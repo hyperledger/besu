@@ -1,4 +1,4 @@
-# Pantheon Ethereum Client &middot; [![Build Status](https://circleci.com/gh/ConsenSys/pantheon.svg?style=shield&circle-token=fe99ba1f7e99c65632a1b1ae69a821ef52ee9bc4)](https://circleci.com/gh/ConsenSys/pantheon) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/ConsenSys/pantheon/blob/master/LICENSE)
+# Pantheon Ethereum Client &middot; [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/ConsenSys/pantheon/blob/master/LICENSE)
 
 ## Pantheon Users
 
