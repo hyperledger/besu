@@ -24,7 +24,7 @@ User and reference documentation available on the Wiki includes:
 To build, clone this repo and run with `./gradlew` like so:
 
 ```
-git clone --recursive https://github.com/ConsenSys/pantheon
+git clone --recursive https://github.com/PegaSysEng/pantheon.git
 cd pantheon
 ./gradlew
 ```
