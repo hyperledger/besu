@@ -1,0 +1,17 @@
+{
+  "request": {
+    "id": 32,
+    "jsonrpc": "2.0",
+    "method": "eth_getBalance",
+    "params": []
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 32,
+    "error" : {
+      "code" : -32602,
+      "message" : "Invalid params"
+    }
+  },
+  "statusCode": 400
+}

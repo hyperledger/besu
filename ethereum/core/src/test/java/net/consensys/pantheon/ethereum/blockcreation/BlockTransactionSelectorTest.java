@@ -1,0 +1,550 @@
+package net.consensys.pantheon.ethereum.blockcreation;
+
+import static net.consensys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.NONCE_TOO_LOW;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
+import net.consensys.pantheon.ethereum.chain.Blockchain;
+import net.consensys.pantheon.ethereum.core.Address;
+import net.consensys.pantheon.ethereum.core.AddressHelpers;
+import net.consensys.pantheon.ethereum.core.BlockHeaderBuilder;
+import net.consensys.pantheon.ethereum.core.Hash;
+import net.consensys.pantheon.ethereum.core.LogSeries;
+import net.consensys.pantheon.ethereum.core.PendingTransactions;
+import net.consensys.pantheon.ethereum.core.ProcessableBlockHeader;
+import net.consensys.pantheon.ethereum.core.Transaction;
+import net.consensys.pantheon.ethereum.core.TransactionReceipt;
+import net.consensys.pantheon.ethereum.core.TransactionTestFixture;
+import net.consensys.pantheon.ethereum.core.Wei;
+import net.consensys.pantheon.ethereum.core.WorldState;
+import net.consensys.pantheon.ethereum.core.WorldUpdater;
+import net.consensys.pantheon.ethereum.development.DevelopmentProtocolSchedule;
+import net.consensys.pantheon.ethereum.mainnet.MainnetTransactionProcessor;
+import net.consensys.pantheon.ethereum.mainnet.MainnetTransactionProcessor.Result;
+import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import net.consensys.pantheon.ethereum.mainnet.TransactionProcessor;
+import net.consensys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
+import net.consensys.pantheon.ethereum.mainnet.ValidationResult;
+import net.consensys.pantheon.ethereum.vm.TestBlockchain;
+import net.consensys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
+import net.consensys.pantheon.ethereum.worldstate.KeyValueStorageWorldStateStorage;
+import net.consensys.pantheon.services.kvstore.InMemoryKeyValueStorage;
+import net.consensys.pantheon.util.bytes.BytesValue;
+import net.consensys.pantheon.util.uint.UInt256;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.function.Supplier;
+
+import com.google.common.collect.Lists;
+import io.vertx.core.json.JsonObject;
+import org.junit.Test;
+
+public class BlockTransactionSelectorTest {
+
+  private static final KeyPair keyPair = KeyPair.generate();
+
+  @Test
+  public void emptyPendingTransactionsResultsInEmptyVettingResult() {
+    final ProtocolSchedule<Void> protocolSchedule =
+        DevelopmentProtocolSchedule.create(new JsonObject());
+    final Blockchain blockchain = new TestBlockchain();
+    final TransactionProcessor transactionProcessor =
+        protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
+    final DefaultMutableWorldState worldState = inMemoryWorldState();
+    final PendingTransactions pendingTransactions = new PendingTransactions(5);
+    final Supplier<Boolean> isCancelled = () -> false;
+
+    final ProcessableBlockHeader blockHeader =
+        BlockHeaderBuilder.create()
+            .parentHash(Hash.EMPTY)
+            .coinbase(Address.fromHexString(String.format("%020x", 1)))
+            .difficulty(UInt256.ONE)
+            .number(1)
+            .gasLimit(5000)
+            .timestamp(Instant.now().toEpochMilli())
+            .buildProcessableBlockHeader();
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+
+    final BlockTransactionSelector selector =
+        new BlockTransactionSelector(
+            transactionProcessor,
+            blockchain,
+            worldState,
+            pendingTransactions,
+            blockHeader,
+            this::createReceipt,
+            Wei.ZERO,
+            isCancelled,
+            miningBeneficiary);
+
+    final BlockTransactionSelector.TransactionSelectionResults results =
+        selector.buildTransactionListForBlock();
+
+    assertThat(results.getTransactions().size()).isEqualTo(0);
+    assertThat(results.getReceipts().size()).isEqualTo(0);
+    assertThat(results.getCumulativeGasUsed()).isEqualTo(0);
+  }
+
+  @Test
+  public void failedTransactionsAreIncludedInTheBlock() {
+    final PendingTransactions pendingTransactions = new PendingTransactions(5);
+
+    final Transaction transaction = createTransaction(1);
+    pendingTransactions.addRemoteTransaction(transaction);
+
+    final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
+
+    when(transactionProcessor.processTransaction(any(), any(), any(), eq(transaction), any()))
+        .thenReturn(MainnetTransactionProcessor.Result.failed(5, ValidationResult.valid()));
+
+    final Blockchain blockchain = new TestBlockchain();
+    final DefaultMutableWorldState worldState = inMemoryWorldState();
+    final Supplier<Boolean> isCancelled = () -> false;
+
+    // The block should fit 3 transactions only
+    final ProcessableBlockHeader blockHeader =
+        BlockHeaderBuilder.create()
+            .parentHash(Hash.EMPTY)
+            .coinbase(Address.fromHexString(String.format("%020x", 1)))
+            .difficulty(UInt256.ONE)
+            .number(1)
+            .gasLimit(5000)
+            .timestamp(Instant.now().toEpochMilli())
+            .buildProcessableBlockHeader();
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+
+    final BlockTransactionSelector selector =
+        new BlockTransactionSelector(
+            transactionProcessor,
+            blockchain,
+            worldState,
+            pendingTransactions,
+            blockHeader,
+            this::createReceipt,
+            Wei.ZERO,
+            isCancelled,
+            miningBeneficiary);
+
+    final BlockTransactionSelector.TransactionSelectionResults results =
+        selector.buildTransactionListForBlock();
+
+    assertThat(results.getTransactions().size()).isEqualTo(1);
+    assertThat(results.getTransactions()).contains(transaction);
+    assertThat(results.getReceipts().size()).isEqualTo(1);
+    assertThat(results.getCumulativeGasUsed()).isEqualTo(95L);
+  }
+
+  @Test
+  public void invalidTransactionsTransactionProcessingAreSkippedButBlockStillFills() {
+    final PendingTransactions pendingTransactions = new PendingTransactions(5);
+
+    final List<Transaction> transactionsToInject = Lists.newArrayList();
+    for (int i = 0; i < 5; i++) {
+      final Transaction tx = createTransaction(i);
+      transactionsToInject.add(tx);
+      pendingTransactions.addRemoteTransaction(tx);
+    }
+
+    final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
+    when(transactionProcessor.processTransaction(any(), any(), any(), any(), any()))
+        .thenReturn(
+            MainnetTransactionProcessor.Result.successful(
+                new LogSeries(Lists.newArrayList()),
+                0,
+                BytesValue.EMPTY,
+                ValidationResult.valid()));
+    when(transactionProcessor.processTransaction(
+            any(), any(), any(), eq(transactionsToInject.get(1)), any()))
+        .thenReturn(
+            MainnetTransactionProcessor.Result.invalid(ValidationResult.invalid(NONCE_TOO_LOW)));
+
+    final Blockchain blockchain = new TestBlockchain();
+    final DefaultMutableWorldState worldState = inMemoryWorldState();
+    final Supplier<Boolean> isCancelled = () -> false;
+
+    // The block should fit 3 transactions only
+    final ProcessableBlockHeader blockHeader =
+        BlockHeaderBuilder.create()
+            .parentHash(Hash.EMPTY)
+            .coinbase(Address.fromHexString(String.format("%020x", 1)))
+            .difficulty(UInt256.ONE)
+            .number(1)
+            .gasLimit(5000)
+            .timestamp(Instant.now().toEpochMilli())
+            .buildProcessableBlockHeader();
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+
+    final BlockTransactionSelector selector =
+        new BlockTransactionSelector(
+            transactionProcessor,
+            blockchain,
+            worldState,
+            pendingTransactions,
+            blockHeader,
+            this::createReceipt,
+            Wei.ZERO,
+            isCancelled,
+            miningBeneficiary);
+
+    final BlockTransactionSelector.TransactionSelectionResults results =
+        selector.buildTransactionListForBlock();
+
+    assertThat(results.getTransactions().size()).isEqualTo(4);
+    assertThat(results.getTransactions().contains(transactionsToInject.get(1))).isFalse();
+    assertThat(results.getReceipts().size()).isEqualTo(4);
+    assertThat(results.getCumulativeGasUsed()).isEqualTo(400);
+  }
+
+  @Test
+  public void subsetOfPendingTransactionsIncludedWhenBlockGasLimitHit() {
+    final PendingTransactions pendingTransactions = new PendingTransactions(5);
+
+    final List<Transaction> transactionsToInject = Lists.newArrayList();
+    // Transactions are reported in reverse order.
+    for (int i = 0; i < 5; i++) {
+      final Transaction tx = createTransaction(i);
+      transactionsToInject.add(tx);
+      pendingTransactions.addRemoteTransaction(tx);
+    }
+    final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
+    when(transactionProcessor.processTransaction(any(), any(), any(), any(), any()))
+        .thenReturn(
+            MainnetTransactionProcessor.Result.successful(
+                new LogSeries(Lists.newArrayList()),
+                0,
+                BytesValue.EMPTY,
+                ValidationResult.valid()));
+
+    final Blockchain blockchain = new TestBlockchain();
+
+    final DefaultMutableWorldState worldState = inMemoryWorldState();
+
+    final Supplier<Boolean> isCancelled = () -> false;
+
+    final ProcessableBlockHeader blockHeader =
+        BlockHeaderBuilder.create()
+            .parentHash(Hash.EMPTY)
+            .coinbase(Address.fromHexString(String.format("%020x", 1)))
+            .difficulty(UInt256.ONE)
+            .number(1)
+            .gasLimit(301)
+            .timestamp(Instant.now().toEpochMilli())
+            .buildProcessableBlockHeader();
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+
+    final BlockTransactionSelector selector =
+        new BlockTransactionSelector(
+            transactionProcessor,
+            blockchain,
+            worldState,
+            pendingTransactions,
+            blockHeader,
+            this::createReceipt,
+            Wei.ZERO,
+            isCancelled,
+            miningBeneficiary);
+
+    final BlockTransactionSelector.TransactionSelectionResults results =
+        selector.buildTransactionListForBlock();
+
+    assertThat(results.getTransactions().size()).isEqualTo(3);
+
+    assertThat(results.getTransactions().containsAll(transactionsToInject.subList(0, 3))).isTrue();
+    assertThat(results.getReceipts().size()).isEqualTo(3);
+    assertThat(results.getCumulativeGasUsed()).isEqualTo(300);
+
+    // Ensure receipts have the correct cumulative gas
+    assertThat(results.getReceipts().get(0).getCumulativeGasUsed()).isEqualTo(100);
+    assertThat(results.getReceipts().get(1).getCumulativeGasUsed()).isEqualTo(200);
+    assertThat(results.getReceipts().get(2).getCumulativeGasUsed()).isEqualTo(300);
+  }
+
+  @Test
+  public void transactionOfferingGasPriceLessThanMinimumIsIdentifiedAndRemovedFromPending() {
+    final PendingTransactions pendingTransactions = new PendingTransactions(5);
+
+    final Blockchain blockchain = new TestBlockchain();
+
+    final DefaultMutableWorldState worldState = inMemoryWorldState();
+
+    final Supplier<Boolean> isCancelled = () -> false;
+
+    final ProcessableBlockHeader blockHeader =
+        BlockHeaderBuilder.create()
+            .parentHash(Hash.EMPTY)
+            .coinbase(Address.fromHexString(String.format("%020x", 1)))
+            .difficulty(UInt256.ONE)
+            .number(1)
+            .gasLimit(301)
+            .timestamp(Instant.now().toEpochMilli())
+            .buildProcessableBlockHeader();
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+    final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
+    final BlockTransactionSelector selector =
+        new BlockTransactionSelector(
+            transactionProcessor,
+            blockchain,
+            worldState,
+            pendingTransactions,
+            blockHeader,
+            this::createReceipt,
+            Wei.of(6),
+            isCancelled,
+            miningBeneficiary);
+
+    final Transaction tx = createTransaction(1);
+    pendingTransactions.addRemoteTransaction(tx);
+
+    final BlockTransactionSelector.TransactionSelectionResults results =
+        selector.buildTransactionListForBlock();
+
+    assertThat(results.getTransactions().size()).isEqualTo(0);
+    assertThat(pendingTransactions.size()).isEqualTo(0);
+  }
+
+  @Test
+  public void transactionTooLargeForBlockDoesNotPreventMoreBeingAddedIfBlockOccupancyNotReached() {
+    final PendingTransactions pendingTransactions = new PendingTransactions(5);
+    final Blockchain blockchain = new TestBlockchain();
+    final DefaultMutableWorldState worldState = inMemoryWorldState();
+    final Supplier<Boolean> isCancelled = () -> false;
+
+    final ProcessableBlockHeader blockHeader =
+        BlockHeaderBuilder.create()
+            .parentHash(Hash.EMPTY)
+            .coinbase(Address.fromHexString(String.format("%020x", 1)))
+            .difficulty(UInt256.ONE)
+            .number(1)
+            .gasLimit(300)
+            .timestamp(Instant.now().toEpochMilli())
+            .buildProcessableBlockHeader();
+
+    // TransactionProcessor mock assumes all gas in the transaction was used (i.e. gasLimit).
+    final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
+    when(transactionProcessor.processTransaction(any(), any(), any(), any(), any()))
+        .thenReturn(
+            MainnetTransactionProcessor.Result.successful(
+                new LogSeries(Lists.newArrayList()),
+                0,
+                BytesValue.EMPTY,
+                ValidationResult.valid()));
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+    final BlockTransactionSelector selector =
+        new BlockTransactionSelector(
+            transactionProcessor,
+            blockchain,
+            worldState,
+            pendingTransactions,
+            blockHeader,
+            this::createReceipt,
+            Wei.ZERO,
+            isCancelled,
+            miningBeneficiary);
+
+    final TransactionTestFixture txTestFixture = new TransactionTestFixture();
+    // Add 3 transactions to the Pending Transactions, 79% of block, 100% of block and 10% of block
+    // should end up selecting the first and third only.
+    // NOTE - PendingTransactions outputs these in nonce order
+    final List<Transaction> transactionsToInject = Lists.newArrayList();
+    transactionsToInject.add(
+        txTestFixture
+            .gasLimit((long) (blockHeader.getGasLimit() * 0.79))
+            .nonce(1)
+            .createTransaction(keyPair));
+    transactionsToInject.add(
+        txTestFixture.gasLimit(blockHeader.getGasLimit()).nonce(2).createTransaction(keyPair));
+    transactionsToInject.add(
+        txTestFixture
+            .gasLimit((long) (blockHeader.getGasLimit() * 0.1))
+            .nonce(3)
+            .createTransaction(keyPair));
+
+    for (final Transaction tx : transactionsToInject) {
+      pendingTransactions.addRemoteTransaction(tx);
+    }
+
+    final BlockTransactionSelector.TransactionSelectionResults results =
+        selector.buildTransactionListForBlock();
+
+    assertThat(results.getTransactions().size()).isEqualTo(2);
+    assertThat(results.getTransactions().get(0)).isEqualTo(transactionsToInject.get(0));
+    assertThat(results.getTransactions().get(1)).isEqualTo(transactionsToInject.get(2));
+  }
+
+  @Test
+  public void transactionSelectionStopsWhenSufficientBlockOccupancyIsReached() {
+    final PendingTransactions pendingTransactions = new PendingTransactions(10);
+    final Blockchain blockchain = new TestBlockchain();
+    final DefaultMutableWorldState worldState = inMemoryWorldState();
+    final Supplier<Boolean> isCancelled = () -> false;
+
+    final ProcessableBlockHeader blockHeader =
+        BlockHeaderBuilder.create()
+            .parentHash(Hash.EMPTY)
+            .coinbase(Address.fromHexString(String.format("%020x", 1)))
+            .difficulty(UInt256.ONE)
+            .number(1)
+            .gasLimit(300)
+            .timestamp(Instant.now().toEpochMilli())
+            .buildProcessableBlockHeader();
+
+    // TransactionProcessor mock assumes all gas in the transaction was used (i.e. gasLimit).
+    final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
+    when(transactionProcessor.processTransaction(any(), any(), any(), any(), any()))
+        .thenReturn(
+            MainnetTransactionProcessor.Result.successful(
+                new LogSeries(Lists.newArrayList()),
+                0,
+                BytesValue.EMPTY,
+                ValidationResult.valid()));
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+    final BlockTransactionSelector selector =
+        new BlockTransactionSelector(
+            transactionProcessor,
+            blockchain,
+            worldState,
+            pendingTransactions,
+            blockHeader,
+            this::createReceipt,
+            Wei.ZERO,
+            isCancelled,
+            miningBeneficiary);
+
+    final TransactionTestFixture txTestFixture = new TransactionTestFixture();
+    // Add 4 transactions to the Pending Transactions 15% (ok), 79% (ok), 25% (too large), 10%
+    // (not included, it would fit, however previous transaction was too large and block was
+    // suitably populated).
+    // NOTE - PendingTransactions will output these in nonce order.
+    final Transaction transaction1 =
+        txTestFixture
+            .gasLimit((long) (blockHeader.getGasLimit() * 0.15))
+            .nonce(1)
+            .createTransaction(keyPair);
+    final Transaction transaction2 =
+        txTestFixture
+            .gasLimit((long) (blockHeader.getGasLimit() * 0.79))
+            .nonce(2)
+            .createTransaction(keyPair);
+    final Transaction transaction3 =
+        txTestFixture
+            .gasLimit((long) (blockHeader.getGasLimit() * 0.25))
+            .nonce(3)
+            .createTransaction(keyPair);
+    final Transaction transaction4 =
+        txTestFixture
+            .gasLimit((long) (blockHeader.getGasLimit() * 0.1))
+            .nonce(4)
+            .createTransaction(keyPair);
+
+    pendingTransactions.addRemoteTransaction(transaction1);
+    pendingTransactions.addRemoteTransaction(transaction2);
+    pendingTransactions.addRemoteTransaction(transaction3);
+    pendingTransactions.addRemoteTransaction(transaction4);
+
+    final BlockTransactionSelector.TransactionSelectionResults results =
+        selector.buildTransactionListForBlock();
+
+    assertThat(results.getTransactions().size()).isEqualTo(2);
+    assertThat(results.getTransactions().get(0)).isEqualTo(transaction1);
+    assertThat(results.getTransactions().get(1)).isEqualTo(transaction2);
+    assertThat(results.getTransactions().contains(transaction4)).isFalse();
+    assertThat(results.getTransactions().contains(transaction3)).isFalse();
+  }
+
+  @Test
+  public void shouldDiscardTransactionsThatFailValidation() {
+    final PendingTransactions pendingTransactions = new PendingTransactions(10);
+    final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
+    final Blockchain blockchain = new TestBlockchain();
+    final DefaultMutableWorldState worldState = inMemoryWorldState();
+    final Supplier<Boolean> isCancelled = () -> false;
+
+    final ProcessableBlockHeader blockHeader =
+        BlockHeaderBuilder.create()
+            .parentHash(Hash.EMPTY)
+            .coinbase(Address.fromHexString(String.format("%020x", 1)))
+            .difficulty(UInt256.ONE)
+            .number(1)
+            .gasLimit(300)
+            .timestamp(Instant.now().toEpochMilli())
+            .buildProcessableBlockHeader();
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+    final BlockTransactionSelector selector =
+        new BlockTransactionSelector(
+            transactionProcessor,
+            blockchain,
+            worldState,
+            pendingTransactions,
+            blockHeader,
+            this::createReceipt,
+            Wei.ZERO,
+            isCancelled,
+            miningBeneficiary);
+
+    final TransactionTestFixture txTestFixture = new TransactionTestFixture();
+    final Transaction validTransaction =
+        txTestFixture.nonce(1).gasLimit(1).createTransaction(keyPair);
+    final Transaction invalidTransaction =
+        txTestFixture.nonce(2).gasLimit(2).createTransaction(keyPair);
+
+    pendingTransactions.addRemoteTransaction(validTransaction);
+    pendingTransactions.addRemoteTransaction(invalidTransaction);
+
+    when(transactionProcessor.processTransaction(
+            eq(blockchain), any(WorldUpdater.class), eq(blockHeader), eq(validTransaction), any()))
+        .thenReturn(
+            Result.successful(
+                LogSeries.empty(), 10000, BytesValue.EMPTY, ValidationResult.valid()));
+    when(transactionProcessor.processTransaction(
+            eq(blockchain),
+            any(WorldUpdater.class),
+            eq(blockHeader),
+            eq(invalidTransaction),
+            any()))
+        .thenReturn(
+            Result.invalid(
+                ValidationResult.invalid(TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT)));
+
+    selector.buildTransactionListForBlock();
+
+    assertThat(pendingTransactions.getTransactionByHash(validTransaction.hash())).isPresent();
+    assertThat(pendingTransactions.getTransactionByHash(invalidTransaction.hash())).isNotPresent();
+  }
+
+  private Transaction createTransaction(final int transactionNumber) {
+    return Transaction.builder()
+        .gasLimit(100)
+        .gasPrice(Wei.of(5))
+        .nonce(transactionNumber)
+        .payload(BytesValue.EMPTY)
+        .to(Address.ID)
+        .value(Wei.of(transactionNumber))
+        .sender(Address.ID)
+        .chainId(1)
+        .signAndBuild(keyPair);
+  }
+
+  // This is a duplicate of the MainnetProtocolSpec::frontierTransactionReceiptFactory
+  private TransactionReceipt createReceipt(
+      final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
+    return new TransactionReceipt(worldState.rootHash(), gasUsed, Lists.newArrayList());
+  }
+
+  private DefaultMutableWorldState inMemoryWorldState() {
+    return new DefaultMutableWorldState(
+        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage()));
+  }
+}

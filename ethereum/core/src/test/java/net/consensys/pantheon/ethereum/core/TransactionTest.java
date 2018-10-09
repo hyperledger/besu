@@ -1,0 +1,100 @@
+package net.consensys.pantheon.ethereum.core;
+
+import net.consensys.pantheon.ethereum.mainnet.TransactionValidator;
+import net.consensys.pantheon.ethereum.rlp.RLP;
+import net.consensys.pantheon.ethereum.vm.ReferenceTestProtocolSchedules;
+import net.consensys.pantheon.testutil.JsonTestParameters;
+import net.consensys.pantheon.util.bytes.BytesValue;
+
+import java.util.Collection;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
+@RunWith(Parameterized.class)
+public class TransactionTest {
+
+  private static final ReferenceTestProtocolSchedules REFERENCE_TEST_PROTOCOL_SCHEDULES =
+      ReferenceTestProtocolSchedules.create();
+
+  private static TransactionValidator transactionValidator(final String name) {
+    return REFERENCE_TEST_PROTOCOL_SCHEDULES
+        .getByName(name)
+        .getByBlockNumber(0)
+        .getTransactionValidator();
+  }
+
+  private final TransactionTestCaseSpec spec;
+
+  private static final String TEST_CONFIG_FILE_DIR_PATH = "TransactionTests/";
+
+  @Parameters(name = "Name: {0}")
+  public static Collection<Object[]> getTestParametersForConfig() {
+    return JsonTestParameters.create(TransactionTestCaseSpec.class)
+        // Blacklist tests that expect transactions with large gasLimits to properly decode
+        .blacklist(
+            "TransactionWithGasLimitOverflow(2|63)", "TransactionWithGasLimitxPriceOverflow$")
+        // Nonce is tracked with type long, large valued nonces can't currently be decoded
+        .blacklist("TransactionWithHighNonce256")
+        .generator((name, spec, collector) -> collector.add(name, spec))
+        .generate(TEST_CONFIG_FILE_DIR_PATH);
+  }
+
+  public TransactionTest(final String name, final TransactionTestCaseSpec spec) {
+    this.spec = spec;
+  }
+
+  @Test
+  public void frontier() {
+    milestone("Frontier");
+  }
+
+  @Test
+  public void homestead() {
+    milestone("Homestead");
+  }
+
+  @Test
+  public void eIP150() {
+    milestone("EIP150");
+  }
+
+  @Test
+  public void eIP158() {
+    milestone("EIP158");
+  }
+
+  @Test
+  public void byzantium() {
+    milestone("Byzantium");
+  }
+
+  public void milestone(final String milestone) {
+
+    final TransactionTestCaseSpec.Expectation expected = spec.expectation(milestone);
+
+    try {
+      final BytesValue rlp = spec.getRlp();
+
+      // Test transaction deserialization (will throw an exception if it fails).
+      final Transaction transaction = Transaction.readFrom(RLP.input(rlp));
+      if (!transactionValidator(milestone).validate(transaction).isValid()) {
+        throw new RuntimeException(String.format("Transaction is invalid %s", transaction));
+      }
+
+      // Test rlp encoding
+      final BytesValue actualRlp = RLP.encode(transaction::writeTo);
+      Assert.assertTrue(expected.isSucceeds());
+
+      Assert.assertEquals(rlp, actualRlp);
+
+      Assert.assertEquals(expected.getSender(), transaction.getSender());
+      Assert.assertEquals(expected.getHash(), transaction.hash());
+    } catch (final Exception e) {
+      Assert.assertFalse(expected.isSucceeds());
+    }
+  }
+}

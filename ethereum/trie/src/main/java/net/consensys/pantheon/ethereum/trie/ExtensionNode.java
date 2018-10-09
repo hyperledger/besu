@@ -1,0 +1,131 @@
+package net.consensys.pantheon.ethereum.trie;
+
+import static net.consensys.pantheon.crypto.Hash.keccak256;
+
+import net.consensys.pantheon.ethereum.rlp.BytesValueRLPOutput;
+import net.consensys.pantheon.ethereum.rlp.RLP;
+import net.consensys.pantheon.util.bytes.Bytes32;
+import net.consensys.pantheon.util.bytes.BytesValue;
+import net.consensys.pantheon.util.bytes.BytesValues;
+
+import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
+import java.util.Optional;
+
+class ExtensionNode<V> implements Node<V> {
+  private final BytesValue path;
+  private final Node<V> child;
+  private final NodeFactory<V> nodeFactory;
+  private WeakReference<BytesValue> rlp;
+  private SoftReference<Bytes32> hash;
+  private boolean dirty = false;
+
+  ExtensionNode(final BytesValue path, final Node<V> child, final NodeFactory<V> nodeFactory) {
+    assert (path.size() > 0);
+    assert (path.get(path.size() - 1) != CompactEncoding.LEAF_TERMINATOR)
+        : "Extension path ends in a leaf terminator";
+    this.path = path;
+    this.child = child;
+    this.nodeFactory = nodeFactory;
+  }
+
+  @Override
+  public Node<V> accept(final PathNodeVisitor<V> visitor, final BytesValue path) {
+    return visitor.visit(this, path);
+  }
+
+  @Override
+  public void accept(final NodeVisitor<V> visitor) {
+    visitor.visit(this);
+  }
+
+  @Override
+  public BytesValue getPath() {
+    return path;
+  }
+
+  @Override
+  public Optional<V> getValue() {
+    throw new UnsupportedOperationException();
+  }
+
+  public Node<V> getChild() {
+    return child;
+  }
+
+  @Override
+  public BytesValue getRlp() {
+    if (rlp != null) {
+      final BytesValue encoded = rlp.get();
+      if (encoded != null) {
+        return encoded;
+      }
+    }
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    out.writeBytesValue(CompactEncoding.encode(path));
+    out.writeRLPUnsafe(child.getRlpRef());
+    out.endList();
+    final BytesValue encoded = out.encoded();
+    rlp = new WeakReference<>(encoded);
+    return encoded;
+  }
+
+  @Override
+  public BytesValue getRlpRef() {
+    final BytesValue rlp = getRlp();
+    if (rlp.size() < 32) {
+      return rlp;
+    } else {
+      return RLP.encodeOne(getHash());
+    }
+  }
+
+  @Override
+  public Bytes32 getHash() {
+    if (hash != null) {
+      final Bytes32 hashed = hash.get();
+      if (hashed != null) {
+        return hashed;
+      }
+    }
+    final BytesValue rlp = getRlp();
+    final Bytes32 hashed = keccak256(rlp);
+    hash = new SoftReference<>(hashed);
+    return hashed;
+  }
+
+  public Node<V> replaceChild(final Node<V> updatedChild) {
+    // collapse this extension - if the child is a branch, it will create a new extension
+    return updatedChild.replacePath(BytesValues.concatenate(path, updatedChild.getPath()));
+  }
+
+  @Override
+  public Node<V> replacePath(final BytesValue path) {
+    if (path.size() == 0) {
+      return child;
+    }
+    return nodeFactory.createExtension(path, child);
+  }
+
+  @Override
+  public String print() {
+    final StringBuilder builder = new StringBuilder();
+    builder.append("Extension:");
+    builder.append("\n\tRef: ").append(getRlpRef());
+    builder.append("\n\tPath: " + CompactEncoding.encode(path));
+    final String childRep = getChild().print().replaceAll("\n\t", "\n\t\t");
+    builder.append("\n\t").append(childRep);
+    return builder.toString();
+  }
+
+  @Override
+  public boolean isDirty() {
+    return dirty;
+  }
+
+  @Override
+  public void markDirty() {
+    dirty = true;
+  }
+}

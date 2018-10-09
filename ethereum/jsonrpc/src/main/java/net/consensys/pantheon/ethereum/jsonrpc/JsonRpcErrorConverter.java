@@ -1,0 +1,28 @@
+package net.consensys.pantheon.ethereum.jsonrpc;
+
+import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
+import net.consensys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
+
+public class JsonRpcErrorConverter {
+
+  public static JsonRpcError convertTransactionInvalidReason(
+      final TransactionInvalidReason reason) {
+    switch (reason) {
+      case NONCE_TOO_LOW:
+        return JsonRpcError.NONCE_TOO_LOW;
+      case INCORRECT_NONCE:
+        return JsonRpcError.INCORRECT_NONCE;
+      case INVALID_SIGNATURE:
+        return JsonRpcError.INVALID_TRANSACTION_SIGNATURE;
+      case INTRINSIC_GAS_EXCEEDS_GAS_LIMIT:
+        return JsonRpcError.INTRINSIC_GAS_EXCEEDS_LIMIT;
+      case UPFRONT_COST_EXCEEDS_BALANCE:
+        return JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
+      case EXCEEDS_BLOCK_GAS_LIMIT:
+        return JsonRpcError.EXCEEDS_BLOCK_GAS_LIMIT;
+
+      default:
+        return JsonRpcError.INVALID_PARAMS;
+    }
+  }
+}

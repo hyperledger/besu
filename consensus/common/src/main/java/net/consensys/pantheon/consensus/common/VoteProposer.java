@@ -1,0 +1,122 @@
+package net.consensys.pantheon.consensus.common;
+
+import net.consensys.pantheon.ethereum.core.Address;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+/** Container for pending votes and selecting a vote for new blocks */
+public class VoteProposer {
+  public enum Vote {
+    AUTH,
+    DROP
+  }
+
+  private final Map<Address, Vote> proposals = new ConcurrentHashMap<>();
+  private final AtomicInteger votePosition = new AtomicInteger(0);
+
+  /**
+   * Identifies an address that should be voted into the validator pool
+   *
+   * @param address The address to be voted in
+   */
+  public void auth(final Address address) {
+    proposals.put(address, Vote.AUTH);
+  }
+
+  /**
+   * Identifies an address that should be voted out of the validator pool
+   *
+   * @param address The address to be voted out
+   */
+  public void drop(final Address address) {
+    proposals.put(address, Vote.DROP);
+  }
+
+  /**
+   * Discards a pending vote for an address if one exists
+   *
+   * @param address The address that should no longer be voted for
+   */
+  public void discard(final Address address) {
+    proposals.remove(address);
+  }
+
+  /** Discards all pending votes */
+  public void clear() {
+    proposals.clear();
+  }
+
+  public Optional<Vote> get(final Address address) {
+    return Optional.ofNullable(proposals.get(address));
+  }
+
+  private boolean voteNotYetCast(
+      final Address localAddress,
+      final Address voteAddress,
+      final Vote vote,
+      final Collection<Address> validators,
+      final VoteTally tally) {
+
+    // Pre evaluate if we have a vote outstanding to auth or drop the target address
+    final boolean votedAuth = tally.getOutstandingAddVotesFor(voteAddress).contains(localAddress);
+    final boolean votedDrop =
+        tally.getOutstandingRemoveVotesFor(voteAddress).contains(localAddress);
+
+    // if they're a validator, we want to see them dropped, and we haven't voted to drop them yet
+    if (validators.contains(voteAddress) && !votedDrop && vote == Vote.DROP) {
+      return true;
+      // or if we've previously voted to auth them and we want to drop them
+    } else if (votedAuth && vote == Vote.DROP) {
+      return true;
+      // if they're not currently a validator and we want to see them authed and we haven't voted to
+      // auth them yet
+    } else if (!validators.contains(voteAddress) && !votedAuth && vote == Vote.AUTH) {
+      return true;
+      // or if we've previously voted to drop them and we want to see them authed
+    } else if (votedDrop && vote == Vote.AUTH) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Gets a valid vote from our list of pending votes
+   *
+   * @param localAddress The address of this validator node
+   * @param tally the vote tally at the height of the chain we need a vote for
+   * @return Either an address with the vote (auth or drop) or no vote if we have no valid pending
+   *     votes
+   */
+  public Optional<Map.Entry<Address, Vote>> getVote(
+      final Address localAddress, final VoteTally tally) {
+    final Collection<Address> validators = tally.getCurrentValidators();
+    final List<Map.Entry<Address, Vote>> validVotes = new ArrayList<>();
+
+    proposals
+        .entrySet()
+        .forEach(
+            proposal -> {
+              if (voteNotYetCast(
+                  localAddress, proposal.getKey(), proposal.getValue(), validators, tally)) {
+                validVotes.add(proposal);
+              }
+            });
+
+    if (validVotes.isEmpty()) {
+      return Optional.empty();
+    }
+
+    // Get the next position in the voting queue we should propose
+    final int currentVotePosition = votePosition.updateAndGet(i -> ++i % validVotes.size());
+
+    // Get a vote from the valid votes and return it
+    return Optional.of(validVotes.get(currentVotePosition));
+  }
+}

@@ -1,0 +1,100 @@
+package net.consensys.pantheon.consensus.ibft;
+
+import static java.util.Collections.emptyList;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
+
+import net.consensys.pantheon.consensus.common.VoteProposer;
+import net.consensys.pantheon.consensus.common.VoteTally;
+import net.consensys.pantheon.ethereum.ProtocolContext;
+import net.consensys.pantheon.ethereum.chain.MutableBlockchain;
+import net.consensys.pantheon.ethereum.core.Block;
+import net.consensys.pantheon.ethereum.core.BlockBody;
+import net.consensys.pantheon.ethereum.core.BlockHeaderTestFixture;
+import net.consensys.pantheon.ethereum.core.BlockImporter;
+import net.consensys.pantheon.ethereum.db.WorldStateArchive;
+import net.consensys.pantheon.ethereum.mainnet.HeaderValidationMode;
+
+import java.util.Collections;
+
+import org.junit.Test;
+
+public class IbftBlockImporterTest {
+
+  private final VoteTallyUpdater voteTallyUpdater = mock(VoteTallyUpdater.class);
+  private final VoteTally voteTally = mock(VoteTally.class);
+  private final VoteProposer voteProposer = mock(VoteProposer.class);
+
+  @SuppressWarnings("unchecked")
+  private final BlockImporter<IbftContext> delegate = mock(BlockImporter.class);
+
+  private final MutableBlockchain blockchain = mock(MutableBlockchain.class);
+  private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
+  private final ProtocolContext<IbftContext> context =
+      new ProtocolContext<>(
+          blockchain, worldStateArchive, new IbftContext(voteTally, voteProposer));
+
+  private final IbftBlockImporter importer = new IbftBlockImporter(delegate, voteTallyUpdater);
+
+  @Test
+  public void voteTallyNotUpdatedWhenBlockImportFails() {
+    final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
+    final Block block =
+        new Block(
+            headerBuilder.buildHeader(),
+            new BlockBody(Collections.emptyList(), Collections.emptyList()));
+
+    when(delegate.importBlock(context, block, HeaderValidationMode.FULL)).thenReturn(false);
+
+    importer.importBlock(context, block, HeaderValidationMode.FULL);
+
+    verifyZeroInteractions(voteTallyUpdater);
+  }
+
+  @Test
+  public void voteTallyNotUpdatedWhenFastBlockImportFails() {
+    final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
+    final Block block =
+        new Block(
+            headerBuilder.buildHeader(),
+            new BlockBody(Collections.emptyList(), Collections.emptyList()));
+
+    when(delegate.fastImportBlock(context, block, emptyList(), HeaderValidationMode.LIGHT))
+        .thenReturn(false);
+
+    importer.fastImportBlock(context, block, Collections.emptyList(), HeaderValidationMode.LIGHT);
+
+    verifyZeroInteractions(voteTallyUpdater);
+  }
+
+  @Test
+  public void voteTallyUpdatedWhenBlockImportSucceeds() {
+    final Block block =
+        new Block(
+            new BlockHeaderTestFixture().buildHeader(),
+            new BlockBody(Collections.emptyList(), Collections.emptyList()));
+
+    when(delegate.importBlock(context, block, HeaderValidationMode.FULL)).thenReturn(true);
+
+    importer.importBlock(context, block, HeaderValidationMode.FULL);
+
+    verify(voteTallyUpdater).updateForBlock(block.getHeader(), voteTally);
+  }
+
+  @Test
+  public void voteTallyUpdatedWhenFastBlockImportSucceeds() {
+    final Block block =
+        new Block(
+            new BlockHeaderTestFixture().buildHeader(),
+            new BlockBody(Collections.emptyList(), Collections.emptyList()));
+
+    when(delegate.fastImportBlock(context, block, emptyList(), HeaderValidationMode.LIGHT))
+        .thenReturn(true);
+
+    importer.fastImportBlock(context, block, Collections.emptyList(), HeaderValidationMode.LIGHT);
+
+    verify(voteTallyUpdater).updateForBlock(block.getHeader(), voteTally);
+  }
+}

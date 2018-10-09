@@ -1,0 +1,109 @@
+package net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request;
+
+import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.FilterParameter;
+import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.UnsignedLongParameter;
+import net.consensys.pantheon.ethereum.jsonrpc.websocket.methods.WebSocketRpcRequest;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+public class SubscriptionRequestMapper {
+
+  private final JsonRpcParameter parameter;
+
+  public SubscriptionRequestMapper(final JsonRpcParameter parameter) {
+    this.parameter = parameter;
+  }
+
+  public SubscribeRequest mapSubscribeRequest(final JsonRpcRequest jsonRpcRequest)
+      throws InvalidSubscriptionRequestException {
+    try {
+      final WebSocketRpcRequest webSocketRpcRequest = validateRequest(jsonRpcRequest);
+
+      final SubscriptionType subscriptionType =
+          parameter.required(webSocketRpcRequest.getParams(), 0, SubscriptionType.class);
+
+      switch (subscriptionType) {
+        case NEW_BLOCK_HEADERS:
+          {
+            return parseNewBlockHeadersRequest(webSocketRpcRequest);
+          }
+        case LOGS:
+          {
+            return parseLogsRequest(webSocketRpcRequest, parameter);
+          }
+        case NEW_PENDING_TRANSACTIONS:
+        case SYNCING:
+        default:
+          return new SubscribeRequest(
+              subscriptionType, null, null, webSocketRpcRequest.getConnectionId());
+      }
+    } catch (final Exception e) {
+      throw new InvalidSubscriptionRequestException("Error parsing subscribe request", e);
+    }
+  }
+
+  private SubscribeRequest parseNewBlockHeadersRequest(final WebSocketRpcRequest request) {
+    final Optional<NewBlockHeadersSubscriptionParam> params =
+        parameter.optional(request.getParams(), 1, NewBlockHeadersSubscriptionParam.class);
+    final boolean includeTransactions = params.isPresent() && params.get().includeTransaction();
+    return new SubscribeRequest(
+        SubscriptionType.NEW_BLOCK_HEADERS, null, includeTransactions, request.getConnectionId());
+  }
+
+  private SubscribeRequest parseLogsRequest(
+      final WebSocketRpcRequest request, final JsonRpcParameter parameter) {
+    final LogsSubscriptionParam logFilterParams =
+        parameter.required(request.getParams(), 1, LogsSubscriptionParam.class);
+    return new SubscribeRequest(
+        SubscriptionType.LOGS,
+        createFilterParameter(logFilterParams),
+        null,
+        request.getConnectionId());
+  }
+
+  private FilterParameter createFilterParameter(final LogsSubscriptionParam logFilterParams) {
+    final List<String> addresses = hasAddresses(logFilterParams);
+    final List<List<String>> topics = hasTopics(logFilterParams);
+    return new FilterParameter(null, null, addresses, topics, null);
+  }
+
+  private List<String> hasAddresses(final LogsSubscriptionParam logFilterParams) {
+    return logFilterParams.address() != null && !logFilterParams.address().isEmpty()
+        ? Arrays.asList(logFilterParams.address())
+        : Collections.emptyList();
+  }
+
+  private List<List<String>> hasTopics(final LogsSubscriptionParam logFilterParams) {
+    return logFilterParams.topics() != null && !logFilterParams.topics().isEmpty()
+        ? Arrays.asList(logFilterParams.topics())
+        : Collections.emptyList();
+  }
+
+  public UnsubscribeRequest mapUnsubscribeRequest(final JsonRpcRequest jsonRpcRequest)
+      throws InvalidSubscriptionRequestException {
+    try {
+      final WebSocketRpcRequest webSocketRpcRequest = validateRequest(jsonRpcRequest);
+
+      final long subscriptionId =
+          parameter
+              .required(webSocketRpcRequest.getParams(), 0, UnsignedLongParameter.class)
+              .getValue();
+      return new UnsubscribeRequest(subscriptionId, webSocketRpcRequest.getConnectionId());
+    } catch (final Exception e) {
+      throw new InvalidSubscriptionRequestException("Error parsing subscribe request", e);
+    }
+  }
+
+  private WebSocketRpcRequest validateRequest(final JsonRpcRequest jsonRpcRequest) {
+    if (jsonRpcRequest instanceof WebSocketRpcRequest) {
+      return (WebSocketRpcRequest) jsonRpcRequest;
+    } else {
+      throw new InvalidRequestException("Invalid request received.");
+    }
+  }
+}

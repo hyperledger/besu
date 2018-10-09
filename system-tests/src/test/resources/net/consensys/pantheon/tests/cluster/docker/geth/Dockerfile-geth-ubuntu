@@ -1,0 +1,45 @@
+FROM ubuntu:18.04
+
+ENV PATH /go-ethereum/build/bin:$PATH
+
+RUN useradd --create-home --user-group -u 999  appuser
+
+RUN apt-get update
+RUN apt-get install -y build-essential golang git net-tools iputils-ping netcat curl
+RUN apt-get install -y vim emacs
+
+WORKDIR /
+RUN git clone https://github.com/ethereum/go-ethereum
+# && git checkout tags/v1.8.7
+WORKDIR /go-ethereum
+RUN make all
+
+RUN mkdir -p /ethereum/data/geth
+
+ADD genesis.json /ethereum/genesis.json
+ADD gethUtils.sh /gethUtils.sh
+ADD run.sh /run.sh
+ADD runBootNode.sh /runBootNode.sh
+ADD bash_aliases /home/appuser/.bash_aliases
+
+RUN chmod +x               /run.sh /runBootNode.sh /gethUtils.sh /home/appuser/.bash_aliases
+RUN chown appuser:appuser  /run.sh /runBootNode.sh /gethUtils.sh /home/appuser/.bash_aliases
+
+# store cmd to ~/.bash_history every time the prompt is displayed, instead of waiting for a clean exit from the shell
+RUN echo "export PROMPT_COMMAND=\"history -a\"" >> /root/.profile
+RUN cp /root/.profile /home/appuser/
+RUN cp /root/.bashrc /home/appuser/
+
+#RUN echo "if [ -f \"~/.bash_aliases\" ]; then echo 'Sourcing \"~/.bash_aliases\"'; source \"~/.bash_aliases\"; fi\n" >> /home/appuser/.bashrc
+RUN echo "if [ -f '/gethUtils.sh' ]; then echo 'Sourcing /gethUtils.sh'; source /gethUtils.sh; fi\n" >> /home/appuser/.bashrc
+
+
+WORKDIR /go-ethereum
+RUN chown -R appuser:appuser /ethereum
+RUN chown -R appuser:appuser /go-ethereum
+
+USER appuser
+CMD /run.sh
+
+# List Exposed Ports
+EXPOSE 8084 8545 30303 30303/udp

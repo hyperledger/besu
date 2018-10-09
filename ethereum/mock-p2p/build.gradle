@@ -1,0 +1,19 @@
+apply plugin: 'java-library'
+
+jar {
+  baseName 'pantheon-mock-p2p'
+  manifest {
+    attributes('Implementation-Title': baseName,
+    'Implementation-Version': project.version)
+  }
+}
+
+dependencies {
+  implementation project(':ethereum:p2p')
+  implementation project(':util')
+
+  implementation 'io.vertx:vertx-core'
+
+  testImplementation "junit:junit"
+  testImplementation 'org.assertj:assertj-core'
+}

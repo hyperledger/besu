@@ -1,0 +1,17 @@
+{
+  "request": {
+    "id": 481,
+    "jsonrpc": "2.0",
+    "method": "eth_getTransactionByBlockNumberAndIndex",
+    "params": [
+      "earliest",
+      "0x0"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 481,
+    "result": null
+  },
+  "statusCode": 200
+}

@@ -1,0 +1,92 @@
+package net.consensys.pantheon.consensus.clique.headervalidationrules;
+
+import net.consensys.pantheon.consensus.clique.CliqueBlockHashing;
+import net.consensys.pantheon.consensus.clique.CliqueContext;
+import net.consensys.pantheon.consensus.clique.CliqueExtraData;
+import net.consensys.pantheon.consensus.common.EpochManager;
+import net.consensys.pantheon.consensus.common.VoteTally;
+import net.consensys.pantheon.ethereum.ProtocolContext;
+import net.consensys.pantheon.ethereum.core.Address;
+import net.consensys.pantheon.ethereum.core.BlockHeader;
+import net.consensys.pantheon.ethereum.mainnet.AttachedBlockHeaderValidationRule;
+import net.consensys.pantheon.ethereum.rlp.RLPException;
+
+import java.util.Collection;
+
+import com.google.common.collect.Iterables;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class CliqueExtraDataValidationRule
+    implements AttachedBlockHeaderValidationRule<CliqueContext> {
+
+  private static final Logger LOGGER = LogManager.getLogger();
+
+  private final EpochManager epochManager;
+
+  public CliqueExtraDataValidationRule(final EpochManager epochManager) {
+    this.epochManager = epochManager;
+  }
+
+  /**
+   * Responsible for determining the validity of the extra data field. Ensures:
+   *
+   * <ul>
+   *   <li>Bytes in the extra data field can be decoded as per Clique specification
+   *   <li>Proposer (derived from the proposerSeal) is a member of the validators
+   *   <li>Validators are only validated on epoch blocks.
+   * </ul>
+   *
+   * @param header the block header containing the extraData to be validated.
+   * @return True if the extraData successfully produces an CliqueExtraData object, false otherwise
+   */
+  @Override
+  public boolean validate(
+      final BlockHeader header,
+      final BlockHeader parent,
+      final ProtocolContext<CliqueContext> protocolContext) {
+    try {
+      final VoteTally validatorProvider =
+          protocolContext.getConsensusState().getVoteTallyCache().getVoteTallyAtBlock(parent);
+
+      final Collection<Address> storedValidators = validatorProvider.getCurrentValidators();
+      return extraDataIsValid(storedValidators, header);
+
+    } catch (final RLPException ex) {
+      LOGGER.trace("ExtraData field was unable to be deserialised into an Clique Struct.", ex);
+      return false;
+    } catch (final IllegalArgumentException ex) {
+      LOGGER.trace("Failed to verify extra data", ex);
+      return false;
+    }
+  }
+
+  private boolean extraDataIsValid(
+      final Collection<Address> expectedValidators, final BlockHeader header) {
+
+    final CliqueExtraData cliqueExtraData = CliqueExtraData.decode(header.getExtraData());
+    final Address proposer = CliqueBlockHashing.recoverProposerAddress(header, cliqueExtraData);
+
+    if (!expectedValidators.contains(proposer)) {
+      LOGGER.trace("Proposer sealing block is not a member of the validators.");
+      return false;
+    }
+
+    if (epochManager.isEpochBlock(header.getNumber())) {
+      if (!Iterables.elementsEqual(cliqueExtraData.getValidators(), expectedValidators)) {
+        LOGGER.trace(
+            "Incorrect validators. Expected {} but got {}.",
+            expectedValidators,
+            cliqueExtraData.getValidators());
+        return false;
+      }
+    } else {
+      if (!cliqueExtraData.getValidators().isEmpty()) {
+        LOGGER.trace("Validator list on non-epoch blocks must be empty.");
+        return false;
+      }
+    }
+
+    return true;
+  }
+}

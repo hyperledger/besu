@@ -1,0 +1,18 @@
+{
+  "request": {
+    "id": 337,
+    "jsonrpc": "2.0",
+    "method": "eth_getStorageAt",
+    "params": [
+      "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+      "0x0",
+      "-0x10"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 337,
+    "result": null
+  },
+  "statusCode": 200
+}

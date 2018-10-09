@@ -1,0 +1,24 @@
+apply plugin: 'java-library'
+
+jar {
+  baseName 'pantheon-crypto'
+  manifest {
+    attributes('Implementation-Title': baseName,
+    'Implementation-Version': project.version)
+  }
+}
+
+dependencies {
+  api project(':util')
+
+  api 'org.bouncycastle:bcprov-jdk15on'
+
+  implementation 'com.google.guava:guava'
+  implementation 'org.apache.logging.log4j:log4j-api'
+
+  runtime 'org.apache.logging.log4j:log4j-core'
+
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.mockito:mockito-core'
+  testImplementation 'junit:junit'
+}

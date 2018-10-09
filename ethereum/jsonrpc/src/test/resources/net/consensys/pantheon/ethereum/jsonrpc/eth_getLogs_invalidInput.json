@@ -1,0 +1,29 @@
+{
+  "request": {
+    "id": 406,
+    "jsonrpc": "2.0",
+    "method": "eth_getLogs",
+    "params": [{
+      "fromBlock": "0x17",
+      "toBlock": "0x17",
+      "address": [],
+      "topics": [["0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b", "0x65c9ac8011e286e89d02a269890f41d67ca2cc597b2c76c7c69321ff492be580"]],
+      "blockhash": "0x3c419f39b340a4c35cc27b8f7880b779dc1abb9814ad13a2a5a55b885cc8ec2d"
+    }]
+  },
+  "response": {
+    "jsonrpc" : "2.0",
+    "id" : 406,
+    "error" : {
+      "code": -32602,
+      "message": "Invalid params"
+    }
+  },
+  "statusCode": 400
+}
+
+
+
+
+
+

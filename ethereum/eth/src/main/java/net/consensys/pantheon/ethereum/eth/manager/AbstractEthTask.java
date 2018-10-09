@@ -1,0 +1,114 @@
+package net.consensys.pantheon.ethereum.eth.manager;
+
+import java.util.Collection;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+
+public abstract class AbstractEthTask<T> implements EthTask<T> {
+
+  protected final AtomicReference<CompletableFuture<T>> result = new AtomicReference<>();
+  protected volatile Collection<CompletableFuture<?>> subTaskFutures =
+      new ConcurrentLinkedDeque<>();
+
+  @Override
+  public final CompletableFuture<T> run() {
+    if (result.compareAndSet(null, new CompletableFuture<>())) {
+      executeTask();
+      result
+          .get()
+          .whenComplete(
+              (r, t) -> {
+                cleanup();
+              });
+    }
+    return result.get();
+  }
+
+  @Override
+  public final void cancel() {
+    synchronized (result) {
+      result.compareAndSet(null, new CompletableFuture<>());
+      result.get().cancel(false);
+    }
+  }
+
+  public final boolean isDone() {
+    return result.get() != null && result.get().isDone();
+  }
+
+  public final boolean isSucceeded() {
+    return isDone() && !result.get().isCompletedExceptionally();
+  }
+
+  public final boolean isFailed() {
+    return isDone() && result.get().isCompletedExceptionally();
+  }
+
+  public final boolean isCancelled() {
+    return isDone() && result.get().isCancelled();
+  }
+
+  /**
+   * Utility for executing completable futures that handles cleanup if this EthTask is cancelled.
+   *
+   * @param subTask a subTask to execute
+   * @param <S> the type of data returned from the CompletableFuture
+   * @return The completableFuture that was executed
+   */
+  protected final <S> CompletableFuture<S> executeSubTask(
+      final Supplier<CompletableFuture<S>> subTask) {
+    synchronized (result) {
+      if (!isCancelled()) {
+        final CompletableFuture<S> subTaskFuture = subTask.get();
+        subTaskFutures.add(subTaskFuture);
+        subTaskFuture.whenComplete(
+            (r, t) -> {
+              subTaskFutures.remove(subTaskFuture);
+            });
+        return subTaskFuture;
+      } else {
+        final CompletableFuture<S> future = new CompletableFuture<>();
+        future.completeExceptionally(new CancellationException());
+        return future;
+      }
+    }
+  }
+
+  /**
+   * Helper method for sending subTask to worker that will clean up if this EthTask is cancelled.
+   *
+   * @param scheduler the scheduler that will run worker task
+   * @param subTask a subTask to execute
+   * @param <S> the type of data returned from the CompletableFuture
+   * @return The completableFuture that was executed
+   */
+  protected final <S> CompletableFuture<S> executeWorkerSubTask(
+      final EthScheduler scheduler, final Supplier<CompletableFuture<S>> subTask) {
+    return executeSubTask(() -> scheduler.scheduleWorkerTask(subTask));
+  }
+
+  public final T result() {
+    if (!isSucceeded()) {
+      return null;
+    }
+    try {
+      return result.get().get();
+    } catch (InterruptedException | ExecutionException e) {
+      return null;
+    }
+  }
+
+  /** Execute core task logic. */
+  protected abstract void executeTask();
+
+  /** Cleanup any resources when task completes. */
+  protected void cleanup() {
+    for (final CompletableFuture<?> subTaskFuture : subTaskFutures) {
+      subTaskFuture.cancel(false);
+    }
+  }
+}

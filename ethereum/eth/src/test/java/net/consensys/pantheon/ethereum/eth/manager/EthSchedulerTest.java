@@ -1,0 +1,195 @@
+package net.consensys.pantheon.ethereum.eth.manager;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.junit.Before;
+import org.junit.Test;
+
+public class EthSchedulerTest {
+
+  private DeterministicEthScheduler ethScheduler;
+  private MockExecutorService workerExecutor;
+  private MockScheduledExecutor scheduledExecutor;
+  private AtomicBoolean shouldTimeout;
+
+  @Before
+  public void setup() {
+    shouldTimeout = new AtomicBoolean(false);
+    ethScheduler = new DeterministicEthScheduler(shouldTimeout::get);
+    workerExecutor = ethScheduler.mockWorkerExecutor();
+    scheduledExecutor = ethScheduler.mockScheduledExecutor();
+  }
+
+  @Test
+  public void scheduleWorkerTask_completesWhenScheduledTaskCompletes() {
+    final CompletableFuture<Object> future = new CompletableFuture<>();
+    final CompletableFuture<Object> result = ethScheduler.scheduleWorkerTask(() -> future);
+
+    assertThat(result.isDone()).isFalse();
+    future.complete("bla");
+    assertThat(result.isDone()).isTrue();
+    assertThat(result.isCompletedExceptionally()).isFalse();
+    assertThat(result.isCancelled()).isFalse();
+  }
+
+  @Test
+  public void scheduleWorkerTask_completesWhenScheduledTaskFails() {
+    final CompletableFuture<Object> future = new CompletableFuture<>();
+    final CompletableFuture<Object> result = ethScheduler.scheduleWorkerTask(() -> future);
+
+    assertThat(result.isDone()).isFalse();
+    future.completeExceptionally(new RuntimeException("whoops"));
+    assertThat(result.isDone()).isTrue();
+    assertThat(result.isCompletedExceptionally()).isTrue();
+    assertThat(result.isCancelled()).isFalse();
+  }
+
+  @Test
+  public void scheduleWorkerTask_completesWhenScheduledTaskIsCancelled() {
+    final CompletableFuture<Object> future = new CompletableFuture<>();
+    final CompletableFuture<Object> result = ethScheduler.scheduleWorkerTask(() -> future);
+
+    assertThat(result.isDone()).isFalse();
+    future.cancel(false);
+    assertThat(result.isDone()).isTrue();
+    assertThat(result.isCompletedExceptionally()).isTrue();
+    assertThat(result.isCancelled()).isTrue();
+  }
+
+  @Test
+  public void scheduleWorkerTask_cancelsScheduledFutureWhenResultIsCancelled() {
+    final CompletableFuture<Object> result =
+        ethScheduler.scheduleWorkerTask(() -> new CompletableFuture<>());
+
+    assertThat(workerExecutor.getScheduledFutures().size()).isEqualTo(1);
+    final Future<?> future = workerExecutor.getScheduledFutures().get(0);
+
+    verify(future, times(0)).cancel(anyBoolean());
+    result.cancel(true);
+    verify(future, times(1)).cancel(eq(false));
+  }
+
+  @Test
+  public void scheduleFutureTask_completesWhenScheduledTaskCompletes() {
+    final CompletableFuture<Object> future = new CompletableFuture<>();
+    final CompletableFuture<Object> result =
+        ethScheduler.scheduleFutureTask(() -> future, Duration.ofMillis(100));
+
+    assertThat(result.isDone()).isFalse();
+    future.complete("bla");
+    assertThat(result.isDone()).isTrue();
+    assertThat(result.isCompletedExceptionally()).isFalse();
+    assertThat(result.isCancelled()).isFalse();
+  }
+
+  @Test
+  public void scheduleFutureTask_completesWhenScheduledTaskFails() {
+    final CompletableFuture<Object> future = new CompletableFuture<>();
+    final CompletableFuture<Object> result =
+        ethScheduler.scheduleFutureTask(() -> future, Duration.ofMillis(100));
+
+    assertThat(result.isDone()).isFalse();
+    future.completeExceptionally(new RuntimeException("whoops"));
+    assertThat(result.isDone()).isTrue();
+    assertThat(result.isCompletedExceptionally()).isTrue();
+    assertThat(result.isCancelled()).isFalse();
+  }
+
+  @Test
+  public void scheduleFutureTask_completesWhenScheduledTaskIsCancelled() {
+    final CompletableFuture<Object> future = new CompletableFuture<>();
+    final CompletableFuture<Object> result =
+        ethScheduler.scheduleFutureTask(() -> future, Duration.ofMillis(100));
+
+    assertThat(result.isDone()).isFalse();
+    future.cancel(false);
+    assertThat(result.isDone()).isTrue();
+    assertThat(result.isCompletedExceptionally()).isTrue();
+    assertThat(result.isCancelled()).isTrue();
+  }
+
+  @Test
+  public void scheduleFutureTask_cancelsScheduledFutureWhenResultIsCancelled() {
+    final CompletableFuture<Object> result =
+        ethScheduler.scheduleFutureTask(() -> new CompletableFuture<>(), Duration.ofMillis(100));
+
+    assertThat(scheduledExecutor.getScheduledFutures().size()).isEqualTo(1);
+    final Future<?> future = scheduledExecutor.getScheduledFutures().get(0);
+
+    verify(future, times(0)).cancel(anyBoolean());
+    result.cancel(true);
+    verify(future, times(1)).cancel(eq(false));
+  }
+
+  @Test
+  public void timeout_resultCompletesWhenScheduledTaskCompletes() {
+    final MockEthTask task = new MockEthTask();
+    final CompletableFuture<Object> result = ethScheduler.timeout(task, Duration.ofSeconds(2));
+
+    assertThat(task.hasBeenStarted()).isTrue();
+    assertThat(task.isDone()).isFalse();
+    assertThat(result.isDone()).isFalse();
+
+    task.complete();
+    assertThat(result.isDone()).isTrue();
+    assertThat(result.isCompletedExceptionally()).isFalse();
+    assertThat(result.isCancelled()).isFalse();
+  }
+
+  @Test
+  public void timeout_resultCompletesWhenScheduledTaskFails() {
+    final MockEthTask task = new MockEthTask();
+    final CompletableFuture<Object> result = ethScheduler.timeout(task, Duration.ofSeconds(2));
+
+    assertThat(task.hasBeenStarted()).isTrue();
+    assertThat(task.isDone()).isFalse();
+    assertThat(result.isDone()).isFalse();
+
+    task.fail();
+    assertThat(result.isDone()).isTrue();
+    assertThat(result.isCompletedExceptionally()).isTrue();
+    assertThat(result.isCancelled()).isFalse();
+  }
+
+  @Test
+  public void timeout_resultCompletesOnTimeout() {
+    shouldTimeout.set(true);
+    final MockEthTask task = new MockEthTask();
+    final CompletableFuture<Object> result = ethScheduler.timeout(task, Duration.ofSeconds(2));
+
+    // Timeout fires immediately, so everything should be done
+    assertThat(task.hasBeenStarted()).isTrue();
+    assertThat(task.isDone()).isTrue();
+    assertThat(result.isDone()).isTrue();
+    assertThat(result.isCompletedExceptionally()).isTrue();
+    assertThatThrownBy(result::get).hasCauseInstanceOf(TimeoutException.class);
+    assertThat(result.isCancelled()).isFalse();
+  }
+
+  @Test
+  public void timeout_cancelsTaskWhenResultIsCancelled() {
+    final MockEthTask task = new MockEthTask();
+    final CompletableFuture<Object> result = ethScheduler.timeout(task, Duration.ofSeconds(2));
+
+    assertThat(task.hasBeenStarted()).isTrue();
+    assertThat(task.isDone()).isFalse();
+    assertThat(result.isDone()).isFalse();
+
+    result.cancel(false);
+    assertThat(task.isDone()).isTrue();
+    assertThat(task.isFailed()).isTrue();
+    assertThat(task.isSucceeded()).isFalse();
+    assertThat(task.isCancelled()).isTrue();
+  }
+}

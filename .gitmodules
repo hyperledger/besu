@@ -1,0 +1,4 @@
+[submodule "eth-ref-tests"]
+	path = ethereum/referencetests/src/test/resources
+	url = https://github.com/ethereum/tests.git
+	ignore = all

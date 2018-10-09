@@ -1,0 +1,90 @@
+{
+	"declaredPayloadLengthOverflowsRLP_shortByteArray": {
+		"in": "INVALID",
+		"out": "82FF"
+	},
+	"declaredPayloadLengthOverflowsRLP_longByteArray": {
+		"in": "INVALID",
+		"out": "B83A0102"
+	},
+	"declaredPayloadLengthOverflowsRLP_shortList": {
+		"in": "INVALID",
+		"out": "C201"
+	},
+	"declaredPayloadLengthOverflowsRLP_longList": {
+		"in": "INVALID",
+		"out": "F83A0102"
+	},
+	"lengthByteStringHasLeadingZeros_longByteArray": {
+		"in": "INVALID",
+		"out": "B9003A000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f30313233343536373839"
+	},
+	"lengthByteStringHasLeadingZeros_longList": {
+		"in": "INVALID",
+		"out": "F9003A000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f30313233343536373839"
+	},
+	"longPayloadLengthTruncated_longByteArray": {
+		"in": "INVALID",
+		"out": "B901"
+	},
+	"longPayloadLengthTruncated_longList": {
+		"in": "INVALID",
+		"out": "F901"
+	},
+	"listContainsTruncatedPayload": {
+		"in": "INVALID",
+		"out": "C181"
+	},
+	"trailingBytes_shortList": {
+		"in": "INVALID",
+		"out": "C10102"
+	},
+	"trailingBytes_longList": {
+		"in": "INVALID",
+		"out": "F839000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f30313233343536373839"
+	},
+	"longElement_invalidLength_lowerBoundary": {
+		"in": "INVALID",
+		"out": "0xb800"
+	},
+	"longElement_invalidLength_middle": {
+		"in": "INVALID",
+		"out": "0xb80101"
+	},
+	"longElement_invalidLength_upperBoundary": {
+		"in": "INVALID",
+		"out" : "0xb83701010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101"
+	},
+	"longList_invalidLength_lowerBoundary": {
+		"in": "INVALID",
+		"out": "0xf800"
+	},
+	"longList_invalidLength_middle": {
+		"in": "INVALID",
+		"out": "0xf80101"
+	},
+	"longList_invalid_Length_upperBoundary": {
+		"in": "INVALID",
+		"out" : "0xf83701010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101"
+	},
+	"invalid_string_lowerBoundary": {
+		"in": "INVALID",
+		"out": "8100"
+	},
+	"invalid_string_middle": {
+		"in": "INVALID",
+		"out": "8105"
+	},
+	"invalid_string_upeerBoundary": {
+		"in": "INVALID",
+		"out": "817f"
+	},
+	"list_contains_invalidString": {
+		"in": "INVALID",
+		"out": "c2817f"
+	},
+	"list_contains_invalidList": {
+		"in": "INVALID",
+		"out": "c3c2817f"
+	}
+}

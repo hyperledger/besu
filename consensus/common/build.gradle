@@ -1,0 +1,20 @@
+apply plugin: 'java-library'
+
+jar {
+  baseName 'pantheon-consensus-common'
+  manifest {
+    attributes('Implementation-Title': baseName,
+    'Implementation-Version': project.version)
+  }
+}
+
+dependencies {
+  implementation project(':ethereum:core')
+  implementation project(':util')
+  implementation 'com.google.guava:guava'
+
+  testImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation 'junit:junit'
+  testImplementation "org.assertj:assertj-core"
+  testImplementation 'org.mockito:mockito-core'
+}

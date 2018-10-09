@@ -1,0 +1,162 @@
+/**
+ * Check that the licenses of our 3rd parties are in our acceptedLicenses list.
+ *
+ * run it with "gradle checkLicenses"
+ *
+ * To add new accepted licenses you need to update this script.
+ * Some products may be available with multiple licenses. In this case you must update
+ *  this script to add it in the downloadLicenses#licenses.
+ */
+
+// Some parts of this code comes from Zipkin/https://github.com/openzipkin/zipkin/pull/852
+// Zipkin itself is under Apache License.
+
+/**
+ * The lists of the license we accept.
+ */
+ext.acceptedLicenses = [
+    'BSD License',
+    'BSD 3-Clause',
+    'Eclipse Public License - v 1.0',
+    'Eclipse Public License 1.0',
+    'MIT License',
+    'Apache License, Version 2.0',
+    'Bouncy Castle Licence',
+    'Public Domain',
+    'Mozilla Public License 1.0',
+    'Mozilla Public License Version 1.1',
+    'Mozilla Public License Version 2.0',
+    'CC0 1.0 Universal License',
+    'Common Development and Distribution License 1.0',
+    'Unicode/ICU License',
+    'No license found',// for temporary use with Picocli jar
+    'TODO to be fixed' // use it for temporary states when a license needs investigation.
+]*.toLowerCase()
+
+/**
+ * This is the configuration we need for our licenses plugin: 'com.github.hierynomus.license'
+ * This plugin generates a list of dependencies.
+ */
+downloadLicenses {
+  includeProjectDependencies = true
+  reportByDependency = false
+  reportByLicenseType = true
+  dependencyConfiguration = 'testCompile'
+
+  ext.apache = license('Apache License, Version 2.0', 'http://opensource.org/licenses/Apache-2.0')
+  ext.mit = license('MIT License', 'http://www.opensource.org/licenses/mit-license.php')
+  ext.bsd = license('BSD License', 'http://www.opensource.org/licenses/bsd-license.php')
+  ext.bsd3Clause = license('BSD 3-Clause', 'http://opensource.org/licenses/BSD-3-Clause')
+  ext.mpl = license('Mozilla Public License', 'http://www.mozilla.org/MPL')
+  ext.mpl1_1 = license('Mozilla Public License Version 1.1', 'http://www.mozilla.org/MPL/1.1/')
+  ext.mpl2_0 = license('Mozilla Public License, Version 2.0', 'http://www.mozilla.org/MPL/2.0/')
+  ext.cddl = license('Common Development and Distribution License 1.0', 'http://opensource.org/licenses/CDDL-1.0')
+  ext.cddl1_1 = license('Common Development and Distribution License 1.0', 'http://oss.oracle.com/licenses/CDDL-1.1')
+  ext.todoToBeFixed = license('TODO to be fixed', 'TODO to be fixed')
+  aliases = [
+      (apache)    : [
+          'The Apache Software License, Version 2.0',
+          'The Apache Software License, version 2.0',
+          'Apache License Version 2.0',
+          'Apache License, Version 2.0',
+          'The Apache License, Version 2.0',
+          'Apache 2',
+          'Apache 2.0',
+          'Apache License 2.0',
+          'Apache-2.0',
+          license('Apache License', 'http://www.apache.org/licenses/LICENSE-2.0'),
+          license('Apache Software Licenses', 'http://www.apache.org/licenses/LICENSE-2.0.txt'),
+          license('Apache', 'http://www.opensource.org/licenses/Apache-2.0')
+      ],
+      (mit)       : ['The MIT License'],
+      (bsd)       : [
+          'BSD',
+          'BSD licence',
+          'The BSD License',
+          'Berkeley Software Distribution (BSD) License',
+          license('New BSD License', 'http://www.opensource.org/licenses/bsd-license.php')
+      ],
+      (bsd3Clause): [
+          'BSD 3-Clause',
+          'BSD 3-Clause "New" or "Revised" License (BSD-3-Clause)',
+          license('BSD 3-clause', 'http://opensource.org/licenses/BSD-3-Clause'),
+          license('BSD 3-Clause', 'http://www.scala-lang.org/license.html')
+      ],
+      (mpl): [
+          'MPL',
+          'Mozilla Public License',
+          'Mozilla Public License 1.0',
+          license('Mozilla Public License', 'http://www.mozilla.org/MPL')
+      ],
+      (mpl1_1): [
+          'MPL 1.1',
+          'Mozilla Public License Version 1.1',
+          license('Mozilla Public License Version 1.1', 'http://www.mozilla.org/media/MPL/1.1/index.0c5913925d40.txt')
+      ],
+      (mpl2_0): [
+          'MPL 2.0',
+          'Mozilla Public License Version 2.0',
+          license('Mozilla Public License 2.0', 'http://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt')
+      ],
+      (cddl): [
+              'CDDL',
+              'Common Development and Distribution License 1.0',
+              'CDDL + GPLv2 with classpath exception',
+              'Dual license consisting of the CDDL v1.1 and GPL v2'
+      ],
+              (cddl1_1): [
+              'CDDL 1.1',
+              'COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.1',
+      ]
+
+  ]
+
+  licenses = [
+      (group('pantheon'))            : apache,
+      (group('pantheon.ethereum'))   : apache,
+      (group('pantheon.services'))   : apache,
+      (group('pantheon.consensus'))  : apache,
+
+      // https://checkerframework.org/manual/#license
+      // The more permissive MIT License applies to code that you might want
+      // to include in your own program, such as the annotations and run-time utility classes.
+      (group('org.checkerframework')): mit,
+      // RocksDB is dual licensed under Apache v2.0 and GPL 2 licenses
+      // Explicitly declare that we are using the Apache v2.0 license
+      (group('org.rocksdb')): apache,
+      /// Explicilitly declare Apache 2.0 license for javassist
+      (group('org.javassist')): apache,
+      /// Explicilitly declare Apache 2.0 license for javassist
+      (group('javax.ws.rs')): cddl1_1,
+      (group('org.glassfish.jersey.core')): apache,
+      (group('org.glassfish.jersey.bundles.repackaged')): apache,
+      (group('org.glassfish.jersey.connectors')): apache
+  ]
+}
+
+
+task checkLicenses {
+  description "Verify that all dependencies use white-listed licenses."
+  dependsOn ':downloadLicenses'
+
+  def bads = ""
+  doLast {
+    def xml = new XmlParser().parse('build/reports/license/license-dependency.xml')
+    xml.each { license ->
+      if (!acceptedLicenses.contains((license.@name).toLowerCase())) {
+        def depStrings = []
+        license.dependency.each { depStrings << it.text() }
+        bads = bads + depStrings + " =>  ${license.@name} \n"
+      }
+    }
+    if (bads != "") {
+      throw new GradleException("Some 3rd parties are using licenses not in our accepted licenses list:\n" +
+          bads +
+          "If it's a license acceptable for us, add it in the file check-licenses.gradle\n"+
+          "Be careful, some 3rd parties may accept multiple licenses.\n" +
+          "In this case, select the one you want to use by changing downloadLicenses.licenses\n"
+      )
+    }
+  }
+}
+check.dependsOn checkLicenses

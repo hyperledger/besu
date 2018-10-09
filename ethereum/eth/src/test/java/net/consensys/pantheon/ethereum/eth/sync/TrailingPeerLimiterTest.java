@@ -1,0 +1,145 @@
+package net.consensys.pantheon.ethereum.eth.sync;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import net.consensys.pantheon.ethereum.chain.BlockAddedEvent;
+import net.consensys.pantheon.ethereum.chain.Blockchain;
+import net.consensys.pantheon.ethereum.core.Block;
+import net.consensys.pantheon.ethereum.core.BlockBody;
+import net.consensys.pantheon.ethereum.core.BlockHeaderTestFixture;
+import net.consensys.pantheon.ethereum.core.Hash;
+import net.consensys.pantheon.ethereum.eth.manager.ChainState;
+import net.consensys.pantheon.ethereum.eth.manager.EthPeer;
+import net.consensys.pantheon.ethereum.eth.manager.EthPeers;
+import net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import net.consensys.pantheon.util.uint.UInt256;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.Before;
+import org.junit.Test;
+
+public class TrailingPeerLimiterTest {
+
+  private static final long CHAIN_HEAD = 10_000L;
+  private static final int MAX_TRAILING_PEERS = 2;
+  private static final int TRAILING_PEER_BLOCKS_BEHIND_THRESHOLD = 10;
+  private final EthPeers ethPeers = mock(EthPeers.class);
+  private final Blockchain blockchain = mock(Blockchain.class);
+  private final List<EthPeer> peers = new ArrayList<>();
+  private final TrailingPeerLimiter trailingPeerLimiter =
+      new TrailingPeerLimiter(
+          ethPeers, blockchain, TRAILING_PEER_BLOCKS_BEHIND_THRESHOLD, MAX_TRAILING_PEERS);
+
+  @Before
+  public void setUp() {
+    when(ethPeers.availablePeers()).then(invocation -> peers.stream());
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(CHAIN_HEAD);
+  }
+
+  @Test
+  public void shouldDisconnectFurthestBehindPeerWhenTrailingPeerLimitExceeded() {
+    final EthPeer ethPeer1 = addPeerWithEstimatedHeight(1);
+    addPeerWithEstimatedHeight(3);
+    addPeerWithEstimatedHeight(2);
+
+    trailingPeerLimiter.enforceTrailingPeerLimit();
+
+    assertDisconnections(ethPeer1);
+  }
+
+  @Test
+  public void shouldDisconnectMultiplePeersWhenTrailingPeerLimitExceeded() {
+    final EthPeer ethPeer1 = addPeerWithEstimatedHeight(1);
+    final EthPeer ethPeer2 = addPeerWithEstimatedHeight(2);
+    addPeerWithEstimatedHeight(3);
+    addPeerWithEstimatedHeight(4);
+
+    trailingPeerLimiter.enforceTrailingPeerLimit();
+
+    assertDisconnections(ethPeer1, ethPeer2);
+  }
+
+  @Test
+  public void shouldNotDisconnectPeersWhenLimitNotReached() {
+    addPeerWithEstimatedHeight(1);
+    addPeerWithEstimatedHeight(2);
+
+    trailingPeerLimiter.enforceTrailingPeerLimit();
+
+    assertDisconnections();
+  }
+
+  @Test
+  public void shouldNotDisconnectPeersWithinToleranceOfChainHead() {
+    addPeerWithEstimatedHeight(CHAIN_HEAD);
+    addPeerWithEstimatedHeight(CHAIN_HEAD);
+    addPeerWithEstimatedHeight(CHAIN_HEAD);
+    addPeerWithEstimatedHeight(CHAIN_HEAD - TRAILING_PEER_BLOCKS_BEHIND_THRESHOLD);
+    addPeerWithEstimatedHeight(CHAIN_HEAD - TRAILING_PEER_BLOCKS_BEHIND_THRESHOLD);
+
+    trailingPeerLimiter.enforceTrailingPeerLimit();
+
+    assertDisconnections();
+  }
+
+  @Test
+  public void shouldRecheckTrailingPeersWhenBlockAddedThatIsMultipleOf100() {
+    final EthPeer ethPeer1 = addPeerWithEstimatedHeight(1);
+    addPeerWithEstimatedHeight(3);
+    addPeerWithEstimatedHeight(2);
+
+    final BlockAddedEvent blockAddedEvent =
+        BlockAddedEvent.createForHeadAdvancement(
+            new Block(
+                new BlockHeaderTestFixture().number(500).buildHeader(),
+                new BlockBody(emptyList(), emptyList())));
+    trailingPeerLimiter.onBlockAdded(blockAddedEvent, blockchain);
+
+    assertDisconnections(ethPeer1);
+  }
+
+  @Test
+  public void shouldNotRecheckTrailingPeersWhenBlockAddedIsNotAMultipleOf100() {
+    addPeerWithEstimatedHeight(1);
+    addPeerWithEstimatedHeight(3);
+    addPeerWithEstimatedHeight(2);
+
+    final BlockAddedEvent blockAddedEvent =
+        BlockAddedEvent.createForHeadAdvancement(
+            new Block(
+                new BlockHeaderTestFixture().number(599).buildHeader(),
+                new BlockBody(emptyList(), emptyList())));
+    trailingPeerLimiter.onBlockAdded(blockAddedEvent, blockchain);
+
+    assertDisconnections();
+  }
+
+  private void assertDisconnections(final EthPeer... disconnectedPeers) {
+    final List<EthPeer> disconnected = asList(disconnectedPeers);
+    for (final EthPeer peer : peers) {
+      if (disconnected.contains(peer)) {
+        verify(peer).disconnect(DisconnectReason.TOO_MANY_PEERS);
+      } else {
+        verify(peer, never()).disconnect(any(DisconnectReason.class));
+      }
+    }
+  }
+
+  private EthPeer addPeerWithEstimatedHeight(final long height) {
+    final EthPeer peer = mock(EthPeer.class);
+    final ChainState chainState = new ChainState();
+    chainState.statusReceived(Hash.EMPTY, UInt256.ONE);
+    chainState.update(Hash.EMPTY, height);
+    when(peer.chainState()).thenReturn(chainState);
+    peers.add(peer);
+    return peer;
+  }
+}

@@ -1,0 +1,21 @@
+# this is a valid TOML config file
+
+datadir="~/pantheondata" # Path
+
+#invalid-option=true
+
+# network
+no-discovery=true # true=no discovery of peers or false=discover peers please
+bootnodes=["enode://001@123:4567", "enode://002@123:4567", "enode://003@123:4567"]
+p2p-listen="1.2.3.4:1234" # IP:port
+max-peers=42
+rpc-listen="5.6.7.8:5678" # IP:port
+ws-listen="9.10.11.12:9101" # IP:port
+
+# chain
+genesis="~/genesys.json" # Path
+sync-mode="fast"# should be FAST or FULL (or fast or full)
+ottoman=false # true means using ottoman testnet if genesys file uses iBFT
+
+#mining
+miner-coinbase="0x0000000000000000000000000000000000000002"

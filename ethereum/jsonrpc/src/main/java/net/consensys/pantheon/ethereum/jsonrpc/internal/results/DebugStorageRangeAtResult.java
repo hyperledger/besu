@@ -1,0 +1,74 @@
+package net.consensys.pantheon.ethereum.jsonrpc.internal.results;
+
+import net.consensys.pantheon.util.bytes.Bytes32;
+import net.consensys.pantheon.util.uint.UInt256;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.google.common.base.MoreObjects;
+
+public class DebugStorageRangeAtResult implements JsonRpcResult {
+
+  private final Map<String, StorageEntry> storage = new HashMap<>();
+  private final String nextKey;
+
+  public DebugStorageRangeAtResult(final Map<Bytes32, UInt256> entries, final Bytes32 nextKey) {
+    entries.forEach((keyHash, value) -> storage.put(keyHash.toString(), new StorageEntry(value)));
+    this.nextKey = nextKey != null ? nextKey.toString() : null;
+  }
+
+  @JsonGetter(value = "storage")
+  public Map<String, StorageEntry> getStorage() {
+    return storage;
+  }
+
+  @JsonGetter(value = "nextKey")
+  public String getNextKey() {
+    return nextKey;
+  }
+
+  @JsonPropertyOrder(value = {"key", "value"})
+  public static class StorageEntry {
+    private final String value;
+
+    public StorageEntry(final UInt256 value) {
+      this.value = value.toHexString();
+    }
+
+    @JsonGetter(value = "key")
+    public String getKey() {
+      return null;
+    }
+
+    @JsonGetter(value = "value")
+    public String getValue() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return MoreObjects.toStringHelper(this).add("value", value).toString();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      final StorageEntry that = (StorageEntry) o;
+      return Objects.equals(value, that.value);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(value);
+    }
+  }
+}

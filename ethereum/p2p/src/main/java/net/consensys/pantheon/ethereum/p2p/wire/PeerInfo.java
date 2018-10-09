@@ -1,0 +1,129 @@
+package net.consensys.pantheon.ethereum.p2p.wire;
+
+import static net.consensys.pantheon.util.bytes.BytesValue.wrap;
+
+import net.consensys.pantheon.ethereum.p2p.NetworkMemoryPool;
+import net.consensys.pantheon.ethereum.rlp.BytesValueRLPOutput;
+import net.consensys.pantheon.ethereum.rlp.RLPInput;
+import net.consensys.pantheon.ethereum.rlp.RLPOutput;
+import net.consensys.pantheon.util.bytes.BytesValue;
+import net.consensys.pantheon.util.bytes.BytesValues;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
+import io.netty.buffer.ByteBuf;
+
+/**
+ * Encapsulates information about a peer, including their protocol version, client ID, capabilities
+ * and other.
+ *
+ * <p>The peer info is shared between peers during the <tt>HELLO</tt> wire protocol handshake.
+ */
+public class PeerInfo {
+  private final int version;
+  private final String clientId;
+  private final List<Capability> capabilities;
+  private final int port;
+  private final BytesValue nodeId;
+
+  public PeerInfo(
+      final int version,
+      final String clientId,
+      final List<Capability> capabilities,
+      final int port,
+      final BytesValue nodeId) {
+    this.version = version;
+    this.clientId = clientId;
+    this.capabilities = capabilities;
+    this.port = port;
+    this.nodeId = nodeId;
+  }
+
+  public static PeerInfo readFrom(final RLPInput in) {
+    in.enterList();
+    final int version = in.readUnsignedByte();
+    final String clientId = in.readBytesValue(BytesValues::asString);
+    final List<Capability> caps =
+        in.nextIsNull() ? Collections.emptyList() : in.readList(Capability::readFrom);
+    final int port = in.readIntScalar();
+    final BytesValue nodeId = in.readBytesValue();
+    in.leaveList(true);
+    return new PeerInfo(version, clientId, caps, port, nodeId);
+  }
+
+  public int getVersion() {
+    return version;
+  }
+
+  public String getClientId() {
+    return clientId;
+  }
+
+  public List<Capability> getCapabilities() {
+    return capabilities;
+  }
+
+  public int getPort() {
+    return port;
+  }
+
+  public BytesValue getNodeId() {
+    return nodeId;
+  }
+
+  public void writeTo(final RLPOutput out) {
+    out.startList();
+    out.writeUnsignedByte(getVersion());
+    out.writeBytesValue(wrap(getClientId().getBytes(StandardCharsets.UTF_8)));
+    out.writeList(getCapabilities(), Capability::writeTo);
+    out.writeIntScalar(getPort());
+    out.writeBytesValue(getNodeId());
+    out.endList();
+  }
+
+  public ByteBuf toByteBuf() {
+    // TODO: we should have a RLPOutput type based on ByteBuf
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    writeTo(out);
+
+    final ByteBuf data = NetworkMemoryPool.allocate(out.encodedSize());
+    data.writeBytes(out.encoded().extractArray());
+    return data;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("PeerInfo{");
+    sb.append("version=").append(version);
+    sb.append(", clientId='").append(clientId).append('\'');
+    sb.append(", capabilities=").append(capabilities);
+    sb.append(", port=").append(port);
+    sb.append(", nodeId=").append(nodeId);
+    sb.append('}');
+    return sb.toString();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof PeerInfo)) {
+      return false;
+    }
+    final PeerInfo peerInfo = (PeerInfo) o;
+    return version == peerInfo.version
+        && port == peerInfo.port
+        && Objects.equals(clientId, peerInfo.clientId)
+        && Objects.equals(capabilities, peerInfo.capabilities)
+        && Objects.equals(nodeId, peerInfo.nodeId);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(version, clientId, capabilities, port, nodeId);
+  }
+}

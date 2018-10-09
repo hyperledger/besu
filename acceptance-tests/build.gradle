@@ -1,0 +1,33 @@
+dependencies {
+
+  testRuntime 'org.apache.logging.log4j:log4j-core'
+  testRuntime 'org.apache.logging.log4j:log4j-slf4j-impl'
+
+  testImplementation project(':crypto')
+  testImplementation project(':ethereum:client')
+  testImplementation project(':ethereum:eth')
+  testImplementation project(':ethereum:core')
+  testImplementation project(':ethereum:jsonrpc')
+  testImplementation project(':pantheon')
+  testImplementation project(':util')
+
+  testImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation 'junit:junit'
+  testImplementation 'org.awaitility:awaitility'
+  testImplementation 'com.squareup.okhttp3:okhttp'
+  testImplementation 'io.vertx:vertx-core'
+  testImplementation 'org.apache.logging.log4j:log4j-api'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'com.google.guava:guava'
+  testImplementation 'org.web3j:core'
+}
+
+test.enabled = false
+
+task acceptanceTest(type: Test) {
+  System.setProperty('acctests.runPantheonAsProcess', 'true')
+  mustRunAfter rootProject.subprojects*.test
+  description = 'Runs Pantheon acceptance tests.'
+  group = 'verification'
+}
+acceptanceTest.dependsOn(rootProject.installDist)

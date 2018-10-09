@@ -1,0 +1,37 @@
+// See https://github.com/tbroyer/gradle-errorprone-plugin
+// See https://github.com/tbroyer/gradle-apt-plugin
+plugins { id 'net.ltgt.apt' version '0.14' apply false }
+
+// we use this config to get the path of the JDK 9 javac jar, to
+// stick it in the bootclasspath when running tests
+configurations.maybeCreate("epJavac")
+
+
+apply plugin: 'java'
+apply plugin: 'net.ltgt.errorprone'
+apply plugin: 'net.ltgt.apt'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+
+  implementation "com.google.errorprone:error_prone_core"
+  implementation "com.google.errorprone:error_prone_annotation"
+
+  implementation      "com.google.auto.service:auto-service:1.0-rc4"
+  annotationProcessor "com.google.auto.service:auto-service:1.0-rc4"
+
+  testImplementation "junit:junit"
+  testImplementation "org.assertj:assertj-core"
+  testImplementation 'com.google.errorprone:error_prone_test_helpers'
+
+  epJavac "com.google.errorprone:error_prone_check_api"
+}
+
+test {
+  if (JavaVersion.current().isJava8()) {
+    jvmArgs "-Xbootclasspath/p:${configurations.epJavac.asPath}"
+  }
+  testLogging { showStandardStreams = true }
+}

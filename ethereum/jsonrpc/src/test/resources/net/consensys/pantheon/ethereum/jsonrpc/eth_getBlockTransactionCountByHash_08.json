@@ -1,0 +1,16 @@
+{
+  "request": {
+    "id": 182,
+    "jsonrpc": "2.0",
+    "method": "eth_getBlockTransactionCountByHash",
+    "params": [
+      "0x0362d0ee919714b702cb31d2f4fe6b5c834f36cc19558acb81a4832f86738e39"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 182,
+    "result": "0x1"
+  },
+  "statusCode": 200
+}

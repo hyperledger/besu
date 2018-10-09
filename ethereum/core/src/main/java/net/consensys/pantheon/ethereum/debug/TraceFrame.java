@@ -1,0 +1,97 @@
+package net.consensys.pantheon.ethereum.debug;
+
+import net.consensys.pantheon.ethereum.core.Gas;
+import net.consensys.pantheon.ethereum.vm.ExceptionalHaltReason;
+import net.consensys.pantheon.util.bytes.Bytes32;
+import net.consensys.pantheon.util.uint.UInt256;
+
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Optional;
+
+import com.google.common.base.MoreObjects;
+
+public class TraceFrame {
+
+  private final int pc;
+  private final String opcode;
+  private final Gas gasRemaining;
+  private final Optional<Gas> gasCost;
+  private final int depth;
+  private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons;
+  private final Optional<Bytes32[]> stack;
+  private final Optional<Bytes32[]> memory;
+  private final Optional<Map<UInt256, UInt256>> storage;
+
+  public TraceFrame(
+      final int pc,
+      final String opcode,
+      final Gas gasRemaining,
+      final Optional<Gas> gasCost,
+      final int depth,
+      final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons,
+      final Optional<Bytes32[]> stack,
+      final Optional<Bytes32[]> memory,
+      final Optional<Map<UInt256, UInt256>> storage) {
+    this.pc = pc;
+    this.opcode = opcode;
+    this.gasRemaining = gasRemaining;
+    this.gasCost = gasCost;
+    this.depth = depth;
+    this.exceptionalHaltReasons = exceptionalHaltReasons;
+    this.stack = stack;
+    this.memory = memory;
+    this.storage = storage;
+  }
+
+  public int getPc() {
+    return pc;
+  }
+
+  public String getOpcode() {
+    return opcode;
+  }
+
+  public Gas getGasRemaining() {
+    return gasRemaining;
+  }
+
+  public Optional<Gas> getGasCost() {
+    return gasCost;
+  }
+
+  public int getDepth() {
+    return depth;
+  }
+
+  public EnumSet<ExceptionalHaltReason> getExceptionalHaltReasons() {
+    return exceptionalHaltReasons;
+  }
+
+  public Optional<Bytes32[]> getStack() {
+    return stack;
+  }
+
+  public Optional<Bytes32[]> getMemory() {
+    return memory;
+  }
+
+  public Optional<Map<UInt256, UInt256>> getStorage() {
+    return storage;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("pc", pc)
+        .add("opcode", opcode)
+        .add("getGasRemaining", gasRemaining)
+        .add("gasCost", gasCost)
+        .add("depth", depth)
+        .add("exceptionalHaltReasons", exceptionalHaltReasons)
+        .add("stack", stack)
+        .add("memory", memory)
+        .add("storage", storage)
+        .toString();
+  }
+}
