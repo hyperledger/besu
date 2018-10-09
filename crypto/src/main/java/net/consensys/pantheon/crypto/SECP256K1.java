@@ -167,6 +167,10 @@ public class SECP256K1 {
     final BigInteger eInvrInv = rInv.multiply(eInv).mod(n);
     final ECPoint q = ECAlgorithms.sumOfTwoMultiplies(CURVE.getG(), eInvrInv, R, srInv);
 
+    if (q.isInfinity()) {
+      return null;
+    }
+
     final byte[] qBytes = q.getEncoded(false);
     // We remove the prefix
     return new BigInteger(1, Arrays.copyOfRange(qBytes, 1, qBytes.length));
@@ -431,7 +435,7 @@ public class SECP256K1 {
       final BigInteger publicKeyBI =
           SECP256K1.recoverFromSignature(
               signature.getRecId(), signature.getR(), signature.getS(), dataHash);
-      return publicKeyBI == null ? Optional.empty() : Optional.of(create(publicKeyBI));
+      return Optional.ofNullable(publicKeyBI).map(PublicKey::create);
     }
 
     private PublicKey(final BytesValue encoded) {
