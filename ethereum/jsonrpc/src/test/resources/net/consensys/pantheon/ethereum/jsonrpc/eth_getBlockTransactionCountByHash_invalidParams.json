@@ -1,0 +1,17 @@
+{
+  "request": {
+    "id": 209,
+    "jsonrpc": "2.0",
+    "method": "eth_getBlockTransactionCountByHash",
+    "params": []
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 209,
+    "error": {
+      "code" : -32602,
+      "message" : "Invalid params"
+    }
+  },
+  "statusCode": 400
+}

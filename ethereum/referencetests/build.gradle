@@ -1,0 +1,10 @@
+spotless { groovyGradle { paddedCell()
+  } }
+
+sourceSets {
+  test { resources { include '*Tests/**/*.json' } }
+}
+
+configurations { testOutput }
+
+dependencies { testOutput sourceSets.test.output }

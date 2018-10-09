@@ -1,0 +1,401 @@
+import net.ltgt.gradle.errorprone.CheckSeverity
+
+plugins {
+  id 'com.diffplug.gradle.spotless' version '3.13.0'
+  id 'com.palantir.git-version' version '0.10.0'
+  id 'io.spring.dependency-management' version '1.0.4.RELEASE'
+  id 'com.github.hierynomus.license' version '0.14.0'
+  id 'net.ltgt.errorprone' version '0.6'
+  id 'me.champeau.gradle.jmh' version '0.4.5' apply false
+  id 'com.jfrog.bintray' version '1.7.3'
+}
+
+apply from: './versions.gradle'
+
+defaultTasks 'build', 'checkLicenses', 'javadoc'
+
+def buildAliases = ['dev': [
+    'spotlessApply',
+    'build',
+    'checkLicenses',
+    'javadoc'
+  ]]
+
+def expandedTaskList = []
+gradle.startParameter.taskNames.each {
+  expandedTaskList << (buildAliases[it] ? buildAliases[it] : it)
+}
+gradle.startParameter.taskNames = expandedTaskList.flatten()
+
+// Gets a integer command argument, passed with -Pname=x, or the defaut if not provided.
+def _intCmdArg(name, defaultValue) {
+  return project.hasProperty(name) ? project.property(name) as int : defaultValue
+}
+
+def _intCmdArg(name) {
+  return _intCmdArg(name, null)
+}
+
+def _strListCmdArg(name, defaultValue) {
+  if (!project.hasProperty(name))
+    return defaultValue
+
+  return ((String)project.property(name)).tokenize(',')
+}
+
+def _strListCmdArg(name) {
+  return _strListCmdArg(name, null)
+}
+
+def baseVersion = '0.8.0'
+project.version = baseVersion + '-SNAPSHOT'
+
+allprojects {
+  apply plugin: 'java-library'
+  apply plugin: 'io.spring.dependency-management'
+  apply plugin: 'jacoco'
+  apply plugin: 'net.ltgt.errorprone'
+  apply plugin: 'com.jfrog.bintray'
+  apply from: "${rootDir}/gradle/versions.gradle"
+  apply from: "${rootDir}/gradle/check-licenses.gradle"
+
+  version = rootProject.version
+
+  jacoco { toolVersion = '0.8.2' }
+
+  sourceCompatibility = '1.8'
+  targetCompatibility = '1.8'
+
+  repositories {
+    jcenter()
+    mavenCentral()
+    maven { url  "https://consensys.bintray.com/pegasys-repo" }
+  }
+
+  dependencies {
+    errorprone("com.google.errorprone:error_prone_core:$errorproneCore")
+    if (JavaVersion.current().isJava8()) {
+      errorproneJavac("com.google.errorprone:javac:$errorproneJavac")
+    }
+  }
+
+  apply plugin: 'com.diffplug.gradle.spotless'
+  spotless {
+    java {
+      // This path needs to be relative to each project
+      target fileTree('.') {
+        include '**/*.java'
+        exclude '**/generalstate/GeneralStateReferenceTest*.java'
+        exclude '**/generalstate/GeneralStateRegressionReferenceTest*.java'
+        exclude '**/blockchain/BlockchainReferenceTest*.java'
+        exclude '**/.gradle/**'
+      }
+      removeUnusedImports()
+      googleJavaFormat()
+      importOrder 'net.consensys', 'java', ''
+      trimTrailingWhitespace()
+      endWithNewline()
+    }
+    groovyGradle {
+      target '*.gradle'
+      greclipse().configFile(rootProject.file('gradle/formatter.properties'))
+      endWithNewline()
+    }
+  }
+
+  tasks.withType(JavaCompile) {
+    options.compilerArgs += [
+      '-Xlint:unchecked',
+      '-Xlint:cast',
+      '-Xlint:rawtypes',
+      '-Xlint:overloads',
+      '-Xlint:divzero',
+      '-Xlint:finally',
+      '-Xlint:static',
+      '-Werror',
+    ]
+
+    options.errorprone {
+      excludedPaths '.*/(generated|.*ReferenceTest_.*)'
+      check('FutureReturnValueIgnored', CheckSeverity.OFF)
+      check('InsecureCryptoUsage', CheckSeverity.WARN)
+      check('FieldCanBeFinal', CheckSeverity.WARN)
+      check('WildcardImport', CheckSeverity.WARN)
+    }
+  }
+
+  /*
+   * Pass some system properties provided on the gradle command line to test executions for
+   * convenience.
+   *
+   * The properties passed are:
+   * - 'test.ethereum.include': allows to run a single Ethereum reference tests. For instance,
+   *   running a single general state test can be done with:
+   *    ./gradlew :ethereum:net.consensys.pantheon.ethereum.vm:test -Dtest.single=GeneralStateTest -Dtest.ethereum.include=callcodecallcallcode_101-Frontier
+   *   The meaning being that will be run only the tests for which the value passed as "include"
+   *   (which can be a java pattern) matches parts of the test name. Knowing that tests names for
+   *   reference tests are of the form:
+   *     <name>(-<milestone>([<variant>])?)?
+   *   where <name> is the test name as defined in the json file (usually the name of the json file
+   *   as well), <milestone> is the Ethereum milestone tested (not all test use it) and <variant>
+   *   is only use in some general state tests where for the same json file and same milestone,
+   *   multiple variant of that test are run. The variant is a simple number.
+   * - 'test.ethereum.state.eip': for general state tests, allows to only run tests for the
+   *   milestone specified by this value. So for instance,
+   *    ./gradlew :ethereum:net.consensys.pantheon.ethereum.vm:test -Dtest.single=GeneralStateTest -Dtest.ethereum.state.eip=Frontier
+   *   only run general state tests for Frontier. Note that this behavior could be achieved as well
+   *   with the 'include' option above since it is a pattern, but this is a slightly more convenient
+   *   option.
+   * - 'root.log.level' and 'evm.log.level': allow to control the log level used during the tests.
+   */
+  test {
+    jvmArgs = [
+      '-Xmx4g',
+      '-XX:-UseGCOverheadLimit'
+    ]
+    Set toImport = [
+      'test.ethereum.include',
+      'test.ethereum.state.eip',
+      'root.log.level',
+      'evm.log.level'
+    ]
+    for (String name : toImport) {
+      if (System.getProperty(name) != null) {
+        systemProperty name, System.getProperty(name)
+      }
+    }
+  }
+
+  // Normalise Xdoclint behaviour across JDKs (OpenJDK 8 is more lenient than Oracle JDK by default).
+  javadoc {
+    options.addStringOption('Xdoclint:all', '-quiet')
+    options.encoding = 'UTF-8'
+  }
+
+}
+
+task deploy() {}
+
+
+
+
+
+subprojects {
+
+  tasks.withType(Test) {
+    // If GRADLE_MAX_TEST_FORKS is not set, use half the available processors
+    maxParallelForks = (System.getenv('GRADLE_MAX_TEST_FORKS') ?: (Runtime.runtime.availableProcessors().intdiv(2) ?: 1)).toInteger()
+  }
+
+  tasks.withType(JavaCompile) {
+    options.fork = true
+    options.incremental = true
+  }
+  apply plugin: 'maven-publish'
+
+  sourceSets {
+    // test-support can be consumed as a library by other projects in their tests
+    testSupport {
+      java {
+        compileClasspath += main.output
+        runtimeClasspath += main.output
+        srcDir file('src/test-support/java')
+      }
+      resources.srcDir file('src/test-support/resources')
+    }
+    integrationTest {
+      java {
+        compileClasspath += main.output
+        runtimeClasspath += main.output
+        srcDir file('src/integration-test/java')
+      }
+      resources.srcDir file('src/integration-test/resources')
+    }
+  }
+
+  configurations {
+    testSupportImplementation.extendsFrom implementation
+    integrationTestImplementation.extendsFrom implementation
+    testSupportArtifacts
+  }
+
+  task testSupportJar (type: Jar) {
+    baseName = "${project.name}-support-test"
+    from sourceSets.testSupport.output
+  }
+
+  dependencies {
+    testImplementation sourceSets.testSupport.output
+    integrationTestImplementation sourceSets.testSupport.output
+  }
+
+  task integrationTest(type: Test, dependsOn:["compileTestJava"]){
+    group = "verification"
+    description = "Runs the Pantheon Integration Test"
+
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    outputs.upToDateWhen { false }
+  }
+
+  if (file('src/jmh').directory) {
+    apply plugin: 'me.champeau.gradle.jmh'
+
+    jmhCompileGeneratedClasses {
+      options.compilerArgs += [
+        '-XepDisableAllChecks'
+      ]
+    }
+
+    jmh {
+      // Allows to control JMH execution directly from the command line. I typical execution may look
+      // like:
+      //    gradle jmh -Pf=2 -Pwi=3 -Pi=5 -Pinclude=MyBench
+      // which will run 2 forks with 3 warmup iterations and 5 normal ones for each, and will only
+      // run the benchmark matching 'MyBench' (a regexp).
+      warmupForks = _intCmdArg('wf')
+      warmupIterations = _intCmdArg('wi')
+      fork = _intCmdArg('f')
+      iterations = _intCmdArg('i')
+      benchmarkMode = _strListCmdArg('bm')
+      include = _strListCmdArg('include', [''])
+      humanOutputFile = project.file("${project.buildDir}/reports/jmh/results.txt")
+      resultFormat = 'JSON'
+    }
+
+    dependencies { jmh 'org.apache.logging.log4j:log4j-api' }
+  }
+
+  afterEvaluate {
+    if (project.jar.enabled) {
+      publishing {
+        publications {
+          MavenDeployment(MavenPublication) {
+            from components.java
+            groupId 'net.consensys.pantheon'
+            artifactId project.jar.baseName
+            version project.version
+          }
+        }
+      }
+
+      bintray {
+        user = System.getenv('BINTRAY_USER')
+        key = System.getenv('BINTRAY_KEY')
+        publications = ['MavenDeployment']
+        pkg {
+          repo = rootProject.name.toLowerCase()
+          name = rootProject.name.capitalize()
+          userOrg = 'consensys'
+          licenses = ['Apache-2.0']
+          version {
+            name = project.version
+            desc = rootProject.name.capitalize() + ' distribution'
+            released  = new Date()
+            vcsTag = project.version
+          }
+        }
+      }
+
+      deploy.dependsOn bintrayUpload
+    }
+  }
+}
+
+jar { enabled = false }
+
+apply plugin: 'application'
+mainClassName = "net.consensys.pantheon.Pantheon"
+applicationDefaultJvmArgs = [
+  "-Dvertx.disableFileCPResolving=true",
+  "-Dpantheon.home=PANTHEON_HOME",
+  // We shutdown log4j ourselves, as otherwise his shutdown hook runs before our own and whatever
+  // happens during shutdown is not logged.
+  "-Dlog4j.shutdownHookEnabled=false",
+  "-Djava.security.egd=file:/dev/urandom"
+]
+
+run {
+  args project.hasProperty("pantheon.run.args") ? project.property("pantheon.run.args").toString().split("\\s+") : []
+  doFirst {
+    applicationDefaultJvmArgs = applicationDefaultJvmArgs.collect{it.replace('PANTHEON_HOME', "$buildDir/pantheon")}
+  }
+}
+
+startScripts {
+  doLast {
+    unixScript.text = unixScript.text.replace('PANTHEON_HOME', '\$APP_HOME')
+    windowsScript.text = windowsScript.text.replace('PANTHEON_HOME', '%~dp0..')
+  }
+}
+
+dependencies {
+  compile project(':ethereum:evmtool')
+  compile project(':pantheon')
+  errorprone 'com.google.errorprone:error_prone_core:2.3.1'
+}
+
+task createEVMToolApp(type: CreateStartScripts) {
+  outputDir = startScripts.outputDir
+  mainClassName = 'net.consensys.pantheon.EVMTool'
+  applicationName = 'evm'
+  classpath = startScripts.classpath
+}
+
+applicationDistribution.into("bin") {
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  from(createEVMToolApp)
+  fileMode = 0755
+}
+
+applicationDistribution.into("") { from("LICENSE") }
+
+distTar {
+  doFirst {
+    delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
+  }
+  compression = Compression.GZIP
+  extension = 'tar.gz'
+}
+
+distZip {
+  doFirst {
+    delete fileTree(dir: 'build/distributions', include: '*.zip')
+  }
+}
+
+task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
+  additionalSourceDirs = files(subprojects.sourceSets.main.allSource.srcDirs)
+  sourceDirectories = files(subprojects.sourceSets.main.allSource.srcDirs)
+  classDirectories = files(subprojects.sourceSets.main.output)
+  executionData = files(subprojects.jacocoTestReport.executionData)  //how to exclude some package/classes com.test.**
+  reports {
+    xml.enabled true
+    csv.enabled true
+    html.destination file("build/reports/jacocoHtml")
+  }
+  onlyIf = { true }
+  doFirst {
+    executionData = files(executionData.findAll { it.exists() })
+  }
+}
+
+configurations { annotationProcessor }
+
+// Prevent errorprone-checks being dependent upon errorprone-checks!
+// However, ensure all subprojects comply with the custom rules.
+configure(subprojects.findAll {it.name != 'errorprone-checks'}) {
+  dependencies { annotationProcessor project(":errorprone-checks") }
+
+  tasks.withType(JavaCompile) {
+    options.compilerArgs += [
+      '-processorpath',
+      configurations.annotationProcessor.asPath
+    ]
+  }
+}
+
+
+if (!file("ethereum/referencetests/src/test/resources/README.md").exists()) {
+  throw new GradleException("ethereum/referencetests/src/test/resources/README.md missing: please clone submodules (git submodule update --init --recursive)")
+}

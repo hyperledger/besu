@@ -1,0 +1,16 @@
+{
+  "request": {
+    "id": 246,
+    "jsonrpc": "2.0",
+    "method": "eth_getBlockTransactionCountByNumber",
+    "params": [
+      "earliest"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 246,
+    "result": "0x0"
+  },
+  "statusCode": 200
+}

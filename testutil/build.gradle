@@ -1,0 +1,14 @@
+apply plugin: 'java-library'
+
+jar {
+  baseName 'pantheon-util-test'
+  manifest {
+    attributes('Implementation-Title': baseName,
+    'Implementation-Version': project.version)
+  }
+}
+
+dependencies {
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation 'com.google.guava:guava'
+}

@@ -1,0 +1,17 @@
+{
+  "request": {
+    "id": 486,
+    "jsonrpc": "2.0",
+    "method": "eth_getTransactionByBlockNumberAndIndex",
+    "params": []
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 486,
+    "error": {
+      "code" : -32602,
+      "message" : "Invalid params"
+    }
+  },
+  "statusCode": 400
+}

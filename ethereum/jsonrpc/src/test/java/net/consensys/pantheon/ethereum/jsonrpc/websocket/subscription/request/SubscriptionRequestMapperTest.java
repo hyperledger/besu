@@ -1,0 +1,283 @@
+package net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.both;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
+
+import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import net.consensys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.FilterParameter;
+import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import net.consensys.pantheon.ethereum.jsonrpc.websocket.methods.WebSocketRpcRequest;
+
+import java.util.Arrays;
+import java.util.Collections;
+
+import io.vertx.core.json.Json;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
+public class SubscriptionRequestMapperTest {
+
+  @Rule public ExpectedException thrown = ExpectedException.none();
+
+  private SubscriptionRequestMapper mapper;
+  // These tests aren't passing through WebSocketRequestHandler, so connectionId is null.
+  private final String CONNECTION_ID = null;
+
+  @Before
+  public void before() {
+    mapper = new SubscriptionRequestMapper(new JsonRpcParameter());
+  }
+
+  @Test
+  public void mapRequestToUnsubscribeRequest() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_unsubscribe\", \"params\": [\"0x1\"]}");
+    final UnsubscribeRequest expectedUnsubscribeRequest = new UnsubscribeRequest(1L, CONNECTION_ID);
+
+    final UnsubscribeRequest unsubscribeRequest = mapper.mapUnsubscribeRequest(jsonRpcRequest);
+
+    assertThat(unsubscribeRequest).isEqualTo(expectedUnsubscribeRequest);
+  }
+
+  @Test
+  public void mapRequestToUnsubscribeRequestIgnoresSecondParam() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_unsubscribe\", \"params\": [\"0x1\", {\"foo\": \"bar\"}]}");
+    final UnsubscribeRequest expectedUnsubscribeRequest = new UnsubscribeRequest(1L, CONNECTION_ID);
+
+    final UnsubscribeRequest unsubscribeRequest = mapper.mapUnsubscribeRequest(jsonRpcRequest);
+
+    assertThat(unsubscribeRequest).isEqualTo(expectedUnsubscribeRequest);
+  }
+
+  @Test
+  public void mapRequestToUnsubscribeRequestMissingSubscriptionIdFails() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest("{\"id\": 1, \"method\": \"eth_unsubscribe\", \"params\": []}");
+
+    thrown.expect(InvalidSubscriptionRequestException.class);
+    thrown.expectCause(
+        both(hasMessage(equalTo("Missing required json rpc parameter at index 0")))
+            .and(instanceOf(InvalidJsonRpcParameters.class)));
+
+    mapper.mapUnsubscribeRequest(jsonRpcRequest);
+  }
+
+  @Test
+  public void mapRequestToNewHeadsSubscribeIncludeTransactionsTrue() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"newHeads\", {\"includeTransactions\": true}]}");
+    final SubscribeRequest expectedSubscribeRequest =
+        new SubscribeRequest(SubscriptionType.NEW_BLOCK_HEADERS, null, true, CONNECTION_ID);
+
+    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+
+    assertThat(subscribeRequest).isEqualTo(expectedSubscribeRequest);
+  }
+
+  @Test
+  public void mapRequestToNewHeadsSubscribeIncludeTransactionsFalse() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"newHeads\", {\"includeTransactions\": false}]}");
+    final SubscribeRequest expectedSubscribeRequest =
+        new SubscribeRequest(SubscriptionType.NEW_BLOCK_HEADERS, null, false, CONNECTION_ID);
+
+    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+
+    assertThat(subscribeRequest).isEqualTo(expectedSubscribeRequest);
+  }
+
+  @Test
+  public void mapRequestToNewHeadsSubscribeOmittingIncludeTransactions() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"newHeads\"]}");
+    final SubscribeRequest expectedSubscribeRequest =
+        new SubscribeRequest(SubscriptionType.NEW_BLOCK_HEADERS, null, false, CONNECTION_ID);
+
+    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+
+    assertThat(subscribeRequest).isEqualTo(expectedSubscribeRequest);
+  }
+
+  @Test
+  public void mapRequestToNewHeadsWithInvalidSecondParamFails() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"newHeads\", {\"foo\": \"bar\"}]}");
+
+    thrown.expect(InvalidSubscriptionRequestException.class);
+    thrown.expectCause(
+        both(hasMessage(equalTo("Invalid json rpc parameter at index 1")))
+            .and(instanceOf(InvalidJsonRpcParameters.class)));
+
+    mapper.mapSubscribeRequest(jsonRpcRequest);
+  }
+
+  @Test
+  public void mapRequestToNewHeadsIgnoresThirdParam() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"newHeads\", {\"includeTransactions\": true}, {\"foo\": \"bar\"}]}");
+    final SubscribeRequest expectedSubscribeRequest =
+        new SubscribeRequest(SubscriptionType.NEW_BLOCK_HEADERS, null, true, CONNECTION_ID);
+
+    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+
+    assertThat(subscribeRequest).isEqualTo(expectedSubscribeRequest);
+  }
+
+  @Test
+  public void mapRequestToLogs() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"logs\", {\"address\": \"0x8320fe7702b96808f7bbc0d4a888ed1468216cfd\", \"topics\": [\"0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902\"]}]}");
+
+    final FilterParameter expectedFilterParam =
+        new FilterParameter(
+            null,
+            null,
+            Arrays.asList("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd"),
+            Arrays.asList(
+                Arrays.asList(
+                    "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902")),
+            null);
+    final SubscribeRequest expectedSubscribeRequest =
+        new SubscribeRequest(SubscriptionType.LOGS, expectedFilterParam, null, null);
+
+    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+
+    assertThat(subscribeRequest)
+        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+  }
+
+  @Test
+  public void mapRequestToLogsWithoutTopics() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"logs\", {\"address\": \"0x8320fe7702b96808f7bbc0d4a888ed1468216cfd\"}]}");
+
+    final FilterParameter expectedFilterParam =
+        new FilterParameter(
+            null,
+            null,
+            Arrays.asList("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd"),
+            Collections.emptyList(),
+            null);
+    final SubscribeRequest expectedSubscribeRequest =
+        new SubscribeRequest(SubscriptionType.LOGS, expectedFilterParam, null, null);
+
+    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+
+    assertThat(subscribeRequest)
+        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+  }
+
+  @Test
+  public void mapRequestToLogsWithInvalidTopicInFilter() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"logs\", {\"address\": \"0x0\", \"topics\": [\"0x1\"]}]}");
+
+    thrown.expect(InvalidSubscriptionRequestException.class);
+    thrown.expectCause(
+        both(hasMessage(equalTo("Invalid odd-length hex binary representation 0x1")))
+            .and(instanceOf(IllegalArgumentException.class)));
+
+    mapper.mapSubscribeRequest(jsonRpcRequest);
+  }
+
+  @Test
+  public void mapRequestToLogsWithInvalidSecondParam() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"logs\", {\"foo\": \"bar\"}]}");
+
+    thrown.expect(InvalidSubscriptionRequestException.class);
+    thrown.expectCause(
+        both(hasMessage(equalTo("Invalid json rpc parameter at index 1")))
+            .and(instanceOf(InvalidJsonRpcParameters.class)));
+
+    mapper.mapSubscribeRequest(jsonRpcRequest);
+  }
+
+  @Test
+  public void mapRequestToNewPendingTransactions() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"newPendingTransactions\"]}");
+    final SubscribeRequest expectedSubscribeRequest =
+        new SubscribeRequest(SubscriptionType.NEW_PENDING_TRANSACTIONS, null, null, CONNECTION_ID);
+
+    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+
+    assertThat(subscribeRequest).isEqualTo(expectedSubscribeRequest);
+  }
+
+  @Test
+  public void mapRequestToNewPendingTransactionsIgnoresSecondParam() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"newPendingTransactions\", {\"foo\": \"bar\"}]}");
+    final SubscribeRequest expectedSubscribeRequest =
+        new SubscribeRequest(SubscriptionType.NEW_PENDING_TRANSACTIONS, null, null, CONNECTION_ID);
+
+    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+
+    assertThat(subscribeRequest).isEqualTo(expectedSubscribeRequest);
+  }
+
+  @Test
+  public void mapRequestToSyncingSubscribe() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"]}");
+    final SubscribeRequest expectedSubscribeRequest =
+        new SubscribeRequest(SubscriptionType.SYNCING, null, null, CONNECTION_ID);
+
+    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+
+    assertThat(subscribeRequest).isEqualTo(expectedSubscribeRequest);
+  }
+
+  @Test
+  public void mapRequestToSyncingSubscribeIgnoresSecondParam() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\", {\"foo\": \"bar\"}]}");
+    final SubscribeRequest expectedSubscribeRequest =
+        new SubscribeRequest(SubscriptionType.SYNCING, null, null, CONNECTION_ID);
+
+    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+
+    assertThat(subscribeRequest).isEqualTo(expectedSubscribeRequest);
+  }
+
+  @Test
+  public void mapAbsentSubscriptionTypeRequestFails() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"foo\"]}");
+
+    thrown.expect(InvalidSubscriptionRequestException.class);
+    thrown.expectCause(
+        both(hasMessage(equalTo("Invalid json rpc parameter at index 0")))
+            .and(instanceOf(InvalidJsonRpcParameters.class)));
+
+    mapper.mapSubscribeRequest(jsonRpcRequest);
+  }
+
+  private WebSocketRpcRequest parseWebSocketRpcRequest(final String json) {
+    return Json.decodeValue(json, WebSocketRpcRequest.class);
+  }
+}

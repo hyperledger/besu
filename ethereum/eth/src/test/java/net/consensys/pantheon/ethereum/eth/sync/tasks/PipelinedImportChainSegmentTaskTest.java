@@ -1,0 +1,433 @@
+package net.consensys.pantheon.ethereum.eth.sync.tasks;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import net.consensys.pantheon.ethereum.ProtocolContext;
+import net.consensys.pantheon.ethereum.chain.MutableBlockchain;
+import net.consensys.pantheon.ethereum.core.Block;
+import net.consensys.pantheon.ethereum.core.BlockBody;
+import net.consensys.pantheon.ethereum.core.BlockHeader;
+import net.consensys.pantheon.ethereum.core.TransactionReceipt;
+import net.consensys.pantheon.ethereum.db.DefaultMutableBlockchain;
+import net.consensys.pantheon.ethereum.eth.manager.EthPeer;
+import net.consensys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import net.consensys.pantheon.ethereum.eth.manager.EthTask;
+import net.consensys.pantheon.ethereum.eth.manager.RespondingEthPeer;
+import net.consensys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
+import net.consensys.pantheon.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskTest;
+import net.consensys.pantheon.ethereum.eth.messages.EthPV62;
+import net.consensys.pantheon.ethereum.eth.messages.EthPV63;
+import net.consensys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
+import net.consensys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
+import net.consensys.pantheon.ethereum.p2p.api.MessageData;
+import net.consensys.pantheon.ethereum.p2p.wire.Capability;
+import net.consensys.pantheon.ethereum.testutil.BlockDataGenerator;
+import net.consensys.pantheon.ethereum.testutil.BlockDataGenerator.BlockOptions;
+import net.consensys.pantheon.services.kvstore.InMemoryKeyValueStorage;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
+
+import org.junit.Test;
+
+public class PipelinedImportChainSegmentTaskTest
+    extends RetryingMessageTaskTest<List<Block>, List<Block>> {
+
+  @Override
+  protected List<Block> generateDataToBeRequested() {
+    final long chainHead = blockchain.getChainHeadBlockNumber();
+    final long importSize = 5;
+    final long startNumber = chainHead - importSize + 1;
+    final List<Block> blocksToImport = new ArrayList<>();
+    for (long i = 0; i < importSize; i++) {
+      blocksToImport.add(getBlockAtNumber(startNumber + i));
+    }
+    return blocksToImport;
+  }
+
+  private Block getBlockAtNumber(final long number) {
+    final BlockHeader header = blockchain.getBlockHeader(number).get();
+    final BlockBody body = blockchain.getBlockBody(header.getHash()).get();
+    return new Block(header, body);
+  }
+
+  @Override
+  protected EthTask<List<Block>> createTask(final List<Block> requestedData) {
+    final Block firstBlock = requestedData.get(0);
+    final Block lastBlock = requestedData.get(requestedData.size() - 1);
+    final Block previousBlock = getBlockAtNumber(firstBlock.getHeader().getNumber() - 1);
+    final MutableBlockchain shortBlockchain = createShortChain(firstBlock.getHeader().getNumber());
+    final ProtocolContext<Void> modifiedContext =
+        new ProtocolContext<>(
+            shortBlockchain,
+            protocolContext.getWorldStateArchive(),
+            protocolContext.getConsensusState());
+    return PipelinedImportChainSegmentTask.forCheckpoints(
+        protocolSchedule,
+        modifiedContext,
+        ethContext,
+        1,
+        new BlockHeader[] {previousBlock.getHeader(), lastBlock.getHeader()});
+  }
+
+  @Override
+  protected void assertResultMatchesExpectation(
+      final List<Block> requestedData, final List<Block> response, final EthPeer respondingPeer) {
+    assertThat(response).isEqualTo(requestedData);
+  }
+
+  @Test
+  public void betweenContiguousHeadersSucceeds() {
+    // Setup a responsive peer
+    final Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
+    final RespondingEthPeer respondingPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+
+    // Setup task and expectations
+    final Block firstBlock = getBlockAtNumber(5L);
+    final Block secondBlock = getBlockAtNumber(6L);
+    final List<Block> expectedResult = Collections.singletonList(secondBlock);
+    final MutableBlockchain shortBlockchain = createShortChain(firstBlock.getHeader().getNumber());
+    final ProtocolContext<Void> modifiedContext =
+        new ProtocolContext<>(
+            shortBlockchain,
+            protocolContext.getWorldStateArchive(),
+            protocolContext.getConsensusState());
+    final EthTask<List<Block>> task =
+        PipelinedImportChainSegmentTask.forCheckpoints(
+            protocolSchedule,
+            modifiedContext,
+            ethContext,
+            1,
+            firstBlock.getHeader(),
+            secondBlock.getHeader());
+
+    // Sanity check
+    assertThat(shortBlockchain.contains(secondBlock.getHash())).isFalse();
+
+    // Execute task and wait for response
+    final AtomicReference<List<Block>> actualResult = new AtomicReference<>();
+    final AtomicBoolean done = new AtomicBoolean(false);
+
+    final CompletableFuture<List<Block>> future = task.run();
+    respondingPeer.respond(responder);
+    future.whenComplete(
+        (result, error) -> {
+          actualResult.set(result);
+          done.compareAndSet(false, true);
+        });
+
+    assertThat(done).isTrue();
+    assertResultMatchesExpectation(expectedResult, actualResult.get(), respondingPeer.getEthPeer());
+  }
+
+  @Test
+  public void betweenUnconnectedHeadersFails() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    // Setup a responsive peer
+    final Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
+    final RespondingEthPeer respondingPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+
+    // Setup data
+    final Block fakeFirstBlock = gen.block(BlockOptions.create().setBlockNumber(5L));
+    final Block firstBlock = getBlockAtNumber(5L);
+    final Block secondBlock = getBlockAtNumber(6L);
+    final Block thirdBlock = getBlockAtNumber(7L);
+
+    // Setup task
+    final MutableBlockchain shortBlockchain = createShortChain(firstBlock.getHeader().getNumber());
+    final ProtocolContext<Void> modifiedContext =
+        new ProtocolContext<>(
+            shortBlockchain,
+            protocolContext.getWorldStateArchive(),
+            protocolContext.getConsensusState());
+    final EthTask<List<Block>> task =
+        PipelinedImportChainSegmentTask.forCheckpoints(
+            protocolSchedule,
+            modifiedContext,
+            ethContext,
+            1,
+            fakeFirstBlock.getHeader(),
+            thirdBlock.getHeader());
+
+    // Sanity check
+    assertThat(shortBlockchain.contains(secondBlock.getHash())).isFalse();
+
+    // Execute task and wait for response
+    final AtomicReference<Throwable> actualError = new AtomicReference<>();
+    final AtomicReference<List<Block>> actualResult = new AtomicReference<>();
+    final AtomicBoolean done = new AtomicBoolean(false);
+
+    final CompletableFuture<List<Block>> future = task.run();
+    respondingPeer.respond(responder);
+    future.whenComplete(
+        (result, error) -> {
+          actualResult.set(result);
+          actualError.set(error);
+          done.compareAndSet(false, true);
+        });
+
+    assertThat(done).isTrue();
+    assertThat(actualResult.get()).isNull();
+    assertThat(actualError.get()).hasCauseInstanceOf(InvalidBlockException.class);
+  }
+
+  @Test
+  public void shouldSyncInSequencesOfChunksSequentially() {
+    // Setup a responsive peer
+    final Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
+    final RespondingEthPeer respondingPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+
+    // Setup task for three chunks
+    final List<BlockHeader> checkpointHeaders =
+        LongStream.range(0, 13)
+            .filter(n -> n % 4 == 0)
+            .mapToObj(this::getBlockAtNumber)
+            .map(Block::getHeader)
+            .collect(Collectors.toList());
+    final List<Block> expectedResult =
+        LongStream.range(1, 13).mapToObj(this::getBlockAtNumber).collect(Collectors.toList());
+    final MutableBlockchain shortBlockchain = createShortChain(0);
+    final ProtocolContext<Void> modifiedContext =
+        new ProtocolContext<>(
+            shortBlockchain,
+            protocolContext.getWorldStateArchive(),
+            protocolContext.getConsensusState());
+    final EthTask<List<Block>> task =
+        PipelinedImportChainSegmentTask.forCheckpoints(
+            protocolSchedule, modifiedContext, ethContext, 1, checkpointHeaders);
+
+    // Execute task and wait for response
+    final AtomicReference<List<Block>> actualResult = new AtomicReference<>();
+    final AtomicBoolean done = new AtomicBoolean(false);
+
+    final CompletableFuture<List<Block>> future = task.run();
+    final CountingResponder countingResponder = CountingResponder.wrap(responder);
+
+    // Import first segment's headers and bodies
+    respondingPeer.respondTimes(countingResponder, 2);
+    assertThat(countingResponder.getBlockHeaderMessages()).isEqualTo(1);
+    assertThat(countingResponder.getBlockBodiesMessages()).isEqualTo(1);
+    // Import second segment's headers and bodies
+    respondingPeer.respondTimes(countingResponder, 2);
+    assertThat(countingResponder.getBlockHeaderMessages()).isEqualTo(2);
+    assertThat(countingResponder.getBlockBodiesMessages()).isEqualTo(2);
+    // Import third segment's headers and bodies
+    respondingPeer.respondTimes(countingResponder, 2);
+    assertThat(countingResponder.getBlockHeaderMessages()).isEqualTo(3);
+    assertThat(countingResponder.getBlockBodiesMessages()).isEqualTo(3);
+
+    future.whenComplete(
+        (result, error) -> {
+          actualResult.set(result);
+          done.compareAndSet(false, true);
+        });
+
+    assertThat(done).isTrue();
+    assertResultMatchesExpectation(expectedResult, actualResult.get(), respondingPeer.getEthPeer());
+  }
+
+  @Test
+  public void shouldPipelineChainSegmentImportsUpToMaxActiveChunks() {
+    // Setup a responsive peer
+    final Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
+    final RespondingEthPeer respondingPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+
+    // Setup task and expectations
+    final List<BlockHeader> checkpointHeaders =
+        LongStream.range(0, 13)
+            .filter(n -> n % 4 == 0)
+            .mapToObj(this::getBlockAtNumber)
+            .map(Block::getHeader)
+            .collect(Collectors.toList());
+    final List<Block> expectedResult =
+        LongStream.range(1, 13).mapToObj(this::getBlockAtNumber).collect(Collectors.toList());
+    final MutableBlockchain shortBlockchain = createShortChain(0);
+    final ProtocolContext<Void> modifiedContext =
+        new ProtocolContext<>(
+            shortBlockchain,
+            protocolContext.getWorldStateArchive(),
+            protocolContext.getConsensusState());
+    final EthTask<List<Block>> task =
+        PipelinedImportChainSegmentTask.forCheckpoints(
+            protocolSchedule, modifiedContext, ethContext, 2, checkpointHeaders);
+
+    // Execute task and wait for response
+    final AtomicReference<List<Block>> actualResult = new AtomicReference<>();
+    final AtomicBoolean done = new AtomicBoolean(false);
+
+    final CompletableFuture<List<Block>> future = task.run();
+    final CountingResponder countingResponder = CountingResponder.wrap(responder);
+
+    // Import first segment's header
+    respondingPeer.respond(countingResponder);
+    assertThat(countingResponder.getBlockHeaderMessages()).isEqualTo(1);
+    assertThat(countingResponder.getBlockBodiesMessages()).isEqualTo(0);
+    // Import first segment's body and second segment's header
+    respondingPeer.respond(countingResponder);
+    assertThat(countingResponder.getBlockHeaderMessages()).isEqualTo(2);
+    assertThat(countingResponder.getBlockBodiesMessages()).isEqualTo(1);
+    // Import second segment's body and third segment's header
+    respondingPeer.respond(countingResponder);
+    assertThat(countingResponder.getBlockHeaderMessages()).isEqualTo(3);
+    assertThat(countingResponder.getBlockBodiesMessages()).isEqualTo(2);
+    // Import third segment's body
+    respondingPeer.respond(countingResponder);
+    assertThat(countingResponder.getBlockHeaderMessages()).isEqualTo(3);
+    assertThat(countingResponder.getBlockBodiesMessages()).isEqualTo(3);
+
+    future.whenComplete(
+        (result, error) -> {
+          actualResult.set(result);
+          done.compareAndSet(false, true);
+        });
+
+    assertThat(done).isTrue();
+    assertResultMatchesExpectation(expectedResult, actualResult.get(), respondingPeer.getEthPeer());
+  }
+
+  @Test
+  public void shouldPipelineChainSegmentImportsWithinMaxActiveChunks() {
+    // Setup a responsive peer
+    final Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
+    final RespondingEthPeer respondingPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+
+    // Setup task and expectations
+    final List<BlockHeader> checkpointHeaders =
+        LongStream.range(0, 13)
+            .filter(n -> n % 4 == 0)
+            .mapToObj(this::getBlockAtNumber)
+            .map(Block::getHeader)
+            .collect(Collectors.toList());
+    final List<Block> expectedResult =
+        LongStream.range(1, 13).mapToObj(this::getBlockAtNumber).collect(Collectors.toList());
+    final MutableBlockchain shortBlockchain = createShortChain(0);
+    final ProtocolContext<Void> modifiedContext =
+        new ProtocolContext<>(
+            shortBlockchain,
+            protocolContext.getWorldStateArchive(),
+            protocolContext.getConsensusState());
+    final EthTask<List<Block>> task =
+        PipelinedImportChainSegmentTask.forCheckpoints(
+            protocolSchedule, modifiedContext, ethContext, 3, checkpointHeaders);
+
+    // Execute task and wait for response
+    final AtomicReference<List<Block>> actualResult = new AtomicReference<>();
+    final AtomicBoolean done = new AtomicBoolean(false);
+
+    final CompletableFuture<List<Block>> future = task.run();
+    final CountingResponder countingResponder = CountingResponder.wrap(responder);
+
+    // Import first segment's header
+    respondingPeer.respond(countingResponder);
+    assertThat(countingResponder.getBlockHeaderMessages()).isEqualTo(1);
+    assertThat(countingResponder.getBlockBodiesMessages()).isEqualTo(0);
+    // Import first segment's body and second segment's header
+    respondingPeer.respond(countingResponder);
+    assertThat(countingResponder.getBlockHeaderMessages()).isEqualTo(2);
+    assertThat(countingResponder.getBlockBodiesMessages()).isEqualTo(1);
+    // Import second segment's body and third segment's header
+    respondingPeer.respond(countingResponder);
+    assertThat(countingResponder.getBlockHeaderMessages()).isEqualTo(3);
+    assertThat(countingResponder.getBlockBodiesMessages()).isEqualTo(2);
+    // Import third segment's body
+    respondingPeer.respond(countingResponder);
+    assertThat(countingResponder.getBlockHeaderMessages()).isEqualTo(3);
+    assertThat(countingResponder.getBlockBodiesMessages()).isEqualTo(3);
+
+    future.whenComplete(
+        (result, error) -> {
+          actualResult.set(result);
+          done.compareAndSet(false, true);
+        });
+
+    assertThat(done).isTrue();
+    assertResultMatchesExpectation(expectedResult, actualResult.get(), respondingPeer.getEthPeer());
+  }
+
+  private MutableBlockchain createShortChain(final long lastBlockToInclude) {
+    final BlockHeader genesisHeader =
+        blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get();
+    final BlockBody genesisBody = blockchain.getBlockBody(genesisHeader.getHash()).get();
+    final Block genesisBlock = new Block(genesisHeader, genesisBody);
+    final MutableBlockchain shortChain =
+        new DefaultMutableBlockchain(
+            genesisBlock,
+            new InMemoryKeyValueStorage(),
+            ScheduleBasedBlockHashFunction.create(protocolSchedule));
+    long nextBlock = genesisHeader.getNumber() + 1;
+    while (nextBlock <= lastBlockToInclude) {
+      final BlockHeader header = blockchain.getBlockHeader(nextBlock).get();
+      final BlockBody body = blockchain.getBlockBody(header.getHash()).get();
+      final List<TransactionReceipt> receipts = blockchain.getTxReceipts(header.getHash()).get();
+      final Block block = new Block(header, body);
+      shortChain.appendBlock(block, receipts);
+      nextBlock++;
+    }
+    return shortChain;
+  }
+
+  private static class CountingResponder implements Responder {
+
+    private final Responder delegate;
+    private int getBlockHeaderMessages = 0;
+    private int getBlockBodiesMessages = 0;
+    private int getReceiptsMessages = 0;
+    private int getNodeDataMessages = 0;
+
+    private static CountingResponder wrap(final Responder delegate) {
+      return new CountingResponder(delegate);
+    }
+
+    private CountingResponder(final Responder delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public Optional<MessageData> respond(final Capability cap, final MessageData msg) {
+      final MessageData response = null;
+      switch (msg.getCode()) {
+        case EthPV62.GET_BLOCK_HEADERS:
+          getBlockHeaderMessages++;
+          break;
+        case EthPV62.GET_BLOCK_BODIES:
+          getBlockBodiesMessages++;
+          break;
+        case EthPV63.GET_RECEIPTS:
+          getReceiptsMessages++;
+          break;
+        case EthPV63.GET_NODE_DATA:
+          getNodeDataMessages++;
+          break;
+      }
+      return delegate.respond(cap, msg);
+    }
+
+    public int getBlockHeaderMessages() {
+      return getBlockHeaderMessages;
+    }
+
+    public int getBlockBodiesMessages() {
+      return getBlockBodiesMessages;
+    }
+
+    public int getReceiptsMessages() {
+      return getReceiptsMessages;
+    }
+
+    public int getNodeDataMessages() {
+      return getNodeDataMessages;
+    }
+  }
+}

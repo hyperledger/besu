@@ -1,0 +1,14 @@
+{
+  "request": {
+    "id": 2,
+    "jsonrpc": "2.0",
+    "method": "eth_newBlockFilter",
+    "params": []
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "result": "0x1"
+  },
+  "statusCode": 200
+}

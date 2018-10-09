@@ -1,0 +1,21 @@
+apply plugin: 'java-library'
+
+jar {
+  baseName 'pantheon-kvstore'
+  manifest {
+    attributes('Implementation-Title': baseName,
+    'Implementation-Version': project.version)
+  }
+}
+
+dependencies {
+  api project(':util')
+
+  implementation 'com.google.guava:guava'
+  implementation group: 'net.consensys', name: 'rocksdbjni', version: '5.14.2'
+  implementation 'org.apache.logging.log4j:log4j-api'
+
+  runtime 'org.apache.logging.log4j:log4j-core'
+
+  testImplementation 'junit:junit'
+}

@@ -1,0 +1,17 @@
+{
+  "request": {
+    "id": 250,
+    "jsonrpc": "2.0",
+    "method": "eth_getCode",
+    "params": [
+      "0x8888f1f195afa192cfee860698584c030f4c9db1",
+      "latest"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 250,
+    "result": "0x"
+  },
+  "statusCode": 200
+}

@@ -1,0 +1,25 @@
+FROM ethereum/client-go:alltools-stable
+
+ENV NODE_NAME=node01
+ENV DATA_DIR=/var/lib/geth/$NODE_NAME
+
+ENV HOME=/root
+
+RUN mkdir -p $DATA_DIR
+
+ADD genesis.json $DATA_DIR/genesis.json
+ADD gethUtils.sh /gethUtils.sh
+ADD run.sh /run.sh
+ADD runBootNode.sh /runBootNode.sh
+
+
+RUN echo "if [ -f '/gethUtils.sh' ]; then echo 'Sourcing /gethUtils.sh'; source /gethUtils.sh; fi\n" >> $HOME/.bashrc
+RUN sed -i s@REPLACE_NODE_NAME@$NODE_NAME@ /gethUtils.sh
+RUN sed -i s@REPLACE_DATA_DIR@$DATA_DIR@ /gethUtils.sh
+
+WORKDIR $HOME/
+
+ENTRYPOINT ["/run.sh"]
+
+# List Exposed Ports
+EXPOSE 8084 8545 30303 30303/udp

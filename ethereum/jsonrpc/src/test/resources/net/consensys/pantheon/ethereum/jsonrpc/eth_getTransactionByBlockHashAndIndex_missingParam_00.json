@@ -1,0 +1,19 @@
+{
+  "request": {
+    "id": 448,
+    "jsonrpc": "2.0",
+    "method": "eth_getTransactionByBlockHashAndIndex",
+    "params": [
+      "0x0"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 448,
+    "error": {
+      "code": -32602,
+      "message" : "Invalid params"
+    }
+  },
+  "statusCode": 400
+}

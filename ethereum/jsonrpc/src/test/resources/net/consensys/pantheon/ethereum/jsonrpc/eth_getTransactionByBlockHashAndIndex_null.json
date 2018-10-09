@@ -1,0 +1,17 @@
+{
+  "request": {
+    "id": 447,
+    "jsonrpc": "2.0",
+    "method": "eth_getTransactionByBlockHashAndIndex",
+    "params": [
+      "0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9",
+      "0xb"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 447,
+    "result": null
+  },
+  "statusCode": 200
+}

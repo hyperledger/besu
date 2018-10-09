@@ -1,0 +1,26 @@
+apply plugin: 'java-library'
+
+jar {
+  baseName 'pantheon-ethereum-rlp'
+  manifest {
+    attributes('Implementation-Title': baseName,
+    'Implementation-Version': project.version)
+  }
+}
+
+dependencies {
+  api project(':util')
+
+  implementation 'com.google.guava:guava'
+  implementation 'io.vertx:vertx-core'
+
+  compileOnly 'org.openjdk.jmh:jmh-generator-annprocess'
+
+  jmh project(':util')
+
+  testImplementation project(':testutil')
+  testImplementation project(path:':ethereum:referencetests', configuration: 'testOutput')
+
+  testImplementation 'com.fasterxml.jackson.core:jackson-databind'
+  testImplementation 'junit:junit'
+}

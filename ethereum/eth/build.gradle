@@ -1,0 +1,30 @@
+apply plugin: 'java-library'
+
+jar {
+  baseName 'pantheon-eth'
+  manifest {
+    attributes('Implementation-Title': baseName,
+    'Implementation-Version': project.version)
+  }
+}
+
+dependencies {
+  implementation project(':ethereum:core')
+  implementation project(':ethereum:p2p')
+  implementation project(':ethereum:rlp')
+  implementation project(':services:kvstore')
+
+  implementation 'io.vertx:vertx-core'
+  implementation 'com.google.guava:guava'
+
+  testImplementation project(':crypto')
+  testImplementation project( path: ':ethereum:core', configuration: 'testArtifacts')
+  testImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(':ethereum:mock-p2p')
+  testImplementation project(':testutil')
+
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.awaitility:awaitility'
+  testImplementation 'org.mockito:mockito-core'
+}

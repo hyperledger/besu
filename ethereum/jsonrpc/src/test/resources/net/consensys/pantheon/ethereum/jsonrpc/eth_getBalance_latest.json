@@ -1,0 +1,17 @@
+{
+  "request": {
+    "id": 27,
+    "jsonrpc": "2.0",
+    "method": "eth_getBalance",
+    "params": [
+      "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+      "latest"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 27,
+    "result": "0x140"
+  },
+  "statusCode": 200
+}

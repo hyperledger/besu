@@ -1,0 +1,121 @@
+package net.consensys.pantheon.ethereum.eth.messages;
+
+import net.consensys.pantheon.ethereum.core.Hash;
+import net.consensys.pantheon.ethereum.p2p.NetworkMemoryPool;
+import net.consensys.pantheon.ethereum.p2p.api.MessageData;
+import net.consensys.pantheon.ethereum.p2p.wire.AbstractMessageData;
+import net.consensys.pantheon.ethereum.rlp.BytesValueRLPInput;
+import net.consensys.pantheon.ethereum.rlp.BytesValueRLPOutput;
+import net.consensys.pantheon.util.bytes.BytesValue;
+
+import java.util.Iterator;
+import java.util.Objects;
+
+import com.google.common.collect.Iterators;
+import io.netty.buffer.ByteBuf;
+
+public final class NewBlockHashesMessage extends AbstractMessageData {
+
+  public static NewBlockHashesMessage readFrom(final MessageData message) {
+    if (message instanceof NewBlockHashesMessage) {
+      message.retain();
+      return (NewBlockHashesMessage) message;
+    }
+    final int code = message.getCode();
+    if (code != EthPV62.NEW_BLOCK_HASHES) {
+      throw new IllegalArgumentException(
+          String.format("Message has code %d and thus is not a NewBlockHashesMessage.", code));
+    }
+    final ByteBuf data = NetworkMemoryPool.allocate(message.getSize());
+    message.writeTo(data);
+    return new NewBlockHashesMessage(data);
+  }
+
+  public static NewBlockHashesMessage create(
+      final Iterable<NewBlockHashesMessage.NewBlockHash> hashes) {
+    final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
+    tmp.startList();
+    for (final NewBlockHashesMessage.NewBlockHash hash : hashes) {
+      tmp.startList();
+      tmp.writeBytesValue(hash.hash());
+      tmp.writeLongScalar(hash.number());
+      tmp.endList();
+    }
+    tmp.endList();
+    final ByteBuf data = NetworkMemoryPool.allocate(tmp.encodedSize());
+    data.writeBytes(tmp.encoded().extractArray());
+    return new NewBlockHashesMessage(data);
+  }
+
+  private NewBlockHashesMessage(final ByteBuf data) {
+    super(data);
+  }
+
+  @Override
+  public int getCode() {
+    return EthPV62.NEW_BLOCK_HASHES;
+  }
+
+  public Iterator<NewBlockHashesMessage.NewBlockHash> getNewHashes() {
+    final byte[] hashes = new byte[data.readableBytes()];
+    data.getBytes(0, hashes);
+    return new BytesValueRLPInput(BytesValue.wrap(hashes), false)
+        .readList(
+            rlpInput -> {
+              rlpInput.enterList();
+              final NewBlockHashesMessage.NewBlockHash res =
+                  new NewBlockHashesMessage.NewBlockHash(
+                      Hash.wrap(rlpInput.readBytes32()), rlpInput.readLongScalar());
+              rlpInput.leaveList();
+              return res;
+            })
+        .iterator();
+  }
+
+  @Override
+  public String toString() {
+    return String.format("NewBlockHashesMessage: [%s]", Iterators.toString(getNewHashes()));
+  }
+
+  public static final class NewBlockHash {
+
+    private final Hash hash;
+
+    private final long number;
+
+    public NewBlockHash(final Hash hash, final long number) {
+      this.hash = hash;
+      this.number = number;
+    }
+
+    public long number() {
+      return number;
+    }
+
+    public Hash hash() {
+      return hash;
+    }
+
+    @Override
+    public String toString() {
+      return String.format("New Block Hash [%d: %s]", number, hash);
+    }
+
+    @Override
+    public boolean equals(final Object that) {
+      if (this == that) {
+        return true;
+      }
+      if (!(that instanceof NewBlockHashesMessage.NewBlockHash)) {
+        return false;
+      }
+      final NewBlockHashesMessage.NewBlockHash other = (NewBlockHashesMessage.NewBlockHash) that;
+      return other.hash.equals(hash) && other.number == number;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(hash, number);
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "request": {
+    "id": 13,
+    "jsonrpc": "2.0",
+    "method": "eth_getCode",
+    "params": [
+      "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+      "0x666"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 13,
+    "result": null
+  },
+  "statusCode": 200
+}

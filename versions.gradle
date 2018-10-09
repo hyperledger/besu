@@ -1,0 +1,4 @@
+ext {
+  errorproneCore='2.3.1'
+  errorproneJavac='9+181-r4173-1'
+}

@@ -1,0 +1,19 @@
+{
+  "request": {
+    "id": 406,
+    "jsonrpc": "2.0",
+    "method": "eth_newFilter",
+    "params": [{
+      "address": ["foo"]
+    }]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 406,
+    "error" : {
+      "code" : -32602,
+      "message" : "Invalid params"
+    }
+  },
+  "statusCode": 400
+}

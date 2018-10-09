@@ -1,0 +1,19 @@
+{
+  "request": {
+    "id": 406,
+    "jsonrpc": "2.0",
+    "method": "eth_getLogs",
+    "params": [{
+      "fromBlock": "0x17",
+      "toBlock": "0x17",
+      "address": [],
+      "topics": [["0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b", "0x65c9ac8011e286e89d02a269890f41d67ca2cc597b2c76c7c69321ff492be580"], [null]]
+    }]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 406,
+    "result" : []
+  },
+  "statusCode": 200
+}

@@ -1,0 +1,31 @@
+{
+  "request": {
+    "id": 406,
+    "jsonrpc": "2.0",
+    "method": "eth_getTransactionByHash",
+    "params": [
+      "0x9cc6c7e602c56aa30c554bb691377f8703d778cec8845f4b88c0f72516b304f4"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 406,
+    "result": {
+      "blockHash": "0xc8df1f061abb4d0c107b2b1a794ade8780b3120e681f723fe55a7be586d95ba6",
+      "blockNumber": "0x1e",
+      "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+      "gas": "0x4cb2f",
+      "gasPrice": "0x1",
+      "hash": "0x9cc6c7e602c56aa30c554bb691377f8703d778cec8845f4b88c0f72516b304f4",
+      "input": "0xe8beef5b",
+      "nonce": "0x1d",
+      "to": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+      "transactionIndex": "0x0",
+      "value": "0xa",
+      "v": "0x1c",
+      "r": "0x11232cac2f935ab8dd5d5972438fde90e05d0dd620860b42886e7d54dc5c4a0c",
+      "s": "0x3dd467b5faa6e5a0f3c22a5396fefa5b03f07d8114d8434e0e1493736aad8d0e"
+    }
+  },
+  "statusCode": 200
+}

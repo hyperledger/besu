@@ -1,0 +1,114 @@
+package net.consensys.pantheon.ethereum.eth.sync.tasks;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import net.consensys.pantheon.ethereum.core.BlockHeader;
+import net.consensys.pantheon.ethereum.eth.manager.AbstractPeerTask.PeerTaskResult;
+import net.consensys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import net.consensys.pantheon.ethereum.eth.manager.EthTask;
+import net.consensys.pantheon.ethereum.eth.manager.RespondingEthPeer;
+import net.consensys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
+import net.consensys.pantheon.ethereum.eth.manager.ethtaskutils.PeerMessageTaskTest;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.junit.Test;
+
+public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<BlockHeader>> {
+
+  @Override
+  protected void assertPartialResultMatchesExpectation(
+      final List<BlockHeader> requestedData, final List<BlockHeader> partialResponse) {
+    assertThat(partialResponse.size()).isLessThanOrEqualTo(requestedData.size());
+    assertThat(partialResponse.size()).isGreaterThan(0);
+    for (final BlockHeader header : partialResponse) {
+      assertThat(requestedData).contains(header);
+    }
+  }
+
+  @Override
+  protected List<BlockHeader> generateDataToBeRequested() {
+    final int count = 3;
+    final List<BlockHeader> requestedHeaders = new ArrayList<>(count);
+    for (long i = 0; i < count; i++) {
+      requestedHeaders.add(blockchain.getBlockHeader(5 + i).get());
+    }
+    return requestedHeaders;
+  }
+
+  @Override
+  protected EthTask<PeerTaskResult<List<BlockHeader>>> createTask(
+      final List<BlockHeader> requestedData) {
+    final BlockHeader firstHeader = requestedData.get(0);
+    return GetHeadersFromPeerByHashTask.startingAtHash(
+        protocolSchedule,
+        ethContext,
+        firstHeader.getHash(),
+        firstHeader.getNumber(),
+        requestedData.size());
+  }
+
+  @Test
+  public void getHeadersFromHashNoSkip() {
+    getHeadersFromHash(0, false);
+  }
+
+  @Test
+  public void getHeadersFromHashNoSkipReversed() {
+    getHeadersFromHash(0, true);
+  }
+
+  @Test
+  public void getHeadersFromHashWithSkip() {
+    getHeadersFromHash(2, false);
+  }
+
+  @Test
+  public void getHeadersFromHashWithSkipReversed() {
+    getHeadersFromHash(2, true);
+  }
+
+  private void getHeadersFromHash(final int skip, final boolean reverse) {
+    // Setup a responsive peer
+    final Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
+    final RespondingEthPeer respondingPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+
+    // Set up parameters and calculated expected response
+    final long startNumber = reverse ? blockchain.getChainHeadBlockNumber() - 2 : 2;
+    final int delta = (skip + 1) * (reverse ? -1 : 1);
+    final int count = 4;
+    final List<BlockHeader> expectedHeaders = new ArrayList<>(count);
+    for (long i = 0; i < count; i++) {
+      expectedHeaders.add(blockchain.getBlockHeader(startNumber + delta * i).get());
+    }
+
+    // Execute task and wait for response
+    final AbstractGetHeadersFromPeerTask task =
+        new GetHeadersFromPeerByHashTask(
+            protocolSchedule,
+            ethContext,
+            blockchain.getBlockHashByNumber(startNumber).get(),
+            startNumber,
+            count,
+            skip,
+            reverse);
+    final AtomicReference<PeerTaskResult<List<BlockHeader>>> actualResult = new AtomicReference<>();
+    final AtomicBoolean done = new AtomicBoolean(false);
+    final CompletableFuture<PeerTaskResult<List<BlockHeader>>> future = task.run();
+    respondingPeer.respondWhile(responder, () -> !future.isDone());
+    future.whenComplete(
+        (result, error) -> {
+          actualResult.set(result);
+          done.compareAndSet(false, true);
+        });
+
+    assertThat(done).isTrue();
+    assertThat(actualResult.get().getPeer()).isEqualTo(respondingPeer.getEthPeer());
+    assertThat(actualResult.get().getResult()).isEqualTo(expectedHeaders);
+  }
+}
