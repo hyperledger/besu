@@ -46,7 +46,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
     final BigInteger r = BytesValues.asUnsignedBigInteger(d.slice(64, 32));
     final BigInteger s = BytesValues.asUnsignedBigInteger(d.slice(96, 32));
 
-    Signature signature;
+    final Signature signature;
     try {
       signature = Signature.create(r, s, (byte) recId);
     } catch (final IllegalArgumentException e) {
@@ -60,7 +60,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
     try {
       final Optional<PublicKey> recovered = PublicKey.recoverFromSignature(h, signature);
       if (!recovered.isPresent()) {
-        return BytesValue.EMPTY;
+        return Bytes32.ZERO;
       }
 
       final Bytes32 hashed = Hash.hash(recovered.get().getEncodedBytes());
@@ -68,7 +68,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
       hashed.slice(12).copyTo(result, 12);
       return result;
     } catch (final IllegalArgumentException e) {
-      return BytesValue.EMPTY;
+      return Bytes32.ZERO;
     }
   }
 }
