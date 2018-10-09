@@ -38,6 +38,8 @@ public class WebSocketServiceTest {
     vertx = Vertx.vertx();
 
     websocketConfiguration = WebSocketConfiguration.createDefault();
+    websocketConfiguration.setPort(0);
+
     final Map<String, JsonRpcMethod> websocketMethods =
         new WebSocketMethodsFactory(new SubscriptionManager(), new HashMap<>()).methods();
     webSocketRequestHandlerSpy = spy(new WebSocketRequestHandler(vertx, websocketMethods));
@@ -45,6 +47,8 @@ public class WebSocketServiceTest {
     websocketService =
         new WebSocketService(vertx, websocketConfiguration, webSocketRequestHandlerSpy);
     websocketService.start().join();
+
+    websocketConfiguration.setPort(websocketService.socketAddress().getPort());
   }
 
   @After
