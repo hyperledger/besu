@@ -15,8 +15,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class GasLimitRangeAndDeltaValidationRule implements DetachedBlockHeaderValidationRule {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(GasLimitRangeAndDeltaValidationRule.class);
+  private static final Logger LOG = LogManager.getLogger(GasLimitRangeAndDeltaValidationRule.class);
   private static final int GASLIMIT_BOUND_DIVISOR = 1024;
   private final long minGasLimit;
   private final long maxGasLimit;
@@ -37,7 +36,7 @@ public class GasLimitRangeAndDeltaValidationRule implements DetachedBlockHeaderV
     final long gasLimit = header.getGasLimit();
 
     if ((gasLimit < minGasLimit) || (gasLimit > maxGasLimit)) {
-      LOGGER.trace(
+      LOG.trace(
           "Header gasLimit = {}, outside range {} --> {}", gasLimit, minGasLimit, maxGasLimit);
       return false;
     }
@@ -46,7 +45,7 @@ public class GasLimitRangeAndDeltaValidationRule implements DetachedBlockHeaderV
     final long difference = Math.abs(parentGasLimit - gasLimit);
     final long bounds = Long.divideUnsigned(parentGasLimit, GASLIMIT_BOUND_DIVISOR);
     if (Long.compareUnsigned(difference, bounds) >= 0) {
-      LOGGER.trace(
+      LOG.trace(
           "Invalid block header: gas limit delta {} is out of bounds of {}", gasLimit, bounds);
       return false;
     }

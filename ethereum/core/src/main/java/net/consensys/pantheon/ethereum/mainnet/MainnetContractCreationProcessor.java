@@ -18,7 +18,7 @@ import org.apache.logging.log4j.Logger;
 /** A contract creation message processor. */
 public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
 
-  private static final Logger LOGGER = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   private final boolean requireCodeDepositToSucceed;
 
@@ -69,8 +69,8 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
 
   @Override
   public void start(final MessageFrame frame) {
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("Executing contract-creation");
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Executing contract-creation");
     }
 
     final MutableAccount sender = frame.getWorldState().getMutable(frame.getSenderAddress());
@@ -82,7 +82,7 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
     // incorrectly include this even in early hard forks.
     final MutableAccount contract = frame.getWorldState().getOrCreate(frame.getContractAddress());
     if (accountExists(contract)) {
-      LOGGER.trace(
+      LOG.trace(
           "Contract creation error: account as already been created for address {}",
           frame.getContractAddress());
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
@@ -100,21 +100,21 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
     final Gas depositFee = gasCalculator.codeDepositGasCost(contractCode.size());
 
     if (frame.getRemainingGas().compareTo(depositFee) < 0) {
-      LOGGER.trace(
+      LOG.trace(
           "Not enough gas to pay the code deposit fee for {}: "
               + "remaining gas = {} < {} = deposit fee",
           frame.getContractAddress(),
           frame.getRemainingGas(),
           depositFee);
       if (requireCodeDepositToSucceed) {
-        LOGGER.trace("Contract creation error: insufficient funds for code deposit");
+        LOG.trace("Contract creation error: insufficient funds for code deposit");
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
       } else {
         frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
       }
     } else {
       if (contractCode.size() > codeSizeLimit) {
-        LOGGER.trace(
+        LOG.trace(
             "Contract creation error: code size {} exceeds code size limit {}",
             contractCode.size(),
             codeSizeLimit);
@@ -126,7 +126,7 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
         final MutableAccount contract =
             frame.getWorldState().getOrCreate(frame.getContractAddress());
         contract.setCode(contractCode);
-        LOGGER.trace(
+        LOG.trace(
             "Successful creation of contract {} with code of size {} (Gas remaining: {})",
             frame.getContractAddress(),
             contractCode.size(),

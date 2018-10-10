@@ -26,7 +26,7 @@ import org.apache.logging.log4j.Logger;
 
 public class MainnetTransactionProcessor implements TransactionProcessor {
 
-  private static final Logger LOGGER = LogManager.getLogger(MainnetTransactionProcessor.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final GasCalculator gasCalculator;
 
@@ -130,7 +130,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final Transaction transaction,
       final Address miningBenficiary,
       final OperationTracer operationTracer) {
-    LOGGER.trace("Starting execution of {}", transaction);
+    LOG.trace("Starting execution of {}", transaction);
 
     ValidationResult<TransactionInvalidReason> validationResult =
         transactionValidator.validate(transaction);
@@ -138,7 +138,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     // compare against a sender account (because the transaction may not
     // be signed correctly to extract the sender).
     if (!validationResult.isValid()) {
-      LOGGER.warn("Invalid transaction: {}", validationResult.getErrorMessage());
+      LOG.warn("Invalid transaction: {}", validationResult.getErrorMessage());
       return Result.invalid(validationResult);
     }
 
@@ -147,17 +147,17 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     validationResult =
         transactionValidator.validateForSender(transaction, sender, OptionalLong.empty());
     if (!validationResult.isValid()) {
-      LOGGER.warn("Invalid transaction: {}", validationResult.getErrorMessage());
+      LOG.warn("Invalid transaction: {}", validationResult.getErrorMessage());
       return Result.invalid(validationResult);
     }
 
     final long previousNonce = sender.incrementNonce();
-    LOGGER.trace(
+    LOG.trace(
         "Incremented sender {} nonce ({} -> {})", senderAddress, previousNonce, sender.getNonce());
 
     final Wei upfrontGasCost = transaction.getUpfrontGasCost();
     final Wei previousBalance = sender.decrementBalance(upfrontGasCost);
-    LOGGER.trace(
+    LOG.trace(
         "Deducted sender {} upfront gas cost {} ({} -> {})",
         senderAddress,
         upfrontGasCost,
@@ -166,7 +166,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
 
     final Gas intrinsicGas = gasCalculator.transactionIntrinsicGasCost(transaction);
     final Gas gasAvailable = Gas.of(transaction.getGasLimit()).minus(intrinsicGas);
-    LOGGER.trace(
+    LOG.trace(
         "Gas available for execution {} = {} - {} (limit - intrinsic)",
         gasAvailable,
         transaction.getGasLimit(),
@@ -236,8 +236,8 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       worldUpdater.commit();
     }
 
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace(
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
           "Gas used by transaction: {}, by message call/contract creation: {}",
           () -> Gas.of(transaction.getGasLimit()).minus(initialFrame.getRemainingGas()),
           () -> gasAvailable.minus(initialFrame.getRemainingGas()));

@@ -15,7 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 final class WireKeepAlive extends ChannelDuplexHandler {
-  private static final Logger LOGGER = LogManager.getLogger(WireKeepAlive.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final AtomicBoolean waitingForPong;
 
@@ -37,12 +37,12 @@ final class WireKeepAlive extends ChannelDuplexHandler {
 
     if (waitingForPong.get()) {
       // We are still waiting for a response from our last pong, disconnect with timeout error
-      LOGGER.info("Wire PONG never received, disconnecting from peer.");
+      LOG.info("Wire PONG never received, disconnecting from peer.");
       connection.disconnect(DisconnectReason.TIMEOUT);
       return;
     }
 
-    LOGGER.debug("Idle connection detected, sending Wire PING to peer.");
+    LOG.debug("Idle connection detected, sending Wire PING to peer.");
     connection.send(null, PingMessage.get());
     waitingForPong.set(true);
   }

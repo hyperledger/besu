@@ -45,7 +45,7 @@ import org.apache.logging.log4j.Logger;
 
 public class JsonRpcHttpService {
 
-  private static final Logger LOGGER = LogManager.getLogger(JsonRpcHttpService.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
   private static final String APPLICATION_JSON = "application/json";
@@ -76,7 +76,7 @@ public class JsonRpcHttpService {
   }
 
   public CompletableFuture<?> start() {
-    LOGGER.info("Starting JsonRPC service on {}:{}", config.getHost(), config.getPort());
+    LOG.info("Starting JsonRPC service on {}:{}", config.getHost(), config.getPort());
     // Create the HTTP server and a router object.
     httpServer =
         vertx.createHttpServer(
@@ -105,7 +105,7 @@ public class JsonRpcHttpService {
             res -> {
               if (!res.failed()) {
                 resultFuture.complete(null);
-                LOGGER.info(
+                LOG.info(
                     "JsonRPC service started and listening on {}:{}",
                     config.getHost(),
                     httpServer.actualPort());
@@ -298,7 +298,7 @@ public class JsonRpcHttpService {
       return NO_RESPONSE;
     }
 
-    LOGGER.info("JSON-RPC request -> {}", request.getMethod());
+    LOG.info("JSON-RPC request -> {}", request.getMethod());
     // Find method handler
     final JsonRpcMethod method = jsonRpcMethods.get(request.getMethod());
     if (method == null) {
@@ -309,7 +309,7 @@ public class JsonRpcHttpService {
     try {
       return method.response(request);
     } catch (final InvalidJsonRpcParameters e) {
-      LOGGER.debug(e);
+      LOG.debug(e);
       return errorResponse(id, JsonRpcError.INVALID_PARAMS);
     }
   }

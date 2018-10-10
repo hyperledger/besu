@@ -32,7 +32,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
 
-  private static final Logger LOGGER = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   private final KeyPair nodeKeys;
   private final ProtocolSchedule<IbftContext> protocolSchedule;

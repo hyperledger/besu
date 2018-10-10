@@ -18,7 +18,7 @@ import org.apache.logging.log4j.Logger;
 
 final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
 
-  private static final Logger LOGGER = LogManager.getLogger(ApiHandler.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final CapabilityMultiplexer multiplexer;
   private final AtomicBoolean waitingForPong;
@@ -49,7 +49,7 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
     if (demultiplexed.getCapability() == null) {
       switch (message.getCode()) {
         case WireMessageCodes.PING:
-          LOGGER.debug("Received Wire PING");
+          LOG.debug("Received Wire PING");
           try {
             connection.send(null, PongMessage.get());
           } catch (final PeerNotConnected peerNotConnected) {
@@ -57,7 +57,7 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
           }
           break;
         case WireMessageCodes.PONG:
-          LOGGER.debug("Received Wire PONG");
+          LOG.debug("Received Wire PONG");
           waitingForPong.set(false);
           break;
         case WireMessageCodes.DISCONNECT:
@@ -65,18 +65,18 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
           DisconnectReason reason = null;
           try {
             reason = disconnect.getReason();
-            LOGGER.info(
+            LOG.info(
                 "Received Wire DISCONNECT ({}) from peer: {}",
                 reason.name(),
                 connection.getPeer().getClientId());
           } catch (final RLPException e) {
             // It seems pretty common to get disconnect messages with no reason, which results in an
             // rlp parsing error
-            LOGGER.warn(
+            LOG.warn(
                 "Received Wire DISCONNECT, but unable to parse reason. Peer: {}",
                 connection.getPeer().getClientId());
           } catch (final Exception e) {
-            LOGGER.error(
+            LOG.error(
                 "Received Wire DISCONNECT, but unable to parse reason. Peer: {}",
                 connection.getPeer().getClientId(),
                 e);
@@ -91,7 +91,7 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
 
   @Override
   public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable throwable) {
-    LOGGER.error("Error:", throwable);
+    LOG.error("Error:", throwable);
     callbacks.invokeDisconnect(connection, DisconnectReason.TCP_SUBSYSTEM_ERROR, false);
     ctx.close();
   }

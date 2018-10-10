@@ -87,7 +87,7 @@ import org.apache.logging.log4j.Logger;
  */
 public final class NettyP2PNetwork implements P2PNetwork {
 
-  private static final Logger LOGGER = LogManager.getLogger(NettyP2PNetwork.class);
+  private static final Logger LOG = LogManager.getLogger();
   private static final int TIMEOUT_SECONDS = 30;
 
   final Map<Capability, Subscribers<Consumer<Message>>> protocolCallbacks =
@@ -173,7 +173,7 @@ public final class NettyP2PNetwork implements P2PNetwork {
                   supportedCapabilities,
                   socketAddress.getPort(),
                   this.keyPair.getPublicKey().getEncodedBytes());
-          LOGGER.info("P2PNetwork started and listening on {}", socketAddress);
+          LOG.info("P2PNetwork started and listening on {}", socketAddress);
           latch.countDown();
         });
 
@@ -209,7 +209,7 @@ public final class NettyP2PNetwork implements P2PNetwork {
             connection -> {
               // Reject incoming connections if we've reached our limit
               if (connections.size() >= maxPeers) {
-                LOGGER.info(
+                LOG.info(
                     "Disconnecting incoming connection because connection limit of {} has been reached: {}",
                     maxPeers,
                     connection.getPeer().getNodeId());
@@ -223,7 +223,7 @@ public final class NettyP2PNetwork implements P2PNetwork {
               }
 
               onConnectionEstablished(connection);
-              LOGGER.info(
+              LOG.info(
                   "Successfully accepted connection from {}", connection.getPeer().getNodeId());
               logConnections();
             });
@@ -242,7 +242,7 @@ public final class NettyP2PNetwork implements P2PNetwork {
 
   @Override
   public CompletableFuture<PeerConnection> connect(final Peer peer) {
-    LOGGER.trace("Initiating connection to peer: {}", peer.getId());
+    LOG.trace("Initiating connection to peer: {}", peer.getId());
     final CompletableFuture<PeerConnection> connectionFuture = new CompletableFuture<>();
     final Endpoint endpoint = peer.getEndpoint();
     pendingConnections.incrementAndGet();
@@ -290,9 +290,9 @@ public final class NettyP2PNetwork implements P2PNetwork {
           pendingConnections.decrementAndGet();
           if (t == null) {
             onConnectionEstablished(connection);
-            LOGGER.info("Connection established to peer: {}", peer.getId());
+            LOG.info("Connection established to peer: {}", peer.getId());
           } else {
-            LOGGER.warn("Failed to connect to peer {}: {}", peer.getId(), t);
+            LOG.warn("Failed to connect to peer {}: {}", peer.getId(), t);
           }
           logConnections();
         });
@@ -300,7 +300,7 @@ public final class NettyP2PNetwork implements P2PNetwork {
   }
 
   private void logConnections() {
-    LOGGER.info(
+    LOG.info(
         "Connections: {} pending, {} active connections.",
         pendingConnections.get(),
         connections.size());

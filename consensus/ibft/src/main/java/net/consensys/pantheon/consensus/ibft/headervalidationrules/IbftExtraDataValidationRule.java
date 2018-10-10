@@ -26,7 +26,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidationRule<IbftContext> {
 
-  private static final Logger LOGGER = LogManager.getLogger(IbftExtraDataValidationRule.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final boolean validateCommitSeals;
 
@@ -66,7 +66,7 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
       final Collection<Address> storedValidators = validatorProvider.getCurrentValidators();
 
       if (!storedValidators.contains(proposer)) {
-        LOGGER.trace("Proposer sealing block is not a member of the validators.");
+        LOG.trace("Proposer sealing block is not a member of the validators.");
         return false;
       }
 
@@ -79,7 +79,7 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
       }
 
       if (!Iterables.elementsEqual(ibftExtraData.getValidators(), storedValidators)) {
-        LOGGER.trace(
+        LOG.trace(
             "Incorrect validators. Expected {} but got {}.",
             storedValidators,
             ibftExtraData.getValidators());
@@ -87,10 +87,10 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
       }
 
     } catch (final RLPException ex) {
-      LOGGER.trace("ExtraData field was unable to be deserialised into an IBFT Struct.", ex);
+      LOG.trace("ExtraData field was unable to be deserialised into an IBFT Struct.", ex);
       return false;
     } catch (final IllegalArgumentException ex) {
-      LOGGER.trace("Failed to verify extra data", ex);
+      LOG.trace("Failed to verify extra data", ex);
       return false;
     }
 
@@ -102,7 +102,7 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
 
     final int minimumSealsRequired = calculateRequiredValidatorQuorum(storedValidators.size());
     if (committers.size() < minimumSealsRequired) {
-      LOGGER.trace(
+      LOG.trace(
           "Insufficient committers to seal block. (Required {}, received {})",
           minimumSealsRequired,
           committers.size());
@@ -110,7 +110,7 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
     }
 
     if (!storedValidators.containsAll(committers)) {
-      LOGGER.trace("Not all committers are in the locally maintained validator list.");
+      LOG.trace("Not all committers are in the locally maintained validator list.");
       return false;
     }
 

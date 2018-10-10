@@ -16,7 +16,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class TimestampValidationRule implements DetachedBlockHeaderValidationRule {
 
-  private final Logger LOGGER = LogManager.getLogger(TimestampValidationRule.class);
+  private final Logger LOG = LogManager.getLogger(TimestampValidationRule.class);
   private final long acceptableClockDriftSeconds;
   private final long minimumSecondsSinceParent;
 
@@ -42,7 +42,7 @@ public class TimestampValidationRule implements DetachedBlockHeaderValidationRul
   private boolean validateHeaderSufficientlyAheadOfParent(
       final long timestamp, final long parentTimestamp) {
     if ((timestamp - minimumSecondsSinceParent) < parentTimestamp) {
-      LOGGER.trace(
+      LOG.trace(
           "Invalid block header: timestamp {} is not sufficiently newer than parent timestamp {}",
           timestamp,
           parentTimestamp);
@@ -57,7 +57,7 @@ public class TimestampValidationRule implements DetachedBlockHeaderValidationRul
         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
             + acceptableClockDriftSeconds;
     if (Long.compareUnsigned(timestamp, timestampMargin) > 0) {
-      LOGGER.trace(
+      LOG.trace(
           "Invalid block header: timestamp {} is greater than the timestamp margin {}",
           timestamp,
           timestampMargin);

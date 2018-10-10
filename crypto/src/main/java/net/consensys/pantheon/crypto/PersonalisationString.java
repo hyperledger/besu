@@ -14,7 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class PersonalisationString {
-  private static final Logger LOGGER = LogManager.getLogger(PersonalisationString.class);
+  private static final Logger LOG = LogManager.getLogger(PersonalisationString.class);
   private static final byte[] NETWORK_MACS = networkHardwareAddresses();
 
   public static byte[] getPersonalizationString() {
@@ -42,7 +42,7 @@ public class PersonalisationString {
         }
       }
     } catch (SocketException | BufferOverflowException e) {
-      LOGGER.warn(
+      LOG.warn(
           "Failed to obtain network hardware address for use in random number personalisation string, "
               + "continuing without this piece of random information",
           e);

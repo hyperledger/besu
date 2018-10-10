@@ -22,7 +22,7 @@ import org.apache.logging.log4j.Logger;
 
 public class EthSendRawTransaction implements JsonRpcMethod {
 
-  private static final Logger LOGGER = LogManager.getLogger(EthSendRawTransaction.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final TransactionPool transactionPool;
   private final JsonRpcParameter parameters;
@@ -66,7 +66,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
     try {
       return Transaction.readFrom(RLP.input(BytesValue.fromHexString(hash)));
     } catch (IllegalArgumentException | RLPException e) {
-      LOGGER.debug(e);
+      LOG.debug(e);
       throw new InvalidJsonRpcRequestException("Invalid raw transaction hex", e);
     }
   }

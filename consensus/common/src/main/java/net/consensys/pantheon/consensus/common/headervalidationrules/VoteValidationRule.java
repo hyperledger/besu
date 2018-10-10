@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 public class VoteValidationRule implements DetachedBlockHeaderValidationRule {
 
-  private static final Logger LOGGER = LogManager.getLogger(VoteValidationRule.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   /**
    * Responsible for ensuring the nonce is either auth or drop.
@@ -22,7 +22,7 @@ public class VoteValidationRule implements DetachedBlockHeaderValidationRule {
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     final long nonce = header.getNonce();
     if (!VoteType.fromNonce(nonce).isPresent()) {
-      LOGGER.trace("Nonce value ({}) is neither auth or drop.", nonce);
+      LOG.trace("Nonce value ({}) is neither auth or drop.", nonce);
       return false;
     }
     return true;

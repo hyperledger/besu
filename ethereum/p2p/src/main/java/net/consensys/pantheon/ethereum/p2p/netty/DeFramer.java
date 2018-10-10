@@ -23,7 +23,7 @@ import org.apache.logging.log4j.Logger;
 
 final class DeFramer extends ByteToMessageDecoder {
 
-  private static final Logger LOG = LogManager.getLogger(DeFramer.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final CompletableFuture<PeerConnection> connectFuture;
 

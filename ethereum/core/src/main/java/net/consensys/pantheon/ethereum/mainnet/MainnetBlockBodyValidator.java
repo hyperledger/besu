@@ -18,7 +18,7 @@ import org.apache.logging.log4j.Logger;
 
 public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
 
-  private static final Logger LOGGER = LogManager.getLogger(MainnetBlockBodyValidator.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private static final int MAX_OMMERS = 2;
 
@@ -84,7 +84,7 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
 
   private static boolean validateTransactionsRoot(final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
-      LOGGER.warn(
+      LOG.warn(
           "Invalid block: transaction root mismatch (expected={}, actual={})", expected, actual);
       return false;
     }
@@ -95,7 +95,7 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
   private static boolean validateLogsBloom(
       final LogsBloomFilter expected, final LogsBloomFilter actual) {
     if (!expected.equals(actual)) {
-      LOGGER.warn(
+      LOG.warn(
           "Invalid block: logs bloom filter mismatch (expected={}, actual={})", expected, actual);
       return false;
     }
@@ -105,7 +105,7 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
 
   private static boolean validateGasUsed(final long expected, final long actual) {
     if (expected != actual) {
-      LOGGER.warn("Invalid block: gas used mismatch (expected={}, actual={})", expected, actual);
+      LOG.warn("Invalid block: gas used mismatch (expected={}, actual={})", expected, actual);
       return false;
     }
 
@@ -114,8 +114,7 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
 
   private static boolean validateReceiptsRoot(final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
-      LOGGER.warn(
-          "Invalid block: receipts root mismatch (expected={}, actual={})", expected, actual);
+      LOG.warn("Invalid block: receipts root mismatch (expected={}, actual={})", expected, actual);
       return false;
     }
 
@@ -124,7 +123,7 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
 
   private static boolean validateStateRoot(final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
-      LOGGER.warn("Invalid block: state root mismatch (expected={}, actual={})", expected, actual);
+      LOG.warn("Invalid block: state root mismatch (expected={}, actual={})", expected, actual);
       return false;
     }
 
@@ -149,7 +148,7 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
 
   private static boolean validateOmmersHash(final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
-      LOGGER.warn("Invalid block: ommers hash mismatch (expected={}, actual={})", expected, actual);
+      LOG.warn("Invalid block: ommers hash mismatch (expected={}, actual={})", expected, actual);
       return false;
     }
 
@@ -159,19 +158,18 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
   private boolean validateOmmers(
       final ProtocolContext<C> context, final BlockHeader header, final List<BlockHeader> ommers) {
     if (ommers.size() > MAX_OMMERS) {
-      LOGGER.warn(
-          "Invalid block: ommer count {} exceeds ommer limit {}", ommers.size(), MAX_OMMERS);
+      LOG.warn("Invalid block: ommer count {} exceeds ommer limit {}", ommers.size(), MAX_OMMERS);
       return false;
     }
 
     if (!areOmmersUnique(ommers)) {
-      LOGGER.warn("Invalid block: ommers are not unique");
+      LOG.warn("Invalid block: ommers are not unique");
       return false;
     }
 
     for (final BlockHeader ommer : ommers) {
       if (!isOmmerValid(context, header, ommer)) {
-        LOGGER.warn("Invalid block: ommer is invalid");
+        LOG.warn("Invalid block: ommer is invalid");
         return false;
       }
     }

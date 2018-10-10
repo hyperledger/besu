@@ -25,7 +25,7 @@ import org.rocksdb.WriteOptions;
 
 public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
 
-  private static final Logger logger = LogManager.getLogger(RocksDbKeyValueStorage.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final Options options;
   private final TransactionDBOptions txOptions;
@@ -106,7 +106,7 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
 
   private void throwIfClosed() {
     if (closed.get()) {
-      logger.error("Attempting to use a closed RocksDbKeyValueStorage");
+      LOG.error("Attempting to use a closed RocksDbKeyValueStorage");
       throw new IllegalStateException("Storage has been closed");
     }
   }
@@ -140,7 +140,7 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
       try {
         rocksIt.status();
       } catch (final RocksDBException e) {
-        logger.error("RocksDbEntryIterator encountered a problem while iterating.", e);
+        LOG.error("RocksDbEntryIterator encountered a problem while iterating.", e);
       }
       if (!hasNext()) {
         throw new NoSuchElementException();

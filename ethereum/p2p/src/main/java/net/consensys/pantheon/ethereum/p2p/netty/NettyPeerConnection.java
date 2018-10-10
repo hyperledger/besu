@@ -27,7 +27,7 @@ import org.apache.logging.log4j.Logger;
 
 final class NettyPeerConnection implements PeerConnection {
 
-  private static final Logger LOGGER = LogManager.getLogger(NettyPeerConnection.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final ChannelHandlerContext ctx;
   private final PeerInfo peerInfo;
@@ -74,7 +74,7 @@ final class NettyPeerConnection implements PeerConnection {
       }
     }
 
-    LOGGER.debug("Writing {} to {} via protocol {}", message, peerInfo, capability);
+    LOG.debug("Writing {} to {} via protocol {}", message, peerInfo, capability);
     ctx.channel().writeAndFlush(new OutboundMessage(capability, message));
   }
 
@@ -96,7 +96,7 @@ final class NettyPeerConnection implements PeerConnection {
   @Override
   public void terminateConnection(final DisconnectReason reason, final boolean peerInitiated) {
     if (disconnectDispatched.compareAndSet(false, true)) {
-      LOGGER.info("Disconnected ({}) from {}", reason, peerInfo);
+      LOG.info("Disconnected ({}) from {}", reason, peerInfo);
       callbacks.invokeDisconnect(this, reason, peerInitiated);
       disconnected.set(true);
     }
@@ -108,7 +108,7 @@ final class NettyPeerConnection implements PeerConnection {
   @Override
   public void disconnect(final DisconnectReason reason) {
     if (disconnectDispatched.compareAndSet(false, true)) {
-      LOGGER.info("Disconnecting ({}) from {}", reason, peerInfo);
+      LOG.info("Disconnecting ({}) from {}", reason, peerInfo);
       callbacks.invokeDisconnect(this, reason, false);
       try {
         send(null, DisconnectMessage.create(reason));

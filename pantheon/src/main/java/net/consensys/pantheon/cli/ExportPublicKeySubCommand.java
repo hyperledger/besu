@@ -27,7 +27,7 @@ import picocli.CommandLine.ParentCommand;
 )
 class ExportPublicKeySubCommand implements Runnable {
 
-  private static final Logger LOGGER = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   @Parameters(arity = "1..1", paramLabel = "PATH", description = "File to write public key to")
   private final File publicKeyExportFile = null;
@@ -49,7 +49,7 @@ class ExportPublicKeySubCommand implements Runnable {
     try (BufferedWriter fileWriter = Files.newBufferedWriter(path, UTF_8)) {
       fileWriter.write(keyPair.getPublicKey().toString());
     } catch (final IOException e) {
-      LOGGER.error("An error occurred while trying to write the public key", e);
+      LOG.error("An error occurred while trying to write the public key", e);
     }
   }
 }

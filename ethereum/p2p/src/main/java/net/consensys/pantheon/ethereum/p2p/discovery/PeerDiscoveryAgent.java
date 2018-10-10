@@ -78,7 +78,7 @@ import org.apache.logging.log4j.Logger;
  * </ol>
  */
 public class PeerDiscoveryAgent implements DisconnectCallback {
-  private static final Logger LOG = LogManager.getLogger(PeerDiscoveryAgent.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.

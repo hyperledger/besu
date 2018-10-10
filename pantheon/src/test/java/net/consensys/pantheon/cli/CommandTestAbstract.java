@@ -37,7 +37,7 @@ import picocli.CommandLine.RunLast;
 @RunWith(MockitoJUnitRunner.class)
 public abstract class CommandTestAbstract {
 
-  private final Logger LOGGER = LogManager.getLogger();
+  private final Logger LOG = LogManager.getLogger();
 
   final ByteArrayOutputStream commandOutput = new ByteArrayOutputStream();
   private final PrintStream outPrintStream = new PrintStream(commandOutput);
@@ -74,8 +74,8 @@ public abstract class CommandTestAbstract {
   // Display outputs for debug purpose
   @After
   public void displayOutput() {
-    LOGGER.info("Standard output {}", commandOutput.toString());
-    LOGGER.info("Standard error {}", commandErrorOutput.toString());
+    LOG.info("Standard output {}", commandOutput.toString());
+    LOG.info("Standard error {}", commandErrorOutput.toString());
   }
 
   void parseCommand(final String... args) {

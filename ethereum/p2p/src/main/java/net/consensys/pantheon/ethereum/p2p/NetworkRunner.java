@@ -26,7 +26,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class NetworkRunner implements AutoCloseable {
-  private static final Logger LOGGER = LogManager.getLogger(NetworkRunner.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final CountDownLatch shutdown = new CountDownLatch(1);;
   private final AtomicBoolean started = new AtomicBoolean(false);
@@ -59,17 +59,17 @@ public class NetworkRunner implements AutoCloseable {
 
   public void start() {
     if (started.compareAndSet(false, true)) {
-      LOGGER.info("Starting Network.");
+      LOG.info("Starting Network.");
       setupHandlers();
       networkExecutor.submit(network);
     } else {
-      LOGGER.error("Attempted to start already running network.");
+      LOG.error("Attempted to start already running network.");
     }
   }
 
   public void stop() {
     if (stopped.compareAndSet(false, true)) {
-      LOGGER.info("Stopping Network.");
+      LOG.info("Stopping Network.");
       network.stop();
       for (final ProtocolManager protocolManager : protocolManagers) {
         protocolManager.stop();
@@ -77,7 +77,7 @@ public class NetworkRunner implements AutoCloseable {
       networkExecutor.shutdown();
       shutdown.countDown();
     } else {
-      LOGGER.error("Attempted to stop already stopped network.");
+      LOG.error("Attempted to stop already stopped network.");
     }
   }
 
@@ -88,11 +88,11 @@ public class NetworkRunner implements AutoCloseable {
       protocolManager.awaitStop();
     }
     if (!networkExecutor.awaitTermination(2L, TimeUnit.MINUTES)) {
-      LOGGER.error("Network executor did not shutdown cleanly.");
+      LOG.error("Network executor did not shutdown cleanly.");
       networkExecutor.shutdownNow();
       networkExecutor.awaitTermination(2L, TimeUnit.MINUTES);
     }
-    LOGGER.info("Network stopped.");
+    LOG.info("Network stopped.");
   }
 
   private void setupHandlers() {
@@ -108,7 +108,7 @@ public class NetworkRunner implements AutoCloseable {
                 final int code = message.getData().getCode();
                 if (!protocol.isValidMessageCode(cap.getVersion(), code)) {
                   // Handle invalid messsages by disconnecting
-                  LOGGER.info(
+                  LOG.info(
                       "Invalid message code ({}-{}, {}) received from peer, disconnecting from:",
                       cap.getName(),
                       cap.getVersion(),
