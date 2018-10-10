@@ -1,4 +1,4 @@
-# Pantheon Ethereum Client &middot; [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/ConsenSys/pantheon/blob/master/LICENSE)
+# Pantheon Ethereum Client &middot; [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 ## Pantheon Users
 
@@ -7,15 +7,15 @@ The process for building and running Pantheon as a user is different to when dev
 ### Build, Install, and Run Pantheon
 
 Building, installing, and running Pantheon is described in the Wiki:
-* [Build and Install](https://github.com/ConsenSys/pantheon/wiki/Installation)
-* [Quickstart](https://github.com/ConsenSys/pantheon/wiki/Quickstart)
+* [Build and Install](https://github.com/PegaSysEng/pantheon/wiki/Installation)
+* [Quickstart](https://github.com/PegaSysEng/pantheon/wiki/Quickstart)
 
 ### Documentation 
 
 User and reference documentation available on the Wiki includes:
-* [Command Line Options](https://github.com/ConsenSys/pantheon/wiki/Pantheon-CLI-Syntax)
-* [https://github.com/ConsenSys/pantheon/wiki/JSON-RPC-API](https://github.com/ConsenSys/pantheon/wiki/JSON-RPC-API)
-* [Docker Quickstart Tutorial](https://github.com/ConsenSys/pantheon/wiki/Docker-Quickstart)
+* [Command Line Options](https://github.com/PegaSysEng/pantheon/wiki/Pantheon-CLI-Syntax)
+* [JSON-RPC API](https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API)
+* [Docker Quickstart Tutorial](https://github.com/PegaSysEng/pantheon/wiki/Docker-Quickstart)
 
 ## Pantheon Developers
 
