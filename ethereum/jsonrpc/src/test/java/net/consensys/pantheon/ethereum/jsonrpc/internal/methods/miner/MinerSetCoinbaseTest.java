@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
-import net.consensys.pantheon.ethereum.blockcreation.MiningCoordinator;
+import net.consensys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
 import net.consensys.pantheon.ethereum.core.Address;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -24,7 +24,7 @@ public class MinerSetCoinbaseTest {
 
   private MinerSetCoinbase method;
 
-  @Mock private MiningCoordinator miningCoordinator;
+  @Mock private EthHashMiningCoordinator miningCoordinator;
 
   @Before
   public void before() {

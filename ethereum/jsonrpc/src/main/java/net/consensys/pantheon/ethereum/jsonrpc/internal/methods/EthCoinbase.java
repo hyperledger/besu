@@ -1,6 +1,6 @@
 package net.consensys.pantheon.ethereum.jsonrpc.internal.methods;
 
-import net.consensys.pantheon.ethereum.blockcreation.MiningCoordinator;
+import net.consensys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
 import net.consensys.pantheon.ethereum.core.Address;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
@@ -12,9 +12,9 @@ import java.util.Optional;
 
 public class EthCoinbase implements JsonRpcMethod {
 
-  private final MiningCoordinator miningCoordinator;
+  private final AbstractMiningCoordinator<?, ?> miningCoordinator;
 
-  public EthCoinbase(final MiningCoordinator miningCoordinator) {
+  public EthCoinbase(final AbstractMiningCoordinator<?, ?> miningCoordinator) {
     this.miningCoordinator = miningCoordinator;
   }
 

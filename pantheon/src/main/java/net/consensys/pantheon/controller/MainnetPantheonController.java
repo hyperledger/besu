@@ -6,8 +6,9 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
 import net.consensys.pantheon.ethereum.ProtocolContext;
 import net.consensys.pantheon.ethereum.blockcreation.DefaultBlockScheduler;
+import net.consensys.pantheon.ethereum.blockcreation.EthHashBlockMiner;
 import net.consensys.pantheon.ethereum.blockcreation.EthHashMinerExecutor;
-import net.consensys.pantheon.ethereum.blockcreation.MiningCoordinator;
+import net.consensys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
 import net.consensys.pantheon.ethereum.blockcreation.MiningParameters;
 import net.consensys.pantheon.ethereum.chain.GenesisConfig;
 import net.consensys.pantheon.ethereum.chain.MutableBlockchain;
@@ -41,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.Logger;
 
-public class MainnetPantheonController implements PantheonController<Void> {
+public class MainnetPantheonController implements PantheonController<Void, EthHashBlockMiner> {
 
   private static final Logger LOG = getLogger();
   public static final int MAINNET_NETWORK_ID = 1;
@@ -53,7 +54,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
   private final Synchronizer synchronizer;
 
   private final TransactionPool transactionPool;
-  private final MiningCoordinator miningCoordinator;
+  private final EthHashMiningCoordinator miningCoordinator;
   private final Runnable close;
 
   public MainnetPantheonController(
@@ -63,7 +64,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
       final Synchronizer synchronizer,
       final KeyPair keyPair,
       final TransactionPool transactionPool,
-      final MiningCoordinator miningCoordinator,
+      final EthHashMiningCoordinator miningCoordinator,
       final Runnable close) {
     this.genesisConfig = genesisConfig;
     this.protocolContext = protocolContext;
@@ -75,7 +76,8 @@ public class MainnetPantheonController implements PantheonController<Void> {
     this.close = close;
   }
 
-  public static PantheonController<Void> mainnet(final Path home) throws IOException {
+  public static PantheonController<Void, EthHashBlockMiner> mainnet(final Path home)
+      throws IOException {
     final MiningParameters miningParams = new MiningParameters(null, null, null, false);
     final KeyPair nodeKeys = loadKeyPair(home);
     return init(
@@ -87,7 +89,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
         nodeKeys);
   }
 
-  public static PantheonController<Void> init(
+  public static PantheonController<Void, EthHashBlockMiner> init(
       final Path home,
       final GenesisConfig<Void> genesisConfig,
       final SynchronizerConfiguration taintedSyncConfig,
@@ -138,8 +140,8 @@ public class MainnetPantheonController implements PantheonController<Void> {
                 MainnetBlockHeaderValidator.TIMESTAMP_TOLERANCE_S,
                 new SystemClock()));
 
-    final MiningCoordinator miningCoordinator =
-        new MiningCoordinator(protocolContext.getBlockchain(), executor);
+    final EthHashMiningCoordinator miningCoordinator =
+        new EthHashMiningCoordinator(protocolContext.getBlockchain(), executor);
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
     if (miningParams.isMiningEnabled()) {
       miningCoordinator.enable();
@@ -196,7 +198,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
   }
 
   @Override
-  public MiningCoordinator getMiningCoordinator() {
+  public EthHashMiningCoordinator getMiningCoordinator() {
     return miningCoordinator;
   }
 

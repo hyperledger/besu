@@ -8,7 +8,7 @@ import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
 import net.consensys.pantheon.ethereum.ProtocolContext;
 import net.consensys.pantheon.ethereum.blockcreation.AbstractBlockScheduler;
 import net.consensys.pantheon.ethereum.blockcreation.AbstractMinerExecutor;
-import net.consensys.pantheon.ethereum.blockcreation.MiningCoordinator.MinedBlockObserver;
+import net.consensys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator.MinedBlockObserver;
 import net.consensys.pantheon.ethereum.blockcreation.MiningParameters;
 import net.consensys.pantheon.ethereum.core.Address;
 import net.consensys.pantheon.ethereum.core.BlockHeader;

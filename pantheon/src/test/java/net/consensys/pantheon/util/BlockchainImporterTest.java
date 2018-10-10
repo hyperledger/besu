@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import net.consensys.pantheon.controller.MainnetPantheonController;
 import net.consensys.pantheon.controller.PantheonController;
 import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
+import net.consensys.pantheon.ethereum.blockcreation.EthHashBlockMiner;
 import net.consensys.pantheon.ethereum.blockcreation.MiningParameters;
 import net.consensys.pantheon.ethereum.chain.GenesisConfig;
 import net.consensys.pantheon.ethereum.core.MiningParametersTestBuilder;
@@ -53,7 +54,7 @@ public final class BlockchainImporterTest {
     final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
     final MiningParameters miningParams = new MiningParametersTestBuilder().enabled(false).build();
     final GenesisConfig<Void> genesisConfig = GenesisConfig.fromJson(genesisJson, protocolSchedule);
-    final PantheonController<Void> ctrl =
+    final PantheonController<Void, EthHashBlockMiner> ctrl =
         MainnetPantheonController.init(
             target,
             genesisConfig,

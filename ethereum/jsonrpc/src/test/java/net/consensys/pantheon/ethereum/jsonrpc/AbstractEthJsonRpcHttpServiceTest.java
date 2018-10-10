@@ -7,7 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.blockcreation.MiningCoordinator;
+import net.consensys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
 import net.consensys.pantheon.ethereum.chain.GenesisConfig;
 import net.consensys.pantheon.ethereum.chain.MutableBlockchain;
 import net.consensys.pantheon.ethereum.core.Block;
@@ -130,7 +130,7 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
     final Synchronizer synchronizerMock = mock(Synchronizer.class);
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final TransactionPool transactionPoolMock = mock(TransactionPool.class);
-    final MiningCoordinator miningCoordinatorMock = mock(MiningCoordinator.class);
+    final EthHashMiningCoordinator miningCoordinatorMock = mock(EthHashMiningCoordinator.class);
     when(transactionPoolMock.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
     final PendingTransactions pendingTransactionsMock = mock(PendingTransactions.class);

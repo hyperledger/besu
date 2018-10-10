@@ -2,7 +2,8 @@ package net.consensys.pantheon.ethereum.jsonrpc.internal.methods.miner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.blockcreation.MiningCoordinator;
+import net.consensys.pantheon.ethereum.blockcreation.EthHashBlockMiner;
+import net.consensys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -16,13 +17,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MinerStopTest {
 
-  private MinerStop method;
+  private MinerStop<Void, EthHashBlockMiner> method;
 
-  @Mock private MiningCoordinator miningCoordinator;
+  @Mock private EthHashMiningCoordinator miningCoordinator;
 
   @Before
   public void before() {
-    method = new MinerStop(miningCoordinator);
+    method = new MinerStop<>(miningCoordinator);
   }
 
   @Test
