@@ -13,6 +13,7 @@ import net.consensys.pantheon.ethereum.vm.operations.BalanceOperation;
 import net.consensys.pantheon.ethereum.vm.operations.BlockHashOperation;
 import net.consensys.pantheon.ethereum.vm.operations.ExpOperation;
 import net.consensys.pantheon.ethereum.vm.operations.ExtCodeCopyOperation;
+import net.consensys.pantheon.ethereum.vm.operations.ExtCodeHashOperation;
 import net.consensys.pantheon.ethereum.vm.operations.ExtCodeSizeOperation;
 import net.consensys.pantheon.ethereum.vm.operations.JumpDestOperation;
 import net.consensys.pantheon.ethereum.vm.operations.LogOperation;
@@ -251,6 +252,13 @@ public interface GasCalculator {
    * @return the cost for executing the external code size operation
    */
   Gas extCodeCopyOperationGasCost(MessageFrame frame, UInt256 offset, UInt256 length);
+
+  /**
+   * Returns the cost for executing a {@link ExtCodeHashOperation}.
+   *
+   * @return the cost for executing the external code hash operation
+   */
+  Gas extCodeHashOperationGasCost();
 
   /**
    * Returns the cost for executing a {@link ExtCodeSizeOperation}.

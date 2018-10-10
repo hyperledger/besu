@@ -30,6 +30,7 @@ import net.consensys.pantheon.ethereum.vm.operations.DupOperation;
 import net.consensys.pantheon.ethereum.vm.operations.EqOperation;
 import net.consensys.pantheon.ethereum.vm.operations.ExpOperation;
 import net.consensys.pantheon.ethereum.vm.operations.ExtCodeCopyOperation;
+import net.consensys.pantheon.ethereum.vm.operations.ExtCodeHashOperation;
 import net.consensys.pantheon.ethereum.vm.operations.ExtCodeSizeOperation;
 import net.consensys.pantheon.ethereum.vm.operations.GasLimitOperation;
 import net.consensys.pantheon.ethereum.vm.operations.GasOperation;
@@ -256,6 +257,7 @@ public abstract class MainnetEvmRegistries {
     builder.add(SarOperation::new);
     builder.add(ShlOperation::new);
     builder.add(ShrOperation::new);
+    builder.add(ExtCodeHashOperation::new);
 
     return builder.build();
   }

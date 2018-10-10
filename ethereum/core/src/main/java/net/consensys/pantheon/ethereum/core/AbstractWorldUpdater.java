@@ -158,6 +158,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     private Wei balance;
 
     @Nullable private BytesValue updatedCode; // Null if the underlying code has not been updated.
+    @Nullable private Hash updatedCodeHash;
 
     // Only contains update storage entries, but may contains entry with a value of 0 to signify
     // deletion.
@@ -246,6 +247,21 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     public BytesValue getCode() {
       // Note that we set code for new account, so it's only null if account isn't.
       return updatedCode == null ? account.getCode() : updatedCode;
+    }
+
+    @Override
+    public Hash getCodeHash() {
+      if (updatedCode == null) {
+        // Note that we set code for new account, so it's only null if account isn't.
+        return account.getCodeHash();
+      } else {
+        // Cache the hash of updated code to avoid DOS attacks which repeatedly request hash
+        // of updated code and cause us to regenerate it.
+        if (updatedCodeHash == null) {
+          updatedCodeHash = Hash.hash(updatedCode);
+        }
+        return updatedCodeHash;
+      }
     }
 
     @Override
