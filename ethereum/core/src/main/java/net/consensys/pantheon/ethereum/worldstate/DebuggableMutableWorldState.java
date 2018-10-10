@@ -156,5 +156,11 @@ public class DebuggableMutableWorldState extends DefaultMutableWorldState {
       record(address);
       return wrapped.get(address);
     }
+
+    @Override
+    public Account getOriginalAccount(final Address address) {
+      record(address);
+      return wrapped.getOriginalAccount(address);
+    }
   }
 }

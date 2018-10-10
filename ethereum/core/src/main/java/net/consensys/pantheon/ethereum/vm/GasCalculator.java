@@ -20,11 +20,12 @@ import net.consensys.pantheon.ethereum.vm.operations.MLoadOperation;
 import net.consensys.pantheon.ethereum.vm.operations.MStore8Operation;
 import net.consensys.pantheon.ethereum.vm.operations.MStoreOperation;
 import net.consensys.pantheon.ethereum.vm.operations.SLoadOperation;
-import net.consensys.pantheon.ethereum.vm.operations.SStoreOperation;
 import net.consensys.pantheon.ethereum.vm.operations.SelfDestructOperation;
 import net.consensys.pantheon.ethereum.vm.operations.Sha3Operation;
 import net.consensys.pantheon.util.bytes.BytesValue;
 import net.consensys.pantheon.util.uint.UInt256;
+
+import java.util.function.Supplier;
 
 /**
  * Provides various gas cost lookups and calculations used during block processing.
@@ -331,25 +332,25 @@ public interface GasCalculator {
   Gas getSloadOperationGasCost();
 
   /**
-   * Returns the cost for clearing a value in a {@link SStoreOperation}.
+   * Returns the cost for an SSTORE operation.
    *
-   * @return the cost for clearing a value in a storage store operation
+   * @param originalValue supplies the value from prior to this transaction
+   * @param currentValue the current value in the affected storage location
+   * @param newValue the new value to be stored
+   * @return the gas cost for the SSTORE operation
    */
-  Gas getStorageResetGasCost();
+  Gas calculateStorageCost(Supplier<UInt256> originalValue, UInt256 currentValue, UInt256 newValue);
 
   /**
-   * Returns the cost for setting a value in a {@link SStoreOperation}.
+   * Returns the refund amount for an SSTORE operation.
    *
-   * @return the cost for setting a value in a storage store operation
+   * @param originalValue supplies the value from prior to this transaction
+   * @param currentValue the current value in the affected storage location
+   * @param newValue the new value to be stored
+   * @return the gas refund for the SSTORE operation
    */
-  Gas getStorageSetGasCost();
-
-  /**
-   * Returns the refund amount for clearing a storage location in a {@link SStoreOperation}.
-   *
-   * @return the refund amount for clearing a storage store operation
-   */
-  Gas getStorageResetRefundAmount();
+  Gas calculateStorageRefundAmount(
+      Supplier<UInt256> originalValue, UInt256 currentValue, UInt256 newValue);
 
   /**
    * Returns the refund amount for deleting an account in a {@link SelfDestructOperation}.

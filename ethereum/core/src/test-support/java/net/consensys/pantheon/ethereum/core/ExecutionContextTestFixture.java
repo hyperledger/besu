@@ -22,14 +22,18 @@ public class ExecutionContextTestFixture {
   private final WorldStateArchive stateArchive =
       new WorldStateArchive(new KeyValueStorageWorldStateStorage(keyValueStorage));
 
-  ProtocolSchedule<Void> protocolSchedule =
-      MainnetProtocolSchedule.create(2, 3, 10, 11, 12, -1, 42);
+  ProtocolSchedule<Void> protocolSchedule;
   ProtocolContext<Void> protocolContext = new ProtocolContext<>(blockchain, stateArchive, null);
 
   public ExecutionContextTestFixture() {
+    this(MainnetProtocolSchedule.create(2, 3, 10, 11, 12, -1, 42));
+  }
+
+  public ExecutionContextTestFixture(final ProtocolSchedule<Void> protocolSchedule) {
     GenesisConfig.mainnet()
         .writeStateTo(
             new DefaultMutableWorldState(new KeyValueStorageWorldStateStorage(keyValueStorage)));
+    this.protocolSchedule = protocolSchedule;
   }
 
   public Block getGenesis() {
