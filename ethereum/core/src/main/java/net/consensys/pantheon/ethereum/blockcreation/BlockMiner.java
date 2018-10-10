@@ -32,7 +32,7 @@ public class BlockMiner<C> implements Runnable {
   private final ProtocolContext<C> protocolContext;
   private final ProtocolSchedule<C> protocolSchedule;
   private final Subscribers<MinedBlockObserver> observers;
-  private final BaseBlockScheduler scheduler;
+  private final AbstractBlockScheduler scheduler;
   private final BlockHeader parentHeader;
 
   public BlockMiner(
@@ -40,7 +40,7 @@ public class BlockMiner<C> implements Runnable {
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final Subscribers<MinedBlockObserver> observers,
-      final BaseBlockScheduler scheduler,
+      final AbstractBlockScheduler scheduler,
       final BlockHeader parentHeader) {
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;

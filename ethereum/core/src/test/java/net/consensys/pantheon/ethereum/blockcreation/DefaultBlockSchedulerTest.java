@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.ethereum.blockcreation.BaseBlockScheduler.BlockCreationTimeResult;
+import net.consensys.pantheon.ethereum.blockcreation.AbstractBlockScheduler.BlockCreationTimeResult;
 import net.consensys.pantheon.ethereum.core.BlockHeader;
 import net.consensys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import net.consensys.pantheon.util.time.Clock;

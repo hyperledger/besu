@@ -3,11 +3,11 @@ package net.consensys.pantheon.ethereum.blockcreation;
 import net.consensys.pantheon.ethereum.core.BlockHeader;
 import net.consensys.pantheon.util.time.Clock;
 
-public abstract class BaseBlockScheduler {
+public abstract class AbstractBlockScheduler {
 
   protected final Clock clock;
 
-  public BaseBlockScheduler(final Clock clock) {
+  public AbstractBlockScheduler(final Clock clock) {
     this.clock = clock;
   }
 
