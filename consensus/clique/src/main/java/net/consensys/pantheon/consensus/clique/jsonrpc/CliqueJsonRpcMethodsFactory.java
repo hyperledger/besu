@@ -2,6 +2,7 @@ package net.consensys.pantheon.consensus.clique.jsonrpc;
 
 import net.consensys.pantheon.consensus.clique.CliqueContext;
 import net.consensys.pantheon.consensus.clique.jsonrpc.methods.CliqueGetSigners;
+import net.consensys.pantheon.consensus.clique.jsonrpc.methods.CliqueGetSignersAtHash;
 import net.consensys.pantheon.consensus.clique.jsonrpc.methods.Discard;
 import net.consensys.pantheon.consensus.clique.jsonrpc.methods.Propose;
 import net.consensys.pantheon.ethereum.ProtocolContext;
@@ -22,9 +23,11 @@ public class CliqueJsonRpcMethodsFactory {
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, worldStateArchive);
     final JsonRpcParameter jsonRpcParameter = new JsonRpcParameter();
+
     final CliqueGetSigners cliqueGetSigners =
         new CliqueGetSigners(blockchainQueries, jsonRpcParameter);
-
+    final CliqueGetSignersAtHash cliqueGetSignersAtHash =
+        new CliqueGetSignersAtHash(blockchainQueries, jsonRpcParameter);
     final Propose proposeRpc =
         new Propose(context.getConsensusState().getVoteProposer(), jsonRpcParameter);
     final Discard discardRpc =
@@ -32,6 +35,7 @@ public class CliqueJsonRpcMethodsFactory {
 
     final Map<String, JsonRpcMethod> rpcMethods = new HashMap<>();
     rpcMethods.put(cliqueGetSigners.getName(), cliqueGetSigners);
+    rpcMethods.put(cliqueGetSignersAtHash.getName(), cliqueGetSignersAtHash);
     rpcMethods.put(proposeRpc.getName(), proposeRpc);
     rpcMethods.put(discardRpc.getName(), discardRpc);
     return rpcMethods;
