@@ -12,12 +12,12 @@ import org.apache.logging.log4j.Logger;
  */
 public class GasUsageValidationRule implements DetachedBlockHeaderValidationRule {
 
-  private final Logger LOGGER = LogManager.getLogger(GasUsageValidationRule.class);
+  private final Logger LOG = LogManager.getLogger(GasUsageValidationRule.class);
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     if (header.getGasUsed() > header.getGasLimit()) {
-      LOGGER.trace(
+      LOG.trace(
           "Invalid block header: gas used {} exceeds gas limit {}",
           header.getGasUsed(),
           header.getGasLimit());

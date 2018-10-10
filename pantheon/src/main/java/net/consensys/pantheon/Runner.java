@@ -22,7 +22,7 @@ public class Runner implements AutoCloseable {
 
   static final String KEY_PATH = "key";
 
-  private static final Logger LOGGER = LogManager.getLogger(Runner.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final Vertx vertx;
 
@@ -53,19 +53,19 @@ public class Runner implements AutoCloseable {
 
   public void execute() {
     try {
-      LOGGER.info("Starting Ethereum main loop ... ");
+      LOG.info("Starting Ethereum main loop ... ");
       networkRunner.start();
       pantheonController.getSynchronizer().start();
       jsonRpc.ifPresent(service -> service.start().join());
       websocketRpc.ifPresent(service -> service.start().join());
-      LOGGER.info("Ethereum main loop is up.");
+      LOG.info("Ethereum main loop is up.");
       writePantheonPortsToFile();
       networkRunner.awaitStop();
     } catch (final InterruptedException e) {
-      LOGGER.debug("Interrupted, exiting", e);
+      LOG.debug("Interrupted, exiting", e);
       Thread.currentThread().interrupt();
     } catch (final Exception ex) {
-      LOGGER.error("Exception in main loop:", ex);
+      LOG.error("Exception in main loop:", ex);
       throw new IllegalStateException(ex);
     }
   }
@@ -111,7 +111,7 @@ public class Runner implements AutoCloseable {
           fileOutputStream,
           "This file contains the ports used by the running instance of Pantheon. This file will be deleted after the node is shutdown.");
     } catch (final Exception e) {
-      LOGGER.warn("Error writing ports file", e);
+      LOG.warn("Error writing ports file", e);
     }
   }
 

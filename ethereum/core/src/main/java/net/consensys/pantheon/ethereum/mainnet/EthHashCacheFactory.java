@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 public class EthHashCacheFactory {
 
-  private static final Logger LOGGER = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   public static class EthHashDescriptor {
     private final long datasetSize;

@@ -79,7 +79,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class PeerDiscoveryController {
 
-  private static final Logger LOG = LogManager.getLogger(PeerDiscoveryController.class);
+  private static final Logger LOG = LogManager.getLogger();
   private static final long REFRESH_CHECK_INTERVAL_MILLIS = MILLISECONDS.convert(30, SECONDS);
   private final Vertx vertx;
   private final PeerTable peerTable;

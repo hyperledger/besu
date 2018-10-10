@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 
 public class WebSocketRequestHandler {
 
-  private static final Logger LOGGER = LogManager.getLogger(WebSocketRequestHandler.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final Vertx vertx;
   private final Map<String, JsonRpcMethod> methods;
@@ -32,23 +32,23 @@ public class WebSocketRequestHandler {
           try {
             request = buffer.toJsonObject().mapTo(WebSocketRpcRequest.class);
           } catch (IllegalArgumentException | DecodeException e) {
-            LOGGER.debug("Error mapping json to WebSocketRpcRequest", e);
+            LOG.debug("Error mapping json to WebSocketRpcRequest", e);
             future.complete(JsonRpcError.INVALID_REQUEST);
             return;
           }
 
           if (!methods.containsKey(request.getMethod())) {
             future.complete(JsonRpcError.METHOD_NOT_FOUND);
-            LOGGER.debug("Can't find method {}", request.getMethod());
+            LOG.debug("Can't find method {}", request.getMethod());
             return;
           }
           final JsonRpcMethod method = methods.get(request.getMethod());
           try {
-            LOGGER.info("WS-RPC request -> {}", request.getMethod());
+            LOG.info("WS-RPC request -> {}", request.getMethod());
             request.setConnectionId(id);
             future.complete(method.response(request));
           } catch (final Exception e) {
-            LOGGER.error(JsonRpcError.INTERNAL_ERROR.getMessage(), e);
+            LOG.error(JsonRpcError.INTERNAL_ERROR.getMessage(), e);
             future.complete(JsonRpcError.INTERNAL_ERROR);
           }
         },

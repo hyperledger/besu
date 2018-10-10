@@ -31,7 +31,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class ProposerSelector {
 
-  private static final Logger LOGGER = LogManager.getLogger(ProposerSelector.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final Blockchain blockchain;
 
@@ -143,7 +143,7 @@ public class ProposerSelector {
       final IbftExtraData extraData = IbftExtraData.decode(blockHeader.getExtraData());
       return IbftBlockHashing.recoverProposerAddress(blockHeader, extraData);
     } else {
-      LOGGER.trace("Unable to determine proposer for requested block");
+      LOG.trace("Unable to determine proposer for requested block");
       throw new RuntimeException("Unable to determine past proposer");
     }
   }

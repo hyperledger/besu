@@ -18,7 +18,7 @@ import org.apache.logging.log4j.Logger;
 public class IbftProtocolManager implements ProtocolManager {
   private final IbftEventQueue ibftEventQueue;
 
-  private final Logger LOGGER = LogManager.getLogger(IbftProtocolManager.class);
+  private final Logger LOG = LogManager.getLogger();
 
   /**
    * Constructor for the ibft protocol manager

@@ -17,7 +17,7 @@ import org.apache.logging.log4j.Logger;
 
 public class WebSocketService {
 
-  private static final Logger LOGGER = LogManager.getLogger(WebSocketService.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
 
@@ -37,7 +37,7 @@ public class WebSocketService {
   }
 
   public CompletableFuture<?> start() {
-    LOGGER.info(
+    LOG.info(
         "Starting Websocket service on {}:{}", configuration.getHost(), configuration.getPort());
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
@@ -60,11 +60,11 @@ public class WebSocketService {
       final SocketAddress socketAddress = websocket.remoteAddress();
       final String connectionId = websocket.textHandlerID();
 
-      LOGGER.debug("Websocket Connected ({})", socketAddressAsString(socketAddress));
+      LOG.debug("Websocket Connected ({})", socketAddressAsString(socketAddress));
 
       websocket.handler(
           buffer -> {
-            LOGGER.debug(
+            LOG.debug(
                 "Received Websocket request {} ({})",
                 buffer.toString(),
                 socketAddressAsString(socketAddress));
@@ -74,7 +74,7 @@ public class WebSocketService {
 
       websocket.closeHandler(
           v -> {
-            LOGGER.debug("Websocket Disconnected ({})", socketAddressAsString(socketAddress));
+            LOG.debug("Websocket Disconnected ({})", socketAddressAsString(socketAddress));
             vertx
                 .eventBus()
                 .publish(SubscriptionManager.EVENTBUS_REMOVE_SUBSCRIPTIONS_ADDRESS, connectionId);
@@ -82,7 +82,7 @@ public class WebSocketService {
 
       websocket.exceptionHandler(
           t -> {
-            LOGGER.debug(
+            LOG.debug(
                 "Unrecoverable error on Websocket: {} ({})",
                 t.getMessage(),
                 socketAddressAsString(socketAddress));
@@ -95,7 +95,7 @@ public class WebSocketService {
     return res -> {
       if (res.succeeded()) {
 
-        LOGGER.info(
+        LOG.info(
             "Websocket service started and listening on {}:{}",
             configuration.getHost(),
             httpServer.actualPort());

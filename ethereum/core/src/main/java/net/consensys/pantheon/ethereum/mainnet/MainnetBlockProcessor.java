@@ -28,7 +28,7 @@ public class MainnetBlockProcessor implements BlockProcessor {
         TransactionProcessor.Result result, WorldState worldState, long gasUsed);
   }
 
-  private static final Logger LOGGER = LogManager.getLogger(MainnetBlockProcessor.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private static final int MAX_GENERATION = 6;
 
@@ -99,7 +99,7 @@ public class MainnetBlockProcessor implements BlockProcessor {
 
       final long remainingGasBudget = blockHeader.getGasLimit() - gasUsed;
       if (Long.compareUnsigned(transaction.getGasLimit(), remainingGasBudget) > 0) {
-        LOGGER.warn(
+        LOG.warn(
             "Transaction processing error: transaction gas limit {} exceeds available block budget remaining {}",
             transaction.getGasLimit(),
             remainingGasBudget);
@@ -149,7 +149,7 @@ public class MainnetBlockProcessor implements BlockProcessor {
     coinbase.incrementBalance(coinbaseReward);
     for (final BlockHeader ommerHeader : ommers) {
       if (ommerHeader.getNumber() - header.getNumber() > MAX_GENERATION) {
-        LOGGER.warn(
+        LOG.warn(
             "Block processing error: ommer block number {} more than {} generations current block number {}",
             ommerHeader.getNumber(),
             MAX_GENERATION,

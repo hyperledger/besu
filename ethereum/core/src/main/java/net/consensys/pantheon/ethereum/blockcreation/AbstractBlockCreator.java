@@ -39,7 +39,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
     BytesValue get(final BlockHeader parent);
   }
 
-  private static final Logger LOGGER = LogManager.getLogger(AbstractBlockCreator.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   protected final Address coinbase;
 
@@ -117,7 +117,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
           protocolSchedule.getByBlockNumber(processableBlockHeader.getNumber()).getBlockReward();
 
       if (!rewardBeneficiary(disposableWorldState, processableBlockHeader, ommers, blockReward)) {
-        LOGGER.trace("Failed to apply mining reward, exiting.");
+        LOG.trace("Failed to apply mining reward, exiting.");
         throw new RuntimeException("Failed to apply mining reward.");
       }
 
@@ -147,12 +147,11 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
       return new Block(blockHeader, new BlockBody(transactionResults.getTransactions(), ommers));
 
     } catch (final CancellationException ex) {
-      LOGGER.trace("Attempt to create block was interrupted.");
+      LOG.trace("Attempt to create block was interrupted.");
       throw ex;
     } catch (final Exception ex) {
       // TODO(tmm): How are we going to know this has exploded, and thus restart it?
-      LOGGER.trace(
-          "Block creation failed unexpectedly. Will restart on next block added to chain.");
+      LOG.trace("Block creation failed unexpectedly. Will restart on next block added to chain.");
       throw ex;
     }
   }
@@ -245,7 +244,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
     beneficiary.incrementBalance(coinbaseReward);
     for (final BlockHeader ommerHeader : ommers) {
       if (ommerHeader.getNumber() - header.getNumber() > MAX_GENERATION) {
-        LOGGER.trace(
+        LOG.trace(
             "Block processing error: ommer block number {} more than {} generations current block number {}",
             ommerHeader.getNumber(),
             MAX_GENERATION,

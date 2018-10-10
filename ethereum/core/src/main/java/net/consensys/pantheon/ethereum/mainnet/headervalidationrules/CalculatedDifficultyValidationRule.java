@@ -11,7 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class CalculatedDifficultyValidationRule<C> implements AttachedBlockHeaderValidationRule<C> {
-  private final Logger LOGGER = LogManager.getLogger(CalculatedDifficultyValidationRule.class);
+  private final Logger LOG = LogManager.getLogger(CalculatedDifficultyValidationRule.class);
   private final DifficultyCalculator<C> difficultyCalculator;
 
   public CalculatedDifficultyValidationRule(final DifficultyCalculator<C> difficultyCalculator) {
@@ -27,7 +27,7 @@ public class CalculatedDifficultyValidationRule<C> implements AttachedBlockHeade
         difficultyCalculator.nextDifficulty(header.getTimestamp(), parent, context);
 
     if (actualDifficulty.compareTo(expectedDifficulty) != 0) {
-      LOGGER.trace(
+      LOG.trace(
           "Invalid block header: difficulty {} does not equal expected difficulty {}",
           actualDifficulty,
           expectedDifficulty);

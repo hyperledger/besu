@@ -15,7 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
-  private static final Logger LOGGER = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   private final PrecompileContractRegistry precompiles;
 
@@ -34,7 +34,7 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
 
   @Override
   public void start(final MessageFrame frame) {
-    LOGGER.trace("Executing message-call");
+    LOG.trace("Executing message-call");
 
     transferValue(frame);
 
@@ -49,7 +49,7 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
 
   @Override
   protected void codeSuccess(final MessageFrame frame) {
-    LOGGER.trace(
+    LOG.trace(
         "Successful message call of {} to {} (Gas remaining: {})",
         frame.getSenderAddress(),
         frame.getRecipientAddress(),
@@ -71,12 +71,12 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
         frame.getWorldState().getOrCreate(frame.getRecipientAddress());
 
     if (frame.getRecipientAddress().equals(frame.getSenderAddress())) {
-      LOGGER.trace("Message call of {} to itself: no fund transferred", frame.getSenderAddress());
+      LOG.trace("Message call of {} to itself: no fund transferred", frame.getSenderAddress());
     } else {
       final Wei prevSenderBalance = senderAccount.decrementBalance(frame.getValue());
       final Wei prevRecipientBalance = recipientAccount.incrementBalance(frame.getValue());
 
-      LOGGER.trace(
+      LOG.trace(
           "Transferred value {} for message call from {} ({} -> {}) to {} ({} -> {})",
           frame.getValue(),
           frame.getSenderAddress(),
@@ -96,7 +96,7 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
   private void executePrecompile(final PrecompiledContract contract, final MessageFrame frame) {
     final Gas gasRequirement = contract.gasRequirement(frame.getInputData());
     if (frame.getRemainingGas().compareTo(gasRequirement) < 0) {
-      LOGGER.trace(
+      LOG.trace(
           "Not enough gas available for pre-compiled contract code {}: requiring "
               + "{} but only {} gas available",
           contract,
@@ -108,14 +108,13 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
       final BytesValue output = contract.compute(frame.getInputData());
       if (output != null) {
         frame.setOutputData(output);
-        LOGGER.trace(
+        LOG.trace(
             "Precompiled contract {}  successfully executed (gas consumed: {})",
             contract,
             gasRequirement);
         frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
       } else {
-        LOGGER.trace(
-            "Precompiled contract  {} failed (gas consumed: {})", contract, gasRequirement);
+        LOG.trace("Precompiled contract  {} failed (gas consumed: {})", contract, gasRequirement);
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
       }
     }

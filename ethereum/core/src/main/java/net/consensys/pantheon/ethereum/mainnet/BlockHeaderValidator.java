@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
 
 public class BlockHeaderValidator<C> {
 
-  private static final Logger LOGGER = LogManager.getLogger(BlockHeaderValidator.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final List<Rule<C>> rules;
 
@@ -69,7 +69,7 @@ public class BlockHeaderValidator<C> {
     final Optional<BlockHeader> parent =
         context.getBlockchain().getBlockHeader(header.getParentHash());
     if (!parent.isPresent()) {
-      LOGGER.trace("Invalid block header: cannot determine parent header");
+      LOG.trace("Invalid block header: cannot determine parent header");
     }
     return parent;
   }

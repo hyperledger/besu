@@ -11,12 +11,12 @@ import org.apache.logging.log4j.Logger;
  * header.
  */
 public class AncestryValidationRule implements DetachedBlockHeaderValidationRule {
-  private final Logger LOGGER = LogManager.getLogger(AncestryValidationRule.class);
+  private final Logger LOG = LogManager.getLogger(AncestryValidationRule.class);
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     if (!header.getParentHash().equals(parent.getHash())) {
-      LOGGER.trace(
+      LOG.trace(
           "Invalid parent block header.  Parent hash {} does not match "
               + "supplied parent header {}.",
           header.getParentHash(),
@@ -25,7 +25,7 @@ public class AncestryValidationRule implements DetachedBlockHeaderValidationRule
     }
 
     if (header.getNumber() != (parent.getNumber() + 1)) {
-      LOGGER.trace(
+      LOG.trace(
           "Invalid block header: number {} is not one more than parent number {}",
           header.getNumber(),
           parent.getNumber());

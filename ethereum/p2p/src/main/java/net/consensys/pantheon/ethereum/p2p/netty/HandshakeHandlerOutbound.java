@@ -18,7 +18,7 @@ import org.apache.logging.log4j.Logger;
 
 public final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
 
-  private static final Logger LOGGER = LogManager.getLogger(HandshakeHandlerOutbound.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final ByteBuf first;
 
@@ -53,7 +53,7 @@ public final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
         .addListener(
             f -> {
               if (f.isSuccess()) {
-                LOGGER.debug(
+                LOG.debug(
                     "Wrote initial crypto handshake message to {}.", ctx.channel().remoteAddress());
               }
             });

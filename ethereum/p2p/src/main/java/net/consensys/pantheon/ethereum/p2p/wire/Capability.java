@@ -20,7 +20,7 @@ import org.apache.logging.log4j.Logger;
  *     format</a>
  */
 public class Capability {
-  private static final Logger LOGGER = LogManager.getLogger(Capability.class);
+  private static final Logger LOG = LogManager.getLogger();
   private final String name;
   private final int version;
 
@@ -28,7 +28,7 @@ public class Capability {
     // Quorum reports IBFT as "istanbul", breaking wire protocol conventions.
     // As such, this check cannot prevent connection.
     if (name.length() != 3) {
-      LOGGER.warn("Capability name '{}' is too long", name);
+      LOG.warn("Capability name '{}' is too long", name);
     }
     this.name = name;
     this.version = version;

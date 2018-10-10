@@ -31,7 +31,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class SubscriptionManager extends AbstractVerticle {
 
-  private static final Logger LOGGER = LogManager.getLogger(SubscriptionManager.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   public static final String EVENTBUS_REMOVE_SUBSCRIPTIONS_ADDRESS =
       "SubscriptionManager::removeSubscriptions";
@@ -47,7 +47,7 @@ public class SubscriptionManager extends AbstractVerticle {
   }
 
   public Long subscribe(final SubscribeRequest request) {
-    LOGGER.info("Subscribe request {}", request);
+    LOG.info("Subscribe request {}", request);
 
     final long subscriptionId = subscriptionCounter.incrementAndGet();
     final Subscription subscription = subscriptionBuilder.build(subscriptionId, request);
@@ -70,7 +70,7 @@ public class SubscriptionManager extends AbstractVerticle {
   }
 
   public boolean unsubscribe(final UnsubscribeRequest request) {
-    LOGGER.debug("Unsubscribe request subscriptionId = {}", request.getSubscriptionId());
+    LOG.debug("Unsubscribe request subscriptionId = {}", request.getSubscriptionId());
 
     if (!subscriptions.containsKey(request.getSubscriptionId())) {
       throw new SubscriptionNotFoundException(request.getSubscriptionId());
@@ -102,10 +102,10 @@ public class SubscriptionManager extends AbstractVerticle {
   void removeSubscriptions(final Message<String> message) {
     final String connectionId = message.body();
     if (connectionId == null || "".equals(connectionId)) {
-      LOGGER.warn("Received invalid connectionId ({}). No subscriptions removed.");
+      LOG.warn("Received invalid connectionId ({}). No subscriptions removed.");
     }
 
-    LOGGER.debug("Removing subscription for connectionId = {}", connectionId);
+    LOG.debug("Removing subscription for connectionId = {}", connectionId);
 
     final List<Long> subscriptionIds =
         Lists.newArrayList(

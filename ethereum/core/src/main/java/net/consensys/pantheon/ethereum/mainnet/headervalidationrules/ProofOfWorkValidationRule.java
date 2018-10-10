@@ -21,7 +21,7 @@ import org.apache.logging.log4j.Logger;
 
 public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValidationRule {
 
-  private static final Logger LOGGER = LogManager.getLogger(ProofOfWorkValidationRule.class);
+  private static final Logger LOG = LogManager.getLogger(ProofOfWorkValidationRule.class);
 
   private static final int SERIALIZED_HASH_SIZE = 33;
 
@@ -60,7 +60,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
     HASHER.hash(hashBuffer, header.getNonce(), header.getNumber(), keccak256.digest());
 
     if (header.getDifficulty().isZero()) {
-      LOGGER.trace("Rejecting header because difficulty is 0");
+      LOG.trace("Rejecting header because difficulty is 0");
       return false;
     }
     final BigInteger difficulty =
@@ -69,7 +69,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
     final UInt256 result = UInt256.wrap(Bytes32.wrap(hashBuffer, 32));
     if (result.compareTo(target) > 0) {
-      LOGGER.warn(
+      LOG.warn(
           "Invalid block header: the EthHash result {} was greater than the target {}.\n"
               + "Failing header:\n{}",
           result,
@@ -81,7 +81,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
     final Hash mixedHash =
         Hash.wrap(Bytes32.leftPad(BytesValue.wrap(hashBuffer).slice(0, Bytes32.SIZE)));
     if (!header.getMixHash().equals(mixedHash)) {
-      LOGGER.warn(
+      LOG.warn(
           "Invalid block header: header mixed hash {} does not equal calculated mixed hash {}.\n"
               + "Failing header:\n{}",
           header.getMixHash(),

@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class ExtraDataMaxLengthValidationRule implements DetachedBlockHeaderValidationRule {
 
-  private final Logger LOGGER = LogManager.getLogger(ExtraDataMaxLengthValidationRule.class);
+  private final Logger LOG = LogManager.getLogger(ExtraDataMaxLengthValidationRule.class);
   private final long maxExtraDataBytes;
 
   public ExtraDataMaxLengthValidationRule(final long maxExtraDataBytes) {
@@ -27,7 +27,7 @@ public class ExtraDataMaxLengthValidationRule implements DetachedBlockHeaderVali
 
   private boolean validateExtraData(final BytesValue extraData) {
     if (extraData.size() > maxExtraDataBytes) {
-      LOGGER.trace(
+      LOG.trace(
           "Invalid block header: extra data field length {} is greater {}",
           extraData.size(),
           maxExtraDataBytes);

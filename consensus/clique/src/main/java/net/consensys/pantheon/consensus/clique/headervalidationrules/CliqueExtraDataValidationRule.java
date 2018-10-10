@@ -20,7 +20,7 @@ import org.apache.logging.log4j.Logger;
 public class CliqueExtraDataValidationRule
     implements AttachedBlockHeaderValidationRule<CliqueContext> {
 
-  private static final Logger LOGGER = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   private final EpochManager epochManager;
 
@@ -53,10 +53,10 @@ public class CliqueExtraDataValidationRule
       return extraDataIsValid(storedValidators, header);
 
     } catch (final RLPException ex) {
-      LOGGER.trace("ExtraData field was unable to be deserialised into an Clique Struct.", ex);
+      LOG.trace("ExtraData field was unable to be deserialised into an Clique Struct.", ex);
       return false;
     } catch (final IllegalArgumentException ex) {
-      LOGGER.trace("Failed to verify extra data", ex);
+      LOG.trace("Failed to verify extra data", ex);
       return false;
     }
   }
@@ -68,13 +68,13 @@ public class CliqueExtraDataValidationRule
     final Address proposer = CliqueBlockHashing.recoverProposerAddress(header, cliqueExtraData);
 
     if (!expectedValidators.contains(proposer)) {
-      LOGGER.trace("Proposer sealing block is not a member of the validators.");
+      LOG.trace("Proposer sealing block is not a member of the validators.");
       return false;
     }
 
     if (epochManager.isEpochBlock(header.getNumber())) {
       if (!Iterables.elementsEqual(cliqueExtraData.getValidators(), expectedValidators)) {
-        LOGGER.trace(
+        LOG.trace(
             "Incorrect validators. Expected {} but got {}.",
             expectedValidators,
             cliqueExtraData.getValidators());
@@ -82,7 +82,7 @@ public class CliqueExtraDataValidationRule
       }
     } else {
       if (!cliqueExtraData.getValidators().isEmpty()) {
-        LOGGER.trace("Validator list on non-epoch blocks must be empty.");
+        LOG.trace("Validator list on non-epoch blocks must be empty.");
         return false;
       }
     }

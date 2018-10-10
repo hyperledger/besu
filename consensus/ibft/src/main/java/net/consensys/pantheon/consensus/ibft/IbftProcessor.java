@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
 
 /** Execution context for draining queued ibft events and applying them to a maintained state */
 public class IbftProcessor implements Runnable {
-  private static final Logger LOGGER = LogManager.getLogger(IbftEventQueue.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final IbftEventQueue incomingQueue;
   private final ScheduledExecutorService roundTimerExecutor;
@@ -73,7 +73,7 @@ public class IbftProcessor implements Runnable {
             try {
               stateMachine.processEvent(ibftEvent, roundTimer);
             } catch (final Exception e) {
-              LOGGER.error(
+              LOG.error(
                   "State machine threw exception while processing event {" + ibftEvent + "}", e);
             }
           });

@@ -23,7 +23,7 @@ import picocli.CommandLine.ParentCommand;
 )
 class ImportBlockchainSubCommand implements Runnable {
 
-  private static final Logger LOGGER = LogManager.getLogger(ImportBlockchainSubCommand.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   @ParentCommand
   private PantheonCommand parentCommand; // Picocli injects reference to parent command
@@ -76,7 +76,7 @@ class ImportBlockchainSubCommand implements Runnable {
 
   @Override
   public void run() {
-    LOGGER.info("Runs import sub command with blocksImportPath : {}", blocksImportPath);
+    LOG.info("Runs import sub command with blocksImportPath : {}", blocksImportPath);
 
     checkNotNull(parentCommand);
 

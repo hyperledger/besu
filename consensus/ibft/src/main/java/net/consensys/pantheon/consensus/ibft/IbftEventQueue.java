@@ -13,7 +13,7 @@ public class IbftEventQueue {
   private final BlockingQueue<IbftEvent> queue = new LinkedBlockingQueue<>();
 
   private static final int MAX_QUEUE_SIZE = 1000;
-  private static final Logger LOGGER = LogManager.getLogger(IbftEventQueue.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   /**
    * Put an Ibft event onto the queue
@@ -22,7 +22,7 @@ public class IbftEventQueue {
    */
   public void add(final IbftEvent event) {
     if (queue.size() > MAX_QUEUE_SIZE) {
-      LOGGER.warn("Queue size exceeded trying to add new ibft event {}", event.toString());
+      LOG.warn("Queue size exceeded trying to add new ibft event {}", event.toString());
     } else {
       queue.add(event);
     }
