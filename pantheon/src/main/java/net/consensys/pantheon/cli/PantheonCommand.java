@@ -182,12 +182,14 @@ public class PantheonCommand implements Runnable {
   )
   private final Integer maxTrailingPeers = Integer.MAX_VALUE;
 
-  @Option(
-    names = {"--sync-mode"},
-    paramLabel = MANDATORY_MODE_FORMAT_HELP,
-    description =
-        "Synchronization mode (Value can be one of ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE})"
-  )
+  // TODO: Re-enable as per NC-1057/NC-1681
+  //  @Option(
+  //    names = {"--sync-mode"},
+  //    paramLabel = MANDATORY_MODE_FORMAT_HELP,
+  //    description =
+  //        "Synchronization mode (Value can be one of ${COMPLETION-CANDIDATES}, default:
+  // ${DEFAULT-VALUE})"
+  //  )
   private final SyncMode syncMode = DEFAULT_SYNC_MODE;
 
   // Boolean option to indicate if the client have to sync against the ottoman test network
