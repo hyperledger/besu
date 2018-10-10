@@ -4,7 +4,9 @@ import net.consensys.pantheon.consensus.clique.CliqueProtocolSchedule;
 import net.consensys.pantheon.consensus.ibft.IbftProtocolSchedule;
 import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
 import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.blockcreation.MiningCoordinator;
+import net.consensys.pantheon.ethereum.blockcreation.AbstractBlockCreator;
+import net.consensys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
+import net.consensys.pantheon.ethereum.blockcreation.BlockMiner;
 import net.consensys.pantheon.ethereum.blockcreation.MiningParameters;
 import net.consensys.pantheon.ethereum.chain.GenesisConfig;
 import net.consensys.pantheon.ethereum.core.Synchronizer;
@@ -20,11 +22,12 @@ import java.nio.file.Path;
 
 import io.vertx.core.json.JsonObject;
 
-public interface PantheonController<C> extends Closeable {
+public interface PantheonController<C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>>
+    extends Closeable {
 
   String DATABASE_PATH = "database";
 
-  static PantheonController<?> fromConfig(
+  static PantheonController<?, ?> fromConfig(
       final SynchronizerConfiguration syncConfig,
       final String configContents,
       final Path pantheonHome,
@@ -82,5 +85,5 @@ public interface PantheonController<C> extends Closeable {
 
   TransactionPool getTransactionPool();
 
-  MiningCoordinator getMiningCoordinator();
+  AbstractMiningCoordinator<C, M> getMiningCoordinator();
 }

@@ -1,16 +1,19 @@
 package net.consensys.pantheon.ethereum.jsonrpc.internal.methods.miner;
 
-import net.consensys.pantheon.ethereum.blockcreation.MiningCoordinator;
+import net.consensys.pantheon.ethereum.blockcreation.AbstractBlockCreator;
+import net.consensys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
+import net.consensys.pantheon.ethereum.blockcreation.BlockMiner;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
-public class MinerStop implements JsonRpcMethod {
+public class MinerStop<C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>>
+    implements JsonRpcMethod {
 
-  private final MiningCoordinator miningCoordinator;
+  private final AbstractMiningCoordinator<C, M> miningCoordinator;
 
-  public MinerStop(final MiningCoordinator miningCoordinator) {
+  public MinerStop(final AbstractMiningCoordinator<C, M> miningCoordinator) {
     this.miningCoordinator = miningCoordinator;
   }
 

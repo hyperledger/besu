@@ -1,6 +1,6 @@
 package net.consensys.pantheon.ethereum.jsonrpc;
 
-import net.consensys.pantheon.ethereum.blockcreation.MiningCoordinator;
+import net.consensys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
 import net.consensys.pantheon.ethereum.chain.Blockchain;
 import net.consensys.pantheon.ethereum.core.Synchronizer;
 import net.consensys.pantheon.ethereum.core.TransactionPool;
@@ -83,7 +83,7 @@ public class JsonRpcMethodsFactory {
       final Synchronizer synchronizer,
       final TransactionPool transactionPool,
       final ProtocolSchedule<?> protocolSchedule,
-      final MiningCoordinator miningCoordinator,
+      final AbstractMiningCoordinator<?, ?> miningCoordinator,
       final Set<Capability> supportedCapabilities,
       final Collection<RpcApis> rpcApis) {
     final BlockchainQueries blockchainQueries =
@@ -113,7 +113,7 @@ public class JsonRpcMethodsFactory {
       final ProtocolSchedule<?> protocolSchedule,
       final FilterManager filterManager,
       final TransactionPool transactionPool,
-      final MiningCoordinator miningCoordinator,
+      final AbstractMiningCoordinator<?, ?> miningCoordinator,
       final Set<Capability> supportedCapabilities,
       final Collection<RpcApis> rpcApis) {
     final Map<String, JsonRpcMethod> enabledMethods = new HashMap<>();
@@ -164,10 +164,10 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries.getWorldStateArchive(),
                   protocolSchedule),
               parameter),
-          new EthMining(miningCoordinator),
+          new EthMining<>(miningCoordinator),
           new EthCoinbase(miningCoordinator),
           new EthProtocolVersion(supportedCapabilities),
-          new EthGasPrice(miningCoordinator));
+          new EthGasPrice<>(miningCoordinator));
     }
     if (rpcApis.contains(RpcApis.DEBUG)) {
       final BlockReplay blockReplay =
@@ -196,8 +196,8 @@ public class JsonRpcMethodsFactory {
       final MinerSetCoinbase minerSetCoinbase = new MinerSetCoinbase(miningCoordinator, parameter);
       addMethods(
           enabledMethods,
-          new MinerStart(miningCoordinator),
-          new MinerStop(miningCoordinator),
+          new MinerStart<>(miningCoordinator),
+          new MinerStop<>(miningCoordinator),
           minerSetCoinbase,
           new MinerSetEtherbase(minerSetCoinbase));
     }

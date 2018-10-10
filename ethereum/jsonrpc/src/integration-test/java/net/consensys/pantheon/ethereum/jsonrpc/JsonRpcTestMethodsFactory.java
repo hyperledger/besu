@@ -3,7 +3,7 @@ package net.consensys.pantheon.ethereum.jsonrpc;
 import static org.mockito.Mockito.mock;
 
 import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.blockcreation.MiningCoordinator;
+import net.consensys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
 import net.consensys.pantheon.ethereum.chain.MutableBlockchain;
 import net.consensys.pantheon.ethereum.core.Block;
 import net.consensys.pantheon.ethereum.core.BlockImporter;
@@ -67,7 +67,7 @@ public class JsonRpcTestMethodsFactory {
     final TransactionPool transactionPool = mock(TransactionPool.class);
     final FilterManager filterManager =
         new FilterManager(blockchainQueries, transactionPool, new FilterIdGenerator());
-    final MiningCoordinator miningCoordinator = mock(MiningCoordinator.class);
+    final EthHashMiningCoordinator miningCoordinator = mock(EthHashMiningCoordinator.class);
 
     return new JsonRpcMethodsFactory()
         .methods(

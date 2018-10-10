@@ -1,7 +1,7 @@
 package net.consensys.pantheon.ethereum.blockcreation;
 
 import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.blockcreation.MiningCoordinator.MinedBlockObserver;
+import net.consensys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator.MinedBlockObserver;
 import net.consensys.pantheon.ethereum.core.BlockHeader;
 import net.consensys.pantheon.ethereum.mainnet.EthHashBlockCreator;
 import net.consensys.pantheon.ethereum.mainnet.EthHashSolution;

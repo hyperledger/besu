@@ -33,7 +33,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
     }
 
     final PantheonControllerBuilder builder = new PantheonControllerBuilder();
-    PantheonController<?> pantheonController;
+    PantheonController<?, ?> pantheonController;
     try {
       pantheonController =
           builder.build(

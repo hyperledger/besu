@@ -39,7 +39,7 @@ class ExportPublicKeySubCommand implements Runnable {
   @Override
   public void run() {
 
-    final PantheonController<?> controller = parentCommand.buildController();
+    final PantheonController<?, ?> controller = parentCommand.buildController();
     final KeyPair keyPair = controller.getLocalNodeKeyPair();
 
     // this publicKeyExportFile can never be null because of Picocli arity requirement

@@ -2,7 +2,7 @@ package net.consensys.pantheon.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import net.consensys.pantheon.ethereum.blockcreation.MiningCoordinator.MinedBlockObserver;
+import net.consensys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator.MinedBlockObserver;
 import net.consensys.pantheon.ethereum.chain.Blockchain;
 import net.consensys.pantheon.ethereum.core.Block;
 import net.consensys.pantheon.ethereum.core.Hash;

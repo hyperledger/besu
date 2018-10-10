@@ -7,6 +7,7 @@ import net.consensys.pantheon.controller.MainnetPantheonController;
 import net.consensys.pantheon.controller.PantheonController;
 import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
 import net.consensys.pantheon.ethereum.ProtocolContext;
+import net.consensys.pantheon.ethereum.blockcreation.EthHashBlockMiner;
 import net.consensys.pantheon.ethereum.chain.GenesisConfig;
 import net.consensys.pantheon.ethereum.core.Block;
 import net.consensys.pantheon.ethereum.core.BlockImporter;
@@ -78,7 +79,7 @@ public final class RunnerTest {
             .build();
 
     // Setup state with block data
-    try (final PantheonController<Void> controller =
+    try (final PantheonController<Void, EthHashBlockMiner> controller =
         MainnetPantheonController.init(
             dbAhead,
             GenesisConfig.mainnet(),
@@ -90,7 +91,7 @@ public final class RunnerTest {
     }
 
     // Setup Runner with blocks
-    final PantheonController<Void> controllerAhead =
+    final PantheonController<Void, EthHashBlockMiner> controllerAhead =
         MainnetPantheonController.init(
             dbAhead,
             GenesisConfig.mainnet(),
@@ -124,7 +125,7 @@ public final class RunnerTest {
       // Setup runner with no block data
       final Path dbBehind = temp.newFolder().toPath();
       final KeyPair behindDbNodeKeys = loadKeyPair(dbBehind);
-      final PantheonController<Void> controllerBehind =
+      final PantheonController<Void, EthHashBlockMiner> controllerBehind =
           MainnetPantheonController.init(
               temp.newFolder().toPath(),
               GenesisConfig.mainnet(),

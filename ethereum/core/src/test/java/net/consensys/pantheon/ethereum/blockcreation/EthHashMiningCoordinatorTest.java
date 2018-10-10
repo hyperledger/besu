@@ -14,15 +14,15 @@ import java.util.Optional;
 
 import org.junit.Test;
 
-public class MiningCoordinatorTest {
+public class EthHashMiningCoordinatorTest {
 
   private final ExecutionContextTestFixture executionContext = new ExecutionContextTestFixture();
 
   @Test
   public void miningCoordinatorIsCreatedDisabledWithNoReportableMiningStatistics() {
     final EthHashMinerExecutor executor = mock(EthHashMinerExecutor.class);
-    final MiningCoordinator miningCoordinator =
-        new MiningCoordinator(executionContext.getBlockchain(), executor);
+    final EthHashMiningCoordinator miningCoordinator =
+        new EthHashMiningCoordinator(executionContext.getBlockchain(), executor);
     final EthHashSolution solution = new EthHashSolution(1L, Hash.EMPTY, new byte[Bytes32.SIZE]);
 
     assertThat(miningCoordinator.isRunning()).isFalse();
@@ -46,8 +46,8 @@ public class MiningCoordinatorTest {
     final EthHashMinerExecutor executor = mock(EthHashMinerExecutor.class);
     when(executor.startAsyncMining(any(), any())).thenReturn(miner);
 
-    final MiningCoordinator miningCoordinator =
-        new MiningCoordinator(executionContext.getBlockchain(), executor);
+    final EthHashMiningCoordinator miningCoordinator =
+        new EthHashMiningCoordinator(executionContext.getBlockchain(), executor);
 
     miningCoordinator.enable(); // Must enable prior returning data
     assertThat(miningCoordinator.hashesPerSecond()).isEqualTo(hashRate1);

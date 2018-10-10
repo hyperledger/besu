@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-import net.consensys.pantheon.ethereum.blockcreation.MiningCoordinator;
+import net.consensys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
 import net.consensys.pantheon.ethereum.core.Synchronizer;
 import net.consensys.pantheon.ethereum.core.TransactionPool;
 import net.consensys.pantheon.ethereum.eth.EthProtocol;
@@ -162,7 +162,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     MainnetProtocolSchedule.create(),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
-                    mock(MiningCoordinator.class),
+                    mock(EthHashMiningCoordinator.class),
                     supportedCapabilities,
                     config.getRpcApis()));
     final JsonRpcHttpService jsonRpcHttpService = new JsonRpcHttpService(vertx, config, rpcMethods);

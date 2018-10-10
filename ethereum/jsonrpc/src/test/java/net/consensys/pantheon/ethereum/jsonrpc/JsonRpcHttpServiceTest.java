@@ -7,7 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.ethereum.blockcreation.MiningCoordinator;
+import net.consensys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
 import net.consensys.pantheon.ethereum.core.Address;
 import net.consensys.pantheon.ethereum.core.Block;
 import net.consensys.pantheon.ethereum.core.BlockHeader;
@@ -102,7 +102,7 @@ public class JsonRpcHttpServiceTest {
                     MainnetProtocolSchedule.create(),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
-                    mock(MiningCoordinator.class),
+                    mock(EthHashMiningCoordinator.class),
                     supportedCapabilities,
                     JSON_RPC_APIS));
     service = createJsonRpcHttpService();
