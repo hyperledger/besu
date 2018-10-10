@@ -241,12 +241,6 @@ subprojects {
   if (file('src/jmh').directory) {
     apply plugin: 'me.champeau.gradle.jmh'
 
-    jmhCompileGeneratedClasses {
-      options.compilerArgs += [
-        '-XepDisableAllChecks'
-      ]
-    }
-
     jmh {
       // Allows to control JMH execution directly from the command line. I typical execution may look
       // like:
