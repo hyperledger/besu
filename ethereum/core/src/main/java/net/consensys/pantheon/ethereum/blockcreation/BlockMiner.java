@@ -24,19 +24,20 @@ import org.apache.logging.log4j.Logger;
  * <p>This class is responsible for mining a single block only - the AbstractBlockCreator maintains
  * state so must be destroyed between block mining activities.
  */
-public class BlockMiner<C> implements Runnable {
+public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final AbstractBlockCreator<C> blockCreator;
-  private final ProtocolContext<C> protocolContext;
+  protected final M blockCreator;
+  protected final ProtocolContext<C> protocolContext;
+  protected final BlockHeader parentHeader;
+
   private final ProtocolSchedule<C> protocolSchedule;
   private final Subscribers<MinedBlockObserver> observers;
   private final AbstractBlockScheduler scheduler;
-  private final BlockHeader parentHeader;
 
   public BlockMiner(
-      final AbstractBlockCreator<C> blockCreator,
+      final M blockCreator,
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final Subscribers<MinedBlockObserver> observers,
@@ -67,13 +68,13 @@ public class BlockMiner<C> implements Runnable {
     }
   }
 
-  private boolean mineBlock() throws InterruptedException {
+  protected boolean mineBlock() throws InterruptedException {
     // Ensure the block is allowed to be mined - i.e. the timestamp on the new block is sufficiently
     // ahead of the parent, and still within allowable clock tolerance.
-    LOG.trace("Waiting for next block timestamp to be valid.");
+    LOG.trace("Started a mining operation.");
     long newBlockTimestamp = scheduler.waitUntilNextBlockCanBeMined(parentHeader);
 
-    LOG.trace("Started a mining operation.");
+    LOG.trace("Mining a new block with timestamp {}", newBlockTimestamp);
     Block block = blockCreator.createBlock(newBlockTimestamp);
     LOG.info(
         "Block created, importing to local chain, block includes {} transactions",
