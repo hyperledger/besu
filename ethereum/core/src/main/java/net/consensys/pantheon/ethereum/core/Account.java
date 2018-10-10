@@ -66,6 +66,13 @@ public interface Account {
   BytesValue getCode();
 
   /**
+   * The hash of the EVM bytecode associated with this account.
+   *
+   * @return the hash of the account code (which may be {@link Hash#EMPTY}.
+   */
+  Hash getCodeHash();
+
+  /**
    * Whether the account has (non empty) EVM bytecode associated to it.
    *
    * <p>This is functionally equivalent to {@code !code().isEmpty()}, though could be implemented

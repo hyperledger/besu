@@ -18,6 +18,8 @@ public class ConstantinopleGasCalculator extends SpuriousDragonGasCalculator {
   private static final Gas SSTORE_DIRTY_RETURN_TO_UNUSED_REFUND_AMOUNT = Gas.of(19800);
   private static final Gas SSTORE_DIRTY_RETURN_TO_ORIGINAL_VALUE_REFUND_AMOUNT = Gas.of(4800);
 
+  private static final Gas EXTCODE_HASH_COST = Gas.of(400);
+
   @Override
   public Gas create2OperationGasCost(final MessageFrame frame) {
     final UInt256 initCodeLength = frame.getStackItem(2).asUInt256();
@@ -86,5 +88,10 @@ public class ConstantinopleGasCalculator extends SpuriousDragonGasCalculator {
         return refund;
       }
     }
+  }
+
+  @Override
+  public Gas extCodeHashOperationGasCost() {
+    return EXTCODE_HASH_COST;
   }
 }

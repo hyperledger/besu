@@ -249,6 +249,11 @@ public class DefaultMutableWorldState implements MutableWorldState {
     }
 
     @Override
+    public Hash getCodeHash() {
+      return codeHash;
+    }
+
+    @Override
     public UInt256 getStorageValue(final UInt256 key) {
       final Optional<BytesValue> val = storageTrie().get(Hash.hash(key.getBytes()));
       if (!val.isPresent()) {
