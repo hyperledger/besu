@@ -37,6 +37,10 @@ public class CliqueHelpers {
     final VoteTally validatorProvider =
         protocolContext.getConsensusState().getVoteTallyCache().getVoteTallyAtBlock(parent);
 
+    if (!validatorProvider.getCurrentValidators().contains(candidate)) {
+      return false;
+    }
+
     final int minimumUnsignedPastBlocks = minimumBlocksSincePreviousSigning(validatorProvider);
 
     final Blockchain blockchain = protocolContext.getBlockchain();
