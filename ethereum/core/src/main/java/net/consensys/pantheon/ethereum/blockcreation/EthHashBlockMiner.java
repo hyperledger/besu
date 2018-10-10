@@ -27,7 +27,7 @@ public class EthHashBlockMiner extends BlockMiner<Void> {
       final ProtocolSchedule<Void> protocolSchedule,
       final ProtocolContext<Void> protocolContext,
       final Subscribers<MinedBlockObserver> observers,
-      final BaseBlockScheduler scheduler,
+      final AbstractBlockScheduler scheduler,
       final BlockHeader parentHeader) {
     super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
     this.blockCreator = blockCreator;

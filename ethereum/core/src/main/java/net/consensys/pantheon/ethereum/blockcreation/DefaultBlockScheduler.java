@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
 
-public class DefaultBlockScheduler extends BaseBlockScheduler {
+public class DefaultBlockScheduler extends AbstractBlockScheduler {
 
   private final long acceptableClockDriftSeconds;
   private final long minimumSecondsSinceParent;
@@ -25,16 +25,14 @@ public class DefaultBlockScheduler extends BaseBlockScheduler {
   @VisibleForTesting
   public BlockCreationTimeResult getNextTimestamp(final BlockHeader parentHeader) {
     final long msSinceEpoch = clock.millisecondsSinceEpoch();
-    final long secondsSinceEpoch = TimeUnit.SECONDS.convert(msSinceEpoch, TimeUnit.MILLISECONDS);
+    final long now = TimeUnit.SECONDS.convert(msSinceEpoch, TimeUnit.MILLISECONDS);
     final long parentTimestamp = parentHeader.getTimestamp();
 
-    final long nextHeaderTimestamp =
-        Long.max(parentTimestamp + minimumSecondsSinceParent, secondsSinceEpoch);
+    final long nextHeaderTimestamp = Long.max(parentTimestamp + minimumSecondsSinceParent, now);
 
-    final long millisecondsUntilHeaderTimeStampIsValid =
-        (nextHeaderTimestamp * 1000) - (msSinceEpoch + (acceptableClockDriftSeconds * 1000));
+    final long earliestBlockTransmissionTime = nextHeaderTimestamp - acceptableClockDriftSeconds;
+    final long msUntilBlocKTransmission = (earliestBlockTransmissionTime * 1000) - msSinceEpoch;
 
-    return new BlockCreationTimeResult(
-        nextHeaderTimestamp, Math.max(0, millisecondsUntilHeaderTimeStampIsValid));
+    return new BlockCreationTimeResult(nextHeaderTimestamp, Math.max(0, msUntilBlocKTransmission));
   }
 }

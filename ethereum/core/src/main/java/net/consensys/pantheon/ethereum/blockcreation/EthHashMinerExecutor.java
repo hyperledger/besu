@@ -25,7 +25,7 @@ public class EthHashMinerExecutor {
   private volatile BytesValue extraData;
   private volatile Optional<Address> coinbase;
   private volatile Wei minTransactionGasPrice;
-  private final BaseBlockScheduler blockScheduler;
+  private final AbstractBlockScheduler blockScheduler;
 
   public EthHashMinerExecutor(
       final ProtocolContext<Void> protocolContext,
@@ -33,7 +33,7 @@ public class EthHashMinerExecutor {
       final ProtocolSchedule<Void> protocolSchedule,
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
-      final BaseBlockScheduler blockScheduler) {
+      final AbstractBlockScheduler blockScheduler) {
     this.protocolContext = protocolContext;
     this.executorService = executorService;
     this.protocolSchedule = protocolSchedule;

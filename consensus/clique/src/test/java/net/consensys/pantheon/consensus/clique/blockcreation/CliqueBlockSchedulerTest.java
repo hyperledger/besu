@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 import net.consensys.pantheon.consensus.clique.VoteTallyCache;
 import net.consensys.pantheon.consensus.common.VoteTally;
 import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
-import net.consensys.pantheon.ethereum.blockcreation.BaseBlockScheduler.BlockCreationTimeResult;
+import net.consensys.pantheon.ethereum.blockcreation.AbstractBlockScheduler.BlockCreationTimeResult;
 import net.consensys.pantheon.ethereum.core.Address;
 import net.consensys.pantheon.ethereum.core.AddressHelpers;
 import net.consensys.pantheon.ethereum.core.BlockHeader;
