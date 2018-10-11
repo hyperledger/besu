@@ -15,6 +15,7 @@ import net.consensys.pantheon.util.bytes.BytesValue;
 
 import java.util.Arrays;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.netty.buffer.ByteBuf;
 import org.bouncycastle.crypto.BlockCipher;
@@ -212,7 +213,6 @@ public class Framer {
    *
    * @param f The buffer containing
    * @param frameSize The expected
-   * @return
    */
   private MessageData processFrame(final ByteBuf f, final int frameSize) {
     final int pad = padding16(frameSize);
@@ -242,10 +242,14 @@ public class Framer {
     final int id = idbv.isZero() || idbv.size() == 0 ? 0 : idbv.get(0);
 
     // Write message data to ByteBuf, decompressing as necessary
-    ByteBuf data;
+    final ByteBuf data;
     if (compressionEnabled) {
       // Decompress data before writing to ByteBuf
       final byte[] compressedMessageData = Arrays.copyOfRange(frameData, 1, frameData.length - pad);
+      // Check message length
+      Preconditions.checkState(
+          compressor.uncompressedLength(compressedMessageData) < LENGTH_MAX_MESSAGE_FRAME,
+          "Message size in excess of maximum length.");
       final byte[] decompressedMessageData = compressor.decompress(compressedMessageData);
       data = NetworkMemoryPool.allocate(decompressedMessageData.length);
       data.writeBytes(decompressedMessageData);
@@ -301,7 +305,8 @@ public class Framer {
     }
   }
 
-  private ByteBuf frameAndReleaseMessage(final MessageData message) {
+  @VisibleForTesting
+  ByteBuf frameAndReleaseMessage(final MessageData message) {
     try {
       final int frameSize = message.getSize() + LENGTH_MESSAGE_ID;
       final int pad = padding16(frameSize);
