@@ -123,6 +123,7 @@ public class ExtCodeHashOperationTest {
             .code(new Code(BytesValue.EMPTY))
             .blockchain(blockchain)
             .completer(messageFrame -> {})
+            .miningBeneficiary(AddressHelpers.ofValue(0))
             .build();
 
     frame.pushStackItem(stackItem);

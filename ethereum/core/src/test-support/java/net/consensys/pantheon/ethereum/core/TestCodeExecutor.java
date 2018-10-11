@@ -67,6 +67,7 @@ public class TestCodeExecutor {
             .blockHeader(blockHeader)
             .depth(0)
             .completer(c -> {})
+            .miningBeneficiary(blockHeader.coinbase)
             .build();
     messageFrameStack.addFirst(initialFrame);
 

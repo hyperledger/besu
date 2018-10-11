@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import net.consensys.pantheon.ethereum.core.Address;
+import net.consensys.pantheon.ethereum.core.AddressHelpers;
 import net.consensys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import net.consensys.pantheon.ethereum.core.Gas;
 import net.consensys.pantheon.ethereum.core.MutableAccount;
@@ -205,7 +206,8 @@ public class DebugOperationTracerTest {
         .code(new Code())
         .blockHeader(new BlockHeaderTestFixture().buildHeader())
         .depth(DEPTH)
-        .completer(c -> {});
+        .completer(c -> {})
+        .miningBeneficiary(AddressHelpers.ofValue(0));
   }
 
   private Map<UInt256, UInt256> setupStorageForCapture(final MessageFrame frame) {

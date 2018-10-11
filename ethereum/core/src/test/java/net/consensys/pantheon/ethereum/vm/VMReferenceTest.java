@@ -120,6 +120,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
             .blockHeader(execEnv.getBlockHeader())
             .depth(execEnv.getDepth())
             .completer(c -> {})
+            .miningBeneficiary(execEnv.getBlockHeader().getCoinbase())
             .build();
 
     // This is normally set inside the containing message executing the code.

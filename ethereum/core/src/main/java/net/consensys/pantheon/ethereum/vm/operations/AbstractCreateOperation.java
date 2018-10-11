@@ -108,6 +108,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
             .blockHeader(frame.getBlockHeader())
             .depth(frame.getMessageStackDepth() + 1)
             .completer(child -> complete(frame, child))
+            .miningBeneficiary(frame.getMiningBeneficiary())
             .build();
 
     frame.getMessageFrameStack().addFirst(childFrame);
