@@ -215,13 +215,14 @@ public class TransientTransactionProcessorTest {
         break;
     }
 
-    when(transactionProcessor.processTransaction(any(), any(), any(), eq(transaction), any()))
+    when(transactionProcessor.processTransaction(
+            any(), any(), any(), eq(transaction), any(), any()))
         .thenReturn(result);
   }
 
   private void verifyTransactionWasProcessed(final Transaction expectedTransaction) {
     verify(transactionProcessor)
-        .processTransaction(any(), any(), any(), eq(expectedTransaction), any());
+        .processTransaction(any(), any(), any(), eq(expectedTransaction), any(), any());
   }
 
   private CallParameter callParameter() {

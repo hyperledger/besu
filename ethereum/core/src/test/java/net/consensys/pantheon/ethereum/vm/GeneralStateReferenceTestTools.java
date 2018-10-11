@@ -94,13 +94,15 @@ public class GeneralStateReferenceTestTools {
 
     final TransactionProcessor processor = transactionProcessor(spec.eip());
     final WorldUpdater worldStateUpdater = worldState.updater();
+    final TestBlockchain blockchain = new TestBlockchain(blockHeader.getNumber());
     final TransactionProcessor.Result result =
         processor.processTransaction(
-            new TestBlockchain(),
+            blockchain,
             worldStateUpdater,
             blockHeader,
             transaction,
-            blockHeader.getCoinbase());
+            blockHeader.getCoinbase(),
+            new BlockHashLookup(blockHeader, blockchain));
 
     if (!result.isInvalid()) {
       worldStateUpdater.commit();

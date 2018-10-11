@@ -10,6 +10,7 @@ import net.consensys.pantheon.ethereum.db.WorldStateArchive;
 import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import net.consensys.pantheon.ethereum.mainnet.ProtocolSpec;
 import net.consensys.pantheon.ethereum.mainnet.TransactionProcessor;
+import net.consensys.pantheon.ethereum.vm.BlockHashLookup;
 
 import java.util.Optional;
 
@@ -46,6 +47,7 @@ public class BlockReplay {
     }
     final MutableWorldState mutableWorldState =
         worldStateArchive.getMutable(previous.getStateRoot());
+    final BlockHashLookup blockHashLookup = new BlockHashLookup(header, blockchain);
     for (final Transaction transaction : body.getTransactions()) {
       if (transaction.hash().equals(transactionHash)) {
         return Optional.of(
@@ -58,7 +60,8 @@ public class BlockReplay {
             mutableWorldState.updater(),
             header,
             transaction,
-            spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header));
+            spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
+            blockHashLookup);
       }
     }
     return Optional.empty();
@@ -76,7 +79,8 @@ public class BlockReplay {
               worldState.updater(),
               blockHeader,
               transaction,
-              spec.getMiningBeneficiaryCalculator().calculateBeneficiary(blockHeader));
+              spec.getMiningBeneficiaryCalculator().calculateBeneficiary(blockHeader),
+              new BlockHashLookup(blockHeader, blockchain));
           return action.performAction(
               transaction, blockHeader, blockchain, worldState, transactionProcessor);
         });

@@ -9,6 +9,7 @@ import net.consensys.pantheon.ethereum.core.ProcessableBlockHeader;
 import net.consensys.pantheon.ethereum.core.Transaction;
 import net.consensys.pantheon.ethereum.core.WorldUpdater;
 import net.consensys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
+import net.consensys.pantheon.ethereum.vm.BlockHashLookup;
 import net.consensys.pantheon.ethereum.vm.OperationTracer;
 import net.consensys.pantheon.util.bytes.BytesValue;
 
@@ -99,9 +100,16 @@ public interface TransactionProcessor {
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
-      final Address miningBeneficiary) {
+      final Address miningBeneficiary,
+      final BlockHashLookup blockHashLookup) {
     return processTransaction(
-        blockchain, worldState, blockHeader, transaction, miningBeneficiary, NO_TRACING);
+        blockchain,
+        worldState,
+        blockHeader,
+        transaction,
+        miningBeneficiary,
+        NO_TRACING,
+        blockHashLookup);
   }
 
   /**
@@ -121,5 +129,6 @@ public interface TransactionProcessor {
       ProcessableBlockHeader blockHeader,
       Transaction transaction,
       Address miningBeneficiary,
-      OperationTracer operationTracer);
+      OperationTracer operationTracer,
+      BlockHashLookup blockHashLookup);
 }

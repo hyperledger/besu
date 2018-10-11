@@ -11,6 +11,7 @@ import net.consensys.pantheon.ethereum.core.Transaction;
 import net.consensys.pantheon.ethereum.core.Wei;
 import net.consensys.pantheon.ethereum.core.WorldUpdater;
 import net.consensys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
+import net.consensys.pantheon.ethereum.vm.BlockHashLookup;
 import net.consensys.pantheon.ethereum.vm.Code;
 import net.consensys.pantheon.ethereum.vm.GasCalculator;
 import net.consensys.pantheon.ethereum.vm.MessageFrame;
@@ -129,7 +130,8 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBenficiary,
-      final OperationTracer operationTracer) {
+      final OperationTracer operationTracer,
+      final BlockHashLookup blockHashLookup) {
     LOG.trace("Starting execution of {}", transaction);
 
     ValidationResult<TransactionInvalidReason> validationResult =
@@ -199,6 +201,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .depth(0)
               .completer(c -> {})
               .miningBeneficiary(miningBenficiary)
+              .blockHashLookup(blockHashLookup)
               .build();
 
     } else {
@@ -225,6 +228,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .depth(0)
               .completer(c -> {})
               .miningBeneficiary(miningBenficiary)
+              .blockHashLookup(blockHashLookup)
               .build();
     }
 

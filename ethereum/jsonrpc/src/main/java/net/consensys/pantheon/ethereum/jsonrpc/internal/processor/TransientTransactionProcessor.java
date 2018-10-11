@@ -13,6 +13,7 @@ import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.CallParameter
 import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import net.consensys.pantheon.ethereum.mainnet.ProtocolSpec;
 import net.consensys.pantheon.ethereum.mainnet.TransactionProcessor;
+import net.consensys.pantheon.ethereum.vm.BlockHashLookup;
 import net.consensys.pantheon.util.bytes.BytesValue;
 
 import java.util.Optional;
@@ -88,7 +89,8 @@ public class TransientTransactionProcessor {
             worldState.updater(),
             header,
             transaction,
-            protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header));
+            protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
+            new BlockHashLookup(header, blockchain));
 
     return Optional.of(new TransientTransactionProcessingResult(transaction, result));
   }

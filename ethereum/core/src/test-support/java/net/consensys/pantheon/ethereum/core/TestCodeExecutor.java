@@ -6,6 +6,7 @@ import net.consensys.pantheon.ethereum.mainnet.MainnetMessageCallProcessor;
 import net.consensys.pantheon.ethereum.mainnet.PrecompileContractRegistry;
 import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import net.consensys.pantheon.ethereum.mainnet.ProtocolSpec;
+import net.consensys.pantheon.ethereum.vm.BlockHashLookup;
 import net.consensys.pantheon.ethereum.vm.Code;
 import net.consensys.pantheon.ethereum.vm.MessageFrame;
 import net.consensys.pantheon.ethereum.vm.MessageFrame.Type;
@@ -68,6 +69,7 @@ public class TestCodeExecutor {
             .depth(0)
             .completer(c -> {})
             .miningBeneficiary(blockHeader.coinbase)
+            .blockHashLookup(new BlockHashLookup(blockHeader, fixture.getBlockchain()))
             .build();
     messageFrameStack.addFirst(initialFrame);
 

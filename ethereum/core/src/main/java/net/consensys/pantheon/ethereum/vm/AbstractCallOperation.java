@@ -171,6 +171,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
             .isStatic(isStatic(frame))
             .completer(child -> complete(frame, child))
             .miningBeneficiary(frame.getMiningBeneficiary())
+            .blockHashLookup(frame.getBlockHashLookup())
             .build();
 
     frame.getMessageFrameStack().addFirst(childFrame);

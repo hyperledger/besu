@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import net.consensys.pantheon.ethereum.chain.Blockchain;
 import net.consensys.pantheon.ethereum.core.Address;
 import net.consensys.pantheon.ethereum.core.AddressHelpers;
+import net.consensys.pantheon.ethereum.core.BlockHeader;
 import net.consensys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import net.consensys.pantheon.ethereum.core.Gas;
 import net.consensys.pantheon.ethereum.core.Hash;
@@ -13,6 +14,7 @@ import net.consensys.pantheon.ethereum.core.Wei;
 import net.consensys.pantheon.ethereum.core.WorldUpdater;
 import net.consensys.pantheon.ethereum.db.WorldStateArchive;
 import net.consensys.pantheon.ethereum.mainnet.ConstantinopleGasCalculator;
+import net.consensys.pantheon.ethereum.vm.BlockHashLookup;
 import net.consensys.pantheon.ethereum.vm.Code;
 import net.consensys.pantheon.ethereum.vm.MessageFrame;
 import net.consensys.pantheon.ethereum.vm.MessageFrame.Type;
@@ -104,6 +106,7 @@ public class ExtCodeHashOperationTest {
   }
 
   private MessageFrame createMessageFrame(final Bytes32 stackItem) {
+    final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
     final MessageFrame frame =
         new MessageFrame.Builder()
             .type(Type.MESSAGE_CALL)
@@ -117,13 +120,14 @@ public class ExtCodeHashOperationTest {
             .sender(ADDRESS1)
             .worldState(worldStateUpdater)
             .messageFrameStack(new ArrayDeque<>())
-            .blockHeader(new BlockHeaderTestFixture().buildHeader())
+            .blockHeader(blockHeader)
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
             .code(new Code(BytesValue.EMPTY))
             .blockchain(blockchain)
             .completer(messageFrame -> {})
             .miningBeneficiary(AddressHelpers.ofValue(0))
+            .blockHashLookup(new BlockHashLookup(blockHeader, blockchain))
             .build();
 
     frame.pushStackItem(stackItem);

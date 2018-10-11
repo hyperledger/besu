@@ -4,14 +4,14 @@ import net.consensys.pantheon.ethereum.core.Gas;
 import net.consensys.pantheon.ethereum.core.Hash;
 import net.consensys.pantheon.ethereum.core.ProcessableBlockHeader;
 import net.consensys.pantheon.ethereum.vm.AbstractOperation;
+import net.consensys.pantheon.ethereum.vm.BlockHashLookup;
 import net.consensys.pantheon.ethereum.vm.GasCalculator;
 import net.consensys.pantheon.ethereum.vm.MessageFrame;
 import net.consensys.pantheon.util.bytes.Bytes32;
 import net.consensys.pantheon.util.uint.UInt256;
 
-import java.util.Optional;
-
 public class BlockHashOperation extends AbstractOperation {
+
   private static final int MAX_RELATIVE_BLOCK = 255;
 
   public BlockHashOperation(final GasCalculator gasCalculator) {
@@ -45,9 +45,9 @@ public class BlockHashOperation extends AbstractOperation {
         || soughtBlock > mostRecentBlockNumber) {
       frame.pushStackItem(Bytes32.ZERO);
     } else {
-      final Optional<Hash> maybeBlockHash = frame.getBlockchain().getBlockHashByNumber(soughtBlock);
-      assert maybeBlockHash.isPresent();
-      frame.pushStackItem(maybeBlockHash.get());
+      final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
+      final Hash blockHash = blockHashLookup.getBlockHash(soughtBlock);
+      frame.pushStackItem(blockHash);
     }
   }
 }

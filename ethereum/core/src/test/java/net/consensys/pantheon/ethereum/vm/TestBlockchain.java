@@ -8,13 +8,16 @@ import net.consensys.pantheon.ethereum.chain.ChainHead;
 import net.consensys.pantheon.ethereum.chain.TransactionLocation;
 import net.consensys.pantheon.ethereum.core.BlockBody;
 import net.consensys.pantheon.ethereum.core.BlockHeader;
+import net.consensys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import net.consensys.pantheon.ethereum.core.Hash;
 import net.consensys.pantheon.ethereum.core.Transaction;
 import net.consensys.pantheon.ethereum.core.TransactionReceipt;
 import net.consensys.pantheon.util.bytes.BytesValue;
 import net.consensys.pantheon.util.uint.UInt256;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -26,7 +29,29 @@ import java.util.Optional;
  */
 public class TestBlockchain implements Blockchain {
 
-  private static Hash generateTestBlockHash(final long number) {
+  // Maximum number of blocks prior to the chain head that can be retrieved by hash.
+  private static final long MAXIMUM_BLOCKS_BEHIND_HEAD = 256;
+  private final Map<Hash, BlockHeader> hashToHeader = new HashMap<>();
+
+  public TestBlockchain() {
+    this(0);
+  }
+
+  public TestBlockchain(final long chainHeadBlockNumber) {
+    for (long blockNumber = Math.max(0L, chainHeadBlockNumber - MAXIMUM_BLOCKS_BEHIND_HEAD);
+        blockNumber < chainHeadBlockNumber;
+        blockNumber++) {
+      final Hash hash = generateTestBlockHash(blockNumber);
+      hashToHeader.put(
+          hash,
+          new BlockHeaderTestFixture()
+              .number(blockNumber)
+              .parentHash(generateTestBlockHash(blockNumber - 1))
+              .buildHeader());
+    }
+  }
+
+  public static Hash generateTestBlockHash(final long number) {
     final byte[] bytes = Long.toString(number).getBytes(UTF_8);
     return Hash.hash(BytesValue.wrap(bytes));
   }
@@ -63,7 +88,7 @@ public class TestBlockchain implements Blockchain {
 
   @Override
   public Optional<BlockHeader> getBlockHeader(final Hash blockHeaderHash) {
-    throw new UnsupportedOperationException();
+    return Optional.ofNullable(hashToHeader.get(blockHeaderHash));
   }
 
   @Override

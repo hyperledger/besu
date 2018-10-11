@@ -1,15 +1,19 @@
 package net.consensys.pantheon.ethereum.jsonrpc.internal.processor;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import net.consensys.pantheon.ethereum.chain.Blockchain;
+import net.consensys.pantheon.ethereum.core.Address;
 import net.consensys.pantheon.ethereum.core.BlockBody;
 import net.consensys.pantheon.ethereum.core.BlockHeader;
 import net.consensys.pantheon.ethereum.core.Hash;
 import net.consensys.pantheon.ethereum.core.MutableWorldState;
 import net.consensys.pantheon.ethereum.core.Transaction;
+import net.consensys.pantheon.ethereum.core.WorldUpdater;
 import net.consensys.pantheon.ethereum.db.WorldStateArchive;
 import net.consensys.pantheon.ethereum.debug.TraceFrame;
 import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -135,13 +139,16 @@ public class TransactionTracerTest {
     when(blockBody.getTransactions()).thenReturn(Collections.singletonList(transaction));
     when(blockchain.getBlockBody(blockHash)).thenReturn(Optional.of(blockBody));
 
+    final WorldUpdater updater = mutableWorldState.updater();
+    final Address coinbase = blockHeader.getCoinbase();
     when(transactionProcessor.processTransaction(
-            blockchain,
-            mutableWorldState.updater(),
-            blockHeader,
-            transaction,
-            blockHeader.getCoinbase(),
-            tracer))
+            eq(blockchain),
+            eq(updater),
+            eq(blockHeader),
+            eq(transaction),
+            eq(coinbase),
+            eq(tracer),
+            any()))
         .thenReturn(result);
 
     final Optional<TransactionTrace> transactionTrace =
