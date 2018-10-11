@@ -33,9 +33,25 @@ public abstract class AbstractMiningCoordinator<
     this.blockchain.observeBlockAdded(this);
   }
 
-  public abstract void enable();
+  public void enable() {
+    synchronized (this) {
+      if (isEnabled) {
+        return;
+      }
+      startAsyncMiningOperation();
+      isEnabled = true;
+    }
+  }
 
-  public abstract void disable();
+  public void disable() {
+    synchronized (this) {
+      if (!isEnabled) {
+        return;
+      }
+      haltCurrentMiningOperation();
+      isEnabled = false;
+    }
+  }
 
   public boolean isRunning() {
     synchronized (this) {

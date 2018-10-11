@@ -62,6 +62,8 @@ public interface PantheonController<C, M extends BlockMiner<C, ? extends Abstrac
           pantheonHome,
           GenesisConfig.fromConfig(config, CliqueProtocolSchedule.create(configOptions, nodeKeys)),
           syncConfig,
+          miningParameters,
+          configOptions.getJsonObject("clique"),
           networkId,
           nodeKeys);
     } else {

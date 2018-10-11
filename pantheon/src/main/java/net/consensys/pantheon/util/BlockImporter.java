@@ -34,6 +34,7 @@ public class BlockImporter {
    * @param blocks Path to the file containing the blocks
    * @param pantheonController the PantheonController that defines blockchain behavior
    * @param <C> the consensus context type
+   * @param <M> the type of miner being used within the executing pantheon
    * @return the import result
    * @throws IOException On Failure
    */

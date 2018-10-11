@@ -25,28 +25,6 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<Void, Et
   }
 
   @Override
-  public void enable() {
-    synchronized (this) {
-      if (isEnabled) {
-        return;
-      }
-      startAsyncMiningOperation();
-      isEnabled = true;
-    }
-  }
-
-  @Override
-  public void disable() {
-    synchronized (this) {
-      if (!isEnabled) {
-        return;
-      }
-      haltCurrentMiningOperation();
-      isEnabled = false;
-    }
-  }
-
-  @Override
   public void setCoinbase(final Address coinbase) {
     executor.setCoinbase(coinbase);
   }
