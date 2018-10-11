@@ -56,10 +56,6 @@ The reference tests (described below) can be triggered with:
 ```
 ./gradlew referenceTest
 ```
-The system tests can be triggered with:
-```
-./gradlew smokeTest
-```
 
 ## Running Pantheon
 

@@ -50,9 +50,6 @@ node {
                 stage('Check javadoc') {
                     sh './gradlew --no-daemon --parallel javadoc'
                 }
-                // stage('Smoke test') {
-                //     sh 'DOCKER_HOST=$DOCKER_PORT DOCKER_HOSTNAME=docker ./gradlew --no-daemon smokeTest'
-                // }
                 stage('Jacoco root report') {
                     sh './gradlew --no-daemon jacocoRootReport'
                 }
