@@ -23,10 +23,7 @@ dependencies {
   implementation project(':services:kvstore')
 
   implementation 'com.google.guava:guava'
-  // Disable picocli while the 3.6 release with default enhancement is published.
-  // The jar is directly inserted until then.
-  //  implementation 'info.picocli:picocli'
-  compile files('libs/picocli-3.6.0-SNAPSHOT.jar')
+  implementation('info.picocli:picocli')
   implementation 'net.consensys.cava:cava-toml'
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'

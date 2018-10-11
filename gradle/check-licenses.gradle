@@ -28,9 +28,7 @@ ext.acceptedLicenses = [
     'Mozilla Public License Version 2.0',
     'CC0 1.0 Universal License',
     'Common Development and Distribution License 1.0',
-    'Unicode/ICU License',
-    'No license found',// for temporary use with Picocli jar
-    'TODO to be fixed' // use it for temporary states when a license needs investigation.
+    'Unicode/ICU License'
 ]*.toLowerCase()
 
 /**
@@ -52,7 +50,6 @@ downloadLicenses {
   ext.mpl2_0 = license('Mozilla Public License, Version 2.0', 'http://www.mozilla.org/MPL/2.0/')
   ext.cddl = license('Common Development and Distribution License 1.0', 'http://opensource.org/licenses/CDDL-1.0')
   ext.cddl1_1 = license('Common Development and Distribution License 1.0', 'http://oss.oracle.com/licenses/CDDL-1.1')
-  ext.todoToBeFixed = license('TODO to be fixed', 'TODO to be fixed')
   aliases = [
       (apache)    : [
           'The Apache Software License, Version 2.0',
