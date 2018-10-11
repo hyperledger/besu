@@ -198,6 +198,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .blockHeader(blockHeader)
               .depth(0)
               .completer(c -> {})
+              .miningBeneficiary(miningBenficiary)
               .build();
 
     } else {
@@ -223,6 +224,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .blockHeader(blockHeader)
               .depth(0)
               .completer(c -> {})
+              .miningBeneficiary(miningBenficiary)
               .build();
     }
 

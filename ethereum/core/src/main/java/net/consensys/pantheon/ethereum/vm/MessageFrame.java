@@ -200,6 +200,7 @@ public class MessageFrame {
   private final ProcessableBlockHeader blockHeader;
   private final int depth;
   private final Deque<MessageFrame> messageFrameStack;
+  private final Address miningBeneficiary;
 
   // Miscellaneous fields.
   private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
@@ -229,7 +230,8 @@ public class MessageFrame {
       final ProcessableBlockHeader blockHeader,
       final int depth,
       final boolean isStatic,
-      final Consumer<MessageFrame> completer) {
+      final Consumer<MessageFrame> completer,
+      final Address miningBeneficiary) {
     this.type = type;
     this.blockchain = blockchain;
     this.messageFrameStack = messageFrameStack;
@@ -257,6 +259,7 @@ public class MessageFrame {
     this.state = State.NOT_STARTED;
     this.isStatic = isStatic;
     this.completer = completer;
+    this.miningBeneficiary = miningBeneficiary;
   }
 
   /**
@@ -771,6 +774,15 @@ public class MessageFrame {
     return exceptionalHaltReasons;
   }
 
+  /**
+   * Returns the current miningBeneficiary (aka coinbase)
+   *
+   * @return the current mining beneficiary
+   */
+  public Address getMiningBeneficiary() {
+    return miningBeneficiary;
+  }
+
   public Operation getCurrentOperation() {
     return currentOperation;
   }
@@ -799,6 +811,7 @@ public class MessageFrame {
     private int depth = -1;
     private boolean isStatic = false;
     private Consumer<MessageFrame> completer;
+    private Address miningBeneficiary;
 
     public Builder type(final Type type) {
       this.type = type;
@@ -890,6 +903,11 @@ public class MessageFrame {
       return this;
     }
 
+    public Builder miningBeneficiary(final Address miningBeneficiary) {
+      this.miningBeneficiary = miningBeneficiary;
+      return this;
+    }
+
     private void validate() {
       checkState(type != null, "Missing message frame type");
       checkState(blockchain != null, "Missing message frame blockchain");
@@ -908,6 +926,7 @@ public class MessageFrame {
       checkState(blockHeader != null, "Missing message frame block header");
       checkState(depth > -1, "Missing message frame depth");
       checkState(completer != null, "Missing message frame completer");
+      checkState(miningBeneficiary != null, "Missing mining beneficiary");
     }
 
     public MessageFrame build() {
@@ -931,7 +950,8 @@ public class MessageFrame {
           blockHeader,
           depth,
           isStatic,
-          completer);
+          completer,
+          miningBeneficiary);
     }
   }
 }

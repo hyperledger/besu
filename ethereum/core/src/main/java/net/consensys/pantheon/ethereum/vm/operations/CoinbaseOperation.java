@@ -20,7 +20,7 @@ public class CoinbaseOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    final Address coinbase = frame.getBlockHeader().getCoinbase();
+    final Address coinbase = frame.getMiningBeneficiary();
     frame.pushStackItem(Words.fromAddress(coinbase));
   }
 }
