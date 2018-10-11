@@ -22,4 +22,14 @@ public interface Compressor {
    * @return The original payload.
    */
   byte[] decompress(byte[] compressed) throws CompressionException;
+
+  /**
+   * Return the length when uncompressed
+   *
+   * @param compressed The compressed payload.
+   * @return The length of the payload when uncompressed.
+   * @throws CompressionException Thrown if the size cannot be calculated from the available data;
+   *     expect to find the root cause inside;
+   */
+  int uncompressedLength(byte[] compressed) throws CompressionException;
 }

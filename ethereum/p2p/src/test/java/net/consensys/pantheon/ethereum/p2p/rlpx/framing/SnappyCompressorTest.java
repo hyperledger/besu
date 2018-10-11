@@ -25,16 +25,22 @@ public class SnappyCompressorTest {
     assertThat(snappy.decompress(snappy.compress(data))).isEqualTo(data);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void compressNull() {
     final SnappyCompressor snappy = new SnappyCompressor();
     snappy.compress(null);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void decompressNull() {
     final SnappyCompressor snappy = new SnappyCompressor();
     snappy.decompress(null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void uncompressedLengthNull() {
+    final SnappyCompressor snappy = new SnappyCompressor();
+    snappy.uncompressedLength(null);
   }
 
   @Test
