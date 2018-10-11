@@ -6,6 +6,7 @@
     "eip150Block": 0,
     "eip158Block": 10,
     "byzantiumBlock": 1700000,
+    "constantinopleBlock": 4230000,
     "ethash": {
     }
   },
