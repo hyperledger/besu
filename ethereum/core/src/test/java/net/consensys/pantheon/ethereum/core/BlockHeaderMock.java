@@ -1,6 +1,7 @@
 package net.consensys.pantheon.ethereum.core;
 
 import net.consensys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import net.consensys.pantheon.ethereum.vm.TestBlockchain;
 import net.consensys.pantheon.util.bytes.BytesValue;
 import net.consensys.pantheon.util.uint.UInt256;
 
@@ -27,7 +28,7 @@ public class BlockHeaderMock extends BlockHeader {
       @JsonProperty("currentNumber") final String number,
       @JsonProperty("currentTimestamp") final String timestamp) {
     super(
-        Hash.EMPTY, // parentHash
+        TestBlockchain.generateTestBlockHash(Long.decode(number) - 1),
         Hash.EMPTY, // ommersHash
         Address.fromHexString(coinbase),
         Hash.EMPTY, // stateRoot

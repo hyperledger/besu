@@ -50,6 +50,7 @@ public class TraceTransactionIntegrationTest {
   private WorldStateArchive worldStateArchive;
   private Block genesisBlock;
   private TransactionProcessor transactionProcessor;
+  private BlockHashLookup blockHashLookup;
 
   @Before
   public void setUp() {
@@ -64,6 +65,7 @@ public class TraceTransactionIntegrationTest {
     final ProtocolSchedule<Void> protocolSchedule = genesisConfig.getProtocolSchedule();
     genesisConfig.writeStateTo(worldStateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
     transactionProcessor = protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
+    blockHashLookup = new BlockHashLookup(genesisBlock.getHeader(), blockchain);
   }
 
   @Test
@@ -87,7 +89,8 @@ public class TraceTransactionIntegrationTest {
             createTransactionUpdater,
             genesisBlock.getHeader(),
             createTransaction,
-            genesisBlock.getHeader().getCoinbase());
+            genesisBlock.getHeader().getCoinbase(),
+            blockHashLookup);
     assertThat(result.isSuccessful()).isTrue();
     final Account createdContract =
         createTransactionUpdater
@@ -118,7 +121,8 @@ public class TraceTransactionIntegrationTest {
             genesisBlock.getHeader(),
             executeTransaction,
             genesisBlock.getHeader().getCoinbase(),
-            tracer);
+            tracer,
+            blockHashLookup);
 
     assertThat(result.isSuccessful()).isTrue();
 
@@ -153,7 +157,8 @@ public class TraceTransactionIntegrationTest {
         genesisBlock.getHeader(),
         transaction,
         genesisBlock.getHeader().getCoinbase(),
-        tracer);
+        tracer,
+        new BlockHashLookup(genesisBlock.getHeader(), blockchain));
 
     final int expectedDepth = 0; // Reference impl returned 1. Why the difference?
 

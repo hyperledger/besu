@@ -11,6 +11,7 @@ import net.consensys.pantheon.ethereum.core.TransactionReceipt;
 import net.consensys.pantheon.ethereum.core.Wei;
 import net.consensys.pantheon.ethereum.core.WorldState;
 import net.consensys.pantheon.ethereum.core.WorldUpdater;
+import net.consensys.pantheon.ethereum.vm.BlockHashLookup;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,9 +95,7 @@ public class MainnetBlockProcessor implements BlockProcessor {
     long gasUsed = 0;
     final List<TransactionReceipt> receipts = new ArrayList<>();
 
-    for (int i = 0; i < transactions.size(); ++i) {
-      final Transaction transaction = transactions.get(i);
-
+    for (final Transaction transaction : transactions) {
       final long remainingGasBudget = blockHeader.getGasLimit() - gasUsed;
       if (Long.compareUnsigned(transaction.getGasLimit(), remainingGasBudget) > 0) {
         LOG.warn(
@@ -107,11 +106,17 @@ public class MainnetBlockProcessor implements BlockProcessor {
       }
 
       final WorldUpdater worldStateUpdater = worldState.updater();
+      final BlockHashLookup blockHashLookup = new BlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
       final TransactionProcessor.Result result =
           transactionProcessor.processTransaction(
-              blockchain, worldStateUpdater, blockHeader, transaction, miningBeneficiary);
+              blockchain,
+              worldStateUpdater,
+              blockHeader,
+              transaction,
+              miningBeneficiary,
+              blockHashLookup);
       if (result.isInvalid()) {
         return Result.failed();
       }
@@ -129,10 +134,6 @@ public class MainnetBlockProcessor implements BlockProcessor {
 
     worldState.persist();
     return Result.successful(receipts);
-  }
-
-  protected Address calculateFeeRecipient(final BlockHeader header) {
-    return header.getCoinbase();
   }
 
   private boolean rewardCoinbase(

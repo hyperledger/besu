@@ -2,6 +2,7 @@ package net.consensys.pantheon.ethereum.jsonrpc.internal.processor;
 
 import net.consensys.pantheon.ethereum.core.Hash;
 import net.consensys.pantheon.ethereum.mainnet.TransactionProcessor.Result;
+import net.consensys.pantheon.ethereum.vm.BlockHashLookup;
 import net.consensys.pantheon.ethereum.vm.DebugOperationTracer;
 
 import java.util.Optional;
@@ -28,7 +29,8 @@ public class TransactionTracer {
                   header,
                   transaction,
                   header.getCoinbase(),
-                  tracer);
+                  tracer,
+                  new BlockHashLookup(header, blockchain));
           return new TransactionTrace(transaction, result, tracer.getTraceFrames());
         });
   }

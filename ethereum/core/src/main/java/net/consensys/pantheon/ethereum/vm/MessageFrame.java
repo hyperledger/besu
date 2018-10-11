@@ -175,6 +175,7 @@ public class MessageFrame {
 
   // Machine state fields.
   private Gas gasRemaining;
+  private final BlockHashLookup blockHashLookup;
   private int pc;
   private final Memory memory;
   private final OperandStack stack;
@@ -231,12 +232,14 @@ public class MessageFrame {
       final int depth,
       final boolean isStatic,
       final Consumer<MessageFrame> completer,
-      final Address miningBeneficiary) {
+      final Address miningBeneficiary,
+      final BlockHashLookup blockHashLookup) {
     this.type = type;
     this.blockchain = blockchain;
     this.messageFrameStack = messageFrameStack;
     this.worldState = worldState;
     this.gasRemaining = initialGas;
+    this.blockHashLookup = blockHashLookup;
     this.pc = 0;
     this.memory = new Memory();
     this.stack = new PreAllocatedOperandStack(MAX_STACK_SIZE);
@@ -783,6 +786,10 @@ public class MessageFrame {
     return miningBeneficiary;
   }
 
+  public BlockHashLookup getBlockHashLookup() {
+    return blockHashLookup;
+  }
+
   public Operation getCurrentOperation() {
     return currentOperation;
   }
@@ -812,6 +819,7 @@ public class MessageFrame {
     private boolean isStatic = false;
     private Consumer<MessageFrame> completer;
     private Address miningBeneficiary;
+    private BlockHashLookup blockHashLookup;
 
     public Builder type(final Type type) {
       this.type = type;
@@ -908,6 +916,11 @@ public class MessageFrame {
       return this;
     }
 
+    public Builder blockHashLookup(final BlockHashLookup blockHashLookup) {
+      this.blockHashLookup = blockHashLookup;
+      return this;
+    }
+
     private void validate() {
       checkState(type != null, "Missing message frame type");
       checkState(blockchain != null, "Missing message frame blockchain");
@@ -927,6 +940,7 @@ public class MessageFrame {
       checkState(depth > -1, "Missing message frame depth");
       checkState(completer != null, "Missing message frame completer");
       checkState(miningBeneficiary != null, "Missing mining beneficiary");
+      checkState(blockHashLookup != null, "Missing block hash lookup");
     }
 
     public MessageFrame build() {
@@ -951,7 +965,8 @@ public class MessageFrame {
           depth,
           isStatic,
           completer,
-          miningBeneficiary);
+          miningBeneficiary,
+          blockHashLookup);
     }
   }
 }
