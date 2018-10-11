@@ -17,6 +17,7 @@ import net.consensys.pantheon.ethereum.core.Util;
 import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import net.consensys.pantheon.util.Subscribers;
 import net.consensys.pantheon.util.bytes.BytesValue;
+import net.consensys.pantheon.util.bytes.BytesValues;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -83,15 +84,22 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
   public BytesValue calculateExtraData(final BlockHeader parentHeader) {
     List<Address> validators = Lists.newArrayList();
 
+    final BytesValue vanityDataToInsert = createCorrectlySizedVanityData();
     // Building ON TOP of canonical head, if the next block is epoch, include validators.
     if (epochManager.isEpochBlock(parentHeader.getNumber() + 1)) {
-      VoteTally voteTally =
+      final VoteTally voteTally =
           protocolContext.getConsensusState().getVoteTallyCache().getVoteTallyAtBlock(parentHeader);
       validators.addAll(voteTally.getCurrentValidators());
     }
 
-    CliqueExtraData extraData = new CliqueExtraData(vanityData, null, validators);
+    final CliqueExtraData extraData = new CliqueExtraData(vanityDataToInsert, null, validators);
 
     return extraData.encode();
+  }
+
+  private BytesValue createCorrectlySizedVanityData() {
+    int vanityPadding = Math.max(0, CliqueExtraData.EXTRA_VANITY_LENGTH - vanityData.size());
+    return BytesValues.concatenate(BytesValue.wrap(new byte[vanityPadding]), vanityData)
+        .slice(0, CliqueExtraData.EXTRA_VANITY_LENGTH);
   }
 }

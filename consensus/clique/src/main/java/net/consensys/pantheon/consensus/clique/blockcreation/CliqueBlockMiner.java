@@ -2,7 +2,6 @@ package net.consensys.pantheon.consensus.clique.blockcreation;
 
 import net.consensys.pantheon.consensus.clique.CliqueContext;
 import net.consensys.pantheon.consensus.clique.CliqueHelpers;
-import net.consensys.pantheon.consensus.common.ValidatorProvider;
 import net.consensys.pantheon.ethereum.ProtocolContext;
 import net.consensys.pantheon.ethereum.blockcreation.AbstractBlockScheduler;
 import net.consensys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator.MinedBlockObserver;
@@ -30,8 +29,6 @@ public class CliqueBlockMiner extends BlockMiner<CliqueContext, CliqueBlockCreat
 
   @Override
   protected boolean mineBlock() throws InterruptedException {
-    ValidatorProvider validators =
-        protocolContext.getConsensusState().getVoteTallyCache().getVoteTallyAtBlock(parentHeader);
     if (CliqueHelpers.addressIsAllowedToProduceNextBlock(
         localAddress, protocolContext, parentHeader)) {
       return super.mineBlock();

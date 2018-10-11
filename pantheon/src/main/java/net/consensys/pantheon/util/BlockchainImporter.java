@@ -79,6 +79,7 @@ public class BlockchainImporter extends BlockImporter {
    * Imports blockchain from file as concatenated RLP sections
    *
    * @param <C> the consensus context type
+   * @param <M> the type of miner being used within the executing pantheon
    * @param dataFilePath Path to the file containing the dataFilePath
    * @param pantheonController the PantheonController that defines blockchain behavior
    * @param isSkipHeaderValidation if true, header validation is skipped. This must only be used

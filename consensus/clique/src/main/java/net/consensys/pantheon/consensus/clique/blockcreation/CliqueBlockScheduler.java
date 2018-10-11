@@ -17,7 +17,6 @@ public class CliqueBlockScheduler extends DefaultBlockScheduler {
 
   private final VoteTallyCache voteTallyCache;
   private final Address localNodeAddress;
-  private final long secondsBetweenBlocks;
 
   public CliqueBlockScheduler(
       final Clock clock,
@@ -27,7 +26,6 @@ public class CliqueBlockScheduler extends DefaultBlockScheduler {
     super(secondsBetweenBlocks, 0L, clock);
     this.voteTallyCache = voteTallyCache;
     this.localNodeAddress = localNodeAddress;
-    this.secondsBetweenBlocks = secondsBetweenBlocks;
   }
 
   @Override
