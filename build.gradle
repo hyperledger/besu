@@ -305,8 +305,7 @@ applicationDefaultJvmArgs = [
   "-Dpantheon.home=PANTHEON_HOME",
   // We shutdown log4j ourselves, as otherwise his shutdown hook runs before our own and whatever
   // happens during shutdown is not logged.
-  "-Dlog4j.shutdownHookEnabled=false",
-  "-Djava.security.egd=file:/dev/urandom"
+  "-Dlog4j.shutdownHookEnabled=false"
 ]
 
 run {
