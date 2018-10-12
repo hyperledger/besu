@@ -50,7 +50,7 @@ import org.apache.logging.log4j.Logger;
 
 public class CliquePantheonController
     implements PantheonController<CliqueContext, CliqueBlockMiner> {
-
+  public static int RINKEBY_NETWORK_ID = 4;
   private static final Logger LOG = getLogger();
   private final GenesisConfig<CliqueContext> genesisConfig;
   private final ProtocolContext<CliqueContext> context;

@@ -1,7 +1,10 @@
 package net.consensys.pantheon.tests.acceptance.dsl.node;
 
+import static net.consensys.pantheon.cli.EthNetworkConfig.mainnet;
+
 import net.consensys.pantheon.Runner;
 import net.consensys.pantheon.RunnerBuilder;
+import net.consensys.pantheon.cli.EthNetworkConfig;
 import net.consensys.pantheon.cli.PantheonControllerBuilder;
 import net.consensys.pantheon.controller.PantheonController;
 import net.consensys.pantheon.ethereum.eth.sync.SynchronizerConfiguration.Builder;
@@ -33,17 +36,18 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
     }
 
     final PantheonControllerBuilder builder = new PantheonControllerBuilder();
+    final EthNetworkConfig ethNetworkConfig =
+        new EthNetworkConfig.Builder(mainnet()).setNetworkId(NETWORK_ID).build();
     PantheonController<?, ?> pantheonController;
     try {
       pantheonController =
           builder.build(
               new Builder().build(),
-              null,
               node.homeDirectory(),
+              ethNetworkConfig,
               false,
               node.getMiningParameters(),
-              true,
-              NETWORK_ID);
+              true);
     } catch (final IOException e) {
       throw new RuntimeException("Error building PantheonController", e);
     }
