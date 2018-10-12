@@ -14,10 +14,7 @@ import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.mainnet.ConstantinopleGasCalculator;
-import tech.pegasys.pantheon.ethereum.vm.BlockHashLookup;
-import tech.pegasys.pantheon.ethereum.vm.Code;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
-import tech.pegasys.pantheon.ethereum.vm.MessageFrame.Type;
 import tech.pegasys.pantheon.ethereum.vm.Words;
 import tech.pegasys.pantheon.ethereum.worldstate.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
@@ -25,13 +22,11 @@ import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
-import java.util.ArrayDeque;
-
+import net.consensys.pantheon.ethereum.core.MessageFrameTestFixture;
 import org.junit.Test;
 
 public class ExtCodeHashOperationTest {
 
-  private static final Address ADDRESS1 = AddressHelpers.ofValue(11111111);
   private static final Address REQUESTED_ADDRESS = AddressHelpers.ofValue(22222222);
 
   private final Blockchain blockchain = mock(Blockchain.class);
@@ -108,26 +103,10 @@ public class ExtCodeHashOperationTest {
   private MessageFrame createMessageFrame(final Bytes32 stackItem) {
     final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
     final MessageFrame frame =
-        new MessageFrame.Builder()
-            .type(Type.MESSAGE_CALL)
-            .initialGas(Gas.MAX_VALUE)
-            .inputData(BytesValue.EMPTY)
-            .depth(1)
-            .gasPrice(Wei.ZERO)
-            .contract(ADDRESS1)
-            .address(ADDRESS1)
-            .originator(ADDRESS1)
-            .sender(ADDRESS1)
+        new MessageFrameTestFixture()
             .worldState(worldStateUpdater)
-            .messageFrameStack(new ArrayDeque<>())
             .blockHeader(blockHeader)
-            .value(Wei.ZERO)
-            .apparentValue(Wei.ZERO)
-            .code(new Code(BytesValue.EMPTY))
             .blockchain(blockchain)
-            .completer(messageFrame -> {})
-            .miningBeneficiary(AddressHelpers.ofValue(0))
-            .blockHashLookup(new BlockHashLookup(blockHeader, blockchain))
             .build();
 
     frame.pushStackItem(stackItem);
