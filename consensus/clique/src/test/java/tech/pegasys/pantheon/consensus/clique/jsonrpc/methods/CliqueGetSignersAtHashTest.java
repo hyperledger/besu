@@ -1,11 +1,14 @@
 package tech.pegasys.pantheon.consensus.clique.jsonrpc.methods;
 
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.core.Address.fromHexString;
 
+import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
+import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
@@ -38,16 +41,19 @@ public class CliqueGetSignersAtHashTest {
   private CliqueGetSignersAtHash method;
   private BlockHeader blockHeader;
   private List<Address> validators;
+  private List<String> validatorsAsStrings;
 
   @Mock private BlockchainQueries blockchainQueries;
-
+  @Mock private VoteTallyCache voteTallyCache;
   @Mock private BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata;
+  @Mock private VoteTally voteTally;
+
   public static final String BLOCK_HASH =
       "0xe36a3edf0d8664002a72ef7c5f8e271485e7ce5c66455a07cb679d855818415f";
 
   @Before
   public void setup() {
-    method = new CliqueGetSignersAtHash(blockchainQueries, new JsonRpcParameter());
+    method = new CliqueGetSignersAtHash(blockchainQueries, voteTallyCache, new JsonRpcParameter());
 
     final byte[] genesisBlockExtraData =
         Hex.decode(
@@ -61,6 +67,7 @@ public class CliqueGetSignersAtHashTest {
             fromHexString("0x42eb768f2244c8811c63729a21a3569731535f06"),
             fromHexString("0x7ffc57839b00206d1ad20c69a1981b489f772031"),
             fromHexString("0xb279182d99e65703f0076e4812653aab85fca0f0"));
+    validatorsAsStrings = validators.stream().map(Object::toString).collect(toList());
   }
 
   @Test
@@ -90,10 +97,11 @@ public class CliqueGetSignersAtHashTest {
     when(blockchainQueries.blockByHash(Hash.fromHexString(BLOCK_HASH)))
         .thenReturn(Optional.of(blockWithMetadata));
     when(blockWithMetadata.getHeader()).thenReturn(blockHeader);
+    when(voteTallyCache.getVoteTallyAtBlock(blockHeader)).thenReturn(voteTally);
+    when(voteTally.getCurrentValidators()).thenReturn(validators);
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
-    final List<Address> result = (List<Address>) response.getResult();
-    assertEquals(validators, result);
+    assertEquals(validatorsAsStrings, response.getResult());
   }
 
   @Test

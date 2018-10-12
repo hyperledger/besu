@@ -1,7 +1,6 @@
 package tech.pegasys.pantheon.consensus.clique.jsonrpc.methods;
 
-import static tech.pegasys.pantheon.consensus.clique.CliqueHelpers.getValidatorsOfBlock;
-
+import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
@@ -14,16 +13,22 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResp
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class CliqueGetSignersAtHash implements JsonRpcMethod {
   public static final String CLIQUE_GET_SIGNERS_AT_HASH = "clique_getSignersAtHash";
   private final BlockchainQueries blockchainQueries;
+  private final VoteTallyCache voteTallyCache;
   private final JsonRpcParameter parameters;
 
   public CliqueGetSignersAtHash(
-      final BlockchainQueries blockchainQueries, final JsonRpcParameter parameter) {
+      final BlockchainQueries blockchainQueries,
+      final VoteTallyCache voteTallyCache,
+      final JsonRpcParameter parameter) {
     this.blockchainQueries = blockchainQueries;
+    this.voteTallyCache = voteTallyCache;
     this.parameters = parameter;
   }
 
@@ -34,14 +39,15 @@ public class CliqueGetSignersAtHash implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    final Optional<BlockHeader> blockHeader = blockHeader(request);
+    final Optional<BlockHeader> blockHeader = determineBlockHeader(request);
     return blockHeader
-        .<JsonRpcResponse>map(
-            bh -> new JsonRpcSuccessResponse(request.getId(), getValidatorsOfBlock(bh)))
+        .map(bh -> voteTallyCache.getVoteTallyAtBlock(bh).getCurrentValidators())
+        .map(addresses -> addresses.stream().map(Objects::toString).collect(Collectors.toList()))
+        .<JsonRpcResponse>map(addresses -> new JsonRpcSuccessResponse(request.getId(), addresses))
         .orElse(new JsonRpcErrorResponse(request.getId(), JsonRpcError.INTERNAL_ERROR));
   }
 
-  private Optional<BlockHeader> blockHeader(final JsonRpcRequest request) {
+  private Optional<BlockHeader> determineBlockHeader(final JsonRpcRequest request) {
     final Hash hash = parameters.required(request.getParams(), 0, Hash.class);
     return blockchainQueries.blockByHash(hash).map(BlockWithMetadata::getHeader);
   }

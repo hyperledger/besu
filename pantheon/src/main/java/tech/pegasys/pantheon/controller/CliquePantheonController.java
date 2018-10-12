@@ -114,7 +114,8 @@ public class CliquePantheonController
             new CliqueContext(
                 new VoteTallyCache(
                     blockchain, new CliqueVoteTallyUpdater(epochManger), epochManger),
-                new VoteProposer()));
+                new VoteProposer(),
+                epochManger));
 
     final SynchronizerConfiguration syncConfig = taintedSyncConfig.validated(blockchain);
     final boolean fastSyncEnabled = syncConfig.syncMode().equals(SyncMode.FAST);
