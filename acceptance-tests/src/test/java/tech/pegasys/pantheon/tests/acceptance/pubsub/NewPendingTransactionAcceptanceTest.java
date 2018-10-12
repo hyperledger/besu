@@ -16,8 +16,10 @@ import java.math.BigInteger;
 import io.vertx.core.Vertx;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
 
   private Vertx vertx;

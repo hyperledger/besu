@@ -7,10 +7,13 @@ plugins {
   id 'com.github.hierynomus.license' version '0.14.0'
   id 'net.ltgt.errorprone' version '0.6'
   id 'me.champeau.gradle.jmh' version '0.4.5' apply false
-  id 'com.jfrog.bintray' version '1.7.3'
+  id 'com.jfrog.bintray' version '1.8.4'
+  id 'net.researchgate.release' version '2.6.0'
 }
 
 apply from: './versions.gradle'
+
+group = 'tech.pegasys.pantheon'
 
 defaultTasks 'build', 'checkLicenses', 'javadoc'
 
@@ -47,15 +50,12 @@ def _strListCmdArg(name) {
   return _strListCmdArg(name, null)
 }
 
-def baseVersion = '0.8.0'
-project.version = baseVersion + '-SNAPSHOT'
 
 allprojects {
   apply plugin: 'java-library'
   apply plugin: 'io.spring.dependency-management'
   apply plugin: 'jacoco'
   apply plugin: 'net.ltgt.errorprone'
-  apply plugin: 'com.jfrog.bintray'
   apply from: "${rootDir}/gradle/versions.gradle"
   apply from: "${rootDir}/gradle/check-licenses.gradle"
 
@@ -177,9 +177,6 @@ allprojects {
 task deploy() {}
 
 
-
-
-
 subprojects {
 
   tasks.withType(Test) {
@@ -231,7 +228,7 @@ subprojects {
 
   task integrationTest(type: Test, dependsOn:["compileTestJava"]){
     group = "verification"
-    description = "Runs the Pantheon Integration Test"
+    description = "Runs the Pantheon integration tests"
 
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
@@ -258,41 +255,6 @@ subprojects {
     }
 
     dependencies { jmh 'org.apache.logging.log4j:log4j-api' }
-  }
-
-  afterEvaluate {
-    if (project.jar.enabled) {
-      publishing {
-        publications {
-          MavenDeployment(MavenPublication) {
-            from components.java
-            groupId 'tech.pegasys.pantheon'
-            artifactId project.jar.baseName
-            version project.version
-          }
-        }
-      }
-
-      bintray {
-        user = System.getenv('BINTRAY_USER')
-        key = System.getenv('BINTRAY_KEY')
-        publications = ['MavenDeployment']
-        pkg {
-          repo = rootProject.name.toLowerCase()
-          name = rootProject.name.capitalize()
-          userOrg = 'consensys'
-          licenses = ['Apache-2.0']
-          version {
-            name = project.version
-            desc = rootProject.name.capitalize() + ' distribution'
-            released  = new Date()
-            vcsTag = project.version
-          }
-        }
-      }
-
-      deploy.dependsOn bintrayUpload
-    }
   }
 }
 
@@ -403,3 +365,69 @@ configure(subprojects.findAll {it.name != 'errorprone-checks'}) {
 if (!file("ethereum/referencetests/src/test/resources/README.md").exists()) {
   throw new GradleException("ethereum/referencetests/src/test/resources/README.md missing: please clone submodules (git submodule update --init --recursive)")
 }
+
+
+apply plugin: 'net.researchgate.release'
+
+task releaseIntegrationTest(type: Test){
+  for(TaskContainer taskList : subprojects.tasks){
+    def subProjectIntegrationTask = taskList.findByName('integrationTest')
+
+    if (subProjectIntegrationTask != null) {
+      dependsOn subProjectIntegrationTask
+    }
+  }
+}
+
+task releaseReferenceTest(type: Test, dependsOn : ':ethereum:core:referenceTests'){
+}
+
+task releaseAcceptanceTest(type: Test, dependsOn : ':acceptance-tests:acceptanceTest') {}
+
+release {
+  preTagCommitMessage = '[Gradle Release Plugin] - pre tag commit: '
+  tagCommitMessage = '[Gradle Release Plugin] - creating tag: '
+  newVersionCommitMessage = '[Gradle Release Plugin] - new version commit: '
+  tagTemplate = '${version}'
+  versionPropertyFile = 'gradle.properties'
+  buildTasks = [
+    'build',
+    'releaseIntegrationTest',
+    'releaseAcceptanceTest',
+    'releaseReferenceTest',
+    'checkLicenses',
+    'javadoc'
+  ]
+
+  git {
+    requireBranch = 'release-pipeline'
+    pushToRemote = 'origin'
+  }
+}
+
+apply plugin: 'com.jfrog.bintray'
+
+bintray {
+  user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+  key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_KEY')
+  filesSpec {
+    from distTar.destinationDir.path
+    from distZip.destinationDir.path
+    into '.'
+  }
+  pkg {
+    repo = "pegasys-repo"
+    name = "pantheon"
+    userOrg = "consensys"
+    licenses = ["Apache-2.0"]
+    vcsUrl = "https://github.com/PegaSysEng/pantheon"
+    version {
+      name = project.version
+      released  = new Date()
+    }
+  }
+}
+
+afterReleaseBuild.dependsOn bintrayUpload
+bintrayUpload.mustRunAfter(distTar)
+bintrayUpload.mustRunAfter(distZip)
