@@ -1,6 +1,8 @@
 <!--  Thanks for sending a pull request!  Here are some tips for you:
-1. If this is your first time, read our contributor guidelines https://github.com/PegaSysEng/pantheon/blob/master/CONTRIBUTING.md#Your-First-Code-Contribution
-4. Label the PR appropriately how to mark it: https://github.com/PegaSysEng/pantheon/blob/master/CONTRIBUTING.md#Pull-Request-Labels
+1. If this is your first time, read our contributor guidelines 
+https://github.com/PegaSysEng/pantheon/blob/master/CONTRIBUTING.md#your-first-code-contribution
+2. Label the PR appropriately how to mark it: 
+https://github.com/PegaSysEng/pantheon/blob/master/CONTRIBUTING.md#pull-request-labels
 -->
 
 # PR Details
