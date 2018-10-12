@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import net.consensys.pantheon.consensus.common.VoteProposer;
-import net.consensys.pantheon.consensus.common.VoteProposer.Vote;
+import net.consensys.pantheon.consensus.common.VoteType;
 import net.consensys.pantheon.ethereum.core.Address;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -80,7 +80,7 @@ public class DiscardTest {
     final JsonRpcResponse response = discard.response(requestWithParams(a0));
 
     assertThat(proposer.get(a0)).isEqualTo(Optional.empty());
-    assertThat(proposer.get(a1)).isEqualTo(Optional.of(Vote.AUTH));
+    assertThat(proposer.get(a1)).isEqualTo(Optional.of(VoteType.ADD));
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);

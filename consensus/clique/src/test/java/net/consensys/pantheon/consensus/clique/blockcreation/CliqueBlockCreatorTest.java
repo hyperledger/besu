@@ -14,6 +14,7 @@ import net.consensys.pantheon.consensus.clique.TestHelpers;
 import net.consensys.pantheon.consensus.clique.VoteTallyCache;
 import net.consensys.pantheon.consensus.common.VoteProposer;
 import net.consensys.pantheon.consensus.common.VoteTally;
+import net.consensys.pantheon.consensus.common.VoteType;
 import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
 import net.consensys.pantheon.ethereum.ProtocolContext;
 import net.consensys.pantheon.ethereum.chain.GenesisConfig;
@@ -58,6 +59,7 @@ public class CliqueBlockCreatorTest {
   private ProtocolContext<CliqueContext> protocolContext;
   private final MutableProtocolSchedule<CliqueContext> protocolSchedule =
       new CliqueProtocolSchedule();
+  private VoteProposer voteProposer;
 
   @Before
   public void setup() {
@@ -76,7 +78,9 @@ public class CliqueBlockCreatorTest {
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
-    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, new VoteProposer());
+    voteProposer = new VoteProposer();
+    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer);
+
     protocolContext = new ProtocolContext<>(blockchain, stateArchive, cliqueContext);
 
     // Add a block above the genesis
@@ -113,5 +117,55 @@ public class CliqueBlockCreatorTest {
 
     assertThat(CliqueHelpers.getProposerOfBlock(createdBlock.getHeader()))
         .isEqualTo(proposerAddress);
+  }
+
+  @Test
+  public void insertsValidVoteIntoConstructedBlock() {
+    final CliqueExtraData extraData =
+        new CliqueExtraData(BytesValue.wrap(new byte[32]), null, validatorList);
+    final Address a1 = Address.fromHexString("5");
+    voteProposer.auth(a1);
+    final Address coinbase = AddressHelpers.ofValue(1);
+
+    final CliqueBlockCreator blockCreator =
+        new CliqueBlockCreator(
+            coinbase,
+            parent -> extraData.encode(),
+            new PendingTransactions(5),
+            protocolContext,
+            protocolSchedule,
+            gasLimit -> gasLimit,
+            proposerKeyPair,
+            Wei.ZERO,
+            blockchain.getChainHeadHeader());
+
+    final Block createdBlock = blockCreator.createBlock(0L);
+    assertThat(createdBlock.getHeader().getNonce()).isEqualTo(VoteType.ADD.getNonceValue());
+    assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(a1);
+  }
+
+  @Test
+  public void insertsNoVoteWhenAuthInValidators() {
+    final CliqueExtraData extraData =
+        new CliqueExtraData(BytesValue.wrap(new byte[32]), null, validatorList);
+    final Address a1 = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
+    voteProposer.auth(a1);
+    final Address coinbase = AddressHelpers.ofValue(1);
+
+    final CliqueBlockCreator blockCreator =
+        new CliqueBlockCreator(
+            coinbase,
+            parent -> extraData.encode(),
+            new PendingTransactions(5),
+            protocolContext,
+            protocolSchedule,
+            gasLimit -> gasLimit,
+            proposerKeyPair,
+            Wei.ZERO,
+            blockchain.getChainHeadHeader());
+
+    final Block createdBlock = blockCreator.createBlock(0L);
+    assertThat(createdBlock.getHeader().getNonce()).isEqualTo(VoteType.DROP.getNonceValue());
+    assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(Address.fromHexString("0"));
   }
 }

@@ -47,11 +47,11 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
 
   private final ExtraDataCalculator extraDataCalculator;
   private final PendingTransactions pendingTransactions;
-  private final ProtocolContext<C> protocolContext;
-  private final ProtocolSchedule<C> protocolSchedule;
+  protected final ProtocolContext<C> protocolContext;
+  protected final ProtocolSchedule<C> protocolSchedule;
   private final Wei minTransactionGasPrice;
   private final Address miningBeneficiary;
-  private final BlockHeader parentHeader;
+  protected final BlockHeader parentHeader;
 
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
