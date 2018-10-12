@@ -58,4 +58,13 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<Void, Et
       return currentRunningMiner.map(miner -> miner.submitWork(solution)).orElse(false);
     }
   }
+
+  @Override
+  protected void haltCurrentMiningOperation() {
+    currentRunningMiner.ifPresent(
+        miner -> {
+          miner.cancel();
+          miner.getHashesPerSecond().ifPresent(val -> cachedHashesPerSecond = Optional.of(val));
+        });
+  }
 }
