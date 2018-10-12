@@ -47,7 +47,7 @@ public class CliqueDifficultyValidationRuleTest {
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
     final VoteProposer voteProposer = new VoteProposer();
 
-    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer);
+    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);
     cliqueProtocolContext = new ProtocolContext<>(null, null, cliqueContext);
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }

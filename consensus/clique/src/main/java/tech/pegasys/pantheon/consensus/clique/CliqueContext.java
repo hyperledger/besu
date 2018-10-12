@@ -1,5 +1,6 @@
 package tech.pegasys.pantheon.consensus.clique;
 
+import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 
 /**
@@ -10,10 +11,15 @@ public class CliqueContext {
 
   private final VoteTallyCache voteTallyCache;
   private final VoteProposer voteProposer;
+  private final EpochManager epochManager;
 
-  public CliqueContext(final VoteTallyCache voteTallyCache, final VoteProposer voteProposer) {
+  public CliqueContext(
+      final VoteTallyCache voteTallyCache,
+      final VoteProposer voteProposer,
+      final EpochManager epochManager) {
     this.voteTallyCache = voteTallyCache;
     this.voteProposer = voteProposer;
+    this.epochManager = epochManager;
   }
 
   public VoteTallyCache getVoteTallyCache() {
@@ -22,5 +28,9 @@ public class CliqueContext {
 
   public VoteProposer getVoteProposer() {
     return voteProposer;
+  }
+
+  public EpochManager getEpochManager() {
+    return epochManager;
   }
 }

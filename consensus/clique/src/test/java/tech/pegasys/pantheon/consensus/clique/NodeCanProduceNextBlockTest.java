@@ -68,7 +68,7 @@ public class NodeCanProduceNextBlockTest {
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
     final VoteProposer voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer);
+    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);
     cliqueProtocolContext = new ProtocolContext<>(blockChain, null, cliqueContext);
 
     headerBuilder.number(1).parentHash(genesisBlock.getHash());
@@ -96,7 +96,7 @@ public class NodeCanProduceNextBlockTest {
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
     final VoteProposer voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer);
+    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);
     cliqueProtocolContext = new ProtocolContext<>(blockChain, null, cliqueContext);
 
     headerBuilder.number(1).parentHash(genesisBlock.getHash());
@@ -133,7 +133,7 @@ public class NodeCanProduceNextBlockTest {
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
     final VoteProposer voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer);
+    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);
     cliqueProtocolContext = new ProtocolContext<>(blockChain, null, cliqueContext);
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
@@ -166,7 +166,7 @@ public class NodeCanProduceNextBlockTest {
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
     final VoteProposer voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer);
+    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);
     cliqueProtocolContext = new ProtocolContext<>(blockChain, null, cliqueContext);
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
@@ -214,7 +214,7 @@ public class NodeCanProduceNextBlockTest {
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
     final VoteProposer voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer);
+    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);
     cliqueProtocolContext = new ProtocolContext<>(blockChain, null, cliqueContext);
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
@@ -246,7 +246,7 @@ public class NodeCanProduceNextBlockTest {
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
     final VoteProposer voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer);
+    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);
     cliqueProtocolContext = new ProtocolContext<>(blockChain, null, cliqueContext);
 
     headerBuilder.parentHash(Hash.ZERO).number(3);
@@ -273,7 +273,7 @@ public class NodeCanProduceNextBlockTest {
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
     final VoteProposer voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer);
+    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);
     cliqueProtocolContext = new ProtocolContext<>(blockChain, null, cliqueContext);
 
     headerBuilder.parentHash(Hash.ZERO).number(3);

@@ -7,21 +7,12 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
-
-import java.util.List;
 
 public class CliqueHelpers {
 
   public static Address getProposerOfBlock(final BlockHeader header) {
     final CliqueExtraData extraData = CliqueExtraData.decode(header.getExtraData());
     return CliqueBlockHashing.recoverProposerAddress(header, extraData);
-  }
-
-  public static List<Address> getValidatorsOfBlock(final BlockHeader header) {
-    final BytesValue extraData = header.getExtraData();
-    final CliqueExtraData cliqueExtraData = CliqueExtraData.decode(extraData);
-    return cliqueExtraData.getValidators();
   }
 
   public static Address getProposerForBlockAfter(
