@@ -3,8 +3,8 @@ package net.consensys.pantheon.consensus.common;
 import java.util.Optional;
 
 public enum VoteType {
-  ADD(0x0L),
-  DROP(0xFFFFFFFFFFFFFFFFL);
+  ADD(0xFFFFFFFFFFFFFFFFL),
+  DROP(0x0L);
 
   private final long nonceValue;
 
