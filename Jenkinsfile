@@ -42,7 +42,7 @@ node {
                     sh './gradlew --no-daemon --parallel integrationTest'
                 }
                 stage('Acceptance Tests') {
-                    sh './gradlew --no-daemon --parallel acceptanceTest --tests Web3Sha3AcceptanceTest --tests PantheonClusterAcceptanceTest --tests MiningAcceptanceTest'
+                    sh './gradlew --no-daemon --parallel acceptanceTest'
                 }
                 stage('Check Licenses') {
                     sh './gradlew --no-daemon --parallel checkLicenses'
