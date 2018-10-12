@@ -198,7 +198,7 @@ public abstract class AbstractPeerDiscoveryTest {
     peerSocket.sendToAgent(agent, pingPacket);
 
     // Wait for returned pong packet to finish bonding
-    peerSocket.getIncomingPackets().poll(1, TimeUnit.SECONDS);
+    peerSocket.getIncomingPackets().poll(10, TimeUnit.SECONDS);
   }
 
   /**
