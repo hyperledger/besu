@@ -1,13 +1,13 @@
-package net.consensys.pantheon.ethereum.p2p.discovery.internal;
+package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
-import net.consensys.pantheon.ethereum.p2p.peers.Peer;
-import net.consensys.pantheon.util.bytes.Bytes32;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.Optional;

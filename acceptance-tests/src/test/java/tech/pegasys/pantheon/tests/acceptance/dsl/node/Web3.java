@@ -1,4 +1,4 @@
-package net.consensys.pantheon.tests.acceptance.dsl.node;
+package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

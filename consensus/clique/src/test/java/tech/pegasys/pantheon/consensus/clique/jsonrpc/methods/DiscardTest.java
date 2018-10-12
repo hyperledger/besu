@@ -1,17 +1,17 @@
-package net.consensys.pantheon.consensus.clique.jsonrpc.methods;
+package tech.pegasys.pantheon.consensus.clique.jsonrpc.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import net.consensys.pantheon.consensus.common.VoteProposer;
-import net.consensys.pantheon.consensus.common.VoteType;
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponseType;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.consensus.common.VoteProposer;
+import tech.pegasys.pantheon.consensus.common.VoteType;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponseType;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 import java.util.Optional;
 

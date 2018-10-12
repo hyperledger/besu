@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.results;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.results;
 
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection;
-import net.consensys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 
 import java.util.List;
 import java.util.stream.Collectors;

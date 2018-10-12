@@ -1,4 +1,4 @@
-package net.consensys.pantheon.util.time;
+package tech.pegasys.pantheon.util.time;
 
 public interface Clock {
 

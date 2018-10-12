@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.vm;
+package tech.pegasys.pantheon.ethereum.vm;
 
-import net.consensys.pantheon.ethereum.vm.operations.JumpDestOperation;
-import net.consensys.pantheon.util.bytes.BytesValue;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.ethereum.vm.operations.JumpDestOperation;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.BitSet;
 

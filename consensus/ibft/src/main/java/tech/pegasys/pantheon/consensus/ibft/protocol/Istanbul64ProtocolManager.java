@@ -1,10 +1,10 @@
-package net.consensys.pantheon.consensus.ibft.protocol;
+package tech.pegasys.pantheon.consensus.ibft.protocol;
 
-import net.consensys.pantheon.ethereum.chain.Blockchain;
-import net.consensys.pantheon.ethereum.eth.EthProtocol;
-import net.consensys.pantheon.ethereum.eth.manager.EthProtocolManager;
-import net.consensys.pantheon.ethereum.p2p.api.Message;
-import net.consensys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
+import tech.pegasys.pantheon.ethereum.p2p.api.Message;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 
 import java.util.List;
 

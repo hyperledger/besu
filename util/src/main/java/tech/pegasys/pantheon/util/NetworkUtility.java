@@ -1,4 +1,4 @@
-package net.consensys.pantheon.util;
+package tech.pegasys.pantheon.util;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;

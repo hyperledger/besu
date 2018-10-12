@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.p2p.rlpx.handshake;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import net.consensys.pantheon.util.bytes.Bytes32;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.Objects;

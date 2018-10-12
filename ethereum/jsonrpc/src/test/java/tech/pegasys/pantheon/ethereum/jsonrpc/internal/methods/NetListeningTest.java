@@ -1,12 +1,12 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.methods;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import net.consensys.pantheon.ethereum.p2p.api.P2PNetwork;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 
 import org.junit.Before;
 import org.junit.Test;

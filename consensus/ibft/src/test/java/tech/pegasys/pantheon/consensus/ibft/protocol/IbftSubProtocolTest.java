@@ -1,4 +1,4 @@
-package net.consensys.pantheon.consensus.ibft.protocol;
+package tech.pegasys.pantheon.consensus.ibft.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

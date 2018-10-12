@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.mainnet.headervalidationrules;
+package tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.core.BlockHeaderTestFixture;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 
 import java.util.Arrays;
 import java.util.Collection;

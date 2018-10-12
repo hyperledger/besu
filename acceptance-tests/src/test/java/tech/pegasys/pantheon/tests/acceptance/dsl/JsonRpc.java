@@ -1,9 +1,9 @@
-package net.consensys.pantheon.tests.acceptance.dsl;
+package tech.pegasys.pantheon.tests.acceptance.dsl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.tests.acceptance.dsl.node.Cluster;
-import net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNode;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.Cluster;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 
 public class JsonRpc {
 

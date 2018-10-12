@@ -1,12 +1,12 @@
-package net.consensys.pantheon.consensus.clique;
+package tech.pegasys.pantheon.consensus.clique;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import net.consensys.pantheon.crypto.SECP256K1.Signature;
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.util.bytes.BytesValue;
-import net.consensys.pantheon.util.bytes.BytesValues;
+import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.util.List;
 import java.util.Optional;

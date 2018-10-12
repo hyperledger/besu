@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.jsonrpc;
+package tech.pegasys.pantheon.ethereum.jsonrpc;
 
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
-import net.consensys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
+import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 
 public class JsonRpcErrorConverter {
 

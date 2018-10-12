@@ -1,11 +1,11 @@
-package net.consensys.pantheon.consensus.ibft;
+package tech.pegasys.pantheon.consensus.ibft;
 
 import static java.util.Arrays.asList;
 
-import net.consensys.pantheon.consensus.common.VoteProposer;
-import net.consensys.pantheon.consensus.common.VoteTally;
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.consensus.common.VoteProposer;
+import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.core.Address;
 
 import java.util.List;
 

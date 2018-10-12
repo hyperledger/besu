@@ -1,6 +1,6 @@
-package net.consensys.pantheon.crypto;
+package tech.pegasys.pantheon.crypto;
 
-import static net.consensys.pantheon.crypto.PersonalisationString.getPersonalizationString;
+import static tech.pegasys.pantheon.crypto.PersonalisationString.getPersonalizationString;
 
 import java.security.SecureRandom;
 

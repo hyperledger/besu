@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.p2p.rlpx.framing;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.framing;
 
 /** A strategy for compressing and decompressing devp2p subprotocol messages. */
 public interface Compressor {

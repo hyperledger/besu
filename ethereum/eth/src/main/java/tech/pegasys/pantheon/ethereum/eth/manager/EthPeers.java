@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.eth.manager;
+package tech.pegasys.pantheon.ethereum.eth.manager;
 
-import net.consensys.pantheon.ethereum.eth.manager.EthPeer.DisconnectCallback;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection;
-import net.consensys.pantheon.util.Subscribers;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer.DisconnectCallback;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.util.Subscribers;
 
 import java.util.Collections;
 import java.util.Comparator;

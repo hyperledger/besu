@@ -1,12 +1,12 @@
-package net.consensys.pantheon.consensus.ibft;
+package tech.pegasys.pantheon.consensus.ibft;
 
-import net.consensys.pantheon.consensus.common.EpochManager;
-import net.consensys.pantheon.consensus.common.VoteTally;
-import net.consensys.pantheon.consensus.common.VoteType;
-import net.consensys.pantheon.ethereum.chain.Blockchain;
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.consensus.common.EpochManager;
+import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.consensus.common.VoteType;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.eth.messages;
+package tech.pegasys.pantheon.ethereum.eth.messages;
 
 public final class EthPV63 {
 

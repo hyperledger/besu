@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.util;
+package tech.pegasys.pantheon.ethereum.util;
 
-import net.consensys.pantheon.ethereum.chain.Blockchain;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 
 import java.util.Collections;
 import java.util.Comparator;

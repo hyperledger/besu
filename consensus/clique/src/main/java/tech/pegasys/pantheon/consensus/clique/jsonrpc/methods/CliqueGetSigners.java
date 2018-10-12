@@ -1,18 +1,18 @@
-package net.consensys.pantheon.consensus.clique.jsonrpc.methods;
+package tech.pegasys.pantheon.consensus.clique.jsonrpc.methods;
 
-import static net.consensys.pantheon.consensus.clique.CliqueHelpers.getValidatorsOfBlock;
+import static tech.pegasys.pantheon.consensus.clique.CliqueHelpers.getValidatorsOfBlock;
 
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.BlockParameter;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.queries.BlockWithMetadata;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.BlockParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockWithMetadata;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 import java.util.Optional;
 

@@ -1,9 +1,9 @@
-package net.consensys.pantheon.consensus.clique;
+package tech.pegasys.pantheon.consensus.clique;
 
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.mainnet.DifficultyCalculator;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.mainnet.DifficultyCalculator;
 
 import java.math.BigInteger;
 

@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.p2p.discovery.internal;
+package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
-import net.consensys.pantheon.ethereum.rlp.RLPOutput;
+import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
 public interface PacketData {
 

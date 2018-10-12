@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.results;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.results;
 
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.core.BlockBody;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockBody;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Collections;
 

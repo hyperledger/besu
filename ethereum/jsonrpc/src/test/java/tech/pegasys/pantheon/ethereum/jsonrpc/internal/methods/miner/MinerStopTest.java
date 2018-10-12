@@ -1,12 +1,12 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.methods.miner;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.miner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.blockcreation.EthHashBlockMiner;
-import net.consensys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.blockcreation.EthHashBlockMiner;
+import tech.pegasys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 import org.junit.Before;
 import org.junit.Test;

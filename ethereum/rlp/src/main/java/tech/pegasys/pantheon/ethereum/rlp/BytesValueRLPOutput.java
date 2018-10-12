@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.rlp;
+package tech.pegasys.pantheon.ethereum.rlp;
 
-import net.consensys.pantheon.util.bytes.BytesValue;
-import net.consensys.pantheon.util.bytes.MutableBytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.MutableBytesValue;
 
 /** An {@link RLPOutput} that writes RLP encoded data to a {@link BytesValue}. */
 public class BytesValueRLPOutput extends AbstractRLPOutput {

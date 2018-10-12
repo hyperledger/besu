@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.mainnet;
+package tech.pegasys.pantheon.ethereum.mainnet;
 
-import net.consensys.pantheon.crypto.BouncyCastleMessageDigestFactory;
-import net.consensys.pantheon.crypto.Hash;
-import net.consensys.pantheon.ethereum.core.SealableBlockHeader;
-import net.consensys.pantheon.ethereum.rlp.BytesValueRLPOutput;
+import tech.pegasys.pantheon.crypto.BouncyCastleMessageDigestFactory;
+import tech.pegasys.pantheon.crypto.Hash;
+import tech.pegasys.pantheon.ethereum.core.SealableBlockHeader;
+import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;

@@ -1,19 +1,19 @@
-package net.consensys.pantheon.util;
+package tech.pegasys.pantheon.util;
 
-import static net.consensys.pantheon.controller.KeyPairUtil.loadKeyPair;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.controller.KeyPairUtil.loadKeyPair;
 
-import net.consensys.pantheon.controller.MainnetPantheonController;
-import net.consensys.pantheon.controller.PantheonController;
-import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
-import net.consensys.pantheon.ethereum.blockcreation.EthHashBlockMiner;
-import net.consensys.pantheon.ethereum.blockcreation.MiningParameters;
-import net.consensys.pantheon.ethereum.chain.GenesisConfig;
-import net.consensys.pantheon.ethereum.core.MiningParametersTestBuilder;
-import net.consensys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
-import net.consensys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.controller.MainnetPantheonController;
+import tech.pegasys.pantheon.controller.PantheonController;
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.ethereum.blockcreation.EthHashBlockMiner;
+import tech.pegasys.pantheon.ethereum.blockcreation.MiningParameters;
+import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
+import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
+import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.io.File;
 import java.net.URL;
@@ -37,7 +37,7 @@ public final class BlockchainImporterTest {
     final URL importFileURL =
         getClass()
             .getClassLoader()
-            .getResource("net/consensys/pantheon/ethereum/jsonrpc/json-rpc-test.bin");
+            .getResource("tech/pegasys/pantheon/ethereum/jsonrpc/json-rpc-test.bin");
     assertThat(importFileURL).isNotNull();
 
     final Path source = new File(importFileURL.toURI()).toPath();
@@ -46,7 +46,7 @@ public final class BlockchainImporterTest {
     final URL genesisJsonUrl =
         getClass()
             .getClassLoader()
-            .getResource("net/consensys/pantheon/ethereum/jsonrpc/jsonRpcTestGenesis.json");
+            .getResource("tech/pegasys/pantheon/ethereum/jsonrpc/jsonRpcTestGenesis.json");
     assertThat(genesisJsonUrl).isNotNull();
     final String genesisJson = Resources.toString(genesisJsonUrl, Charsets.UTF_8);
     final KeyPair keyPair = loadKeyPair(target);

@@ -1,11 +1,11 @@
-package net.consensys.pantheon.tests.acceptance.mining;
+package tech.pegasys.pantheon.tests.acceptance.mining;
 
-import static net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonMinerNode;
 import static org.web3j.utils.Convert.Unit.ETHER;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonMinerNode;
 
-import net.consensys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
-import net.consensys.pantheon.tests.acceptance.dsl.account.Account;
-import net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNode;
+import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
+import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 
 import org.junit.Before;
 import org.junit.Test;

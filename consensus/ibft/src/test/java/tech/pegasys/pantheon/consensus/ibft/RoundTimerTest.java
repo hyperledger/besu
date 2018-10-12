@@ -1,4 +1,4 @@
-package net.consensys.pantheon.consensus.ibft;
+package tech.pegasys.pantheon.consensus.ibft;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -9,7 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 
-import net.consensys.pantheon.consensus.ibft.ibftevent.RoundExpiry;
+import tech.pegasys.pantheon.consensus.ibft.ibftevent.RoundExpiry;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;

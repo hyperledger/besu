@@ -1,4 +1,4 @@
-package net.consensys.pantheon.consensus.common;
+package tech.pegasys.pantheon.consensus.common;
 
 import java.util.Optional;
 

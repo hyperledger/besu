@@ -1,8 +1,8 @@
-package net.consensys.pantheon.services.kvstore;
+package tech.pegasys.pantheon.services.kvstore;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Objects;
 import java.util.Optional;

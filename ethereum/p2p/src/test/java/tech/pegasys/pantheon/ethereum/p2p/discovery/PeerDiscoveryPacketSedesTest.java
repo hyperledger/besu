@@ -1,21 +1,21 @@
-package net.consensys.pantheon.ethereum.p2p.discovery;
+package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
-import static net.consensys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper.generateKeyPairs;
-import static net.consensys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper.generatePeers;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.assertNotNull;
+import static tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper.generateKeyPairs;
+import static tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper.generatePeers;
 
-import net.consensys.pantheon.crypto.SECP256K1;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.NeighborsPacketData;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.Packet;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PacketData;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PacketType;
-import net.consensys.pantheon.ethereum.rlp.RLP;
-import net.consensys.pantheon.ethereum.rlp.RLPException;
-import net.consensys.pantheon.util.bytes.BytesValue;
-import net.consensys.pantheon.util.bytes.MutableBytesValue;
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.NeighborsPacketData;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketData;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
+import tech.pegasys.pantheon.ethereum.rlp.RLPException;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.MutableBytesValue;
 
 import java.util.Arrays;
 import java.util.List;

@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.p2p.api;
+package tech.pegasys.pantheon.ethereum.p2p.api;
 
-import net.consensys.pantheon.ethereum.p2p.peers.Peer;
-import net.consensys.pantheon.ethereum.p2p.wire.Capability;
-import net.consensys.pantheon.ethereum.p2p.wire.PeerInfo;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 
 import java.io.Closeable;
 import java.net.InetSocketAddress;

@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.eth.sync;
+package tech.pegasys.pantheon.ethereum.eth.sync;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -8,17 +8,17 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.ethereum.chain.BlockAddedEvent;
-import net.consensys.pantheon.ethereum.chain.Blockchain;
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.core.BlockBody;
-import net.consensys.pantheon.ethereum.core.BlockHeaderTestFixture;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.eth.manager.ChainState;
-import net.consensys.pantheon.ethereum.eth.manager.EthPeer;
-import net.consensys.pantheon.ethereum.eth.manager.EthPeers;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockBody;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.eth.manager.ChainState;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.List;

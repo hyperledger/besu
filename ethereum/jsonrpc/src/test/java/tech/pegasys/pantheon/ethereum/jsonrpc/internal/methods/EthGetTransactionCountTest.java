@@ -1,15 +1,15 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.methods;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.PendingTransactions;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 import java.util.OptionalLong;
 

@@ -1,13 +1,13 @@
-package net.consensys.pantheon.ethereum.blockcreation;
+package tech.pegasys.pantheon.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.ethereum.blockcreation.AbstractBlockScheduler.BlockCreationTimeResult;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.core.BlockHeaderTestFixture;
-import net.consensys.pantheon.util.time.Clock;
+import tech.pegasys.pantheon.ethereum.blockcreation.AbstractBlockScheduler.BlockCreationTimeResult;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
+import tech.pegasys.pantheon.util.time.Clock;
 
 import org.junit.Test;
 

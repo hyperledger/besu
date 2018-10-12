@@ -1,13 +1,13 @@
-package net.consensys.pantheon.tests.web3j;
+package tech.pegasys.pantheon.tests.web3j;
 
-import static net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonMinerNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonMinerNode;
 
-import net.consensys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
-import net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNode;
-import net.consensys.pantheon.tests.web3j.generated.EventEmitter;
-import net.consensys.pantheon.tests.web3j.generated.EventEmitter.StoredEventResponse;
+import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
+import tech.pegasys.pantheon.tests.web3j.generated.EventEmitter;
+import tech.pegasys.pantheon.tests.web3j.generated.EventEmitter.StoredEventResponse;
 
 import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicBoolean;

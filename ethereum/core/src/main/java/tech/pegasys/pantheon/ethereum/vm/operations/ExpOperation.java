@@ -1,10 +1,10 @@
-package net.consensys.pantheon.ethereum.vm.operations;
+package tech.pegasys.pantheon.ethereum.vm.operations;
 
-import net.consensys.pantheon.ethereum.core.Gas;
-import net.consensys.pantheon.ethereum.vm.AbstractOperation;
-import net.consensys.pantheon.ethereum.vm.GasCalculator;
-import net.consensys.pantheon.ethereum.vm.MessageFrame;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.ethereum.core.Gas;
+import tech.pegasys.pantheon.ethereum.vm.AbstractOperation;
+import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
+import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 public class ExpOperation extends AbstractOperation {
 

@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket;
 
-import net.consensys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.RpcApis;
+import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.RpcApis;
 
 import java.util.Arrays;
 import java.util.Collection;

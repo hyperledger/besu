@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.RpcApis;
+import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.RpcApis;
 
 import org.junit.Test;
 

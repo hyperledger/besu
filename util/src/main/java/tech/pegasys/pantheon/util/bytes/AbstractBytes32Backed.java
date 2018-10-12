@@ -1,4 +1,4 @@
-package net.consensys.pantheon.util.bytes;
+package tech.pegasys.pantheon.util.bytes;
 
 /** Base abstract implementation for {@link Bytes32Backed} implementations. */
 public class AbstractBytes32Backed implements Bytes32Backed {

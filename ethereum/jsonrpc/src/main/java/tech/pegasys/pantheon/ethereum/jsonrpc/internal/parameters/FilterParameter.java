@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.parameters;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters;
 
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 
 import java.util.ArrayList;
 import java.util.Collections;

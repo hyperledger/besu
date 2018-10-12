@@ -1,8 +1,8 @@
-package net.consensys.pantheon.util.uint;
+package tech.pegasys.pantheon.util.uint;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import net.consensys.pantheon.util.bytes.Bytes32Backed;
+import tech.pegasys.pantheon.util.bytes.Bytes32Backed;
 
 /**
  * Represents a 256-bits (32 bytes) unsigned integer value.

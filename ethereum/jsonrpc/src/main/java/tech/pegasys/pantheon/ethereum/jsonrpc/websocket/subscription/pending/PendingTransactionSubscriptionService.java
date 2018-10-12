@@ -1,11 +1,11 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.pending;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.pending;
 
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.core.PendingTransactionListener;
-import net.consensys.pantheon.ethereum.core.Transaction;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.Subscription;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.PendingTransactionListener;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.Subscription;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
 
 import java.util.List;
 

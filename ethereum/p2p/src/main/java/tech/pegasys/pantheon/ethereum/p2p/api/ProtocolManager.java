@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.p2p.api;
+package tech.pegasys.pantheon.ethereum.p2p.api;
 
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PeerRequirement;
-import net.consensys.pantheon.ethereum.p2p.wire.Capability;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerRequirement;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 
 import java.util.List;
 

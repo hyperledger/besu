@@ -1,10 +1,10 @@
-package net.consensys.pantheon.consensus.common;
+package tech.pegasys.pantheon.consensus.common;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Address;
 
 import org.junit.Test;
 

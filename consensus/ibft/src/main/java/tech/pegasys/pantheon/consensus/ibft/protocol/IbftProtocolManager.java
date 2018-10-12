@@ -1,13 +1,13 @@
-package net.consensys.pantheon.consensus.ibft.protocol;
+package tech.pegasys.pantheon.consensus.ibft.protocol;
 
-import net.consensys.pantheon.consensus.ibft.IbftEvent;
-import net.consensys.pantheon.consensus.ibft.IbftEventQueue;
-import net.consensys.pantheon.consensus.ibft.IbftEvents;
-import net.consensys.pantheon.ethereum.p2p.api.Message;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection;
-import net.consensys.pantheon.ethereum.p2p.api.ProtocolManager;
-import net.consensys.pantheon.ethereum.p2p.wire.Capability;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.consensus.ibft.IbftEvent;
+import tech.pegasys.pantheon.consensus.ibft.IbftEventQueue;
+import tech.pegasys.pantheon.consensus.ibft.IbftEvents;
+import tech.pegasys.pantheon.ethereum.p2p.api.Message;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 
 import java.util.Arrays;
 import java.util.List;

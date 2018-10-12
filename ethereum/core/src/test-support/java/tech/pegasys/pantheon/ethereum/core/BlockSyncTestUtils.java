@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.core;
 
-import net.consensys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
-import net.consensys.pantheon.ethereum.util.RawBlockIterator;
-import net.consensys.pantheon.testutil.BlockTestUtil;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
+import tech.pegasys.pantheon.testutil.BlockTestUtil;
 
 import java.io.IOException;
 import java.nio.file.Path;

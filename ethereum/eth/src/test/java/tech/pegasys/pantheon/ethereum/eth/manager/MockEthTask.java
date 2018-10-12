@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.eth.manager;
+package tech.pegasys.pantheon.ethereum.eth.manager;
 
 public class MockEthTask extends AbstractEthTask<Object> {
 

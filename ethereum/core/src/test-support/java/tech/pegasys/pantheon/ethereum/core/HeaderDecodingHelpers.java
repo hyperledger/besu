@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.core;
 
-import net.consensys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
-import net.consensys.pantheon.util.bytes.BytesValue;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Map;
 

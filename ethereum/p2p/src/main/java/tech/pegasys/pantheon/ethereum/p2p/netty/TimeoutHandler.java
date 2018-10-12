@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.p2p.netty;
+package tech.pegasys.pantheon.ethereum.p2p.netty;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;

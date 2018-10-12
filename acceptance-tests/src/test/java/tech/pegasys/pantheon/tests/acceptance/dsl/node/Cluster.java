@@ -1,11 +1,11 @@
-package net.consensys.pantheon.tests.acceptance.dsl.node;
+package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
-import static net.consensys.pantheon.tests.acceptance.dsl.WaitUtils.waitFor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.web3j.utils.Convert.toWei;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils.waitFor;
 
-import net.consensys.pantheon.tests.acceptance.dsl.WaitUtils;
-import net.consensys.pantheon.tests.acceptance.dsl.account.Account;
+import tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils;
+import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
 
 import java.io.IOException;
 import java.util.ArrayList;

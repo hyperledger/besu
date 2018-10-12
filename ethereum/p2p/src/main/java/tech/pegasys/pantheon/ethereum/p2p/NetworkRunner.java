@@ -1,11 +1,11 @@
-package net.consensys.pantheon.ethereum.p2p;
+package tech.pegasys.pantheon.ethereum.p2p;
 
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
-import net.consensys.pantheon.ethereum.p2p.api.P2PNetwork;
-import net.consensys.pantheon.ethereum.p2p.api.ProtocolManager;
-import net.consensys.pantheon.ethereum.p2p.wire.Capability;
-import net.consensys.pantheon.ethereum.p2p.wire.SubProtocol;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
+import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 
 import java.util.ArrayList;
 import java.util.Arrays;

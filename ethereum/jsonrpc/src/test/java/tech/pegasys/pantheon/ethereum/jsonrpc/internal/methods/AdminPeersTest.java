@@ -1,17 +1,17 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.methods;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.ethereum.jsonrpc.MockPeerConnection;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.results.PeerResult;
-import net.consensys.pantheon.ethereum.p2p.api.P2PNetwork;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection;
-import net.consensys.pantheon.ethereum.p2p.wire.PeerInfo;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.ethereum.jsonrpc.MockPeerConnection;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.PeerResult;
+import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;

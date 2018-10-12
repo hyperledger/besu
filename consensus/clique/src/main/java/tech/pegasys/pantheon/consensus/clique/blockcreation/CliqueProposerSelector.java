@@ -1,11 +1,11 @@
-package net.consensys.pantheon.consensus.clique.blockcreation;
+package tech.pegasys.pantheon.consensus.clique.blockcreation;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import net.consensys.pantheon.consensus.clique.VoteTallyCache;
-import net.consensys.pantheon.consensus.common.VoteTally;
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
+import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 
 import java.util.ArrayList;
 import java.util.List;

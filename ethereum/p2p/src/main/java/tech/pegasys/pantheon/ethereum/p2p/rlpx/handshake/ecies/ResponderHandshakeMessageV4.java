@@ -1,11 +1,11 @@
-package net.consensys.pantheon.ethereum.p2p.rlpx.handshake.ecies;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.ecies;
 
-import net.consensys.pantheon.crypto.SECP256K1;
-import net.consensys.pantheon.ethereum.rlp.BytesValueRLPInput;
-import net.consensys.pantheon.ethereum.rlp.BytesValueRLPOutput;
-import net.consensys.pantheon.ethereum.rlp.RLPInput;
-import net.consensys.pantheon.util.bytes.Bytes32;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
+import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
+import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 public class ResponderHandshakeMessageV4 implements ResponderHandshakeMessage {
 

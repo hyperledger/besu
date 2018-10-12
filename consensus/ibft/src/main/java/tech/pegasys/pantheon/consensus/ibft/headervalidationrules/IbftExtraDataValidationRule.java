@@ -1,16 +1,16 @@
-package net.consensys.pantheon.consensus.ibft.headervalidationrules;
+package tech.pegasys.pantheon.consensus.ibft.headervalidationrules;
 
-import static net.consensys.pantheon.consensus.ibft.IbftHelpers.calculateRequiredValidatorQuorum;
+import static tech.pegasys.pantheon.consensus.ibft.IbftHelpers.calculateRequiredValidatorQuorum;
 
-import net.consensys.pantheon.consensus.common.ValidatorProvider;
-import net.consensys.pantheon.consensus.ibft.IbftBlockHashing;
-import net.consensys.pantheon.consensus.ibft.IbftContext;
-import net.consensys.pantheon.consensus.ibft.IbftExtraData;
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.mainnet.AttachedBlockHeaderValidationRule;
-import net.consensys.pantheon.ethereum.rlp.RLPException;
+import tech.pegasys.pantheon.consensus.common.ValidatorProvider;
+import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
+import tech.pegasys.pantheon.consensus.ibft.IbftContext;
+import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.mainnet.AttachedBlockHeaderValidationRule;
+import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 
 import java.util.Collection;
 import java.util.List;

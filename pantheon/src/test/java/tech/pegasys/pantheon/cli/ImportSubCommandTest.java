@@ -1,4 +1,4 @@
-package net.consensys.pantheon.cli;
+package tech.pegasys.pantheon.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;

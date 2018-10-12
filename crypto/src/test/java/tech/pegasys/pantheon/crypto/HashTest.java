@@ -1,9 +1,9 @@
-package net.consensys.pantheon.crypto;
+package tech.pegasys.pantheon.crypto;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import org.junit.Test;
 

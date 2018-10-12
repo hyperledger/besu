@@ -1,10 +1,10 @@
-package net.consensys.pantheon.ethereum.eth.sync;
+package tech.pegasys.pantheon.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import net.consensys.pantheon.ethereum.chain.Blockchain;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Optional;
 

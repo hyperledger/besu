@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.p2p.wire;
+package tech.pegasys.pantheon.ethereum.p2p.wire;
 
-import net.consensys.pantheon.ethereum.p2p.api.Message;
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.api.Message;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 
 /**
  * Simple implementation of {@link Message} that associates a {@link MessageData} instance with a

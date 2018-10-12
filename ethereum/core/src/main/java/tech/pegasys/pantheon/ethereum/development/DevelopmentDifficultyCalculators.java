@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.development;
+package tech.pegasys.pantheon.ethereum.development;
 
-import net.consensys.pantheon.ethereum.mainnet.DifficultyCalculator;
+import tech.pegasys.pantheon.ethereum.mainnet.DifficultyCalculator;
 
 import java.math.BigInteger;
 

@@ -1,13 +1,13 @@
-package net.consensys.pantheon.ethereum.p2p.netty;
+package tech.pegasys.pantheon.ethereum.p2p.netty;
 
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.PongMessage;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.WireMessageCodes;
-import net.consensys.pantheon.ethereum.rlp.RLPException;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.PongMessage;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.WireMessageCodes;
+import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 

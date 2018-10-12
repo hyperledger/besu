@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.results;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.results;
 
 import java.net.SocketAddress;
 

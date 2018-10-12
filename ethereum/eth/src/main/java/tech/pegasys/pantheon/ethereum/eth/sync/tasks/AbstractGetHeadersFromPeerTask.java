@@ -1,15 +1,15 @@
-package net.consensys.pantheon.ethereum.eth.sync.tasks;
+package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.eth.manager.AbstractPeerRequestTask;
-import net.consensys.pantheon.ethereum.eth.manager.EthContext;
-import net.consensys.pantheon.ethereum.eth.manager.EthPeer;
-import net.consensys.pantheon.ethereum.eth.messages.BlockHeadersMessage;
-import net.consensys.pantheon.ethereum.eth.messages.EthPV62;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPeerRequestTask;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
+import tech.pegasys.pantheon.ethereum.eth.messages.BlockHeadersMessage;
+import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 
 import java.util.ArrayList;
 import java.util.Collections;

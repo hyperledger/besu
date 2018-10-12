@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.vm;
+package tech.pegasys.pantheon.ethereum.vm;
 
-import net.consensys.pantheon.ethereum.core.BlockHeaderMock;
-import net.consensys.pantheon.ethereum.core.Gas;
-import net.consensys.pantheon.ethereum.core.WorldState;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderMock;
+import tech.pegasys.pantheon.ethereum.core.Gas;
+import tech.pegasys.pantheon.ethereum.core.WorldState;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

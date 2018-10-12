@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.vm;
+package tech.pegasys.pantheon.ethereum.vm;
 
 public enum ExceptionalHaltReason {
   NONE,

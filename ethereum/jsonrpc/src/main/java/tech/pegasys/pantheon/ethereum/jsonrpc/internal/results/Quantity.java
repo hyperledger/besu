@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.results;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.results;
 
-import net.consensys.pantheon.util.uint.UInt256;
-import net.consensys.pantheon.util.uint.UInt256Value;
+import tech.pegasys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.util.uint.UInt256Value;
 
 import java.math.BigInteger;
 import java.util.Objects;

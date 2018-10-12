@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.p2p.rlpx.framing;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.framing;
 
 import static io.netty.buffer.ByteBufUtil.decodeHexDump;
 import static org.assertj.core.api.Assertions.assertThat;

@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.results;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.results;
 
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.core.Log;
-import net.consensys.pantheon.ethereum.core.LogTopic;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.Log;
+import tech.pegasys.pantheon.ethereum.core.LogTopic;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,22 +1,22 @@
-package net.consensys.pantheon.ethereum.eth.sync.tasks;
+package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
 import static java.util.Arrays.asList;
-import static net.consensys.pantheon.ethereum.mainnet.HeaderValidationMode.DETACHED_ONLY;
+import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.DETACHED_ONLY;
 
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.eth.manager.AbstractPeerTask.PeerTaskResult;
-import net.consensys.pantheon.ethereum.eth.manager.AbstractRetryingPeerTask;
-import net.consensys.pantheon.ethereum.eth.manager.EthContext;
-import net.consensys.pantheon.ethereum.eth.manager.exceptions.NoAvailablePeersException;
-import net.consensys.pantheon.ethereum.eth.manager.exceptions.PeerBreachedProtocolException;
-import net.consensys.pantheon.ethereum.eth.manager.exceptions.PeerDisconnectedException;
-import net.consensys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
-import net.consensys.pantheon.ethereum.mainnet.BlockHeaderValidator;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSpec;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPeerTask.PeerTaskResult;
+import tech.pegasys.pantheon.ethereum.eth.manager.AbstractRetryingPeerTask;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.NoAvailablePeersException;
+import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerBreachedProtocolException;
+import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerDisconnectedException;
+import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
+import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 
 import java.util.Arrays;
 import java.util.List;

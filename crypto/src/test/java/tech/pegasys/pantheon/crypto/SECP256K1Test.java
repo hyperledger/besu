@@ -1,15 +1,15 @@
-package net.consensys.pantheon.crypto;
+package tech.pegasys.pantheon.crypto;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static net.consensys.pantheon.crypto.Hash.keccak256;
-import static net.consensys.pantheon.util.bytes.BytesValue.fromHexString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static tech.pegasys.pantheon.crypto.Hash.keccak256;
+import static tech.pegasys.pantheon.util.bytes.BytesValue.fromHexString;
 
-import net.consensys.pantheon.util.bytes.Bytes32;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -235,7 +235,7 @@ public class SECP256K1Test {
 
   @Test
   public void fileContainsValidPrivateKey() throws Exception {
-    final URL url = Resources.getResource("net/consensys/pantheon/crypto/validPrivateKey.txt");
+    final URL url = Resources.getResource("tech/pegasys/pantheon/crypto/validPrivateKey.txt");
     final File file = new File(url.getFile());
     final SECP256K1.PrivateKey privateKey = SECP256K1.PrivateKey.load(file);
     assertEquals(

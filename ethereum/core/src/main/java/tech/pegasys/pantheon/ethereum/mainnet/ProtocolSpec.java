@@ -1,10 +1,10 @@
-package net.consensys.pantheon.ethereum.mainnet;
+package tech.pegasys.pantheon.ethereum.mainnet;
 
-import net.consensys.pantheon.ethereum.core.BlockHashFunction;
-import net.consensys.pantheon.ethereum.core.BlockImporter;
-import net.consensys.pantheon.ethereum.core.Wei;
-import net.consensys.pantheon.ethereum.mainnet.MainnetBlockProcessor.TransactionReceiptFactory;
-import net.consensys.pantheon.ethereum.vm.EVM;
+import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
+import tech.pegasys.pantheon.ethereum.core.BlockImporter;
+import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockProcessor.TransactionReceiptFactory;
+import tech.pegasys.pantheon.ethereum.vm.EVM;
 
 /** A protocol specification. */
 public class ProtocolSpec<C> {

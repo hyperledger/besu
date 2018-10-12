@@ -1,32 +1,32 @@
-package net.consensys.pantheon.ethereum.jsonrpc.methods;
+package tech.pegasys.pantheon.ethereum.jsonrpc.methods;
 
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.COINBASE;
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.DIFFICULTY;
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.EXTRA_DATA;
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.GAS_LIMIT;
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.GAS_USED;
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.LOGS_BLOOM;
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.MIX_HASH;
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.NONCE;
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.NUMBER;
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.OMMERS_HASH;
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.PARENT_HASH;
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.RECEIPTS_ROOT;
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.SIZE;
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.STATE_ROOT;
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.TIMESTAMP;
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.TOTAL_DIFFICULTY;
-import static net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.TRANSACTION_ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.COINBASE;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.DIFFICULTY;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.EXTRA_DATA;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.GAS_LIMIT;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.GAS_USED;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.LOGS_BLOOM;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.MIX_HASH;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.NONCE;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.NUMBER;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.OMMERS_HASH;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.PARENT_HASH;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.RECEIPTS_ROOT;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.SIZE;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.STATE_ROOT;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.TIMESTAMP;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.TOTAL_DIFFICULTY;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey.TRANSACTION_ROOT;
 
-import net.consensys.pantheon.ethereum.jsonrpc.BlockchainImporter;
-import net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey;
-import net.consensys.pantheon.ethereum.jsonrpc.JsonRpcResponseUtils;
-import net.consensys.pantheon.ethereum.jsonrpc.JsonRpcTestMethodsFactory;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.BlockchainImporter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseKey;
+import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcResponseUtils;
+import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcTestMethodsFactory;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 import java.net.URL;
 import java.util.EnumMap;
@@ -51,12 +51,12 @@ public class EthGetUncleByBlockHashAndIndexIntegrationTest {
     final URL blocksUrl =
         EthGetUncleByBlockHashAndIndexIntegrationTest.class
             .getClassLoader()
-            .getResource("net/consensys/pantheon/ethereum/jsonrpc/jsonRpcTestBlockchain.blocks");
+            .getResource("tech/pegasys/pantheon/ethereum/jsonrpc/jsonRpcTestBlockchain.blocks");
 
     final URL genesisJsonUrl =
         EthGetUncleByBlockHashAndIndexIntegrationTest.class
             .getClassLoader()
-            .getResource("net/consensys/pantheon/ethereum/jsonrpc/jsonRpcTestGenesis.json");
+            .getResource("tech/pegasys/pantheon/ethereum/jsonrpc/jsonRpcTestGenesis.json");
 
     assertThat(blocksUrl).isNotNull();
     assertThat(genesisJsonUrl).isNotNull();

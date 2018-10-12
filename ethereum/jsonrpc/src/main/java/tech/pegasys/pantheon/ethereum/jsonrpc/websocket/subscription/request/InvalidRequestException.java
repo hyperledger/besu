@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request;
 
 public class InvalidRequestException extends RuntimeException {
 

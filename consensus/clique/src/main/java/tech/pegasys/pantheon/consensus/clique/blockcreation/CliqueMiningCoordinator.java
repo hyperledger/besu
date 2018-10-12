@@ -1,8 +1,8 @@
-package net.consensys.pantheon.consensus.clique.blockcreation;
+package tech.pegasys.pantheon.consensus.clique.blockcreation;
 
-import net.consensys.pantheon.consensus.clique.CliqueContext;
-import net.consensys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
-import net.consensys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.consensus.clique.CliqueContext;
+import tech.pegasys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 
 import java.util.Optional;
 

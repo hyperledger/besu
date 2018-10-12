@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.p2p.wire;
+package tech.pegasys.pantheon.ethereum.p2p.wire;
 
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 
 import io.netty.buffer.ByteBuf;
 

@@ -1,8 +1,8 @@
-package net.consensys.pantheon.cli;
+package tech.pegasys.pantheon.cli;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import net.consensys.pantheon.util.BlockImporter;
+import tech.pegasys.pantheon.util.BlockImporter;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

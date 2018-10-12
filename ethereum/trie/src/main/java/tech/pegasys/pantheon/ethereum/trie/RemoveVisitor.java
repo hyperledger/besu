@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.trie;
+package tech.pegasys.pantheon.ethereum.trie;
 
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 class RemoveVisitor<V> implements PathNodeVisitor<V> {
   private final Node<V> NULL_NODE_RESULT = NullNode.instance();

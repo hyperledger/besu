@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.results;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.results;
 
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.queries.BlockWithMetadata;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.queries.TransactionWithMetadata;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockWithMetadata;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.TransactionWithMetadata;
 
 import java.util.List;
 import java.util.stream.Collectors;

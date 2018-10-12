@@ -1,20 +1,20 @@
-package net.consensys.pantheon.ethereum.p2p.rlpx.handshake.ecies;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.ecies;
 
 import static com.google.common.base.Preconditions.checkState;
-import static net.consensys.pantheon.crypto.SECP256K1.calculateKeyAgreement;
-import static net.consensys.pantheon.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker.HASH_EPH_PUBKEY_LENGTH;
-import static net.consensys.pantheon.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker.NONCE_LENGTH;
-import static net.consensys.pantheon.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker.PUBKEY_LENGTH;
-import static net.consensys.pantheon.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker.SIGNATURE_LENGTH;
-import static net.consensys.pantheon.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker.TOKEN_FLAG_LENGTH;
+import static tech.pegasys.pantheon.crypto.SECP256K1.calculateKeyAgreement;
+import static tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker.HASH_EPH_PUBKEY_LENGTH;
+import static tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker.NONCE_LENGTH;
+import static tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker.PUBKEY_LENGTH;
+import static tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker.SIGNATURE_LENGTH;
+import static tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker.TOKEN_FLAG_LENGTH;
 
-import net.consensys.pantheon.crypto.Hash;
-import net.consensys.pantheon.crypto.SECP256K1;
-import net.consensys.pantheon.util.bytes.Bytes32;
-import net.consensys.pantheon.util.bytes.Bytes32s;
-import net.consensys.pantheon.util.bytes.BytesValue;
-import net.consensys.pantheon.util.bytes.MutableBytes32;
-import net.consensys.pantheon.util.bytes.MutableBytesValue;
+import tech.pegasys.pantheon.crypto.Hash;
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.Bytes32s;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.MutableBytes32;
+import tech.pegasys.pantheon.util.bytes.MutableBytesValue;
 
 /**
  * The initiator's handshake message.

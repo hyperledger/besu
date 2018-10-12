@@ -1,12 +1,12 @@
-package net.consensys.pantheon.ethereum.p2p.peers;
+package tech.pegasys.pantheon.ethereum.p2p.peers;
 
-import static net.consensys.pantheon.util.bytes.BytesValue.fromHexString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static tech.pegasys.pantheon.util.bytes.BytesValue.fromHexString;
 
-import net.consensys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
-import net.consensys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import org.junit.Test;
 

@@ -1,13 +1,13 @@
-package net.consensys.pantheon.ethereum.p2p.netty;
+package tech.pegasys.pantheon.ethereum.p2p.netty;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.p2p.NetworkMemoryPool;
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
-import net.consensys.pantheon.ethereum.p2p.netty.CapabilityMultiplexer.ProtocolMessage;
-import net.consensys.pantheon.ethereum.p2p.wire.Capability;
-import net.consensys.pantheon.ethereum.p2p.wire.RawMessage;
-import net.consensys.pantheon.ethereum.p2p.wire.SubProtocol;
+import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.netty.CapabilityMultiplexer.ProtocolMessage;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
+import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 
 import java.util.Arrays;
 import java.util.HashSet;

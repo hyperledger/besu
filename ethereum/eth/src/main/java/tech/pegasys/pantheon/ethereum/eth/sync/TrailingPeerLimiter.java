@@ -1,14 +1,14 @@
-package net.consensys.pantheon.ethereum.eth.sync;
+package tech.pegasys.pantheon.ethereum.eth.sync;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import net.consensys.pantheon.ethereum.chain.BlockAddedEvent;
-import net.consensys.pantheon.ethereum.chain.BlockAddedEvent.EventType;
-import net.consensys.pantheon.ethereum.chain.BlockAddedObserver;
-import net.consensys.pantheon.ethereum.chain.Blockchain;
-import net.consensys.pantheon.ethereum.eth.manager.EthPeer;
-import net.consensys.pantheon.ethereum.eth.manager.EthPeers;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
+import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent.EventType;
+import tech.pegasys.pantheon.ethereum.chain.BlockAddedObserver;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 
 import java.util.Comparator;
 import java.util.List;

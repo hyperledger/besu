@@ -1,13 +1,13 @@
-package net.consensys.pantheon.ethereum.p2p.discovery.internal;
+package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import static java.lang.System.arraycopy;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.copyOf;
 import static java.util.Collections.unmodifiableList;
 
-import net.consensys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
-import net.consensys.pantheon.ethereum.p2p.peers.PeerId;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.PeerId;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.List;

@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.eth.manager;
+package tech.pegasys.pantheon.ethereum.eth.manager;
 
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import com.google.common.base.MoreObjects;
 

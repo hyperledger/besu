@@ -1,12 +1,12 @@
-package net.consensys.pantheon.consensus.clique.headervalidationrules;
+package tech.pegasys.pantheon.consensus.clique.headervalidationrules;
 
-import net.consensys.pantheon.consensus.clique.CliqueContext;
-import net.consensys.pantheon.consensus.clique.CliqueDifficultyCalculator;
-import net.consensys.pantheon.consensus.clique.CliqueHelpers;
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.mainnet.AttachedBlockHeaderValidationRule;
+import tech.pegasys.pantheon.consensus.clique.CliqueContext;
+import tech.pegasys.pantheon.consensus.clique.CliqueDifficultyCalculator;
+import tech.pegasys.pantheon.consensus.clique.CliqueHelpers;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 
 import java.math.BigInteger;
 

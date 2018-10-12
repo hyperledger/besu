@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.development;
+package tech.pegasys.pantheon.ethereum.development;
 
-import net.consensys.pantheon.ethereum.mainnet.MainnetProtocolSpecs;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSpec;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSpecs;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 
 /**
  * Provides a protocol specification which is suitable for use on private, PoW networks, where block

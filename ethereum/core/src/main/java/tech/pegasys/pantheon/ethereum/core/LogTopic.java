@@ -1,11 +1,11 @@
-package net.consensys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import net.consensys.pantheon.ethereum.rlp.RLPInput;
-import net.consensys.pantheon.ethereum.rlp.RLPOutput;
-import net.consensys.pantheon.util.bytes.BytesValue;
-import net.consensys.pantheon.util.bytes.DelegatingBytesValue;
+import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
+import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.DelegatingBytesValue;
 
 public class LogTopic extends DelegatingBytesValue {
 

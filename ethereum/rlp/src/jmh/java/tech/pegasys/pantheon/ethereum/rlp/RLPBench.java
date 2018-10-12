@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.rlp;
+package tech.pegasys.pantheon.ethereum.rlp;
 
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;

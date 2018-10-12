@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.response;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.response;
 
-import net.consensys.pantheon.ethereum.jsonrpc.internal.results.JsonRpcResult;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.JsonRpcResult;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

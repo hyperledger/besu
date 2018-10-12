@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.p2p.config;
+package tech.pegasys.pantheon.ethereum.p2p.config;
 
-import net.consensys.pantheon.ethereum.p2p.wire.SubProtocol;
+import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 
 import java.util.Arrays;
 import java.util.Collections;

@@ -1,10 +1,10 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.methods;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
-import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
 
 public class EthBlockNumber implements JsonRpcMethod {
 

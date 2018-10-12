@@ -1,10 +1,10 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.methods;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
-import net.consensys.pantheon.ethereum.core.Synchronizer;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.results.SyncingResult;
+import tech.pegasys.pantheon.ethereum.core.Synchronizer;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.SyncingResult;
 
 /*
  * SyncProgress retrieves the current progress of the syncing algorithm. If there's no sync

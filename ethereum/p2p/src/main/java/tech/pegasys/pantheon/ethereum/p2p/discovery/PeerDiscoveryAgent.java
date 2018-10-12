@@ -1,29 +1,29 @@
-package net.consensys.pantheon.ethereum.p2p.discovery;
+package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static net.consensys.pantheon.util.Preconditions.checkGuard;
-import static net.consensys.pantheon.util.bytes.BytesValue.wrapBuffer;
+import static tech.pegasys.pantheon.util.Preconditions.checkGuard;
+import static tech.pegasys.pantheon.util.bytes.BytesValue.wrapBuffer;
 
-import net.consensys.pantheon.crypto.SECP256K1;
-import net.consensys.pantheon.ethereum.p2p.api.DisconnectCallback;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection;
-import net.consensys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
-import net.consensys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
-import net.consensys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerDroppedEvent;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.Packet;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PacketData;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PacketType;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PeerRequirement;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PeerTable;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
-import net.consensys.pantheon.ethereum.p2p.peers.DefaultPeerId;
-import net.consensys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
-import net.consensys.pantheon.util.NetworkUtility;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.ethereum.p2p.api.DisconnectCallback;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerDroppedEvent;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketData;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerRequirement;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
+import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeerId;
+import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
+import tech.pegasys.pantheon.util.NetworkUtility;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.BindException;
 import java.net.InetSocketAddress;
@@ -92,7 +92,7 @@ public class PeerDiscoveryAgent implements DisconnectCallback {
   private final PeerTable peerTable;
   private final DiscoveryConfiguration config;
 
-  /* This is the {@link net.consensys.pantheon.ethereum.p2p.Peer} object holding who we are. */
+  /* This is the {@link tech.pegasys.pantheon.ethereum.p2p.Peer} object holding who we are. */
   private DiscoveryPeer advertisedPeer;
   /* The vert.x UDP socket. */
   private DatagramSocket socket;

@@ -1,10 +1,10 @@
-package net.consensys.pantheon.consensus.clique;
+package tech.pegasys.pantheon.consensus.clique;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
 
-import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSpec;
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 
 import io.vertx.core.json.JsonObject;
 import org.junit.Test;

@@ -1,11 +1,11 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket;
 
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 
-import net.consensys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.methods.WebSocketMethodsFactory;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.methods.WebSocketMethodsFactory;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
 
 import java.util.Arrays;
 import java.util.HashMap;

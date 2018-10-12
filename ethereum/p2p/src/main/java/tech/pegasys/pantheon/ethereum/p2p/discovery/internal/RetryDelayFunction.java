@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.p2p.discovery.internal;
+package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import java.util.function.UnaryOperator;
 

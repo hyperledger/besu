@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.core;
 
 import static org.junit.Assert.assertEquals;
 
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;

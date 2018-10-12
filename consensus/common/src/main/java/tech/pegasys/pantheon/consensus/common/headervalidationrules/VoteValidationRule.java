@@ -1,8 +1,8 @@
-package net.consensys.pantheon.consensus.common.headervalidationrules;
+package tech.pegasys.pantheon.consensus.common.headervalidationrules;
 
-import net.consensys.pantheon.consensus.common.VoteType;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.mainnet.DetachedBlockHeaderValidationRule;
+import tech.pegasys.pantheon.consensus.common.VoteType;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

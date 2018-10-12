@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket.methods;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.methods;
 
-import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;

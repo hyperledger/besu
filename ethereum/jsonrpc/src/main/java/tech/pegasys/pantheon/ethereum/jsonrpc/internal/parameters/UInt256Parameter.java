@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.parameters;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters;
 
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 

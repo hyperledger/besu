@@ -1,8 +1,8 @@
-package net.consensys.pantheon.tests.acceptance.dsl.pubsub;
+package tech.pegasys.pantheon.tests.acceptance.dsl.pubsub;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 
 import java.util.List;
 import java.util.Map;

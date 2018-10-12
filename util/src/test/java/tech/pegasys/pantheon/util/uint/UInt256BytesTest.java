@@ -1,9 +1,9 @@
-package net.consensys.pantheon.util.uint;
+package tech.pegasys.pantheon.util.uint;
 
-import net.consensys.pantheon.util.bytes.Bytes32;
-import net.consensys.pantheon.util.bytes.MutableBytes32;
-import net.consensys.pantheon.util.uint.UInt256Bytes.BinaryLongOp;
-import net.consensys.pantheon.util.uint.UInt256Bytes.BinaryOp;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.MutableBytes32;
+import tech.pegasys.pantheon.util.uint.UInt256Bytes.BinaryLongOp;
+import tech.pegasys.pantheon.util.uint.UInt256Bytes.BinaryOp;
 
 import java.math.BigInteger;
 

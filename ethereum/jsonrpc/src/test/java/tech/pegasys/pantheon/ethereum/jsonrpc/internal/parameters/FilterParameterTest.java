@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.parameters;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 
 import java.util.Arrays;
 

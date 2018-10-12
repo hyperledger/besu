@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.mainnet.headervalidationrules;
+package tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules;
 
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.mainnet.AttachedBlockHeaderValidationRule;
-import net.consensys.pantheon.ethereum.mainnet.DifficultyCalculator;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.mainnet.AttachedBlockHeaderValidationRule;
+import tech.pegasys.pantheon.ethereum.mainnet.DifficultyCalculator;
 
 import java.math.BigInteger;
 

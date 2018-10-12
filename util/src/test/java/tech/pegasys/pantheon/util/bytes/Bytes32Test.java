@@ -1,4 +1,4 @@
-package net.consensys.pantheon.util.bytes;
+package tech.pegasys.pantheon.util.bytes;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

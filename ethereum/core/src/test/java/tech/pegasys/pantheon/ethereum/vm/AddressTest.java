@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.vm;
+package tech.pegasys.pantheon.ethereum.vm;
 
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import org.junit.Assert;
 import org.junit.Test;

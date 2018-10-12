@@ -1,9 +1,9 @@
-package net.consensys.pantheon.tests.acceptance.dsl.pubsub;
+package tech.pegasys.pantheon.tests.acceptance.dsl.pubsub;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.tests.acceptance.dsl.WaitUtils;
-import net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNode;
+import tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,11 +1,11 @@
-package net.consensys.pantheon.ethereum.eth.transactions;
+package tech.pegasys.pantheon.ethereum.eth.transactions;
 
 import static java.util.Collections.emptySet;
 
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.core.Transaction;
-import net.consensys.pantheon.ethereum.eth.manager.EthPeer;
-import net.consensys.pantheon.ethereum.eth.manager.EthPeer.DisconnectCallback;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer.DisconnectCallback;
 
 import java.util.Collection;
 import java.util.Collections;

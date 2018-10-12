@@ -1,7 +1,7 @@
-package net.consensys.pantheon.tests.acceptance.dsl;
+package tech.pegasys.pantheon.tests.acceptance.dsl;
 
-import net.consensys.pantheon.tests.acceptance.dsl.account.Accounts;
-import net.consensys.pantheon.tests.acceptance.dsl.node.Cluster;
+import tech.pegasys.pantheon.tests.acceptance.dsl.account.Accounts;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.Cluster;
 
 import org.junit.After;
 

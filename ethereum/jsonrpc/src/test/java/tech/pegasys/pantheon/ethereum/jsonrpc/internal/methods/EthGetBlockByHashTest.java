@@ -1,14 +1,14 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.methods;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.results.BlockResultFactory;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.BlockResultFactory;
 
 import org.junit.Before;
 import org.junit.Rule;

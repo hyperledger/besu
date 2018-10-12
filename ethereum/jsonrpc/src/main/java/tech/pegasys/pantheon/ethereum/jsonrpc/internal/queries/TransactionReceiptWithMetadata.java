@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.queries;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries;
 
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.core.Transaction;
-import net.consensys.pantheon.ethereum.core.TransactionReceipt;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 
 public class TransactionReceiptWithMetadata {
   private final TransactionReceipt receipt;

@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.p2p.netty;
+package tech.pegasys.pantheon.ethereum.p2p.netty;
 
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
-import net.consensys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 
 final class OutboundMessage {
 

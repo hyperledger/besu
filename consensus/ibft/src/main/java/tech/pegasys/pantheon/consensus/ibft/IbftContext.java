@@ -1,7 +1,7 @@
-package net.consensys.pantheon.consensus.ibft;
+package tech.pegasys.pantheon.consensus.ibft;
 
-import net.consensys.pantheon.consensus.common.VoteProposer;
-import net.consensys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.consensus.common.VoteProposer;
+import tech.pegasys.pantheon.consensus.common.VoteTally;
 
 /** Holds the IBFT specific mutable state. */
 public class IbftContext {

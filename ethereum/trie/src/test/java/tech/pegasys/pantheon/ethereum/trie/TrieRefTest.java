@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.trie;
+package tech.pegasys.pantheon.ethereum.trie;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.testutil.JsonTestParameters;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.testutil.JsonTestParameters;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Collection;
 import java.util.function.Function;

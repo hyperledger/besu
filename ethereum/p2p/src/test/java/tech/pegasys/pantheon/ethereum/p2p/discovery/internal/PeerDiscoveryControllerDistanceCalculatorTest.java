@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.p2p.discovery.internal;
+package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Random;
 

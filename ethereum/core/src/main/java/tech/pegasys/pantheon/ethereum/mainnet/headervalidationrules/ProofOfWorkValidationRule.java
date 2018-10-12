@@ -1,16 +1,16 @@
-package net.consensys.pantheon.ethereum.mainnet.headervalidationrules;
+package tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules;
 
-import net.consensys.pantheon.crypto.BouncyCastleMessageDigestFactory;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.mainnet.DetachedBlockHeaderValidationRule;
-import net.consensys.pantheon.ethereum.mainnet.EthHasher;
-import net.consensys.pantheon.ethereum.rlp.RLP;
-import net.consensys.pantheon.ethereum.rlp.RlpUtils;
-import net.consensys.pantheon.util.bytes.Bytes32;
-import net.consensys.pantheon.util.bytes.BytesValue;
-import net.consensys.pantheon.util.bytes.BytesValues;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.crypto.BouncyCastleMessageDigestFactory;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.mainnet.DetachedBlockHeaderValidationRule;
+import tech.pegasys.pantheon.ethereum.mainnet.EthHasher;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
+import tech.pegasys.pantheon.ethereum.rlp.RlpUtils;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValues;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -36,7 +36,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
           () -> {
             try {
               return BouncyCastleMessageDigestFactory.create(
-                  net.consensys.pantheon.crypto.Hash.KECCAK256_ALG);
+                  tech.pegasys.pantheon.crypto.Hash.KECCAK256_ALG);
             } catch (final NoSuchAlgorithmException ex) {
               throw new IllegalStateException(ex);
             }

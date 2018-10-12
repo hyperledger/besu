@@ -1,24 +1,24 @@
-package net.consensys.pantheon.ethereum.eth.manager;
+package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import net.consensys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator.MinedBlockObserver;
-import net.consensys.pantheon.ethereum.chain.Blockchain;
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.eth.EthProtocol;
-import net.consensys.pantheon.ethereum.eth.messages.EthPV62;
-import net.consensys.pantheon.ethereum.eth.messages.NewBlockMessage;
-import net.consensys.pantheon.ethereum.eth.messages.StatusMessage;
-import net.consensys.pantheon.ethereum.p2p.api.Message;
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
-import net.consensys.pantheon.ethereum.p2p.api.ProtocolManager;
-import net.consensys.pantheon.ethereum.p2p.wire.Capability;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import net.consensys.pantheon.ethereum.rlp.RLPException;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator.MinedBlockObserver;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
+import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
+import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockMessage;
+import tech.pegasys.pantheon.ethereum.eth.messages.StatusMessage;
+import tech.pegasys.pantheon.ethereum.p2p.api.Message;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
+import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.ethereum.rlp.RLPException;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Arrays;
 import java.util.Collections;

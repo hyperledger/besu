@@ -1,12 +1,12 @@
-package net.consensys.pantheon.ethereum.jsonrpc;
+package tech.pegasys.pantheon.ethereum.jsonrpc;
 
-import net.consensys.pantheon.ethereum.chain.GenesisConfig;
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
-import net.consensys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.ethereum.util.RawBlockIterator;
+import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
 
 import java.net.URL;
 import java.nio.file.Paths;

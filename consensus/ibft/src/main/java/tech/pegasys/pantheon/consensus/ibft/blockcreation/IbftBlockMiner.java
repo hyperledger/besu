@@ -1,13 +1,13 @@
-package net.consensys.pantheon.consensus.ibft.blockcreation;
+package tech.pegasys.pantheon.consensus.ibft.blockcreation;
 
-import net.consensys.pantheon.consensus.ibft.IbftContext;
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.blockcreation.AbstractBlockScheduler;
-import net.consensys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator.MinedBlockObserver;
-import net.consensys.pantheon.ethereum.blockcreation.BlockMiner;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.util.Subscribers;
+import tech.pegasys.pantheon.consensus.ibft.IbftContext;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.blockcreation.AbstractBlockScheduler;
+import tech.pegasys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator.MinedBlockObserver;
+import tech.pegasys.pantheon.ethereum.blockcreation.BlockMiner;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.util.Subscribers;
 
 public class IbftBlockMiner extends BlockMiner<IbftContext, IbftBlockCreator> {
 

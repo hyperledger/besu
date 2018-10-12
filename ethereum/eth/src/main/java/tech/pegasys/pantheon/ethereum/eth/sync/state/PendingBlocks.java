@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.eth.sync.state;
+package tech.pegasys.pantheon.ethereum.eth.sync.state;
 
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 
 import java.util.Collections;
 import java.util.List;

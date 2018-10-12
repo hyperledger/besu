@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.rlp;
+package tech.pegasys.pantheon.ethereum.rlp;
 
-import net.consensys.pantheon.testutil.JsonTestParameters;
+import tech.pegasys.pantheon.testutil.JsonTestParameters;
 
 import java.util.Collection;
 
@@ -15,7 +15,7 @@ public class InvalidRLPRefTest {
 
   private static final String[] TEST_CONFIG_FILES = {
     // TODO: upstream these additional tests to the ethereum tests repo
-    "net/consensys/pantheon/ethereum/rlp/invalidRLPTest.json", "RLPTests/invalidRLPTest.json"
+    "tech/pegasys/pantheon/ethereum/rlp/invalidRLPTest.json", "RLPTests/invalidRLPTest.json"
   };
 
   private final InvalidRLPRefTestCaseSpec spec;

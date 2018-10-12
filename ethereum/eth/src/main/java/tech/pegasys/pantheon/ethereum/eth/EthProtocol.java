@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.eth;
+package tech.pegasys.pantheon.ethereum.eth;
 
-import net.consensys.pantheon.ethereum.eth.messages.EthPV62;
-import net.consensys.pantheon.ethereum.eth.messages.EthPV63;
-import net.consensys.pantheon.ethereum.p2p.wire.Capability;
-import net.consensys.pantheon.ethereum.p2p.wire.SubProtocol;
+import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
+import tech.pegasys.pantheon.ethereum.eth.messages.EthPV63;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 
 import java.util.ArrayList;
 import java.util.Arrays;

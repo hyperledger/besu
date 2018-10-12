@@ -1,22 +1,22 @@
-package net.consensys.pantheon.ethereum.jsonrpc;
+package tech.pegasys.pantheon.ethereum.jsonrpc;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-import net.consensys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
-import net.consensys.pantheon.ethereum.core.Synchronizer;
-import net.consensys.pantheon.ethereum.core.TransactionPool;
-import net.consensys.pantheon.ethereum.eth.EthProtocol;
-import net.consensys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.RpcApis;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
-import net.consensys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
-import net.consensys.pantheon.ethereum.p2p.api.P2PNetwork;
-import net.consensys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
+import tech.pegasys.pantheon.ethereum.core.Synchronizer;
+import tech.pegasys.pantheon.ethereum.core.TransactionPool;
+import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
+import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.RpcApis;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 
 import java.util.HashSet;
 import java.util.Map;

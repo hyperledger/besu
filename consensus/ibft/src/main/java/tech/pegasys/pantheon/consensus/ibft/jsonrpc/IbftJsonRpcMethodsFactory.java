@@ -1,10 +1,10 @@
-package net.consensys.pantheon.consensus.ibft.jsonrpc;
+package tech.pegasys.pantheon.consensus.ibft.jsonrpc;
 
-import net.consensys.pantheon.consensus.ibft.IbftContext;
-import net.consensys.pantheon.consensus.ibft.jsonrpc.methods.IbftProposeValidatorVote;
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.consensus.ibft.IbftContext;
+import tech.pegasys.pantheon.consensus.ibft.jsonrpc.methods.IbftProposeValidatorVote;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 
 import java.util.HashMap;
 import java.util.Map;

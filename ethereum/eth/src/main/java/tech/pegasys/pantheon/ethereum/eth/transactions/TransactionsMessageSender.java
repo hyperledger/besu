@@ -1,11 +1,11 @@
-package net.consensys.pantheon.ethereum.eth.transactions;
+package tech.pegasys.pantheon.ethereum.eth.transactions;
 
 import static java.util.stream.Collectors.toSet;
 
-import net.consensys.pantheon.ethereum.core.Transaction;
-import net.consensys.pantheon.ethereum.eth.manager.EthPeer;
-import net.consensys.pantheon.ethereum.eth.messages.TransactionsMessage;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
+import tech.pegasys.pantheon.ethereum.eth.messages.TransactionsMessage;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
 
 import java.util.Set;
 

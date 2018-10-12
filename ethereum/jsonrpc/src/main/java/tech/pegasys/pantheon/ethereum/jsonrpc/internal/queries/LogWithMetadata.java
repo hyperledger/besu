@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.queries;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries;
 
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.core.LogTopic;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.LogTopic;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
 

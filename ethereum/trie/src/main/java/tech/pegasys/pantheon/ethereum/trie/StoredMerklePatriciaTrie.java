@@ -1,10 +1,10 @@
-package net.consensys.pantheon.ethereum.trie;
+package tech.pegasys.pantheon.ethereum.trie;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static net.consensys.pantheon.ethereum.trie.CompactEncoding.bytesToPath;
+import static tech.pegasys.pantheon.ethereum.trie.CompactEncoding.bytesToPath;
 
-import net.consensys.pantheon.util.bytes.Bytes32;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Map;
 import java.util.Optional;

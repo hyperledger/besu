@@ -1,10 +1,10 @@
-package net.consensys.pantheon.tests.acceptance;
+package tech.pegasys.pantheon.tests.acceptance;
 
-import static net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonMinerNode;
-import static net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonNode;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonMinerNode;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonNode;
 
-import net.consensys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
-import net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNode;
+import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 
 import org.junit.Before;
 import org.junit.Test;

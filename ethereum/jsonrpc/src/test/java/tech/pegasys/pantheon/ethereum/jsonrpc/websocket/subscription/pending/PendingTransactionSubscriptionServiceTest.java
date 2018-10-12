@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.pending;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.pending;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -9,13 +9,13 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.ethereum.chain.Blockchain;
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.core.Transaction;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.Subscription;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.Subscription;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
 
 import java.util.Arrays;
 import java.util.HashMap;

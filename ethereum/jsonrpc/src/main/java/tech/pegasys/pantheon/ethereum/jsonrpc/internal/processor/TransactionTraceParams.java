@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.processor;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor;
 
-import net.consensys.pantheon.ethereum.debug.TraceOptions;
+import tech.pegasys.pantheon.ethereum.debug.TraceOptions;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

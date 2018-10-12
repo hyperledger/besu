@@ -1,4 +1,4 @@
-package net.consensys.pantheon.consensus.ibft;
+package tech.pegasys.pantheon.consensus.ibft;
 
 import static java.util.Collections.emptyList;
 import static org.mockito.Mockito.mock;
@@ -6,16 +6,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.consensus.common.VoteProposer;
-import net.consensys.pantheon.consensus.common.VoteTally;
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.chain.MutableBlockchain;
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.core.BlockBody;
-import net.consensys.pantheon.ethereum.core.BlockHeaderTestFixture;
-import net.consensys.pantheon.ethereum.core.BlockImporter;
-import net.consensys.pantheon.ethereum.db.WorldStateArchive;
-import net.consensys.pantheon.ethereum.mainnet.HeaderValidationMode;
+import tech.pegasys.pantheon.consensus.common.VoteProposer;
+import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockBody;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
+import tech.pegasys.pantheon.ethereum.core.BlockImporter;
+import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
+import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 
 import java.util.Collections;
 

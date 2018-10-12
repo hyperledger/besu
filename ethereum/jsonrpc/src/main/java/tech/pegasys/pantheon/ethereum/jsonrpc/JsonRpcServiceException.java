@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.jsonrpc;
+package tech.pegasys.pantheon.ethereum.jsonrpc;
 
 public class JsonRpcServiceException extends RuntimeException {
 

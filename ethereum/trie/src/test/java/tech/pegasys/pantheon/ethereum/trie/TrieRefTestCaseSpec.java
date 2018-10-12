@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.trie;
+package tech.pegasys.pantheon.ethereum.trie;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 

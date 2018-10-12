@@ -1,11 +1,11 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.filter;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.Log;
-import net.consensys.pantheon.ethereum.core.LogTopic;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Log;
+import tech.pegasys.pantheon.ethereum.core.LogTopic;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package net.consensys.pantheon.testutil;
+package tech.pegasys.pantheon.testutil;
 
 import java.io.IOException;
 import java.nio.file.Files;

@@ -1,10 +1,10 @@
-package net.consensys.pantheon.util.bytes;
+package tech.pegasys.pantheon.util.bytes;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import net.consensys.pantheon.util.uint.Int256;
-import net.consensys.pantheon.util.uint.UInt256;
-import net.consensys.pantheon.util.uint.UInt256Bytes;
+import tech.pegasys.pantheon.util.uint.Int256;
+import tech.pegasys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.util.uint.UInt256Bytes;
 
 /**
  * A {@link BytesValue} that is guaranteed to contain exactly 32 bytes.

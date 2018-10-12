@@ -1,10 +1,10 @@
-package net.consensys.pantheon.ethereum.mainnet;
+package tech.pegasys.pantheon.ethereum.mainnet;
 
-import net.consensys.pantheon.ethereum.core.Account;
-import net.consensys.pantheon.ethereum.core.Gas;
-import net.consensys.pantheon.ethereum.core.Wei;
-import net.consensys.pantheon.ethereum.vm.MessageFrame;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.ethereum.core.Account;
+import tech.pegasys.pantheon.ethereum.core.Gas;
+import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
 

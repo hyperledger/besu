@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.core;
 
-import net.consensys.pantheon.ethereum.db.WorldStateArchive;
-import net.consensys.pantheon.ethereum.worldstate.KeyValueStorageWorldStateStorage;
-import net.consensys.pantheon.services.kvstore.InMemoryKeyValueStorage;
+import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
+import tech.pegasys.pantheon.ethereum.worldstate.KeyValueStorageWorldStateStorage;
+import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 
 public class InMemoryWorldState {
 

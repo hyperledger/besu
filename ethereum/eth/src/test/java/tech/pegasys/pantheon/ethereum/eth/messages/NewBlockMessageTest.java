@@ -1,17 +1,17 @@
-package net.consensys.pantheon.ethereum.eth.messages;
+package tech.pegasys.pantheon.ethereum.eth.messages;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.ethereum.p2p.NetworkMemoryPool;
-import net.consensys.pantheon.ethereum.p2p.wire.RawMessage;
-import net.consensys.pantheon.ethereum.rlp.BytesValueRLPOutput;
-import net.consensys.pantheon.ethereum.testutil.BlockDataGenerator;
-import net.consensys.pantheon.util.bytes.BytesValue;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
+import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
+import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
+import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import io.netty.buffer.Unpooled;
 import org.junit.Test;

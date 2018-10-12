@@ -1,4 +1,4 @@
-package net.consensys.pantheon.crypto.altbn128;
+package tech.pegasys.pantheon.crypto.altbn128;
 
 /**
  * Adapted from the pc_ecc (Apache 2 License) implementation:

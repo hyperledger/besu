@@ -1,9 +1,9 @@
-package net.consensys.pantheon;
+package tech.pegasys.pantheon;
 
-import net.consensys.pantheon.controller.PantheonController;
-import net.consensys.pantheon.ethereum.jsonrpc.JsonRpcHttpService;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.WebSocketService;
-import net.consensys.pantheon.ethereum.p2p.NetworkRunner;
+import tech.pegasys.pantheon.controller.PantheonController;
+import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcHttpService;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketService;
+import tech.pegasys.pantheon.ethereum.p2p.NetworkRunner;
 
 import java.io.File;
 import java.io.FileOutputStream;

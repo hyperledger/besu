@@ -1,13 +1,13 @@
-package net.consensys.pantheon.consensus.clique;
+package tech.pegasys.pantheon.consensus.clique;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.core.AddressHelpers;
-import net.consensys.pantheon.ethereum.core.Wei;
-import net.consensys.pantheon.ethereum.mainnet.MainnetProtocolSpecs;
-import net.consensys.pantheon.ethereum.mainnet.MutableProtocolSchedule;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSpec;
+import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
+import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSpecs;
+import tech.pegasys.pantheon.ethereum.mainnet.MutableProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 
 import org.junit.Test;
 

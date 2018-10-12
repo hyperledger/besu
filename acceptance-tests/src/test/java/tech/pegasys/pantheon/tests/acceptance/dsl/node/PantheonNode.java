@@ -1,4 +1,4 @@
-package net.consensys.pantheon.tests.acceptance.dsl.node;
+package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -6,13 +6,13 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.web3j.protocol.core.DefaultBlockParameterName.LATEST;
 import static org.web3j.utils.Numeric.toHexString;
 
-import net.consensys.pantheon.controller.KeyPairUtil;
-import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
-import net.consensys.pantheon.ethereum.blockcreation.MiningParameters;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
-import net.consensys.pantheon.tests.acceptance.dsl.account.Account;
+import tech.pegasys.pantheon.controller.KeyPairUtil;
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.ethereum.blockcreation.MiningParameters;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
+import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
 
 import java.io.File;
 import java.io.FileInputStream;

@@ -1,16 +1,16 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.methods;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.queries.TransactionReceiptWithMetadata;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.results.TransactionReceiptResult;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.results.TransactionReceiptRootResult;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.results.TransactionReceiptStatusResult;
-import net.consensys.pantheon.ethereum.mainnet.TransactionReceiptType;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.TransactionReceiptWithMetadata;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.TransactionReceiptResult;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.TransactionReceiptRootResult;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.TransactionReceiptStatusResult;
+import tech.pegasys.pantheon.ethereum.mainnet.TransactionReceiptType;
 
 public class EthGetTransactionReceipt implements JsonRpcMethod {
 

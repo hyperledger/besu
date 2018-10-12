@@ -1,4 +1,4 @@
-package net.consensys.pantheon.util.bytes;
+package tech.pegasys.pantheon.util.bytes;
 
 /** Static utility methods to work with {@link Bytes32}. */
 public abstract class Bytes32s {

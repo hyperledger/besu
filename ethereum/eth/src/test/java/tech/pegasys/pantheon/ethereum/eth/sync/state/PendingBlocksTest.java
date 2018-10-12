@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.eth.sync.state;
+package tech.pegasys.pantheon.ethereum.eth.sync.state;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.testutil.BlockDataGenerator;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
 
 import java.util.Arrays;
 import java.util.Collections;

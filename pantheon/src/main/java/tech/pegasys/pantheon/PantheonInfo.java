@@ -1,4 +1,4 @@
-package net.consensys.pantheon;
+package tech.pegasys.pantheon;
 
 // This file is generated via a gradle task and should not be edited directly.
 public class PantheonInfo {

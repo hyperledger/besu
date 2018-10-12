@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.p2p.discovery.internal;
+package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -15,19 +15,19 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.crypto.SECP256K1;
-import net.consensys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
-import net.consensys.pantheon.ethereum.p2p.discovery.PeerDiscoveryAgent;
-import net.consensys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
-import net.consensys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
-import net.consensys.pantheon.ethereum.p2p.peers.Endpoint;
-import net.consensys.pantheon.ethereum.p2p.peers.Peer;
-import net.consensys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import net.consensys.pantheon.util.bytes.Bytes32;
-import net.consensys.pantheon.util.bytes.BytesValue;
-import net.consensys.pantheon.util.bytes.MutableBytesValue;
-import net.consensys.pantheon.util.uint.UInt256;
-import net.consensys.pantheon.util.uint.UInt256Value;
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryAgent;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.MutableBytesValue;
+import tech.pegasys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.util.uint.UInt256Value;
 
 import java.util.Arrays;
 import java.util.Collections;

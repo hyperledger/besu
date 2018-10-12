@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.rlp;
+package tech.pegasys.pantheon.ethereum.rlp;
 
 /** Exception thrown if an RLP input is corrupted and cannot be decoded properly. */
 public class CorruptedRLPInputException extends RLPException {

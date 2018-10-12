@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.eth.sync.state;
+package tech.pegasys.pantheon.ethereum.eth.sync.state;
 
-import net.consensys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
+import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 
 public final class FastSyncState {
   private long fastSyncTargetBlockNumber = -1;

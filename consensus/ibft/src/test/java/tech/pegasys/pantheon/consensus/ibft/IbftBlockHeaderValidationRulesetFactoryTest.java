@@ -1,22 +1,22 @@
-package net.consensys.pantheon.consensus.ibft;
+package tech.pegasys.pantheon.consensus.ibft;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static net.consensys.pantheon.consensus.ibft.IbftProtocolContextFixture.protocolContext;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.consensus.ibft.IbftProtocolContextFixture.protocolContext;
 
-import net.consensys.pantheon.consensus.common.VoteType;
-import net.consensys.pantheon.crypto.SECP256K1;
-import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
-import net.consensys.pantheon.crypto.SECP256K1.Signature;
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.core.BlockHeaderTestFixture;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.mainnet.BlockHeaderValidator;
-import net.consensys.pantheon.ethereum.mainnet.HeaderValidationMode;
-import net.consensys.pantheon.util.bytes.BytesValue;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.consensus.common.VoteType;
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
+import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.List;

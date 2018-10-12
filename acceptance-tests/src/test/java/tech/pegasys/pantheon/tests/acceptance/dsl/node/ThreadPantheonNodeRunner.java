@@ -1,13 +1,13 @@
-package net.consensys.pantheon.tests.acceptance.dsl.node;
+package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
-import static net.consensys.pantheon.cli.EthNetworkConfig.mainnet;
+import static tech.pegasys.pantheon.cli.EthNetworkConfig.mainnet;
 
-import net.consensys.pantheon.Runner;
-import net.consensys.pantheon.RunnerBuilder;
-import net.consensys.pantheon.cli.EthNetworkConfig;
-import net.consensys.pantheon.cli.PantheonControllerBuilder;
-import net.consensys.pantheon.controller.PantheonController;
-import net.consensys.pantheon.ethereum.eth.sync.SynchronizerConfiguration.Builder;
+import tech.pegasys.pantheon.Runner;
+import tech.pegasys.pantheon.RunnerBuilder;
+import tech.pegasys.pantheon.cli.EthNetworkConfig;
+import tech.pegasys.pantheon.cli.PantheonControllerBuilder;
+import tech.pegasys.pantheon.controller.PantheonController;
+import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration.Builder;
 
 import java.io.IOException;
 import java.util.HashMap;

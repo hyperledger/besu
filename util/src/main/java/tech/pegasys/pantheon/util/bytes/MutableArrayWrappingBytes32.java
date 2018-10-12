@@ -1,4 +1,4 @@
-package net.consensys.pantheon.util.bytes;
+package tech.pegasys.pantheon.util.bytes;
 
 /** An implementation of {@link MutableBytes32} backed by a byte array ({@code byte[]}). */
 class MutableArrayWrappingBytes32 extends MutableArrayWrappingBytesValue implements MutableBytes32 {

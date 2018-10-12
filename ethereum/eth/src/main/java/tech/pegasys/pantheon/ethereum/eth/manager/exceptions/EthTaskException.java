@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.eth.manager.exceptions;
+package tech.pegasys.pantheon.ethereum.eth.manager.exceptions;
 
 public class EthTaskException extends RuntimeException {
 

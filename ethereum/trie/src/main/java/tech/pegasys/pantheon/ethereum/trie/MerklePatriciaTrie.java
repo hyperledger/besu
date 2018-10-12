@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.trie;
+package tech.pegasys.pantheon.ethereum.trie;
 
-import static net.consensys.pantheon.crypto.Hash.keccak256;
+import static tech.pegasys.pantheon.crypto.Hash.keccak256;
 
-import net.consensys.pantheon.ethereum.rlp.RLP;
-import net.consensys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
 
 import java.util.Map;
 import java.util.Optional;

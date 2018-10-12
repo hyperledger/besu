@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.vm;
+package tech.pegasys.pantheon.ethereum.vm;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;

@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.p2p.discovery;
+package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 import com.google.common.base.MoreObjects;
 
@@ -32,7 +32,7 @@ public abstract class PeerDiscoveryEvent {
    * An event that is dispatched whenever we bond with a new peer. See Javadoc on
    * <tt>PeerDiscoveryController</tt> to understand when this happens.
    *
-   * <p>{@link net.consensys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController}
+   * <p>{@link tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController}
    */
   public static class PeerBondedEvent extends PeerDiscoveryEvent {
     public PeerBondedEvent(final DiscoveryPeer peer, final long timestamp) {
@@ -44,7 +44,7 @@ public abstract class PeerDiscoveryEvent {
    * An event that is dispatched whenever we drop a peer from the peer table. See Javadoc on
    * <tt>PeerDiscoveryController</tt> to understand when this happens.
    *
-   * <p>{@link net.consensys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController}
+   * <p>{@link tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController}
    */
   public static class PeerDroppedEvent extends PeerDiscoveryEvent {
     public PeerDroppedEvent(final DiscoveryPeer peer, final long timestamp) {

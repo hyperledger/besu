@@ -1,12 +1,12 @@
-package net.consensys.pantheon.ethereum.eth.manager;
+package tech.pegasys.pantheon.ethereum.eth.manager;
 
-import net.consensys.pantheon.ethereum.eth.manager.RequestManager.ResponseStream;
-import net.consensys.pantheon.ethereum.eth.manager.exceptions.PeerBreachedProtocolException;
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import net.consensys.pantheon.ethereum.rlp.RLPException;
-import net.consensys.pantheon.util.ExceptionUtils;
+import tech.pegasys.pantheon.ethereum.eth.manager.RequestManager.ResponseStream;
+import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerBreachedProtocolException;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.ethereum.rlp.RLPException;
+import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;

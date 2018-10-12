@@ -1,13 +1,13 @@
-package net.consensys.pantheon.tests.acceptance.dsl.account;
+package tech.pegasys.pantheon.tests.acceptance.dsl.account;
 
-import static net.consensys.pantheon.tests.acceptance.dsl.WaitUtils.waitFor;
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.web3j.utils.Convert.Unit.ETHER;
 import static org.web3j.utils.Convert.toWei;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils.waitFor;
 
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNode;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 
 import java.util.ArrayList;
 import java.util.List;

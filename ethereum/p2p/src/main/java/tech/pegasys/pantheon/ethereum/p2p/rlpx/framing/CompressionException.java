@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.p2p.rlpx.framing;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.framing;
 
 /** Thrown when an error occurs during compression and decompression of payloads. */
 public class CompressionException extends RuntimeException {

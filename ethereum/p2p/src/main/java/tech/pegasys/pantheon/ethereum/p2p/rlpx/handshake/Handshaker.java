@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.p2p.rlpx.handshake;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake;
 
-import net.consensys.pantheon.crypto.SECP256K1;
-import net.consensys.pantheon.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker;
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker;
 
 import java.util.Optional;
 

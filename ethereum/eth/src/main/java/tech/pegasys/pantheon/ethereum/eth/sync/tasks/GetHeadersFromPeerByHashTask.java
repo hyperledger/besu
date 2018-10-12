@@ -1,14 +1,14 @@
-package net.consensys.pantheon.ethereum.eth.sync.tasks;
+package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.eth.manager.EthContext;
-import net.consensys.pantheon.ethereum.eth.manager.EthPeer;
-import net.consensys.pantheon.ethereum.eth.manager.RequestManager.ResponseStream;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
+import tech.pegasys.pantheon.ethereum.eth.manager.RequestManager.ResponseStream;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;

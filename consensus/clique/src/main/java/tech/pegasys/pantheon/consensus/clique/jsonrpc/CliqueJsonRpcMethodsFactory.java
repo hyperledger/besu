@@ -1,16 +1,16 @@
-package net.consensys.pantheon.consensus.clique.jsonrpc;
+package tech.pegasys.pantheon.consensus.clique.jsonrpc;
 
-import net.consensys.pantheon.consensus.clique.CliqueContext;
-import net.consensys.pantheon.consensus.clique.jsonrpc.methods.CliqueGetSigners;
-import net.consensys.pantheon.consensus.clique.jsonrpc.methods.CliqueGetSignersAtHash;
-import net.consensys.pantheon.consensus.clique.jsonrpc.methods.Discard;
-import net.consensys.pantheon.consensus.clique.jsonrpc.methods.Propose;
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.chain.MutableBlockchain;
-import net.consensys.pantheon.ethereum.db.WorldStateArchive;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
+import tech.pegasys.pantheon.consensus.clique.CliqueContext;
+import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.CliqueGetSigners;
+import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.CliqueGetSignersAtHash;
+import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.Discard;
+import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.Propose;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.both;
@@ -6,11 +6,11 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 
-import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.FilterParameter;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.methods.WebSocketRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.FilterParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.methods.WebSocketRpcRequest;
 
 import java.util.Arrays;
 import java.util.Collections;

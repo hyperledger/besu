@@ -1,4 +1,4 @@
-package net.consensys.pantheon.crypto;
+package tech.pegasys.pantheon.crypto;
 
 import java.net.NetworkInterface;
 import java.net.SocketException;

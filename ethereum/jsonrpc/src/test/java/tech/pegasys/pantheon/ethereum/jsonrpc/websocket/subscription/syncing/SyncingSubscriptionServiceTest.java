@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.syncing;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.syncing;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -6,11 +6,11 @@ import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.ethereum.core.SyncStatus;
-import net.consensys.pantheon.ethereum.core.Synchronizer;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.results.SyncingResult;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
+import tech.pegasys.pantheon.ethereum.core.SyncStatus;
+import tech.pegasys.pantheon.ethereum.core.Synchronizer;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.SyncingResult;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
 
 import java.util.Optional;
 

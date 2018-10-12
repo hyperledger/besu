@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.core;
 
-import net.consensys.pantheon.crypto.SECP256K1.PublicKey;
-import net.consensys.pantheon.crypto.SECP256K1.Signature;
+import tech.pegasys.pantheon.crypto.SECP256K1.PublicKey;
+import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 
 public class Util {
 

@@ -1,10 +1,10 @@
-package net.consensys.pantheon.cli;
+package tech.pegasys.pantheon.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.contentOf;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 
 import java.io.File;
 

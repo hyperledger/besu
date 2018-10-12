@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.core;
 
-import net.consensys.pantheon.ethereum.vm.LogMock;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.ethereum.vm.LogMock;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
 

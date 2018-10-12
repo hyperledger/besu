@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.parameters;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

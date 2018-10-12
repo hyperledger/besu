@@ -1,4 +1,4 @@
-package net.consensys.pantheon.cli.custom;
+package tech.pegasys.pantheon.cli.custom;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal;
 
-import net.consensys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 
 import java.math.BigInteger;
 

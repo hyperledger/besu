@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.processor;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor;
 
-import net.consensys.pantheon.ethereum.core.Transaction;
-import net.consensys.pantheon.ethereum.debug.TraceFrame;
-import net.consensys.pantheon.ethereum.mainnet.TransactionProcessor.Result;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.debug.TraceFrame;
+import tech.pegasys.pantheon.ethereum.mainnet.TransactionProcessor.Result;
 
 import java.util.List;
 

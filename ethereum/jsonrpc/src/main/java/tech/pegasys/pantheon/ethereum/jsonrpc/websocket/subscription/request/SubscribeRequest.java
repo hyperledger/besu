@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request;
 
-import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.FilterParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.FilterParameter;
 
 import com.google.common.base.Objects;
 

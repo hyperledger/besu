@@ -1,6 +1,6 @@
-package net.consensys.pantheon.services.kvstore;
+package tech.pegasys.pantheon.services.kvstore;
 
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.Closeable;
 import java.nio.file.Path;

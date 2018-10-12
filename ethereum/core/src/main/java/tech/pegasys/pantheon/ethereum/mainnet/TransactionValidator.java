@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.mainnet;
+package tech.pegasys.pantheon.ethereum.mainnet;
 
-import net.consensys.pantheon.ethereum.core.Account;
-import net.consensys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.core.Account;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
 
 import java.util.OptionalLong;
 

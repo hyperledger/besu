@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.mainnet;
+package tech.pegasys.pantheon.ethereum.mainnet;
 
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.core.TransactionReceipt;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 
 import java.util.List;
 

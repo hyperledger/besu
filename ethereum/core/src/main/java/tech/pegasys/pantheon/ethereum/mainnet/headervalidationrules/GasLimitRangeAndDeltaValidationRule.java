@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.mainnet.headervalidationrules;
+package tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.mainnet.DetachedBlockHeaderValidationRule;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

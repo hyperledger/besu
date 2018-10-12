@@ -1,7 +1,7 @@
-package net.consensys.pantheon.util.uint;
+package tech.pegasys.pantheon.util.uint;
 
-import net.consensys.pantheon.util.bytes.Bytes32;
-import net.consensys.pantheon.util.bytes.Bytes32Backed;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.Bytes32Backed;
 
 /** A signed 256-bits precision number. */
 /*

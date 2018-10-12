@@ -1,20 +1,20 @@
-package net.consensys.pantheon.ethereum.p2p.discovery.internal;
+package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static net.consensys.pantheon.crypto.Hash.keccak256;
-import static net.consensys.pantheon.util.Preconditions.checkGuard;
-import static net.consensys.pantheon.util.bytes.BytesValues.asUnsignedBigInteger;
+import static tech.pegasys.pantheon.crypto.Hash.keccak256;
+import static tech.pegasys.pantheon.util.Preconditions.checkGuard;
+import static tech.pegasys.pantheon.util.bytes.BytesValues.asUnsignedBigInteger;
 
-import net.consensys.pantheon.crypto.SECP256K1;
-import net.consensys.pantheon.crypto.SECP256K1.PublicKey;
-import net.consensys.pantheon.crypto.SECP256K1.Signature;
-import net.consensys.pantheon.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
-import net.consensys.pantheon.ethereum.rlp.RLP;
-import net.consensys.pantheon.ethereum.rlp.RLPException;
-import net.consensys.pantheon.ethereum.rlp.VertxBufferRLPOutput;
-import net.consensys.pantheon.util.bytes.BytesValue;
-import net.consensys.pantheon.util.bytes.MutableBytesValue;
-import net.consensys.pantheon.util.uint.UInt256Bytes;
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.crypto.SECP256K1.PublicKey;
+import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
+import tech.pegasys.pantheon.ethereum.rlp.RLPException;
+import tech.pegasys.pantheon.ethereum.rlp.VertxBufferRLPOutput;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.MutableBytesValue;
+import tech.pegasys.pantheon.util.uint.UInt256Bytes;
 
 import java.math.BigInteger;
 import java.util.Arrays;

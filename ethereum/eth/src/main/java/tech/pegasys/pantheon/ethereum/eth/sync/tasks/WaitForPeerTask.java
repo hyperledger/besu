@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.eth.sync.tasks;
+package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
-import net.consensys.pantheon.ethereum.eth.manager.AbstractEthTask;
-import net.consensys.pantheon.ethereum.eth.manager.EthContext;
-import net.consensys.pantheon.ethereum.eth.manager.EthPeers;
+import tech.pegasys.pantheon.ethereum.eth.manager.AbstractEthTask;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

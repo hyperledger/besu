@@ -1,14 +1,14 @@
-package net.consensys.pantheon.tests.acceptance;
+package tech.pegasys.pantheon.tests.acceptance;
 
-import static net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonNode;
-import static net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonRpcDisabledNode;
-import static net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.patheonNodeWithRpcApis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonNode;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonRpcDisabledNode;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.patheonNodeWithRpcApis;
 
-import net.consensys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.RpcApis;
-import net.consensys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
-import net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNode;
+import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.RpcApis;
+import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 
 import org.junit.Before;
 import org.junit.Test;

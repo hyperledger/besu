@@ -1,4 +1,4 @@
-package net.consensys.pantheon.crypto.altbn128;
+package tech.pegasys.pantheon.crypto.altbn128;
 
 import java.math.BigInteger;
 import java.util.Arrays;

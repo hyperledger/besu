@@ -1,10 +1,10 @@
-package net.consensys.pantheon.tests.acceptance.dsl.node;
+package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
-import net.consensys.pantheon.ethereum.blockcreation.MiningParameters;
-import net.consensys.pantheon.ethereum.core.MiningParametersTestBuilder;
-import net.consensys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
-import net.consensys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.RpcApis;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
+import tech.pegasys.pantheon.ethereum.blockcreation.MiningParameters;
+import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
+import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
+import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.RpcApis;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 
 import java.io.IOException;
 import java.net.ServerSocket;

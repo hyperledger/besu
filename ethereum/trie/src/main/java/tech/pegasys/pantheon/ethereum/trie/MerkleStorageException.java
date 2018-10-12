@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.trie;
+package tech.pegasys.pantheon.ethereum.trie;
 
 /**
  * This exception is thrown when there is an issue retrieving or decoding values from {@link

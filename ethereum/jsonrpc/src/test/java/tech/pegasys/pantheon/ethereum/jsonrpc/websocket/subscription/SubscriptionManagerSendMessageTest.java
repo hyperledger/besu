@@ -1,12 +1,12 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription;
 
 import static junit.framework.TestCase.fail;
 import static org.mockito.Mockito.mock;
 
-import net.consensys.pantheon.ethereum.jsonrpc.internal.results.JsonRpcResult;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscribeRequest;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.response.SubscriptionResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.JsonRpcResult;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscribeRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.response.SubscriptionResponse;
 
 import java.util.UUID;
 

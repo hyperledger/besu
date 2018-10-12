@@ -1,4 +1,4 @@
-package net.consensys.pantheon.tests.web3j.generated;
+package tech.pegasys.pantheon.tests.web3j.generated;
 
 import java.math.BigInteger;
 import java.util.ArrayList;

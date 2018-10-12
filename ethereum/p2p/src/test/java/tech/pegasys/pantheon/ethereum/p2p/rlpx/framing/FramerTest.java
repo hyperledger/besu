@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.p2p.rlpx.framing;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.framing;
 
 import static io.netty.buffer.ByteBufUtil.decodeHexDump;
 import static io.netty.buffer.Unpooled.buffer;
@@ -9,9 +9,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
-import net.consensys.pantheon.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
-import net.consensys.pantheon.ethereum.p2p.wire.RawMessage;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
+import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 
 import java.io.IOException;
 import java.util.List;

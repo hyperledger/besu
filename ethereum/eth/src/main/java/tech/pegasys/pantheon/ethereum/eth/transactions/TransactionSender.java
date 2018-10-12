@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.eth.transactions;
+package tech.pegasys.pantheon.ethereum.eth.transactions;
 
-import net.consensys.pantheon.ethereum.core.Transaction;
-import net.consensys.pantheon.ethereum.core.TransactionPool.TransactionBatchAddedListener;
-import net.consensys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.core.TransactionPool.TransactionBatchAddedListener;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 
 class TransactionSender implements TransactionBatchAddedListener {
 

@@ -46,9 +46,9 @@ task testJar (type: Jar) {
 }
 
 test {
-  exclude 'net/consensys/pantheon/ethereum/vm/**ReferenceTest.class'
-  exclude 'net/consensys/pantheon/ethereum/vm/blockchain/**.class'
-  exclude 'net/consensys/pantheon/ethereum/vm/generalstate/**.class'
+  exclude 'tech/pegasys/pantheon/ethereum/vm/**ReferenceTest.class'
+  exclude 'tech/pegasys/pantheon/ethereum/vm/blockchain/**.class'
+  exclude 'tech/pegasys/pantheon/ethereum/vm/generalstate/**.class'
 }
 
 def generateTestFiles(FileTree jsonPath, File resourcesPath, File templateFile, String pathstrip, String destination, String namePrefix) {
@@ -92,9 +92,9 @@ task blockchainReferenceTestsSetup {
   generateTestFiles(
     fileTree('../referencetests/src/test/resources/BlockchainTests'),
     file("../referencetests/src/test/resources"),
-    file("./src/test/resources/net/consensys/pantheon/ethereum/vm/BlockchainReferenceTest.java.template"),
+    file("./src/test/resources/tech/pegasys/pantheon/ethereum/vm/BlockchainReferenceTest.java.template"),
     "BlockchainTests/",
-    "./src/test/java/net/consensys/pantheon/ethereum/vm/blockchain",
+    "./src/test/java/tech/pegasys/pantheon/ethereum/vm/blockchain",
     "BlockchainReferenceTest"
     )
 }
@@ -105,9 +105,9 @@ task generalstateReferenceTestsSetup {
   generateTestFiles(
     fileTree("../referencetests/src/test/resources/GeneralStateTests"),
     file("../referencetests/src/test/resources"),
-    file("./src/test/resources/net/consensys/pantheon/ethereum/vm/GeneralStateReferenceTest.java.template"),
+    file("./src/test/resources/tech/pegasys/pantheon/ethereum/vm/GeneralStateReferenceTest.java.template"),
     "GeneralStateTests/",
-    "./src/test/java/net/consensys/pantheon/ethereum/vm/generalstate",
+    "./src/test/java/tech/pegasys/pantheon/ethereum/vm/generalstate",
     "GeneralStateReferenceTest"
     )
 }
@@ -118,9 +118,9 @@ task generalstateRegressionReferenceTestsSetup {
   generateTestFiles(
     fileTree("./src/test/resources/regressions/generalstate"),
     file("./src/test/resources"),
-    file("./src/test/resources/net/consensys/pantheon/ethereum/vm/GeneralStateReferenceTest.java.template"),
+    file("./src/test/resources/tech/pegasys/pantheon/ethereum/vm/GeneralStateReferenceTest.java.template"),
     "regressions/generalstate/",
-    "./src/test/java/net/consensys/pantheon/ethereum/vm/generalstate",
+    "./src/test/java/tech/pegasys/pantheon/ethereum/vm/generalstate",
     "GeneralStateRegressionReferenceTest"
     )
 }
@@ -128,11 +128,11 @@ task generalstateRegressionReferenceTestsSetup {
 compileTestJava.dependsOn(generalstateRegressionReferenceTestsSetup)
 
 task cleanupReferenceTests(type: Delete) {
-  delete fileTree("./src/test/java/net/consensys/pantheon/ethereum/vm/generalstate/") {
+  delete fileTree("./src/test/java/tech/pegasys/pantheon/ethereum/vm/generalstate/") {
     include("**/GeneralStateReferenceTest*.java")
     include("**/GeneralStateRegressionReferenceTest*.java")
   }
-  delete fileTree("./src/test/java/net/consensys/pantheon/ethereum/vm/blockchain/") { include("**/BlockchainReferenceTest*.java") }
+  delete fileTree("./src/test/java/tech/pegasys/pantheon/ethereum/vm/blockchain/") { include("**/BlockchainReferenceTest*.java") }
 }
 
 clean.dependsOn(cleanupReferenceTests)
@@ -140,9 +140,9 @@ clean.dependsOn(cleanupReferenceTests)
 task referenceTests(type: Test, dependsOn: ["compileTestJava"]) {
   scanForTestClasses = false
   enableAssertions = true
-  include 'net/consensys/pantheon/ethereum/vm/**ReferenceTest.class'
-  include 'net/consensys/pantheon/ethereum/vm/blockchain/**.class'
-  include 'net/consensys/pantheon/ethereum/vm/generalstate/**.class'
+  include 'tech/pegasys/pantheon/ethereum/vm/**ReferenceTest.class'
+  include 'tech/pegasys/pantheon/ethereum/vm/blockchain/**.class'
+  include 'tech/pegasys/pantheon/ethereum/vm/generalstate/**.class'
 }
 
 artifacts {

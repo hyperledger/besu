@@ -1,4 +1,4 @@
-package net.consensys.errorpronechecks;
+package tech.pegasys.errorpronechecks;
 
 public class MethodInputParametersMustBeFinalPositiveCases {
 

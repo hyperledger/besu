@@ -1,6 +1,6 @@
-package net.consensys.pantheon.consensus.ibft;
+package tech.pegasys.pantheon.consensus.ibft;
 
-import net.consensys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 
 public class IbftHelpers {
 

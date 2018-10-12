@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.blockcreation;
+package tech.pegasys.pantheon.ethereum.blockcreation;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -7,18 +7,18 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator.MinedBlockObserver;
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.core.BlockBody;
-import net.consensys.pantheon.ethereum.core.BlockHeaderTestFixture;
-import net.consensys.pantheon.ethereum.core.BlockImporter;
-import net.consensys.pantheon.ethereum.mainnet.EthHashBlockCreator;
-import net.consensys.pantheon.ethereum.mainnet.HeaderValidationMode;
-import net.consensys.pantheon.ethereum.mainnet.MutableProtocolSchedule;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSpec;
-import net.consensys.pantheon.util.Subscribers;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator.MinedBlockObserver;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockBody;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
+import tech.pegasys.pantheon.ethereum.core.BlockImporter;
+import tech.pegasys.pantheon.ethereum.mainnet.EthHashBlockCreator;
+import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
+import tech.pegasys.pantheon.ethereum.mainnet.MutableProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
+import tech.pegasys.pantheon.util.Subscribers;
 
 import com.google.common.collect.Lists;
 import org.junit.Test;

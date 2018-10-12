@@ -1,4 +1,4 @@
-package net.consensys.pantheon.consensus.clique;
+package tech.pegasys.pantheon.consensus.clique;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -6,23 +6,23 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.consensus.clique.headervalidationrules.SignerRateLimitValidationRule;
-import net.consensys.pantheon.consensus.common.VoteProposer;
-import net.consensys.pantheon.consensus.common.VoteTally;
-import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.AddressHelpers;
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.core.BlockBody;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.core.BlockHeaderTestFixture;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.core.Util;
-import net.consensys.pantheon.ethereum.db.DefaultMutableBlockchain;
-import net.consensys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
-import net.consensys.pantheon.services.kvstore.InMemoryKeyValueStorage;
-import net.consensys.pantheon.services.kvstore.KeyValueStorage;
+import tech.pegasys.pantheon.consensus.clique.headervalidationrules.SignerRateLimitValidationRule;
+import tech.pegasys.pantheon.consensus.common.VoteProposer;
+import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockBody;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.Util;
+import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
+import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 
 import java.util.List;
 

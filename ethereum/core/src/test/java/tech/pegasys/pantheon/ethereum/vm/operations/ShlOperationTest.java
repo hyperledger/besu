@@ -1,13 +1,13 @@
-package net.consensys.pantheon.ethereum.vm.operations;
+package tech.pegasys.pantheon.ethereum.vm.operations;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.ethereum.mainnet.SpuriousDragonGasCalculator;
-import net.consensys.pantheon.ethereum.vm.GasCalculator;
-import net.consensys.pantheon.ethereum.vm.MessageFrame;
-import net.consensys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.ethereum.mainnet.SpuriousDragonGasCalculator;
+import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
+import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
 
 import java.util.Arrays;
 

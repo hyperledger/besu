@@ -1,15 +1,15 @@
-package net.consensys.pantheon.ethereum.p2p.discovery;
+package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 import static io.vertx.core.Vertx.vertx;
-import static net.consensys.pantheon.ethereum.p2p.NetworkingTestHelper.configWithRandomPorts;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.awaitility.Awaitility.await;
+import static tech.pegasys.pantheon.ethereum.p2p.NetworkingTestHelper.configWithRandomPorts;
 
-import net.consensys.pantheon.crypto.SECP256K1;
-import net.consensys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
-import net.consensys.pantheon.ethereum.p2p.peers.Peer;
-import net.consensys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 
 import java.util.ArrayList;
 import java.util.Collections;

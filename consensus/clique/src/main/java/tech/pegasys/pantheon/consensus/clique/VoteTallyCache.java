@@ -1,12 +1,12 @@
-package net.consensys.pantheon.consensus.clique;
+package tech.pegasys.pantheon.consensus.clique;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import net.consensys.pantheon.consensus.common.EpochManager;
-import net.consensys.pantheon.consensus.common.VoteTally;
-import net.consensys.pantheon.ethereum.chain.Blockchain;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.consensus.common.EpochManager;
+import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 
 import java.util.ArrayDeque;
 import java.util.Deque;

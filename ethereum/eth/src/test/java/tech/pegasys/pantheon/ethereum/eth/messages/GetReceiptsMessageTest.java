@@ -1,10 +1,10 @@
-package net.consensys.pantheon.ethereum.eth.messages;
+package tech.pegasys.pantheon.ethereum.eth.messages;
 
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.p2p.NetworkMemoryPool;
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
-import net.consensys.pantheon.ethereum.p2p.wire.RawMessage;
-import net.consensys.pantheon.ethereum.testutil.BlockDataGenerator;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
+import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
 
 import java.io.IOException;
 import java.util.ArrayList;

@@ -1,10 +1,10 @@
-package net.consensys.pantheon.consensus.ibft.blockcreation;
+package tech.pegasys.pantheon.consensus.ibft.blockcreation;
 
-import net.consensys.pantheon.consensus.common.ValidatorProvider;
-import net.consensys.pantheon.consensus.ibft.IbftExtraData;
-import net.consensys.pantheon.ethereum.blockcreation.AbstractBlockCreator.ExtraDataCalculator;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.consensus.common.ValidatorProvider;
+import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
+import tech.pegasys.pantheon.ethereum.blockcreation.AbstractBlockCreator.ExtraDataCalculator;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import com.google.common.collect.Lists;
 

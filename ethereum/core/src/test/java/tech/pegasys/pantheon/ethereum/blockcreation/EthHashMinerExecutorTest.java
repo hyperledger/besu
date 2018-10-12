@@ -1,11 +1,11 @@
-package net.consensys.pantheon.ethereum.blockcreation;
+package tech.pegasys.pantheon.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import net.consensys.pantheon.ethereum.core.MiningParametersTestBuilder;
-import net.consensys.pantheon.ethereum.core.PendingTransactions;
-import net.consensys.pantheon.util.Subscribers;
-import net.consensys.pantheon.util.time.SystemClock;
+import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
+import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
+import tech.pegasys.pantheon.util.Subscribers;
+import tech.pegasys.pantheon.util.time.SystemClock;
 
 import java.util.concurrent.Executors;
 

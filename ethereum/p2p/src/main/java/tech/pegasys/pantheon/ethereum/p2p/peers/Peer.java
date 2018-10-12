@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.p2p.peers;
+package tech.pegasys.pantheon.ethereum.p2p.peers;
 
-import net.consensys.pantheon.crypto.SecureRandomProvider;
-import net.consensys.pantheon.ethereum.rlp.RLPOutput;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.crypto.SecureRandomProvider;
+import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 public interface Peer extends PeerId {
 
