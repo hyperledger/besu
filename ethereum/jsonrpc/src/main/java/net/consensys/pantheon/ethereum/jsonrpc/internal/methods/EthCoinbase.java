@@ -25,10 +25,14 @@ public class EthCoinbase implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest req) {
-    final Optional<Address> coinbase = miningCoordinator.getCoinbase();
-    if (coinbase.isPresent()) {
-      return new JsonRpcSuccessResponse(req.getId(), coinbase.get().toString());
+    try {
+      final Optional<Address> coinbase = miningCoordinator.getCoinbase();
+      if (coinbase.isPresent()) {
+        return new JsonRpcSuccessResponse(req.getId(), coinbase.get().toString());
+      }
+      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.COINBASE_NOT_SPECIFIED);
+    } catch (UnsupportedOperationException ex) {
+      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INVALID_REQUEST);
     }
-    return new JsonRpcErrorResponse(req.getId(), JsonRpcError.COINBASE_NOT_SPECIFIED);
   }
 }

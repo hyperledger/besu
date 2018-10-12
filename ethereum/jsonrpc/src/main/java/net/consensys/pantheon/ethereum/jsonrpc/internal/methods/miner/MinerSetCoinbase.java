@@ -5,6 +5,8 @@ import net.consensys.pantheon.ethereum.core.Address;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
+import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
@@ -26,10 +28,12 @@ public class MinerSetCoinbase implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest req) {
-    final Address coinbase = parameters.required(req.getParams(), 0, Address.class);
-
-    miningCoordinator.setCoinbase(coinbase);
-
-    return new JsonRpcSuccessResponse(req.getId(), true);
+    try {
+      final Address coinbase = parameters.required(req.getParams(), 0, Address.class);
+      miningCoordinator.setCoinbase(coinbase);
+      return new JsonRpcSuccessResponse(req.getId(), true);
+    } catch (UnsupportedOperationException ex) {
+      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INVALID_REQUEST);
+    }
   }
 }

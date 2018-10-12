@@ -2,14 +2,18 @@ package net.consensys.pantheon.ethereum.jsonrpc.internal.methods.miner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 
-import net.consensys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
+import net.consensys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
 import net.consensys.pantheon.ethereum.core.Address;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
+import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
@@ -24,7 +28,7 @@ public class MinerSetCoinbaseTest {
 
   private MinerSetCoinbase method;
 
-  @Mock private EthHashMiningCoordinator miningCoordinator;
+  @Mock private AbstractMiningCoordinator<?, ?> miningCoordinator;
 
   @Before
   public void before() {
@@ -64,6 +68,23 @@ public class MinerSetCoinbaseTest {
     final JsonRpcResponse response = method.response(request);
 
     verify(miningCoordinator).setCoinbase(eq(Address.fromHexString("0x0")));
+    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnAnInvalidRequestIfUnderlyingOperationThrowsUnsupportedOperation() {
+    final JsonRpcRequest request = minerSetCoinbaseRequest("0x0");
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_REQUEST);
+
+    doAnswer(
+            invocation -> {
+              throw new UnsupportedOperationException();
+            })
+        .when(miningCoordinator)
+        .setCoinbase(any());
+
+    final JsonRpcResponse response = method.response(request);
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
   }
 
