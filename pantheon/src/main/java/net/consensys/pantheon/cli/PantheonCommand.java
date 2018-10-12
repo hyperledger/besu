@@ -5,7 +5,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import net.consensys.pantheon.Runner;
 import net.consensys.pantheon.RunnerBuilder;
 import net.consensys.pantheon.cli.custom.CorsAllowedOriginsProperty;
-import net.consensys.pantheon.controller.MainnetPantheonController;
 import net.consensys.pantheon.controller.PantheonController;
 import net.consensys.pantheon.ethereum.blockcreation.MiningParameters;
 import net.consensys.pantheon.ethereum.core.Address;
@@ -203,6 +202,14 @@ public class PantheonCommand implements Runnable {
   private final Boolean syncWithOttoman = false;
 
   @Option(
+    names = {"--rinkeby"},
+    description =
+        "Use the Rinkeby test network"
+            + "- see https://github.com/ethereum/EIPs/issues/225 (default: ${DEFAULT-VALUE})"
+  )
+  private final Boolean rinkeby = false;
+
+  @Option(
     names = {"--p2p-listen"},
     paramLabel = MANDATORY_HOST_AND_PORT_FORMAT_HELP,
     description = "Host and port for p2p peers discovery to listen on (default: ${DEFAULT-VALUE})",
@@ -216,7 +223,7 @@ public class PantheonCommand implements Runnable {
     description = "P2P network identifier (default: ${DEFAULT-VALUE})",
     arity = "1"
   )
-  private final Integer networkId = MainnetPantheonController.MAINNET_NETWORK_ID;
+  private final Integer networkId = null;
 
   @Option(
     names = {"--rpc-enabled"},
@@ -367,10 +374,11 @@ public class PantheonCommand implements Runnable {
               + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
       return;
     }
+    final EthNetworkConfig ethNetworkConfig = ethNetworkConfig();
     synchronize(
         buildController(),
         noPeerDiscovery,
-        bootstrapNodes,
+        ethNetworkConfig.getBootNodes(),
         maxPeers,
         p2pHostAndPort,
         jsonRpcConfiguration(),
@@ -381,12 +389,11 @@ public class PantheonCommand implements Runnable {
     try {
       return controllerBuilder.build(
           buildSyncConfig(syncMode),
-          genesisFile,
           dataDir,
+          ethNetworkConfig(),
           syncWithOttoman,
           new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled),
-          isDevMode,
-          networkId);
+          isDevMode);
     } catch (final IOException e) {
       throw new ExecutionException(new CommandLine(this), "Invalid path", e);
     }
@@ -422,7 +429,7 @@ public class PantheonCommand implements Runnable {
   private void synchronize(
       final PantheonController<?, ?> controller,
       final boolean noPeerDiscovery,
-      final Collection<String> bootstrapNodes,
+      final Collection<?> bootstrapNodes,
       final int maxPeers,
       final HostAndPort discoveryHostAndPort,
       final JsonRpcConfiguration jsonRpcConfiguration,
@@ -514,5 +521,25 @@ public class PantheonCommand implements Runnable {
           e);
     }
     return pantheonHome;
+  }
+
+  private EthNetworkConfig ethNetworkConfig() {
+    final EthNetworkConfig predefinedNetworkConfig =
+        rinkeby ? EthNetworkConfig.rinkeby() : EthNetworkConfig.mainnet();
+    return updateNetworkConfig(predefinedNetworkConfig);
+  }
+
+  private EthNetworkConfig updateNetworkConfig(final EthNetworkConfig ethNetworkConfig) {
+    EthNetworkConfig.Builder builder = new EthNetworkConfig.Builder(ethNetworkConfig);
+    if (genesisFile != null) {
+      builder.setGenesisConfig(genesisFile.toPath().toUri());
+    }
+    if (networkId != null) {
+      builder.setNetworkId(networkId);
+    }
+    if (bootstrapNodes != null) {
+      builder.setBootNodes(bootstrapNodes);
+    }
+    return builder.build();
   }
 }

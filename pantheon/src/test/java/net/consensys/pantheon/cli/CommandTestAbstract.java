@@ -2,7 +2,6 @@ package net.consensys.pantheon.cli;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 import net.consensys.pantheon.Runner;
@@ -14,7 +13,6 @@ import net.consensys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import net.consensys.pantheon.util.BlockImporter;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -55,7 +53,6 @@ public abstract class CommandTestAbstract {
 
   @Captor ArgumentCaptor<Collection<String>> stringListArgumentCaptor;
   @Captor ArgumentCaptor<Path> pathArgumentCaptor;
-  @Captor ArgumentCaptor<File> fileArgumentCaptor;
   @Captor ArgumentCaptor<String> stringArgumentCaptor;
   @Captor ArgumentCaptor<Integer> intArgumentCaptor;
   @Captor ArgumentCaptor<JsonRpcConfiguration> jsonRpcConfigArgumentCaptor;
@@ -66,7 +63,7 @@ public abstract class CommandTestAbstract {
     // doReturn used because of generic PantheonController
     Mockito.doReturn(mockController)
         .when(mockControllerBuilder)
-        .build(any(), any(), any(), anyBoolean(), any(), anyBoolean(), anyInt());
+        .build(any(), any(), any(), anyBoolean(), any(), anyBoolean());
 
     when(mockSyncConfBuilder.build()).thenReturn(mockSyncConf);
   }

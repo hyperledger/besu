@@ -1,6 +1,8 @@
 package net.consensys.pantheon.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
+import static net.consensys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -8,12 +10,12 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import net.consensys.pantheon.PantheonInfo;
+import net.consensys.pantheon.cli.EthNetworkConfig.Builder;
 import net.consensys.pantheon.ethereum.blockcreation.MiningParameters;
 import net.consensys.pantheon.ethereum.core.Address;
 import net.consensys.pantheon.ethereum.core.Wei;
@@ -28,6 +30,8 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -89,7 +93,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             any(),
             eq(true),
-            isNull(),
+            eq(MAINNET_BOOTSTRAP_NODES),
             eq("127.0.0.1"),
             eq(30303),
             eq(25),
@@ -99,8 +103,10 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     final ArgumentCaptor<MiningParameters> miningArg =
         ArgumentCaptor.forClass(MiningParameters.class);
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
     verify(mockControllerBuilder)
-        .build(any(), isNull(), isNotNull(), eq(false), miningArg.capture(), eq(false), anyInt());
+        .build(any(), isNotNull(), networkArg.capture(), eq(false), miningArg.capture(), eq(false));
 
     verify(mockSyncConfBuilder).syncMode(ArgumentMatchers.eq(SyncMode.FULL));
 
@@ -108,6 +114,9 @@ public class PantheonCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
     assertThat(miningArg.getValue().getExtraData()).isEqualTo(BytesValue.EMPTY);
+    assertThat(networkArg.getValue().getNetworkId()).isEqualTo(1);
+    assertThat(networkArg.getValue().getGenesisConfig().toString()).endsWith("mainnet.json");
+    assertThat(networkArg.getValue().getBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
   }
 
   // Testing each option
@@ -215,18 +224,23 @@ public class PantheonCommandTest extends CommandTestAbstract {
             eq(webSocketConfiguration),
             any());
 
-    final String[] nodes = {"enode://001@123:4567", "enode://002@123:4567", "enode://003@123:4567"};
-    assertThat(stringListArgumentCaptor.getValue().toArray()).isEqualTo(nodes);
+    final Collection<String> nodes =
+        asList("enode://001@123:4567", "enode://002@123:4567", "enode://003@123:4567");
+    assertThat(stringListArgumentCaptor.getValue()).isEqualTo(nodes);
 
+    EthNetworkConfig networkConfig =
+        new Builder(EthNetworkConfig.mainnet())
+            .setGenesisConfig(new File("~/genesys.json").toPath().toUri())
+            .setBootNodes(nodes)
+            .build();
     verify(mockControllerBuilder)
         .build(
             any(),
-            eq(new File("~/genesys.json")),
             eq(Paths.get("~/pantheondata")),
+            eq(networkConfig),
             eq(false),
             any(),
-            anyBoolean(),
-            anyInt());
+            anyBoolean());
 
     // TODO: Re-enable as per NC-1057/NC-1681
     // verify(mockSyncConfBuilder).syncMode(ArgumentMatchers.eq(SyncMode.FAST));
@@ -248,7 +262,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             any(),
             eq(true),
-            isNull(),
+            eq(MAINNET_BOOTSTRAP_NODES),
             eq("127.0.0.1"),
             eq(30303),
             eq(25),
@@ -256,8 +270,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             eq(WebSocketConfiguration.createDefault()),
             any());
 
-    verify(mockControllerBuilder)
-        .build(any(), eq(null), any(), eq(false), any(), eq(false), anyInt());
+    verify(mockControllerBuilder).build(any(), any(), any(), eq(false), any(), eq(false));
 
     // TODO: Re-enable as per NC-1057/NC-1681
     // verify(mockSyncConfBuilder).syncMode(ArgumentMatchers.eq(SyncMode.FULL));
@@ -275,14 +288,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     parseCommand("--datadir", path.toString());
 
     verify(mockControllerBuilder)
-        .build(
-            any(),
-            isNull(),
-            pathArgumentCaptor.capture(),
-            anyBoolean(),
-            any(),
-            anyBoolean(),
-            anyInt());
+        .build(any(), pathArgumentCaptor.capture(), any(), eq(false), any(), anyBoolean());
 
     assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(path);
 
@@ -293,20 +299,15 @@ public class PantheonCommandTest extends CommandTestAbstract {
   @Test
   public void genesisPathOptionMustBeUsed() throws Exception {
     final Path path = Paths.get(".");
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
 
     parseCommand("--genesis", path.toString());
 
     verify(mockControllerBuilder)
-        .build(
-            any(),
-            fileArgumentCaptor.capture(),
-            any(),
-            anyBoolean(),
-            any(),
-            anyBoolean(),
-            anyInt());
+        .build(any(), any(), networkArg.capture(), anyBoolean(), any(), anyBoolean());
 
-    assertThat(fileArgumentCaptor.getValue().toPath()).isEqualByComparingTo(path);
+    assertThat(networkArg.getValue().getGenesisConfig()).isEqualTo(path.toUri());
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -745,7 +746,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
         ArgumentCaptor.forClass(MiningParameters.class);
 
     verify(mockControllerBuilder)
-        .build(any(), any(), any(), anyBoolean(), miningArg.capture(), anyBoolean(), anyInt());
+        .build(any(), any(), any(), anyBoolean(), miningArg.capture(), anyBoolean());
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(miningArg.getValue().isMiningEnabled()).isTrue();
@@ -767,7 +768,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
         ArgumentCaptor.forClass(MiningParameters.class);
 
     verify(mockControllerBuilder)
-        .build(any(), any(), any(), anyBoolean(), miningArg.capture(), anyBoolean(), anyInt());
+        .build(any(), any(), any(), anyBoolean(), miningArg.capture(), anyBoolean());
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.of(requestedCoinbase));
@@ -779,9 +780,45 @@ public class PantheonCommandTest extends CommandTestAbstract {
   @Test
   public void devModeOptionMustBeUsed() throws Exception {
     parseCommand("--dev-mode");
-    verify(mockControllerBuilder)
-        .build(any(), any(), any(), anyBoolean(), any(), eq(true), anyInt());
+    verify(mockControllerBuilder).build(any(), any(), any(), anyBoolean(), any(), eq(true));
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void rinkebyValuesAreUsed() throws Exception {
+    parseCommand("--rinkeby");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+    verify(mockControllerBuilder)
+        .build(any(), any(), networkArg.capture(), anyBoolean(), any(), anyBoolean());
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.rinkeby());
+  }
+
+  @Test
+  public void rinkebyValuesCanBeOverridden() throws Exception {
+    final String[] nodes = {"enode://001@123:4567", "enode://002@123:4567", "enode://003@123:4567"};
+    final Path path = Paths.get(".");
+    parseCommand(
+        "--rinkeby",
+        "--network-id",
+        "1",
+        "--bootnodes",
+        String.join(",", nodes),
+        "--genesis",
+        path.toString());
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+    verify(mockControllerBuilder)
+        .build(any(), any(), networkArg.capture(), anyBoolean(), any(), anyBoolean());
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(networkArg.getValue().getGenesisConfig()).isEqualTo(path.toUri());
+    assertThat(networkArg.getValue().getBootNodes()).isEqualTo(Arrays.asList(nodes));
+    assertThat(networkArg.getValue().getNetworkId()).isEqualTo(1);
   }
 }
