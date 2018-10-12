@@ -1,15 +1,15 @@
-package net.consensys.pantheon.ethereum.p2p.discovery;
+package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 import static com.google.common.net.InetAddresses.isInetAddress;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.NeighborsPacketData;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.Packet;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PongPacketData;
-import net.consensys.pantheon.ethereum.p2p.peers.Peer;
-import net.consensys.pantheon.util.NetworkUtility;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.NeighborsPacketData;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PongPacketData;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.util.NetworkUtility;
 
 import java.io.IOException;
 import java.time.Instant;

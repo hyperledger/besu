@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.eth.manager;
+package tech.pegasys.pantheon.ethereum.eth.manager;
 
-import net.consensys.pantheon.util.Subscribers;
+import tech.pegasys.pantheon.util.Subscribers;
 
 import java.util.Map;
 import java.util.Map.Entry;

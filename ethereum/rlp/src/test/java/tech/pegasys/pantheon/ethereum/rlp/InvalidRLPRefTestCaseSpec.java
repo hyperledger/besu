@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.rlp;
+package tech.pegasys.pantheon.ethereum.rlp;
 
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

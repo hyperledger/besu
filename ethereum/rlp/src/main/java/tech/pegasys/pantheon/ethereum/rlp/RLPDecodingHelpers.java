@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.rlp;
+package tech.pegasys.pantheon.ethereum.rlp;
 
 import java.util.function.IntUnaryOperator;
 import java.util.function.LongUnaryOperator;

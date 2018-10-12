@@ -1,4 +1,4 @@
-package net.consensys.pantheon.tests.acceptance.dsl.node;
+package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
 import java.io.File;
 import java.nio.file.Files;

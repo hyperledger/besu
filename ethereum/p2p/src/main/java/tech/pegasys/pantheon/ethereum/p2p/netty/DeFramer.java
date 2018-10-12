@@ -1,14 +1,14 @@
-package net.consensys.pantheon.ethereum.p2p.netty;
+package tech.pegasys.pantheon.ethereum.p2p.netty;
 
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection;
-import net.consensys.pantheon.ethereum.p2p.netty.exceptions.IncompatiblePeerException;
-import net.consensys.pantheon.ethereum.p2p.rlpx.framing.Framer;
-import net.consensys.pantheon.ethereum.p2p.wire.PeerInfo;
-import net.consensys.pantheon.ethereum.p2p.wire.SubProtocol;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.HelloMessage;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.WireMessageCodes;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.netty.exceptions.IncompatiblePeerException;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.Framer;
+import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
+import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.HelloMessage;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.WireMessageCodes;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

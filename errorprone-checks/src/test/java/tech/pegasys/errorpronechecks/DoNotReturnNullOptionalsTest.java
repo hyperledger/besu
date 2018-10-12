@@ -1,4 +1,4 @@
-package net.consensys.errorpronechecks;
+package tech.pegasys.errorpronechecks;
 
 import com.google.errorprone.CompilationTestHelper;
 import org.junit.Before;

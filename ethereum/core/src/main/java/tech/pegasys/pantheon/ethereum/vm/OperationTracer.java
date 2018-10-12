@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.vm;
+package tech.pegasys.pantheon.ethereum.vm;
 
-import net.consensys.pantheon.ethereum.core.Gas;
-import net.consensys.pantheon.ethereum.vm.ehalt.ExceptionalHaltException;
+import tech.pegasys.pantheon.ethereum.core.Gas;
+import tech.pegasys.pantheon.ethereum.vm.ehalt.ExceptionalHaltException;
 
 import java.util.Optional;
 

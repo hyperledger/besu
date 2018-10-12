@@ -1,15 +1,15 @@
-package net.consensys.pantheon.consensus.clique.headervalidationrules;
+package tech.pegasys.pantheon.consensus.clique.headervalidationrules;
 
-import net.consensys.pantheon.consensus.clique.CliqueBlockHashing;
-import net.consensys.pantheon.consensus.clique.CliqueContext;
-import net.consensys.pantheon.consensus.clique.CliqueExtraData;
-import net.consensys.pantheon.consensus.common.EpochManager;
-import net.consensys.pantheon.consensus.common.VoteTally;
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.mainnet.AttachedBlockHeaderValidationRule;
-import net.consensys.pantheon.ethereum.rlp.RLPException;
+import tech.pegasys.pantheon.consensus.clique.CliqueBlockHashing;
+import tech.pegasys.pantheon.consensus.clique.CliqueContext;
+import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
+import tech.pegasys.pantheon.consensus.common.EpochManager;
+import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.mainnet.AttachedBlockHeaderValidationRule;
+import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 
 import java.util.Collection;
 

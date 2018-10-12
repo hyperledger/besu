@@ -1,10 +1,10 @@
-package net.consensys.pantheon.ethereum.p2p.peers;
+package tech.pegasys.pantheon.ethereum.p2p.peers;
 
-import net.consensys.pantheon.ethereum.p2p.api.DisconnectCallback;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.ethereum.p2p.api.DisconnectCallback;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;

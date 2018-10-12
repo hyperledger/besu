@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.mainnet;
+package tech.pegasys.pantheon.ethereum.mainnet;
 
 /** Tuple that associates a {@link ProtocolSpec} with a given block level starting point */
 public class ScheduledProtocolSpec<C> {

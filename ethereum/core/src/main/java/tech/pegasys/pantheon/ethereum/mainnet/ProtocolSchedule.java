@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.mainnet;
+package tech.pegasys.pantheon.ethereum.mainnet;
 
 public interface ProtocolSchedule<C> {
 

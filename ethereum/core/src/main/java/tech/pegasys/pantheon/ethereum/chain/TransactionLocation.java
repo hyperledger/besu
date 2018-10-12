@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.chain;
+package tech.pegasys.pantheon.ethereum.chain;
 
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.rlp.RLPInput;
-import net.consensys.pantheon.ethereum.rlp.RLPOutput;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
+import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
 

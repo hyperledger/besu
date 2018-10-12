@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.results;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.results;
 
-import net.consensys.pantheon.ethereum.debug.TraceFrame;
-import net.consensys.pantheon.ethereum.vm.ExceptionalHaltReason;
+import tech.pegasys.pantheon.ethereum.debug.TraceFrame;
+import tech.pegasys.pantheon.ethereum.vm.ExceptionalHaltReason;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 

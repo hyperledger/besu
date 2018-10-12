@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.chain;
+package tech.pegasys.pantheon.ethereum.chain;
 
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
 
 import java.util.Collections;
 import java.util.List;

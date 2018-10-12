@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.eth.manager;
+package tech.pegasys.pantheon.ethereum.eth.manager;
 
-import net.consensys.pantheon.ethereum.eth.manager.AbstractPeerTask.PeerTaskResult;
-import net.consensys.pantheon.ethereum.eth.manager.exceptions.NoAvailablePeersException;
-import net.consensys.pantheon.ethereum.eth.manager.exceptions.PeerDisconnectedException;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
+import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPeerTask.PeerTaskResult;
+import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.NoAvailablePeersException;
+import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerDisconnectedException;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
 
 import java.util.Optional;
 

@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.p2p.rlpx.framing;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.framing;
 
 /** Thrown when the framer encounters an error during framing or deframing. */
 public class FramingException extends RuntimeException {

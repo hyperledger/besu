@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.blockcreation;
+package tech.pegasys.pantheon.ethereum.blockcreation;
 
-import net.consensys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.Block;
 
 public interface BlockCreator {
 

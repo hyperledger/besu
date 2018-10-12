@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.parameters;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters;
 
-import net.consensys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 
 import java.util.Objects;
 import java.util.OptionalLong;

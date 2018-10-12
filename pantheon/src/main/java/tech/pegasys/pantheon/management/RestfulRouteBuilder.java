@@ -1,4 +1,4 @@
-package net.consensys.pantheon.management;
+package tech.pegasys.pantheon.management;
 
 import java.util.Collections;
 import java.util.HashMap;

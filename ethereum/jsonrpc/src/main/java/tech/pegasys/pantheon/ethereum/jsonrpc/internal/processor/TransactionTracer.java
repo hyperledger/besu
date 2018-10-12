@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.processor;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor;
 
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.mainnet.TransactionProcessor.Result;
-import net.consensys.pantheon.ethereum.vm.BlockHashLookup;
-import net.consensys.pantheon.ethereum.vm.DebugOperationTracer;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.mainnet.TransactionProcessor.Result;
+import tech.pegasys.pantheon.ethereum.vm.BlockHashLookup;
+import tech.pegasys.pantheon.ethereum.vm.DebugOperationTracer;
 
 import java.util.Optional;
 

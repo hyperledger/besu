@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.exception;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.exception;
 
 public class InvalidJsonRpcParameters extends InvalidJsonRpcRequestException {
 

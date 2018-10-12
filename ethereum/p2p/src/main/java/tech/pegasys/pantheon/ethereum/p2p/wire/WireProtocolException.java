@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.p2p.wire;
+package tech.pegasys.pantheon.ethereum.p2p.wire;
 
 /** Signals that an exception occurred in the Wire protocol layer of the RLPx stack. */
 public class WireProtocolException extends RuntimeException {

@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription;
 
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;

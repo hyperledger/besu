@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.vm.generalstate;
+package tech.pegasys.pantheon.ethereum.vm.generalstate;
 
-import static net.consensys.pantheon.ethereum.vm.GeneralStateReferenceTestTools.executeTest;
-import static net.consensys.pantheon.ethereum.vm.GeneralStateReferenceTestTools.generateTestParametersForConfig;
+import static tech.pegasys.pantheon.ethereum.vm.GeneralStateReferenceTestTools.executeTest;
+import static tech.pegasys.pantheon.ethereum.vm.GeneralStateReferenceTestTools.generateTestParametersForConfig;
 
-import net.consensys.pantheon.ethereum.vm.GeneralStateTestCaseEipSpec;
+import tech.pegasys.pantheon.ethereum.vm.GeneralStateTestCaseEipSpec;
 
 import java.util.Collection;
 

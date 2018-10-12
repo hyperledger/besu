@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.core;
 
 /** Generic interface for a view over the accounts of the world state. */
 public interface WorldView {

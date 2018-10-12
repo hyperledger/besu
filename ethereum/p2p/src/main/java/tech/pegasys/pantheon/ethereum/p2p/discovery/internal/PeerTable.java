@@ -1,15 +1,15 @@
-package net.consensys.pantheon.ethereum.p2p.discovery.internal;
+package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import static java.util.Collections.unmodifiableList;
 import static java.util.Comparator.comparingInt;
 import static java.util.stream.Collectors.toList;
 
-import net.consensys.pantheon.crypto.Hash;
-import net.consensys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
-import net.consensys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
-import net.consensys.pantheon.ethereum.p2p.peers.Peer;
-import net.consensys.pantheon.ethereum.p2p.peers.PeerId;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.crypto.Hash;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.PeerId;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.Collection;

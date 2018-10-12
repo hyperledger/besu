@@ -1,7 +1,7 @@
-package net.consensys.pantheon.consensus.ibft.protocol;
+package tech.pegasys.pantheon.consensus.ibft.protocol;
 
-import net.consensys.pantheon.ethereum.p2p.wire.Capability;
-import net.consensys.pantheon.ethereum.p2p.wire.SubProtocol;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 
 import java.util.Arrays;
 import java.util.Collections;

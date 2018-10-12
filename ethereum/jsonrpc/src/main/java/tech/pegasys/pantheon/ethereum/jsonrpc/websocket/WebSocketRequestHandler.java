@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket;
 
-import net.consensys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.methods.WebSocketRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.methods.WebSocketRpcRequest;
 
 import java.util.Map;
 

@@ -1,12 +1,12 @@
-package net.consensys.pantheon;
+package tech.pegasys.pantheon;
 
 import static picocli.CommandLine.defaultExceptionHandler;
 
-import net.consensys.pantheon.cli.PantheonCommand;
-import net.consensys.pantheon.cli.PantheonControllerBuilder;
-import net.consensys.pantheon.ethereum.eth.sync.SynchronizerConfiguration.Builder;
-import net.consensys.pantheon.util.BlockImporter;
-import net.consensys.pantheon.util.BlockchainImporter;
+import tech.pegasys.pantheon.cli.PantheonCommand;
+import tech.pegasys.pantheon.cli.PantheonControllerBuilder;
+import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration.Builder;
+import tech.pegasys.pantheon.util.BlockImporter;
+import tech.pegasys.pantheon.util.BlockchainImporter;
 
 import picocli.CommandLine.RunLast;
 

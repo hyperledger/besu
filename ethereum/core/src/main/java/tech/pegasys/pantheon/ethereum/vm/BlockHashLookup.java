@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.vm;
+package tech.pegasys.pantheon.ethereum.vm;
 
-import net.consensys.pantheon.ethereum.chain.Blockchain;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.core.ProcessableBlockHeader;
-import net.consensys.pantheon.ethereum.vm.operations.BlockHashOperation;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.ProcessableBlockHeader;
+import tech.pegasys.pantheon.ethereum.vm.operations.BlockHashOperation;
 
 import java.util.HashMap;
 import java.util.Map;

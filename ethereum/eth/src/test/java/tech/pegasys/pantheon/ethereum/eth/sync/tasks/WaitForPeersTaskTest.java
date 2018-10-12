@@ -1,11 +1,11 @@
-package net.consensys.pantheon.ethereum.eth.sync.tasks;
+package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.eth.manager.EthContext;
-import net.consensys.pantheon.ethereum.eth.manager.EthProtocolManager;
-import net.consensys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import net.consensys.pantheon.ethereum.eth.manager.EthTask;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthTask;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;

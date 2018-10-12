@@ -1,11 +1,11 @@
-package net.consensys.pantheon.ethereum.p2p.wire.messages;
+package tech.pegasys.pantheon.ethereum.p2p.wire.messages;
 
-import net.consensys.pantheon.ethereum.p2p.NetworkMemoryPool;
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
-import net.consensys.pantheon.ethereum.p2p.utils.ByteBufUtils;
-import net.consensys.pantheon.ethereum.p2p.wire.AbstractMessageData;
-import net.consensys.pantheon.ethereum.p2p.wire.PeerInfo;
-import net.consensys.pantheon.ethereum.rlp.BytesValueRLPOutput;
+import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.utils.ByteBufUtils;
+import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
+import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
+import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 
 import io.netty.buffer.ByteBuf;
 

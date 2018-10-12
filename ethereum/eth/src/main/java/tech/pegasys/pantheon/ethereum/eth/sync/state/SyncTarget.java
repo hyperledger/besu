@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.eth.sync.state;
+package tech.pegasys.pantheon.ethereum.eth.sync.state;
 
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.eth.manager.ChainState;
-import net.consensys.pantheon.ethereum.eth.manager.EthPeer;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.eth.manager.ChainState;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 
 import com.google.common.base.MoreObjects;
 

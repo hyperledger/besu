@@ -1,17 +1,17 @@
-package net.consensys.pantheon.ethereum.blockcreation;
+package tech.pegasys.pantheon.ethereum.blockcreation;
 
-import net.consensys.pantheon.ethereum.chain.BlockAddedEvent;
-import net.consensys.pantheon.ethereum.chain.BlockAddedEvent.EventType;
-import net.consensys.pantheon.ethereum.chain.BlockAddedObserver;
-import net.consensys.pantheon.ethereum.chain.Blockchain;
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.core.Wei;
-import net.consensys.pantheon.ethereum.mainnet.EthHashSolution;
-import net.consensys.pantheon.ethereum.mainnet.EthHashSolverInputs;
-import net.consensys.pantheon.util.Subscribers;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
+import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent.EventType;
+import tech.pegasys.pantheon.ethereum.chain.BlockAddedObserver;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolution;
+import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolverInputs;
+import tech.pegasys.pantheon.util.Subscribers;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Optional;
 

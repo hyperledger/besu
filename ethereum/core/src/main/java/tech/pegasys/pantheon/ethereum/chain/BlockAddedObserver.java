@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.chain;
+package tech.pegasys.pantheon.ethereum.chain;
 
 @FunctionalInterface
 public interface BlockAddedObserver {

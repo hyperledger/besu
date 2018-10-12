@@ -1,17 +1,17 @@
-package net.consensys.pantheon.ethereum.p2p.discovery;
+package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.crypto.SECP256K1;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.Packet;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PacketType;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PeerTable;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
-import net.consensys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
+import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;

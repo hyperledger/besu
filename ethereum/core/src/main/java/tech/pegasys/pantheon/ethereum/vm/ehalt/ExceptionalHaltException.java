@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.vm.ehalt;
+package tech.pegasys.pantheon.ethereum.vm.ehalt;
 
-import net.consensys.pantheon.ethereum.vm.ExceptionalHaltReason;
+import tech.pegasys.pantheon.ethereum.vm.ExceptionalHaltReason;
 
 import java.util.EnumSet;
 

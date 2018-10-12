@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.vm.blockchain;
+package tech.pegasys.pantheon.ethereum.vm.blockchain;
 
-import static net.consensys.pantheon.ethereum.vm.BlockchainReferenceTestTools.executeTest;
-import static net.consensys.pantheon.ethereum.vm.BlockchainReferenceTestTools.generateTestParametersForConfig;
+import static tech.pegasys.pantheon.ethereum.vm.BlockchainReferenceTestTools.executeTest;
+import static tech.pegasys.pantheon.ethereum.vm.BlockchainReferenceTestTools.generateTestParametersForConfig;
 
-import net.consensys.pantheon.ethereum.vm.BlockchainReferenceTestCaseSpec;
+import tech.pegasys.pantheon.ethereum.vm.BlockchainReferenceTestCaseSpec;
 
 import java.util.Collection;
 

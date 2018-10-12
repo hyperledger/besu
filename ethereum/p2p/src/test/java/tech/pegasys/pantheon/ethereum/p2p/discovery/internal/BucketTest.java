@@ -1,12 +1,12 @@
-package net.consensys.pantheon.ethereum.p2p.discovery.internal;
+package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import static junit.framework.TestCase.assertFalse;
-import static net.consensys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper.generateDiscoveryPeers;
-import static net.consensys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper.generateKeyPairs;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper.generateDiscoveryPeers;
+import static tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper.generateKeyPairs;
 
-import net.consensys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 
 import java.util.Optional;
 import java.util.stream.Stream;

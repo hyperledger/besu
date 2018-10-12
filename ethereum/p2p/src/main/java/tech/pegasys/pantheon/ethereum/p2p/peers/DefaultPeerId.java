@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.p2p.peers;
+package tech.pegasys.pantheon.ethereum.p2p.peers;
 
-import net.consensys.pantheon.crypto.Hash;
-import net.consensys.pantheon.util.bytes.Bytes32;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.crypto.Hash;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Objects;
 

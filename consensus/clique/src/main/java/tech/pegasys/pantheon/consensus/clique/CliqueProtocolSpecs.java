@@ -1,16 +1,16 @@
-package net.consensys.pantheon.consensus.clique;
+package tech.pegasys.pantheon.consensus.clique;
 
-import static net.consensys.pantheon.consensus.clique.BlockHeaderValidationRulesetFactory.cliqueBlockHeaderValidator;
+import static tech.pegasys.pantheon.consensus.clique.BlockHeaderValidationRulesetFactory.cliqueBlockHeaderValidator;
 
-import net.consensys.pantheon.consensus.common.EpochManager;
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.Wei;
-import net.consensys.pantheon.ethereum.mainnet.MainnetBlockBodyValidator;
-import net.consensys.pantheon.ethereum.mainnet.MainnetBlockImporter;
-import net.consensys.pantheon.ethereum.mainnet.MainnetProtocolSpecs;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSpec;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSpecBuilder;
+import tech.pegasys.pantheon.consensus.common.EpochManager;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockBodyValidator;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockImporter;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSpecs;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpecBuilder;
 
 /** Factory for producing Clique protocol specs for given configurations and known fork points */
 public class CliqueProtocolSpecs {

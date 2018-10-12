@@ -1,10 +1,10 @@
-package net.consensys.pantheon.ethereum.mainnet.precompiles;
+package tech.pegasys.pantheon.ethereum.mainnet.precompiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.mainnet.SpuriousDragonGasCalculator;
-import net.consensys.pantheon.util.bytes.Bytes32;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.ethereum.mainnet.SpuriousDragonGasCalculator;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

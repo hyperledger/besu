@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.p2p.api;
+package tech.pegasys.pantheon.ethereum.p2p.api;
 
 import io.netty.buffer.ByteBuf;
 

@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.blockcreation;
+package tech.pegasys.pantheon.ethereum.blockcreation;
 
 public class CoinbaseNotSetException extends RuntimeException {
 

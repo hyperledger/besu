@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription;
 
 public class SubscriptionNotFoundException extends RuntimeException {
 

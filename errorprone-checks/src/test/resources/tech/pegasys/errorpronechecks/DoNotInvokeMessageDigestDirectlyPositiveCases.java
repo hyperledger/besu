@@ -1,4 +1,4 @@
-package net.consensys.errorpronechecks;
+package tech.pegasys.errorpronechecks;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

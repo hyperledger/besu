@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.vm;
+package tech.pegasys.pantheon.ethereum.vm;
 
 /**
  * All {@link Operation} implementations should inherit from this class to get the setting of some

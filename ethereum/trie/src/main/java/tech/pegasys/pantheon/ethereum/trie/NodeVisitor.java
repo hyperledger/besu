@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.trie;
+package tech.pegasys.pantheon.ethereum.trie;
 
 interface NodeVisitor<V> {
 

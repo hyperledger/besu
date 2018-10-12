@@ -1,19 +1,19 @@
-package net.consensys.pantheon.ethereum.eth.sync;
+package tech.pegasys.pantheon.ethereum.eth.sync;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import net.consensys.pantheon.ethereum.chain.GenesisConfig;
-import net.consensys.pantheon.ethereum.chain.MutableBlockchain;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.eth.manager.ChainState;
-import net.consensys.pantheon.ethereum.eth.manager.EthProtocolManager;
-import net.consensys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import net.consensys.pantheon.ethereum.eth.manager.RespondingEthPeer;
-import net.consensys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
-import net.consensys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUtil;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.eth.manager.ChainState;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
+import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
+import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUtil;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import org.junit.Test;
 

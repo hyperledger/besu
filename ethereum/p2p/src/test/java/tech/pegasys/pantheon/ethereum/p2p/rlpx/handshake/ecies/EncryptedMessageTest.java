@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.p2p.rlpx.handshake.ecies;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.ecies;
 
-import net.consensys.pantheon.crypto.SECP256K1;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.concurrent.ThreadLocalRandom;
 

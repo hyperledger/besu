@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.p2p.netty.exceptions;
+package tech.pegasys.pantheon.ethereum.p2p.netty.exceptions;
 
 public class IncompatiblePeerException extends RuntimeException {
 

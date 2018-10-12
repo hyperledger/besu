@@ -1,18 +1,18 @@
-package net.consensys.pantheon.ethereum.p2p;
+package tech.pegasys.pantheon.ethereum.p2p;
 
 import static java.util.Collections.emptyList;
-import static net.consensys.pantheon.ethereum.p2p.NetworkingTestHelper.configWithRandomPorts;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static tech.pegasys.pantheon.ethereum.p2p.NetworkingTestHelper.configWithRandomPorts;
 
-import net.consensys.pantheon.crypto.SECP256K1;
-import net.consensys.pantheon.ethereum.p2p.api.P2PNetwork;
-import net.consensys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
-import net.consensys.pantheon.ethereum.p2p.config.NetworkingConfiguration;
-import net.consensys.pantheon.ethereum.p2p.discovery.PeerDiscoveryServiceException;
-import net.consensys.pantheon.ethereum.p2p.netty.NettyP2PNetwork;
-import net.consensys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
+import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.config.NetworkingConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryServiceException;
+import tech.pegasys.pantheon.ethereum.p2p.netty.NettyP2PNetwork;
+import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 
 import java.io.IOException;
 
@@ -160,7 +160,7 @@ public class NetworkingServiceLifecycleTest {
           assertThat(e.getCause()).hasCauseExactlyInstanceOf(PeerDiscoveryServiceException.class);
           assertThat(e.getCause())
               .hasMessageStartingWith(
-                  "net.consensys.pantheon.ethereum.p2p.discovery."
+                  "tech.pegasys.pantheon.ethereum.p2p.discovery."
                       + "PeerDiscoveryServiceException: Failed to bind Ethereum UDP discovery listener to 0.0.0.0:");
           assertThat(e).hasMessageContaining("Address already in use");
         } finally {

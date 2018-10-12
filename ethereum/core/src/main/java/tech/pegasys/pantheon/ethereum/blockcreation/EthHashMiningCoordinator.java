@@ -1,10 +1,10 @@
-package net.consensys.pantheon.ethereum.blockcreation;
+package tech.pegasys.pantheon.ethereum.blockcreation;
 
-import net.consensys.pantheon.ethereum.chain.BlockAddedObserver;
-import net.consensys.pantheon.ethereum.chain.Blockchain;
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.mainnet.EthHashSolution;
-import net.consensys.pantheon.ethereum.mainnet.EthHashSolverInputs;
+import tech.pegasys.pantheon.ethereum.chain.BlockAddedObserver;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolution;
+import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.Optional;
 

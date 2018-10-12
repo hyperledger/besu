@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.rlp;
+package tech.pegasys.pantheon.ethereum.rlp;
 
 /**
  * Exception thrown if an RLP input is strictly malformed, but in such a way that can be processed

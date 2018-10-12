@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.filter;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter;
 
 import java.util.UUID;
 

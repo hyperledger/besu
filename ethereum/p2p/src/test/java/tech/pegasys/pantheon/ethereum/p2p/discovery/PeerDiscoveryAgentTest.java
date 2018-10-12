@@ -1,24 +1,24 @@
-package net.consensys.pantheon.ethereum.p2p.discovery;
+package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
-import static net.consensys.pantheon.util.bytes.BytesValue.fromHexString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static tech.pegasys.pantheon.util.bytes.BytesValue.fromHexString;
 
-import net.consensys.pantheon.crypto.SECP256K1;
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection;
-import net.consensys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.NeighborsPacketData;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.Packet;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PacketType;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
-import net.consensys.pantheon.ethereum.p2p.peers.DefaultPeer;
-import net.consensys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import net.consensys.pantheon.ethereum.p2p.wire.Capability;
-import net.consensys.pantheon.ethereum.p2p.wire.PeerInfo;
-import net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.NeighborsPacketData;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
+import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.SocketAddress;
 import java.util.Arrays;

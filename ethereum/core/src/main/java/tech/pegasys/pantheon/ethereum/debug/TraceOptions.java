@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.debug;
+package tech.pegasys.pantheon.ethereum.debug;
 
 public class TraceOptions {
 

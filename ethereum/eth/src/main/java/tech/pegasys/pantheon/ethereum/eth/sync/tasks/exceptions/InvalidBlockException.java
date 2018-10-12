@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.eth.sync.tasks.exceptions;
+package tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions;
 
-import net.consensys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 
 public class InvalidBlockException extends RuntimeException {
 

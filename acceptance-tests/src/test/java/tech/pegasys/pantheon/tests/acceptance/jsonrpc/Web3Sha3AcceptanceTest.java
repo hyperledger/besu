@@ -1,10 +1,10 @@
-package net.consensys.pantheon.tests.acceptance.jsonrpc;
+package tech.pegasys.pantheon.tests.acceptance.jsonrpc;
 
-import static net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonNode;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonNode;
 
-import net.consensys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
-import net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNode;
+import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 
 import java.io.IOException;
 

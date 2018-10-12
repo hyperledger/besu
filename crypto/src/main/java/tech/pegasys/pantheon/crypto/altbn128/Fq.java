@@ -1,7 +1,7 @@
-package net.consensys.pantheon.crypto.altbn128;
+package tech.pegasys.pantheon.crypto.altbn128;
 
-import net.consensys.pantheon.util.bytes.BytesValue;
-import net.consensys.pantheon.util.bytes.BytesValues;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.math.BigInteger;
 import java.util.Objects;

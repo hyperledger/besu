@@ -1,20 +1,20 @@
-package net.consensys.pantheon.controller;
+package tech.pegasys.pantheon.controller;
 
-import net.consensys.pantheon.consensus.clique.CliqueProtocolSchedule;
-import net.consensys.pantheon.consensus.ibft.IbftProtocolSchedule;
-import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.blockcreation.AbstractBlockCreator;
-import net.consensys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
-import net.consensys.pantheon.ethereum.blockcreation.BlockMiner;
-import net.consensys.pantheon.ethereum.blockcreation.MiningParameters;
-import net.consensys.pantheon.ethereum.chain.GenesisConfig;
-import net.consensys.pantheon.ethereum.core.Synchronizer;
-import net.consensys.pantheon.ethereum.core.TransactionPool;
-import net.consensys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
-import net.consensys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
+import tech.pegasys.pantheon.consensus.clique.CliqueProtocolSchedule;
+import tech.pegasys.pantheon.consensus.ibft.IbftProtocolSchedule;
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.blockcreation.AbstractBlockCreator;
+import tech.pegasys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
+import tech.pegasys.pantheon.ethereum.blockcreation.BlockMiner;
+import tech.pegasys.pantheon.ethereum.blockcreation.MiningParameters;
+import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
+import tech.pegasys.pantheon.ethereum.core.Synchronizer;
+import tech.pegasys.pantheon.ethereum.core.TransactionPool;
+import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 
 import java.io.Closeable;
 import java.io.IOException;

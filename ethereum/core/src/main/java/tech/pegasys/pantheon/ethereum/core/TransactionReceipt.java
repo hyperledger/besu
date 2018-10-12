@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.core;
 
-import net.consensys.pantheon.ethereum.mainnet.TransactionReceiptType;
-import net.consensys.pantheon.ethereum.rlp.RLPInput;
-import net.consensys.pantheon.ethereum.rlp.RLPOutput;
+import tech.pegasys.pantheon.ethereum.mainnet.TransactionReceiptType;
+import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
+import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
 import java.util.List;
 import java.util.Objects;

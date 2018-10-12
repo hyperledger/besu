@@ -1,4 +1,4 @@
-package net.consensys.pantheon.util;
+package tech.pegasys.pantheon.util;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

@@ -1,14 +1,14 @@
-package net.consensys.pantheon.consensus.ibft;
+package tech.pegasys.pantheon.consensus.ibft;
 
-import static net.consensys.pantheon.consensus.ibft.IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator;
+import static tech.pegasys.pantheon.consensus.ibft.IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator;
 
-import net.consensys.pantheon.consensus.common.EpochManager;
-import net.consensys.pantheon.ethereum.core.Wei;
-import net.consensys.pantheon.ethereum.mainnet.MainnetBlockBodyValidator;
-import net.consensys.pantheon.ethereum.mainnet.MainnetBlockImporter;
-import net.consensys.pantheon.ethereum.mainnet.MainnetProtocolSpecs;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSpec;
+import tech.pegasys.pantheon.consensus.common.EpochManager;
+import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockBodyValidator;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockImporter;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSpecs;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 
 import java.math.BigInteger;
 

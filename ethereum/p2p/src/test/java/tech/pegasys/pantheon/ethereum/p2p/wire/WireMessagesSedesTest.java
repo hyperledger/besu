@@ -1,10 +1,10 @@
-package net.consensys.pantheon.ethereum.p2p.wire;
+package tech.pegasys.pantheon.ethereum.p2p.wire;
 
 import static io.netty.buffer.ByteBufUtil.decodeHexDump;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.rlp.RLP;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import io.netty.buffer.ByteBuf;
 import org.junit.Test;

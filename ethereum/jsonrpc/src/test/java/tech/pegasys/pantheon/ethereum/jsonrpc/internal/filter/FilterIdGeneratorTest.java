@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.filter;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter;
 
 import static org.junit.Assert.assertEquals;
 
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import org.junit.Test;
 

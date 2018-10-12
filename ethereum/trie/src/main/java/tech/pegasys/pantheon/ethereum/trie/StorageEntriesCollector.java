@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.trie;
+package tech.pegasys.pantheon.ethereum.trie;
 
-import net.consensys.pantheon.ethereum.trie.TrieIterator.State;
-import net.consensys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.ethereum.trie.TrieIterator.State;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
 
 import java.util.Map;
 import java.util.TreeMap;

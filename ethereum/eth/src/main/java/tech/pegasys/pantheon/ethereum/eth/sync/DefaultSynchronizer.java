@@ -1,12 +1,12 @@
-package net.consensys.pantheon.ethereum.eth.sync;
+package tech.pegasys.pantheon.ethereum.eth.sync;
 
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.core.SyncStatus;
-import net.consensys.pantheon.ethereum.core.Synchronizer;
-import net.consensys.pantheon.ethereum.eth.manager.EthContext;
-import net.consensys.pantheon.ethereum.eth.sync.state.PendingBlocks;
-import net.consensys.pantheon.ethereum.eth.sync.state.SyncState;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.core.SyncStatus;
+import tech.pegasys.pantheon.ethereum.core.Synchronizer;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.PendingBlocks;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;

@@ -1,12 +1,12 @@
-package net.consensys.pantheon.ethereum.eth.messages;
+package tech.pegasys.pantheon.ethereum.eth.messages;
 
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.p2p.NetworkMemoryPool;
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
-import net.consensys.pantheon.ethereum.p2p.wire.AbstractMessageData;
-import net.consensys.pantheon.ethereum.rlp.BytesValueRLPOutput;
-import net.consensys.pantheon.ethereum.rlp.RlpUtils;
-import net.consensys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
+import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
+import tech.pegasys.pantheon.ethereum.rlp.RlpUtils;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;

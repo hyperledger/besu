@@ -1,11 +1,11 @@
-package net.consensys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.core;
 
-import net.consensys.pantheon.ethereum.rlp.RLP;
-import net.consensys.pantheon.ethereum.rlp.RLPException;
-import net.consensys.pantheon.ethereum.rlp.RLPInput;
-import net.consensys.pantheon.ethereum.rlp.RLPOutput;
-import net.consensys.pantheon.util.bytes.BytesValue;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
+import tech.pegasys.pantheon.ethereum.rlp.RLPException;
+import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
+import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 public class BlockMetadata {
   private static final BlockMetadata EMPTY = new BlockMetadata(null);

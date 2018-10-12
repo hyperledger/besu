@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.core;
 
 import static java.util.Collections.newSetFromMap;
 import static java.util.Comparator.comparing;

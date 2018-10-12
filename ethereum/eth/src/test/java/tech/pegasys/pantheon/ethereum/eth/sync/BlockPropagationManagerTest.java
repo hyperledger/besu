@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.eth.sync;
+package tech.pegasys.pantheon.ethereum.eth.sync;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -6,24 +6,24 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.chain.Blockchain;
-import net.consensys.pantheon.ethereum.chain.MutableBlockchain;
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.eth.manager.EthProtocolManager;
-import net.consensys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import net.consensys.pantheon.ethereum.eth.manager.RespondingEthPeer;
-import net.consensys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
-import net.consensys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUtil;
-import net.consensys.pantheon.ethereum.eth.messages.NewBlockHashesMessage;
-import net.consensys.pantheon.ethereum.eth.messages.NewBlockHashesMessage.NewBlockHash;
-import net.consensys.pantheon.ethereum.eth.messages.NewBlockMessage;
-import net.consensys.pantheon.ethereum.eth.sync.state.PendingBlocks;
-import net.consensys.pantheon.ethereum.eth.sync.state.SyncState;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.ethereum.testutil.BlockDataGenerator;
-import net.consensys.pantheon.ethereum.testutil.BlockDataGenerator.BlockOptions;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
+import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
+import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUtil;
+import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockHashesMessage;
+import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockHashesMessage.NewBlockHash;
+import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockMessage;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.PendingBlocks;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
+import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator.BlockOptions;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Collections;
 

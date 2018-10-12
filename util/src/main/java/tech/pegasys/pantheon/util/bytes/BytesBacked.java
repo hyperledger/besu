@@ -1,4 +1,4 @@
-package net.consensys.pantheon.util.bytes;
+package tech.pegasys.pantheon.util.bytes;
 
 /** Base interface for a value whose content is stored as bytes. */
 public interface BytesBacked {

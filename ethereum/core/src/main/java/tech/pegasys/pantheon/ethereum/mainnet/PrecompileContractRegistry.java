@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.mainnet;
+package tech.pegasys.pantheon.ethereum.mainnet;
 
-import net.consensys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Address;
 
 import java.util.HashMap;
 import java.util.Map;

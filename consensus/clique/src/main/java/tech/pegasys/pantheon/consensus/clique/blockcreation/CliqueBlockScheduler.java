@@ -1,11 +1,11 @@
-package net.consensys.pantheon.consensus.clique.blockcreation;
+package tech.pegasys.pantheon.consensus.clique.blockcreation;
 
-import net.consensys.pantheon.consensus.clique.VoteTallyCache;
-import net.consensys.pantheon.consensus.common.ValidatorProvider;
-import net.consensys.pantheon.ethereum.blockcreation.DefaultBlockScheduler;
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.util.time.Clock;
+import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
+import tech.pegasys.pantheon.consensus.common.ValidatorProvider;
+import tech.pegasys.pantheon.ethereum.blockcreation.DefaultBlockScheduler;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.util.time.Clock;
 
 import java.util.Random;
 

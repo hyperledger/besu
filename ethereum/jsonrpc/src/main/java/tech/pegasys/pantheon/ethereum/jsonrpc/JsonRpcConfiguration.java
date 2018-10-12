@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.jsonrpc;
+package tech.pegasys.pantheon.ethereum.jsonrpc;
 
 import java.util.Arrays;
 import java.util.Collection;

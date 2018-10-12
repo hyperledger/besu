@@ -1,11 +1,11 @@
-package net.consensys.pantheon.ethereum.p2p.discovery.internal;
+package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
-import net.consensys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PeerTable.AddResult.Outcome;
-import net.consensys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.AddResult.Outcome;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 
 import org.junit.Test;
 

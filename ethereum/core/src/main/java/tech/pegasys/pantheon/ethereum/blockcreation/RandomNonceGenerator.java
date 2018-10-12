@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.blockcreation;
+package tech.pegasys.pantheon.ethereum.blockcreation;
 
-import net.consensys.pantheon.crypto.SecureRandomProvider;
+import tech.pegasys.pantheon.crypto.SecureRandomProvider;
 
 import java.util.Iterator;
 import java.util.Random;

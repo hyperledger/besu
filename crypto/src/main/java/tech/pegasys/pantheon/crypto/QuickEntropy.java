@@ -1,4 +1,4 @@
-package net.consensys.pantheon.crypto;
+package tech.pegasys.pantheon.crypto;
 
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;

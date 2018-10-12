@@ -1,10 +1,10 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription;
 
-import net.consensys.pantheon.ethereum.jsonrpc.internal.results.JsonRpcResult;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscribeRequest;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request.UnsubscribeRequest;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.response.SubscriptionResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.JsonRpcResult;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscribeRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.UnsubscribeRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.response.SubscriptionResponse;
 
 import java.util.HashMap;
 import java.util.List;

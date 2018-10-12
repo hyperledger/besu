@@ -1,6 +1,6 @@
-package net.consensys.pantheon.controller;
+package tech.pegasys.pantheon.controller;
 
-import net.consensys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.crypto.SECP256K1;
 
 import java.io.File;
 import java.io.IOException;

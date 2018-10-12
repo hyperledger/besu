@@ -1,15 +1,15 @@
-package net.consensys.pantheon.ethereum.p2p.discovery;
+package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 import static io.vertx.core.Vertx.vertx;
 
-import net.consensys.pantheon.crypto.SECP256K1;
-import net.consensys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.Packet;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PacketType;
-import net.consensys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
-import net.consensys.pantheon.ethereum.p2p.peers.Endpoint;
-import net.consensys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
+import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -130,7 +130,7 @@ public abstract class AbstractPeerDiscoveryTest {
    *
    * <p>A test socket allows you to send messages to a discovery agent, as well as to react to
    * received messages. A test socket encapsulates: (1) a {@link DiscoveryPeer} and its {@link
-   * net.consensys.pantheon.crypto.SECP256K1.KeyPair}, (2) an {@link ArrayBlockingQueue} where
+   * tech.pegasys.pantheon.crypto.SECP256K1.KeyPair}, (2) an {@link ArrayBlockingQueue} where
    * received messages are placed automatically, and (3) the socket itself.
    *
    * @param count the number of test sockets to start.

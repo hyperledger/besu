@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.p2p.rlpx.handshake.ecies;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.ecies;
 
-import net.consensys.pantheon.crypto.SECP256K1;
-import net.consensys.pantheon.crypto.SecureRandomProvider;
-import net.consensys.pantheon.util.bytes.BytesValue;
-import net.consensys.pantheon.util.bytes.MutableBytesValue;
+import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.crypto.SecureRandomProvider;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.MutableBytesValue;
 
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;

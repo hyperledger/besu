@@ -1,9 +1,9 @@
-package net.consensys.pantheon.consensus.clique.headervalidationrules;
+package tech.pegasys.pantheon.consensus.clique.headervalidationrules;
 
-import net.consensys.pantheon.consensus.clique.CliqueVoteTallyUpdater;
-import net.consensys.pantheon.consensus.common.EpochManager;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.mainnet.DetachedBlockHeaderValidationRule;
+import tech.pegasys.pantheon.consensus.clique.CliqueVoteTallyUpdater;
+import tech.pegasys.pantheon.consensus.common.EpochManager;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
 public class CoinbaseHeaderValidationRule implements DetachedBlockHeaderValidationRule {
 

@@ -1,4 +1,4 @@
-package net.consensys.pantheon.tests.acceptance.dsl.pubsub;
+package tech.pegasys.pantheon.tests.acceptance.dsl.pubsub;
 
 import java.util.Map;
 

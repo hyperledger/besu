@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.chain;
+package tech.pegasys.pantheon.ethereum.chain;
 
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 /** Head of a blockchain. */
 public final class ChainHead {

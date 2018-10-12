@@ -1,18 +1,18 @@
-package net.consensys.pantheon.ethereum.eth.manager;
+package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.eth.EthProtocol;
-import net.consensys.pantheon.ethereum.eth.manager.RequestManager.ResponseCallback;
-import net.consensys.pantheon.ethereum.eth.manager.RequestManager.ResponseStream;
-import net.consensys.pantheon.ethereum.eth.messages.BlockBodiesMessage;
-import net.consensys.pantheon.ethereum.eth.messages.BlockHeadersMessage;
-import net.consensys.pantheon.ethereum.eth.messages.ReceiptsMessage;
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection;
-import net.consensys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
-import net.consensys.pantheon.ethereum.p2p.wire.Capability;
-import net.consensys.pantheon.ethereum.testutil.BlockDataGenerator;
+import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
+import tech.pegasys.pantheon.ethereum.eth.manager.RequestManager.ResponseCallback;
+import tech.pegasys.pantheon.ethereum.eth.manager.RequestManager.ResponseStream;
+import tech.pegasys.pantheon.ethereum.eth.messages.BlockBodiesMessage;
+import tech.pegasys.pantheon.ethereum.eth.messages.BlockHeadersMessage;
+import tech.pegasys.pantheon.ethereum.eth.messages.ReceiptsMessage;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
 
 import java.util.Arrays;
 import java.util.Collections;

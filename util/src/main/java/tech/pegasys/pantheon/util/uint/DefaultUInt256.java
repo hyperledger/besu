@@ -1,6 +1,6 @@
-package net.consensys.pantheon.util.uint;
+package tech.pegasys.pantheon.util.uint;
 
-import net.consensys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
 
 /**
  * Default implementation of a {@link UInt256}.

@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.p2p.config;
+package tech.pegasys.pantheon.ethereum.p2p.config;
 
 import static java.util.stream.Collectors.toList;
 
-import net.consensys.pantheon.ethereum.p2p.peers.DefaultPeer;
-import net.consensys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 
 import java.util.ArrayList;
 import java.util.Collection;

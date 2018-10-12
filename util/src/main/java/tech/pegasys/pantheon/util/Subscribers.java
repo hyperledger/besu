@@ -1,4 +1,4 @@
-package net.consensys.pantheon.util;
+package tech.pegasys.pantheon.util;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

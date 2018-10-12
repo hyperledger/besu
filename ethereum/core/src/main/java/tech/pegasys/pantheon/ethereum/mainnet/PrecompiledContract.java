@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.mainnet;
+package tech.pegasys.pantheon.ethereum.mainnet;
 
-import net.consensys.pantheon.ethereum.core.Gas;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.ethereum.core.Gas;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 /**
  * A pre-compiled contract.

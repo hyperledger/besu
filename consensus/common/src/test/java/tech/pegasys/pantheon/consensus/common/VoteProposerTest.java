@@ -1,10 +1,10 @@
-package net.consensys.pantheon.consensus.common;
+package tech.pegasys.pantheon.consensus.common;
 
-import static net.consensys.pantheon.consensus.common.VoteType.ADD;
-import static net.consensys.pantheon.consensus.common.VoteType.DROP;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.consensus.common.VoteType.ADD;
+import static tech.pegasys.pantheon.consensus.common.VoteType.DROP;
 
-import net.consensys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Address;
 
 import java.util.AbstractMap;
 import java.util.Arrays;

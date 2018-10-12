@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.vm;
+package tech.pegasys.pantheon.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
 
 import org.junit.Test;
 

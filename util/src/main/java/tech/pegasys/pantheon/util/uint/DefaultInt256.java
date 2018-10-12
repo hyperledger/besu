@@ -1,10 +1,10 @@
-package net.consensys.pantheon.util.uint;
+package tech.pegasys.pantheon.util.uint;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import net.consensys.pantheon.util.bytes.AbstractBytes32Backed;
-import net.consensys.pantheon.util.bytes.Bytes32;
-import net.consensys.pantheon.util.bytes.MutableBytes32;
+import tech.pegasys.pantheon.util.bytes.AbstractBytes32Backed;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.MutableBytes32;
 
 /**
  * Default implementation of a {@link Int256}.

@@ -1,4 +1,4 @@
-package net.consensys.pantheon.util.bytes;
+package tech.pegasys.pantheon.util.bytes;
 
 public class DelegatingBytesValue extends BaseDelegatingBytesValue<BytesValue>
     implements BytesValue {

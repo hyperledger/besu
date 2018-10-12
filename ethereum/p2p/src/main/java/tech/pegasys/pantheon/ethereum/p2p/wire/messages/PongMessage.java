@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.p2p.wire.messages;
+package tech.pegasys.pantheon.ethereum.p2p.wire.messages;
 
 public final class PongMessage extends EmptyMessage {
 

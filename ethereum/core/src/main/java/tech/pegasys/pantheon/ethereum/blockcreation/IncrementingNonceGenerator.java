@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.blockcreation;
+package tech.pegasys.pantheon.ethereum.blockcreation;
 
 import java.util.Iterator;
 

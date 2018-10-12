@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.core;
 
 @FunctionalInterface
 public interface PendingTransactionListener {

@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket.methods;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.methods;
 
-import net.consensys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionRequestMapper;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionRequestMapper;
 
 abstract class AbstractSubscriptionMethod implements JsonRpcMethod {
 

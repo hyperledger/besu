@@ -1,6 +1,6 @@
-package net.consensys.pantheon.cli;
+package tech.pegasys.pantheon.cli;
 
-import net.consensys.pantheon.PantheonInfo;
+import tech.pegasys.pantheon.PantheonInfo;
 
 import picocli.CommandLine;
 

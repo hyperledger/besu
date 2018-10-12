@@ -1,4 +1,4 @@
-package net.consensys.pantheon.testutil;
+package tech.pegasys.pantheon.testutil;
 
 import static com.google.common.base.Preconditions.checkState;
 

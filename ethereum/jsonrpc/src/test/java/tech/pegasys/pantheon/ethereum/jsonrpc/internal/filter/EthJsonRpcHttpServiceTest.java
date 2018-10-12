@@ -1,11 +1,11 @@
-package net.consensys.pantheon.ethereum.jsonrpc.internal.filter;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.core.Transaction;
-import net.consensys.pantheon.ethereum.jsonrpc.AbstractEthJsonRpcHttpServiceTest;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.jsonrpc.AbstractEthJsonRpcHttpServiceTest;
 
 import java.io.IOException;
 

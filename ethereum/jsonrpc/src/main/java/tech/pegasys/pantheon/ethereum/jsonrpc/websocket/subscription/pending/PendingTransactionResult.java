@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.pending;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.pending;
 
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.jsonrpc.internal.results.JsonRpcResult;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.JsonRpcResult;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 

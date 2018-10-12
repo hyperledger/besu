@@ -1,7 +1,7 @@
-package net.consensys.pantheon.ethereum;
+package tech.pegasys.pantheon.ethereum;
 
-import net.consensys.pantheon.ethereum.chain.MutableBlockchain;
-import net.consensys.pantheon.ethereum.db.WorldStateArchive;
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 
 /**
  * Holds the mutable state used to track the current context of the protocol. This is primarily the

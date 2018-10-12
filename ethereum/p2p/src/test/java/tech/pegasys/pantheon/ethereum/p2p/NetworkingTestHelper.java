@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.p2p;
+package tech.pegasys.pantheon.ethereum.p2p;
 
-import net.consensys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
-import net.consensys.pantheon.ethereum.p2p.config.NetworkingConfiguration;
-import net.consensys.pantheon.ethereum.p2p.config.RlpxConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.config.NetworkingConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.config.RlpxConfiguration;
 
 public class NetworkingTestHelper {
 

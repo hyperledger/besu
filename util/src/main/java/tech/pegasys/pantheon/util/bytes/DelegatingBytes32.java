@@ -1,4 +1,4 @@
-package net.consensys.pantheon.util.bytes;
+package tech.pegasys.pantheon.util.bytes;
 
 public class DelegatingBytes32 extends BaseDelegatingBytesValue<Bytes32> implements Bytes32 {
   protected DelegatingBytes32(final Bytes32 wrapped) {

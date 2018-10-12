@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.util;
+package tech.pegasys.pantheon.ethereum.util;
 
 import com.google.common.primitives.Longs;
 

@@ -1,10 +1,10 @@
-package net.consensys.pantheon.tests.acceptance.dsl.account;
+package tech.pegasys.pantheon.tests.acceptance.dsl.account;
 
-import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
-import net.consensys.pantheon.crypto.SECP256K1.PrivateKey;
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.crypto.SECP256K1.PrivateKey;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
 
 import java.math.BigInteger;
 

@@ -1,11 +1,11 @@
-package net.consensys.pantheon.ethereum.mainnet;
+package tech.pegasys.pantheon.ethereum.mainnet;
 
-import static net.consensys.pantheon.util.uint.UInt256.ONE;
-import static net.consensys.pantheon.util.uint.UInt256.ZERO;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.util.uint.UInt256.ONE;
+import static tech.pegasys.pantheon.util.uint.UInt256.ZERO;
 
-import net.consensys.pantheon.ethereum.core.Gas;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.ethereum.core.Gas;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

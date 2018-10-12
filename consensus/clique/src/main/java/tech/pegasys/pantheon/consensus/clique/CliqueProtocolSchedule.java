@@ -1,9 +1,9 @@
-package net.consensys.pantheon.consensus.clique;
+package tech.pegasys.pantheon.consensus.clique;
 
-import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
-import net.consensys.pantheon.ethereum.core.Util;
-import net.consensys.pantheon.ethereum.mainnet.MutableProtocolSchedule;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.ethereum.core.Util;
+import tech.pegasys.pantheon.ethereum.mainnet.MutableProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Optional;
 

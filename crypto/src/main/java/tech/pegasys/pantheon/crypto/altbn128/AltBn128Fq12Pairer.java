@@ -1,6 +1,6 @@
-package net.consensys.pantheon.crypto.altbn128;
+package tech.pegasys.pantheon.crypto.altbn128;
 
-import static net.consensys.pantheon.crypto.altbn128.AltBn128Fq12Point.twist;
+import static tech.pegasys.pantheon.crypto.altbn128.AltBn128Fq12Point.twist;
 
 import java.math.BigInteger;
 import java.util.Arrays;

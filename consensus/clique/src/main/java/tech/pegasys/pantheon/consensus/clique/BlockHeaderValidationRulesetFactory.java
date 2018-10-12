@@ -1,19 +1,19 @@
-package net.consensys.pantheon.consensus.clique;
+package tech.pegasys.pantheon.consensus.clique;
 
-import net.consensys.pantheon.consensus.clique.headervalidationrules.CliqueDifficultyValidationRule;
-import net.consensys.pantheon.consensus.clique.headervalidationrules.CliqueExtraDataValidationRule;
-import net.consensys.pantheon.consensus.clique.headervalidationrules.CoinbaseHeaderValidationRule;
-import net.consensys.pantheon.consensus.clique.headervalidationrules.SignerRateLimitValidationRule;
-import net.consensys.pantheon.consensus.common.EpochManager;
-import net.consensys.pantheon.consensus.common.headervalidationrules.VoteValidationRule;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.mainnet.BlockHeaderValidator;
-import net.consensys.pantheon.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
-import net.consensys.pantheon.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
-import net.consensys.pantheon.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
-import net.consensys.pantheon.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
-import net.consensys.pantheon.ethereum.mainnet.headervalidationrules.TimestampValidationRule;
+import tech.pegasys.pantheon.consensus.clique.headervalidationrules.CliqueDifficultyValidationRule;
+import tech.pegasys.pantheon.consensus.clique.headervalidationrules.CliqueExtraDataValidationRule;
+import tech.pegasys.pantheon.consensus.clique.headervalidationrules.CoinbaseHeaderValidationRule;
+import tech.pegasys.pantheon.consensus.clique.headervalidationrules.SignerRateLimitValidationRule;
+import tech.pegasys.pantheon.consensus.common.EpochManager;
+import tech.pegasys.pantheon.consensus.common.headervalidationrules.VoteValidationRule;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
+import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
+import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
+import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
+import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
+import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.TimestampValidationRule;
 
 public class BlockHeaderValidationRulesetFactory {
 

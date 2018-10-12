@@ -1,8 +1,7 @@
-package net.consensys.pantheon.cli;
+package tech.pegasys.pantheon.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
-import static net.consensys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -13,16 +12,17 @@ import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 
-import net.consensys.pantheon.PantheonInfo;
-import net.consensys.pantheon.cli.EthNetworkConfig.Builder;
-import net.consensys.pantheon.ethereum.blockcreation.MiningParameters;
-import net.consensys.pantheon.ethereum.core.Address;
-import net.consensys.pantheon.ethereum.core.Wei;
-import net.consensys.pantheon.ethereum.eth.sync.SyncMode;
-import net.consensys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.PantheonInfo;
+import tech.pegasys.pantheon.cli.EthNetworkConfig.Builder;
+import tech.pegasys.pantheon.ethereum.blockcreation.MiningParameters;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
+import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.File;
 import java.io.IOException;

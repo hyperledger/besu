@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.eth.sync;
+package tech.pegasys.pantheon.ethereum.eth.sync;
 
 public enum SyncMode {
   // Fully validate all blocks as they sync

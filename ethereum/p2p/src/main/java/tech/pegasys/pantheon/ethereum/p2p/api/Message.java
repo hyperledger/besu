@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.p2p.api;
+package tech.pegasys.pantheon.ethereum.p2p.api;
 
 /** A P2P network message received from another peer. */
 public interface Message {

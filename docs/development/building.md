@@ -56,11 +56,11 @@ as part of the unit test suite as described above, but for debugging, it is
 often convenient to run only a subset of those tests, for which a few convenience
 as provided. For instance, one can run only "Frontier" general state tests with
 ```
-./gradlew :ethereum:net.consensys.pantheon.ethereum.vm:referenceTest -Dtest.single=GeneralStateTest -Dtest.ethereum.state.eip=Frontier
+./gradlew :ethereum:tech.pegasys.pantheon.ethereum.vm:referenceTest -Dtest.single=GeneralStateTest -Dtest.ethereum.state.eip=Frontier
 ```
 or only the tests that match a particular pattern with something like:
 ```
-gradle :ethereum:net.consensys.pantheon.ethereum.vm:test -Dtest.single=GeneralStateTest -Dtest.ethereum.include='^CALLCODE.*-Frontier'
+gradle :ethereum:tech.pegasys.pantheon.ethereum.vm:test -Dtest.single=GeneralStateTest -Dtest.ethereum.include='^CALLCODE.*-Frontier'
 ```
 Please see the comment on the `test` target in the top level `build.gradle`
 file for more details.

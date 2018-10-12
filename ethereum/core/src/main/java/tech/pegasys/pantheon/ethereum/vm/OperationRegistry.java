@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.vm;
+package tech.pegasys.pantheon.ethereum.vm;
 
 /** Encapsulates a group of {@link Operation}s used together. */
 public class OperationRegistry {

@@ -1,4 +1,4 @@
-package net.consensys.pantheon.services.kvstore;
+package tech.pegasys.pantheon.services.kvstore;
 
 public class InMemoryKeyValueStorageTest extends AbstractKeyValueStorageTest {
 

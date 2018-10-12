@@ -1,12 +1,12 @@
-package net.consensys.pantheon.ethereum.eth.messages;
+package tech.pegasys.pantheon.ethereum.eth.messages;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.ethereum.eth.EthProtocol.EthVersion;
-import net.consensys.pantheon.ethereum.p2p.api.MessageData;
-import net.consensys.pantheon.util.bytes.Bytes32;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.eth.EthProtocol.EthVersion;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Random;
 

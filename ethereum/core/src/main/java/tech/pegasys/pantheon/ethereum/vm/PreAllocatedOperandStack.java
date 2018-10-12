@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.vm;
+package tech.pegasys.pantheon.ethereum.vm;
 
-import net.consensys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
 
 import java.util.Arrays;
 

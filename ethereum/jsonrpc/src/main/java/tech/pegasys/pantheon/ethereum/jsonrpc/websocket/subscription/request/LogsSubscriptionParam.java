@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request;
 
 import java.util.List;
 

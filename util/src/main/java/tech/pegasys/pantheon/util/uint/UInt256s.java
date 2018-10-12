@@ -1,4 +1,4 @@
-package net.consensys.pantheon.util.uint;
+package tech.pegasys.pantheon.util.uint;
 
 /** Static utility methods on UInt256 values. */
 public class UInt256s {

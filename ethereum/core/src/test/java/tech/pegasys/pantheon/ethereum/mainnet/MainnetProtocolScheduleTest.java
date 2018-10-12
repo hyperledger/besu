@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.mainnet;
+package tech.pegasys.pantheon.ethereum.mainnet;
 
 import io.vertx.core.json.JsonObject;
 import org.assertj.core.api.Assertions;

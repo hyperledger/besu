@@ -1,4 +1,4 @@
-package net.consensys.pantheon.cli;
+package tech.pegasys.pantheon.cli;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

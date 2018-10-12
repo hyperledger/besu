@@ -1,6 +1,6 @@
-package net.consensys.pantheon.consensus.ibft;
+package tech.pegasys.pantheon.consensus.ibft;
 
-import net.consensys.pantheon.consensus.ibft.ibftevent.RoundExpiry;
+import tech.pegasys.pantheon.consensus.ibft.ibftevent.RoundExpiry;
 
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;

@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.core;
 
 /**
  * An interface for creating the block hash given a {@link BlockHeader}.

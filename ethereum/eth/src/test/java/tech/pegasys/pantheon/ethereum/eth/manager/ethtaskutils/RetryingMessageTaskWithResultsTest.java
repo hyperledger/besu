@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.eth.manager.ethtaskutils;
+package tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.eth.manager.EthPeer;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 
 public abstract class RetryingMessageTaskWithResultsTest<T> extends RetryingMessageTaskTest<T, T> {
 

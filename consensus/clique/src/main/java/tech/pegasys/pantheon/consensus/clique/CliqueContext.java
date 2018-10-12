@@ -1,6 +1,6 @@
-package net.consensys.pantheon.consensus.clique;
+package tech.pegasys.pantheon.consensus.clique;
 
-import net.consensys.pantheon.consensus.common.VoteProposer;
+import tech.pegasys.pantheon.consensus.common.VoteProposer;
 
 /**
  * Holds the data which lives "in parallel" with the importation of blocks etc. when using the

@@ -1,4 +1,4 @@
-package net.consensys.pantheon.consensus.ibft;
+package tech.pegasys.pantheon.consensus.ibft;
 
 /** Stateful evaluator for ibft events */
 public class IbftStateMachine {

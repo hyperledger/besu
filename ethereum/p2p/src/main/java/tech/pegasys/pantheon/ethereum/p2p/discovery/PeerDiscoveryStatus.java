@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.p2p.discovery;
+package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 /** The status of a {@link DiscoveryPeer}, in relation to the peer discovery state machine. */
 public enum PeerDiscoveryStatus {

@@ -1,8 +1,8 @@
-package net.consensys.pantheon.ethereum.eth.manager;
+package tech.pegasys.pantheon.ethereum.eth.manager;
 
-import net.consensys.pantheon.ethereum.eth.manager.exceptions.NoAvailablePeersException;
-import net.consensys.pantheon.ethereum.eth.sync.tasks.WaitForPeerTask;
-import net.consensys.pantheon.util.ExceptionUtils;
+import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.NoAvailablePeersException;
+import tech.pegasys.pantheon.ethereum.eth.sync.tasks.WaitForPeerTask;
+import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;

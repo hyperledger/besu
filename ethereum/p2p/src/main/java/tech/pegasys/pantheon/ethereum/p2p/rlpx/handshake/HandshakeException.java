@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.p2p.rlpx.handshake;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake;
 
 /** Signals that an error occurred during the RLPx cryptographic handshake. */
 public class HandshakeException extends RuntimeException {

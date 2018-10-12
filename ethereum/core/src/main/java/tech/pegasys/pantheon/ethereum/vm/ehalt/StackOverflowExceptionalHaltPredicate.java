@@ -1,9 +1,9 @@
-package net.consensys.pantheon.ethereum.vm.ehalt;
+package tech.pegasys.pantheon.ethereum.vm.ehalt;
 
-import net.consensys.pantheon.ethereum.vm.EVM;
-import net.consensys.pantheon.ethereum.vm.ExceptionalHaltReason;
-import net.consensys.pantheon.ethereum.vm.MessageFrame;
-import net.consensys.pantheon.ethereum.vm.Operation;
+import tech.pegasys.pantheon.ethereum.vm.EVM;
+import tech.pegasys.pantheon.ethereum.vm.ExceptionalHaltReason;
+import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
+import tech.pegasys.pantheon.ethereum.vm.Operation;
 
 import java.util.EnumSet;
 import java.util.Optional;

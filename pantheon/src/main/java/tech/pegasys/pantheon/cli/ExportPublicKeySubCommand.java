@@ -1,9 +1,9 @@
-package net.consensys.pantheon.cli;
+package tech.pegasys.pantheon.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import net.consensys.pantheon.controller.PantheonController;
-import net.consensys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.controller.PantheonController;
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 
 import java.io.BufferedWriter;
 import java.io.File;

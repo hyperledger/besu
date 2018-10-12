@@ -1,6 +1,6 @@
-package net.consensys.pantheon.consensus.ibft;
+package tech.pegasys.pantheon.consensus.ibft;
 
-import net.consensys.pantheon.ethereum.p2p.api.Message;
+import tech.pegasys.pantheon.ethereum.p2p.api.Message;
 
 /** Static helper functions for producing and working with IbftEvent objects */
 public class IbftEvents {

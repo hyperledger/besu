@@ -1,8 +1,8 @@
-package net.consensys.pantheon.consensus.ibft.ibftevent;
+package tech.pegasys.pantheon.consensus.ibft.ibftevent;
 
-import net.consensys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
-import net.consensys.pantheon.consensus.ibft.IbftEvent;
-import net.consensys.pantheon.consensus.ibft.IbftEvents.Type;
+import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
+import tech.pegasys.pantheon.consensus.ibft.IbftEvent;
+import tech.pegasys.pantheon.consensus.ibft.IbftEvents.Type;
 
 import java.util.Objects;
 

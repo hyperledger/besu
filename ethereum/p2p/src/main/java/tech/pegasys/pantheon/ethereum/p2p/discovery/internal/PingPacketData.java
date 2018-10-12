@@ -1,12 +1,12 @@
-package net.consensys.pantheon.ethereum.p2p.discovery.internal;
+package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static net.consensys.pantheon.util.Preconditions.checkGuard;
+import static tech.pegasys.pantheon.util.Preconditions.checkGuard;
 
-import net.consensys.pantheon.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
-import net.consensys.pantheon.ethereum.p2p.peers.Endpoint;
-import net.consensys.pantheon.ethereum.rlp.RLPInput;
-import net.consensys.pantheon.ethereum.rlp.RLPOutput;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
+import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
+import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
 import java.math.BigInteger;
 

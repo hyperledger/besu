@@ -1,14 +1,14 @@
-package net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription;
+package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
-import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.FilterParameter;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.blockheaders.NewBlockHeadersSubscription;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.logs.LogsSubscription;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscribeRequest;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
-import net.consensys.pantheon.ethereum.jsonrpc.websocket.subscription.syncing.SyncingSubscription;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.FilterParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.blockheaders.NewBlockHeadersSubscription;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.logs.LogsSubscription;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscribeRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.syncing.SyncingSubscription;
 
 import java.util.function.Function;
 

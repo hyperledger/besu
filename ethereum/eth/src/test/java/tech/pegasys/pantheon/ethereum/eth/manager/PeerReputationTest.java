@@ -1,11 +1,11 @@
-package net.consensys.pantheon.ethereum.eth.manager;
+package tech.pegasys.pantheon.ethereum.eth.manager;
 
-import static net.consensys.pantheon.ethereum.eth.manager.PeerReputation.USELESS_RESPONSE_WINDOW_IN_MILLIS;
-import static net.consensys.pantheon.ethereum.eth.messages.EthPV62.GET_BLOCK_BODIES;
-import static net.consensys.pantheon.ethereum.eth.messages.EthPV62.GET_BLOCK_HEADERS;
-import static net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason.TIMEOUT;
-import static net.consensys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason.USELESS_PEER;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.ethereum.eth.manager.PeerReputation.USELESS_RESPONSE_WINDOW_IN_MILLIS;
+import static tech.pegasys.pantheon.ethereum.eth.messages.EthPV62.GET_BLOCK_BODIES;
+import static tech.pegasys.pantheon.ethereum.eth.messages.EthPV62.GET_BLOCK_HEADERS;
+import static tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason.TIMEOUT;
+import static tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason.USELESS_PEER;
 
 import org.junit.Test;
 

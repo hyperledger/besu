@@ -42,7 +42,7 @@ dependencies {
 }
 
 task writeInfoFile(type: ProjectPropertiesFile) {
-  destPackage = "net.consensys.pantheon"
+  destPackage = "tech.pegasys.pantheon"
   addString("version", "$rootProject.name/$rootProject.version")
 }
 

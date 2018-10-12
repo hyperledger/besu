@@ -1,7 +1,7 @@
-package net.consensys.pantheon.crypto;
+package tech.pegasys.pantheon.crypto;
 
-import net.consensys.pantheon.util.bytes.Bytes32;
-import net.consensys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

@@ -1,15 +1,15 @@
-package net.consensys.pantheon.tests.acceptance.pubsub;
+package tech.pegasys.pantheon.tests.acceptance.pubsub;
 
-import static net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonMinerNode;
-import static net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonNode;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonMinerNode;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonNode;
 
-import net.consensys.pantheon.ethereum.core.Hash;
-import net.consensys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
-import net.consensys.pantheon.tests.acceptance.dsl.account.Account;
-import net.consensys.pantheon.tests.acceptance.dsl.node.PantheonNode;
-import net.consensys.pantheon.tests.acceptance.dsl.pubsub.Subscription;
-import net.consensys.pantheon.tests.acceptance.dsl.pubsub.WebSocket;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
+import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
+import tech.pegasys.pantheon.tests.acceptance.dsl.pubsub.Subscription;
+import tech.pegasys.pantheon.tests.acceptance.dsl.pubsub.WebSocket;
 
 import java.math.BigInteger;
 

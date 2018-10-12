@@ -1,22 +1,22 @@
-package net.consensys.pantheon.util;
+package tech.pegasys.pantheon.util;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import net.consensys.pantheon.controller.PantheonController;
-import net.consensys.pantheon.ethereum.ProtocolContext;
-import net.consensys.pantheon.ethereum.blockcreation.AbstractBlockCreator;
-import net.consensys.pantheon.ethereum.blockcreation.BlockMiner;
-import net.consensys.pantheon.ethereum.chain.GenesisConfig;
-import net.consensys.pantheon.ethereum.chain.MutableBlockchain;
-import net.consensys.pantheon.ethereum.core.Block;
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.mainnet.BlockHeaderValidator;
-import net.consensys.pantheon.ethereum.mainnet.HeaderValidationMode;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import net.consensys.pantheon.ethereum.mainnet.ProtocolSpec;
-import net.consensys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
-import net.consensys.pantheon.ethereum.util.RawBlockIterator;
-import net.consensys.pantheon.util.uint.UInt256;
+import tech.pegasys.pantheon.controller.PantheonController;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.blockcreation.AbstractBlockCreator;
+import tech.pegasys.pantheon.ethereum.blockcreation.BlockMiner;
+import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
+import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
+import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -78,7 +78,7 @@ public class BlockImporter {
           throw new IllegalStateException(
               "Invalid header at block number " + header.getNumber() + ".");
         }
-        final net.consensys.pantheon.ethereum.core.BlockImporter<C> blockImporter =
+        final tech.pegasys.pantheon.ethereum.core.BlockImporter<C> blockImporter =
             protocolSpec.getBlockImporter();
         final boolean blockImported =
             blockImporter.importBlock(context, block, HeaderValidationMode.NONE);

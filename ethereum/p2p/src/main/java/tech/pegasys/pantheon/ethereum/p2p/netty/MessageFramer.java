@@ -1,6 +1,6 @@
-package net.consensys.pantheon.ethereum.p2p.netty;
+package tech.pegasys.pantheon.ethereum.p2p.netty;
 
-import net.consensys.pantheon.ethereum.p2p.rlpx.framing.Framer;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.Framer;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

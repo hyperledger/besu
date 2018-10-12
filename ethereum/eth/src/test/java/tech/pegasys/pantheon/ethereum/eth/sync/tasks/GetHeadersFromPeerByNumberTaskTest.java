@@ -1,13 +1,13 @@
-package net.consensys.pantheon.ethereum.eth.sync.tasks;
+package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.ethereum.core.BlockHeader;
-import net.consensys.pantheon.ethereum.eth.manager.AbstractPeerTask;
-import net.consensys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import net.consensys.pantheon.ethereum.eth.manager.EthTask;
-import net.consensys.pantheon.ethereum.eth.manager.RespondingEthPeer;
-import net.consensys.pantheon.ethereum.eth.manager.ethtaskutils.PeerMessageTaskTest;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPeerTask;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthTask;
+import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
+import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.PeerMessageTaskTest;
 
 import java.util.ArrayList;
 import java.util.List;

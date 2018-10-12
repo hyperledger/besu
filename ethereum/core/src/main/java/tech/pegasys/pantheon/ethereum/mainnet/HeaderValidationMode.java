@@ -1,4 +1,4 @@
-package net.consensys.pantheon.ethereum.mainnet;
+package tech.pegasys.pantheon.ethereum.mainnet;
 
 public enum HeaderValidationMode {
   /** No Validation. data must be pre-validated */

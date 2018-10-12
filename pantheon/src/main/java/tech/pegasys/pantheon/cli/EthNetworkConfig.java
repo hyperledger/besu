@@ -1,9 +1,9 @@
-package net.consensys.pantheon.cli;
+package tech.pegasys.pantheon.cli;
 
-import static net.consensys.pantheon.controller.CliquePantheonController.RINKEBY_NETWORK_ID;
-import static net.consensys.pantheon.controller.MainnetPantheonController.MAINNET_NETWORK_ID;
-import static net.consensys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
-import static net.consensys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
+import static tech.pegasys.pantheon.controller.CliquePantheonController.RINKEBY_NETWORK_ID;
+import static tech.pegasys.pantheon.controller.MainnetPantheonController.MAINNET_NETWORK_ID;
+import static tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
+import static tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
 
 import java.net.URI;
 import java.net.URISyntaxException;

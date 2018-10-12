@@ -1,4 +1,4 @@
-package net.consensys.pantheon.tests.acceptance.dsl;
+package tech.pegasys.pantheon.tests.acceptance.dsl;
 
 import java.util.concurrent.TimeUnit;
 
