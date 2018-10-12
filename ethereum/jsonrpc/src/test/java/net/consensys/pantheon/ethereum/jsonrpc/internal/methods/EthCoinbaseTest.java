@@ -5,7 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import net.consensys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
+import net.consensys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
 import net.consensys.pantheon.ethereum.core.Address;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
@@ -24,7 +24,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class EthCoinbaseTest {
 
-  @Mock private EthHashMiningCoordinator miningCoordinator;
+  @Mock private AbstractMiningCoordinator<?, ?> miningCoordinator;
   private EthCoinbase method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String ETH_METHOD = "eth_coinbase";
@@ -60,6 +60,17 @@ public class EthCoinbaseTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(request.getId(), JsonRpcError.COINBASE_NOT_SPECIFIED);
     when(miningCoordinator.getCoinbase()).thenReturn(Optional.empty());
+
+    final JsonRpcResponse actualResponse = method.response(request);
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnAnInvalidRequestIfUnderlyingOperationThrowsUnsupportedOperation() {
+    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_REQUEST);
+    when(miningCoordinator.getCoinbase()).thenThrow(UnsupportedOperationException.class);
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
