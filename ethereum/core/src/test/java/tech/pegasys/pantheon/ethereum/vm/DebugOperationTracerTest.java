@@ -10,6 +10,7 @@ import static tech.pegasys.pantheon.ethereum.vm.ExceptionalHaltReason.INSUFFICIE
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Gas;
+import tech.pegasys.pantheon.ethereum.core.MessageFrameTestFixture;
 import tech.pegasys.pantheon.ethereum.core.MutableAccount;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
@@ -25,7 +26,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
-import net.consensys.pantheon.ethereum.core.MessageFrameTestFixture;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
