@@ -16,8 +16,6 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.function.Consumer;
 
-import net.consensys.pantheon.ethereum.core.MessageFrameTestFixture;
-
 public class TestCodeExecutor {
 
   private final ExecutionContextTestFixture fixture;

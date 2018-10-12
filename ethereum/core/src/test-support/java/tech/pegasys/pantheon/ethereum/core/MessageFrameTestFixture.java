@@ -1,14 +1,6 @@
-package net.consensys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.core;
 
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
-import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
-import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.core.ExecutionContextTestFixture;
-import tech.pegasys.pantheon.ethereum.core.Gas;
-import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
-import tech.pegasys.pantheon.ethereum.core.Wei;
-import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.vm.BlockHashLookup;
 import tech.pegasys.pantheon.ethereum.vm.Code;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
