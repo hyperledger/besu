@@ -1,5 +1,5 @@
 # Pantheon Ethereum Client
- [![Build Status](http://forge-jenkins.kellstrand.com:8080/job/Pantheon/job/master/badge/icon)](http://forge-jenkins.kellstrand.com:8080/job/Pantheon/job/master/)
+ [![Build Status](http://forge-jenkins.kellstrand.com:8080/job/PegaSysEng%20Pantheon/job/master/badge/icon)](http://forge-jenkins.kellstrand.com:8080/job/PegaSysEng%20Pantheon/job/master/)
  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/PegasysEng/pantheon/blob/master/LICENSE)
  [![Download](https://api.bintray.com/packages/consensys/binaries/pantheon/images/download.svg)](https://bintray.com/consensys/binaries/pantheon/_latestVersion)
  
