@@ -4,7 +4,6 @@ import static net.consensys.pantheon.consensus.common.VoteType.ADD;
 import static net.consensys.pantheon.consensus.common.VoteType.DROP;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import net.consensys.pantheon.consensus.common.VoteProposer.Vote;
 import net.consensys.pantheon.ethereum.core.Address;
 
 import java.util.AbstractMap;
@@ -46,9 +45,9 @@ public class VoteProposerTest {
     assertThat(proposer.getVote(localAddress, new VoteTally(Collections.emptyList())))
         .isEqualTo(Optional.empty());
     assertThat(proposer.getVote(localAddress, new VoteTally(Collections.singletonList(a1))))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, Vote.DROP)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, VoteType.DROP)));
     assertThat(proposer.getVote(localAddress, new VoteTally(Arrays.asList(a1, a2, a3))))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, Vote.DROP)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, VoteType.DROP)));
     assertThat(proposer.getVote(localAddress, new VoteTally(Arrays.asList(a2, a3))))
         .isEqualTo(Optional.empty());
   }
@@ -63,13 +62,13 @@ public class VoteProposerTest {
     proposer.auth(a1);
 
     assertThat(proposer.getVote(localAddress, new VoteTally(Collections.emptyList())))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, Vote.AUTH)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, VoteType.ADD)));
     assertThat(proposer.getVote(localAddress, new VoteTally(Collections.singletonList(a1))))
         .isEqualTo(Optional.empty());
     assertThat(proposer.getVote(localAddress, new VoteTally(Arrays.asList(a1, a2, a3))))
         .isEqualTo(Optional.empty());
     assertThat(proposer.getVote(localAddress, new VoteTally(Arrays.asList(a2, a3))))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, Vote.AUTH)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, VoteType.ADD)));
   }
 
   @Test
@@ -84,13 +83,13 @@ public class VoteProposerTest {
     proposer.discard(a2);
 
     assertThat(proposer.getVote(localAddress, new VoteTally(Collections.emptyList())))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, Vote.AUTH)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, VoteType.ADD)));
     assertThat(proposer.getVote(localAddress, new VoteTally(Collections.singletonList(a1))))
         .isEqualTo(Optional.empty());
     assertThat(proposer.getVote(localAddress, new VoteTally(Arrays.asList(a1, a2, a3))))
         .isEqualTo(Optional.empty());
     assertThat(proposer.getVote(localAddress, new VoteTally(Arrays.asList(a2, a3))))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, Vote.AUTH)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, VoteType.ADD)));
   }
 
   @Test
@@ -105,13 +104,13 @@ public class VoteProposerTest {
     proposer.auth(a3);
 
     assertThat(proposer.getVote(localAddress, new VoteTally(Collections.emptyList())))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a2, Vote.AUTH)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a2, VoteType.ADD)));
     assertThat(proposer.getVote(localAddress, new VoteTally(Collections.emptyList())))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a3, Vote.AUTH)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a3, VoteType.ADD)));
     assertThat(proposer.getVote(localAddress, new VoteTally(Collections.emptyList())))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, Vote.AUTH)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, VoteType.ADD)));
     assertThat(proposer.getVote(localAddress, new VoteTally(Collections.emptyList())))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a2, Vote.AUTH)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a2, VoteType.ADD)));
   }
 
   @Test
@@ -128,13 +127,13 @@ public class VoteProposerTest {
     proposer.drop(a4);
 
     assertThat(proposer.getVote(localAddress, new VoteTally(Collections.emptyList())))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a2, Vote.AUTH)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a2, VoteType.ADD)));
     assertThat(proposer.getVote(localAddress, new VoteTally(Collections.emptyList())))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a3, Vote.AUTH)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a3, VoteType.ADD)));
     assertThat(proposer.getVote(localAddress, new VoteTally(Collections.emptyList())))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, Vote.AUTH)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, VoteType.ADD)));
     assertThat(proposer.getVote(localAddress, new VoteTally(Collections.emptyList())))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a2, Vote.AUTH)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a2, VoteType.ADD)));
   }
 
   @Test
@@ -150,7 +149,7 @@ public class VoteProposerTest {
     tally.addVote(localAddress, a1, ADD);
 
     assertThat(proposer.getVote(localAddress, tally))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, Vote.DROP)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, VoteType.DROP)));
   }
 
   @Test
@@ -166,7 +165,7 @@ public class VoteProposerTest {
     tally.addVote(localAddress, a1, DROP);
 
     assertThat(proposer.getVote(localAddress, tally))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, Vote.AUTH)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, VoteType.ADD)));
   }
 
   @Test
@@ -182,7 +181,7 @@ public class VoteProposerTest {
     proposer.drop(a1);
 
     assertThat(proposer.getVote(localAddress, tally))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, Vote.DROP)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, VoteType.DROP)));
   }
 
   @Test
@@ -198,6 +197,6 @@ public class VoteProposerTest {
     proposer.auth(a1);
 
     assertThat(proposer.getVote(localAddress, tally))
-        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, Vote.AUTH)));
+        .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, VoteType.ADD)));
   }
 }

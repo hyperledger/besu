@@ -3,7 +3,7 @@ package net.consensys.pantheon.consensus.clique.jsonrpc.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import net.consensys.pantheon.consensus.common.VoteProposer;
-import net.consensys.pantheon.consensus.common.VoteProposer.Vote;
+import net.consensys.pantheon.consensus.common.VoteType;
 import net.consensys.pantheon.ethereum.core.Address;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import net.consensys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -27,7 +27,7 @@ public class ProposeTest {
 
     final JsonRpcResponse response = propose.response(requestWithParams(a0, true));
 
-    assertThat(proposer.get(a0)).isEqualTo(Optional.of(Vote.AUTH));
+    assertThat(proposer.get(a0)).isEqualTo(Optional.of(VoteType.ADD));
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
@@ -41,7 +41,7 @@ public class ProposeTest {
 
     final JsonRpcResponse response = propose.response(requestWithParams(a0, false));
 
-    assertThat(proposer.get(a0)).isEqualTo(Optional.of(Vote.DROP));
+    assertThat(proposer.get(a0)).isEqualTo(Optional.of(VoteType.DROP));
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
@@ -56,7 +56,7 @@ public class ProposeTest {
     proposer.auth(a0);
     final JsonRpcResponse response = propose.response(requestWithParams(a0, true));
 
-    assertThat(proposer.get(a0)).isEqualTo(Optional.of(Vote.AUTH));
+    assertThat(proposer.get(a0)).isEqualTo(Optional.of(VoteType.ADD));
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
@@ -71,7 +71,7 @@ public class ProposeTest {
     proposer.drop(a0);
     final JsonRpcResponse response = propose.response(requestWithParams(a0, false));
 
-    assertThat(proposer.get(a0)).isEqualTo(Optional.of(Vote.DROP));
+    assertThat(proposer.get(a0)).isEqualTo(Optional.of(VoteType.DROP));
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
@@ -86,7 +86,7 @@ public class ProposeTest {
     proposer.drop(a0);
     final JsonRpcResponse response = propose.response(requestWithParams(a0, true));
 
-    assertThat(proposer.get(a0)).isEqualTo(Optional.of(Vote.AUTH));
+    assertThat(proposer.get(a0)).isEqualTo(Optional.of(VoteType.ADD));
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
@@ -101,7 +101,7 @@ public class ProposeTest {
     proposer.auth(a0);
     final JsonRpcResponse response = propose.response(requestWithParams(a0, false));
 
-    assertThat(proposer.get(a0)).isEqualTo(Optional.of(Vote.DROP));
+    assertThat(proposer.get(a0)).isEqualTo(Optional.of(VoteType.DROP));
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);

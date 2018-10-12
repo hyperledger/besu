@@ -35,7 +35,6 @@ public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
   private static final Logger LOG = LogManager.getLogger();
 
   private final KeyPair nodeKeys;
-  private final ProtocolSchedule<IbftContext> protocolSchedule;
 
   public IbftBlockCreator(
       final Address coinbase,
@@ -58,7 +57,6 @@ public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
         Util.publicKeyToAddress(nodeKeys.getPublicKey()),
         parentHeader);
     this.nodeKeys = nodeKeys;
-    this.protocolSchedule = protocolSchedule;
   }
 
   /**
