@@ -43,7 +43,7 @@ This project and everyone participating in it is governed by the [Pantheon Code 
 
 This section guides you through submitting a bug report. Following these guidelines helps maintainers and the community understand your report :pencil:, reproduce the behavior :computer: :computer:, and find related reports :mag_right:.
 
-Before creating bug reports, please check the [before-submitting-a-bug-report](#before-submitting-a-bug-report) checklist as you might find out that you don't need to create one. When you are creating a bug report, please [include as many details as possible](#how-do-i-submit-a-good-bug-report). Fill in the [ISSUE-TEMPLATE.md](.github/issue_template.md), the information it asks for helps us resolve issues faster.
+Before creating bug reports, please check the [before-submitting-a-bug-report](#before-submitting-a-bug-report) checklist as you might find out that you don't need to create one. When you are creating a bug report, please [include as many details as possible](#how-do-i-submit-a-good-bug-report). Fill in the [issue_template.md](.github/issue_template.md), the information it asks for helps us resolve issues faster.
 
 > **Note:** If you find a **Closed** issue that seems like it is the same thing that you're experiencing, open a new issue and include a link to the original issue in the body of your new one.
 
@@ -53,7 +53,7 @@ Before creating bug reports, please check the [before-submitting-a-bug-report](#
 * **Perform a [cursory search of project issues](https://github.com/search?q=+is%3Aissue+repo%3APegasysEng/Pantheon)** to see if the problem has already been reported. If it has **and the issue is still open**, add a comment to the existing issue instead of opening a new one.
 
 #### How Do I Submit A (Good) Bug Report?
-Bugs are tracked as [GitHub issues](https://guides.github.com/features/issues/).  Issues should and provide the following information by filling in the [ISSUE-TEMPLATE.md](.github/issue_template.md).
+Bugs are tracked as [GitHub issues](https://guides.github.com/features/issues/).  Issues should and provide the following information by filling in the [issue_template.md](.github/issue_template.md).
 
 Explain the problem and include additional details to help maintainers reproduce the problem:
 
@@ -84,7 +84,7 @@ Include details about your configuration and environment:
 
 This section guides you through submitting an enhancement suggestion, including completely new features and minor improvements to existing functionality. Following these guidelines helps maintainers and the community understand your suggestion :pencil: and find related suggestions :mag_right:.
 
-Before creating enhancement suggestions, please check the [before-submitting-an-enhancement-suggestion](#before-submitting-an-enhancement-suggestion) list as you might find out that you don't need to create one. When you are creating an enhancement suggestion, please [include as many details as possible](#how-do-i-submit-a-good-enhancement-suggestion). Fill in the [ISSUE-TEMPLATE.md](.github/issue_template.md), including the steps that you imagine you would take if the feature you're requesting existed.
+Before creating enhancement suggestions, please check the [before-submitting-an-enhancement-suggestion](#before-submitting-an-enhancement-suggestion) list as you might find out that you don't need to create one. When you are creating an enhancement suggestion, please [include as many details as possible](#how-do-i-submit-a-good-enhancement-suggestion). Fill in the [issue_template.md](.github/issue_template.md), including the steps that you imagine you would take if the feature you're requesting existed.
 
 #### Before Submitting An Enhancement Suggestion
 
@@ -93,7 +93,7 @@ Before creating enhancement suggestions, please check the [before-submitting-an-
 
 #### How Do I Submit A (Good) Enhancement Suggestion?
 
-Enhancement suggestions are tracked as [GitHub issues](https://guides.github.com/features/issues/).  Issues should and provide the following information by filling in the [ISSUE-TEMPLATE.md](.github/issue_template.md) and providing the following information:
+Enhancement suggestions are tracked as [GitHub issues](https://guides.github.com/features/issues/).  Issues should and provide the following information by filling in the [issue_template.md](.github/issue_template.md) and providing the following information:
 
 * **Use a clear and descriptive title** for the issue to identify the suggestion.
 * **Provide a step-by-step description of the suggested enhancement** in as many details as possible.
@@ -276,4 +276,4 @@ Please open an issue on `PegasysEng/Pantheon` if you have suggestions for new la
 [Wiki]: https://github.com/PegaSysEng/pantheon/wiki
 [Debugging Wiki]: https://github.com/PegaSysEng/pantheon/wiki/Debugging
 [CLA.md]: /CLA.md
-[code-reviews.md]: /docs/community/code-reviews.md
+[Code Reviews]: /docs/community/code-reviews.md
