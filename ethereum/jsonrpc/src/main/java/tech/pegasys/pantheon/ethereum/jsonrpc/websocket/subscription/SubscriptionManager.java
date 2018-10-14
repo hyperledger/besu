@@ -70,15 +70,24 @@ public class SubscriptionManager extends AbstractVerticle {
   }
 
   public boolean unsubscribe(final UnsubscribeRequest request) {
-    LOG.debug("Unsubscribe request subscriptionId = {}", request.getSubscriptionId());
+    final Long subscriptionId = request.getSubscriptionId();
+    final String connectionId = request.getConnectionId();
 
-    if (!subscriptions.containsKey(request.getSubscriptionId())) {
-      throw new SubscriptionNotFoundException(request.getSubscriptionId());
+    LOG.debug("Unsubscribe request subscriptionId = {}", subscriptionId);
+
+    if (!subscriptions.containsKey(subscriptionId)
+        || !connectionOwnsSubscription(subscriptionId, connectionId)) {
+      throw new SubscriptionNotFoundException(subscriptionId);
     }
 
-    destroySubscription(request.getSubscriptionId(), request.getConnectionId());
+    destroySubscription(subscriptionId, connectionId);
 
     return true;
+  }
+
+  private boolean connectionOwnsSubscription(final Long subscriptionId, final String connectionId) {
+    return connectionSubscriptionsMap.get(connectionId) != null
+        && connectionSubscriptionsMap.get(connectionId).contains(subscriptionId);
   }
 
   private void destroySubscription(final long subscriptionId, final String connectionId) {
