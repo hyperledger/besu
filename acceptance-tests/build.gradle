@@ -4,7 +4,6 @@ dependencies {
   testRuntime 'org.apache.logging.log4j:log4j-slf4j-impl'
 
   testImplementation project(':crypto')
-  testImplementation project(':ethereum:client')
   testImplementation project(':ethereum:eth')
   testImplementation project(':ethereum:core')
   testImplementation project(':ethereum:jsonrpc')

@@ -15,7 +15,6 @@ dependencies {
   implementation project(':consensus:ibft')
   implementation project(':consensus:clique')
   implementation project(':ethereum:eth')
-  implementation project(':ethereum:client')
   implementation project(':ethereum:core')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:p2p')
