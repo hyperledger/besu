@@ -11,8 +11,8 @@ fi
 
 COMPOSE_CONFIG_FILE_OPTION="-f ${QUICKSTART_FOLDER}/docker-compose.yml"
 
-
 # Build and run containers and network
-docker-compose ${COMPOSE_CONFIG_FILE_OPTION} up -d --scale node=4 --build
+docker-compose ${COMPOSE_CONFIG_FILE_OPTION} build --force-rm
+docker-compose ${COMPOSE_CONFIG_FILE_OPTION} up -d --scale node=4
 
 ${QUICKSTART_FOLDER}/listQuickstartServices.sh
