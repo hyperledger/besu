@@ -12,6 +12,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import static org.junit.Assume.assumeTrue;
+
 /** The blockchain test operation testing framework entry point. */
 @RunWith(Parameterized.class)
 public class %%TESTS_NAME%% {
@@ -28,9 +30,11 @@ public class %%TESTS_NAME%% {
 
   public %%TESTS_NAME%%(
       final String name,
-      final BlockchainReferenceTestCaseSpec spec) {
+      final BlockchainReferenceTestCaseSpec spec,
+      final boolean runTest) {
     this.name = name;
     this.spec = spec;
+    assumeTrue("Test was blacklisted", runTest);
   }
 
   @Test

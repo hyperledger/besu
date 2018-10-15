@@ -40,9 +40,7 @@ public class BlockchainReferenceTestTools {
           .generator(
               (testName, spec, collector) -> {
                 final String eip = spec.getNetwork();
-                if (NETWORKS_TO_RUN.contains(eip)) {
-                  collector.add(testName + "[" + eip + "]", spec);
-                }
+                collector.add(testName + "[" + eip + "]", spec, NETWORKS_TO_RUN.contains(eip));
               });
 
   static {

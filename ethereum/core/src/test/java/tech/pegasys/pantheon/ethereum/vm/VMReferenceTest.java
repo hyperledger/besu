@@ -3,6 +3,7 @@ package tech.pegasys.pantheon.ethereum.vm;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 import static tech.pegasys.pantheon.ethereum.vm.OperationTracer.NO_TRACING;
 
 import tech.pegasys.pantheon.ethereum.core.Gas;
@@ -88,9 +89,11 @@ public class VMReferenceTest extends AbstractRetryingTest {
         .generate(TEST_CONFIG_FILE_DIR_PATHS);
   }
 
-  public VMReferenceTest(final String name, final VMReferenceTestCaseSpec spec) {
+  public VMReferenceTest(
+      final String name, final VMReferenceTestCaseSpec spec, final boolean runTest) {
     this.name = name;
     this.spec = spec;
+    assumeTrue("Test was blacklisted", runTest);
   }
 
   @Override

@@ -1,5 +1,7 @@
 package tech.pegasys.pantheon.ethereum.rlp;
 
+import static org.junit.Assume.assumeTrue;
+
 import tech.pegasys.pantheon.testutil.JsonTestParameters;
 
 import java.util.Collection;
@@ -20,8 +22,10 @@ public class InvalidRLPRefTest {
 
   private final InvalidRLPRefTestCaseSpec spec;
 
-  public InvalidRLPRefTest(final String name, final InvalidRLPRefTestCaseSpec spec) {
+  public InvalidRLPRefTest(
+      final String name, final InvalidRLPRefTestCaseSpec spec, final boolean runTest) {
     this.spec = spec;
+    assumeTrue("Test was blacklisted", runTest);
   }
 
   @Parameters(name = "Name: {0}")

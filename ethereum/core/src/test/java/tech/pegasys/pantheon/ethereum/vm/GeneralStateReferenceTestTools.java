@@ -47,15 +47,13 @@ public class GeneralStateReferenceTestTools {
                 for (final Map.Entry<String, List<GeneralStateTestCaseEipSpec>> entry :
                     stateSpec.finalStateSpecs().entrySet()) {
                   final String eip = entry.getKey();
-                  if (!EIPS_TO_RUN.contains(eip)) {
-                    continue;
-                  }
+                  final boolean runTest = EIPS_TO_RUN.contains(eip);
                   final List<GeneralStateTestCaseEipSpec> eipSpecs = entry.getValue();
                   if (eipSpecs.size() == 1) {
-                    collector.add(prefix + eip, eipSpecs.get(0));
+                    collector.add(prefix + eip, eipSpecs.get(0), runTest);
                   } else {
                     for (int i = 0; i < eipSpecs.size(); i++) {
-                      collector.add(prefix + eip + '[' + i + ']', eipSpecs.get(i));
+                      collector.add(prefix + eip + '[' + i + ']', eipSpecs.get(i), runTest);
                     }
                   }
                 }

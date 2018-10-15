@@ -1,6 +1,7 @@
 package tech.pegasys.pantheon.ethereum.trie;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import tech.pegasys.pantheon.testutil.JsonTestParameters;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -20,8 +21,9 @@ public class TrieRefTest {
 
   private final TrieRefTestCaseSpec spec;
 
-  public TrieRefTest(final String name, final TrieRefTestCaseSpec spec) {
+  public TrieRefTest(final String name, final TrieRefTestCaseSpec spec, final boolean runTest) {
     this.spec = spec;
+    assumeTrue("Test was blacklisted", runTest);
   }
 
   @Parameters(name = "Name: {0}")

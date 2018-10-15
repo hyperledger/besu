@@ -1,6 +1,7 @@
 package tech.pegasys.pantheon.ethereum.rlp;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
 
 import tech.pegasys.pantheon.testutil.JsonTestParameters;
 
@@ -19,8 +20,9 @@ public class RLPRefTest {
 
   private final RLPRefTestCaseSpec spec;
 
-  public RLPRefTest(final String name, final RLPRefTestCaseSpec spec) {
+  public RLPRefTest(final String name, final RLPRefTestCaseSpec spec, final boolean runTest) {
     this.spec = spec;
+    assumeTrue("Test was blacklisted", runTest);
   }
 
   @Parameters(name = "Name: {0}")

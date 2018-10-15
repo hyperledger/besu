@@ -1,5 +1,7 @@
 package tech.pegasys.pantheon.ethereum.core;
 
+import static org.junit.Assume.assumeTrue;
+
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.vm.ReferenceTestProtocolSchedules;
@@ -39,12 +41,14 @@ public class TransactionTest {
             "TransactionWithGasLimitOverflow(2|63)", "TransactionWithGasLimitxPriceOverflow$")
         // Nonce is tracked with type long, large valued nonces can't currently be decoded
         .blacklist("TransactionWithHighNonce256")
-        .generator((name, spec, collector) -> collector.add(name, spec))
+        .generator((name, spec, collector) -> collector.add(name, spec, true))
         .generate(TEST_CONFIG_FILE_DIR_PATH);
   }
 
-  public TransactionTest(final String name, final TransactionTestCaseSpec spec) {
+  public TransactionTest(
+      final String name, final TransactionTestCaseSpec spec, final boolean runTest) {
     this.spec = spec;
+    assumeTrue("Test was blacklisted", runTest);
   }
 
   @Test
