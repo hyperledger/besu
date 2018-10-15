@@ -34,9 +34,10 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
       final ProtocolContext<C> context,
       final Block block,
       final List<TransactionReceipt> receipts,
-      final Hash worldStateRootHash) {
+      final Hash worldStateRootHash,
+      final HeaderValidationMode ommerValidationMode) {
 
-    if (!validateBodyLight(context, block, receipts)) {
+    if (!validateBodyLight(context, block, receipts, ommerValidationMode)) {
       return false;
     }
 
@@ -51,7 +52,8 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
   public boolean validateBodyLight(
       final ProtocolContext<C> context,
       final Block block,
-      final List<TransactionReceipt> receipts) {
+      final List<TransactionReceipt> receipts,
+      final HeaderValidationMode ommerValidationMode) {
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
 
@@ -75,7 +77,7 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
       return false;
     }
 
-    if (!validateEthHash(context, block)) {
+    if (!validateEthHash(context, block, ommerValidationMode)) {
       return false;
     }
 
@@ -130,7 +132,10 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
     return true;
   }
 
-  private boolean validateEthHash(final ProtocolContext<C> context, final Block block) {
+  private boolean validateEthHash(
+      final ProtocolContext<C> context,
+      final Block block,
+      final HeaderValidationMode ommerValidationMode) {
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
 
@@ -139,7 +144,7 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
       return false;
     }
 
-    if (!validateOmmers(context, header, body.getOmmers())) {
+    if (!validateOmmers(context, header, body.getOmmers(), ommerValidationMode)) {
       return false;
     }
 
@@ -156,7 +161,10 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
   }
 
   private boolean validateOmmers(
-      final ProtocolContext<C> context, final BlockHeader header, final List<BlockHeader> ommers) {
+      final ProtocolContext<C> context,
+      final BlockHeader header,
+      final List<BlockHeader> ommers,
+      final HeaderValidationMode ommerValidationMode) {
     if (ommers.size() > MAX_OMMERS) {
       LOG.warn("Invalid block: ommer count {} exceeds ommer limit {}", ommers.size(), MAX_OMMERS);
       return false;
@@ -168,7 +176,7 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
     }
 
     for (final BlockHeader ommer : ommers) {
-      if (!isOmmerValid(context, header, ommer)) {
+      if (!isOmmerValid(context, header, ommer, ommerValidationMode)) {
         LOG.warn("Invalid block: ommer is invalid");
         return false;
       }
@@ -193,11 +201,14 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
   }
 
   private boolean isOmmerValid(
-      final ProtocolContext<C> context, final BlockHeader current, final BlockHeader ommer) {
+      final ProtocolContext<C> context,
+      final BlockHeader current,
+      final BlockHeader ommer,
+      final HeaderValidationMode ommerValidationMode) {
     final ProtocolSpec<C> protocolSpec = protocolSchedule.getByBlockNumber(ommer.getNumber());
     if (!protocolSpec
         .getBlockHeaderValidator()
-        .validateHeader(ommer, context, HeaderValidationMode.FULL)) {
+        .validateHeader(ommer, context, ommerValidationMode)) {
       return false;
     }
 

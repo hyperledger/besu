@@ -37,7 +37,8 @@ public class MainnetBlockImporter<C> implements BlockImporter<C> {
   public synchronized boolean importBlock(
       final ProtocolContext<C> context,
       final Block block,
-      final HeaderValidationMode headerValidationMode) {
+      final HeaderValidationMode headerValidationMode,
+      final HeaderValidationMode ommerValidationMode) {
     final BlockHeader header = block.getHeader();
 
     final Optional<BlockHeader> maybeParentHeader =
@@ -65,7 +66,8 @@ public class MainnetBlockImporter<C> implements BlockImporter<C> {
     }
 
     final List<TransactionReceipt> receipts = result.getReceipts();
-    if (!blockBodyValidator.validateBody(context, block, receipts, worldState.rootHash())) {
+    if (!blockBodyValidator.validateBody(
+        context, block, receipts, worldState.rootHash(), ommerValidationMode)) {
       return false;
     }
 
@@ -86,7 +88,8 @@ public class MainnetBlockImporter<C> implements BlockImporter<C> {
       return false;
     }
 
-    if (!blockBodyValidator.validateBodyLight(context, block, receipts)) {
+    if (!blockBodyValidator.validateBodyLight(
+        context, block, receipts, HeaderValidationMode.FULL)) {
       return false;
     }
 
