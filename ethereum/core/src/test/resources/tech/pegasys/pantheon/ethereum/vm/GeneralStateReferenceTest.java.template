@@ -26,7 +26,9 @@ public class %%TESTS_NAME%% {
   private final String name;
   private final GeneralStateTestCaseEipSpec spec;
 
-  public %%TESTS_NAME%%(String name, GeneralStateTestCaseEipSpec spec) {
+  public %%TESTS_NAME%%(
+      final String name,
+      final GeneralStateTestCaseEipSpec spec) {
     this.name = name;
     this.spec = spec;
   }

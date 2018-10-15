@@ -31,7 +31,11 @@ public class ReferenceTestProtocolSchedules {
     builder.put(
         "Byzantium",
         createSchedule(
-            protocolSpecLookup -> MainnetProtocolSpecs.byzantium(CHAIN_ID, protocolSpecLookup)));
+            protocolSchedule -> MainnetProtocolSpecs.byzantium(CHAIN_ID, protocolSchedule)));
+    builder.put(
+        "Constantinople",
+        createSchedule(
+            protocolSchedule -> MainnetProtocolSpecs.constantinople(CHAIN_ID, protocolSchedule)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 

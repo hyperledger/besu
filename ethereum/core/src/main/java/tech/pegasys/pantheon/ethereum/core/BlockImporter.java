@@ -23,8 +23,28 @@ public interface BlockImporter<C> {
    * @return {@code true} if the block was added somewhere in the blockchain; otherwise {@code
    *     false}
    */
+  default boolean importBlock(
+      final ProtocolContext<C> context,
+      final Block block,
+      final HeaderValidationMode headerValidationMode) {
+    return importBlock(context, block, headerValidationMode, HeaderValidationMode.FULL);
+  }
+
+  /**
+   * Attempts to import the given block to the specificed blockchain and world state.
+   *
+   * @param context The context to attempt to update
+   * @param block The block
+   * @param headerValidationMode Determines the validation to perform on this header.
+   * @param ommerValidationMode Determines the validation to perform on ommer headers.
+   * @return {@code true} if the block was added somewhere in the blockchain; otherwise {@code
+   *     false}
+   */
   boolean importBlock(
-      ProtocolContext<C> context, Block block, HeaderValidationMode headerValidationMode);
+      ProtocolContext<C> context,
+      Block block,
+      HeaderValidationMode headerValidationMode,
+      HeaderValidationMode ommerValidationMode);
 
   /**
    * Attempts to import the given block. Uses "fast" validation. Performs light validation using the

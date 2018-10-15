@@ -59,7 +59,10 @@ def generateTestFiles(FileTree jsonPath, File resourcesPath, File templateFile, 
 
   fileSets.each { fileSet ->
     def resPath = resourcesPath.getPath().replaceAll("\\\\", "/")
-    def name = fileSet.first().getPath().toString()
+    def name = fileSet
+      .find({ !it.getName().toString().startsWith(".")})
+      .getPath()
+      .toString()
       .replaceAll("\\\\", "/")
       .replaceAll(resPath + "/", "")
       .replaceAll(pathstrip, "")

@@ -27,8 +27,10 @@ public class IbftBlockImporter implements BlockImporter<IbftContext> {
   public boolean importBlock(
       final ProtocolContext<IbftContext> context,
       final Block block,
-      final HeaderValidationMode headerValidationMode) {
-    final boolean result = delegate.importBlock(context, block, headerValidationMode);
+      final HeaderValidationMode headerValidationMode,
+      final HeaderValidationMode ommerValidationMode) {
+    final boolean result =
+        delegate.importBlock(context, block, headerValidationMode, ommerValidationMode);
     updateVoteTally(result, block.getHeader(), context);
     return result;
   }

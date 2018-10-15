@@ -46,7 +46,8 @@ public class IbftBlockImporterTest {
             headerBuilder.buildHeader(),
             new BlockBody(Collections.emptyList(), Collections.emptyList()));
 
-    when(delegate.importBlock(context, block, HeaderValidationMode.FULL)).thenReturn(false);
+    when(delegate.importBlock(context, block, HeaderValidationMode.FULL, HeaderValidationMode.FULL))
+        .thenReturn(false);
 
     importer.importBlock(context, block, HeaderValidationMode.FULL);
 
@@ -76,7 +77,8 @@ public class IbftBlockImporterTest {
             new BlockHeaderTestFixture().buildHeader(),
             new BlockBody(Collections.emptyList(), Collections.emptyList()));
 
-    when(delegate.importBlock(context, block, HeaderValidationMode.FULL)).thenReturn(true);
+    when(delegate.importBlock(context, block, HeaderValidationMode.FULL, HeaderValidationMode.FULL))
+        .thenReturn(true);
 
     importer.importBlock(context, block, HeaderValidationMode.FULL);
 
