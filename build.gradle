@@ -297,12 +297,6 @@ task createEVMToolApp(type: CreateStartScripts) {
   classpath = startScripts.classpath
 }
 
-applicationDistribution.into("bin") {
-  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-  from(createEVMToolApp)
-  fileMode = 0755
-}
-
 distributions {
   main {
     contents {
