@@ -35,6 +35,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List<BlockHeader>> {
   private static final Logger LOG = LogManager.getLogger();
+  private static final int DEFAULT_RETRIES = 3;
 
   private final EthContext ethContext;
   private final ProtocolContext<C> protocolContext;
@@ -52,8 +53,9 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final BlockHeader referenceHeader,
-      final int segmentLength) {
-    super(ethContext);
+      final int segmentLength,
+      final int maxRetries) {
+    super(ethContext, maxRetries);
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
@@ -70,9 +72,25 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final BlockHeader referenceHeader,
+      final int segmentLength,
+      final int maxRetries) {
+    return new DownloadHeaderSequenceTask<>(
+        protocolSchedule, protocolContext, ethContext, referenceHeader, segmentLength, maxRetries);
+  }
+
+  public static <C> DownloadHeaderSequenceTask<C> endingAtHeader(
+      final ProtocolSchedule<C> protocolSchedule,
+      final ProtocolContext<C> protocolContext,
+      final EthContext ethContext,
+      final BlockHeader referenceHeader,
       final int segmentLength) {
     return new DownloadHeaderSequenceTask<>(
-        protocolSchedule, protocolContext, ethContext, referenceHeader, segmentLength);
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        referenceHeader,
+        segmentLength,
+        DEFAULT_RETRIES);
   }
 
   @Override

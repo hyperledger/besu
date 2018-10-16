@@ -23,6 +23,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+/**
+ * @param <T> The type of data being requested from the network
+ * @param <R> The type of data returned from the network
+ */
 public abstract class AbstractMessageTaskTest<T, R> {
   protected static Blockchain blockchain;
   protected static ProtocolSchedule<Void> protocolSchedule;

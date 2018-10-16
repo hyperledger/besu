@@ -14,7 +14,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
-import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskTest;
+import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.AbstractMessageTaskTest;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV63;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
@@ -38,7 +38,7 @@ import java.util.stream.LongStream;
 import org.junit.Test;
 
 public class PipelinedImportChainSegmentTaskTest
-    extends RetryingMessageTaskTest<List<Block>, List<Block>> {
+    extends AbstractMessageTaskTest<List<Block>, List<Block>> {
 
   @Override
   protected List<Block> generateDataToBeRequested() {

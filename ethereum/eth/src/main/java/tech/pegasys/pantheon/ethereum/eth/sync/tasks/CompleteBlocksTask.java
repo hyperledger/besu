@@ -32,6 +32,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>> {
   private static final Logger LOG = LogManager.getLogger();
+  private static final int DEFAULT_RETRIES = 3;
 
   private final EthContext ethContext;
   private final ProtocolSchedule<C> protocolSchedule;
@@ -43,8 +44,9 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
   private CompleteBlocksTask(
       final ProtocolSchedule<C> protocolSchedule,
       final EthContext ethContext,
-      final List<BlockHeader> headers) {
-    super(ethContext);
+      final List<BlockHeader> headers,
+      final int maxRetries) {
+    super(ethContext, maxRetries);
     checkArgument(headers.size() > 0, "Must supply a non-empty headers list");
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
@@ -56,8 +58,16 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
   public static <C> CompleteBlocksTask<C> forHeaders(
       final ProtocolSchedule<C> protocolSchedule,
       final EthContext ethContext,
+      final List<BlockHeader> headers,
+      final int maxRetries) {
+    return new CompleteBlocksTask<>(protocolSchedule, ethContext, headers, maxRetries);
+  }
+
+  public static <C> CompleteBlocksTask<C> forHeaders(
+      final ProtocolSchedule<C> protocolSchedule,
+      final EthContext ethContext,
       final List<BlockHeader> headers) {
-    return new CompleteBlocksTask<>(protocolSchedule, ethContext, headers);
+    return new CompleteBlocksTask<>(protocolSchedule, ethContext, headers, DEFAULT_RETRIES);
   }
 
   @Override

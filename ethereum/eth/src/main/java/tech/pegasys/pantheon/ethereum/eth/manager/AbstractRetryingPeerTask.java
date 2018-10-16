@@ -1,5 +1,6 @@
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
+import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.WaitForPeerTask;
 import tech.pegasys.pantheon.util.ExceptionUtils;
@@ -14,9 +15,12 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
   private static final Logger LOG = LogManager.getLogger();
   private final EthContext ethContext;
+  private final int maxRetries;
+  private int requestCount = 0;
 
-  public AbstractRetryingPeerTask(final EthContext ethContext) {
+  public AbstractRetryingPeerTask(final EthContext ethContext, final int maxRetries) {
     this.ethContext = ethContext;
+    this.maxRetries = maxRetries;
   }
 
   @Override
@@ -25,7 +29,12 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
       // Return if task is done
       return;
     }
+    if (requestCount > maxRetries) {
+      result.get().completeExceptionally(new MaxRetriesReachedException());
+      return;
+    }
 
+    requestCount += 1;
     executePeerTask()
         .whenComplete(
             (peerResult, error) -> {
