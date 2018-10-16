@@ -1,6 +1,7 @@
 package tech.pegasys.pantheon.consensus.ibft.jsonrpc;
 
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
+import tech.pegasys.pantheon.consensus.ibft.jsonrpc.methods.IbftDiscardValidatorVote;
 import tech.pegasys.pantheon.consensus.ibft.jsonrpc.methods.IbftProposeValidatorVote;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
@@ -20,6 +21,8 @@ public class IbftJsonRpcMethodsFactory {
     addMethods(
         rpcMethods,
         new IbftProposeValidatorVote(
+            context.getConsensusState().getVoteProposer(), jsonRpcParameter),
+        new IbftDiscardValidatorVote(
             context.getConsensusState().getVoteProposer(), jsonRpcParameter));
 
     return rpcMethods;
