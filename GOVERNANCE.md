@@ -10,7 +10,7 @@ The community adheres to the following principles:
 * Open: Pantheon is open source. See repository guidelines and CLA, below.
 * Welcoming and respectful: See Code of Conduct, below.
 * Transparent and accessible: Work and collaboration should be done in public. 
-* Merit: Ideas and contributions are accepted according to their technical merit and alignment with project [objectives], [scope], and [design principles].
+* Merit: Ideas and contributions are accepted according to their technical merit and alignment with project objectives and design principles.
 
 # Code of Conduct
 See [code of conduct]
@@ -34,9 +34,6 @@ This document was influenced by the following:
 - OSSWatch Benevolent Dictator Governance Model, available at [oss watch benevolent dictator].  
 
 [CLA.md]: /CLA.md
-[objectives]: /docs/architecture/objectives.md
-[scope]: /docs/architecture/objectives.md
-[design principles]: /docs/architecture/design-principles.md
 [community membership]: /docs/community/community-membership.md 
 [code of conduct]: /CODE-OF-CONDUCT.md
 [oss watch benevolent dictator]: http://oss-watch.ac.uk/resources/benevolentdictatorgovernancemodel
