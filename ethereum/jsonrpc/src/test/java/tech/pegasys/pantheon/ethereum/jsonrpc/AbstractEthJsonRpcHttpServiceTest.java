@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.RpcApis;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterIdGenerator;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterRepository;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
@@ -146,8 +147,11 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
 
     final BlockchainQueries blockchainQueries = new BlockchainQueries(blockchain, stateArchive);
     final FilterIdGenerator filterIdGenerator = mock(FilterIdGenerator.class);
+    final FilterRepository filterRepository = new FilterRepository();
     when(filterIdGenerator.nextId()).thenReturn("0x1");
-    filterManager = new FilterManager(blockchainQueries, transactionPoolMock, filterIdGenerator);
+    filterManager =
+        new FilterManager(
+            blockchainQueries, transactionPoolMock, filterIdGenerator, filterRepository);
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);

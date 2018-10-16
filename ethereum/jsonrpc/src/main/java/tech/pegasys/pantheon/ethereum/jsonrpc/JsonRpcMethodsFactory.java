@@ -6,7 +6,6 @@ import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.RpcApis;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterIdGenerator;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminPeers;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.DebugStorageRangeAt;
@@ -85,11 +84,10 @@ public class JsonRpcMethodsFactory {
       final ProtocolSchedule<?> protocolSchedule,
       final AbstractMiningCoordinator<?, ?> miningCoordinator,
       final Set<Capability> supportedCapabilities,
-      final Collection<RpcApis> rpcApis) {
+      final Collection<RpcApis> rpcApis,
+      final FilterManager filterManager) {
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, worldStateArchive);
-    final FilterManager filterManager =
-        new FilterManager(blockchainQueries, transactionPool, new FilterIdGenerator());
     return methods(
         clientVersion,
         chainId,

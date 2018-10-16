@@ -1,0 +1,72 @@
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+public class FilterRepository {
+
+  private final Map<String, Filter> filters = new ConcurrentHashMap<>();
+
+  public FilterRepository() {}
+
+  Collection<Filter> getFilters() {
+    return new ArrayList<>(filters.values());
+  }
+
+  <T extends Filter> Collection<T> getFiltersOfType(final Class<T> filterClass) {
+    return filters
+        .values()
+        .stream()
+        .flatMap(f -> getIfTypeMatches(f, filterClass).map(Stream::of).orElseGet(Stream::empty))
+        .collect(Collectors.toList());
+  }
+
+  <T extends Filter> Optional<T> getFilter(final String filterId, final Class<T> filterClass) {
+    final Filter filter = filters.get(filterId);
+    return getIfTypeMatches(filter, filterClass);
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T extends Filter> Optional<T> getIfTypeMatches(
+      final Filter filter, final Class<T> filterClass) {
+    if (filter == null) {
+      return Optional.empty();
+    }
+
+    if (!filterClass.isAssignableFrom(filter.getClass())) {
+      return Optional.empty();
+    }
+
+    return Optional.of((T) filter);
+  }
+
+  boolean exists(final String id) {
+    return filters.containsKey(id);
+  }
+
+  void save(final Filter filter) {
+    if (filter == null) {
+      throw new IllegalArgumentException("Can't save null filter");
+    }
+
+    if (exists(filter.getId())) {
+      throw new IllegalArgumentException(
+          String.format("Filter with id %s already exists", filter.getId()));
+    }
+
+    filters.put(filter.getId(), filter);
+  }
+
+  void delete(final String id) {
+    filters.remove(id);
+  }
+
+  void deleteAll() {
+    filters.clear();
+  }
+}
