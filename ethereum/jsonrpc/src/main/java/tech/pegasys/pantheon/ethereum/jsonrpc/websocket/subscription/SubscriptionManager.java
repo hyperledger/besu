@@ -25,9 +25,6 @@ import org.apache.logging.log4j.Logger;
 /**
  * The SubscriptionManager is responsible for managing subscriptions and sending messages to the
  * clients that have an active subscription subscription.
- *
- * <p>TODO: The logic to send a notification to a client that has an active subscription TODO:
- * handle connection close (remove subscriptions)
  */
 public class SubscriptionManager extends AbstractVerticle {
 

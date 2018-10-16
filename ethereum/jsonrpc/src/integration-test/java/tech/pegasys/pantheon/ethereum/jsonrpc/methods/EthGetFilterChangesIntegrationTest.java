@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterIdGenerator;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterRepository;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthGetFilterChanges;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
@@ -81,7 +82,9 @@ public class EthGetFilterChangesIntegrationTest {
             transactions, genesisConfig.getProtocolSchedule(), protocolContext, batchAddedListener);
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, worldStateArchive);
-    filterManager = new FilterManager(blockchainQueries, transactionPool, new FilterIdGenerator());
+    filterManager =
+        new FilterManager(
+            blockchainQueries, transactionPool, new FilterIdGenerator(), new FilterRepository());
     method = new EthGetFilterChanges(filterManager, parameters);
   }
 
