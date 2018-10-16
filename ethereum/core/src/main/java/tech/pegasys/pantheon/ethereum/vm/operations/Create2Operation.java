@@ -19,7 +19,7 @@ public class Create2Operation extends AbstractCreateOperation {
 
   @Override
   protected Address targetContractAddress(final MessageFrame frame) {
-    final Address sender = frame.getSenderAddress();
+    final Address sender = frame.getRecipientAddress();
     final UInt256 offset = frame.getStackItem(1).asUInt256();
     final UInt256 length = frame.getStackItem(2).asUInt256();
     final Bytes32 salt = frame.getStackItem(3);
