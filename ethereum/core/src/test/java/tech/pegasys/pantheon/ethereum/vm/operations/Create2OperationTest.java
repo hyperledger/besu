@@ -101,7 +101,7 @@ public class Create2OperationTest {
 
   @Before
   public void setUp() {
-    when(messageFrame.getSenderAddress()).thenReturn(Address.fromHexString(sender));
+    when(messageFrame.getRecipientAddress()).thenReturn(Address.fromHexString(sender));
     final Bytes32 memoryOffset = Bytes32.fromHexString("0xFF");
     final BytesValue codeBytes = BytesValue.fromHexString(code);
     final UInt256 memoryLength = UInt256.of(codeBytes.size());
