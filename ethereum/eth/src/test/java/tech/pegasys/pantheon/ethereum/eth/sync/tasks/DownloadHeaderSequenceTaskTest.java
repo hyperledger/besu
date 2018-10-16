@@ -2,13 +2,12 @@ package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthTask;
-import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskWithResultsTest;
+import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskTest;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DownloadHeaderSequenceTaskTest
-    extends RetryingMessageTaskWithResultsTest<List<BlockHeader>> {
+public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List<BlockHeader>> {
 
   @Override
   protected List<BlockHeader> generateDataToBeRequested() {
@@ -26,6 +25,11 @@ public class DownloadHeaderSequenceTaskTest
     final BlockHeader lastHeader = requestedData.get(requestedData.size() - 1);
     final BlockHeader referenceHeader = blockchain.getBlockHeader(lastHeader.getNumber() + 1).get();
     return DownloadHeaderSequenceTask.endingAtHeader(
-        protocolSchedule, protocolContext, ethContext, referenceHeader, requestedData.size());
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        referenceHeader,
+        requestedData.size(),
+        maxRetries);
   }
 }

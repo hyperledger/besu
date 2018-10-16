@@ -4,13 +4,13 @@ import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthTask;
-import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskWithResultsTest;
+import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskTest;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CompleteBlocksTaskTest extends RetryingMessageTaskWithResultsTest<List<Block>> {
+public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>> {
 
   @Override
   protected List<Block> generateDataToBeRequested() {
@@ -28,6 +28,7 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskWithResultsTest<L
   protected EthTask<List<Block>> createTask(final List<Block> requestedData) {
     final List<BlockHeader> headersToComplete =
         requestedData.stream().map(Block::getHeader).collect(Collectors.toList());
-    return CompleteBlocksTask.forHeaders(protocolSchedule, ethContext, headersToComplete);
+    return CompleteBlocksTask.forHeaders(
+        protocolSchedule, ethContext, headersToComplete, maxRetries);
   }
 }
