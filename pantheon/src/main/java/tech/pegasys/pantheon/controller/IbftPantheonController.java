@@ -5,6 +5,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.consensus.ibft.IbftChainObserver;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftEventQueue;
 import tech.pegasys.pantheon.consensus.ibft.IbftProcessor;
@@ -144,6 +145,8 @@ public class IbftPantheonController implements PantheonController<IbftContext, I
             syncConfig, protocolSchedule, protocolContext, ethProtocolManager.ethContext());
 
     final IbftEventQueue ibftEventQueue = new IbftEventQueue();
+
+    blockchain.observeBlockAdded(new IbftChainObserver(ibftEventQueue));
 
     final IbftStateMachine ibftStateMachine = new IbftStateMachine();
     final IbftProcessor ibftProcessor =
