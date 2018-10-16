@@ -1,8 +1,0 @@
-jar {
-  baseName 'pantheon-evmtool'
-  manifest {
-    attributes(
-      'Implementation-Title': baseName,
-      'Implementation-Version': project.version)
-  }
-}
