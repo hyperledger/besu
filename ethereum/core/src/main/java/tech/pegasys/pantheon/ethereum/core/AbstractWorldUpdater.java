@@ -79,7 +79,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   @Override
   public Account getOriginalAccount(final Address address) {
-    return world.get(address);
+    return world.getOriginalAccount(address);
   }
 
   @Override
