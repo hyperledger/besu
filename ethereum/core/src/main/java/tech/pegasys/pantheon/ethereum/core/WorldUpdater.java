@@ -78,14 +78,6 @@ public interface WorldUpdater extends MutableWorldView {
   MutableAccount getMutable(Address address);
 
   /**
-   * Retrieve the original account, prior to any modifications made by this updater.
-   *
-   * @param address the address of the account.
-   * @return the account {@code address} or {@code null} if the account does not exist.
-   */
-  Account getOriginalAccount(Address address);
-
-  /**
    * Deletes the provided account.
    *
    * @param address the address of the account to delete. If that account doesn't exists prior to
