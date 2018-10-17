@@ -63,6 +63,25 @@ public class BlockHeaderBuilder {
     return new BlockHeaderBuilder();
   }
 
+  public static BlockHeaderBuilder fromHeader(final BlockHeader header) {
+    return create()
+        .parentHash(header.getParentHash())
+        .ommersHash(header.getOmmersHash())
+        .coinbase(header.getCoinbase())
+        .stateRoot(header.getStateRoot())
+        .transactionsRoot(header.getTransactionsRoot())
+        .receiptsRoot(header.getReceiptsRoot())
+        .logsBloom(header.getLogsBloom())
+        .difficulty(header.getDifficulty())
+        .number(header.getNumber())
+        .gasLimit(header.getGasLimit())
+        .gasUsed(header.getGasUsed())
+        .timestamp(header.getTimestamp())
+        .extraData(header.getExtraData())
+        .mixHash(header.getMixHash())
+        .nonce(header.getNonce());
+  }
+
   public BlockHeader buildBlockHeader() {
     validateBlockHeader();
 
