@@ -42,7 +42,6 @@ public class SStoreOperation extends AbstractOperation {
     assert account != null : "VM account should exists";
 
     // Increment the refund counter.
-    final UInt256 originalValue = getOriginalValue(frame, key);
     final UInt256 currentValue = account.getStorageValue(key);
     frame.incrementGasRefund(
         gasCalculator()
