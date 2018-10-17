@@ -16,11 +16,14 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.crypto.SECP256K1.PrivateKey;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.ExpectAccountBalance;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 
 import java.math.BigInteger;
 
 import org.web3j.crypto.Credentials;
+import org.web3j.utils.Convert.Unit;
 
 public class Account {
 
@@ -60,5 +63,13 @@ public class Account {
 
   public String getName() {
     return name;
+  }
+
+  public Condition balanceEquals(final String expectedBalance, final Unit balanceUnit) {
+    return new ExpectAccountBalance(this, expectedBalance, balanceUnit);
+  }
+
+  public Condition balanceEquals(final int expectedBalance) {
+    return balanceEquals(String.valueOf(expectedBalance), Unit.ETHER);
   }
 }

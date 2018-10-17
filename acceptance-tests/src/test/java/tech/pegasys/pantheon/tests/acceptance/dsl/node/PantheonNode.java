@@ -16,15 +16,14 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.web3j.protocol.core.DefaultBlockParameterName.LATEST;
-import static org.web3j.utils.Numeric.toHexString;
 
 import tech.pegasys.pantheon.controller.KeyPairUtil;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningParameters;
-import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,23 +43,17 @@ import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
 import org.apache.logging.log4j.Logger;
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
-import org.web3j.crypto.RawTransaction;
-import org.web3j.crypto.TransactionEncoder;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.protocol.websocket.WebSocketService;
 import org.web3j.utils.Async;
-import org.web3j.utils.Convert;
-import org.web3j.utils.Convert.Unit;
 
-public class PantheonNode implements AutoCloseable {
+public class PantheonNode implements Node, AutoCloseable {
 
   private static final String LOCALHOST = "127.0.0.1";
   private static final Logger LOG = getLogger();
-  private static final BigInteger MINIMUM_GAS_PRICE = BigInteger.valueOf(1000);
-  private static final BigInteger TRANSFER_GAS_COST = BigInteger.valueOf(21000);
 
   private final String name;
   private final Path homeDirectory;
@@ -161,25 +154,7 @@ public class PantheonNode implements AutoCloseable {
     return web3j;
   }
 
-  public Hash transferFunds(
-      final Account from, final Account to, final String amount, final Unit unit) {
-    final RawTransaction transaction =
-        RawTransaction.createEtherTransaction(
-            from.getNextNonce(),
-            MINIMUM_GAS_PRICE,
-            TRANSFER_GAS_COST,
-            to.getAddress(),
-            Convert.toWei(amount, unit).toBigIntegerExact());
-    final String signedTransactionData =
-        toHexString(TransactionEncoder.signMessage(transaction, from.web3jCredentials()));
-    try {
-      return Hash.fromHexString(
-          web3j().ethSendRawTransaction(signedTransactionData).send().getTransactionHash());
-    } catch (final IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
+  @Override
   public BigInteger getAccountBalance(final Account account) {
     try {
       final EthGetBalance balanceResponse =
@@ -310,7 +285,7 @@ public class PantheonNode implements AutoCloseable {
     this.bootnodes = bootnodes;
   }
 
-  public MiningParameters getMiningParameters() {
+  MiningParameters getMiningParameters() {
     return miningParameters;
   }
 
@@ -324,7 +299,7 @@ public class PantheonNode implements AutoCloseable {
         .toString();
   }
 
-  public void stop() {
+  void stop() {
     if (web3j != null) {
       web3j.shutdown();
       web3j = null;
@@ -358,5 +333,10 @@ public class PantheonNode implements AutoCloseable {
     }
 
     return eth;
+  }
+
+  @Override
+  public <T> T execute(final Transaction<T> transaction) {
+    return transaction.execute(web3j());
   }
 }
