@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.mining;
 
-import static org.web3j.utils.Convert.Unit.ETHER;
 import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonMinerNode;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
@@ -36,23 +35,24 @@ public class MiningAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldMineTransactions() {
-    final Account fromAccount = accounts.createAccount("account1", "50", ETHER, minerNode);
-    final Account toAccount = accounts.createAccount("account2", "0", ETHER, minerNode);
-    accounts.waitForAccountBalance(fromAccount, 50, minerNode);
+    final Account sender = accounts.createAccount("account1");
+    final Account receiver = accounts.createAccount("account2");
+    minerNode.execute(transactions.createTransfer(sender, 50));
+    cluster.verify(sender.balanceEquals(50));
 
-    accounts.incrementalTransfer(fromAccount, toAccount, 1, minerNode);
-    accounts.waitForAccountBalance(toAccount, 1, minerNode);
+    minerNode.execute(transactions.createIncrementalTransfers(sender, receiver, 1));
+    cluster.verify(receiver.balanceEquals(1));
 
-    accounts.incrementalTransfer(fromAccount, toAccount, 2, minerNode);
-    accounts.waitForAccountBalance(toAccount, 3, minerNode);
+    minerNode.execute(transactions.createIncrementalTransfers(sender, receiver, 2));
+    cluster.verify(receiver.balanceEquals(3));
 
-    accounts.incrementalTransfer(fromAccount, toAccount, 3, minerNode);
-    accounts.waitForAccountBalance(toAccount, 6, minerNode);
+    minerNode.execute(transactions.createIncrementalTransfers(sender, receiver, 3));
+    cluster.verify(receiver.balanceEquals(6));
 
-    accounts.incrementalTransfer(fromAccount, toAccount, 4, minerNode);
-    accounts.waitForAccountBalance(toAccount, 10, minerNode);
+    minerNode.execute(transactions.createIncrementalTransfers(sender, receiver, 4));
+    cluster.verify(receiver.balanceEquals(10));
 
-    accounts.incrementalTransfer(fromAccount, toAccount, 5, minerNode);
-    accounts.waitForAccountBalance(toAccount, 15, minerNode);
+    minerNode.execute(transactions.createIncrementalTransfers(sender, receiver, 5));
+    cluster.verify(receiver.balanceEquals(15));
   }
 }
