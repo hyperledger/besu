@@ -145,48 +145,11 @@ public class GeneralStateReferenceTestTools {
     params.blacklist("ecmul_0-3_5616_28000_96-Byzantium\\[3\\]");
 
     // Constantinople failures to investigate
-    params.blacklist("badOpcodes-Constantinople\\[115\\]");
-    params.blacklist("Call1024OOG-Constantinople\\[0\\]");
-    params.blacklist("Call1024OOG-Constantinople\\[1\\]");
-    params.blacklist("CallRecursiveBombPreCall-Constantinople");
-    params.blacklist("Call1024PreCalls-Constantinople");
-    params.blacklist("Callcode1024OOG-Constantinople");
-    params.blacklist("Callcode1024BalanceTooLow-Constantinople");
-    params.blacklist("Call1024BalanceTooLow-Constantinople");
-    params.blacklist("Callcode1024BalanceTooLow-Constantinople");
-    params.blacklist("Call1024PreCalls-Constantinople");
-    params.blacklist("CallRecursiveBombLog2-Constantinople");
     params.blacklist("RevertInCreateInInitCreate2-Constantinople");
-    params.blacklist("returndatacopy_0_0_following_successful_create-Constantinople");
-    params.blacklist("CreateMessageRevertedOOGInInit-Constantinople\\[1\\]");
-    params.blacklist("returndatasize_following_successful_create-Constantinople");
     params.blacklist("create2collisionStorage-Constantinople\\[0\\]");
     params.blacklist("create2collisionStorage-Constantinople\\[1\\]");
     params.blacklist("create2collisionStorage-Constantinople\\[2\\]");
-    params.blacklist("Call1024OOG-Constantinople");
-    params.blacklist("Delegatecall1024OOG-Constantinople");
-    params.blacklist("CallRecursiveBombPreCall-Constantinople");
-    params.blacklist("Call1024PreCalls-Constantinople");
-    params.blacklist("Delegatecall1024-Constantinople");
-    params.blacklist("Call1MB1024Calldepth-Constantinople\\[1\\]");
-    params.blacklist("LoopCallsDepthThenRevert3-Constantinople");
-    params.blacklist("LoopCallsDepthThenRevert-Constantinople");
-    params.blacklist("LoopDelegateCallsDepthThenRevert-Constantinople");
-    params.blacklist("LoopCallsThenRevert-Constantinople\\[0\\]");
-    params.blacklist("LoopCallsThenRevert-Constantinople\\[1\\]");
     params.blacklist("RevertInCreateInInit-Constantinople");
-    params.blacklist("LoopCallsDepthThenRevert2-Constantinople");
-    params.blacklist("Call1024BalanceTooLow-Constantinople");
-    params.blacklist("Call1024BalanceTooLow-Constantinople");
-    params.blacklist("static_Call1024PreCalls2-Constantinople\\[0\\]");
-    params.blacklist("CallRecursiveBomb0_OOG_atMaxCallDepth-Constantinople");
-    params.blacklist("CallRecursiveBomb3-Constantinople");
-    params.blacklist("ABAcalls3-Constantinople");
-    params.blacklist("CallRecursiveBomb2-Constantinople");
-    params.blacklist("CallRecursiveBombLog-Constantinople");
-    params.blacklist("CallRecursiveBomb0-Constantinople");
-    params.blacklist("CallRecursiveBomb1-Constantinople");
-    params.blacklist("ABAcalls2-Constantinople");
     params.blacklist("ecmul_0-3_5616_28000_96-Constantinople\\[3\\]");
   }
 
