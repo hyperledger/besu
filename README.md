@@ -29,7 +29,7 @@ User and reference documentation available on the Wiki includes:
 * [Installation Wiki]
 
 ### Development
-Instructions for how to get started with developing on the Orion codebase. Please also read the 
+Instructions for how to get started with developing on the Pantheon codebase. Please also read the
 [contribution guidelines](CONTRIBUTING.md) for more detail on how to submit a pull request (PR).
 
 * [Installation Wiki]
