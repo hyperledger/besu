@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.controller;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
 import static tech.pegasys.pantheon.controller.KeyPairUtil.loadKeyPair;
 
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
@@ -52,11 +51,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class MainnetPantheonController implements PantheonController<Void, EthHashBlockMiner> {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LogManager.getLogger();
   public static final int MAINNET_NETWORK_ID = 1;
 
   private final GenesisConfig<Void> genesisConfig;
