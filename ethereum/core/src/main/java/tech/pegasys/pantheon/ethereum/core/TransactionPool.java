@@ -85,7 +85,7 @@ public class TransactionPool implements BlockAddedObserver {
           addedTransactions.add(transaction);
         }
       } else {
-        LOG.debug(
+        LOG.trace(
             "Validation failed ({}) for transaction {}. Discarding.",
             validationResult.getInvalidReason(),
             transaction);

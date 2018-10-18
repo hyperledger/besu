@@ -300,7 +300,7 @@ public class Downloader<C> {
               } else {
                 checkpointTimeouts = 0;
                 checkpointHeaders.addAll(headers);
-                LOG.info("Tracking {} checkpoint headers", checkpointHeaders.size());
+                LOG.debug("Tracking {} checkpoint headers", checkpointHeaders.size());
               }
               return r;
             });
@@ -310,7 +310,7 @@ public class Downloader<C> {
       final SyncTarget syncTarget) {
     final BlockHeader lastHeader =
         checkpointHeaders.size() > 0 ? checkpointHeaders.getLast() : syncTarget.commonAncestor();
-    LOG.info("Requesting checkpoint headers from {}", lastHeader.getNumber());
+    LOG.debug("Requesting checkpoint headers from {}", lastHeader.getNumber());
     return GetHeadersFromPeerByHashTask.startingAtHash(
             protocolSchedule,
             ethContext,

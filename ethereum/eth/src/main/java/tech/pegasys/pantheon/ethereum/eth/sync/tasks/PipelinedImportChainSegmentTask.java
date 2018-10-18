@@ -103,7 +103,7 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
 
   @Override
   protected void executeTask() {
-    LOG.info(
+    LOG.debug(
         "Importing chain segment from {} to {}.",
         firstHeader().getNumber(),
         lastHeader().getNumber());
@@ -144,7 +144,7 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
   public void completeChunkPipelineAndMaybeLaunchNextOne(
       final List<Block> blocks, final Throwable throwable) {
     if (throwable != null) {
-      LOG.info(
+      LOG.warn(
           "Import of chain segment ({} to {}) failed: {}.",
           firstHeader().getNumber(),
           lastHeader().getNumber());
@@ -155,7 +155,7 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
       final BlockHeader firstHeader = blocks.get(0).getHeader();
       final BlockHeader lastHeader = blocks.get(blocks.size() - 1).getHeader();
       chunksCompleted++;
-      LOG.info(
+      LOG.debug(
           "Import chain segment from {} to {} succeeded (chunk {}/{}).",
           firstHeader.getNumber(),
           lastHeader.getNumber(),
@@ -182,7 +182,7 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
   private CompletableFuture<List<BlockHeader>> downloadNextHeaders(
       final BlockHeader firstChunkHeader, final BlockHeader lastChunkHeader) {
     // Download the headers we're missing (between first and last)
-    LOG.info(
+    LOG.debug(
         "Downloading headers {} to {}",
         firstChunkHeader.getNumber() + 1,
         lastChunkHeader.getNumber());
@@ -233,7 +233,7 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
   }
 
   private CompletableFuture<List<Block>> downloadBlocks(final List<BlockHeader> headers) {
-    LOG.info(
+    LOG.debug(
         "Downloading bodies {} to {}",
         headers.get(0).getNumber(),
         headers.get(headers.size() - 1).getNumber());
@@ -243,7 +243,7 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
   }
 
   private CompletableFuture<List<Block>> validateAndImportBlocks(final List<Block> blocks) {
-    LOG.info(
+    LOG.debug(
         "Validating and importing {} to {}",
         blocks.get(0).getHeader().getNumber(),
         blocks.get(blocks.size() - 1).getHeader().getNumber());
@@ -254,7 +254,7 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
   }
 
   private CompletableFuture<List<Block>> extractTransactionSenders(final List<Block> blocks) {
-    LOG.info(
+    LOG.debug(
         "Extracting sender {} to {}",
         blocks.get(0).getHeader().getNumber(),
         blocks.get(blocks.size() - 1).getHeader().getNumber());

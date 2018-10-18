@@ -183,7 +183,7 @@ public class PeerDiscoveryController {
    * @param sender The sender.
    */
   public void onMessage(final Packet packet, final DiscoveryPeer sender) {
-    LOG.debug(
+    LOG.trace(
         "<<< Received {} discovery packet from {} ({}): {}",
         packet.getType(),
         sender.getEndpoint(),

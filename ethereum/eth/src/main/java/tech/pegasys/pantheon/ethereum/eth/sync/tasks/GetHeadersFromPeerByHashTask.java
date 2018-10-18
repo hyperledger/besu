@@ -84,7 +84,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
 
   @Override
   protected ResponseStream sendRequest(final EthPeer peer) throws PeerNotConnected {
-    LOG.info("Requesting {} headers from peer {}.", count, peer);
+    LOG.debug("Requesting {} headers from peer {}.", count, peer);
     return peer.getHeadersByHash(referenceHash, count, reverse, skip);
   }
 

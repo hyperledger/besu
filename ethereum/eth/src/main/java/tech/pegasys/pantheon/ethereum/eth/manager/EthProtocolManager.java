@@ -188,7 +188,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             blockchain.getChainHeadHash(),
             genesisHash);
     try {
-      LOG.info("Sending status message to {}.", peer);
+      LOG.debug("Sending status message to {}.", peer);
       peer.send(status);
       peer.registerStatusSent();
     } catch (final PeerNotConnected peerNotConnected) {
@@ -203,13 +203,13 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final boolean initiatedByPeer) {
     ethPeers.registerDisconnect(connection);
     if (initiatedByPeer) {
-      LOG.info(
+      LOG.debug(
           "Peer requested to be disconnected ({}), {} peers left: {}",
           reason,
           ethPeers.peerCount(),
           ethPeers);
     } else {
-      LOG.info(
+      LOG.debug(
           "Disconnecting from peer ({}), {} peers left: {}",
           reason,
           ethPeers.peerCount(),
@@ -226,7 +226,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     final StatusMessage status = StatusMessage.readFrom(data);
     try {
       if (status.networkId() != networkId) {
-        LOG.info("Disconnecting from peer with mismatched network id: {}", status.networkId());
+        LOG.debug("Disconnecting from peer with mismatched network id: {}", status.networkId());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (!status.genesisHash().equals(genesisHash)) {
         LOG.warn(
@@ -235,7 +235,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             status.genesisHash());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else {
-        LOG.info("Received status message from {}: {}", peer, status);
+        LOG.debug("Received status message from {}: {}", peer, status);
         peer.registerStatusReceived(status.bestHash(), status.totalDifficulty());
       }
     } catch (final RLPException e) {

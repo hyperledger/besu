@@ -81,7 +81,7 @@ final class DeFramer extends ByteToMessageDecoder {
         final PeerConnection connection =
             new NettyPeerConnection(ctx, peerInfo, capabilityMultiplexer, callbacks);
         if (capabilityMultiplexer.getAgreedCapabilities().size() == 0) {
-          LOG.info(
+          LOG.debug(
               "Disconnecting from {} because no capabilities are shared.", peerInfo.getClientId());
           connectFuture.completeExceptionally(
               new IncompatiblePeerException("No shared capabilities"));

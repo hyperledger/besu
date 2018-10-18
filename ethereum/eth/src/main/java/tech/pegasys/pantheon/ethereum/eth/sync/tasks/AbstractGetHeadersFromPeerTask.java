@@ -102,7 +102,7 @@ public abstract class AbstractGetHeadersFromPeerTask
         }
       }
 
-      LOG.info("Received {} of {} headers requested from peer.", headersList.size(), count);
+      LOG.debug("Received {} of {} headers requested from peer.", headersList.size(), count);
       return Optional.of(headersList);
     } finally {
       headersMessage.release();

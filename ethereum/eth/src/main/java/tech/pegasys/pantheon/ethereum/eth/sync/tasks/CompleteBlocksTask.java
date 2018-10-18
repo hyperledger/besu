@@ -104,7 +104,7 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
 
   private CompletableFuture<PeerTaskResult<List<Block>>> requestBodies() {
     final List<BlockHeader> incompleteHeaders = incompleteHeaders();
-    LOG.info(
+    LOG.debug(
         "Requesting bodies to complete {} blocks, starting with {}.",
         incompleteHeaders.size(),
         incompleteHeaders.get(0).getNumber());
