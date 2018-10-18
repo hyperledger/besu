@@ -29,6 +29,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
+import tech.pegasys.pantheon.ethereum.util.InvalidConfigurationException;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.uint.UInt256;
@@ -352,8 +353,10 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
         throw new IllegalStateException("Blockchain is missing genesis block data.");
       }
       if (!genesisHash.get().equals(genesisBlock.getHash())) {
-        throw new IllegalArgumentException(
-            "Supplied genesis block does not match stored chain data.");
+        throw new InvalidConfigurationException(
+            "Supplied genesis block does not match stored chain data.\n"
+                + "Please ensure the integrity of the file: \'pantheon/ethereum/core/src/main/resources/mainnet.json\'.\n"
+                + "To set a custom genesis file employ the runtime option \'--genesis=PATH_TO_FILE\'.");
       }
     }
   }
