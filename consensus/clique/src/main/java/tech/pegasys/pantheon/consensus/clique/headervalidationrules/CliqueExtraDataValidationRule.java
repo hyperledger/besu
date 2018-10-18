@@ -80,21 +80,21 @@ public class CliqueExtraDataValidationRule
     final Address proposer = CliqueBlockHashing.recoverProposerAddress(header, cliqueExtraData);
 
     if (!expectedValidators.contains(proposer)) {
-      LOG.trace("Proposer sealing block is not a member of the validators.");
+      LOG.trace("Proposer sealing block is not a member of the signers.");
       return false;
     }
 
     if (epochManager.isEpochBlock(header.getNumber())) {
       if (!Iterables.elementsEqual(cliqueExtraData.getValidators(), expectedValidators)) {
         LOG.trace(
-            "Incorrect validators. Expected {} but got {}.",
+            "Incorrect signers. Expected {} but got {}.",
             expectedValidators,
             cliqueExtraData.getValidators());
         return false;
       }
     } else {
       if (!cliqueExtraData.getValidators().isEmpty()) {
-        LOG.trace("Validator list on non-epoch blocks must be empty.");
+        LOG.trace("Singer list on non-epoch blocks must be empty.");
         return false;
       }
     }
