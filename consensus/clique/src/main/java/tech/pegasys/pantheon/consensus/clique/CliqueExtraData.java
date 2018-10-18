@@ -15,8 +15,11 @@ package tech.pegasys.pantheon.consensus.clique;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import tech.pegasys.pantheon.crypto.SECP256K1.PrivateKey;
+import tech.pegasys.pantheon.crypto.SECP256K1.PublicKey;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 
@@ -104,6 +107,23 @@ public class CliqueExtraData {
   }
 
   public List<Address> getValidators() {
+    return validators;
+  }
+
+  public static String createGenesisExtraDataString(final List<PrivateKey> privKeys) {
+    final List<Address> validators = convertPrivKeysToAddresses(privKeys);
+    final CliqueExtraData cliqueExtraData =
+        new CliqueExtraData(BytesValue.wrap(new byte[32]), null, validators);
+    final BytesValue output = cliqueExtraData.encode();
+    return output.toString();
+  }
+
+  private static List<Address> convertPrivKeysToAddresses(final List<PrivateKey> privKeys) {
+    final List<Address> validators = Lists.newArrayList();
+    for (PrivateKey privKey : privKeys) {
+      final PublicKey pubKey = PublicKey.create(privKey);
+      validators.add(Util.publicKeyToAddress(pubKey));
+    }
     return validators;
   }
 }
