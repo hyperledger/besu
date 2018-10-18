@@ -86,7 +86,7 @@ final class NettyPeerConnection implements PeerConnection {
       }
     }
 
-    LOG.debug("Writing {} to {} via protocol {}", message, peerInfo, capability);
+    LOG.trace("Writing {} to {} via protocol {}", message, peerInfo, capability);
     ctx.channel().writeAndFlush(new OutboundMessage(capability, message));
   }
 
@@ -108,7 +108,7 @@ final class NettyPeerConnection implements PeerConnection {
   @Override
   public void terminateConnection(final DisconnectReason reason, final boolean peerInitiated) {
     if (disconnectDispatched.compareAndSet(false, true)) {
-      LOG.info("Disconnected ({}) from {}", reason, peerInfo);
+      LOG.debug("Disconnected ({}) from {}", reason, peerInfo);
       callbacks.invokeDisconnect(this, reason, peerInitiated);
       disconnected.set(true);
     }
@@ -120,7 +120,7 @@ final class NettyPeerConnection implements PeerConnection {
   @Override
   public void disconnect(final DisconnectReason reason) {
     if (disconnectDispatched.compareAndSet(false, true)) {
-      LOG.info("Disconnecting ({}) from {}", reason, peerInfo);
+      LOG.debug("Disconnecting ({}) from {}", reason, peerInfo);
       callbacks.invokeDisconnect(this, reason, false);
       try {
         send(null, DisconnectMessage.create(reason));

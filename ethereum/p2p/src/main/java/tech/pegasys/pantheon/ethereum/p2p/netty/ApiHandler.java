@@ -77,7 +77,7 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
           DisconnectReason reason = null;
           try {
             reason = disconnect.getReason();
-            LOG.info(
+            LOG.debug(
                 "Received Wire DISCONNECT ({}) from peer: {}",
                 reason.name(),
                 connection.getPeer().getClientId());

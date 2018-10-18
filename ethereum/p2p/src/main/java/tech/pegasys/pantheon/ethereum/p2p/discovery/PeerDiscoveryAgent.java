@@ -280,7 +280,7 @@ public class PeerDiscoveryAgent implements DisconnectCallback {
    */
   public Packet sendPacket(final DiscoveryPeer peer, final PacketType type, final PacketData data) {
     final Packet packet = Packet.create(type, data, keyPair);
-    LOG.debug(
+    LOG.trace(
         ">>> Sending {} discovery packet to {} ({}): {}",
         type,
         peer.getEndpoint(),

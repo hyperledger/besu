@@ -107,7 +107,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
 
   @Override
   protected CompletableFuture<?> executePeerTask() {
-    LOG.info(
+    LOG.debug(
         "Downloading headers from {} to {}.", startingBlockNumber, referenceHeader.getNumber() - 1);
     final CompletableFuture<List<BlockHeader>> task =
         downloadHeaders().thenCompose(this::processHeaders);
@@ -115,7 +115,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
         (r, t) -> {
           // We're done if we've filled all requested headers
           if (r != null && r.size() == segmentLength) {
-            LOG.info(
+            LOG.debug(
                 "Finished downloading headers from {} to {}.",
                 startingBlockNumber,
                 referenceHeader.getNumber() - 1);

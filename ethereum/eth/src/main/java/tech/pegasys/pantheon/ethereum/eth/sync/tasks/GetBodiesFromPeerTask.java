@@ -84,7 +84,7 @@ public class GetBodiesFromPeerTask<C> extends AbstractPeerRequestTask<List<Block
   protected ResponseStream sendRequest(final EthPeer peer) throws PeerNotConnected {
     final List<Hash> blockHashes =
         headers.stream().map(BlockHeader::getHash).collect(Collectors.toList());
-    LOG.info("Requesting {} bodies from peer {}.", blockHashes.size(), peer);
+    LOG.debug("Requesting {} bodies from peer {}.", blockHashes.size(), peer);
     return peer.getBodies(blockHashes);
   }
 
