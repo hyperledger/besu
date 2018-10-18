@@ -24,16 +24,23 @@ import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 public class CliqueJsonRpcMethodsFactory {
 
-  public Map<String, JsonRpcMethod> methods(final ProtocolContext<CliqueContext> context) {
+  public Map<String, JsonRpcMethod> methods(
+      final ProtocolContext<CliqueContext> context, final Collection<RpcApi> jsonRpcApis) {
+    final Map<String, JsonRpcMethod> rpcMethods = new HashMap<>();
+    if (!jsonRpcApis.contains(CliqueRpcApis.CLIQUE)) {
+      return rpcMethods;
+    }
     final MutableBlockchain blockchain = context.getBlockchain();
     final WorldStateArchive worldStateArchive = context.getWorldStateArchive();
     final BlockchainQueries blockchainQueries =
@@ -50,7 +57,6 @@ public class CliqueJsonRpcMethodsFactory {
     final Propose proposeRpc = new Propose(voteProposer, jsonRpcParameter);
     final Discard discardRpc = new Discard(voteProposer, jsonRpcParameter);
 
-    final Map<String, JsonRpcMethod> rpcMethods = new HashMap<>();
     rpcMethods.put(cliqueGetSigners.getName(), cliqueGetSigners);
     rpcMethods.put(cliqueGetSignersAtHash.getName(), cliqueGetSignersAtHash);
     rpcMethods.put(proposeRpc.getName(), proposeRpc);

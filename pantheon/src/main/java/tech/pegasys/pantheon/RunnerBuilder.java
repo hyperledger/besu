@@ -25,9 +25,9 @@ import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
-import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.RpcApis;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcHttpService;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcMethodsFactory;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterIdGenerator;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterRepository;
@@ -219,7 +219,7 @@ public class RunnerBuilder {
       final TransactionPool transactionPool,
       final AbstractMiningCoordinator<?, ?> miningCoordinator,
       final Set<Capability> supportedCapabilities,
-      final Collection<RpcApis> jsonRpcApis,
+      final Collection<RpcApi> jsonRpcApis,
       final FilterManager filterManager) {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
@@ -242,7 +242,7 @@ public class RunnerBuilder {
       @SuppressWarnings("unchecked")
       final ProtocolContext<CliqueContext> cliqueProtocolContext =
           (ProtocolContext<CliqueContext>) context;
-      methods.putAll(new CliqueJsonRpcMethodsFactory().methods(cliqueProtocolContext));
+      methods.putAll(new CliqueJsonRpcMethodsFactory().methods(cliqueProtocolContext, jsonRpcApis));
     }
 
     if (context.getConsensusState() instanceof IbftContext) {
@@ -250,7 +250,7 @@ public class RunnerBuilder {
       @SuppressWarnings("unchecked")
       final ProtocolContext<IbftContext> ibftProtocolContext =
           (ProtocolContext<IbftContext>) context;
-      methods.putAll(new IbftJsonRpcMethodsFactory().methods(ibftProtocolContext));
+      methods.putAll(new IbftJsonRpcMethodsFactory().methods(ibftProtocolContext, jsonRpcApis));
     }
     return methods;
   }

@@ -12,8 +12,10 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.websocket;
 
-import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.RpcApis;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -21,16 +23,15 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 public class WebSocketConfiguration {
-
   public static final String DEFAULT_WEBSOCKET_HOST = "127.0.0.1";
   public static final int DEFAULT_WEBSOCKET_PORT = 8546;
-  public static final Collection<RpcApis> DEFAULT_WEBSOCKET_APIS =
+  public static final Collection<RpcApi> DEFAULT_WEBSOCKET_APIS =
       Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
 
   private boolean enabled;
   private int port;
   private String host;
-  private Collection<RpcApis> rpcApis;
+  private Collection<RpcApi> rpcApis;
 
   public static WebSocketConfiguration createDefault() {
     final WebSocketConfiguration config = new WebSocketConfiguration();
@@ -67,12 +68,17 @@ public class WebSocketConfiguration {
     return port;
   }
 
-  public Collection<RpcApis> getRpcApis() {
+  public Collection<RpcApi> getRpcApis() {
     return rpcApis;
   }
 
-  public void setRpcApis(final Collection<RpcApis> rpcApis) {
+  public void setRpcApis(final Collection<RpcApi> rpcApis) {
     this.rpcApis = rpcApis;
+  }
+
+  public void addRpcApi(final RpcApi rpcApi) {
+    this.rpcApis = new ArrayList<>(rpcApis);
+    rpcApis.add(rpcApi);
   }
 
   @Override

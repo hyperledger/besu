@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.websocket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.RpcApis;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 
 import org.junit.Test;
 

@@ -95,6 +95,6 @@ public class JsonRpcTestMethodsFactory {
             transactionPool,
             miningCoordinator,
             new HashSet<>(),
-            JsonRpcConfiguration.DEFAULT_JSON_RPC_APIS);
+            RpcApis.DEFAULT_JSON_RPC_APIS);
   }
 }

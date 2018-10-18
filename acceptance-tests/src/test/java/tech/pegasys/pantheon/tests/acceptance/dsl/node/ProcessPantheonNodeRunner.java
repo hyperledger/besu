@@ -12,7 +12,8 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
-import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.RpcApis;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 
 import java.io.File;
 import java.io.IOException;
@@ -93,7 +94,7 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
     waitForPortsFile(dataDir);
   }
 
-  private String apiList(final Collection<RpcApis> rpcApis) {
+  private String apiList(final Collection<RpcApi> rpcApis) {
     return String.join(",", rpcApis.stream().map(RpcApis::getValue).collect(Collectors.toList()));
   }
 

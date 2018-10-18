@@ -16,9 +16,11 @@ import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.jsonrpc.methods.IbftDiscardValidatorVote;
 import tech.pegasys.pantheon.consensus.ibft.jsonrpc.methods.IbftProposeValidatorVote;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,16 +28,20 @@ public class IbftJsonRpcMethodsFactory {
 
   private final JsonRpcParameter jsonRpcParameter = new JsonRpcParameter();
 
-  public Map<String, JsonRpcMethod> methods(final ProtocolContext<IbftContext> context) {
+  public Map<String, JsonRpcMethod> methods(
+      final ProtocolContext<IbftContext> context, final Collection<RpcApi> jsonRpcApis) {
 
     final Map<String, JsonRpcMethod> rpcMethods = new HashMap<>();
-    // @formatter:off
-    addMethods(
-        rpcMethods,
-        new IbftProposeValidatorVote(
-            context.getConsensusState().getVoteProposer(), jsonRpcParameter),
-        new IbftDiscardValidatorVote(
-            context.getConsensusState().getVoteProposer(), jsonRpcParameter));
+
+    if (jsonRpcApis.contains(IbftRpcApis.IBFT)) {
+      // @formatter:off
+      addMethods(
+          rpcMethods,
+          new IbftProposeValidatorVote(
+              context.getConsensusState().getVoteProposer(), jsonRpcParameter),
+          new IbftDiscardValidatorVote(
+              context.getConsensusState().getVoteProposer(), jsonRpcParameter));
+    }
 
     return rpcMethods;
   }
