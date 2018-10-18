@@ -94,7 +94,7 @@ public class CliqueExtraDataValidationRule
       }
     } else {
       if (!cliqueExtraData.getValidators().isEmpty()) {
-        LOG.trace("Singer list on non-epoch blocks must be empty.");
+        LOG.trace("Signer list on non-epoch blocks must be empty.");
         return false;
       }
     }
