@@ -15,15 +15,20 @@ package tech.pegasys.pantheon.consensus.clique;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.crypto.SECP256K1.PrivateKey;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
+import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import com.google.common.collect.Lists;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
@@ -87,5 +92,29 @@ public class CliqueExtraDataTest {
     assertThatThrownBy(() -> CliqueExtraData.decode(illegalData))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("BytesValue is of invalid size - i.e. contains unused bytes.");
+  }
+
+  @Test
+  public void privKeysToExtraDataString() {
+    List<KeyPair> nodeKeys = Lists.newArrayList();
+    for (int i = 0; i < 4; i++) {
+      nodeKeys.add(KeyPair.generate());
+    }
+
+    final List<PrivateKey> privKeys =
+        nodeKeys.stream().map(k -> k.getPrivateKey()).collect(Collectors.toList());
+
+    final String hexOutput = CliqueExtraData.createGenesisExtraDataString(privKeys);
+
+    final CliqueExtraData extraData = CliqueExtraData.decode(BytesValue.fromHexString(hexOutput));
+
+    final List<Address> expectedAddresses =
+        nodeKeys
+            .stream()
+            .map(k -> Util.publicKeyToAddress(k.getPublicKey()))
+            .collect(Collectors.toList());
+
+    assertThat(extraData.getValidators())
+        .containsExactly(expectedAddresses.toArray(new Address[expectedAddresses.size()]));
   }
 }
