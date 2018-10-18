@@ -92,6 +92,9 @@ public interface MutableAccount extends Account {
    */
   void setStorageValue(UInt256 key, UInt256 value);
 
+  /** Clears out an account's storage. */
+  void clearStorage();
+
   /**
    * Returns the storage entries that have been set through the updater this instance came from.
    *
