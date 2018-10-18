@@ -146,9 +146,6 @@ public class GeneralStateReferenceTestTools {
 
     // Constantinople failures to investigate
     params.blacklist("RevertInCreateInInitCreate2-Constantinople");
-    params.blacklist("create2collisionStorage-Constantinople\\[0\\]");
-    params.blacklist("create2collisionStorage-Constantinople\\[1\\]");
-    params.blacklist("create2collisionStorage-Constantinople\\[2\\]");
     params.blacklist("RevertInCreateInInit-Constantinople");
     params.blacklist("ecmul_0-3_5616_28000_96-Constantinople\\[3\\]");
   }

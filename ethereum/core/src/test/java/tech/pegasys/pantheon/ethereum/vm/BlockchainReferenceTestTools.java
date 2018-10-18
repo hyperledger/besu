@@ -78,9 +78,6 @@ public class BlockchainReferenceTestTools {
     params.blacklist("RevertInCreateInInit_d0g0v0_Constantinople");
 
     // Constantinople failures to investigate
-    params.blacklist("create2collisionStorage_d0g0v0_Constantinople\\[Constantinople\\]");
-    params.blacklist("create2collisionStorage_d1g0v0_Constantinople\\[Constantinople\\]");
-    params.blacklist("create2collisionStorage_d2g0v0_Constantinople\\[Constantinople\\]");
     params.blacklist("RevertInCreateInInitCreate2_d0g0v0_Constantinople\\[Constantinople\\]");
   }
 

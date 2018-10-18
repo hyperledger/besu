@@ -349,11 +349,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
         wrapped.updatedAccountCode.remove(address);
       }
 
-      // TODO: this is inefficient with a real persistent world state as doing updates one by one
-      // might create a lot of garbage nodes that will be persisted without being needed. Also, if
-      // the state is big, doing update one by one is not algorithmically optimal in general. We
-      // should create a small in-memory trie of the updates first, and then apply this in bulk
-      // to the real world state as a merge of trie.
       for (final UpdateTrackingAccount<AccountState> updated : updatedAccounts()) {
         final AccountState origin = updated.getWrappedAccount();
 
@@ -364,15 +359,16 @@ public class DefaultMutableWorldState implements MutableWorldState {
           wrapped.updatedAccountCode.put(updated.getAddress(), updated.getCode());
         }
         // ...and storage in the account trie first.
-        // TODO: same remark as above really, this could be make more efficient by "batching"
+        final boolean freshState = origin == null || updated.getStorageWasCleared();
+        Hash storageRoot = freshState ? Hash.EMPTY_TRIE_HASH : origin.storageRoot;
+        if (freshState) {
+          wrapped.updatedStorageTries.remove(updated.getAddress());
+        }
         final SortedMap<UInt256, UInt256> updatedStorage = updated.getUpdatedStorage();
-        Hash storageRoot;
-        MerklePatriciaTrie<Bytes32, BytesValue> storageTrie;
-        if (updatedStorage.isEmpty()) {
-          storageRoot = origin == null ? Hash.EMPTY_TRIE_HASH : origin.storageRoot;
-        } else {
-          storageTrie =
-              origin == null
+        if (!updatedStorage.isEmpty()) {
+          // Apply any storage updates
+          final MerklePatriciaTrie<Bytes32, BytesValue> storageTrie =
+              freshState
                   ? wrapped.newAccountStorageTrie(Hash.EMPTY_TRIE_HASH)
                   : origin.storageTrie();
           wrapped.updatedStorageTries.put(updated.getAddress(), storageTrie);
@@ -394,6 +390,10 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
       }
+
+      // After committing, clear data
+      deletedAccounts().clear();
+      updatedAccounts().clear();
     }
   }
 }

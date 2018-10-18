@@ -88,10 +88,6 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
     final MutableAccount sender = frame.getWorldState().getMutable(frame.getSenderAddress());
     sender.decrementBalance(frame.getValue());
 
-    // TODO: Fix when tests are upstreamed or remove from test suit.
-    // EIP-68 mandates that contract creations cannot collide any more.
-    // While that EIP has been deferred, the General State reference tests
-    // incorrectly include this even in early hard forks.
     final MutableAccount contract = frame.getWorldState().getOrCreate(frame.getContractAddress());
     if (accountExists(contract)) {
       LOG.trace(
@@ -101,6 +97,7 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
     } else {
       contract.incrementBalance(frame.getValue());
       contract.setNonce(initialContractNonce);
+      contract.clearStorage();
       frame.setState(MessageFrame.State.CODE_EXECUTING);
     }
   }
