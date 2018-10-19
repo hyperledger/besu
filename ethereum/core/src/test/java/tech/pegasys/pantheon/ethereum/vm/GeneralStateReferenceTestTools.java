@@ -87,7 +87,6 @@ public class GeneralStateReferenceTestTools {
     params.blacklist("static_Call1MB1024Calldepth-(Byzantium|Constantinople)");
 
     // Needs investigation (tests pass in other clients)
-    params.blacklist("createNameRegistratorPerTxsNotEnoughGas-Frontier\\[0\\]");
     params.blacklist("NotEnoughCashContractCreation-Frontier");
     params.blacklist("NotEnoughCashContractCreation-Homestead");
     params.blacklist("NotEnoughCashContractCreation-EIP150");
