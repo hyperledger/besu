@@ -19,6 +19,7 @@ import java.math.BigInteger;
 
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.EthBlockNumber;
+import org.web3j.protocol.core.methods.response.EthGetWork;
 
 public class Eth {
 
@@ -33,5 +34,15 @@ public class Eth {
     assertThat(result).isNotNull();
     assertThat(result.hasError()).isFalse();
     return result.getBlockNumber();
+  }
+
+  public String[] getWork() throws IOException {
+    final EthGetWork result = web3j.ethGetWork().send();
+    assertThat(result).isNotNull();
+    return new String[] {
+      result.getCurrentBlockHeaderPowHash(),
+      result.getSeedHashForDag(),
+      result.getBoundaryCondition()
+    };
   }
 }
