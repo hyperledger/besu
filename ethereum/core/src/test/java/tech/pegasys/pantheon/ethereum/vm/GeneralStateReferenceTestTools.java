@@ -85,10 +85,6 @@ public class GeneralStateReferenceTestTools {
     params.blacklist("OverflowGasRequire");
     // Consumes a huge amount of memory
     params.blacklist("static_Call1MB1024Calldepth-(Byzantium|Constantinople)");
-
-    // Constantinople failures to investigate
-    params.blacklist("RevertInCreateInInitCreate2-Constantinople");
-    params.blacklist("RevertInCreateInInit-Constantinople");
   }
 
   public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {

@@ -65,13 +65,6 @@ public class BlockchainReferenceTestTools {
 
     // Consumes a huge amount of memory
     params.blacklist("static_Call1MB1024Calldepth_d1g0v0_(Byzantium|Constantinople)");
-
-    // Needs investigation
-    params.blacklist("RevertInCreateInInit_d0g0v0_Byzantium");
-    params.blacklist("RevertInCreateInInit_d0g0v0_Constantinople");
-
-    // Constantinople failures to investigate
-    params.blacklist("RevertInCreateInInitCreate2_d0g0v0_Constantinople\\[Constantinople\\]");
   }
 
   public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {

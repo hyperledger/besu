@@ -37,12 +37,7 @@ public class SStoreOperation extends AbstractOperation {
     final UInt256 newValue = frame.getStackItem(1).asUInt256();
 
     final Account account = frame.getWorldState().get(frame.getRecipientAddress());
-    // Setting storage value to non-zero from zero (i.e. nothing currently at this location) vs.
-    // resetting an existing value.
-    final UInt256 currentValue = account.getStorageValue(key);
-
-    return gasCalculator()
-        .calculateStorageCost(() -> getOriginalValue(frame, key), currentValue, newValue);
+    return gasCalculator().calculateStorageCost(account, key, newValue);
   }
 
   @Override
@@ -54,10 +49,7 @@ public class SStoreOperation extends AbstractOperation {
     assert account != null : "VM account should exists";
 
     // Increment the refund counter.
-    final UInt256 currentValue = account.getStorageValue(key);
-    frame.incrementGasRefund(
-        gasCalculator()
-            .calculateStorageRefundAmount(() -> getOriginalValue(frame, key), currentValue, value));
+    frame.incrementGasRefund(gasCalculator().calculateStorageRefundAmount(account, key, value));
 
     account.setStorageValue(key.copy(), value.copy());
   }
@@ -70,11 +62,5 @@ public class SStoreOperation extends AbstractOperation {
     return frame.isStatic()
         ? Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE)
         : Optional.empty();
-  }
-
-  private UInt256 getOriginalValue(final MessageFrame frame, final UInt256 key) {
-    final Account originalAccount =
-        frame.getWorldState().getOriginalAccount(frame.getRecipientAddress());
-    return originalAccount != null ? originalAccount.getStorageValue(key) : UInt256.ZERO;
   }
 }

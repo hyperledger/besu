@@ -299,9 +299,40 @@ public class DefaultMutableWorldStateTest {
   }
 
   @Test
+  public void getOriginalStorageValue() {
+    final MutableWorldState worldState = createEmpty();
+    final WorldUpdater setupUpdater = worldState.updater();
+    final MutableAccount setupAccount = setupUpdater.createAccount(ADDRESS);
+    setupAccount.setStorageValue(UInt256.ONE, UInt256.of(2));
+    setupUpdater.commit();
+
+    final WorldUpdater updater = worldState.updater();
+    final MutableAccount account = updater.getOrCreate(ADDRESS);
+    assertThat(account.getOriginalStorageValue(UInt256.ONE)).isEqualTo(UInt256.of(2));
+
+    account.setStorageValue(UInt256.ONE, UInt256.of(3));
+    assertThat(account.getOriginalStorageValue(UInt256.ONE)).isEqualTo(UInt256.of(2));
+  }
+
+  @Test
+  public void originalStorageValueIsAlwaysZeroIfStorageWasCleared() {
+    final MutableWorldState worldState = createEmpty();
+    final WorldUpdater setupUpdater = worldState.updater();
+    final MutableAccount setupAccount = setupUpdater.createAccount(ADDRESS);
+    setupAccount.setStorageValue(UInt256.ONE, UInt256.of(2));
+    setupUpdater.commit();
+
+    final WorldUpdater updater = worldState.updater();
+    final MutableAccount account = updater.getOrCreate(ADDRESS);
+
+    account.clearStorage();
+    assertThat(account.getOriginalStorageValue(UInt256.ONE)).isEqualTo(UInt256.ZERO);
+  }
+
+  @Test
   public void clearStorage() {
-    UInt256 storageKey = UInt256.of(1L);
-    UInt256 storageValue = UInt256.of(2L);
+    final UInt256 storageKey = UInt256.of(1L);
+    final UInt256 storageValue = UInt256.of(2L);
 
     // Create a world state with one account
     final MutableWorldState worldState = createEmpty();
@@ -333,8 +364,8 @@ public class DefaultMutableWorldStateTest {
 
   @Test
   public void clearStorage_AfterPersisting() {
-    UInt256 storageKey = UInt256.of(1L);
-    UInt256 storageValue = UInt256.of(2L);
+    final UInt256 storageKey = UInt256.of(1L);
+    final UInt256 storageValue = UInt256.of(2L);
 
     // Create a world state with one account
     final MutableWorldState worldState = createEmpty();
@@ -370,9 +401,9 @@ public class DefaultMutableWorldStateTest {
 
   @Test
   public void clearStorageThenEdit() {
-    UInt256 storageKey = UInt256.of(1L);
-    UInt256 originalStorageValue = UInt256.of(2L);
-    UInt256 newStorageValue = UInt256.of(3L);
+    final UInt256 storageKey = UInt256.of(1L);
+    final UInt256 originalStorageValue = UInt256.of(2L);
+    final UInt256 newStorageValue = UInt256.of(3L);
 
     // Create a world state with one account
     final MutableWorldState worldState = createEmpty();
@@ -405,9 +436,9 @@ public class DefaultMutableWorldStateTest {
 
   @Test
   public void clearStorageThenEditAfterPersisting() {
-    UInt256 storageKey = UInt256.of(1L);
-    UInt256 originalStorageValue = UInt256.of(2L);
-    UInt256 newStorageValue = UInt256.of(3L);
+    final UInt256 storageKey = UInt256.of(1L);
+    final UInt256 originalStorageValue = UInt256.of(2L);
+    final UInt256 newStorageValue = UInt256.of(3L);
 
     // Create a world state with one account
     final MutableWorldState worldState = createEmpty();

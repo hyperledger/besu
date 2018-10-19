@@ -100,11 +100,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
         .orElse(null);
   }
 
-  @Override
-  public Account getOriginalAccount(final Address address) {
-    return get(address);
-  }
-
   private AccountState deserializeAccount(
       final Address address, final Hash addressHash, final BytesValue encoded) throws RLPException {
     final RLPInput in = RLP.input(encoded);
@@ -277,6 +272,11 @@ public class DefaultMutableWorldState implements MutableWorldState {
         return UInt256.ZERO;
       }
       return convertToUInt256(val.get());
+    }
+
+    @Override
+    public UInt256 getOriginalStorageValue(final UInt256 key) {
+      return getStorageValue(key);
     }
 
     @Override
