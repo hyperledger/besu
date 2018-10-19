@@ -90,8 +90,8 @@ public class PeerTable {
   }
 
   /**
-   * Attempts to add the provided peer to the peer table, and returns a struct signalling one of
-   * three outcomes.
+   * Attempts to add the provided peer to the peer table, and returns an {@link AddResult}
+   * signalling one of three outcomes.
    *
    * <h3>Possible outcomes:</h3>
    *
@@ -235,7 +235,7 @@ public class PeerTable {
     return distance;
   }
 
-  /** A struct that encapsulates the result of a peer addition to the table. */
+  /** A class that encapsulates the result of a peer addition to the table. */
   public static class AddResult {
     /** The outcome of the operation. */
     public enum Outcome {
