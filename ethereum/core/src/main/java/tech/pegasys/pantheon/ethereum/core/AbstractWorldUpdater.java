@@ -78,11 +78,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   }
 
   @Override
-  public Account getOriginalAccount(final Address address) {
-    return world.getOriginalAccount(address);
-  }
-
-  @Override
   public MutableAccount getMutable(final Address address) {
     // We may have updated it already, so check that first.
     final MutableAccount existing = updatedAccounts.get(address);
@@ -301,6 +296,13 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       // We haven't updated the key-value yet, so either it's a new account and it doesn't have the
       // key, or we should query the underlying storage for its existing value (which might be 0).
       return account == null ? UInt256.ZERO : account.getStorageValue(key);
+    }
+
+    @Override
+    public UInt256 getOriginalStorageValue(final UInt256 key) {
+      return storageWasCleared || account == null
+          ? UInt256.ZERO
+          : account.getOriginalStorageValue(key);
     }
 
     @Override

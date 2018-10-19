@@ -106,6 +106,16 @@ public interface Account {
   UInt256 getStorageValue(UInt256 key);
 
   /**
+   * Retrieves the original value from before the current transaction in the account storage given
+   * its key.
+   *
+   * @param key the key to retrieve in the account storage.
+   * @return the original value associated to {@code key} in the account storage. Note that this is
+   *     never {@code null}, but 0 acts as a default value.
+   */
+  UInt256 getOriginalStorageValue(UInt256 key);
+
+  /**
    * Whether the account is "empty".
    *
    * <p>An account is defined as empty if:

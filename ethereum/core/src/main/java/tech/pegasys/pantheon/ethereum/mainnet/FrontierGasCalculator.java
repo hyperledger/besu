@@ -24,8 +24,6 @@ import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
-import java.util.function.Supplier;
-
 public class FrontierGasCalculator implements GasCalculator {
 
   private static final Gas TX_DATA_ZERO_COST = Gas.of(4L);
@@ -419,16 +417,18 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public Gas calculateStorageCost(
-      final Supplier<UInt256> originalValue, final UInt256 currentValue, final UInt256 newValue) {
-    return !newValue.isZero() && currentValue.isZero()
+      final Account account, final UInt256 key, final UInt256 newValue) {
+    return !newValue.isZero() && account.getStorageValue(key).isZero()
         ? STORAGE_SET_GAS_COST
         : STORAGE_RESET_GAS_COST;
   }
 
   @Override
   public Gas calculateStorageRefundAmount(
-      final Supplier<UInt256> originalValue, final UInt256 currentValue, final UInt256 newValue) {
-    return newValue.isZero() && !currentValue.isZero() ? STORAGE_RESET_REFUND_AMOUNT : Gas.ZERO;
+      final Account account, final UInt256 key, final UInt256 newValue) {
+    return newValue.isZero() && !account.getStorageValue(key).isZero()
+        ? STORAGE_RESET_REFUND_AMOUNT
+        : Gas.ZERO;
   }
 
   @Override

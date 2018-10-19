@@ -13,12 +13,16 @@
 package tech.pegasys.pantheon.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.util.uint.UInt256.ONE;
 import static tech.pegasys.pantheon.util.uint.UInt256.ZERO;
 
+import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Gas;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -84,16 +88,23 @@ public class ConstantinopleSstoreGasTest {
   @Parameter(value = 4)
   public Gas expectedGasRefund;
 
+  private final Account account = mock(Account.class);
+
+  @Before
+  public void setUp() {
+    when(account.getOriginalStorageValue(UInt256.ZERO)).thenReturn(originalValue);
+    when(account.getStorageValue(UInt256.ZERO)).thenReturn(currentValue);
+  }
+
   @Test
   public void shouldChargeCorrectGas() {
-    assertThat(gasCalculator.calculateStorageCost(() -> originalValue, currentValue, newValue))
+    assertThat(gasCalculator.calculateStorageCost(account, UInt256.ZERO, newValue))
         .isEqualTo(expectedGasCost);
   }
 
   @Test
   public void shouldRefundCorrectGas() {
-    assertThat(
-            gasCalculator.calculateStorageRefundAmount(() -> originalValue, currentValue, newValue))
+    assertThat(gasCalculator.calculateStorageRefundAmount(account, UInt256.ZERO, newValue))
         .isEqualTo(expectedGasRefund);
   }
 }

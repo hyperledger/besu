@@ -68,7 +68,7 @@ public class EVM {
         currentGasCost,
         () -> {
           checkForExceptionalHalt(frame);
-          logState(frame);
+          logState(frame, currentGasCost);
           decrementRemainingGas(frame, currentGasCost);
           frame.getCurrentOperation().execute(frame);
           incrementProgramCounter(frame);
@@ -118,13 +118,15 @@ public class EVM {
     }
   }
 
-  private static void logState(final MessageFrame frame) {
+  private static void logState(final MessageFrame frame, final Optional<Gas> currentGasCost) {
     if (LOG.isTraceEnabled()) {
       final StringBuilder builder = new StringBuilder();
       builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
       builder.append("Operation: ").append(frame.getCurrentOperation().getName()).append("\n");
-      builder.append(" PC: ").append(frame.getPC()).append("\n");
+      builder.append("PC: ").append(frame.getPC()).append("\n");
+      currentGasCost.ifPresent(gas -> builder.append("Gas cost: ").append(gas).append("\n"));
       builder.append("Gas Remaining: ").append(frame.getRemainingGas()).append("\n");
+      builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
       builder.append("Stack:");
       for (int i = 0; i < frame.stackSize(); ++i) {
         builder.append("\n\t").append(i).append(" ").append(frame.getStackItem(i));
