@@ -72,6 +72,7 @@ public class CliqueProtocolSpecs {
     return specBuilder
         .<CliqueContext>changeConsensusContextType(
             difficultyCalculator -> cliqueBlockHeaderValidator(secondsBetweenBlocks, epochManager),
+            difficultyCalculator -> cliqueBlockHeaderValidator(secondsBetweenBlocks, epochManager),
             MainnetBlockBodyValidator::new,
             MainnetBlockImporter::new,
             new CliqueDifficultyCalculator(localNodeAddress))

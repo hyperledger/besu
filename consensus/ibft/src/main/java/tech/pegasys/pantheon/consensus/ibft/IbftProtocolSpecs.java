@@ -45,6 +45,7 @@ public class IbftProtocolSpecs {
     return MainnetProtocolSpecs.spuriousDragonDefinition(chainId)
         .<IbftContext>changeConsensusContextType(
             difficultyCalculator -> ibftBlockHeaderValidator(secondsBetweenBlocks),
+            difficultyCalculator -> ibftBlockHeaderValidator(secondsBetweenBlocks),
             MainnetBlockBodyValidator::new,
             (blockHeaderValidator, blockBodyValidator, blockProcessor) ->
                 new IbftBlockImporter(

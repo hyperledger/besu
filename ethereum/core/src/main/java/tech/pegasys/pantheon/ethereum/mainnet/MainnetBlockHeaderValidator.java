@@ -20,7 +20,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.ExtraDataMax
 import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
 import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.ProofOfWorkValidationRule;
-import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.TimestampValidationRule;
+import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
+import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 public final class MainnetBlockHeaderValidator {
@@ -46,6 +47,19 @@ public final class MainnetBlockHeaderValidator {
         .build();
   }
 
+  static BlockHeaderValidator<Void> createOmmerValidator(
+      final DifficultyCalculator<Void> difficultyCalculator) {
+    return new BlockHeaderValidator.Builder<Void>()
+        .addRule(new CalculatedDifficultyValidationRule<>(difficultyCalculator))
+        .addRule(new AncestryValidationRule())
+        .addRule(new GasLimitRangeAndDeltaValidationRule(MIN_GAS_LIMIT, MAX_GAS_LIMIT))
+        .addRule(new GasUsageValidationRule())
+        .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
+        .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
+        .addRule(new ProofOfWorkValidationRule())
+        .build();
+  }
+
   private static BlockHeaderValidator.Builder<Void> createValidator(
       final DifficultyCalculator<Void> difficultyCalculator) {
     return new BlockHeaderValidator.Builder<Void>()
@@ -53,7 +67,8 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new AncestryValidationRule())
         .addRule(new GasLimitRangeAndDeltaValidationRule(MIN_GAS_LIMIT, MAX_GAS_LIMIT))
         .addRule(new GasUsageValidationRule())
-        .addRule(new TimestampValidationRule(TIMESTAMP_TOLERANCE_S, MINIMUM_SECONDS_SINCE_PARENT))
+        .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
+        .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
         .addRule(new ProofOfWorkValidationRule());
   }

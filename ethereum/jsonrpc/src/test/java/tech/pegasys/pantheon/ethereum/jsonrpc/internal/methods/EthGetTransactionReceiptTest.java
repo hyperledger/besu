@@ -88,11 +88,13 @@ public class EthGetTransactionReceiptTest {
           null,
           null,
           null,
+          null,
           TransactionReceiptType.ROOT,
           BlockHeader::getCoinbase);
   private final ProtocolSpec<Void> statusTransactionTypeSpec =
       new ProtocolSpec<>(
           "status",
+          null,
           null,
           null,
           null,
