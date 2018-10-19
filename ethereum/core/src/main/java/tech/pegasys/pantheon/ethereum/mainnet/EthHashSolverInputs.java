@@ -17,12 +17,13 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 public class EthHashSolverInputs {
   private final UInt256 target;
   private final byte[] prePowHash;
-  private final long dagSeed; // typically block number
+  private final long blockNumber;
 
-  public EthHashSolverInputs(final UInt256 target, final byte[] prePowHash, final long dagSeed) {
+  public EthHashSolverInputs(
+      final UInt256 target, final byte[] prePowHash, final long blockNumber) {
     this.target = target;
     this.prePowHash = prePowHash;
-    this.dagSeed = dagSeed;
+    this.blockNumber = blockNumber;
   }
 
   public UInt256 getTarget() {
@@ -33,7 +34,7 @@ public class EthHashSolverInputs {
     return prePowHash;
   }
 
-  public long getDagSeed() {
-    return dagSeed;
+  public long getBlockNumber() {
+    return blockNumber;
   }
 }

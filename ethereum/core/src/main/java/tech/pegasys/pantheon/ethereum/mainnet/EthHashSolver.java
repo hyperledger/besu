@@ -110,7 +110,7 @@ public class EthHashSolver {
 
   private Optional<EthHashSolution> testNonce(
       final EthHashSolverInputs inputs, final long nonce, final byte[] hashBuffer) {
-    ethHasher.hash(hashBuffer, nonce, inputs.getDagSeed(), inputs.getPrePowHash());
+    ethHasher.hash(hashBuffer, nonce, inputs.getBlockNumber(), inputs.getPrePowHash());
     final UInt256 x = UInt256.wrap(Bytes32.wrap(hashBuffer, 32));
     if (x.compareTo(inputs.getTarget()) <= 0) {
       final Hash mixedHash =

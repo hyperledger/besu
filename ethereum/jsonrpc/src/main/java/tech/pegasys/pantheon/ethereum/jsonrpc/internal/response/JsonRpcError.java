@@ -29,6 +29,7 @@ public enum JsonRpcError {
   // Filter & Subscription Errors
   FILTER_NOT_FOUND(-32000, "Filter not found"),
   SUBSCRIPTION_NOT_FOUND(-32000, "Subscription not found"),
+  NO_MINING_WORK_FOUND(-32000, "No mining work available yet"),
 
   // Transaction validation failures
   NONCE_TOO_LOW(-32001, "Nonce too low"),
