@@ -24,8 +24,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.DirectAcyclicGraphSeed;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.Optional;
-import javax.xml.bind.DatatypeConverter;
 
+import com.google.common.io.BaseEncoding;
 import org.apache.logging.log4j.Logger;
 
 public class EthGetWork implements JsonRpcMethod {
@@ -49,8 +49,8 @@ public class EthGetWork implements JsonRpcMethod {
       EthHashSolverInputs rawResult = solver.get();
       byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(rawResult.getBlockNumber());
       String[] result = {
-        "0x" + DatatypeConverter.printHexBinary(rawResult.getPrePowHash()).toLowerCase(),
-        "0x" + DatatypeConverter.printHexBinary(dagSeed).toLowerCase(),
+        "0x" + BaseEncoding.base16().lowerCase().encode(rawResult.getPrePowHash()),
+        "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),
         rawResult.getTarget().toHexString()
       };
       return new JsonRpcSuccessResponse(req.getId(), result);

@@ -26,8 +26,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolverInputs;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Optional;
-import javax.xml.bind.DatatypeConverter;
 
+import com.google.common.io.BaseEncoding;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,7 +59,7 @@ public class EthGetWorkTest {
     final JsonRpcRequest request = requestWithParams();
     final EthHashSolverInputs values =
         new EthHashSolverInputs(
-            UInt256.fromHexString(hexValue), DatatypeConverter.parseHexBinary(hexValue), 0);
+            UInt256.fromHexString(hexValue), BaseEncoding.base16().lowerCase().decode(hexValue), 0);
     final String[] expectedValue = {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -78,10 +78,12 @@ public class EthGetWorkTest {
     final JsonRpcRequest request = requestWithParams();
     final EthHashSolverInputs values =
         new EthHashSolverInputs(
-            UInt256.fromHexString(hexValue), DatatypeConverter.parseHexBinary(hexValue), 30000);
+            UInt256.fromHexString(hexValue),
+            BaseEncoding.base16().lowerCase().decode(hexValue),
+            30000);
     final String[] expectedValue = {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0x" + DatatypeConverter.printHexBinary(DirectAcyclicGraphSeed.dagSeed(30000)).toLowerCase(),
+      "0x" + BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(30000)),
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     };
     final JsonRpcResponse expectedResponse =
