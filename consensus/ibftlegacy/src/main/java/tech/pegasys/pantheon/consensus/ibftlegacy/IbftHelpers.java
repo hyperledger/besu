@@ -10,26 +10,17 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
+package tech.pegasys.pantheon.consensus.ibftlegacy;
 
-rootProject.name='pantheon'
-include 'acceptance-tests'
-include 'consensus'
-include 'consensus:clique'
-include 'consensus:common'
-include 'consensus:ibft'
-include 'consensus:ibftlegacy'
-include 'crypto'
-include 'ethereum:p2p'
-include 'ethereum:mock-p2p'
-include 'ethereum:jsonrpc'
-include 'ethereum:referencetests'
-include 'ethereum:core'
-include 'ethereum:rlp'
-include 'ethereum:eth'
-include 'ethereum:trie'
-include 'pantheon'
-include 'services:kvstore'
-include 'testutil'
-include 'util'
-include 'errorprone-checks'
-include 'quickstart'
+import tech.pegasys.pantheon.ethereum.core.Hash;
+
+public class IbftHelpers {
+
+  public static final Hash EXPECTED_MIX_HASH =
+      Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365");
+
+  public static int calculateRequiredValidatorQuorum(final int validatorCount) {
+    final int F = (validatorCount - 1) / 3;
+    return (2 * F) + 1;
+  }
+}
