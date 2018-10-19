@@ -310,7 +310,7 @@ public class JsonRpcHttpService {
       return NO_RESPONSE;
     }
 
-    LOG.info("JSON-RPC request -> {}", request.getMethod());
+    LOG.debug("JSON-RPC request -> {}", request.getMethod());
     // Find method handler
     final JsonRpcMethod method = jsonRpcMethods.get(request.getMethod());
     if (method == null) {

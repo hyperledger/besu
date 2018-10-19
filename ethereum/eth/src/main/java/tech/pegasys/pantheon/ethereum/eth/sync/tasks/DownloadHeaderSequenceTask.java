@@ -178,7 +178,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
 
             if (!validateHeader(child, header)) {
               // Invalid headers - disconnect from peer
-              LOG.info(
+              LOG.debug(
                   "Received invalid headers from peer, disconnecting from: {}",
                   headersResult.getPeer());
               headersResult.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);

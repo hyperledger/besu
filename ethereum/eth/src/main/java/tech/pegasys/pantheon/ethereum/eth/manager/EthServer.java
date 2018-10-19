@@ -65,7 +65,7 @@ class EthServer {
   }
 
   private void handleGetBlockHeaders(final EthMessage message) {
-    LOG.info("Responding to GET_BLOCK_HEADERS request");
+    LOG.trace("Responding to GET_BLOCK_HEADERS request");
     try {
       final MessageData response =
           constructGetHeadersResponse(blockchain, message.getData(), requestLimit);
@@ -78,7 +78,7 @@ class EthServer {
   }
 
   private void handleGetBlockBodies(final EthMessage message) {
-    LOG.info("Responding to GET_BLOCK_BODIES request");
+    LOG.trace("Responding to GET_BLOCK_BODIES request");
     try {
       final MessageData response =
           constructGetBodiesResponse(blockchain, message.getData(), requestLimit);
@@ -91,7 +91,7 @@ class EthServer {
   }
 
   private void handleGetReceipts(final EthMessage message) {
-    LOG.info("Responding to GET_RECEIPTS request");
+    LOG.trace("Responding to GET_RECEIPTS request");
     try {
       final MessageData response =
           constructGetReceiptsResponse(blockchain, message.getData(), requestLimit);
@@ -104,7 +104,7 @@ class EthServer {
   }
 
   private void handleGetNodeData(final EthMessage message) {
-    LOG.info("Responding to GET_NODE_DATA request");
+    LOG.trace("Responding to GET_NODE_DATA request");
     try {
       final MessageData response = constructGetNodeDataResponse(message.getData(), requestLimit);
       message.getPeer().send(response);
