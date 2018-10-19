@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.vm;
 
 import static org.junit.Assert.assertEquals;
 
+import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.LogSeries;
@@ -34,6 +35,8 @@ import java.util.Map;
 public class GeneralStateReferenceTestTools {
   private static final ReferenceTestProtocolSchedules REFERENCE_TEST_PROTOCOL_SCHEDULES =
       ReferenceTestProtocolSchedules.create();
+  private static final List<String> SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS =
+      Arrays.asList("Frontier", "Homestead", "EIP-150");
 
   private static TransactionProcessor transactionProcessor(final String name) {
     return REFERENCE_TEST_PROTOCOL_SCHEDULES
@@ -101,7 +104,6 @@ public class GeneralStateReferenceTestTools {
     params.blacklist("RevertOpcodeWithBigOutputInInit-EIP150\\[3\\]");
     params.blacklist("RevertOpcodeWithBigOutputInInit-Homestead\\[2\\]");
     params.blacklist("RevertOpcodeWithBigOutputInInit-Homestead\\[3\\]");
-    params.blacklist("RevertInCreateInInit-Byzantium");
     params.blacklist("RevertOpcodeInInit-EIP150\\[2\\]");
     params.blacklist("RevertOpcodeInInit-EIP150\\[3\\]");
     params.blacklist("RevertOpcodeInInit-Homestead\\[2\\]");
@@ -142,12 +144,10 @@ public class GeneralStateReferenceTestTools {
     params.blacklist("UserTransactionGasLimitIsTooLowWhenZeroCost-EIP150");
     params.blacklist("UserTransactionGasLimitIsTooLowWhenZeroCost-Frontier");
     params.blacklist("UserTransactionGasLimitIsTooLowWhenZeroCost-Homestead");
-    params.blacklist("ecmul_0-3_5616_28000_96-Byzantium\\[3\\]");
 
     // Constantinople failures to investigate
     params.blacklist("RevertInCreateInInitCreate2-Constantinople");
     params.blacklist("RevertInCreateInInit-Constantinople");
-    params.blacklist("ecmul_0-3_5616_28000_96-Constantinople\\[3\\]");
   }
 
   public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {
@@ -160,7 +160,6 @@ public class GeneralStateReferenceTestTools {
     final Transaction transaction = spec.transaction();
 
     final MutableWorldState worldState = new DebuggableMutableWorldState(initialWorldState);
-
     // Several of the GeneralStateTests check if the transaction could potentially
     // consume more gas than is left for the block it's attempted to be included in.
     // This check is performed within the `BlockImporter` rather than inside the
@@ -181,9 +180,13 @@ public class GeneralStateReferenceTestTools {
             blockHeader.getCoinbase(),
             new BlockHashLookup(blockHeader, blockchain));
 
-    if (!result.isInvalid()) {
-      worldStateUpdater.commit();
+    if (result.isInvalid()) {
+      final Account coinbase = worldStateUpdater.getOrCreate(spec.blockHeader().getCoinbase());
+      if (coinbase != null && coinbase.isEmpty() && shouldClearEmptyAccounts(spec.eip())) {
+        worldStateUpdater.deleteAccount(coinbase.getAddress());
+      }
     }
+    worldStateUpdater.commit();
 
     // Check the world state root hash.
     final Hash expectedRootHash = spec.expectedRootHash();
@@ -199,5 +202,9 @@ public class GeneralStateReferenceTestTools {
         "Unmatched logs hash. Generated logs: " + logs,
         expectedLogsHash,
         Hash.hash(RLP.encode(logs::writeTo)));
+  }
+
+  private static boolean shouldClearEmptyAccounts(final String eip) {
+    return !SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS.contains(eip);
   }
 }
