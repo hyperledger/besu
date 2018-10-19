@@ -56,7 +56,7 @@ public class SubscriptionManager extends AbstractVerticle {
   }
 
   public Long subscribe(final SubscribeRequest request) {
-    LOG.info("Subscribe request {}", request);
+    LOG.debug("Subscribe request {}", request);
 
     final long subscriptionId = subscriptionCounter.incrementAndGet();
     final Subscription subscription = subscriptionBuilder.build(subscriptionId, request);

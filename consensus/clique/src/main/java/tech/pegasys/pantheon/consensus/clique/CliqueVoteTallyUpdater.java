@@ -40,7 +40,7 @@ public class CliqueVoteTallyUpdater {
   public VoteTally buildVoteTallyFromBlockchain(final Blockchain blockchain) {
     final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
     final long epochBlockNumber = epochManager.getLastEpochBlock(chainHeadBlockNumber);
-    LOG.info("Loading validator voting state starting from block {}", epochBlockNumber);
+    LOG.debug("Loading validator voting state starting from block {}", epochBlockNumber);
     final BlockHeader epochBlock = blockchain.getBlockHeader(epochBlockNumber).get();
     final List<Address> initialValidators =
         CliqueExtraData.decode(epochBlock.getExtraData()).getValidators();

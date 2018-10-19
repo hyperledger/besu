@@ -49,7 +49,7 @@ final class WireKeepAlive extends ChannelDuplexHandler {
 
     if (waitingForPong.get()) {
       // We are still waiting for a response from our last pong, disconnect with timeout error
-      LOG.info("Wire PONG never received, disconnecting from peer.");
+      LOG.debug("Wire PONG never received, disconnecting from peer.");
       connection.disconnect(DisconnectReason.TIMEOUT);
       return;
     }

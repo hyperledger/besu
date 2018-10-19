@@ -82,7 +82,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
 
       final BytesValue nodeId = handshaker.partyPubKey().getEncodedBytes();
       if (peerConnectionRegistry.isAlreadyConnected(nodeId)) {
-        LOG.info("Rejecting connection from already connected client {}", nodeId);
+        LOG.debug("Rejecting connection from already connected client {}", nodeId);
         ctx.writeAndFlush(
                 new OutboundMessage(
                     null, DisconnectMessage.create(DisconnectReason.ALREADY_CONNECTED)))

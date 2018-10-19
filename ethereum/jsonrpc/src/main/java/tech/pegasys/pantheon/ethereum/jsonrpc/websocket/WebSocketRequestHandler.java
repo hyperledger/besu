@@ -56,7 +56,7 @@ public class WebSocketRequestHandler {
           }
           final JsonRpcMethod method = methods.get(request.getMethod());
           try {
-            LOG.info("WS-RPC request -> {}", request.getMethod());
+            LOG.debug("WS-RPC request -> {}", request.getMethod());
             request.setConnectionId(id);
             future.complete(method.response(request));
           } catch (final Exception e) {
