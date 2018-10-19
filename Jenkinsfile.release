@@ -1,0 +1,41 @@
+void tryAddKnownHost(String hostUrl){
+    // ssh-keygen -F ${hostUrl} will fail (in bash that means status code != 0) if ${hostUrl} is not yet a known host
+    def statusCode = sh script:"ssh-keygen -F ${hostUrl}", returnStatus:true
+    if(statusCode != 0){
+        sh "mkdir -p ~/.ssh"
+        sh "ssh-keyscan ${hostUrl} >> ~/.ssh/known_hosts"
+    }
+}
+
+pipeline {
+    agent {
+        docker { image 'pegasyseng/pantheon-build:0.0.2' }
+    }
+    stages {
+        stage('Release') {
+            steps {
+                sshagent(
+                    credentials: ['pegasys-admin-github-ssh-private-key']
+                ) {
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'pegasys-bintray',
+                            usernameVariable: 'BINTRAY_USER',
+                            passwordVariable: 'BINTRAY_KEY'
+                        )
+                    ]) {
+                        withEnv([
+                            'GIT_COMMITTER_NAME="PegaSys Admin"',
+                            'GIT_COMMITTER_EMAIL="pegasys.manager@gmail.com"',
+                            'GIT_AUTHOR_NAME="PegaSys Admin"',
+                            'GIT_AUTHOR_EMAIL="pegasys.manager@gmail.com"'
+                        ]) {
+                            tryAddKnownHost('github.com')
+                            sh './gradlew release -Prelease.useAutomaticVersion=true -Prelease.releaseVersion=0.8.0-RC2 -Prelease.newVersion=0.8.0-SNAPSHOT'
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
