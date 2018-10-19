@@ -17,25 +17,17 @@ import static com.google.common.base.Preconditions.checkArgument;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
-import java.util.concurrent.TimeUnit;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- * Responsible for ensuring the timestamp of a block is newer than its parent, but also that it has
- * a timestamp not more than "acceptableClockDriftSeconds' into the future.
- */
-public class TimestampValidationRule implements DetachedBlockHeaderValidationRule {
+/** Responsible for ensuring the timestamp of a block is newer than its parent. */
+public class TimestampMoreRecentThanParent implements DetachedBlockHeaderValidationRule {
 
-  private final Logger LOG = LogManager.getLogger(TimestampValidationRule.class);
-  private final long acceptableClockDriftSeconds;
+  private final Logger LOG = LogManager.getLogger();
   private final long minimumSecondsSinceParent;
 
-  public TimestampValidationRule(
-      final long acceptableClockDriftSeconds, final long minimumSecondsSinceParent) {
+  public TimestampMoreRecentThanParent(final long minimumSecondsSinceParent) {
     checkArgument(minimumSecondsSinceParent >= 0, "minimumSecondsSinceParent must be positive");
-    this.acceptableClockDriftSeconds = acceptableClockDriftSeconds;
     this.minimumSecondsSinceParent = minimumSecondsSinceParent;
   }
 
@@ -45,10 +37,7 @@ public class TimestampValidationRule implements DetachedBlockHeaderValidationRul
   }
 
   private boolean validateTimestamp(final long timestamp, final long parentTimestamp) {
-    boolean result = validateHeaderSufficientlyAheadOfParent(timestamp, parentTimestamp);
-    result &= validateHeaderNotAheadOfCurrentSystemTime(timestamp);
-
-    return result;
+    return validateHeaderSufficientlyAheadOfParent(timestamp, parentTimestamp);
   }
 
   private boolean validateHeaderSufficientlyAheadOfParent(
@@ -61,20 +50,6 @@ public class TimestampValidationRule implements DetachedBlockHeaderValidationRul
       return false;
     }
 
-    return true;
-  }
-
-  private boolean validateHeaderNotAheadOfCurrentSystemTime(final long timestamp) {
-    final long timestampMargin =
-        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-            + acceptableClockDriftSeconds;
-    if (Long.compareUnsigned(timestamp, timestampMargin) > 0) {
-      LOG.trace(
-          "Invalid block header: timestamp {} is greater than the timestamp margin {}",
-          timestamp,
-          timestampMargin);
-      return false;
-    }
     return true;
   }
 }

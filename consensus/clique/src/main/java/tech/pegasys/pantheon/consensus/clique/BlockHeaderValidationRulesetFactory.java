@@ -25,7 +25,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.AncestryVali
 import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
 import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
-import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.TimestampValidationRule;
+import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
+import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
 
 public class BlockHeaderValidationRulesetFactory {
 
@@ -46,7 +47,8 @@ public class BlockHeaderValidationRulesetFactory {
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
         .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))
-        .addRule(new TimestampValidationRule(10, secondsBetweenBlocks))
+        .addRule(new TimestampBoundedByFutureParameter(10))
+        .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
         .addRule(new ConstantFieldValidationRule<>("MixHash", BlockHeader::getMixHash, Hash.ZERO))
         .addRule(
             new ConstantFieldValidationRule<>(

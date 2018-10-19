@@ -66,10 +66,6 @@ public class BlockchainReferenceTestTools {
     // Consumes a huge amount of memory
     params.blacklist("static_Call1MB1024Calldepth_d1g0v0_(Byzantium|Constantinople)");
 
-    // Pantheon is incorrectly rejecting Uncle block timestamps in the future
-    params.blacklist("futureUncleTimestampDifficultyDrop2");
-    params.blacklist("futureUncleTimestampDifficultyDrop");
-
     // Needs investigation
     params.blacklist("RevertInCreateInInit_d0g0v0_Byzantium");
     params.blacklist("RevertInCreateInInit_d0g0v0_Constantinople");
