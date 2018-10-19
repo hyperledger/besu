@@ -29,8 +29,6 @@ import tech.pegasys.pantheon.ethereum.core.BlockImporter;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 
-import java.util.Collections;
-
 import org.junit.Test;
 
 public class IbftBlockImporterTest {
@@ -54,9 +52,7 @@ public class IbftBlockImporterTest {
   public void voteTallyNotUpdatedWhenBlockImportFails() {
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     final Block block =
-        new Block(
-            headerBuilder.buildHeader(),
-            new BlockBody(Collections.emptyList(), Collections.emptyList()));
+        new Block(headerBuilder.buildHeader(), new BlockBody(emptyList(), emptyList()));
 
     when(delegate.importBlock(context, block, HeaderValidationMode.FULL, HeaderValidationMode.FULL))
         .thenReturn(false);
@@ -70,14 +66,12 @@ public class IbftBlockImporterTest {
   public void voteTallyNotUpdatedWhenFastBlockImportFails() {
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     final Block block =
-        new Block(
-            headerBuilder.buildHeader(),
-            new BlockBody(Collections.emptyList(), Collections.emptyList()));
+        new Block(headerBuilder.buildHeader(), new BlockBody(emptyList(), emptyList()));
 
     when(delegate.fastImportBlock(context, block, emptyList(), HeaderValidationMode.LIGHT))
         .thenReturn(false);
 
-    importer.fastImportBlock(context, block, Collections.emptyList(), HeaderValidationMode.LIGHT);
+    importer.fastImportBlock(context, block, emptyList(), HeaderValidationMode.LIGHT);
 
     verifyZeroInteractions(voteTallyUpdater);
   }
@@ -86,8 +80,7 @@ public class IbftBlockImporterTest {
   public void voteTallyUpdatedWhenBlockImportSucceeds() {
     final Block block =
         new Block(
-            new BlockHeaderTestFixture().buildHeader(),
-            new BlockBody(Collections.emptyList(), Collections.emptyList()));
+            new BlockHeaderTestFixture().buildHeader(), new BlockBody(emptyList(), emptyList()));
 
     when(delegate.importBlock(context, block, HeaderValidationMode.FULL, HeaderValidationMode.FULL))
         .thenReturn(true);
@@ -101,13 +94,12 @@ public class IbftBlockImporterTest {
   public void voteTallyUpdatedWhenFastBlockImportSucceeds() {
     final Block block =
         new Block(
-            new BlockHeaderTestFixture().buildHeader(),
-            new BlockBody(Collections.emptyList(), Collections.emptyList()));
+            new BlockHeaderTestFixture().buildHeader(), new BlockBody(emptyList(), emptyList()));
 
     when(delegate.fastImportBlock(context, block, emptyList(), HeaderValidationMode.LIGHT))
         .thenReturn(true);
 
-    importer.fastImportBlock(context, block, Collections.emptyList(), HeaderValidationMode.LIGHT);
+    importer.fastImportBlock(context, block, emptyList(), HeaderValidationMode.LIGHT);
 
     verify(voteTallyUpdater).updateForBlock(block.getHeader(), voteTally);
   }

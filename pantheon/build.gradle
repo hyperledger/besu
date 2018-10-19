@@ -26,6 +26,7 @@ dependencies {
   implementation project(':consensus:common')
   implementation project(':consensus:clique')
   implementation project(':consensus:ibft')
+  implementation project(':consensus:ibftlegacy')
   implementation project(':consensus:clique')
   implementation project(':ethereum:eth')
   implementation project(':ethereum:core')

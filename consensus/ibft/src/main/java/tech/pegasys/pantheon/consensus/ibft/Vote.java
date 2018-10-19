@@ -20,19 +20,19 @@ import com.google.common.base.Objects;
 
 public class Vote {
   private final Address recipient;
-  private final Ibft2VoteType voteType;
+  private final IbftVoteType voteType;
 
-  private Vote(final Address recipient, final Ibft2VoteType voteType) {
+  private Vote(final Address recipient, final IbftVoteType voteType) {
     this.recipient = recipient;
     this.voteType = voteType;
   }
 
   public static Vote authVote(final Address address) {
-    return new Vote(address, Ibft2VoteType.ADD);
+    return new Vote(address, IbftVoteType.ADD);
   }
 
   public static Vote dropVote(final Address address) {
-    return new Vote(address, Ibft2VoteType.DROP);
+    return new Vote(address, IbftVoteType.DROP);
   }
 
   public Address getRecipient() {
@@ -40,11 +40,11 @@ public class Vote {
   }
 
   public boolean isAuth() {
-    return voteType.equals(Ibft2VoteType.ADD);
+    return voteType.equals(IbftVoteType.ADD);
   }
 
   public boolean isDrop() {
-    return voteType.equals(Ibft2VoteType.DROP);
+    return voteType.equals(IbftVoteType.DROP);
   }
 
   @Override
@@ -64,7 +64,7 @@ public class Vote {
     return Objects.hashCode(recipient, voteType);
   }
 
-  public Ibft2VoteType getVoteType() {
+  public IbftVoteType getVoteType() {
     return voteType;
   }
 
@@ -79,7 +79,7 @@ public class Vote {
 
     rlpInput.enterList();
     final Address recipient = Address.readFrom(rlpInput);
-    final Ibft2VoteType vote = Ibft2VoteType.readFrom(rlpInput);
+    final IbftVoteType vote = IbftVoteType.readFrom(rlpInput);
     rlpInput.leaveList();
 
     return new Vote(recipient, vote);
