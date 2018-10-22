@@ -44,13 +44,16 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class JsonRpcHttpServiceRpcApisTest {
+  @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
   private final Vertx vertx = Vertx.vertx();
   private final OkHttpClient client = new OkHttpClient();
@@ -86,7 +89,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
     final Request request = new Request.Builder().post(body).url(baseUrl).build();
 
-    try (Response resp = client.newCall(request).execute()) {
+    try (final Response resp = client.newCall(request).execute()) {
       assertThat(resp.code()).isEqualTo(200);
     }
   }
@@ -101,7 +104,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
     final Request request = new Request.Builder().post(body).url(baseUrl).build();
 
-    try (Response resp = client.newCall(request).execute()) {
+    try (final Response resp = client.newCall(request).execute()) {
       assertThat(resp.code()).isEqualTo(200);
     }
   }
@@ -116,7 +119,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
     final Request request = new Request.Builder().post(body).url(baseUrl).build();
 
-    try (Response resp = client.newCall(request).execute()) {
+    try (final Response resp = client.newCall(request).execute()) {
       assertThat(resp.code()).isEqualTo(400);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
@@ -136,7 +139,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
     final Request request = new Request.Builder().post(body).url(baseUrl).build();
 
-    try (Response resp = client.newCall(request).execute()) {
+    try (final Response resp = client.newCall(request).execute()) {
       assertThat(resp.code()).isEqualTo(200);
     }
   }
@@ -151,12 +154,13 @@ public class JsonRpcHttpServiceRpcApisTest {
     return config;
   }
 
-  private JsonRpcHttpService createJsonRpcHttpServiceWithRpcApis(final RpcApi... rpcApis) {
+  private JsonRpcHttpService createJsonRpcHttpServiceWithRpcApis(final RpcApi... rpcApis)
+      throws Exception {
     return createJsonRpcHttpServiceWithRpcApis(createJsonRpcConfigurationWithRpcApis(rpcApis));
   }
 
-  private JsonRpcHttpService createJsonRpcHttpServiceWithRpcApis(
-      final JsonRpcConfiguration config) {
+  private JsonRpcHttpService createJsonRpcHttpServiceWithRpcApis(final JsonRpcConfiguration config)
+      throws Exception {
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);
     supportedCapabilities.add(EthProtocol.ETH63);
@@ -176,7 +180,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(EthHashMiningCoordinator.class),
                     supportedCapabilities,
                     config.getRpcApis()));
-    final JsonRpcHttpService jsonRpcHttpService = new JsonRpcHttpService(vertx, config, rpcMethods);
+    final JsonRpcHttpService jsonRpcHttpService =
+        new JsonRpcHttpService(vertx, folder.newFolder().toPath(), config, rpcMethods);
     jsonRpcHttpService.start().join();
 
     baseUrl = jsonRpcHttpService.url();

@@ -68,8 +68,11 @@ import okhttp3.OkHttpClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 
 public abstract class AbstractEthJsonRpcHttpServiceTest {
+  @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
   protected static ProtocolSchedule<Void> PROTOCOL_SCHEDULE;
 
@@ -138,7 +141,7 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
   }
 
   @Before
-  public void setupTest() {
+  public void setupTest() throws Exception {
     final Synchronizer synchronizerMock = mock(Synchronizer.class);
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final TransactionPool transactionPoolMock = mock(TransactionPool.class);
@@ -184,7 +187,7 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
                 JSON_RPC_APIS);
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setPort(0);
-    service = new JsonRpcHttpService(vertx, config, methods);
+    service = new JsonRpcHttpService(vertx, folder.newFolder().toPath(), config, methods);
     service.start().join();
 
     client = new OkHttpClient();
