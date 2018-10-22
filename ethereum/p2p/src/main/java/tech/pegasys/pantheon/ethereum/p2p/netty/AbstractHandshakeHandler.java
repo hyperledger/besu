@@ -144,7 +144,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
           || outboundMessage.getData().getCode() != WireMessageCodes.HELLO) {
         throw new IllegalStateException("First wire message sent wasn't a HELLO.");
       }
-      out.writeBytes(framer.frame(outboundMessage.getData()));
+      framer.frame(outboundMessage.getData(), out);
       context.pipeline().remove(this);
     }
   }

@@ -32,6 +32,6 @@ final class MessageFramer extends MessageToByteEncoder<OutboundMessage> {
   @Override
   protected void encode(
       final ChannelHandlerContext ctx, final OutboundMessage msg, final ByteBuf out) {
-    out.writeBytes(framer.frame(multiplexer.multiplex(msg.getCapability(), msg.getData())));
+    framer.frame(multiplexer.multiplex(msg.getCapability(), msg.getData()), out);
   }
 }

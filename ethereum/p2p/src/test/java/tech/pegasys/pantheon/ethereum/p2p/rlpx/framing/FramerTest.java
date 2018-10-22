@@ -59,7 +59,7 @@ public class FramerTest {
     final Framer framer = new Framer(secrets);
 
     assertThatExceptionOfType(IllegalArgumentException.class)
-        .isThrownBy(() -> framer.frame(ethMessage))
+        .isThrownBy(() -> framer.frame(ethMessage, Unpooled.buffer()))
         .withMessageContaining("Message size in excess of maximum length.");
   }
 
@@ -80,7 +80,8 @@ public class FramerTest {
     final ByteBuf buf = wrappedBuffer(byteArray);
 
     final MessageData ethMessage = new RawMessage(0x00, buf);
-    final ByteBuf framedMessage = framer.frameAndReleaseMessage(ethMessage);
+    final ByteBuf framedMessage = Unpooled.buffer();
+    framer.frameAndReleaseMessage(ethMessage, framedMessage);
 
     final HandshakeSecrets deframeSecrets = secretsFrom(td, true);
     final Framer deframer = new Framer(deframeSecrets);
@@ -186,7 +187,8 @@ public class FramerTest {
     framer = new Framer(secrets);
 
     for (int i = 0; i < decrypted.size(); i++) {
-      final ByteBuf b = framer.frame(decrypted.get(i));
+      final ByteBuf b = Unpooled.buffer();
+      framer.frame(decrypted.get(i), b);
       final byte[] enc = new byte[b.readableBytes()];
       b.readBytes(enc);
       final byte[] expected = decodeHexDump(messages.get(i).get("data").asText());
