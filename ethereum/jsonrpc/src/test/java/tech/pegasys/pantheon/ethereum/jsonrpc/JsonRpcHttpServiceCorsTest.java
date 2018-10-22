@@ -24,9 +24,12 @@ import okhttp3.Request.Builder;
 import okhttp3.Response;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class JsonRpcHttpServiceCorsTest {
+  @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
   private final Vertx vertx = Vertx.vertx();
   private final OkHttpClient client = new OkHttpClient();
@@ -50,7 +53,7 @@ public class JsonRpcHttpServiceCorsTest {
     final Request request =
         new Builder().url(jsonRpcHttpService.url()).header("Origin", "http://bar.me").build();
 
-    try (Response response = client.newCall(request).execute()) {
+    try (final Response response = client.newCall(request).execute()) {
       assertThat(response.isSuccessful()).isFalse();
     }
   }
@@ -62,7 +65,7 @@ public class JsonRpcHttpServiceCorsTest {
     final Request request =
         new Builder().url(jsonRpcHttpService.url()).header("Origin", "http://foo.io").build();
 
-    try (Response response = client.newCall(request).execute()) {
+    try (final Response response = client.newCall(request).execute()) {
       assertThat(response.isSuccessful()).isTrue();
     }
   }
@@ -75,7 +78,7 @@ public class JsonRpcHttpServiceCorsTest {
     final Request request =
         new Builder().url(jsonRpcHttpService.url()).header("Origin", "http://bar.me").build();
 
-    try (Response response = client.newCall(request).execute()) {
+    try (final Response response = client.newCall(request).execute()) {
       assertThat(response.isSuccessful()).isTrue();
     }
   }
@@ -88,7 +91,7 @@ public class JsonRpcHttpServiceCorsTest {
     final Request request =
         new Builder().url(jsonRpcHttpService.url()).header("Origin", "http://hel.lo").build();
 
-    try (Response response = client.newCall(request).execute()) {
+    try (final Response response = client.newCall(request).execute()) {
       assertThat(response.isSuccessful()).isFalse();
     }
   }
@@ -99,7 +102,7 @@ public class JsonRpcHttpServiceCorsTest {
 
     final Request request = new Builder().url(jsonRpcHttpService.url()).build();
 
-    try (Response response = client.newCall(request).execute()) {
+    try (final Response response = client.newCall(request).execute()) {
       assertThat(response.isSuccessful()).isTrue();
     }
   }
@@ -110,7 +113,7 @@ public class JsonRpcHttpServiceCorsTest {
 
     final Request request = new Builder().url(jsonRpcHttpService.url()).build();
 
-    try (Response response = client.newCall(request).execute()) {
+    try (final Response response = client.newCall(request).execute()) {
       assertThat(response.isSuccessful()).isTrue();
     }
   }
@@ -122,7 +125,7 @@ public class JsonRpcHttpServiceCorsTest {
     final Request request =
         new Builder().url(jsonRpcHttpService.url()).header("Origin", "http://bar.me").build();
 
-    try (Response response = client.newCall(request).execute()) {
+    try (final Response response = client.newCall(request).execute()) {
       assertThat(response.isSuccessful()).isFalse();
     }
   }
@@ -134,7 +137,7 @@ public class JsonRpcHttpServiceCorsTest {
     final Request request =
         new Builder().url(jsonRpcHttpService.url()).header("Origin", "http://bar.me").build();
 
-    try (Response response = client.newCall(request).execute()) {
+    try (final Response response = client.newCall(request).execute()) {
       assertThat(response.isSuccessful()).isTrue();
     }
   }
@@ -151,13 +154,13 @@ public class JsonRpcHttpServiceCorsTest {
             .header("Origin", "http://foo.io")
             .build();
 
-    try (Response response = client.newCall(request).execute()) {
+    try (final Response response = client.newCall(request).execute()) {
       assertThat(response.header("Access-Control-Allow-Headers")).contains("*", "content-type");
     }
   }
 
   private JsonRpcHttpService createJsonRpcHttpServiceWithAllowedDomains(
-      final String... corsAllowedDomains) {
+      final String... corsAllowedDomains) throws Exception {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setPort(0);
     if (corsAllowedDomains != null) {
@@ -165,7 +168,7 @@ public class JsonRpcHttpServiceCorsTest {
     }
 
     final JsonRpcHttpService jsonRpcHttpService =
-        new JsonRpcHttpService(vertx, config, new HashMap<>());
+        new JsonRpcHttpService(vertx, folder.newFolder().toPath(), config, new HashMap<>());
     jsonRpcHttpService.start().join();
 
     return jsonRpcHttpService;

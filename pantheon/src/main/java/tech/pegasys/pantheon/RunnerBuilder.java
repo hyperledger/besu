@@ -159,7 +159,7 @@ public class RunnerBuilder {
               jsonRpcConfiguration.getRpcApis(),
               filterManager);
       jsonRpcHttpService =
-          Optional.of(new JsonRpcHttpService(vertx, jsonRpcConfiguration, jsonRpcMethods));
+          Optional.of(new JsonRpcHttpService(vertx, dataDir, jsonRpcConfiguration, jsonRpcMethods));
     }
 
     Optional<WebSocketService> webSocketService = Optional.empty();

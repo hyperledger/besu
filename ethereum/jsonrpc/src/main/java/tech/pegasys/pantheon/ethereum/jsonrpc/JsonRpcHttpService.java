@@ -30,6 +30,7 @@ import tech.pegasys.pantheon.util.NetworkUtility;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -67,13 +68,16 @@ public class JsonRpcHttpService {
   private final Vertx vertx;
   private final JsonRpcConfiguration config;
   private final Map<String, JsonRpcMethod> jsonRpcMethods;
+  private final Path dataDir;
 
   private HttpServer httpServer;
 
   public JsonRpcHttpService(
       final Vertx vertx,
+      final Path dataDir,
       final JsonRpcConfiguration config,
       final Map<String, JsonRpcMethod> methods) {
+    this.dataDir = dataDir;
     validateConfig(config);
     this.config = config;
     this.vertx = vertx;
@@ -102,7 +106,12 @@ public class JsonRpcHttpService {
             CorsHandler.create(buildCorsRegexFromConfig())
                 .allowedHeader("*")
                 .allowedHeader("content-type"));
-    router.route().handler(BodyHandler.create());
+    router
+        .route()
+        .handler(
+            BodyHandler.create()
+                .setUploadsDirectory(dataDir.resolve("uploads").toString())
+                .setDeleteUploadedFilesOnEnd(true));
     router.route("/").method(HttpMethod.GET).handler(this::handleEmptyRequest);
     router
         .route("/")
