@@ -390,10 +390,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
       }
-
-      // After committing, clear data
-      deletedAccounts().clear();
-      updatedAccounts().clear();
     }
   }
 }
