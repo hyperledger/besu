@@ -288,9 +288,9 @@ public class Framer {
    * MACs.
    *
    * @param message The message to frame.
-   * @return The framed message, as byte buffer.
+   * @param output The {@link ByteBuf} to write framed data to.
    */
-  public synchronized ByteBuf frame(final MessageData message) {
+  public synchronized void frame(final MessageData message, final ByteBuf output) {
     Preconditions.checkArgument(
         message.getSize() < LENGTH_MAX_MESSAGE_FRAME, "Message size in excess of maximum length.");
     // Compress message
@@ -306,24 +306,22 @@ public class Framer {
         // Construct new, compressed message
         final ByteBuf compressedBuf = NetworkMemoryPool.allocate(compressed.length);
         compressedBuf.writeBytes(compressed);
-        return frameAndReleaseMessage(new RawMessage(message.getCode(), compressedBuf));
+        frameAndReleaseMessage(new RawMessage(message.getCode(), compressedBuf), output);
       } finally {
         // We have to release the original message because frameAndRelease only released the
         // compressed copy.
         message.release();
       }
     } else {
-      return frameAndReleaseMessage(message);
+      frameAndReleaseMessage(message, output);
     }
   }
 
   @VisibleForTesting
-  ByteBuf frameAndReleaseMessage(final MessageData message) {
+  void frameAndReleaseMessage(final MessageData message, final ByteBuf buf) {
     try {
       final int frameSize = message.getSize() + LENGTH_MESSAGE_ID;
       final int pad = padding16(frameSize);
-      final int bufSize = LENGTH_FULL_HEADER + (frameSize + pad + LENGTH_MAC);
-      final ByteBuf buf = NetworkMemoryPool.allocate(bufSize);
 
       final byte id = (byte) message.getCode();
 
@@ -342,9 +340,6 @@ public class Framer {
       hMac = secrets.updateEgress(xor(h, hMac)).getEgressMac();
       hMac = Arrays.copyOf(hMac, LENGTH_MAC);
       buf.writeBytes(h).writeBytes(hMac);
-
-      // Sanity check.
-      assert buf.writerIndex() == LENGTH_FULL_HEADER;
 
       // Encrypt payload.
       final byte[] f = new byte[frameSize + pad];
@@ -367,11 +362,6 @@ public class Framer {
       fMac = Arrays.copyOf(secrets.updateEgress(xor(fMac, fMacSeed)).getEgressMac(), LENGTH_MAC);
 
       buf.writeBytes(f).writeBytes(fMac);
-
-      // Sanity check: all expected bytes are written.
-      assert buf.writerIndex() == LENGTH_FULL_HEADER + (frameSize + pad + LENGTH_MAC);
-
-      return buf;
     } finally {
       message.release();
     }
