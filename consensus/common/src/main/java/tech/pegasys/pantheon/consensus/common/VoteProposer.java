@@ -60,6 +60,10 @@ public class VoteProposer {
     proposals.clear();
   }
 
+  public Map<Address, VoteType> getProposals() {
+    return proposals;
+  }
+
   public Optional<VoteType> get(final Address address) {
     return Optional.ofNullable(proposals.get(address));
   }
