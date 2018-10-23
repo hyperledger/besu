@@ -308,7 +308,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     @Override
     public NavigableMap<Bytes32, UInt256> storageEntriesFrom(
         final Bytes32 startKeyHash, final int limit) {
-      NavigableMap<Bytes32, UInt256> entries;
+      final NavigableMap<Bytes32, UInt256> entries;
       if (account != null) {
         entries = account.storageEntriesFrom(startKeyHash, limit);
       } else {

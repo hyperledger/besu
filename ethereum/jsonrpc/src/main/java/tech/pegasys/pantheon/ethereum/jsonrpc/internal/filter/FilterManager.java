@@ -124,7 +124,8 @@ public class FilterManager extends AbstractVerticle {
 
   public void recordBlockEvent(final BlockAddedEvent event, final Blockchain blockchain) {
     final Hash blockHash = event.getBlock().getHash();
-    Collection<BlockFilter> blockFilters = filterRepository.getFiltersOfType(BlockFilter.class);
+    final Collection<BlockFilter> blockFilters =
+        filterRepository.getFiltersOfType(BlockFilter.class);
     blockFilters.forEach(
         (filter) -> {
           synchronized (filter) {
@@ -136,7 +137,7 @@ public class FilterManager extends AbstractVerticle {
   }
 
   private void checkBlockchainForMatchingLogsForFilters() {
-    Collection<LogFilter> logFilters = filterRepository.getFiltersOfType(LogFilter.class);
+    final Collection<LogFilter> logFilters = filterRepository.getFiltersOfType(LogFilter.class);
     logFilters.forEach(
         (filter) -> {
           final long headBlockNumber = blockchainQueries.headBlockNumber();
@@ -150,7 +151,7 @@ public class FilterManager extends AbstractVerticle {
 
   @VisibleForTesting
   void recordPendingTransactionEvent(final Transaction transaction) {
-    Collection<PendingTransactionFilter> pendingTransactionFilters =
+    final Collection<PendingTransactionFilter> pendingTransactionFilters =
         filterRepository.getFiltersOfType(PendingTransactionFilter.class);
     if (pendingTransactionFilters.isEmpty()) {
       return;
@@ -213,7 +214,7 @@ public class FilterManager extends AbstractVerticle {
       return null;
     }
 
-    List<LogWithMetadata> logs;
+    final List<LogWithMetadata> logs;
     synchronized (filter) {
       logs = new ArrayList<>(filter.logs());
       filter.clearLogs();

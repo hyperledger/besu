@@ -122,7 +122,7 @@ public class PeerTable {
     // and an eviction
     // candidate is proposed. The Bucket#add method will raise an exception if the peer already
     // existed.
-    Optional<DiscoveryPeer> res;
+    final Optional<DiscoveryPeer> res;
     try {
       res = bucket.add(peer);
     } catch (final IllegalArgumentException ex) {

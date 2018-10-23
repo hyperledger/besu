@@ -312,7 +312,7 @@ public final class GenesisConfig<C> {
     }
 
     private Wei parseBalance(final String balance) {
-      BigInteger val;
+      final BigInteger val;
       if (balance.startsWith("0x")) {
         val = new BigInteger(1, BytesValue.fromHexStringLenient(balance).extractArray());
       } else {

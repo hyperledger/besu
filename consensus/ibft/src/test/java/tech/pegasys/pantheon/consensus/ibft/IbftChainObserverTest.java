@@ -54,7 +54,8 @@ public class IbftChainObserverTest {
 
     ibftChainObserver.onBlockAdded(mockBlockAddedEvent, mockBlockchain);
 
-    ArgumentCaptor<IbftEvent> ibftEventArgumentCaptor = ArgumentCaptor.forClass(IbftEvent.class);
+    final ArgumentCaptor<IbftEvent> ibftEventArgumentCaptor =
+        ArgumentCaptor.forClass(IbftEvent.class);
     verify(mockQueue).add(ibftEventArgumentCaptor.capture());
 
     assertThat(ibftEventArgumentCaptor.getValue() instanceof NewChainHead).isTrue();

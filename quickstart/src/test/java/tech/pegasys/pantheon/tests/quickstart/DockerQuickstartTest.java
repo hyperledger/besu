@@ -67,12 +67,13 @@ public class DockerQuickstartTest {
 
   @BeforeClass
   public static void runPantheonPrivateNetwork() throws IOException, InterruptedException {
-    ProcessBuilder processBuilder = new ProcessBuilder("quickstart/runPantheonPrivateNetwork.sh");
+    final ProcessBuilder processBuilder =
+        new ProcessBuilder("quickstart/runPantheonPrivateNetwork.sh");
     processBuilder.directory(new File(PROJECT_ROOT)); // going up one level is the project root
     processBuilder.inheritIO(); // redirect all output to logs
-    Process process = processBuilder.start();
+    final Process process = processBuilder.start();
 
-    int exitValue = process.waitFor();
+    final int exitValue = process.waitFor();
 
     if (exitValue != 0) {
       // check for errors, error messages and causes are redirected to logs already
@@ -82,21 +83,22 @@ public class DockerQuickstartTest {
 
   @Before
   public void listQuickstartServices() throws IOException, InterruptedException {
-    ProcessBuilder processBuilder = new ProcessBuilder("quickstart/listQuickstartServices.sh");
+    final ProcessBuilder processBuilder =
+        new ProcessBuilder("quickstart/listQuickstartServices.sh");
     processBuilder.directory(new File(PROJECT_ROOT)); // going up one level is the project root
     // redirect only error output to logs as we want to be able to
     // keep the standard output available for reading
     processBuilder.redirectError(Redirect.INHERIT);
-    Process process = processBuilder.start();
+    final Process process = processBuilder.start();
 
-    int exitValue = process.waitFor();
+    final int exitValue = process.waitFor();
 
     if (exitValue != 0) {
       // check for errors, error messages and causes are redirected to logs already
       throw new RuntimeException("execution of script failed!");
     }
 
-    BufferedReader reader =
+    final BufferedReader reader =
         new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8));
 
     reader.lines().forEach(this::populateServicesAndEndpoints);
@@ -125,25 +127,25 @@ public class DockerQuickstartTest {
     // We check that the output of the script displays the right endpoints and services states
     // each endpoint and service will be stored in a map for later use.
 
-    for (ServicesIdentifier servicesIdentifier : ServicesIdentifier.values()) {
-      Matcher regexMatcher = servicesIdentifier.pattern.matcher(line);
+    for (final ServicesIdentifier servicesIdentifier : ServicesIdentifier.values()) {
+      final Matcher regexMatcher = servicesIdentifier.pattern.matcher(line);
       if (regexMatcher.find()) {
-        Service service = new Service();
+        final Service service = new Service();
         service.name = regexMatcher.group(1);
         service.state = regexMatcher.group(2).toLowerCase();
-        String portMappings[] = regexMatcher.group(3).split(",", -1);
-        for (String mapping : portMappings) {
-          ExposedPort port = new ExposedPort(mapping);
+        final String[] portMappings = regexMatcher.group(3).split(",", -1);
+        for (final String mapping : portMappings) {
+          final ExposedPort port = new ExposedPort(mapping);
           service.exposedPorts.put(port.internalPort, port);
         }
         services.put(servicesIdentifier, service);
       }
     }
 
-    for (EndpointsIdentifier endpointsIdentifier : EndpointsIdentifier.values()) {
-      Matcher regexMatcher = endpointsIdentifier.pattern.matcher(line);
+    for (final EndpointsIdentifier endpointsIdentifier : EndpointsIdentifier.values()) {
+      final Matcher regexMatcher = endpointsIdentifier.pattern.matcher(line);
       if (regexMatcher.find()) {
-        String endpoint = regexMatcher.group(1);
+        final String endpoint = regexMatcher.group(1);
         endpoints.put(endpointsIdentifier, endpoint);
       }
     }
@@ -157,13 +159,13 @@ public class DockerQuickstartTest {
 
   @AfterClass
   public static void removePantheonPrivateNetwork() throws IOException, InterruptedException {
-    ProcessBuilder processBuilder =
+    final ProcessBuilder processBuilder =
         new ProcessBuilder("quickstart/removePantheonPrivateNetwork.sh");
     processBuilder.inheritIO(); // redirect all output to logs
     processBuilder.directory(new File(PROJECT_ROOT)); // going up one level is the project root
-    Process process = processBuilder.start();
+    final Process process = processBuilder.start();
 
-    int exitValue = process.waitFor();
+    final int exitValue = process.waitFor();
     if (exitValue != 0) {
       // check for errors, all output and then also error messages and causes are redirected to logs
       throw new RuntimeException("execution of script failed!");
@@ -202,7 +204,7 @@ public class DockerQuickstartTest {
   public void rpcNodeShouldFindPeers() {
     // Peers are those defined in docker-compose.yml and launched with scaling of 4 regular nodes
     // which gives us 6 peers of the RPC node: bootnode, minernode and 4 regular nodes.
-    int expectecNumberOfPeers = 6;
+    final int expectecNumberOfPeers = 6;
 
     Awaitility.await()
         .ignoreExceptions()
@@ -215,7 +217,7 @@ public class DockerQuickstartTest {
 
   @Test
   public void rpcNodeShouldReturnCorrectVersion() {
-    String expectedVersion = PantheonInfo.version();
+    final String expectedVersion = PantheonInfo.version();
     Awaitility.await()
         .ignoreExceptions()
         .atMost(60, TimeUnit.SECONDS)
@@ -228,7 +230,7 @@ public class DockerQuickstartTest {
   @Test
   public void mustMineSomeBlocks() {
     // A bug occurred that failed mining after 2 blocks, so testing at least 10.
-    int expectedAtLeastBlockNumber = 10;
+    final int expectedAtLeastBlockNumber = 10;
     Awaitility.await()
         .ignoreExceptions()
         .atMost(5, TimeUnit.MINUTES)
@@ -240,7 +242,7 @@ public class DockerQuickstartTest {
 
   @Test
   public void webSocketRpcServiceMustConnect() {
-    RequestOptions options = new RequestOptions();
+    final RequestOptions options = new RequestOptions();
     options.setPort(
         services
             .get(ServicesIdentifier.RPCNODE)
@@ -271,14 +273,14 @@ public class DockerQuickstartTest {
     // we have to check that the sed command well replaced the endpoint placeholder with the
     // real dynamic endpoint. But as this is a react app, we have to search for the value in the JS
     // as we can't find it in the HTML page because source code is rendered dynamically.
-    Request request =
+    final Request request =
         new Request.Builder()
             .get()
             .url(endpoints.get(EndpointsIdentifier.EXPLORER) + "/static/js/bundle.js")
             .build();
 
-    OkHttpClient httpClient = new OkHttpClient();
-    try (Response resp = httpClient.newCall(request).execute()) {
+    final OkHttpClient httpClient = new OkHttpClient();
+    try (final Response resp = httpClient.newCall(request).execute()) {
       assertThat(resp.code()).isEqualTo(200);
       assertThat(resp.body()).isNotNull();
       assertThat(resp.body().string())
@@ -333,15 +335,15 @@ public class DockerQuickstartTest {
 
       ExposedPort(final String portDescription) {
         if (portDescription.contains("->")) {
-          String[] ports = portDescription.split("->", 2);
+          final String[] ports = portDescription.split("->", 2);
 
-          String[] internalPortInfos = ports[1].split("/", 2);
+          final String[] internalPortInfos = ports[1].split("/", 2);
           internalPort = Integer.valueOf(internalPortInfos[0]);
-          String[] externalPortInfos = ports[0].split(":", 2);
+          final String[] externalPortInfos = ports[0].split(":", 2);
 
           externalPort = Integer.valueOf(externalPortInfos[1]);
         } else {
-          Matcher regexMatcher = pattern.matcher(portDescription);
+          final Matcher regexMatcher = pattern.matcher(portDescription);
           internalPort = regexMatcher.find() ? Integer.valueOf(regexMatcher.group(0)) : null;
           externalPort = null;
         }

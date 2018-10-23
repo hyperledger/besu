@@ -58,19 +58,19 @@ public class CliqueBlockSchedulerTest {
 
   @Test
   public void inturnValidatorWaitsExactlyBlockInterval() {
-    Clock clock = mock(Clock.class);
+    final Clock clock = mock(Clock.class);
     final long currentSecondsSinceEpoch = 10L;
     final long secondsBetweenBlocks = 5L;
     when(clock.millisecondsSinceEpoch()).thenReturn(currentSecondsSinceEpoch * 1000);
-    CliqueBlockScheduler scheduler =
+    final CliqueBlockScheduler scheduler =
         new CliqueBlockScheduler(clock, voteTallyCache, localAddr, secondsBetweenBlocks);
 
     // There are 2 validators, therefore block 2 will put localAddr as the in-turn voter, therefore
     // parent block should be number 1.
-    BlockHeader parentHeader =
+    final BlockHeader parentHeader =
         blockHeaderBuilder.number(1).timestamp(currentSecondsSinceEpoch).buildHeader();
 
-    BlockCreationTimeResult result = scheduler.getNextTimestamp(parentHeader);
+    final BlockCreationTimeResult result = scheduler.getNextTimestamp(parentHeader);
 
     assertThat(result.getTimestampForHeader())
         .isEqualTo(currentSecondsSinceEpoch + secondsBetweenBlocks);
@@ -79,19 +79,19 @@ public class CliqueBlockSchedulerTest {
 
   @Test
   public void outOfturnValidatorWaitsLongerThanBlockInterval() {
-    Clock clock = mock(Clock.class);
+    final Clock clock = mock(Clock.class);
     final long currentSecondsSinceEpoch = 10L;
     final long secondsBetweenBlocks = 5L;
     when(clock.millisecondsSinceEpoch()).thenReturn(currentSecondsSinceEpoch * 1000);
-    CliqueBlockScheduler scheduler =
+    final CliqueBlockScheduler scheduler =
         new CliqueBlockScheduler(clock, voteTallyCache, localAddr, secondsBetweenBlocks);
 
     // There are 2 validators, therefore block 3 will put localAddr as the out-turn voter, therefore
     // parent block should be number 2.
-    BlockHeader parentHeader =
+    final BlockHeader parentHeader =
         blockHeaderBuilder.number(2).timestamp(currentSecondsSinceEpoch).buildHeader();
 
-    BlockCreationTimeResult result = scheduler.getNextTimestamp(parentHeader);
+    final BlockCreationTimeResult result = scheduler.getNextTimestamp(parentHeader);
 
     assertThat(result.getTimestampForHeader())
         .isEqualTo(currentSecondsSinceEpoch + secondsBetweenBlocks);
@@ -100,22 +100,22 @@ public class CliqueBlockSchedulerTest {
 
   @Test
   public void inTurnValidatorCreatesBlockNowIFParentTimestampSufficientlyBehindNow() {
-    Clock clock = mock(Clock.class);
+    final Clock clock = mock(Clock.class);
     final long currentSecondsSinceEpoch = 10L;
     final long secondsBetweenBlocks = 5L;
     when(clock.millisecondsSinceEpoch()).thenReturn(currentSecondsSinceEpoch * 1000);
-    CliqueBlockScheduler scheduler =
+    final CliqueBlockScheduler scheduler =
         new CliqueBlockScheduler(clock, voteTallyCache, localAddr, secondsBetweenBlocks);
 
     // There are 2 validators, therefore block 2 will put localAddr as the in-turn voter, therefore
     // parent block should be number 1.
-    BlockHeader parentHeader =
+    final BlockHeader parentHeader =
         blockHeaderBuilder
             .number(1)
             .timestamp(currentSecondsSinceEpoch - secondsBetweenBlocks)
             .buildHeader();
 
-    BlockCreationTimeResult result = scheduler.getNextTimestamp(parentHeader);
+    final BlockCreationTimeResult result = scheduler.getNextTimestamp(parentHeader);
 
     assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch);
     assertThat(result.getMillisecondsUntilValid()).isEqualTo(0);

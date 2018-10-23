@@ -42,7 +42,7 @@ public class CorsAllowedOriginsProperty {
 
     @Override
     public CorsAllowedOriginsProperty convert(final String value) throws IllegalArgumentException {
-      List<String> domains;
+      final List<String> domains;
       if (value != null && !value.isEmpty()) {
         domains = new ArrayList<>(Arrays.asList(value.split("\\s*,\\s*")));
       } else {

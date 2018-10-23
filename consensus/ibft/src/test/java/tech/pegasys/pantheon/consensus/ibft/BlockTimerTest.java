@@ -78,7 +78,8 @@ public class BlockTimerTest {
 
     when(mockClock.millisecondsSinceEpoch()).thenReturn(NOW_MILLIS);
 
-    BlockHeader header = new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
+    final BlockHeader header =
+        new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
     final ConsensusRoundIdentifier round =
         new ConsensusRoundIdentifier(0xFEDBCA9876543210L, 0x12345678);
 
@@ -102,11 +103,12 @@ public class BlockTimerTest {
 
     when(mockClock.millisecondsSinceEpoch()).thenReturn(NOW_MILLIS);
 
-    BlockHeader header = new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
+    final BlockHeader header =
+        new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
     final ConsensusRoundIdentifier round =
         new ConsensusRoundIdentifier(0xFEDBCA9876543210L, 0x12345678);
 
-    BlockTimer timer =
+    final BlockTimer timer =
         new BlockTimer(
             mockQueue,
             MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS,
@@ -122,7 +124,7 @@ public class BlockTimerTest {
         .atLeast(EXPECTED_DELAY - 200, TimeUnit.MILLISECONDS)
         .until(timer::isRunning, equalTo(false));
 
-    ArgumentCaptor<IbftEvent> ibftEventCaptor = ArgumentCaptor.forClass(IbftEvent.class);
+    final ArgumentCaptor<IbftEvent> ibftEventCaptor = ArgumentCaptor.forClass(IbftEvent.class);
     verify(mockQueue).add(ibftEventCaptor.capture());
 
     assertThat(ibftEventCaptor.getValue() instanceof BlockTimerExpiry).isTrue();
@@ -142,14 +144,15 @@ public class BlockTimerTest {
 
     when(mockClock.millisecondsSinceEpoch()).thenReturn(NOW_MILLIS);
 
-    BlockHeader header = new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
+    final BlockHeader header =
+        new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
     final ConsensusRoundIdentifier round =
         new ConsensusRoundIdentifier(0xFEDBCA9876543210L, 0x12345678);
 
     timer.startTimer(round, header);
     verify(mockExecutorService, never()).schedule(any(Runnable.class), anyLong(), any());
 
-    ArgumentCaptor<IbftEvent> ibftEventCaptor = ArgumentCaptor.forClass(IbftEvent.class);
+    final ArgumentCaptor<IbftEvent> ibftEventCaptor = ArgumentCaptor.forClass(IbftEvent.class);
     verify(mockQueue).add(ibftEventCaptor.capture());
 
     assertThat(ibftEventCaptor.getValue() instanceof BlockTimerExpiry).isTrue();
@@ -169,14 +172,15 @@ public class BlockTimerTest {
 
     when(mockClock.millisecondsSinceEpoch()).thenReturn(NOW_MILLIS);
 
-    BlockHeader header = new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
+    final BlockHeader header =
+        new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
     final ConsensusRoundIdentifier round =
         new ConsensusRoundIdentifier(0xFEDBCA9876543210L, 0x12345678);
 
     timer.startTimer(round, header);
     verify(mockExecutorService, never()).schedule(any(Runnable.class), anyLong(), any());
 
-    ArgumentCaptor<IbftEvent> ibftEventCaptor = ArgumentCaptor.forClass(IbftEvent.class);
+    final ArgumentCaptor<IbftEvent> ibftEventCaptor = ArgumentCaptor.forClass(IbftEvent.class);
     verify(mockQueue).add(ibftEventCaptor.capture());
 
     assertThat(ibftEventCaptor.getValue() instanceof BlockTimerExpiry).isTrue();
@@ -196,7 +200,8 @@ public class BlockTimerTest {
 
     when(mockClock.millisecondsSinceEpoch()).thenReturn(NOW_MILLIS);
 
-    BlockHeader header = new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
+    final BlockHeader header =
+        new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
     final ConsensusRoundIdentifier round =
         new ConsensusRoundIdentifier(0xFEDBCA9876543210L, 0x12345678);
     final ScheduledFuture<?> mockedFuture = mock(ScheduledFuture.class);
@@ -222,7 +227,8 @@ public class BlockTimerTest {
 
     when(mockClock.millisecondsSinceEpoch()).thenReturn(NOW_MILLIS);
 
-    BlockHeader header = new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
+    final BlockHeader header =
+        new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
     final ConsensusRoundIdentifier round =
         new ConsensusRoundIdentifier(0xFEDBCA9876543210L, 0x12345678);
 

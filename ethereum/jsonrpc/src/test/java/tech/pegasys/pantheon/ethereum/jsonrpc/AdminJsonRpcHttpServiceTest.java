@@ -71,7 +71,7 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTest {
             "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"admin_peers\"}");
     final Request request = new Request.Builder().post(body).url(baseUrl).build();
     LOG.info("Request: " + request);
-    try (Response resp = client.newCall(request).execute()) {
+    try (final Response resp = client.newCall(request).execute()) {
       LOG.info("Response: " + resp);
 
       assertThat(resp.code()).isEqualTo(200);

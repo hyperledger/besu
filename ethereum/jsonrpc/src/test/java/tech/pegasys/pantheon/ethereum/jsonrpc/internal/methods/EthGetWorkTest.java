@@ -69,7 +69,7 @@ public class EthGetWorkTest {
         new JsonRpcSuccessResponse(request.getId(), expectedValue);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(values));
 
-    JsonRpcResponse actualResponse = method.response(request);
+    final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
@@ -89,7 +89,7 @@ public class EthGetWorkTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getId(), expectedValue);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(values));
-    JsonRpcResponse actualResponse = method.response(request);
+    final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
@@ -100,7 +100,7 @@ public class EthGetWorkTest {
         new JsonRpcErrorResponse(request.getId(), JsonRpcError.NO_MINING_WORK_FOUND);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.empty());
 
-    JsonRpcResponse actualResponse = method.response(request);
+    final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 

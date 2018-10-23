@@ -42,7 +42,7 @@ public abstract class Hash {
    * @return A digest.
    */
   private static byte[] digestUsingAlgorithm(final byte[] input, final String alg) {
-    MessageDigest digest;
+    final MessageDigest digest;
     try {
       digest = BouncyCastleMessageDigestFactory.create(alg);
       digest.update(input);
@@ -60,7 +60,7 @@ public abstract class Hash {
    * @return A digest.
    */
   private static byte[] digestUsingAlgorithm(final BytesValue input, final String alg) {
-    MessageDigest digest;
+    final MessageDigest digest;
     try {
       digest = BouncyCastleMessageDigestFactory.create(alg);
       input.update(digest);

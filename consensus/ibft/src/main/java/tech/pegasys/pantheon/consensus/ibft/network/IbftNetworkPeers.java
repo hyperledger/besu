@@ -53,7 +53,7 @@ public class IbftNetworkPeers {
   }
 
   public void multicastToValidators(final MessageData message) {
-    Collection<Address> validators = validatorProvider.getCurrentValidators();
+    final Collection<Address> validators = validatorProvider.getCurrentValidators();
     sendMessageToSpecificAddresses(validators, message);
   }
 
@@ -67,7 +67,7 @@ public class IbftNetworkPeers {
             connection -> {
               try {
                 connection.sendForProtocol(PROTOCOL_NAME, message);
-              } catch (PeerNotConnected peerNotConnected) {
+              } catch (final PeerNotConnected peerNotConnected) {
                 LOG.trace("Lost connection to a validator.");
               }
             });

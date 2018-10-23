@@ -255,7 +255,7 @@ public class EthJsonRpcHttpBySpecTest extends AbstractEthJsonRpcHttpServiceTest 
     final Request request = new Request.Builder().post(requestBody).url(baseUrl).build();
 
     importBlocks(1, BLOCKS.size());
-    try (Response resp = client.newCall(request).execute()) {
+    try (final Response resp = client.newCall(request).execute()) {
       final int expectedStatusCode = spec.getInteger("statusCode");
       assertThat(resp.code()).isEqualTo(expectedStatusCode);
 

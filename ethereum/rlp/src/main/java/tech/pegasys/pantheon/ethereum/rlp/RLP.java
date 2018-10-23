@@ -226,8 +226,8 @@ public abstract class RLP {
       return encodedValue;
     }
 
-    int offset;
-    int size;
+    final int offset;
+    final int size;
     if (kind == Kind.SHORT_ELEMENT) {
       offset = 1;
       size = prefix - 0x80;

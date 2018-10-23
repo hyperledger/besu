@@ -197,10 +197,10 @@ public class SubscriptionManagerTest {
 
   @Test
   public void unsubscribeOthersSubscriptionsNotHavingOwnSubscriptionShouldReturnNotFound() {
-    SubscribeRequest subscribeRequest = subscribeRequest(CONNECTION_ID);
-    Long subscriptionId = subscriptionManager.subscribe(subscribeRequest);
+    final SubscribeRequest subscribeRequest = subscribeRequest(CONNECTION_ID);
+    final Long subscriptionId = subscriptionManager.subscribe(subscribeRequest);
 
-    UnsubscribeRequest unsubscribeRequest =
+    final UnsubscribeRequest unsubscribeRequest =
         new UnsubscribeRequest(subscriptionId, UUID.randomUUID().toString());
 
     final Throwable thrown =
@@ -210,15 +210,15 @@ public class SubscriptionManagerTest {
 
   @Test
   public void unsubscribeOthersSubscriptionsHavingOwnSubscriptionShouldReturnNotFound() {
-    String ownConnectionId = UUID.randomUUID().toString();
-    SubscribeRequest ownSubscribeRequest = subscribeRequest(ownConnectionId);
+    final String ownConnectionId = UUID.randomUUID().toString();
+    final SubscribeRequest ownSubscribeRequest = subscribeRequest(ownConnectionId);
     subscriptionManager.subscribe(ownSubscribeRequest);
 
-    String otherConnectionId = UUID.randomUUID().toString();
-    SubscribeRequest otherSubscribeRequest = subscribeRequest(otherConnectionId);
-    Long otherSubscriptionId = subscriptionManager.subscribe(otherSubscribeRequest);
+    final String otherConnectionId = UUID.randomUUID().toString();
+    final SubscribeRequest otherSubscribeRequest = subscribeRequest(otherConnectionId);
+    final Long otherSubscriptionId = subscriptionManager.subscribe(otherSubscribeRequest);
 
-    UnsubscribeRequest unsubscribeRequest =
+    final UnsubscribeRequest unsubscribeRequest =
         new UnsubscribeRequest(otherSubscriptionId, ownConnectionId);
 
     final Throwable thrown =

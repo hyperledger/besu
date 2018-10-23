@@ -165,10 +165,10 @@ public class ECIESEncryptionEngine {
 
   private byte[] encrypt(final byte[] in, final int inOff, final int inLen, final byte[] macData)
       throws InvalidCipherTextException {
-    byte[] C;
-    byte[] K;
-    byte[] K1;
-    byte[] K2;
+    final byte[] C;
+    final byte[] K;
+    final byte[] K1;
+    final byte[] K2;
 
     int len;
 
@@ -245,10 +245,10 @@ public class ECIESEncryptionEngine {
   private byte[] decrypt(
       final byte[] inEnc, final int inOff, final int inLen, final byte[] commonMac)
       throws InvalidCipherTextException {
-    byte[] M;
-    byte[] K;
-    byte[] K1;
-    byte[] K2;
+    final byte[] M;
+    final byte[] K;
+    final byte[] K1;
+    final byte[] K2;
 
     int len;
 

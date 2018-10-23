@@ -95,7 +95,7 @@ public class SynchronizerConfiguration {
       return this;
     }
 
-    SyncMode actualSyncMode;
+    final SyncMode actualSyncMode;
     if (requestedSyncMode.equals(SyncMode.FAST)) {
       final boolean blockchainIsEmpty =
           blockchain.getChainHeadBlockNumber() != BlockHeader.GENESIS_BLOCK_NUMBER;

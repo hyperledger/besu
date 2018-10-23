@@ -48,7 +48,7 @@ public class IbftJsonRpcMethodsFactory {
 
   private void addMethods(
       final Map<String, JsonRpcMethod> methods, final JsonRpcMethod... rpcMethods) {
-    for (JsonRpcMethod rpcMethod : rpcMethods) {
+    for (final JsonRpcMethod rpcMethod : rpcMethods) {
       methods.put(rpcMethod.getName(), rpcMethod);
     }
   }

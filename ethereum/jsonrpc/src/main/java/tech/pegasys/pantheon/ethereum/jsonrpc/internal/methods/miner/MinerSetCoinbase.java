@@ -44,7 +44,7 @@ public class MinerSetCoinbase implements JsonRpcMethod {
       final Address coinbase = parameters.required(req.getParams(), 0, Address.class);
       miningCoordinator.setCoinbase(coinbase);
       return new JsonRpcSuccessResponse(req.getId(), true);
-    } catch (UnsupportedOperationException ex) {
+    } catch (final UnsupportedOperationException ex) {
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INVALID_REQUEST);
     }
   }

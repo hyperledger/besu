@@ -67,7 +67,7 @@ public class ProofOfWorkValidationRuleTest {
 
   @Test
   public void failsBlockWithZeroValuedDifficulty() {
-    BlockHeader header =
+    final BlockHeader header =
         BlockHeaderBuilder.fromHeader(blockHeader)
             .difficulty(UInt256.ZERO)
             .blockHashFunction(mainnetBlockHashFunction())
@@ -77,8 +77,8 @@ public class ProofOfWorkValidationRuleTest {
 
   @Test
   public void failsWithVeryLargeDifficulty() {
-    UInt256 largeDifficulty = UInt256.of(BigInteger.valueOf(2).pow(255));
-    BlockHeader header =
+    final UInt256 largeDifficulty = UInt256.of(BigInteger.valueOf(2).pow(255));
+    final BlockHeader header =
         BlockHeaderBuilder.fromHeader(blockHeader)
             .difficulty(largeDifficulty)
             .blockHashFunction(mainnetBlockHashFunction())
@@ -88,8 +88,8 @@ public class ProofOfWorkValidationRuleTest {
 
   @Test
   public void failsWithMisMatchedMixHash() {
-    Hash updateMixHash = Hash.wrap(blockHeader.getMixHash().asUInt256().minus(1L).getBytes());
-    BlockHeader header =
+    final Hash updateMixHash = Hash.wrap(blockHeader.getMixHash().asUInt256().minus(1L).getBytes());
+    final BlockHeader header =
         BlockHeaderBuilder.fromHeader(blockHeader)
             .mixHash(updateMixHash)
             .blockHashFunction(mainnetBlockHashFunction())
@@ -99,8 +99,8 @@ public class ProofOfWorkValidationRuleTest {
 
   @Test
   public void failsWithMisMatchedNonce() {
-    long updatedNonce = blockHeader.getNonce() + 1;
-    BlockHeader header =
+    final long updatedNonce = blockHeader.getNonce() + 1;
+    final BlockHeader header =
         BlockHeaderBuilder.fromHeader(blockHeader)
             .nonce(updatedNonce)
             .blockHashFunction(mainnetBlockHashFunction())
@@ -109,7 +109,7 @@ public class ProofOfWorkValidationRuleTest {
   }
 
   private BlockHashFunction mainnetBlockHashFunction() {
-    ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
+    final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
     return ScheduleBasedBlockHashFunction.create(protocolSchedule);
   }
 }

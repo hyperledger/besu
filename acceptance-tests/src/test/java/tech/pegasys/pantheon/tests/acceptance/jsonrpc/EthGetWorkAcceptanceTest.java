@@ -38,14 +38,14 @@ public class EthGetWorkAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldReturnSuccessResponseWhenMining() throws Exception {
-    String[] response = minerNode.eth().getWork();
+    final String[] response = minerNode.eth().getWork();
     assertThat(response).hasSize(3);
     assertThat(response).doesNotContainNull();
   }
 
   @Test
   public void shouldReturnErrorResponseWhenNotMining() {
-    Throwable thrown = catchThrowable(() -> fullNode.eth().getWork());
+    final Throwable thrown = catchThrowable(() -> fullNode.eth().getWork());
     assertThat(thrown).isInstanceOf(ClientConnectionException.class);
     assertThat(thrown.getMessage()).contains("No mining work available yet");
   }

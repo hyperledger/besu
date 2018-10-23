@@ -149,7 +149,7 @@ abstract class AbstractRLPOutput implements RLPOutput {
       assert values.size() == 1;
       final BytesValue value = values.get(0);
 
-      int finalOffset;
+      final int finalOffset;
       // Single non-list value.
       if (rlpEncoded.get(0)) {
         value.copyTo(res, 0);

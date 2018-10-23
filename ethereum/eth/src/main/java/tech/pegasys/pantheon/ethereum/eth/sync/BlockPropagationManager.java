@@ -101,7 +101,7 @@ public class BlockPropagationManager<C> {
     // Check to see if any of our pending blocks are now ready for import
     final Block newBlock = blockAddedEvent.getBlock();
 
-    List<Block> readyForImport;
+    final List<Block> readyForImport;
     synchronized (pendingBlocks) {
       // Remove block from pendingBlocks list
       pendingBlocks.deregisterPendingBlock(newBlock);

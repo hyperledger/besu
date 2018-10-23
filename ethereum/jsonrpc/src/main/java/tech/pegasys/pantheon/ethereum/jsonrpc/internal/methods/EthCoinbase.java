@@ -43,7 +43,7 @@ public class EthCoinbase implements JsonRpcMethod {
         return new JsonRpcSuccessResponse(req.getId(), coinbase.get().toString());
       }
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.COINBASE_NOT_SPECIFIED);
-    } catch (UnsupportedOperationException ex) {
+    } catch (final UnsupportedOperationException ex) {
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INVALID_REQUEST);
     }
   }

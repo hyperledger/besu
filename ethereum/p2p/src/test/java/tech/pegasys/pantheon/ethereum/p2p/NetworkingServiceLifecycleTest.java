@@ -45,7 +45,7 @@ public class NetworkingServiceLifecycleTest {
   @Test
   public void createPeerDiscoveryAgent() {
     final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
-    try (NettyP2PNetwork service =
+    try (final NettyP2PNetwork service =
         new NettyP2PNetwork(
             vertx,
             keyPair,
@@ -67,7 +67,7 @@ public class NetworkingServiceLifecycleTest {
     final NetworkingConfiguration config =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindHost(null));
-    try (P2PNetwork broken =
+    try (final P2PNetwork broken =
         new NettyP2PNetwork(vertx, keyPair, config, emptyList(), () -> true, new PeerBlacklist())) {
       Assertions.fail("Expected Exception");
     }
@@ -79,7 +79,7 @@ public class NetworkingServiceLifecycleTest {
     final NetworkingConfiguration config =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindHost("fake.fake.fake"));
-    try (P2PNetwork broken =
+    try (final P2PNetwork broken =
         new NettyP2PNetwork(vertx, keyPair, config, emptyList(), () -> true, new PeerBlacklist())) {
       Assertions.fail("Expected Exception");
     }
@@ -91,7 +91,7 @@ public class NetworkingServiceLifecycleTest {
     final NetworkingConfiguration config =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindPort(-1));
-    try (P2PNetwork broken =
+    try (final P2PNetwork broken =
         new NettyP2PNetwork(vertx, keyPair, config, emptyList(), () -> true, new PeerBlacklist())) {
       Assertions.fail("Expected Exception");
     }
@@ -99,7 +99,7 @@ public class NetworkingServiceLifecycleTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void createPeerDiscoveryAgent_NullKeyPair() throws IOException {
-    try (P2PNetwork broken =
+    try (final P2PNetwork broken =
         new NettyP2PNetwork(
             vertx, null, configWithRandomPorts(), emptyList(), () -> true, new PeerBlacklist())) {
       Assertions.fail("Expected Exception");
@@ -109,7 +109,7 @@ public class NetworkingServiceLifecycleTest {
   @Test
   public void startStopPeerDiscoveryAgent() {
     final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
-    try (NettyP2PNetwork service =
+    try (final NettyP2PNetwork service =
         new NettyP2PNetwork(
             vertx,
             keyPair,
@@ -126,7 +126,7 @@ public class NetworkingServiceLifecycleTest {
   @Test
   public void startDiscoveryAgentBackToBack() {
     final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
-    try (NettyP2PNetwork service1 =
+    try (final NettyP2PNetwork service1 =
             new NettyP2PNetwork(
                 vertx,
                 keyPair,
@@ -134,7 +134,7 @@ public class NetworkingServiceLifecycleTest {
                 emptyList(),
                 () -> true,
                 new PeerBlacklist());
-        NettyP2PNetwork service2 =
+        final NettyP2PNetwork service2 =
             new NettyP2PNetwork(
                 vertx,
                 keyPair,
@@ -152,7 +152,7 @@ public class NetworkingServiceLifecycleTest {
   @Test
   public void startDiscoveryPortInUse() {
     final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
-    try (NettyP2PNetwork service1 =
+    try (final NettyP2PNetwork service1 =
         new NettyP2PNetwork(
             vertx,
             keyPair,
@@ -163,7 +163,7 @@ public class NetworkingServiceLifecycleTest {
       service1.run();
       final NetworkingConfiguration config = configWithRandomPorts();
       config.getDiscovery().setBindPort(service1.getDiscoverySocketAddress().getPort());
-      try (NettyP2PNetwork service2 =
+      try (final NettyP2PNetwork service2 =
           new NettyP2PNetwork(
               vertx, keyPair, config, emptyList(), () -> true, new PeerBlacklist())) {
         try {
@@ -186,7 +186,7 @@ public class NetworkingServiceLifecycleTest {
   @Test
   public void createPeerDiscoveryAgent_NoActivePeers() {
     final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
-    try (NettyP2PNetwork agent =
+    try (final NettyP2PNetwork agent =
         new NettyP2PNetwork(
             vertx,
             keyPair,

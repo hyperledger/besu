@@ -96,7 +96,7 @@ public class ProposerSelector {
       final Address prevBlockProposer, final ConsensusRoundIdentifier roundIdentifier) {
     final NavigableSet<Address> validatorSet = new TreeSet<>(validators.getCurrentValidators());
     final SortedSet<Address> latterValidators = validatorSet.tailSet(prevBlockProposer, false);
-    Address nextProposer;
+    final Address nextProposer;
     if (latterValidators.isEmpty()) {
       // i.e. prevBlockProposer was at the end of the validator list, so the right validator for
       // the start of this round is the first.

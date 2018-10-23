@@ -38,8 +38,8 @@ public class IbftProposeValidatorVote implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequest req) {
 
-    Address validatorAddress = parameters.required(req.getParams(), 0, Address.class);
-    Boolean add = parameters.required(req.getParams(), 1, Boolean.class);
+    final Address validatorAddress = parameters.required(req.getParams(), 0, Address.class);
+    final Boolean add = parameters.required(req.getParams(), 1, Boolean.class);
 
     if (add) {
       voteProposer.auth(validatorAddress);

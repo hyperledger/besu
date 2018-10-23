@@ -39,11 +39,12 @@ public class BlockchainUtil {
       final Blockchain blockchain,
       final List<BlockHeader> headers,
       final boolean ascendingHeaderOrder) {
-    int offset = ascendingHeaderOrder ? -1 : 0;
-    Comparator<BlockHeader> comparator = knownBlockComparator(blockchain, ascendingHeaderOrder);
+    final int offset = ascendingHeaderOrder ? -1 : 0;
+    final Comparator<BlockHeader> comparator =
+        knownBlockComparator(blockchain, ascendingHeaderOrder);
 
-    int insertionIndex = -Collections.binarySearch(headers, null, comparator) - 1;
-    int ancestorIndex = insertionIndex + offset;
+    final int insertionIndex = -Collections.binarySearch(headers, null, comparator) - 1;
+    final int ancestorIndex = insertionIndex + offset;
     if (ancestorIndex < 0 || ancestorIndex >= headers.size()) {
       return OptionalInt.empty();
     }
@@ -52,7 +53,7 @@ public class BlockchainUtil {
 
   private static Comparator<BlockHeader> knownBlockComparator(
       final Blockchain blockchain, final boolean ascendingHeaderOrder) {
-    Comparator<BlockHeader> comparator =
+    final Comparator<BlockHeader> comparator =
         (final BlockHeader element0, final BlockHeader element1) -> {
           if (element0 == null) {
             return blockchain.contains(element1.getHash()) ? -1 : 1;

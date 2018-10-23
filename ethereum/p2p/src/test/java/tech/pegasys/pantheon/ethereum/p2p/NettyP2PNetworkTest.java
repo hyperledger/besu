@@ -294,8 +294,8 @@ public final class NettyP2PNetworkTest {
     final SECP256K1.KeyPair remoteKp = SECP256K1.KeyPair.generate();
     final BytesValue localId = localKp.getPublicKey().getEncodedBytes();
     final BytesValue remoteId = remoteKp.getPublicKey().getEncodedBytes();
-    PeerBlacklist localBlacklist = new PeerBlacklist();
-    PeerBlacklist remoteBlacklist = new PeerBlacklist();
+    final PeerBlacklist localBlacklist = new PeerBlacklist();
+    final PeerBlacklist remoteBlacklist = new PeerBlacklist();
 
     final SubProtocol subprotocol = subProtocol();
     final Capability cap = Capability.create(subprotocol.getName(), 63);

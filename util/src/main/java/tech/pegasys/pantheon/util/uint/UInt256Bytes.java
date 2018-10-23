@@ -159,8 +159,8 @@ public abstract class UInt256Bytes {
       return;
     }
 
-    Bytes32 a;
-    Bytes32 b;
+    final Bytes32 a;
+    final Bytes32 b;
     if (sign > 0) {
       a = v1;
       b = v2;

@@ -80,7 +80,7 @@ public class TestNodeList implements Closeable {
               .atMost(30, TimeUnit.SECONDS)
               .until(() -> hasConnection(destination, source));
           LOG.info("Successfully connected       " + source.shortId() + " to dest " + destination);
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+        } catch (final InterruptedException | ExecutionException | TimeoutException e) {
           final String msg =
               format(
                   "Error connecting source node %s to destination node %s in time allotted.",

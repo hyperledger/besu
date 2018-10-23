@@ -179,7 +179,7 @@ public class PantheonNode implements Node, AutoCloseable {
   }
 
   private void loadPortsFile() {
-    try (FileInputStream fis =
+    try (final FileInputStream fis =
         new FileInputStream(new File(homeDirectory.toFile(), "pantheon.ports"))) {
       portsProperties.load(fis);
     } catch (final IOException e) {

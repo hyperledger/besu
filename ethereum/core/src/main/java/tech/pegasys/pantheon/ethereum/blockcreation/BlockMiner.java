@@ -84,10 +84,10 @@ public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnabl
     // Ensure the block is allowed to be mined - i.e. the timestamp on the new block is sufficiently
     // ahead of the parent, and still within allowable clock tolerance.
     LOG.trace("Started a mining operation.");
-    long newBlockTimestamp = scheduler.waitUntilNextBlockCanBeMined(parentHeader);
+    final long newBlockTimestamp = scheduler.waitUntilNextBlockCanBeMined(parentHeader);
 
     LOG.trace("Mining a new block with timestamp {}", newBlockTimestamp);
-    Block block = blockCreator.createBlock(newBlockTimestamp);
+    final Block block = blockCreator.createBlock(newBlockTimestamp);
     LOG.info(
         "Block created, importing to local chain, block includes {} transactions",
         block.getBody().getTransactions().size());

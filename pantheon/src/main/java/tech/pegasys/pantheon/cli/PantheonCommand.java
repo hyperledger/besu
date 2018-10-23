@@ -102,7 +102,7 @@ public class PantheonCommand implements Runnable {
   public static class RpcApisConverter implements ITypeConverter<RpcApi> {
     @Override
     public RpcApi convert(final String name) throws RpcApisConversionException {
-      String uppercaseName = name.trim().toUpperCase();
+      final String uppercaseName = name.trim().toUpperCase();
 
       return Stream.<Function<String, Optional<RpcApi>>>of(
               RpcApis::valueOf, CliqueRpcApis::valueOf, IbftRpcApis::valueOf)
@@ -514,7 +514,7 @@ public class PantheonCommand implements Runnable {
   private Path getDefaultPantheonDataDir() {
     // this property is retrieved from Gradle tasks or Pantheon running shell script.
     final String pantheonHomeProperty = System.getProperty(PANTHEON_HOME_PROPERTY_NAME);
-    Path pantheonHome;
+    final Path pantheonHome;
 
     // If prop is found, then use it
     if (pantheonHomeProperty != null) {
@@ -569,7 +569,7 @@ public class PantheonCommand implements Runnable {
   }
 
   private EthNetworkConfig updateNetworkConfig(final EthNetworkConfig ethNetworkConfig) {
-    EthNetworkConfig.Builder builder = new EthNetworkConfig.Builder(ethNetworkConfig);
+    final EthNetworkConfig.Builder builder = new EthNetworkConfig.Builder(ethNetworkConfig);
     if (genesisFile != null) {
       builder.setGenesisConfig(genesisFile.toPath().toUri());
     }

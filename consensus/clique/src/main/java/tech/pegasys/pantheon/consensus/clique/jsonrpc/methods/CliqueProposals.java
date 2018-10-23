@@ -37,7 +37,7 @@ public class CliqueProposals implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    Map<String, Boolean> proposals =
+    final Map<String, Boolean> proposals =
         voteProposer
             .getProposals()
             .entrySet()

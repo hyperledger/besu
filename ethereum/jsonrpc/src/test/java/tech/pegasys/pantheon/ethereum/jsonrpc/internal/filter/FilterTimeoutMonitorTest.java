@@ -41,7 +41,7 @@ public class FilterTimeoutMonitorTest {
 
   @Test
   public void expiredFilterShouldBeDeleted() {
-    Filter filter = spy(new BlockFilter("foo"));
+    final Filter filter = spy(new BlockFilter("foo"));
     when(filter.isExpired()).thenReturn(true);
     when(filterRepository.getFilters()).thenReturn(Lists.newArrayList(filter));
 
@@ -54,7 +54,7 @@ public class FilterTimeoutMonitorTest {
 
   @Test
   public void nonExpiredFilterShouldNotBeDeleted() {
-    Filter filter = mock(Filter.class);
+    final Filter filter = mock(Filter.class);
     when(filter.isExpired()).thenReturn(false);
     when(filterRepository.getFilters()).thenReturn(Lists.newArrayList(filter));
 

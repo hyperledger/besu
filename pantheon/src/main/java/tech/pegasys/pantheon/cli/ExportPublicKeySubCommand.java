@@ -58,7 +58,7 @@ class ExportPublicKeySubCommand implements Runnable {
     //noinspection ConstantConditions
     final Path path = publicKeyExportFile.toPath();
 
-    try (BufferedWriter fileWriter = Files.newBufferedWriter(path, UTF_8)) {
+    try (final BufferedWriter fileWriter = Files.newBufferedWriter(path, UTF_8)) {
       fileWriter.write(keyPair.getPublicKey().toString());
     } catch (final IOException e) {
       LOG.error("An error occurred while trying to write the public key", e);

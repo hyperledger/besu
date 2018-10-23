@@ -57,7 +57,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
     }
     final String rawTransaction = parameters.required(request.getParams(), 0, String.class);
 
-    Transaction transaction;
+    final Transaction transaction;
     try {
       transaction = decodeRawTransaction(rawTransaction);
     } catch (final InvalidJsonRpcRequestException e) {
@@ -77,7 +77,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
       throws InvalidJsonRpcRequestException {
     try {
       return Transaction.readFrom(RLP.input(BytesValue.fromHexString(hash)));
-    } catch (IllegalArgumentException | RLPException e) {
+    } catch (final IllegalArgumentException | RLPException e) {
       LOG.debug(e);
       throw new InvalidJsonRpcRequestException("Invalid raw transaction hex", e);
     }

@@ -308,7 +308,7 @@ public class DetermineCommonAncestorTaskTest {
 
   @Test
   public void shouldShortCircuitOnHeaderInInitialRequest() {
-    DefaultMutableBlockchain remoteBlockchain =
+    final DefaultMutableBlockchain remoteBlockchain =
         new DefaultMutableBlockchain(
             genesisBlock, new InMemoryKeyValueStorage(), MainnetBlockHashFunction::createHash);
 
@@ -316,56 +316,58 @@ public class DetermineCommonAncestorTaskTest {
 
     // Populate common chain
     for (long i = 1; i <= 95; i++) {
-      BlockDataGenerator.BlockOptions options =
+      final BlockDataGenerator.BlockOptions options =
           new BlockDataGenerator.BlockOptions()
               .setBlockNumber(i)
               .setParentHash(localBlockchain.getBlockHashByNumber(i - 1).get());
       commonBlock = blockDataGenerator.block(options);
-      List<TransactionReceipt> receipts = blockDataGenerator.receipts(commonBlock);
+      final List<TransactionReceipt> receipts = blockDataGenerator.receipts(commonBlock);
       localBlockchain.appendBlock(commonBlock, receipts);
       remoteBlockchain.appendBlock(commonBlock, receipts);
     }
 
     // Populate local chain
     for (long i = 96; i <= 99; i++) {
-      BlockDataGenerator.BlockOptions options00 =
+      final BlockDataGenerator.BlockOptions options00 =
           new BlockDataGenerator.BlockOptions()
               .setBlockNumber(i)
               .setParentHash(localBlockchain.getBlockHashByNumber(i - 1).get());
-      Block block00 = blockDataGenerator.block(options00);
-      List<TransactionReceipt> receipts00 = blockDataGenerator.receipts(block00);
+      final Block block00 = blockDataGenerator.block(options00);
+      final List<TransactionReceipt> receipts00 = blockDataGenerator.receipts(block00);
       localBlockchain.appendBlock(block00, receipts00);
     }
 
     // Populate remote chain
     for (long i = 96; i <= 99; i++) {
-      BlockDataGenerator.BlockOptions options01 =
+      final BlockDataGenerator.BlockOptions options01 =
           new BlockDataGenerator.BlockOptions()
               .setDifficulty(UInt256.ONE)
               .setBlockNumber(i)
               .setParentHash(remoteBlockchain.getBlockHashByNumber(i - 1).get());
-      Block block01 = blockDataGenerator.block(options01);
-      List<TransactionReceipt> receipts01 = blockDataGenerator.receipts(block01);
+      final Block block01 = blockDataGenerator.block(options01);
+      final List<TransactionReceipt> receipts01 = blockDataGenerator.receipts(block01);
       remoteBlockchain.appendBlock(block01, receipts01);
     }
 
-    RespondingEthPeer.Responder responder = RespondingEthPeer.blockchainResponder(remoteBlockchain);
-    RespondingEthPeer respondingEthPeer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+    final RespondingEthPeer.Responder responder =
+        RespondingEthPeer.blockchainResponder(remoteBlockchain);
+    final RespondingEthPeer respondingEthPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
 
-    DetermineCommonAncestorTask<Void> task =
+    final DetermineCommonAncestorTask<Void> task =
         DetermineCommonAncestorTask.create(
             protocolSchedule,
             protocolContext,
             ethContext,
             respondingEthPeer.getEthPeer(),
             defaultHeaderRequestSize);
-    DetermineCommonAncestorTask<Void> spy = spy(task);
+    final DetermineCommonAncestorTask<Void> spy = spy(task);
 
     // Execute task
-    CompletableFuture<BlockHeader> future = spy.run();
+    final CompletableFuture<BlockHeader> future = spy.run();
     respondingEthPeer.respondWhile(responder, () -> !future.isDone());
 
-    AtomicReference<BlockHeader> result = new AtomicReference<>();
+    final AtomicReference<BlockHeader> result = new AtomicReference<>();
     future.whenComplete(
         (response, error) -> {
           result.set(response);

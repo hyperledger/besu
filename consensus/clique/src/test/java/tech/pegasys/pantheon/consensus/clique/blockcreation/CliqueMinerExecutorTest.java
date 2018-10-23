@@ -72,7 +72,7 @@ public class CliqueMinerExecutorTest {
 
   @Test
   public void extraDataCreatedOnEpochBlocksContainsValidators() {
-    byte[] vanityData = new byte[32];
+    final byte[] vanityData = new byte[32];
     new Random().nextBytes(vanityData);
     final BytesValue wrappedVanityData = BytesValue.wrap(vanityData);
     final int EPOCH_LENGTH = 10;
@@ -102,7 +102,7 @@ public class CliqueMinerExecutorTest {
 
   @Test
   public void extraDataForNonEpochBlocksDoesNotContainValidaors() {
-    byte[] vanityData = new byte[32];
+    final byte[] vanityData = new byte[32];
     new Random().nextBytes(vanityData);
     final BytesValue wrappedVanityData = BytesValue.wrap(vanityData);
     final int EPOCH_LENGTH = 10;

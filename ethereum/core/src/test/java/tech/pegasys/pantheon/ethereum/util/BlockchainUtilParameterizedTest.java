@@ -131,7 +131,7 @@ public class BlockchainUtilParameterizedTest {
 
   @Test
   public void searchesAscending() {
-    OptionalInt maybeAncestorNumber =
+    final OptionalInt maybeAncestorNumber =
         BlockchainUtil.findHighestKnownBlockIndex(localBlockchain, headers, true);
     assertThat(maybeAncestorNumber.getAsInt()).isEqualTo(Math.toIntExact(commonHeader.getNumber()));
   }
@@ -139,7 +139,7 @@ public class BlockchainUtilParameterizedTest {
   @Test
   public void searchesDescending() {
     Collections.reverse(headers);
-    OptionalInt maybeAncestorNumber =
+    final OptionalInt maybeAncestorNumber =
         BlockchainUtil.findHighestKnownBlockIndex(localBlockchain, headers, false);
     assertThat(maybeAncestorNumber.getAsInt())
         .isEqualTo(Math.toIntExact(chainHeight - commonHeader.getNumber()));

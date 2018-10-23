@@ -201,7 +201,7 @@ public class FilterManagerTest {
 
   @Test
   public void getBlockChangesShouldResetFilterExpireDate() {
-    BlockFilter filter = spy(new BlockFilter("foo"));
+    final BlockFilter filter = spy(new BlockFilter("foo"));
     doReturn(Optional.of(filter))
         .when(filterRepository)
         .getFilter(eq("foo"), eq(BlockFilter.class));
@@ -213,7 +213,7 @@ public class FilterManagerTest {
 
   @Test
   public void getPendingTransactionsChangesShouldResetFilterExpireDate() {
-    PendingTransactionFilter filter = spy(new PendingTransactionFilter("foo"));
+    final PendingTransactionFilter filter = spy(new PendingTransactionFilter("foo"));
     doReturn(Optional.of(filter))
         .when(filterRepository)
         .getFilter(eq("foo"), eq(PendingTransactionFilter.class));

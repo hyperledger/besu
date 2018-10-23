@@ -92,9 +92,9 @@ public class IbftProposeValidatorVoteTest {
   public void addValidator() {
     final Address parameterAddress = Address.fromHexString("1");
     final JsonRpcRequest request = requestWithParams(parameterAddress, "true");
-    JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), true);
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), true);
 
-    JsonRpcResponse response = method.response(request);
+    final JsonRpcResponse response = method.response(request);
 
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
 
@@ -105,9 +105,9 @@ public class IbftProposeValidatorVoteTest {
   public void removeValidator() {
     final Address parameterAddress = Address.fromHexString("1");
     final JsonRpcRequest request = requestWithParams(parameterAddress, "false");
-    JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), true);
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), true);
 
-    JsonRpcResponse response = method.response(request);
+    final JsonRpcResponse response = method.response(request);
 
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
 
