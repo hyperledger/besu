@@ -1,6 +1,12 @@
 {
   "config": {
     "chainId": 2018,
+    "homesteadBlock": 0,
+    "daoForkBlock": 0,
+    "eip150Block": 0,
+    "eip155Block": 0,
+    "eip158Block": 0,
+    "byzantiumBlock": 0,
     "ethash": {
     }
   },
