@@ -61,7 +61,7 @@ public class EthHashBlockCreator extends AbstractBlockCreator<Void> {
   @Override
   protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
     final EthHashSolverInputs workDefinition = generateNonceSolverInputs(sealableBlockHeader);
-    EthHashSolution solution;
+    final EthHashSolution solution;
     try {
       solution = nonceSolver.solveFor(EthHashSolverJob.createFromInputs(workDefinition));
     } catch (final InterruptedException ex) {

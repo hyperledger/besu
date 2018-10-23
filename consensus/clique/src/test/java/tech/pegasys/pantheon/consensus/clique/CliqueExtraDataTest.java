@@ -96,7 +96,7 @@ public class CliqueExtraDataTest {
 
   @Test
   public void privKeysToExtraDataString() {
-    List<KeyPair> nodeKeys = Lists.newArrayList();
+    final List<KeyPair> nodeKeys = Lists.newArrayList();
     for (int i = 0; i < 4; i++) {
       nodeKeys.add(KeyPair.generate());
     }

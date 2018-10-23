@@ -185,7 +185,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     // We write a config file to prevent an invalid file in resource folder to raise errors in
     // code checks (CI + IDE)
     final File tempConfigFile = temp.newFile("invalid_config.toml");
-    try (Writer fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
+    try (final Writer fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
 
       fileWriter.write("."); // an invalid toml content
       fileWriter.flush();
@@ -206,7 +206,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     // We write a config file to prevent an invalid file in resource folder to raise errors in
     // code checks (CI + IDE)
     final File tempConfigFile = temp.newFile("invalid_config.toml");
-    try (Writer fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
+    try (final Writer fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
 
       fileWriter.write("tester===========......."); // an invalid toml content
       fileWriter.flush();
@@ -261,7 +261,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
         asList("enode://001@123:4567", "enode://002@123:4567", "enode://003@123:4567");
     assertThat(stringListArgumentCaptor.getValue()).isEqualTo(nodes);
 
-    EthNetworkConfig networkConfig =
+    final EthNetworkConfig networkConfig =
         new Builder(EthNetworkConfig.mainnet())
             .setGenesisConfig(new File("~/genesys.json").toPath().toUri())
             .setBootNodes(nodes)

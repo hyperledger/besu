@@ -54,7 +54,7 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
 
   private String getConfigurationValue(final OptionSpec optionSpec) {
     final String optionKey = getConfigurationKey(optionSpec);
-    String
+    final String
         defaultValue; // Convert values to the right string representation for default string value
     if (optionSpec.type().equals(Boolean.class)) {
       defaultValue = getBooleanEntryAsString(optionKey);

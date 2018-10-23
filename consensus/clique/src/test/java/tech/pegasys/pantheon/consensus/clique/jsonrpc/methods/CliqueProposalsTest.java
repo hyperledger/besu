@@ -57,7 +57,7 @@ public class CliqueProposalsTest {
                 Address.fromHexString("2"),
                 VoteType.DROP));
 
-    JsonRpcResponse expectedResponse =
+    final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
             request.getId(),
             ImmutableMap.of(
@@ -66,7 +66,7 @@ public class CliqueProposalsTest {
                 "0x0000000000000000000000000000000000000002",
                 false));
 
-    JsonRpcResponse response = method.response(request);
+    final JsonRpcResponse response = method.response(request);
 
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
   }

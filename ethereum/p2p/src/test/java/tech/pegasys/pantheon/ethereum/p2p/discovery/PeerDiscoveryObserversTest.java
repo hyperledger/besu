@@ -121,7 +121,7 @@ public class PeerDiscoveryObserversTest extends AbstractPeerDiscoveryTest {
       await()
           .atMost(5, TimeUnit.SECONDS)
           .untilAsserted(() -> assertThat(queue.size()).isEqualTo(5));
-    } catch (ConditionTimeoutException | AssertionError e) {
+    } catch (final ConditionTimeoutException | AssertionError e) {
       final List<String> events = new ArrayList<>();
       queue.forEach(evt -> events.add(evt.toString()));
       LOG.error("Queue:\n" + String.join("\n", events), e);

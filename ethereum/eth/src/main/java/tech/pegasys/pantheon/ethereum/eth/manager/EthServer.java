@@ -123,7 +123,7 @@ class EthServer {
       final int skip = getHeaders.skip();
       final int maxHeaders = Math.min(requestLimit, getHeaders.maxHeaders());
       final boolean reversed = getHeaders.reverse();
-      BlockHeader firstHeader;
+      final BlockHeader firstHeader;
       if (hash.isPresent()) {
         final Hash startHash = hash.get();
         firstHeader = blockchain.getBlockHeader(startHash).orElse(null);

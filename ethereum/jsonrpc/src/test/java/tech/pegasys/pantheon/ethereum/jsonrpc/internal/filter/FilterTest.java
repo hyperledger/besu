@@ -23,14 +23,14 @@ public class FilterTest {
 
   @Test
   public void filterJustCreatedShouldNotBeExpired() {
-    BlockFilter filter = new BlockFilter("foo");
+    final BlockFilter filter = new BlockFilter("foo");
 
     assertThat(filter.isExpired()).isFalse();
   }
 
   @Test
   public void isExpiredShouldReturnTrueForExpiredFilter() {
-    BlockFilter filter = new BlockFilter("foo");
+    final BlockFilter filter = new BlockFilter("foo");
     filter.setExpireTime(Instant.now().minusSeconds(1));
 
     assertThat(filter.isExpired()).isTrue();
@@ -38,7 +38,7 @@ public class FilterTest {
 
   @Test
   public void resetExpireDateShouldIncrementExpireDate() {
-    BlockFilter filter = new BlockFilter("foo");
+    final BlockFilter filter = new BlockFilter("foo");
     filter.setExpireTime(Instant.now().minus(Duration.ofDays(1)));
     filter.resetExpireTime();
 

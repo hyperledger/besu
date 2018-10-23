@@ -167,7 +167,7 @@ public class FilterManagerLogFilterTest {
 
   @Test
   public void getLogsChangesShouldResetFilterExpireDate() {
-    LogFilter filter = spy(new LogFilter("foo", latest(), latest(), logsQuery()));
+    final LogFilter filter = spy(new LogFilter("foo", latest(), latest(), logsQuery()));
     doReturn(Optional.of(filter)).when(filterRepository).getFilter(eq("foo"), eq(LogFilter.class));
 
     filterManager.logsChanges("foo");
@@ -177,7 +177,7 @@ public class FilterManagerLogFilterTest {
 
   @Test
   public void getLogsShouldResetFilterExpireDate() {
-    LogFilter filter = spy(new LogFilter("foo", latest(), latest(), logsQuery()));
+    final LogFilter filter = spy(new LogFilter("foo", latest(), latest(), logsQuery()));
     doReturn(Optional.of(filter)).when(filterRepository).getFilter(eq("foo"), eq(LogFilter.class));
 
     filterManager.logs("foo");

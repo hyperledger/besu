@@ -175,7 +175,7 @@ public class Ibft2ExtraDataTest {
   @Test
   public void emptyVoteAndListIsEncodedCorrectly() {
     final List<Address> validators = Lists.newArrayList();
-    Optional<Vote> vote = Optional.empty();
+    final Optional<Vote> vote = Optional.empty();
     final int round = 0x00FEDCBA;
     final List<Signature> committerSeals = Lists.newArrayList();
 
@@ -183,10 +183,10 @@ public class Ibft2ExtraDataTest {
     final byte[] vanity_bytes = new byte[32];
     final BytesValue vanity_data = BytesValue.wrap(vanity_bytes);
 
-    Ibft2ExtraData expectedExtraData =
+    final Ibft2ExtraData expectedExtraData =
         new Ibft2ExtraData(vanity_data, committerSeals, vote, round, validators);
 
-    Ibft2ExtraData actualExtraData = Ibft2ExtraData.decode(expectedExtraData.encode());
+    final Ibft2ExtraData actualExtraData = Ibft2ExtraData.decode(expectedExtraData.encode());
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
@@ -240,10 +240,10 @@ public class Ibft2ExtraDataTest {
     final byte[] vanity_bytes = new byte[32];
     final BytesValue vanity_data = BytesValue.wrap(vanity_bytes);
 
-    Ibft2ExtraData expectedExtraData =
+    final Ibft2ExtraData expectedExtraData =
         new Ibft2ExtraData(vanity_data, committerSeals, vote, round, validators);
 
-    Ibft2ExtraData actualExtraData = Ibft2ExtraData.decode(expectedExtraData.encode());
+    final Ibft2ExtraData actualExtraData = Ibft2ExtraData.decode(expectedExtraData.encode());
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
@@ -306,17 +306,17 @@ public class Ibft2ExtraDataTest {
     final byte[] vanity_bytes = createNonEmptyVanityData();
     final BytesValue vanity_data = BytesValue.wrap(vanity_bytes);
 
-    Ibft2ExtraData expectedExtraData =
+    final Ibft2ExtraData expectedExtraData =
         new Ibft2ExtraData(vanity_data, committerSeals, vote, round, validators);
 
-    Ibft2ExtraData actualExtraData = Ibft2ExtraData.decode(expectedExtraData.encode());
+    final Ibft2ExtraData actualExtraData = Ibft2ExtraData.decode(expectedExtraData.encode());
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
 
   @Test
   public void encodingMatchesKnownRawHexString() {
-    BytesValue expectedRawDecoding = BytesValue.fromHexString(RAW_HEX_ENCODING_STRING);
+    final BytesValue expectedRawDecoding = BytesValue.fromHexString(RAW_HEX_ENCODING_STRING);
     assertThat(DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING.encode())
         .isEqualTo(expectedRawDecoding);
   }
@@ -326,8 +326,8 @@ public class Ibft2ExtraDataTest {
 
     final Ibft2ExtraData expectedExtraData = DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING;
 
-    BytesValue rawDecoding = BytesValue.fromHexString(RAW_HEX_ENCODING_STRING);
-    Ibft2ExtraData actualExtraData = Ibft2ExtraData.decode(rawDecoding);
+    final BytesValue rawDecoding = BytesValue.fromHexString(RAW_HEX_ENCODING_STRING);
+    final Ibft2ExtraData actualExtraData = Ibft2ExtraData.decode(rawDecoding);
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }

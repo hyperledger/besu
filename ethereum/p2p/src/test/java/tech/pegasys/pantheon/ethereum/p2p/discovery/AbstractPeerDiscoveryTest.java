@@ -189,7 +189,7 @@ public abstract class AbstractPeerDiscoveryTest {
               result.complete(discoveryTestSocket);
             });
 
-    DiscoveryTestSocket discoveryTestSocket;
+    final DiscoveryTestSocket discoveryTestSocket;
     try {
       discoveryTestSocket = result.get(TEST_SOCKET_START_TIMEOUT_SECS, TimeUnit.SECONDS);
     } catch (final Exception ex) {
@@ -268,7 +268,7 @@ public abstract class AbstractPeerDiscoveryTest {
      * @return the head of the queue
      */
     public Packet compulsoryPoll() {
-      Packet packet;
+      final Packet packet;
       try {
         packet = queue.poll(5, TimeUnit.SECONDS);
       } catch (final Exception e) {

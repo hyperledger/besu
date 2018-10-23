@@ -53,7 +53,7 @@ public class PersonalisationString {
           }
         }
       }
-    } catch (SocketException | BufferOverflowException e) {
+    } catch (final SocketException | BufferOverflowException e) {
       LOG.warn(
           "Failed to obtain network hardware address for use in random number personalisation string, "
               + "continuing without this piece of random information",

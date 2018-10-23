@@ -37,7 +37,7 @@ public class EthGasPrice<C, M extends BlockMiner<C, ? extends AbstractBlockCreat
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest req) {
-    Wei gasPrice;
+    final Wei gasPrice;
     Object result = null;
     gasPrice = miningCoordinator.getMinTransactionGasPrice();
     if (gasPrice != null) {

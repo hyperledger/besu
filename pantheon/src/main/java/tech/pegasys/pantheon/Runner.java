@@ -118,7 +118,7 @@ public class Runner implements AutoCloseable {
     final File portsFile = new File(dataDir.toFile(), "pantheon.ports");
     portsFile.deleteOnExit();
 
-    try (FileOutputStream fileOutputStream = new FileOutputStream(portsFile)) {
+    try (final FileOutputStream fileOutputStream = new FileOutputStream(portsFile)) {
       properties.store(
           fileOutputStream,
           "This file contains the ports used by the running instance of Pantheon. This file will be deleted after the node is shutdown.");

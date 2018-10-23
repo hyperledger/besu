@@ -110,7 +110,7 @@ public class Packet {
                     new PeerDiscoveryPacketDecodingException("Unrecognized packet type: " + type));
 
     final PacketType.Deserializer<?> deserializer = packetType.getDeserializer();
-    PacketData packetData;
+    final PacketData packetData;
     try {
       packetData = deserializer.deserialize(RLP.input(message, PACKET_DATA_INDEX));
     } catch (final RLPException e) {

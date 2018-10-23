@@ -63,9 +63,9 @@ public class CliqueBlockScheduler extends DefaultBlockScheduler {
   }
 
   private int calculatorOutOfTurnDelay(final ValidatorProvider validators) {
-    int countSigners = validators.getCurrentValidators().size();
-    int maxDelay = ((countSigners / 2) + 1) * OUT_OF_TURN_DELAY_MULTIPLIER_MILLIS;
-    Random r = new Random();
+    final int countSigners = validators.getCurrentValidators().size();
+    final int maxDelay = ((countSigners / 2) + 1) * OUT_OF_TURN_DELAY_MULTIPLIER_MILLIS;
+    final Random r = new Random();
     return r.nextInt(maxDelay + 1);
   }
 }

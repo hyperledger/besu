@@ -29,7 +29,7 @@ public abstract class AbstractPeerTask<R> extends AbstractEthTask<PeerTaskResult
 
   @Override
   protected void executeTask() {
-    EthPeer peer;
+    final EthPeer peer;
     if (assignedPeer.isPresent()) {
       peer = assignedPeer.get();
     } else {

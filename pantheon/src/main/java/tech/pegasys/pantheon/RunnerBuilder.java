@@ -200,7 +200,7 @@ public class RunnerBuilder {
 
   private FilterManager createFilterManager(
       final Vertx vertx, final ProtocolContext<?> context, final TransactionPool transactionPool) {
-    FilterManager filterManager =
+    final FilterManager filterManager =
         new FilterManager(
             new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive()),
             transactionPool,

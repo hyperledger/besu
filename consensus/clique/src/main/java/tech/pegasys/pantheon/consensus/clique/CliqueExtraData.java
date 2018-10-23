@@ -120,7 +120,7 @@ public class CliqueExtraData {
 
   private static List<Address> convertPrivKeysToAddresses(final List<PrivateKey> privKeys) {
     final List<Address> validators = Lists.newArrayList();
-    for (PrivateKey privKey : privKeys) {
+    for (final PrivateKey privKey : privKeys) {
       final PublicKey pubKey = PublicKey.create(privKey);
       validators.add(Util.publicKeyToAddress(pubKey));
     }

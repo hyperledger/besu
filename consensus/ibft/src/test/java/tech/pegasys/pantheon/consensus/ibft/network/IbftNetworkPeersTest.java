@@ -50,7 +50,7 @@ public class IbftNetworkPeersTest {
   @Before
   public void setup() {
     for (int i = 0; i < 4; i++) {
-      PublicKey pubKey = PublicKey.create(BigInteger.valueOf(i));
+      final PublicKey pubKey = PublicKey.create(BigInteger.valueOf(i));
       publicKeys.add(pubKey);
 
       final PeerInfo peerInfo = mock(PeerInfo.class);
@@ -66,15 +66,15 @@ public class IbftNetworkPeersTest {
   public void onlyValidatorsAreSentAMessage() throws PeerNotConnected {
     // Only add the first Peer's address to the validators.
     validators.add(Util.publicKeyToAddress(publicKeys.get(0)));
-    ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getCurrentValidators()).thenReturn(validators);
 
-    IbftNetworkPeers peers = new IbftNetworkPeers(validatorProvider);
-    for (PeerConnection peer : peerConnections) {
+    final IbftNetworkPeers peers = new IbftNetworkPeers(validatorProvider);
+    for (final PeerConnection peer : peerConnections) {
       peers.peerAdded(peer);
     }
 
-    MessageData messageToSend = new RawMessage(1, EMPTY_BUFFER);
+    final MessageData messageToSend = new RawMessage(1, EMPTY_BUFFER);
     peers.multicastToValidators(messageToSend);
 
     verify(peerConnections.get(0), times(1)).sendForProtocol("IBF", messageToSend);
@@ -87,15 +87,15 @@ public class IbftNetworkPeersTest {
   public void doesntSendToValidatorsWhichAreNotDirectlyConnected() throws PeerNotConnected {
     validators.add(Util.publicKeyToAddress(publicKeys.get(0)));
 
-    ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getCurrentValidators()).thenReturn(validators);
 
-    IbftNetworkPeers peers = new IbftNetworkPeers(validatorProvider);
+    final IbftNetworkPeers peers = new IbftNetworkPeers(validatorProvider);
 
     // only add peer connections 1, 2 & 3, none of which should be invoked.
     Lists.newArrayList(1, 2, 3).stream().forEach(i -> peers.peerAdded(peerConnections.get(i)));
 
-    MessageData messageToSend = new RawMessage(1, EMPTY_BUFFER);
+    final MessageData messageToSend = new RawMessage(1, EMPTY_BUFFER);
     peers.multicastToValidators(messageToSend);
 
     verify(peerConnections.get(0), never()).sendForProtocol(any(), any());

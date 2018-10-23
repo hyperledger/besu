@@ -126,13 +126,13 @@ public class BlockchainImporter extends BlockImporter {
       final FileRLPInput rlp = new FileRLPInput(file, true);
       LOG.info("Import started.");
 
-      BlockchainImporter.ImportResult blockImportResults;
+      final BlockchainImporter.ImportResult blockImportResults;
       blockImportResults =
           importBlockchain(
               pantheonController, rlp, isSkipBlocks, metricsIntervalSec, worldStateOffset);
 
       if (!isSkipAccounts) {
-        Hash worldStateRootHash;
+        final Hash worldStateRootHash;
         worldStateRootHash =
             importWorldState(pantheonController, rlp, metricsIntervalSec, accountCommitInterval);
         validateWorldStateRootHash(pantheonController, worldStateRootHash);
@@ -277,7 +277,7 @@ public class BlockchainImporter extends BlockImporter {
                     itemStartingOffset, header, body, receiptsStr));
           }
 
-          tech.pegasys.pantheon.ethereum.core.BlockImporter<C> blockImporter;
+          final tech.pegasys.pantheon.ethereum.core.BlockImporter<C> blockImporter;
           blockImporter = protocolSpec.getBlockImporter();
 
           if (!isSkipBlocks) {

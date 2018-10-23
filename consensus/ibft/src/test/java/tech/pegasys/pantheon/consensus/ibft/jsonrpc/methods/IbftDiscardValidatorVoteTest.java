@@ -73,9 +73,9 @@ public class IbftDiscardValidatorVoteTest {
     final Address parameterAddress = Address.fromHexString("1");
     final JsonRpcRequest request = requestWithParams(parameterAddress);
 
-    JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), true);
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), true);
 
-    JsonRpcResponse response = method.response(request);
+    final JsonRpcResponse response = method.response(request);
 
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
 

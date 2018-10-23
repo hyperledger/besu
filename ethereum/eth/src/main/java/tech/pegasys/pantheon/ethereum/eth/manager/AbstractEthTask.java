@@ -109,7 +109,7 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
     }
     try {
       return result.get().get();
-    } catch (InterruptedException | ExecutionException e) {
+    } catch (final InterruptedException | ExecutionException e) {
       return null;
     }
   }

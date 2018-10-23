@@ -95,7 +95,7 @@ abstract class CompactEncoding {
     final boolean isLeaf = (metadata & 0x20) != 0;
 
     final int pathLength = ((size - 1) * 2) + (isLeaf ? 1 : 0);
-    MutableBytesValue path;
+    final MutableBytesValue path;
     int i = 0;
 
     if ((metadata & 0x10) != 0) {

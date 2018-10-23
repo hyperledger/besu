@@ -38,8 +38,8 @@ public class GenesisBlockMismatchTest {
 
   @Test
   public void suppliedGenesisBlockMismatchStoredChainDataException() {
-    KeyValueStorage kvStore = new InMemoryKeyValueStorage();
-    BlockHeader genesisHeader00 =
+    final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
+    final BlockHeader genesisHeader00 =
         BlockHeaderBuilder.create()
             .parentHash(Hash.ZERO)
             .ommersHash(Hash.ZERO)
@@ -58,12 +58,12 @@ public class GenesisBlockMismatchTest {
             .nonce(0L)
             .blockHashFunction(MainnetBlockHashFunction::createHash)
             .buildBlockHeader();
-    BlockBody genesisBody00 = new BlockBody(Collections.emptyList(), Collections.emptyList());
-    Block genesisBlock00 = new Block(genesisHeader00, genesisBody00);
-    DefaultMutableBlockchain blockchain00 =
+    final BlockBody genesisBody00 = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    final Block genesisBlock00 = new Block(genesisHeader00, genesisBody00);
+    final DefaultMutableBlockchain blockchain00 =
         new DefaultMutableBlockchain(genesisBlock00, kvStore, MainnetBlockHashFunction::createHash);
 
-    BlockHeader genesisHeader01 =
+    final BlockHeader genesisHeader01 =
         BlockHeaderBuilder.create()
             .parentHash(Hash.ZERO)
             .ommersHash(Hash.ZERO)
@@ -82,8 +82,8 @@ public class GenesisBlockMismatchTest {
             .nonce(0L)
             .blockHashFunction(MainnetBlockHashFunction::createHash)
             .buildBlockHeader();
-    BlockBody genesisBody01 = new BlockBody(Collections.emptyList(), Collections.emptyList());
-    Block genesisBlock01 = new Block(genesisHeader01, genesisBody01);
+    final BlockBody genesisBody01 = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    final Block genesisBlock01 = new Block(genesisHeader01, genesisBody01);
 
     assertThatExceptionOfType(InvalidConfigurationException.class)
         .isThrownBy(() -> blockchain00.setGenesis(genesisBlock01))

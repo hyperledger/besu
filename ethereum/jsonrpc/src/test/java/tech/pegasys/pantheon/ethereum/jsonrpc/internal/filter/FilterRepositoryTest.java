@@ -33,12 +33,12 @@ public class FilterRepositoryTest {
 
   @Test
   public void getFiltersShouldReturnAllFilters() {
-    BlockFilter filter1 = new BlockFilter("foo");
-    BlockFilter filter2 = new BlockFilter("bar");
+    final BlockFilter filter1 = new BlockFilter("foo");
+    final BlockFilter filter2 = new BlockFilter("bar");
     repository.save(filter1);
     repository.save(filter2);
 
-    Collection<Filter> filters = repository.getFilters();
+    final Collection<Filter> filters = repository.getFilters();
 
     assertThat(filters).containsExactlyInAnyOrderElementsOf(Lists.newArrayList(filter1, filter2));
   }
@@ -50,17 +50,17 @@ public class FilterRepositoryTest {
 
   @Test
   public void saveShouldAddFilterToRepository() {
-    BlockFilter filter = new BlockFilter("id");
+    final BlockFilter filter = new BlockFilter("id");
     repository.save(filter);
 
-    BlockFilter retrievedFilter = repository.getFilter("id", BlockFilter.class).get();
+    final BlockFilter retrievedFilter = repository.getFilter("id", BlockFilter.class).get();
 
     assertThat(retrievedFilter).isEqualToComparingFieldByField(filter);
   }
 
   @Test
   public void saveNullFilterShouldFail() {
-    Throwable throwable = catchThrowable(() -> repository.save(null));
+    final Throwable throwable = catchThrowable(() -> repository.save(null));
 
     assertThat(throwable)
         .isInstanceOf(IllegalArgumentException.class)
@@ -69,10 +69,10 @@ public class FilterRepositoryTest {
 
   @Test
   public void saveFilterWithSameIdShouldFail() {
-    BlockFilter filter = new BlockFilter("x");
+    final BlockFilter filter = new BlockFilter("x");
     repository.save(filter);
 
-    Throwable throwable = catchThrowable(() -> repository.save(filter));
+    final Throwable throwable = catchThrowable(() -> repository.save(filter));
 
     assertThat(throwable)
         .isInstanceOf(IllegalArgumentException.class)
@@ -81,10 +81,10 @@ public class FilterRepositoryTest {
 
   @Test
   public void getSingleFilterShouldReturnExistingFilterOfCorrectType() {
-    BlockFilter filter = new BlockFilter("id");
+    final BlockFilter filter = new BlockFilter("id");
     repository.save(filter);
 
-    Optional<BlockFilter> optional = repository.getFilter(filter.getId(), BlockFilter.class);
+    final Optional<BlockFilter> optional = repository.getFilter(filter.getId(), BlockFilter.class);
 
     assertThat(optional.isPresent()).isTrue();
     assertThat(optional.get()).isEqualToComparingFieldByField(filter);
@@ -92,10 +92,10 @@ public class FilterRepositoryTest {
 
   @Test
   public void getSingleFilterShouldReturnEmptyForFilterOfIncorrectType() {
-    BlockFilter filter = new BlockFilter("id");
+    final BlockFilter filter = new BlockFilter("id");
     repository.save(filter);
 
-    Optional<PendingTransactionFilter> optional =
+    final Optional<PendingTransactionFilter> optional =
         repository.getFilter(filter.getId(), PendingTransactionFilter.class);
 
     assertThat(optional.isPresent()).isFalse();
@@ -103,58 +103,58 @@ public class FilterRepositoryTest {
 
   @Test
   public void getSingleFilterShouldReturnEmptyForAbsentId() {
-    BlockFilter filter = new BlockFilter("foo");
+    final BlockFilter filter = new BlockFilter("foo");
     repository.save(filter);
 
-    Optional<BlockFilter> optional = repository.getFilter("bar", BlockFilter.class);
+    final Optional<BlockFilter> optional = repository.getFilter("bar", BlockFilter.class);
 
     assertThat(optional.isPresent()).isFalse();
   }
 
   @Test
   public void getSingleFilterShouldReturnEmptyForEmptyRepository() {
-    Optional<BlockFilter> optional = repository.getFilter("id", BlockFilter.class);
+    final Optional<BlockFilter> optional = repository.getFilter("id", BlockFilter.class);
 
     assertThat(optional.isPresent()).isFalse();
   }
 
   @Test
   public void getFilterCollectionShouldReturnAllFiltersOfSpecificType() {
-    BlockFilter blockFilter1 = new BlockFilter("foo");
-    BlockFilter blockFilter2 = new BlockFilter("biz");
-    PendingTransactionFilter pendingTxFilter1 = new PendingTransactionFilter("bar");
+    final BlockFilter blockFilter1 = new BlockFilter("foo");
+    final BlockFilter blockFilter2 = new BlockFilter("biz");
+    final PendingTransactionFilter pendingTxFilter1 = new PendingTransactionFilter("bar");
 
-    Collection<BlockFilter> expectedFilters = Lists.newArrayList(blockFilter1, blockFilter2);
+    final Collection<BlockFilter> expectedFilters = Lists.newArrayList(blockFilter1, blockFilter2);
 
     repository.save(blockFilter1);
     repository.save(blockFilter2);
     repository.save(pendingTxFilter1);
 
-    Collection<BlockFilter> blockFilters = repository.getFiltersOfType(BlockFilter.class);
+    final Collection<BlockFilter> blockFilters = repository.getFiltersOfType(BlockFilter.class);
 
     assertThat(blockFilters).containsExactlyInAnyOrderElementsOf(expectedFilters);
   }
 
   @Test
   public void getFilterCollectionShouldReturnEmptyForNoneMatchingTypes() {
-    PendingTransactionFilter filter = new PendingTransactionFilter("foo");
+    final PendingTransactionFilter filter = new PendingTransactionFilter("foo");
     repository.save(filter);
 
-    Collection<BlockFilter> filters = repository.getFiltersOfType(BlockFilter.class);
+    final Collection<BlockFilter> filters = repository.getFiltersOfType(BlockFilter.class);
 
     assertThat(filters).isEmpty();
   }
 
   @Test
   public void getFilterCollectionShouldReturnEmptyListForEmptyRepository() {
-    Collection<BlockFilter> filters = repository.getFiltersOfType(BlockFilter.class);
+    final Collection<BlockFilter> filters = repository.getFiltersOfType(BlockFilter.class);
 
     assertThat(filters).isEmpty();
   }
 
   @Test
   public void existsShouldReturnTrueForExistingId() {
-    BlockFilter filter = new BlockFilter("id");
+    final BlockFilter filter = new BlockFilter("id");
     repository.save(filter);
 
     assertThat(repository.exists("id")).isTrue();
@@ -162,7 +162,7 @@ public class FilterRepositoryTest {
 
   @Test
   public void existsShouldReturnFalseForAbsentId() {
-    BlockFilter filter = new BlockFilter("foo");
+    final BlockFilter filter = new BlockFilter("foo");
     repository.save(filter);
 
     assertThat(repository.exists("bar")).isFalse();
@@ -175,7 +175,7 @@ public class FilterRepositoryTest {
 
   @Test
   public void deleteExistingFilterShouldDeleteSuccessfully() {
-    BlockFilter filter = new BlockFilter("foo");
+    final BlockFilter filter = new BlockFilter("foo");
     repository.save(filter);
     repository.delete(filter.getId());
 
@@ -190,8 +190,8 @@ public class FilterRepositoryTest {
 
   @Test
   public void deleteAllShouldClearFilters() {
-    BlockFilter filter1 = new BlockFilter("foo");
-    BlockFilter filter2 = new BlockFilter("biz");
+    final BlockFilter filter1 = new BlockFilter("foo");
+    final BlockFilter filter2 = new BlockFilter("biz");
     repository.save(filter1);
     repository.save(filter2);
 

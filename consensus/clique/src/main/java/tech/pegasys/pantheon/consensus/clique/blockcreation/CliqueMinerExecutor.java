@@ -68,7 +68,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
   @Override
   public CliqueBlockMiner startAsyncMining(
       final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
-    CliqueBlockCreator blockCreator =
+    final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             localAddress, // TOOD(tmm): This can be removed (used for voting not coinbase).
             this::calculateExtraData,
@@ -80,7 +80,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
             minTransactionGasPrice,
             parentHeader);
 
-    CliqueBlockMiner currentRunningMiner =
+    final CliqueBlockMiner currentRunningMiner =
         new CliqueBlockMiner(
             blockCreator,
             protocolSchedule,
@@ -94,7 +94,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
   }
 
   public BytesValue calculateExtraData(final BlockHeader parentHeader) {
-    List<Address> validators = Lists.newArrayList();
+    final List<Address> validators = Lists.newArrayList();
 
     final BytesValue vanityDataToInsert = createCorrectlySizedVanityData();
     // Building ON TOP of canonical head, if the next block is epoch, include validators.
@@ -110,7 +110,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
   }
 
   private BytesValue createCorrectlySizedVanityData() {
-    int vanityPadding = Math.max(0, CliqueExtraData.EXTRA_VANITY_LENGTH - vanityData.size());
+    final int vanityPadding = Math.max(0, CliqueExtraData.EXTRA_VANITY_LENGTH - vanityData.size());
     return BytesValues.concatenate(BytesValue.wrap(new byte[vanityPadding]), vanityData)
         .slice(0, CliqueExtraData.EXTRA_VANITY_LENGTH);
   }

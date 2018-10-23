@@ -44,7 +44,7 @@ public class TomlConfigFileDefaultProviderTest {
   @Test
   public void defaultValueIsNullIfNoMatchingKeyFoundOtherwiseTheValue() throws IOException {
     final File tempConfigFile = temp.newFile("config.toml");
-    try (Writer fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
+    try (final Writer fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
 
       fileWriter.write("an-option='123'");
       fileWriter.flush();
@@ -64,7 +64,8 @@ public class TomlConfigFileDefaultProviderTest {
   @Test
   public void defaultValueForOptionMustMatchType() throws IOException {
     final File tempConfigFile = temp.newFile("config.toml");
-    try (BufferedWriter fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
+    try (final BufferedWriter fileWriter =
+        Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
 
       fileWriter.write("a-boolean-option=true");
       fileWriter.newLine();
@@ -137,7 +138,8 @@ public class TomlConfigFileDefaultProviderTest {
             + "\"\"\", a number, a boolean, a date/time, an array, or a table (line 1, column 19)");
 
     final File tempConfigFile = temp.newFile("config.toml");
-    try (BufferedWriter fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
+    try (final BufferedWriter fileWriter =
+        Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
 
       fileWriter.write("an-invalid-syntax=======....");
       fileWriter.flush();

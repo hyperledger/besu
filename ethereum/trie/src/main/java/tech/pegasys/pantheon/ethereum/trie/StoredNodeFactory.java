@@ -119,7 +119,7 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
 
         case 2:
           final BytesValue encodedPath = nodeRLPs.readBytesValue();
-          BytesValue path;
+          final BytesValue path;
           try {
             path = CompactEncoding.decode(encodedPath);
           } catch (final IllegalArgumentException ex) {
@@ -175,7 +175,7 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
       }
     }
 
-    Optional<V> value;
+    final Optional<V> value;
     if (nodeRLPs.nextIsNull()) {
       nodeRLPs.skipNext();
       value = Optional.empty();
@@ -205,7 +205,7 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
   }
 
   private V decodeValue(final RLPInput valueRlp, final Supplier<String> errMessage) {
-    BytesValue bytes;
+    final BytesValue bytes;
     try {
       bytes = valueRlp.readBytesValue();
     } catch (final RLPException ex) {
@@ -216,7 +216,7 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
   }
 
   private V deserializeValue(final Supplier<String> errMessage, final BytesValue bytes) {
-    V value;
+    final V value;
     try {
       value = valueDeserializer.apply(bytes);
     } catch (final IllegalArgumentException ex) {

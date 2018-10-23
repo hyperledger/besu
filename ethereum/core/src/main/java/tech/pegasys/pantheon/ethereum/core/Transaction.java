@@ -88,7 +88,7 @@ public class Transaction {
             .payload(input.readBytesValue());
 
     final int v = input.readIntScalar();
-    byte recId;
+    final byte recId;
     int chainId = -1;
     if (v == REPLAY_UNPROTECTED_V_BASE || v == REPLAY_UNPROTECTED_V_BASE + 1) {
       recId = (byte) (v - REPLAY_UNPROTECTED_V_BASE);
@@ -285,7 +285,7 @@ public class Transaction {
   }
 
   public int getV() {
-    int v;
+    final int v;
     if (!chainId.isPresent()) {
       v = signature.getRecId() + REPLAY_UNPROTECTED_V_BASE;
     } else {

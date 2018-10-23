@@ -61,7 +61,7 @@ public class EthNetworkConfig {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    EthNetworkConfig that = (EthNetworkConfig) o;
+    final EthNetworkConfig that = (EthNetworkConfig) o;
     return networkId == that.networkId
         && Objects.equals(genesisConfig, that.genesisConfig)
         && Objects.equals(bootNodes, that.bootNodes);
@@ -97,7 +97,7 @@ public class EthNetworkConfig {
   private static URI jsonConfigURI(final String resourceName) {
     try {
       return Resources.getResource(resourceName).toURI();
-    } catch (URISyntaxException e) {
+    } catch (final URISyntaxException e) {
       throw new IllegalStateException(e);
     }
   }

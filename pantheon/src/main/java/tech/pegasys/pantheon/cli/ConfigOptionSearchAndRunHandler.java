@@ -46,7 +46,7 @@ class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<List<Ob
     final CommandLine commandLine = parseResult.asCommandLineList().get(0);
     if (parseResult.hasMatchedOption(configFileOptionName)) {
       final OptionSpec configFileOption = parseResult.matchedOption(configFileOptionName);
-      File configFile;
+      final File configFile;
       try {
         configFile = configFileOption.getter().get();
       } catch (final Exception e) {
