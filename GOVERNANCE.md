@@ -1,5 +1,3 @@
-This is a Work in Progress, documenting approximately how we have been operating up to this point.
-
 # Overview
 This project is led by a benevolent dictator (PegaSys) and managed by the community. That is, the community actively contributes to the day-to-day maintenance of the project, but the general strategic line is drawn by the benevolent dictator. In case of disagreement, they have the last word. It is the benevolent dictator’s job to resolve disputes within the community and to ensure that the project is able to progress in a coordinated way. In turn, it is the community’s job to guide the decisions of the benevolent dictator through active engagement and contribution.
 

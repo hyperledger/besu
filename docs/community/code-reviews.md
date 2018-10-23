@@ -17,10 +17,6 @@ reasonable timeframe).
 
 If a PR has gone 2 work days without an approver emerging, please ask on [Pantheon Gitter]
 
-Except for rare cases, such as trivial changes (e.g. typos, comments) or
-emergencies (e.g. broken builds), approvers should not merge their own
-changes without another approver providing the code review.
-
 ## Attribution
 
 This Document was adapted by the following:

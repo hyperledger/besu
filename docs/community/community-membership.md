@@ -44,7 +44,7 @@ issues and PRs assigned to them.
 - Have made multiple contributions to the project or community.  Contribution may include, but is not limited to:
     - Authoring or reviewing PRs on GitHub
     - Filing or commenting on issues on GitHub
-    - Contributing community discussions (e.g. meetings, Slack, email discussion forums, Stack Overflow)
+    - Contributing to community discussions (e.g. meetings, Slack, email discussion forums, Stack Overflow)
 - Subscribed to [pantheon-dev@pegasys.tech]
 - Joined [Pantheon Gitter]
 - Browsed [Pantheon Wiki]
@@ -127,7 +127,7 @@ The Open Source Circle is a group that provides open source software support to 
 ### Responsibilities and privileges
 - Includes all of the responsibilities and privileges of a Project Sponsor
 - Ability to archive the project
-- manage the CLA 
+- Manage the CLA
 - Conduct legal reviews
 
 ## Project Evangelist
