@@ -17,6 +17,7 @@ import tech.pegasys.pantheon.consensus.clique.CliqueVoteTallyUpdater;
 import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.CliqueGetSigners;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.CliqueGetSignersAtHash;
+import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.CliqueProposals;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.Discard;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.Propose;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
@@ -56,11 +57,13 @@ public class CliqueJsonRpcMethodsFactory {
         new CliqueGetSignersAtHash(blockchainQueries, voteTallyCache, jsonRpcParameter);
     final Propose proposeRpc = new Propose(voteProposer, jsonRpcParameter);
     final Discard discardRpc = new Discard(voteProposer, jsonRpcParameter);
+    final CliqueProposals cliqueProposals = new CliqueProposals(voteProposer);
 
     rpcMethods.put(cliqueGetSigners.getName(), cliqueGetSigners);
     rpcMethods.put(cliqueGetSignersAtHash.getName(), cliqueGetSignersAtHash);
     rpcMethods.put(proposeRpc.getName(), proposeRpc);
     rpcMethods.put(discardRpc.getName(), discardRpc);
+    rpcMethods.put(cliqueProposals.getName(), cliqueProposals);
     return rpcMethods;
   }
 
