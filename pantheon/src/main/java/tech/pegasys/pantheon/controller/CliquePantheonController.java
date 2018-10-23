@@ -74,6 +74,7 @@ public class CliquePantheonController
 
   private static final long EPOCH_LENGTH_DEFAULT = 30_000L;
   private static final long SECONDS_BETWEEN_BLOCKS_DEFAULT = 15L;
+  private final CliqueMiningCoordinator miningCoordinator;
 
   CliquePantheonController(
       final GenesisConfig<CliqueContext> genesisConfig,
@@ -82,6 +83,7 @@ public class CliquePantheonController
       final Synchronizer synchronizer,
       final KeyPair keyPair,
       final TransactionPool transactionPool,
+      final CliqueMiningCoordinator miningCoordinator,
       final Runnable closer) {
 
     this.genesisConfig = genesisConfig;
@@ -91,6 +93,7 @@ public class CliquePantheonController
     this.keyPair = keyPair;
     this.transactionPool = transactionPool;
     this.closer = closer;
+    this.miningCoordinator = miningCoordinator;
   }
 
   public static PantheonController<CliqueContext, CliqueBlockMiner> init(
@@ -174,6 +177,7 @@ public class CliquePantheonController
         synchronizer,
         nodeKeys,
         transactionPool,
+        miningCoordinator,
         () -> {
           miningCoordinator.disable();
           minerThreadPool.shutdownNow();
@@ -218,7 +222,7 @@ public class CliquePantheonController
 
   @Override
   public AbstractMiningCoordinator<CliqueContext, CliqueBlockMiner> getMiningCoordinator() {
-    return null;
+    return miningCoordinator;
   }
 
   @Override
