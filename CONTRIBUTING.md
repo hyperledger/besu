@@ -19,7 +19,7 @@ Before You start
   * [Pull Requests](#pull-requests)
   * [Code Reviews]
 
-[Style Guides](#Style-Guides)
+[Style Guides](#style-guides)
   * [Git Commit Messages & Pull Request Messages](#git-commit-messages--pull-request-messages)
   * [Java Style Guide](#java-code-style-guide)
   * [Documentation Style Guide](#documentation-style-guide)
@@ -73,8 +73,8 @@ Provide more context by answering these questions:
 Include details about your configuration and environment:
 
 * **Which version of the software are you using?** You can get the exact version by running `pantheon -v` in your terminal.
-* **What OS & Version are you running
-* **For linux, What Kernel are you running? You can get the exact version by running `uname -a` in your terminal.
+* **What OS & Version are you running?**
+  * **For Linux - What kernel are you running?** You can get the exact version by running `uname -a` in your terminal.
 * **Are you running in a virtual machine?** If so, which VM software are you using and which operating systems and versions are used for the host and the guest?
 * **Are you running in a docker container?** If so, what version of docker?
 * **Are you running in a a Cloud?** If so, which one, and what type/size of VM is it?
@@ -147,7 +147,7 @@ Please follow these steps to have your contribution considered by the approvers:
 4. Follow the [styleguides](#Style Guides)
 5. After you submit your pull request, verify that all [status checks](https://help.github.com/articles/about-status-checks/) are passing <details><summary>What if the status checks are failing?</summary>If a status check is failing, and you believe that the failure is unrelated to your change, please leave a comment on the pull request explaining why you believe the failure is unrelated. A maintainer will re-run the status check for you. If we conclude that the failure was a false positive, then we will open an issue to track that problem with our status check suite.</details>
 
-While the prerequisites above must be satisfied prior to having your pull request reviewed, the reviewer(s) may ask you to complete additional design work, tests, or other changes before your pull request can be ultimately accepted.  Please refer to [code-reviews.md].
+While the prerequisites above must be satisfied prior to having your pull request reviewed, the reviewer(s) may ask you to complete additional design work, tests, or other changes before your pull request can be ultimately accepted.  Please refer to [Code Reviews].
 
 # Style Guides
 ## Java Code Style Guide
@@ -198,7 +198,7 @@ Exceptions:
 
 This section lists the labels we use to help us track and manage issues and pull requests. 
 
-[GitHub search](https://help.github.com/articles/searching-issues/) makes it easy to use labels for finding groups of issues or pull requests you're interested in. 
+[GitHub search](https://help.github.com/articles/searching-issues-and-pull-requests/) makes it easy to use labels for finding groups of issues or pull requests you're interested in. 
 
 The labels are loosely grouped by their purpose, but it's not required that every issue have a label from every group or that an issue can't have more than one label from the same group.
 

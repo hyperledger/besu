@@ -5,7 +5,7 @@ Have you read the Code of Conduct? By filing an Issue, you are expected to compl
 
 ### Prerequisites
 
-* [ ] Put an X between the brackets on this line if you have done all of the following:
+* [] Put an X between the brackets on this line if you have done all of the following:
   * Reproduced the issue in the latest version of the software
   * Followed all steps in the debugging wiki: https://github.com/PegasysEng/pantheon/wiki/debugging
   * Verified the issue doesn't already exist: https://github.com/search?q=+is%3Aissue+repo%3APegasysEng/Pantheon
