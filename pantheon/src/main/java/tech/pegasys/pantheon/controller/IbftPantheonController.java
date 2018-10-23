@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.consensus.ibft.IbftEventQueue;
 import tech.pegasys.pantheon.consensus.ibft.IbftProcessor;
 import tech.pegasys.pantheon.consensus.ibft.IbftStateMachine;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockMiner;
+import tech.pegasys.pantheon.consensus.ibft.network.IbftNetworkPeers;
 import tech.pegasys.pantheon.consensus.ibft.protocol.IbftProtocolManager;
 import tech.pegasys.pantheon.consensus.ibft.protocol.IbftSubProtocol;
 import tech.pegasys.pantheon.consensus.ibftlegacy.IbftProtocolSchedule;
@@ -185,12 +186,15 @@ public class IbftPantheonController implements PantheonController<IbftContext, I
         TransactionPoolFactory.createTransactionPool(
             protocolSchedule, protocolContext, ethProtocolManager.ethContext());
 
+    final IbftNetworkPeers peers =
+        new IbftNetworkPeers(protocolContext.getConsensusState().getVoteTally());
+
     return new IbftPantheonController(
         genesisConfig,
         protocolContext,
         ethSubProtocol,
         ethProtocolManager,
-        new IbftProtocolManager(ibftEventQueue),
+        new IbftProtocolManager(ibftEventQueue, peers),
         synchronizer,
         nodeKeys,
         transactionPool,

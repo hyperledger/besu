@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.consensus.ibft.protocol;
 import tech.pegasys.pantheon.consensus.ibft.IbftEvent;
 import tech.pegasys.pantheon.consensus.ibft.IbftEventQueue;
 import tech.pegasys.pantheon.consensus.ibft.IbftEvents;
+import tech.pegasys.pantheon.consensus.ibft.network.IbftNetworkPeers;
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
@@ -31,14 +32,17 @@ public class IbftProtocolManager implements ProtocolManager {
   private final IbftEventQueue ibftEventQueue;
 
   private final Logger LOG = LogManager.getLogger();
+  private final IbftNetworkPeers peers;
 
   /**
    * Constructor for the ibft protocol manager
    *
    * @param ibftEventQueue Entry point into the ibft event processor
+   * @param peers
    */
-  public IbftProtocolManager(final IbftEventQueue ibftEventQueue) {
+  public IbftProtocolManager(final IbftEventQueue ibftEventQueue, final IbftNetworkPeers peers) {
     this.ibftEventQueue = ibftEventQueue;
+    this.peers = peers;
   }
 
   @Override
@@ -79,13 +83,17 @@ public class IbftProtocolManager implements ProtocolManager {
   }
 
   @Override
-  public void handleNewConnection(final PeerConnection peerConnection) {}
+  public void handleNewConnection(final PeerConnection peerConnection) {
+    peers.peerAdded(peerConnection);
+  }
 
   @Override
   public void handleDisconnect(
       final PeerConnection peerConnection,
       final DisconnectReason disconnectReason,
-      final boolean initiatedByPeer) {}
+      final boolean initiatedByPeer) {
+    peers.peerRemoved(peerConnection);
+  }
 
   @Override
   public boolean hasSufficientPeers() {
