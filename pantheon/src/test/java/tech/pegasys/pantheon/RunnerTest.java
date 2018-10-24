@@ -97,7 +97,6 @@ public final class RunnerTest {
             GenesisConfig.mainnet(),
             fastSyncConfig,
             new MiningParametersTestBuilder().enabled(false).build(),
-            NETWORK_ID,
             aheadDbNodeKeys)) {
       setupState(blockCount, controller.getProtocolSchedule(), controller.getProtocolContext());
     }
@@ -109,7 +108,6 @@ public final class RunnerTest {
             GenesisConfig.mainnet(),
             fastSyncConfig,
             new MiningParametersTestBuilder().enabled(false).build(),
-            NETWORK_ID,
             aheadDbNodeKeys);
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
     final ExecutorService executorService = Executors.newFixedThreadPool(2);
@@ -143,7 +141,6 @@ public final class RunnerTest {
               GenesisConfig.mainnet(),
               fastSyncConfig,
               new MiningParametersTestBuilder().enabled(false).build(),
-              NETWORK_ID,
               behindDbNodeKeys);
       final Runner runnerBehind =
           runnerBuilder.build(

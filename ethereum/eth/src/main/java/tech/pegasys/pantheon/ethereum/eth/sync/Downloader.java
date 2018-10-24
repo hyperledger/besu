@@ -327,7 +327,7 @@ public class Downloader<C> {
       return CompletableFuture.completedFuture(Collections.emptyList());
     }
 
-    CompletableFuture<List<Block>> importedBlocks;
+    final CompletableFuture<List<Block>> importedBlocks;
     if (checkpointHeaders.size() < 2) {
       // Download blocks without constraining the end block
       final ImportBlocksTask<C> importTask =
@@ -382,9 +382,7 @@ public class Downloader<C> {
             chainSegmentTimeouts = 0;
             final BlockHeader lastImportedCheckpoint = checkpointHeaders.getLast();
             checkpointHeaders.clear();
-            syncState
-                .syncTarget()
-                .ifPresent(target -> target.setCommonAncestor(lastImportedCheckpoint));
+            syncState.setCommonAncestor(lastImportedCheckpoint);
           }
         });
   }
@@ -400,9 +398,7 @@ public class Downloader<C> {
     final BlockHeader lastImportedCheckpointHeader = imported.get(imported.size() - 1);
     // The first checkpoint header is always present in the blockchain.
     checkpointHeaders.addFirst(lastImportedCheckpointHeader);
-    syncState
-        .syncTarget()
-        .ifPresent(target -> target.setCommonAncestor(lastImportedCheckpointHeader));
+    syncState.setCommonAncestor(lastImportedCheckpointHeader);
     return imported.size() > 1;
   }
 }

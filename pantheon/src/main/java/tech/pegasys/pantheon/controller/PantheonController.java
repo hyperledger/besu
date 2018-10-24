@@ -19,8 +19,8 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.AbstractBlockCreator;
 import tech.pegasys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
 import tech.pegasys.pantheon.ethereum.blockcreation.BlockMiner;
-import tech.pegasys.pantheon.ethereum.blockcreation.MiningParameters;
 import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
+import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
@@ -58,7 +58,6 @@ public interface PantheonController<C, M extends BlockMiner<C, ? extends Abstrac
           GenesisConfig.fromConfig(config, MainnetProtocolSchedule.fromConfig(configOptions)),
           syncConfig,
           miningParameters,
-          networkId,
           nodeKeys);
     } else if (configOptions.containsKey("ibft")) {
       return IbftPantheonController.init(

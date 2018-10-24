@@ -13,9 +13,8 @@
 package tech.pegasys.pantheon.ethereum.blockcreation;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator.MinedBlockObserver;
+import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.mainnet.EthHashBlockCreator;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolution;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolverInputs;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;

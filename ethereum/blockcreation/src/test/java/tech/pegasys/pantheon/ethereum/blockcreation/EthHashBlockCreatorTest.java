@@ -10,13 +10,16 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.mainnet;
+package tech.pegasys.pantheon.ethereum.blockcreation;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.ExecutionContextTestFixture;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolver;
+import tech.pegasys.pantheon.ethereum.mainnet.EthHasher.Light;
+import tech.pegasys.pantheon.ethereum.mainnet.ValidationTestUtils;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -42,8 +45,7 @@ public class EthHashBlockCreatorTest {
 
   @Test
   public void createMainnetBlock1() throws IOException {
-    final EthHashSolver solver =
-        new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light());
+    final EthHashSolver solver = new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new Light());
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(
             BLOCK_1_COINBASE,

@@ -24,6 +24,7 @@ jar {
 dependencies {
   implementation project(':crypto')
   implementation project(':ethereum:core')
+  implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:eth')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:rlp')

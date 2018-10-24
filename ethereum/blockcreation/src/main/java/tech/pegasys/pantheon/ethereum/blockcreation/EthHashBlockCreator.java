@@ -10,17 +10,22 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.mainnet;
+package tech.pegasys.pantheon.ethereum.blockcreation;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.blockcreation.AbstractBlockCreator;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.SealableBlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.mainnet.EthHash;
+import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolution;
+import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolver;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolver.EthHashSolverJob;
+import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolverInputs;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 import tech.pegasys.pantheon.util.uint.UInt256;
 

@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.ethereum.eth.sync;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
-import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent.EventType;
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedObserver;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
@@ -74,7 +73,7 @@ public class TrailingPeerLimiter implements BlockAddedObserver {
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event, final Blockchain blockchain) {
-    if (event.getEventType() != EventType.FORK
+    if (event.isNewCanonicalHead()
         && event.getBlock().getHeader().getNumber() % RECHECK_PEERS_WHEN_BLOCK_NUMBER_MULTIPLE_OF
             == 0) {
       enforceTrailingPeerLimit();

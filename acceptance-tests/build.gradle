@@ -19,6 +19,7 @@ dependencies {
   testImplementation project(':crypto')
   testImplementation project(':ethereum:eth')
   testImplementation project(':ethereum:core')
+  testImplementation project(':ethereum:blockcreation')
   testImplementation project(':ethereum:jsonrpc')
   testImplementation project(':pantheon')
   testImplementation project(':util')

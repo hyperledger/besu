@@ -54,6 +54,7 @@ public class BlockPropagationManagerTest {
   private EthProtocolManager ethProtocolManager;
   private BlockPropagationManager<Void> blockPropagationManager;
   private SynchronizerConfiguration syncConfig;
+  private final PendingBlocks pendingBlocks = new PendingBlocks();
   private SyncState syncState;
 
   @BeforeClass
@@ -78,14 +79,15 @@ public class BlockPropagationManagerTest {
             .blockPropagationRange(-3, 5)
             .build()
             .validated(blockchain);
-    syncState = new SyncState(blockchain, ethProtocolManager.ethContext(), new PendingBlocks());
+    syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
     blockPropagationManager =
         new BlockPropagationManager<>(
             syncConfig,
             protocolSchedule,
             protocolContext,
             ethProtocolManager.ethContext(),
-            syncState);
+            syncState,
+            pendingBlocks);
   }
 
   @Test
@@ -459,7 +461,8 @@ public class BlockPropagationManagerTest {
             protocolSchedule,
             protocolContext,
             ethProtocolManager.ethContext(),
-            syncState);
+            syncState,
+            pendingBlocks);
 
     final BlockDataGenerator gen = new BlockDataGenerator();
     // Import some blocks
@@ -479,20 +482,20 @@ public class BlockPropagationManagerTest {
 
     // Check that we pushed our block into the pending collection
     assertThat(blockchain.contains(blockToPurge.getHash())).isFalse();
-    assertThat(syncState.pendingBlocks().contains(blockToPurge.getHash())).isTrue();
+    assertThat(pendingBlocks.contains(blockToPurge.getHash())).isTrue();
 
     // Import blocks until we bury the target block far enough to be cleaned up
     for (int i = 0; i < oldBlocksToImport; i++) {
       blockchainUtil.importBlockAtIndex((int) blockchain.getChainHeadBlockNumber() + 1);
 
       assertThat(blockchain.contains(blockToPurge.getHash())).isFalse();
-      assertThat(syncState.pendingBlocks().contains(blockToPurge.getHash())).isTrue();
+      assertThat(pendingBlocks.contains(blockToPurge.getHash())).isTrue();
     }
 
     // Import again to trigger cleanup
     blockchainUtil.importBlockAtIndex((int) blockchain.getChainHeadBlockNumber() + 1);
     assertThat(blockchain.contains(blockToPurge.getHash())).isFalse();
-    assertThat(syncState.pendingBlocks().contains(blockToPurge.getHash())).isFalse();
+    assertThat(pendingBlocks.contains(blockToPurge.getHash())).isFalse();
   }
 
   @Test

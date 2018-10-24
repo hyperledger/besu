@@ -39,12 +39,17 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
-      final EthContext ethContext) {
-    this.syncState =
-        new SyncState(protocolContext.getBlockchain(), ethContext, new PendingBlocks());
+      final EthContext ethContext,
+      final SyncState syncState) {
+    this.syncState = syncState;
     this.blockPropagationManager =
         new BlockPropagationManager<>(
-            syncConfig, protocolSchedule, protocolContext, ethContext, syncState);
+            syncConfig,
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            syncState,
+            new PendingBlocks());
     this.downloader =
         new Downloader<>(syncConfig, protocolSchedule, protocolContext, ethContext, syncState);
 

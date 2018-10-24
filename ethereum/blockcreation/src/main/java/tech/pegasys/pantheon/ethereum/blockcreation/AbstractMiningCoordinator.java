@@ -12,14 +12,16 @@
  */
 package tech.pegasys.pantheon.ethereum.blockcreation;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
-import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent.EventType;
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedObserver;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolution;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolverInputs;
 import tech.pegasys.pantheon.util.Subscribers;
@@ -27,22 +29,29 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Optional;
 
+import org.apache.logging.log4j.Logger;
+
 public abstract class AbstractMiningCoordinator<
         C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>>
     implements BlockAddedObserver {
-
+  private static final Logger LOG = getLogger();
   protected boolean isEnabled = false;
   protected volatile Optional<M> currentRunningMiner = Optional.empty();
 
   private final Subscribers<MinedBlockObserver> minedBlockObservers = new Subscribers<>();
   private final AbstractMinerExecutor<C, M> executor;
   protected final Blockchain blockchain;
+  private final SyncState syncState;
 
   public AbstractMiningCoordinator(
-      final Blockchain blockchain, final AbstractMinerExecutor<C, M> executor) {
+      final Blockchain blockchain,
+      final AbstractMinerExecutor<C, M> executor,
+      final SyncState syncState) {
     this.executor = executor;
     this.blockchain = blockchain;
+    this.syncState = syncState;
     this.blockchain.observeBlockAdded(this);
+    syncState.addInSyncListener(this::inSyncChanged);
   }
 
   public void enable() {
@@ -50,7 +59,9 @@ public abstract class AbstractMiningCoordinator<
       if (isEnabled) {
         return;
       }
-      startAsyncMiningOperation();
+      if (syncState.isInSync()) {
+        startAsyncMiningOperation();
+      }
       isEnabled = true;
     }
   }
@@ -67,7 +78,7 @@ public abstract class AbstractMiningCoordinator<
 
   public boolean isRunning() {
     synchronized (this) {
-      return isEnabled;
+      return currentRunningMiner.isPresent();
     }
   }
 
@@ -78,28 +89,35 @@ public abstract class AbstractMiningCoordinator<
 
   protected void haltCurrentMiningOperation() {
     currentRunningMiner.ifPresent(M::cancel);
+    currentRunningMiner = Optional.empty();
   }
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event, final Blockchain blockchain) {
     synchronized (this) {
-      if (isEnabled && shouldStartNewMiner(event)) {
+      if (isEnabled && event.isNewCanonicalHead()) {
         haltCurrentMiningOperation();
-        startAsyncMiningOperation();
+        if (syncState.isInSync()) {
+          startAsyncMiningOperation();
+        }
       }
     }
   }
 
-  private boolean shouldStartNewMiner(final BlockAddedEvent event) {
-    return event.getEventType() != EventType.FORK;
+  public void inSyncChanged(final boolean inSync) {
+    synchronized (this) {
+      if (isEnabled && inSync) {
+        LOG.info("Resuming mining operations");
+        startAsyncMiningOperation();
+      } else if (!inSync) {
+        LOG.info("Pausing mining while behind chain head");
+        haltCurrentMiningOperation();
+      }
+    }
   }
 
-  public void removeMinedBlockObserver(final long id) {
-    minedBlockObservers.unsubscribe(id);
-  }
-
-  public long addMinedBlockObserver(final MinedBlockObserver obs) {
-    return minedBlockObservers.subscribe(obs);
+  public void addMinedBlockObserver(final MinedBlockObserver obs) {
+    minedBlockObservers.subscribe(obs);
   }
 
   // Required for JSON RPC, and are deemed to be valid for all mining mechanisms
@@ -117,31 +135,26 @@ public abstract class AbstractMiningCoordinator<
 
   public void setCoinbase(final Address coinbase) {
     throw new UnsupportedOperationException(
-        "Current consensus mechanism prevents" + " setting coinbase.");
+        "Current consensus mechanism prevents setting coinbase.");
   }
 
   public Optional<Address> getCoinbase() {
     throw new UnsupportedOperationException(
-        "Current consensus mechanism prevents" + " querying of coinbase.");
+        "Current consensus mechanism prevents querying of coinbase.");
   }
 
   public Optional<Long> hashesPerSecond() {
     throw new UnsupportedOperationException(
-        "Current consensus mechanism prevents querying " + "of hashrate.");
+        "Current consensus mechanism prevents querying of hashrate.");
   }
 
   public Optional<EthHashSolverInputs> getWorkDefinition() {
     throw new UnsupportedOperationException(
-        "Current consensus mechanism prevents querying " + "work definition.");
+        "Current consensus mechanism prevents querying work definition.");
   }
 
   public boolean submitWork(final EthHashSolution solution) {
     throw new UnsupportedOperationException(
-        "Current consensus mechanism prevents submission of work" + " solutions.");
-  }
-
-  public interface MinedBlockObserver {
-
-    void blockMined(Block block);
+        "Current consensus mechanism prevents submission of work solutions.");
   }
 }

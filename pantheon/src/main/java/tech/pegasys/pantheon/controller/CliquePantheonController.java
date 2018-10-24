@@ -26,11 +26,11 @@ import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
-import tech.pegasys.pantheon.ethereum.blockcreation.MiningParameters;
 import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.core.Util;
@@ -41,6 +41,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.sync.DefaultSynchronizer;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolFactory;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
@@ -140,16 +141,23 @@ public class CliquePantheonController
             genesisConfig.getChainId(),
             fastSyncEnabled,
             networkId);
+    final SyncState syncState =
+        new SyncState(
+            protocolContext.getBlockchain(), ethProtocolManager.ethContext().getEthPeers());
     final Synchronizer synchronizer =
         new DefaultSynchronizer<>(
-            syncConfig, protocolSchedule, protocolContext, ethProtocolManager.ethContext());
+            syncConfig,
+            protocolSchedule,
+            protocolContext,
+            ethProtocolManager.ethContext(),
+            syncState);
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
             protocolSchedule, protocolContext, ethProtocolManager.ethContext());
 
     final ExecutorService minerThreadPool = Executors.newCachedThreadPool();
-    CliqueMinerExecutor miningExecutor =
+    final CliqueMinerExecutor miningExecutor =
         new CliqueMinerExecutor(
             protocolContext,
             minerThreadPool,
@@ -163,8 +171,8 @@ public class CliquePantheonController
                 Util.publicKeyToAddress(nodeKeys.getPublicKey()),
                 secondsBetweenBlocks),
             epochManger);
-    CliqueMiningCoordinator miningCoordinator =
-        new CliqueMiningCoordinator(blockchain, miningExecutor);
+    final CliqueMiningCoordinator miningCoordinator =
+        new CliqueMiningCoordinator(blockchain, miningExecutor, syncState);
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
 
     // Clique mining is implicitly enabled.

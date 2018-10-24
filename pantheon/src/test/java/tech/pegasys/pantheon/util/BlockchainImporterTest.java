@@ -19,8 +19,8 @@ import tech.pegasys.pantheon.controller.MainnetPantheonController;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.blockcreation.EthHashBlockMiner;
-import tech.pegasys.pantheon.ethereum.blockcreation.MiningParameters;
 import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
+import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
@@ -72,7 +72,6 @@ public final class BlockchainImporterTest {
             genesisConfig,
             SynchronizerConfiguration.builder().build(),
             miningParams,
-            10,
             keyPair);
     final BlockchainImporter.ImportResult result =
         blockImporter.importBlockchain(source, ctrl, true, 1, 1, false, false, null);

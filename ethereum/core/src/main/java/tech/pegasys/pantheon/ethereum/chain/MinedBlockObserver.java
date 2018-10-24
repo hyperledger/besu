@@ -10,27 +10,10 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
+package tech.pegasys.pantheon.ethereum.chain;
 
-rootProject.name='pantheon'
-include 'acceptance-tests'
-include 'consensus'
-include 'consensus:clique'
-include 'consensus:common'
-include 'consensus:ibft'
-include 'consensus:ibftlegacy'
-include 'crypto'
-include 'ethereum:p2p'
-include 'ethereum:mock-p2p'
-include 'ethereum:jsonrpc'
-include 'ethereum:referencetests'
-include 'ethereum:core'
-include 'ethereum:blockcreation'
-include 'ethereum:rlp'
-include 'ethereum:eth'
-include 'ethereum:trie'
-include 'pantheon'
-include 'services:kvstore'
-include 'testutil'
-include 'util'
-include 'errorprone-checks'
-include 'quickstart'
+import tech.pegasys.pantheon.ethereum.core.Block;
+
+public interface MinedBlockObserver {
+  void blockMined(Block block);
+}

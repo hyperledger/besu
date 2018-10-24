@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
-import tech.pegasys.pantheon.ethereum.blockcreation.MiningParameters;
+import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;

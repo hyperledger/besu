@@ -19,22 +19,31 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.core.ExecutionContextTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolution;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 
 import java.util.Optional;
 
+import org.junit.Before;
 import org.junit.Test;
 
 public class EthHashMiningCoordinatorTest {
 
   private final ExecutionContextTestFixture executionContext = new ExecutionContextTestFixture();
+  private final SyncState syncState = mock(SyncState.class);
+  private final EthHashMinerExecutor executor = mock(EthHashMinerExecutor.class);
+  private final EthHashBlockMiner miner = mock(EthHashBlockMiner.class);
+
+  @Before
+  public void setUp() {
+    when(syncState.isInSync()).thenReturn(true);
+  }
 
   @Test
   public void miningCoordinatorIsCreatedDisabledWithNoReportableMiningStatistics() {
-    final EthHashMinerExecutor executor = mock(EthHashMinerExecutor.class);
     final EthHashMiningCoordinator miningCoordinator =
-        new EthHashMiningCoordinator(executionContext.getBlockchain(), executor);
+        new EthHashMiningCoordinator(executionContext.getBlockchain(), executor, syncState);
     final EthHashSolution solution = new EthHashSolution(1L, Hash.EMPTY, new byte[Bytes32.SIZE]);
 
     assertThat(miningCoordinator.isRunning()).isFalse();
@@ -45,21 +54,17 @@ public class EthHashMiningCoordinatorTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void reportedHashRateIsCachedIfNoCurrentDataInMiner() throws InterruptedException {
-
-    final EthHashBlockMiner miner = mock(EthHashBlockMiner.class);
-
+  public void reportedHashRateIsCachedIfNoCurrentDataInMiner() {
     final Optional<Long> hashRate1 = Optional.of(10L);
     final Optional<Long> hashRate2 = Optional.empty();
     final Optional<Long> hashRate3 = Optional.of(20L);
 
     when(miner.getHashesPerSecond()).thenReturn(hashRate1, hashRate2, hashRate3);
 
-    final EthHashMinerExecutor executor = mock(EthHashMinerExecutor.class);
     when(executor.startAsyncMining(any(), any())).thenReturn(miner);
 
     final EthHashMiningCoordinator miningCoordinator =
-        new EthHashMiningCoordinator(executionContext.getBlockchain(), executor);
+        new EthHashMiningCoordinator(executionContext.getBlockchain(), executor, syncState);
 
     miningCoordinator.enable(); // Must enable prior returning data
     assertThat(miningCoordinator.hashesPerSecond()).isEqualTo(hashRate1);

@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.util.Subscribers;
