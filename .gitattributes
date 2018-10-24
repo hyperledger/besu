@@ -3,3 +3,8 @@
 *.bat -text
 *.pcap binary
 *.blocks binary
+*.eot binary
+*.svg binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
