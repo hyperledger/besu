@@ -37,9 +37,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.RequestOptions;
 import io.vertx.core.http.WebSocket;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -265,27 +262,6 @@ public class DockerQuickstartTest {
     } finally {
       assertThat(wsConnection[0]).isNotNull();
       wsConnection[0].close();
-    }
-  }
-
-  @Test
-  public void explorerShouldHaveModifiedHttpRpcEndpoint() throws IOException {
-    // we have to check that the sed command well replaced the endpoint placeholder with the
-    // real dynamic endpoint. But as this is a react app, we have to search for the value in the JS
-    // as we can't find it in the HTML page because source code is rendered dynamically.
-    final Request request =
-        new Request.Builder()
-            .get()
-            .url(endpoints.get(EndpointsIdentifier.EXPLORER) + "/static/js/bundle.js")
-            .build();
-
-    final OkHttpClient httpClient = new OkHttpClient();
-    try (final Response resp = httpClient.newCall(request).execute()) {
-      assertThat(resp.code()).isEqualTo(200);
-      assertThat(resp.body()).isNotNull();
-      assertThat(resp.body().string())
-          .containsOnlyOnce(
-              "var fallbackUrl = '" + endpoints.get(EndpointsIdentifier.HTTP_RPC) + "';");
     }
   }
 
