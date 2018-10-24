@@ -35,7 +35,7 @@ public final class NewChainHead implements IbftEvent {
 
   @Override
   public Type getType() {
-    return Type.NEW_CHAIN_HEAD_HEADER;
+    return Type.NEW_CHAIN_HEAD;
   }
 
   @Override
