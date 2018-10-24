@@ -92,6 +92,8 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
                 "Received Wire DISCONNECT, but unable to parse reason. Peer: {}",
                 connection.getPeer().getClientId(),
                 e);
+          } finally {
+            disconnect.release();
           }
 
           connection.terminateConnection(reason, true);
