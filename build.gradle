@@ -419,9 +419,7 @@ release {
   ]
 
   git {
-    requireBranch = 'master'
-    pushToRemote = 'origin'
-    pushToBranchPrefix = project.version.replace('SNAPSHOT','')
+    requireBranch = project.hasProperty('release.branch') ? project.property('release.branch') : 'master'
   }
 }
 
