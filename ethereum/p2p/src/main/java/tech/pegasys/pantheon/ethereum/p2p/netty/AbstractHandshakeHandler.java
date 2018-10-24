@@ -122,7 +122,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
 
   @Override
   public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable throwable) {
-    LOG.warn("Handshake error:", throwable.getMessage());
+    LOG.debug("Handshake error:", throwable);
     connectionFuture.completeExceptionally(throwable);
     ctx.close();
   }

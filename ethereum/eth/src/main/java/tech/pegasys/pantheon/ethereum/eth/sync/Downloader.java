@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeoutException;
@@ -103,7 +104,14 @@ public class Downloader<C> {
             .whenComplete(
                 (r, t) -> {
                   if (t != null) {
-                    LOG.error("Error encountered while downloading", t);
+                    final Throwable rootCause = ExceptionUtils.rootCause(t);
+                    if (rootCause instanceof CancellationException) {
+                      LOG.trace("Download cancelled", t);
+                    } else if (rootCause instanceof InvalidBlockException) {
+                      LOG.debug("Invalid block downloaded", t);
+                    } else {
+                      LOG.error("Error encountered while downloading", t);
+                    }
                     // On error, wait a bit before retrying
                     ethContext
                         .getScheduler()
@@ -160,8 +168,8 @@ public class Downloader<C> {
                   return waitForPeerAndThenSetSyncTarget();
                 }
                 final SyncTarget syncTarget = syncState.setSyncTarget(bestPeer, target);
-                LOG.info("Found common ancestor with sync target at block {}", target.getNumber());
-                LOG.info("Set sync target: {}.", syncTarget);
+                LOG.info(
+                    "Found common ancestor with peer {} at block {}", bestPeer, target.getNumber());
                 syncTargetDisconnectListenerId =
                     bestPeer.subscribeDisconnect(this::onSyncTargetPeerDisconnect);
                 return CompletableFuture.completedFuture(syncTarget);

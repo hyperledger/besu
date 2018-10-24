@@ -84,7 +84,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
       return;
     }
 
-    LOG.info(
+    LOG.debug(
         "Retrying after recoverable failure from peer task {}: {}",
         this.getClass().getSimpleName(),
         cause.getMessage());

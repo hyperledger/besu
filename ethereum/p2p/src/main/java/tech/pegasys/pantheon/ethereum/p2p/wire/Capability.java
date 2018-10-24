@@ -21,9 +21,6 @@ import tech.pegasys.pantheon.util.bytes.BytesValues;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 /**
  * Represents a client capability.
  *
@@ -32,16 +29,10 @@ import org.apache.logging.log4j.Logger;
  *     format</a>
  */
 public class Capability {
-  private static final Logger LOG = LogManager.getLogger();
   private final String name;
   private final int version;
 
   private Capability(final String name, final int version) {
-    // Quorum reports IBFT as "istanbul", breaking wire protocol conventions.
-    // As such, this check cannot prevent connection.
-    if (name.length() != 3) {
-      LOG.warn("Capability name '{}' is too long", name);
-    }
     this.name = name;
     this.version = version;
   }
