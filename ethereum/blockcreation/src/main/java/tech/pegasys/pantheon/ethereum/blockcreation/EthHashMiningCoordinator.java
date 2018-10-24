@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.blockcreation;
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedObserver;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolution;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolverInputs;
 
@@ -31,8 +32,8 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<Void, Et
   private volatile Optional<Long> cachedHashesPerSecond = Optional.empty();
 
   public EthHashMiningCoordinator(
-      final Blockchain blockchain, final EthHashMinerExecutor executor) {
-    super(blockchain, executor);
+      final Blockchain blockchain, final EthHashMinerExecutor executor, final SyncState syncState) {
+    super(blockchain, executor, syncState);
     this.executor = executor;
   }
 
@@ -78,5 +79,6 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<Void, Et
           miner.cancel();
           miner.getHashesPerSecond().ifPresent(val -> cachedHashesPerSecond = Optional.of(val));
         });
+    currentRunningMiner = Optional.empty();
   }
 }

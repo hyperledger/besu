@@ -70,14 +70,15 @@ public class BlockPropagationManager<C> {
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
-      final SyncState syncState) {
+      final SyncState syncState,
+      final PendingBlocks pendingBlocks) {
     this.config = config;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
 
     this.syncState = syncState;
-    pendingBlocks = syncState.pendingBlocks();
+    this.pendingBlocks = pendingBlocks;
   }
 
   public void start() {

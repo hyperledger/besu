@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import com.google.common.base.MoreObjects;
@@ -24,6 +25,16 @@ public class ChainState {
   // The highest block that we've seen
   private volatile long estimatedHeight = 0L;
   private volatile boolean estimatedHeightKnown = false;
+
+  private final Subscribers<EstimatedHeightListener> estimatedHeightListeners = new Subscribers<>();
+
+  public long addEstimatedHeightListener(final EstimatedHeightListener listener) {
+    return estimatedHeightListeners.subscribe(listener);
+  }
+
+  public void removeEstimatedHeightListener(final long listenerId) {
+    estimatedHeightListeners.unsubscribe(listenerId);
+  }
 
   public boolean hasEstimatedHeight() {
     return estimatedHeightKnown;
@@ -55,7 +66,7 @@ public class ChainState {
 
   public void update(final BlockHeader header) {
     synchronized (this) {
-      if (bestBlock.hash.equals(header.getHash())) {
+      if (header.getHash().equals(bestBlock.hash)) {
         bestBlock.number = header.getNumber();
       }
       updateHeightEstimate(header.getNumber());
@@ -77,6 +88,7 @@ public class ChainState {
     estimatedHeightKnown = true;
     if (blockNumber > estimatedHeight) {
       estimatedHeight = blockNumber;
+      estimatedHeightListeners.forEach(e -> e.onEstimatedHeightChanged(estimatedHeight));
     }
   }
 
@@ -114,5 +126,10 @@ public class ChainState {
           .add("number", number)
           .toString();
     }
+  }
+
+  @FunctionalInterface
+  public interface EstimatedHeightListener {
+    void onEstimatedHeightChanged(long estimatedHeight);
   }
 }

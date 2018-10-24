@@ -14,8 +14,8 @@ package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import tech.pegasys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;

@@ -13,6 +13,7 @@ dependencies {
   implementation project(':consensus:ibft')
   implementation project(':crypto')
   implementation project(':ethereum:core')
+  implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:eth')
   implementation project(':ethereum:jsonrpc')
   implementation project(':ethereum:rlp')

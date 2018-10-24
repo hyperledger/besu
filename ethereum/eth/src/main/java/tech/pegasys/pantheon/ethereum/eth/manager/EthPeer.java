@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.eth.manager;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.eth.manager.ChainState.EstimatedHeightListener;
 import tech.pegasys.pantheon.ethereum.eth.manager.RequestManager.ResponseStream;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV63;
@@ -79,6 +80,14 @@ public class EthPeer {
                 }));
     this.chainHeadState = new ChainState();
     this.onStatusesExchanged.set(onStatusesExchanged);
+  }
+
+  public long addChainEstimatedHeightListener(final EstimatedHeightListener listener) {
+    return chainHeadState.addEstimatedHeightListener(listener);
+  }
+
+  public void removeChainEstimatedHeightListener(final long listenerId) {
+    chainHeadState.removeEstimatedHeightListener(listenerId);
   }
 
   public void recordRequestTimeout(final int requestCode) {

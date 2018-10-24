@@ -20,11 +20,11 @@ import tech.pegasys.pantheon.ethereum.blockcreation.DefaultBlockScheduler;
 import tech.pegasys.pantheon.ethereum.blockcreation.EthHashBlockMiner;
 import tech.pegasys.pantheon.ethereum.blockcreation.EthHashMinerExecutor;
 import tech.pegasys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
-import tech.pegasys.pantheon.ethereum.blockcreation.MiningParameters;
 import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
@@ -34,6 +34,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.sync.DefaultSynchronizer;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolFactory;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -97,7 +98,6 @@ public class MainnetPantheonController implements PantheonController<Void, EthHa
         GenesisConfig.mainnet(),
         SynchronizerConfiguration.builder().build(),
         miningParams,
-        MAINNET_NETWORK_ID,
         nodeKeys);
   }
 
@@ -106,7 +106,6 @@ public class MainnetPantheonController implements PantheonController<Void, EthHa
       final GenesisConfig<Void> genesisConfig,
       final SynchronizerConfiguration taintedSyncConfig,
       final MiningParameters miningParams,
-      final int networkId,
       final KeyPair nodeKeys)
       throws IOException {
     final RocksDbKeyValueStorage kv =
@@ -131,9 +130,16 @@ public class MainnetPantheonController implements PantheonController<Void, EthHa
             genesisConfig.getChainId(),
             fastSyncEnabled,
             syncConfig.downloaderParallelism());
+    final SyncState syncState =
+        new SyncState(
+            protocolContext.getBlockchain(), ethProtocolManager.ethContext().getEthPeers());
     final Synchronizer synchronizer =
         new DefaultSynchronizer<>(
-            syncConfig, protocolSchedule, protocolContext, ethProtocolManager.ethContext());
+            syncConfig,
+            protocolSchedule,
+            protocolContext,
+            ethProtocolManager.ethContext(),
+            syncState);
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -153,7 +159,7 @@ public class MainnetPantheonController implements PantheonController<Void, EthHa
                 new SystemClock()));
 
     final EthHashMiningCoordinator miningCoordinator =
-        new EthHashMiningCoordinator(protocolContext.getBlockchain(), executor);
+        new EthHashMiningCoordinator(protocolContext.getBlockchain(), executor, syncState);
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
     if (miningParams.isMiningEnabled()) {
       miningCoordinator.enable();

@@ -64,6 +64,10 @@ public class BlockAddedEvent {
     return block;
   }
 
+  public boolean isNewCanonicalHead() {
+    return eventType != EventType.FORK;
+  }
+
   public EventType getEventType() {
     return eventType;
   }

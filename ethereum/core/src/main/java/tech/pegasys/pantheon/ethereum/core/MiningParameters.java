@@ -10,10 +10,8 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.blockcreation;
+package tech.pegasys.pantheon.ethereum.core;
 
-import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Optional;

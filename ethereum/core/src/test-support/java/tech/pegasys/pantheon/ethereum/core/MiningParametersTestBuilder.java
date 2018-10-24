@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.core;
 
-import tech.pegasys.pantheon.ethereum.blockcreation.MiningParameters;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 public class MiningParametersTestBuilder {

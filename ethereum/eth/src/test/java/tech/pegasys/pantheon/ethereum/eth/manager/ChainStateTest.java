@@ -13,10 +13,14 @@
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.eth.manager.ChainState.EstimatedHeightListener;
 import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -227,5 +231,60 @@ public class ChainStateTest {
     chainState.update(new BlockHeaderTestFixture().number(12).buildHeader());
 
     assertThat(chainState.hasEstimatedHeight()).isTrue();
+  }
+
+  @Test
+  public void observersInformedWhenHeightUpdatedViaHashAndNumber() {
+    final long blockNumber = 12;
+    final BlockHeader bestBlockHeader =
+        new BlockHeaderTestFixture().number(blockNumber).buildHeader();
+    chainState.statusReceived(bestBlockHeader.getHash(), INITIAL_TOTAL_DIFFICULTY);
+    final EstimatedHeightListener listener = mock(EstimatedHeightListener.class);
+    chainState.addEstimatedHeightListener(listener);
+    chainState.update(bestBlockHeader.getHash(), blockNumber);
+    verify(listener).onEstimatedHeightChanged(blockNumber);
+  }
+
+  @Test
+  public void observersInformedWhenHeightUpdatedViaHeader() {
+    final long blockNumber = 12;
+    final BlockHeader bestBlockHeader =
+        new BlockHeaderTestFixture().number(blockNumber).buildHeader();
+    chainState.statusReceived(bestBlockHeader.getHash(), INITIAL_TOTAL_DIFFICULTY);
+    final EstimatedHeightListener listener = mock(EstimatedHeightListener.class);
+    chainState.addEstimatedHeightListener(listener);
+    chainState.update(bestBlockHeader);
+    verify(listener).onEstimatedHeightChanged(blockNumber);
+  }
+
+  @Test
+  public void observersInformedWhenHeightUpdatedViaHeaderAndTD() {
+    final long blockNumber = 12;
+    final BlockHeader bestBlockHeader =
+        new BlockHeaderTestFixture().number(blockNumber).buildHeader();
+    chainState.statusReceived(bestBlockHeader.getHash(), INITIAL_TOTAL_DIFFICULTY);
+    final EstimatedHeightListener listener = mock(EstimatedHeightListener.class);
+    chainState.addEstimatedHeightListener(listener);
+    chainState.update(bestBlockHeader, INITIAL_TOTAL_DIFFICULTY);
+    verify(listener).onEstimatedHeightChanged(blockNumber);
+  }
+
+  @Test
+  public void observersNotInformedWhenHeightLowers() {
+    final long blockNumber = 12;
+    final BlockHeader bestBlockHeader =
+        new BlockHeaderTestFixture().number(blockNumber).buildHeader();
+    chainState.statusReceived(bestBlockHeader.getHash(), INITIAL_TOTAL_DIFFICULTY);
+    final EstimatedHeightListener listener = mock(EstimatedHeightListener.class);
+    chainState.addEstimatedHeightListener(listener);
+    chainState.update(bestBlockHeader);
+    verify(listener).onEstimatedHeightChanged(blockNumber);
+
+    final long lowerBlockNumber = 12;
+    final BlockHeader lowerBlockHeader =
+        new BlockHeaderTestFixture().number(lowerBlockNumber).buildHeader();
+    chainState.update(lowerBlockHeader);
+
+    verifyNoMoreInteractions(listener);
   }
 }
