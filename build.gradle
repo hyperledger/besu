@@ -383,12 +383,6 @@ configure(subprojects.findAll {it.name != 'errorprone-checks'}) {
   }
 }
 
-
-if (!file("ethereum/referencetests/src/test/resources/README.md").exists()) {
-  throw new GradleException("ethereum/referencetests/src/test/resources/README.md missing: please clone submodules (git submodule update --init --recursive)")
-}
-
-
 apply plugin: 'net.researchgate.release'
 
 task releaseIntegrationTest(type: Test){
@@ -401,7 +395,11 @@ task releaseIntegrationTest(type: Test){
   }
 }
 
-task releaseReferenceTest(type: Test, dependsOn : ':ethereum:core:referenceTests'){
+task releaseReferenceTest(type: Test, dependsOn : [
+  ':ethereum:core:referenceTests',
+  ':ethereum:rlp:referenceTests',
+  ':ethereum:trie:referenceTests'
+]){
 }
 
 task releaseAcceptanceTest(type: Test, dependsOn : ':acceptance-tests:acceptanceTest') {}
