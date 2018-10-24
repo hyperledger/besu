@@ -26,8 +26,11 @@ import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class DetermineCommonAncestorTask<C> extends AbstractEthTask<BlockHeader> {
+  private static final Logger LOG = LogManager.getLogger();
   private final EthContext ethContext;
   private final ProtocolSchedule<C> protocolSchedule;
   private final ProtocolContext<C> protocolContext;
@@ -97,7 +100,11 @@ public class DetermineCommonAncestorTask<C> extends AbstractEthTask<BlockHeader>
     final int skipInterval = initialQuery ? 0 : calculateSkipInterval(range, headerRequestSize);
     final int count =
         initialQuery ? headerRequestSize : calculateCount((double) range, skipInterval);
-
+    LOG.debug(
+        "Searching for common ancestor with {} between {} and {}",
+        peer,
+        minimumPossibleCommonAncestorNumber,
+        maximumPossibleCommonAncestorNumber);
     return executeSubTask(
         () ->
             GetHeadersFromPeerByNumberTask.endingAtNumber(

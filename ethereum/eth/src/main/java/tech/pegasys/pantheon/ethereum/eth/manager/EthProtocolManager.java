@@ -146,7 +146,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     LOG.trace("Process message {}, {}", cap, message.getData().getCode());
     final EthPeer peer = ethPeers.peer(message.getConnection());
     if (peer == null) {
-      LOG.error("Message received from unknown peer connection: " + message.getConnection());
+      LOG.debug(
+          "Ignoring message received from unknown peer connection: " + message.getConnection());
       return;
     }
 
@@ -229,7 +230,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         LOG.debug("Disconnecting from peer with mismatched network id: {}", status.networkId());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (!status.genesisHash().equals(genesisHash)) {
-        LOG.warn(
+        LOG.debug(
             "Disconnecting from peer with matching network id ({}), but non-matching genesis hash: {}",
             networkId,
             status.genesisHash());
@@ -239,7 +240,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         peer.registerStatusReceived(status.bestHash(), status.totalDifficulty());
       }
     } catch (final RLPException e) {
-      LOG.info("Unable to parse status message, disconnecting from peer.");
+      LOG.debug("Unable to parse status message, disconnecting from peer.", e);
       // Parsing errors can happen when clients broadcast network ids outside of the int range,
       // So just disconnect with "subprotocol" error rather than "breach of protocol".
       peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);

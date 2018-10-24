@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
+import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -147,8 +148,8 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
       LOG.warn(
           "Import of chain segment ({} to {}) failed: {}.",
           firstHeader().getNumber(),
-          lastHeader().getNumber());
-      LOG.error("Error", throwable);
+          lastHeader().getNumber(),
+          ExceptionUtils.rootCause(throwable).getMessage());
       result.get().completeExceptionally(throwable);
     } else {
       importedBlocks.addAll(blocks);

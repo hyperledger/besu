@@ -41,7 +41,7 @@ public class PeerReputation {
   public Optional<DisconnectReason> recordRequestTimeout(final int requestCode) {
     final int newTimeoutCount = getOrCreateTimeoutCount(requestCode).incrementAndGet();
     if (newTimeoutCount >= TIMEOUT_THRESHOLD) {
-      LOG.info("Disconnection triggered by repeated timeouts");
+      LOG.debug("Disconnection triggered by repeated timeouts");
       return Optional.of(DisconnectReason.TIMEOUT);
     } else {
       return Optional.empty();
@@ -66,7 +66,7 @@ public class PeerReputation {
       uselessResponseTimes.poll();
     }
     if (uselessResponseTimes.size() >= USELESS_RESPONSE_THRESHOLD) {
-      LOG.info("Disconnection triggered by exceeding useless response threshold");
+      LOG.debug("Disconnection triggered by exceeding useless response threshold");
       return Optional.of(DisconnectReason.USELESS_PEER);
     } else {
       return Optional.empty();

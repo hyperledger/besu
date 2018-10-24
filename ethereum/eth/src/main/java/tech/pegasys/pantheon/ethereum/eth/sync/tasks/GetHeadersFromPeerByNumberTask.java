@@ -79,7 +79,7 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
 
   @Override
   protected ResponseStream sendRequest(final EthPeer peer) throws PeerNotConnected {
-    LOG.info("Requesting {} headers from peer {}.", count, peer);
+    LOG.debug("Requesting {} headers from peer {}.", count, peer);
     return peer.getHeadersByNumber(blockNumber, count, reverse, skip);
   }
 

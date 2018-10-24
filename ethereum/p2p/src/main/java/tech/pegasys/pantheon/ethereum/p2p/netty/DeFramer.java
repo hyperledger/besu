@@ -21,7 +21,9 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.HelloMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.WireMessageCodes;
+import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -67,7 +69,15 @@ final class DeFramer extends ByteToMessageDecoder {
       if (!hellosExchanged && message.getCode() == WireMessageCodes.HELLO) {
         hellosExchanged = true;
         // Decode first hello and use the payload to modify pipeline
-        final PeerInfo peerInfo = parsePeerInfo(message);
+        final PeerInfo peerInfo;
+        try {
+          peerInfo = parsePeerInfo(message);
+        } catch (final RLPException e) {
+          LOG.debug("Received invalid HELLO message", e);
+          connectFuture.completeExceptionally(e);
+          ctx.close();
+          return;
+        }
         message.release();
         LOG.debug("Received HELLO message: {}", peerInfo);
         if (peerInfo.getVersion() >= 5) {
@@ -115,7 +125,12 @@ final class DeFramer extends ByteToMessageDecoder {
   @Override
   public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable throwable)
       throws Exception {
-    LOG.error("Exception while processing incoming message", throwable);
+    if (throwable instanceof IOException) {
+      // IO failures are routine when communicating with random peers across the network.
+      LOG.debug("IO error while processing incoming message", throwable);
+    } else {
+      LOG.error("Exception while processing incoming message", throwable);
+    }
     if (connectFuture.isDone()) {
       connectFuture.get().terminateConnection(DisconnectReason.TCP_SUBSYSTEM_ERROR, false);
     } else {
