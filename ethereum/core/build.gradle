@@ -62,6 +62,7 @@ test {
   exclude 'tech/pegasys/pantheon/ethereum/vm/**ReferenceTest.class'
   exclude 'tech/pegasys/pantheon/ethereum/vm/blockchain/**.class'
   exclude 'tech/pegasys/pantheon/ethereum/vm/generalstate/**.class'
+  exclude 'tech/pegasys/pantheon/ethereum/core/TransactionTest.class'
 }
 
 def generateTestFiles(FileTree jsonPath, File resourcesPath, File templateFile, String pathstrip, String destination, String namePrefix) {
@@ -115,8 +116,6 @@ task blockchainReferenceTestsSetup {
     )
 }
 
-compileTestJava.dependsOn(blockchainReferenceTestsSetup)
-
 task generalstateReferenceTestsSetup {
   generateTestFiles(
     fileTree("../referencetests/src/test/resources/GeneralStateTests"),
@@ -127,8 +126,6 @@ task generalstateReferenceTestsSetup {
     "GeneralStateReferenceTest"
     )
 }
-
-compileTestJava.dependsOn(generalstateReferenceTestsSetup)
 
 task generalstateRegressionReferenceTestsSetup {
   generateTestFiles(
@@ -141,8 +138,6 @@ task generalstateRegressionReferenceTestsSetup {
     )
 }
 
-compileTestJava.dependsOn(generalstateRegressionReferenceTestsSetup)
-
 task cleanupReferenceTests(type: Delete) {
   delete fileTree("./src/test/java/tech/pegasys/pantheon/ethereum/vm/generalstate/") {
     include("**/GeneralStateReferenceTest*.java")
@@ -153,12 +148,26 @@ task cleanupReferenceTests(type: Delete) {
 
 clean.dependsOn(cleanupReferenceTests)
 
-task referenceTests(type: Test, dependsOn: ["compileTestJava"]) {
+task referenceTests(type: Test, dependsOn: [
+  "blockchainReferenceTestsSetup",
+  "generalstateReferenceTestsSetup",
+  "generalstateRegressionReferenceTestsSetup",
+  "compileTestJava"
+]) {
+  compileTestJava.mustRunAfter blockchainReferenceTestsSetup
+  compileTestJava.mustRunAfter generalstateReferenceTestsSetup
+  compileTestJava.mustRunAfter generalstateRegressionReferenceTestsSetup
+  doFirst {
+    if (!file("../referencetests/src/test/resources/README.md").exists()) {
+      throw new GradleException("ethereum/referencetests/src/test/resources/README.md missing: please clone submodules (git submodule update --init --recursive)")
+    }
+  }
   scanForTestClasses = false
   enableAssertions = true
   include 'tech/pegasys/pantheon/ethereum/vm/**ReferenceTest.class'
   include 'tech/pegasys/pantheon/ethereum/vm/blockchain/**.class'
   include 'tech/pegasys/pantheon/ethereum/vm/generalstate/**.class'
+  include 'tech/pegasys/pantheon/ethereum/core/TransactionTest.class'
 }
 
 artifacts {
