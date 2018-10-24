@@ -39,7 +39,7 @@ public enum PacketType {
   private final Deserializer<?> deserializer;
 
   public static Optional<PacketType> forByte(final byte b) {
-    return b > MAX_VALUE ? Optional.empty() : Optional.ofNullable(INDEX[b]);
+    return b >= MAX_VALUE || b < 0 ? Optional.empty() : Optional.ofNullable(INDEX[b]);
   }
 
   PacketType(final int value, final Deserializer<?> deserializer) {
