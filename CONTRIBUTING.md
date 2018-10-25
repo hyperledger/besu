@@ -103,8 +103,8 @@ Enhancement suggestions are tracked as [GitHub issues](https://guides.github.com
 
 ## Your First Code Contribution
 Start by looking through the 'beginner' and 'help wanted' issues:
-* [Beginner issues][beginner] - issues which should only require a few lines of code, and a test or two.
-* [Help wanted issues][help-wanted] - issues which are a bit more involved than `beginner` issues.
+* [Beginner issues][search-label-beginner] - issues which should only require a few lines of code, and a test or two.
+* [Help wanted issues][search-label-help-wanted] - issues which are a bit more involved than `beginner` issues.
 
 ### Local Development
 The codebase is maintained using the "*contributor workflow*" where everyone without exception contributes patch proposals using "*pull-requests*". This facilitates social contribution, easy testing and peer review.
@@ -176,16 +176,15 @@ Exceptions:
 | --- | --- | --- |
 | `enhancement` | [search][search-label-enhancement] | Feature requests. |
 | `bug` | [search][search-label-bug] | Confirmed bugs or reports that are very likely to be bugs. |
-| `question` | [search][search-label-question] | Questions more than bug reports or feature requests (e.g. how do I do X). |
-| `feedback` | [search][search-label-feedback] | General feedback more than bug reports or feature requests. |
-| `help-wanted` | [search][search-label-help-wanted] | The core team would appreciate help from the community in resolving these issues. |
+| `help wanted` | [search][search-label-help-wanted] | The core team would appreciate help from the community in resolving these issues. |
 | `beginner` | [search][search-label-beginner] | Less complex issues which would be good first issues to work on for users who want to contribute. |
-| `more-information-needed` | [search][search-label-more-information-needed] | More information needs to be collected about these problems or feature requests (e.g. steps to reproduce). |
-| `needs-reproduction` | [search][search-label-needs-reproduction] | Likely bugs, but haven't been reliably reproduced. |
+| `info needed` | [search][search-label-more-information-needed] | More information needs to be collected about these problems or feature requests (e.g. steps to reproduce). |
+| `needs reproduction` | [search][search-label-needs-reproduction] | Likely bugs, but haven't been reliably reproduced. |
 | `blocked` | [search][search-label-blocked] | Issues blocked on other issues. |
 | `duplicate` | [search][search-label-duplicate] | Issues which are duplicates of other issues, i.e. they have been reported before. |
 | `wontfix` | [search][search-label-wontfix] | The core team has decided not to fix these issues for now, either because they're working as intended or for some other reason. |
 | `invalid` | [search][search-label-invalid] | Issues which aren't valid (e.g. user errors). |
+| `do we want this?` | [search][search-label-do-we-want-this] | Seeking stakeholder consensus on proposed feature. |
 
 #### Topic Categories
 
@@ -204,20 +203,8 @@ Exceptions:
 | Label name | Search Link :mag_right: | Description
 | --- | --- | --- |
 | `work-in-progress` | [search][search-label-work-in-progress] | Pull requests which are still being worked on, more changes will follow. |
-| `needs-review` | [search][search-label-needs-review] | Pull requests which need code review, and approval from maintainers or the core team. |
-| `under-review` | [search][search-label-under-review] | Pull requests being reviewed by maintainers or the core team. |
 | `requires-changes` | [search][search-label-requires-changes] | Pull requests which need to be updated based on review comments and then reviewed again. |
 
-
-[search-label-enhancement]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Aenhancement
-[search-label-bug]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Abug
-[search-label-question]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Aquestion
-[search-label-feedback]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Afeedback
-[search-label-help-wanted]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Ahelp-wanted
-[search-label-beginner]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Abeginner
-[search-label-more-information-needed]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Amore-information-needed
-[search-label-needs-reproduction]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Aneeds-reproduction
-[search-label-triage-help-needed]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Atriage-help-needed
 [search-label-windows]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Awindows
 [search-label-linux]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Alinux
 [search-label-mac]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Amac
@@ -226,16 +213,19 @@ Exceptions:
 [search-label-security]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Asecurity
 [search-label-api]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Aapi
 
+[search-label-enhancement]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Aenhancement
+[search-label-bug]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Abug
+[search-label-help-wanted]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Ahelp%20wanted
+[search-label-beginner]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Abeginner
+[search-label-info-needed]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Ainfo%20needed
+[search-label-needs-reproduction]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Aneeds%20reproduction
 [search-label-blocked]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Ablocked
 [search-label-duplicate]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Aduplicate
 [search-label-wontfix]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Awontfix
 [search-label-invalid]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Ainvalid
-[search-label-work-in-progress]: https://github.com/search?q=is%3Aopen+is%3Apr+repo%3APegasysEng%2FPantheon+label%3Awork-in-progress
-[search-label-needs-review]: https://github.com/search?q=is%3Aopen+is%3Apr+repo%3APegasysEng%2FPantheon+label%3Aneeds-review
-[search-label-under-review]: https://github.com/search?q=is%3Aopen+is%3Apr+repo%3APegasysEng%2FPantheon+label%3Aunder-review
-[search-label-requires-changes]: https://github.com/search?q=is%3Aopen+is%3Apr+repo%3APegasysEng%2FPantheon+label%3Arequires-changes
-[beginner]:https://github.com/search?utf8=%E2%9C%93&q=is%3Aopen+is%3Aissue+label%3Abeginner+label%3Ahelp-wanted+repo%3APegasysEng%2FPantheon+sort%3Acomments-desc
-[help-wanted]:https://github.com/search?q=is%3Aopen+is%3Aissue+label%3Ahelp-wanted+repo%3APegasysEng%2FPantheon+sort%3Acomments-desc+-label%3Abeginner
+[search-label-work-in-progress]: https://github.com/search?q=is%3Aopen+is%3Apr+repo%3APegasysEng%2FPantheon+label%3Awork%20in%20progress
+[search-label-requires-changes]: https://github.com/search?q=is%3Aopen+is%3Apr+repo%3APegasysEng%2FPantheon+label%3Arequires%20changes
+
 
 [private@pegasys.tech]: mailto:private@pegasys.tech
 [Gitter]: https://gitter.im/Pantheon
