@@ -12,15 +12,9 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.protocol;
 
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftV2;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 public class IbftSubProtocol implements SubProtocol {
 
@@ -40,41 +34,20 @@ public class IbftSubProtocol implements SubProtocol {
 
   @Override
   public int messageSpace(final int protocolVersion) {
-    return NotificationType.getMax() + 1;
+    return IbftV2.MESSAGE_SPACE;
   }
 
   @Override
   public boolean isValidMessageCode(final int protocolVersion, final int code) {
-    return NotificationType.fromValue(code).isPresent();
-  }
+    switch (code) {
+      case IbftV2.PRE_PREPARE:
+      case IbftV2.PREPARE:
+      case IbftV2.COMMIT:
+      case IbftV2.ROUND_CHANGE:
+        return true;
 
-  public enum NotificationType {
-    PREPREPARE(0),
-    PREPARE(1),
-    COMMIT(2),
-    ROUND_CHANGE(3);
-
-    private final int value;
-
-    NotificationType(final int value) {
-      this.value = value;
-    }
-
-    public final int getValue() {
-      return value;
-    }
-
-    public static final int getMax() {
-      return Collections.max(
-              Arrays.asList(NotificationType.values()),
-              Comparator.comparing(NotificationType::getValue))
-          .getValue();
-    }
-
-    public static final Optional<NotificationType> fromValue(final int i) {
-      final List<NotificationType> notifications = Arrays.asList(NotificationType.values());
-
-      return Stream.of(NotificationType.values()).filter(n -> n.getValue() == i).findFirst();
+      default:
+        return false;
     }
   }
 }
