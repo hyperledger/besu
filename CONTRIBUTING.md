@@ -8,10 +8,6 @@ Welcome to the Pantheon repository!  The following is a set of guidelines for co
 
 [I just have a quick question](#i-just-have-a-quick-question)
 
-Before You start
-  * [Pantheon Architecture](docs/architecture/architecture.md)
-  * [Java Modules](docs/architecture/java-modules.md)
-
 [How To Contribute](#how-to-contribute)
   * [Reporting Bugs](#reporting-bugs)
   * [Suggesting Enhancements](#suggesting-enhancements)
@@ -41,7 +37,7 @@ This project and everyone participating in it is governed by the [Pantheon Code 
 ## How To Contribute
 ### Reporting Bugs
 
-This section guides you through submitting a bug report. Following these guidelines helps maintainers and the community understand your report :pencil:, reproduce the behavior :computer: :computer:, and find related reports :mag_right:.
+This section guides you through submitting a bug report. Following these guidelines helps maintainers and the community understand your report, reproduce the behavior, and find related reports.
 
 Before creating bug reports, please check the [before-submitting-a-bug-report](#before-submitting-a-bug-report) checklist as you might find out that you don't need to create one. When you are creating a bug report, please [include as many details as possible](#how-do-i-submit-a-good-bug-report). Fill in the [issue_template.md](.github/issue_template.md), the information it asks for helps us resolve issues faster.
 
@@ -53,7 +49,7 @@ Before creating bug reports, please check the [before-submitting-a-bug-report](#
 * **Perform a [cursory search of project issues](https://github.com/search?q=+is%3Aissue+repo%3APegasysEng/Pantheon)** to see if the problem has already been reported. If it has **and the issue is still open**, add a comment to the existing issue instead of opening a new one.
 
 #### How Do I Submit A (Good) Bug Report?
-Bugs are tracked as [GitHub issues](https://guides.github.com/features/issues/).  Issues should and provide the following information by filling in the [issue_template.md](.github/issue_template.md).
+Bugs are tracked as [GitHub issues](https://guides.github.com/features/issues/).  Issues should provide the following information by filling in the [issue_template.md](.github/issue_template.md).
 
 Explain the problem and include additional details to help maintainers reproduce the problem:
 
@@ -82,7 +78,7 @@ Include details about your configuration and environment:
 
 ### Suggesting Enhancements
 
-This section guides you through submitting an enhancement suggestion, including completely new features and minor improvements to existing functionality. Following these guidelines helps maintainers and the community understand your suggestion :pencil: and find related suggestions :mag_right:.
+This section guides you through submitting an enhancement suggestion, including completely new features and minor improvements to existing functionality. Following these guidelines helps maintainers and the community understand your suggestion and find related suggestions.
 
 Before creating enhancement suggestions, please check the [before-submitting-an-enhancement-suggestion](#before-submitting-an-enhancement-suggestion) list as you might find out that you don't need to create one. When you are creating an enhancement suggestion, please [include as many details as possible](#how-do-i-submit-a-good-enhancement-suggestion). Fill in the [issue_template.md](.github/issue_template.md), including the steps that you imagine you would take if the feature you're requesting existed.
 
@@ -108,7 +104,7 @@ Enhancement suggestions are tracked as [GitHub issues](https://guides.github.com
 ## Your First Code Contribution
 Start by looking through the 'beginner' and 'help wanted' issues:
 * [Beginner issues][beginner] - issues which should only require a few lines of code, and a test or two.
-* [Help wanted issues][help-wanted] - issues which should be a bit more involved than `beginner` issues.
+* [Help wanted issues][help-wanted] - issues which are a bit more involved than `beginner` issues.
 
 ### Local Development
 The codebase is maintained using the "*contributor workflow*" where everyone without exception contributes patch proposals using "*pull-requests*". This facilitates social contribution, easy testing and peer review.
@@ -127,7 +123,7 @@ In general a commit serves a single purpose and diffs should be easily comprehen
 Questions on architectural best practices will be guided by the principles set forth in [Effective Java](http://index-of.es/Java/Effective%20Java.pdf) by Joshua Bloch
 
 ### Automated Test coverage
-Testing is 100% automated for this product.  There is no such thing as a manual test.  All code submissions must be accompanied by appropriate tests.  The goal is to provide confidence in the code’s robustness, while avoiding redundant tests.
+All code submissions must be accompanied by appropriate automated tests.  The goal is to provide confidence in the code’s robustness, while avoiding redundant tests.
 
 ### Pull Requests
 
@@ -171,38 +167,8 @@ Exceptions:
 ## Git Commit Messages & Pull Request Messages
 * Use the present tense ("Add feature" not "Added feature")
 * Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
-* Limit the first line to 72 characters or less
-* Reference issues and pull requests liberally after the first line
-* Consider starting the commit message with an applicable emoji:
-    * :art: `:art:` when improving the format/structure of the code
-    * :racehorse: `:racehorse:` when improving performance
-    * :non-potable_water: `:non-potable_water:` when plugging memory leaks
-    * :memo: `:memo:` when writing docs
-    * :penguin: `:penguin:` when fixing something on Linux
-    * :apple: `:apple:` when fixing something on macOS
-    * :checkered_flag: `:checkered_flag:` when fixing something on Windows
-    * :bug: `:bug:` when fixing a bug
-    * :fire: `:fire:` when removing code or files
-    * :green_heart: `:green_heart:` when fixing the CI build
-    * :white_check_mark: `:white_check_mark:` when adding tests
-    * :lock: `:lock:` when dealing with security
-    * :arrow_up: `:arrow_up:` when upgrading dependencies
-    * :arrow_down: `:arrow_down:` when downgrading dependencies
-    * :shirt: `:shirt:` when removing lint warnings
-
-## Documentation Style Guide
-**TODO: Create Documentation Style Guide**
-
-
-# Issue and Pull Request Labels
-
-This section lists the labels we use to help us track and manage issues and pull requests. 
-
-[GitHub search](https://help.github.com/articles/searching-issues-and-pull-requests/) makes it easy to use labels for finding groups of issues or pull requests you're interested in. 
-
-The labels are loosely grouped by their purpose, but it's not required that every issue have a label from every group or that an issue can't have more than one label from the same group.
-
-Please open an issue on `PegasysEng/Pantheon` if you have suggestions for new labels.
+* Provide a summary on the first line with more details on additional lines as needed
+* Reference issues and pull requests liberally
 
 #### Type of Issue and Issue State
 
