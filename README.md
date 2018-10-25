@@ -7,13 +7,13 @@ Pantheon is an Apache 2.0 licensed, MainNet compatible, Ethereum client written 
 
 ## Pantheon Users
 
-The process for building and running Pantheon as a user is different to when developing. All user documentation is on our Wiki and some processes are different to those described in this Readme. 
+The process for installing and running Pantheon as a user is different to when developing. All user documentation is on our [Wiki] and some processes are different to those described in this Readme. 
 
-### Build, Install, and Run Pantheon
+### Install and Run Pantheon
 
-Building, installing, and running Pantheon is described in the Wiki:
-* [Installation Wiki]
-* [Quickstart Wiki]
+Installing and running Pantheon is described in the Wiki:
+* [Installation]
+* [Quickstart]
 
 ### Documentation 
 
@@ -21,26 +21,26 @@ User and reference documentation available on the Wiki includes:
 * [Command Line Options]
 * [JSON-RPC API]
 * [Docker Quickstart Tutorial]
+* [Using Pantheon]
 
 ## Pantheon Developers
 
 * [Contribution Guidelines](CONTRIBUTING.md)
-* [Wiki] for installation & configuring Pantheon
-* [Installation Wiki]
+* [Wiki] for running and using Pantheon
 
 ### Development
 Instructions for how to get started with developing on the Pantheon codebase. Please also read the
 [contribution guidelines](CONTRIBUTING.md) for more detail on how to submit a pull request (PR).
 
-* [Installation Wiki]
 * [Checking out and building](docs/development/building.md)
 * [Running Pantheon via Gradle](docs/development/running-with-gradle.md)
 * [Code Coverage](docs/development/code-coverage.md)
 * [Logging](docs/development/logging.md)
 
 [Wiki]: https://github.com/PegaSysEng/pantheon/wiki
-[Installation Wiki]: https://github.com/PegaSysEng/pantheon/wiki/Installation
-[Quickstart Wiki]: https://github.com/PegaSysEng/pantheon/wiki/Quickstart
+[Installation]: https://github.com/PegaSysEng/pantheon/wiki/Installation
+[Quickstart]: https://github.com/PegaSysEng/pantheon/wiki/Quickstart
 [Docker Quickstart Tutorial]: https://github.com/PegaSysEng/pantheon/wiki/Docker-Quickstart
 [Command Line Options]: https://github.com/PegaSysEng/pantheon/wiki/Pantheon-CLI-Syntax
 [JSON-RPC API]: https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API
+[Using Pantheon]: https://github.com/PegaSysEng/pantheon/wiki/Transactions
