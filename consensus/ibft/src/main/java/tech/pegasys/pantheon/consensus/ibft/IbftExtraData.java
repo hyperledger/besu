@@ -29,7 +29,7 @@ import java.util.Optional;
  * Represents the data structure stored in the extraData field of the BlockHeader used when
  * operating under an IBFT 2.0 consensus mechanism.
  */
-public class Ibft2ExtraData {
+public class IbftExtraData {
 
   public static final int EXTRA_VANITY_LENGTH = 32;
 
@@ -39,7 +39,7 @@ public class Ibft2ExtraData {
   private final int round;
   private final List<Address> validators;
 
-  public Ibft2ExtraData(
+  public IbftExtraData(
       final BytesValue vanityData,
       final List<Signature> seals,
       final Optional<Vote> vote,
@@ -57,7 +57,7 @@ public class Ibft2ExtraData {
     this.vote = vote;
   }
 
-  public static Ibft2ExtraData decode(final BytesValue input) {
+  public static IbftExtraData decode(final BytesValue input) {
     checkArgument(
         input.size() > EXTRA_VANITY_LENGTH,
         "Invalid BytesValue supplied - too short to produce a valid IBFT Extra Data object.");
@@ -78,10 +78,29 @@ public class Ibft2ExtraData {
     final List<Signature> seals = rlpInput.readList(rlp -> Signature.decode(rlp.readBytesValue()));
     rlpInput.leaveList();
 
-    return new Ibft2ExtraData(vanityData, seals, vote, round, validators);
+    return new IbftExtraData(vanityData, seals, vote, round, validators);
   }
 
   public BytesValue encode() {
+    return encode(EncodingType.ALL);
+  }
+
+  public BytesValue encodeWithoutCommitSeals() {
+    return encode(EncodingType.EXCLUDE_COMMIT_SEALS);
+  }
+
+  public BytesValue encodeWithoutCommitSealsAndRoundNumber() {
+    return encode(EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER);
+  }
+
+  private enum EncodingType {
+    ALL,
+    EXCLUDE_COMMIT_SEALS,
+    EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER
+  }
+
+  private BytesValue encode(final EncodingType encodingType) {
+
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytesValue(vanityData);
@@ -91,8 +110,13 @@ public class Ibft2ExtraData {
     } else {
       encoder.writeNull();
     }
-    encoder.writeInt(round);
-    encoder.writeList(seals, (committer, rlp) -> rlp.writeBytesValue(committer.encodedBytes()));
+
+    if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER) {
+      encoder.writeInt(round);
+      if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS) {
+        encoder.writeList(seals, (committer, rlp) -> rlp.writeBytesValue(committer.encodedBytes()));
+      }
+    }
     encoder.endList();
 
     return encoder.encoded();

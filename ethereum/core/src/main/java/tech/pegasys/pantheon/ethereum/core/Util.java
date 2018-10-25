@@ -34,4 +34,12 @@ public class Util {
   public static Address publicKeyToAddress(final PublicKey publicKey) {
     return Address.extract(Hash.hash(publicKey.getEncodedBytes()));
   }
+
+  /**
+   * Implements a fast version of ceiling(numerator/denominator) that does not require using
+   * floating point math
+   */
+  public static int fastDivCeiling(final int numerator, final int denominator) {
+    return ((numerator - 1) / denominator) + 1;
+  }
 }

@@ -31,7 +31,7 @@ import java.util.Random;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
-public class Ibft2ExtraDataTest {
+public class IbftExtraDataTest {
   private final String RAW_HEX_ENCODING_STRING =
       "f8f1a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea9400000000000000000000000000000000000"
           + "00001940000000000000000000000000000000000000002d794000000000000000000000000000000000000000181ff8400fedc"
@@ -39,10 +39,10 @@ public class Ibft2ExtraDataTest {
           + "0000000000000000000000000000000000a00b84100000000000000000000000000000000000000000000000000000000000000"
           + "0a000000000000000000000000000000000000000000000000000000000000000100";
 
-  private final Ibft2ExtraData DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING =
+  private final IbftExtraData DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING =
       getDecodedExtraDataForRawHexEncodingString();
 
-  private static Ibft2ExtraData getDecodedExtraDataForRawHexEncodingString() {
+  private static IbftExtraData getDecodedExtraDataForRawHexEncodingString() {
     final List<Address> validators =
         Arrays.asList(Address.fromHexString("1"), Address.fromHexString("2"));
     final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
@@ -56,7 +56,7 @@ public class Ibft2ExtraDataTest {
     final byte[] vanity_bytes = createNonEmptyVanityData();
     final BytesValue vanity_data = BytesValue.wrap(vanity_bytes);
 
-    return new Ibft2ExtraData(vanity_data, committerSeals, vote, round, validators);
+    return new IbftExtraData(vanity_data, committerSeals, vote, round, validators);
   }
 
   @Test
@@ -90,7 +90,7 @@ public class Ibft2ExtraDataTest {
 
     final BytesValue bufferToInject = encoder.encoded();
 
-    final Ibft2ExtraData extraData = Ibft2ExtraData.decode(bufferToInject);
+    final IbftExtraData extraData = IbftExtraData.decode(bufferToInject);
 
     assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
     assertThat(extraData.getVote()).isEqualTo(vote);
@@ -100,7 +100,7 @@ public class Ibft2ExtraDataTest {
   }
 
   /**
-   * This test specifically verifies that {@link Ibft2ExtraData#decode(BytesValue)} uses {@link
+   * This test specifically verifies that {@link IbftExtraData#decode(BytesValue)} uses {@link
    * RLPInput#readInt()} rather than {@link RLPInput#readIntScalar()} to decode the round number
    */
   @Test
@@ -134,8 +134,7 @@ public class Ibft2ExtraDataTest {
 
     final BytesValue bufferToInject = encoder.encoded();
 
-    assertThatThrownBy(() -> Ibft2ExtraData.decode(bufferToInject))
-        .isInstanceOf(RLPException.class);
+    assertThatThrownBy(() -> IbftExtraData.decode(bufferToInject)).isInstanceOf(RLPException.class);
   }
 
   @Test
@@ -163,7 +162,7 @@ public class Ibft2ExtraDataTest {
 
     final BytesValue bufferToInject = encoder.encoded();
 
-    final Ibft2ExtraData extraData = Ibft2ExtraData.decode(bufferToInject);
+    final IbftExtraData extraData = IbftExtraData.decode(bufferToInject);
 
     assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
     assertThat(extraData.getVote().isPresent()).isEqualTo(false);
@@ -183,10 +182,10 @@ public class Ibft2ExtraDataTest {
     final byte[] vanity_bytes = new byte[32];
     final BytesValue vanity_data = BytesValue.wrap(vanity_bytes);
 
-    final Ibft2ExtraData expectedExtraData =
-        new Ibft2ExtraData(vanity_data, committerSeals, vote, round, validators);
+    IbftExtraData expectedExtraData =
+        new IbftExtraData(vanity_data, committerSeals, vote, round, validators);
 
-    final Ibft2ExtraData actualExtraData = Ibft2ExtraData.decode(expectedExtraData.encode());
+    IbftExtraData actualExtraData = IbftExtraData.decode(expectedExtraData.encode());
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
@@ -220,7 +219,7 @@ public class Ibft2ExtraDataTest {
 
     final BytesValue bufferToInject = encoder.encoded();
 
-    final Ibft2ExtraData extraData = Ibft2ExtraData.decode(bufferToInject);
+    final IbftExtraData extraData = IbftExtraData.decode(bufferToInject);
 
     assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
     assertThat(extraData.getVote()).isEqualTo(vote);
@@ -240,10 +239,10 @@ public class Ibft2ExtraDataTest {
     final byte[] vanity_bytes = new byte[32];
     final BytesValue vanity_data = BytesValue.wrap(vanity_bytes);
 
-    final Ibft2ExtraData expectedExtraData =
-        new Ibft2ExtraData(vanity_data, committerSeals, vote, round, validators);
+    IbftExtraData expectedExtraData =
+        new IbftExtraData(vanity_data, committerSeals, vote, round, validators);
 
-    final Ibft2ExtraData actualExtraData = Ibft2ExtraData.decode(expectedExtraData.encode());
+    IbftExtraData actualExtraData = IbftExtraData.decode(expectedExtraData.encode());
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
@@ -282,7 +281,7 @@ public class Ibft2ExtraDataTest {
 
     final BytesValue bufferToInject = encoder.encoded();
 
-    final Ibft2ExtraData extraData = Ibft2ExtraData.decode(bufferToInject);
+    final IbftExtraData extraData = IbftExtraData.decode(bufferToInject);
 
     assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
     assertThat(extraData.getVote()).isEqualTo(vote);
@@ -306,10 +305,10 @@ public class Ibft2ExtraDataTest {
     final byte[] vanity_bytes = createNonEmptyVanityData();
     final BytesValue vanity_data = BytesValue.wrap(vanity_bytes);
 
-    final Ibft2ExtraData expectedExtraData =
-        new Ibft2ExtraData(vanity_data, committerSeals, vote, round, validators);
+    IbftExtraData expectedExtraData =
+        new IbftExtraData(vanity_data, committerSeals, vote, round, validators);
 
-    final Ibft2ExtraData actualExtraData = Ibft2ExtraData.decode(expectedExtraData.encode());
+    IbftExtraData actualExtraData = IbftExtraData.decode(expectedExtraData.encode());
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
@@ -324,12 +323,85 @@ public class Ibft2ExtraDataTest {
   @Test
   public void decodingOfKnownRawHexStringMatchesKnowExtraDataObject() {
 
-    final Ibft2ExtraData expectedExtraData = DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING;
+    final IbftExtraData expectedExtraData = DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING;
 
-    final BytesValue rawDecoding = BytesValue.fromHexString(RAW_HEX_ENCODING_STRING);
-    final Ibft2ExtraData actualExtraData = Ibft2ExtraData.decode(rawDecoding);
+    BytesValue rawDecoding = BytesValue.fromHexString(RAW_HEX_ENCODING_STRING);
+    IbftExtraData actualExtraData = IbftExtraData.decode(rawDecoding);
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
+  }
+
+  @Test
+  public void testEncodeWithoutCommitSeals() {
+    final List<Address> validators =
+        Arrays.asList(Address.fromHexString("1"), Address.fromHexString("2"));
+    final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
+    final int round = 0x00FEDCBA;
+    final List<Signature> committerSeals =
+        Arrays.asList(
+            Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            Signature.create(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+
+    // Create a byte buffer with no data.
+    final byte[] vanity_bytes = createNonEmptyVanityData();
+    final BytesValue vanity_data = BytesValue.wrap(vanity_bytes);
+
+    final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
+    encoder.startList();
+    encoder.writeBytesValue(vanity_data);
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytesValue(validator));
+
+    // encoded vote
+    encoder.startList();
+    encoder.writeBytesValue(vote.get().getRecipient());
+    vote.get().getVoteType().writeTo(encoder);
+    encoder.endList();
+    encoder.writeInt(round);
+    encoder.endList();
+
+    BytesValue expectedEncoding = encoder.encoded();
+
+    BytesValue actualEncoding =
+        new IbftExtraData(vanity_data, committerSeals, vote, round, validators)
+            .encodeWithoutCommitSeals();
+
+    assertThat(actualEncoding).isEqualTo(expectedEncoding);
+  }
+
+  @Test
+  public void testEncodeWithoutCommitSealsAndRoundNumber() {
+    final List<Address> validators =
+        Arrays.asList(Address.fromHexString("1"), Address.fromHexString("2"));
+    final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
+    final int round = 0x00FEDCBA;
+    final List<Signature> committerSeals =
+        Arrays.asList(
+            Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            Signature.create(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+
+    // Create a byte buffer with no data.
+    final byte[] vanity_bytes = createNonEmptyVanityData();
+    final BytesValue vanity_data = BytesValue.wrap(vanity_bytes);
+
+    final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
+    encoder.startList();
+    encoder.writeBytesValue(vanity_data);
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytesValue(validator));
+
+    // encoded vote
+    encoder.startList();
+    encoder.writeBytesValue(vote.get().getRecipient());
+    vote.get().getVoteType().writeTo(encoder);
+    encoder.endList();
+    encoder.endList();
+
+    BytesValue expectedEncoding = encoder.encoded();
+
+    BytesValue actualEncoding =
+        new IbftExtraData(vanity_data, committerSeals, vote, round, validators)
+            .encodeWithoutCommitSealsAndRoundNumber();
+
+    assertThat(actualEncoding).isEqualTo(expectedEncoding);
   }
 
   @Test
@@ -362,8 +434,7 @@ public class Ibft2ExtraDataTest {
 
     final BytesValue bufferToInject = encoder.encoded();
 
-    assertThatThrownBy(() -> Ibft2ExtraData.decode(bufferToInject))
-        .isInstanceOf(RLPException.class);
+    assertThatThrownBy(() -> IbftExtraData.decode(bufferToInject)).isInstanceOf(RLPException.class);
   }
 
   @Test
@@ -400,8 +471,7 @@ public class Ibft2ExtraDataTest {
 
     final BytesValue bufferToInject = encoder.encoded();
 
-    assertThatThrownBy(() -> Ibft2ExtraData.decode(bufferToInject))
-        .isInstanceOf(RLPException.class);
+    assertThatThrownBy(() -> IbftExtraData.decode(bufferToInject)).isInstanceOf(RLPException.class);
   }
 
   private static byte[] createNonEmptyVanityData() {
@@ -409,7 +479,6 @@ public class Ibft2ExtraDataTest {
     for (int i = 0; i < vanity_bytes.length; i++) {
       vanity_bytes[i] = (byte) (i + 1);
     }
-
     return vanity_bytes;
   }
 }
