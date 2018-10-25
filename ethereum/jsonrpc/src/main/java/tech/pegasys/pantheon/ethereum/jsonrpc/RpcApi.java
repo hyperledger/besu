@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 public class RpcApi {
@@ -40,5 +41,10 @@ public class RpcApi {
   @Override
   public int hashCode() {
     return Objects.hashCode(cliValue);
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this).add("cliValue", cliValue).toString();
   }
 }

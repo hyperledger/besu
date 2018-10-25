@@ -35,6 +35,7 @@ import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -102,6 +103,13 @@ public class PantheonCommandTest extends CommandTestAbstract {
     parseCommand("--help");
     final String expectedOutputStart = String.format("Usage:%n%npantheon [OPTIONS] [COMMAND]");
     assertThat(commandOutput.toString()).startsWith(expectedOutputStart);
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void callingHelpDisplaysDefaultRpcApisCorrectly() {
+    parseCommand("--help");
+    assertThat(commandOutput.toString()).contains("default: ETH,NET,WEB3,CLIQUE,IBFT");
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
@@ -522,6 +530,30 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void rpcApisPropertyMustBeUsed() {
+    parseCommand("--rpc-api", "ETH,NET");
+
+    verify(mockRunnerBuilder)
+        .build(
+            any(),
+            any(),
+            anyBoolean(),
+            any(),
+            anyString(),
+            anyInt(),
+            anyInt(),
+            jsonRpcConfigArgumentCaptor.capture(),
+            any(),
+            any());
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
+        .containsExactlyInAnyOrder(RpcApis.ETH, RpcApis.NET);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void jsonRpcHostAndPortOptionMustBeUsed() {
 
     final String host = "1.2.3.4";
@@ -736,6 +768,30 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any());
 
     assertThat(wsRpcConfigArgumentCaptor.getValue().isEnabled()).isTrue();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void wsApiPropertyMustBeUsed() {
+    parseCommand("--ws-api", "ETH, NET");
+
+    verify(mockRunnerBuilder)
+        .build(
+            any(),
+            any(),
+            anyBoolean(),
+            any(),
+            anyString(),
+            anyInt(),
+            anyInt(),
+            any(),
+            wsRpcConfigArgumentCaptor.capture(),
+            any());
+
+    assertThat(wsRpcConfigArgumentCaptor.getValue().getRpcApis())
+        .containsExactlyInAnyOrder(RpcApis.ETH, RpcApis.NET);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();

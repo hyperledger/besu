@@ -25,7 +25,7 @@ public class RpcApis {
 
   public static final Collection<RpcApi> DEFAULT_JSON_RPC_APIS = Arrays.asList(ETH, NET, WEB3);
 
-  public static final Optional<RpcApi> valueOf(final String name) {
+  public static Optional<RpcApi> valueOf(final String name) {
     if (name.equals(ETH.getCliValue())) {
       return Optional.of(ETH);
     } else if (name.equals(DEBUG.getCliValue())) {
@@ -41,7 +41,7 @@ public class RpcApis {
     }
   }
 
-  public static final String getValue(final RpcApi rpcapi) {
+  public static String getValue(final RpcApi rpcapi) {
     return rpcapi.getCliValue();
   }
 }
