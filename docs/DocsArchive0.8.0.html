@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Pantheon Documentation 0.8.0-RC2</title>
+    <title>Pantheon Documentation 0.8.0</title>
     <style>/*!
  * Bootstrap v3.3.7 (http://getbootstrap.com)
  * Copyright 2011-2016 Twitter, Inc.
@@ -697,7 +697,7 @@ this.activeTarget=b,this.clear();var c=this.selector+'[data-target="'+b+'"],'+th
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand doc-title" href="#page-top">Pantheon Documentation 0.8.0-RC2</a>
+          <a class="navbar-brand doc-title" href="#page-top">Pantheon Documentation 0.8.0</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
@@ -711,7 +711,7 @@ this.activeTarget=b,this.clear();var c=this.selector+'[data-target="'+b+'"],'+th
           <div class="nav-container">
             <div class="nav-inner" id="scroll-spy" style="width: min-content; overflow: auto; top: 60px; bottom: 0; padding 10px 0 10px 0;">
               <span class="toc"></span>
-              <ul class="nav"><li class="active"><a href="#Overview">Overview</a></li><li><a href="#Getting-Started">Getting Started</a><ul class="nav"><li><a href="#Installation">Installation</a></li><li><a href="#Quickstart">Basic Quickstart</a></li><li><a href="#Docker-Quickstart">Docker Quickstart</a></li><li><a href="#Starting-Pantheon">Starting Pantheon</a></li></ul></li><li><a href="#Using-Pantheon">Using Pantheon</a><ul class="nav"><li><a href="#Transactions">Creating and Sending Transactions</a></li><li><a href="#Filters">Filters</a></li><li><a href="#Testing-Developing-Nodes">Testing and Developing Nodes</a></li><li><a href="#Mining">Mining</a></li><li><a href="#Debugging">Debugging Pantheon</a></li></ul></li><li><span>Reference</span><ul class="nav"><li><a href="#Pantheon-CLI-Syntax">Pantheon CLI Reference</a></li><li><a href="#JSON-RPC-API">JSON-RPC API Reference</a></li></ul></li></ul>
+              <ul class="nav"><li class="active"><a href="#Overview">Overview</a></li><li><span>Getting Started</span><ul class="nav"><li><a href="#Installation">Installation</a></li><li><a href="#Quickstart">Basic Quickstart</a></li><li><a href="#Docker-Quickstart">Docker Quickstart</a></li><li><a href="#Starting-Pantheon">Starting Pantheon</a></li><li><a href="#Run-Docker-Image">Running Pantheon from Docker Image</a></li></ul></li><li><span>Using Pantheon</span><ul class="nav"><li><a href="#Transactions">Creating and Sending Transactions</a></li><li><a href="#Account-Management">Using Wallets for Account Management</a></li><li><a href="#Filters">Filters</a></li><li><a href="#Testing-Developing-Nodes">Testing and Developing Nodes</a></li><li><a href="#Mining">Mining</a></li><li><a href="#RPC-PubSub">RPC Pub/Sub</a></li><li><a href="#Debugging">Debugging Pantheon</a></li></ul></li><li><span>Reference</span><ul class="nav"><li><a href="#Pantheon-CLI-Syntax">Pantheon CLI Reference</a></li><li><a href="#JSON-RPC-API">JSON-RPC API Reference</a></li></ul></li></ul>
               
             </div>
           </div>
@@ -726,6 +726,7 @@ this.activeTarget=b,this.clear();var c=this.selector+'[data-target="'+b+'"],'+th
 <ul>
 <li><a href="#what-is-pantheon">What is Pantheon?</a></li>
 <li><a href="#what-can-you-do-with-pantheon">What can you do with Pantheon?</a></li>
+<li><a href="#what-doesnt-pantheon-support">What doesn&#39;t Pantheon support?</a></li>
 <li>Architecture</li>
 </ul>
 <h3 id="what-is-pantheon-">What is Pantheon?</h3>
@@ -739,27 +740,22 @@ this.activeTarget=b,this.clear();var c=this.selector+'[data-target="'+b+'"],'+th
 <li>Smart contract development</li>
 <li>Decentralized application (Dapp) development</li>
 </ul>
-<p>The Pantheon client supports common smart contract and Dapp development, deployment, and operational use cases, using tools such as <a href="http://truffleframework.com/">Truffle</a>, <a href="https://github.com/ethereum/remix">Remix</a>, and <a href="https://web3j.io/">web3j</a>. The client supports common JSON-RPC API methods such as eth, net, web3, debug, and miner (note that it doesn&#39;t support Whisper or Swarm).</p>
-<h3 id="architecture">Architecture</h3>
-<p class="page" id="Getting-Started"></p><h1>Getting Started</h1>
-<p>Get started with Pantheon: </p>
+<p>The Pantheon client supports common smart contract and Dapp development, deployment, and operational use cases, using tools such as <a href="http://truffleframework.com/">Truffle</a>, <a href="https://github.com/ethereum/remix">Remix</a>, and <a href="https://web3j.io/">web3j</a>. The client supports common JSON-RPC API methods such as eth, net, web3, debug, and miner.</p>
+<h3 id="what-doesn-t-pantheon-support-">What doesn&#39;t Pantheon support?</h3>
+<p>Pantheon doesn&#39;t support:</p>
 <ul>
-<li><p><a href="#Installation">Installation</a></p>
-<p>  Install and build Pantheon. </p>
-</li>
-<li><p><a href="#Quickstart">Basic Quickstart</a></p>
-<p>  Run a Pantheon node.  </p>
-</li>
-<li><p><a href="#Docker-Quickstart">Docker Quickstart</a></p>
-<p>  Run a private network of Pantheon nodes in a Docker container. </p>
-</li>
-<li><p><a href="#Starting-Pantheon">Starting Pantheon</a> </p>
-<p>  Use the command line options to connect to public testnets or run a node for testing. </p>
-</li>
+<li><a href="#Account-Management">Account management</a></li>
+<li>Whisper</li>
+<li>Swarm. </li>
 </ul>
+<h3 id="architecture">Architecture</h3>
 <p class="page" id="Installation"></p><h1>Installation</h1>
 <h1 id="pantheon-installation">Pantheon Installation</h1>
 <p><strong>[<em>This is preliminary content for the Pantheon Alpha release.</em>]</strong></p>
+<blockquote>
+<p><strong>Note</strong> If you have installed Pantheon from the <a href="https://pegasys.tech/">packaged binaries</a> or are running the <a href="https://hub.docker.com/u/pegasyseng/">Docker image</a>, this section is not relevant. </p>
+<p>Continue with <a href="#Quickstart">Basic Quickstart</a> or <a href="#Starting-Pantheon">Starting Pantheon</a>.</p>
+</blockquote>
 <h2 id="contents">Contents</h2>
 <h3 id="running-locally">Running Locally</h3>
 <ul>
@@ -892,6 +888,10 @@ KeyPairUtil | Generated new key &lt;key&gt; and stored it to ~/pantheon/build/di
 <p class="page" id="Docker-Quickstart"></p><h1>Docker Quickstart</h1>
 <h1 id="docker-quickstart-tutorial">Docker Quickstart Tutorial</h1>
 <p>This tutorial describes how to use Pantheon to run a private network of Pantheon nodes in a Docker container.</p>
+<blockquote>
+<p><strong>Note</strong> To run the Docker Quickstart, you must install Pantheon by <a href="https://github.com/PegaSysEng/pantheon/wiki/Installation">cloning and building</a>. </p>
+<p>If you have installed Pantheon from the <a href="https://pegasys.tech/">packaged binaries</a> or are running the <a href="https://hub.docker.com/u/pegasyseng/">Docker image</a>, continue with <a href="#Quickstart">Basic Quickstart</a> or <a href="#Starting-Pantheon">Starting Pantheon</a>.</p>
+</blockquote>
 <h2 id="prerequisites">Prerequisites</h2>
 <p>To run this tutorial, you must have the following installed:</p>
 <ul>
@@ -912,8 +912,8 @@ clone the repository.</p>
 <h2 id="build-docker-images-and-start-services-and-network">Build Docker Images and Start Services and Network</h2>
 <p>This tutorial uses <a href="https://docs.docker.com/compose/">Docker Compose</a> to simplify assembling images and 
 running in a private network. To run the containers, go to the <code>pantheon</code> directory and run the following shell command:</p>
-<pre class="hljs">./runPantheonPrivateNetwork.sh</pre><p>This script builds Pantheon, builds the images and runs the containers. It will also scale the regular node container to four containers to simulate a network with enough peers to synchronize.</p>
-<p>When the <code>./runPantheonPrivateNetwork.sh</code> script ends, it lists the running services:</p>
+<pre class="hljs">quickstart/runPantheonPrivateNetwork.sh</pre><p>This script builds Pantheon, builds the images and runs the containers. It will also scale the regular node container to four containers to simulate a network with enough peers to synchronize.</p>
+<p>When the <code>quickstart/runPantheonPrivateNetwork.sh</code> script ends, it lists the running services:</p>
 <pre class="hljs">         Name                       Command               State                           Ports
 -----------------------------------------------------------------------------------------------------------------------
 quickstart_bootnode_1    /opt/pantheon/bootnode_sta ...   Up      <span class="hljs-number">30303</span>/tcp, <span class="hljs-number">30303</span>/udp, <span class="hljs-number">8084</span>/tcp, <span class="hljs-number">8545</span>/tcp
@@ -935,7 +935,7 @@ Web block explorer address          : http://localhost:32770   *
 <li>Use the <strong>Web block explorer address</strong> to display the block explorer web application. You can invoke the block explorer by clicking on the endpoint link or by entering the URL in your web browser.</li>
 </ul>
 <p>To display this list at any time, run:</p>
-<pre class="hljs">./listQuickstartServices.sh</pre><h2 id="block-explorer">Block Explorer</h2>
+<pre class="hljs">quickstart/listQuickstartServices.sh</pre><h2 id="block-explorer">Block Explorer</h2>
 <p>This tutorial uses a block explorer based on <a href="https://github.com/mix-blockchain/block-explorer.git">the MIX project explorer</a>.</p>
 <blockquote>
 <p><strong>Note:</strong> As Yarn is an Apache 2.0 licensed tool, it has been patched to fit this tutorial&#39;s needs. (You can view the patches in the quickstart/explorer folder.)</p>
@@ -961,7 +961,7 @@ Web block explorer address          : http://localhost:32770   *
 <p>You can run RPC requests on <code>rpcnode</code>, the node that is exposed to the host in order to listen for requests.</p>
 <p>In this tutorial, note that the <code>http://localhost:http-rpc-port</code> placeholder is <code>http://localhost: 32769</code>.</p>
 <blockquote>
-<p><strong>Note:</strong> Make sure to replace <code>port</code> with the one provided in the <code>./listQuickstartServices.sh</code> command <code>JSON-RPC HTTP service endpoint</code>.
+<p><strong>Note:</strong> Make sure to replace <code>port</code> with the one provided in the <code>quickstart/listQuickstartServices.sh</code> command <code>JSON-RPC HTTP service endpoint</code>.
 The dynamic docker port mapping changes each time you run the network.</p>
 </blockquote>
 <h3 id="requesting-the-node-version">Requesting the Node Version</h3>
@@ -1087,7 +1087,7 @@ So modify the file to look like the following :</p>
 <p>When you have to run a truffle command, you only have to indicate the right network to use, as in the following command using the <code>--network quickstartWallet</code> option :</p>
 <pre class="hljs">truffle migrate --network quickstartWallet</pre><p>Your are then able to see the transactions and contracts deployed on your local docker network if you have a look in the block explorer.</p>
 <h2 id="shut-down-the-network-and-remove-the-nodes">Shut Down the Network and Remove the Nodes</h2>
-<p>To shut down the network, you can use the script <code>./removePantheonPrivateNetwork.sh</code>; this will stop and destroy all containers.</p>
+<p>To shut down the network, you can use the script <code>quickstart/removePantheonPrivateNetwork.sh</code>; this will stop and destroy all containers.</p>
 <p class="page" id="Starting-Pantheon"></p><h1>Starting Pantheon</h1>
 <h1 id="starting-pantheon">Starting Pantheon</h1>
 <p>Pantheon nodes can be used for varying purposes as described in the <a href="#Overview">Overview</a>. Nodes can connect to the Ethereum mainnet, public testnets such as Ropsten, or private networks.</p>
@@ -1104,15 +1104,15 @@ So modify the file to look like the following :</p>
 </ul>
 <h2 id="run-a-node-on-ethereum-mainnet">Run a Node on Ethereum  Mainnet</h2>
 <p>To run a node on the Ethereum mainnet: </p>
-<p><code>$ pantheon</code></p>
+<p><code>$ bin/pantheon</code></p>
 <p>To run a node on mainnet with the HTTP JSON-RPC service enabled: </p>
-<p><code>$ pantheon --rpc-enabled</code></p>
+<p><code>$ bin/pantheon --rpc-enabled</code></p>
 <h2 id="run-a-node-on-ropsten-testnet">Run a Node on Ropsten Testnet</h2>
 <p>Replace <code>&lt;path&gt;</code> with the path to the <code>/pantheon</code> directory. </p>
 <p>To run a node on Ropsten: </p>
-<p><code>$ bin/pantheon --network-id=3 --genesis=&lt;path&gt;/pantheon/ethereum/core/src/main/resources/ropsten.json --bootnodes enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:3030</code></p>
+<p><code>$ bin/pantheon --network-id=3 --genesis=&lt;path&gt;/pantheon/ethereum/core/src/main/resources/ropsten.json --bootnodes=enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303</code></p>
 <p>To run a node on Ropsten with the HTTP JSON-RPC service enabled and allow Remix to access the node: </p>
-<p><code>$ bin/pantheon --rpc-enabled --rpc-cors-origins &quot;http://remix.ethereum.org&quot; --network-id=3 --genesis=&lt;path&gt;/pantheon/ethereum/core/src/main/resources/ropsten.json --bootnodes enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:3030</code></p>
+<p><code>$ bin/pantheon --rpc-enabled --rpc-cors-origins &quot;http://remix.ethereum.org&quot; --network-id=3 --genesis=&lt;path&gt;/pantheon/ethereum/core/src/main/resources/ropsten.json --bootnodes=enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303</code></p>
 <h2 id="run-a-node-on-rinkeby-testnet">Run a Node on Rinkeby Testnet</h2>
 <p>Replace <code>&lt;path&gt;</code> with the path where the Rinkeby chain data is to be saved. </p>
 <p>To run a node on Rinkeby specifying a data directory: </p>
@@ -1120,43 +1120,90 @@ So modify the file to look like the following :</p>
 <h2 id="run-a-node-for-testing">Run a Node for Testing</h2>
 <p>To run a node that mines blocks at a rate suitable for testing purposes: </p>
 <p><code>$ bin/pantheon --dev-mode --bootnodes= --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-cors-origins &quot;all&quot; --ws-enabled --rpc-enabled</code></p>
-<p class="page" id="Using-Pantheon"></p><h1>Using Pantheon</h1>
-<h1 id="using-pantheon">Using Pantheon</h1>
-<p><strong>[<em>This is preliminary content for the Pantheon Alpha release.</em>]</strong></p>
-<h2 id="contents">Contents</h2>
+<p class="page" id="Run-Docker-Image"></p><h1>Running Pantheon from Docker Image</h1>
+<h1 id="run-pantheon-from-docker-image">Run Pantheon from Docker Image</h1>
+<p>A Docker image is provided to run a Pantheon node in a Docker container. </p>
+<p>Use this Docker image to run a single Pantheon node without installing Pantheon. </p>
+<h2 id="prerequisites">Prerequisites</h2>
+<p>To run Pantheon from the Docker image, you must have the following installed:</p>
 <ul>
-<li><a href="#Transactions">Transactions</a></li>
-<li><a href="#Filters">Filters</a></li>
-<li><a href="#Testing-Developing-Nodes">Testing and Developing Nodes</a></li>
-<li><a href="#Proof-of-Authority">Proof of Authority (Clique)</a></li>
-<li><a href="#Mining">Mining</a></li>
+<li><p>Linux or Mac OS</p>
+</li>
+<li><p><a href="https://docs.docker.com/compose/install/">Docker and Docker-compose</a> </p>
+</li>
 </ul>
-<p class="page" id="Transactions"></p><h1>Creating and Sending Transactions</h1>
+<h2 id="quickstart">Quickstart</h2>
+<p>To run a Pantheon node in a container connected to the Ethereum mainnet: </p>
+<pre class="hljs">docker run pegasyseng/pantheon:latest</pre><h2 id="command-line-options">Command Line Options</h2>
+<p>The following Pantheon command line options cannot be used when running Pantheon from the Docker image: </p>
+<ul>
+<li><code>--datadir</code>, see <a href="#persisting-data">Persisting Data</a></li>
+<li><code>--config</code>, see <a href="#custom-configuration-file">Custom Configuration File</a></li>
+<li><code>--genesis</code>, see <a href="#custom-genesis-file">Custom Genesis File</a>.</li>
+<li><code>--rpc-listen</code>, <code>--p2plisten</code>, <code>--ws-listen</code>, see <a href="#specifying-ports">Specifying Ports</a></li>
+</ul>
+<p>All other <a href="https://github.com/PegaSysEng/pantheon/wiki/Pantheon-CLI-Syntax">Pantheon command line options</a> work in the same way as when Pantheon is installed locally.</p>
+<h3 id="persisting-data">Persisting Data</h3>
+<p>Specify a Docker volume to persist data between stopping and restarting the container. This is the equivalent of specifying the <code>-datadir</code> option. </p>
+<p>If a Docker volume is not specified, all data saved to the data directory is removed each time the container is stopped. </p>
+<p>To run Pantheon specifying a volume for the data directory: </p>
+<pre class="hljs">docker run -v /&lt;myvolume/pantheon&gt;:/var/lib/pantheon pegasyseng/pantheon:latest</pre><p>Where <code>&lt;myvolume/pantheon&gt;</code> is the directory to which the data is saved.  </p>
+<h3 id="custom-configuration-file">Custom Configuration File</h3>
+<p>Specify a custom configuration file to provide a file containing key/value pairs for command line options. This is the equivalent of specifying the <code>--config</code> option. </p>
+<p>To run Pantheon specifying a custom configuration file: </p>
+<pre class="hljs">docker run -v &lt;/path/myconf.toml&gt;:/etc/pantheon/pantheon.conf pegasyseng/pantheon:latest</pre><p>Where <code>myconf.toml</code> is your custom configuration file and <code>path</code> is the absolute path to the file. For example:</p>
+<pre class="hljs">docker run -v /Users/madelinemurray/pegasys-jenkins/docker/pantheon/myconf.toml:/etc/pantheon/pantheon.conf pegasyseng/pantheon:latest</pre><h3 id="custom-genesis-file">Custom Genesis File</h3>
+<p>Specify a custom genesis file to configure the blockchain. This is equivalent to specifying the <code>--genesis</code> option.</p>
+<p>To run Pantheon specifying a custom genesis file: </p>
+<pre class="hljs">docker run -v &lt;/path/mygenesis.json&gt;:/etc/pantheon/genesis.json pegasyseng/pantheon:latest</pre><p>Where <code>mygenesis.json</code> is your custom configuration file and <code>path</code> is the absolute path to the file. For example:</p>
+<pre class="hljs">docker run -v /Users/madelinemurray/pegasys-jenkins/docker/pantheon/mygenesis.json:/etc/pantheon/genesis.json pegasyseng/pantheon:latest</pre><h3 id="exposing-ports">Exposing Ports</h3>
+<p>Expose ports for P2P peer discovery, JSON-RPC service, and WebSockets. This is required to use the defaults ports or specify different ports (the equivalent of specifying the <code>--rpc-listen</code>, <code>--p2plisten</code>, <code>--ws-listen</code> options).</p>
+<p>To run Pantheon exposing local ports for access: </p>
+<pre class="hljs">docker run -p &lt;localportJSON-RPC&gt;:8545 -p &lt;localportWS&gt;:8546 -p &lt;localportP2P&gt;:30303 pegasyseng/pantheon:latest --rpc-enabled --ws-enabled</pre><p>For example, to enable RPC calls to <a href="http://127.0.0.1:8545">http://127.0.0.1:8545</a> and P2P discovery on <a href="http://127.0.0.1:13001">http://127.0.0.1:13001</a>:</p>
+<pre class="hljs">docker run -p 8545:8545 -p 13001:30303 pegasyseng/pantheon:latest --rpc-enabled</pre><h2 id="starting-pantheon">Starting Pantheon</h2>
+<h3 id="run-a-node-on-ethereum-mainnet">Run a Node on Ethereum Mainnet</h3>
+<p>To run a node on the Ethereum mainnet: </p>
+<pre class="hljs">docker run -v /&lt;myvolume/pantheon&gt;:/var/lib/pantheon pegasyseng/pantheon:latest</pre><p>To run a node on mainnet with the HTTP JSON-RPC service enabled: </p>
+<pre class="hljs">docker run -p 8545:8545 -v /&lt;myvolume/pantheon&gt;:/var/lib/pantheon pegasyseng/pantheon:latest --rpc-enabled</pre><h2 id="run-a-node-on-ropsten-testnet">Run a Node on Ropsten Testnet</h2>
+<p>Save a local copy of the <a href="https://github.com/PegaSysEng/pantheon/blob/master/ethereum/core/src/main/resources/ropsten.json">Ropsten genesis file</a>. </p>
+<p>To run a node on Ropsten: </p>
+<pre class="hljs">docker run -v /&lt;myvolume/pantheon/ropsten&gt;:/var/lib/pantheon -v ropsten.json:/etc/pantheon/genesis.json pegasyseng/pantheon:latest --network-id=3 --bootnodes=enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303</pre><h2 id="run-a-node-on-rinkeby-testnet">Run a Node on Rinkeby Testnet</h2>
+<p>To run a node on Rinkeby: </p>
+<pre class="hljs">docker run -v /&lt;myvolume/pantheon/rinkeby&gt;:/var/lib/pantheon pegasyseng/pantheon:latest --rinkeby</pre><h2 id="run-a-node-for-testing">Run a Node for Testing</h2>
+<p>To run a node that mines blocks at a rate suitable for testing purposes with WebSockets enabled: </p>
+<pre class="hljs">docker run -p 8546:8546 -v /&lt;myvolume/pantheon/testnode&gt;:/var/lib/pantheon pegasyseng/pantheon:latest --dev-mode --bootnodes= --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-cors-origins "all" --ws-enabled</pre><p class="page" id="Transactions"></p><h1>Creating and Sending Transactions</h1>
 <h1 id="transactions">Transactions</h1>
-<p>Signed transactions can be sent using the <a href="https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API#eth_sendrawtransaction"><code>eth_sendRawTransaction</code></a> JSON-RPC API method. </p>
+<p>You can send signed transactions using the <a href="https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API#eth_sendrawtransaction"><code>eth_sendRawTransaction</code></a> JSON-RPC API method.</p>
+<p>These examples describe how to create a signed raw transaction that can be passed to <a href="https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API#eth_sendrawtransaction"><code>eth_sendRawTransaction</code></a>.</p>
 <p><strong>To avoid exposing your private keys, create signed transactions offline.</strong>  </p>
-<p>The examples all use the following libraries to create signed transactions:</p>
+<p>The examples use the following libraries to create signed transactions:</p>
 <ul>
 <li><a href="https://github.com/ethereum/web3.js/">https://github.com/ethereum/web3.js/</a></li>
 <li><a href="https://github.com/ethereumjs/ethereumjs-tx">https://github.com/ethereumjs/ethereumjs-tx</a></li>
 </ul>
-<p><strong>Note:</strong> Other libraries (for example, <a href="https://github.com/web3j/web3j">webj3</a> or <a href="https://github.com/ethereum/ethereumj">ethereumj</a>) and tools (for example, <a href="https://kb.myetherwallet.com/offline/making-offline-transaction-on-myetherwallet.html">MyEtherWallet</a> or <a href="https://mycrypto.com/">mycrypto.com</a>) can also be used to create signed transactions. </p>
-<p>Example JS scripts are provided below to create signed raw transactions to: </p>
+<blockquote>
+<p><strong>Note:</strong> Other libraries (such as <a href="https://github.com/web3j/web3j">webj3</a> or <a href="https://github.com/ethereum/ethereumj">ethereumj</a>) and tools (such as <a href="https://kb.myetherwallet.com/offline/making-offline-transaction-on-myetherwallet.html">MyEtherWallet</a> or <a href="https://mycrypto.com/">MyCrypto</a>) can also be used to create signed transactions. </p>
+</blockquote>
+<p>Example JS scripts are provided to create signed raw transaction strings to: </p>
 <ul>
 <li><a href="#sending-ether">Send ether</a></li>
 <li><a href="#deploying-a-contract">Deploy a contract</a></li>
 </ul>
-<p>The example JS scripts can be used to create raw transactions to send in the private network created by the <a href="#docker-quickstart">Docker Quickstart</a>. The <code>HTTP JSON-RPC endpoint</code> in the examples must be updated to the endpoint for private network. </p>
-<p>Run a JS script to create and display the transaction string. For example:</p>
+<blockquote>
+<p><strong>Note:</strong> <a href="https://nodejs.org/en/download/">Node.js</a> must be installed to run JS scripts. </p>
+</blockquote>
+<p>The example JS scripts can be used to create raw transactions to send in the private network created by the <a href="#docker-quickstart">Docker Quickstart</a>. The <code>JSON-RPC endpoint</code> in the examples must be updated to the endpoint for the private network displayed after running the <code>quickstart/runPantheonPrivateNetwork.sh</code> script. </p>
+<p>To create and display the transaction string, run the JS script. For example:</p>
 <p><code>node create_signed_raw_transaction.js</code></p>
 <p>To send a signed transaction, run:</p>
 <pre class="hljs">curl -X POST --data <span class="hljs-string">'{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["raw_transaction_string"],"id":1}'</span> &lt;JSON-RPC-endpoint:port&gt;</pre><p>Where:</p>
 <ul>
-<li><code>raw_transaction_string</code> is the signed raw transaction string. </li>
-<li><code>&lt;JSON-RPC-endpoint:port&gt;</code> is the JSON-RPC HTTP endpoint.</li>
+<li><code>raw_transaction_string</code> is the signed raw transaction string displayed by the JS script. </li>
+<li><code>&lt;JSON-RPC-endpoint:port&gt;</code> is the JSON-RPC endpoint.</li>
 </ul>
 <p>For example: </p>
-<pre class="hljs">curl -X POST --data <span class="hljs-string">'{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["0xf86a808203e882520894f17f52151ebef6c7334fad080c5704d77216b732896c6b935b8bbd400000801ca08ce4a6c12f7f273321c5dc03910744f8fb11573fcce8140aa44486d385d22fb3a051f6bcc918bf3f12e06bfccfd1451bea5c517dffee0777ebd50caf177b17f383"],"id":1}'</span> http://localhost:8545</pre><h2 id="sending-ether">Sending Ether</h2>
+<pre class="hljs">curl -X POST --data <span class="hljs-string">'{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["0xf86a808203e882520894f17f52151ebef6c7334fad080c5704d77216b732896c6b935b8bbd400000801ca08ce4a6c12f7f273321c5dc03910744f8fb11573fcce8140aa44486d385d22fb3a051f6bcc918bf3f12e06bfccfd1451bea5c517dffee0777ebd50caf177b17f383"],"id":1}'</span> http://localhost:8545</pre><p>All accounts and private keys in the examples are from the <code>dev.json</code> genesis file in the <code>/pantheon/ethereum/core/src/main/resources</code> directory.</p>
+<h2 id="sending-ether">Sending Ether</h2>
 <p>The following is an example of JS script that displays a signed transaction string to send ether.  </p>
 <pre class="hljs">const web3 = require(<span class="hljs-string">'web3'</span>)
 const ethTx = require(<span class="hljs-string">'ethereumjs-tx'</span>)
@@ -1165,11 +1212,13 @@ const ethTx = require(<span class="hljs-string">'ethereumjs-tx'</span>)
 const web3 = new Web3(new Web3.providers.HttpProvider(<span class="hljs-string">'http://127.0.0.1:8545'</span>))
 
 // Sender address and private key
+// Second acccount <span class="hljs-keyword">in</span> dev.json genesis file
 // Exclude 0x at the beginning of the private key
 const addressFrom = <span class="hljs-string">'0x627306090abaB3A6e1400e9345bC60c78a8BEf57'</span>
 const privKey = Buffer.from(<span class="hljs-string">'c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3'</span>, <span class="hljs-string">'hex'</span>)
 
 // Receiver address and value to transfer
+// Third account <span class="hljs-keyword">in</span> dev.json genesis file
 const addressTo = <span class="hljs-string">'0xf17f52151EbEF6C7334FAD080c5704D77216b732'</span>
 const valueInEther = 2000
 
@@ -1202,6 +1251,7 @@ const ethTx = require(<span class="hljs-string">'ethereumjs-tx'</span>)
 const web3 = new Web3(new Web3.providers.HttpProvider(<span class="hljs-string">'http://127.0.0.1:8545'</span>))
 
 // Deployer address and private key
+// First account <span class="hljs-keyword">in</span> the dev.json genesis file
 const addressFrom = <span class="hljs-string">'0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73'</span>
 const privKey = Buffer.from(<span class="hljs-string">'8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63'</span>, <span class="hljs-string">'hex'</span>)
 
@@ -1261,15 +1311,168 @@ console.log(<span class="hljs-string">"Raw transaction string="</span> + rawTxHe
 </tr>
 </tbody>
 </table>
+<p class="page" id="Account-Management"></p><h1>Using Wallets for Account Management</h1>
+<h2 id="using-wallets-for-account-management">Using Wallets for Account Management</h2>
+<p>Pantheon does not implement private key management. Use third-party tools (for example, <a href="https://consensys.zendesk.com/hc/en-us/articles/360004685212-Generating-MetaMask-Wallet-New-UI-">MetaMask</a> and <a href="https://web3j.io/">web3j</a>) for creating accounts. </p>
+<p>In Pantheon, you can use the JSON-RPC methods:</p>
+<ul>
+<li><a href="#JSON-RPC-API.mdeth_getbalance">eth_getBalance</a> to obtain the account balance</li>
+<li><a href="#JSON-RPC-API.mdeth_sendrawtransaction">eth_sendRawTransaction</a> to transfer ether or create and interact with contracts (for more information, refer to <a href="#transactions">Transactions</a>).  </li>
+</ul>
 <p class="page" id="Filters"></p><h1>Filters</h1>
 <h1 id="filters">Filters</h1>
 <p>Explains how to query block status using filters.</p>
 <p class="page" id="Testing-Developing-Nodes"></p><h1>Testing and Developing Nodes</h1>
 <h1 id="testing-and-developing-nodes">Testing and Developing Nodes</h1>
-<p>Explains how to set networks and configure genesis files for test and development.</p>
-<p class="page" id="Mining"></p><h1>Mining</h1>
+<h2 id="bootnodes">Bootnodes</h2>
+<p>Bootnodes are used to initially discover peers. </p>
+<h3 id="mainnet-and-public-testnets">Mainnet and Public Testnets</h3>
+<p>For mainnet and Rinkeby, Pantheon predefines a list of enonde URLs. For Ropsten, bootnodes are specified using the <a href="#Starting-Pantheonrun-a-node-on-ropsten-testnet"><code>--bootnodes</code> option</a>. </p>
+<h3 id="private-networks">Private Networks</h3>
+<p>To start a bootnode for a private network:</p>
+<ol>
+<li><p>Export the public key to a file:</p>
+<pre class="hljs">pantheon export-pub-key bootnode</pre><p>The node public key is exported to the <code>bootnode</code> file. </p>
+</li>
+<li><p>Start the bootnode, specifying:</p>
+<ul>
+<li>An empty string for the <code>--bootnodes</code> option because this is the bootnode. </li>
+<li><p>The network ID for your private network. </p>
+<pre class="hljs">pantheon --bootnodes="" --network-id 123 </pre></li>
+</ul>
+</li>
+</ol>
+<p>To specify this bootnode for another node, the enode URL for the <code>--bootnodes</code> option is <code>enode://&lt;id&gt;@&lt;host:port&gt;</code> where:</p>
+<ul>
+<li><code>&lt;id&gt;</code> is the node public key written to the specified file (<code>bootnode</code> in the above example) excluding the initial 0x. </li>
+<li><code>&lt;host:port&gt;</code> is the host and port the bootnode is listening on for P2P peer discovery. Specified by the <code>--p2p-listen</code> option for the bootnode (default is <code>127.0.0.1:30303</code>).</li>
+</ul>
+<p>For example, if the <code>--p2p-listen</code> option is not specified and the node public key exported is <code>0xc35c3ec90a8a51fd5703594c6303382f3ae6b2ecb9589bab2c04b3794f2bc3fc2631dabb0c08af795787a6c004d8f532230ae6e9925cbbefb0b28b79295d615f</code></p>
+<p>Then the enode URL is:
+<code>enode://c35c3ec90a8a51fd5703594c6303382f3ae6b2ecb9589bab2c04b3794f2bc3fc2631dabb0c08af795787a6c004d8f532230ae6e9925cbbefb0b28b79295d615f@127.0.0.1:30303</code> </p>
+<p>To start a node specifying the bootnode for P2P discovery:</p>
+<pre class="hljs">pantheon --datadir=/tmp/pantheon/30301 --p2p-listen=127.0.0.1:30301 --network-id=123 --bootnodes=enode://c35c3ec90a8a51fd5703594c6303382f3ae6b2ecb99bab2c04b3794f2bc3fc2631dabb0c08af795787a6c004d8f532230ae6e9925cbbefb0b28b79295d615f@127.0.0.1:30303</pre><p class="page" id="Mining"></p><h1>Mining</h1>
 <h1 id="mining">Mining</h1>
 <p>Explains how to mine blocks.</p>
+<p class="page" id="RPC-PubSub"></p><h1>RPC Pub/Sub</h1>
+<h1 id="rpc-pub-sub">RPC Pub/Sub</h1>
+<p><strong>[<em>This is preliminary content for the Pantheon Alpha release.</em>]</strong></p>
+<h2 id="contents">Contents</h2>
+<ul>
+<li>Event Publication and Subscription</li>
+<li>Creating Subscriptions</li>
+<li>Canceling Subscriptions</li>
+</ul>
+<h2 id="event-publication-and-subscription">Event Publication and Subscription</h2>
+<p>Pantheon supports event publication and subscription with RPC Pub/Sub methods. Using RPC Pub/Sub, your client can wait for events instead of polling for them. You invoke the RPC Pub/Sub methods over WebSockets; the methods are:</p>
+<ul>
+<li><code>eth_subscribe</code> - Creates a subscription that waits for particular events.</li>
+<li><code>eth_unsubscribe</code> - Cancels an existing subscription.</li>
+<li><code>eth_subscription</code> - Publishes (reports) notifications of event occurrences.</li>
+</ul>
+<h3 id="subscriptions">Subscriptions</h3>
+<p>When you subscribe to particular events (using <code>eth_subscribe</code>), the node returns a subscription ID. For each matching event that occurs, the node uses <code>eth_subscription</code> to return a notification with relevant data and the subscription ID.</p>
+<p>Subscriptions require a full duplex connection, so you need to invoke the RPC Pub/Sub methods over WebSockets. You can use a tool such as <a href="https://github.com/websockets/wscat">wscat</a>, a Node.js based command-line tool.</p>
+<p>Subscriptions are coupled to a connection. If the connection is closed, all subscriptions that have been created over this connection will be removed.</p>
+<p>The types of events that you can subscribe to are:</p>
+<h4 id="newblockheaders">NewBlockHeaders</h4>
+<p>This subscription sends a notification each time a new header is appended to the chain. This includes chain reorganizations. You can use the bloom filter to determine if the block contains logs that are interested to them.
+In case of a chain reorganization the subscription will emit all new headers for the new chain. Therefore the subscription can emit multiple headers on the same height.</p>
+<p>You can filter blocks using elements from the <a href="https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API#block-object">Block Object</a>. For example, you can use the <code>logsBloom</code> parameter to filter blocks containing logs of interest to you.</p>
+<p>The following is an example of <code>NewBlockHeaders</code> notifications:</p>
+<pre class="hljs">&gt;&gt; {"id": 1, "method": "eth_subscribe", "params": ["NewBlockHeaders"]}
+&lt;&lt; {"jsonrpc":"2.0","id":2,"result":"0x9ce59a13059e417087c02d3236a0b1cc"}
+
+&lt;&lt; {
+  "jsonrpc": "2.0",
+  "method": "eth_subscription",
+  "params": {
+    "result": {
+      "difficulty": "0x15d9223a23aa",
+      "extraData": "0xd983010305844765746887676f312e342e328777696e646f7773",
+      "gasLimit": "0x47e7c4",
+      "gasUsed": "0x38658",
+      "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "miner": "0xf8b483dba2c3b7176a3da549ad41a48bb3121069",
+      "nonce": "0x084149998194cc5f",
+      "number": "0x1348c9",
+      "parentHash": "0x7736fab79e05dc611604d22470dadad26f56fe494421b5b333de816ce1f25701",
+      "receiptRoot": "0x2fab35823ad00c7bb388595cb46652fe7886e00660a01e867824d3dceb1c8d36",
+      "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+      "stateRoot": "0xb3346685172db67de536d8765c43c31009d0eb3bd9c501c9be3229203f15f378",
+      "timestamp": "0x56ffeff8",
+      "transactionsRoot": "0x0167ffa60e3ebc0b080cdb95f7c0087dd6c0e61413140e39d94d3468d7c9689f"
+    },
+    "subscription": "0x9ce59a13059e417087c02d3236a0b1cc"
+  }
+}</pre><h4 id="logs">Logs</h4>
+<p>Returns logs included in new imported blocks and match the given filter criteria. In a chain reorganization, previous sent logs from the old chain are resent with the removed property set to <code>true</code>. Logs from transactions included in the new chain are sent. Therefore a subscription can send logs for the same transaction multiple times.</p>
+<p><code>Logs</code> subscriptions can take as a parameter an <code>object</code> with the following fields:</p>
+<ul>
+<li><code>address</code> - (optional) Either an address or an array of addresses. Returns only logs created from these addresses.</li>
+<li><code>topics</code> - (optional) Returns only logs that match the specified topics.</li>
+</ul>
+<p>The following is an example of <code>Logs</code> notifications:</p>
+<pre class="hljs">&gt;&gt; {"id": 1, "method": "eth_subscribe", "params": ["logs", {"address": "0x8320fe7702b96808f7bbc0d4a888ed1468216cfd", "topics": ["0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902"]}]}
+&lt;&lt; {"jsonrpc":"2.0","id":2,"result":"0x4a8a4c0517381924f9838102c5a4dcb7"}
+
+&lt;&lt; {"jsonrpc":"2.0","method":"eth_subscription","params": {"subscription":"0x4a8a4c0517381924f9838102c5a4dcb7","result":{"address":"0x8320fe7702b96808f7bbc0d4a888ed1468216cfd","blockHash":"0x61cdb2a09ab99abf791d474f20c2ea89bf8de2923a2d42bb49944c8c993cbf04","blockNumber":"0x29e87","data":"0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000003","logIndex":"0x0","topics":["0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902"],"transactionHash":"0xe044554a0a55067caafd07f8020ab9f2af60bdfe337e395ecd84b4877a3d1ab4","transactionIndex":"0x0"}}}</pre><h4 id="pendingtransactions">PendingTransactions</h4>
+<p>Returns the hash of transactions in the pending state and signed with a key available in the node. If a transaction that was previously part of the canonical chain isn&#39;t in the new canonical chain after a reorganization, it will be sent again.</p>
+<p><code>PendingTransactions</code> takes no parameters.</p>
+<p>The returned data is a transaction hash.</p>
+<p>The following is an example of <code>PendingTransactions</code> notifications:</p>
+<pre class="hljs">&gt;&gt; {"id": 1, "method": "eth_subscribe", "params": ["newPendingTransactions"]}
+&lt;&lt; {"jsonrpc":"2.0","id":2,"result":"0xc3b33aa549fb9a60e95d21862596617c"}
+
+&lt;&lt; {
+        "jsonrpc":"2.0",
+        "method":"eth_subscription",
+        "params":{
+            "subscription":"0xc3b33aa549fb9a60e95d21862596617c",
+            "result":"0xd6fdc5cc41a9959e922f30cb772a9aef46f4daea279307bc5f7024edc4ccd7fa"
+        }
+    }</pre><h4 id="syncing">Syncing</h4>
+<p>Indicates when the node starts or stops synchronizing. The result can either be a <code>boolean</code> indicating that the synchronization has started (<code>true</code>), finished (<code>false</code>) or an <code>object</code> with various progress indicators.</p>
+<pre class="hljs">&gt;&gt; {"id": 1, "method": "eth_subscribe", "params": ["syncing"]}
+&lt;&lt; {"jsonrpc":"2.0","id":2,"result":"0xe2ffeb2703bcf602d42922385829ce96"}
+
+&lt;&lt; {"subscription":"0xe2ffeb2703bcf602d42922385829ce96","result":{"syncing":true,"status":{"startingBlock":674427,"currentBlock":67400,"highestBlock":674432,"pulledStates":0,"knownStates":0}}}}</pre><h3 id="notifications">Notifications</h3>
+<p>Notifications are sent for current events only, not past events.</p>
+<p>Notifications are stored in an internal buffer to be sent to the client. If the client falls behind and the number of buffered notifications reaches a limit (currently 10k), the connection will be closed. Keep in mind that subscribing to certain events can cause a flood of notifications; for example, listening for all logs when the node synchronizes.</p>
+<h2 id="creating-subscriptions">Creating Subscriptions</h2>
+<p><code>eth_subscribe</code> creates a subscription that waits for particular events. If successful, it returns the subscription ID.</p>
+<h4 id="parameters">Parameters</h4>
+<p>When you call <code>eth_subscribe</code>, supply the type of event to subscribe to, plus optional arguments.</p>
+<p><code>subscriptionType</code> : <code>string</code> - A type of event to which to subscribe:</p>
+<ul>
+<li><code>NewBlockHeaders</code></li>
+<li><code>Logs</code></li>
+<li><code>PendingTransactions</code></li>
+<li><code>Syncing</code></li>
+</ul>
+<p>Optional arguments are described above for each of the subscription types.</p>
+<h4 id="returns">Returns</h4>
+<p><code>subscriptionID</code> : - The ID of the subscription.</p>
+<h4 id="request">Request</h4>
+<pre class="hljs">&gt;&gt; {"id": 1, "method": "eth_subscribe", "params": ["NewBlockHeaders", {"includeTransactions": true}]}</pre><h4 id="result">Result</h4>
+<pre class="hljs">&lt;&lt; {"id": 1, "jsonrpc": "2.0", "result": "0x9cef478923ff08bf67fde6c64013158d"}</pre><h2 id="canceling-subscriptions">Canceling Subscriptions</h2>
+<p><code>eth_unsubscribe</code> cancels an existing subscription. It returns a boolean indicating whether the subscription was cancelled successfully.</p>
+<blockquote>
+<p><strong>Note:</strong> Only the connection that created a subscription is able to unsubscribe from it. If another connection tries to unsubscribe, it will receive a <code>SubscriptionNotFound</code> response with no information about existing subscriptions.</p>
+</blockquote>
+<h4 id="parameters">Parameters</h4>
+<p><code>subscriptionID</code> : - The ID of the subscription to cancel. You receive this ID from <code>eth_subscribe</code>.</p>
+<h4 id="returns">Returns</h4>
+<p><code>result</code> : <code>boolean</code> - <code>true</code> if the subscription was cancelled successfully; otherwise <code>false</code>.</p>
+<h4 id="request">Request</h4>
+<pre class="hljs">&gt;&gt; {"id": 1, "method": "eth_unsubscribe", "params": ["0x9cef478923ff08bf67fde6c64013158d"]}</pre><h4 id="result">Result</h4>
+<pre class="hljs">&lt;&lt; {"jsonrpc":"2.0","id":1,"result":true}</pre><h2 id="publishing-subscriptions">Publishing Subscriptions</h2>
+<p><code>eth_subscription</code> publishes (reports) notifications of event occurrences. You do not call this method. The node invokes <code>eth_subscription</code> to return a notification with relevant data and the subscription ID for each matching event that occurs.</p>
+<h4 id="parameters">Parameters</h4>
+<p>None</p>
+<h4 id="returns">Returns</h4>
+<p><code>subscription</code> : <code>string</code> - The subscription ID. </p>
+<p><code>result</code> : <code>object</code> - An object containing relevant block data. For example, for pending transactions the returned data is a transaction hash. For detailed information on this data, see <a href="https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API#block-object">Block Object</a>.</p>
 <p class="page" id="Debugging"></p><h1>Debugging Pantheon</h1>
 <h1 id="faq">FAQ</h1>
 <ul>
@@ -1285,7 +1488,10 @@ console.log(<span class="hljs-string">"Raw transaction string="</span> + rawTxHe
 <h2 id="options">Options</h2>
 <dl>
   <dt><code>--bootnodes=&lt;enode://id@host:port&gt;[,&lt;enode://id@host:port&gt;...]...</code></dt>
-  <dd>A list of comma-separated enode URLs for P2P discovery bootstrap. The default is a predefined list of enode URLs.</dd>
+
+  <dd>List of comma-separated enode URLs for P2P discovery bootstrap. </dd>
+
+  <dd>When connecting to mainnet and Rinkeby, the default is a predefined list of enode URLs. Specify bootnodes when <a href="https://github.com/PegaSysEng/pantheon/wiki/Starting-Pantheon#run-a-node-on-ropsten-testnet">connecting to Ropsten</a> or a <a href="https://github.com/PegaSysEng/pantheon/wiki/Testing-Developing-Nodes#bootnodes">private network.</a></dd>
 <br>
   <dt><code>--config=&lt;PATH&gt;</code></dt>
   <dd>The path to the TOML configuration file. The default is <code>none</code>. The TOML file is composed of key/value pairs. Each key is the same as the corresponding CLI option name without the leading dashes (<code>--</code>). The config option is not used in the config file. Values must be treated according to TOML specifications for string, numbers, arrays and Booleans.
@@ -1310,8 +1516,12 @@ miner-enabled=true
 miner-coinbase=&quot;0x0000000000000000000000000000000000000002&quot;</code>
 </dd>
 <br>
+
+&gt; <strong>Note:</strong> This option is not used when running Pantheon from the <a href="#Run-Docker-Imagecustom-configuration-file">Docker image</a>. 
   <dt><code>--datadir=&lt;PATH&gt;</code></dt>
   <dd>The path to the Pantheon data directory. The default location is the <code>/build/distributions/pantheon-1.0.0-SNAPSHOT</code> directory in the Pantheon installation directory.</dd>
+
+&gt; <strong>Note:</strong> This option is not used when running Pantheon from the <a href="#Run-Docker-Imagepersisting-data">Docker image</a>. 
 <br>
   <dt><code>--dev-mode</code></dt>
   <dd>
@@ -1320,6 +1530,8 @@ miner-coinbase=&quot;0x0000000000000000000000000000000000000002&quot;</code>
 <br>
   <dt><code>--genesis=&lt;PATH&gt;</code></dt>
   <dd>The path to the genesis file. The default is the embedded genesis file in the Pantheon mainnet.</dd>
+
+&gt; <strong>Note:</strong> This option is not used when running Pantheon from the <a href="#Run-Docker-Imagecustom-genesis-file">Docker image</a>. 
 <br>
   <dt><code>--max-peers=&lt;INTEGER&gt;</code></dt>
   <dd>Specifies the maximium P2P peer connections that can be established. The default is 25.</dd>
@@ -1352,6 +1564,8 @@ miner-coinbase=&quot;0x0000000000000000000000000000000000000002&quot;</code>
 <br>
   <dt><code>--p2p-listen=&lt;HOST:PORT&gt;</code></dt>
   <dd>Specifies the host and port on which P2P peer discovery listens. The default is 127.0.0.1:30303.</dd>
+
+&gt; <strong>Note:</strong> This option is not used when running Pantheon from the <a href="#Run-Docker-Imageexposing-ports">Docker image</a>. 
 <br>
   <dt><code>--rinkeby</code></dt>
   <dd>Uses the Rinkeby test network.</dd>
@@ -1361,6 +1575,8 @@ miner-coinbase=&quot;0x0000000000000000000000000000000000000002&quot;</code>
 <br>
   <dt><code>--rpc-listen=&lt;HOST:PORT&gt;</code></dt>
   <dd>Specifies the host and port on which JSON-RPC listens. The default is 127.0.0.1:8545.</dd>
+
+&gt; <strong>Note:</strong> This option is not used when running Pantheon from the <a href="#Run-Docker-Imageexposing-ports">Docker image</a>. 
 <br>
   <dt><code>--rpc-api=&lt;api name&gt;[,<api name>...]...</code></dt>
   <dd>Comma-separated APIs to enable on the JSON-RPC channel. The <code>--rpc-enabled</code> option must be specified with this option. The default is: <code>ETH, NET, WEB3</code>. The <code>DEBUG</code> and <code>MINER</code> APIs can also be enabled.</dd>
@@ -1384,9 +1600,7 @@ You can whitelist one or more domains with a comma-separated list. For example:
 For development purposes, you can use <code>&quot;all&quot;</code> to accept requests from any domain, but we don&#39;t recommend this for production code.
 </dd>
 
-<br>
-  <dt><code>--sync-mode=&lt;MODE&gt;</code></dt>
-  <dd>Synchronization mode. Value can be <code>FULL</code> or <code>FAST</code>. The default is <code>FULL</code>.</dd>
+
 <br>
   <dt><code>--ws-enabled</code></dt>
   <dd>Set to <code>true</code> to enable the WS-RPC (WebSockets) service. The default is <code>false</code>.</dd>
@@ -1399,6 +1613,7 @@ For development purposes, you can use <code>&quot;all&quot;</code> to accept req
   <dt><code> --ws-listen=&lt;HOST:PORT&gt;</code></dt>
   <dd>Host and port for WS-RPC (Websocket) to listen on. The default is 127.0.0.1:8546.</dd>
 
+&gt; <strong>Note:</strong> This option is not used when running Pantheon from the <a href="#Run-Docker-Imageexposing-ports">Docker image</a>. 
 <br>
   <dt><code>-h, --help</code></dt>
   <dd>Show the help message and exit.</dd>
@@ -1409,9 +1624,19 @@ For development purposes, you can use <code>&quot;all&quot;</code> to accept req
 
 <hr>
 <h2 id="commands">Commands</h2>
-<p>The <code>import</code> subcommand imports blocks from the specified file into the blockchain database:</p>
-<p><code>pantheon import &lt;block-file&gt;</code></p>
+<p>Pantheon subcommands are: </p>
+<ul>
+<li><p><code>import</code></p>
+<p> Imports blocks from the specified file into the blockchain database:</p>
+<p> <code>pantheon import &lt;block-file&gt;</code></p>
+</li>
+<li><p><code>export-pub-key</code></p>
+<p>  Exports node public key to the specified file. </p>
+<p>  <code>pantheon export-pub-key &lt;key-file&gt;</code></p>
+</li>
+</ul>
 <p><br></p>
+<p>### </p>
 <hr>
 <p>Pantheon is licensed under Apache License 2.0.</p>
 <p class="page" id="JSON-RPC-API"></p><h1>JSON-RPC API Reference</h1>
@@ -1459,6 +1684,10 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <li><code>latest</code> : <code>tag</code> - Last block mined.</li>
 <li><code>pending</code> : <code>tag</code> - Last block mined plus pending transactions.</li>
 </ul>
+<h2 id="account-management-not-supported-by-pantheon">Account Management Not Supported by Pantheon</h2>
+<p>Account management relies on private key management in the client which is not implemented by Pantheon. </p>
+<p>Use <a href="#eth_sendrawtransaction"><code>eth_sendRawTransaction</code></a> to send signed transaction; <code>eth_sendTransaction</code> is not implemented. </p>
+<p>Use wallets for <a href="#Account-Management">account management</a>. </p>
 <h2 id="json-rpc-methods">JSON-RPC Methods</h2>
 <p><strong>[<em>Note for Alpha release: The following lists only the Pantheon JSON-RPC API commands that are currently fully or partially implemented.</em>]</strong></p>
 <p>The following lists the Pantheon JSON-RPC API commands:</p>
@@ -1660,13 +1889,11 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 }</pre><hr>
 <h4 id="eth_accounts">eth_accounts</h4>
 <p>Returns a list of account addresses that the client owns.</p>
-<p><strong>NOTE:</strong> This method returns an empty object; this is the correct behavior, not a malfunction, and simply reflects the current state of mainnet.</p>
-<pre><DEVELOPMENT NOTE: The Bunyip team spreadsheet indicates that this method returns an empty object; this is not a malfunction, but simply reflects the current state of mainnet. Technically this is correct behavior, but it will change when we have the complete implementation after we start doing key management.></pre>
-
+<p><strong>NOTE:</strong> This method returns an empty object because Pantheon <a href="#account-management-not-supported-by-pantheon">does not support account management</a>.</p>
 <h5 id="parameters">Parameters</h5>
 <p>None</p>
 <h5 id="returns">Returns</h5>
-<p><code>Array of DATA</code> : A list of 20-byte account addresses that the client owns.</p>
+<p><code>Array of data</code> : List of 20-byte account addresses owned by the client.</p>
 <h5 id="request">Request</h5>
 <pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"eth_accounts","params":[],"id":53}'  &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
 <pre class="hljs">{
@@ -1801,7 +2028,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <p>Sends a signed transaction. A transaction can send ether, deploy a contract, or interact with a contract.  </p>
 <p>You can interact with contracts using <a href="#Using-Pantheoneth_call-or-eth_sendrawtransaction">eth_sendRawTransaction or eth_call</a>.</p>
 <p>To avoid exposing your private key, create signed transactions offline and send the signed transaction data using this method. For information on creating signed transactions and using <code>eth_sendRawTransaction</code>, refer to <a href="https://github.com/PegaSysEng/pantheon/wiki/Using-Pantheon#transactions">Using Pantheon</a>.  </p>
-<p><strong>Note: Pantheon does not implement eth_sendTransaction because this relies on private key management by the client that could potentially be exposed during the transaction.</strong>  </p>
+<p><strong>Note: Pantheon does not implement <a href="#account-management-not-supported-by-pantheon">eth_sendTransaction</a>.</strong>  </p>
 <h5 id="parameters">Parameters</h5>
 <p><code>DATA</code> - Hash of the signed raw transaction in hexadecimal format; for example:</p>
 <pre class="hljs">params: ["0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675"]</pre><h5 id="returns">Returns</h5>
