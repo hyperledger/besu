@@ -12,11 +12,12 @@
  */
 package tech.pegasys.pantheon.consensus.ibft;
 
+import tech.pegasys.pantheon.consensus.common.ValidatorVote;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
-public enum IbftVoteType {
+public enum IbftVoteType implements ValidatorVote {
   ADD((byte) 0xFF),
   DROP((byte) 0x00);
 
@@ -43,5 +44,15 @@ public enum IbftVoteType {
 
   public void writeTo(final RLPOutput rlpOutput) {
     rlpOutput.writeByte(voteValue);
+  }
+
+  @Override
+  public boolean isAddVote() {
+    return this.equals(ADD);
+  }
+
+  @Override
+  public boolean isDropVote() {
+    return this.equals(DROP);
   }
 }

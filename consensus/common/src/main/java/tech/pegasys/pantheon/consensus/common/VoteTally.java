@@ -54,15 +54,16 @@ public class VoteTally implements ValidatorProvider {
    *
    * @param proposer the address of the validator casting the vote via block proposal
    * @param subject the validator the vote is about
-   * @param voteType the type of vote, either add or drop
+   * @param validatorVote the type of vote, either add or drop
    */
-  public void addVote(final Address proposer, final Address subject, final VoteType voteType) {
+  public void addVote(
+      final Address proposer, final Address subject, final ValidatorVote validatorVote) {
     final Set<Address> addVotesForSubject =
         addVotesBySubject.computeIfAbsent(subject, target -> new HashSet<>());
     final Set<Address> removeVotesForSubject =
         removeVotesBySubject.computeIfAbsent(subject, target -> new HashSet<>());
 
-    if (voteType == VoteType.ADD) {
+    if (validatorVote.isAddVote()) {
       addVotesForSubject.add(proposer);
       removeVotesForSubject.remove(proposer);
     } else {
