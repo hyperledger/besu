@@ -329,6 +329,7 @@ distributions {
       from("./LICENSE") { into "." }
       from("build/reports/license/license-dependency.html") { into "." }
       from("./docs/GettingStartedBinaries.md") { into "." }
+      from("./docs/DocsArchive0.8.0.html") { into "." }
     }
   }
 }
