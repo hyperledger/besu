@@ -80,8 +80,6 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
     final BlockHashFunction blockHashFunction =
         ScheduleBasedBlockHashFunction.create(protocolSchedule);
 
-    final Optional<BlockHeader> optionalParentHeader =
-        protocolContext.getBlockchain().getBlockHeader(sealableBlockHeader.getParentHash());
     final CliqueContext cliqueContext = protocolContext.getConsensusState();
     final VoteTally voteTally = cliqueContext.getVoteTallyCache().getVoteTallyAtBlock(parentHeader);
 
