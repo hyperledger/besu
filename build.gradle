@@ -15,7 +15,6 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 
 plugins {
   id 'com.diffplug.gradle.spotless' version '3.13.0'
-  id 'com.palantir.git-version' version '0.10.0'
   id 'io.spring.dependency-management' version '1.0.4.RELEASE'
   id 'com.github.hierynomus.license' version '0.14.0'
   id 'net.ltgt.errorprone' version '0.6'
