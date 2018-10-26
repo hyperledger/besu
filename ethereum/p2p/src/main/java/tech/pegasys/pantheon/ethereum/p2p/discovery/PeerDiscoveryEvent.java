@@ -41,8 +41,8 @@ public abstract class PeerDiscoveryEvent {
   }
 
   /**
-   * An event that is dispatched whenever we bond with a new peer. See Javadoc on
-   * <tt>PeerDiscoveryController</tt> to understand when this happens.
+   * An event that is dispatched whenever we bond with a new peer. See Javadoc on <code>
+   * PeerDiscoveryController</code> to understand when this happens.
    *
    * <p>{@link tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController}
    */
@@ -53,8 +53,8 @@ public abstract class PeerDiscoveryEvent {
   }
 
   /**
-   * An event that is dispatched whenever we drop a peer from the peer table. See Javadoc on
-   * <tt>PeerDiscoveryController</tt> to understand when this happens.
+   * An event that is dispatched whenever we drop a peer from the peer table. See Javadoc on <code>
+   * PeerDiscoveryController</code> to understand when this happens.
    *
    * <p>{@link tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController}
    */

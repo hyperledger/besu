@@ -81,10 +81,10 @@ import org.apache.logging.log4j.Logger;
  *   <li><em>DROPPED (*):</em> the peer is no longer in our peer table.
  * </ul>
  *
- * <p>(*) It is worthy to note that the <tt>MESSAGE_EXPECTED</tt> and <tt>DROPPED</tt> states are
- * not modelled explicitly in {@link PeerDiscoveryStatus}, but they have been included in the
- * diagram for clarity. These two states define the elimination path for a peer from the underlying
- * table.
+ * <p>(*) It is worthy to note that the <code>MESSAGE_EXPECTED</code> and <code>DROPPED</code>
+ * states are not modelled explicitly in {@link PeerDiscoveryStatus}, but they have been included in
+ * the diagram for clarity. These two states define the elimination path for a peer from the
+ * underlying table.
  *
  * <p>If an expectation to receive a message was unmet, following the evaluation of a failure
  * condition, the peer will be physically dropped (eliminated) from the table.

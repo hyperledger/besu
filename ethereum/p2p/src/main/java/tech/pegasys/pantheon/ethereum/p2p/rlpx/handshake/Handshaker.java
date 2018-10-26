@@ -71,7 +71,7 @@ public interface Handshaker {
    * This method must be called by the <em>initiating side</em> of the handshake to provide the
    * initial crypto material for the handshake, before any further methods are called.
    *
-   * <p>This method must throw an <tt>IllegalStateException</tt> exception if the handshake had
+   * <p>This method must throw an {@link IllegalStateException} exception if the handshake had
    * already been prepared before, no matter if under the initiator or the responder role.
    *
    * @param ourKeypair The keypair for our node identity.
@@ -84,7 +84,7 @@ public interface Handshaker {
    * This method must be called by the <em>responding side</em> of the handshake to prepare the
    * initial crypto material for the handshake, before any further methods are called.
    *
-   * <p>This method must throw an <tt>IllegalStateException</tt> exception if the handshake had
+   * <p>This method must throw an {@link IllegalStateException} exception if the handshake had
    * already been prepared before, whether with the initiator or the responder role.
    *
    * @param ourKeypair The keypair for our node identity.
@@ -100,7 +100,7 @@ public interface Handshaker {
    * the initiator is allowed to send the first message in the channel. Future implementations may
    * allow for a concurrent exchange.
    *
-   * <p>This method will throw an <tt>IllegalStateException</tt> if the consumer has prepared this
+   * <p>This method will throw an {@link IllegalStateException} if the consumer has prepared this
    * handshake taking the role of the responder, and the underlying implementation only allows the
    * initiator to send the first message.
    *

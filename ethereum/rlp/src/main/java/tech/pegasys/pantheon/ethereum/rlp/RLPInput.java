@@ -110,7 +110,8 @@ public interface RLPInput {
   /**
    * Exits the current list after all its items have been consumed.
    *
-   * <p>This method is equivalent to calling {@link #leaveList(boolean)} with value <tt>false</tt>.
+   * <p>This method is equivalent to calling {@link #leaveList(boolean)} with value <code>false
+   * </code>.
    *
    * <p>Note that this method technically doesn't consume any input but must be called after having
    * read the last element of a list. This allow to ensure the structure of the input is indeed the
@@ -128,9 +129,9 @@ public interface RLPInput {
    * one expected.
    *
    * @param ignoreRest Whether to ignore any remaining elements in the list. If elements remain and
-   *     this parameter is <tt>false</tt>, an exception will be thrown.
-   * @throws RLPException if the current list is not finished (it has more items), if
-   *     <tt>ignoreRest</tt> is <tt>false</tt>.
+   *     this parameter is <code>false</code>, an exception will be thrown.
+   * @throws RLPException if the current list is not finished (it has more items), if <code>
+   *     ignoreRest</code> is <code>false</code>.
    */
   void leaveList(boolean ignoreRest);
 

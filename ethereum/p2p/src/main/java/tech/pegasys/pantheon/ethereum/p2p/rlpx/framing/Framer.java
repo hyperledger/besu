@@ -111,12 +111,12 @@ public class Framer {
    * Deframes a full message from the byte buffer, if possible.
    *
    * <p>If the byte buffer contains insufficient bytes to extract a full message, this method
-   * returns <tt>null</tt>.
+   * returns <code>null</code>.
    *
    * <p>If the buffer contains at least a header, it offloads it and processes it, setting an
    * internal expectation to subsequently receive as many bytes for the frame as the header
-   * specified. In this case, this method also returns <tt>null</tt> to inform the caller that it
-   * requires more bytes before it can produce an output.
+   * specified. In this case, this method also returns <code>null</code> to inform the caller that
+   * it requires more bytes before it can produce an output.
    *
    * <p>This method can be called repetitively whenever new bytes appear in the buffer. It is worthy
    * to note that the byte buffer is not consumed unless the next expected amount of bytes appears.
@@ -129,7 +129,7 @@ public class Framer {
    * connection, as the digests and stream ciphers could have become corrupted.
    *
    * @param buf The buffer containing no messages, partial messages or multiple messages.
-   * @return The first fully extracted message from this buffer, or <tt>null</tt> if no message
+   * @return The first fully extracted message from this buffer, or <code>null</code> if no message
    *     could be extracted yet.
    * @throws FramingException Thrown when a decryption or internal error occurs.
    */
