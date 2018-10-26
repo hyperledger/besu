@@ -1,21 +1,17 @@
-<!--
-
-Have you read the Code of Conduct? By filing an Issue, you are expected to comply with it, including treating everyone with respect: https://github.com/PegasysEng/pantheon/blob/master/CODE-OF-CONDUCT.md
-  -->
-
-### Prerequisites
-
-* [] Put an X between the brackets on this line if you have done all of the following:
+<!-- Have you done the following?
+  * read the Code of Conduct? By filing an Issue, you are expected to comply with it, including treating everyone with respect: https://github.com/PegasysEng/pantheon/blob/master/CODE-OF-CONDUCT.md
   * Reproduced the issue in the latest version of the software
   * Followed all steps in the debugging wiki: https://github.com/PegasysEng/pantheon/wiki/debugging
   * Verified the issue doesn't already exist: https://github.com/search?q=+is%3Aissue+repo%3APegasysEng/Pantheon
+Note:  Not all sections will apply to all issue types.-->
 
 ### Description
+As an [Actor], I want [feature] so that [why]. 
 
-[Description of the issue]
+### Acceptance Criteria
+* [Criteria 1]
 
-### Steps to Reproduce
-
+### Steps to Reproduce (Bug)
 1. [Step 1]
 2. [Step 2]
 3. [Step ...]
@@ -26,15 +22,14 @@ Have you read the Code of Conduct? By filing an Issue, you are expected to compl
 
 **Frequency:** [What percentage of the time does it occur?]
 
-### Versions
-
-* Software version `pantheon --version`
-* OS Name & Version
-* Kernel Version `uname -a`
-* Virtual Machine software & version
-* Docker Version
-* Cloud VM, type, size (eg Amazon Web Services I3-large)
+### Versions (Add all that apply)
+* Software version: [`pantheon --version`]
+* Java version: [`java -version`]
+* OS Name & Version: [`cat /etc/*release`]
+* Kernel Version: [`uname -a`]
+* Virtual Machine software & version: [`vmware -v`]
+* Docker Version: [`docker version`]
+* Cloud VM, type, size: [Amazon Web Services I3-large]
 
 ### Additional Information
 
-Any additional information, configuration or data that might be necessary to reproduce the issue.
