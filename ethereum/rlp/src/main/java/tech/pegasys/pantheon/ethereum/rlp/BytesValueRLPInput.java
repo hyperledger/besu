@@ -32,7 +32,7 @@ public class BytesValueRLPInput extends AbstractRLPInput {
 
   @Override
   protected byte inputByte(final long offset) {
-    return value.get(Math.toIntExact(offset));
+    return value.get(offset);
   }
 
   @Override

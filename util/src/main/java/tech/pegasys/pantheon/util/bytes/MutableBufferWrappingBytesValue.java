@@ -25,7 +25,9 @@ class MutableBufferWrappingBytesValue extends AbstractBytesValue implements Muta
 
   MutableBufferWrappingBytesValue(final Buffer buffer, final int offset, final int size) {
     checkArgument(size >= 0, "Invalid negative length provided");
-    checkElementIndex(offset, buffer.length());
+    if (size > 0) {
+      checkElementIndex(offset, buffer.length());
+    }
     checkArgument(
         offset + size <= buffer.length(),
         "Provided length %s is too big: the buffer has size %s and has only %s bytes from %s",
@@ -39,6 +41,10 @@ class MutableBufferWrappingBytesValue extends AbstractBytesValue implements Muta
     this.size = size;
   }
 
+  MutableBufferWrappingBytesValue(final Buffer buffer) {
+    this(buffer, 0, buffer.length());
+  }
+
   @Override
   public int size() {
     return size;
@@ -46,11 +52,13 @@ class MutableBufferWrappingBytesValue extends AbstractBytesValue implements Muta
 
   @Override
   public byte get(final int i) {
+    checkElementIndex(i, size());
     return buffer.getByte(offset + i);
   }
 
   @Override
   public void set(final int i, final byte b) {
+    checkElementIndex(i, size());
     buffer.setByte(offset + i, b);
   }
 

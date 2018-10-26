@@ -17,8 +17,8 @@ import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
-import tech.pegasys.pantheon.ethereum.rlp.RlpUtils;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.Closeable;
@@ -26,25 +26,34 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
 
 public final class RawBlockIterator implements Iterator<Block>, Closeable {
+  private static final int DEFAULT_INIT_BUFFER_CAPACITY = 1 << 16;
 
   private final FileChannel fileChannel;
   private final Function<RLPInput, BlockHeader> headerReader;
 
-  private ByteBuffer readBuffer = ByteBuffer.allocate(2 << 15);
+  private ByteBuffer readBuffer;
 
   private Block next;
 
-  public RawBlockIterator(final Path file, final Function<RLPInput, BlockHeader> headerReader)
+  RawBlockIterator(
+      final Path file,
+      final Function<RLPInput, BlockHeader> headerReader,
+      final int initialCapacity)
       throws IOException {
     fileChannel = FileChannel.open(file);
     this.headerReader = headerReader;
+    readBuffer = ByteBuffer.allocate(initialCapacity);
     nextBlock();
+  }
+
+  public RawBlockIterator(final Path file, final Function<RLPInput, BlockHeader> headerReader)
+      throws IOException {
+    this(file, headerReader, DEFAULT_INIT_BUFFER_CAPACITY);
   }
 
   @Override
@@ -75,7 +84,7 @@ public final class RawBlockIterator implements Iterator<Block>, Closeable {
     fillReadBuffer();
     int initial = readBuffer.position();
     if (initial > 0) {
-      final int length = RlpUtils.decodeLength(readBuffer, 0);
+      final int length = RLP.calculateSize(BytesValue.wrapBuffer(readBuffer));
       if (length > readBuffer.capacity()) {
         readBuffer.flip();
         final ByteBuffer newBuffer = ByteBuffer.allocate(2 * length);
@@ -84,8 +93,9 @@ public final class RawBlockIterator implements Iterator<Block>, Closeable {
         fillReadBuffer();
         initial = readBuffer.position();
       }
-      final RLPInput rlp =
-          new BytesValueRLPInput(BytesValue.wrap(Arrays.copyOf(readBuffer.array(), length)), false);
+
+      final BytesValue rlpBytes = BytesValue.wrapBuffer(readBuffer, 0, length).copy();
+      final RLPInput rlp = new BytesValueRLPInput(rlpBytes, false);
       rlp.enterList();
       final BlockHeader header = headerReader.apply(rlp);
       final BlockBody body =

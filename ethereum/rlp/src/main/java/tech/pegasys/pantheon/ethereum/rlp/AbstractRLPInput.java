@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.rlp;
 import static com.google.common.base.Preconditions.checkState;
 
 import tech.pegasys.pantheon.ethereum.rlp.RLPDecodingHelpers.Kind;
+import tech.pegasys.pantheon.ethereum.rlp.RLPDecodingHelpers.RLPElementMetadata;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.MutableBytes32;
@@ -31,7 +32,7 @@ abstract class AbstractRLPInput implements RLPInput {
 
   private final boolean lenient;
 
-  protected long size;
+  protected long size; // The number of bytes in this rlp-encoded byte string
 
   // Information on the item the input currently is at (next thing to read).
   protected long
@@ -56,7 +57,7 @@ abstract class AbstractRLPInput implements RLPInput {
     }
 
     currentItem = 0;
-    // Initially set the size to the input as prepareCurrentTime() needs it. Once we've prepare the
+    // Initially set the size to the input as prepareCurrentItem() needs it. Once we've prepared the
     // top level item, we know where that item ends exactly and can update the size to that more
     // precise value (which basically mean we'll throw errors on malformed inputs potentially
     // sooner).
@@ -127,31 +128,17 @@ abstract class AbstractRLPInput implements RLPInput {
   private void prepareCurrentItem() {
     // Sets the kind of the item, the offset at which his payload starts and the size of this
     // payload.
-    final int prefix = inputByte(currentItem) & 0xFF;
-    currentKind = Kind.of(prefix);
-    switch (currentKind) {
-      case BYTE_ELEMENT:
-        currentPayloadOffset = currentItem;
-        currentPayloadSize = 1;
-        break;
-      case SHORT_ELEMENT:
-        currentPayloadOffset = currentItem + 1;
-        currentPayloadSize = prefix - 0x80;
-        break;
-      case LONG_ELEMENT:
-        final int sizeLengthElt = prefix - 0xb7;
-        currentPayloadOffset = currentItem + 1 + sizeLengthElt;
-        currentPayloadSize = readLongSize(currentItem, sizeLengthElt);
-        break;
-      case SHORT_LIST:
-        currentPayloadOffset = currentItem + 1;
-        currentPayloadSize = prefix - 0xc0;
-        break;
-      case LONG_LIST:
-        final int sizeLengthList = prefix - 0xf7;
-        currentPayloadOffset = currentItem + 1 + sizeLengthList;
-        currentPayloadSize = readLongSize(currentItem, sizeLengthList);
-        break;
+    try {
+      RLPElementMetadata elementMetadata =
+          RLPDecodingHelpers.rlpElementMetadata(this::inputByte, size, currentItem);
+      currentKind = elementMetadata.kind;
+      currentPayloadOffset = elementMetadata.payloadStart;
+      currentPayloadSize = elementMetadata.payloadSize;
+    } catch (RLPException exception) {
+      String message =
+          String.format(
+              exception.getMessage() + getErrorMessageSuffix(), getErrorMessageSuffixParams());
+      throw new RLPException(message, exception);
     }
   }
 
@@ -180,32 +167,6 @@ abstract class AbstractRLPInput implements RLPInput {
               + "has only %d bytes from that offset",
           currentPayloadOffset, currentPayloadSize, size - currentPayloadOffset);
     }
-  }
-
-  /** The size of the item payload for a "long" item, given the length in bytes of the said size. */
-  private int readLongSize(final long item, final int sizeLength) {
-    // We will read sizeLength bytes from item + 1. There must be enough bytes for this or the input
-    // is corrupted.
-    if (size - (item + 1) < sizeLength) {
-      throw corrupted(
-          "Invalid RLP item: value of size %d has not enough bytes to read the %d "
-              + "bytes payload size",
-          size, sizeLength);
-    }
-
-    // That size (which is at least 1 byte by construction) shouldn't have leading zeros.
-    if (inputByte(item + 1) == 0) {
-      throwMalformed("Malformed RLP item: size of payload has leading zeros");
-    }
-
-    final int res = RLPDecodingHelpers.extractSizeFromLong(this::inputByte, item + 1, sizeLength);
-
-    // We should not have had the size written separately if it was less than 56 bytes long.
-    if (res < 56) {
-      throwMalformed("Malformed RLP item: written as a long item, but size %d < 56 bytes", res);
-    }
-
-    return res;
   }
 
   private long nextItem() {
@@ -246,21 +207,28 @@ abstract class AbstractRLPInput implements RLPInput {
   }
 
   private String errorMsg(final String message, final Object... params) {
+    return String.format(
+        message + getErrorMessageSuffix(), concatParams(params, getErrorMessageSuffixParams()));
+  }
+
+  private String getErrorMessageSuffix() {
+    return " (at bytes %d-%d: %s%s[%s]%s%s)";
+  }
+
+  private Object[] getErrorMessageSuffixParams() {
     final long start = currentItem;
     final long end = Math.min(size, nextItem());
     final long realStart = Math.max(0, start - 4);
     final long realEnd = Math.min(size, end + 4);
-    return String.format(
-        message + " (at bytes %d-%d: %s%s[%s]%s%s)",
-        concatParams(
-            params,
-            start,
-            end,
-            realStart == 0 ? "" : "...",
-            hex(realStart, start),
-            hex(start, end),
-            hex(end, realEnd),
-            realEnd == size ? "" : "..."));
+    return new Object[] {
+      start,
+      end,
+      realStart == 0 ? "" : "...",
+      hex(realStart, start),
+      hex(start, end),
+      hex(end, realEnd),
+      realEnd == size ? "" : "..."
+    };
   }
 
   private static Object[] concatParams(final Object[] initial, final Object... others) {
