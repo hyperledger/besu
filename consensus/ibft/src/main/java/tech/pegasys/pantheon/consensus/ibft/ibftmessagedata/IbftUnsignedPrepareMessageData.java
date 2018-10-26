@@ -22,7 +22,6 @@ public class IbftUnsignedPrepareMessageData extends AbstractIbftUnsignedInRoundM
   private static final int TYPE = IbftV2.PREPARE;
   private final Hash digest;
 
-  /** Constructor used when a validator wants to send a message */
   public IbftUnsignedPrepareMessageData(
       final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
     super(roundIdentifier);

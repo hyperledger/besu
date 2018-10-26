@@ -38,7 +38,7 @@ public class IbftProtocolManager implements ProtocolManager {
    * Constructor for the ibft protocol manager
    *
    * @param ibftEventQueue Entry point into the ibft event processor
-   * @param peers
+   * @param peers iBFT network peers
    */
   public IbftProtocolManager(final IbftEventQueue ibftEventQueue, final IbftNetworkPeers peers) {
     this.ibftEventQueue = ibftEventQueue;
