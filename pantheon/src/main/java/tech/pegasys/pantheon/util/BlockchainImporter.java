@@ -174,6 +174,7 @@ public class BlockchainImporter extends BlockImporter {
     final ProtocolContext<C> context = pantheonController.getProtocolContext();
     final GenesisConfig<C> genesis = pantheonController.getGenesisConfig();
     checkNotNull(isSkipBlocks);
+    final BlockHeader genesisHeader = genesis.getBlock().getHeader();
 
     final long startTime = System.currentTimeMillis();
     long lapStartTime = startTime;
@@ -227,6 +228,11 @@ public class BlockchainImporter extends BlockImporter {
           body = new BlockBody(rlp.readList(Transaction::readFrom), rlp.readList(headerReader));
           rlp.leaveList();
           receipts = rlp.readList(TransactionReceipt::readFrom);
+          if (header.getNumber() == genesisHeader.getNumber()) {
+            // Don't import genesis block
+            previousHeader = header;
+            continue;
+          }
           final ProtocolSpec<C> protocolSpec =
               protocolSchedule.getByBlockNumber(header.getNumber());
 
