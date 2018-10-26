@@ -414,7 +414,7 @@ public class PantheonCommand implements Runnable {
     synchronize(
         buildController(),
         noPeerDiscovery,
-        ethNetworkConfig.getBootNodes(),
+        ethNetworkConfig,
         maxPeers,
         p2pHostAndPort,
         jsonRpcConfiguration(),
@@ -467,7 +467,7 @@ public class PantheonCommand implements Runnable {
   private void synchronize(
       final PantheonController<?, ?> controller,
       final boolean noPeerDiscovery,
-      final Collection<?> bootstrapNodes,
+      final EthNetworkConfig ethNetworkConfig,
       final int maxPeers,
       final HostAndPort discoveryHostAndPort,
       final JsonRpcConfiguration jsonRpcConfiguration,
@@ -481,7 +481,8 @@ public class PantheonCommand implements Runnable {
             Vertx.vertx(),
             controller,
             !noPeerDiscovery,
-            bootstrapNodes,
+            ethNetworkConfig.getBootNodes(),
+            ethNetworkConfig.getNetworkId(),
             discoveryHostAndPort.getHost(),
             discoveryHostAndPort.getPort(),
             maxPeers,
