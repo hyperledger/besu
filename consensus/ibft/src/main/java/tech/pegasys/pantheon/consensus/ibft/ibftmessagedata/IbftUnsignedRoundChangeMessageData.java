@@ -29,7 +29,6 @@ public class IbftUnsignedRoundChangeMessageData extends AbstractIbftUnsignedMess
   // The validator may not hae any prepared certificate
   private final Optional<IbftPreparedCertificate> preparedCertificate;
 
-  /** Constructor used only by the {@link #readFrom(RLPInput)} method */
   public IbftUnsignedRoundChangeMessageData(
       final ConsensusRoundIdentifier roundIdentifier,
       final Optional<IbftPreparedCertificate> preparedCertificate) {
