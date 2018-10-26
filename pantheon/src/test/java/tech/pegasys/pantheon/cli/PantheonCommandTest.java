@@ -88,6 +88,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             anyBoolean(),
             any(),
+            anyInt(),
             anyString(),
             anyInt(),
             anyInt(),
@@ -130,6 +131,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             eq(true),
             eq(MAINNET_BOOTSTRAP_NODES),
+            eq(1),
             eq("127.0.0.1"),
             eq(30303),
             eq(25),
@@ -257,6 +259,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             eq(false),
             stringListArgumentCaptor.capture(),
+            eq(1),
             eq("1.2.3.4"),
             eq(1234),
             eq(42),
@@ -310,6 +313,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             eq(true),
             eq(MAINNET_BOOTSTRAP_NODES),
+            eq(1),
             eq("127.0.0.1"),
             eq(30303),
             eq(25),
@@ -368,7 +372,17 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder)
         .build(
-            any(), any(), eq(false), any(), anyString(), anyInt(), anyInt(), any(), any(), any());
+            any(),
+            any(),
+            eq(false),
+            any(),
+            anyInt(),
+            anyString(),
+            anyInt(),
+            anyInt(),
+            any(),
+            any(),
+            any());
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -394,6 +408,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             anyBoolean(),
             stringListArgumentCaptor.capture(),
+            anyInt(),
             anyString(),
             anyInt(),
             anyInt(),
@@ -420,6 +435,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             anyBoolean(),
             any(),
+            anyInt(),
             stringArgumentCaptor.capture(),
             intArgumentCaptor.capture(),
             anyInt(),
@@ -446,6 +462,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             anyBoolean(),
             any(),
+            anyInt(),
             anyString(),
             anyInt(),
             intArgumentCaptor.capture(),
@@ -492,6 +509,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             anyBoolean(),
             any(),
+            anyInt(),
             anyString(),
             anyInt(),
             anyInt(),
@@ -515,6 +533,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             anyBoolean(),
             any(),
+            anyInt(),
             anyString(),
             anyInt(),
             anyInt(),
@@ -538,6 +557,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             anyBoolean(),
             any(),
+            anyInt(),
             anyString(),
             anyInt(),
             anyInt(),
@@ -565,6 +585,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             anyBoolean(),
             any(),
+            anyInt(),
             anyString(),
             anyInt(),
             anyInt(),
@@ -590,6 +611,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             anyBoolean(),
             any(),
+            anyInt(),
             anyString(),
             anyInt(),
             anyInt(),
@@ -615,6 +637,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             anyBoolean(),
             any(),
+            anyInt(),
             anyString(),
             anyInt(),
             anyInt(),
@@ -640,6 +663,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             anyBoolean(),
             any(),
+            anyInt(),
             anyString(),
             anyInt(),
             anyInt(),
@@ -665,6 +689,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             anyBoolean(),
             any(),
+            anyInt(),
             anyString(),
             anyInt(),
             anyInt(),
@@ -736,6 +761,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             anyBoolean(),
             any(),
+            anyInt(),
             anyString(),
             anyInt(),
             anyInt(),
@@ -759,6 +785,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             anyBoolean(),
             any(),
+            anyInt(),
             anyString(),
             anyInt(),
             anyInt(),
@@ -782,6 +809,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             anyBoolean(),
             any(),
+            anyInt(),
             anyString(),
             anyInt(),
             anyInt(),
@@ -808,6 +836,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             anyBoolean(),
             any(),
+            anyInt(),
             anyString(),
             anyInt(),
             anyInt(),
@@ -825,9 +854,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
   @Test
   public void pantheonDoesNotStartInMiningModeIfCoinbaseNotSet() throws Exception {
     parseCommand("--miner-enabled");
-
-    final ArgumentCaptor<MiningParameters> miningArg =
-        ArgumentCaptor.forClass(MiningParameters.class);
 
     verifyZeroInteractions(mockControllerBuilder);
   }

@@ -73,6 +73,7 @@ public class RunnerBuilder {
       final PantheonController<?, ?> pantheonController,
       final boolean discovery,
       final Collection<?> bootstrapPeers,
+      final int networkId,
       final String discoveryHost,
       final int listenPort,
       final int maxPeers,
@@ -150,7 +151,7 @@ public class RunnerBuilder {
           jsonRpcMethods(
               context,
               protocolSchedule,
-              pantheonController,
+              networkId,
               networkRunner,
               synchronizer,
               transactionPool,
@@ -168,7 +169,7 @@ public class RunnerBuilder {
           jsonRpcMethods(
               context,
               protocolSchedule,
-              pantheonController,
+              networkId,
               networkRunner,
               synchronizer,
               transactionPool,
@@ -213,7 +214,7 @@ public class RunnerBuilder {
   private Map<String, JsonRpcMethod> jsonRpcMethods(
       final ProtocolContext<?> context,
       final ProtocolSchedule<?> protocolSchedule,
-      final PantheonController<?, ?> pantheonController,
+      final int networkId,
       final NetworkRunner networkRunner,
       final Synchronizer synchronizer,
       final TransactionPool transactionPool,
@@ -225,7 +226,7 @@ public class RunnerBuilder {
         new JsonRpcMethodsFactory()
             .methods(
                 PantheonInfo.version(),
-                String.valueOf(pantheonController.getGenesisConfig().getChainId()),
+                String.valueOf(networkId),
                 networkRunner.getNetwork(),
                 context.getBlockchain(),
                 context.getWorldStateArchive(),
