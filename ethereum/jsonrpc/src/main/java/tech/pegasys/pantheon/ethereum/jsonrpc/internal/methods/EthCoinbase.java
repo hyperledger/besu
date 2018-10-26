@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
-import tech.pegasys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
+import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
@@ -24,9 +24,9 @@ import java.util.Optional;
 
 public class EthCoinbase implements JsonRpcMethod {
 
-  private final AbstractMiningCoordinator<?, ?> miningCoordinator;
+  private final MiningCoordinator miningCoordinator;
 
-  public EthCoinbase(final AbstractMiningCoordinator<?, ?> miningCoordinator) {
+  public EthCoinbase(final MiningCoordinator miningCoordinator) {
     this.miningCoordinator = miningCoordinator;
   }
 

@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.miner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.ethereum.blockcreation.EthHashBlockMiner;
 import tech.pegasys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
@@ -29,13 +28,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MinerStopTest {
 
-  private MinerStop<Void, EthHashBlockMiner> method;
+  private MinerStop method;
 
   @Mock private EthHashMiningCoordinator miningCoordinator;
 
   @Before
   public void before() {
-    method = new MinerStop<>(miningCoordinator);
+    method = new MinerStop(miningCoordinator);
   }
 
   @Test

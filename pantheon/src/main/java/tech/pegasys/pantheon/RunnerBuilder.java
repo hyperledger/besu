@@ -19,7 +19,7 @@ import tech.pegasys.pantheon.consensus.ibft.jsonrpc.IbftJsonRpcMethodsFactory;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
+import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
@@ -70,7 +70,7 @@ public class RunnerBuilder {
 
   public Runner build(
       final Vertx vertx,
-      final PantheonController<?, ?> pantheonController,
+      final PantheonController<?> pantheonController,
       final boolean discovery,
       final Collection<?> bootstrapPeers,
       final String discoveryHost,
@@ -139,8 +139,7 @@ public class RunnerBuilder {
 
     final Synchronizer synchronizer = pantheonController.getSynchronizer();
     final TransactionPool transactionPool = pantheonController.getTransactionPool();
-    final AbstractMiningCoordinator<?, ?> miningCoordinator =
-        pantheonController.getMiningCoordinator();
+    final MiningCoordinator miningCoordinator = pantheonController.getMiningCoordinator();
 
     final FilterManager filterManager = createFilterManager(vertx, context, transactionPool);
 
@@ -213,11 +212,11 @@ public class RunnerBuilder {
   private Map<String, JsonRpcMethod> jsonRpcMethods(
       final ProtocolContext<?> context,
       final ProtocolSchedule<?> protocolSchedule,
-      final PantheonController<?, ?> pantheonController,
+      final PantheonController<?> pantheonController,
       final NetworkRunner networkRunner,
       final Synchronizer synchronizer,
       final TransactionPool transactionPool,
-      final AbstractMiningCoordinator<?, ?> miningCoordinator,
+      final MiningCoordinator miningCoordinator,
       final Set<Capability> supportedCapabilities,
       final Collection<RpcApi> jsonRpcApis,
       final FilterManager filterManager) {

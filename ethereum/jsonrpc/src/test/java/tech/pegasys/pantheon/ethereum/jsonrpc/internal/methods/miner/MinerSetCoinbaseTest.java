@@ -19,7 +19,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 
-import tech.pegasys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
+import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -40,7 +40,7 @@ public class MinerSetCoinbaseTest {
 
   private MinerSetCoinbase method;
 
-  @Mock private AbstractMiningCoordinator<?, ?> miningCoordinator;
+  @Mock private MiningCoordinator miningCoordinator;
 
   @Before
   public void before() {

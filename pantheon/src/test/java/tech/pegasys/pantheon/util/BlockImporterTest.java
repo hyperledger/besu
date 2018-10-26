@@ -67,7 +67,7 @@ public final class BlockImporterTest {
       throw new IllegalStateException(ex);
     }
 
-    final PantheonController<?, ?> controller =
+    final PantheonController<?> controller =
         PantheonController.fromConfig(
             SynchronizerConfiguration.builder().build(),
             config,

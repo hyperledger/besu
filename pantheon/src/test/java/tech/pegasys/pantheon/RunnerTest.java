@@ -19,7 +19,6 @@ import tech.pegasys.pantheon.controller.MainnetPantheonController;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.blockcreation.EthHashBlockMiner;
 import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
@@ -91,7 +90,7 @@ public final class RunnerTest {
             .build();
 
     // Setup state with block data
-    try (final PantheonController<Void, EthHashBlockMiner> controller =
+    try (final PantheonController<Void> controller =
         MainnetPantheonController.init(
             dbAhead,
             GenesisConfig.mainnet(),
@@ -102,7 +101,7 @@ public final class RunnerTest {
     }
 
     // Setup Runner with blocks
-    final PantheonController<Void, EthHashBlockMiner> controllerAhead =
+    final PantheonController<Void> controllerAhead =
         MainnetPantheonController.init(
             dbAhead,
             GenesisConfig.mainnet(),
@@ -135,7 +134,7 @@ public final class RunnerTest {
       // Setup runner with no block data
       final Path dbBehind = temp.newFolder().toPath();
       final KeyPair behindDbNodeKeys = loadKeyPair(dbBehind);
-      final PantheonController<Void, EthHashBlockMiner> controllerBehind =
+      final PantheonController<Void> controllerBehind =
           MainnetPantheonController.init(
               temp.newFolder().toPath(),
               GenesisConfig.mainnet(),

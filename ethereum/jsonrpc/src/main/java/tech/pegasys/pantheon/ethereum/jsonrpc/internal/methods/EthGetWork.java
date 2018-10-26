@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import tech.pegasys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
+import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -30,10 +30,10 @@ import org.apache.logging.log4j.Logger;
 
 public class EthGetWork implements JsonRpcMethod {
 
-  private final AbstractMiningCoordinator<?, ?> miner;
+  private final MiningCoordinator miner;
   private static final Logger LOG = getLogger();
 
-  public EthGetWork(final AbstractMiningCoordinator<?, ?> miner) {
+  public EthGetWork(final MiningCoordinator miner) {
     this.miner = miner;
   }
 

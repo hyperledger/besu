@@ -17,7 +17,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import tech.pegasys.pantheon.ethereum.blockcreation.EthHashBlockMiner;
 import tech.pegasys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
@@ -33,13 +32,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class EthMiningTest {
 
   @Mock private EthHashMiningCoordinator miningCoordinator;
-  private EthMining<Void, EthHashBlockMiner> method;
+  private EthMining method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String ETH_METHOD = "eth_mining";
 
   @Before
   public void setUp() {
-    method = new EthMining<>(miningCoordinator);
+    method = new EthMining(miningCoordinator);
   }
 
   @Test

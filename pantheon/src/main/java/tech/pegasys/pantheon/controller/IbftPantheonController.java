@@ -22,7 +22,6 @@ import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftEventQueue;
 import tech.pegasys.pantheon.consensus.ibft.IbftProcessor;
 import tech.pegasys.pantheon.consensus.ibft.IbftStateMachine;
-import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockMiner;
 import tech.pegasys.pantheon.consensus.ibft.network.IbftNetworkPeers;
 import tech.pegasys.pantheon.consensus.ibft.protocol.IbftProtocolManager;
 import tech.pegasys.pantheon.consensus.ibft.protocol.IbftSubProtocol;
@@ -32,7 +31,7 @@ import tech.pegasys.pantheon.consensus.ibftlegacy.protocol.Istanbul64Protocol;
 import tech.pegasys.pantheon.consensus.ibftlegacy.protocol.Istanbul64ProtocolManager;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
+import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
@@ -67,7 +66,7 @@ import java.util.concurrent.TimeUnit;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.Logger;
 
-public class IbftPantheonController implements PantheonController<IbftContext, IbftBlockMiner> {
+public class IbftPantheonController implements PantheonController<IbftContext> {
 
   private static final int DEFAULT_ROUND_EXPIRY_MILLISECONDS = 10000;
   private static final Logger LOG = getLogger();
@@ -106,7 +105,7 @@ public class IbftPantheonController implements PantheonController<IbftContext, I
     this.closer = closer;
   }
 
-  public static PantheonController<IbftContext, IbftBlockMiner> init(
+  public static PantheonController<IbftContext> init(
       final Path home,
       final GenesisConfig<IbftContext> genesisConfig,
       final SynchronizerConfiguration taintedSyncConfig,
@@ -243,7 +242,7 @@ public class IbftPantheonController implements PantheonController<IbftContext, I
   }
 
   @Override
-  public AbstractMiningCoordinator<IbftContext, IbftBlockMiner> getMiningCoordinator() {
+  public MiningCoordinator getMiningCoordinator() {
     return null;
   }
 

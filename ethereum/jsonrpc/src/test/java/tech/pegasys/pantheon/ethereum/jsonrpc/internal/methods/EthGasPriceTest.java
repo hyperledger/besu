@@ -17,7 +17,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import tech.pegasys.pantheon.ethereum.blockcreation.EthHashBlockMiner;
 import tech.pegasys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
@@ -34,13 +33,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class EthGasPriceTest {
 
   @Mock private EthHashMiningCoordinator miningCoordinator;
-  private EthGasPrice<Void, EthHashBlockMiner> method;
+  private EthGasPrice method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String ETH_METHOD = "eth_gasPrice";
 
   @Before
   public void setUp() {
-    method = new EthGasPrice<>(miningCoordinator);
+    method = new EthGasPrice(miningCoordinator);
   }
 
   @Test
