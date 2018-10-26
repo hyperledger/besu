@@ -12,23 +12,26 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.messages;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.utils.ByteBufUtils;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
-import tech.pegasys.pantheon.ethereum.rlp.RlpUtils;
-import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
+import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
-import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.OptionalLong;
 
-import com.google.common.primitives.Ints;
 import io.netty.buffer.ByteBuf;
 
 /** PV62 GetBlockHeaders Message. */
 public final class GetBlockHeadersMessage extends AbstractMessageData {
+
+  private GetBlockHeadersData getBlockHeadersData = null;
 
   public static GetBlockHeadersMessage readFrom(final MessageData message) {
     if (message instanceof GetBlockHeadersMessage) {
@@ -46,33 +49,25 @@ public final class GetBlockHeadersMessage extends AbstractMessageData {
   }
 
   public static GetBlockHeadersMessage create(
-      final long blockNum, final int maxHeaders, final boolean reverse, final int skip) {
+      final long blockNum, final int maxHeaders, final int skip, final boolean reverse) {
+    final GetBlockHeadersData getBlockHeadersData =
+        GetBlockHeadersData.create(blockNum, maxHeaders, skip, reverse);
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
-    tmp.startList();
-    tmp.writeLongScalar(blockNum);
-    return create(maxHeaders, reverse, skip, tmp);
+    getBlockHeadersData.writeTo(tmp);
+    final ByteBuf data = NetworkMemoryPool.allocate(tmp.encodedSize());
+    data.writeBytes(tmp.encoded().extractArray());
+    return new GetBlockHeadersMessage(data);
   }
 
   public static GetBlockHeadersMessage create(
-      final Hash hash, final int maxHeaders, final boolean reverse, final int skip) {
+      final Hash hash, final int maxHeaders, final int skip, final boolean reverse) {
+    final GetBlockHeadersData getBlockHeadersData =
+        GetBlockHeadersData.create(hash, maxHeaders, skip, reverse);
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
-    tmp.startList();
-    tmp.writeBytesValue(hash);
-    return create(maxHeaders, reverse, skip, tmp);
-  }
-
-  public static GetBlockHeadersMessage createForSingleHeader(final Hash hash) {
-    return create(hash, 1, false, 0);
-  }
-
-  public static GetBlockHeadersMessage createForContiguousHeaders(
-      final long blockNum, final int maxHeaders) {
-    return create(blockNum, maxHeaders, false, 0);
-  }
-
-  public static GetBlockHeadersMessage createForContiguousHeaders(
-      final Hash blockHash, final int maxHeaders) {
-    return create(blockHash, maxHeaders, false, 0);
+    getBlockHeadersData.writeTo(tmp);
+    final ByteBuf data = NetworkMemoryPool.allocate(tmp.encodedSize());
+    data.writeBytes(tmp.encoded().extractArray());
+    return new GetBlockHeadersMessage(data);
   }
 
   private GetBlockHeadersMessage(final ByteBuf data) {
@@ -91,18 +86,7 @@ public final class GetBlockHeadersMessage extends AbstractMessageData {
    * @return Block Number Requested or {@link OptionalLong#EMPTY}
    */
   public OptionalLong blockNumber() {
-    final ByteBuffer raw = data.nioBuffer();
-    final int offsetList = RlpUtils.decodeOffset(raw, 0);
-    final int lengthFirst = RlpUtils.decodeLength(raw, offsetList);
-    final int offsetFirst = RlpUtils.decodeOffset(raw, offsetList);
-    if (lengthFirst - offsetFirst == Bytes32.SIZE) {
-      return OptionalLong.empty();
-    } else {
-      final byte[] tmp = new byte[lengthFirst];
-      raw.position(offsetList);
-      raw.get(tmp);
-      return OptionalLong.of(RlpUtils.readLong(0, lengthFirst, tmp));
-    }
+    return getBlockHeadersData().blockNumber;
   }
 
   /**
@@ -112,52 +96,109 @@ public final class GetBlockHeadersMessage extends AbstractMessageData {
    * @return Block Hash Requested or {@link Optional#EMPTY}
    */
   public Optional<Hash> hash() {
-    final ByteBuffer raw = data.nioBuffer();
-    final int offsetList = RlpUtils.decodeOffset(raw, 0);
-    final int lengthFirst = RlpUtils.decodeLength(raw, offsetList);
-    final int offsetFirst = RlpUtils.decodeOffset(raw, offsetList);
-    if (lengthFirst - offsetFirst == Bytes32.SIZE) {
-      final byte[] hashBytes = new byte[Bytes32.SIZE];
-      raw.position(offsetFirst + offsetList);
-      raw.get(hashBytes);
-      return Optional.of(Hash.wrap(Bytes32.wrap(hashBytes)));
-    } else {
-      return Optional.empty();
-    }
+    return getBlockHeadersData().blockHash;
   }
 
   public int maxHeaders() {
-    final ByteBuffer raw = data.nioBuffer();
-    final int offsetList = RlpUtils.decodeOffset(raw, 0);
-    final byte[] tmp = new byte[raw.capacity()];
-    raw.get(tmp);
-    final int offsetMaxHeaders = RlpUtils.nextOffset(tmp, offsetList);
-    final int lenMaxHeaders = RlpUtils.decodeLength(tmp, offsetMaxHeaders);
-    return Ints.checkedCast(RlpUtils.readLong(offsetMaxHeaders, lenMaxHeaders, tmp));
+    return getBlockHeadersData().maxHeaders;
   }
 
   public int skip() {
-    final ByteBuffer raw = data.nioBuffer();
-    final int offsetList = RlpUtils.decodeOffset(raw, 0);
-    final byte[] tmp = new byte[raw.capacity()];
-    raw.get(tmp);
-    final int offsetSkip = RlpUtils.nextOffset(tmp, RlpUtils.nextOffset(tmp, offsetList));
-    final int lenSkip = RlpUtils.decodeLength(tmp, offsetSkip);
-    return Ints.checkedCast(RlpUtils.readLong(offsetSkip, lenSkip, tmp));
+    return getBlockHeadersData().skip;
   }
 
   public boolean reverse() {
-    return (data.getByte(this.getSize() - 1) & 0xff) != RlpUtils.RLP_ZERO;
+    return getBlockHeadersData().reverse;
   }
 
-  private static GetBlockHeadersMessage create(
-      final int maxHeaders, final boolean reverse, final int skip, final BytesValueRLPOutput tmp) {
-    tmp.writeIntScalar(maxHeaders);
-    tmp.writeIntScalar(skip);
-    tmp.writeIntScalar(reverse ? 1 : 0);
-    tmp.endList();
-    final ByteBuf data = NetworkMemoryPool.allocate(tmp.encodedSize());
-    data.writeBytes(tmp.encoded().extractArray());
-    return new GetBlockHeadersMessage(data);
+  private GetBlockHeadersData getBlockHeadersData() {
+    if (getBlockHeadersData == null) {
+      getBlockHeadersData = GetBlockHeadersData.readFrom(ByteBufUtils.toRLPInput(data));
+    }
+    return getBlockHeadersData;
+  }
+
+  private static class GetBlockHeadersData {
+    private final Optional<Hash> blockHash;
+    private final OptionalLong blockNumber;
+    private final int maxHeaders;
+    private final int skip;
+    private final boolean reverse;
+
+    private GetBlockHeadersData(
+        final Optional<Hash> blockHash,
+        final OptionalLong blockNumber,
+        final int maxHeaders,
+        final int skip,
+        final boolean reverse) {
+      checkArgument(
+          validateBlockHashAndNumber(blockHash, blockNumber),
+          "Either blockHash or blockNumber should be non-empty");
+      this.blockHash = blockHash;
+      this.blockNumber = blockNumber;
+      this.maxHeaders = maxHeaders;
+      this.skip = skip;
+      this.reverse = reverse;
+    }
+
+    private static boolean validateBlockHashAndNumber(
+        final Optional<Hash> blockHash, final OptionalLong blockNumber) {
+      return (blockHash.isPresent() || blockNumber.isPresent())
+          && !(blockHash.isPresent() && blockNumber.isPresent());
+    }
+
+    public static GetBlockHeadersData readFrom(final RLPInput input) {
+      input.enterList();
+
+      final Optional<Hash> blockHash;
+      final OptionalLong blockNumber;
+      if (input.nextSize() == Hash.SIZE) {
+        blockHash = Optional.of(Hash.wrap(input.readBytes32()));
+        blockNumber = OptionalLong.empty();
+      } else {
+        blockHash = Optional.empty();
+        blockNumber = OptionalLong.of(input.readLongScalar());
+      }
+
+      int maxHeaders = input.readIntScalar();
+      int skip = input.readIntScalar();
+      boolean reverse = input.readIntScalar() != 0;
+
+      input.leaveList();
+
+      return new GetBlockHeadersData(blockHash, blockNumber, maxHeaders, skip, reverse);
+    }
+
+    public static GetBlockHeadersData create(
+        final long blockNum, final int maxHeaders, final int skip, final boolean reverse) {
+      return new GetBlockHeadersData(
+          Optional.empty(), OptionalLong.of(blockNum), maxHeaders, skip, reverse);
+    }
+
+    public static GetBlockHeadersData create(
+        final Hash hash, final int maxHeaders, final int skip, final boolean reverse) {
+      return new GetBlockHeadersData(
+          Optional.of(hash), OptionalLong.empty(), maxHeaders, skip, reverse);
+    }
+
+    /**
+     * Write an RLP representation.
+     *
+     * @param out The RLP output to write to
+     */
+    public void writeTo(final RLPOutput out) {
+      out.startList();
+
+      if (blockHash.isPresent()) {
+        out.writeBytesValue(blockHash.get());
+      } else {
+        out.writeLongScalar(blockNumber.getAsLong());
+      }
+      out.writeIntScalar(maxHeaders);
+      out.writeIntScalar(skip);
+      out.writeIntScalar(reverse ? 1 : 0);
+
+      out.endList();
+    }
   }
 }
