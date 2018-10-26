@@ -175,7 +175,7 @@ public final class EthProtocolManagerTest {
       final long startBlock = 5L;
       final int blockCount = 5;
       final MessageData messageData =
-          GetBlockHeadersMessage.create(startBlock, blockCount, false, 0);
+          GetBlockHeadersMessage.create(startBlock, blockCount, 0, false);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
             if (message.getCode() == EthPV62.STATUS) {
@@ -208,7 +208,7 @@ public final class EthProtocolManagerTest {
       final long startBlock = 5L;
       final int blockCount = 10;
       final MessageData messageData =
-          GetBlockHeadersMessage.create(startBlock, blockCount, false, 0);
+          GetBlockHeadersMessage.create(startBlock, blockCount, 0, false);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
             if (message.getCode() == EthPV62.STATUS) {
@@ -238,7 +238,7 @@ public final class EthProtocolManagerTest {
     try (final EthProtocolManager ethManager = new EthProtocolManager(blockchain, 1, true, 1)) {
       final long endBlock = 10L;
       final int blockCount = 5;
-      final MessageData messageData = GetBlockHeadersMessage.create(endBlock, blockCount, true, 0);
+      final MessageData messageData = GetBlockHeadersMessage.create(endBlock, blockCount, 0, true);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
             if (message.getCode() == EthPV62.STATUS) {
@@ -270,7 +270,7 @@ public final class EthProtocolManagerTest {
       final int blockCount = 5;
       final int skip = 1;
       final MessageData messageData =
-          GetBlockHeadersMessage.create(startBlock, blockCount, false, 1);
+          GetBlockHeadersMessage.create(startBlock, blockCount, 1, false);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
             if (message.getCode() == EthPV62.STATUS) {
@@ -303,7 +303,7 @@ public final class EthProtocolManagerTest {
       final int blockCount = 5;
       final int skip = 1;
       final MessageData messageData =
-          GetBlockHeadersMessage.create(endBlock, blockCount, true, skip);
+          GetBlockHeadersMessage.create(endBlock, blockCount, skip, true);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
             if (message.getCode() == EthPV62.STATUS) {
@@ -356,7 +356,7 @@ public final class EthProtocolManagerTest {
       final long startBlock = blockchain.getChainHeadBlockNumber() - 1L;
       final int blockCount = 5;
       final MessageData messageData =
-          GetBlockHeadersMessage.create(startBlock, blockCount, false, 0);
+          GetBlockHeadersMessage.create(startBlock, blockCount, 0, false);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
             if (message.getCode() == EthPV62.STATUS) {
@@ -387,7 +387,7 @@ public final class EthProtocolManagerTest {
       final long startBlock = blockchain.getChainHeadBlockNumber() + 1;
       final int blockCount = 5;
       final MessageData messageData =
-          GetBlockHeadersMessage.create(startBlock, blockCount, false, 0);
+          GetBlockHeadersMessage.create(startBlock, blockCount, 0, false);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
             if (message.getCode() == EthPV62.STATUS) {
@@ -729,7 +729,7 @@ public final class EthProtocolManagerTest {
       final int requestedBlockCount = 13;
       final int receivedBlockCount = 2;
       final MessageData messageData =
-          GetBlockHeadersMessage.create(startBlock, requestedBlockCount, true, 0);
+          GetBlockHeadersMessage.create(startBlock, requestedBlockCount, 0, true);
       final MockPeerConnection.PeerSendHandler onSend =
           (cap, message, conn) -> {
             if (message.getCode() == EthPV62.STATUS) {

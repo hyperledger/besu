@@ -127,18 +127,18 @@ public class EthPeer {
   }
 
   public ResponseStream getHeadersByHash(
-      final Hash hash, final int maxHeaders, final boolean reverse, final int skip)
+      final Hash hash, final int maxHeaders, final int skip, final boolean reverse)
       throws PeerNotConnected {
     final GetBlockHeadersMessage message =
-        GetBlockHeadersMessage.create(hash, maxHeaders, reverse, skip);
+        GetBlockHeadersMessage.create(hash, maxHeaders, skip, reverse);
     return sendHeadersRequest(message);
   }
 
   public ResponseStream getHeadersByNumber(
-      final long blockNumber, final int maxHeaders, final boolean reverse, final int skip)
+      final long blockNumber, final int maxHeaders, final int skip, final boolean reverse)
       throws PeerNotConnected {
     final GetBlockHeadersMessage message =
-        GetBlockHeadersMessage.create(blockNumber, maxHeaders, reverse, skip);
+        GetBlockHeadersMessage.create(blockNumber, maxHeaders, skip, reverse);
     return sendHeadersRequest(message);
   }
 

@@ -41,7 +41,7 @@ public class EthPeerTest {
   @Test
   public void getHeadersStream() throws PeerNotConnected {
     final ResponseStreamSupplier getStream =
-        (peer) -> peer.getHeadersByHash(gen.hash(), 5, false, 0);
+        (peer) -> peer.getHeadersByHash(gen.hash(), 5, 0, false);
     final MessageData targetMessage =
         BlockHeadersMessage.create(Arrays.asList(gen.header(), gen.header()));
     final MessageData otherMessage =
@@ -79,7 +79,7 @@ public class EthPeerTest {
     final EthPeer peer = createPeer();
     // Setup headers stream
     final AtomicInteger headersClosedCount = new AtomicInteger(0);
-    peer.getHeadersByHash(gen.hash(), 5, false, 0)
+    peer.getHeadersByHash(gen.hash(), 5, 0, false)
         .then(
             (closed, msg, p) -> {
               if (closed) {
@@ -133,7 +133,7 @@ public class EthPeerTest {
     final AtomicInteger headersMessageCount = new AtomicInteger(0);
     final AtomicInteger headersClosedCount = new AtomicInteger(0);
     final ResponseStream headersStream =
-        peer.getHeadersByHash(gen.hash(), 5, false, 0)
+        peer.getHeadersByHash(gen.hash(), 5, 0, false)
             .then(
                 (closed, msg, p) -> {
                   if (closed) {

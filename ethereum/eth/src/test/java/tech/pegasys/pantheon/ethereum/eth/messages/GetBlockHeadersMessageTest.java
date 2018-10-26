@@ -33,7 +33,7 @@ public final class GetBlockHeadersMessageTest {
       final int skip = 10;
       final int maxHeaders = 128;
       final GetBlockHeadersMessage initialMessage =
-          GetBlockHeadersMessage.create(hash, maxHeaders, reverse, skip);
+          GetBlockHeadersMessage.create(hash, maxHeaders, skip, reverse);
       final ByteBuf rawBuffer = NetworkMemoryPool.allocate(initialMessage.getSize());
       initialMessage.writeTo(rawBuffer);
       final MessageData raw = new RawMessage(EthPV62.GET_BLOCK_HEADERS, rawBuffer);
@@ -59,7 +59,7 @@ public final class GetBlockHeadersMessageTest {
       final int skip = 10;
       final int maxHeaders = 128;
       final GetBlockHeadersMessage initialMessage =
-          GetBlockHeadersMessage.create(blockNum, maxHeaders, reverse, skip);
+          GetBlockHeadersMessage.create(blockNum, maxHeaders, skip, reverse);
       final ByteBuf rawBuffer = NetworkMemoryPool.allocate(initialMessage.getSize());
       final MessageData raw = new RawMessage(EthPV62.GET_BLOCK_HEADERS, rawBuffer);
       final GetBlockHeadersMessage message = GetBlockHeadersMessage.readFrom(raw);

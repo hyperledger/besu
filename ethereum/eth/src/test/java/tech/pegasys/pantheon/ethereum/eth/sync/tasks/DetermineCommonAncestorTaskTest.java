@@ -393,8 +393,8 @@ public class DetermineCommonAncestorTaskTest {
     assertThat(result).isCompletedWithValue(genesisBlock.getHeader());
 
     // Make sure we didn't ask for any headers
-    verify(peer, times(0)).getHeadersByHash(any(), anyInt(), anyBoolean(), anyInt());
-    verify(peer, times(0)).getHeadersByNumber(anyLong(), anyInt(), anyBoolean(), anyInt());
+    verify(peer, times(0)).getHeadersByHash(any(), anyInt(), anyInt(), anyBoolean());
+    verify(peer, times(0)).getHeadersByNumber(anyLong(), anyInt(), anyInt(), anyBoolean());
     verify(peer, times(0)).send(any());
   }
 }
