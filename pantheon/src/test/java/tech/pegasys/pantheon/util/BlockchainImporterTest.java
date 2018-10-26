@@ -44,11 +44,18 @@ public final class BlockchainImporterTest {
   BlockchainImporter blockImporter = new BlockchainImporter();
 
   @Test
-  public void blockImport() throws Exception {
+  public void importBlocksWithoutValidation() throws Exception {
+    blockImportTest(true);
+  }
+
+  @Test
+  public void importBlocksWithValidation() throws Exception {
+    blockImportTest(false);
+  }
+
+  private void blockImportTest(final boolean skipValidation) throws Exception {
     final URL importFileURL =
-        getClass()
-            .getClassLoader()
-            .getResource("tech/pegasys/pantheon/ethereum/jsonrpc/json-rpc-test.bin");
+        getClass().getClassLoader().getResource("tech/pegasys/pantheon/util/blockchain-import.bin");
     assertThat(importFileURL).isNotNull();
 
     final Path source = new File(importFileURL.toURI()).toPath();
@@ -57,7 +64,7 @@ public final class BlockchainImporterTest {
     final URL genesisJsonUrl =
         getClass()
             .getClassLoader()
-            .getResource("tech/pegasys/pantheon/ethereum/jsonrpc/jsonRpcTestGenesis.json");
+            .getResource("tech/pegasys/pantheon/util/blockchain-import-genesis-file.json");
     assertThat(genesisJsonUrl).isNotNull();
     final String genesisJson = Resources.toString(genesisJsonUrl, Charsets.UTF_8);
     final KeyPair keyPair = loadKeyPair(target);
@@ -73,7 +80,7 @@ public final class BlockchainImporterTest {
             miningParams,
             keyPair);
     final BlockchainImporter.ImportResult result =
-        blockImporter.importBlockchain(source, ctrl, true, 1, 1, false, false, null);
+        blockImporter.importBlockchain(source, ctrl, skipValidation, 1, 1, false, false, null);
     System.out.println(source);
     System.out.println(target);
 
