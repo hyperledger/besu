@@ -87,7 +87,7 @@ public class JsonRpcMethodsFactory {
 
   public Map<String, JsonRpcMethod> methods(
       final String clientVersion,
-      final String networkId,
+      final String chainId,
       final P2PNetwork peerNetworkingService,
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
@@ -102,7 +102,7 @@ public class JsonRpcMethodsFactory {
         new BlockchainQueries(blockchain, worldStateArchive);
     return methods(
         clientVersion,
-        networkId,
+        chainId,
         peerNetworkingService,
         blockchainQueries,
         synchronizer,
@@ -116,7 +116,7 @@ public class JsonRpcMethodsFactory {
 
   public Map<String, JsonRpcMethod> methods(
       final String clientVersion,
-      final String networkId,
+      final String chainId,
       final P2PNetwork p2pNetwork,
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
@@ -195,7 +195,7 @@ public class JsonRpcMethodsFactory {
     if (rpcApis.contains(RpcApis.NET)) {
       addMethods(
           enabledMethods,
-          new NetVersion(networkId),
+          new NetVersion(chainId),
           new NetListening(p2pNetwork),
           new NetPeerCount(p2pNetwork),
           new AdminPeers(p2pNetwork));

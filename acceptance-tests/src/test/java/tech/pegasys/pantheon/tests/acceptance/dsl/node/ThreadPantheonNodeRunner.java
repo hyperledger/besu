@@ -71,7 +71,6 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
                 pantheonController,
                 true,
                 node.bootnodes(),
-                NETWORK_ID,
                 node.getHost(),
                 node.p2pPort(),
                 25,
