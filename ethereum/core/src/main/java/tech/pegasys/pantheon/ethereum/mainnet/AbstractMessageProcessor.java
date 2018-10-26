@@ -31,7 +31,8 @@ import java.util.stream.Collectors;
  * default behaviors. There is currently no method for responding to a {@link
  * MessageFrame.State#CODE_SUSPENDED}.
  *
- * <table summary="Method Overview">
+ * <table>
+ * <caption>Method Overview</caption>
  * <tr>
  * <td><b>{@code MessageFrame.State}</b></td>
  * <td><b>Method</b></td>

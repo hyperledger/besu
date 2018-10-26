@@ -110,7 +110,7 @@ public class Bucket {
    * the left (subtracts one from their indices).
    *
    * @param peer the element to be removed
-   * @return <tt>true</tt>
+   * @return <code>true</code>
    */
   synchronized boolean evict(final PeerId peer) {
     // If the bucket is empty, there's nothing to evict.

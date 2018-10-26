@@ -32,7 +32,7 @@ import io.netty.buffer.ByteBuf;
  * Encapsulates information about a peer, including their protocol version, client ID, capabilities
  * and other.
  *
- * <p>The peer info is shared between peers during the <tt>HELLO</tt> wire protocol handshake.
+ * <p>The peer info is shared between peers during the <code>HELLO</code> wire protocol handshake.
  */
 public class PeerInfo {
   private final int version;

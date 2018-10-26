@@ -50,8 +50,8 @@ import org.bouncycastle.util.Pack;
  * Scheme</a> engine that implements the encryption and decryption logic behind the ECIES crypto
  * handshake during the RLPx connection establishment.
  *
- * <p>This class has been inspired by the <tt>IESEngine</tt> implementation in Bouncy Castle. It has
- * been modified heavily to accommodate our usage, yet the core logic remains unchanged. It
+ * <p>This class has been inspired by the <code>IESEngine</code> implementation in Bouncy Castle. It
+ * has been modified heavily to accommodate our usage, yet the core logic remains unchanged. It
  * implements a peculiarity of the Ethereum encryption protocol: updating the encryption MAC with
  * the IV.
  */
@@ -341,8 +341,8 @@ public class ECIESEncryptionEngine {
    * Key generation function as defined in NIST SP 800-56A, but swapping the order of the digested
    * values (counter first, shared secret second) to comply with Ethereum's approach.
    *
-   * <p>This class has been adapted from the <tt>BaseKDFBytesGenerator</tt> implementation of Bouncy
-   * Castle.
+   * <p>This class has been adapted from the <code>BaseKDFBytesGenerator</code> implementation of
+   * Bouncy Castle.
    */
   private static class ECIESHandshakeKDFFunction implements DigestDerivationFunction {
     private static final int COUNTER_START = 1;
@@ -371,7 +371,7 @@ public class ECIESEncryptionEngine {
     }
 
     /**
-     * Fills <tt>len</tt> bytes of the output buffer with bytes generated from the derivation
+     * Fills <code>len</code> bytes of the output buffer with bytes generated from the derivation
      * function.
      *
      * @throws IllegalArgumentException If the size of the request will cause an overflow.

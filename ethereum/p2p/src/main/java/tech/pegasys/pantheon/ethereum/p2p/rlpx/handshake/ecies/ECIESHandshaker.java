@@ -301,12 +301,14 @@ public class ECIESHandshaker implements Handshaker {
   /**
    * Returns the current status of this handshake.
    *
-   * <p>Starts <tt>UNINITIALIZED</tt> and moves to <tt>PREPARED</tt> when a prepared* method is
-   * called, or to <tt>IN_PROGRESS</tt> if we're the responder part and have nothing to prepare
+   * <p>Starts {@link Handshaker.HandshakeStatus#UNINITIALIZED} and moves to {@link
+   * Handshaker.HandshakeStatus#PREPARED} when a prepared* method is called, or to {@link
+   * Handshaker.HandshakeStatus#IN_PROGRESS} if we're the responder part and have nothing to prepare
    * since we're awaiting the initiator's message.
    *
-   * <p>As soon as we receive the expected message, the status transitions to <tt>SUCCESS</tt> if
-   * the message is well formed and we're able to generate the resulting secrets.
+   * <p>As soon as we receive the expected message, the status transitions to {@link
+   * Handshaker.HandshakeStatus#SUCCESS} if the message is well formed and we're able to generate
+   * the resulting secrets.
    *
    * @return Returns the current status of this handshake.
    */
