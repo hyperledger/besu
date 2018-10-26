@@ -10,10 +10,10 @@ this project.
 | Everyone | none | anybody with a belly button
 | Member | everyone who contributes - code or otherwise | Pantheon GitHub org member
 | Approver | approve accepting contributions | write permissions on master
-| Project Manager | management of the project | **TODO:**
-| Project Sponsor | contribute developer resources | **TODO:**
-| Open Source Circle | OSS support | **TODO:**
-| Project Evangelist | promote the project | **TODO:**
+| Project Manager | management of the project | PegaSys
+| Project Sponsor | contribute developer resources | PegaSys
+| Open Source Circle | OSS support | PegaSys
+| Project Evangelist | promote the project | PegaSys
 | Benevolent Dictator | decision tie-breaker | PegaSys
 
 ## Everyone
@@ -88,7 +88,7 @@ Code approvers are members that have signed an ICLA and have been granted additi
 ## Project Manager
 The Project Manager role provides the user with control over management aspects of the project.  
 
-**Defined by:** TODO: Where do we document this?
+**Defined by:** PegaSys
 
 ### Requirements
 - Includes all of the requirements of a Member user
@@ -105,7 +105,7 @@ The Project Manager role provides the user with control over management aspects 
 ## Project Sponsor
 The Project Sponsor role provides a user with the ability to contribute additional developer resources to the project.  Project Sponsors must sign the ICLA.
 
-**Defined by:** TODO: Where do we document this?
+**Defined by:** PegaSys
 
 ### Requirements
 - Signed ICLA, as described in [CLA.md]
@@ -117,7 +117,7 @@ The Project Sponsor role provides a user with the ability to contribute addition
 
 ## Open Source Circle
 The Open Source Circle is a group that provides open source software support to projects.
-**Defined by:** **TODO:** Where do we document this?
+**Defined by:** PegaSys
 
 ### Requirements
 - Includes all of the requirements of a Member user
@@ -132,7 +132,7 @@ The Open Source Circle is a group that provides open source software support to 
 
 ## Project Evangelist
 The Project Evangelist role is for those who wish to promote the project to the outside world, but not actively contribute to it.  
-**Defined by:** TODO: Where do we document this?
+**Defined by:** PegaSys
 
 ### Requirements
 - Includes all of the requirements of a Member user
@@ -169,5 +169,5 @@ This document is adapted from the following sources:
 [New contributors]: /CONTRIBUTING.md
 [two-factor authentication]: https://help.github.com/articles/about-two-factor-authentication
 [pantheon-dev@pegasys.tech]: mailto:pantheon-dev@pegasys.tech
-[Pantheon Gitter]: https://gitter.im/Pantheon
+[Pantheon Gitter]: https://gitter.im/PegaSysEng/pantheon
 [Pantheon Wiki]: https://github.com/PegaSysEng/pantheon/wiki

@@ -18,7 +18,6 @@ Welcome to the Pantheon repository!  The following is a set of guidelines for co
 [Style Guides](#style-guides)
   * [Git Commit Messages & Pull Request Messages](#git-commit-messages--pull-request-messages)
   * [Java Style Guide](#java-code-style-guide)
-  * [Documentation Style Guide](#documentation-style-guide)
 
 [Issue and Pull Request Labels](#issue-and-pull-request-labels)
 
@@ -170,6 +169,7 @@ Exceptions:
 * Provide a summary on the first line with more details on additional lines as needed
 * Reference issues and pull requests liberally
 
+#Issue and Pull Request Labels
 #### Type of Issue and Issue State
 
 | Label name | Search Link :mag_right: | Description |
@@ -228,7 +228,7 @@ Exceptions:
 
 
 [private@pegasys.tech]: mailto:private@pegasys.tech
-[Gitter]: https://gitter.im/Pantheon
+[Gitter]: https://gitter.im/PegaSysEng/pantheon
 [Wiki]: https://github.com/PegaSysEng/pantheon/wiki
 [Debugging Wiki]: https://github.com/PegaSysEng/pantheon/wiki/Debugging
 [CLA.md]: /CLA.md
