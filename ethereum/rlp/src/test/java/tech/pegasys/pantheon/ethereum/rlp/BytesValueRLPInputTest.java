@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.rlp;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -156,9 +157,13 @@ public class BytesValueRLPInputTest {
     assertLongScalar(1024L, h("0x820400"));
   }
 
-  @Test(expected = RLPException.class)
+  @Test
   public void longScalar_NegativeLong() {
-    assertLongScalar(-1L, h("0xFFFFFFFFFFFFFFFF"));
+    BytesValue bytes = h("0x88FFFFFFFFFFFFFFFF");
+    final RLPInput in = RLP.input(bytes);
+    assertThatThrownBy(in::readLongScalar)
+        .isInstanceOf(RLPException.class)
+        .hasMessageStartingWith("long scalar -1 is not non-negative");
   }
 
   private void assertLongScalar(final long expected, final BytesValue toTest) {
@@ -438,11 +443,69 @@ public class BytesValueRLPInputTest {
     in.leaveList(true);
   }
 
-  @Test(expected = RLPException.class)
+  @Test
   public void leaveListEarly() {
     final RLPInput in = RLP.input(h("0xc80102c51112c22122"));
     assertEquals(3, in.enterList());
     assertEquals(0x01, in.readByte());
-    in.leaveList(false);
+    assertThatThrownBy(() -> in.leaveList(false))
+        .isInstanceOf(RLPException.class)
+        .hasMessageStartingWith("Not at the end of the current list");
+  }
+
+  @Test
+  public void failsWhenPayloadSizeIsTruncated() {
+    // The prefix B9 indicates this is a long value that requires 2 bytes to encode the payload size
+    // Only 1 byte follows the prefix
+    BytesValue bytes = h("0xB901");
+    assertThatThrownBy(() -> RLP.input(bytes))
+        .isInstanceOf(RLPException.class)
+        .hasRootCauseInstanceOf(CorruptedRLPInputException.class)
+        .hasMessageContaining(
+            "value of size 2 has not enough bytes to read the 2 bytes payload size ");
+  }
+
+  @Test
+  public void failsWhenPayloadSizeHasLeadingZeroes() {
+    // Sanity check correctly encoded value: a byte string of 56 bytes, requiring 1 byte to encode
+    // size 56
+    final BytesValue correctBytes =
+        h(
+            "0xB8380102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738");
+    assertEquals(
+        RLP.input(correctBytes).readBytesValue(),
+        h(
+            "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738"));
+
+    // Encode same value, but use 2 bytes to represent the size, and pad size value with leading
+    // zeroes
+    final BytesValue incorrectBytes =
+        h(
+            "0xB900380102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738");
+    assertThatThrownBy(() -> RLP.input(incorrectBytes))
+        .isInstanceOf(RLPException.class)
+        .hasRootCauseInstanceOf(MalformedRLPInputException.class)
+        .hasMessageContaining("size of payload has leading zeros");
+  }
+
+  @Test
+  public void failsWhenShortByteStringEncodedAsLongByteString() {
+    // Sanity check correctly encoded value: a byte string of 55 bytes encoded as short byte string
+    final BytesValue correctBytes =
+        h(
+            "0xB70102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3031323334353637");
+    assertEquals(
+        RLP.input(correctBytes).readBytesValue(),
+        h(
+            "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3031323334353637"));
+
+    // Encode same value using long format
+    final BytesValue incorrectBytes =
+        h(
+            "0xB8370102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3031323334353637");
+    assertThatThrownBy(() -> RLP.input(incorrectBytes))
+        .isInstanceOf(RLPException.class)
+        .hasRootCauseInstanceOf(MalformedRLPInputException.class)
+        .hasMessageContaining("written as a long item, but size 55 < 56 bytes");
   }
 }

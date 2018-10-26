@@ -25,7 +25,9 @@ class MutableByteBufWrappingBytesValue extends AbstractBytesValue implements Mut
 
   MutableByteBufWrappingBytesValue(final ByteBuf buffer, final int offset, final int size) {
     checkArgument(size >= 0, "Invalid negative length provided");
-    checkElementIndex(offset, buffer.writerIndex());
+    if (size > 0) {
+      checkElementIndex(offset, buffer.writerIndex());
+    }
     checkArgument(
         offset + size <= buffer.writerIndex(),
         "Provided length %s is too big: the buffer has size %s and has only %s bytes from %s",
@@ -37,6 +39,10 @@ class MutableByteBufWrappingBytesValue extends AbstractBytesValue implements Mut
     this.buffer = buffer;
     this.offset = offset;
     this.size = size;
+  }
+
+  MutableByteBufWrappingBytesValue(final ByteBuf buffer) {
+    this(buffer, 0, buffer.writerIndex());
   }
 
   @Override

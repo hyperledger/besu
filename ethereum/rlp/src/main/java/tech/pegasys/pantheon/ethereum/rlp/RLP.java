@@ -272,4 +272,15 @@ public abstract class RLP {
       }
     }
   }
+
+  /**
+   * Given a {@link BytesValue} containing rlp-encoded data, determines the full length of the
+   * encoded value (including the prefix) by inspecting the prefixed metadata.
+   *
+   * @param value the rlp-encoded byte string
+   * @return the length of the encoded data, according to the prefixed metadata
+   */
+  public static int calculateSize(final BytesValue value) {
+    return RLPDecodingHelpers.rlpElementMetadata(value::get, value.size(), 0).getEncodedSize();
+  }
 }

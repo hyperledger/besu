@@ -34,6 +34,7 @@ dependencies {
   testImplementation project(':testutil')
   testImplementation project(path:':ethereum:referencetests', configuration: 'testOutput')
 
+  testImplementation 'org.assertj:assertj-core'
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'junit:junit'
 }

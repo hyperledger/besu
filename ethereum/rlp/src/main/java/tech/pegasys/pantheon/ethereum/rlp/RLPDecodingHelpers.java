@@ -82,4 +82,100 @@ class RLPDecodingHelpers {
       throw new RLPException(msg, e);
     }
   }
+
+  static RLPElementMetadata rlpElementMetadata(
+      final LongUnaryOperator byteGetter, final long size, final long elementStart) {
+    final int prefix = Math.toIntExact(byteGetter.applyAsLong(elementStart)) & 0xFF;
+    final Kind kind = Kind.of(prefix);
+    long payloadStart = 0;
+    int payloadSize = 0;
+
+    switch (kind) {
+      case BYTE_ELEMENT:
+        payloadStart = elementStart;
+        payloadSize = 1;
+        break;
+      case SHORT_ELEMENT:
+        payloadStart = elementStart + 1;
+        payloadSize = prefix - 0x80;
+        break;
+      case LONG_ELEMENT:
+        final int sizeLengthElt = prefix - 0xb7;
+        payloadStart = elementStart + 1 + sizeLengthElt;
+        payloadSize = readLongSize(byteGetter, size, elementStart, sizeLengthElt);
+        break;
+      case SHORT_LIST:
+        payloadStart = elementStart + 1;
+        payloadSize = prefix - 0xc0;
+        break;
+      case LONG_LIST:
+        final int sizeLengthList = prefix - 0xf7;
+        payloadStart = elementStart + 1 + sizeLengthList;
+        payloadSize = readLongSize(byteGetter, size, elementStart, sizeLengthList);
+        break;
+    }
+
+    return new RLPElementMetadata(kind, elementStart, payloadStart, payloadSize);
+  }
+
+  /** The size of the item payload for a "long" item, given the length in bytes of the said size. */
+  private static int readLongSize(
+      final LongUnaryOperator byteGetter,
+      final long sizeOfRlpEncodedByteString,
+      final long item,
+      final int sizeLength) {
+    // We will read sizeLength bytes from item + 1. There must be enough bytes for this or the input
+    // is corrupted.
+    if (sizeOfRlpEncodedByteString - (item + 1) < sizeLength) {
+      throw new CorruptedRLPInputException(
+          String.format(
+              "Invalid RLP item: value of size %d has not enough bytes to read the %d "
+                  + "bytes payload size",
+              sizeOfRlpEncodedByteString, sizeLength));
+    }
+
+    // That size (which is at least 1 byte by construction) shouldn't have leading zeros.
+    if (byteGetter.applyAsLong(item + 1) == 0) {
+      throw new MalformedRLPInputException("Malformed RLP item: size of payload has leading zeros");
+    }
+
+    final int res = RLPDecodingHelpers.extractSizeFromLong(byteGetter, item + 1, sizeLength);
+
+    // We should not have had the size written separately if it was less than 56 bytes long.
+    if (res < 56) {
+      throw new MalformedRLPInputException(
+          String.format("Malformed RLP item: written as a long item, but size %d < 56 bytes", res));
+    }
+
+    return res;
+  }
+
+  static class RLPElementMetadata {
+    final Kind kind; // The type of rlp element
+    final long elementStart; // The index at which this element starts
+    final long payloadStart; // The index at which the payload of this element starts
+    final int payloadSize; // The size of the paylod
+
+    RLPElementMetadata(
+        final Kind kind, final long elementStart, final long payloadStart, final int payloadSize) {
+      this.kind = kind;
+      this.elementStart = elementStart;
+      this.payloadStart = payloadStart;
+      this.payloadSize = payloadSize;
+    }
+
+    /** @return the size of the byte string holding the rlp-encoded value and metadata */
+    int getEncodedSize() {
+      return Math.toIntExact(elementEnd() - elementStart + 1);
+    }
+
+    /**
+     * The index of the last byte of the rlp encoded element at startIndex
+     *
+     * @return
+     */
+    long elementEnd() {
+      return payloadStart + payloadSize - 1;
+    }
+  }
 }
