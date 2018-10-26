@@ -17,8 +17,6 @@ import static java.lang.String.format;
 
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.blockcreation.AbstractBlockCreator;
-import tech.pegasys.pantheon.ethereum.blockcreation.BlockMiner;
 import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -91,7 +89,6 @@ public class BlockchainImporter extends BlockImporter {
    * Imports blockchain from file as concatenated RLP sections
    *
    * @param <C> the consensus context type
-   * @param <M> the type of miner being used within the executing pantheon
    * @param dataFilePath Path to the file containing the dataFilePath
    * @param pantheonController the PantheonController that defines blockchain behavior
    * @param isSkipHeaderValidation if true, header validation is skipped. This must only be used
@@ -105,17 +102,16 @@ public class BlockchainImporter extends BlockImporter {
    * @return the import result
    * @throws IOException On Failure
    */
-  public <C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>>
-      BlockImporter.ImportResult importBlockchain(
-          final Path dataFilePath,
-          final PantheonController<C, M> pantheonController,
-          final boolean isSkipHeaderValidation,
-          final int metricsIntervalSec,
-          final int accountCommitInterval,
-          final boolean isSkipBlocks,
-          final boolean isSkipAccounts,
-          final Long worldStateOffset)
-          throws IOException {
+  public <C> BlockImporter.ImportResult importBlockchain(
+      final Path dataFilePath,
+      final PantheonController<C> pantheonController,
+      final boolean isSkipHeaderValidation,
+      final int metricsIntervalSec,
+      final int accountCommitInterval,
+      final boolean isSkipBlocks,
+      final boolean isSkipAccounts,
+      final Long worldStateOffset)
+      throws IOException {
     checkNotNull(dataFilePath);
     checkNotNull(pantheonController);
     this.isSkipHeaderValidation = isSkipHeaderValidation;
@@ -168,13 +164,12 @@ public class BlockchainImporter extends BlockImporter {
    *     combination with isSkipBlocks
    * @return the import result
    */
-  private <C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>>
-      BlockImporter.ImportResult importBlockchain(
-          final PantheonController<C, M> pantheonController,
-          final FileRLPInput rlp,
-          final Boolean isSkipBlocks,
-          final int metricsIntervalSec,
-          final Long worldStateOffset) {
+  private <C> BlockImporter.ImportResult importBlockchain(
+      final PantheonController<C> pantheonController,
+      final FileRLPInput rlp,
+      final Boolean isSkipBlocks,
+      final int metricsIntervalSec,
+      final Long worldStateOffset) {
     final ProtocolSchedule<C> protocolSchedule = pantheonController.getProtocolSchedule();
     final ProtocolContext<C> context = pantheonController.getProtocolContext();
     final GenesisConfig<C> genesis = pantheonController.getGenesisConfig();
@@ -328,8 +323,8 @@ public class BlockchainImporter extends BlockImporter {
    * @param <C> the consensus context type
    * @return root hash of the world state
    */
-  private <C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>> Hash importWorldState(
-      final PantheonController<C, M> pantheonController,
+  private <C> Hash importWorldState(
+      final PantheonController<C> pantheonController,
       final FileRLPInput rlp,
       final int metricsIntervalSec,
       final int accountCommitInterval) {
@@ -487,9 +482,8 @@ public class BlockchainImporter extends BlockImporter {
    * @param worldStateRootHash calculated world state's root hash
    * @param <C> the consensus context type
    */
-  private <C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>>
-      void validateWorldStateRootHash(
-          final PantheonController<C, M> pantheonController, final Hash worldStateRootHash) {
+  private <C> void validateWorldStateRootHash(
+      final PantheonController<C> pantheonController, final Hash worldStateRootHash) {
     final ProtocolContext<C> context = pantheonController.getProtocolContext();
     final MutableBlockchain blockchain = context.getBlockchain();
     final Optional<BlockHeader> header = blockchain.getBlockHeader(blockchain.getChainHeadHash());

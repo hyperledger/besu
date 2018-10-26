@@ -52,7 +52,7 @@ public class BlockImporter {
    */
   public <C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>>
       BlockImporter.ImportResult importBlockchain(
-          final Path blocks, final PantheonController<C, M> pantheonController) throws IOException {
+          final Path blocks, final PantheonController<C> pantheonController) throws IOException {
     final ProtocolSchedule<C> protocolSchedule = pantheonController.getProtocolSchedule();
     final ProtocolContext<C> context = pantheonController.getProtocolContext();
     final GenesisConfig<C> genesis = pantheonController.getGenesisConfig();

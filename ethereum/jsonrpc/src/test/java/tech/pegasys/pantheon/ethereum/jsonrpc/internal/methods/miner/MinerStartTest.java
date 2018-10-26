@@ -16,7 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doThrow;
 
 import tech.pegasys.pantheon.ethereum.blockcreation.CoinbaseNotSetException;
-import tech.pegasys.pantheon.ethereum.blockcreation.EthHashBlockMiner;
 import tech.pegasys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
@@ -33,13 +32,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MinerStartTest {
 
-  private MinerStart<Void, EthHashBlockMiner> method;
+  private MinerStart method;
 
   @Mock private EthHashMiningCoordinator miningCoordinator;
 
   @Before
   public void before() {
-    method = new MinerStart<>(miningCoordinator);
+    method = new MinerStart(miningCoordinator);
   }
 
   @Test

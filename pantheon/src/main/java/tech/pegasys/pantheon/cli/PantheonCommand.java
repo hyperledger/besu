@@ -421,7 +421,7 @@ public class PantheonCommand implements Runnable {
         webSocketConfiguration());
   }
 
-  PantheonController<?, ?> buildController() {
+  PantheonController<?> buildController() {
     try {
       return controllerBuilder.build(
           buildSyncConfig(syncMode),
@@ -465,7 +465,7 @@ public class PantheonCommand implements Runnable {
 
   // Blockchain synchronisation from peers.
   private void synchronize(
-      final PantheonController<?, ?> controller,
+      final PantheonController<?> controller,
       final boolean noPeerDiscovery,
       final Collection<?> bootstrapNodes,
       final int maxPeers,

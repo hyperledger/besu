@@ -33,7 +33,7 @@ import org.apache.logging.log4j.Logger;
 
 public abstract class AbstractMiningCoordinator<
         C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>>
-    implements BlockAddedObserver {
+    implements BlockAddedObserver, MiningCoordinator {
   private static final Logger LOG = getLogger();
   protected boolean isEnabled = false;
   protected volatile Optional<M> currentRunningMiner = Optional.empty();
@@ -54,6 +54,7 @@ public abstract class AbstractMiningCoordinator<
     syncState.addInSyncListener(this::inSyncChanged);
   }
 
+  @Override
   public void enable() {
     synchronized (this) {
       if (isEnabled) {
@@ -66,6 +67,7 @@ public abstract class AbstractMiningCoordinator<
     }
   }
 
+  @Override
   public void disable() {
     synchronized (this) {
       if (!isEnabled) {
@@ -76,6 +78,7 @@ public abstract class AbstractMiningCoordinator<
     }
   }
 
+  @Override
   public boolean isRunning() {
     synchronized (this) {
       return currentRunningMiner.isPresent();
@@ -121,38 +124,46 @@ public abstract class AbstractMiningCoordinator<
   }
 
   // Required for JSON RPC, and are deemed to be valid for all mining mechanisms
+  @Override
   public void setMinTransactionGasPrice(final Wei minGasPrice) {
     executor.setMinTransactionGasPrice(minGasPrice);
   }
 
+  @Override
   public Wei getMinTransactionGasPrice() {
     return executor.getMinTransactionGasPrice();
   }
 
+  @Override
   public void setExtraData(final BytesValue extraData) {
     executor.setExtraData(extraData);
   }
 
+  @Override
   public void setCoinbase(final Address coinbase) {
     throw new UnsupportedOperationException(
         "Current consensus mechanism prevents setting coinbase.");
   }
 
+  @Override
   public Optional<Address> getCoinbase() {
     throw new UnsupportedOperationException(
         "Current consensus mechanism prevents querying of coinbase.");
   }
 
+  @Override
   public Optional<Long> hashesPerSecond() {
     throw new UnsupportedOperationException(
         "Current consensus mechanism prevents querying of hashrate.");
   }
 
+  @Override
   public Optional<EthHashSolverInputs> getWorkDefinition() {
     throw new UnsupportedOperationException(
         "Current consensus mechanism prevents querying work definition.");
   }
 
+  @Override
   public boolean submitWork(final EthHashSolution solution) {
     throw new UnsupportedOperationException(
         "Current consensus mechanism prevents submission of work solutions.");

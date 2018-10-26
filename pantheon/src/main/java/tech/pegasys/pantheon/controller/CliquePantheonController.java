@@ -17,7 +17,6 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueVoteTallyUpdater;
 import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
-import tech.pegasys.pantheon.consensus.clique.blockcreation.CliqueBlockMiner;
 import tech.pegasys.pantheon.consensus.clique.blockcreation.CliqueBlockScheduler;
 import tech.pegasys.pantheon.consensus.clique.blockcreation.CliqueMinerExecutor;
 import tech.pegasys.pantheon.consensus.clique.blockcreation.CliqueMiningCoordinator;
@@ -25,7 +24,7 @@ import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
+import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
@@ -61,8 +60,7 @@ import java.util.concurrent.TimeUnit;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.Logger;
 
-public class CliquePantheonController
-    implements PantheonController<CliqueContext, CliqueBlockMiner> {
+public class CliquePantheonController implements PantheonController<CliqueContext> {
   public static int RINKEBY_NETWORK_ID = 4;
   private static final Logger LOG = getLogger();
   private final GenesisConfig<CliqueContext> genesisConfig;
@@ -75,7 +73,7 @@ public class CliquePantheonController
 
   private static final long EPOCH_LENGTH_DEFAULT = 30_000L;
   private static final long SECONDS_BETWEEN_BLOCKS_DEFAULT = 15L;
-  private final CliqueMiningCoordinator miningCoordinator;
+  private final MiningCoordinator miningCoordinator;
 
   CliquePantheonController(
       final GenesisConfig<CliqueContext> genesisConfig,
@@ -84,7 +82,7 @@ public class CliquePantheonController
       final Synchronizer synchronizer,
       final KeyPair keyPair,
       final TransactionPool transactionPool,
-      final CliqueMiningCoordinator miningCoordinator,
+      final MiningCoordinator miningCoordinator,
       final Runnable closer) {
 
     this.genesisConfig = genesisConfig;
@@ -97,7 +95,7 @@ public class CliquePantheonController
     this.miningCoordinator = miningCoordinator;
   }
 
-  public static PantheonController<CliqueContext, CliqueBlockMiner> init(
+  public static PantheonController<CliqueContext> init(
       final Path home,
       final GenesisConfig<CliqueContext> genesisConfig,
       final SynchronizerConfiguration taintedSyncConfig,
@@ -229,7 +227,7 @@ public class CliquePantheonController
   }
 
   @Override
-  public AbstractMiningCoordinator<CliqueContext, CliqueBlockMiner> getMiningCoordinator() {
+  public MiningCoordinator getMiningCoordinator() {
     return miningCoordinator;
   }
 

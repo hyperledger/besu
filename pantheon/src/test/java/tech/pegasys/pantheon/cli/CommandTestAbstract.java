@@ -60,7 +60,7 @@ public abstract class CommandTestAbstract {
   @Mock PantheonControllerBuilder mockControllerBuilder;
   @Mock SynchronizerConfiguration.Builder mockSyncConfBuilder;
   @Mock SynchronizerConfiguration mockSyncConf;
-  @Mock PantheonController<?, ?> mockController;
+  @Mock PantheonController<?> mockController;
   @Mock BlockImporter mockBlockImporter;
 
   @Captor ArgumentCaptor<Collection<String>> stringListArgumentCaptor;
