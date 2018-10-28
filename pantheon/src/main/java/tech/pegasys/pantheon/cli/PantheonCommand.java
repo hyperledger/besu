@@ -226,7 +226,7 @@ public class PantheonCommand implements Runnable {
     names = {"--rinkeby"},
     description =
         "Use the Rinkeby test network"
-            + "- see https://github.com/ethereum/EIPs/issues/225 (default: ${DEFAULT-VALUE})"
+            + " - see https://github.com/ethereum/EIPs/issues/225 (default: ${DEFAULT-VALUE})"
   )
   private final Boolean rinkeby = false;
 
