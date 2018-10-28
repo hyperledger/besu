@@ -35,7 +35,7 @@ public class EthGetBlockByHashTest {
 
   @Rule public final ExpectedException thrown = ExpectedException.none();
 
-  @Mock private BlockchainQueries blockChainQueries;
+  @Mock private BlockchainQueries blockchainQueries;
   private final BlockResultFactory blockResult = new BlockResultFactory();
   private final JsonRpcParameter parameters = new JsonRpcParameter();
   private EthGetBlockByHash method;
@@ -45,7 +45,7 @@ public class EthGetBlockByHashTest {
 
   @Before
   public void setUp() {
-    method = new EthGetBlockByHash(blockChainQueries, blockResult, parameters);
+    method = new EthGetBlockByHash(blockchainQueries, blockResult, parameters);
   }
 
   @Test
@@ -62,7 +62,7 @@ public class EthGetBlockByHashTest {
 
     method.response(request);
 
-    verifyNoMoreInteractions(blockChainQueries);
+    verifyNoMoreInteractions(blockchainQueries);
   }
 
   @Test
@@ -74,7 +74,7 @@ public class EthGetBlockByHashTest {
 
     method.response(request);
 
-    verifyNoMoreInteractions(blockChainQueries);
+    verifyNoMoreInteractions(blockchainQueries);
   }
 
   @Test
@@ -86,7 +86,7 @@ public class EthGetBlockByHashTest {
 
     method.response(request);
 
-    verifyNoMoreInteractions(blockChainQueries);
+    verifyNoMoreInteractions(blockchainQueries);
   }
 
   @Test
@@ -98,7 +98,7 @@ public class EthGetBlockByHashTest {
 
     method.response(request);
 
-    verifyNoMoreInteractions(blockChainQueries);
+    verifyNoMoreInteractions(blockchainQueries);
   }
 
   @Test
@@ -110,7 +110,7 @@ public class EthGetBlockByHashTest {
 
     method.response(request);
 
-    verifyNoMoreInteractions(blockChainQueries);
+    verifyNoMoreInteractions(blockchainQueries);
   }
 
   private JsonRpcRequest requestWithParams(final Object... params) {
