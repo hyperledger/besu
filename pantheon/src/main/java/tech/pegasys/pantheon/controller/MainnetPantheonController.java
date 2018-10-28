@@ -58,7 +58,6 @@ import org.apache.logging.log4j.Logger;
 public class MainnetPantheonController implements PantheonController<Void> {
 
   private static final Logger LOG = LogManager.getLogger();
-  public static final int MAINNET_NETWORK_ID = 1;
 
   private final GenesisConfig<Void> genesisConfig;
   private final ProtocolContext<Void> protocolContext;
