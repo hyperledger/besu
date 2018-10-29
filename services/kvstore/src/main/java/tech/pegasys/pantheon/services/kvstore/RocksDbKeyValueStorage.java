@@ -48,7 +48,7 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
     RocksDB.loadLibrary();
   }
 
-  public static RocksDbKeyValueStorage create(final Path storageDirectory) throws StorageException {
+  public static KeyValueStorage create(final Path storageDirectory) throws StorageException {
     return new RocksDbKeyValueStorage(storageDirectory);
   }
 

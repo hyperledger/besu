@@ -53,6 +53,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.worldstate.KeyValueStorageWorldStateStorage;
+import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.RocksDbKeyValueStorage;
 
 import java.io.IOException;
@@ -114,7 +115,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
       final int networkId,
       final KeyPair nodeKeys)
       throws IOException {
-    final RocksDbKeyValueStorage kv =
+    final KeyValueStorage kv =
         RocksDbKeyValueStorage.create(Files.createDirectories(home.resolve(DATABASE_PATH)));
     final ProtocolSchedule<IbftContext> protocolSchedule = genesisConfig.getProtocolSchedule();
     final BlockHashFunction blockHashFunction =
@@ -186,7 +187,11 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
           } catch (final InterruptedException e) {
             LOG.error("Failed to shutdown ibft processor executor");
           }
-          kv.close();
+          try {
+            kv.close();
+          } catch (final IOException e) {
+            LOG.error("Failed to close key value storage", e);
+          }
         };
 
     final TransactionPool transactionPool =
