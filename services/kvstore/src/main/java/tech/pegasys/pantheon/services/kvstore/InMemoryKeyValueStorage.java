@@ -85,6 +85,9 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
     }
   }
 
+  @Override
+  public void close() {}
+
   private class InMemoryTransaction extends AbstractTransaction {
 
     private Map<BytesValue, BytesValue> updatedValues = new HashMap<>();

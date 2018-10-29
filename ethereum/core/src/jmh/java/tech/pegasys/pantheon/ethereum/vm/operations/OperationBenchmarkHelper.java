@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.ExecutionContextTestFixture;
 import tech.pegasys.pantheon.ethereum.core.MessageFrameTestFixture;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
+import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.RocksDbKeyValueStorage;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -34,12 +35,12 @@ import com.google.common.io.RecursiveDeleteOption;
 public class OperationBenchmarkHelper {
 
   private final Path storageDirectory;
-  private final RocksDbKeyValueStorage keyValueStorage;
+  private final KeyValueStorage keyValueStorage;
   private final MessageFrame messageFrame;
 
   private OperationBenchmarkHelper(
       final Path storageDirectory,
-      final RocksDbKeyValueStorage keyValueStorage,
+      final KeyValueStorage keyValueStorage,
       final MessageFrame messageFrame) {
     this.storageDirectory = storageDirectory;
     this.keyValueStorage = keyValueStorage;
@@ -48,7 +49,7 @@ public class OperationBenchmarkHelper {
 
   public static OperationBenchmarkHelper create() throws IOException {
     final Path storageDirectory = Files.createTempDirectory("benchmark");
-    final RocksDbKeyValueStorage keyValueStorage = RocksDbKeyValueStorage.create(storageDirectory);
+    final KeyValueStorage keyValueStorage = RocksDbKeyValueStorage.create(storageDirectory);
 
     final ExecutionContextTestFixture executionContext =
         ExecutionContextTestFixture.builder().keyValueStorage(keyValueStorage).build();
