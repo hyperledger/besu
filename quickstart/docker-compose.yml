@@ -4,6 +4,8 @@ services:
     build:
       context: ../
       dockerfile: quickstart/pantheon/Dockerfile
+      args:
+        - JENKINS_URL=${JENKINS_URL:-null}
     image: quickstart/pantheon:latest
     entrypoint: /opt/pantheon/bootnode_start.sh --dev-mode
     volumes:

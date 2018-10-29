@@ -1,4 +1,6 @@
 FROM openjdk:8-jdk as builder
+ARG JENKINS_URL
+ENV JENKINS_URL $JENKINS_URL
 COPY . /tmp/pantheon
 WORKDIR /tmp/pantheon
 RUN ./gradlew installDist -x test
