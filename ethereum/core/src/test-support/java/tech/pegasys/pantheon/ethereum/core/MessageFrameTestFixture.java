@@ -59,6 +59,12 @@ public class MessageFrameTestFixture {
     return this;
   }
 
+  public MessageFrameTestFixture executionContextTestFixture(
+      final ExecutionContextTestFixture executionContextTestFixture) {
+    this.executionContextTestFixture = executionContextTestFixture;
+    return this;
+  }
+
   public MessageFrameTestFixture blockchain(final Blockchain blockchain) {
     this.blockchain = Optional.of(blockchain);
     return this;
@@ -181,7 +187,7 @@ public class MessageFrameTestFixture {
   private ExecutionContextTestFixture getOrCreateExecutionContextTestFixture() {
     // Avoid creating a test fixture if the test supplies the blockchain and worldstate.
     if (executionContextTestFixture == null) {
-      executionContextTestFixture = new ExecutionContextTestFixture();
+      executionContextTestFixture = ExecutionContextTestFixture.create();
     }
     return executionContextTestFixture;
   }
