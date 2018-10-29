@@ -79,9 +79,13 @@ allprojects {
   targetCompatibility = '1.8'
 
   repositories {
-    jcenter()
-    mavenCentral()
-    maven { url  "https://consensys.bintray.com/pegasys-repo" }
+    if ("$System.env.JENKINS_URL" == 'https://jenkins.pegasys.tech/') {
+      maven { url "https://nexus.int.pegasys.tech/repository/jcenter/" }
+    } else {
+      jcenter()
+      mavenCentral()
+      maven { url  "https://consensys.bintray.com/pegasys-repo" }
+    }
   }
 
   dependencies {
