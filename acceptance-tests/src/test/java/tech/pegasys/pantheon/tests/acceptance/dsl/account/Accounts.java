@@ -12,18 +12,24 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.account;
 
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.EthTransactions;
+
 public class Accounts {
 
+  private final EthTransactions eth;
   private final Account richBenefactorOne;
   private final Account richBenefactorTwo;
 
-  public Accounts() {
+  public Accounts(final EthTransactions eth) {
+    this.eth = eth;
     richBenefactorOne =
         Account.fromPrivateKey(
+            eth,
             "Rich Benefactor One",
             "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63");
     richBenefactorTwo =
         Account.fromPrivateKey(
+            eth,
             "Rich Benefactor Two",
             "c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
   }
@@ -37,6 +43,6 @@ public class Accounts {
   }
 
   public Account createAccount(final String accountName) {
-    return Account.create(accountName);
+    return Account.create(eth, accountName);
   }
 }

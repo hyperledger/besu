@@ -15,20 +15,18 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.web3j.protocol.core.DefaultBlockParameterName.LATEST;
 
 import tech.pegasys.pantheon.controller.KeyPairUtil;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
-import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.ConnectException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,7 +43,6 @@ import org.apache.logging.log4j.Logger;
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.Web3jService;
-import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.protocol.websocket.WebSocketService;
 import org.web3j.utils.Async;
@@ -67,7 +64,6 @@ public class PantheonNode implements Node, AutoCloseable {
   private final Properties portsProperties = new Properties();
 
   private List<String> bootnodes = new ArrayList<>();
-  private Eth eth;
   private Web3 web3;
   private Web3j web3j;
 
@@ -145,24 +141,12 @@ public class PantheonNode implements Node, AutoCloseable {
     return web3j;
   }
 
-  @Deprecated
-  public Web3j web3j(final Web3jService web3jService) {
+  private Web3j web3j(final Web3jService web3jService) {
     if (web3j == null) {
       web3j = Web3j.build(web3jService, 2000, Async.defaultExecutorService());
     }
 
     return web3j;
-  }
-
-  @Override
-  public BigInteger getAccountBalance(final Account account) {
-    try {
-      final EthGetBalance balanceResponse =
-          web3j().ethGetBalance(account.getAddress(), LATEST).send();
-      return balanceResponse.getBalance();
-    } catch (final IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public int getPeerCount() {
@@ -305,7 +289,6 @@ public class PantheonNode implements Node, AutoCloseable {
       web3j = null;
     }
 
-    eth = null;
     web3 = null;
   }
 
@@ -327,16 +310,12 @@ public class PantheonNode implements Node, AutoCloseable {
     return web3;
   }
 
-  public Eth eth() {
-    if (eth == null) {
-      eth = new Eth(web3j());
-    }
-
-    return eth;
-  }
-
   @Override
   public <T> T execute(final Transaction<T> transaction) {
     return transaction.execute(web3j());
+  }
+
+  public void verify(final Condition expected) {
+    expected.verify(this);
   }
 }

@@ -38,7 +38,7 @@ public class Web3Sha3AcceptanceTest extends AcceptanceTestBase {
     final String input = "0x68656c6c6f20776f726c64";
     final String sha3 = "0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad";
 
-    final String response = node.web3().web3Sha3(input);
+    final String response = node.execute(web3.sha3(input));
 
     assertThat(response).isEqualTo(sha3);
   }

@@ -12,18 +12,16 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.pubsub;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonMinerNode;
 import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonNode;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.pubsub.Subscription;
 import tech.pegasys.pantheon.tests.acceptance.dsl.pubsub.WebSocket;
-
-import java.math.BigInteger;
 
 import io.vertx.core.Vertx;
 import org.junit.After;
@@ -69,7 +67,7 @@ public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
     minerWebSocket.verifyTotalEventsReceived(1);
     lightForkSubscription.verifyEventReceived(lightForkEvent);
 
-    final BigInteger lighterForkBlockNumber = minerNode.eth().blockNumber();
+    final Condition atLeastLighterForkBlockNumber = blockchain.blockNumberMustBeLatest(minerNode);
 
     cluster.stop();
 
@@ -100,7 +98,8 @@ public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
     heavyForkSubscription.verifyEventReceived(heavyForkEventTwo);
     heavyForkSubscription.verifyEventReceived(heavyForkEventThree);
 
-    final BigInteger heavierForkBlockNumber = minerNodeTwo.eth().blockNumber();
+    final Condition atLeastHeavierForkBlockNumber =
+        blockchain.blockNumberMustBeLatest(minerNodeTwo);
 
     cluster.stop();
 
@@ -115,9 +114,9 @@ public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
     final Subscription archiveMergedForksSubscription = archiveMergedForksWebSocket.subscribe();
 
     // Check that all node have loaded their respective forks, i.e. not begin new chains
-    assertThat(minerNode.eth().blockNumber()).isGreaterThanOrEqualTo(lighterForkBlockNumber);
-    assertThat(archiveNode.eth().blockNumber()).isGreaterThanOrEqualTo(lighterForkBlockNumber);
-    assertThat(minerNodeTwo.eth().blockNumber()).isGreaterThanOrEqualTo(heavierForkBlockNumber);
+    minerNode.verify(atLeastLighterForkBlockNumber);
+    archiveNode.verify(atLeastLighterForkBlockNumber);
+    minerNodeTwo.verify(atLeastHeavierForkBlockNumber);
 
     // This publish give time needed for heavy fork to be chosen
     final Hash mergedForksEventOne =

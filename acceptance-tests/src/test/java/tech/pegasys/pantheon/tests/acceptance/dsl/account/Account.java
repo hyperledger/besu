@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.ExpectAccountBalance;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.EthTransactions;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 
 import java.math.BigInteger;
@@ -27,21 +28,25 @@ import org.web3j.utils.Convert.Unit;
 
 public class Account {
 
+  private final EthTransactions eth;
   private final String name;
   private final KeyPair keyPair;
   private long nonce = 0;
 
-  private Account(final String name, final KeyPair keyPair) {
+  private Account(final EthTransactions eth, final String name, final KeyPair keyPair) {
     this.name = name;
     this.keyPair = keyPair;
+    this.eth = eth;
   }
 
-  public static Account create(final String name) {
-    return new Account(name, KeyPair.generate());
+  public static Account create(final EthTransactions eth, final String name) {
+    return new Account(eth, name, KeyPair.generate());
   }
 
-  public static Account fromPrivateKey(final String name, final String privateKey) {
-    return new Account(name, KeyPair.create(PrivateKey.create(Bytes32.fromHexString(privateKey))));
+  static Account fromPrivateKey(
+      final EthTransactions eth, final String name, final String privateKey) {
+    return new Account(
+        eth, name, KeyPair.create(PrivateKey.create(Bytes32.fromHexString(privateKey))));
   }
 
   public Credentials web3jCredentials() {
@@ -66,7 +71,7 @@ public class Account {
   }
 
   public Condition balanceEquals(final String expectedBalance, final Unit balanceUnit) {
-    return new ExpectAccountBalance(this, expectedBalance, balanceUnit);
+    return new ExpectAccountBalance(eth, this, expectedBalance, balanceUnit);
   }
 
   public Condition balanceEquals(final int expectedBalance) {
