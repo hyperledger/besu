@@ -13,38 +13,24 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.condition;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.web3j.utils.Convert.toWei;
-import static tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils.waitFor;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.EthTransactions;
 
-import org.web3j.utils.Convert.Unit;
+import java.math.BigInteger;
 
-public class ExpectAccountBalance implements Condition {
+public class ExpectMinimumBlockNumber implements Condition {
 
   private final EthTransactions eth;
-  private final Account account;
-  private final String expectedBalance;
-  private final Unit balanceUnit;
+  private final BigInteger blockNumber;
 
-  public ExpectAccountBalance(
-      final EthTransactions eth,
-      final Account account,
-      final String expectedBalance,
-      final Unit balanceUnit) {
-    this.expectedBalance = expectedBalance;
-    this.balanceUnit = balanceUnit;
-    this.account = account;
+  public ExpectMinimumBlockNumber(final EthTransactions eth, final BigInteger blockNumber) {
+    this.blockNumber = blockNumber;
     this.eth = eth;
   }
 
   @Override
   public void verify(final Node node) {
-    waitFor(
-        () ->
-            assertThat(node.execute(eth.getBalance((account))))
-                .isEqualTo(toWei(expectedBalance, balanceUnit).toBigIntegerExact()));
+    assertThat(node.execute(eth.blockNumber())).isGreaterThanOrEqualTo(blockNumber);
   }
 }

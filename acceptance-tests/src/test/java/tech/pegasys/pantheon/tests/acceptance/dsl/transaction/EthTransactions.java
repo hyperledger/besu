@@ -10,11 +10,21 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.node;
+package tech.pegasys.pantheon.tests.acceptance.dsl.transaction;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
 
-public interface Node {
+public class EthTransactions {
 
-  <T> T execute(Transaction<T> transaction);
+  public EthGetWorkTransaction getWork() {
+    return new EthGetWorkTransaction();
+  }
+
+  public EthBlockNumberTransaction blockNumber() {
+    return new EthBlockNumberTransaction();
+  }
+
+  public EthGetBalanceTransaction getBalance(final Account account) {
+    return new EthGetBalanceTransaction(account);
+  }
 }
