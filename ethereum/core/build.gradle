@@ -50,6 +50,15 @@ dependencies {
   testSupportImplementation 'org.assertj:assertj-core'
   testSupportImplementation 'org.mockito:mockito-core'
   testSupportImplementation 'junit:junit'
+
+  jmhImplementation project(':util')
+  jmhImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  jmhImplementation project(':crypto')
+  jmhImplementation project(':ethereum:rlp')
+  jmhImplementation project(':ethereum:trie')
+  jmhImplementation project(':services:kvstore')
+  jmhImplementation 'com.google.guava:guava'
+  jmhImplementation 'org.openjdk.jmh:jmh-generator-annprocess'
 }
 
 configurations { testArtifacts }

@@ -27,25 +27,37 @@ import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 
 public class ExecutionContextTestFixture {
 
-  private final Block genesis = GenesisConfig.mainnet().getBlock();
-  private final KeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
-  private final MutableBlockchain blockchain =
-      new DefaultMutableBlockchain(genesis, keyValueStorage, MainnetBlockHashFunction::createHash);
-  private final WorldStateArchive stateArchive =
-      new WorldStateArchive(new KeyValueStorageWorldStateStorage(keyValueStorage));
+  private final Block genesis;
+  private final KeyValueStorage keyValueStorage;
+  private final MutableBlockchain blockchain;
+  private final WorldStateArchive stateArchive;
 
-  ProtocolSchedule<Void> protocolSchedule;
-  ProtocolContext<Void> protocolContext = new ProtocolContext<>(blockchain, stateArchive, null);
+  private final ProtocolSchedule<Void> protocolSchedule;
+  private final ProtocolContext<Void> protocolContext;
 
-  public ExecutionContextTestFixture() {
-    this(MainnetProtocolSchedule.create(2, 3, 10, 11, 12, -1, 42));
+  private ExecutionContextTestFixture(
+      final ProtocolSchedule<Void> protocolSchedule, final KeyValueStorage keyValueStorage) {
+    final GenesisConfig<Void> genesisConfig = GenesisConfig.mainnet();
+    this.genesis = genesisConfig.getBlock();
+    this.keyValueStorage = keyValueStorage;
+    this.blockchain =
+        new DefaultMutableBlockchain(
+            genesis, keyValueStorage, MainnetBlockHashFunction::createHash);
+    this.stateArchive =
+        new WorldStateArchive(new KeyValueStorageWorldStateStorage(keyValueStorage));
+    this.protocolSchedule = protocolSchedule;
+    this.protocolContext = new ProtocolContext<>(blockchain, stateArchive, null);
+
+    genesisConfig.writeStateTo(
+        new DefaultMutableWorldState(new KeyValueStorageWorldStateStorage(keyValueStorage)));
   }
 
-  public ExecutionContextTestFixture(final ProtocolSchedule<Void> protocolSchedule) {
-    GenesisConfig.mainnet()
-        .writeStateTo(
-            new DefaultMutableWorldState(new KeyValueStorageWorldStateStorage(keyValueStorage)));
-    this.protocolSchedule = protocolSchedule;
+  public static ExecutionContextTestFixture create() {
+    return new Builder().build();
+  }
+
+  public static Builder builder() {
+    return new Builder();
   }
 
   public Block getGenesis() {
@@ -70,5 +82,31 @@ public class ExecutionContextTestFixture {
 
   public ProtocolContext<Void> getProtocolContext() {
     return protocolContext;
+  }
+
+  public static class Builder {
+
+    private KeyValueStorage keyValueStorage;
+    private ProtocolSchedule<Void> protocolSchedule;
+
+    public Builder keyValueStorage(final KeyValueStorage keyValueStorage) {
+      this.keyValueStorage = keyValueStorage;
+      return this;
+    }
+
+    public Builder protocolSchedule(final ProtocolSchedule<Void> protocolSchedule) {
+      this.protocolSchedule = protocolSchedule;
+      return this;
+    }
+
+    public ExecutionContextTestFixture build() {
+      if (protocolSchedule == null) {
+        protocolSchedule = MainnetProtocolSchedule.create(0, 0, 0, 0, 0, 0, 42);
+      }
+      if (keyValueStorage == null) {
+        keyValueStorage = new InMemoryKeyValueStorage();
+      }
+      return new ExecutionContextTestFixture(protocolSchedule, keyValueStorage);
+    }
   }
 }

@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolver;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHasher.Light;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationTestUtils;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -41,7 +42,9 @@ public class EthHashBlockCreatorTest {
       BytesValue.fromHexString("0x476574682f76312e302e302f6c696e75782f676f312e342e32");
 
   private final ExecutionContextTestFixture executionContextTestFixture =
-      new ExecutionContextTestFixture();
+      ExecutionContextTestFixture.builder()
+          .protocolSchedule(MainnetProtocolSchedule.create(2, 3, 10, 11, 12, -1, 42))
+          .build();
 
   @Test
   public void createMainnetBlock1() throws IOException {

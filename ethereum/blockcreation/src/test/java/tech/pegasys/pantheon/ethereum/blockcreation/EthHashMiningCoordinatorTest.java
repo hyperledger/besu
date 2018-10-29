@@ -30,7 +30,7 @@ import org.junit.Test;
 
 public class EthHashMiningCoordinatorTest {
 
-  private final ExecutionContextTestFixture executionContext = new ExecutionContextTestFixture();
+  private final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();
   private final SyncState syncState = mock(SyncState.class);
   private final EthHashMinerExecutor executor = mock(EthHashMinerExecutor.class);
   private final EthHashBlockMiner miner = mock(EthHashBlockMiner.class);

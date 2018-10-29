@@ -72,7 +72,7 @@ public class EthHashBlockCreator extends AbstractBlockCreator<Void> {
     } catch (final InterruptedException ex) {
       throw new CancellationException();
     } catch (final ExecutionException ex) {
-      throw new RuntimeException("Failure occurred during nonce calculations.");
+      throw new RuntimeException("Failure occurred during nonce calculations.", ex);
     }
     return BlockHeaderBuilder.create()
         .populateFrom(sealableBlockHeader)

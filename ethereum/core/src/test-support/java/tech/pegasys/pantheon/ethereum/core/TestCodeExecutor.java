@@ -35,7 +35,7 @@ public class TestCodeExecutor {
   private static final Address SENDER_ADDRESS = AddressHelpers.ofValue(244259721);
 
   public TestCodeExecutor(final ProtocolSchedule<Void> protocolSchedule) {
-    fixture = new ExecutionContextTestFixture(protocolSchedule);
+    fixture = ExecutionContextTestFixture.builder().protocolSchedule(protocolSchedule).build();
   }
 
   public MessageFrame executeCode(
