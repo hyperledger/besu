@@ -10,29 +10,24 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.transaction;
+package tech.pegasys.pantheon.tests.acceptance.dsl.condition.net;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
-import java.math.BigInteger;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetVersionTransaction;
 
-import org.web3j.protocol.Web3j;
+public class ExpectNetVersionIsNotBlank implements Condition {
 
-public class EthBlockNumberTransaction implements Transaction<BigInteger> {
+  private final NetVersionTransaction transaction;
 
-  EthBlockNumberTransaction() {}
+  public ExpectNetVersionIsNotBlank(final NetVersionTransaction transaction) {
+    this.transaction = transaction;
+  }
 
   @Override
-  public BigInteger execute(final Web3j node) {
-    try {
-      final org.web3j.protocol.core.methods.response.EthBlockNumber result =
-          node.ethBlockNumber().send();
-      assertThat(result).isNotNull();
-      assertThat(result.hasError()).isFalse();
-      return result.getBlockNumber();
-    } catch (final IOException e) {
-      throw new RuntimeException(e);
-    }
+  public void verify(final Node node) {
+    assertThat(node.execute(transaction)).isNotBlank();
   }
 }

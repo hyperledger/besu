@@ -14,10 +14,15 @@ package tech.pegasys.pantheon.tests.acceptance.dsl;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Accounts;
 import tech.pegasys.pantheon.tests.acceptance.dsl.blockchain.Blockchain;
+import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eth;
+import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.JsonRpc;
+import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Net;
+import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Web3;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Cluster;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.EthTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transactions;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Web3Transactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetTransactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.web3.Web3Transactions;
 
 import org.junit.After;
 
@@ -26,19 +31,22 @@ public class AcceptanceTestBase {
   protected final Accounts accounts;
   protected final Blockchain blockchain;
   protected final Cluster cluster;
-  protected final EthTransactions eth;
   protected final JsonRpc jsonRpc;
   protected final Transactions transactions;
-  protected final Web3Transactions web3;
+  protected final Web3 web3;
+  protected final Eth eth;
+  protected final Net net;
 
   protected AcceptanceTestBase() {
-    eth = new EthTransactions();
-    accounts = new Accounts(eth);
-    blockchain = new Blockchain(eth);
+    final EthTransactions ethTransactions = new EthTransactions();
+    accounts = new Accounts(ethTransactions);
+    blockchain = new Blockchain(ethTransactions);
     cluster = new Cluster();
+    eth = new Eth(ethTransactions);
     jsonRpc = new JsonRpc(cluster);
+    net = new Net(new NetTransactions());
     transactions = new Transactions(accounts);
-    web3 = new Web3Transactions();
+    web3 = new Web3(new Web3Transactions());
   }
 
   @After

@@ -28,13 +28,11 @@ import org.junit.Test;
 public class CreateAccountAcceptanceTest extends AcceptanceTestBase {
 
   private PantheonNode minerNode;
-  private PantheonNode fullNode;
 
   @Before
   public void setUp() throws Exception {
     minerNode = cluster.create(pantheonMinerNode("node1"));
-    fullNode = cluster.create(pantheonNode("node2"));
-    cluster.start(minerNode, fullNode);
+    cluster.start(minerNode, cluster.create(pantheonNode("node2")));
   }
 
   @Test
