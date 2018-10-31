@@ -26,8 +26,8 @@ import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Util;
-import tech.pegasys.pantheon.util.time.Clock;
 
+import java.time.Clock;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -61,7 +61,7 @@ public class CliqueBlockSchedulerTest {
     final Clock clock = mock(Clock.class);
     final long currentSecondsSinceEpoch = 10L;
     final long secondsBetweenBlocks = 5L;
-    when(clock.millisecondsSinceEpoch()).thenReturn(currentSecondsSinceEpoch * 1000);
+    when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final CliqueBlockScheduler scheduler =
         new CliqueBlockScheduler(clock, voteTallyCache, localAddr, secondsBetweenBlocks);
 
@@ -82,7 +82,7 @@ public class CliqueBlockSchedulerTest {
     final Clock clock = mock(Clock.class);
     final long currentSecondsSinceEpoch = 10L;
     final long secondsBetweenBlocks = 5L;
-    when(clock.millisecondsSinceEpoch()).thenReturn(currentSecondsSinceEpoch * 1000);
+    when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final CliqueBlockScheduler scheduler =
         new CliqueBlockScheduler(clock, voteTallyCache, localAddr, secondsBetweenBlocks);
 
@@ -103,7 +103,7 @@ public class CliqueBlockSchedulerTest {
     final Clock clock = mock(Clock.class);
     final long currentSecondsSinceEpoch = 10L;
     final long secondsBetweenBlocks = 5L;
-    when(clock.millisecondsSinceEpoch()).thenReturn(currentSecondsSinceEpoch * 1000);
+    when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final CliqueBlockScheduler scheduler =
         new CliqueBlockScheduler(clock, voteTallyCache, localAddr, secondsBetweenBlocks);
 

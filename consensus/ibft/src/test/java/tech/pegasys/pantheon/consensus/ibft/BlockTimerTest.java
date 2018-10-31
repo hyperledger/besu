@@ -27,8 +27,8 @@ import static org.mockito.Mockito.when;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.BlockTimerExpiry;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
-import tech.pegasys.pantheon.util.time.Clock;
 
+import java.time.Clock;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -76,7 +76,7 @@ public class BlockTimerTest {
         new BlockTimer(
             mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS, mockExecutorService, mockClock);
 
-    when(mockClock.millisecondsSinceEpoch()).thenReturn(NOW_MILLIS);
+    when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
     final BlockHeader header =
         new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
@@ -101,7 +101,7 @@ public class BlockTimerTest {
     final long BLOCK_TIME_STAMP = 300;
     final long EXPECTED_DELAY = 500;
 
-    when(mockClock.millisecondsSinceEpoch()).thenReturn(NOW_MILLIS);
+    when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
     final BlockHeader header =
         new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
@@ -142,7 +142,7 @@ public class BlockTimerTest {
         new BlockTimer(
             mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS, mockExecutorService, mockClock);
 
-    when(mockClock.millisecondsSinceEpoch()).thenReturn(NOW_MILLIS);
+    when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
     final BlockHeader header =
         new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
@@ -170,7 +170,7 @@ public class BlockTimerTest {
         new BlockTimer(
             mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS, mockExecutorService, mockClock);
 
-    when(mockClock.millisecondsSinceEpoch()).thenReturn(NOW_MILLIS);
+    when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
     final BlockHeader header =
         new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
@@ -198,7 +198,7 @@ public class BlockTimerTest {
         new BlockTimer(
             mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS, mockExecutorService, mockClock);
 
-    when(mockClock.millisecondsSinceEpoch()).thenReturn(NOW_MILLIS);
+    when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
     final BlockHeader header =
         new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
@@ -225,7 +225,7 @@ public class BlockTimerTest {
         new BlockTimer(
             mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS, mockExecutorService, mockClock);
 
-    when(mockClock.millisecondsSinceEpoch()).thenReturn(NOW_MILLIS);
+    when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
     final BlockHeader header =
         new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();

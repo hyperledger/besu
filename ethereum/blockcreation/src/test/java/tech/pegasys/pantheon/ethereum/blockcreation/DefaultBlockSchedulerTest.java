@@ -19,7 +19,8 @@ import static org.mockito.Mockito.when;
 import tech.pegasys.pantheon.ethereum.blockcreation.AbstractBlockScheduler.BlockCreationTimeResult;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
-import tech.pegasys.pantheon.util.time.Clock;
+
+import java.time.Clock;
 
 import org.junit.Test;
 
@@ -38,7 +39,7 @@ public class DefaultBlockSchedulerTest {
     // Determine the system time of parent block creation, which means child will occur on
     // the limit of clock drift.
     final long parentBlockSystemTimeCreation = parentTimeStamp - acceptableClockDrift + 1;
-    when(clock.millisecondsSinceEpoch()).thenReturn(parentBlockSystemTimeCreation * 1000);
+    when(clock.millis()).thenReturn(parentBlockSystemTimeCreation * 1000);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     final BlockHeader parentBlock = headerBuilder.timestamp(parentTimeStamp).buildHeader();
@@ -54,7 +55,7 @@ public class DefaultBlockSchedulerTest {
     final DefaultBlockScheduler scheduler =
         new DefaultBlockScheduler(interBlockSeconds, acceptableClockDrift, clock);
 
-    when(clock.millisecondsSinceEpoch()).thenReturn(parentTimeStamp * 1000);
+    when(clock.millis()).thenReturn(parentTimeStamp * 1000);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     final BlockHeader parentBlock = headerBuilder.timestamp(parentTimeStamp).buildHeader();
@@ -70,8 +71,7 @@ public class DefaultBlockSchedulerTest {
         new DefaultBlockScheduler(interBlockSeconds, acceptableClockDrift, clock);
 
     // Set the clock such that the parenttimestamp is on the limit of acceptability
-    when(clock.millisecondsSinceEpoch())
-        .thenReturn((parentTimeStamp - acceptableClockDrift) * 1000);
+    when(clock.millis()).thenReturn((parentTimeStamp - acceptableClockDrift) * 1000);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     final BlockHeader parentBlock = headerBuilder.timestamp(parentTimeStamp).buildHeader();
@@ -88,7 +88,7 @@ public class DefaultBlockSchedulerTest {
     final DefaultBlockScheduler scheduler =
         new DefaultBlockScheduler(interBlockSeconds, acceptableClockDrift, clock);
 
-    when(clock.millisecondsSinceEpoch()).thenReturn(secondsSinceEpoch * 1000);
+    when(clock.millis()).thenReturn(secondsSinceEpoch * 1000);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     final BlockHeader parentBlock = headerBuilder.timestamp(parentTimeStamp).buildHeader();

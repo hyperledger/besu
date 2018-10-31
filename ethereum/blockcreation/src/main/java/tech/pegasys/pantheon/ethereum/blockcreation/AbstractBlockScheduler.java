@@ -13,7 +13,8 @@
 package tech.pegasys.pantheon.ethereum.blockcreation;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.util.time.Clock;
+
+import java.time.Clock;
 
 public abstract class AbstractBlockScheduler {
 

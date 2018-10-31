@@ -18,8 +18,8 @@ import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.util.Subscribers;
-import tech.pegasys.pantheon.util.time.SystemClock;
 
+import java.time.Clock;
 import java.util.concurrent.Executors;
 
 import org.junit.Test;
@@ -38,7 +38,7 @@ public class EthHashMinerExecutorTest {
             null,
             new PendingTransactions(1),
             miningParameters,
-            new DefaultBlockScheduler(1, 10, new SystemClock()));
+            new DefaultBlockScheduler(1, 10, Clock.systemUTC()));
 
     assertThatExceptionOfType(CoinbaseNotSetException.class)
         .isThrownBy(() -> executor.startAsyncMining(new Subscribers<>(), null))
@@ -56,7 +56,7 @@ public class EthHashMinerExecutorTest {
             null,
             new PendingTransactions(1),
             miningParameters,
-            new DefaultBlockScheduler(1, 10, new SystemClock()));
+            new DefaultBlockScheduler(1, 10, Clock.systemUTC()));
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> executor.setCoinbase(null))

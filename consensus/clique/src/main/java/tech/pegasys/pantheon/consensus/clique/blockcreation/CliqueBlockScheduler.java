@@ -17,8 +17,8 @@ import tech.pegasys.pantheon.consensus.common.ValidatorProvider;
 import tech.pegasys.pantheon.ethereum.blockcreation.DefaultBlockScheduler;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.util.time.Clock;
 
+import java.time.Clock;
 import java.util.Random;
 
 import com.google.common.annotations.VisibleForTesting;
