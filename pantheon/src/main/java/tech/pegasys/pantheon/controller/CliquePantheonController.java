@@ -50,11 +50,11 @@ import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.worldstate.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.RocksDbKeyValueStorage;
-import tech.pegasys.pantheon.util.time.SystemClock;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -170,7 +170,7 @@ public class CliquePantheonController implements PantheonController<CliqueContex
             nodeKeys,
             miningParams,
             new CliqueBlockScheduler(
-                new SystemClock(),
+                Clock.systemUTC(),
                 protocolContext.getConsensusState().getVoteTallyCache(),
                 Util.publicKeyToAddress(nodeKeys.getPublicKey()),
                 secondsBetweenBlocks),

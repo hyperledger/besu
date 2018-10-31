@@ -14,8 +14,8 @@ package tech.pegasys.pantheon.consensus.ibft;
 
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.BlockTimerExpiry;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.util.time.Clock;
 
+import java.time.Clock;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -74,7 +74,7 @@ public class BlockTimer {
       final ConsensusRoundIdentifier round, final BlockHeader chainHeadHeader) {
     cancelTimer();
 
-    final long now = clock.millisecondsSinceEpoch();
+    final long now = clock.millis();
 
     // absolute time when the timer is supposed to expire
     final long expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;

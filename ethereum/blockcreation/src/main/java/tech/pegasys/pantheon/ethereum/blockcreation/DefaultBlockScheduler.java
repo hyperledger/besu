@@ -13,8 +13,8 @@
 package tech.pegasys.pantheon.ethereum.blockcreation;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.util.time.Clock;
 
+import java.time.Clock;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -36,7 +36,7 @@ public class DefaultBlockScheduler extends AbstractBlockScheduler {
   @Override
   @VisibleForTesting
   public BlockCreationTimeResult getNextTimestamp(final BlockHeader parentHeader) {
-    final long msSinceEpoch = clock.millisecondsSinceEpoch();
+    final long msSinceEpoch = clock.millis();
     final long now = TimeUnit.SECONDS.convert(msSinceEpoch, TimeUnit.MILLISECONDS);
     final long parentTimestamp = parentHeader.getTimestamp();
 
