@@ -80,20 +80,8 @@ def generateTestFiles(FileTree jsonPath, File resourcesPath, File templateFile, 
   // This is how many json files to include in each test file
   def fileSets = jsonPath.getFiles().collate(5)
 
-  fileSets.each { fileSet ->
+  fileSets.eachWithIndex { fileSet, idx ->
     def resPath = resourcesPath.getPath().replaceAll("\\\\", "/")
-    def name = fileSet
-      .find({ !it.getName().toString().startsWith(".")})
-      .getPath()
-      .toString()
-      .replaceAll("\\\\", "/")
-      .replaceAll(resPath + "/", "")
-      .replaceAll(pathstrip, "")
-      .replaceAll(".json", "")
-      .replaceAll("/", "_")
-      .replaceAll("\\^", "")
-      .replaceAll("\\-", "")
-      .replaceAll("\\+", "")
 
     def paths = []
     fileSet.each { testJsonFile ->
@@ -103,13 +91,13 @@ def generateTestFiles(FileTree jsonPath, File resourcesPath, File templateFile, 
       }
     }
 
-    def testFile = file(destination + "/" + namePrefix + "_" + name + ".java")
+    def testFile = file(destination + "/" + namePrefix + "_" + idx + ".java")
 
     def allPaths = '"' + paths.join('", "') + '"';
 
     def testFileContents = referenceTestTemplate
       .replaceAll("%%TESTS_FILE%%", allPaths)
-      .replaceAll("%%TESTS_NAME%%", namePrefix + "_" + name)
+      .replaceAll("%%TESTS_NAME%%", namePrefix + "_" + idx)
     testFile.newWriter().withWriter { w -> w << testFileContents }
   }
 }
