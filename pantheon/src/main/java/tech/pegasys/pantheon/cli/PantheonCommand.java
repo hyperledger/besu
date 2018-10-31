@@ -189,8 +189,7 @@ public class PantheonCommand implements Runnable {
   @Option(
     names = {"--max-peers"},
     paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-    description =
-        "Maximium p2p peer connections that can be established (default: ${DEFAULT-VALUE})"
+    description = "Maximum p2p peer connections that can be established (default: ${DEFAULT-VALUE})"
   )
   private final Integer maxPeers = DEFAULT_MAX_PEERS;
 
