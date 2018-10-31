@@ -16,7 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static tech.pegasys.pantheon.ethereum.core.InMemoryWorldState.createInMemoryWorldStateArchive;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryBlockchain;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
@@ -30,7 +31,6 @@ import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
-import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterIdGenerator;
@@ -47,8 +47,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
-import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
-import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 
 import java.net.URL;
 import java.nio.file.Paths;
@@ -150,13 +148,10 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
         .thenReturn(ValidationResult.valid());
     final PendingTransactions pendingTransactionsMock = mock(PendingTransactions.class);
     when(transactionPoolMock.getPendingTransactions()).thenReturn(pendingTransactionsMock);
-    final KeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
     stateArchive = createInMemoryWorldStateArchive();
     GENESIS_CONFIG.writeStateTo(stateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
 
-    blockchain =
-        new DefaultMutableBlockchain(
-            GENESIS_BLOCK, keyValueStorage, MainnetBlockHashFunction::createHash);
+    blockchain = createInMemoryBlockchain(GENESIS_BLOCK);
     context = new ProtocolContext<>(blockchain, stateArchive, null);
 
     final BlockchainQueries blockchainQueries = new BlockchainQueries(blockchain, stateArchive);

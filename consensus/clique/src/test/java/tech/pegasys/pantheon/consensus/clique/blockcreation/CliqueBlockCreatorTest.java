@@ -16,6 +16,8 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryBlockchain;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
@@ -39,13 +41,8 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
-import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.mainnet.MutableProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.worldstate.KeyValueStorageWorldStateStorage;
-import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
-import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
@@ -62,11 +59,8 @@ public class CliqueBlockCreatorTest {
   private final List<Address> validatorList = Lists.newArrayList();
 
   private final Block genesis = GenesisConfig.mainnet().getBlock();
-  private final KeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
-  private final MutableBlockchain blockchain =
-      new DefaultMutableBlockchain(genesis, keyValueStorage, MainnetBlockHashFunction::createHash);
-  private final WorldStateArchive stateArchive =
-      new WorldStateArchive(new KeyValueStorageWorldStateStorage(keyValueStorage));
+  private final MutableBlockchain blockchain = createInMemoryBlockchain(genesis);
+  private final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
 
   private ProtocolContext<CliqueContext> protocolContext;
   private final MutableProtocolSchedule<CliqueContext> protocolSchedule =

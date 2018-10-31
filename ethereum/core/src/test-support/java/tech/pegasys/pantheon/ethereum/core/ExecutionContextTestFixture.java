@@ -16,6 +16,7 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
+import tech.pegasys.pantheon.ethereum.db.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
@@ -42,7 +43,9 @@ public class ExecutionContextTestFixture {
     this.keyValueStorage = keyValueStorage;
     this.blockchain =
         new DefaultMutableBlockchain(
-            genesis, keyValueStorage, MainnetBlockHashFunction::createHash);
+            genesis,
+            new KeyValueStoragePrefixedKeyBlockchainStorage(
+                keyValueStorage, MainnetBlockHashFunction::createHash));
     this.stateArchive =
         new WorldStateArchive(new KeyValueStorageWorldStateStorage(keyValueStorage));
     this.protocolSchedule = protocolSchedule;

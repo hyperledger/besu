@@ -34,6 +34,7 @@ import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
+import tech.pegasys.pantheon.ethereum.db.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
@@ -62,6 +63,7 @@ import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.Logger;
 
 public class CliquePantheonController implements PantheonController<CliqueContext> {
+
   private static final Logger LOG = getLogger();
   private final GenesisConfig<CliqueContext> genesisConfig;
   private final ProtocolContext<CliqueContext> context;
@@ -112,10 +114,14 @@ public class CliquePantheonController implements PantheonController<CliqueContex
     final KeyValueStorage kv =
         RocksDbKeyValueStorage.create(Files.createDirectories(home.resolve(DATABASE_PATH)));
     final ProtocolSchedule<CliqueContext> protocolSchedule = genesisConfig.getProtocolSchedule();
+
     final BlockHashFunction blockHashFunction =
         ScheduleBasedBlockHashFunction.create(protocolSchedule);
+    final KeyValueStoragePrefixedKeyBlockchainStorage blockchainStorage =
+        new KeyValueStoragePrefixedKeyBlockchainStorage(kv, blockHashFunction);
     final MutableBlockchain blockchain =
-        new DefaultMutableBlockchain(genesisConfig.getBlock(), kv, blockHashFunction);
+        new DefaultMutableBlockchain(genesisConfig.getBlock(), blockchainStorage);
+
     final KeyValueStorageWorldStateStorage worldStateStorage =
         new KeyValueStorageWorldStateStorage(kv);
     final WorldStateArchive worldStateArchive = new WorldStateArchive(worldStateStorage);

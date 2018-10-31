@@ -14,15 +14,13 @@ package tech.pegasys.pantheon.ethereum.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
-import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
-import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
-import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.ArrayList;
@@ -46,11 +44,9 @@ public class BlockchainUtilParameterizedTest {
   private static final int chainHeight = 89;
   private final int commonAncestorHeight;
   private static Block genesisBlock;
-  private static KeyValueStorage localKvStore;
-  private static DefaultMutableBlockchain localBlockchain;
+  private static MutableBlockchain localBlockchain;
 
-  private KeyValueStorage remoteKvStore;
-  private DefaultMutableBlockchain remoteBlockchain;
+  private MutableBlockchain remoteBlockchain;
 
   private BlockHeader commonHeader;
   private List<BlockHeader> headers;
@@ -62,10 +58,7 @@ public class BlockchainUtilParameterizedTest {
   @BeforeClass
   public static void setupClass() {
     genesisBlock = blockDataGenerator.genesisBlock();
-    localKvStore = new InMemoryKeyValueStorage();
-    localBlockchain =
-        new DefaultMutableBlockchain(
-            genesisBlock, localKvStore, MainnetBlockHashFunction::createHash);
+    localBlockchain = InMemoryTestFixture.createInMemoryBlockchain(genesisBlock);
     // Setup local chain.
     for (int i = 1; i <= chainHeight; i++) {
       final BlockDataGenerator.BlockOptions options =
@@ -80,10 +73,7 @@ public class BlockchainUtilParameterizedTest {
 
   @Before
   public void setup() {
-    remoteKvStore = new InMemoryKeyValueStorage();
-    remoteBlockchain =
-        new DefaultMutableBlockchain(
-            genesisBlock, remoteKvStore, MainnetBlockHashFunction::createHash);
+    remoteBlockchain = InMemoryTestFixture.createInMemoryBlockchain(genesisBlock);
 
     commonHeader = genesisBlock.getHeader();
     for (long i = 1; i <= commonAncestorHeight; i++) {

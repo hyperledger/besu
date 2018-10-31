@@ -25,8 +25,8 @@ import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
-import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
@@ -37,11 +37,9 @@ import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.messages.GetBlockHeadersMessage;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
-import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.ArrayList;
@@ -619,11 +617,7 @@ public class DownloaderTest {
         blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get();
     final BlockBody genesisBody = blockchain.getBlockBody(genesisHeader.getHash()).get();
     final Block genesisBlock = new Block(genesisHeader, genesisBody);
-    final MutableBlockchain shortChain =
-        new DefaultMutableBlockchain(
-            genesisBlock,
-            new InMemoryKeyValueStorage(),
-            ScheduleBasedBlockHashFunction.create(protocolSchedule));
+    final MutableBlockchain shortChain = InMemoryTestFixture.createInMemoryBlockchain(genesisBlock);
     long nextBlock = genesisHeader.getNumber() + 1;
     while (nextBlock <= truncateAtBlockNumber) {
       final BlockHeader header = blockchain.getBlockHeader(nextBlock).get();

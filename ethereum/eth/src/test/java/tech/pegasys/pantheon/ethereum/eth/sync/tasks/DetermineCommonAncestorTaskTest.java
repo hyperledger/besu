@@ -20,13 +20,14 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static tech.pegasys.pantheon.ethereum.core.InMemoryWorldState.createInMemoryWorldStateArchive;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryBlockchain;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
-import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
@@ -40,8 +41,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
-import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
-import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -57,8 +56,7 @@ public class DetermineCommonAncestorTaskTest {
 
   private final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
   private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
-  private KeyValueStorage localKvStore;
-  private DefaultMutableBlockchain localBlockchain;
+  private MutableBlockchain localBlockchain;
   private final int defaultHeaderRequestSize = 10;
   Block genesisBlock;
   private EthProtocolManager ethProtocolManager;
@@ -68,10 +66,7 @@ public class DetermineCommonAncestorTaskTest {
   @Before
   public void setup() {
     genesisBlock = blockDataGenerator.genesisBlock();
-    localKvStore = new InMemoryKeyValueStorage();
-    localBlockchain =
-        new DefaultMutableBlockchain(
-            genesisBlock, localKvStore, MainnetBlockHashFunction::createHash);
+    localBlockchain = createInMemoryBlockchain(genesisBlock);
     ethProtocolManager = EthProtocolManagerTestUtil.create(localBlockchain);
     ethContext = ethProtocolManager.ethContext();
     protocolContext =
@@ -93,11 +88,7 @@ public class DetermineCommonAncestorTaskTest {
 
     // Populate remote chain
     final Block remoteGenesisBlock = blockDataGenerator.genesisBlock();
-    final DefaultMutableBlockchain remoteBlockchain =
-        new DefaultMutableBlockchain(
-            remoteGenesisBlock,
-            new InMemoryKeyValueStorage(),
-            MainnetBlockHashFunction::createHash);
+    final MutableBlockchain remoteBlockchain = createInMemoryBlockchain(remoteGenesisBlock);
     for (long i = 1; i <= 9; i++) {
       final BlockDataGenerator.BlockOptions options01 =
           new BlockDataGenerator.BlockOptions()
@@ -202,11 +193,7 @@ public class DetermineCommonAncestorTaskTest {
 
     // Populate remote chain
     final Block remoteGenesisBlock = blockDataGenerator.genesisBlock();
-    final DefaultMutableBlockchain remoteBlockchain =
-        new DefaultMutableBlockchain(
-            remoteGenesisBlock,
-            new InMemoryKeyValueStorage(),
-            MainnetBlockHashFunction::createHash);
+    final MutableBlockchain remoteBlockchain = createInMemoryBlockchain(remoteGenesisBlock);
     for (long i = 1; i <= 99; i++) {
       final BlockDataGenerator.BlockOptions options01 =
           new BlockDataGenerator.BlockOptions()
@@ -262,9 +249,7 @@ public class DetermineCommonAncestorTaskTest {
     }
 
     // Populate remote chain
-    final DefaultMutableBlockchain remoteBlockchain =
-        new DefaultMutableBlockchain(
-            genesisBlock, new InMemoryKeyValueStorage(), MainnetBlockHashFunction::createHash);
+    final MutableBlockchain remoteBlockchain = createInMemoryBlockchain(genesisBlock);
     for (long i = 1; i <= 100; i++) {
       final BlockDataGenerator.BlockOptions options01 =
           new BlockDataGenerator.BlockOptions()
@@ -308,9 +293,7 @@ public class DetermineCommonAncestorTaskTest {
 
   @Test
   public void shouldShortCircuitOnHeaderInInitialRequest() {
-    final DefaultMutableBlockchain remoteBlockchain =
-        new DefaultMutableBlockchain(
-            genesisBlock, new InMemoryKeyValueStorage(), MainnetBlockHashFunction::createHash);
+    final MutableBlockchain remoteBlockchain = createInMemoryBlockchain(genesisBlock);
 
     Block commonBlock = null;
 

@@ -20,9 +20,9 @@ import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
-import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterIdGenerator;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
@@ -30,14 +30,10 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterRepository;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
-import tech.pegasys.pantheon.ethereum.worldstate.KeyValueStorageWorldStateStorage;
-import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
-import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -54,15 +50,12 @@ public class JsonRpcTestMethodsFactory {
   }
 
   public Map<String, JsonRpcMethod> methods(final String chainId) {
-    final KeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
-    final WorldStateArchive stateArchive =
-        new WorldStateArchive(new KeyValueStorageWorldStateStorage(keyValueStorage));
+    final WorldStateArchive stateArchive = InMemoryTestFixture.createInMemoryWorldStateArchive();
 
     importer.getGenesisConfig().writeStateTo(stateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
 
     final MutableBlockchain blockchain =
-        new DefaultMutableBlockchain(
-            importer.getGenesisBlock(), keyValueStorage, MainnetBlockHashFunction::createHash);
+        InMemoryTestFixture.createInMemoryBlockchain(importer.getGenesisBlock());
     final ProtocolContext<Void> context = new ProtocolContext<>(blockchain, stateArchive, null);
 
     for (final Block block : importer.getBlocks()) {

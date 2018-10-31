@@ -12,17 +12,15 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
+import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryBlockchain;
+
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.ChainHead;
 import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
-import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.manager.DeterministicEthScheduler.TimeoutPolicy;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.DefaultMessage;
-import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 public class EthProtocolManagerTestUtil {
@@ -40,11 +38,7 @@ public class EthProtocolManagerTestUtil {
   }
 
   public static EthProtocolManager create() {
-    final Blockchain blockchain =
-        new DefaultMutableBlockchain(
-            GenesisConfig.mainnet().getBlock(),
-            new InMemoryKeyValueStorage(),
-            ScheduleBasedBlockHashFunction.create(MainnetProtocolSchedule.create()));
+    final Blockchain blockchain = createInMemoryBlockchain(GenesisConfig.mainnet().getBlock());
     return create(blockchain);
   }
 

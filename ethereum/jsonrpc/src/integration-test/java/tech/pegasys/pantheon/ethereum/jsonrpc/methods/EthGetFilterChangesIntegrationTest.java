@@ -26,13 +26,13 @@ import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
+import tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool.TransactionBatchAddedListener;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.core.Wei;
-import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterIdGenerator;
@@ -45,10 +45,6 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
-import tech.pegasys.pantheon.ethereum.worldstate.KeyValueStorageWorldStateStorage;
-import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
-import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -81,12 +77,9 @@ public class EthGetFilterChangesIntegrationTest {
   public void setUp() {
     final GenesisConfig<Void> genesisConfig = GenesisConfig.mainnet();
     final Block genesisBlock = genesisConfig.getBlock();
-    final KeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
-    blockchain =
-        new DefaultMutableBlockchain(
-            genesisBlock, keyValueStorage, MainnetBlockHashFunction::createHash);
+    blockchain = InMemoryTestFixture.createInMemoryBlockchain(genesisBlock);
     final WorldStateArchive worldStateArchive =
-        new WorldStateArchive(new KeyValueStorageWorldStateStorage(keyValueStorage));
+        InMemoryTestFixture.createInMemoryWorldStateArchive();
     final ProtocolContext<Void> protocolContext =
         new ProtocolContext<>(blockchain, worldStateArchive, null);
     transactionPool =
