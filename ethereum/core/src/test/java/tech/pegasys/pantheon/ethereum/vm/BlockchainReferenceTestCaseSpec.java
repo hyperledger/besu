@@ -12,7 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.vm;
 
-import static tech.pegasys.pantheon.ethereum.core.InMemoryWorldState.createInMemoryWorldStateArchive;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryBlockchain;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryWorldStateArchive;
 import static tech.pegasys.pantheon.ethereum.vm.WorldStateMock.insertAccount;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -26,12 +27,10 @@ import tech.pegasys.pantheon.ethereum.core.LogsBloomFilter;
 import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
-import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
-import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -80,8 +79,7 @@ public class BlockchainReferenceTestCaseSpec {
 
   private static MutableBlockchain buildBlockchain(final BlockHeader genesisBlockHeader) {
     final Block genesisBlock = new Block(genesisBlockHeader, BlockBody.empty());
-    return new DefaultMutableBlockchain(
-        genesisBlock, new InMemoryKeyValueStorage(), MainnetBlockHashFunction::createHash);
+    return createInMemoryBlockchain(genesisBlock);
   }
 
   @JsonCreator

@@ -12,11 +12,27 @@
  */
 package tech.pegasys.pantheon.ethereum.core;
 
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
+import tech.pegasys.pantheon.ethereum.db.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.worldstate.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 
-public class InMemoryWorldState {
+public class InMemoryTestFixture {
+
+  public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
+    return createInMemoryBlockchain(genesisBlock, MainnetBlockHashFunction::createHash);
+  }
+
+  public static MutableBlockchain createInMemoryBlockchain(
+      final Block genesisBlock, final BlockHashFunction blockHashFunction) {
+    final InMemoryKeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
+    return new DefaultMutableBlockchain(
+        genesisBlock,
+        new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHashFunction));
+  }
 
   public static WorldStateArchive createInMemoryWorldStateArchive() {
     return new WorldStateArchive(

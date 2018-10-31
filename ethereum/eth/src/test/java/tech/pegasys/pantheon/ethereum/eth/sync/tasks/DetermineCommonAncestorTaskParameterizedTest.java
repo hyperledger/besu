@@ -13,14 +13,15 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.pantheon.ethereum.core.InMemoryWorldState.createInMemoryWorldStateArchive;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryBlockchain;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
-import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
@@ -30,8 +31,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
-import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
-import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.io.IOException;
@@ -55,14 +54,12 @@ public class DetermineCommonAncestorTaskParameterizedTest {
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
   private static Block genesisBlock;
-  private static KeyValueStorage localKvStore;
-  private static DefaultMutableBlockchain localBlockchain;
+  private static MutableBlockchain localBlockchain;
   private static final int chainHeight = 50;
   private final int headerRequestSize;
   private final int commonAncestorHeight;
 
-  private KeyValueStorage remoteKvStore;
-  private DefaultMutableBlockchain remoteBlockchain;
+  private MutableBlockchain remoteBlockchain;
 
   public DetermineCommonAncestorTaskParameterizedTest(
       final int headerRequestSize, final int commonAncestorHeight) {
@@ -73,10 +70,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
   @BeforeClass
   public static void setupClass() {
     genesisBlock = blockDataGenerator.genesisBlock();
-    localKvStore = new InMemoryKeyValueStorage();
-    localBlockchain =
-        new DefaultMutableBlockchain(
-            genesisBlock, localKvStore, MainnetBlockHashFunction::createHash);
+    localBlockchain = createInMemoryBlockchain(genesisBlock);
 
     // Setup local chain
     for (int i = 1; i <= chainHeight; i++) {
@@ -92,10 +86,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
 
   @Before
   public void setup() {
-    remoteKvStore = new InMemoryKeyValueStorage();
-    remoteBlockchain =
-        new DefaultMutableBlockchain(
-            genesisBlock, remoteKvStore, MainnetBlockHashFunction::createHash);
+    remoteBlockchain = createInMemoryBlockchain(genesisBlock);
   }
 
   @Parameters(name = "requestSize={0}, commonAncestor={1}")

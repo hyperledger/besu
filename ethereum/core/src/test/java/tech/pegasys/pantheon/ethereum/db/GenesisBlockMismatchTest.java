@@ -61,7 +61,10 @@ public class GenesisBlockMismatchTest {
     final BlockBody genesisBody00 = new BlockBody(Collections.emptyList(), Collections.emptyList());
     final Block genesisBlock00 = new Block(genesisHeader00, genesisBody00);
     final DefaultMutableBlockchain blockchain00 =
-        new DefaultMutableBlockchain(genesisBlock00, kvStore, MainnetBlockHashFunction::createHash);
+        new DefaultMutableBlockchain(
+            genesisBlock00,
+            new KeyValueStoragePrefixedKeyBlockchainStorage(
+                kvStore, MainnetBlockHashFunction::createHash));
 
     final BlockHeader genesisHeader01 =
         BlockHeaderBuilder.create()
