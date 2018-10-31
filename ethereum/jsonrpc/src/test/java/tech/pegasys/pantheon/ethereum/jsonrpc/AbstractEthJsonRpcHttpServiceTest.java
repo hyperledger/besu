@@ -92,7 +92,7 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
 
   protected final String CLIENT_VERSION = "TestClientVersion/0.1.0";
 
-  protected final String NET_VERSION = "6986785976597";
+  protected final int NET_VERSION = 123;
 
   protected static final Collection<RpcApi> JSON_RPC_APIS =
       Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);

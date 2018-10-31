@@ -58,7 +58,7 @@ public class EthGetBlockByHashIntegrationTest {
   private Map<String, JsonRpcMethod> methods;
   private static JsonRpcTestMethodsFactory BLOCKCHAIN;
   private final JsonRpcResponseUtils responseUtils = new JsonRpcResponseUtils();
-  private static final String CHAIN_ID = "6986785976597";
+  private static final int CHAIN_ID = 123;
   private final String ETH_METHOD = "eth_getBlockByHash";
   private final String JSON_RPC_VERSION = "2.0";
   private final String ZERO_HASH = String.valueOf(Hash.ZERO);

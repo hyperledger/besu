@@ -49,7 +49,7 @@ public class JsonRpcTestMethodsFactory {
     this.importer = importer;
   }
 
-  public Map<String, JsonRpcMethod> methods(final String chainId) {
+  public Map<String, JsonRpcMethod> methods(final int chainId) {
     final WorldStateArchive stateArchive = InMemoryTestFixture.createInMemoryWorldStateArchive();
 
     importer.getGenesisConfig().writeStateTo(stateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
