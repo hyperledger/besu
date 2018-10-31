@@ -37,7 +37,7 @@ import org.junit.Test;
 
 public class EthCallIntegrationTest {
 
-  private static final String CHAIN_ID = "6986785976597";
+  private static final int CHAIN_ID = 123;
   private static JsonRpcTestMethodsFactory BLOCKCHAIN;
 
   private JsonRpcMethod method;

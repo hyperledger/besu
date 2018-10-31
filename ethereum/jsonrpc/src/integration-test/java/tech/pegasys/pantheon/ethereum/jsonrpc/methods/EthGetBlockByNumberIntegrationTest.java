@@ -59,7 +59,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class EthGetBlockByNumberIntegrationTest {
 
-  private static final String CHAIN_ID = "6986785976597";
+  private static final int CHAIN_ID = 123;
   private static final String ETH_METHOD = "eth_getBlockByNumber";
   private static final String JSON_RPC_VERSION = "2.0";
   private static JsonRpcTestMethodsFactory BLOCKCHAIN;

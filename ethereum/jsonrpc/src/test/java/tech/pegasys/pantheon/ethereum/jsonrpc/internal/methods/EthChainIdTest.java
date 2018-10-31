@@ -12,30 +12,41 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
 
-/**
- * In Consensys' client, net_version maps to the network id, as specified in *
- * https://github.com/ethereum/wiki/wiki/JSON-RPC#net_version
- *
- * <p>This method can be deprecated in the future, @see https://github.com/ethereum/EIPs/issues/611
- */
-public class NetVersion implements JsonRpcMethod {
-  private final String chainId;
+import org.junit.Before;
+import org.junit.Test;
 
-  public NetVersion(final int chainId) {
-    this.chainId = String.valueOf(chainId);
+public class EthChainIdTest {
+
+  private EthChainId method;
+  private final int CHAIN_ID = 1;
+
+  @Before
+  public void setUp() {
+    method = new EthChainId(CHAIN_ID);
   }
 
-  @Override
-  public String getName() {
-    return "net_version";
+  @Test
+  public void shouldReturnCorrectMethodName() {
+    assertThat(method.getName()).isEqualTo("eth_chainId");
   }
 
-  @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
-    return new JsonRpcSuccessResponse(req.getId(), chainId);
+  @Test
+  public void shouldReturnChainId() {
+    JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(CHAIN_ID));
+
+    JsonRpcResponse response = method.response(request());
+
+    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  private JsonRpcRequest request() {
+    return new JsonRpcRequest(null, "eth_chainId", null);
   }
 }
