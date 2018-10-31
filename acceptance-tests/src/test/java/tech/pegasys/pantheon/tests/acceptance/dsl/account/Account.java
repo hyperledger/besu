@@ -17,8 +17,8 @@ import tech.pegasys.pantheon.crypto.SECP256K1.PrivateKey;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.ExpectAccountBalance;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.EthTransactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.account.ExpectAccountBalance;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 
 import java.math.BigInteger;
@@ -60,14 +60,6 @@ public class Account {
 
   public BigInteger getNextNonce() {
     return BigInteger.valueOf(nonce++);
-  }
-
-  public void setNextNonce(final long nonce) {
-    this.nonce = nonce;
-  }
-
-  public String getName() {
-    return name;
   }
 
   public Condition balanceEquals(final String expectedBalance, final Unit balanceUnit) {

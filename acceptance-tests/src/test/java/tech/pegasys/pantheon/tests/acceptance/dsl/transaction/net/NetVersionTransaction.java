@@ -10,36 +10,28 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.transaction;
+package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.web3j.protocol.core.DefaultBlockParameterName.LATEST;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
-import java.math.BigInteger;
 
 import org.web3j.protocol.Web3j;
-import org.web3j.protocol.core.methods.response.EthGetBalance;
+import org.web3j.protocol.core.methods.response.NetVersion;
 
-public class EthGetBalanceTransaction implements Transaction<BigInteger> {
+public class NetVersionTransaction implements Transaction<String> {
 
-  private final Account account;
-
-  EthGetBalanceTransaction(final Account account) {
-    this.account = account;
-  }
+  NetVersionTransaction() {}
 
   @Override
-  public BigInteger execute(final Web3j node) {
+  public String execute(final Web3j node) {
     try {
-      final EthGetBalance result = node.ethGetBalance(account.getAddress(), LATEST).send();
+      final NetVersion result = node.netVersion().send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
-
-      return result.getBalance();
-
+      return result.getNetVersion();
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }

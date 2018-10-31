@@ -14,6 +14,8 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Accounts;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account.TransferTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account.TransferTransactionSet;
 
 import java.util.ArrayList;
 import java.util.List;

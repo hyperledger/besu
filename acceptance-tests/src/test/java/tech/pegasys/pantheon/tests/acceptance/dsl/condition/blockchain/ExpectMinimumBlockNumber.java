@@ -10,22 +10,28 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.blockchain;
+package tech.pegasys.pantheon.tests.acceptance.dsl.condition.blockchain;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.blockchain.ExpectMinimumBlockNumber;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
 
-public class Blockchain {
+import java.math.BigInteger;
+
+public class ExpectMinimumBlockNumber implements Condition {
 
   private final EthTransactions eth;
+  private final BigInteger blockNumber;
 
-  public Blockchain(final EthTransactions eth) {
+  public ExpectMinimumBlockNumber(final EthTransactions eth, final BigInteger blockNumber) {
+    this.blockNumber = blockNumber;
     this.eth = eth;
   }
 
-  public Condition blockNumberMustBeLatest(final Node node) {
-    return new ExpectMinimumBlockNumber(eth, node.execute(eth.blockNumber()));
+  @Override
+  public void verify(final Node node) {
+    assertThat(node.execute(eth.blockNumber())).isGreaterThanOrEqualTo(blockNumber);
   }
 }

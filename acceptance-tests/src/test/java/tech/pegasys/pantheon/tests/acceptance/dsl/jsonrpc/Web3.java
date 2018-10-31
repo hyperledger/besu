@@ -10,22 +10,21 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.blockchain;
+package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.blockchain.ExpectMinimumBlockNumber;
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.web3.ExpectWeb3Sha3Equals;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.web3.Web3Transactions;
 
-public class Blockchain {
+public class Web3 {
 
-  private final EthTransactions eth;
+  private final Web3Transactions transactions;
 
-  public Blockchain(final EthTransactions eth) {
-    this.eth = eth;
+  public Web3(final Web3Transactions transactions) {
+    this.transactions = transactions;
   }
 
-  public Condition blockNumberMustBeLatest(final Node node) {
-    return new ExpectMinimumBlockNumber(eth, node.execute(eth.blockNumber()));
+  public Condition sha3(final String input, final String expectedHash) {
+    return new ExpectWeb3Sha3Equals(transactions.sha3(input), expectedHash);
   }
 }

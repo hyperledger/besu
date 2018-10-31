@@ -10,27 +10,33 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.node;
+package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 
 import org.web3j.protocol.Web3j;
-import org.web3j.protocol.core.methods.response.Web3Sha3;
+import org.web3j.protocol.core.methods.response.EthGetWork;
 
-public class Web3 {
+public class EthGetWorkTransaction implements Transaction<String[]> {
 
-  private final Web3j web3j;
+  EthGetWorkTransaction() {}
 
-  public Web3(final Web3j web3) {
-    this.web3j = web3;
-  }
-
-  public String web3Sha3(final String input) throws IOException {
-    final Web3Sha3 result = web3j.web3Sha3(input).send();
-    assertThat(result).isNotNull();
-    assertThat(result.hasError()).isFalse();
-    return result.getResult();
+  @Override
+  public String[] execute(final Web3j node) {
+    try {
+      final EthGetWork result = node.ethGetWork().send();
+      assertThat(result).isNotNull();
+      return new String[] {
+        result.getCurrentBlockHeaderPowHash(),
+        result.getSeedHashForDag(),
+        result.getBoundaryCondition()
+      };
+    } catch (final IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
