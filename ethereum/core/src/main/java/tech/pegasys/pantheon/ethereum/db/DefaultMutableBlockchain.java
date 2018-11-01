@@ -350,8 +350,7 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
       if (!genesisHash.get().equals(genesisBlock.getHash())) {
         throw new InvalidConfigurationException(
             "Supplied genesis block does not match stored chain data.\n"
-                + "Please ensure the integrity of the file: \'pantheon/ethereum/core/src/main/resources/mainnet.json\'.\n"
-                + "To set a custom genesis file employ the runtime option \'--genesis=PATH_TO_FILE\'.");
+                + "Please specify a different data directory with --datadir or specify the original genesis file with --genesis.");
       }
     }
   }
