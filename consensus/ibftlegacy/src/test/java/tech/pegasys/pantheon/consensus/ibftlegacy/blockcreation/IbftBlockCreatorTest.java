@@ -18,6 +18,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryWorldStateArchive;
 
+import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
@@ -45,7 +46,6 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
-import io.vertx.core.json.JsonObject;
 import org.junit.Test;
 
 public class IbftBlockCreatorTest {
@@ -77,7 +77,8 @@ public class IbftBlockCreatorTest {
     final VoteTally voteTally = new VoteTally(initialValidatorList);
 
     final ProtocolSchedule<IbftContext> protocolSchedule =
-        IbftProtocolSchedule.create(new JsonObject("{\"spuriousDragonBlock\":0}"));
+        IbftProtocolSchedule.create(
+            GenesisConfigOptions.fromGenesisConfig("{\"config\": {\"spuriousDragonBlock\":0}}"));
     final ProtocolContext<IbftContext> protContext =
         new ProtocolContext<>(
             blockchain,

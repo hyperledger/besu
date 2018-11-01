@@ -14,11 +14,11 @@ package tech.pegasys.pantheon.consensus.clique;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
 
+import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 
-import io.vertx.core.json.JsonObject;
 import org.junit.Test;
 
 public class CliqueProtocolScheduleTest {
@@ -26,17 +26,18 @@ public class CliqueProtocolScheduleTest {
   @Test
   public void protocolSpecsAreCreatedAtBlockDefinedInJson() {
     final String jsonInput =
-        "{\"chainId\": 4,\n"
+        "{\"config\": "
+            + "{\"chainId\": 4,\n"
             + "\"homesteadBlock\": 1,\n"
             + "\"eip150Block\": 2,\n"
             + "\"eip155Block\": 3,\n"
             + "\"eip158Block\": 3,\n"
-            + "\"byzantiumBlock\": 1035301}";
+            + "\"byzantiumBlock\": 1035301}"
+            + "}";
 
-    final JsonObject jsonObject = new JsonObject(jsonInput);
-
+    final GenesisConfigOptions config = GenesisConfigOptions.fromGenesisConfig(jsonInput);
     final ProtocolSchedule<CliqueContext> protocolSchedule =
-        CliqueProtocolSchedule.create(jsonObject, KeyPair.generate());
+        CliqueProtocolSchedule.create(config, KeyPair.generate());
 
     final ProtocolSpec<CliqueContext> homesteadSpec = protocolSchedule.getByBlockNumber(1);
     final ProtocolSpec<CliqueContext> tangerineWhistleSpec = protocolSchedule.getByBlockNumber(2);

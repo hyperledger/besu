@@ -11,6 +11,7 @@ jar {
 dependencies {
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')
+  implementation project(':config')
   implementation project(':crypto')
   implementation project(':ethereum:core')
   implementation project(':ethereum:blockcreation')

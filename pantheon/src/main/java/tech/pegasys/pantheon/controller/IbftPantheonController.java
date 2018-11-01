@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.controller;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import tech.pegasys.pantheon.config.IbftConfigOptions;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
@@ -25,7 +26,6 @@ import tech.pegasys.pantheon.consensus.ibft.IbftStateMachine;
 import tech.pegasys.pantheon.consensus.ibft.network.IbftNetworkPeers;
 import tech.pegasys.pantheon.consensus.ibft.protocol.IbftProtocolManager;
 import tech.pegasys.pantheon.consensus.ibft.protocol.IbftSubProtocol;
-import tech.pegasys.pantheon.consensus.ibftlegacy.IbftProtocolSchedule;
 import tech.pegasys.pantheon.consensus.ibftlegacy.IbftVoteTallyUpdater;
 import tech.pegasys.pantheon.consensus.ibftlegacy.protocol.Istanbul64Protocol;
 import tech.pegasys.pantheon.consensus.ibftlegacy.protocol.Istanbul64ProtocolManager;
@@ -60,17 +60,14 @@ import tech.pegasys.pantheon.services.kvstore.RocksDbKeyValueStorage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.Logger;
 
 public class IbftPantheonController implements PantheonController<IbftContext> {
 
-  private static final int DEFAULT_ROUND_EXPIRY_MILLISECONDS = 10000;
   private static final Logger LOG = getLogger();
   private final GenesisConfig<IbftContext> genesisConfig;
   private final ProtocolContext<IbftContext> context;
@@ -112,7 +109,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
       final GenesisConfig<IbftContext> genesisConfig,
       final SynchronizerConfiguration taintedSyncConfig,
       final boolean ottomanTestnetOperation,
-      final JsonObject ibftConfig,
+      final IbftConfigOptions ibftConfig,
       final int networkId,
       final KeyPair nodeKeys)
       throws IOException {
@@ -132,8 +129,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
     final WorldStateArchive worldStateArchive = new WorldStateArchive(worldStateStorage);
     genesisConfig.writeStateTo(worldStateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
 
-    final EpochManager epochManager =
-        new EpochManager(IbftProtocolSchedule.getEpochLength(Optional.of(ibftConfig)));
+    final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
 
     final VoteTally voteTally =
         new IbftVoteTallyUpdater(epochManager).buildVoteTallyFromBlockchain(blockchain);
@@ -176,10 +172,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
 
     final IbftStateMachine ibftStateMachine = new IbftStateMachine();
     final IbftProcessor ibftProcessor =
-        new IbftProcessor(
-            ibftEventQueue,
-            ibftConfig.getInteger("requestTimeout", DEFAULT_ROUND_EXPIRY_MILLISECONDS),
-            ibftStateMachine);
+        new IbftProcessor(ibftEventQueue, ibftConfig.getRequestTimeoutMillis(), ibftStateMachine);
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
     processorExecutor.submit(ibftProcessor);
 

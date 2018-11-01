@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.controller;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import tech.pegasys.pantheon.config.CliqueConfigOptions;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueVoteTallyUpdater;
 import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
@@ -59,7 +60,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.Logger;
 
 public class CliquePantheonController implements PantheonController<CliqueContext> {
@@ -73,8 +73,6 @@ public class CliquePantheonController implements PantheonController<CliqueContex
   private final TransactionPool transactionPool;
   private final Runnable closer;
 
-  private static final long EPOCH_LENGTH_DEFAULT = 30_000L;
-  private static final long SECONDS_BETWEEN_BLOCKS_DEFAULT = 15L;
   private final MiningCoordinator miningCoordinator;
 
   CliquePantheonController(
@@ -102,13 +100,12 @@ public class CliquePantheonController implements PantheonController<CliqueContex
       final GenesisConfig<CliqueContext> genesisConfig,
       final SynchronizerConfiguration taintedSyncConfig,
       final MiningParameters miningParams,
-      final JsonObject cliqueConfig,
+      final CliqueConfigOptions cliqueConfig,
       final int networkId,
       final KeyPair nodeKeys)
       throws IOException {
-    final long blocksPerEpoch = cliqueConfig.getLong("epoch", EPOCH_LENGTH_DEFAULT);
-    final long secondsBetweenBlocks =
-        cliqueConfig.getLong("period", SECONDS_BETWEEN_BLOCKS_DEFAULT);
+    final long blocksPerEpoch = cliqueConfig.getEpochLength();
+    final long secondsBetweenBlocks = cliqueConfig.getBlockPeriodSeconds();
 
     final EpochManager epochManger = new EpochManager(blocksPerEpoch);
     final KeyValueStorage kv =

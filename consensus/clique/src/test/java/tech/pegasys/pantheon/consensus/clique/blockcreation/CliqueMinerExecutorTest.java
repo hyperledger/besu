@@ -17,6 +17,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
 import tech.pegasys.pantheon.consensus.clique.CliqueProtocolSchedule;
@@ -47,6 +48,8 @@ import org.junit.Test;
 
 public class CliqueMinerExecutorTest {
 
+  private static final GenesisConfigOptions GENESIS_CONFIG_OPTIONS =
+      GenesisConfigOptions.fromGenesisConfig(new JsonObject());
   private final KeyPair proposerKeyPair = KeyPair.generate();
   private Address localAddress;
   private final List<Address> validatorList = Lists.newArrayList();
@@ -81,7 +84,7 @@ public class CliqueMinerExecutorTest {
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             Executors.newSingleThreadExecutor(),
-            CliqueProtocolSchedule.create(new JsonObject(), proposerKeyPair),
+            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerKeyPair),
             new PendingTransactions(1),
             proposerKeyPair,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, wrappedVanityData, false),
@@ -111,7 +114,7 @@ public class CliqueMinerExecutorTest {
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             Executors.newSingleThreadExecutor(),
-            CliqueProtocolSchedule.create(new JsonObject(), proposerKeyPair),
+            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerKeyPair),
             new PendingTransactions(1),
             proposerKeyPair,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, wrappedVanityData, false),
