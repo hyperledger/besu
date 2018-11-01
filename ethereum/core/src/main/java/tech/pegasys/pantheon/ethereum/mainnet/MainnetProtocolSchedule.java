@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.mainnet;
 
+import tech.pegasys.pantheon.config.GenesisConfigOptions;
+
 import io.vertx.core.json.JsonObject;
 
 /** Provides {@link ProtocolSpec} lookups for mainnet hard forks. */
@@ -92,19 +94,19 @@ public class MainnetProtocolSchedule {
    *     points
    * @return A configured mainnet protocol schedule
    */
-  public static ProtocolSchedule<Void> fromConfig(final JsonObject config) {
+  public static ProtocolSchedule<Void> fromConfig(final GenesisConfigOptions config) {
     final long homesteadBlockNumber =
-        config.getLong("homesteadBlock", DEFAULT_HOMESTEAD_BLOCK_NUMBER);
-    final long daoBlockNumber = config.getLong("daoForkBlock", DEFAULT_DAO_BLOCK_NUMBER);
+        config.getHomesteadBlockNumber().orElse(DEFAULT_HOMESTEAD_BLOCK_NUMBER);
+    final long daoBlockNumber = config.getDaoForkBlock().orElse(DEFAULT_DAO_BLOCK_NUMBER);
     final long tangerineWhistleBlockNumber =
-        config.getLong("eip150Block", DEFAULT_TANGERINE_WHISTLE_BLOCK_NUMBER);
+        config.getTangerineWhistleBlockNumber().orElse(DEFAULT_TANGERINE_WHISTLE_BLOCK_NUMBER);
     final long spuriousDragonBlockNumber =
-        config.getLong("eip158Block", DEFAULT_SPURIOUS_DRAGON_BLOCK_NUMBER);
+        config.getSpuriousDragonBlockNumber().orElse(DEFAULT_SPURIOUS_DRAGON_BLOCK_NUMBER);
     final long byzantiumBlockNumber =
-        config.getLong("byzantiumBlock", DEFAULT_BYZANTIUM_BLOCK_NUMBER);
+        config.getByzantiumBlockNumber().orElse(DEFAULT_BYZANTIUM_BLOCK_NUMBER);
     final long constantinopleBlockNumber =
-        config.getLong("constantinopleBlock", DEFAULT_CONSTANTINOPLE_BLOCK_NUMBER);
-    final int chainId = config.getInteger("chainId", DEFAULT_CHAIN_ID);
+        config.getConstantinopleBlockNumber().orElse(DEFAULT_CONSTANTINOPLE_BLOCK_NUMBER);
+    final int chainId = config.getChainId().orElse(DEFAULT_CHAIN_ID);
     return create(
         homesteadBlockNumber,
         daoBlockNumber,

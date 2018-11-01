@@ -45,6 +45,7 @@ dependencies {
   testImplementation 'io.vertx:vertx-codegen'
   testImplementation 'io.vertx:vertx-unit'
 
+  integrationTestImplementation project(':config')
   integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(':services:kvstore')
 

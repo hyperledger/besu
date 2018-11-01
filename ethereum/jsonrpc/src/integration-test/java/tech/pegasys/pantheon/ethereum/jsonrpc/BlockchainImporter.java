@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc;
 
+import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -25,8 +26,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.vertx.core.json.JsonObject;
-
 /** Creates a block chain from a genesis and a blocks files. */
 public class BlockchainImporter {
 
@@ -39,7 +38,8 @@ public class BlockchainImporter {
   private final Block genesisBlock;
 
   public BlockchainImporter(final URL blocksUrl, final String genesisJson) throws Exception {
-    protocolSchedule = MainnetProtocolSchedule.fromConfig(new JsonObject(genesisJson));
+    protocolSchedule =
+        MainnetProtocolSchedule.fromConfig(GenesisConfigOptions.fromGenesisConfig(genesisJson));
 
     blocks = new ArrayList<>();
     try (final RawBlockIterator iterator =

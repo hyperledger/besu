@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.controller;
 
+import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.consensus.clique.CliqueProtocolSchedule;
 import tech.pegasys.pantheon.consensus.ibftlegacy.IbftProtocolSchedule;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
@@ -47,31 +48,31 @@ public interface PantheonController<C> extends Closeable {
       throws IOException {
 
     final JsonObject config = new JsonObject(configContents);
-    final JsonObject configOptions = config.getJsonObject("config");
+    final GenesisConfigOptions configOptions = GenesisConfigOptions.fromGenesisConfig(config);
 
-    if (configOptions.containsKey("ethash")) {
+    if (configOptions.isEthHash()) {
       return MainnetPantheonController.init(
           pantheonHome,
           GenesisConfig.fromConfig(config, MainnetProtocolSchedule.fromConfig(configOptions)),
           syncConfig,
           miningParameters,
           nodeKeys);
-    } else if (configOptions.containsKey("ibft")) {
+    } else if (configOptions.isIbft()) {
       return IbftPantheonController.init(
           pantheonHome,
           GenesisConfig.fromConfig(config, IbftProtocolSchedule.create(configOptions)),
           syncConfig,
           ottomanTestnetOperation,
-          configOptions.getJsonObject("ibft"),
+          configOptions.getIbftConfigOptions(),
           networkId,
           nodeKeys);
-    } else if (configOptions.containsKey("clique")) {
+    } else if (configOptions.isClique()) {
       return CliquePantheonController.init(
           pantheonHome,
           GenesisConfig.fromConfig(config, CliqueProtocolSchedule.create(configOptions, nodeKeys)),
           syncConfig,
           miningParameters,
-          configOptions.getJsonObject("clique"),
+          configOptions.getCliqueConfigOptions(),
           networkId,
           nodeKeys);
     } else {
