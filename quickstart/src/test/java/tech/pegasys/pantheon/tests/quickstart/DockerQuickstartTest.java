@@ -293,7 +293,8 @@ public class DockerQuickstartTest {
     final Pattern pattern;
 
     EndpointsIdentifier(final String lineLabel) {
-      pattern = Pattern.compile(lineLabel + ".+(http://.+:[0-9]+)", Pattern.DOTALL);
+      pattern =
+          Pattern.compile(lineLabel + ".+((http|ws)://.+:[0-9]+/{0,1}[a-z]*)", Pattern.DOTALL);
     }
   }
 
