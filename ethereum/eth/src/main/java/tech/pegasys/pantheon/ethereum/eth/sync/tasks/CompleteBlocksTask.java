@@ -44,7 +44,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>> {
   private static final Logger LOG = LogManager.getLogger();
-  private static final int DEFAULT_RETRIES = 3;
+  private static final int DEFAULT_RETRIES = 20;
 
   private final EthContext ethContext;
   private final ProtocolSchedule<C> protocolSchedule;
