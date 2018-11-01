@@ -33,7 +33,6 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.util.InvalidConfigurationException;
 import tech.pegasys.pantheon.util.BlockImporter;
-import tech.pegasys.pantheon.util.BlockchainImporter;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.File;
@@ -120,7 +119,6 @@ public class PantheonCommand implements Runnable {
   }
 
   private final BlockImporter blockImporter;
-  final BlockchainImporter blockchainImporter;
 
   private final PantheonControllerBuilder controllerBuilder;
   private final Builder synchronizerConfigurationBuilder;
@@ -361,12 +359,10 @@ public class PantheonCommand implements Runnable {
 
   public PantheonCommand(
       final BlockImporter blockImporter,
-      final BlockchainImporter blockchainImporter,
       final RunnerBuilder runnerBuilder,
       final PantheonControllerBuilder controllerBuilder,
       final Builder synchronizerConfigurationBuilder) {
     this.blockImporter = blockImporter;
-    this.blockchainImporter = blockchainImporter;
     this.runnerBuilder = runnerBuilder;
     this.controllerBuilder = controllerBuilder;
     this.synchronizerConfigurationBuilder = synchronizerConfigurationBuilder;
@@ -380,9 +376,7 @@ public class PantheonCommand implements Runnable {
     final CommandLine commandLine = new CommandLine(this);
 
     final ImportSubCommand importSubCommand = new ImportSubCommand(blockImporter);
-    final ImportBlockchainSubCommand importBlockchainSubCommand = new ImportBlockchainSubCommand();
     commandLine.addSubcommand("import", importSubCommand);
-    commandLine.addSubcommand("import-blockchain", importBlockchainSubCommand);
     commandLine.addSubcommand("export-pub-key", new ExportPublicKeySubCommand());
 
     commandLine.registerConverter(Address.class, Address::fromHexString);

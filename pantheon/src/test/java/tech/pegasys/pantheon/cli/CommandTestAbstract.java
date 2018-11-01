@@ -91,7 +91,7 @@ public abstract class CommandTestAbstract {
 
     final PantheonCommand pantheonCommand =
         new PantheonCommand(
-            mockBlockImporter, null, mockRunnerBuilder, mockControllerBuilder, mockSyncConfBuilder);
+            mockBlockImporter, mockRunnerBuilder, mockControllerBuilder, mockSyncConfBuilder);
 
     // parse using Ansi.OFF to be able to assert on non formatted output results
     pantheonCommand.parse(
