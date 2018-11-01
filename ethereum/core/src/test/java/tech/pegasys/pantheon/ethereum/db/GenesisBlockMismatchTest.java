@@ -92,7 +92,6 @@ public class GenesisBlockMismatchTest {
         .isThrownBy(() -> blockchain00.setGenesis(genesisBlock01))
         .withMessageContaining(
             "Supplied genesis block does not match stored chain data.\n"
-                + "Please ensure the integrity of the file: \'pantheon/ethereum/core/src/main/resources/mainnet.json\'.\n"
-                + "To set a custom genesis file employ the runtime option \'--genesis=PATH_TO_FILE\'.");
+                + "Please specify a different data directory with --datadir or specify the original genesis file with --genesis.");
   }
 }
