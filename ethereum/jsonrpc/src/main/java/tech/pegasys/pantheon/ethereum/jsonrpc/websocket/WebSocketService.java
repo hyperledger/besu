@@ -22,6 +22,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.net.SocketAddress;
 import org.apache.logging.log4j.LogManager;
@@ -62,6 +63,7 @@ public class WebSocketService {
                     .setPort(configuration.getPort())
                     .setWebsocketSubProtocols("undefined"))
             .websocketHandler(websocketHandler())
+            .requestHandler(httpHandler())
             .listen(startHandler(resultFuture));
 
     return resultFuture;
@@ -101,6 +103,11 @@ public class WebSocketService {
             websocket.close();
           });
     };
+  }
+
+  private Handler<HttpServerRequest> httpHandler() {
+    return http ->
+        http.response().setStatusCode(400).end("Websocket endpoint can't handle HTTP requests");
   }
 
   private Handler<AsyncResult<HttpServer>> startHandler(final CompletableFuture<?> resultFuture) {
