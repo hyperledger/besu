@@ -37,7 +37,7 @@ public class ECRECPrecompiledContractTest {
     return new Object[][] {
       {
         "acb1c19ac0832320815b5e886c6b73ad7d6177853d44b026f2a7a9e11bb899fc000000000000000000000000000000000000000000000000000000000000001c89ea49159b334f9aebbf54481b69d000d285baa341899db355a4030f6838394e540e9f9fa17bef441e32d98d5f4554cfefdc6a56101352e4b92efafd0d9646e8",
-        "0x"
+        null
       },
       {
         "0x0049872459827432342344987245982743234234498724598274323423429943000000000000000000000000000000000000000000000000000000000000001be8359c341771db7f9ea3a662a1741d27775ce277961470028e054ed3285aab8e31f63eaac35c4e6178abbc2a1073040ac9bbb0b67f2bc89a2e9593ba9abe8c53",
@@ -454,7 +454,8 @@ public class ECRECPrecompiledContractTest {
   @Test
   public void shouldRecoverAddress() {
     final BytesValue input = BytesValue.fromHexString(this.input);
-    final BytesValue expected = Bytes32.fromHexString(expectedResult);
+    final BytesValue expected =
+        expectedResult == null ? BytesValue.EMPTY : Bytes32.fromHexString(expectedResult);
     assertThat(contract.compute(input)).isEqualTo(expected);
   }
 }
