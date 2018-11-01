@@ -237,7 +237,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     jsonRpcConfiguration.setHost("5.6.7.8");
     jsonRpcConfiguration.setPort(5678);
     jsonRpcConfiguration.setCorsAllowedDomains(Collections.emptyList());
-    jsonRpcConfiguration.setRpcApis(JsonRpcConfiguration.DEFAULT_JSON_RPC_APIS);
+    jsonRpcConfiguration.setRpcApis(RpcApis.DEFAULT_JSON_RPC_APIS);
     jsonRpcConfiguration.addRpcApi(CliqueRpcApis.CLIQUE);
     jsonRpcConfiguration.addRpcApi(IbftRpcApis.IBFT);
 
