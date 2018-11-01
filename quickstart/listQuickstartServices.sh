@@ -57,7 +57,7 @@ if [ ${#dots} -gt ${maxRetryCount} ]; then
   echo "****************************************************************${NORMAL}"
 else
     echo "JSON-RPC ${BOLD}HTTP${NORMAL}${CYAN} service endpoint      : ${ORANGE}http://${HOST}:${explorerMapping##*:}/jsonrpc${CYAN}   *"
-    echo "JSON-RPC ${BOLD}WebSocket${NORMAL}${CYAN} service endpoint : ${ORANGE}http://${HOST}:${explorerMapping##*:}/jsonws${CYAN}   *"
+    echo "JSON-RPC ${BOLD}WebSocket${NORMAL}${CYAN} service endpoint : ${ORANGE}ws://${HOST}:${explorerMapping##*:}/jsonws${CYAN}   *"
   echo "${CYAN}Web block explorer address          : ${ORANGE}http://${HOST}:${explorerMapping##*:}${CYAN}   *                                                                             "
   echo "****************************************************************${NORMAL}"
 fi
