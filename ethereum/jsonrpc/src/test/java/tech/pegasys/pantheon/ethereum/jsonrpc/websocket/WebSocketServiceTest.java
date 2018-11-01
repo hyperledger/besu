@@ -25,6 +25,8 @@ import java.util.Map;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.WebSocketBase;
 import io.vertx.ext.unit.Async;
@@ -44,6 +46,7 @@ public class WebSocketServiceTest {
   private WebSocketConfiguration websocketConfiguration;
   private WebSocketRequestHandler webSocketRequestHandlerSpy;
   private WebSocketService websocketService;
+  private HttpClient httpClient;
 
   @Before
   public void before() {
@@ -61,6 +64,13 @@ public class WebSocketServiceTest {
     websocketService.start().join();
 
     websocketConfiguration.setPort(websocketService.socketAddress().getPort());
+
+    HttpClientOptions httpClientOptions =
+        new HttpClientOptions()
+            .setDefaultHost(websocketConfiguration.getHost())
+            .setDefaultPort(websocketConfiguration.getPort());
+
+    httpClient = vertx.createHttpClient(httpClientOptions);
   }
 
   @After
@@ -76,21 +86,17 @@ public class WebSocketServiceTest {
     final String request = "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"]}";
     final String expectedResponse = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1\"}";
 
-    vertx
-        .createHttpClient()
-        .websocket(
-            websocketConfiguration.getPort(),
-            websocketConfiguration.getHost(),
-            "/",
-            webSocket -> {
-              webSocket.write(Buffer.buffer(request));
+    httpClient.websocket(
+        "/",
+        webSocket -> {
+          webSocket.write(Buffer.buffer(request));
 
-              webSocket.handler(
-                  buffer -> {
-                    context.assertEquals(expectedResponse, buffer.toString());
-                    async.complete();
-                  });
-            });
+          webSocket.handler(
+              buffer -> {
+                context.assertEquals(expectedResponse, buffer.toString());
+                async.complete();
+              });
+        });
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
@@ -107,15 +113,7 @@ public class WebSocketServiceTest {
               context.assertNotNull(m.body());
               async.complete();
             })
-        .completionHandler(
-            v ->
-                vertx
-                    .createHttpClient()
-                    .websocket(
-                        websocketConfiguration.getPort(),
-                        websocketConfiguration.getHost(),
-                        "/",
-                        WebSocketBase::close));
+        .completionHandler(v -> httpClient.websocket("/", WebSocketBase::close));
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
@@ -127,16 +125,35 @@ public class WebSocketServiceTest {
     final byte[] bigMessage = new byte[HttpServerOptions.DEFAULT_MAX_WEBSOCKET_MESSAGE_SIZE + 1];
     Arrays.fill(bigMessage, (byte) 1);
 
-    vertx
-        .createHttpClient()
-        .websocket(
+    httpClient.websocket(
+        "/",
+        webSocket -> {
+          webSocket.write(Buffer.buffer(bigMessage));
+          webSocket.closeHandler(v -> async.complete());
+        });
+
+    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+  }
+
+  @Test
+  public void websocketServiceMustReturnErrorOnHttpRequest(final TestContext context) {
+    final Async async = context.async();
+
+    httpClient
+        .post(
             websocketConfiguration.getPort(),
             websocketConfiguration.getHost(),
             "/",
-            webSocket -> {
-              webSocket.write(Buffer.buffer(bigMessage));
-              webSocket.closeHandler(v -> async.complete());
-            });
+            response ->
+                response.bodyHandler(
+                    b -> {
+                      context
+                          .assertEquals(400, response.statusCode())
+                          .assertEquals(
+                              "Websocket endpoint can't handle HTTP requests", b.toString());
+                      async.complete();
+                    }))
+        .end();
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
