@@ -13,8 +13,8 @@
 package tech.pegasys.pantheon.ethereum.db;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
-import static sun.security.krb5.Confounder.bytes;
 
+import tech.pegasys.pantheon.crypto.SecureRandomProvider;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
@@ -30,11 +30,19 @@ import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.security.SecureRandom;
 import java.util.Collections;
 
 import org.junit.Test;
 
 public class GenesisBlockMismatchTest {
+  private static final SecureRandom srand = SecureRandomProvider.publicSecureRandom();
+
+  private static byte[] bytes(final int len) {
+    final byte[] bytes = new byte[len];
+    srand.nextBytes(bytes);
+    return bytes;
+  }
 
   @Test
   public void suppliedGenesisBlockMismatchStoredChainDataException() {
