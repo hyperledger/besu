@@ -25,7 +25,6 @@ import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.EthTaskException.Fa
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -39,10 +38,10 @@ import org.junit.Test;
  */
 public abstract class PeerMessageTaskTest<T> extends AbstractMessageTaskTest<T, PeerTaskResult<T>> {
   @Test
-  public void completesWhenPeerReturnsPartialResult()
-      throws ExecutionException, InterruptedException {
+  public void completesWhenPeerReturnsPartialResult() {
     // Setup a partially responsive peer
-    final Responder responder = RespondingEthPeer.partialResponder(blockchain, protocolSchedule);
+    final Responder responder =
+        RespondingEthPeer.partialResponder(blockchain, protocolSchedule, 0.5f);
     final RespondingEthPeer respondingEthPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
@@ -67,7 +66,7 @@ public abstract class PeerMessageTaskTest<T> extends AbstractMessageTaskTest<T, 
   }
 
   @Test
-  public void failsWhenNoPeersAreAvailable() throws ExecutionException, InterruptedException {
+  public void failsWhenNoPeersAreAvailable() {
     // Setup data to be requested
     final T requestedData = generateDataToBeRequested();
 
@@ -75,10 +74,7 @@ public abstract class PeerMessageTaskTest<T> extends AbstractMessageTaskTest<T, 
     final EthTask<PeerTaskResult<T>> task = createTask(requestedData);
     final CompletableFuture<PeerTaskResult<T>> future = task.run();
     final AtomicReference<Throwable> failure = new AtomicReference<>();
-    future.whenComplete(
-        (r, t) -> {
-          failure.set(t);
-        });
+    future.whenComplete((r, t) -> failure.set(t));
 
     assertThat(future.isCompletedExceptionally()).isTrue();
     assertThat(failure.get()).isNotNull();
@@ -108,10 +104,7 @@ public abstract class PeerMessageTaskTest<T> extends AbstractMessageTaskTest<T, 
     final EthTask<PeerTaskResult<T>> task = createTask(requestedData);
     final CompletableFuture<PeerTaskResult<T>> future = task.run();
     respondingEthPeer.respondWhile(responder, () -> !future.isDone());
-    future.whenComplete(
-        (response, error) -> {
-          done.compareAndSet(false, true);
-        });
+    future.whenComplete((response, error) -> done.compareAndSet(false, true));
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCompletedExceptionally()).isFalse();
   }

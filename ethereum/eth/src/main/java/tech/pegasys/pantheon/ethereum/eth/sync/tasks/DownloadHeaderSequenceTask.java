@@ -47,7 +47,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List<BlockHeader>> {
   private static final Logger LOG = LogManager.getLogger();
-  private static final int DEFAULT_RETRIES = 20;
+  private static final int DEFAULT_RETRIES = 3;
 
   private final EthContext ethContext;
   private final ProtocolContext<C> protocolContext;
@@ -163,6 +163,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
           BlockHeader child = null;
           boolean firstSkipped = false;
           for (final BlockHeader header : headersResult.getResult()) {
+            resetRetryCounter();
             final int headerIndex =
                 Ints.checkedCast(
                     segmentLength - (referenceHeader.getNumber() - header.getNumber()));

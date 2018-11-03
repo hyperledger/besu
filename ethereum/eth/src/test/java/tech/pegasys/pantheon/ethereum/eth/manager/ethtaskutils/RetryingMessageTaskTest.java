@@ -24,7 +24,6 @@ import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.MaxRetriesReachedEx
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 
@@ -48,12 +47,13 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
   }
 
   @Test
-  public void failsWhenPeerRepeatedlyReturnsPartialResult()
-      throws ExecutionException, InterruptedException {
+  public void failsWhenPeerReturnsPartialResultThenStops() {
     // Setup data to be requested and expected response
 
-    // Setup a partially responsive peer
-    final Responder responder = RespondingEthPeer.partialResponder(blockchain, protocolSchedule);
+    // Setup a partially responsive peer and a non-responsive peer
+    final Responder partialResponder =
+        RespondingEthPeer.partialResponder(blockchain, protocolSchedule, 0.5f);
+    final Responder emptyResponder = RespondingEthPeer.emptyResponder();
     final RespondingEthPeer respondingPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
 
@@ -62,20 +62,51 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
     final EthTask<T> task = createTask(requestedData);
     final CompletableFuture<T> future = task.run();
 
-    // Respond max times
-    respondingPeer.respondTimes(responder, maxRetries);
+    // Respond once with no data
+    respondingPeer.respond(emptyResponder);
+    assertThat(future.isDone()).isFalse();
+
+    // Respond once with partial data, this should reset failures
+    respondingPeer.respond(partialResponder);
+    assertThat(future.isDone()).isFalse();
+
+    // Respond max times with no data
+    respondingPeer.respondTimes(emptyResponder, maxRetries);
     assertThat(future.isDone()).isFalse();
 
     // Next retry should fail
-    respondingPeer.respond(responder);
+    respondingPeer.respond(emptyResponder);
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCompletedExceptionally()).isTrue();
     assertThatThrownBy(future::get).hasCauseInstanceOf(MaxRetriesReachedException.class);
   }
 
   @Test
-  public void doesNotCompleteWhenPeersAreUnavailable()
+  public void completesWhenPeerReturnsPartialResult()
       throws ExecutionException, InterruptedException {
+    // Setup data to be requested and expected response
+
+    // Setup a partially responsive peer
+    final RespondingEthPeer respondingPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+
+    // Execute task and wait for response
+    final T requestedData = generateDataToBeRequested();
+    final EthTask<T> task = createTask(requestedData);
+    final CompletableFuture<T> future = task.run();
+
+    // Respond with partial data up until complete.
+    respondingPeer.respond(RespondingEthPeer.partialResponder(blockchain, protocolSchedule, 0.25f));
+    respondingPeer.respond(RespondingEthPeer.partialResponder(blockchain, protocolSchedule, 0.50f));
+    respondingPeer.respond(RespondingEthPeer.partialResponder(blockchain, protocolSchedule, 0.75f));
+    respondingPeer.respond(RespondingEthPeer.partialResponder(blockchain, protocolSchedule, 1.0f));
+
+    assertThat(future.isDone()).isTrue();
+    assertResultMatchesExpectation(requestedData, future.get(), respondingPeer.getEthPeer());
+  }
+
+  @Test
+  public void doesNotCompleteWhenPeersAreUnavailable() {
     // Setup data to be requested
     final T requestedData = generateDataToBeRequested();
 
@@ -87,7 +118,7 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
 
   @Test
   public void completesWhenPeersAreTemporarilyUnavailable()
-      throws ExecutionException, InterruptedException, TimeoutException {
+      throws ExecutionException, InterruptedException {
     // Setup data to be requested
     final T requestedData = generateDataToBeRequested();
 
@@ -108,7 +139,7 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
 
   @Test
   public void completeWhenPeersTimeoutTemporarily()
-      throws ExecutionException, InterruptedException, TimeoutException {
+      throws ExecutionException, InterruptedException {
     peerCountToTimeout.set(1);
     final Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
     final RespondingEthPeer respondingPeer =
@@ -125,7 +156,7 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
   }
 
   @Test
-  public void failsWhenPeersSendEmptyResponses() throws ExecutionException, InterruptedException {
+  public void failsWhenPeersSendEmptyResponses() {
     // Setup a unresponsive peer
     final Responder responder = RespondingEthPeer.emptyResponder();
     final RespondingEthPeer respondingPeer =

@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -143,10 +145,7 @@ public class RespondingEthPeer {
     }
   }
 
-  /**
-   * @param responder
-   * @return True if any requests were processed
-   */
+  /** @return True if any requests were processed */
   public boolean respond(final Responder responder) {
     // Respond to queued messages
     final List<OutgoingMessage> currentMessages = new ArrayList<>(outgoingMessages);
@@ -207,8 +206,17 @@ public class RespondingEthPeer {
     };
   }
 
+  /**
+   * Create a responder that only responds with a fixed portion of the available data.
+   *
+   * @param portion The portion of the available data to return, from 0 to 1
+   */
   public static <C> Responder partialResponder(
-      final Blockchain blockchain, final ProtocolSchedule<C> protocolSchedule) {
+      final Blockchain blockchain,
+      final ProtocolSchedule<C> protocolSchedule,
+      final float portion) {
+    checkArgument(portion >= 0.0 && portion <= 1.0, "Portion is in the range [0.0..1.0]");
+
     final Responder fullResponder = blockchainResponder(blockchain);
     return (cap, msg) -> {
       final Optional<MessageData> maybeResponse = fullResponder.respond(cap, msg);
@@ -225,7 +233,7 @@ public class RespondingEthPeer {
             final List<BlockHeader> originalHeaders =
                 Lists.newArrayList(headersMessage.getHeaders(protocolSchedule));
             final List<BlockHeader> partialHeaders =
-                originalHeaders.subList(0, originalHeaders.size() / 2);
+                originalHeaders.subList(0, (int) (originalHeaders.size() * portion));
             partialResponse = BlockHeadersMessage.create(partialHeaders);
           } finally {
             headersMessage.release();
@@ -237,7 +245,7 @@ public class RespondingEthPeer {
             final List<BlockBody> originalBodies =
                 Lists.newArrayList(bodiesMessage.bodies(protocolSchedule));
             final List<BlockBody> partialBodies =
-                originalBodies.subList(0, originalBodies.size() / 2);
+                originalBodies.subList(0, (int) (originalBodies.size() * portion));
             partialResponse = BlockBodiesMessage.create(partialBodies);
           } finally {
             bodiesMessage.release();
@@ -249,7 +257,7 @@ public class RespondingEthPeer {
             final List<List<TransactionReceipt>> originalReceipts =
                 Lists.newArrayList(receiptsMessage.receipts());
             final List<List<TransactionReceipt>> partialReceipts =
-                originalReceipts.subList(0, originalReceipts.size() / 2);
+                originalReceipts.subList(0, (int) (originalReceipts.size() * portion));
             partialResponse = ReceiptsMessage.create(partialReceipts);
           } finally {
             receiptsMessage.release();
@@ -261,7 +269,7 @@ public class RespondingEthPeer {
             final List<BytesValue> originalNodeData =
                 Lists.newArrayList(nodeDataMessage.nodeData());
             final List<BytesValue> partialNodeData =
-                originalNodeData.subList(0, originalNodeData.size() / 2);
+                originalNodeData.subList(0, (int) (originalNodeData.size() * portion));
             partialResponse = NodeDataMessage.create(partialNodeData);
           } finally {
             nodeDataMessage.release();
