@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.netty;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.p2p.api.DisconnectCallback;
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;
@@ -178,6 +180,11 @@ public final class NettyP2PNetwork implements P2PNetwork {
         future -> {
           final InetSocketAddress socketAddress =
               (InetSocketAddress) server.channel().localAddress();
+          String message =
+              String.format(
+                  "Unable start up P2P network on %s:%s.  Check for port conflicts.",
+                  config.getRlpx().getBindHost(), config.getRlpx().getBindPort());
+          checkState(socketAddress != null, message);
           ourPeerInfo =
               new PeerInfo(
                   5,
