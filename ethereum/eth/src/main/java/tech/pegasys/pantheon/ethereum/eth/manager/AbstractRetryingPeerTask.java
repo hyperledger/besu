@@ -23,13 +23,28 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * A task that will retry a fixed number of times before completing the associated CompletableFuture
+ * exceptionally with a new {@link MaxRetriesReachedException}.
+ *
+ * <p>As an additional semantic subclasses may call {@link #resetRetryCounter} so that if they have
+ * partial success they can reset the retry counter and only count zero progress retries against the
+ * exception limit. If this facility is used only consecutive zero progress retries count against
+ * the maximum retries limit.
+ *
+ * @param <T> The type of the CompletableFuture this task will return.
+ */
 public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
   private static final Logger LOG = LogManager.getLogger();
   private final EthContext ethContext;
   private final int maxRetries;
-  private int requestCount = 0;
+  private int retryCount = 0;
 
+  /**
+   * @param ethContext The context of the current Eth network we are attached to.
+   * @param maxRetries Maximum number of retries to accept before completing exceptionally.
+   */
   public AbstractRetryingPeerTask(final EthContext ethContext, final int maxRetries) {
     this.ethContext = ethContext;
     this.maxRetries = maxRetries;
@@ -41,12 +56,12 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
       // Return if task is done
       return;
     }
-    if (requestCount > maxRetries) {
+    if (retryCount > maxRetries) {
       result.get().completeExceptionally(new MaxRetriesReachedException());
       return;
     }
 
-    requestCount += 1;
+    retryCount += 1;
     executePeerTask()
         .whenComplete(
             (peerResult, error) -> {
@@ -77,10 +92,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
               ethContext
                   .getScheduler()
                   .timeout(waitTask, Duration.ofSeconds(5))
-                  .whenComplete(
-                      (r, t) -> {
-                        executeTask();
-                      }));
+                  .whenComplete((r, t) -> executeTask()));
       return;
     }
 
@@ -92,6 +104,14 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     executeSubTask(
         () ->
             ethContext.getScheduler().scheduleFutureTask(this::executeTask, Duration.ofSeconds(1)));
+  }
+
+  /**
+   * Reset the retryCounter. Once called executeTask will get a fresh set of retries to complete the
+   * task.
+   */
+  protected void resetRetryCounter() {
+    retryCount = 0;
   }
 
   protected abstract boolean isRetryableError(Throwable error);
