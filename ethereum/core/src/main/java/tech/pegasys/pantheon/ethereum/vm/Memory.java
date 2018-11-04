@@ -361,8 +361,9 @@ public class Memory {
     ensureCapacityForBytes(start, length);
 
     // We've properly expanded memory as needed. We now have simply have to copy the
-    // min(length, value.size()) first bytes of value.
+    // min(length, value.size()) first bytes of value and clear any bytes that exceed value's length
     if (taintedValue.isEmpty()) {
+      clearBytes(location, numBytes);
       return;
     }
     final BytesValue value;
