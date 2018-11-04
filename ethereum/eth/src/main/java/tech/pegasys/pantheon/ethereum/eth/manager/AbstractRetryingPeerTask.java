@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.tasks.WaitForPeerTask;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.time.Duration;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
@@ -25,16 +26,12 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * A task that will retry a fixed number of times before completing the associated CompletableFuture
- * exceptionally with a new {@link MaxRetriesReachedException}.
+ * exceptionally with a new {@link MaxRetriesReachedException}. If the future returned from {@link
+ * #executePeerTask()} is complete with a non-empty list the retry counter is reset.
  *
- * <p>As an additional semantic subclasses may call {@link #resetRetryCounter} so that if they have
- * partial success they can reset the retry counter and only count zero progress retries against the
- * exception limit. If this facility is used only consecutive zero progress retries count against
- * the maximum retries limit.
- *
- * @param <T> The type of the CompletableFuture this task will return.
+ * @param <T> The type as a typed list that the peer task can get partial or full results in.
  */
-public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
+public abstract class AbstractRetryingPeerTask<T extends Collection<?>> extends AbstractEthTask<T> {
 
   private static final Logger LOG = LogManager.getLogger();
   private final EthContext ethContext;
@@ -68,12 +65,16 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
               if (error != null) {
                 handleTaskError(error);
               } else {
+                // If we get a partial success reset the retry counter.
+                if (peerResult.size() > 0) {
+                  retryCount = 0;
+                }
                 executeTask();
               }
             });
   }
 
-  protected abstract CompletableFuture<?> executePeerTask();
+  protected abstract CompletableFuture<T> executePeerTask();
 
   private void handleTaskError(final Throwable error) {
     final Throwable cause = ExceptionUtils.rootCause(error);
@@ -104,14 +105,6 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     executeSubTask(
         () ->
             ethContext.getScheduler().scheduleFutureTask(this::executeTask, Duration.ofSeconds(1)));
-  }
-
-  /**
-   * Reset the retryCounter. Once called executeTask will get a fresh set of retries to complete the
-   * task.
-   */
-  protected void resetRetryCounter() {
-    retryCount = 0;
   }
 
   protected abstract boolean isRetryableError(Throwable error);

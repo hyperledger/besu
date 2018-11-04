@@ -106,7 +106,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
   }
 
   @Override
-  protected CompletableFuture<?> executePeerTask() {
+  protected CompletableFuture<List<BlockHeader>> executePeerTask() {
     LOG.debug(
         "Downloading headers from {} to {}.", startingBlockNumber, referenceHeader.getNumber() - 1);
     final CompletableFuture<List<BlockHeader>> task =
@@ -163,7 +163,6 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
           BlockHeader child = null;
           boolean firstSkipped = false;
           for (final BlockHeader header : headersResult.getResult()) {
-            resetRetryCounter();
             final int headerIndex =
                 Ints.checkedCast(
                     segmentLength - (referenceHeader.getNumber() - header.getNumber()));
