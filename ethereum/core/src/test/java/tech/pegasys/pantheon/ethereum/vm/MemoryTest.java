@@ -123,6 +123,30 @@ public class MemoryTest {
     assertThat(memory.getWord(UInt256.of(64))).isEqualTo(WORD3);
   }
 
+  @Test
+  public void shouldClearMemoryWhenSourceDataIsEmpty() {
+    memory.setWord(UInt256.of(64), WORD3);
+    assertThat(memory.getWord(UInt256.of(64))).isEqualTo(WORD3);
+
+    memory.setBytes(UInt256.ZERO, UInt256.of(96), BytesValue.EMPTY);
+
+    assertThat(memory.getWord(UInt256.of(0))).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(UInt256.of(32))).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(UInt256.of(64))).isEqualTo(Bytes32.ZERO);
+  }
+
+  @Test
+  public void shouldClearMemoryWhenSourceDataIsEmptyWithSourceOffset() {
+    memory.setWord(UInt256.of(64), WORD3);
+    assertThat(memory.getWord(UInt256.of(64))).isEqualTo(WORD3);
+
+    memory.setBytes(UInt256.ZERO, UInt256.ZERO, UInt256.of(96), BytesValue.EMPTY);
+
+    assertThat(memory.getWord(UInt256.of(0))).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(UInt256.of(32))).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(UInt256.of(64))).isEqualTo(Bytes32.ZERO);
+  }
+
   private static Bytes32 fillBytes32(final long value) {
     return Bytes32.fromHexString(Strings.repeat(Long.toString(value), 64));
   }

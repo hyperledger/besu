@@ -195,9 +195,17 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final UInt256 outputOffset = outputDataOffset(frame);
     final UInt256 outputSize = outputDataLength(frame);
-    frame.writeMemory(outputOffset, outputSize, childFrame.getOutputData());
+    final BytesValue outputData = childFrame.getOutputData();
+    final int outputSizeAsInt = outputSize.toInt();
 
-    frame.setReturnData(childFrame.getOutputData());
+    if (outputSizeAsInt > outputData.size()) {
+      frame.expandMemory(outputOffset.toLong(), outputSizeAsInt);
+      frame.writeMemory(outputOffset, UInt256.of(outputData.size()), outputData);
+    } else {
+      frame.writeMemory(outputOffset, outputSize, outputData);
+    }
+
+    frame.setReturnData(outputData);
     frame.addLogs(childFrame.getLogs());
     frame.addSelfDestructs(childFrame.getSelfDestructs());
     frame.incrementGasRefund(childFrame.getGasRefund());
