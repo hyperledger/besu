@@ -160,6 +160,8 @@ allprojects {
       check('FieldCanBeFinal', CheckSeverity.WARN)
       check('WildcardImport', CheckSeverity.WARN)
     }
+
+    options.encoding = 'UTF-8'
   }
 
   /*
