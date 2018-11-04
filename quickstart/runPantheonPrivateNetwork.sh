@@ -14,7 +14,7 @@
 me=`basename "$0"`
 
 PARAMS=""
-while (( "$#" )); do
+while [ $# -gt 0 ]; do
   case "$1" in
     -h|--help)
       echo "Usage:"
