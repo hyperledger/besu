@@ -83,7 +83,7 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
   }
 
   @Override
-  protected CompletableFuture<?> executePeerTask() {
+  protected CompletableFuture<List<Block>> executePeerTask() {
     return requestBodies().thenCompose(this::processBodiesResult);
   }
 
@@ -117,26 +117,18 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
         });
   }
 
-  private CompletableFuture<Void> processBodiesResult(
+  private CompletableFuture<List<Block>> processBodiesResult(
       final PeerTaskResult<List<Block>> blocksResult) {
-    final int startingIncompleteHeaders = incompleteHeaders().size();
     blocksResult.getResult().forEach((block) -> blocks.put(block.getHeader().getNumber(), block));
 
-    final int endingIncompleteHeaders = incompleteHeaders().size();
-    final boolean done = endingIncompleteHeaders == 0;
-    if (done) {
+    if (incompleteHeaders().size() == 0) {
       result
           .get()
           .complete(
               headers.stream().map(h -> blocks.get(h.getNumber())).collect(Collectors.toList()));
-    } else if (endingIncompleteHeaders < startingIncompleteHeaders) {
-      // If we made any progress reset the retry counter
-      resetRetryCounter();
     }
 
-    final CompletableFuture<Void> future = new CompletableFuture<>();
-    future.complete(null);
-    return future;
+    return CompletableFuture.completedFuture(blocksResult.getResult());
   }
 
   private List<BlockHeader> incompleteHeaders() {
