@@ -32,7 +32,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
   private static final int V_BASE = 27;
 
   public ECRECPrecompiledContract(final GasCalculator gasCalculator) {
-    super("ECREC_PRECOMPILED_GAS_COST", gasCalculator);
+    super("ECREC", gasCalculator);
   }
 
   @Override
