@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.tests.web3j;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonMinerNode;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
@@ -48,7 +47,7 @@ public class EventEmitterAcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
-    node = cluster.create(pantheonMinerNode("node1"));
+    node = pantheon.createMinerNode("node1");
     cluster.start(node);
   }
 

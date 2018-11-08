@@ -10,15 +10,22 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net;
+package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
-public class NetTransactions {
+import java.util.List;
+import java.util.Optional;
 
-  public NetVersionTransaction netVersion() {
-    return new NetVersionTransaction();
-  }
+public interface NodeConfiguration {
 
-  public NetPeerCountTransaction peerCount() {
-    return new NetPeerCountTransaction();
-  }
+  String enodeUrl();
+
+  void bootnodes(List<String> bootnodes);
+
+  void useWebSocketsForJsonRpc();
+
+  Optional<Integer> jsonRpcWebSocketPort();
+
+  String hostName();
+
+  boolean jsonRpcEnabled();
 }

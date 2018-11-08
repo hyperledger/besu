@@ -12,10 +12,6 @@
  */
 package tech.pegasys.pantheon.tests.acceptance;
 
-import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonNode;
-import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonRpcDisabledNode;
-import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.patheonNodeWithRpcApis;
-
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
@@ -34,9 +30,9 @@ public class RpcApisTogglesAcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void before() throws Exception {
-    rpcEnabledNode = cluster.create(pantheonNode("rpc-enabled"));
-    rpcDisabledNode = cluster.create(pantheonRpcDisabledNode("rpc-disabled"));
-    ethApiDisabledNode = cluster.create(patheonNodeWithRpcApis("eth-api-disabled", RpcApis.NET));
+    rpcEnabledNode = pantheon.createArchiveNode("rpc-enabled");
+    rpcDisabledNode = pantheon.createArchiveNodeWithRpcDisabled("rpc-disabled");
+    ethApiDisabledNode = pantheon.createArchiveNodeWithRpcApis("eth-api-disabled", RpcApis.NET);
     cluster.start(rpcEnabledNode, rpcDisabledNode, ethApiDisabledNode);
   }
 

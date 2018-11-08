@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.pubsub;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.NodeConfiguration;
 
 import java.util.List;
 
@@ -26,7 +26,7 @@ public class WebSocket {
 
   private final WebSocketConnection connection;
 
-  public WebSocket(final Vertx vertx, final PantheonNode node) {
+  public WebSocket(final Vertx vertx, final NodeConfiguration node) {
     this.connection = new WebSocketConnection(vertx, node);
   }
 

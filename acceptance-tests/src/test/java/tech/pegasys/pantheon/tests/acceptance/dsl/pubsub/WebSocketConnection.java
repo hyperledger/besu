@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.pubsub;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils;
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.NodeConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +39,7 @@ public class WebSocketConnection {
   private volatile JsonRpcSuccessEvent latestEvent;
   private volatile WebSocket connection;
 
-  public WebSocketConnection(final Vertx vertx, final PantheonNode node) {
+  public WebSocketConnection(final Vertx vertx, final NodeConfiguration node) {
     if (!node.jsonRpcWebSocketPort().isPresent()) {
       throw new IllegalStateException(
           "Can't start websocket connection for node with RPC disabled");
@@ -47,7 +47,7 @@ public class WebSocketConnection {
     subscriptionEvents = new ConcurrentLinkedDeque<>();
     options = new RequestOptions();
     options.setPort(node.jsonRpcWebSocketPort().get());
-    options.setHost(node.getHost());
+    options.setHost(node.hostName());
 
     connect(vertx);
   }

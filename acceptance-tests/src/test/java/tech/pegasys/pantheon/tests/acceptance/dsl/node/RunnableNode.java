@@ -10,15 +10,21 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net;
+package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
-public class NetTransactions {
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 
-  public NetVersionTransaction netVersion() {
-    return new NetVersionTransaction();
-  }
+public interface RunnableNode extends Node {
 
-  public NetPeerCountTransaction peerCount() {
-    return new NetPeerCountTransaction();
-  }
+  void stop();
+
+  void close();
+
+  void start(PantheonNodeRunner runner);
+
+  NodeConfiguration getConfiguration();
+
+  void awaitPeerDiscovery(final Condition condition);
+
+  String getName();
 }

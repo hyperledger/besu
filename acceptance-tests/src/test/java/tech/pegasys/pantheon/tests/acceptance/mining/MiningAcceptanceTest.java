@@ -12,11 +12,9 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.mining;
 
-import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonMinerNode;
-
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -25,11 +23,11 @@ import org.junit.Test;
 @Ignore
 public class MiningAcceptanceTest extends AcceptanceTestBase {
 
-  private PantheonNode minerNode;
+  private Node minerNode;
 
   @Before
   public void setUp() throws Exception {
-    minerNode = cluster.create(pantheonMinerNode("miner1"));
+    minerNode = pantheon.createMinerNode("miner1");
     cluster.start(minerNode);
   }
 
