@@ -13,10 +13,13 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.AwaitNetPeerCount;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionConnectionException;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionConnectionExceptionWithCause;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionIsNotBlank;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetTransactions;
+
+import java.math.BigInteger;
 
 public class Net {
 
@@ -28,6 +31,10 @@ public class Net {
 
   public Condition netVersion() {
     return new ExpectNetVersionIsNotBlank(transactions.netVersion());
+  }
+
+  public Condition awaitPeerCount(final int awaitPeerCount) {
+    return new AwaitNetPeerCount(transactions.peerCount(), BigInteger.valueOf(awaitPeerCount));
   }
 
   public Condition netVersionExceptional(final String expectedMessage) {

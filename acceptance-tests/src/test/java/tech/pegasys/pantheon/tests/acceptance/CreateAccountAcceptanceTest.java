@@ -13,12 +13,10 @@
 package tech.pegasys.pantheon.tests.acceptance;
 
 import static org.web3j.utils.Convert.Unit.ETHER;
-import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonMinerNode;
-import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonNode;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -27,12 +25,12 @@ import org.junit.Test;
 @Ignore
 public class CreateAccountAcceptanceTest extends AcceptanceTestBase {
 
-  private PantheonNode minerNode;
+  private Node minerNode;
 
   @Before
   public void setUp() throws Exception {
-    minerNode = cluster.create(pantheonMinerNode("node1"));
-    cluster.start(minerNode, cluster.create(pantheonNode("node2")));
+    minerNode = pantheon.createMinerNode("node1");
+    cluster.start(minerNode, pantheon.createArchiveNode("node2"));
   }
 
   @Test

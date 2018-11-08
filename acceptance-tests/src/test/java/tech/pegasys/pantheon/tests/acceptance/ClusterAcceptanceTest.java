@@ -12,30 +12,27 @@
  */
 package tech.pegasys.pantheon.tests.acceptance;
 
-import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonMinerNode;
-import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonNode;
-
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 
 import org.junit.Before;
 import org.junit.Test;
 
-public class PantheonClusterAcceptanceTest extends AcceptanceTestBase {
+public class ClusterAcceptanceTest extends AcceptanceTestBase {
 
-  private PantheonNode minerNode;
-  private PantheonNode fullNode;
+  private Node minerNode;
+  private Node fullNode;
 
   @Before
   public void setUp() throws Exception {
-    minerNode = cluster.create(pantheonMinerNode("node1"));
-    fullNode = cluster.create(pantheonNode("node2"));
+    minerNode = pantheon.createMinerNode("node1");
+    fullNode = pantheon.createArchiveNode("node2");
     cluster.start(minerNode, fullNode);
   }
 
   @Test
   public void shouldConnectToOtherPeer() {
-    jsonRpc.waitForPeersConnected(minerNode, 1);
-    jsonRpc.waitForPeersConnected(fullNode, 1);
+    minerNode.verify(net.awaitPeerCount(1));
+    fullNode.verify(net.awaitPeerCount(1));
   }
 }

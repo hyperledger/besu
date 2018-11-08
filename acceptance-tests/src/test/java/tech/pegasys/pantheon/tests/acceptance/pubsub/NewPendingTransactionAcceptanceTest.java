@@ -12,9 +12,6 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.pubsub;
 
-import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonMinerNode;
-import static tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeConfig.pantheonNode;
-
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
@@ -42,12 +39,12 @@ public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
   @Before
   public void setUp() throws Exception {
     vertx = Vertx.vertx();
-    minerNode = cluster.create(pantheonMinerNode("miner-node1"));
-    archiveNode = cluster.create(pantheonNode("full-node1"));
+    minerNode = pantheon.createMinerNode("miner-node1");
+    archiveNode = pantheon.createArchiveNode("full-node1");
     cluster.start(minerNode, archiveNode);
     accountOne = accounts.createAccount("account-one");
-    minerWebSocket = new WebSocket(vertx, minerNode);
-    archiveWebSocket = new WebSocket(vertx, archiveNode);
+    minerWebSocket = new WebSocket(vertx, minerNode.getConfiguration());
+    archiveWebSocket = new WebSocket(vertx, archiveNode.getConfiguration());
   }
 
   @After
@@ -72,7 +69,7 @@ public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
     cluster.stop();
 
     // Create the heavy fork
-    final PantheonNode minerNodeTwo = cluster.create(pantheonMinerNode("miner-node2"));
+    final PantheonNode minerNodeTwo = pantheon.createMinerNode("miner-node2");
     cluster.start(minerNodeTwo);
 
     final WebSocket heavyForkWebSocket = new WebSocket(vertx, minerNodeTwo);
@@ -106,9 +103,10 @@ public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
     // Restart the two nodes on the light fork with the additional node from the heavy fork
     cluster.start(minerNode, archiveNode, minerNodeTwo);
 
-    final WebSocket minerMergedForksWebSocket = new WebSocket(vertx, minerNode);
+    final WebSocket minerMergedForksWebSocket = new WebSocket(vertx, minerNode.getConfiguration());
     final WebSocket minerTwoMergedForksWebSocket = new WebSocket(vertx, minerNodeTwo);
-    final WebSocket archiveMergedForksWebSocket = new WebSocket(vertx, archiveNode);
+    final WebSocket archiveMergedForksWebSocket =
+        new WebSocket(vertx, archiveNode.getConfiguration());
     final Subscription minerMergedForksSubscription = minerMergedForksWebSocket.subscribe();
     final Subscription minerTwoMergedForksSubscription = minerTwoMergedForksWebSocket.subscribe();
     final Subscription archiveMergedForksSubscription = archiveMergedForksWebSocket.subscribe();
