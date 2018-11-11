@@ -493,7 +493,21 @@ public class PantheonCommand implements Runnable {
             webSocketConfiguration,
             dataDir);
 
+    addShutdownHook(runner);
     runner.execute();
+  }
+
+  private void addShutdownHook(final Runner runner) {
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  try {
+                    runner.close();
+                  } catch (Exception e) {
+                    throw new RuntimeException(e);
+                  }
+                }));
   }
 
   // Used to discover the default IP of the client.
