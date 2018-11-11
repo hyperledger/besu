@@ -66,6 +66,10 @@ public class CliqueProtocolSpecs {
     return applyCliqueSpecificModifications(MainnetProtocolSpecs.byzantiumDefinition(chainId));
   }
 
+  public ProtocolSpec<CliqueContext> constantinople() {
+    return applyCliqueSpecificModifications(MainnetProtocolSpecs.constantinopleDefinition(chainId));
+  }
+
   private ProtocolSpec<CliqueContext> applyCliqueSpecificModifications(
       final ProtocolSpecBuilder<Void> specBuilder) {
     final EpochManager epochManager = new EpochManager(epochLength);

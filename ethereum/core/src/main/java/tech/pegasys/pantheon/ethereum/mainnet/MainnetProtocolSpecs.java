@@ -263,13 +263,16 @@ public abstract class MainnetProtocolSpecs {
    */
   public static ProtocolSpec<Void> constantinople(
       final int chainId, final ProtocolSchedule<Void> protocolSchedule) {
+    return constantinopleDefinition(chainId).build(protocolSchedule);
+  }
+
+  public static ProtocolSpecBuilder<Void> constantinopleDefinition(final int chainId) {
     return byzantiumDefinition(chainId)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
         .gasCalculator(ConstantinopleGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::constantinople)
         .blockReward(CONSTANTINOPLE_BLOCK_REWARD)
-        .name("Constantinople")
-        .build(protocolSchedule);
+        .name("Constantinople");
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

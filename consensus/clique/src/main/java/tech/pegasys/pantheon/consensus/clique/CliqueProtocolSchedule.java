@@ -60,6 +60,10 @@ public class CliqueProtocolSchedule extends MutableProtocolSchedule<CliqueContex
     config
         .getByzantiumBlockNumber()
         .ifPresent(blockNumber -> protocolSchedule.putMilestone(blockNumber, specs.byzantium()));
+    config
+        .getConstantinopleBlockNumber()
+        .ifPresent(
+            blockNumber -> protocolSchedule.putMilestone(blockNumber, specs.constantinople()));
 
     return protocolSchedule;
   }
