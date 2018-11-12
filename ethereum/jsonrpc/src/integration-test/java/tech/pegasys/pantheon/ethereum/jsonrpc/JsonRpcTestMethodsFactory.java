@@ -49,10 +49,10 @@ public class JsonRpcTestMethodsFactory {
     this.importer = importer;
   }
 
-  public Map<String, JsonRpcMethod> methods(final int chainId) {
+  public Map<String, JsonRpcMethod> methods() {
     final WorldStateArchive stateArchive = InMemoryTestFixture.createInMemoryWorldStateArchive();
 
-    importer.getGenesisConfig().writeStateTo(stateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
+    importer.getGenesisState().writeStateTo(stateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
 
     final MutableBlockchain blockchain =
         InMemoryTestFixture.createInMemoryBlockchain(importer.getGenesisBlock());
@@ -79,7 +79,6 @@ public class JsonRpcTestMethodsFactory {
     return new JsonRpcMethodsFactory()
         .methods(
             CLIENT_VERSION,
-            chainId,
             peerDiscovery,
             blockchainQueries,
             synchronizer,

@@ -14,11 +14,11 @@ package tech.pegasys.pantheon.ethereum.development;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 
-import io.vertx.core.json.JsonObject;
 import org.junit.Test;
 
 public class DevelopmentProtocolScheduleTest {
@@ -26,8 +26,8 @@ public class DevelopmentProtocolScheduleTest {
   @Test
   public void reportedDifficultyForAllBlocksIsAFixedValue() {
 
-    final JsonObject config = new JsonObject();
-    final ProtocolSchedule<Void> schedule = DevelopmentProtocolSchedule.create(config);
+    final ProtocolSchedule<Void> schedule =
+        DevelopmentProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions());
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 

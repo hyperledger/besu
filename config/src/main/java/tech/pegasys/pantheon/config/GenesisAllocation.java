@@ -14,24 +14,20 @@ package tech.pegasys.pantheon.config;
 
 import io.vertx.core.json.JsonObject;
 
-public class CliqueConfigOptions {
+public class GenesisAllocation {
+  private final String address;
+  private final JsonObject data;
 
-  public static final CliqueConfigOptions DEFAULT = new CliqueConfigOptions(new JsonObject());
-
-  private static final long DEFAULT_EPOCH_LENGTH = 30_000;
-  private static final int DEFAULT_BLOCK_PERIOD_SECONDS = 15;
-
-  private final JsonObject cliqueConfigRoot;
-
-  CliqueConfigOptions(final JsonObject cliqueConfigRoot) {
-    this.cliqueConfigRoot = cliqueConfigRoot;
+  public GenesisAllocation(final String address, final JsonObject data) {
+    this.address = address;
+    this.data = data;
   }
 
-  public long getEpochLength() {
-    return cliqueConfigRoot.getLong("epochlength", DEFAULT_EPOCH_LENGTH);
+  public String getAddress() {
+    return address;
   }
 
-  public int getBlockPeriodSeconds() {
-    return cliqueConfigRoot.getInteger("blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
+  public String getBalance() {
+    return data.getString("balance", "0");
   }
 }

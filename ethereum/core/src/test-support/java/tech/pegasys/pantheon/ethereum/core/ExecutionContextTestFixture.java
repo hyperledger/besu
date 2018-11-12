@@ -12,8 +12,9 @@
  */
 package tech.pegasys.pantheon.ethereum.core;
 
+import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
+import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.db.KeyValueStoragePrefixedKeyBlockchainStorage;
@@ -38,8 +39,9 @@ public class ExecutionContextTestFixture {
 
   private ExecutionContextTestFixture(
       final ProtocolSchedule<Void> protocolSchedule, final KeyValueStorage keyValueStorage) {
-    final GenesisConfig<Void> genesisConfig = GenesisConfig.mainnet();
-    this.genesis = genesisConfig.getBlock();
+    final GenesisState genesisState =
+        GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule);
+    this.genesis = genesisState.getBlock();
     this.keyValueStorage = keyValueStorage;
     this.blockchain =
         new DefaultMutableBlockchain(
@@ -51,7 +53,7 @@ public class ExecutionContextTestFixture {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = new ProtocolContext<>(blockchain, stateArchive, null);
 
-    genesisConfig.writeStateTo(
+    genesisState.writeStateTo(
         new DefaultMutableWorldState(new KeyValueStorageWorldStateStorage(keyValueStorage)));
   }
 

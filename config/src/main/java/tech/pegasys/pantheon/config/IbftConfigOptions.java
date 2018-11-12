@@ -24,19 +24,19 @@ public class IbftConfigOptions {
 
   private final JsonObject ibftConfigRoot;
 
-  public IbftConfigOptions(final JsonObject ibftConfigRoot) {
+  IbftConfigOptions(final JsonObject ibftConfigRoot) {
     this.ibftConfigRoot = ibftConfigRoot;
   }
 
   public long getEpochLength() {
-    return ibftConfigRoot.getLong("epochLength", DEFAULT_EPOCH_LENGTH);
+    return ibftConfigRoot.getLong("epochlength", DEFAULT_EPOCH_LENGTH);
   }
 
   public int getBlockPeriodSeconds() {
-    return ibftConfigRoot.getInteger("blockPeriodSeconds", DEFAULT_BLOCK_PERIOD_SECONDS);
+    return ibftConfigRoot.getInteger("blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
   }
 
   public int getRequestTimeoutMillis() {
-    return ibftConfigRoot.getInteger("requestTimeout", DEFAULT_ROUND_EXPIRY_MILLISECONDS);
+    return ibftConfigRoot.getInteger("requesttimeout", DEFAULT_ROUND_EXPIRY_MILLISECONDS);
   }
 }

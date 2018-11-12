@@ -29,7 +29,7 @@ public class IbftConfigOptionsTest {
 
   @Test
   public void shouldGetEpochLengthFromConfig() {
-    final IbftConfigOptions config = fromConfigOptions(singletonMap("epochLength", 10_000));
+    final IbftConfigOptions config = fromConfigOptions(singletonMap("EpochLength", 10_000));
     assertThat(config.getEpochLength()).isEqualTo(10_000);
   }
 
@@ -46,7 +46,7 @@ public class IbftConfigOptionsTest {
 
   @Test
   public void shouldGetBlockPeriodFromConfig() {
-    final IbftConfigOptions config = fromConfigOptions(singletonMap("blockPeriodSeconds", 5));
+    final IbftConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", 5));
     assertThat(config.getBlockPeriodSeconds()).isEqualTo(5);
   }
 
@@ -64,7 +64,7 @@ public class IbftConfigOptionsTest {
 
   @Test
   public void shouldGetRequestTimeoutFromConfig() {
-    final IbftConfigOptions config = fromConfigOptions(singletonMap("requestTimeout", 5));
+    final IbftConfigOptions config = fromConfigOptions(singletonMap("RequestTimeout", 5));
     assertThat(config.getRequestTimeoutMillis()).isEqualTo(5);
   }
 
@@ -81,8 +81,9 @@ public class IbftConfigOptionsTest {
   }
 
   private IbftConfigOptions fromConfigOptions(final Map<String, Object> ibftConfigOptions) {
-    return GenesisConfigOptions.fromGenesisConfig(
+    return GenesisConfigFile.fromConfig(
             new JsonObject(singletonMap("config", singletonMap("ibft", ibftConfigOptions))))
+        .getConfigOptions()
         .getIbftConfigOptions();
   }
 }

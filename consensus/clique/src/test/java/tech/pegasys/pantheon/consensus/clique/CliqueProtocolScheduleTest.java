@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.consensus.clique;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
 
+import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -35,7 +36,7 @@ public class CliqueProtocolScheduleTest {
             + "\"byzantiumBlock\": 1035301}"
             + "}";
 
-    final GenesisConfigOptions config = GenesisConfigOptions.fromGenesisConfig(jsonInput);
+    final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule<CliqueContext> protocolSchedule =
         CliqueProtocolSchedule.create(config, KeyPair.generate());
 

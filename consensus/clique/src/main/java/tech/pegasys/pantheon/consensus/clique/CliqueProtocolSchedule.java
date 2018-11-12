@@ -20,7 +20,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.MutableProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 
 /** Defines the protocol behaviours for a blockchain using Clique. */
-public class CliqueProtocolSchedule extends MutableProtocolSchedule<CliqueContext> {
+public class CliqueProtocolSchedule {
 
   private static final int DEFAULT_CHAIN_ID = 4;
 
@@ -33,14 +33,14 @@ public class CliqueProtocolSchedule extends MutableProtocolSchedule<CliqueContex
     final long blockPeriod = cliqueConfig.getBlockPeriodSeconds();
     final int chainId = config.getChainId().orElse(DEFAULT_CHAIN_ID);
 
-    final MutableProtocolSchedule<CliqueContext> protocolSchedule = new CliqueProtocolSchedule();
+    final MutableProtocolSchedule<CliqueContext> protocolSchedule =
+        new MutableProtocolSchedule<>(chainId);
 
     // TODO(tmm) replace address with passed in node data (coming later)
     final CliqueProtocolSpecs specs =
         new CliqueProtocolSpecs(
             blockPeriod,
             epochLength,
-            chainId,
             Util.publicKeyToAddress(nodeKeys.getPublicKey()),
             protocolSchedule);
 

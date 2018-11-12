@@ -17,6 +17,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
@@ -49,7 +50,7 @@ import org.junit.Test;
 public class CliqueMinerExecutorTest {
 
   private static final GenesisConfigOptions GENESIS_CONFIG_OPTIONS =
-      GenesisConfigOptions.fromGenesisConfig(new JsonObject());
+      GenesisConfigFile.fromConfig(new JsonObject()).getConfigOptions();
   private final KeyPair proposerKeyPair = KeyPair.generate();
   private Address localAddress;
   private final List<Address> validatorList = Lists.newArrayList();

@@ -14,13 +14,15 @@ package tech.pegasys.pantheon.controller;
 
 import static tech.pegasys.pantheon.controller.KeyPairUtil.loadKeyPair;
 
+import tech.pegasys.pantheon.config.GenesisConfigFile;
+import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.DefaultBlockScheduler;
 import tech.pegasys.pantheon.ethereum.blockcreation.EthHashMinerExecutor;
 import tech.pegasys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
-import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
+import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.core.Hash;
@@ -38,6 +40,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolFactory;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderValidator;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
@@ -61,7 +64,8 @@ public class MainnetPantheonController implements PantheonController<Void> {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final GenesisConfig<Void> genesisConfig;
+  private final GenesisConfigFile genesisConfig;
+  private final ProtocolSchedule<Void> protocolSchedule;
   private final ProtocolContext<Void> protocolContext;
   private final ProtocolManager ethProtocolManager;
   private final KeyPair keyPair;
@@ -72,7 +76,8 @@ public class MainnetPantheonController implements PantheonController<Void> {
   private final Runnable close;
 
   public MainnetPantheonController(
-      final GenesisConfig<Void> genesisConfig,
+      final GenesisConfigFile genesisConfig,
+      final ProtocolSchedule<Void> protocolSchedule,
       final ProtocolContext<Void> protocolContext,
       final ProtocolManager ethProtocolManager,
       final Synchronizer synchronizer,
@@ -81,6 +86,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
       final MiningCoordinator miningCoordinator,
       final Runnable close) {
     this.genesisConfig = genesisConfig;
+    this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
     this.synchronizer = synchronizer;
@@ -95,7 +101,8 @@ public class MainnetPantheonController implements PantheonController<Void> {
     final KeyPair nodeKeys = loadKeyPair(home);
     return init(
         home,
-        GenesisConfig.mainnet(),
+        GenesisConfigFile.mainnet(),
+        MainnetProtocolSchedule.create(),
         SynchronizerConfiguration.builder().build(),
         miningParams,
         nodeKeys);
@@ -103,25 +110,26 @@ public class MainnetPantheonController implements PantheonController<Void> {
 
   public static PantheonController<Void> init(
       final Path home,
-      final GenesisConfig<Void> genesisConfig,
+      final GenesisConfigFile genesisConfig,
+      final ProtocolSchedule<Void> protocolSchedule,
       final SynchronizerConfiguration taintedSyncConfig,
       final MiningParameters miningParams,
       final KeyPair nodeKeys)
       throws IOException {
+
+    final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
     final KeyValueStorage kv =
         RocksDbKeyValueStorage.create(Files.createDirectories(home.resolve(DATABASE_PATH)));
-    final ProtocolSchedule<Void> protocolSchedule = genesisConfig.getProtocolSchedule();
-
     final BlockHashFunction blockHashFunction =
         ScheduleBasedBlockHashFunction.create(protocolSchedule);
     final KeyValueStoragePrefixedKeyBlockchainStorage blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(kv, blockHashFunction);
     final MutableBlockchain blockchain =
-        new DefaultMutableBlockchain(genesisConfig.getBlock(), blockchainStorage);
+        new DefaultMutableBlockchain(genesisState.getBlock(), blockchainStorage);
 
     final WorldStateArchive worldStateArchive =
         new WorldStateArchive(new KeyValueStorageWorldStateStorage(kv));
-    genesisConfig.writeStateTo(worldStateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
+    genesisState.writeStateTo(worldStateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
 
     final ProtocolContext<Void> protocolContext =
         new ProtocolContext<>(blockchain, worldStateArchive, null);
@@ -131,7 +139,10 @@ public class MainnetPantheonController implements PantheonController<Void> {
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(
             protocolContext.getBlockchain(),
-            genesisConfig.getChainId(),
+            genesisConfig
+                .getConfigOptions()
+                .getChainId()
+                .orElse(MainnetProtocolSchedule.DEFAULT_CHAIN_ID),
             fastSyncEnabled,
             syncConfig.downloaderParallelism());
     final SyncState syncState =
@@ -171,6 +182,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
 
     return new MainnetPantheonController(
         genesisConfig,
+        protocolSchedule,
         protocolContext,
         ethProtocolManager,
         synchronizer,
@@ -199,8 +211,13 @@ public class MainnetPantheonController implements PantheonController<Void> {
   }
 
   @Override
-  public GenesisConfig<Void> getGenesisConfig() {
-    return genesisConfig;
+  public ProtocolSchedule<Void> getProtocolSchedule() {
+    return protocolSchedule;
+  }
+
+  @Override
+  public GenesisConfigOptions getGenesisConfigOptions() {
+    return genesisConfig.getConfigOptions();
   }
 
   @Override

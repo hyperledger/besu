@@ -14,16 +14,13 @@ package tech.pegasys.pantheon.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
-import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryBlockchain;
-import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
-import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.ExecutionContextTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Gas;
-import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
@@ -63,12 +60,11 @@ public class TraceTransactionIntegrationTest {
 
   @Before
   public void setUp() {
-    final GenesisConfig<Void> genesisConfig = GenesisConfig.development();
-    genesisBlock = genesisConfig.getBlock();
-    blockchain = createInMemoryBlockchain(genesisBlock);
-    worldStateArchive = createInMemoryWorldStateArchive();
-    final ProtocolSchedule<Void> protocolSchedule = genesisConfig.getProtocolSchedule();
-    genesisConfig.writeStateTo(worldStateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
+    final ExecutionContextTestFixture contextTestFixture = ExecutionContextTestFixture.create();
+    genesisBlock = contextTestFixture.getGenesis();
+    blockchain = contextTestFixture.getBlockchain();
+    worldStateArchive = contextTestFixture.getStateArchive();
+    final ProtocolSchedule<Void> protocolSchedule = contextTestFixture.getProtocolSchedule();
     transactionProcessor = protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
     blockHashLookup = new BlockHashLookup(genesisBlock.getHeader(), blockchain);
   }

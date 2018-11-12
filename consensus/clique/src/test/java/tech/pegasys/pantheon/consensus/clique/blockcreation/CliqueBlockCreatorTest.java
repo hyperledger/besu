@@ -19,10 +19,10 @@ import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryBlockchain;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryWorldStateArchive;
 
+import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
 import tech.pegasys.pantheon.consensus.clique.CliqueHelpers;
-import tech.pegasys.pantheon.consensus.clique.CliqueProtocolSchedule;
 import tech.pegasys.pantheon.consensus.clique.CliqueProtocolSpecs;
 import tech.pegasys.pantheon.consensus.clique.TestHelpers;
 import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
@@ -31,7 +31,7 @@ import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.consensus.common.VoteType;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
+import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
@@ -53,29 +53,25 @@ import org.junit.Test;
 
 public class CliqueBlockCreatorTest {
 
+  private static final int CHAIN_ID = 1;
   private final KeyPair proposerKeyPair = KeyPair.generate();
   private final Address proposerAddress = Util.publicKeyToAddress(proposerKeyPair.getPublicKey());
   private final KeyPair otherKeyPair = KeyPair.generate();
   private final List<Address> validatorList = Lists.newArrayList();
 
-  private final Block genesis = GenesisConfig.mainnet().getBlock();
-  private final MutableBlockchain blockchain = createInMemoryBlockchain(genesis);
+  private final MutableProtocolSchedule<CliqueContext> protocolSchedule =
+      new MutableProtocolSchedule<>(CHAIN_ID);
   private final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
 
+  private MutableBlockchain blockchain;
   private ProtocolContext<CliqueContext> protocolContext;
-  private final MutableProtocolSchedule<CliqueContext> protocolSchedule =
-      new CliqueProtocolSchedule();
   private VoteProposer voteProposer;
 
   @Before
   public void setup() {
     final CliqueProtocolSpecs specs =
         new CliqueProtocolSpecs(
-            15,
-            30_000,
-            1,
-            Util.publicKeyToAddress(proposerKeyPair.getPublicKey()),
-            protocolSchedule);
+            15, 30_000, Util.publicKeyToAddress(proposerKeyPair.getPublicKey()), protocolSchedule);
 
     protocolSchedule.putMilestone(0, specs.frontier());
 
@@ -87,6 +83,9 @@ public class CliqueBlockCreatorTest {
     voteProposer = new VoteProposer();
     final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);
 
+    final Block genesis =
+        GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule).getBlock();
+    blockchain = createInMemoryBlockchain(genesis);
     protocolContext = new ProtocolContext<>(blockchain, stateArchive, cliqueContext);
 
     // Add a block above the genesis

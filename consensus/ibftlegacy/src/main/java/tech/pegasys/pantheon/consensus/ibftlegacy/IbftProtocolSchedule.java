@@ -30,7 +30,8 @@ public class IbftProtocolSchedule {
     final long epochLength = ibftConfig.getEpochLength();
     final long blockPeriod = ibftConfig.getBlockPeriodSeconds();
 
-    final MutableProtocolSchedule<IbftContext> protocolSchedule = new MutableProtocolSchedule<>();
+    final MutableProtocolSchedule<IbftContext> protocolSchedule =
+        new MutableProtocolSchedule<>(chainId);
     protocolSchedule.putMilestone(
         spuriousDragonBlock,
         IbftProtocolSpecs.spuriousDragon(blockPeriod, epochLength, chainId, protocolSchedule));

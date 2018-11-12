@@ -24,6 +24,16 @@ public class MutableProtocolSchedule<C> implements ProtocolSchedule<C> {
       new TreeSet<>(
           Comparator.<ScheduledProtocolSpec<C>, Long>comparing(ScheduledProtocolSpec::getBlock)
               .reversed());
+  private final int chainId;
+
+  public MutableProtocolSchedule(final int chainId) {
+    this.chainId = chainId;
+  }
+
+  @Override
+  public int getChainId() {
+    return chainId;
+  }
 
   public void putMilestone(final long blockNumber, final ProtocolSpec<C> protocolSpec) {
     final ScheduledProtocolSpec<C> scheduledProtocolSpec =

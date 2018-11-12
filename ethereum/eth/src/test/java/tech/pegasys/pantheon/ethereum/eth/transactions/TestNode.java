@@ -17,14 +17,16 @@ import static org.assertj.core.util.Preconditions.checkNotNull;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryBlockchain;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryWorldStateArchive;
 
+import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
+import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
+import tech.pegasys.pantheon.ethereum.development.DevelopmentProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
@@ -84,14 +86,16 @@ public class TestNode implements Closeable {
             .setRlpx(RlpxConfiguration.create().setBindPort(listenPort))
             .setSupportedProtocols(EthProtocol.get());
 
-    final GenesisConfig<Void> genesisConfig = GenesisConfig.development();
-    final ProtocolSchedule<Void> protocolSchedule = genesisConfig.getProtocolSchedule();
+    final GenesisConfigFile genesisConfigFile = GenesisConfigFile.development();
+    final ProtocolSchedule<Void> protocolSchedule =
+        DevelopmentProtocolSchedule.create(genesisConfigFile.getConfigOptions());
+    final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
     final BlockHashFunction blockHashFunction =
         ScheduleBasedBlockHashFunction.create(protocolSchedule);
     final MutableBlockchain blockchain =
-        createInMemoryBlockchain(genesisConfig.getBlock(), blockHashFunction);
+        createInMemoryBlockchain(genesisState.getBlock(), blockHashFunction);
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
-    genesisConfig.writeStateTo(worldStateArchive.getMutable());
+    genesisState.writeStateTo(worldStateArchive.getMutable());
     final ProtocolContext<Void> protocolContext =
         new ProtocolContext<>(blockchain, worldStateArchive, null);
     final EthProtocolManager ethProtocolManager = new EthProtocolManager(blockchain, 1, false, 1);

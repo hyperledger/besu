@@ -15,11 +15,12 @@ package tech.pegasys.pantheon.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.pantheon.controller.KeyPairUtil.loadKeyPair;
 
+import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.controller.MainnetPantheonController;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
-import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
+import tech.pegasys.pantheon.ethereum.development.DevelopmentProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 
 import java.io.IOException;
@@ -41,9 +42,11 @@ public class PantheonControllerBuilder {
     // otherwise use the indicated genesis file
     final KeyPair nodeKeys = loadKeyPair(homePath);
     if (isDevMode) {
+      final GenesisConfigFile genesisConfig = GenesisConfigFile.development();
       return MainnetPantheonController.init(
           homePath,
-          GenesisConfig.development(),
+          genesisConfig,
+          DevelopmentProtocolSchedule.create(genesisConfig.getConfigOptions()),
           synchronizerConfiguration,
           miningParameters,
           nodeKeys);

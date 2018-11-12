@@ -63,27 +63,27 @@ public class ReferenceTestProtocolSchedules {
 
   private static ProtocolSchedule<Void> createSchedule(
       final Function<ProtocolSchedule<Void>, ProtocolSpec<Void>> specCreator) {
-    final MutableProtocolSchedule<Void> protocolSchedule = new MutableProtocolSchedule<>();
+    final MutableProtocolSchedule<Void> protocolSchedule = new MutableProtocolSchedule<>(CHAIN_ID);
     protocolSchedule.putMilestone(0, specCreator.apply(protocolSchedule));
     return protocolSchedule;
   }
 
   private static ProtocolSchedule<Void> frontierToHomesteadAt5() {
-    final MutableProtocolSchedule<Void> protocolSchedule = new MutableProtocolSchedule<>();
+    final MutableProtocolSchedule<Void> protocolSchedule = new MutableProtocolSchedule<>(CHAIN_ID);
     protocolSchedule.putMilestone(0, MainnetProtocolSpecs.frontier(protocolSchedule));
     protocolSchedule.putMilestone(5, MainnetProtocolSpecs.homestead(protocolSchedule));
     return protocolSchedule;
   }
 
   private static ProtocolSchedule<Void> homesteadToEip150At5() {
-    final MutableProtocolSchedule<Void> protocolSchedule = new MutableProtocolSchedule<>();
+    final MutableProtocolSchedule<Void> protocolSchedule = new MutableProtocolSchedule<>(CHAIN_ID);
     protocolSchedule.putMilestone(0, MainnetProtocolSpecs.homestead(protocolSchedule));
     protocolSchedule.putMilestone(5, MainnetProtocolSpecs.tangerineWhistle(protocolSchedule));
     return protocolSchedule;
   }
 
   private static ProtocolSchedule<Void> homesteadToDaoAt5() {
-    final MutableProtocolSchedule<Void> protocolSchedule = new MutableProtocolSchedule<>();
+    final MutableProtocolSchedule<Void> protocolSchedule = new MutableProtocolSchedule<>(CHAIN_ID);
     final ProtocolSpec<Void> homestead = MainnetProtocolSpecs.homestead(protocolSchedule);
     protocolSchedule.putMilestone(0, homestead);
     protocolSchedule.putMilestone(5, MainnetProtocolSpecs.daoRecoveryInit(protocolSchedule));
@@ -93,7 +93,7 @@ public class ReferenceTestProtocolSchedules {
   }
 
   private static ProtocolSchedule<Void> eip158ToByzantiumAt5() {
-    final MutableProtocolSchedule<Void> protocolSchedule = new MutableProtocolSchedule<>();
+    final MutableProtocolSchedule<Void> protocolSchedule = new MutableProtocolSchedule<>(CHAIN_ID);
     protocolSchedule.putMilestone(
         0, MainnetProtocolSpecs.spuriousDragon(CHAIN_ID, protocolSchedule));
     protocolSchedule.putMilestone(5, MainnetProtocolSpecs.byzantium(CHAIN_ID, protocolSchedule));

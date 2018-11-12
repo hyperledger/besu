@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.mainnet;
 
-import tech.pegasys.pantheon.config.GenesisConfigOptions;
+import tech.pegasys.pantheon.config.GenesisConfigFile;
 
 import io.vertx.core.json.JsonObject;
 import org.assertj.core.api.Assertions;
@@ -55,7 +55,7 @@ public class MainnetProtocolScheduleTest {
   public void shouldReturnDefaultProtocolSpecsWhenEmptyJsonConfigIsUsed() {
     final JsonObject json = new JsonObject("{}");
     final ProtocolSchedule<Void> sched =
-        MainnetProtocolSchedule.fromConfig(GenesisConfigOptions.fromGenesisConfig(json));
+        MainnetProtocolSchedule.fromConfig(GenesisConfigFile.fromConfig(json).getConfigOptions());
     Assertions.assertThat(sched.getByBlockNumber(1L).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockNumber(1_150_000L).getName()).isEqualTo("Homestead");
     Assertions.assertThat(sched.getByBlockNumber(1_920_000L).getName())
@@ -76,7 +76,7 @@ public class MainnetProtocolScheduleTest {
         new JsonObject(
             "{\"config\": {\"homesteadBlock\": 2, \"daoForkBlock\": 3, \"eip150Block\": 14, \"eip158Block\": 15, \"byzantiumBlock\": 16, \"constantinopleBlock\": 18, \"chainId\":1234}}");
     final ProtocolSchedule<Void> sched =
-        MainnetProtocolSchedule.fromConfig(GenesisConfigOptions.fromGenesisConfig(json));
+        MainnetProtocolSchedule.fromConfig(GenesisConfigFile.fromConfig(json).getConfigOptions());
     Assertions.assertThat(sched.getByBlockNumber(1).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockNumber(2).getName()).isEqualTo("Homestead");
     Assertions.assertThat(sched.getByBlockNumber(3).getName()).isEqualTo("DaoRecoveryInit");

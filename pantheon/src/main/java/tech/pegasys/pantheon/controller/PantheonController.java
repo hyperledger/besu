@@ -12,13 +12,11 @@
  */
 package tech.pegasys.pantheon.controller;
 
+import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
-import tech.pegasys.pantheon.consensus.clique.CliqueProtocolSchedule;
-import tech.pegasys.pantheon.consensus.ibftlegacy.IbftProtocolSchedule;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
-import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
@@ -30,8 +28,6 @@ import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
-
-import io.vertx.core.json.JsonObject;
 
 public interface PantheonController<C> extends Closeable {
 
@@ -47,46 +43,33 @@ public interface PantheonController<C> extends Closeable {
       final KeyPair nodeKeys)
       throws IOException {
 
-    final JsonObject config = new JsonObject(configContents);
-    final GenesisConfigOptions configOptions = GenesisConfigOptions.fromGenesisConfig(config);
+    final GenesisConfigFile config = GenesisConfigFile.fromConfig(configContents);
+    final GenesisConfigOptions configOptions = config.getConfigOptions();
 
     if (configOptions.isEthHash()) {
       return MainnetPantheonController.init(
           pantheonHome,
-          GenesisConfig.fromConfig(config, MainnetProtocolSchedule.fromConfig(configOptions)),
+          config,
+          MainnetProtocolSchedule.fromConfig(configOptions),
           syncConfig,
           miningParameters,
           nodeKeys);
     } else if (configOptions.isIbft()) {
       return IbftPantheonController.init(
-          pantheonHome,
-          GenesisConfig.fromConfig(config, IbftProtocolSchedule.create(configOptions)),
-          syncConfig,
-          ottomanTestnetOperation,
-          configOptions.getIbftConfigOptions(),
-          networkId,
-          nodeKeys);
+          pantheonHome, config, syncConfig, ottomanTestnetOperation, networkId, nodeKeys);
     } else if (configOptions.isClique()) {
       return CliquePantheonController.init(
-          pantheonHome,
-          GenesisConfig.fromConfig(config, CliqueProtocolSchedule.create(configOptions, nodeKeys)),
-          syncConfig,
-          miningParameters,
-          configOptions.getCliqueConfigOptions(),
-          networkId,
-          nodeKeys);
+          pantheonHome, config, syncConfig, miningParameters, networkId, nodeKeys);
     } else {
       throw new IllegalArgumentException("Unknown consensus mechanism defined");
     }
   }
 
-  default ProtocolSchedule<C> getProtocolSchedule() {
-    return getGenesisConfig().getProtocolSchedule();
-  }
-
   ProtocolContext<C> getProtocolContext();
 
-  GenesisConfig<C> getGenesisConfig();
+  ProtocolSchedule<C> getProtocolSchedule();
+
+  GenesisConfigOptions getGenesisConfigOptions();
 
   Synchronizer getSynchronizer();
 

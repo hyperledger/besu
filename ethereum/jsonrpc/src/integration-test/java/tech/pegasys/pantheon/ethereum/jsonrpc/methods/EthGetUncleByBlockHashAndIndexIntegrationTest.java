@@ -52,7 +52,6 @@ import org.junit.Test;
 
 public class EthGetUncleByBlockHashAndIndexIntegrationTest {
 
-  private static final int CHAIN_ID = 123;
   private static JsonRpcTestMethodsFactory BLOCKCHAIN;
 
   private final JsonRpcResponseUtils responseUtils = new JsonRpcResponseUtils();
@@ -80,7 +79,7 @@ public class EthGetUncleByBlockHashAndIndexIntegrationTest {
 
   @Before
   public void setUp() {
-    method = BLOCKCHAIN.methods(CHAIN_ID).get("eth_getUncleByBlockHashAndIndex");
+    method = BLOCKCHAIN.methods().get("eth_getUncleByBlockHashAndIndex");
   }
 
   @Test

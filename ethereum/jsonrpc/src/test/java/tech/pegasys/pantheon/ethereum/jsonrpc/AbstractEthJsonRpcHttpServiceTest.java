@@ -21,7 +21,7 @@ import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMe
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
-import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
+import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -78,7 +78,7 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
 
   protected static Block GENESIS_BLOCK;
 
-  protected static GenesisConfig<?> GENESIS_CONFIG;
+  protected static GenesisState GENESIS_CONFIG;
 
   protected final Vertx vertx = Vertx.vertx();
 
@@ -91,8 +91,6 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
   protected final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
   protected final String CLIENT_VERSION = "TestClientVersion/0.1.0";
-
-  protected final int NET_VERSION = 123;
 
   protected static final Collection<RpcApi> JSON_RPC_APIS =
       Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
@@ -135,7 +133,7 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
     final String gensisjson = Resources.toString(genesisJsonUrl, Charsets.UTF_8);
 
     GENESIS_BLOCK = BLOCKS.get(0);
-    GENESIS_CONFIG = GenesisConfig.fromJson(gensisjson, PROTOCOL_SCHEDULE);
+    GENESIS_CONFIG = GenesisState.fromJson(gensisjson, PROTOCOL_SCHEDULE);
   }
 
   @Before
@@ -170,7 +168,6 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
         new JsonRpcMethodsFactory()
             .methods(
                 CLIENT_VERSION,
-                NET_VERSION,
                 peerDiscoveryMock,
                 blockchainQueries,
                 synchronizerMock,

@@ -19,21 +19,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
-import tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture;
+import tech.pegasys.pantheon.ethereum.core.ExecutionContextTestFixture;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool.TransactionBatchAddedListener;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.core.Wei;
-import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterIdGenerator;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
@@ -75,18 +73,17 @@ public class EthGetFilterChangesIntegrationTest {
 
   @Before
   public void setUp() {
-    final GenesisConfig<Void> genesisConfig = GenesisConfig.mainnet();
-    final Block genesisBlock = genesisConfig.getBlock();
-    blockchain = InMemoryTestFixture.createInMemoryBlockchain(genesisBlock);
-    final WorldStateArchive worldStateArchive =
-        InMemoryTestFixture.createInMemoryWorldStateArchive();
-    final ProtocolContext<Void> protocolContext =
-        new ProtocolContext<>(blockchain, worldStateArchive, null);
+    final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();
+    blockchain = executionContext.getBlockchain();
+    final ProtocolContext<Void> protocolContext = executionContext.getProtocolContext();
     transactionPool =
         new TransactionPool(
-            transactions, genesisConfig.getProtocolSchedule(), protocolContext, batchAddedListener);
+            transactions,
+            executionContext.getProtocolSchedule(),
+            protocolContext,
+            batchAddedListener);
     final BlockchainQueries blockchainQueries =
-        new BlockchainQueries(blockchain, worldStateArchive);
+        new BlockchainQueries(blockchain, protocolContext.getWorldStateArchive());
     filterManager =
         new FilterManager(
             blockchainQueries, transactionPool, new FilterIdGenerator(), new FilterRepository());

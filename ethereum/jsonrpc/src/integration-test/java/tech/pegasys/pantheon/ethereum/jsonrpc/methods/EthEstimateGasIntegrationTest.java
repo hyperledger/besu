@@ -33,7 +33,6 @@ import org.junit.Test;
 
 public class EthEstimateGasIntegrationTest {
 
-  private static final int CHAIN_ID = 123;
   private static JsonRpcTestMethodsFactory BLOCKCHAIN;
 
   private JsonRpcMethod method;
@@ -60,7 +59,7 @@ public class EthEstimateGasIntegrationTest {
 
   @Before
   public void setUp() {
-    final Map<String, JsonRpcMethod> methods = BLOCKCHAIN.methods(CHAIN_ID);
+    final Map<String, JsonRpcMethod> methods = BLOCKCHAIN.methods();
     method = methods.get("eth_estimateGas");
   }
 

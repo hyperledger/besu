@@ -14,8 +14,6 @@ package tech.pegasys.pantheon.ethereum.mainnet;
 
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
 
-import io.vertx.core.json.JsonObject;
-
 /** Provides {@link ProtocolSpec} lookups for mainnet hard forks. */
 public class MainnetProtocolSchedule {
 
@@ -49,7 +47,7 @@ public class MainnetProtocolSchedule {
       final long constantinopleBlockNumber,
       final int chainId) {
 
-    final MutableProtocolSchedule<Void> protocolSchedule = new MutableProtocolSchedule<>();
+    final MutableProtocolSchedule<Void> protocolSchedule = new MutableProtocolSchedule<>(chainId);
     protocolSchedule.putMilestone(0, MainnetProtocolSpecs.frontier(protocolSchedule));
     final ProtocolSpec<Void> homestead = MainnetProtocolSpecs.homestead(protocolSchedule);
     protocolSchedule.putMilestone(homesteadBlockNumber, homestead);
@@ -90,8 +88,8 @@ public class MainnetProtocolSchedule {
   /**
    * Create a Mainnet protocol schedule from a config object
    *
-   * @param config {@link JsonObject} containing the config options for the milestone starting
-   *     points
+   * @param config {@link GenesisConfigOptions} containing the config options for the milestone
+   *     starting points
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule<Void> fromConfig(final GenesisConfigOptions config) {

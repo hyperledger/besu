@@ -20,6 +20,8 @@ import org.junit.Test;
 
 public class ProtocolScheduleTest {
 
+  private static final int CHAIN_ID = 1;
+
   @SuppressWarnings("unchecked")
   @Test
   public void getByBlockNumber() {
@@ -28,7 +30,7 @@ public class ProtocolScheduleTest {
     final ProtocolSpec<Void> spec3 = mock(ProtocolSpec.class);
     final ProtocolSpec<Void> spec4 = mock(ProtocolSpec.class);
 
-    final MutableProtocolSchedule<Void> schedule = new MutableProtocolSchedule<>();
+    final MutableProtocolSchedule<Void> schedule = new MutableProtocolSchedule<>(CHAIN_ID);
     schedule.putMilestone(20, spec3);
     schedule.putMilestone(0, spec1);
     schedule.putMilestone(30, spec4);
@@ -42,7 +44,7 @@ public class ProtocolScheduleTest {
 
   @Test
   public void emptySchedule() {
-    Assertions.assertThatThrownBy(() -> new MutableProtocolSchedule<>().getByBlockNumber(0))
+    Assertions.assertThatThrownBy(() -> new MutableProtocolSchedule<>(CHAIN_ID).getByBlockNumber(0))
         .hasMessage("At least 1 milestone must be provided to the protocol schedule");
   }
 
@@ -52,7 +54,7 @@ public class ProtocolScheduleTest {
     final ProtocolSpec<Void> spec1 = mock(ProtocolSpec.class);
     final ProtocolSpec<Void> spec2 = mock(ProtocolSpec.class);
 
-    final MutableProtocolSchedule<Void> protocolSchedule = new MutableProtocolSchedule<>();
+    final MutableProtocolSchedule<Void> protocolSchedule = new MutableProtocolSchedule<>(CHAIN_ID);
     protocolSchedule.putMilestone(0, spec1);
     protocolSchedule.putMilestone(0, spec2);
     assertThat(protocolSchedule.getByBlockNumber(0)).isSameAs(spec2);

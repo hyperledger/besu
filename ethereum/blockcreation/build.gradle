@@ -12,6 +12,7 @@ dependencies {
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
   implementation project(':util')
+  implementation project(':config')
   implementation project(':crypto')
   implementation project(':services:kvstore')
 

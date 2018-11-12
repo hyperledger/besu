@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.messages;
 
+import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.development.DevelopmentProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
@@ -31,7 +32,6 @@ import java.util.List;
 
 import com.google.common.io.Resources;
 import io.netty.buffer.ByteBuf;
-import io.vertx.core.json.JsonObject;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -61,7 +61,8 @@ public final class BlockHeadersMessageTest {
     final BlockHeadersMessage message = BlockHeadersMessage.readFrom(raw);
     try {
       final Iterator<BlockHeader> readHeaders =
-          message.getHeaders(DevelopmentProtocolSchedule.create(new JsonObject()));
+          message.getHeaders(
+              DevelopmentProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions()));
       for (int i = 0; i < 50; ++i) {
         Assertions.assertThat(readHeaders.next()).isEqualTo(headers.get(i));
       }
