@@ -15,6 +15,10 @@ package tech.pegasys.pantheon.ethereum.p2p;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
@@ -29,6 +33,7 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -401,5 +406,54 @@ public final class NettyP2PNetworkTest {
         return true;
       }
     };
+  }
+
+  @Test
+  public void shouldSendClientQuittingWhenNetworkStops() {
+    NettyP2PNetwork nettyP2PNetwork = mockNettyP2PNetwork();
+    Peer peer = mockPeer();
+    PeerConnection peerConnection = mockPeerConnection();
+
+    nettyP2PNetwork.connect(peer).complete(peerConnection);
+    nettyP2PNetwork.stop();
+
+    verify(peerConnection).disconnect(eq(DisconnectReason.CLIENT_QUITTING));
+  }
+
+  private PeerConnection mockPeerConnection() {
+    PeerInfo peerInfo = mock(PeerInfo.class);
+    when(peerInfo.getNodeId()).thenReturn(BytesValue.fromHexString("0x00"));
+    PeerConnection peerConnection = mock(PeerConnection.class);
+    when(peerConnection.getPeer()).thenReturn(peerInfo);
+    return peerConnection;
+  }
+
+  private NettyP2PNetwork mockNettyP2PNetwork() {
+    final DiscoveryConfiguration noDiscovery = DiscoveryConfiguration.create().setActive(false);
+    final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
+    final Capability cap = Capability.create("eth", 63);
+    final NetworkingConfiguration networkingConfiguration =
+        NetworkingConfiguration.create()
+            .setDiscovery(noDiscovery)
+            .setSupportedProtocols(subProtocol())
+            .setRlpx(RlpxConfiguration.create().setBindPort(0));
+
+    return new NettyP2PNetwork(
+        mock(Vertx.class),
+        keyPair,
+        networkingConfiguration,
+        singletonList(cap),
+        () -> false,
+        new PeerBlacklist());
+  }
+
+  private Peer mockPeer() {
+    Peer peer = mock(Peer.class);
+    when(peer.getId())
+        .thenReturn(
+            BytesValue.fromHexString(
+                "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"));
+    when(peer.getEndpoint()).thenReturn(new Endpoint("127.0.0.1", 30303, OptionalInt.of(30303)));
+    return peer;
   }
 }

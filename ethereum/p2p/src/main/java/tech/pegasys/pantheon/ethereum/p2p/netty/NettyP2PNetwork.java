@@ -361,12 +361,17 @@ public final class NettyP2PNetwork implements P2PNetwork {
 
   @Override
   public void stop() {
+    sendClientQuittingToPeers();
     peerDiscoveryAgent.stop().join();
     peerBondedObserverId.ifPresent(peerDiscoveryAgent::removePeerBondedObserver);
     peerBondedObserverId = OptionalLong.empty();
     peerDiscoveryAgent.stop().join();
     workers.shutdownGracefully();
     boss.shutdownGracefully();
+  }
+
+  private void sendClientQuittingToPeers() {
+    connections.getPeerConnections().forEach(p -> p.disconnect(DisconnectReason.CLIENT_QUITTING));
   }
 
   @Override
