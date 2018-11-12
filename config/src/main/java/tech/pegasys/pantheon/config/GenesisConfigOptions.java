@@ -24,16 +24,8 @@ public class GenesisConfigOptions {
   private static final String CLIQUE_CONFIG_KEY = "clique";
   private final JsonObject configRoot;
 
-  private GenesisConfigOptions(final JsonObject configRoot) {
+  GenesisConfigOptions(final JsonObject configRoot) {
     this.configRoot = configRoot != null ? configRoot : new JsonObject();
-  }
-
-  public static GenesisConfigOptions fromGenesisConfig(final String genesisConfig) {
-    return fromGenesisConfig(new JsonObject(genesisConfig));
-  }
-
-  public static GenesisConfigOptions fromGenesisConfig(final JsonObject genesisConfig) {
-    return new GenesisConfigOptions(genesisConfig.getJsonObject("config"));
   }
 
   public boolean isEthHash() {
@@ -61,32 +53,32 @@ public class GenesisConfigOptions {
   }
 
   public OptionalLong getHomesteadBlockNumber() {
-    return getOptionalLong("homesteadBlock");
+    return getOptionalLong("homesteadblock");
   }
 
   public OptionalLong getDaoForkBlock() {
-    return getOptionalLong("daoForkBlock");
+    return getOptionalLong("daoforkblock");
   }
 
   public OptionalLong getTangerineWhistleBlockNumber() {
-    return getOptionalLong("eip150Block");
+    return getOptionalLong("eip150block");
   }
 
   public OptionalLong getSpuriousDragonBlockNumber() {
-    return getOptionalLong("eip158Block");
+    return getOptionalLong("eip158block");
   }
 
   public OptionalLong getByzantiumBlockNumber() {
-    return getOptionalLong("byzantiumBlock");
+    return getOptionalLong("byzantiumblock");
   }
 
   public OptionalLong getConstantinopleBlockNumber() {
-    return getOptionalLong("constantinopleBlock");
+    return getOptionalLong("constantinopleblock");
   }
 
   public OptionalInt getChainId() {
-    return configRoot.containsKey("chainId")
-        ? OptionalInt.of(configRoot.getInteger("chainId"))
+    return configRoot.containsKey("chainid")
+        ? OptionalInt.of(configRoot.getInteger("chainid"))
         : OptionalInt.empty();
   }
 

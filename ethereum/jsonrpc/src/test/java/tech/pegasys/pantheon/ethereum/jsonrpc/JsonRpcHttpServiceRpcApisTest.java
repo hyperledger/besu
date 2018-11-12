@@ -61,7 +61,6 @@ public class JsonRpcHttpServiceRpcApisTest {
   private static String baseUrl;
   private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
   private static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
-  private static final int NET_VERSION = 123;
   private JsonRpcConfiguration configuration;
 
   @Mock protected static BlockchainQueries blockchainQueries;
@@ -170,7 +169,6 @@ public class JsonRpcHttpServiceRpcApisTest {
             new JsonRpcMethodsFactory()
                 .methods(
                     CLIENT_VERSION,
-                    NET_VERSION,
                     mock(P2PNetwork.class),
                     blockchainQueries,
                     mock(Synchronizer.class),

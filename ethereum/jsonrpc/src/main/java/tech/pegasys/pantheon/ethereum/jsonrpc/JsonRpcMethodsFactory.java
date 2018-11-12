@@ -88,7 +88,6 @@ public class JsonRpcMethodsFactory {
 
   public Map<String, JsonRpcMethod> methods(
       final String clientVersion,
-      final int chainId,
       final P2PNetwork peerNetworkingService,
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
@@ -103,7 +102,6 @@ public class JsonRpcMethodsFactory {
         new BlockchainQueries(blockchain, worldStateArchive);
     return methods(
         clientVersion,
-        chainId,
         peerNetworkingService,
         blockchainQueries,
         synchronizer,
@@ -117,7 +115,6 @@ public class JsonRpcMethodsFactory {
 
   public Map<String, JsonRpcMethod> methods(
       final String clientVersion,
-      final int chainId,
       final P2PNetwork p2pNetwork,
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
@@ -180,7 +177,7 @@ public class JsonRpcMethodsFactory {
           new EthProtocolVersion(supportedCapabilities),
           new EthGasPrice(miningCoordinator),
           new EthGetWork(miningCoordinator),
-          new EthChainId(chainId));
+          new EthChainId(protocolSchedule.getChainId()));
     }
     if (rpcApis.contains(RpcApis.DEBUG)) {
       final BlockReplay blockReplay =
@@ -197,7 +194,7 @@ public class JsonRpcMethodsFactory {
     if (rpcApis.contains(RpcApis.NET)) {
       addMethods(
           enabledMethods,
-          new NetVersion(chainId),
+          new NetVersion(protocolSchedule.getChainId()),
           new NetListening(p2pNetwork),
           new NetPeerCount(p2pNetwork),
           new AdminPeers(p2pNetwork));

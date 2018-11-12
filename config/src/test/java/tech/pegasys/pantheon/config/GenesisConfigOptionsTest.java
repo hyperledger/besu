@@ -120,7 +120,7 @@ public class GenesisConfigOptionsTest {
 
   @Test
   public void shouldSupportEmptyGenesisConfig() {
-    final GenesisConfigOptions config = GenesisConfigOptions.fromGenesisConfig("{}");
+    final GenesisConfigOptions config = GenesisConfigFile.fromConfig("{}").getConfigOptions();
     assertThat(config.isEthHash()).isFalse();
     assertThat(config.isIbft()).isFalse();
     assertThat(config.isClique()).isFalse();
@@ -128,7 +128,7 @@ public class GenesisConfigOptionsTest {
   }
 
   private GenesisConfigOptions fromConfigOptions(final Map<String, Object> options) {
-    return GenesisConfigOptions.fromGenesisConfig(
-        new JsonObject(Collections.singletonMap("config", options)));
+    return GenesisConfigFile.fromConfig(new JsonObject(Collections.singletonMap("config", options)))
+        .getConfigOptions();
   }
 }

@@ -18,8 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
-import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.Wei;
@@ -45,7 +45,11 @@ public class MainnetBlockProcessorTest {
     final MutableWorldState worldState = WorldStateMock.create(emptyMap());
     final Hash initialHash = worldState.rootHash();
 
-    final BlockHeader emptyBlockHeader = GenesisConfig.mainnet().getBlock().getHeader();
+    final BlockHeader emptyBlockHeader =
+        new BlockHeaderTestFixture()
+            .transactionsRoot(Hash.EMPTY_LIST_HASH)
+            .ommersHash(Hash.EMPTY_LIST_HASH)
+            .buildHeader();
     blockProcessor.processBlock(blockchain, worldState, emptyBlockHeader, emptyList(), emptyList());
 
     // An empty block with 0 reward should not change the world state

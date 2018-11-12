@@ -25,9 +25,10 @@ import org.junit.Test;
 
 public class CliqueProtocolSpecsTest {
 
+  private static final int CHAIN_ID = 5;
   CliqueProtocolSpecs protocolSpecs =
       new CliqueProtocolSpecs(
-          15, 30_000, 5, AddressHelpers.ofValue(5), new MutableProtocolSchedule<>());
+          15, 30_000, AddressHelpers.ofValue(5), new MutableProtocolSchedule<>(CHAIN_ID));
 
   @Test
   public void homsteadParametersAlignWithMainnetWithAdjustments() {
@@ -40,7 +41,7 @@ public class CliqueProtocolSpecsTest {
 
   @Test
   public void allSpecsInheritFromMainnetCounterparts() {
-    final ProtocolSchedule<Void> mainnetProtocolSchedule = new MutableProtocolSchedule<>();
+    final ProtocolSchedule<Void> mainnetProtocolSchedule = new MutableProtocolSchedule<>(CHAIN_ID);
 
     assertThat(protocolSpecs.frontier().getName())
         .isEqualTo(MainnetProtocolSpecs.frontier(mainnetProtocolSchedule).getName());

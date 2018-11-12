@@ -124,7 +124,7 @@ public class BlockMinerTest {
   }
 
   private ProtocolSchedule<Void> singleSpecSchedule(final ProtocolSpec<Void> protocolSpec) {
-    final MutableProtocolSchedule<Void> protocolSchedule = new MutableProtocolSchedule<>();
+    final MutableProtocolSchedule<Void> protocolSchedule = new MutableProtocolSchedule<>(1234);
     protocolSchedule.putMilestone(0, protocolSpec);
     return protocolSchedule;
   }

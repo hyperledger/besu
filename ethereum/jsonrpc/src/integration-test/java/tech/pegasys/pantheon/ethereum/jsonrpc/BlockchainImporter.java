@@ -12,8 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc;
 
-import tech.pegasys.pantheon.config.GenesisConfigOptions;
-import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
+import tech.pegasys.pantheon.config.GenesisConfigFile;
+import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
@@ -29,7 +29,7 @@ import java.util.List;
 /** Creates a block chain from a genesis and a blocks files. */
 public class BlockchainImporter {
 
-  private final GenesisConfig<?> genesisConfig;
+  private final GenesisState genesisState;
 
   private final ProtocolSchedule<Void> protocolSchedule;
 
@@ -39,7 +39,8 @@ public class BlockchainImporter {
 
   public BlockchainImporter(final URL blocksUrl, final String genesisJson) throws Exception {
     protocolSchedule =
-        MainnetProtocolSchedule.fromConfig(GenesisConfigOptions.fromGenesisConfig(genesisJson));
+        MainnetProtocolSchedule.fromConfig(
+            GenesisConfigFile.fromConfig(genesisJson).getConfigOptions());
 
     blocks = new ArrayList<>();
     try (final RawBlockIterator iterator =
@@ -52,11 +53,11 @@ public class BlockchainImporter {
     }
 
     genesisBlock = blocks.get(0);
-    genesisConfig = GenesisConfig.fromJson(genesisJson, protocolSchedule);
+    genesisState = GenesisState.fromJson(genesisJson, protocolSchedule);
   }
 
-  public GenesisConfig<?> getGenesisConfig() {
-    return genesisConfig;
+  public GenesisState getGenesisState() {
+    return genesisState;
   }
 
   public ProtocolSchedule<Void> getProtocolSchedule() {

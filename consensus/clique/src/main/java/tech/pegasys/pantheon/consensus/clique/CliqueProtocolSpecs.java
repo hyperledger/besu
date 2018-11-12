@@ -29,19 +29,16 @@ public class CliqueProtocolSpecs {
 
   private final long secondsBetweenBlocks;
   private final long epochLength;
-  private final int chainId;
   private final Address localNodeAddress;
   private final ProtocolSchedule<CliqueContext> protocolSchedule;
 
   public CliqueProtocolSpecs(
       final long secondsBetweenBlocks,
       final long epochLength,
-      final int chainId,
       final Address localNodeAddress,
       final ProtocolSchedule<CliqueContext> protocolSchedule) {
     this.secondsBetweenBlocks = secondsBetweenBlocks;
     this.epochLength = epochLength;
-    this.chainId = chainId;
     this.localNodeAddress = localNodeAddress;
     this.protocolSchedule = protocolSchedule;
   }
@@ -59,15 +56,18 @@ public class CliqueProtocolSpecs {
   }
 
   public ProtocolSpec<CliqueContext> spuriousDragon() {
-    return applyCliqueSpecificModifications(MainnetProtocolSpecs.spuriousDragonDefinition(chainId));
+    return applyCliqueSpecificModifications(
+        MainnetProtocolSpecs.spuriousDragonDefinition(protocolSchedule.getChainId()));
   }
 
   public ProtocolSpec<CliqueContext> byzantium() {
-    return applyCliqueSpecificModifications(MainnetProtocolSpecs.byzantiumDefinition(chainId));
+    return applyCliqueSpecificModifications(
+        MainnetProtocolSpecs.byzantiumDefinition(protocolSchedule.getChainId()));
   }
 
   public ProtocolSpec<CliqueContext> constantinople() {
-    return applyCliqueSpecificModifications(MainnetProtocolSpecs.constantinopleDefinition(chainId));
+    return applyCliqueSpecificModifications(
+        MainnetProtocolSpecs.constantinopleDefinition(protocolSchedule.getChainId()));
   }
 
   private ProtocolSpec<CliqueContext> applyCliqueSpecificModifications(

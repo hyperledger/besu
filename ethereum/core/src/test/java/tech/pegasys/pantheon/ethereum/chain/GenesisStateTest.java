@@ -30,7 +30,7 @@ import com.google.common.io.Resources;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
-public final class GenesisConfigTest {
+public final class GenesisStateTest {
 
   /** Known RLP encoded bytes of the Olympic Genesis Block. */
   private static final String OLYMPIC_RLP =
@@ -42,12 +42,11 @@ public final class GenesisConfigTest {
 
   @Test
   public void createFromJsonWithAllocs() throws Exception {
-    final GenesisConfig<?> genesisConfig =
-        GenesisConfig.fromJson(
-            Resources.toString(
-                GenesisConfigTest.class.getResource("genesis1.json"), Charsets.UTF_8),
+    final GenesisState genesisState =
+        GenesisState.fromJson(
+            Resources.toString(GenesisStateTest.class.getResource("genesis1.json"), Charsets.UTF_8),
             MainnetProtocolSchedule.create());
-    final BlockHeader header = genesisConfig.getBlock().getHeader();
+    final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getStateRoot())
         .isEqualTo(
             Hash.fromHexString(
@@ -60,7 +59,7 @@ public final class GenesisConfigTest {
     final DefaultMutableWorldState worldState =
         new DefaultMutableWorldState(
             new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage()));
-    genesisConfig.writeStateTo(worldState);
+    genesisState.writeStateTo(worldState);
     final Account first =
         worldState.get(Address.fromHexString("0x0000000000000000000000000000000000000001"));
     final Account second =
@@ -73,12 +72,11 @@ public final class GenesisConfigTest {
 
   @Test
   public void createFromJsonNoAllocs() throws Exception {
-    final GenesisConfig<?> genesisConfig =
-        GenesisConfig.fromJson(
-            Resources.toString(
-                GenesisConfigTest.class.getResource("genesis2.json"), Charsets.UTF_8),
+    final GenesisState genesisState =
+        GenesisState.fromJson(
+            Resources.toString(GenesisStateTest.class.getResource("genesis2.json"), Charsets.UTF_8),
             MainnetProtocolSchedule.create());
-    final BlockHeader header = genesisConfig.getBlock().getHeader();
+    final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getStateRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(header.getTransactionsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(header.getReceiptsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
@@ -89,14 +87,14 @@ public final class GenesisConfigTest {
 
   @Test
   public void encodeOlympicBlock() throws Exception {
-    final GenesisConfig<?> genesisConfig =
-        GenesisConfig.fromJson(
+    final GenesisState genesisState =
+        GenesisState.fromJson(
             Resources.toString(
-                GenesisConfigTest.class.getResource("genesis-olympic.json"), Charsets.UTF_8),
+                GenesisStateTest.class.getResource("genesis-olympic.json"), Charsets.UTF_8),
             MainnetProtocolSchedule.create());
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
-    genesisConfig.getBlock().writeTo(tmp);
-    assertThat(Hex.toHexString(genesisConfig.getBlock().getHeader().getHash().extractArray()))
+    genesisState.getBlock().writeTo(tmp);
+    assertThat(Hex.toHexString(genesisState.getBlock().getHeader().getHash().extractArray()))
         .isEqualTo(OLYMPIC_HASH);
     assertThat(Hex.toHexString(tmp.encoded().extractArray())).isEqualTo(OLYMPIC_RLP);
   }

@@ -28,7 +28,7 @@ public class CliqueConfigOptionsTest {
 
   @Test
   public void shouldGetEpochLengthFromConfig() {
-    final CliqueConfigOptions config = fromConfigOptions(singletonMap("epochLength", 10_000));
+    final CliqueConfigOptions config = fromConfigOptions(singletonMap("EpochLength", 10_000));
     assertThat(config.getEpochLength()).isEqualTo(10_000);
   }
 
@@ -46,7 +46,7 @@ public class CliqueConfigOptionsTest {
 
   @Test
   public void shouldGetBlockPeriodFromConfig() {
-    final CliqueConfigOptions config = fromConfigOptions(singletonMap("blockPeriodSeconds", 5));
+    final CliqueConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", 5));
     assertThat(config.getBlockPeriodSeconds()).isEqualTo(5);
   }
 
@@ -63,8 +63,9 @@ public class CliqueConfigOptionsTest {
   }
 
   private CliqueConfigOptions fromConfigOptions(final Map<String, Object> cliqueConfigOptions) {
-    return GenesisConfigOptions.fromGenesisConfig(
+    return GenesisConfigFile.fromConfig(
             new JsonObject(singletonMap("config", singletonMap("clique", cliqueConfigOptions))))
+        .getConfigOptions()
         .getCliqueConfigOptions();
   }
 }

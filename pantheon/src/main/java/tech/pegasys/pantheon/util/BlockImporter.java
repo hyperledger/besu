@@ -18,7 +18,6 @@ import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.AbstractBlockCreator;
 import tech.pegasys.pantheon.ethereum.blockcreation.BlockMiner;
-import tech.pegasys.pantheon.ethereum.chain.GenesisConfig;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -55,7 +54,6 @@ public class BlockImporter {
           final Path blocks, final PantheonController<C> pantheonController) throws IOException {
     final ProtocolSchedule<C> protocolSchedule = pantheonController.getProtocolSchedule();
     final ProtocolContext<C> context = pantheonController.getProtocolContext();
-    final GenesisConfig<C> genesis = pantheonController.getGenesisConfig();
 
     try (final RawBlockIterator iterator =
         new RawBlockIterator(
@@ -69,7 +67,7 @@ public class BlockImporter {
       while (iterator.hasNext()) {
         final Block block = iterator.next();
         final BlockHeader header = block.getHeader();
-        if (header.getNumber() == genesis.getBlock().getHeader().getNumber()) {
+        if (header.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
           continue;
         }
         if (header.getNumber() % 100 == 0) {
