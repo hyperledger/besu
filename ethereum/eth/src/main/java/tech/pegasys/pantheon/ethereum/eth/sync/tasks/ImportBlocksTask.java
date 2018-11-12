@@ -74,17 +74,17 @@ public class ImportBlocksTask<C> extends AbstractPeerTask<List<Block>> {
   @Override
   protected void executeTaskWithPeer(final EthPeer peer) throws PeerNotConnected {
     this.peer = peer;
-    LOG.info("Importing blocks from {}", startNumber);
+    LOG.debug("Importing blocks from {}", startNumber);
     downloadHeaders()
         .thenCompose(this::completeBlocks)
         .thenCompose(this::importBlocks)
         .whenComplete(
             (r, t) -> {
               if (t != null) {
-                LOG.info("Import from block {} failed: {}.", startNumber, t);
+                LOG.debug("Import from block {} failed: {}.", startNumber, t);
                 result.get().completeExceptionally(t);
               } else {
-                LOG.info("Import from block {} succeeded.", startNumber);
+                LOG.debug("Import from block {} succeeded.", startNumber);
                 result.get().complete(new PeerTaskResult<>(peer, r));
               }
             });
