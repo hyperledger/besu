@@ -17,12 +17,15 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 
 import org.junit.Test;
 
 public class CliqueProtocolScheduleTest {
+
+  private static final KeyPair NODE_KEYS = KeyPair.generate();
 
   @Test
   public void protocolSpecsAreCreatedAtBlockDefinedInJson() {
@@ -38,7 +41,7 @@ public class CliqueProtocolScheduleTest {
 
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule<CliqueContext> protocolSchedule =
-        CliqueProtocolSchedule.create(config, KeyPair.generate());
+        CliqueProtocolSchedule.create(config, NODE_KEYS);
 
     final ProtocolSpec<CliqueContext> homesteadSpec = protocolSchedule.getByBlockNumber(1);
     final ProtocolSpec<CliqueContext> tangerineWhistleSpec = protocolSchedule.getByBlockNumber(2);
@@ -48,5 +51,16 @@ public class CliqueProtocolScheduleTest {
     assertThat(homesteadSpec.equals(tangerineWhistleSpec)).isFalse();
     assertThat(tangerineWhistleSpec.equals(spuriousDragonSpec)).isFalse();
     assertThat(spuriousDragonSpec.equals(byzantiumSpec)).isFalse();
+  }
+
+  @Test
+  public void parametersAlignWithMainnetWithAdjustments() {
+    final ProtocolSpec<CliqueContext> homestead =
+        CliqueProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions(), NODE_KEYS)
+            .getByBlockNumber(0);
+
+    assertThat(homestead.getName()).isEqualTo("Frontier");
+    assertThat(homestead.getBlockReward()).isEqualTo(Wei.ZERO);
+    assertThat(homestead.getDifficultyCalculator()).isInstanceOf(CliqueDifficultyCalculator.class);
   }
 }

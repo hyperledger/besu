@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.core;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
+import tech.pegasys.pantheon.config.StubGenesisConfigOptions;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
@@ -20,12 +21,14 @@ import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.db.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
 import tech.pegasys.pantheon.ethereum.worldstate.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
+
+import java.util.function.Function;
 
 public class ExecutionContextTestFixture {
 
@@ -106,7 +109,10 @@ public class ExecutionContextTestFixture {
 
     public ExecutionContextTestFixture build() {
       if (protocolSchedule == null) {
-        protocolSchedule = MainnetProtocolSchedule.create(0, 0, 0, 0, 0, 0, 42);
+        protocolSchedule =
+            new ProtocolScheduleBuilder<>(
+                    new StubGenesisConfigOptions().constantinopleBlock(0), 42, Function.identity())
+                .createProtocolSchedule();
       }
       if (keyValueStorage == null) {
         keyValueStorage = new InMemoryKeyValueStorage();

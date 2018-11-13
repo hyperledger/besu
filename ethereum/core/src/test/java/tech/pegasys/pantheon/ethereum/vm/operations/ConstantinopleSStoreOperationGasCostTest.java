@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.config.StubGenesisConfigOptions;
 import tech.pegasys.pantheon.ethereum.core.Gas;
 import tech.pegasys.pantheon.ethereum.core.TestCodeExecutor;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
@@ -31,8 +32,9 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class ConstantinopleSStoreOperationGasCostTest {
+
   private static final ProtocolSchedule<Void> protocolSchedule =
-      MainnetProtocolSchedule.create(0, 0, 0, 0, 0, 0, 1);
+      MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().constantinopleBlock(0));
 
   @Parameters(name = "Code: {0}, Original: {1}")
   public static Object[][] scenarios() {
