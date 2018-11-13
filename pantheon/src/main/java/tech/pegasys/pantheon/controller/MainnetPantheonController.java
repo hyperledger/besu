@@ -99,10 +99,11 @@ public class MainnetPantheonController implements PantheonController<Void> {
   public static PantheonController<Void> mainnet(final Path home) throws IOException {
     final MiningParameters miningParams = new MiningParameters(null, null, null, false);
     final KeyPair nodeKeys = loadKeyPair(home);
+    final GenesisConfigFile genesisConfig = GenesisConfigFile.mainnet();
     return init(
         home,
-        GenesisConfigFile.mainnet(),
-        MainnetProtocolSchedule.create(),
+        genesisConfig,
+        MainnetProtocolSchedule.fromConfig(genesisConfig.getConfigOptions()),
         SynchronizerConfiguration.builder().build(),
         miningParams,
         nodeKeys);

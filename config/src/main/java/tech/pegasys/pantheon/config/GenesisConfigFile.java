@@ -59,7 +59,7 @@ public class GenesisConfigFile {
   }
 
   public GenesisConfigOptions getConfigOptions() {
-    return new GenesisConfigOptions(configRoot.getJsonObject("config"));
+    return new JsonGenesisConfigOptions(configRoot.getJsonObject("config"));
   }
 
   public Stream<GenesisAllocation> getAllocations() {

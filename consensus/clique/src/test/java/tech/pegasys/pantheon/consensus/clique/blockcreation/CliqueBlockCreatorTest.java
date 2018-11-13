@@ -23,7 +23,7 @@ import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
 import tech.pegasys.pantheon.consensus.clique.CliqueHelpers;
-import tech.pegasys.pantheon.consensus.clique.CliqueProtocolSpecs;
+import tech.pegasys.pantheon.consensus.clique.CliqueProtocolSchedule;
 import tech.pegasys.pantheon.consensus.clique.TestHelpers;
 import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
@@ -42,7 +42,7 @@ import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
-import tech.pegasys.pantheon.ethereum.mainnet.MutableProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
@@ -53,14 +53,12 @@ import org.junit.Test;
 
 public class CliqueBlockCreatorTest {
 
-  private static final int CHAIN_ID = 1;
   private final KeyPair proposerKeyPair = KeyPair.generate();
   private final Address proposerAddress = Util.publicKeyToAddress(proposerKeyPair.getPublicKey());
   private final KeyPair otherKeyPair = KeyPair.generate();
   private final List<Address> validatorList = Lists.newArrayList();
 
-  private final MutableProtocolSchedule<CliqueContext> protocolSchedule =
-      new MutableProtocolSchedule<>(CHAIN_ID);
+  private ProtocolSchedule<CliqueContext> protocolSchedule;
   private final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
 
   private MutableBlockchain blockchain;
@@ -69,11 +67,9 @@ public class CliqueBlockCreatorTest {
 
   @Before
   public void setup() {
-    final CliqueProtocolSpecs specs =
-        new CliqueProtocolSpecs(
-            15, 30_000, Util.publicKeyToAddress(proposerKeyPair.getPublicKey()), protocolSchedule);
-
-    protocolSchedule.putMilestone(0, specs.frontier());
+    protocolSchedule =
+        CliqueProtocolSchedule.create(
+            GenesisConfigFile.DEFAULT.getConfigOptions(), proposerKeyPair);
 
     final Address otherAddress = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
     validatorList.add(otherAddress);

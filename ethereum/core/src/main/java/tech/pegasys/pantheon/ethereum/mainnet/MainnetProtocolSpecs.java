@@ -94,26 +94,6 @@ public abstract class MainnetProtocolSpecs {
         .name("Frontier");
   }
 
-  /**
-   * Returns the Frontier milestone protocol spec.
-   *
-   * @param protocolSchedule the {@link ProtocolSchedule} this spec will be part of
-   * @return the Frontier milestone protocol spec
-   */
-  public static ProtocolSpec<Void> frontier(final ProtocolSchedule<Void> protocolSchedule) {
-    return frontierDefinition().build(protocolSchedule);
-  }
-
-  /**
-   * Returns the Homestead milestone protocol spec.
-   *
-   * @param protocolSchedule the {@link ProtocolSchedule} this spec will be part of
-   * @return the Homestead milestone protocol spec
-   */
-  public static ProtocolSpec<Void> homestead(final ProtocolSchedule<Void> protocolSchedule) {
-    return homesteadDefinition().build(protocolSchedule);
-  }
-
   public static ProtocolSpecBuilder<Void> homesteadDefinition() {
     return frontierDefinition()
         .gasCalculator(HomesteadGasCalculator::new)
@@ -128,17 +108,7 @@ public abstract class MainnetProtocolSpecs {
         .name("Homestead");
   }
 
-  /**
-   * Returns the initial DAO block milestone protocol spec.
-   *
-   * @param protocolSchedule the {@link ProtocolSchedule} this spec will be part of
-   * @return the initial DAO block milestone protocol spec
-   */
-  public static ProtocolSpec<Void> daoRecoveryInit(final ProtocolSchedule<Void> protocolSchedule) {
-    return daoRecoveryInitDefinition().build(protocolSchedule);
-  }
-
-  private static ProtocolSpecBuilder<Void> daoRecoveryInitDefinition() {
+  public static ProtocolSpecBuilder<Void> daoRecoveryInitDefinition() {
     return homesteadDefinition()
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::createDaoValidator)
         .blockProcessorBuilder(
@@ -155,46 +125,16 @@ public abstract class MainnetProtocolSpecs {
         .name("DaoRecoveryInit");
   }
 
-  /**
-   * Returns the DAO block transition segment milestone protocol spec.
-   *
-   * @param protocolSchedule the {@link ProtocolSchedule} this spec will be part of
-   * @return the DAO block transition segment milestone protocol spec
-   */
-  public static ProtocolSpec<Void> daoRecoveryTransition(
-      final ProtocolSchedule<Void> protocolSchedule) {
+  public static ProtocolSpecBuilder<Void> daoRecoveryTransitionDefinition() {
     return daoRecoveryInitDefinition()
         .blockProcessorBuilder(MainnetBlockProcessor::new)
-        .name("DaoRecoveryTransition")
-        .build(protocolSchedule);
-  }
-
-  /**
-   * Returns the Tangerine Whistle milestone protocol spec.
-   *
-   * @param protocolSchedule the {@link ProtocolSchedule} this spec will be part of
-   * @return the Tangerine Whistle milestone protocol spec
-   */
-  public static ProtocolSpec<Void> tangerineWhistle(final ProtocolSchedule<Void> protocolSchedule) {
-    return tangerineWhistleDefinition().build(protocolSchedule);
+        .name("DaoRecoveryTransition");
   }
 
   public static ProtocolSpecBuilder<Void> tangerineWhistleDefinition() {
     return homesteadDefinition()
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .name("TangerineWhistle");
-  }
-
-  /**
-   * Returns the Spurious Dragon milestone protocol spec.
-   *
-   * @param chainId ID of the blockchain
-   * @param protocolSchedule the {@link ProtocolSchedule} this spec will be part of
-   * @return the Spurious Dragon milestone protocol spec
-   */
-  public static ProtocolSpec<Void> spuriousDragon(
-      final int chainId, final ProtocolSchedule<Void> protocolSchedule) {
-    return spuriousDragonDefinition(chainId).build(protocolSchedule);
   }
 
   public static ProtocolSpecBuilder<Void> spuriousDragonDefinition(final int chainId) {
@@ -231,18 +171,6 @@ public abstract class MainnetProtocolSpecs {
         .name("SpuriousDragon");
   }
 
-  /**
-   * Returns the Byzantium milestone protocol spec.
-   *
-   * @param chainId ID of the blockchain
-   * @param protocolSchedule the {@link ProtocolSchedule} this spec will be part of
-   * @return the Byzantium milestone protocol spec
-   */
-  public static ProtocolSpec<Void> byzantium(
-      final int chainId, final ProtocolSchedule<Void> protocolSchedule) {
-    return byzantiumDefinition(chainId).build(protocolSchedule);
-  }
-
   public static ProtocolSpecBuilder<Void> byzantiumDefinition(final int chainId) {
     return spuriousDragonDefinition(chainId)
         .evmBuilder(MainnetEvmRegistries::byzantium)
@@ -252,18 +180,6 @@ public abstract class MainnetProtocolSpecs {
         .blockReward(BYZANTIUM_BLOCK_REWARD)
         .transactionReceiptType(TransactionReceiptType.STATUS)
         .name("Byzantium");
-  }
-
-  /**
-   * Returns the Constantinople milestone protocol spec.
-   *
-   * @param chainId ID of the blockchain
-   * @param protocolSchedule the {@link ProtocolSchedule} this spec will be part of
-   * @return the Constantinople milestone protocol spec
-   */
-  public static ProtocolSpec<Void> constantinople(
-      final int chainId, final ProtocolSchedule<Void> protocolSchedule) {
-    return constantinopleDefinition(chainId).build(protocolSchedule);
   }
 
   public static ProtocolSpecBuilder<Void> constantinopleDefinition(final int chainId) {

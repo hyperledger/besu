@@ -115,7 +115,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
     final EnvironmentInformation execEnv = spec.getExec();
 
     final ProtocolSpec<Void> protocolSpec =
-        MainnetProtocolSpecs.frontier(new MutableProtocolSchedule<>(CHAIN_ID));
+        MainnetProtocolSpecs.frontierDefinition().build(new MutableProtocolSchedule<>(CHAIN_ID));
 
     final TestBlockchain blockchain = new TestBlockchain(execEnv.getBlockHeader().getNumber());
     final MessageFrame frame =

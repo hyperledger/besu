@@ -15,76 +15,29 @@ package tech.pegasys.pantheon.config;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 
-import io.vertx.core.json.JsonObject;
+public interface GenesisConfigOptions {
 
-public class GenesisConfigOptions {
+  boolean isEthHash();
 
-  private static final String ETHASH_CONFIG_KEY = "ethash";
-  private static final String IBFT_CONFIG_KEY = "ibft";
-  private static final String CLIQUE_CONFIG_KEY = "clique";
-  private final JsonObject configRoot;
+  boolean isIbft();
 
-  GenesisConfigOptions(final JsonObject configRoot) {
-    this.configRoot = configRoot != null ? configRoot : new JsonObject();
-  }
+  boolean isClique();
 
-  public boolean isEthHash() {
-    return configRoot.containsKey(ETHASH_CONFIG_KEY);
-  }
+  IbftConfigOptions getIbftConfigOptions();
 
-  public boolean isIbft() {
-    return configRoot.containsKey(IBFT_CONFIG_KEY);
-  }
+  CliqueConfigOptions getCliqueConfigOptions();
 
-  public boolean isClique() {
-    return configRoot.containsKey(CLIQUE_CONFIG_KEY);
-  }
+  OptionalLong getHomesteadBlockNumber();
 
-  public IbftConfigOptions getIbftConfigOptions() {
-    return isIbft()
-        ? new IbftConfigOptions(configRoot.getJsonObject(IBFT_CONFIG_KEY))
-        : IbftConfigOptions.DEFAULT;
-  }
+  OptionalLong getDaoForkBlock();
 
-  public CliqueConfigOptions getCliqueConfigOptions() {
-    return isClique()
-        ? new CliqueConfigOptions(configRoot.getJsonObject(CLIQUE_CONFIG_KEY))
-        : CliqueConfigOptions.DEFAULT;
-  }
+  OptionalLong getTangerineWhistleBlockNumber();
 
-  public OptionalLong getHomesteadBlockNumber() {
-    return getOptionalLong("homesteadblock");
-  }
+  OptionalLong getSpuriousDragonBlockNumber();
 
-  public OptionalLong getDaoForkBlock() {
-    return getOptionalLong("daoforkblock");
-  }
+  OptionalLong getByzantiumBlockNumber();
 
-  public OptionalLong getTangerineWhistleBlockNumber() {
-    return getOptionalLong("eip150block");
-  }
+  OptionalLong getConstantinopleBlockNumber();
 
-  public OptionalLong getSpuriousDragonBlockNumber() {
-    return getOptionalLong("eip158block");
-  }
-
-  public OptionalLong getByzantiumBlockNumber() {
-    return getOptionalLong("byzantiumblock");
-  }
-
-  public OptionalLong getConstantinopleBlockNumber() {
-    return getOptionalLong("constantinopleblock");
-  }
-
-  public OptionalInt getChainId() {
-    return configRoot.containsKey("chainid")
-        ? OptionalInt.of(configRoot.getInteger("chainid"))
-        : OptionalInt.empty();
-  }
-
-  private OptionalLong getOptionalLong(final String key) {
-    return configRoot.containsKey(key)
-        ? OptionalLong.of(configRoot.getLong(key))
-        : OptionalLong.empty();
-  }
+  OptionalInt getChainId();
 }

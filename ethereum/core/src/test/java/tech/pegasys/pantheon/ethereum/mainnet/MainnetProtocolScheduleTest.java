@@ -14,6 +14,9 @@ package tech.pegasys.pantheon.ethereum.mainnet;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 
+import java.nio.charset.StandardCharsets;
+
+import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -38,36 +41,12 @@ public class MainnetProtocolScheduleTest {
   }
 
   @Test
-  public void shouldReturnCorrectProtocolSpecsWhenCustomNumbersAreUsed() {
-    final ProtocolSchedule<Void> sched = MainnetProtocolSchedule.create(2, 3, 14, 15, 16, 18, 1);
-    Assertions.assertThat(sched.getByBlockNumber(1).getName()).isEqualTo("Frontier");
-    Assertions.assertThat(sched.getByBlockNumber(2).getName()).isEqualTo("Homestead");
-    Assertions.assertThat(sched.getByBlockNumber(3).getName()).isEqualTo("DaoRecoveryInit");
-    Assertions.assertThat(sched.getByBlockNumber(4).getName()).isEqualTo("DaoRecoveryTransition");
-    Assertions.assertThat(sched.getByBlockNumber(13).getName()).isEqualTo("Homestead");
-    Assertions.assertThat(sched.getByBlockNumber(14).getName()).isEqualTo("TangerineWhistle");
-    Assertions.assertThat(sched.getByBlockNumber(15).getName()).isEqualTo("SpuriousDragon");
-    Assertions.assertThat(sched.getByBlockNumber(16).getName()).isEqualTo("Byzantium");
-    Assertions.assertThat(sched.getByBlockNumber(18).getName()).isEqualTo("Constantinople");
-  }
-
-  @Test
-  public void shouldReturnDefaultProtocolSpecsWhenEmptyJsonConfigIsUsed() {
+  public void shouldOnlyUseFrontierWhenEmptyJsonConfigIsUsed() {
     final JsonObject json = new JsonObject("{}");
     final ProtocolSchedule<Void> sched =
         MainnetProtocolSchedule.fromConfig(GenesisConfigFile.fromConfig(json).getConfigOptions());
     Assertions.assertThat(sched.getByBlockNumber(1L).getName()).isEqualTo("Frontier");
-    Assertions.assertThat(sched.getByBlockNumber(1_150_000L).getName()).isEqualTo("Homestead");
-    Assertions.assertThat(sched.getByBlockNumber(1_920_000L).getName())
-        .isEqualTo("DaoRecoveryInit");
-    Assertions.assertThat(sched.getByBlockNumber(1_920_001L).getName())
-        .isEqualTo("DaoRecoveryTransition");
-    Assertions.assertThat(sched.getByBlockNumber(1_920_010L).getName()).isEqualTo("Homestead");
-    Assertions.assertThat(sched.getByBlockNumber(2_463_000L).getName())
-        .isEqualTo("TangerineWhistle");
-    Assertions.assertThat(sched.getByBlockNumber(2_675_000L).getName()).isEqualTo("SpuriousDragon");
-    Assertions.assertThat(sched.getByBlockNumber(4_730_000L).getName()).isEqualTo("Byzantium");
-    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Byzantium");
+    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Frontier");
   }
 
   @Test
@@ -89,13 +68,19 @@ public class MainnetProtocolScheduleTest {
   }
 
   @Test
-  public void shouldCreateRopstenConfig() {
+  public void shouldCreateRopstenConfig() throws Exception {
     final ProtocolSchedule<Void> sched =
-        MainnetProtocolSchedule.create(0, 0, 0, 10, 1700000, -1, 3);
+        MainnetProtocolSchedule.fromConfig(
+            GenesisConfigFile.fromConfig(
+                    Resources.toString(
+                        Resources.getResource("ropsten.json"), StandardCharsets.UTF_8))
+                .getConfigOptions());
     Assertions.assertThat(sched.getByBlockNumber(0).getName()).isEqualTo("TangerineWhistle");
     Assertions.assertThat(sched.getByBlockNumber(1).getName()).isEqualTo("TangerineWhistle");
     Assertions.assertThat(sched.getByBlockNumber(10).getName()).isEqualTo("SpuriousDragon");
     Assertions.assertThat(sched.getByBlockNumber(1700000).getName()).isEqualTo("Byzantium");
-    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Byzantium");
+    Assertions.assertThat(sched.getByBlockNumber(4230000).getName()).isEqualTo("Constantinople");
+    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName())
+        .isEqualTo("Constantinople");
   }
 }

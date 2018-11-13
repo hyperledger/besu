@@ -12,12 +12,20 @@
  */
 package tech.pegasys.pantheon.consensus.clique;
 
+import static tech.pegasys.pantheon.consensus.clique.BlockHeaderValidationRulesetFactory.cliqueBlockHeaderValidator;
+
 import tech.pegasys.pantheon.config.CliqueConfigOptions;
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
+import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Util;
-import tech.pegasys.pantheon.ethereum.mainnet.MutableProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockBodyValidator;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockImporter;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpecBuilder;
 
 /** Defines the protocol behaviours for a blockchain using Clique. */
 public class CliqueProtocolSchedule {
@@ -27,44 +35,33 @@ public class CliqueProtocolSchedule {
   public static ProtocolSchedule<CliqueContext> create(
       final GenesisConfigOptions config, final KeyPair nodeKeys) {
 
-    // Get Config Data
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
-    final long epochLength = cliqueConfig.getEpochLength();
-    final long blockPeriod = cliqueConfig.getBlockPeriodSeconds();
-    final int chainId = config.getChainId().orElse(DEFAULT_CHAIN_ID);
 
-    final MutableProtocolSchedule<CliqueContext> protocolSchedule =
-        new MutableProtocolSchedule<>(chainId);
+    final Address localNodeAddress = Util.publicKeyToAddress(nodeKeys.getPublicKey());
 
-    // TODO(tmm) replace address with passed in node data (coming later)
-    final CliqueProtocolSpecs specs =
-        new CliqueProtocolSpecs(
-            blockPeriod,
-            epochLength,
-            Util.publicKeyToAddress(nodeKeys.getPublicKey()),
-            protocolSchedule);
+    final EpochManager epochManager = new EpochManager(cliqueConfig.getEpochLength());
+    return new ProtocolScheduleBuilder<>(
+            config,
+            DEFAULT_CHAIN_ID,
+            builder ->
+                applyCliqueSpecificModifications(
+                    epochManager, cliqueConfig.getBlockPeriodSeconds(), localNodeAddress, builder))
+        .createProtocolSchedule();
+  }
 
-    protocolSchedule.putMilestone(0, specs.frontier());
-
-    config
-        .getHomesteadBlockNumber()
-        .ifPresent(blockNumber -> protocolSchedule.putMilestone(blockNumber, specs.homestead()));
-    config
-        .getTangerineWhistleBlockNumber()
-        .ifPresent(
-            blockNumber -> protocolSchedule.putMilestone(blockNumber, specs.tangerineWhistle()));
-    config
-        .getSpuriousDragonBlockNumber()
-        .ifPresent(
-            blockNumber -> protocolSchedule.putMilestone(blockNumber, specs.spuriousDragon()));
-    config
-        .getByzantiumBlockNumber()
-        .ifPresent(blockNumber -> protocolSchedule.putMilestone(blockNumber, specs.byzantium()));
-    config
-        .getConstantinopleBlockNumber()
-        .ifPresent(
-            blockNumber -> protocolSchedule.putMilestone(blockNumber, specs.constantinople()));
-
-    return protocolSchedule;
+  private static ProtocolSpecBuilder<CliqueContext> applyCliqueSpecificModifications(
+      final EpochManager epochManager,
+      final long secondsBetweenBlocks,
+      final Address localNodeAddress,
+      final ProtocolSpecBuilder<Void> specBuilder) {
+    return specBuilder
+        .changeConsensusContextType(
+            difficultyCalculator -> cliqueBlockHeaderValidator(secondsBetweenBlocks, epochManager),
+            difficultyCalculator -> cliqueBlockHeaderValidator(secondsBetweenBlocks, epochManager),
+            MainnetBlockBodyValidator::new,
+            MainnetBlockImporter::new,
+            new CliqueDifficultyCalculator(localNodeAddress))
+        .blockReward(Wei.ZERO)
+        .miningBeneficiaryCalculator(CliqueHelpers::getProposerOfBlock);
   }
 }
