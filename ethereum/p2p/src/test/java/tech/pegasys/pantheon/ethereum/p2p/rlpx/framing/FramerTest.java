@@ -33,8 +33,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import org.iq80.snappy.Snappy;
 import org.junit.Test;
-import org.xerial.snappy.Snappy;
 
 public class FramerTest {
   private static final ObjectMapper MAPPER = new ObjectMapper();
