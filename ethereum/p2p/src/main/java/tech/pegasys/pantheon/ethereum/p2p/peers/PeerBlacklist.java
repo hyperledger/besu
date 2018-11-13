@@ -25,6 +25,19 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 
+/**
+ * A list of nodes that the running client will not communicate with. This can be because of network
+ * issues, protocol issues, or by being explicitly set on the command line.
+ *
+ * <p>Peers are stored and identified strictly by their nodeId, the convenience methods taking
+ * {@link Peer}s and {@link PeerConnection}s redirect to the methods that take {@link BytesValue}
+ * object that represent the node ID of the banned nodes.
+ *
+ * <p>The storage list is not infinite. A default cap of 500 is applied and nodes are removed on a
+ * first added first removed basis. Adding a new copy of the same node will not affect the priority
+ * for removal. The exception to this is a list of banned nodes passed in by reference to the
+ * constructor. This list neither adds nor removes from that list passed in.
+ */
 public class PeerBlacklist implements DisconnectCallback {
   private static final int DEFAULT_BLACKLIST_CAP = 500;
 
@@ -46,16 +59,28 @@ public class PeerBlacklist implements DisconnectCallback {
                 }
               }));
 
-  public PeerBlacklist(final int blacklistCap) {
+  /** These nodes are always banned for the life of this list. They are not subject to rollover. */
+  private final Set<BytesValue> bannedNodeIds;
+
+  public PeerBlacklist(final int blacklistCap, final Set<BytesValue> bannedNodeIds) {
     this.blacklistCap = blacklistCap;
+    this.bannedNodeIds = bannedNodeIds;
+  }
+
+  public PeerBlacklist(final int blacklistCap) {
+    this(blacklistCap, Collections.emptySet());
+  }
+
+  public PeerBlacklist(final Set<BytesValue> bannedNodeIds) {
+    this(DEFAULT_BLACKLIST_CAP, bannedNodeIds);
   }
 
   public PeerBlacklist() {
-    this(DEFAULT_BLACKLIST_CAP);
+    this(DEFAULT_BLACKLIST_CAP, Collections.emptySet());
   }
 
   private boolean contains(final BytesValue nodeId) {
-    return blacklistedNodeIds.contains(nodeId);
+    return blacklistedNodeIds.contains(nodeId) || bannedNodeIds.contains(nodeId);
   }
 
   public boolean contains(final PeerConnection peer) {
@@ -70,7 +95,7 @@ public class PeerBlacklist implements DisconnectCallback {
     add(peer.getId());
   }
 
-  private void add(final BytesValue peerId) {
+  public void add(final BytesValue peerId) {
     blacklistedNodeIds.add(peerId);
   }
 

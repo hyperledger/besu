@@ -44,6 +44,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -198,6 +199,14 @@ public class PantheonCommand implements Runnable {
         "Maximum p2p peer connections for peers that are trailing behind our chain head (default: unlimited)"
   )
   private final Integer maxTrailingPeers = Integer.MAX_VALUE;
+
+  @Option(
+    names = {"--banned-nodeids"},
+    description = "A list of node IDs to ban from the p2p network.",
+    split = ",",
+    arity = "1..*"
+  )
+  private final Collection<String> bannedNodeIds = null;
 
   // TODO: Re-enable as per NC-1057/NC-1681
   //  @Option(
@@ -491,7 +500,8 @@ public class PantheonCommand implements Runnable {
             maxPeers,
             jsonRpcConfiguration,
             webSocketConfiguration,
-            dataDir);
+            dataDir,
+            bannedNodeIds == null ? Collections.emptySet() : bannedNodeIds);
 
     addShutdownHook(runner);
     runner.execute();

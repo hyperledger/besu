@@ -54,6 +54,7 @@ import tech.pegasys.pantheon.ethereum.p2p.netty.NettyP2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -78,7 +79,8 @@ public class RunnerBuilder {
       final int maxPeers,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
-      final Path dataDir) {
+      final Path dataDir,
+      final Collection<String> bannedNodeIds) {
 
     Preconditions.checkNotNull(pantheonController);
 
@@ -122,6 +124,10 @@ public class RunnerBuilder {
             .setClientId(PantheonInfo.version())
             .setSupportedProtocols(subProtocols);
 
+    final PeerBlacklist peerBlacklist =
+        new PeerBlacklist(
+            bannedNodeIds.stream().map(BytesValue::fromHexString).collect(Collectors.toSet()));
+
     final NetworkRunner networkRunner =
         NetworkRunner.builder()
             .protocolManagers(protocolManagers)
@@ -134,7 +140,7 @@ public class RunnerBuilder {
                         networkConfig,
                         caps,
                         PeerRequirement.aggregateOf(protocolManagers),
-                        new PeerBlacklist()))
+                        peerBlacklist))
             .build();
 
     final Synchronizer synchronizer = pantheonController.getSynchronizer();

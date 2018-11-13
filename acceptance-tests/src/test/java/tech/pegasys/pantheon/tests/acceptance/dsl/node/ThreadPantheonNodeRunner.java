@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration.Builder;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -76,7 +77,8 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
                 25,
                 node.jsonRpcConfiguration(),
                 node.webSocketConfiguration(),
-                node.homeDirectory());
+                node.homeDirectory(),
+                Collections.emptySet());
 
     nodeExecutor.submit(runner::execute);
 

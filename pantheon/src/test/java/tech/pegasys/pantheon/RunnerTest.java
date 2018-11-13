@@ -127,7 +127,8 @@ public final class RunnerTest {
             3,
             aheadJsonRpcConfiguration,
             aheadWebSocketConfiguration,
-            dbAhead);
+            dbAhead,
+            Collections.emptySet());
     try {
 
       executorService.submit(runnerAhead::execute);
@@ -161,7 +162,8 @@ public final class RunnerTest {
               3,
               behindJsonRpcConfiguration,
               behindWebSocketConfiguration,
-              dbBehind);
+              dbBehind,
+              Collections.emptySet());
 
       executorService.submit(runnerBehind::execute);
       final Call.Factory client = new OkHttpClient();
