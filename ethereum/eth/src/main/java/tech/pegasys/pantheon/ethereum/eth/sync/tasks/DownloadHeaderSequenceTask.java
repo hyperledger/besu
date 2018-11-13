@@ -114,7 +114,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
     return task.whenComplete(
         (r, t) -> {
           // We're done if we've filled all requested headers
-          if (r != null && r.size() == segmentLength) {
+          if (lastFilledHeaderIndex == 0) {
             LOG.debug(
                 "Finished downloading headers from {} to {}.",
                 startingBlockNumber,
@@ -162,6 +162,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
           final CompletableFuture<List<BlockHeader>> future = new CompletableFuture<>();
           BlockHeader child = null;
           boolean firstSkipped = false;
+          final int previousHeaderIndex = lastFilledHeaderIndex;
           for (final BlockHeader header : headersResult.getResult()) {
             final int headerIndex =
                 Ints.checkedCast(
@@ -191,7 +192,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
             lastFilledHeaderIndex = headerIndex;
             child = header;
           }
-          future.complete(asList(headers).subList(lastFilledHeaderIndex, segmentLength));
+          future.complete(asList(headers).subList(lastFilledHeaderIndex, previousHeaderIndex));
           return future;
         });
   }
