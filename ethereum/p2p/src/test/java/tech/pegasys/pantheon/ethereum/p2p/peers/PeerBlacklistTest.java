@@ -21,13 +21,80 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.Collections;
+
 import org.junit.Test;
 
 public class PeerBlacklistTest {
   private int nodeIdValue = 1;
 
   @Test
-  public void doesNotBlacklistPeerForNormalDisconnect() throws Exception {
+  public void directlyAddingPeerWorks() {
+    final PeerBlacklist blacklist = new PeerBlacklist();
+    final Peer peer = generatePeer();
+
+    assertThat(blacklist.contains(peer)).isFalse();
+
+    blacklist.add(peer);
+
+    assertThat(blacklist.contains(peer)).isTrue();
+  }
+
+  @Test
+  public void directlyAddingPeerByPeerIdWorks() {
+    final PeerBlacklist blacklist = new PeerBlacklist();
+    final Peer peer = generatePeer();
+
+    assertThat(blacklist.contains(peer)).isFalse();
+
+    blacklist.add(peer.getId());
+
+    assertThat(blacklist.contains(peer)).isTrue();
+  }
+
+  @Test
+  public void banningPeerByPeerIdWorks() {
+    final Peer peer = generatePeer();
+    final PeerBlacklist blacklist = new PeerBlacklist(Collections.singleton(peer.getId()));
+
+    assertThat(blacklist.contains(peer)).isTrue();
+
+    blacklist.add(peer.getId());
+
+    assertThat(blacklist.contains(peer)).isTrue();
+  }
+
+  @Test
+  public void bannedNodesDoNotRollover() {
+    final Peer bannedPeer = generatePeer();
+    final Peer peer1 = generatePeer();
+    final Peer peer2 = generatePeer();
+    final Peer peer3 = generatePeer();
+    final PeerBlacklist blacklist = new PeerBlacklist(2, Collections.singleton(bannedPeer.getId()));
+
+    assertThat(blacklist.contains(bannedPeer)).isTrue();
+    assertThat(blacklist.contains(peer1)).isFalse();
+    assertThat(blacklist.contains(peer2)).isFalse();
+    assertThat(blacklist.contains(peer3)).isFalse();
+
+    // fill to the limit
+    blacklist.add(peer1.getId());
+    blacklist.add(peer2.getId());
+    assertThat(blacklist.contains(bannedPeer)).isTrue();
+    assertThat(blacklist.contains(peer1)).isTrue();
+    assertThat(blacklist.contains(peer2)).isTrue();
+    assertThat(blacklist.contains(peer3)).isFalse();
+
+    // trigger rollover
+    blacklist.add(peer3.getId());
+    assertThat(blacklist.contains(bannedPeer)).isTrue();
+    assertThat(blacklist.contains(peer1)).isFalse();
+    assertThat(blacklist.contains(peer2)).isTrue();
+    assertThat(blacklist.contains(peer3)).isTrue();
+  }
+
+  @Test
+  public void doesNotBlacklistPeerForNormalDisconnect() {
     final PeerBlacklist blacklist = new PeerBlacklist();
     final PeerConnection peer = generatePeerConnection();
 
@@ -39,7 +106,7 @@ public class PeerBlacklistTest {
   }
 
   @Test
-  public void blacklistPeerForBadBehavior() throws Exception {
+  public void blacklistPeerForBadBehavior() {
 
     final PeerBlacklist blacklist = new PeerBlacklist();
     final PeerConnection peer = generatePeerConnection();
@@ -52,7 +119,7 @@ public class PeerBlacklistTest {
   }
 
   @Test
-  public void doesNotBlacklistPeerForOurBadBehavior() throws Exception {
+  public void doesNotBlacklistPeerForOurBadBehavior() {
     final PeerBlacklist blacklist = new PeerBlacklist();
     final PeerConnection peer = generatePeerConnection();
 
@@ -64,7 +131,7 @@ public class PeerBlacklistTest {
   }
 
   @Test
-  public void blacklistIncompatiblePeer() throws Exception {
+  public void blacklistIncompatiblePeer() {
     final PeerBlacklist blacklist = new PeerBlacklist();
     final PeerConnection peer = generatePeerConnection();
 
@@ -76,7 +143,7 @@ public class PeerBlacklistTest {
   }
 
   @Test
-  public void blacklistIncompatiblePeerWhoIssuesDisconnect() throws Exception {
+  public void blacklistIncompatiblePeerWhoIssuesDisconnect() {
     final PeerBlacklist blacklist = new PeerBlacklist();
     final PeerConnection peer = generatePeerConnection();
 
@@ -88,7 +155,7 @@ public class PeerBlacklistTest {
   }
 
   @Test
-  public void capsSizeOfList() throws Exception {
+  public void capsSizeOfList() {
 
     final PeerBlacklist blacklist = new PeerBlacklist(2);
     final PeerConnection peer1 = generatePeerConnection();
@@ -135,5 +202,11 @@ public class PeerBlacklistTest {
     when(peer.getPeer()).thenReturn(peerInfo);
 
     return peer;
+  }
+
+  private Peer generatePeer() {
+    final byte[] id = new byte[64];
+    id[0] = (byte) nodeIdValue++;
+    return new DefaultPeer(BytesValue.wrap(id), "10.9.8.7", 65535, 65534);
   }
 }
