@@ -24,8 +24,7 @@ import org.apache.logging.log4j.Logger;
 public class KeyPairUtil {
   private static final Logger LOG = LogManager.getLogger();
 
-  public static SECP256K1.KeyPair loadKeyPair(final Path home) throws IOException {
-    final File keyFile = home.resolve("key").toFile();
+  public static SECP256K1.KeyPair loadKeyPair(final File keyFile) throws IOException {
     final SECP256K1.KeyPair key;
     if (keyFile.exists()) {
       key = SECP256K1.KeyPair.load(keyFile);
@@ -39,5 +38,13 @@ public class KeyPairUtil {
           keyFile.getAbsolutePath());
     }
     return key;
+  }
+
+  public static SECP256K1.KeyPair loadKeyPair(final Path homeDirectory) throws IOException {
+    return loadKeyPair(getDefaultKeyFile(homeDirectory));
+  }
+
+  public static File getDefaultKeyFile(final Path homeDirectory) {
+    return homeDirectory.resolve("key").toFile();
   }
 }

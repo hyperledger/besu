@@ -144,7 +144,14 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
     verify(mockControllerBuilder)
-        .build(any(), isNotNull(), networkArg.capture(), eq(false), miningArg.capture(), eq(false));
+        .build(
+            any(),
+            isNotNull(),
+            networkArg.capture(),
+            eq(false),
+            miningArg.capture(),
+            eq(false),
+            isNotNull());
 
     verify(mockSyncConfBuilder).syncMode(ArgumentMatchers.eq(SyncMode.FULL));
 
@@ -283,7 +290,8 @@ public class PantheonCommandTest extends CommandTestAbstract {
             eq(networkConfig),
             eq(false),
             any(),
-            anyBoolean());
+            anyBoolean(),
+            any());
 
     // TODO: Re-enable as per NC-1057/NC-1681
     // verify(mockSyncConfBuilder).syncMode(ArgumentMatchers.eq(SyncMode.FAST));
@@ -321,12 +329,34 @@ public class PantheonCommandTest extends CommandTestAbstract {
             any(),
             any());
 
-    verify(mockControllerBuilder).build(any(), any(), any(), eq(false), any(), eq(false));
+    verify(mockControllerBuilder).build(any(), any(), any(), eq(false), any(), eq(false), any());
 
     // TODO: Re-enable as per NC-1057/NC-1681
     // verify(mockSyncConfBuilder).syncMode(ArgumentMatchers.eq(SyncMode.FULL));
 
     assertThat(commandErrorOutput.toString()).isEmpty();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void nodekeyOptionMustBeUsed() throws Exception {
+    final File file = new File("./specific/key");
+
+    parseCommand("--node-private-key", file.getPath());
+
+    verify(mockControllerBuilder)
+        .build(
+            any(),
+            isNotNull(),
+            any(),
+            eq(false),
+            any(),
+            anyBoolean(),
+            fileArgumentCaptor.capture());
+
+    assertThat(fileArgumentCaptor.getValue()).isEqualTo(file);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -339,7 +369,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     parseCommand("--datadir", path.toString());
 
     verify(mockControllerBuilder)
-        .build(any(), pathArgumentCaptor.capture(), any(), eq(false), any(), anyBoolean());
+        .build(any(), pathArgumentCaptor.capture(), any(), eq(false), any(), anyBoolean(), any());
 
     assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(path);
 
@@ -356,7 +386,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     parseCommand("--genesis", path.toString());
 
     verify(mockControllerBuilder)
-        .build(any(), any(), networkArg.capture(), anyBoolean(), any(), anyBoolean());
+        .build(any(), any(), networkArg.capture(), anyBoolean(), any(), anyBoolean(), any());
 
     assertThat(networkArg.getValue().getGenesisConfig()).isEqualTo(path.toUri());
 
@@ -904,7 +934,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
         ArgumentCaptor.forClass(MiningParameters.class);
 
     verify(mockControllerBuilder)
-        .build(any(), any(), any(), anyBoolean(), miningArg.capture(), anyBoolean());
+        .build(any(), any(), any(), anyBoolean(), miningArg.capture(), anyBoolean(), any());
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(miningArg.getValue().isMiningEnabled()).isTrue();
@@ -926,7 +956,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
         ArgumentCaptor.forClass(MiningParameters.class);
 
     verify(mockControllerBuilder)
-        .build(any(), any(), any(), anyBoolean(), miningArg.capture(), anyBoolean());
+        .build(any(), any(), any(), anyBoolean(), miningArg.capture(), anyBoolean(), any());
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.of(requestedCoinbase));
@@ -938,7 +968,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   @Test
   public void devModeOptionMustBeUsed() throws Exception {
     parseCommand("--dev-mode");
-    verify(mockControllerBuilder).build(any(), any(), any(), anyBoolean(), any(), eq(true));
+    verify(mockControllerBuilder).build(any(), any(), any(), anyBoolean(), any(), eq(true), any());
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
@@ -950,7 +980,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
     verify(mockControllerBuilder)
-        .build(any(), any(), networkArg.capture(), anyBoolean(), any(), anyBoolean());
+        .build(any(), any(), networkArg.capture(), anyBoolean(), any(), anyBoolean(), any());
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.rinkeby());
@@ -972,7 +1002,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
     verify(mockControllerBuilder)
-        .build(any(), any(), networkArg.capture(), anyBoolean(), any(), anyBoolean());
+        .build(any(), any(), networkArg.capture(), anyBoolean(), any(), anyBoolean(), any());
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(networkArg.getValue().getGenesisConfig()).isEqualTo(path.toUri());

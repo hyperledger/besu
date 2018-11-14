@@ -32,8 +32,6 @@ import org.apache.logging.log4j.Logger;
 
 public class Runner implements AutoCloseable {
 
-  static final String KEY_PATH = "key";
-
   private static final Logger LOG = LogManager.getLogger();
 
   private final Vertx vertx;
