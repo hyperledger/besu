@@ -137,7 +137,7 @@ public final class RunnerTest {
 
       // Setup runner with no block data
       final Path dbBehind = temp.newFolder().toPath();
-      final KeyPair behindDbNodeKeys = loadKeyPair(dbBehind);
+      final KeyPair behindDbNodeKeys = loadKeyPair(dbBehind.resolve("key").toFile());
       final PantheonController<Void> controllerBehind =
           MainnetPantheonController.init(
               temp.newFolder().toPath(),
