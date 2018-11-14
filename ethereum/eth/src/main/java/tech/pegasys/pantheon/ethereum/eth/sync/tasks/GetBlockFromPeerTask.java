@@ -49,7 +49,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
 
   @Override
   protected void executeTaskWithPeer(final EthPeer peer) throws PeerNotConnected {
-    LOG.info("Downloading block {} from peer {}.", hash, peer);
+    LOG.debug("Downloading block {} from peer {}.", hash, peer);
     downloadHeader(peer)
         .thenCompose(this::completeBlock)
         .whenComplete(
@@ -61,7 +61,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
                 LOG.info("Failed to download block {} from peer {}.", hash, peer);
                 result.get().completeExceptionally(new IncompleteResultsException());
               } else {
-                LOG.info("Successfully downloaded block {} from peer {}.", hash, peer);
+                LOG.debug("Successfully downloaded block {} from peer {}.", hash, peer);
                 result.get().complete(new PeerTaskResult<>(r.getPeer(), r.getResult().get(0)));
               }
             });
