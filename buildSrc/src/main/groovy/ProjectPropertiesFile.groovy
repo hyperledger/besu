@@ -55,6 +55,10 @@ class ProjectPropertiesFile extends DefaultTask {
         properties.add(new Property(name, value, PropertyType.STRING))
     }
 
+    void addVersion(String name, String value) {
+        properties.add(new Property(name, value, PropertyType.VERSION))
+    }
+
     @Nested
     List<Property> getProperties() {
         return properties
@@ -73,9 +77,11 @@ class ProjectPropertiesFile extends DefaultTask {
         String[] methodDeclarations = properties.stream().map({p -> p.methodDeclaration()}).toArray()
         return """package ${destPackage};
 
+import tech.pegasys.pantheon.util.PlatformDetector;
+
 // This file is generated via a gradle task and should not be edited directly.
-public class ${filename} {
-${String.join("\n  ", varDeclarations)}
+public final class ${filename} {
+${String.join("\n", varDeclarations)}
 
   private ${filename}() {}
 ${String.join("\n", methodDeclarations)}
@@ -84,7 +90,8 @@ ${String.join("\n", methodDeclarations)}
     }
 
     private enum PropertyType {
-        STRING("String")
+        STRING("String"),
+        VERSION("String");
 
         private final String strVal
         PropertyType(String strVal) {
@@ -96,7 +103,7 @@ ${String.join("\n", methodDeclarations)}
         }
     }
 
-    private static class Property {
+    private class Property {
         private final String name
         private final String value
         private final PropertyType type
@@ -123,13 +130,27 @@ ${String.join("\n", methodDeclarations)}
         }
 
         String variableDeclaration() {
-            return "  private static final ${type} ${name} = \"${value}\";"
+            def constantName = name.replaceAll("([a-z])([A-Z]+)", '$1_$2').toUpperCase()
+            def constantValue = value.replaceAll("([a-z])([A-Z]+)", '$1_$2').toUpperCase()
+            switch (type) {
+                case PropertyType.STRING:
+                    return "  private static final ${type} ${constantName} = \"${value}\";"
+                case PropertyType.VERSION:
+                    return "  private static final ${type} ${constantName} =\n" +
+                           "      ${constantValue}\n" +
+                           "          + \"/v\"\n" +
+                           "          + ${filename}.class.getPackage().getImplementationVersion()\n" +
+                           "          + \"/\"\n" +
+                           "          + PlatformDetector.getOS()\n" +
+                           "          + \"/\"\n" +
+                           "          + PlatformDetector.getVM();"
+            }
         }
 
         String methodDeclaration() {
             return """
   public static ${type} ${name}() {
-    return ${name};
+    return ${name.replaceAll("([a-z])([A-Z]+)", '$1_$2').toUpperCase()};
   }"""
         }
     }
