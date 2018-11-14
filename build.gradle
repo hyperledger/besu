@@ -394,6 +394,33 @@ configure(subprojects.findAll {it.name != 'errorprone-checks'}) {
   }
 }
 
+// Takes the version, and if -SNAPSHOT is part of it replaces SNAPSHOT
+// with the git commit version.
+def calculateVersion() {
+  String version = rootProject.version
+  if (version.endsWith("-SNAPSHOT")) {
+    version = version.replace("-SNAPSHOT", "-dev-" + getCheckedOutGitCommitHash())
+  }
+  return version
+}
+
+def getCheckedOutGitCommitHash() {
+  def gitFolder = "$projectDir/.git/"
+  def takeFromHash = 8
+  /*
+   * '.git/HEAD' contains either
+   *      in case of detached head: the currently checked out commit hash
+   *      otherwise: a reference to a file containing the current commit hash
+   */
+  def head = new File(gitFolder + "HEAD").text.split(":") // .git/HEAD
+  def isCommit = head.length == 1 // e5a7c79edabbf7dd39888442df081b1c9d8e88fd
+
+  if(isCommit) return head[0].trim().take(takeFromHash) // e5a7c79edabb
+
+  def refHead = new File(gitFolder + head[1].trim()) // .git/refs/heads/master
+  refHead.text.trim().take takeFromHash
+}
+
 apply plugin: 'net.researchgate.release'
 
 task releaseIntegrationTest(type: Test){
