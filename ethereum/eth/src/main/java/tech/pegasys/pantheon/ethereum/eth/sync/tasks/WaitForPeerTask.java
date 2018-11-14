@@ -37,7 +37,7 @@ public class WaitForPeerTask extends AbstractEthTask<Void> {
   @Override
   protected void executeTask() {
     final EthPeers ethPeers = ethContext.getEthPeers();
-    LOG.info(
+    LOG.debug(
         "Waiting for new peer connection. {} peers currently connected, {} idle.",
         ethPeers.peerCount(),
         ethPeers.idlePeer().isPresent() ? "Some peers" : "No peers");
@@ -45,7 +45,7 @@ public class WaitForPeerTask extends AbstractEthTask<Void> {
     peerListenerId =
         ethPeers.subscribeConnect(
             (peer) -> {
-              LOG.info("Finished waiting for peer connection.");
+              LOG.debug("Finished waiting for peer connection.");
               // We hit our target
               result.get().complete(null);
             });

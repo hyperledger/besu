@@ -151,7 +151,7 @@ public class Downloader<C> {
       if (peerTd.compareTo(syncState.chainHeadTotalDifficulty()) <= 0
           && peerHeight <= syncState.chainHeadNumber()) {
         // We're caught up to our best peer, try again when a new peer connects
-        LOG.info("Caught up to best peer: " + bestPeer.chainState().getEstimatedHeight());
+        LOG.debug("Caught up to best peer: " + bestPeer.chainState().getEstimatedHeight());
         return waitForPeerAndThenSetSyncTarget();
       }
       return DetermineCommonAncestorTask.create(
