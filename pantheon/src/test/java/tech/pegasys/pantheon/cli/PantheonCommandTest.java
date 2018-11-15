@@ -369,7 +369,14 @@ public class PantheonCommandTest extends CommandTestAbstract {
     parseCommand("--datadir", path.toString());
 
     verify(mockControllerBuilder)
-        .build(any(), pathArgumentCaptor.capture(), any(), eq(false), any(), anyBoolean(), any());
+        .build(
+            any(),
+            pathArgumentCaptor.capture(),
+            any(),
+            eq(false),
+            any(),
+            anyBoolean(),
+            eq(path.resolve("key").toFile()));
 
     assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(path);
 

@@ -150,9 +150,9 @@ public class PantheonCommand implements Runnable {
     names = {"--node-private-key"},
     paramLabel = MANDATORY_PATH_FORMAT_HELP,
     description =
-        "the path to the node's private key file. (default: a file named \"key\" in the Pantheon data folder.)"
+        "the path to the node's private key file (default: a file named \"key\" in the Pantheon data folder)"
   )
-  private final File nodePrivateKeyFile = KeyPairUtil.getDefaultKeyFile(dataDir);
+  private final File nodePrivateKeyFile = null;
 
   // Genesis file path with null default option if the option
   // is not defined on command line as this default is handled by Runner
@@ -452,12 +452,16 @@ public class PantheonCommand implements Runnable {
           syncWithOttoman,
           new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled),
           isDevMode,
-          nodePrivateKeyFile);
+          getNodePrivateKeyFile());
     } catch (final InvalidConfigurationException e) {
       throw new ExecutionException(new CommandLine(this), e.getMessage());
     } catch (final IOException e) {
       throw new ExecutionException(new CommandLine(this), "Invalid path", e);
     }
+  }
+
+  private File getNodePrivateKeyFile() {
+    return nodePrivateKeyFile != null ? nodePrivateKeyFile : KeyPairUtil.getDefaultKeyFile(dataDir);
   }
 
   private JsonRpcConfiguration jsonRpcConfiguration() {
