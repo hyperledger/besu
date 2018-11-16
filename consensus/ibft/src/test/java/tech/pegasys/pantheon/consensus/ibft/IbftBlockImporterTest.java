@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.consensus.common.VoteTallyUpdater;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;

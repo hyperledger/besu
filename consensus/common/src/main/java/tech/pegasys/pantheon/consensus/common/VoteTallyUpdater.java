@@ -10,18 +10,14 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.consensus.ibftlegacy;
+package tech.pegasys.pantheon.consensus.common;
 
-import tech.pegasys.pantheon.consensus.common.EpochManager;
-import tech.pegasys.pantheon.consensus.common.VoteTally;
-import tech.pegasys.pantheon.consensus.common.VoteType;
-import tech.pegasys.pantheon.consensus.ibft.VoteTallyUpdater;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,15 +26,17 @@ import org.apache.logging.log4j.Logger;
  * Provides the logic to extract vote tally state from the blockchain and update it as blocks are
  * added.
  */
-public class IbftVoteTallyUpdater implements VoteTallyUpdater {
+public class VoteTallyUpdater {
 
   private static final Logger LOG = LogManager.getLogger();
-  private static final Address NO_VOTE_SUBJECT = Address.wrap(BytesValue.wrap(new byte[20]));
 
   private final EpochManager epochManager;
+  private final VoteBlockInterface blockInterface;
 
-  public IbftVoteTallyUpdater(final EpochManager epochManager) {
+  public VoteTallyUpdater(
+      final EpochManager epochManager, final VoteBlockInterface blockInterface) {
     this.epochManager = epochManager;
+    this.blockInterface = blockInterface;
   }
 
   /**
@@ -47,14 +45,12 @@ public class IbftVoteTallyUpdater implements VoteTallyUpdater {
    * @param blockchain the blockchain to load the current state from
    * @return a VoteTally reflecting the state of the blockchain head
    */
-  @Override
   public VoteTally buildVoteTallyFromBlockchain(final Blockchain blockchain) {
     final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
     final long epochBlockNumber = epochManager.getLastEpochBlock(chainHeadBlockNumber);
     LOG.info("Loading validator voting state starting from block {}", epochBlockNumber);
     final BlockHeader epochBlock = blockchain.getBlockHeader(epochBlockNumber).get();
-    final List<Address> initialValidators =
-        IbftExtraData.decode(epochBlock.getExtraData()).getValidators();
+    final List<Address> initialValidators = blockInterface.validatorsInBlock(epochBlock);
     final VoteTally voteTally = new VoteTally(initialValidators);
     for (long blockNumber = epochBlockNumber + 1;
         blockNumber <= chainHeadBlockNumber;
@@ -70,18 +66,12 @@ public class IbftVoteTallyUpdater implements VoteTallyUpdater {
    * @param header the header of the block being added
    * @param voteTally the vote tally to update
    */
-  @Override
   public void updateForBlock(final BlockHeader header, final VoteTally voteTally) {
-    final Address candidate = header.getCoinbase();
     if (epochManager.isEpochBlock(header.getNumber())) {
       voteTally.discardOutstandingVotes();
       return;
     }
-
-    if (!candidate.equals(NO_VOTE_SUBJECT)) {
-      final IbftExtraData ibftExtraData = IbftExtraData.decode(header.getExtraData());
-      final Address proposer = IbftBlockHashing.recoverProposerAddress(header, ibftExtraData);
-      voteTally.addVote(proposer, candidate, VoteType.fromNonce(header.getNonce()).get());
-    }
+    final Optional<CastVote> vote = blockInterface.extractVoteFromHeader(header);
+    vote.ifPresent(voteTally::addVote);
   }
 }

@@ -30,6 +30,7 @@ dependencies {
   implementation project(':util')
   implementation 'com.google.guava:guava'
 
+  testImplementation project(':crypto')
   testImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation 'junit:junit'
   testImplementation "org.assertj:assertj-core"

@@ -10,41 +10,32 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.consensus.clique;
+package tech.pegasys.pantheon.consensus.common;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static tech.pegasys.pantheon.consensus.common.ValidatorVotePolarity.ADD;
 
-import tech.pegasys.pantheon.consensus.common.EpochManager;
-import tech.pegasys.pantheon.consensus.common.VoteTally;
-import tech.pegasys.pantheon.consensus.common.VoteType;
-import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
-import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.math.BigInteger;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.Test;
 
-public class CliqueVoteTallyUpdaterTest {
+public class VoteTallyUpdaterTest {
 
   private static final long EPOCH_LENGTH = 30_000;
-  public static final Signature INVALID_SEAL =
-      Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 0);
   private final VoteTally voteTally = mock(VoteTally.class);
   private final MutableBlockchain blockchain = mock(MutableBlockchain.class);
   private final KeyPair proposerKeyPair = KeyPair.generate();
@@ -54,30 +45,31 @@ public class CliqueVoteTallyUpdaterTest {
   private final Address validator1 =
       Address.fromHexString("00dae27b350bae20c5652124af5d8b5cba001ec1");
 
-  private final CliqueVoteTallyUpdater updater =
-      new CliqueVoteTallyUpdater(new EpochManager(EPOCH_LENGTH));
+  private final VoteBlockInterface serialiser = mock(VoteBlockInterface.class);
+
+  private final VoteTallyUpdater updater =
+      new VoteTallyUpdater(new EpochManager(EPOCH_LENGTH), serialiser);
 
   @Test
-  public void voteTallyUpdatedWithVoteFromBlock() {
+  public void voteTallyUpdatedWithAddVote() {
+    when(serialiser.extractVoteFromHeader(any()))
+        .thenReturn(Optional.of(new CastVote(ADD, proposerAddress, subject)));
+
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
-    headerBuilder.number(1);
-    headerBuilder.nonce(VoteType.ADD.getNonceValue());
-    headerBuilder.coinbase(subject);
-    addProposer(headerBuilder);
+    headerBuilder.number(EPOCH_LENGTH - 1);
     final BlockHeader header = headerBuilder.buildHeader();
 
     updater.updateForBlock(header, voteTally);
 
-    verify(voteTally).addVote(proposerAddress, subject, VoteType.ADD);
+    verify(voteTally).addVote(new CastVote(ADD, proposerAddress, subject));
   }
 
   @Test
   public void voteTallyNotUpdatedWhenBlockHasNoVoteSubject() {
+    when(serialiser.extractVoteFromHeader(any())).thenReturn(Optional.empty());
+
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
-    headerBuilder.number(1);
-    headerBuilder.nonce(VoteType.ADD.getNonceValue());
-    headerBuilder.coinbase(Address.fromHexString("0000000000000000000000000000000000000000"));
-    addProposer(headerBuilder);
+    headerBuilder.number(EPOCH_LENGTH - 1);
     final BlockHeader header = headerBuilder.buildHeader();
 
     updater.updateForBlock(header, voteTally);
@@ -87,11 +79,10 @@ public class CliqueVoteTallyUpdaterTest {
 
   @Test
   public void outstandingVotesDiscardedWhenEpochReached() {
+    when(serialiser.extractVoteFromHeader(any())).thenReturn(Optional.empty());
+
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     headerBuilder.number(EPOCH_LENGTH);
-    headerBuilder.nonce(VoteType.ADD.getNonceValue());
-    headerBuilder.coinbase(Address.fromHexString("0000000000000000000000000000000000000000"));
-    addProposer(headerBuilder);
     final BlockHeader header = headerBuilder.buildHeader();
 
     updater.updateForBlock(header, voteTally);
@@ -102,11 +93,9 @@ public class CliqueVoteTallyUpdaterTest {
 
   @Test
   public void buildVoteTallyByExtractingValidatorsFromGenesisBlock() {
+    when(serialiser.validatorsInBlock(any())).thenReturn(asList(subject, validator1));
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     headerBuilder.number(0);
-    headerBuilder.nonce(VoteType.ADD.getNonceValue());
-    headerBuilder.coinbase(Address.fromHexString("0000000000000000000000000000000000000000"));
-    addProposer(headerBuilder, asList(subject, validator1));
     final BlockHeader header = headerBuilder.buildHeader();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(EPOCH_LENGTH);
@@ -118,11 +107,8 @@ public class CliqueVoteTallyUpdaterTest {
 
   @Test
   public void buildVoteTallyByExtractingValidatorsFromEpochBlock() {
+    when(serialiser.validatorsInBlock(any())).thenReturn(asList(subject, validator1));
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
-    headerBuilder.number(EPOCH_LENGTH);
-    headerBuilder.nonce(VoteType.ADD.getNonceValue());
-    headerBuilder.coinbase(Address.fromHexString("0000000000000000000000000000000000000000"));
-    addProposer(headerBuilder, asList(subject, validator1));
     final BlockHeader header = headerBuilder.buildHeader();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(EPOCH_LENGTH);
@@ -134,15 +120,15 @@ public class CliqueVoteTallyUpdaterTest {
 
   @Test
   public void addVotesFromBlocksAfterMostRecentEpoch() {
+    when(serialiser.validatorsInBlock(any())).thenReturn(asList(validator1));
+    when(serialiser.extractVoteFromHeader(any()))
+        .thenReturn(Optional.of(new CastVote(ADD, proposerAddress, subject)));
+
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     headerBuilder.number(EPOCH_LENGTH);
-    headerBuilder.nonce(VoteType.ADD.getNonceValue());
-    headerBuilder.coinbase(Address.fromHexString("0000000000000000000000000000000000000000"));
-    addProposer(headerBuilder, singletonList(validator1));
     final BlockHeader epochHeader = headerBuilder.buildHeader();
 
     headerBuilder.number(EPOCH_LENGTH + 1);
-    headerBuilder.coinbase(subject);
     final BlockHeader voteBlockHeader = headerBuilder.buildHeader();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(EPOCH_LENGTH + 1);
@@ -151,33 +137,5 @@ public class CliqueVoteTallyUpdaterTest {
 
     final VoteTally voteTally = updater.buildVoteTallyFromBlockchain(blockchain);
     assertThat(voteTally.getCurrentValidators()).containsExactly(subject, validator1);
-  }
-
-  private void addProposer(final BlockHeaderTestFixture builder) {
-    addProposer(builder, singletonList(proposerAddress));
-  }
-
-  private void addProposer(final BlockHeaderTestFixture builder, final List<Address> validators) {
-
-    final CliqueExtraData initialIbftExtraData =
-        new CliqueExtraData(
-            BytesValue.wrap(new byte[CliqueExtraData.EXTRA_VANITY_LENGTH]),
-            INVALID_SEAL,
-            validators);
-
-    builder.extraData(initialIbftExtraData.encode());
-    final BlockHeader header = builder.buildHeader();
-    final Hash proposerSealHash =
-        CliqueBlockHashing.calculateDataHashForProposerSeal(header, initialIbftExtraData);
-
-    final Signature proposerSignature = SECP256K1.sign(proposerSealHash, proposerKeyPair);
-
-    final CliqueExtraData sealedData =
-        new CliqueExtraData(
-            BytesValue.wrap(new byte[CliqueExtraData.EXTRA_VANITY_LENGTH]),
-            proposerSignature,
-            validators);
-
-    builder.extraData(sealedData.encode());
   }
 }

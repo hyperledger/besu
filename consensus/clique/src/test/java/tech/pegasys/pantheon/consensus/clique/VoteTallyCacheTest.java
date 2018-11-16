@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 import tech.pegasys.pantheon.consensus.common.EpochManager;
+import tech.pegasys.pantheon.consensus.common.VoteTallyUpdater;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
@@ -79,7 +80,7 @@ public class VoteTallyCacheTest {
 
   @Test
   public void parentBlockVoteTallysAreCachedWhenChildVoteTallyRequested() {
-    final CliqueVoteTallyUpdater tallyUpdater = mock(CliqueVoteTallyUpdater.class);
+    final VoteTallyUpdater tallyUpdater = mock(VoteTallyUpdater.class);
     final VoteTallyCache cache =
         new VoteTallyCache(blockChain, tallyUpdater, new EpochManager(30_000));
 
@@ -105,7 +106,7 @@ public class VoteTallyCacheTest {
 
   @Test
   public void exceptionThrownIfNoParentBlockExists() {
-    final CliqueVoteTallyUpdater tallyUpdater = mock(CliqueVoteTallyUpdater.class);
+    final VoteTallyUpdater tallyUpdater = mock(VoteTallyUpdater.class);
     final VoteTallyCache cache =
         new VoteTallyCache(blockChain, tallyUpdater, new EpochManager(30_000));
 
@@ -119,7 +120,7 @@ public class VoteTallyCacheTest {
 
   @Test
   public void walkBackStopsWhenACachedVoteTallyIsFound() {
-    final CliqueVoteTallyUpdater tallyUpdater = mock(CliqueVoteTallyUpdater.class);
+    final VoteTallyUpdater tallyUpdater = mock(VoteTallyUpdater.class);
     final VoteTallyCache cache =
         new VoteTallyCache(blockChain, tallyUpdater, new EpochManager(30_000));
 

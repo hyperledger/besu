@@ -16,6 +16,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.consensus.common.VoteTallyUpdater;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
@@ -32,14 +33,14 @@ public class VoteTallyCache {
 
   private final Blockchain blockchain;
   private final EpochManager epochManager;
-  private final CliqueVoteTallyUpdater voteTallyUpdater;
+  private final VoteTallyUpdater voteTallyUpdater;
 
   private final Cache<Hash, VoteTally> voteTallyCache =
       CacheBuilder.newBuilder().maximumSize(100).build();
 
   public VoteTallyCache(
       final Blockchain blockchain,
-      final CliqueVoteTallyUpdater voteTallyUpdater,
+      final VoteTallyUpdater voteTallyUpdater,
       final EpochManager epochManager) {
     checkNotNull(blockchain);
     checkNotNull(voteTallyUpdater);
