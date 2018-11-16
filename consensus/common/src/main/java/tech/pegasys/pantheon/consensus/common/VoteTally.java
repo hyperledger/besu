@@ -52,35 +52,32 @@ public class VoteTally implements ValidatorProvider {
    * Add a vote to the current tally. The current validator list will be updated if this vote takes
    * the tally past the required votes to approve the change.
    *
-   * @param proposer the address of the validator casting the vote via block proposal
-   * @param subject the validator the vote is about
-   * @param validatorVote the type of vote, either add or drop
+   * @param castVote The vote which was cast in a block header.
    */
-  public void addVote(
-      final Address proposer, final Address subject, final ValidatorVote validatorVote) {
+  public void addVote(final CastVote castVote) {
     final Set<Address> addVotesForSubject =
-        addVotesBySubject.computeIfAbsent(subject, target -> new HashSet<>());
+        addVotesBySubject.computeIfAbsent(castVote.getRecipient(), target -> new HashSet<>());
     final Set<Address> removeVotesForSubject =
-        removeVotesBySubject.computeIfAbsent(subject, target -> new HashSet<>());
+        removeVotesBySubject.computeIfAbsent(castVote.getRecipient(), target -> new HashSet<>());
 
-    if (validatorVote.isAddVote()) {
-      addVotesForSubject.add(proposer);
-      removeVotesForSubject.remove(proposer);
+    if (castVote.getVotePolarity().isAddVote()) {
+      addVotesForSubject.add(castVote.getProposer());
+      removeVotesForSubject.remove(castVote.getProposer());
     } else {
-      removeVotesForSubject.add(proposer);
-      addVotesForSubject.remove(proposer);
+      removeVotesForSubject.add(castVote.getProposer());
+      addVotesForSubject.remove(castVote.getProposer());
     }
 
     final int validatorLimit = validatorLimit();
     if (addVotesForSubject.size() >= validatorLimit) {
-      currentValidators.add(subject);
-      discardOutstandingVotesFor(subject);
+      currentValidators.add(castVote.getRecipient());
+      discardOutstandingVotesFor(castVote.getRecipient());
     }
     if (removeVotesForSubject.size() >= validatorLimit) {
-      currentValidators.remove(subject);
-      discardOutstandingVotesFor(subject);
-      addVotesBySubject.values().forEach(votes -> votes.remove(subject));
-      removeVotesBySubject.values().forEach(votes -> votes.remove(subject));
+      currentValidators.remove(castVote.getRecipient());
+      discardOutstandingVotesFor(castVote.getRecipient());
+      addVotesBySubject.values().forEach(votes -> votes.remove(castVote.getRecipient()));
+      removeVotesBySubject.values().forEach(votes -> votes.remove(castVote.getRecipient()));
     }
   }
 

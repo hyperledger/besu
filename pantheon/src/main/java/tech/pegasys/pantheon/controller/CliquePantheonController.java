@@ -19,13 +19,14 @@ import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueProtocolSchedule;
-import tech.pegasys.pantheon.consensus.clique.CliqueVoteTallyUpdater;
+import tech.pegasys.pantheon.consensus.clique.CliqueVotingBlockInterface;
 import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.clique.blockcreation.CliqueBlockScheduler;
 import tech.pegasys.pantheon.consensus.clique.blockcreation.CliqueMinerExecutor;
 import tech.pegasys.pantheon.consensus.clique.blockcreation.CliqueMiningCoordinator;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
+import tech.pegasys.pantheon.consensus.common.VoteTallyUpdater;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
@@ -138,7 +139,9 @@ public class CliquePantheonController implements PantheonController<CliqueContex
             worldStateArchive,
             new CliqueContext(
                 new VoteTallyCache(
-                    blockchain, new CliqueVoteTallyUpdater(epochManger), epochManger),
+                    blockchain,
+                    new VoteTallyUpdater(epochManger, new CliqueVotingBlockInterface()),
+                    epochManger),
                 new VoteProposer(),
                 epochManger));
 

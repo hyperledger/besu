@@ -13,8 +13,8 @@
 package tech.pegasys.pantheon.consensus.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.pantheon.consensus.common.VoteType.ADD;
-import static tech.pegasys.pantheon.consensus.common.VoteType.DROP;
+import static tech.pegasys.pantheon.consensus.common.ValidatorVotePolarity.ADD;
+import static tech.pegasys.pantheon.consensus.common.ValidatorVotePolarity.DROP;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 
@@ -158,7 +158,7 @@ public class VoteProposerTest {
     proposer.drop(a1);
 
     final VoteTally tally = new VoteTally(Arrays.asList(a2, a3));
-    tally.addVote(localAddress, a1, ADD);
+    tally.addVote(new CastVote(ADD, localAddress, a1));
 
     assertThat(proposer.getVote(localAddress, tally))
         .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, VoteType.DROP)));
@@ -174,7 +174,7 @@ public class VoteProposerTest {
     proposer.auth(a1);
 
     final VoteTally tally = new VoteTally(Arrays.asList(a2, a3));
-    tally.addVote(localAddress, a1, DROP);
+    tally.addVote(new CastVote(DROP, localAddress, a1));
 
     assertThat(proposer.getVote(localAddress, tally))
         .isEqualTo(Optional.of(new AbstractMap.SimpleEntry<>(a1, VoteType.ADD)));
@@ -188,7 +188,7 @@ public class VoteProposerTest {
     final Address a3 = Address.fromHexString("3");
 
     final VoteTally tally = new VoteTally(Arrays.asList(a1, a2, a3));
-    tally.addVote(localAddress, a1, ADD);
+    tally.addVote(new CastVote(ADD, localAddress, a1));
 
     proposer.drop(a1);
 
@@ -204,7 +204,7 @@ public class VoteProposerTest {
     final Address a3 = Address.fromHexString("3");
 
     final VoteTally tally = new VoteTally(Arrays.asList(a1, a2, a3));
-    tally.addVote(localAddress, a1, DROP);
+    tally.addVote(new CastVote(DROP, localAddress, a1));
 
     proposer.auth(a1);
 
