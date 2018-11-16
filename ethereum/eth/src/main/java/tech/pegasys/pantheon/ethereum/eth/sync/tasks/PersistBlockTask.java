@@ -84,7 +84,7 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
                         successfulImports,
                         headerValidationMode));
       }
-      return future.thenApply((r) -> successfulImports);
+      return future.thenApply(r -> successfulImports);
     };
   }
 

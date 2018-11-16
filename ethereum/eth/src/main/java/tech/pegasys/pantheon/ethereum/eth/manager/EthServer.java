@@ -34,12 +34,12 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -135,8 +135,8 @@ class EthServer {
       if (firstHeader == null) {
         resp = Collections.emptyList();
       } else {
-        resp = new ArrayList<>(Arrays.asList(firstHeader));
-        final int numberDelta = reversed ? -(skip + 1) : (skip + 1);
+        resp = Lists.newArrayList(firstHeader);
+        final long numberDelta = reversed ? -(skip + 1) : (skip + 1);
         for (int i = 1; i < maxHeaders; i++) {
           final long blockNumber = firstHeader.getNumber() + i * numberDelta;
           if (blockNumber < BlockHeader.GENESIS_BLOCK_NUMBER) {

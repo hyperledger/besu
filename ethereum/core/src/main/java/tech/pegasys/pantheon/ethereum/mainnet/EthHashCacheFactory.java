@@ -45,7 +45,7 @@ public class EthHashCacheFactory {
   Cache<Long, EthHashDescriptor> descriptorCache = CacheBuilder.newBuilder().maximumSize(5).build();
 
   public EthHashDescriptor ethHashCacheFor(final long blockNumber) {
-    final Long epochIndex = EthHash.epoch(blockNumber);
+    final long epochIndex = EthHash.epoch(blockNumber);
     try {
       return descriptorCache.get(epochIndex, () -> createHashCache(epochIndex, blockNumber));
     } catch (final ExecutionException ex) {
