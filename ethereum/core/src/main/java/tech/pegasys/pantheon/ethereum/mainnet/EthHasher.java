@@ -75,9 +75,9 @@ public interface EthHasher {
               headerHash,
               datasetSize,
               nonce,
-              (bytes, integer) -> {
+              (bytes, offset) -> {
                 try {
-                  cacheFile.seek(integer * EthHash.HASH_BYTES);
+                  cacheFile.seek(((long) offset) * EthHash.HASH_BYTES);
                   cacheFile.readFully(bytes);
                 } catch (final IOException ex) {
                   throw new IllegalStateException(ex);
