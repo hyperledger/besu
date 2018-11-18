@@ -19,7 +19,6 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.netty.buffer.ByteBuf;
 import io.vertx.core.buffer.Buffer;
 
 /**
@@ -154,30 +153,6 @@ public interface BytesValue extends Comparable<BytesValue> {
    *     offset + size)} (but without copying said bytes).
    */
   static BytesValue wrapBuffer(final Buffer buffer, final int offset, final int size) {
-    return MutableBytesValue.wrapBuffer(buffer, offset, size);
-  }
-
-  /**
-   * Wraps a full Netty {@link ByteBuf} as a {@link BytesValue}.
-   *
-   * @param buffer The buffer to wrap.
-   * @return A {@link BytesValue} that exposes the bytes of {@code buffer}.
-   */
-  static BytesValue wrapBuffer(final ByteBuf buffer) {
-    return wrapBuffer(buffer, buffer.readerIndex(), buffer.readableBytes());
-  }
-
-  /**
-   * Wraps a slice of a Netty {@link ByteBuf} as a {@link BytesValue}.
-   *
-   * @param buffer The buffer to wrap.
-   * @param offset The offset in {@code buffer} from which to expose the bytes in the returned
-   *     value. That is, {@code wrapBuffer(buffer, i, 1).get(0) == buffer.getByte(i)}.
-   * @param size The size of the returned value.
-   * @return A {@link BytesValue} that exposes the equivalent of {@code buffer.getBytes(offset,
-   *     offset + size)} (but without copying said bytes).
-   */
-  static BytesValue wrapBuffer(final ByteBuf buffer, final int offset, final int size) {
     return MutableBytesValue.wrapBuffer(buffer, offset, size);
   }
 
@@ -467,15 +442,8 @@ public interface BytesValue extends Comparable<BytesValue> {
     }
   }
 
-  /**
-   * Appends the bytes of this value to the provided Netty {@link ByteBuf}.
-   *
-   * @param buffer The {@link ByteBuf} to which to append this value.
-   */
-  default void appendTo(final ByteBuf buffer) {
-    for (int i = 0; i < size(); i++) {
-      buffer.writeByte(get(i));
-    }
+  default void copyTo(final byte[] dest, final int srcPos, final int destPos) {
+    System.arraycopy(getArrayUnsafe(), srcPos, dest, destPos, size() - srcPos);
   }
 
   /**

@@ -156,7 +156,6 @@ public class RequestManager {
       if (closed) {
         return;
       }
-      message.retain();
       bufferedResponses.add(new Response(false, message));
       dispatchBufferedResponses();
     }
@@ -168,9 +167,6 @@ public class RequestManager {
       Response response = bufferedResponses.poll();
       while (response != null) {
         responseCallback.exec(response.closed, response.message, peer);
-        if (response.message != null) {
-          response.message.release();
-        }
         response = bufferedResponses.poll();
       }
     }

@@ -13,24 +13,21 @@
 package tech.pegasys.pantheon.ethereum.eth.messages;
 
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import io.netty.buffer.ByteBuf;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public final class ReceiptsMessageTest {
 
   @Test
-  public void roundTripTest() throws IOException {
+  public void roundTripTest() {
     // Generate some data
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final List<List<TransactionReceipt>> receipts = new ArrayList<>();
@@ -47,22 +44,14 @@ public final class ReceiptsMessageTest {
     // Perform round-trip transformation
     // Create specific message, copy it to a generic message, then read back into a specific format
     final MessageData initialMessage = ReceiptsMessage.create(receipts);
-    final ByteBuf rawBuffer = NetworkMemoryPool.allocate(initialMessage.getSize());
-    initialMessage.writeTo(rawBuffer);
-    final MessageData raw = new RawMessage(EthPV63.RECEIPTS, rawBuffer);
+    final MessageData raw = new RawMessage(EthPV63.RECEIPTS, initialMessage.getData());
     final ReceiptsMessage message = ReceiptsMessage.readFrom(raw);
 
     // Read data back out after round trip and check they match originals.
-    try {
-      final Iterator<List<TransactionReceipt>> readData = message.receipts().iterator();
-      for (int i = 0; i < dataCount; ++i) {
-        Assertions.assertThat(readData.next()).isEqualTo(receipts.get(i));
-      }
-      Assertions.assertThat(readData.hasNext()).isFalse();
-    } finally {
-      message.release();
-      initialMessage.release();
-      raw.release();
+    final Iterator<List<TransactionReceipt>> readData = message.receipts().iterator();
+    for (int i = 0; i < dataCount; ++i) {
+      Assertions.assertThat(readData.next()).isEqualTo(receipts.get(i));
     }
+    Assertions.assertThat(readData.hasNext()).isFalse();
   }
 }

@@ -188,7 +188,6 @@ public final class EthProtocolManagerTest {
             for (int i = 0; i < blockCount; i++) {
               assertThat(headers.get(i).getNumber()).isEqualTo(startBlock + i);
             }
-            message.release();
             done.complete(null);
           };
       final PeerConnection peer = setupPeer(ethManager, onSend);
@@ -221,7 +220,6 @@ public final class EthProtocolManagerTest {
             for (int i = 0; i < limit; i++) {
               assertThat(headers.get(i).getNumber()).isEqualTo(startBlock + i);
             }
-            message.release();
             done.complete(null);
           };
       final PeerConnection peer = setupPeer(ethManager, onSend);
@@ -251,7 +249,6 @@ public final class EthProtocolManagerTest {
             for (int i = 0; i < blockCount; i++) {
               assertThat(headers.get(i).getNumber()).isEqualTo(endBlock - i);
             }
-            message.release();
             done.complete(null);
           };
       final PeerConnection peer = setupPeer(ethManager, onSend);
@@ -283,7 +280,6 @@ public final class EthProtocolManagerTest {
             for (int i = 0; i < blockCount; i++) {
               assertThat(headers.get(i).getNumber()).isEqualTo(startBlock + i * (skip + 1));
             }
-            message.release();
             done.complete(null);
           };
       final PeerConnection peer = setupPeer(ethManager, onSend);
@@ -316,7 +312,6 @@ public final class EthProtocolManagerTest {
             for (int i = 0; i < blockCount; i++) {
               assertThat(headers.get(i).getNumber()).isEqualTo(endBlock - i * (skip + 1));
             }
-            message.release();
             done.complete(null);
           };
       final PeerConnection peer = setupPeer(ethManager, onSend);
@@ -369,7 +364,6 @@ public final class EthProtocolManagerTest {
             for (int i = 0; i < 2; i++) {
               assertThat(headers.get(i).getNumber()).isEqualTo(startBlock + i);
             }
-            message.release();
             done.complete(null);
           };
       final PeerConnection peer = setupPeer(ethManager, onSend);
@@ -397,7 +391,6 @@ public final class EthProtocolManagerTest {
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
             assertThat(headers.size()).isEqualTo(0);
-            message.release();
             done.complete(null);
           };
       final PeerConnection peer = setupPeer(ethManager, onSend);
@@ -438,7 +431,6 @@ public final class EthProtocolManagerTest {
             for (int i = 0; i < blockCount; i++) {
               assertThat(expectedBlocks[i].getBody()).isEqualTo(bodies.get(i));
             }
-            message.release();
             done.complete(null);
           };
 
@@ -483,7 +475,6 @@ public final class EthProtocolManagerTest {
             for (int i = 0; i < limit; i++) {
               assertThat(expectedBlocks[i].getBody()).isEqualTo(bodies.get(i));
             }
-            message.release();
             done.complete(null);
           };
 
@@ -520,7 +511,6 @@ public final class EthProtocolManagerTest {
                 Lists.newArrayList(blocksMessage.bodies(protocolSchedule));
             assertThat(bodies.size()).isEqualTo(1);
             assertThat(expectedBlock.getBody()).isEqualTo(bodies.get(0));
-            message.release();
             done.complete(null);
           };
 
@@ -562,7 +552,6 @@ public final class EthProtocolManagerTest {
             for (int i = 0; i < blockCount; i++) {
               assertThat(expectedReceipts.get(i)).isEqualTo(receipts.get(i));
             }
-            message.release();
             done.complete(null);
           };
 
@@ -606,7 +595,6 @@ public final class EthProtocolManagerTest {
             for (int i = 0; i < limit; i++) {
               assertThat(expectedReceipts.get(i)).isEqualTo(receipts.get(i));
             }
-            message.release();
             done.complete(null);
           };
 
@@ -623,7 +611,6 @@ public final class EthProtocolManagerTest {
     try (final EthProtocolManager ethManager = new EthProtocolManager(blockchain, 1, true, 1)) {
       // Setup blocks query
       final long blockNumber = blockchain.getChainHeadBlockNumber() - 5;
-      final int blockCount = 2;
       final BlockHeader header = blockchain.getBlockHeader(blockNumber).get();
       final List<TransactionReceipt> expectedReceipts =
           blockchain.getTxReceipts(header.getHash()).get();
@@ -644,7 +631,6 @@ public final class EthProtocolManagerTest {
                 Lists.newArrayList(receiptsMessage.receipts());
             assertThat(receipts.size()).isEqualTo(1);
             assertThat(expectedReceipts).isEqualTo(receipts.get(0));
-            message.release();
             done.complete(null);
           };
 
@@ -699,7 +685,6 @@ public final class EthProtocolManagerTest {
     for (final NewBlockMessage msg : messageSentCaptor.getAllValues()) {
       assertThat(msg.block(protocolSchdeule)).isEqualTo(minedBlock);
       assertThat(msg.totalDifficulty(protocolSchdeule)).isEqualTo(expectedTotalDifficulty);
-      msg.release();
     }
 
     assertThat(receivingPeerCaptor.getAllValues().containsAll(peers)).isTrue();
@@ -740,7 +725,6 @@ public final class EthProtocolManagerTest {
             for (int i = 0; i < receivedBlockCount; i++) {
               assertThat(headers.get(i).getNumber()).isEqualTo(receivedBlockCount - 1 - i);
             }
-            message.release();
             done.complete(null);
           };
 

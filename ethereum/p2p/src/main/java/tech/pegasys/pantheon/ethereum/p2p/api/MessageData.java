@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.api;
 
-import io.netty.buffer.ByteBuf;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 /** A P2P Network Message's Data. */
 public interface MessageData {
@@ -20,7 +20,7 @@ public interface MessageData {
   /**
    * Returns the size of the message.
    *
-   * @return Number of bytes {@link #writeTo(ByteBuf)} will write to an output buffer.
+   * @return Number of bytes in this data.
    */
   int getSize();
 
@@ -32,15 +32,9 @@ public interface MessageData {
   int getCode();
 
   /**
-   * Puts the message's body into the given {@link ByteBuf}.
+   * Get the serialized representation for this message
    *
-   * @param output ByteBuf to write the message to
+   * @return the serialized representation of this message
    */
-  void writeTo(ByteBuf output);
-
-  /** Releases the memory underlying this message. */
-  void release();
-
-  /** Retains (increments its reference count) the memory underlying this message once. */
-  void retain();
+  BytesValue getData();
 }

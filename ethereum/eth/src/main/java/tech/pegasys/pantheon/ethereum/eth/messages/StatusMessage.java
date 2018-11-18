@@ -13,9 +13,7 @@
 package tech.pegasys.pantheon.ethereum.eth.messages;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
-import tech.pegasys.pantheon.ethereum.p2p.utils.ByteBufUtils;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
@@ -25,13 +23,11 @@ import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
-import io.netty.buffer.ByteBuf;
-
 public final class StatusMessage extends AbstractMessageData {
 
   private EthStatus status;
 
-  public StatusMessage(final ByteBuf data) {
+  public StatusMessage(final BytesValue data) {
     super(data);
   }
 
@@ -45,14 +41,12 @@ public final class StatusMessage extends AbstractMessageData {
         new EthStatus(protocolVersion, networkId, totalDifficulty, bestHash, genesisHash);
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     status.writeTo(out);
-    final ByteBuf data = ByteBufUtils.fromRLPOutput(out);
 
-    return new StatusMessage(data);
+    return new StatusMessage(out.encoded());
   }
 
   public static StatusMessage readFrom(final MessageData message) {
     if (message instanceof StatusMessage) {
-      message.retain();
       return (StatusMessage) message;
     }
     final int code = message.getCode();
@@ -60,9 +54,7 @@ public final class StatusMessage extends AbstractMessageData {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a StatusMessage.", code));
     }
-    final ByteBuf data = NetworkMemoryPool.allocate(message.getSize());
-    message.writeTo(data);
-    return new StatusMessage(data);
+    return new StatusMessage(message.getData());
   }
 
   @Override
@@ -99,7 +91,7 @@ public final class StatusMessage extends AbstractMessageData {
 
   private EthStatus status() {
     if (status == null) {
-      final RLPInput input = RLP.input(BytesValue.wrap(ByteBufUtils.toByteArray(data)));
+      final RLPInput input = RLP.input(data);
       status = EthStatus.readFrom(input);
     }
     return status;

@@ -14,24 +14,20 @@ package tech.pegasys.pantheon.consensus.ibft.ibftmessage;
 
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftSignedMessageData;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftUnsignedRoundChangeMessageData;
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-
-import io.netty.buffer.ByteBuf;
 
 public class IbftRoundChangeMessage extends AbstractIbftMessage {
 
   private static final int MESSAGE_CODE = IbftV2.ROUND_CHANGE;
 
-  private IbftRoundChangeMessage(final ByteBuf data) {
+  private IbftRoundChangeMessage(final BytesValue data) {
     super(data);
   }
 
   public static IbftRoundChangeMessage fromMessage(final MessageData message) {
     if (message instanceof IbftRoundChangeMessage) {
-      message.retain();
       return (IbftRoundChangeMessage) message;
     }
     final int code = message.getCode();
@@ -40,21 +36,18 @@ public class IbftRoundChangeMessage extends AbstractIbftMessage {
           String.format("Message has code %d and thus is not a RoundChangeMessage", code));
     }
 
-    final ByteBuf data = NetworkMemoryPool.allocate(message.getSize());
-    message.writeTo(data);
-    return new IbftRoundChangeMessage(data);
+    return new IbftRoundChangeMessage(message.getData());
   }
 
   @Override
   public IbftSignedMessageData<IbftUnsignedRoundChangeMessageData> decode() {
-    return IbftSignedMessageData.readIbftSignedRoundChangeMessageDataFrom(
-        RLP.input(BytesValue.wrapBuffer(data)));
+    return IbftSignedMessageData.readIbftSignedRoundChangeMessageDataFrom(RLP.input(data));
   }
 
   public static IbftRoundChangeMessage create(
       final IbftSignedMessageData<IbftUnsignedRoundChangeMessageData> ibftPrepareMessageDecoded) {
 
-    return new IbftRoundChangeMessage(writeMessageToByteBuf(ibftPrepareMessageDecoded));
+    return new IbftRoundChangeMessage(ibftPrepareMessageDecoded.encode());
   }
 
   @Override

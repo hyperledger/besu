@@ -13,28 +13,13 @@
 package tech.pegasys.pantheon.consensus.ibft.ibftmessage;
 
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftSignedMessageData;
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
-import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
-
-import io.netty.buffer.ByteBuf;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 public abstract class AbstractIbftMessage extends AbstractMessageData {
-  protected AbstractIbftMessage(final ByteBuf data) {
+  protected AbstractIbftMessage(final BytesValue data) {
     super(data);
   }
 
   public abstract IbftSignedMessageData<?> decode();
-
-  protected static ByteBuf writeMessageToByteBuf(
-      final IbftSignedMessageData<?> ibftSignedMessageData) {
-
-    BytesValueRLPOutput rlpEncode = new BytesValueRLPOutput();
-    ibftSignedMessageData.writeTo(rlpEncode);
-
-    final ByteBuf data = NetworkMemoryPool.allocate(rlpEncode.encodedSize());
-    data.writeBytes(rlpEncode.encoded().extractArray());
-
-    return data;
-  }
 }

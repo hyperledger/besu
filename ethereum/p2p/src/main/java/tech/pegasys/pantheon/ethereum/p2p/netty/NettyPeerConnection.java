@@ -69,7 +69,6 @@ final class NettyPeerConnection implements PeerConnection {
   @Override
   public void send(final Capability capability, final MessageData message) throws PeerNotConnected {
     if (isDisconnected()) {
-      message.release();
       throw new PeerNotConnected("Attempt to send message to a closed peer connection");
     }
     if (capability != null) {
@@ -77,7 +76,6 @@ final class NettyPeerConnection implements PeerConnection {
       final SubProtocol subProtocol = multiplexer.subProtocol(capability);
       if (subProtocol == null
           || !subProtocol.isValidMessageCode(capability.getVersion(), message.getCode())) {
-        message.release();
         throw new UnsupportedOperationException(
             "Attempt to send unsupported message ("
                 + message.getCode()

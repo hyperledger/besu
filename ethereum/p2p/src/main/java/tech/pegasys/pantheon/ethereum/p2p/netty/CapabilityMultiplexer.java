@@ -17,6 +17,7 @@ import static java.util.Comparator.comparing;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -31,7 +32,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableRangeMap;
 import com.google.common.collect.ImmutableRangeMap.Builder;
 import com.google.common.collect.Range;
-import io.netty.buffer.ByteBuf;
 
 public class CapabilityMultiplexer {
 
@@ -108,18 +108,8 @@ public class CapabilityMultiplexer {
       }
 
       @Override
-      public void writeTo(final ByteBuf output) {
-        originalMessage.writeTo(output);
-      }
-
-      @Override
-      public void release() {
-        originalMessage.release();
-      }
-
-      @Override
-      public void retain() {
-        originalMessage.retain();
+      public BytesValue getData() {
+        return originalMessage.getData();
       }
     };
   }

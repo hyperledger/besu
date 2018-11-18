@@ -53,8 +53,6 @@ class TransactionsMessageProcessor {
       if (peer != null) {
         peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       }
-    } finally {
-      transactionsMessage.release();
     }
   }
 }

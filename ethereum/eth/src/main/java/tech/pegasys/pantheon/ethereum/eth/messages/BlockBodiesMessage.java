@@ -16,20 +16,16 @@ import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import io.netty.buffer.ByteBuf;
-
 public final class BlockBodiesMessage extends AbstractMessageData {
 
   public static BlockBodiesMessage readFrom(final MessageData message) {
     if (message instanceof BlockBodiesMessage) {
-      message.retain();
       return (BlockBodiesMessage) message;
     }
     final int code = message.getCode();
@@ -37,9 +33,7 @@ public final class BlockBodiesMessage extends AbstractMessageData {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a BlockBodiesMessage.", code));
     }
-    final ByteBuf data = NetworkMemoryPool.allocate(message.getSize());
-    message.writeTo(data);
-    return new BlockBodiesMessage(data);
+    return new BlockBodiesMessage(message.getData());
   }
 
   public static BlockBodiesMessage create(final Iterable<BlockBody> bodies) {
@@ -47,12 +41,10 @@ public final class BlockBodiesMessage extends AbstractMessageData {
     tmp.startList();
     bodies.forEach(body -> body.writeTo(tmp));
     tmp.endList();
-    final ByteBuf data = NetworkMemoryPool.allocate(tmp.encodedSize());
-    data.writeBytes(tmp.encoded().extractArray());
-    return new BlockBodiesMessage(data);
+    return new BlockBodiesMessage(tmp.encoded());
   }
 
-  private BlockBodiesMessage(final ByteBuf data) {
+  private BlockBodiesMessage(final BytesValue data) {
     super(data);
   }
 
@@ -64,9 +56,7 @@ public final class BlockBodiesMessage extends AbstractMessageData {
   public <C> Iterable<BlockBody> bodies(final ProtocolSchedule<C> protocolSchedule) {
     final BlockHashFunction blockHashFunction =
         ScheduleBasedBlockHashFunction.create(protocolSchedule);
-    final byte[] tmp = new byte[data.readableBytes()];
-    data.getBytes(0, tmp);
-    return new BytesValueRLPInput(BytesValue.wrap(tmp), false)
+    return new BytesValueRLPInput(data, false)
         .readList(rlp -> BlockBody.readFrom(rlp, blockHashFunction));
   }
 }

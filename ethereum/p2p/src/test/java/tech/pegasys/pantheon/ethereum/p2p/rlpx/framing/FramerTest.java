@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.util.List;
@@ -52,8 +53,7 @@ public class FramerTest {
 
     final byte[] byteArray = new byte[0xFFFFFF];
     new Random().nextBytes(byteArray);
-    final ByteBuf buf = wrappedBuffer(byteArray);
-    final MessageData ethMessage = new RawMessage(0x00, buf);
+    final MessageData ethMessage = new RawMessage(0x00, BytesValue.wrap(byteArray));
 
     final HandshakeSecrets secrets = new HandshakeSecrets(aes, mac, mac);
     final Framer framer = new Framer(secrets);
@@ -77,11 +77,10 @@ public class FramerTest {
     framer.enableCompression();
 
     final byte[] byteArray = Snappy.compress(new byte[0x1000000]);
-    final ByteBuf buf = wrappedBuffer(byteArray);
 
-    final MessageData ethMessage = new RawMessage(0x00, buf);
+    final MessageData ethMessage = new RawMessage(0x00, BytesValue.wrap(byteArray));
     final ByteBuf framedMessage = Unpooled.buffer();
-    framer.frameAndReleaseMessage(ethMessage, framedMessage);
+    framer.frameMessage(ethMessage, framedMessage);
 
     final HandshakeSecrets deframeSecrets = secretsFrom(td, true);
     final Framer deframer = new Framer(deframeSecrets);

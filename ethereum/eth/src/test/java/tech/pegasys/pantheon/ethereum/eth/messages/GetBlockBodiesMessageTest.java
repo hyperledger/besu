@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.ethereum.eth.messages;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
@@ -30,7 +29,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.google.common.io.Resources;
-import io.netty.buffer.ByteBuf;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -54,19 +52,11 @@ public final class GetBlockBodiesMessageTest {
       oneBlock.skipNext();
     }
     final MessageData initialMessage = GetBlockBodiesMessage.create(hashes);
-    final ByteBuf rawBuffer = NetworkMemoryPool.allocate(initialMessage.getSize());
-    initialMessage.writeTo(rawBuffer);
-    final MessageData raw = new RawMessage(EthPV62.GET_BLOCK_BODIES, rawBuffer);
+    final MessageData raw = new RawMessage(EthPV62.GET_BLOCK_BODIES, initialMessage.getData());
     final GetBlockBodiesMessage message = GetBlockBodiesMessage.readFrom(raw);
-    try {
-      final Iterator<Hash> readHeaders = message.hashes().iterator();
-      for (int i = 0; i < 50; ++i) {
-        Assertions.assertThat(readHeaders.next()).isEqualTo(hashes.get(i));
-      }
-    } finally {
-      message.release();
-      initialMessage.release();
-      raw.release();
+    final Iterator<Hash> readHeaders = message.hashes().iterator();
+    for (int i = 0; i < 50; ++i) {
+      Assertions.assertThat(readHeaders.next()).isEqualTo(hashes.get(i));
     }
   }
 }

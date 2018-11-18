@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.eth.messages;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
@@ -24,13 +23,10 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import io.netty.buffer.ByteBuf;
-
 public final class GetReceiptsMessage extends AbstractMessageData {
 
   public static GetReceiptsMessage readFrom(final MessageData message) {
     if (message instanceof GetReceiptsMessage) {
-      message.retain();
       return (GetReceiptsMessage) message;
     }
     final int code = message.getCode();
@@ -38,9 +34,7 @@ public final class GetReceiptsMessage extends AbstractMessageData {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a GetReceipts.", code));
     }
-    final ByteBuf data = NetworkMemoryPool.allocate(message.getSize());
-    message.writeTo(data);
-    return new GetReceiptsMessage(data);
+    return new GetReceiptsMessage(message.getData());
   }
 
   public static GetReceiptsMessage create(final Iterable<Hash> hashes) {
@@ -48,12 +42,10 @@ public final class GetReceiptsMessage extends AbstractMessageData {
     tmp.startList();
     hashes.forEach(tmp::writeBytesValue);
     tmp.endList();
-    final ByteBuf data = NetworkMemoryPool.allocate(tmp.encodedSize());
-    data.writeBytes(tmp.encoded().extractArray());
-    return new GetReceiptsMessage(data);
+    return new GetReceiptsMessage(tmp.encoded());
   }
 
-  private GetReceiptsMessage(final ByteBuf data) {
+  private GetReceiptsMessage(final BytesValue data) {
     super(data);
   }
 
@@ -63,9 +55,7 @@ public final class GetReceiptsMessage extends AbstractMessageData {
   }
 
   public Iterable<Hash> hashes() {
-    final byte[] tmp = new byte[data.readableBytes()];
-    data.getBytes(0, tmp);
-    final RLPInput input = new BytesValueRLPInput(BytesValue.wrap(tmp), false);
+    final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
     final Collection<Hash> hashes = new ArrayList<>();
     while (!input.isEndOfCurrentList()) {

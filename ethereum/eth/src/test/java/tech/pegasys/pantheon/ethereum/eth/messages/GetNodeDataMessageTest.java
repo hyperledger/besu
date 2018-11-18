@@ -13,24 +13,21 @@
 package tech.pegasys.pantheon.ethereum.eth.messages;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import io.netty.buffer.ByteBuf;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public final class GetNodeDataMessageTest {
 
   @Test
-  public void roundTripTest() throws IOException {
+  public void roundTripTest() {
     // Generate some hashes
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final List<Hash> hashes = new ArrayList<>();
@@ -42,22 +39,14 @@ public final class GetNodeDataMessageTest {
     // Perform round-trip transformation
     // Create GetNodeData, copy it to a generic message, then read back into a GetNodeData message
     final MessageData initialMessage = GetNodeDataMessage.create(hashes);
-    final ByteBuf rawBuffer = NetworkMemoryPool.allocate(initialMessage.getSize());
-    initialMessage.writeTo(rawBuffer);
-    final MessageData raw = new RawMessage(EthPV63.GET_NODE_DATA, rawBuffer);
+    final MessageData raw = new RawMessage(EthPV63.GET_NODE_DATA, initialMessage.getData());
     final GetNodeDataMessage message = GetNodeDataMessage.readFrom(raw);
 
     // Read hashes back out after round trip and check they match originals.
-    try {
-      final Iterator<Hash> readData = message.hashes().iterator();
-      for (int i = 0; i < hashCount; ++i) {
-        Assertions.assertThat(readData.next()).isEqualTo(hashes.get(i));
-      }
-      Assertions.assertThat(readData.hasNext()).isFalse();
-    } finally {
-      message.release();
-      initialMessage.release();
-      raw.release();
+    final Iterator<Hash> readData = message.hashes().iterator();
+    for (int i = 0; i < hashCount; ++i) {
+      Assertions.assertThat(readData.next()).isEqualTo(hashes.get(i));
     }
+    Assertions.assertThat(readData.hasNext()).isFalse();
   }
 }

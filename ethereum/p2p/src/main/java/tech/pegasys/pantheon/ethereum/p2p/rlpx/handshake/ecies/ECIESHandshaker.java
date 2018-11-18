@@ -178,7 +178,9 @@ public class ECIESHandshaker implements Handshaker {
 
     buf.markReaderIndex();
     final ByteBuf bufferedBytes = buf.readSlice(expectedLength);
-    BytesValue bytes = BytesValue.wrapBuffer(bufferedBytes);
+    final byte[] encryptedBytes = new byte[bufferedBytes.readableBytes()];
+    bufferedBytes.getBytes(0, encryptedBytes);
+    BytesValue bytes = BytesValue.wrap(encryptedBytes);
 
     BytesValue encryptedMsg = bytes;
     try {

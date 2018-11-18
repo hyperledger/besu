@@ -244,8 +244,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       // Parsing errors can happen when clients broadcast network ids outside of the int range,
       // So just disconnect with "subprotocol" error rather than "breach of protocol".
       peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-    } finally {
-      status.release();
     }
   }
 
@@ -266,15 +264,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         .forEach(
             peer -> {
               try {
-                // Send(msg) will release the NewBlockMessage's internal buffer, thus it must be
-                // retained
-                // prior to transmission - then released on exit from function.
-                newBlockMessage.retain();
                 peer.send(newBlockMessage);
               } catch (final PeerNotConnected ex) {
                 // Peers may disconnect while traversing the list, this is a normal occurrence.
               }
             });
-    newBlockMessage.release();
   }
 }

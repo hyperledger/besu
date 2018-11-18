@@ -14,8 +14,6 @@ package tech.pegasys.pantheon.ethereum.p2p.wire;
 
 import static tech.pegasys.pantheon.util.bytes.BytesValue.wrap;
 
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
-import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -25,8 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * Encapsulates information about a peer, including their protocol version, client ID, capabilities
@@ -94,16 +90,6 @@ public class PeerInfo {
     out.writeIntScalar(getPort());
     out.writeBytesValue(getNodeId());
     out.endList();
-  }
-
-  public ByteBuf toByteBuf() {
-    // TODO: we should have a RLPOutput type based on ByteBuf
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    writeTo(out);
-
-    final ByteBuf data = NetworkMemoryPool.allocate(out.encodedSize());
-    data.writeBytes(out.encoded().extractArray());
-    return data;
   }
 
   @Override

@@ -15,22 +15,20 @@ package tech.pegasys.pantheon.ethereum.p2p.wire.messages;
 import static com.google.common.base.Preconditions.checkArgument;
 import static tech.pegasys.pantheon.util.Preconditions.checkGuard;
 
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
-import tech.pegasys.pantheon.ethereum.p2p.utils.ByteBufUtils;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.WireProtocolException;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.stream.Stream;
 
-import io.netty.buffer.ByteBuf;
-
 public final class DisconnectMessage extends AbstractMessageData {
 
-  private DisconnectMessage(final ByteBuf data) {
+  private DisconnectMessage(final BytesValue data) {
     super(data);
   }
 
@@ -38,14 +36,12 @@ public final class DisconnectMessage extends AbstractMessageData {
     final Data data = new Data(reason);
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     data.writeTo(out);
-    final ByteBuf buf = ByteBufUtils.fromRLPOutput(out);
 
-    return new DisconnectMessage(buf);
+    return new DisconnectMessage(out.encoded());
   }
 
   public static DisconnectMessage readFrom(final MessageData message) {
     if (message instanceof DisconnectMessage) {
-      message.retain();
       return (DisconnectMessage) message;
     }
     final int code = message.getCode();
@@ -53,9 +49,7 @@ public final class DisconnectMessage extends AbstractMessageData {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a DisconnectMessage.", code));
     }
-    final ByteBuf data = NetworkMemoryPool.allocate(message.getSize());
-    message.writeTo(data);
-    return new DisconnectMessage(data);
+    return new DisconnectMessage(message.getData());
   }
 
   @Override
@@ -64,7 +58,7 @@ public final class DisconnectMessage extends AbstractMessageData {
   }
 
   public DisconnectReason getReason() {
-    return Data.readFrom(ByteBufUtils.toRLPInput(data)).getReason();
+    return Data.readFrom(RLP.input(data)).getReason();
   }
 
   @Override
@@ -105,7 +99,7 @@ public final class DisconnectMessage extends AbstractMessageData {
    * @see <a href="https://github.com/ethereum/wiki/wiki/%C3%90%CE%9EVp2p-Wire-Protocol">ÐΞVp2p Wire
    *     Protocol</a>
    */
-  public static enum DisconnectReason {
+  public enum DisconnectReason {
     REQUESTED((byte) 0x00),
     TCP_SUBSYSTEM_ERROR((byte) 0x01),
     BREACH_OF_PROTOCOL((byte) 0x02),

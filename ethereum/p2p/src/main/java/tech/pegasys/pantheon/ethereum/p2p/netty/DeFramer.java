@@ -71,14 +71,13 @@ final class DeFramer extends ByteToMessageDecoder {
         // Decode first hello and use the payload to modify pipeline
         final PeerInfo peerInfo;
         try {
-          peerInfo = parsePeerInfo(message);
+          peerInfo = HelloMessage.readFrom(message).getPeerInfo();
         } catch (final RLPException e) {
           LOG.debug("Received invalid HELLO message", e);
           connectFuture.completeExceptionally(e);
           ctx.close();
           return;
         }
-        message.release();
         LOG.debug("Received HELLO message: {}", peerInfo);
         if (peerInfo.getVersion() >= 5) {
           LOG.debug("Enable compression for p2pVersion: {}", peerInfo.getVersion());
@@ -113,13 +112,6 @@ final class DeFramer extends ByteToMessageDecoder {
         out.add(message);
       }
     }
-  }
-
-  private PeerInfo parsePeerInfo(final MessageData message) {
-    final HelloMessage helloMessage = HelloMessage.readFrom(message);
-    final PeerInfo peerInfo = helloMessage.getPeerInfo();
-    helloMessage.release();
-    return peerInfo;
   }
 
   @Override

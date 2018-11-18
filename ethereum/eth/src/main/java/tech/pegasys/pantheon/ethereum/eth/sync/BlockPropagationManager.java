@@ -159,8 +159,6 @@ public class BlockPropagationManager<C> {
       importOrSavePendingBlock(block);
     } catch (final RLPException e) {
       message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-    } finally {
-      newBlockMessage.release();
     }
   }
 
@@ -210,8 +208,6 @@ public class BlockPropagationManager<C> {
       }
     } catch (final RLPException e) {
       message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-    } finally {
-      newBlockHashesMessage.release();
     }
   }
 

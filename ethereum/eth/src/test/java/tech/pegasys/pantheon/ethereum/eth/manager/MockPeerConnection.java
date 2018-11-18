@@ -54,7 +54,6 @@ class MockPeerConnection implements PeerConnection {
   @Override
   public void send(final Capability capability, final MessageData message) throws PeerNotConnected {
     if (disconnected) {
-      message.release();
       throw new PeerNotConnected("MockPeerConnection disconnected");
     }
     onSend.exec(capability, message, this);

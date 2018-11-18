@@ -118,112 +118,96 @@ class EthServer {
   static MessageData constructGetHeadersResponse(
       final Blockchain blockchain, final MessageData message, final int requestLimit) {
     final GetBlockHeadersMessage getHeaders = GetBlockHeadersMessage.readFrom(message);
-    try {
-      final Optional<Hash> hash = getHeaders.hash();
-      final int skip = getHeaders.skip();
-      final int maxHeaders = Math.min(requestLimit, getHeaders.maxHeaders());
-      final boolean reversed = getHeaders.reverse();
-      final BlockHeader firstHeader;
-      if (hash.isPresent()) {
-        final Hash startHash = hash.get();
-        firstHeader = blockchain.getBlockHeader(startHash).orElse(null);
-      } else {
-        final long firstNumber = getHeaders.blockNumber().getAsLong();
-        firstHeader = blockchain.getBlockHeader(firstNumber).orElse(null);
-      }
-      final Collection<BlockHeader> resp;
-      if (firstHeader == null) {
-        resp = Collections.emptyList();
-      } else {
-        resp = Lists.newArrayList(firstHeader);
-        final long numberDelta = reversed ? -(skip + 1) : (skip + 1);
-        for (int i = 1; i < maxHeaders; i++) {
-          final long blockNumber = firstHeader.getNumber() + i * numberDelta;
-          if (blockNumber < BlockHeader.GENESIS_BLOCK_NUMBER) {
-            break;
-          }
-          final Optional<BlockHeader> maybeHeader = blockchain.getBlockHeader(blockNumber);
-          if (maybeHeader.isPresent()) {
-            resp.add(maybeHeader.get());
-          } else {
-            break;
-          }
+    final Optional<Hash> hash = getHeaders.hash();
+    final int skip = getHeaders.skip();
+    final int maxHeaders = Math.min(requestLimit, getHeaders.maxHeaders());
+    final boolean reversed = getHeaders.reverse();
+    final BlockHeader firstHeader;
+    if (hash.isPresent()) {
+      final Hash startHash = hash.get();
+      firstHeader = blockchain.getBlockHeader(startHash).orElse(null);
+    } else {
+      final long firstNumber = getHeaders.blockNumber().getAsLong();
+      firstHeader = blockchain.getBlockHeader(firstNumber).orElse(null);
+    }
+    final Collection<BlockHeader> resp;
+    if (firstHeader == null) {
+      resp = Collections.emptyList();
+    } else {
+      resp = Lists.newArrayList(firstHeader);
+      final long numberDelta = reversed ? -(skip + 1) : (skip + 1);
+      for (int i = 1; i < maxHeaders; i++) {
+        final long blockNumber = firstHeader.getNumber() + i * numberDelta;
+        if (blockNumber < BlockHeader.GENESIS_BLOCK_NUMBER) {
+          break;
+        }
+        final Optional<BlockHeader> maybeHeader = blockchain.getBlockHeader(blockNumber);
+        if (maybeHeader.isPresent()) {
+          resp.add(maybeHeader.get());
+        } else {
+          break;
         }
       }
-      return BlockHeadersMessage.create(resp);
-    } finally {
-      getHeaders.release();
     }
+    return BlockHeadersMessage.create(resp);
   }
 
   static MessageData constructGetBodiesResponse(
       final Blockchain blockchain, final MessageData message, final int requestLimit) {
     final GetBlockBodiesMessage getBlockBodiesMessage = GetBlockBodiesMessage.readFrom(message);
-    try {
-      final Iterable<Hash> hashes = getBlockBodiesMessage.hashes();
+    final Iterable<Hash> hashes = getBlockBodiesMessage.hashes();
 
-      final Collection<BlockBody> bodies = new ArrayList<>();
-      int count = 0;
-      for (final Hash hash : hashes) {
-        if (count >= requestLimit) {
-          break;
-        }
-        count++;
-        final Optional<BlockBody> maybeBody = blockchain.getBlockBody(hash);
-        if (!maybeBody.isPresent()) {
-          continue;
-        }
-        bodies.add(maybeBody.get());
+    final Collection<BlockBody> bodies = new ArrayList<>();
+    int count = 0;
+    for (final Hash hash : hashes) {
+      if (count >= requestLimit) {
+        break;
       }
-      return BlockBodiesMessage.create(bodies);
-    } finally {
-      getBlockBodiesMessage.release();
+      count++;
+      final Optional<BlockBody> maybeBody = blockchain.getBlockBody(hash);
+      if (!maybeBody.isPresent()) {
+        continue;
+      }
+      bodies.add(maybeBody.get());
     }
+    return BlockBodiesMessage.create(bodies);
   }
 
   static MessageData constructGetReceiptsResponse(
       final Blockchain blockchain, final MessageData message, final int requestLimit) {
     final GetReceiptsMessage getReceipts = GetReceiptsMessage.readFrom(message);
-    try {
-      final Iterable<Hash> hashes = getReceipts.hashes();
+    final Iterable<Hash> hashes = getReceipts.hashes();
 
-      final List<List<TransactionReceipt>> receipts = new ArrayList<>();
-      int count = 0;
-      for (final Hash hash : hashes) {
-        if (count >= requestLimit) {
-          break;
-        }
-        count++;
-        final Optional<List<TransactionReceipt>> maybeReceipts = blockchain.getTxReceipts(hash);
-        if (!maybeReceipts.isPresent()) {
-          continue;
-        }
-        receipts.add(maybeReceipts.get());
+    final List<List<TransactionReceipt>> receipts = new ArrayList<>();
+    int count = 0;
+    for (final Hash hash : hashes) {
+      if (count >= requestLimit) {
+        break;
       }
-      return ReceiptsMessage.create(receipts);
-    } finally {
-      getReceipts.release();
+      count++;
+      final Optional<List<TransactionReceipt>> maybeReceipts = blockchain.getTxReceipts(hash);
+      if (!maybeReceipts.isPresent()) {
+        continue;
+      }
+      receipts.add(maybeReceipts.get());
     }
+    return ReceiptsMessage.create(receipts);
   }
 
   static MessageData constructGetNodeDataResponse(
       final MessageData message, final int requestLimit) {
     final GetNodeDataMessage getNodeDataMessage = GetNodeDataMessage.readFrom(message);
-    try {
-      final Iterable<Hash> hashes = getNodeDataMessage.hashes();
+    final Iterable<Hash> hashes = getNodeDataMessage.hashes();
 
-      final List<BytesValue> nodeData = new ArrayList<>();
-      int count = 0;
-      for (final Hash hash : hashes) {
-        if (count >= requestLimit) {
-          break;
-        }
-        count++;
-        // TODO: Lookup node data and add it to the list
+    final List<BytesValue> nodeData = new ArrayList<>();
+    int count = 0;
+    for (final Hash hash : hashes) {
+      if (count >= requestLimit) {
+        break;
       }
-      return NodeDataMessage.create(nodeData);
-    } finally {
-      getNodeDataMessage.release();
+      count++;
+      // TODO: Lookup node data and add it to the list
     }
+    return NodeDataMessage.create(nodeData);
   }
 }

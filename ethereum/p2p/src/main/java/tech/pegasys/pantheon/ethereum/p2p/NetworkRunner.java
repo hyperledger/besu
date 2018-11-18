@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p;
 
-import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
@@ -115,24 +114,19 @@ public class NetworkRunner implements AutoCloseable {
         network.subscribe(
             cap,
             message -> {
-              final MessageData data = message.getData();
-              try {
-                final int code = message.getData().getCode();
-                if (!protocol.isValidMessageCode(cap.getVersion(), code)) {
-                  // Handle invalid messsages by disconnecting
-                  LOG.debug(
-                      "Invalid message code ({}-{}, {}) received from peer, disconnecting from:",
-                      cap.getName(),
-                      cap.getVersion(),
-                      code,
-                      message.getConnection());
-                  message.getConnection().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-                  return;
-                }
-                protocolManager.processMessage(cap, message);
-              } finally {
-                data.release();
+              final int code = message.getData().getCode();
+              if (!protocol.isValidMessageCode(cap.getVersion(), code)) {
+                // Handle invalid messages by disconnecting
+                LOG.debug(
+                    "Invalid message code ({}-{}, {}) received from peer, disconnecting from:",
+                    cap.getName(),
+                    cap.getVersion(),
+                    code,
+                    message.getConnection());
+                message.getConnection().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+                return;
               }
+              protocolManager.processMessage(cap, message);
             });
       }
     }

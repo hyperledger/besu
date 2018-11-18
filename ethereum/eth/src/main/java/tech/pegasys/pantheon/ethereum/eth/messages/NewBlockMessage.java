@@ -16,9 +16,7 @@ import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
-import tech.pegasys.pantheon.ethereum.p2p.utils.ByteBufUtils;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
@@ -27,15 +25,13 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
-import io.netty.buffer.ByteBuf;
-
 public class NewBlockMessage extends AbstractMessageData {
 
   private static final int MESSAGE_CODE = EthPV62.NEW_BLOCK;
 
   private NewBlockMessageData messageFields = null;
 
-  private NewBlockMessage(final ByteBuf data) {
+  private NewBlockMessage(final BytesValue data) {
     super(data);
   }
 
@@ -48,13 +44,11 @@ public class NewBlockMessage extends AbstractMessageData {
     final NewBlockMessageData msgData = new NewBlockMessageData(block, totalDifficulty);
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     msgData.writeTo(out);
-    final ByteBuf data = ByteBufUtils.fromRLPOutput(out);
-    return new NewBlockMessage(data);
+    return new NewBlockMessage(out.encoded());
   }
 
   public static NewBlockMessage readFrom(final MessageData message) {
     if (message instanceof NewBlockMessage) {
-      message.retain();
       return (NewBlockMessage) message;
     }
     final int code = message.getCode();
@@ -62,9 +56,7 @@ public class NewBlockMessage extends AbstractMessageData {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a NewBlockMessage.", code));
     }
-    final ByteBuf data = NetworkMemoryPool.allocate(message.getSize());
-    message.writeTo(data);
-    return new NewBlockMessage(data);
+    return new NewBlockMessage(message.getData());
   }
 
   public <C> Block block(final ProtocolSchedule<C> protocolSchedule) {
@@ -77,7 +69,7 @@ public class NewBlockMessage extends AbstractMessageData {
 
   private <C> NewBlockMessageData messageFields(final ProtocolSchedule<C> protocolSchedule) {
     if (messageFields == null) {
-      final RLPInput input = RLP.input(BytesValue.wrap(ByteBufUtils.toByteArray(data)));
+      final RLPInput input = RLP.input(data);
       messageFields = NewBlockMessageData.readFrom(input, protocolSchedule);
     }
     return messageFields;

@@ -12,36 +12,28 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.wire.messages;
 
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
-import tech.pegasys.pantheon.ethereum.p2p.utils.ByteBufUtils;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
-
-import io.netty.buffer.ByteBuf;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 public final class HelloMessage extends AbstractMessageData {
 
-  private HelloMessage(final ByteBuf data) {
+  private HelloMessage(final BytesValue data) {
     super(data);
   }
 
   public static HelloMessage create(final PeerInfo peerInfo) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     peerInfo.writeTo(out);
-    final ByteBuf buf = ByteBufUtils.fromRLPOutput(out);
 
-    return new HelloMessage(buf);
-  }
-
-  public static HelloMessage create(final ByteBuf data) {
-    return new HelloMessage(data);
+    return new HelloMessage(out.encoded());
   }
 
   public static HelloMessage readFrom(final MessageData message) {
     if (message instanceof HelloMessage) {
-      message.retain();
       return (HelloMessage) message;
     }
     final int code = message.getCode();
@@ -49,9 +41,7 @@ public final class HelloMessage extends AbstractMessageData {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a HelloMessage.", code));
     }
-    final ByteBuf data = NetworkMemoryPool.allocate(message.getSize());
-    message.writeTo(data);
-    return new HelloMessage(data);
+    return new HelloMessage(message.getData());
   }
 
   @Override
@@ -60,7 +50,7 @@ public final class HelloMessage extends AbstractMessageData {
   }
 
   public PeerInfo getPeerInfo() {
-    return PeerInfo.readFrom(ByteBufUtils.toRLPInput(data));
+    return PeerInfo.readFrom(RLP.input(data));
   }
 
   @Override

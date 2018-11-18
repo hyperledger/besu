@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.eth.messages;
 
 import tech.pegasys.pantheon.ethereum.core.Transaction;
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
@@ -24,13 +23,10 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.util.Iterator;
 import java.util.function.Function;
 
-import io.netty.buffer.ByteBuf;
-
 public class TransactionsMessage extends AbstractMessageData {
 
   public static TransactionsMessage readFrom(final MessageData message) {
     if (message instanceof TransactionsMessage) {
-      message.retain();
       return (TransactionsMessage) message;
     }
     final int code = message.getCode();
@@ -38,9 +34,7 @@ public class TransactionsMessage extends AbstractMessageData {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a TransactionsMessage.", code));
     }
-    final ByteBuf data = NetworkMemoryPool.allocate(message.getSize());
-    message.writeTo(data);
-    return new TransactionsMessage(data);
+    return new TransactionsMessage(message.getData());
   }
 
   public static TransactionsMessage create(final Iterable<Transaction> transactions) {
@@ -50,12 +44,10 @@ public class TransactionsMessage extends AbstractMessageData {
       transaction.writeTo(tmp);
     }
     tmp.endList();
-    final ByteBuf data = NetworkMemoryPool.allocate(tmp.encodedSize());
-    data.writeBytes(tmp.encoded().extractArray());
-    return new TransactionsMessage(data);
+    return new TransactionsMessage(tmp.encoded());
   }
 
-  private TransactionsMessage(final ByteBuf data) {
+  private TransactionsMessage(final BytesValue data) {
     super(data);
   }
 
@@ -66,10 +58,6 @@ public class TransactionsMessage extends AbstractMessageData {
 
   public Iterator<Transaction> transactions(
       final Function<RLPInput, Transaction> transactionReader) {
-    final byte[] transactions = new byte[data.readableBytes()];
-    data.getBytes(0, transactions);
-    return new BytesValueRLPInput(BytesValue.wrap(transactions), false)
-        .readList(transactionReader)
-        .iterator();
+    return new BytesValueRLPInput(data, false).readList(transactionReader).iterator();
   }
 }

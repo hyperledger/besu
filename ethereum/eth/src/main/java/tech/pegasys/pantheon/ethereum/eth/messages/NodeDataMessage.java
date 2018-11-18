@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.messages;
 
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
@@ -23,13 +22,10 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import io.netty.buffer.ByteBuf;
-
 public final class NodeDataMessage extends AbstractMessageData {
 
   public static NodeDataMessage readFrom(final MessageData message) {
     if (message instanceof NodeDataMessage) {
-      message.retain();
       return (NodeDataMessage) message;
     }
     final int code = message.getCode();
@@ -37,9 +33,7 @@ public final class NodeDataMessage extends AbstractMessageData {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a NodeDataMessage.", code));
     }
-    final ByteBuf data = NetworkMemoryPool.allocate(message.getSize());
-    message.writeTo(data);
-    return new NodeDataMessage(data);
+    return new NodeDataMessage(message.getData());
   }
 
   public static NodeDataMessage create(final Iterable<BytesValue> nodeData) {
@@ -47,12 +41,10 @@ public final class NodeDataMessage extends AbstractMessageData {
     tmp.startList();
     nodeData.forEach(tmp::writeBytesValue);
     tmp.endList();
-    final ByteBuf data = NetworkMemoryPool.allocate(tmp.encodedSize());
-    data.writeBytes(tmp.encoded().extractArray());
-    return new NodeDataMessage(data);
+    return new NodeDataMessage(tmp.encoded());
   }
 
-  private NodeDataMessage(final ByteBuf data) {
+  private NodeDataMessage(final BytesValue data) {
     super(data);
   }
 
@@ -62,9 +54,7 @@ public final class NodeDataMessage extends AbstractMessageData {
   }
 
   public Iterable<BytesValue> nodeData() {
-    final byte[] tmp = new byte[data.readableBytes()];
-    data.getBytes(0, tmp);
-    final RLPInput input = new BytesValueRLPInput(BytesValue.wrap(tmp), false);
+    final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
     final Collection<BytesValue> nodeData = new ArrayList<>();
     while (!input.isEndOfCurrentList()) {
