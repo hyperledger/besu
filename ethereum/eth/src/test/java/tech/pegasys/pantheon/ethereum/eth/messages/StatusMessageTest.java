@@ -22,8 +22,6 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Random;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import org.junit.Test;
 
 public class StatusMessageTest {
@@ -56,9 +54,7 @@ public class StatusMessageTest {
     final MessageData msg = StatusMessage.create(version, networkId, td, bestHash, genesisHash);
 
     // Make a message copy from serialized data and check deserialized results
-    final ByteBuf buffer = Unpooled.buffer(msg.getSize(), msg.getSize());
-    msg.writeTo(buffer);
-    final StatusMessage copy = new StatusMessage(buffer);
+    final StatusMessage copy = new StatusMessage(msg.getData());
 
     assertThat(copy.protocolVersion()).isEqualTo(version);
     assertThat(copy.networkId()).isEqualTo(networkId);

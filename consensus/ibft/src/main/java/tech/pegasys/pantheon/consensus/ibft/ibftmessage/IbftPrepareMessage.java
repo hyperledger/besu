@@ -14,24 +14,20 @@ package tech.pegasys.pantheon.consensus.ibft.ibftmessage;
 
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftSignedMessageData;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftUnsignedPrepareMessageData;
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-
-import io.netty.buffer.ByteBuf;
 
 public class IbftPrepareMessage extends AbstractIbftMessage {
 
   private static final int MESSAGE_CODE = IbftV2.PREPARE;
 
-  private IbftPrepareMessage(final ByteBuf data) {
+  private IbftPrepareMessage(final BytesValue data) {
     super(data);
   }
 
   public static IbftPrepareMessage fromMessage(final MessageData message) {
     if (message instanceof IbftPrepareMessage) {
-      message.retain();
       return (IbftPrepareMessage) message;
     }
     final int code = message.getCode();
@@ -40,21 +36,18 @@ public class IbftPrepareMessage extends AbstractIbftMessage {
           String.format("Message has code %d and thus is not a PrepareMessage", code));
     }
 
-    final ByteBuf data = NetworkMemoryPool.allocate(message.getSize());
-    message.writeTo(data);
-    return new IbftPrepareMessage(data);
+    return new IbftPrepareMessage(message.getData());
   }
 
   @Override
   public IbftSignedMessageData<IbftUnsignedPrepareMessageData> decode() {
-    return IbftSignedMessageData.readIbftSignedPrepareMessageDataFrom(
-        RLP.input(BytesValue.wrapBuffer(data)));
+    return IbftSignedMessageData.readIbftSignedPrepareMessageDataFrom(RLP.input(data));
   }
 
   public static IbftPrepareMessage create(
       final IbftSignedMessageData<IbftUnsignedPrepareMessageData> ibftPrepareMessageDecoded) {
 
-    return new IbftPrepareMessage(writeMessageToByteBuf(ibftPrepareMessageDecoded));
+    return new IbftPrepareMessage(ibftPrepareMessageDecoded.encode());
   }
 
   @Override

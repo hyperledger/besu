@@ -18,14 +18,12 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
-import io.netty.buffer.Unpooled;
 import org.junit.Test;
 
 public class NewBlockMessageTest {
@@ -56,10 +54,7 @@ public class NewBlockMessageTest {
     tmp.writeUInt256Scalar(totalDifficulty);
     tmp.endList();
 
-    final BytesValue msgPayload = tmp.encoded();
-
-    final RawMessage rawMsg =
-        new RawMessage(EthPV62.NEW_BLOCK, Unpooled.wrappedBuffer(tmp.encoded().extractArray()));
+    final RawMessage rawMsg = new RawMessage(EthPV62.NEW_BLOCK, tmp.encoded());
 
     final NewBlockMessage newBlockMsg = NewBlockMessage.readFrom(rawMsg);
 
@@ -71,8 +66,7 @@ public class NewBlockMessageTest {
 
   @Test
   public void readFromMessageWithWrongCodeThrows() {
-    final ProtocolSchedule<Void> protSchedule = MainnetProtocolSchedule.create();
-    final RawMessage rawMsg = new RawMessage(EthPV62.BLOCK_HEADERS, NetworkMemoryPool.allocate(1));
+    final RawMessage rawMsg = new RawMessage(EthPV62.BLOCK_HEADERS, BytesValue.of(0));
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> NewBlockMessage.readFrom(rawMsg));

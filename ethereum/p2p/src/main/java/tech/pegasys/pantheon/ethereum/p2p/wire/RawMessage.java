@@ -12,13 +12,13 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.wire;
 
-import io.netty.buffer.ByteBuf;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 public final class RawMessage extends AbstractMessageData {
 
   private final int code;
 
-  public RawMessage(final int code, final ByteBuf data) {
+  public RawMessage(final int code, final BytesValue data) {
     super(data);
     this.code = code;
   }

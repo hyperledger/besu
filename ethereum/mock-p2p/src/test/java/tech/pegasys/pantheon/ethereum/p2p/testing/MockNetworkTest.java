@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.testing;
 
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
@@ -30,7 +29,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
-import io.netty.buffer.ByteBuf;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -71,18 +69,15 @@ public final class MockNetworkTest {
 
       // Validate Message Exchange
       final int size = 128;
-      final ByteBuf dataSent = NetworkMemoryPool.allocate(size);
       final byte[] data = new byte[size];
       ThreadLocalRandom.current().nextBytes(data);
-      dataSent.writeBytes(data);
       final int code = 0x74;
       final PeerConnection connection = optionalConnection.get();
-      connection.send(cap, new RawMessage(code, dataSent));
+      connection.send(cap, new RawMessage(code, BytesValue.wrap(data)));
       final Message receivedMessage = messageFuture.get();
       final MessageData receivedMessageData = receivedMessage.getData();
-      final ByteBuf receiveBuffer = NetworkMemoryPool.allocate(size);
-      receivedMessageData.writeTo(receiveBuffer);
-      Assertions.assertThat(receiveBuffer.compareTo(dataSent)).isEqualTo(0);
+      Assertions.assertThat(receivedMessageData.getData().compareTo(BytesValue.wrap(data)))
+          .isEqualTo(0);
       Assertions.assertThat(receivedMessage.getConnection().getPeer().getNodeId())
           .isEqualTo(two.getId());
       Assertions.assertThat(receivedMessageData.getSize()).isEqualTo(size);

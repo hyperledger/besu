@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,7 +32,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import io.netty.buffer.Unpooled;
 import org.junit.Test;
 
 public class RequestManagerTest {
@@ -212,7 +212,7 @@ public class RequestManagerTest {
   }
 
   private EthMessage mockMessage(final EthPeer peer) {
-    return new EthMessage(peer, new RawMessage(1, Unpooled.buffer()));
+    return new EthMessage(peer, new RawMessage(1, BytesValue.EMPTY));
   }
 
   private EthPeer createPeer() {

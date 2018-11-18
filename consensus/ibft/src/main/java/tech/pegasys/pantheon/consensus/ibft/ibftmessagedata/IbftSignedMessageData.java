@@ -15,8 +15,10 @@ package tech.pegasys.pantheon.consensus.ibft.ibftmessagedata;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Util;
+import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 public class IbftSignedMessageData<M extends AbstractIbftUnsignedMessageData> {
 
@@ -49,6 +51,12 @@ public class IbftSignedMessageData<M extends AbstractIbftUnsignedMessageData> {
     ibftUnsignedMessageData.writeTo(output);
     output.writeBytesValue(getSignature().encodedBytes());
     output.endList();
+  }
+
+  public BytesValue encode() {
+    final BytesValueRLPOutput rlpEncode = new BytesValueRLPOutput();
+    writeTo(rlpEncode);
+    return rlpEncode.encoded();
   }
 
   public static IbftSignedMessageData<IbftUnsignedPrePrepareMessageData>

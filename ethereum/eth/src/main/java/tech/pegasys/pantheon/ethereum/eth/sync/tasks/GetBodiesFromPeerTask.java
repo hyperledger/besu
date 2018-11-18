@@ -99,31 +99,27 @@ public class GetBodiesFromPeerTask<C> extends AbstractPeerRequestTask<List<Block
     }
 
     final BlockBodiesMessage bodiesMessage = BlockBodiesMessage.readFrom(message);
-    try {
-      final List<BlockBody> bodies = Lists.newArrayList(bodiesMessage.bodies(protocolSchedule));
-      if (bodies.size() == 0) {
-        // Message contains no data - nothing to do
-        return Optional.empty();
-      } else if (bodies.size() > headers.size()) {
-        // Message doesn't match our request - nothing to do
-        return Optional.empty();
-      }
-
-      final List<Block> blocks = new ArrayList<>();
-      for (final BlockBody body : bodies) {
-        final List<BlockHeader> headers = bodyToHeaders.get(new BodyIdentifier(body));
-        if (headers == null) {
-          // This message contains unrelated bodies - exit
-          return Optional.empty();
-        }
-        headers.forEach(h -> blocks.add(new Block(h, body)));
-        // Clear processed headers
-        headers.clear();
-      }
-      return Optional.of(blocks);
-    } finally {
-      bodiesMessage.release();
+    final List<BlockBody> bodies = Lists.newArrayList(bodiesMessage.bodies(protocolSchedule));
+    if (bodies.size() == 0) {
+      // Message contains no data - nothing to do
+      return Optional.empty();
+    } else if (bodies.size() > headers.size()) {
+      // Message doesn't match our request - nothing to do
+      return Optional.empty();
     }
+
+    final List<Block> blocks = new ArrayList<>();
+    for (final BlockBody body : bodies) {
+      final List<BlockHeader> headers = bodyToHeaders.get(new BodyIdentifier(body));
+      if (headers == null) {
+        // This message contains unrelated bodies - exit
+        return Optional.empty();
+      }
+      headers.forEach(h -> blocks.add(new Block(h, body)));
+      // Clear processed headers
+      headers.clear();
+    }
+    return Optional.of(blocks);
   }
 
   @Override

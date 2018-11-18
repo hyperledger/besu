@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.network;
 
-import static io.netty.buffer.Unpooled.EMPTY_BUFFER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -29,6 +28,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -74,7 +74,7 @@ public class IbftNetworkPeersTest {
       peers.peerAdded(peer);
     }
 
-    final MessageData messageToSend = new RawMessage(1, EMPTY_BUFFER);
+    final MessageData messageToSend = new RawMessage(1, BytesValue.EMPTY);
     peers.multicastToValidators(messageToSend);
 
     verify(peerConnections.get(0), times(1)).sendForProtocol("IBF", messageToSend);
@@ -93,9 +93,9 @@ public class IbftNetworkPeersTest {
     final IbftNetworkPeers peers = new IbftNetworkPeers(validatorProvider);
 
     // only add peer connections 1, 2 & 3, none of which should be invoked.
-    Lists.newArrayList(1, 2, 3).stream().forEach(i -> peers.peerAdded(peerConnections.get(i)));
+    Lists.newArrayList(1, 2, 3).forEach(i -> peers.peerAdded(peerConnections.get(i)));
 
-    final MessageData messageToSend = new RawMessage(1, EMPTY_BUFFER);
+    final MessageData messageToSend = new RawMessage(1, BytesValue.EMPTY);
     peers.multicastToValidators(messageToSend);
 
     verify(peerConnections.get(0), never()).sendForProtocol(any(), any());

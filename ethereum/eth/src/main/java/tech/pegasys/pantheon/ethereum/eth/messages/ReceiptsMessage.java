@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.eth.messages;
 
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
@@ -24,13 +23,10 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.netty.buffer.ByteBuf;
-
 public final class ReceiptsMessage extends AbstractMessageData {
 
   public static ReceiptsMessage readFrom(final MessageData message) {
     if (message instanceof ReceiptsMessage) {
-      message.retain();
       return (ReceiptsMessage) message;
     }
     final int code = message.getCode();
@@ -38,9 +34,7 @@ public final class ReceiptsMessage extends AbstractMessageData {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a ReceiptsMessage.", code));
     }
-    final ByteBuf data = NetworkMemoryPool.allocate(message.getSize());
-    message.writeTo(data);
-    return new ReceiptsMessage(data);
+    return new ReceiptsMessage(message.getData());
   }
 
   public static ReceiptsMessage create(final List<List<TransactionReceipt>> receipts) {
@@ -53,12 +47,10 @@ public final class ReceiptsMessage extends AbstractMessageData {
           tmp.endList();
         });
     tmp.endList();
-    final ByteBuf data = NetworkMemoryPool.allocate(tmp.encodedSize());
-    data.writeBytes(tmp.encoded().extractArray());
-    return new ReceiptsMessage(data);
+    return new ReceiptsMessage(tmp.encoded());
   }
 
-  private ReceiptsMessage(final ByteBuf data) {
+  private ReceiptsMessage(final BytesValue data) {
     super(data);
   }
 
@@ -68,9 +60,7 @@ public final class ReceiptsMessage extends AbstractMessageData {
   }
 
   public List<List<TransactionReceipt>> receipts() {
-    final byte[] tmp = new byte[data.readableBytes()];
-    data.getBytes(0, tmp);
-    final RLPInput input = new BytesValueRLPInput(BytesValue.wrap(tmp), false);
+    final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
     final List<List<TransactionReceipt>> receipts = new ArrayList<>();
     while (input.nextIsList()) {

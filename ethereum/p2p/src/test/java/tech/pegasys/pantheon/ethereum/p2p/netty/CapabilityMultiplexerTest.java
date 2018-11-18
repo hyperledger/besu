@@ -14,19 +14,18 @@ package tech.pegasys.pantheon.ethereum.p2p.netty;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.netty.CapabilityMultiplexer.ProtocolMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import io.netty.buffer.ByteBuf;
 import org.junit.Test;
 
 public class CapabilityMultiplexerTest {
@@ -63,8 +62,7 @@ public class CapabilityMultiplexerTest {
     assertThat(multiplexerB.getAgreedCapabilities()).isEqualTo(expectedCaps);
 
     // Multiplex a message and check the value
-    final ByteBuf ethData = NetworkMemoryPool.allocate(5);
-    ethData.writeBytes(new byte[] {1, 2, 3, 4, 5});
+    final BytesValue ethData = BytesValue.of(1, 2, 3, 4, 5);
     final int ethCode = 1;
     final MessageData ethMessage = new RawMessage(ethCode, ethData);
     // Check offset
@@ -74,15 +72,13 @@ public class CapabilityMultiplexerTest {
     assertThat(multiplexerB.multiplex(eth62, ethMessage).getCode())
         .isEqualTo(ethCode + expectedOffset);
     // Check data is unchanged
-    final ByteBuf multiplexedData = NetworkMemoryPool.allocate(ethMessage.getSize());
-    multiplexerA.multiplex(eth62, ethMessage).writeTo(multiplexedData);
+    final BytesValue multiplexedData = multiplexerA.multiplex(eth62, ethMessage).getData();
     assertThat(multiplexedData).isEqualTo(ethData);
 
     // Demultiplex and check value
     final MessageData multiplexedEthMessage = new RawMessage(ethCode + expectedOffset, ethData);
     ProtocolMessage demultiplexed = multiplexerA.demultiplex(multiplexedEthMessage);
-    final ByteBuf demultiplexedData = NetworkMemoryPool.allocate(ethMessage.getSize());
-    demultiplexed.getMessage().writeTo(demultiplexedData);
+    final BytesValue demultiplexedData = ethMessage.getData();
     // Check returned result
     assertThat(demultiplexed.getMessage().getCode()).isEqualTo(ethCode);
     assertThat(demultiplexed.getCapability()).isEqualTo(eth62);

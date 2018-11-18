@@ -18,7 +18,6 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.development.DevelopmentProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
@@ -33,7 +32,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.google.common.io.Resources;
-import io.netty.buffer.ByteBuf;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -61,23 +59,15 @@ public final class BlockBodiesMessageTest {
                   rlp -> BlockHeader.readFrom(rlp, MainnetBlockHashFunction::createHash))));
     }
     final MessageData initialMessage = BlockBodiesMessage.create(bodies);
-    final ByteBuf rawBuffer = NetworkMemoryPool.allocate(initialMessage.getSize());
-    initialMessage.writeTo(rawBuffer);
-    final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, rawBuffer);
+    final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, initialMessage.getData());
     final BlockBodiesMessage message = BlockBodiesMessage.readFrom(raw);
-    try {
-      final Iterator<BlockBody> readBodies =
-          message
-              .bodies(
-                  DevelopmentProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions()))
-              .iterator();
-      for (int i = 0; i < 50; ++i) {
-        Assertions.assertThat(readBodies.next()).isEqualTo(bodies.get(i));
-      }
-    } finally {
-      message.release();
-      initialMessage.release();
-      raw.release();
+    final Iterator<BlockBody> readBodies =
+        message
+            .bodies(
+                DevelopmentProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions()))
+            .iterator();
+    for (int i = 0; i < 50; ++i) {
+      Assertions.assertThat(readBodies.next()).isEqualTo(bodies.get(i));
     }
   }
 }

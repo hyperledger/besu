@@ -71,42 +71,38 @@ public abstract class AbstractGetHeadersFromPeerTask
     }
 
     final BlockHeadersMessage headersMessage = BlockHeadersMessage.readFrom(message);
-    try {
-      final Iterator<BlockHeader> headers = headersMessage.getHeaders(protocolSchedule);
-      if (!headers.hasNext()) {
-        // Message contains no data - nothing to do
-        return Optional.empty();
-      }
-
-      final BlockHeader firstHeader = headers.next();
-      if (!matchesFirstHeader(firstHeader)) {
-        // This isn't our message - nothing to do
-        return Optional.empty();
-      }
-
-      final List<BlockHeader> headersList = new ArrayList<>();
-      headersList.add(firstHeader);
-      long prevNumber = firstHeader.getNumber();
-
-      final int expectedDelta = reverse ? -(skip + 1) : (skip + 1);
-      while (headers.hasNext()) {
-        final BlockHeader header = headers.next();
-        if (header.getNumber() != prevNumber + expectedDelta) {
-          // Skip doesn't match, this isn't our data
-          return Optional.empty();
-        }
-        prevNumber = header.getNumber();
-        headersList.add(header);
-        if (headersList.size() == count) {
-          break;
-        }
-      }
-
-      LOG.debug("Received {} of {} headers requested from peer.", headersList.size(), count);
-      return Optional.of(headersList);
-    } finally {
-      headersMessage.release();
+    final Iterator<BlockHeader> headers = headersMessage.getHeaders(protocolSchedule);
+    if (!headers.hasNext()) {
+      // Message contains no data - nothing to do
+      return Optional.empty();
     }
+
+    final BlockHeader firstHeader = headers.next();
+    if (!matchesFirstHeader(firstHeader)) {
+      // This isn't our message - nothing to do
+      return Optional.empty();
+    }
+
+    final List<BlockHeader> headersList = new ArrayList<>();
+    headersList.add(firstHeader);
+    long prevNumber = firstHeader.getNumber();
+
+    final int expectedDelta = reverse ? -(skip + 1) : (skip + 1);
+    while (headers.hasNext()) {
+      final BlockHeader header = headers.next();
+      if (header.getNumber() != prevNumber + expectedDelta) {
+        // Skip doesn't match, this isn't our data
+        return Optional.empty();
+      }
+      prevNumber = header.getNumber();
+      headersList.add(header);
+      if (headersList.size() == count) {
+        break;
+      }
+    }
+
+    LOG.debug("Received {} of {} headers requested from peer.", headersList.size(), count);
+    return Optional.of(headersList);
   }
 
   @Override

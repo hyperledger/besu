@@ -15,18 +15,16 @@ package tech.pegasys.pantheon.ethereum.eth.messages;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
-import tech.pegasys.pantheon.ethereum.p2p.utils.ByteBufUtils;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Optional;
 import java.util.OptionalLong;
-
-import io.netty.buffer.ByteBuf;
 
 /** PV62 GetBlockHeaders Message. */
 public final class GetBlockHeadersMessage extends AbstractMessageData {
@@ -35,7 +33,6 @@ public final class GetBlockHeadersMessage extends AbstractMessageData {
 
   public static GetBlockHeadersMessage readFrom(final MessageData message) {
     if (message instanceof GetBlockHeadersMessage) {
-      message.retain();
       return (GetBlockHeadersMessage) message;
     }
     final int code = message.getCode();
@@ -43,9 +40,7 @@ public final class GetBlockHeadersMessage extends AbstractMessageData {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a GetBlockHeadersMessage.", code));
     }
-    final ByteBuf data = NetworkMemoryPool.allocate(message.getSize());
-    message.writeTo(data);
-    return new GetBlockHeadersMessage(data);
+    return new GetBlockHeadersMessage(message.getData());
   }
 
   public static GetBlockHeadersMessage create(
@@ -54,9 +49,7 @@ public final class GetBlockHeadersMessage extends AbstractMessageData {
         GetBlockHeadersData.create(blockNum, maxHeaders, skip, reverse);
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     getBlockHeadersData.writeTo(tmp);
-    final ByteBuf data = NetworkMemoryPool.allocate(tmp.encodedSize());
-    data.writeBytes(tmp.encoded().extractArray());
-    return new GetBlockHeadersMessage(data);
+    return new GetBlockHeadersMessage(tmp.encoded());
   }
 
   public static GetBlockHeadersMessage create(
@@ -65,12 +58,10 @@ public final class GetBlockHeadersMessage extends AbstractMessageData {
         GetBlockHeadersData.create(hash, maxHeaders, skip, reverse);
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     getBlockHeadersData.writeTo(tmp);
-    final ByteBuf data = NetworkMemoryPool.allocate(tmp.encodedSize());
-    data.writeBytes(tmp.encoded().extractArray());
-    return new GetBlockHeadersMessage(data);
+    return new GetBlockHeadersMessage(tmp.encoded());
   }
 
-  private GetBlockHeadersMessage(final ByteBuf data) {
+  private GetBlockHeadersMessage(final BytesValue data) {
     super(data);
   }
 
@@ -113,7 +104,7 @@ public final class GetBlockHeadersMessage extends AbstractMessageData {
 
   private GetBlockHeadersData getBlockHeadersData() {
     if (getBlockHeadersData == null) {
-      getBlockHeadersData = GetBlockHeadersData.readFrom(ByteBufUtils.toRLPInput(data));
+      getBlockHeadersData = GetBlockHeadersData.readFrom(RLP.input(data));
     }
     return getBlockHeadersData;
   }
@@ -160,9 +151,9 @@ public final class GetBlockHeadersMessage extends AbstractMessageData {
         blockNumber = OptionalLong.of(input.readLongScalar());
       }
 
-      int maxHeaders = input.readIntScalar();
-      int skip = input.readIntScalar();
-      boolean reverse = input.readIntScalar() != 0;
+      final int maxHeaders = input.readIntScalar();
+      final int skip = input.readIntScalar();
+      final boolean reverse = input.readIntScalar() != 0;
 
       input.leaveList();
 

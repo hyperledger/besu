@@ -15,10 +15,10 @@ package tech.pegasys.pantheon.ethereum.p2p.wire;
 import static io.netty.buffer.ByteBufUtil.decodeHexDump;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import io.netty.buffer.ByteBuf;
 import org.junit.Test;
 
 public class WireMessagesSedesTest {
@@ -45,7 +45,8 @@ public class WireMessagesSedesTest {
   }
 
   private static void assertSedesWorks(final byte[] data) {
-    final PeerInfo peerInfo = PeerInfo.readFrom(RLP.input(BytesValue.wrap(data)));
+    final BytesValue input = BytesValue.wrap(data);
+    final PeerInfo peerInfo = PeerInfo.readFrom(RLP.input(input));
 
     assertThat(peerInfo.getClientId()).isNotBlank();
     assertThat(peerInfo.getCapabilities()).isNotEmpty();
@@ -54,9 +55,8 @@ public class WireMessagesSedesTest {
     assertThat(peerInfo.getVersion()).isEqualTo(5);
 
     // Re-serialize and check that data matches
-    final ByteBuf buffer = peerInfo.toByteBuf();
-    final byte[] serialized = new byte[buffer.readableBytes()];
-    buffer.getBytes(buffer.readerIndex(), serialized);
-    assertThat(serialized).isEqualTo(data);
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    peerInfo.writeTo(out);
+    assertThat(out.encoded()).isEqualTo(input);
   }
 }

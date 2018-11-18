@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.eth.messages;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.p2p.NetworkMemoryPool;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
@@ -24,13 +23,11 @@ import java.util.Iterator;
 import java.util.Objects;
 
 import com.google.common.collect.Iterators;
-import io.netty.buffer.ByteBuf;
 
 public final class NewBlockHashesMessage extends AbstractMessageData {
 
   public static NewBlockHashesMessage readFrom(final MessageData message) {
     if (message instanceof NewBlockHashesMessage) {
-      message.retain();
       return (NewBlockHashesMessage) message;
     }
     final int code = message.getCode();
@@ -38,9 +35,7 @@ public final class NewBlockHashesMessage extends AbstractMessageData {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a NewBlockHashesMessage.", code));
     }
-    final ByteBuf data = NetworkMemoryPool.allocate(message.getSize());
-    message.writeTo(data);
-    return new NewBlockHashesMessage(data);
+    return new NewBlockHashesMessage(message.getData());
   }
 
   public static NewBlockHashesMessage create(
@@ -54,12 +49,10 @@ public final class NewBlockHashesMessage extends AbstractMessageData {
       tmp.endList();
     }
     tmp.endList();
-    final ByteBuf data = NetworkMemoryPool.allocate(tmp.encodedSize());
-    data.writeBytes(tmp.encoded().extractArray());
-    return new NewBlockHashesMessage(data);
+    return new NewBlockHashesMessage(tmp.encoded());
   }
 
-  private NewBlockHashesMessage(final ByteBuf data) {
+  private NewBlockHashesMessage(final BytesValue data) {
     super(data);
   }
 
@@ -69,9 +62,7 @@ public final class NewBlockHashesMessage extends AbstractMessageData {
   }
 
   public Iterator<NewBlockHashesMessage.NewBlockHash> getNewHashes() {
-    final byte[] hashes = new byte[data.readableBytes()];
-    data.getBytes(0, hashes);
-    return new BytesValueRLPInput(BytesValue.wrap(hashes), false)
+    return new BytesValueRLPInput(data, false)
         .readList(
             rlpInput -> {
               rlpInput.enterList();
