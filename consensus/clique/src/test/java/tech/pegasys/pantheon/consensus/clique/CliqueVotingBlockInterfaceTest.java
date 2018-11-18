@@ -14,10 +14,10 @@ package tech.pegasys.pantheon.consensus.clique;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.pantheon.consensus.common.ValidatorVotePolarity.ADD;
-import static tech.pegasys.pantheon.consensus.common.ValidatorVotePolarity.DROP;
+import static tech.pegasys.pantheon.consensus.common.VoteType.ADD;
+import static tech.pegasys.pantheon.consensus.common.VoteType.DROP;
 
-import tech.pegasys.pantheon.consensus.common.CastVote;
+import tech.pegasys.pantheon.consensus.common.ValidatorVote;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
@@ -62,9 +62,10 @@ public class CliqueVotingBlockInterfaceTest {
   public void headerWithNonceOfZeroReportsDropVote() {
     headerBuilder.coinbase(AddressHelpers.ofValue(1)).nonce(0L);
 
-    final Optional<CastVote> extractedVote = blockInterface.extractVoteFromHeader(header);
+    final Optional<ValidatorVote> extractedVote = blockInterface.extractVoteFromHeader(header);
 
-    assertThat(extractedVote).contains(new CastVote(DROP, proposerAddress, header.getCoinbase()));
+    assertThat(extractedVote)
+        .contains(new ValidatorVote(DROP, proposerAddress, header.getCoinbase()));
   }
 
   @Test
@@ -73,15 +74,17 @@ public class CliqueVotingBlockInterfaceTest {
 
     final BlockHeader header =
         TestHelpers.createCliqueSignedBlockHeader(headerBuilder, proposerKeys, validatorList);
-    final Optional<CastVote> extractedVote = blockInterface.extractVoteFromHeader(header);
+    final Optional<ValidatorVote> extractedVote = blockInterface.extractVoteFromHeader(header);
 
-    assertThat(extractedVote).contains(new CastVote(ADD, proposerAddress, header.getCoinbase()));
+    assertThat(extractedVote)
+        .contains(new ValidatorVote(ADD, proposerAddress, header.getCoinbase()));
   }
 
   @Test
   public void blendingAddVoteToHeaderResultsInHeaderWithNonceOfMaxLong() {
 
-    final CastVote vote = new CastVote(ADD, AddressHelpers.ofValue(1), AddressHelpers.ofValue(2));
+    final ValidatorVote vote =
+        new ValidatorVote(ADD, AddressHelpers.ofValue(1), AddressHelpers.ofValue(2));
     final BlockHeaderBuilder builderWithVote =
         blockInterface.insertVoteToHeaderBuilder(builder, Optional.of(vote));
 
@@ -94,7 +97,8 @@ public class CliqueVotingBlockInterfaceTest {
   @Test
   public void blendingDropVoteToHeaderResultsInHeaderWithNonceOfZero() {
 
-    final CastVote vote = new CastVote(DROP, AddressHelpers.ofValue(1), AddressHelpers.ofValue(2));
+    final ValidatorVote vote =
+        new ValidatorVote(DROP, AddressHelpers.ofValue(1), AddressHelpers.ofValue(2));
     final BlockHeaderBuilder builderWithVote =
         blockInterface.insertVoteToHeaderBuilder(builder, Optional.of(vote));
 

@@ -21,10 +21,10 @@ import java.util.Optional;
 
 public interface VoteBlockInterface {
 
-  Optional<CastVote> extractVoteFromHeader(final BlockHeader header);
+  Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header);
 
   BlockHeaderBuilder insertVoteToHeaderBuilder(
-      final BlockHeaderBuilder builder, final Optional<CastVote> vote);
+      final BlockHeaderBuilder builder, final Optional<ValidatorVote> vote);
 
   List<Address> validatorsInBlock(final BlockHeader header);
 }

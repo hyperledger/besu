@@ -12,8 +12,61 @@
  */
 package tech.pegasys.pantheon.consensus.common;
 
-public interface ValidatorVote {
-  boolean isAddVote();
+import static com.google.common.base.Preconditions.checkNotNull;
+import static tech.pegasys.pantheon.consensus.common.VoteType.ADD;
 
-  boolean isDropVote();
+import tech.pegasys.pantheon.ethereum.core.Address;
+
+import java.util.Objects;
+
+public class ValidatorVote {
+
+  private final VoteType votePolarity;
+  private final Address proposer;
+  private final Address recipient;
+
+  public ValidatorVote(
+      final VoteType votePolarity, final Address proposer, final Address recipient) {
+    checkNotNull(votePolarity);
+    checkNotNull(proposer);
+    checkNotNull(recipient);
+    this.votePolarity = votePolarity;
+    this.proposer = proposer;
+    this.recipient = recipient;
+  }
+
+  public VoteType getVotePolarity() {
+    return votePolarity;
+  }
+
+  public Address getProposer() {
+    return proposer;
+  }
+
+  public Address getRecipient() {
+    return recipient;
+  }
+
+  public boolean isAuthVote() {
+    return votePolarity.equals(ADD);
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ValidatorVote validatorVote = (ValidatorVote) o;
+    return votePolarity == validatorVote.votePolarity
+        && Objects.equals(proposer, validatorVote.proposer)
+        && Objects.equals(recipient, validatorVote.recipient);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(votePolarity, proposer, recipient);
+  }
 }

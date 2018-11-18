@@ -20,7 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import static tech.pegasys.pantheon.consensus.common.ValidatorVotePolarity.ADD;
+import static tech.pegasys.pantheon.consensus.common.VoteType.ADD;
 
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
@@ -53,7 +53,7 @@ public class VoteTallyUpdaterTest {
   @Test
   public void voteTallyUpdatedWithAddVote() {
     when(serialiser.extractVoteFromHeader(any()))
-        .thenReturn(Optional.of(new CastVote(ADD, proposerAddress, subject)));
+        .thenReturn(Optional.of(new ValidatorVote(ADD, proposerAddress, subject)));
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     headerBuilder.number(EPOCH_LENGTH - 1);
@@ -61,7 +61,7 @@ public class VoteTallyUpdaterTest {
 
     updater.updateForBlock(header, voteTally);
 
-    verify(voteTally).addVote(new CastVote(ADD, proposerAddress, subject));
+    verify(voteTally).addVote(new ValidatorVote(ADD, proposerAddress, subject));
   }
 
   @Test
@@ -122,7 +122,7 @@ public class VoteTallyUpdaterTest {
   public void addVotesFromBlocksAfterMostRecentEpoch() {
     when(serialiser.validatorsInBlock(any())).thenReturn(asList(validator1));
     when(serialiser.extractVoteFromHeader(any()))
-        .thenReturn(Optional.of(new CastVote(ADD, proposerAddress, subject)));
+        .thenReturn(Optional.of(new ValidatorVote(ADD, proposerAddress, subject)));
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     headerBuilder.number(EPOCH_LENGTH);

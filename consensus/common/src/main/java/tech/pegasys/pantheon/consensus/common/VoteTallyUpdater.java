@@ -71,7 +71,7 @@ public class VoteTallyUpdater {
       voteTally.discardOutstandingVotes();
       return;
     }
-    final Optional<CastVote> vote = blockInterface.extractVoteFromHeader(header);
+    final Optional<ValidatorVote> vote = blockInterface.extractVoteFromHeader(header);
     vote.ifPresent(voteTally::addVote);
   }
 }

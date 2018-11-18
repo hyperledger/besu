@@ -16,7 +16,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.consensus.common.VoteType;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftProtocolContextFixture;
 import tech.pegasys.pantheon.crypto.SECP256K1;
@@ -100,7 +99,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     builder.mixHash(
         Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"));
     builder.ommersHash(Hash.EMPTY_LIST_HASH);
-    builder.nonce(VoteType.DROP.getNonceValue());
+    builder.nonce(IbftLegacyVotingBlockInterface.DROP_NONCE);
     builder.difficulty(UInt256.ONE);
 
     // Construct an extraData block

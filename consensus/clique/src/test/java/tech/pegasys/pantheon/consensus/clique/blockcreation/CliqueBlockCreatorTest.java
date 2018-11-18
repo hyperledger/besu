@@ -24,11 +24,11 @@ import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
 import tech.pegasys.pantheon.consensus.clique.CliqueHelpers;
 import tech.pegasys.pantheon.consensus.clique.CliqueProtocolSchedule;
+import tech.pegasys.pantheon.consensus.clique.CliqueVotingBlockInterface;
 import tech.pegasys.pantheon.consensus.clique.TestHelpers;
 import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
-import tech.pegasys.pantheon.consensus.common.VoteType;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
@@ -141,7 +141,7 @@ public class CliqueBlockCreatorTest {
             blockchain.getChainHeadHeader());
 
     final Block createdBlock = blockCreator.createBlock(0L);
-    assertThat(createdBlock.getHeader().getNonce()).isEqualTo(VoteType.ADD.getNonceValue());
+    assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueVotingBlockInterface.ADD_NONCE);
     assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(a1);
   }
 
@@ -166,7 +166,8 @@ public class CliqueBlockCreatorTest {
             blockchain.getChainHeadHeader());
 
     final Block createdBlock = blockCreator.createBlock(0L);
-    assertThat(createdBlock.getHeader().getNonce()).isEqualTo(VoteType.DROP.getNonceValue());
+    assertThat(createdBlock.getHeader().getNonce())
+        .isEqualTo(CliqueVotingBlockInterface.DROP_NONCE);
     assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(Address.fromHexString("0"));
   }
 }

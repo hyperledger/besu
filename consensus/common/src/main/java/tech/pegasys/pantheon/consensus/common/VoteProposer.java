@@ -106,8 +106,7 @@ public class VoteProposer {
    * @return Either an address with the vote (auth or drop) or no vote if we have no valid pending
    *     votes
    */
-  public Optional<Map.Entry<Address, VoteType>> getVote(
-      final Address localAddress, final VoteTally tally) {
+  public Optional<ValidatorVote> getVote(final Address localAddress, final VoteTally tally) {
     final Collection<Address> validators = tally.getCurrentValidators();
     final List<Map.Entry<Address, VoteType>> validVotes = new ArrayList<>();
 
@@ -128,7 +127,9 @@ public class VoteProposer {
     // Get the next position in the voting queue we should propose
     final int currentVotePosition = votePosition.updateAndGet(i -> ++i % validVotes.size());
 
+    final Map.Entry<Address, VoteType> voteToCast = validVotes.get(currentVotePosition);
+
     // Get a vote from the valid votes and return it
-    return Optional.of(validVotes.get(currentVotePosition));
+    return Optional.of(new ValidatorVote(voteToCast.getValue(), localAddress, voteToCast.getKey()));
   }
 }

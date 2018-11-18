@@ -12,38 +12,11 @@
  */
 package tech.pegasys.pantheon.consensus.common;
 
-import java.util.Optional;
-
-public enum VoteType implements ValidatorVote {
-  ADD(0xFFFFFFFFFFFFFFFFL),
-  DROP(0x0L);
-
-  private final long nonceValue;
-
-  VoteType(final long nonceValue) {
-    this.nonceValue = nonceValue;
-  }
-
-  public long getNonceValue() {
-    return nonceValue;
-  }
-
-  public static Optional<VoteType> fromNonce(final long nonce) {
-    for (final VoteType voteType : values()) {
-      if (Long.compareUnsigned(voteType.nonceValue, nonce) == 0) {
-        return Optional.of(voteType);
-      }
-    }
-    return Optional.empty();
-  }
-
-  @Override
-  public boolean isAddVote() {
-    return this.equals(ADD);
-  }
-
-  @Override
-  public boolean isDropVote() {
-    return this.equals(DROP);
-  }
+/**
+ * Determines if a validator vote is indicating that they should be added, or removed. This does not
+ * attempt to determine how said vote should be serialised/deserialised.
+ */
+public enum VoteType {
+  ADD,
+  DROP;
 }

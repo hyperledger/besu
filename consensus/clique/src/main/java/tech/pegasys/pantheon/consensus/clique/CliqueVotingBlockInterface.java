@@ -12,9 +12,9 @@
  */
 package tech.pegasys.pantheon.consensus.clique;
 
-import tech.pegasys.pantheon.consensus.common.CastVote;
-import tech.pegasys.pantheon.consensus.common.ValidatorVotePolarity;
+import tech.pegasys.pantheon.consensus.common.ValidatorVote;
 import tech.pegasys.pantheon.consensus.common.VoteBlockInterface;
+import tech.pegasys.pantheon.consensus.common.VoteType;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
@@ -30,34 +30,37 @@ public class CliqueVotingBlockInterface implements VoteBlockInterface {
   public static final Address NO_VOTE_SUBJECT =
       Address.wrap(BytesValue.wrap(new byte[Address.SIZE]));
 
-  private static final ImmutableBiMap<ValidatorVotePolarity, Long> voteToValue =
+  public static final long ADD_NONCE = 0xFFFFFFFFFFFFFFFFL;
+  public static final long DROP_NONCE = 0x0L;
+
+  private static final ImmutableBiMap<VoteType, Long> voteToValue =
       ImmutableBiMap.of(
-          ValidatorVotePolarity.ADD, 0xFFFFFFFFFFFFFFFFL,
-          ValidatorVotePolarity.DROP, 0x0L);
+          VoteType.ADD, ADD_NONCE,
+          VoteType.DROP, DROP_NONCE);
 
   @Override
-  public Optional<CastVote> extractVoteFromHeader(final BlockHeader header) {
+  public Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header) {
     final Address candidate = header.getCoinbase();
     if (!candidate.equals(NO_VOTE_SUBJECT)) {
       final CliqueExtraData cliqueExtraData = CliqueExtraData.decode(header.getExtraData());
       final Address proposer = CliqueBlockHashing.recoverProposerAddress(header, cliqueExtraData);
-      final ValidatorVotePolarity votePolarity = voteToValue.inverse().get(header.getNonce());
+      final VoteType votePolarity = voteToValue.inverse().get(header.getNonce());
       final Address recipient = header.getCoinbase();
 
-      return Optional.of(new CastVote(votePolarity, proposer, recipient));
+      return Optional.of(new ValidatorVote(votePolarity, proposer, recipient));
     }
     return Optional.empty();
   }
 
   @Override
   public BlockHeaderBuilder insertVoteToHeaderBuilder(
-      final BlockHeaderBuilder builder, final Optional<CastVote> vote) {
+      final BlockHeaderBuilder builder, final Optional<ValidatorVote> vote) {
     if (vote.isPresent()) {
-      final CastVote voteToCast = vote.get();
+      final ValidatorVote voteToCast = vote.get();
       builder.nonce(voteToValue.get(voteToCast.getVotePolarity()));
       builder.coinbase(voteToCast.getRecipient());
     } else {
-      builder.nonce(voteToValue.get(ValidatorVotePolarity.DROP));
+      builder.nonce(voteToValue.get(VoteType.DROP));
       builder.coinbase(NO_VOTE_SUBJECT);
     }
     return builder;
@@ -66,5 +69,9 @@ public class CliqueVotingBlockInterface implements VoteBlockInterface {
   @Override
   public List<Address> validatorsInBlock(final BlockHeader header) {
     return CliqueExtraData.decode(header.getExtraData()).getValidators();
+  }
+
+  public static boolean isValidVoteValue(final long value) {
+    return voteToValue.values().contains(value);
   }
 }

@@ -10,11 +10,11 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.consensus.common.headervalidationrules;
+package tech.pegasys.pantheon.consensus.clique.headervalidationrules;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Java6Assertions.assertThat;
 
-import tech.pegasys.pantheon.consensus.common.VoteType;
+import tech.pegasys.pantheon.consensus.clique.CliqueVotingBlockInterface;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 
@@ -34,8 +34,8 @@ public class VoteValidationRuleTest {
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {VoteType.DROP.getNonceValue(), true},
-          {VoteType.ADD.getNonceValue(), true},
+          {CliqueVotingBlockInterface.DROP_NONCE, true},
+          {CliqueVotingBlockInterface.ADD_NONCE, true},
           {0x01L, false},
           {0xFFFFFFFFFFFFFFFEL, false}
         });
