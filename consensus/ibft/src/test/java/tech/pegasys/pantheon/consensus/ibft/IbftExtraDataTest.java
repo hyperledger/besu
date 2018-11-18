@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.consensus.ibft;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import tech.pegasys.pantheon.consensus.common.VoteType;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
@@ -32,6 +33,7 @@ import com.google.common.collect.Lists;
 import org.junit.Test;
 
 public class IbftExtraDataTest {
+
   private final String RAW_HEX_ENCODING_STRING =
       "f8f1a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea9400000000000000000000000000000000000"
           + "00001940000000000000000000000000000000000000002d794000000000000000000000000000000000000000181ff8400fedc"
@@ -77,10 +79,7 @@ public class IbftExtraDataTest {
     encoder.writeList(validators, (validator, rlp) -> rlp.writeBytesValue(validator));
 
     // encoded vote
-    encoder.startList();
-    encoder.writeBytesValue(vote.get().getRecipient());
-    vote.get().getVoteType().writeTo(encoder);
-    encoder.endList();
+    vote.get().writeTo(encoder);
 
     // This is to verify that the decoding works correctly when the round is encoded as 4 bytes
     encoder.writeBytesValue(BytesValue.wrap(roundAsByteArray));
@@ -93,7 +92,6 @@ public class IbftExtraDataTest {
     final IbftExtraData extraData = IbftExtraData.decode(bufferToInject);
 
     assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
-    assertThat(extraData.getVote()).isEqualTo(vote);
     assertThat(extraData.getRound()).isEqualTo(round);
     assertThat(extraData.getSeals()).isEqualTo(committerSeals);
     assertThat(extraData.getValidators()).isEqualTo(validators);
@@ -120,10 +118,7 @@ public class IbftExtraDataTest {
     encoder.writeList(validators, (validator, rlp) -> rlp.writeBytesValue(validator));
 
     // encoded vote
-    encoder.startList();
-    encoder.writeBytesValue(vote.get().getRecipient());
-    vote.get().getVoteType().writeTo(encoder);
-    encoder.endList();
+    vote.get().writeTo(encoder);
 
     // This is to verify that the decoding throws an exception when the round number is not encoded
     // in 4 byte format
@@ -207,10 +202,7 @@ public class IbftExtraDataTest {
     encoder.writeList(validators, (validator, rlp) -> rlp.writeBytesValue(validator));
 
     // encoded vote
-    encoder.startList();
-    encoder.writeBytesValue(vote.get().getRecipient());
-    vote.get().getVoteType().writeTo(encoder);
-    encoder.endList();
+    vote.get().writeTo(encoder);
 
     encoder.writeInt(round);
     encoder.writeList(
@@ -222,7 +214,6 @@ public class IbftExtraDataTest {
     final IbftExtraData extraData = IbftExtraData.decode(bufferToInject);
 
     assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
-    assertThat(extraData.getVote()).isEqualTo(vote);
     assertThat(extraData.getRound()).isEqualTo(round);
     assertThat(extraData.getSeals()).isEqualTo(committerSeals);
     assertThat(extraData.getValidators()).isEqualTo(validators);
@@ -251,7 +242,6 @@ public class IbftExtraDataTest {
   public void fullyPopulatedDataProducesCorrectlyFormedExtraDataObject() {
     final List<Address> validators =
         Arrays.asList(Address.fromHexString("1"), Address.fromHexString("2"));
-    final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
     final int round = 0x00FEDCBA;
     final List<Signature> committerSeals =
         Arrays.asList(
@@ -270,8 +260,8 @@ public class IbftExtraDataTest {
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytesValue(vote.get().getRecipient());
-    vote.get().getVoteType().writeTo(encoder);
+    encoder.writeBytesValue(Address.fromHexString("1"));
+    encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
     encoder.writeInt(round);
@@ -284,7 +274,8 @@ public class IbftExtraDataTest {
     final IbftExtraData extraData = IbftExtraData.decode(bufferToInject);
 
     assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
-    assertThat(extraData.getVote()).isEqualTo(vote);
+    assertThat(extraData.getVote())
+        .isEqualTo(Optional.of(new Vote(Address.fromHexString("1"), VoteType.ADD)));
     assertThat(extraData.getRound()).isEqualTo(round);
     assertThat(extraData.getSeals()).isEqualTo(committerSeals);
     assertThat(extraData.getValidators()).isEqualTo(validators);
@@ -332,7 +323,7 @@ public class IbftExtraDataTest {
   }
 
   @Test
-  public void testEncodeWithoutCommitSeals() {
+  public void extraDataCanBeEncodedWithoutCommitSeals() {
     final List<Address> validators =
         Arrays.asList(Address.fromHexString("1"), Address.fromHexString("2"));
     final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
@@ -352,10 +343,8 @@ public class IbftExtraDataTest {
     encoder.writeList(validators, (validator, rlp) -> rlp.writeBytesValue(validator));
 
     // encoded vote
-    encoder.startList();
-    encoder.writeBytesValue(vote.get().getRecipient());
-    vote.get().getVoteType().writeTo(encoder);
-    encoder.endList();
+    vote.get().writeTo(encoder);
+
     encoder.writeInt(round);
     encoder.endList();
 
@@ -369,7 +358,7 @@ public class IbftExtraDataTest {
   }
 
   @Test
-  public void testEncodeWithoutCommitSealsAndRoundNumber() {
+  public void extraDataCanBeEncodedwithoutCommitSealsOrRoundNumber() {
     final List<Address> validators =
         Arrays.asList(Address.fromHexString("1"), Address.fromHexString("2"));
     final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
@@ -389,10 +378,8 @@ public class IbftExtraDataTest {
     encoder.writeList(validators, (validator, rlp) -> rlp.writeBytesValue(validator));
 
     // encoded vote
-    encoder.startList();
-    encoder.writeBytesValue(vote.get().getRecipient());
-    vote.get().getVoteType().writeTo(encoder);
-    encoder.endList();
+    vote.get().writeTo(encoder);
+
     encoder.endList();
 
     BytesValue expectedEncoding = encoder.encoded();
@@ -421,10 +408,7 @@ public class IbftExtraDataTest {
     encoder.writeList(validators, (validator, rlp) -> rlp.writeBytesValue(validator));
 
     // encoded vote
-    encoder.startList();
-    encoder.writeBytesValue(vote.get().getRecipient());
-    vote.get().getVoteType().writeTo(encoder);
-    encoder.endList();
+    vote.get().writeTo(encoder);
 
     encoder.writeInt(round);
     encoder.writeList(

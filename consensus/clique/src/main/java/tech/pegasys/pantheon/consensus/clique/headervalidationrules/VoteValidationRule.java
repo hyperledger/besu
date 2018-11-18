@@ -10,9 +10,9 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.consensus.common.headervalidationrules;
+package tech.pegasys.pantheon.consensus.clique.headervalidationrules;
 
-import tech.pegasys.pantheon.consensus.common.VoteType;
+import tech.pegasys.pantheon.consensus.clique.CliqueVotingBlockInterface;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
@@ -33,7 +33,7 @@ public class VoteValidationRule implements DetachedBlockHeaderValidationRule {
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     final long nonce = header.getNonce();
-    if (!VoteType.fromNonce(nonce).isPresent()) {
+    if (!CliqueVotingBlockInterface.isValidVoteValue(nonce)) {
       LOG.trace("Nonce value ({}) is neither auth or drop.", nonce);
       return false;
     }

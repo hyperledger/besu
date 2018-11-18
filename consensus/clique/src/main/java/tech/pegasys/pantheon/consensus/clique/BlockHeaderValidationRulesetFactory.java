@@ -16,8 +16,8 @@ import tech.pegasys.pantheon.consensus.clique.headervalidationrules.CliqueDiffic
 import tech.pegasys.pantheon.consensus.clique.headervalidationrules.CliqueExtraDataValidationRule;
 import tech.pegasys.pantheon.consensus.clique.headervalidationrules.CoinbaseHeaderValidationRule;
 import tech.pegasys.pantheon.consensus.clique.headervalidationrules.SignerRateLimitValidationRule;
+import tech.pegasys.pantheon.consensus.clique.headervalidationrules.VoteValidationRule;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
-import tech.pegasys.pantheon.consensus.common.headervalidationrules.VoteValidationRule;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;

@@ -15,8 +15,9 @@ package tech.pegasys.pantheon.consensus.clique.blockcreation;
 import tech.pegasys.pantheon.consensus.clique.CliqueBlockHashing;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
+import tech.pegasys.pantheon.consensus.clique.CliqueVotingBlockInterface;
+import tech.pegasys.pantheon.consensus.common.ValidatorVote;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
-import tech.pegasys.pantheon.consensus.common.VoteType;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -32,16 +33,15 @@ import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Function;
 
 public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
 
   private final KeyPair nodeKeys;
+  private static final CliqueVotingBlockInterface votingInterface =
+      new CliqueVotingBlockInterface();
 
   public CliqueBlockCreator(
       final Address coinbase,
@@ -80,25 +80,20 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
     final BlockHashFunction blockHashFunction =
         ScheduleBasedBlockHashFunction.create(protocolSchedule);
 
-    final CliqueContext cliqueContext = protocolContext.getConsensusState();
-    final VoteTally voteTally = cliqueContext.getVoteTallyCache().getVoteTallyAtBlock(parentHeader);
-
-    final Optional<Map.Entry<Address, VoteType>> vote =
-        cliqueContext
-            .getVoteProposer()
-            .getVote(Util.publicKeyToAddress(nodeKeys.getPublicKey()), voteTally);
-
-    final long nonce = vote.map(Entry::getValue).map(VoteType::getNonceValue).orElse(0L);
-    final Address coinbase =
-        vote.map(Entry::getKey).orElse(Address.wrap(BytesValue.wrap(new byte[20])));
-
     final BlockHeaderBuilder builder =
         BlockHeaderBuilder.create()
             .populateFrom(sealableBlockHeader)
             .mixHash(Hash.ZERO)
-            .nonce(nonce)
-            .coinbase(coinbase)
             .blockHashFunction(blockHashFunction);
+
+    final CliqueContext cliqueContext = protocolContext.getConsensusState();
+    final VoteTally voteTally = cliqueContext.getVoteTallyCache().getVoteTallyAtBlock(parentHeader);
+
+    final Optional<ValidatorVote> vote =
+        cliqueContext
+            .getVoteProposer()
+            .getVote(Util.publicKeyToAddress(nodeKeys.getPublicKey()), voteTally);
+    votingInterface.insertVoteToHeaderBuilder(builder, vote);
 
     final CliqueExtraData sealedExtraData = constructSignedExtraData(builder.buildBlockHeader());
 

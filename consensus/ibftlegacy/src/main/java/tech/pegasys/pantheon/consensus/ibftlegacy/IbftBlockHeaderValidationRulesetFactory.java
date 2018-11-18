@@ -12,9 +12,9 @@
  */
 package tech.pegasys.pantheon.consensus.ibftlegacy;
 
-import tech.pegasys.pantheon.consensus.common.headervalidationrules.VoteValidationRule;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibftlegacy.headervalidationrules.IbftExtraDataValidationRule;
+import tech.pegasys.pantheon.consensus.ibftlegacy.headervalidationrules.VoteValidationRule;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
