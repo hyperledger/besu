@@ -45,7 +45,7 @@ dependencyManagement {
 
     dependency('com.github.docker-java:docker-java:3.0.14')
 
-    dependency('info.picocli:picocli:3.6.1')
+    dependency('info.picocli:picocli:3.8.0')
     dependency('net.consensys.cava:cava-toml:0.3.1')
 
     dependency('org.openjdk.jmh:jmh-core:1.21')
