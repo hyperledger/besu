@@ -142,7 +142,7 @@ public class PantheonCommand implements Runnable {
   @Option(
     names = {"--datadir"},
     paramLabel = MANDATORY_PATH_FORMAT_HELP,
-    description = "the path to Pantheon data directory"
+    description = "the path to Pantheon data directory (default: ${DEFAULT-VALUE})"
   )
   private final Path dataDir = getDefaultPantheonDataDir();
 
