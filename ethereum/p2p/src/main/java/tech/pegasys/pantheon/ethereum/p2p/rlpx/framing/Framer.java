@@ -34,6 +34,7 @@ import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.modes.SICBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
+import org.iq80.snappy.CorruptionException;
 
 /**
  * This component is responsible for reading and composing RLPx protocol frames, conformant to the
@@ -68,7 +69,7 @@ public class Framer {
           .extractArray();
 
   private final HandshakeSecrets secrets;
-  private static final Compressor compressor = new SnappyCompressor();
+  private static final SnappyCompressor compressor = new SnappyCompressor();
   private final StreamCipher encryptor;
   private final StreamCipher decryptor;
   private final BlockCipher macEncryptor;
@@ -254,14 +255,17 @@ public class Framer {
     // Write message data to ByteBuf, decompressing as necessary
     final BytesValue data;
     if (compressionEnabled) {
-      // Decompress data before writing to ByteBuf
       final byte[] compressedMessageData = Arrays.copyOfRange(frameData, 1, frameData.length - pad);
-      // Check message length
-      Preconditions.checkState(
-          compressor.uncompressedLength(compressedMessageData) < LENGTH_MAX_MESSAGE_FRAME,
-          "Message size in excess of maximum length.");
-      final byte[] decompressedMessageData = compressor.decompress(compressedMessageData);
-      data = BytesValue.wrap(decompressedMessageData);
+      final int uncompressedLength = compressor.uncompressedLength(compressedMessageData);
+      if (uncompressedLength >= LENGTH_MAX_MESSAGE_FRAME) {
+        throw error("Message size %s in excess of maximum length.", uncompressedLength);
+      }
+      try {
+        final byte[] decompressedMessageData = compressor.decompress(compressedMessageData);
+        data = BytesValue.wrap(decompressedMessageData);
+      } catch (final CorruptionException e) {
+        throw new FramingException("Decompression failed", e);
+      }
     } else {
       // Move data to a ByteBuf
       final int messageLength = frameSize - LENGTH_MESSAGE_ID;

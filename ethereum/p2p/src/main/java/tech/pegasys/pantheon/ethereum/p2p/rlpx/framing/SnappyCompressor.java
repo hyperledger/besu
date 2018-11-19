@@ -21,21 +21,18 @@ import org.iq80.snappy.Snappy;
  *
  * @see <a href="https://google.github.io/snappy/">Snappy algorithm</a>
  */
-public class SnappyCompressor implements Compressor {
+public class SnappyCompressor {
 
-  @Override
   public byte[] compress(final byte[] uncompressed) {
     checkNotNull(uncompressed, "input data must not be null");
     return Snappy.compress(uncompressed);
   }
 
-  @Override
   public byte[] decompress(final byte[] compressed) {
     checkNotNull(compressed, "input data must not be null");
     return Snappy.uncompress(compressed, 0, compressed.length);
   }
 
-  @Override
   public int uncompressedLength(final byte[] compressed) {
     checkNotNull(compressed, "input data must not be null");
     return Snappy.getUncompressedLength(compressed, 0);

@@ -16,7 +16,7 @@ import static picocli.CommandLine.defaultExceptionHandler;
 
 import tech.pegasys.pantheon.cli.PantheonCommand;
 import tech.pegasys.pantheon.cli.PantheonControllerBuilder;
-import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration.Builder;
+import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.util.BlockImporter;
 
 import picocli.CommandLine.RunLast;
@@ -32,7 +32,7 @@ public final class Pantheon {
             new BlockImporter(),
             new RunnerBuilder(),
             new PantheonControllerBuilder(),
-            new Builder());
+            new SynchronizerConfiguration.Builder());
 
     pantheonCommand.parse(
         new RunLast().andExit(SUCCESS_EXIT_CODE),
