@@ -132,6 +132,22 @@ public class PeerTest {
     assertEquals(30403, peer.getEndpoint().getTcpPort().getAsInt());
   }
 
+  @Test
+  public void createFromIpv6URI() {
+    final Peer peer =
+        DefaultPeer.fromURI(
+            "enode://c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b@[2001:0DB8:85A3:0000::8A2E:370:7334]:30403");
+    assertEquals(
+        fromHexString(
+            "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b"),
+        peer.getId());
+    // We expect bracket unwrapping, zero group removal via double colon, and leading zeros
+    // trimmed, and lowercase hex digits.
+    assertEquals("2001:db8:85a3::8a2e:370:7334", peer.getEndpoint().getHost());
+    assertEquals(30403, peer.getEndpoint().getUdpPort());
+    assertEquals(30403, peer.getEndpoint().getTcpPort().getAsInt());
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void createFromURIFailsForWrongScheme() {
     DefaultPeer.fromURI("http://user@foo:80");
