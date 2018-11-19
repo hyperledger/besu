@@ -45,3 +45,7 @@ Instructions for how to get started with developing on the Pantheon codebase. Pl
 [Command Line Options]: https://github.com/PegaSysEng/pantheon/wiki/Pantheon-CLI-Syntax
 [JSON-RPC API]: https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API
 [Using Pantheon]: https://github.com/PegaSysEng/pantheon/wiki/Transactions
+
+## Release Notes
+
+[v0.8.2 Release Notes](CHANGELOG.md)
