@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.util.uint;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.MutableBytes32;
 import tech.pegasys.pantheon.util.uint.UInt256Bytes.BinaryLongOp;
@@ -186,6 +188,35 @@ public class UInt256BytesTest {
     bitLength("0x8F", 8);
 
     bitLength("0x100000000", 33);
+  }
+
+  @Test
+  public void hexStrings() {
+    assertThat(UInt256.of(0).toShortHexString()).isEqualTo("0x0");
+    assertThat(UInt256.of(1).toShortHexString()).isEqualTo("0x1");
+    assertThat(UInt256.fromHexString("0xdeadbeef").toShortHexString()).isEqualTo("0xdeadbeef");
+    assertThat(
+            UInt256.fromHexString(
+                    "0x00000000000000000000000000000000000000000000000000000000decafbad")
+                .toShortHexString())
+        .isEqualTo("0xdecafbad");
+    assertThat(UInt256.fromHexString("cafebabe").toShortHexString()).isEqualTo("0xcafebabe");
+    assertThat(UInt256.fromHexString("facefeed").toShortHexString()).isEqualTo("0xfacefeed");
+    assertThat(UInt256.of(0).toHexString())
+        .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000000");
+    assertThat(UInt256.of(1).toHexString())
+        .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000001");
+    assertThat(UInt256.fromHexString("0xdeadbeef").toHexString())
+        .isEqualTo("0x00000000000000000000000000000000000000000000000000000000deadbeef");
+    assertThat(
+            UInt256.fromHexString(
+                    "0x00000000000000000000000000000000000000000000000000000000decafbad")
+                .toHexString())
+        .isEqualTo("0x00000000000000000000000000000000000000000000000000000000decafbad");
+    assertThat(UInt256.fromHexString("cafebabe").toHexString())
+        .isEqualTo("0x00000000000000000000000000000000000000000000000000000000cafebabe");
+    assertThat(UInt256.fromHexString("facefeed").toHexString())
+        .isEqualTo("0x00000000000000000000000000000000000000000000000000000000facefeed");
   }
 
   private void bitLength(final String input, final int expectedLength) {
