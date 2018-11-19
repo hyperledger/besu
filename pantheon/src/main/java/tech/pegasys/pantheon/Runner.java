@@ -83,6 +83,7 @@ public class Runner implements AutoCloseable {
   @Override
   public void close() throws Exception {
     networkRunner.stop();
+    networkRunner.awaitStop();
     exec.shutdown();
     try {
       jsonRpc.ifPresent(service -> service.stop().join());
