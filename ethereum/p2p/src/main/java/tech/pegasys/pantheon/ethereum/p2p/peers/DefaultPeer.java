@@ -28,6 +28,7 @@ import java.util.OptionalInt;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.common.net.InetAddresses;
 import com.google.common.primitives.Ints;
 
 /** The default, basic representation of an Ethereum {@link Peer}. */
@@ -67,6 +68,12 @@ public class DefaultPeer extends DefaultPeerId implements Peer {
     // Process the peer's public key, in the host portion of the URI.
     final BytesValue id = BytesValue.fromHexString(uri.getUserInfo());
 
+    // Process the host.  If we have an IPv6 address in URL form translate to an address only form.
+    String host = uri.getHost();
+    if (!InetAddresses.isInetAddress(host) && InetAddresses.isUriInetAddress(host)) {
+      host = InetAddresses.toAddrString(InetAddresses.forUriString(host));
+    }
+
     // Process the ports; falling back to the default port in both TCP and UDP.
     int tcpPort = DEFAULT_PORT;
     int udpPort = DEFAULT_PORT;
@@ -80,7 +87,7 @@ public class DefaultPeer extends DefaultPeerId implements Peer {
       udpPort = extractUdpPortFromQuery(uri.getQuery()).orElse(tcpPort);
     }
 
-    final Endpoint endpoint = new Endpoint(uri.getHost(), udpPort, OptionalInt.of(tcpPort));
+    final Endpoint endpoint = new Endpoint(host, udpPort, OptionalInt.of(tcpPort));
     return new DefaultPeer(id, endpoint);
   }
 
