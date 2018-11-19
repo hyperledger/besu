@@ -160,7 +160,7 @@ public interface UInt256Value<T extends UInt256Value<T>> extends Bytes32Backed, 
     if (hex.charAt(2) != '0') return hex;
 
     int i = 3;
-    while (i < hex.length() && hex.charAt(i) == '0') {
+    while (i < hex.length() - 1 && hex.charAt(i) == '0') {
       i++;
     }
     return "0x" + hex.substring(i);
