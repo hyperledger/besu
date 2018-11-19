@@ -16,6 +16,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.netty.exceptions.IncompatiblePeerException;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.Framer;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.FramingException;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
@@ -31,6 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.handler.codec.DecoderException;
 import io.netty.handler.timeout.IdleStateHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -117,7 +119,17 @@ final class DeFramer extends ByteToMessageDecoder {
   @Override
   public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable throwable)
       throws Exception {
-    if (throwable instanceof IOException) {
+    final Throwable cause =
+        throwable instanceof DecoderException && throwable.getCause() != null
+            ? throwable.getCause()
+            : throwable;
+    if (cause instanceof FramingException) {
+      LOG.debug("Invalid incoming message", throwable);
+      if (connectFuture.isDone()) {
+        connectFuture.get().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+        return;
+      }
+    } else if (cause instanceof IOException) {
       // IO failures are routine when communicating with random peers across the network.
       LOG.debug("IO error while processing incoming message", throwable);
     } else {

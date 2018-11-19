@@ -86,9 +86,9 @@ public class FramerTest {
     final Framer deframer = new Framer(deframeSecrets);
     deframer.enableCompression();
 
-    assertThatExceptionOfType(IllegalStateException.class)
+    assertThatExceptionOfType(FramingException.class)
         .isThrownBy(() -> deframer.deframe(framedMessage))
-        .withMessageContaining("Message size in excess of maximum length.");
+        .withMessageContaining("Message size 16777216 in excess of maximum length.");
   }
 
   @Test
