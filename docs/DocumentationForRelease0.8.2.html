@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Documentation Pantheon v0.8.2</title>
+    <title>Pantheon Documentation v0.8.2</title>
     <style>/*!
  * Bootstrap v3.3.7 (http://getbootstrap.com)
  * Copyright 2011-2016 Twitter, Inc.
@@ -697,7 +697,7 @@ this.activeTarget=b,this.clear();var c=this.selector+'[data-target="'+b+'"],'+th
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand doc-title" href="#page-top">Documentation Pantheon v0.8.2</a>
+          <a class="navbar-brand doc-title" href="#page-top">Pantheon Documentation v0.8.2</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
@@ -711,7 +711,7 @@ this.activeTarget=b,this.clear();var c=this.selector+'[data-target="'+b+'"],'+th
           <div class="nav-container">
             <div class="nav-inner" id="scroll-spy" style="width: min-content; overflow: auto; top: 60px; bottom: 0; padding 10px 0 10px 0;">
               <span class="toc"></span>
-              <ul class="nav"><li class="active"><a href="#Overview">Overview</a></li><li><a href="#Getting-Started">Getting Started</a><ul class="nav"><li><a href="#Installation">Installation</a></li><li><a href="#Quickstart">Basic Quickstart</a></li><li><a href="#Private-Network-Quickstart">Private Network Quickstart</a></li><li><a href="#Starting-Pantheon">Starting Pantheon</a></li><li><a href="#Run-Docker-Image">Running Pantheon from Docker Image</a></li></ul></li><li><span>Configuring Pantheon</span><ul class="nav"><li><a href="#Networking">Networking</a></li><li><a href="#Logging">Logging</a></li><li><a href="#Testing-Developing-Nodes">Testing and Developing Nodes</a></li><li><a href="#Proof-of-Authority">Proof of Authority</a></li><li><a href="#Passing-JVM-Options">Passing JVM Options</a></li></ul></li><li><span>Using Pantheon</span><ul class="nav"><li><a href="#Transactions">Creating and Sending Transactions</a></li><li><a href="#Account-Management">Using Wallets for Account Management</a></li><li><a href="#Mining">Mining</a></li><li><a href="#RPC-PubSub">RPC Pub/Sub</a></li><li><a href="#Debugging">Debugging Pantheon</a></li></ul></li><li><span>Reference</span><ul class="nav"><li><a href="#Pantheon-CLI-Syntax">Pantheon CLI Reference</a></li><li><a href="#JSON-RPC-API">JSON-RPC API Reference</a></li></ul></li></ul>
+              <ul class="nav"><li class="active"><a href="#Overview">Overview</a></li><li><a href="#Getting-Started">Getting Started</a><ul class="nav"><li><a href="#Installation">Installation</a></li><li><a href="#Quickstart">Basic Quickstart</a></li><li><a href="#Private-Network-Quickstart">Private Network Quickstart</a></li><li><a href="#Starting-Pantheon">Starting Pantheon</a></li><li><a href="#Run-Docker-Image">Running Pantheon from Docker Image</a></li></ul></li><li><span>Configuring Pantheon</span><ul class="nav"><li><a href="#NetworkID-And-ChainID">Network ID and Chain ID</a></li><li><a href="#Node-Keys">Node Keys</a></li><li><a href="#Networking">Networking</a></li><li><a href="#Accounts-for-Testing">Accounts for Testing</a></li><li><a href="#Logging">Logging</a></li><li><a href="#Testing-Developing-Nodes">Testing and Developing Nodes</a></li><li><a href="#Proof-of-Authority">Proof of Authority</a></li><li><a href="#Passing-JVM-Options">Passing JVM Options</a></li></ul></li><li><span>Using Pantheon</span><ul class="nav"><li><a href="#Transactions">Creating and Sending Transactions</a></li><li><a href="#Account-Management">Using Wallets for Account Management</a></li><li><a href="#Mining">Mining</a></li><li><a href="#RPC-PubSub">RPC Pub/Sub</a></li><li><a href="#Debugging">Debugging Pantheon</a></li></ul></li><li><span>Reference</span><ul class="nav"><li><a href="#Pantheon-CLI-Syntax">Pantheon CLI Reference</a></li><li><a href="#JSON-RPC-API">JSON-RPC API Reference</a></li></ul></li></ul>
               
             </div>
           </div>
@@ -743,14 +743,14 @@ this.activeTarget=b,this.clear();var c=this.selector+'[data-target="'+b+'"],'+th
 <p class="page" id="Getting-Started"></p><h1>Getting Started</h1>
 <h1 id="getting-started">Getting Started</h1>
 <p>You can get started with Pantheon by:</p>
-<ol>
-<li>Cloning our repository and <a href="#Installation">building from source</a>. </li>
-<li>Cloning our repository and using the <a href="#Private-Network-Quickstart">Private Network Quickstart</a>. </li>
-<li>Downloading the <a href="https://bintray.com/consensys/pegasys-repo/pantheon/0.8.1#files">packaged binaries</a>. </li>
+<ul>
+<li>Cloning the Pantheon repository and <a href="#Installation">building from source</a>. </li>
+<li>Cloning the Pantheon repository and using the <a href="#Private-Network-Quickstart">Private Network Quickstart</a>. </li>
+<li>Downloading the Pantheon <a href="https://bintray.com/consensys/pegasys-repo/pantheon/0.8.1#files">packaged binaries</a>. </li>
 <li>Running from the <a href="#Run-Docker-Image">Pantheon docker image</a>. </li>
-</ol>
-<p>If you want to run a single node to connect the Ethereum mainnet or a public testnet, running from the <a href="#Run-Docker-Image">docker image</a> or <a href="https://bintray.com/consensys/pegasys-repo/pantheon/0.8.1#files">downloading the packaged binaries</a> is the fastest way to get started. </p>
-<p>If you want a private network on which you can make JSON-RPC requests and send transactions, and use for testing or learning about Pantheon and Ethereum networks, the <a href="#Private-Network-Quickstart">Private Network Quickstart</a> runs a private network of Pantheon nodes in a Docker container. </p>
+</ul>
+<p>To run a single node to connect the Ethereum mainnet or a public testnet, running from the Pantheon <a href="#Run-Docker-Image">docker image</a> or <a href="https://bintray.com/consensys/pegasys-repo/pantheon/0.8.1#files">downloading the packaged binaries</a> is the fastest way to get started. </p>
+<p>To run a private network on which you can make JSON-RPC requests and send transactions, or explore Pantheon and Ethereum networks, the <a href="#Private-Network-Quickstart">Private Network Quickstart</a> runs a private network of Pantheon nodes in a Docker container. </p>
 <p class="page" id="Installation"></p><h1>Installation</h1>
 <h1 id="pantheon-installation">Pantheon Installation</h1>
 <blockquote>
@@ -900,10 +900,10 @@ running in a private network. To run the containers, go to the <code>pantheon</c
 <p>On Windows, run the following docker-compose commands:</p>
 </blockquote>
 <pre class="hljs">// Run the Docker containers
-quickstart\docker-compose -f docker-compose.yml up -d --scale node=4
+quickstart\docker-compose up -d --scale node=4
 
 // List the endpoints
-quickstart\docker-compose -f docker-compose.yml port explorer 80</pre><p>This script builds Pantheon, builds the images and runs the containers. It will also scale the regular node container to four containers to simulate a network with enough peers to synchronize.</p>
+quickstart\docker-compose port explorer 80</pre><p>This script builds Pantheon, builds the images and runs the containers. It will also scale the regular node container to four containers to simulate a network with enough peers to synchronize.</p>
 <p>When the process ends, it lists the running services:</p>
 <pre class="hljs">        Name                       Command               State                              Ports                           
 -----------------------------------------------------------------------------------------------------------------------------
@@ -930,7 +930,7 @@ Web block explorer address          : http://localhost:32770   *
 <pre class="hljs">quickstart/listQuickstartServices.sh</pre><blockquote>
 <p>On Windows, to display the list of endpoints again, run the following docker-compose command:</p>
 </blockquote>
-<pre class="hljs">quickstart\docker-compose -f docker-compose.yml port explorer 80</pre><h2 id="block-explorer">Block Explorer</h2>
+<pre class="hljs">quickstart\docker-compose port explorer 80</pre><h2 id="block-explorer">Block Explorer</h2>
 <p>This tutorial uses the <a href="https://aleth.io/">Alethio light block explorer</a>.</p>
 <h3 id="run-the-block-explorer">Run the Block Explorer</h3>
 <p>Access the explorer by copying and pasting the <code>Web block explorer address</code> displayed when starting the private network to your browser.</p>
@@ -1020,18 +1020,18 @@ created during the genesis of this test network.</p>
 <li>In the <strong>New RPC URL</strong> field, enter the <code>JSON-RPC HTTP service endpoint</code> displayed when you started the private network.</li>
 </ol>
 <p>Save the configuration and return to the MetaMask main screen. Your current network is now set to the private network RPC node.</p>
-<p><a href="https://consensys.zendesk.com/hc/en-us/articles/360004176551-Importing-an-Account-New-UI-">Import one of the existing accounts above into metamask</a>
+<p><a href="https://metamask.zendesk.com/hc/en-us/articles/360015489331-Importing-an-Account-New-UI-">Import one of the existing accounts above into metamask</a>
 using the corresponding private key. </p>
 <p><strong>NOTE that here we don&#39;t really care about securing the keys as it&#39;s just a tutorial, but be sure
 to secure your accounts when you run into a real usecase. This will be discussed in a more advanced
 chapter.</strong></p>
-<p>Once this is done, try to <a href="https://consensys.zendesk.com/hc/en-us/articles/360004774951-Creating-Additional-MetaMask-Wallets-New-UI-">create another account from scratch</a>
+<p>Once this is done, try to <a href="https://metamask.zendesk.com/hc/en-us/articles/360015289452-Creating-Additional-MetaMask-Wallets-New-UI-">create another account from scratch</a>
 to send some ether to.</p>
 <p><em>Of course remember that here we are dealing with valueless ether as we are not
 on the main network but on a local private network.</em></p>
 <p>In MetaMask, select the new account and copy the account address by clicking the <strong>...</strong> button and selecting <strong>Copy Address to clipboard</strong>.</p>
 <p>In the block explorer, search for the new account by clicking on the magnifying glass and pasting the account address into the search box. The account is displayed with a zero balance. </p>
-<p><a href="https://consensys.zendesk.com/hc/en-us/articles/360005055472-Sending-Ether-New-UI-">Send some ether</a> 
+<p><a href="https://metamask.zendesk.com/hc/en-us/articles/360015488991-Sending-Ether-New-UI-">Send some ether</a> 
 from the first account (containing some ether) to the new one (that have a zero balance).</p>
 <p>Click refresh on the browser page displaying the new account. The updated balance is displayed and reflects the transaction completed using MetaMask. </p>
 <h3 id="playing-with-the-truffle-pet-shop-tutorial">Playing with the Truffle Pet Shop Tutorial</h3>
@@ -1083,8 +1083,8 @@ So modify the file to look like the following :</p>
 <pre class="hljs">quickstart/removePantheonPrivateNetwork.sh</pre><blockquote>
 <p>On Windows, run the following docker-compose command:</p>
 </blockquote>
-<pre class="hljs">quickstart\docker-compose -f docker-compose.yml down</pre><blockquote>
-<p><strong>Note</strong> The quickstart creates a volume called <code>quickstart_public-keys</code>; you can remove this volume using <code>docker volume rm quickstart_public-keys</code>.</p>
+<pre class="hljs">quickstart\docker-compose down</pre><blockquote>
+<p><strong>Note</strong> On Windows, the quickstart creates a volume called <code>quickstart_public-keys</code>. Remove this volume using <code>docker volume rm quickstart_public-keys</code>.</p>
 </blockquote>
 <h2 id="stop-and-restart-the-private-network-without-removing-the-containers">Stop and restart the Private Network without Removing the Containers</h2>
 <p>To shut down the network without deleting the containers:</p>
@@ -1094,21 +1094,25 @@ So modify the file to look like the following :</p>
 <pre class="hljs">quickstart/stopPantheonPrivateNetwork.sh</pre><blockquote>
 <p>On Windows, run the following docker command:</p>
 </blockquote>
-<pre class="hljs">docker stop $(docker ps -a -q)</pre><p>To restart the private network:</p>
-<pre class="hljs">quickstart/resumePantheonPrivateNetwork.sh</pre><p class="page" id="Starting-Pantheon"></p><h1>Starting Pantheon</h1>
+<pre class="hljs">docker-compose stop</pre><p>(This command will also stop other running containers unrelated to quickstart.)</p>
+<p>To restart the private network:</p>
+<blockquote>
+<p>On Linux/Mac, run the following shell command:</p>
+<pre class="hljs">quickstart/resumePantheonPrivateNetwork.sh</pre></blockquote>
+<blockquote>
+<p>On Windows, run the following docker command:</p>
+<pre class="hljs">docker-compose start</pre></blockquote>
+<p class="page" id="Starting-Pantheon"></p><h1>Starting Pantheon</h1>
 <h1 id="starting-pantheon">Starting Pantheon</h1>
 <p>Pantheon nodes can be used for varying purposes as described in the <a href="#Overview">Overview</a>. Nodes can connect to the Ethereum mainnet, public testnets such as Ropsten, or private networks.</p>
 <h2 id="local-block-data">Local Block Data</h2>
 <p>When connecting to a network other than the network previously connected to, you must either delete the local block data or use the <code>--datadir</code> option to specify a different data directory. </p>
 <p>To delete the local block data, delete the <code>database</code> directory in the <code>pantheon/build/distribution/pantheon-0.8.0-&lt;version&gt;</code> directory.</p>
-<h2 id="genesis-files-provided">Genesis Files Provided</h2>
-<p>The following genesis files are provided in the <code>/pantheon/ethereum/core/src/main/resources</code> directory:</p>
-<ul>
-<li><code>dev.json</code> - Default genesis file when <code>--dev-mode</code> specified. </li>
-<li><code>mainnet.json</code> - Default genesis file when <code>--dev-mode</code> not specified.  </li>
-<li><code>rinkeby.json</code> - Used to connect to Rinkeby testnet when <code>--rinkeby</code> specified. </li>
-<li><code>ropsten.json</code> - Specify using <code>--genesis</code> option when connecting to Ropsten testnet. </li>
-</ul>
+<h2 id="genesis-configuration">Genesis Configuration</h2>
+<p>Pantheon specifies the genesis configuration, and sets the network ID and bootnodes when connecting to <a href="#run-a-node-on-ethereum--mainnet">mainnet</a>, <a href="#run-a-node-on-rinkeby-testnet">Rinkeby</a>, and <a href="#run-a-node-on-ropsten-testnet">Ropsten</a>. </p>
+<p>When <code>--dev-mode</code> is specified, Pantheon uses the development mode genesis configuration.</p>
+<p>The genesis files defining the genesis configurations are in the <a href="https://github.com/PegaSysEng/pantheon/tree/master/config/src/main/resources">Pantheon source files</a>. </p>
+<p>To define a genesis configuration, create a genesis file (for example, <code>genesis.json</code>) and specify the file using the <code>--genesis</code> option.</p>
 <h2 id="run-a-node-on-ethereum-mainnet">Run a Node on Ethereum  Mainnet</h2>
 <p>To run a node on the Ethereum mainnet: </p>
 <p><code>$ bin/pantheon</code></p>
@@ -1116,7 +1120,7 @@ So modify the file to look like the following :</p>
 <p><code>$ bin/pantheon --rpc-enabled</code></p>
 <h2 id="run-a-node-on-ropsten-testnet">Run a Node on Ropsten Testnet</h2>
 <blockquote>
-<p><strong>Note</strong> If <a href="#Installation">building from source</a>, you can use the <a href="#Pantheon-CLI-Syntaxoptions"><code>--ropsten</code> option</a> instead of the following options. For v0.8.1, use the following options.</p>
+<p><strong>Note</strong> From v0.8.2 or when <a href="#Installation">building from source</a>, use the <a href="#Pantheon-CLI-Syntaxoptions"><code>--ropsten</code> option</a> instead of the following options. For v0.8.1, use the following options.</p>
 </blockquote>
 <p>Replace <code>&lt;path&gt;</code> with the path to the <code>/pantheon</code> directory. </p>
 <p>To run a node on Ropsten: </p>
@@ -1171,7 +1175,7 @@ So modify the file to look like the following :</p>
 <p>To run a node on the Ethereum mainnet: </p>
 <pre class="hljs">docker run -p 30303:30303 --mount type=bind,source=/&lt;myvolume/pantheon&gt;,target=/var/lib/pantheon pegasyseng/pantheon:latest</pre><p>To run a node on mainnet with the HTTP JSON-RPC service enabled: </p>
 <pre class="hljs">docker run -p 8545:8545 -p 30303:30303 --mount type=bind,source=/&lt;myvolume/pantheon&gt;,target=/var/lib/pantheon pegasyseng/pantheon:latest --rpc-enabled</pre><h2 id="run-a-node-on-ropsten-testnet">Run a Node on Ropsten Testnet</h2>
-<p>Save a local copy of the <a href="https://github.com/PegaSysEng/pantheon/blob/master/ethereum/core/src/main/resources/ropsten.json">Ropsten genesis file</a>. </p>
+<p>Save a local copy of the <a href="https://github.com/PegaSysEng/pantheon/blob/master/config/src/main/resources/ropsten.json">Ropsten genesis file</a>. </p>
 <p>To run a node on Ropsten: </p>
 <pre class="hljs">docker run -p 30303:30303 --mount type=bind,source=/&lt;myvolume/pantheon/ropsten&gt;,target=/var/lib/pantheon --mount type=bind,source=/&lt;path&gt;/ropsten.json,target=/etc/pantheon/genesis.json pegasyseng/pantheon:latest --network-id=3 --bootnodes=enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303</pre><h2 id="run-a-node-on-rinkeby-testnet">Run a Node on Rinkeby Testnet</h2>
 <p>To run a node on Rinkeby: </p>
@@ -1182,7 +1186,30 @@ So modify the file to look like the following :</p>
 <p>To stop a container:</p>
 <pre class="hljs">docker stop &lt;container-name&gt;</pre><p>To delete a container:</p>
 <pre class="hljs">docker rm &lt;container-name&gt;</pre><p>To delete a container volume (optional):</p>
-<pre class="hljs">docker volume rm &lt;volume-name&gt;</pre><p class="page" id="Networking"></p><h1>Networking</h1>
+<pre class="hljs">docker volume rm &lt;volume-name&gt;</pre><p class="page" id="NetworkID-And-ChainID"></p><h1>Network ID and Chain ID</h1>
+<h1 id="network-id-and-chain-id">Network ID and Chain ID</h1>
+<p>Ethereum networks have a network ID and a chain ID. The network ID is specified using the <code>--network-id</code> option and the chain ID is specified in the genesis file.</p>
+<p>For most networks including mainnet and the public testnets, the network ID and the chain ID are the same. </p>
+<p>The network ID is defined by Pantheon when connecting to the Ethereum mainnet (<code>1</code>), Rinkeby (<code>4</code>), and Ropsten(<code>3</code>).</p>
+<p>When using the <code>--dev-mode</code> or <code>--genesis</code> options, specify the network ID using the <code>--network-id</code> option. </p>
+<p class="page" id="Node-Keys"></p><h1>Node Keys</h1>
+<h1 id="node-keys">Node Keys</h1>
+<p>Each node has a node key pair consisting of a node private key and node public key. </p>
+<h2 id="node-private-key">Node Private Key</h2>
+<p>If a <code>key</code> file does not exist in the data directory and the <code>--node-private-key</code> option is not specified when Pantheon is started, a node private key is generated and written to the <code>key</code> file. If Pantheon is stopped and restarted without deleting the <code>key</code> file, the same private key is used when Pantheon is restarted.</p>
+<p>If a <code>key</code> file exists in the data directory when Pantheon is started, the node is started with the private key in the <code>key</code> file. </p>
+<blockquote>
+<p><strong>Note</strong> The private key is not encrypted. </p>
+</blockquote>
+<h2 id="node-public-key">Node Public Key</h2>
+<p>The node public key is displayed in the log after starting Pantheon. Use the <a href="#Pantheon-CLI-Syntaxcommands"><code>export-pub-key</code></a>  subcommand to export the public key to a file. </p>
+<p>The node public key is also referred to as the node ID. The node ID forms part of the <a href="#Testing-Developing-Nodesprivate-networks">enode URL</a>  for a node. </p>
+<h2 id="specifying-a-custom-node-private-key-file">Specifying a Custom Node Private Key File</h2>
+<p>Use the <code>--node-private-key</code> option to specify a custom <code>key</code> file in any location. </p>
+<p>If the <code>key</code> file exists, the node is started with the private key in the custom <code>key</code> file. If the custom <code>key</code> file does not exist, a node private key is generated and written to the custom <code>key</code> file.</p>
+<p>For example, the following command either reads the node private key from the <code>privatekeyfile</code> or writes the generated private key to the <code>privatekeyfile</code>:</p>
+<p><code>bin/pantheon --node-private-key &quot;/Users/username/privatekeyfile&quot;</code></p>
+<p class="page" id="Networking"></p><h1>Networking</h1>
 <h1 id="networking">Networking</h1>
 <p>Pantheon uses the network to find and connect to peers. </p>
 <h2 id="firewalls-and-incoming-connections">Firewalls and Incoming Connections</h2>
@@ -1199,9 +1226,40 @@ So modify the file to look like the following :</p>
 <p>Trailing peers cannot be used to get new blocks and are more likely to be requesting blocks from you. Limiting trailing peers may reduce the time taken to catch up to the chain head when synchronizing. </p>
 <h2 id="no-discovery">No Discovery</h2>
 <p>The <code>--no-discovery</code> command line option disables P2P peer discovery.  Only use this option if you are running a test node or a test network with fixed nodes.</p>
+<p class="page" id="Accounts-for-Testing"></p><h1>Accounts for Testing</h1>
+<h3 id="accounts-for-testing">Accounts for Testing</h3>
+<p>You can use existing accounts for testing by including them in the genesis file for a private network. Alternatively, Pantheon provides predefined accounts in development mode. </p>
+<h4 id="development-mode">Development Mode</h4>
+<p> When you start Pantheon with the <a href="#Pantheon-CLI-Syntax"><code>--dev-mode</code> command line option</a>, the <code>dev.json</code> genesis file is used by default. </p>
+<p> The <code>dev.json</code> genesis file defines the accounts below that can be used for testing. </p>
+<blockquote>
+<p><strong>Warning</strong> Do not use the following accounts on mainnet or any public network except for testing. The private keys are displayed here so the accounts are not secure.  </p>
+</blockquote>
+<h5 id="account-1-miner-coinbase-account-">Account 1 (Miner Coinbase Account)</h5>
+<ul>
+<li>Address: <code>0xfe3b557e8fb62b89f4916b721be55ceb828dbd73</code></li>
+<li>Private key : <code>0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63</code></li>
+<li><p>Initial balance : <code>0xad78ebc5ac6200000</code> (200000000000000000000 in decimal)  </p>
+<h5 id="account-2">Account 2</h5>
+</li>
+<li><p>Address: <code>0x627306090abaB3A6e1400e9345bC60c78a8BEf57</code></p>
+</li>
+<li>Private key : <code>0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3</code></li>
+<li><p>Initial balance : <code>0x90000000000000000000000</code> (2785365088392105618523029504 in decimal)</p>
+<h5 id="account-3">Account 3</h5>
+</li>
+<li><p>Address: <code>0xf17f52151EbEF6C7334FAD080c5704D77216b732</code></p>
+</li>
+<li>Private key : <code>0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f</code></li>
+<li><p>Initial balance : <code>0x90000000000000000000000</code> (2785365088392105618523029504 in decimal)</p>
+<h4 id="genesis-file">Genesis File</h4>
+</li>
+</ul>
+<p>To use existing test accounts, specify the accounts and balances in a genesis file for your test network. For an example of defining accounts in the genesis file, refer to <a href="https://github.com/PegaSysEng/pantheon/blob/master/config/src/main/resources/dev.json"><code>dev.json</code></a>.</p>
+<p>Use the <a href="https://github.com/PegaSysEng/pantheon/wiki/Pantheon-CLI-Syntax"><code>--genesis</code> command line option</a> to start Pantheon with the genesis file defining the existing accounts. </p>
 <p class="page" id="Logging"></p><h1>Logging</h1>
 <h1 id="logging">Logging</h1>
-<p>Pantheon uses Log4J for logging. There are two methods to configure logging behavior: </p>
+<p>Pantheon uses Log4J2 for logging. There are two methods to configure logging behavior: </p>
 <ul>
 <li>Basic - changes the log level. </li>
 <li>Advanced - configures the output and format of the logs. </li>
@@ -1212,7 +1270,7 @@ So modify the file to look like the following :</p>
 <h2 id="basic-log-level-setting">Basic Log Level Setting</h2>
 <p>Use the <a href="#Pantheon-CLI-Syntax"><code>--logging</code> command line option</a> to specify the logging verbosity. The <code>--logging</code> option changes the volume of events displayed in the log. </p>
 <h2 id="advanced-custom-logging">Advanced Custom Logging</h2>
-<p>You can provide your own logging configuration using the standard Log4J configuration mechanisms.  For example, the following Log4J2 configuration is the same as the <a href="https://github.com/PegaSysEng/pantheon/blob/master/pantheon/src/main/resources/log4j2.xml">default configuration</a> except logging of stack traces for exceptions is excluded.</p>
+<p>You can provide your own logging configuration using the standard Log4J2 configuration mechanisms.  For example, the following Log4J2 configuration is the same as the <a href="https://github.com/PegaSysEng/pantheon/blob/master/pantheon/src/main/resources/log4j2.xml">default configuration</a> except logging of stack traces for exceptions is excluded.</p>
 <pre class="hljs"><span class="hljs-meta">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
 <span class="hljs-tag">&lt;<span class="hljs-name">Configuration</span> <span class="hljs-attr">status</span>=<span class="hljs-string">"INFO"</span>&gt;</span>
   <span class="hljs-tag">&lt;<span class="hljs-name">Properties</span>&gt;</span>
@@ -1267,6 +1325,17 @@ So modify the file to look like the following :</p>
 <h2 id="proof-of-authority">Proof of Authority</h2>
 <p>Pantheon implements the Clique Proof-of-Authority (PoA) consensus protocol. Clique is used by the Rinkeby testnet and can be used for private networks. </p>
 <p>In PoA networks, transactions and blocks are validated by approved accounts, known as signers. Signers take turns to create the next block. Existing signers propose and vote to add or remove signers. </p>
+<h3 id="initial-signers">Initial Signers</h3>
+<p>Before starting a private network using Clique, create at least one </p>
+<p>Specify at least 1 but preferably </p>
+<ul>
+<li>Must create 1 or more (preferably at least 3) private keys (Pantheon doesn&#39;t do account management so probably externally or start nodes with different data directories to get private key)</li>
+<li>32 bytes/64 characters of vanity data</li>
+<li>signers nX40 characters for each one - left pad with zeros</li>
+<li>followed by 65 bytes/130 - usually this is the signature for the block but because this is the genesis block it&#39;s unsigned </li>
+</ul>
+<p>Then need to start network with the nodes specified as initial signers - refer to Node Keys topic. </p>
+<p>Process as per Slack DM. Trent getting back to me. </p>
 <h2 id="genesis-file">Genesis File</h2>
 <p>To use Clique in a private network, Pantheon requires a PoA genesis file. When connecting to Rinkeby, Pantheon uses the <a href="https://github.com/PegaSysEng/pantheon/blob/master/ethereum/core/src/main/resources/rinkeby.json"><code>rinkeby.json</code></a> genesis file in the <code>/pantheon/ethereum/core/src/main/resources</code> directory.</p>
 <p>A PoA genesis file defines properties specific to Clique:</p>
@@ -1285,7 +1354,7 @@ So modify the file to look like the following :</p>
 <ul>
 <li><code>period</code> - Block time in seconds. </li>
 <li><code>epoch</code> - Number of blocks after which to reset all votes.</li>
-<li><code>extraData</code> - Initial signers are specified after the 32 bytes reserved for vanity data. </li>
+<li><code>extraData</code> - Specifies <a href="#specifying-initial-signers">initial signers</a>. </li>
 </ul>
 <p>To connect to the Rinkeby testnet, start Pantheon with the <code>--rinkeby</code> option. To start a node on a PoA private network, use the <code>--network-id</code> and <code>--genesis</code> options. </p>
 <h3 id="adding-and-removing-signers">Adding and Removing Signers</h3>
@@ -1456,36 +1525,8 @@ console.log(<span class="hljs-string">"Raw transaction string="</span> + rawTxHe
 <p>In Pantheon, you can use the JSON-RPC methods:</p>
 <ul>
 <li><a href="#JSON-RPC-APIeth_getbalance">eth_getBalance</a> to obtain the account balance</li>
-<li><p><a href="#JSON-RPC-APIeth_sendrawtransaction">eth_sendRawTransaction</a> to transfer ether or create and interact with contracts (for more information, refer to <a href="#Transactionstransactions">Transactions</a>).  </p>
-<h3 id="accounts-for-testing">Accounts for Testing</h3>
-</li>
+<li><a href="#JSON-RPC-APIeth_sendrawtransaction">eth_sendRawTransaction</a> to transfer ether or create and interact with contracts (for more information, refer to <a href="#Transactionstransactions">Transactions</a>).  </li>
 </ul>
-<p>You can use existing accounts for testing by including them in the genesis file for a private network. Alternatively, Pantheon provides predefined accounts in development mode. </p>
-<h4 id="development-mode">Development Mode</h4>
-<p> When you start Pantheon with the <a href="#Pantheon-CLI-Syntax"><code>--dev-mode</code> command line option</a>, the <code>dev.json</code> genesis file is used by default. </p>
-<p> The <code>dev.json</code> genesis file defines the following accounts that can be used for testing. </p>
-<h5 id="account-1-miner-coinbase-account">Account 1 - Miner Coinbase Account</h5>
-<ul>
-<li>Address: <code>0xfe3b557e8fb62b89f4916b721be55ceb828dbd73</code></li>
-<li>Private key : <code>0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63</code></li>
-<li><p>Initial balance : <code>0xad78ebc5ac6200000</code> (200000000000000000000 in decimal)  </p>
-<h4 id="account-2">Account 2</h4>
-</li>
-<li><p>Address: <code>0x627306090abaB3A6e1400e9345bC60c78a8BEf57</code></p>
-</li>
-<li>Private key : <code>0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3</code></li>
-<li><p>Initial balance : <code>0x90000000000000000000000</code> (2785365088392105618523029504 in decimal)</p>
-<h4 id="account-3">Account 3</h4>
-</li>
-<li><p>Address: <code>0xf17f52151EbEF6C7334FAD080c5704D77216b732</code></p>
-</li>
-<li>Private key : <code>0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f</code></li>
-<li><p>Initial balance : <code>0x90000000000000000000000</code> (2785365088392105618523029504 in decimal)</p>
-<h4 id="genesis-file">Genesis File</h4>
-</li>
-</ul>
-<p>To use existing test accounts, specify the accounts and balances in a genesis file for your test network. For an example of defining accounts in the genesis file, refer to <a href="https://github.com/PegaSysEng/pantheon/blob/master/ethereum/core/src/main/resources/dev.json"><code>dev.json</code></a>.</p>
-<p>Use the <a href="https://github.com/PegaSysEng/pantheon/wiki/Pantheon-CLI-Syntax"><code>--genesis</code> command line option</a> to start Pantheon with the genesis file defining the existing accounts. </p>
 <p class="page" id="Mining"></p><h1>Mining</h1>
 <h1 id="mining">Mining</h1>
 <p>Start Pantheon with the following options to enable mining: </p>
@@ -1633,8 +1674,10 @@ console.log(<span class="hljs-string">"Raw transaction string="</span> + rawTxHe
 <dl>
 <dt><code>--banned-nodeids=&lt;bannedNodeId&amp;gt[,&lt;bannedNodeId&gt;...]...</code></dt>
 
-  <dd>List of node IDs to ban from the P2P network. </dd>
-  <br>
+  <dd>List of node IDs to ban from the P2P network. The node ID is the public key of the node. The banned node IDs can be specified with or without the <code>0x</code> prefix.</dd>
+
+  &gt;<strong>Note</strong> This option is only available from v0.8.2 or when <a href="#Installation">building from source</a>. 
+
   <dt><code>--bootnodes=&lt;enode://id@host:port&gt;[,&lt;enode://id@host:port&gt;...]...</code></dt>
 
   <dd>List of comma-separated enode URLs for P2P discovery bootstrap. </dd>
@@ -1673,13 +1716,16 @@ miner-coinbase=&quot;0x0000000000000000000000000000000000000002&quot;</code>
 <br>
   <dt><code>--dev-mode</code></dt>
   <dd>
-  Set this option to <code>true</code> to run nodes in development mode which means you can run nodes in private or test networks. This is useful, for example, to do CPU mining more easily. In development mode, you use a custom genesis file that specifies a particular chain ID. When you set this option, you should also set the <code>--network-id</code> option to the specific network you use for development. The default is <code>false</code>.
+  Set this option to <code>true</code> to run in development mode. For example, specify this option to perform CPU mining more easily in a private test network. In development mode, a custom genesis configuration specifies the chain ID. When using this option, also set the <code>--network-id</code> option to the network you use for development. Default is <code>false</code>.
   </dd>
-<br>
+
+&gt; <strong>Note:</strong> The <code>--dev-mode</code> option overrides the <code>--genesis</code> option. If both are specified, the development mode configuration is used.<br><br>
   <dt><code>--genesis=&lt;PATH&gt;</code></dt>
-  <dd>The path to the genesis file. The default is the embedded genesis file in the Pantheon mainnet.</dd>
+  <dd>The path to the genesis file. The default is the embedded genesis file for the Ethereum mainnet. When using this option, it is recommended to also set the <code>--network-id</code> option.</dd>
 
 &gt; <strong>Note:</strong> This option is not used when running Pantheon from the <a href="#Run-Docker-Imagecustom-genesis-file">Docker image</a>. 
+
+&gt; <strong>Note:</strong> The <code>--genesis</code> option is overriden by the <code>--dev-mode</code> option. If both are specified, the specified genesis file is ignored and the development mode configuration used. 
 <br>
   <dt><code>--max-peers=&lt;INTEGER&gt;</code></dt>
   <dd>Specifies the maximum P2P peer connections that can be established. The default is 25.</dd>
@@ -1709,10 +1755,12 @@ miner-coinbase=&quot;0x0000000000000000000000000000000000000002&quot;</code>
 
 <br>
   <dt><code>--node-private-key=&lt;PATH&gt;</code></dt>
-  <dd>Path to the private key file of the node. The default is the key file in the data directory. If no key file exists, is it created; otherwise, the existing key file specifies the node private key.
+  <dd><code>&lt;PATH&gt;</code> is the path of the private key file of the node. The default is the key file in the data directory. If no key file exists, a key file containing the generated private key is created; otherwise, the existing key file specifies the node private key.
 </dd>
 
- &gt; <strong>Note</strong> The private key is not encrypted. 
+ &gt; <strong>Note</strong> The private key is not encrypted.
+
+ &gt;<strong>Note</strong> This option is only available from v0.8.2 or when <a href="#Installation">building from source</a>. 
 
 <br>
   <dt><code>--ottoman</code></dt>
@@ -1873,6 +1921,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <h4 id="eth-methods">eth Methods</h4>
 <ul>
 <li><a href="#eth_syncing">eth_syncing</a></li>
+<li><a href="#eth_chainId">eth_chainId</a></li>
 <li><a href="#eth_coinbase">eth_coinbase</a></li>
 <li><a href="#eth_mining">eth_mining</a></li>
 <li><a href="#eth_gasprice">eth_gasPrice</a></li>
@@ -2026,6 +2075,22 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
     <span class="hljs-attr">"currentBlock"</span> : <span class="hljs-string">"0x1d4bff"</span>,
     <span class="hljs-attr">"highestBlock"</span> : <span class="hljs-string">"0x0"</span>
   }</pre><hr>
+<h4 id="eth_chainid">eth_chainId</h4>
+<p>Returns chain ID.</p>
+<blockquote>
+<p><strong>Note</strong> This method is only available from v0.8.2 or when <a href="#Installation">building from source</a>. </p>
+</blockquote>
+<h5 id="parameters">Parameters</h5>
+<p>None</p>
+<h5 id="returns">Returns</h5>
+<p><code>result</code> : <em>quantity</em> - Chain ID in hexadecimal.</p>
+<h5 id="request">Request</h5>
+<pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":51}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
+<pre class="hljs">{
+  <span class="hljs-attr">"jsonrpc"</span> : <span class="hljs-string">"2.0"</span>,
+  <span class="hljs-attr">"id"</span> : <span class="hljs-number">51</span>,
+  <span class="hljs-attr">"result"</span> : <span class="hljs-string">"0x7e2"</span>
+}</pre><hr>
 <h4 id="eth_coinbase">eth_coinbase</h4>
 <p>Returns the client coinbase address.</p>
 <p>To set a coinbase address, call the pantheon CLI with the <code>--miner-coinbase</code> option set to a valid Ethereum account address. You can get the Ethereum account address from a client such as MetaMask or Etherscan. For example:</p>
