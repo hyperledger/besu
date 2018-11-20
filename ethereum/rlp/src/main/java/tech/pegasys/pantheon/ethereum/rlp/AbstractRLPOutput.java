@@ -141,7 +141,12 @@ abstract class AbstractRLPOutput implements RLPOutput {
     return payloadSizes[0];
   }
 
-  protected void writeEncoded(final MutableBytesValue res) {
+  /**
+   * Write the rlp encoded value to the provided {@link MutableBytesValue}
+   *
+   * @param mutableBytesValue the value to which the rlp-data will be written
+   */
+  public void writeEncoded(final MutableBytesValue mutableBytesValue) {
     // Special case where we encode only a single non-list item (note that listsCount is initially
     // set to 1, so listsCount == 1 really mean no list explicitly added to the output).
     if (listsCount == 1) {
@@ -152,15 +157,15 @@ abstract class AbstractRLPOutput implements RLPOutput {
       final int finalOffset;
       // Single non-list value.
       if (rlpEncoded.get(0)) {
-        value.copyTo(res, 0);
+        value.copyTo(mutableBytesValue, 0);
         finalOffset = value.size();
       } else {
-        finalOffset = writeElement(value, res, 0);
+        finalOffset = writeElement(value, mutableBytesValue, 0);
       }
       checkState(
-          finalOffset == res.size(),
+          finalOffset == mutableBytesValue.size(),
           "Expected single element RLP encode to be of size %s but was of size %s.",
-          res.size(),
+          mutableBytesValue.size(),
           finalOffset);
       return;
     }
@@ -171,19 +176,19 @@ abstract class AbstractRLPOutput implements RLPOutput {
       final BytesValue value = values.get(i);
       if (value == LIST_MARKER) {
         final int payloadSize = payloadSizes[++listIdx];
-        offset = writeListHeader(payloadSize, res, offset);
+        offset = writeListHeader(payloadSize, mutableBytesValue, offset);
       } else if (rlpEncoded.get(i)) {
-        value.copyTo(res, offset);
+        value.copyTo(mutableBytesValue, offset);
         offset += value.size();
       } else {
-        offset = writeElement(value, res, offset);
+        offset = writeElement(value, mutableBytesValue, offset);
       }
     }
 
     checkState(
-        offset == res.size(),
+        offset == mutableBytesValue.size(),
         "Expected RLP encoding to be of size %s but was of size %s.",
-        res.size(),
+        mutableBytesValue.size(),
         offset);
   }
 }

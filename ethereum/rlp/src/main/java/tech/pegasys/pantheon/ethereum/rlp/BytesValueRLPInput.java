@@ -25,9 +25,14 @@ public class BytesValueRLPInput extends AbstractRLPInput {
   private final BytesValue value;
 
   public BytesValueRLPInput(final BytesValue value, final boolean lenient) {
+    this(value, lenient, true);
+  }
+
+  public BytesValueRLPInput(
+      final BytesValue value, final boolean lenient, final boolean shouldFitExactly) {
     super(lenient);
     this.value = value;
-    init(value.size(), true);
+    init(value.size(), shouldFitExactly);
   }
 
   @Override

@@ -77,8 +77,8 @@ public abstract class RLP {
    *     deeply nested corruption/malformation of the input will not be detected by this method
    *     call, but only later when the input is read.
    */
-  public static VertxBufferRLPInput input(final Buffer buffer, final int offset) {
-    return new VertxBufferRLPInput(buffer, offset, false);
+  public static BytesValueRLPInput input(final Buffer buffer, final int offset) {
+    return new BytesValueRLPInput(BytesValue.wrapBuffer(buffer, offset), false, false);
   }
 
   /**
