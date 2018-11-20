@@ -20,7 +20,6 @@ import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
-import tech.pegasys.pantheon.ethereum.rlp.RlpUtils;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Arrays;
@@ -199,7 +198,7 @@ public class Framer {
 
     // Discard the header data (RLP): being set to fixed value 0xc28080 (list of two null
     // elements) by other clients.
-    final int headerDataLength = RlpUtils.decodeLength(h.nioBuffer(), 0);
+    final int headerDataLength = RLP.calculateSize(BytesValue.wrapBuffer(h.nioBuffer()));
     h.skipBytes(headerDataLength);
 
     // Discard padding in header (= zero-fill to 16-byte boundary).

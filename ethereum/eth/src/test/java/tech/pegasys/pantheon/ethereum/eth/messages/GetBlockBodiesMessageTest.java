@@ -18,8 +18,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
-import tech.pegasys.pantheon.ethereum.rlp.RlpUtils;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -41,7 +41,8 @@ public final class GetBlockBodiesMessageTest {
     final ByteBuffer buffer =
         ByteBuffer.wrap(Resources.toByteArray(Resources.getResource("50.blocks")));
     for (int i = 0; i < 50; ++i) {
-      final byte[] block = new byte[RlpUtils.decodeLength(buffer, 0)];
+      final int blockSize = RLP.calculateSize(BytesValue.wrapBuffer(buffer));
+      final byte[] block = new byte[blockSize];
       buffer.get(block);
       buffer.compact().position(0);
       final RLPInput oneBlock = new BytesValueRLPInput(BytesValue.wrap(block), false);
