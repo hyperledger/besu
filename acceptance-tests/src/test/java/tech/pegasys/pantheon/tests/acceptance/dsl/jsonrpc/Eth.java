@@ -12,9 +12,12 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
 
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectEthAccountsException;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectEthGetTransactionReceiptIsAbsent;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectEthGetWorkException;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectSuccessfulEthGetTransactionReceipt;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.SanityCheckEthGetWorkValues;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
 
@@ -36,5 +39,15 @@ public class Eth {
 
   public Condition accountsExceptional(final String expectedMessage) {
     return new ExpectEthAccountsException(transactions.accounts(), expectedMessage);
+  }
+
+  public Condition expectSuccessfulTransactionReceipt(final Hash transactionHash) {
+    return new ExpectSuccessfulEthGetTransactionReceipt(
+        transactions.getTransactionReceipt(transactionHash.toString()));
+  }
+
+  public Condition expectNoTransactionReceipt(final String transactionHash) {
+    return new ExpectEthGetTransactionReceiptIsAbsent(
+        transactions.getTransactionReceipt(transactionHash));
   }
 }
