@@ -14,6 +14,9 @@ package tech.pegasys.pantheon.ethereum.p2p.rlpx.framing;
 
 import static io.netty.buffer.ByteBufUtil.decodeHexDump;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.nio.charset.StandardCharsets;
 
@@ -21,38 +24,55 @@ import org.junit.Test;
 
 public class SnappyCompressorTest {
 
+  private final SnappyCompressor snappy = new SnappyCompressor();
+
   @Test
   public void roundTrip() {
     String input = "Uncompressed sample text for round-trip compression/decompression";
     input = input + input + input + input; // Give it some repetition for good sample data
     final byte[] data = input.getBytes(StandardCharsets.UTF_8);
-    final SnappyCompressor snappy = new SnappyCompressor();
     assertThat(snappy.decompress(snappy.compress(data))).isEqualTo(data);
   }
 
   @Test
   public void roundTripEmptyByteArray() {
     final byte[] data = new byte[0];
-    final SnappyCompressor snappy = new SnappyCompressor();
     assertThat(snappy.decompress(snappy.compress(data))).isEqualTo(data);
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void compressNull() {
-    final SnappyCompressor snappy = new SnappyCompressor();
-    snappy.compress(null);
+    assertThatThrownBy(() -> snappy.compress(null)).isInstanceOf(NullPointerException.class);
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void decompressNull() {
-    final SnappyCompressor snappy = new SnappyCompressor();
-    snappy.decompress(null);
+    assertThatThrownBy(() -> snappy.decompress(null)).isInstanceOf(NullPointerException.class);
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void uncompressedLengthNull() {
-    final SnappyCompressor snappy = new SnappyCompressor();
-    snappy.uncompressedLength(null);
+    assertThatThrownBy(() -> snappy.uncompressedLength(null))
+        .isInstanceOf(NullPointerException.class);
+  }
+
+  @Test
+  public void shouldDetermineLengthOfEmptyMessage() {
+    assertThatThrownBy(() -> snappy.uncompressedLength(new byte[0]))
+        .isInstanceOf(FramingException.class);
+  }
+
+  @Test
+  public void shouldDecompressEmptyMessage() {
+    final byte[] compressed = snappy.compress(new byte[0]);
+    assertThat(snappy.decompress(compressed)).isEmpty();
+  }
+
+  @Test
+  public void shouldRejectMessageWithNonZeroDeclaredLengthButNoCompressedData() {
+    assertThatThrownBy(
+            () -> snappy.decompress(BytesValue.fromHexString("0xFFFFFF01").extractArray()))
+        .isInstanceOf(FramingException.class);
   }
 
   @Test
@@ -74,7 +94,6 @@ public class SnappyCompressorTest {
                 + "d94062719ae58d392b253268da005a4fb2d8d33b19ec84a7312a34ecbfc2a0055c660cc59f5dad52ae"
                 + "4d6fd5f2fc081d706ee0bce4195ecfff07a1f85d1bd6");
 
-    final SnappyCompressor snappy = new SnappyCompressor();
     assertThat(snappy.compress(decompressed)).isEqualTo(compressed);
     assertThat(snappy.decompress(compressed)).isEqualTo(decompressed);
     assertThat(snappy.decompress(snappy.compress(decompressed))).isEqualTo(decompressed);
