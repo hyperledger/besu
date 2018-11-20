@@ -13,12 +13,12 @@
 package tech.pegasys.pantheon.ethereum.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
 import tech.pegasys.pantheon.util.uint.UInt256;
@@ -58,7 +58,7 @@ public class BlockchainUtilParameterizedTest {
   @BeforeClass
   public static void setupClass() {
     genesisBlock = blockDataGenerator.genesisBlock();
-    localBlockchain = InMemoryTestFixture.createInMemoryBlockchain(genesisBlock);
+    localBlockchain = createInMemoryBlockchain(genesisBlock);
     // Setup local chain.
     for (int i = 1; i <= chainHeight; i++) {
       final BlockDataGenerator.BlockOptions options =
@@ -73,7 +73,7 @@ public class BlockchainUtilParameterizedTest {
 
   @Before
   public void setup() {
-    remoteBlockchain = InMemoryTestFixture.createInMemoryBlockchain(genesisBlock);
+    remoteBlockchain = createInMemoryBlockchain(genesisBlock);
 
     commonHeader = genesisBlock.getHeader();
     for (long i = 1; i <= commonAncestorHeight; i++) {

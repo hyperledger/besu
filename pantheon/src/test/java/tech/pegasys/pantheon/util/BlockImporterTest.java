@@ -15,9 +15,10 @@ package tech.pegasys.pantheon.util;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.controller.MainnetPantheonController;
+import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.testutil.BlockTestUtil;
@@ -43,10 +44,18 @@ public final class BlockImporterTest {
   @Test
   public void blockImport() throws IOException {
     final Path source = folder.newFile().toPath();
-    final Path target = folder.newFolder().toPath();
     BlockTestUtil.write1000Blocks(source);
+    final PantheonController<?> targetController =
+        PantheonController.fromConfig(
+            GenesisConfigFile.mainnet(),
+            SynchronizerConfiguration.builder().build(),
+            new InMemoryStorageProvider(),
+            false,
+            1,
+            new MiningParametersTestBuilder().enabled(false).build(),
+            KeyPair.generate());
     final BlockImporter.ImportResult result =
-        blockImporter.importBlockchain(source, MainnetPantheonController.mainnet(target));
+        blockImporter.importBlockchain(source, targetController);
     assertThat(result.count).isEqualTo(1000);
     assertThat(result.td).isEqualTo(UInt256.of(21991996248790L));
   }
@@ -54,7 +63,6 @@ public final class BlockImporterTest {
   @Test
   public void ibftImport() throws IOException {
     final Path source = folder.newFile().toPath();
-    final Path target = folder.newFolder().toPath();
     final String config = Resources.toString(Resources.getResource("ibft_genesis.json"), UTF_8);
 
     try {
@@ -69,9 +77,9 @@ public final class BlockImporterTest {
 
     final PantheonController<?> controller =
         PantheonController.fromConfig(
+            GenesisConfigFile.fromConfig(config),
             SynchronizerConfiguration.builder().build(),
-            config,
-            target,
+            new InMemoryStorageProvider(),
             false,
             10,
             new MiningParametersTestBuilder().enabled(false).build(),

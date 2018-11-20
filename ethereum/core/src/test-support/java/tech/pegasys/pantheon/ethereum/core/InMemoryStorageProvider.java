@@ -13,14 +13,19 @@
 package tech.pegasys.pantheon.ethereum.core;
 
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.db.BlockchainStorage;
 import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
-import tech.pegasys.pantheon.ethereum.db.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
-import tech.pegasys.pantheon.ethereum.worldstate.KeyValueStorageWorldStateStorage;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 
-public class InMemoryTestFixture {
+public class InMemoryStorageProvider implements StorageProvider {
 
   public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
     return createInMemoryBlockchain(genesisBlock, MainnetBlockHashFunction::createHash);
@@ -38,4 +43,18 @@ public class InMemoryTestFixture {
     return new WorldStateArchive(
         new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage()));
   }
+
+  @Override
+  public BlockchainStorage createBlockchainStorage(final ProtocolSchedule<?> protocolSchedule) {
+    return new KeyValueStoragePrefixedKeyBlockchainStorage(
+        new InMemoryKeyValueStorage(), ScheduleBasedBlockHashFunction.create(protocolSchedule));
+  }
+
+  @Override
+  public WorldStateStorage createWorldStateStorage() {
+    return new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+  }
+
+  @Override
+  public void close() {}
 }

@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 
 import tech.pegasys.pantheon.consensus.clique.headervalidationrules.SignerRateLimitValidationRule;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
@@ -31,7 +32,6 @@ import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Util;
 
 import java.util.List;
@@ -70,7 +70,7 @@ public class NodeCanProduceNextBlockTest {
 
     genesisBlock = createEmptyBlock(proposerKeyPair);
 
-    blockChain = InMemoryTestFixture.createInMemoryBlockchain(genesisBlock);
+    blockChain = createInMemoryBlockchain(genesisBlock);
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
@@ -95,7 +95,7 @@ public class NodeCanProduceNextBlockTest {
 
     genesisBlock = createEmptyBlock(otherNodeKeyPair);
 
-    blockChain = InMemoryTestFixture.createInMemoryBlockchain(genesisBlock);
+    blockChain = createInMemoryBlockchain(genesisBlock);
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
@@ -129,7 +129,7 @@ public class NodeCanProduceNextBlockTest {
 
     genesisBlock = createEmptyBlock(proposerKeyPair);
 
-    blockChain = InMemoryTestFixture.createInMemoryBlockchain(genesisBlock);
+    blockChain = createInMemoryBlockchain(genesisBlock);
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
@@ -159,7 +159,7 @@ public class NodeCanProduceNextBlockTest {
 
     genesisBlock = createEmptyBlock(proposerKeyPair);
 
-    blockChain = InMemoryTestFixture.createInMemoryBlockchain(genesisBlock);
+    blockChain = createInMemoryBlockchain(genesisBlock);
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
@@ -204,7 +204,7 @@ public class NodeCanProduceNextBlockTest {
 
     genesisBlock = createEmptyBlock(proposerKeyPair);
 
-    blockChain = InMemoryTestFixture.createInMemoryBlockchain(genesisBlock);
+    blockChain = createInMemoryBlockchain(genesisBlock);
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
@@ -233,7 +233,7 @@ public class NodeCanProduceNextBlockTest {
 
     genesisBlock = createEmptyBlock(proposerKeyPair);
 
-    blockChain = InMemoryTestFixture.createInMemoryBlockchain(genesisBlock);
+    blockChain = createInMemoryBlockchain(genesisBlock);
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
@@ -257,7 +257,7 @@ public class NodeCanProduceNextBlockTest {
   public void nonValidatorIsNotAllowedToCreateABlock() {
     genesisBlock = createEmptyBlock(otherNodeKeyPair);
 
-    blockChain = InMemoryTestFixture.createInMemoryBlockchain(genesisBlock);
+    blockChain = createInMemoryBlockchain(genesisBlock);
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));

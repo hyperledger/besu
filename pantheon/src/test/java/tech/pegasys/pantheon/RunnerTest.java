@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
 import tech.pegasys.pantheon.ethereum.core.BlockSyncTestUtils;
+import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
@@ -33,8 +34,11 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -64,7 +68,6 @@ import org.junit.rules.TemporaryFolder;
 /** Tests for {@link Runner}. */
 public final class RunnerTest {
 
-  private static final int NETWORK_ID = 10;
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
   @Test
@@ -93,7 +96,7 @@ public final class RunnerTest {
     // Setup state with block data
     try (final PantheonController<Void> controller =
         MainnetPantheonController.init(
-            dbAhead,
+            createKeyValueStorageProvider(dbAhead),
             GenesisConfigFile.mainnet(),
             MainnetProtocolSchedule.create(),
             fastSyncConfig,
@@ -105,7 +108,7 @@ public final class RunnerTest {
     // Setup Runner with blocks
     final PantheonController<Void> controllerAhead =
         MainnetPantheonController.init(
-            dbAhead,
+            createKeyValueStorageProvider(dbAhead),
             GenesisConfigFile.mainnet(),
             MainnetProtocolSchedule.create(),
             fastSyncConfig,
@@ -136,16 +139,14 @@ public final class RunnerTest {
       final WebSocketConfiguration behindWebSocketConfiguration = wsRpcConfiguration();
 
       // Setup runner with no block data
-      final Path dbBehind = temp.newFolder().toPath();
-      final KeyPair behindDbNodeKeys = loadKeyPair(dbBehind.resolve("key").toFile());
       final PantheonController<Void> controllerBehind =
           MainnetPantheonController.init(
-              temp.newFolder().toPath(),
+              new InMemoryStorageProvider(),
               GenesisConfigFile.mainnet(),
               MainnetProtocolSchedule.create(),
               fastSyncConfig,
               new MiningParametersTestBuilder().enabled(false).build(),
-              behindDbNodeKeys);
+              KeyPair.generate());
       final Runner runnerBehind =
           runnerBuilder.build(
               Vertx.vertx(),
@@ -162,7 +163,7 @@ public final class RunnerTest {
               3,
               behindJsonRpcConfiguration,
               behindWebSocketConfiguration,
-              dbBehind,
+              temp.newFolder().toPath(),
               Collections.emptySet());
 
       executorService.submit(runnerBehind::execute);
@@ -231,6 +232,10 @@ public final class RunnerTest {
         Assertions.fail("One of the two Pantheon runs failed to cleanly join.");
       }
     }
+  }
+
+  private StorageProvider createKeyValueStorageProvider(final Path dbAhead) throws IOException {
+    return RocksDbStorageProvider.create(dbAhead);
   }
 
   private JsonRpcConfiguration jsonRpcConfiguration() {

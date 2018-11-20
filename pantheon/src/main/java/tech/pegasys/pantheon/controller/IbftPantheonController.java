@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.controller;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
-import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.config.IbftConfigOptions;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
@@ -38,12 +37,11 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
-import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
+import tech.pegasys.pantheon.ethereum.db.BlockchainStorage;
 import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
-import tech.pegasys.pantheon.ethereum.db.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
@@ -53,17 +51,13 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolFactory;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
-import tech.pegasys.pantheon.ethereum.worldstate.KeyValueStorageWorldStateStorage;
-import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
-import tech.pegasys.pantheon.services.kvstore.RocksDbKeyValueStorage;
+import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -73,7 +67,6 @@ import org.apache.logging.log4j.Logger;
 public class IbftPantheonController implements PantheonController<IbftContext> {
 
   private static final Logger LOG = getLogger();
-  private final GenesisConfigOptions genesisConfig;
   private final ProtocolSchedule<IbftContext> protocolSchedule;
   private final ProtocolContext<IbftContext> context;
   private final Synchronizer synchronizer;
@@ -86,7 +79,6 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
   private final Runnable closer;
 
   IbftPantheonController(
-      final GenesisConfigOptions genesisConfig,
       final ProtocolSchedule<IbftContext> protocolSchedule,
       final ProtocolContext<IbftContext> context,
       final SubProtocol ethSubProtocol,
@@ -98,7 +90,6 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
       final IbftProcessor ibftProcessor,
       final Runnable closer) {
 
-    this.genesisConfig = genesisConfig;
     this.protocolSchedule = protocolSchedule;
     this.context = context;
     this.ethSubProtocol = ethSubProtocol;
@@ -112,27 +103,21 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
   }
 
   public static PantheonController<IbftContext> init(
-      final Path home,
+      final StorageProvider storageProvider,
       final GenesisConfigFile genesisConfig,
       final SynchronizerConfiguration taintedSyncConfig,
       final boolean ottomanTestnetOperation,
       final int networkId,
-      final KeyPair nodeKeys)
-      throws IOException {
-    final KeyValueStorage kv =
-        RocksDbKeyValueStorage.create(Files.createDirectories(home.resolve(DATABASE_PATH)));
+      final KeyPair nodeKeys) {
     final ProtocolSchedule<IbftContext> protocolSchedule =
         IbftProtocolSchedule.create(genesisConfig.getConfigOptions());
-    final BlockHashFunction blockHashFunction =
-        ScheduleBasedBlockHashFunction.create(protocolSchedule);
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
-    final KeyValueStoragePrefixedKeyBlockchainStorage blockchainStorage =
-        new KeyValueStoragePrefixedKeyBlockchainStorage(kv, blockHashFunction);
+    final BlockchainStorage blockchainStorage =
+        storageProvider.createBlockchainStorage(protocolSchedule);
     final MutableBlockchain blockchain =
         new DefaultMutableBlockchain(genesisState.getBlock(), blockchainStorage);
 
-    final KeyValueStorageWorldStateStorage worldStateStorage =
-        new KeyValueStorageWorldStateStorage(kv);
+    final WorldStateStorage worldStateStorage = storageProvider.createWorldStateStorage();
     final WorldStateArchive worldStateArchive = new WorldStateArchive(worldStateStorage);
     genesisState.writeStateTo(worldStateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
 
@@ -202,9 +187,9 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             LOG.error("Failed to shutdown ibft processor executor");
           }
           try {
-            kv.close();
+            storageProvider.close();
           } catch (final IOException e) {
-            LOG.error("Failed to close key value storage", e);
+            LOG.error("Failed to close storage provider", e);
           }
         };
 
@@ -216,7 +201,6 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
         new IbftNetworkPeers(protocolContext.getConsensusState().getVoteTally());
 
     return new IbftPantheonController(
-        genesisConfig.getConfigOptions(),
         protocolSchedule,
         protocolContext,
         ethSubProtocol,
@@ -237,11 +221,6 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
   @Override
   public ProtocolSchedule<IbftContext> getProtocolSchedule() {
     return protocolSchedule;
-  }
-
-  @Override
-  public GenesisConfigOptions getGenesisConfigOptions() {
-    return genesisConfig;
   }
 
   @Override
