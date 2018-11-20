@@ -41,7 +41,7 @@ dependencyManagement {
 
     dependency('io.pkts:pkts-core:3.0.2')
 
-    dependency("org.iq80.snappy:snappy:0.4")
+    dependency('org.xerial.snappy:snappy-java:1.1.7.2')
 
     dependency('com.github.docker-java:docker-java:3.0.14')
 

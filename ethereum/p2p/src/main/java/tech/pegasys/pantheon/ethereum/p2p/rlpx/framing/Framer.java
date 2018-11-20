@@ -34,7 +34,6 @@ import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.modes.SICBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
-import org.iq80.snappy.CorruptionException;
 
 /**
  * This component is responsible for reading and composing RLPx protocol frames, conformant to the
@@ -260,12 +259,8 @@ public class Framer {
       if (uncompressedLength >= LENGTH_MAX_MESSAGE_FRAME) {
         throw error("Message size %s in excess of maximum length.", uncompressedLength);
       }
-      try {
-        final byte[] decompressedMessageData = compressor.decompress(compressedMessageData);
-        data = BytesValue.wrap(decompressedMessageData);
-      } catch (final CorruptionException e) {
-        throw new FramingException("Decompression failed", e);
-      }
+      final byte[] decompressedMessageData = compressor.decompress(compressedMessageData);
+      data = BytesValue.wrap(decompressedMessageData);
     } else {
       // Move data to a ByteBuf
       final int messageLength = frameSize - LENGTH_MESSAGE_ID;

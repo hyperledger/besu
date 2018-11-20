@@ -14,7 +14,9 @@ package tech.pegasys.pantheon.ethereum.p2p.rlpx.framing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.iq80.snappy.Snappy;
+import java.io.IOException;
+
+import org.xerial.snappy.Snappy;
 
 /**
  * A strategy for compressing and decompressing data with the Snappy algorithm.
@@ -25,16 +27,28 @@ public class SnappyCompressor {
 
   public byte[] compress(final byte[] uncompressed) {
     checkNotNull(uncompressed, "input data must not be null");
-    return Snappy.compress(uncompressed);
+    try {
+      return Snappy.compress(uncompressed);
+    } catch (final IOException e) {
+      throw new FramingException("Snappy compression failed", e);
+    }
   }
 
   public byte[] decompress(final byte[] compressed) {
     checkNotNull(compressed, "input data must not be null");
-    return Snappy.uncompress(compressed, 0, compressed.length);
+    try {
+      return Snappy.uncompress(compressed);
+    } catch (final IOException e) {
+      throw new FramingException("Snappy decompression failed", e);
+    }
   }
 
   public int uncompressedLength(final byte[] compressed) {
     checkNotNull(compressed, "input data must not be null");
-    return Snappy.getUncompressedLength(compressed, 0);
+    try {
+      return Snappy.uncompressedLength(compressed);
+    } catch (final IOException e) {
+      throw new FramingException("Snappy uncompressedLength failed", e);
+    }
   }
 }

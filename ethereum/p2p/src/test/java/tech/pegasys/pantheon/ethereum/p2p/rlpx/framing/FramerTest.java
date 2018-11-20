@@ -20,10 +20,13 @@ import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -34,8 +37,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.iq80.snappy.Snappy;
 import org.junit.Test;
+import org.xerial.snappy.Snappy;
 
 public class FramerTest {
   private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -193,6 +196,31 @@ public class FramerTest {
       final byte[] expected = decodeHexDump(messages.get(i).get("data").asText());
       assertThat(expected).isEqualTo(enc);
     }
+  }
+
+  @Test
+  public void shouldThrowFramingExceptionWhenMessageIsNotCompressedButShouldBe() {
+    final HandshakeSecrets secrets =
+        new HandshakeSecrets(
+            BytesValue.fromHexString(
+                    "0x75b3ee95adff0c529a05efd7612aa1dbe5057eb9facdde0dfc837ad143da1d43")
+                .extractArray(),
+            BytesValue.fromHexString(
+                    "0x030dfd1566f4800c4842c177f7d476b64ae2b99a2aa0ab5600aa2f41a8710575")
+                .extractArray(),
+            BytesValue.fromHexString(
+                    "0xc9d3385b1588a5969cba312f8c29bedb4cb9d56ec0cf825436addc1ec644f1d6")
+                .extractArray());
+    final Framer receivingFramer = new Framer(secrets);
+    final Framer sendingFramer = new Framer(secrets);
+
+    // Write a disconnect message with compression disabled.
+    final ByteBuf out = Unpooled.buffer();
+    sendingFramer.frame(DisconnectMessage.create(DisconnectReason.TIMEOUT), out);
+
+    // Then read it with compression enabled.
+    receivingFramer.enableCompression();
+    assertThatThrownBy(() -> receivingFramer.deframe(out)).isInstanceOf(FramingException.class);
   }
 
   private HandshakeSecrets secretsFrom(final JsonNode td, final boolean swap) {
