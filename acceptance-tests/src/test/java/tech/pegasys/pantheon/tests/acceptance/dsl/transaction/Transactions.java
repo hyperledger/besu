@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account.TransferTr
 import java.util.ArrayList;
 import java.util.List;
 
+import org.web3j.tx.Contract;
 import org.web3j.utils.Convert.Unit;
 
 public class Transactions {
@@ -48,5 +49,10 @@ public class Transactions {
     }
 
     return new TransferTransactionSet(transfers);
+  }
+
+  public <T extends Contract> DeploySmartContractTransaction<T> createSmartContract(
+      final Class<T> clazz) {
+    return new DeploySmartContractTransaction<>(clazz);
   }
 }
