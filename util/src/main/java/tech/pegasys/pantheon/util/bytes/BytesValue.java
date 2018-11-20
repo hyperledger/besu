@@ -140,6 +140,21 @@ public interface BytesValue extends Comparable<BytesValue> {
   }
 
   /**
+   * Wraps a full Vert.x {@link Buffer} as a {@link BytesValue}.
+   *
+   * <p>Note that as the buffer is wrapped, any change to the content of that buffer may be
+   * reflected in the returned value.
+   *
+   * @param buffer The buffer to wrap.
+   * @param offset The offset in {@code buffer} from which to expose the bytes in the returned
+   *     value. That is, {@code wrapBuffer(buffer, i, 1).get(0) == buffer.getByte(i)}.
+   * @return A {@link BytesValue} that exposes the bytes of {@code buffer}.
+   */
+  static BytesValue wrapBuffer(final Buffer buffer, final int offset) {
+    return wrapBuffer(buffer, offset, buffer.length() - offset);
+  }
+
+  /**
    * Wraps a slice of a Vert.x {@link Buffer} as a {@link BytesValue}.
    *
    * <p>Note that as the buffer is wrapped, any change to the content of that buffer may be

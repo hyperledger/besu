@@ -21,9 +21,9 @@ import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.PublicKey;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
+import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
-import tech.pegasys.pantheon.ethereum.rlp.VertxBufferRLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.MutableBytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256Bytes;
@@ -122,7 +122,7 @@ public class Packet {
 
   public Buffer encode() {
     final BytesValue encodedSignature = encodeSignature(signature);
-    final VertxBufferRLPOutput encodedData = new VertxBufferRLPOutput();
+    final BytesValueRLPOutput encodedData = new BytesValueRLPOutput();
     data.writeTo(encodedData);
 
     final Buffer buffer =
@@ -130,8 +130,21 @@ public class Packet {
     hash.appendTo(buffer);
     encodedSignature.appendTo(buffer);
     buffer.appendByte(type.getValue());
-    encodedData.appendEncoded(buffer);
+    appendEncoded(encodedData, buffer);
     return buffer;
+  }
+
+  protected void appendEncoded(final BytesValueRLPOutput encoded, final Buffer buffer) {
+    final int size = encoded.encodedSize();
+    if (size == 0) {
+      return;
+    }
+
+    // We want to append to the buffer, and Buffer always grows to accommodate anything writing,
+    // so we write the last byte we know we'll need to make it resize accordingly.
+    final int start = buffer.length();
+    buffer.setByte(start + size - 1, (byte) 0);
+    encoded.writeEncoded(MutableBytesValue.wrapBuffer(buffer, start, size));
   }
 
   @SuppressWarnings("unchecked")
