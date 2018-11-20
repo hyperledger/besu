@@ -24,42 +24,44 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
+import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 
 import java.io.Closeable;
-import java.io.IOException;
-import java.nio.file.Path;
 
 public interface PantheonController<C> extends Closeable {
 
   String DATABASE_PATH = "database";
 
   static PantheonController<?> fromConfig(
+      final GenesisConfigFile genesisConfigFile,
       final SynchronizerConfiguration syncConfig,
-      final String configContents,
-      final Path pantheonHome,
+      final StorageProvider storageProvider,
       final boolean ottomanTestnetOperation,
       final int networkId,
       final MiningParameters miningParameters,
-      final KeyPair nodeKeys)
-      throws IOException {
+      final KeyPair nodeKeys) {
 
-    final GenesisConfigFile config = GenesisConfigFile.fromConfig(configContents);
-    final GenesisConfigOptions configOptions = config.getConfigOptions();
+    final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
 
     if (configOptions.isEthHash()) {
       return MainnetPantheonController.init(
-          pantheonHome,
-          config,
+          storageProvider,
+          genesisConfigFile,
           MainnetProtocolSchedule.fromConfig(configOptions),
           syncConfig,
           miningParameters,
           nodeKeys);
     } else if (configOptions.isIbft()) {
       return IbftPantheonController.init(
-          pantheonHome, config, syncConfig, ottomanTestnetOperation, networkId, nodeKeys);
+          storageProvider,
+          genesisConfigFile,
+          syncConfig,
+          ottomanTestnetOperation,
+          networkId,
+          nodeKeys);
     } else if (configOptions.isClique()) {
       return CliquePantheonController.init(
-          pantheonHome, config, syncConfig, miningParameters, networkId, nodeKeys);
+          storageProvider, genesisConfigFile, syncConfig, miningParameters, networkId, nodeKeys);
     } else {
       throw new IllegalArgumentException("Unknown consensus mechanism defined");
     }
@@ -68,8 +70,6 @@ public interface PantheonController<C> extends Closeable {
   ProtocolContext<C> getProtocolContext();
 
   ProtocolSchedule<C> getProtocolSchedule();
-
-  GenesisConfigOptions getGenesisConfigOptions();
 
   Synchronizer getSynchronizer();
 

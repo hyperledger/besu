@@ -18,13 +18,13 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
-import tech.pegasys.pantheon.ethereum.db.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
-import tech.pegasys.pantheon.ethereum.worldstate.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 

@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.ethereum.testutil;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryWorldStateArchive;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.core.Address;

@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.LogsBloomFilter;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.util.InvalidConfigurationException;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;

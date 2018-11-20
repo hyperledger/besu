@@ -12,8 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.vm;
 
-import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryBlockchain;
-import static tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture.createInMemoryWorldStateArchive;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 import static tech.pegasys.pantheon.ethereum.vm.WorldStateMock.insertAccount;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;

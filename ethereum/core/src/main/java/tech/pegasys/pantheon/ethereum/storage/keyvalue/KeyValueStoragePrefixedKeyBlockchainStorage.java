@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.db;
+package tech.pegasys.pantheon.ethereum.storage.keyvalue;
 
 import tech.pegasys.pantheon.ethereum.chain.TransactionLocation;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
+import tech.pegasys.pantheon.ethereum.db.BlockchainStorage;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.Bytes32;

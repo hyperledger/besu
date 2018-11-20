@@ -13,13 +13,13 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
@@ -371,7 +371,7 @@ public class PipelinedImportChainSegmentTaskTest
         blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get();
     final BlockBody genesisBody = blockchain.getBlockBody(genesisHeader.getHash()).get();
     final Block genesisBlock = new Block(genesisHeader, genesisBody);
-    final MutableBlockchain shortChain = InMemoryTestFixture.createInMemoryBlockchain(genesisBlock);
+    final MutableBlockchain shortChain = createInMemoryBlockchain(genesisBlock);
     long nextBlock = genesisHeader.getNumber() + 1;
     while (nextBlock <= lastBlockToInclude) {
       final BlockHeader header = blockchain.getBlockHeader(nextBlock).get();

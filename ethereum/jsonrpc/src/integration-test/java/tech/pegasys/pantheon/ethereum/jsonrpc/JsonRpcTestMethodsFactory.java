@@ -13,6 +13,8 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc;
 
 import static org.mockito.Mockito.mock;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
@@ -20,7 +22,6 @@ import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
@@ -50,12 +51,11 @@ public class JsonRpcTestMethodsFactory {
   }
 
   public Map<String, JsonRpcMethod> methods() {
-    final WorldStateArchive stateArchive = InMemoryTestFixture.createInMemoryWorldStateArchive();
+    final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
 
     importer.getGenesisState().writeStateTo(stateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
 
-    final MutableBlockchain blockchain =
-        InMemoryTestFixture.createInMemoryBlockchain(importer.getGenesisBlock());
+    final MutableBlockchain blockchain = createInMemoryBlockchain(importer.getGenesisBlock());
     final ProtocolContext<Void> context = new ProtocolContext<>(blockchain, stateArchive, null);
 
     for (final Block block : importer.getBlocks()) {

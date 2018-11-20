@@ -17,6 +17,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
@@ -24,7 +25,6 @@ import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.core.InMemoryTestFixture;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol.EthVersion;
@@ -694,7 +694,7 @@ public final class EthProtocolManagerTest {
   public void shouldSuccessfullyRespondToGetHeadersRequestLessThanZero()
       throws ExecutionException, InterruptedException {
     final Block genesisBlock = gen.genesisBlock();
-    final MutableBlockchain blockchain = InMemoryTestFixture.createInMemoryBlockchain(genesisBlock);
+    final MutableBlockchain blockchain = createInMemoryBlockchain(genesisBlock);
 
     final BlockDataGenerator.BlockOptions options =
         new BlockDataGenerator.BlockOptions()
