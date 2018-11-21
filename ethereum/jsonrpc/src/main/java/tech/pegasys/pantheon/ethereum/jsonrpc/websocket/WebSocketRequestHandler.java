@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.websocket;
 
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.methods.WebSocketRpcRequest;
 
 import java.util.Map;
@@ -45,12 +46,13 @@ public class WebSocketRequestHandler {
             request = buffer.toJsonObject().mapTo(WebSocketRpcRequest.class);
           } catch (final IllegalArgumentException | DecodeException e) {
             LOG.debug("Error mapping json to WebSocketRpcRequest", e);
-            future.complete(JsonRpcError.INVALID_REQUEST);
+            future.complete(new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST));
             return;
           }
 
           if (!methods.containsKey(request.getMethod())) {
-            future.complete(JsonRpcError.METHOD_NOT_FOUND);
+            future.complete(
+                new JsonRpcErrorResponse(request.getId(), JsonRpcError.METHOD_NOT_FOUND));
             LOG.debug("Can't find method {}", request.getMethod());
             return;
           }
@@ -61,14 +63,16 @@ public class WebSocketRequestHandler {
             future.complete(method.response(request));
           } catch (final Exception e) {
             LOG.error(JsonRpcError.INTERNAL_ERROR.getMessage(), e);
-            future.complete(JsonRpcError.INTERNAL_ERROR);
+            future.complete(new JsonRpcErrorResponse(request.getId(), JsonRpcError.INTERNAL_ERROR));
           }
         },
         result -> {
           if (result.succeeded()) {
             replyToClient(id, Json.encodeToBuffer(result.result()));
           } else {
-            replyToClient(id, Json.encodeToBuffer(JsonRpcError.INTERNAL_ERROR));
+            replyToClient(
+                id,
+                Json.encodeToBuffer(new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR)));
           }
         });
   }
