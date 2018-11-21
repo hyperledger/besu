@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.clique.blockcreation.CliqueBlockScheduler;
 import tech.pegasys.pantheon.consensus.clique.blockcreation.CliqueMinerExecutor;
 import tech.pegasys.pantheon.consensus.clique.blockcreation.CliqueMiningCoordinator;
+import tech.pegasys.pantheon.consensus.clique.jsonrpc.CliqueJsonRpcMethodsFactory;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.VoteTallyUpdater;
@@ -46,6 +47,8 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolFactory;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
@@ -54,6 +57,8 @@ import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 
 import java.io.IOException;
 import java.time.Clock;
+import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -232,6 +237,12 @@ public class CliquePantheonController implements PantheonController<CliqueContex
   @Override
   public MiningCoordinator getMiningCoordinator() {
     return miningCoordinator;
+  }
+
+  @Override
+  public Map<String, JsonRpcMethod> getAdditionalJsonRpcMethods(
+      final Collection<RpcApi> enabledRpcApis) {
+    return new CliqueJsonRpcMethodsFactory().methods(context, enabledRpcApis);
   }
 
   @Override
