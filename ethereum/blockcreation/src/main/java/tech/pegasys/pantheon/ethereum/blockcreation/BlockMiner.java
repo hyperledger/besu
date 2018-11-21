@@ -73,9 +73,9 @@ public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnabl
         LOG.info("Block creation process cancelled.");
         break;
       } catch (final InterruptedException ex) {
-        LOG.error("Block mining was interrupted {}", ex);
+        LOG.error("Block mining was interrupted.", ex);
       } catch (final Exception ex) {
-        LOG.error("Blocking mining threw an exception {}", ex);
+        LOG.error("Block mining threw an unhandled exception.", ex);
       }
     }
   }
