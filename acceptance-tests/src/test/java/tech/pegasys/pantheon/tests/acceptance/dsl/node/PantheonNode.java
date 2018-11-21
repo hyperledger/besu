@@ -25,20 +25,28 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionTimeoutException;
+import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
+import org.web3j.protocol.websocket.WebSocketClient;
+import org.web3j.protocol.websocket.WebSocketListener;
 import org.web3j.protocol.websocket.WebSocketService;
 import org.web3j.utils.Async;
 
@@ -150,13 +158,54 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
   public void useWebSocketsForJsonRpc() {
     final String url = wsRpcBaseUrl().isPresent() ? wsRpcBaseUrl().get() : "ws://127.0.0.1:8546";
 
+    checkIfWebSocketEndpointIsAvailable(url);
+
     final WebSocketService webSocketService = new WebSocketService(url, true);
+    try {
+      webSocketService.connect();
+    } catch (ConnectException e) {
+      throw new RuntimeException("Error connection to WebSocket endpoint", e);
+    }
 
     if (web3j != null) {
       web3j.shutdown();
     }
 
     web3j = Web3j.build(webSocketService, 2000, Async.defaultExecutorService());
+  }
+
+  private void checkIfWebSocketEndpointIsAvailable(final String url) {
+    WebSocketClient webSocketClient = new WebSocketClient(URI.create(url));
+    // Web3j implementation always invoke the listener (even when one hasn't been set). We are using
+    // this stub implementation to avoid a NullPointerException.
+    webSocketClient.setListener(
+        new WebSocketListener() {
+          @Override
+          public void onMessage(final String message) {
+            // DO NOTHING
+          }
+
+          @Override
+          public void onError(final Exception e) {
+            // DO NOTHING
+          }
+
+          @Override
+          public void onClose() {
+            // DO NOTHING
+          }
+        });
+
+    // Because we can't trust the connection timeout of the WebSocket client implementation, we are
+    // using this approach to verify if the endpoint is enabled.
+    webSocketClient.connect();
+    try {
+      Awaitility.await().atMost(5, TimeUnit.SECONDS).until(webSocketClient::isOpen);
+    } catch (ConditionTimeoutException e) {
+      throw new WebsocketNotConnectedException();
+    } finally {
+      webSocketClient.close();
+    }
   }
 
   @Override
