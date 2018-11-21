@@ -18,12 +18,9 @@ import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedObserver;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
-import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
-import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolution;
-import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolverInputs;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -137,35 +134,5 @@ public abstract class AbstractMiningCoordinator<
   @Override
   public void setExtraData(final BytesValue extraData) {
     executor.setExtraData(extraData);
-  }
-
-  @Override
-  public void setCoinbase(final Address coinbase) {
-    throw new UnsupportedOperationException(
-        "Current consensus mechanism prevents setting coinbase.");
-  }
-
-  @Override
-  public Optional<Address> getCoinbase() {
-    throw new UnsupportedOperationException(
-        "Current consensus mechanism prevents querying of coinbase.");
-  }
-
-  @Override
-  public Optional<Long> hashesPerSecond() {
-    throw new UnsupportedOperationException(
-        "Current consensus mechanism prevents querying of hashrate.");
-  }
-
-  @Override
-  public Optional<EthHashSolverInputs> getWorkDefinition() {
-    throw new UnsupportedOperationException(
-        "Current consensus mechanism prevents querying work definition.");
-  }
-
-  @Override
-  public boolean submitWork(final EthHashSolution solution) {
-    throw new UnsupportedOperationException(
-        "Current consensus mechanism prevents submission of work solutions.");
   }
 }

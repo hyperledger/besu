@@ -86,7 +86,7 @@ public class IbftLegacyVotingBlockInterfaceTest {
     final ValidatorVote vote =
         new ValidatorVote(ADD, AddressHelpers.ofValue(1), AddressHelpers.ofValue(2));
     final BlockHeaderBuilder builderWithVote =
-        blockInterface.insertVoteToHeaderBuilder(builder, Optional.of(vote));
+        IbftLegacyVotingBlockInterface.insertVoteToHeaderBuilder(builder, Optional.of(vote));
 
     final BlockHeader header = builderWithVote.buildBlockHeader();
 
@@ -99,7 +99,7 @@ public class IbftLegacyVotingBlockInterfaceTest {
     final ValidatorVote vote =
         new ValidatorVote(DROP, AddressHelpers.ofValue(1), AddressHelpers.ofValue(2));
     final BlockHeaderBuilder builderWithVote =
-        blockInterface.insertVoteToHeaderBuilder(builder, Optional.of(vote));
+        IbftLegacyVotingBlockInterface.insertVoteToHeaderBuilder(builder, Optional.of(vote));
 
     final BlockHeader header = builderWithVote.buildBlockHeader();
 
@@ -110,7 +110,7 @@ public class IbftLegacyVotingBlockInterfaceTest {
   @Test
   public void nonVoteBlendedIntoHeaderResultsInACoinbaseOfZero() {
     final BlockHeaderBuilder builderWithVote =
-        blockInterface.insertVoteToHeaderBuilder(builder, Optional.empty());
+        IbftLegacyVotingBlockInterface.insertVoteToHeaderBuilder(builder, Optional.empty());
 
     final BlockHeader header = builderWithVote.buildBlockHeader();
 
@@ -123,8 +123,7 @@ public class IbftLegacyVotingBlockInterfaceTest {
     final BlockHeader header =
         TestHelpers.createIbftSignedBlockHeader(headerBuilder, proposerKeys, validatorList);
 
-    final IbftLegacyVotingBlockInterface serDeser = new IbftLegacyVotingBlockInterface();
-    final List<Address> extractedValidators = serDeser.validatorsInBlock(header);
+    final List<Address> extractedValidators = blockInterface.validatorsInBlock(header);
 
     assertThat(extractedValidators).isEqualTo(validatorList);
   }

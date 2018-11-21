@@ -25,6 +25,8 @@ import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftEventQueue;
 import tech.pegasys.pantheon.consensus.ibft.IbftProcessor;
 import tech.pegasys.pantheon.consensus.ibft.IbftStateMachine;
+import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockCreatorFactory;
+import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftMiningCoordinator;
 import tech.pegasys.pantheon.consensus.ibft.network.IbftNetworkPeers;
 import tech.pegasys.pantheon.consensus.ibft.protocol.IbftProtocolManager;
 import tech.pegasys.pantheon.consensus.ibft.protocol.IbftSubProtocol;
@@ -38,8 +40,10 @@ import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
+import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.db.BlockchainStorage;
 import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
@@ -106,6 +110,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
       final StorageProvider storageProvider,
       final GenesisConfigFile genesisConfig,
       final SynchronizerConfiguration taintedSyncConfig,
+      final MiningParameters miningParams,
       final boolean ottomanTestnetOperation,
       final int networkId,
       final KeyPair nodeKeys) {
@@ -167,19 +172,35 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             ethProtocolManager.ethContext(),
             syncState);
 
+    final TransactionPool transactionPool =
+        TransactionPoolFactory.createTransactionPool(
+            protocolSchedule, protocolContext, ethProtocolManager.ethContext());
+
     final IbftEventQueue ibftEventQueue = new IbftEventQueue();
 
     blockchain.observeBlockAdded(new IbftChainObserver(ibftEventQueue));
 
-    final IbftStateMachine ibftStateMachine = new IbftStateMachine();
+    final IbftBlockCreatorFactory blockCreatorFactory =
+        new IbftBlockCreatorFactory(
+            (gasLimit) -> gasLimit,
+            transactionPool.getPendingTransactions(),
+            protocolContext,
+            protocolSchedule,
+            miningParams,
+            Util.publicKeyToAddress(nodeKeys.getPublicKey()));
+
+    final IbftStateMachine ibftStateMachine = new IbftStateMachine(blockCreatorFactory);
     final IbftProcessor ibftProcessor =
         new IbftProcessor(ibftEventQueue, ibftConfig.getRequestTimeoutMillis(), ibftStateMachine);
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
     processorExecutor.submit(ibftProcessor);
 
+    final MiningCoordinator ibftMiningCoordinator = new IbftMiningCoordinator(blockCreatorFactory);
+
     final Runnable closer =
         () -> {
           ibftProcessor.stop();
+          ibftMiningCoordinator.disable();
           processorExecutor.shutdownNow();
           try {
             processorExecutor.awaitTermination(5, TimeUnit.SECONDS);
@@ -192,10 +213,6 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             LOG.error("Failed to close storage provider", e);
           }
         };
-
-    final TransactionPool transactionPool =
-        TransactionPoolFactory.createTransactionPool(
-            protocolSchedule, protocolContext, ethProtocolManager.ethContext());
 
     final IbftNetworkPeers peers =
         new IbftNetworkPeers(protocolContext.getConsensusState().getVoteTally());

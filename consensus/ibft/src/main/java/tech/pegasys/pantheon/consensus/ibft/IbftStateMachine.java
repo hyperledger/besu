@@ -12,8 +12,16 @@
  */
 package tech.pegasys.pantheon.consensus.ibft;
 
+import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockCreatorFactory;
+
 /** Stateful evaluator for ibft events */
 public class IbftStateMachine {
+
+  private final IbftBlockCreatorFactory blockCreatorFactory;
+
+  public IbftStateMachine(final IbftBlockCreatorFactory blockCreatorFactory) {
+    this.blockCreatorFactory = blockCreatorFactory;
+  }
 
   /**
    * Attempt to consume the event and update the maintained state

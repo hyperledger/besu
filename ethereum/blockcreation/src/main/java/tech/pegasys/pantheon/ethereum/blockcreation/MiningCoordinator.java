@@ -35,13 +35,28 @@ public interface MiningCoordinator {
 
   void setExtraData(BytesValue extraData);
 
-  void setCoinbase(Address coinbase);
+  default void setCoinbase(final Address coinbase) {
+    throw new UnsupportedOperationException(
+        "Current consensus mechanism prevents setting coinbase.");
+  }
 
-  Optional<Address> getCoinbase();
+  default Optional<Address> getCoinbase() {
+    throw new UnsupportedOperationException(
+        "Current consensus mechanism prevents querying of coinbase.");
+  }
 
-  Optional<Long> hashesPerSecond();
+  default Optional<Long> hashesPerSecond() {
+    throw new UnsupportedOperationException(
+        "Current consensus mechanism prevents querying of hashrate.");
+  }
 
-  Optional<EthHashSolverInputs> getWorkDefinition();
+  default Optional<EthHashSolverInputs> getWorkDefinition() {
+    throw new UnsupportedOperationException(
+        "Current consensus mechanism prevents querying work definition.");
+  }
 
-  boolean submitWork(EthHashSolution solution);
+  default boolean submitWork(final EthHashSolution solution) {
+    throw new UnsupportedOperationException(
+        "Current consensus mechanism prevents submission of work solutions.");
+  }
 }

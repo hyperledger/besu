@@ -17,7 +17,6 @@ import tech.pegasys.pantheon.consensus.common.VoteBlockInterface;
 import tech.pegasys.pantheon.consensus.common.VoteType;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,29 +37,6 @@ public class IbftVotingBlockInterface implements VoteBlockInterface {
       return Optional.of(vote);
     }
     return Optional.empty();
-  }
-
-  @Override
-  public BlockHeaderBuilder insertVoteToHeaderBuilder(
-      final BlockHeaderBuilder builder, final Optional<ValidatorVote> vote) {
-    final BlockHeader header = builder.buildBlockHeader();
-    final IbftExtraData extraData = IbftExtraData.decode(header.getExtraData());
-
-    Optional<Vote> headerVote = Optional.empty();
-
-    if (vote.isPresent()) {
-      final ValidatorVote voteToCast = vote.get();
-      headerVote = Optional.of(new Vote(voteToCast.getRecipient(), voteToCast.getVotePolarity()));
-    }
-
-    final IbftExtraData includingVote =
-        new IbftExtraData(
-            extraData.getVanityData(),
-            extraData.getSeals(),
-            headerVote,
-            extraData.getRound(),
-            extraData.getValidators());
-    return BlockHeaderBuilder.fromHeader(header).extraData(includingVote.encode());
   }
 
   @Override
