@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.methods.WebSocketRpcRequest;
 
@@ -95,6 +96,9 @@ public class WebSocketRequestHandlerTest {
   public void jsonDecodeFailureShouldRespondInvalidRequest(final TestContext context) {
     final Async async = context.async();
 
+    final JsonRpcErrorResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST);
+
     final String websocketId = UUID.randomUUID().toString();
 
     vertx
@@ -102,7 +106,7 @@ public class WebSocketRequestHandlerTest {
         .consumer(websocketId)
         .handler(
             msg -> {
-              context.assertEquals(Json.encode(JsonRpcError.INVALID_REQUEST), msg.body());
+              context.assertEquals(Json.encode(expectedResponse), msg.body());
               verifyZeroInteractions(jsonRpcMethodMock);
               async.complete();
             })
@@ -115,6 +119,9 @@ public class WebSocketRequestHandlerTest {
   public void objectMapperFailureShouldRespondInvalidRequest(final TestContext context) {
     final Async async = context.async();
 
+    final JsonRpcErrorResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST);
+
     final String websocketId = UUID.randomUUID().toString();
 
     vertx
@@ -122,7 +129,7 @@ public class WebSocketRequestHandlerTest {
         .consumer(websocketId)
         .handler(
             msg -> {
-              context.assertEquals(Json.encode(JsonRpcError.INVALID_REQUEST), msg.body());
+              context.assertEquals(Json.encode(expectedResponse), msg.body());
               verifyZeroInteractions(jsonRpcMethodMock);
               async.complete();
             })
@@ -137,6 +144,8 @@ public class WebSocketRequestHandlerTest {
 
     final JsonObject requestJson =
         new JsonObject().put("id", 1).put("method", "eth_nonexistentMethod");
+    final JsonRpcErrorResponse expectedResponse =
+        new JsonRpcErrorResponse(1, JsonRpcError.METHOD_NOT_FOUND);
 
     final String websocketId = UUID.randomUUID().toString();
 
@@ -145,7 +154,7 @@ public class WebSocketRequestHandlerTest {
         .consumer(websocketId)
         .handler(
             msg -> {
-              context.assertEquals(Json.encode(JsonRpcError.METHOD_NOT_FOUND), msg.body());
+              context.assertEquals(Json.encode(expectedResponse), msg.body());
               async.complete();
             })
         .completionHandler(v -> handler.handle(websocketId, Buffer.buffer(requestJson.toString())));
@@ -160,6 +169,8 @@ public class WebSocketRequestHandlerTest {
     final JsonObject requestJson = new JsonObject().put("id", 1).put("method", "eth_x");
     final JsonRpcRequest expectedRequest = requestJson.mapTo(WebSocketRpcRequest.class);
     when(jsonRpcMethodMock.response(eq(expectedRequest))).thenThrow(new RuntimeException());
+    final JsonRpcErrorResponse expectedResponse =
+        new JsonRpcErrorResponse(1, JsonRpcError.INTERNAL_ERROR);
 
     final String websocketId = UUID.randomUUID().toString();
 
@@ -168,7 +179,7 @@ public class WebSocketRequestHandlerTest {
         .consumer(websocketId)
         .handler(
             msg -> {
-              context.assertEquals(Json.encode(JsonRpcError.INTERNAL_ERROR), msg.body());
+              context.assertEquals(Json.encode(expectedResponse), msg.body());
               async.complete();
             })
         .completionHandler(v -> handler.handle(websocketId, Buffer.buffer(requestJson.toString())));
