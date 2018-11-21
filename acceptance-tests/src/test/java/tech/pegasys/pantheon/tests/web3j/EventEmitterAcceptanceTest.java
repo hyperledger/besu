@@ -25,7 +25,6 @@ import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
@@ -34,7 +33,6 @@ import rx.Observable;
 /*
  * This class is based around the EventEmitter solidity contract
  */
-@Ignore
 public class EventEmitterAcceptanceTest extends AcceptanceTestBase {
 
   private PantheonNode node;

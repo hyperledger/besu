@@ -12,16 +12,17 @@
  */
 package tech.pegasys.pantheon.tests.acceptance;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
-@Ignore
 public class RpcApisTogglesAcceptanceTest extends AcceptanceTestBase {
 
   private PantheonNode rpcEnabledNode;
@@ -52,15 +53,16 @@ public class RpcApisTogglesAcceptanceTest extends AcceptanceTestBase {
   public void shouldSucceedConnectingToNodeWithWsRpcEnabled() {
     rpcEnabledNode.useWebSocketsForJsonRpc();
 
-    // TODO previously this test was calling netVersion using the HTTP not WebSockets, now failing
     rpcEnabledNode.verify(net.netVersion());
   }
 
   @Test
   public void shouldFailConnectingToNodeWithWsRpcDisabled() {
-    rpcDisabledNode.useWebSocketsForJsonRpc();
-
-    rpcDisabledNode.verify(net.netVersionExceptional(WebsocketNotConnectedException.class));
+    rpcDisabledNode.verify(
+        node -> {
+          final Throwable thrown = catchThrowable(() -> rpcDisabledNode.useWebSocketsForJsonRpc());
+          assertThat(thrown).isInstanceOf(WebsocketNotConnectedException.class);
+        });
   }
 
   @Test

@@ -26,7 +26,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-@Ignore
 public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
 
   private Vertx vertx;
@@ -52,7 +51,11 @@ public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
     vertx.close();
   }
 
+  /*
+   This test will be fixed on NC-1952
+  */
   @Test
+  @Ignore
   public void transactionRemovedByChainReorganisationMustPublishEvent() throws Exception {
 
     // Create the light fork
