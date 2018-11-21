@@ -34,7 +34,6 @@ public class IbftJsonRpcMethodsFactory {
     final Map<String, JsonRpcMethod> rpcMethods = new HashMap<>();
 
     if (jsonRpcApis.contains(IbftRpcApis.IBFT)) {
-      // @formatter:off
       addMethods(
           rpcMethods,
           new IbftProposeValidatorVote(

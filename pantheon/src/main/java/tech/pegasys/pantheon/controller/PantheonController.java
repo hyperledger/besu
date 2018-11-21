@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.controller;
 
+import static java.util.Collections.emptyMap;
+
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
@@ -21,12 +23,16 @@ import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 
 import java.io.Closeable;
+import java.util.Collection;
+import java.util.Map;
 
 public interface PantheonController<C> extends Closeable {
 
@@ -81,4 +87,9 @@ public interface PantheonController<C> extends Closeable {
   TransactionPool getTransactionPool();
 
   MiningCoordinator getMiningCoordinator();
+
+  default Map<String, JsonRpcMethod> getAdditionalJsonRpcMethods(
+      final Collection<RpcApi> enabledRpcApis) {
+    return emptyMap();
+  }
 }

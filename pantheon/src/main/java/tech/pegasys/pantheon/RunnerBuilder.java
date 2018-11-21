@@ -12,10 +12,6 @@
  */
 package tech.pegasys.pantheon;
 
-import tech.pegasys.pantheon.consensus.clique.CliqueContext;
-import tech.pegasys.pantheon.consensus.clique.jsonrpc.CliqueJsonRpcMethodsFactory;
-import tech.pegasys.pantheon.consensus.ibft.IbftContext;
-import tech.pegasys.pantheon.consensus.ibft.jsonrpc.IbftJsonRpcMethodsFactory;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -155,6 +151,7 @@ public class RunnerBuilder {
           jsonRpcMethods(
               context,
               protocolSchedule,
+              pantheonController,
               networkRunner,
               synchronizer,
               transactionPool,
@@ -172,6 +169,7 @@ public class RunnerBuilder {
           jsonRpcMethods(
               context,
               protocolSchedule,
+              pantheonController,
               networkRunner,
               synchronizer,
               transactionPool,
@@ -216,6 +214,7 @@ public class RunnerBuilder {
   private Map<String, JsonRpcMethod> jsonRpcMethods(
       final ProtocolContext<?> context,
       final ProtocolSchedule<?> protocolSchedule,
+      final PantheonController<?> pantheonController,
       final NetworkRunner networkRunner,
       final Synchronizer synchronizer,
       final TransactionPool transactionPool,
@@ -237,22 +236,7 @@ public class RunnerBuilder {
                 supportedCapabilities,
                 jsonRpcApis,
                 filterManager);
-
-    if (context.getConsensusState() instanceof CliqueContext) {
-      // This is checked before entering this if branch
-      @SuppressWarnings("unchecked")
-      final ProtocolContext<CliqueContext> cliqueProtocolContext =
-          (ProtocolContext<CliqueContext>) context;
-      methods.putAll(new CliqueJsonRpcMethodsFactory().methods(cliqueProtocolContext, jsonRpcApis));
-    }
-
-    if (context.getConsensusState() instanceof IbftContext) {
-      // This is checked before entering this if branch
-      @SuppressWarnings("unchecked")
-      final ProtocolContext<IbftContext> ibftProtocolContext =
-          (ProtocolContext<IbftContext>) context;
-      methods.putAll(new IbftJsonRpcMethodsFactory().methods(ibftProtocolContext, jsonRpcApis));
-    }
+    methods.putAll(pantheonController.getAdditionalJsonRpcMethods(jsonRpcApis));
     return methods;
   }
 

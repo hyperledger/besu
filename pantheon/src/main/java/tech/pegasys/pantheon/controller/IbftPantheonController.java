@@ -27,6 +27,7 @@ import tech.pegasys.pantheon.consensus.ibft.IbftProcessor;
 import tech.pegasys.pantheon.consensus.ibft.IbftStateMachine;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockCreatorFactory;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftMiningCoordinator;
+import tech.pegasys.pantheon.consensus.ibft.jsonrpc.IbftJsonRpcMethodsFactory;
 import tech.pegasys.pantheon.consensus.ibft.network.IbftNetworkPeers;
 import tech.pegasys.pantheon.consensus.ibft.protocol.IbftProtocolManager;
 import tech.pegasys.pantheon.consensus.ibft.protocol.IbftSubProtocol;
@@ -54,6 +55,8 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolFactory;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
@@ -62,6 +65,8 @@ import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -265,6 +270,12 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
   @Override
   public MiningCoordinator getMiningCoordinator() {
     return null;
+  }
+
+  @Override
+  public Map<String, JsonRpcMethod> getAdditionalJsonRpcMethods(
+      final Collection<RpcApi> enabledRpcApis) {
+    return new IbftJsonRpcMethodsFactory().methods(context, enabledRpcApis);
   }
 
   @Override
