@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.p2p.config.NetworkingConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryServiceException;
 import tech.pegasys.pantheon.ethereum.p2p.netty.NettyP2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.util.NetworkUtility;
 
 import java.io.IOException;
 
@@ -56,7 +57,9 @@ public class NetworkingServiceLifecycleTest {
       service.run();
       final int port = service.getDiscoverySocketAddress().getPort();
 
-      assertEquals("/0.0.0.0:" + port, service.getDiscoverySocketAddress().toString());
+      assertEquals(
+          (NetworkUtility.isIPv6Available() ? "/0:0:0:0:0:0:0:0:" : "/0.0.0.0:") + port,
+          service.getDiscoverySocketAddress().toString());
       assertThat(service.getDiscoveryPeers()).hasSize(0);
     }
   }

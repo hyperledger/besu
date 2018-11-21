@@ -150,7 +150,8 @@ public class PeerDiscoveryAgent implements DisconnectCallback {
       LOG.info("Starting peer discovery agent on host={}, port={}", host, port);
 
       vertx
-          .createDatagramSocket(new DatagramSocketOptions())
+          .createDatagramSocket(
+              new DatagramSocketOptions().setIpV6(NetworkUtility.isIPv6Available()))
           .listen(
               port,
               host,
