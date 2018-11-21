@@ -40,8 +40,6 @@ import java.util.function.Function;
 public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
 
   private final KeyPair nodeKeys;
-  private static final CliqueVotingBlockInterface votingInterface =
-      new CliqueVotingBlockInterface();
 
   public CliqueBlockCreator(
       final Address coinbase,
@@ -93,9 +91,11 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
         cliqueContext
             .getVoteProposer()
             .getVote(Util.publicKeyToAddress(nodeKeys.getPublicKey()), voteTally);
-    votingInterface.insertVoteToHeaderBuilder(builder, vote);
+    final BlockHeaderBuilder builderIncludingProposedVotes =
+        CliqueVotingBlockInterface.insertVoteToHeaderBuilder(builder, vote);
 
-    final CliqueExtraData sealedExtraData = constructSignedExtraData(builder.buildBlockHeader());
+    final CliqueExtraData sealedExtraData =
+        constructSignedExtraData(builderIncludingProposedVotes.buildBlockHeader());
 
     // Replace the extraData in the BlockHeaderBuilder, and return header.
     return builder.extraData(sealedExtraData.encode()).buildBlockHeader();

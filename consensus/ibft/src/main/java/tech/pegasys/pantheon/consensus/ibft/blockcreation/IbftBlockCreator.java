@@ -16,40 +16,55 @@ import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.AbstractBlockCreator;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.SealableBlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
 
 import java.util.function.Function;
 
-// TODO: Just a placeholder. Implementation is required.
+// This class is responsible for creating a block without committer seals (basically it was just
+// too hard to coordinate with the state machine).
 public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
   public IbftBlockCreator(
-      final Address coinbase,
+      final Address localAddress,
       final ExtraDataCalculator extraDataCalculator,
       final PendingTransactions pendingTransactions,
       final ProtocolContext<IbftContext> protocolContext,
       final ProtocolSchedule<IbftContext> protocolSchedule,
       final Function<Long, Long> gasLimitCalculator,
       final Wei minTransactionGasPrice,
-      final Address miningBeneficiary,
       final BlockHeader parentHeader) {
     super(
-        coinbase,
+        localAddress,
         extraDataCalculator,
         pendingTransactions,
         protocolContext,
         protocolSchedule,
         gasLimitCalculator,
         minTransactionGasPrice,
-        miningBeneficiary,
+        localAddress,
         parentHeader);
   }
 
   @Override
   protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
-    return null;
+
+    final BlockHashFunction blockHashFunction =
+        ScheduleBasedBlockHashFunction.create(protocolSchedule);
+
+    final BlockHeaderBuilder builder =
+        BlockHeaderBuilder.create()
+            .populateFrom(sealableBlockHeader)
+            .mixHash(Hash.ZERO)
+            .nonce(0L)
+            .blockHashFunction(blockHashFunction);
+
+    return builder.buildBlockHeader();
   }
 }

@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.consensus.clique.blockcreation;
 
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
+import tech.pegasys.pantheon.consensus.common.ConsensusHelpers;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
@@ -29,7 +30,6 @@ import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -96,7 +96,8 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
   public BytesValue calculateExtraData(final BlockHeader parentHeader) {
     final List<Address> validators = Lists.newArrayList();
 
-    final BytesValue vanityDataToInsert = createCorrectlySizedVanityData();
+    final BytesValue vanityDataToInsert =
+        ConsensusHelpers.zeroLeftPad(vanityData, CliqueExtraData.EXTRA_VANITY_LENGTH);
     // Building ON TOP of canonical head, if the next block is epoch, include validators.
     if (epochManager.isEpochBlock(parentHeader.getNumber() + 1)) {
       final VoteTally voteTally =
@@ -107,11 +108,5 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
     final CliqueExtraData extraData = new CliqueExtraData(vanityDataToInsert, null, validators);
 
     return extraData.encode();
-  }
-
-  private BytesValue createCorrectlySizedVanityData() {
-    final int vanityPadding = Math.max(0, CliqueExtraData.EXTRA_VANITY_LENGTH - vanityData.size());
-    return BytesValues.concatenate(BytesValue.wrap(new byte[vanityPadding]), vanityData)
-        .slice(0, CliqueExtraData.EXTRA_VANITY_LENGTH);
   }
 }

@@ -52,8 +52,7 @@ public class IbftLegacyVotingBlockInterface implements VoteBlockInterface {
     return Optional.empty();
   }
 
-  @Override
-  public BlockHeaderBuilder insertVoteToHeaderBuilder(
+  public static BlockHeaderBuilder insertVoteToHeaderBuilder(
       final BlockHeaderBuilder builder, final Optional<ValidatorVote> vote) {
     if (vote.isPresent()) {
       final ValidatorVote voteToCast = vote.get();

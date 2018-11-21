@@ -12,15 +12,14 @@
  */
 package tech.pegasys.pantheon.consensus.common;
 
-import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValues;
 
-import java.util.List;
-import java.util.Optional;
+public class ConsensusHelpers {
 
-public interface VoteBlockInterface {
-
-  Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header);
-
-  List<Address> validatorsInBlock(final BlockHeader header);
+  public static BytesValue zeroLeftPad(final BytesValue input, final int requiredLength) {
+    final int paddingByteCount = Math.max(0, requiredLength - input.size());
+    return BytesValues.concatenate(BytesValue.wrap(new byte[paddingByteCount]), input)
+        .slice(0, requiredLength);
+  }
 }
