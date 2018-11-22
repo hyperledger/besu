@@ -44,6 +44,7 @@ public class IbftSubProtocol implements SubProtocol {
       case IbftV2.PREPARE:
       case IbftV2.COMMIT:
       case IbftV2.ROUND_CHANGE:
+      case IbftV2.NEW_ROUND:
         return true;
 
       default:

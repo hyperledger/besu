@@ -13,8 +13,11 @@
 package tech.pegasys.pantheon.consensus.ibft.ibftmessage;
 
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftSignedMessageData;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+
+import java.util.function.Function;
 
 public abstract class AbstractIbftMessage extends AbstractMessageData {
   protected AbstractIbftMessage(final BytesValue data) {
@@ -22,4 +25,23 @@ public abstract class AbstractIbftMessage extends AbstractMessageData {
   }
 
   public abstract IbftSignedMessageData<?> decode();
+
+  protected static <T extends AbstractIbftMessage> T fromMessage(
+      final MessageData message,
+      final int messageCode,
+      final Class<T> clazz,
+      final Function<BytesValue, T> constructor) {
+    if (clazz.isInstance(message)) {
+      @SuppressWarnings("unchecked")
+      T castMessage = (T) message;
+      return castMessage;
+    }
+    final int code = message.getCode();
+    if (code != messageCode) {
+      throw new IllegalArgumentException(
+          String.format("Message has code %d and thus is not a %s", code, clazz.getSimpleName()));
+    }
+
+    return constructor.apply(message.getData());
+  }
 }

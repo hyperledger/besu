@@ -50,4 +50,13 @@ public class IbftPreparedCertificate {
     rlpOutput.writeList(ibftPrepareMessages, IbftSignedMessageData::writeTo);
     rlpOutput.endList();
   }
+
+  public IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> getIbftPrePrepareMessage() {
+    return ibftPrePrepareMessage;
+  }
+
+  public Collection<IbftSignedMessageData<IbftUnsignedPrepareMessageData>>
+      getIbftPrepareMessages() {
+    return ibftPrepareMessages;
+  }
 }

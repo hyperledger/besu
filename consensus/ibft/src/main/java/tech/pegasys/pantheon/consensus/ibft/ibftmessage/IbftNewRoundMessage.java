@@ -13,32 +13,32 @@
 package tech.pegasys.pantheon.consensus.ibft.ibftmessage;
 
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftSignedMessageData;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftUnsignedPrepareMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftUnsignedNewRoundMessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-public class IbftPrepareMessage extends AbstractIbftMessage {
+public class IbftNewRoundMessage extends AbstractIbftMessage {
 
-  private static final int MESSAGE_CODE = IbftV2.PREPARE;
+  private static final int MESSAGE_CODE = IbftV2.NEW_ROUND;
 
-  private IbftPrepareMessage(final BytesValue data) {
+  private IbftNewRoundMessage(final BytesValue data) {
     super(data);
   }
 
-  public static IbftPrepareMessage fromMessage(final MessageData message) {
-    return fromMessage(message, MESSAGE_CODE, IbftPrepareMessage.class, IbftPrepareMessage::new);
+  public static IbftNewRoundMessage fromMessage(final MessageData message) {
+    return fromMessage(message, MESSAGE_CODE, IbftNewRoundMessage.class, IbftNewRoundMessage::new);
   }
 
   @Override
-  public IbftSignedMessageData<IbftUnsignedPrepareMessageData> decode() {
-    return IbftSignedMessageData.readIbftSignedPrepareMessageDataFrom(RLP.input(data));
+  public IbftSignedMessageData<IbftUnsignedNewRoundMessageData> decode() {
+    return IbftSignedMessageData.readIbftSignedNewRoundMessageDataFrom(RLP.input(data));
   }
 
-  public static IbftPrepareMessage create(
-      final IbftSignedMessageData<IbftUnsignedPrepareMessageData> ibftPrepareMessageDecoded) {
+  public static IbftNewRoundMessage create(
+      final IbftSignedMessageData<IbftUnsignedNewRoundMessageData> ibftPrepareMessageDecoded) {
 
-    return new IbftPrepareMessage(ibftPrepareMessageDecoded.encode());
+    return new IbftNewRoundMessage(ibftPrepareMessageDecoded.encode());
   }
 
   @Override
