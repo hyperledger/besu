@@ -125,7 +125,7 @@ final class DeFramer extends ByteToMessageDecoder {
             : throwable;
     if (cause instanceof FramingException) {
       LOG.debug("Invalid incoming message", throwable);
-      if (connectFuture.isDone()) {
+      if (connectFuture.isDone() && !connectFuture.isCompletedExceptionally()) {
         connectFuture.get().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
         return;
       }
@@ -135,7 +135,7 @@ final class DeFramer extends ByteToMessageDecoder {
     } else {
       LOG.error("Exception while processing incoming message", throwable);
     }
-    if (connectFuture.isDone()) {
+    if (connectFuture.isDone() && !connectFuture.isCompletedExceptionally()) {
       connectFuture.get().terminateConnection(DisconnectReason.TCP_SUBSYSTEM_ERROR, false);
     } else {
       connectFuture.completeExceptionally(throwable);
