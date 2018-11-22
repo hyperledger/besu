@@ -83,12 +83,36 @@ public class IbftSignedMessageData<M extends AbstractIbftUnsignedMessageData> {
     return from(unsignedMessageData, signature);
   }
 
+  public static IbftSignedMessageData<IbftUnsignedCommitMessageData>
+      readIbftSignedCommitMessageDataFrom(final RLPInput rlpInput) {
+
+    rlpInput.enterList();
+    final IbftUnsignedCommitMessageData unsignedMessageData =
+        IbftUnsignedCommitMessageData.readFrom(rlpInput);
+    final Signature signature = readSignature(rlpInput);
+    rlpInput.leaveList();
+
+    return from(unsignedMessageData, signature);
+  }
+
   public static IbftSignedMessageData<IbftUnsignedRoundChangeMessageData>
       readIbftSignedRoundChangeMessageDataFrom(final RLPInput rlpInput) {
 
     rlpInput.enterList();
     final IbftUnsignedRoundChangeMessageData unsignedMessageData =
         IbftUnsignedRoundChangeMessageData.readFrom(rlpInput);
+    final Signature signature = readSignature(rlpInput);
+    rlpInput.leaveList();
+
+    return from(unsignedMessageData, signature);
+  }
+
+  public static IbftSignedMessageData<IbftUnsignedNewRoundMessageData>
+      readIbftSignedNewRoundMessageDataFrom(final RLPInput rlpInput) {
+
+    rlpInput.enterList();
+    final IbftUnsignedNewRoundMessageData unsignedMessageData =
+        IbftUnsignedNewRoundMessageData.readFrom(rlpInput);
     final Signature signature = readSignature(rlpInput);
     rlpInput.leaveList();
 

@@ -27,16 +27,8 @@ public class IbftRoundChangeMessage extends AbstractIbftMessage {
   }
 
   public static IbftRoundChangeMessage fromMessage(final MessageData message) {
-    if (message instanceof IbftRoundChangeMessage) {
-      return (IbftRoundChangeMessage) message;
-    }
-    final int code = message.getCode();
-    if (code != MESSAGE_CODE) {
-      throw new IllegalArgumentException(
-          String.format("Message has code %d and thus is not a RoundChangeMessage", code));
-    }
-
-    return new IbftRoundChangeMessage(message.getData());
+    return fromMessage(
+        message, MESSAGE_CODE, IbftRoundChangeMessage.class, IbftRoundChangeMessage::new);
   }
 
   @Override

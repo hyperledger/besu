@@ -13,33 +13,35 @@
 package tech.pegasys.pantheon.consensus.ibft.ibftmessagedata;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
-import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftV2;
-import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
-// NOTE: Implementation of all methods of this class is still pending. This class was added to show
-// how a PreparedCertificate is encoded and decoded inside a RoundChange message
-public class IbftUnsignedPrePrepareMessageData extends AbstractIbftUnsignedInRoundMessageData {
+public class IbftUnsignedCommitMessageData extends AbstractIbftUnsignedInRoundMessageData {
+  private static final int TYPE = IbftV2.COMMIT;
+  private final Hash digest;
+  private final Signature commitSeal;
 
-  private static final int TYPE = IbftV2.PRE_PREPARE;
-  private final Block block;
-
-  public IbftUnsignedPrePrepareMessageData(
-      final ConsensusRoundIdentifier roundIdentifier, final Block block) {
+  public IbftUnsignedCommitMessageData(
+      final ConsensusRoundIdentifier roundIdentifier,
+      final Hash digest,
+      final Signature commitSeal) {
     super(roundIdentifier);
-    this.block = block;
+    this.digest = digest;
+    this.commitSeal = commitSeal;
   }
 
-  public static IbftUnsignedPrePrepareMessageData readFrom(final RLPInput rlpInput) {
+  public static IbftUnsignedCommitMessageData readFrom(final RLPInput rlpInput) {
 
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
-    final Block block = Block.readFrom(rlpInput, IbftBlockHashing::calculateHashOfIbftBlockOnChain);
+    final Hash digest = readDigest(rlpInput);
+    final Signature commitSeal = rlpInput.readBytesValue(Signature::decode);
     rlpInput.leaveList();
 
-    return new IbftUnsignedPrePrepareMessageData(roundIdentifier, block);
+    return new IbftUnsignedCommitMessageData(roundIdentifier, digest, commitSeal);
   }
 
   @Override
@@ -47,16 +49,21 @@ public class IbftUnsignedPrePrepareMessageData extends AbstractIbftUnsignedInRou
 
     rlpOutput.startList();
     roundIdentifier.writeTo(rlpOutput);
-    block.writeTo(rlpOutput);
+    rlpOutput.writeBytesValue(digest);
+    rlpOutput.writeBytesValue(commitSeal.encodedBytes());
     rlpOutput.endList();
-  }
-
-  public Block getBlock() {
-    return block;
   }
 
   @Override
   public int getMessageType() {
     return TYPE;
+  }
+
+  public Hash getDigest() {
+    return digest;
+  }
+
+  public Signature getCommitSeal() {
+    return commitSeal;
   }
 }

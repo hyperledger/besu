@@ -16,6 +16,7 @@ import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
+import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
@@ -29,6 +30,16 @@ public class IbftMessageFactory {
     this.validatorKeyPair = validatorKeyPair;
   }
 
+  public IbftSignedMessageData<IbftUnsignedPrePrepareMessageData>
+      createIbftSignedPrePrepareMessageData(
+          final ConsensusRoundIdentifier roundIdentifier, final Block block) {
+
+    IbftUnsignedPrePrepareMessageData prePrepareUnsignedMessageData =
+        new IbftUnsignedPrePrepareMessageData(roundIdentifier, block);
+
+    return createSignedMessage(prePrepareUnsignedMessageData);
+  }
+
   public IbftSignedMessageData<IbftUnsignedPrepareMessageData> createIbftSignedPrepareMessageData(
       final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
 
@@ -36,6 +47,17 @@ public class IbftMessageFactory {
         new IbftUnsignedPrepareMessageData(roundIdentifier, digest);
 
     return createSignedMessage(prepareUnsignedMessageData);
+  }
+
+  public IbftSignedMessageData<IbftUnsignedCommitMessageData> createIbftSignedCommitMessageData(
+      final ConsensusRoundIdentifier roundIdentifier,
+      final Hash digest,
+      final Signature commitSeal) {
+
+    IbftUnsignedCommitMessageData commitUnsignedMessageData =
+        new IbftUnsignedCommitMessageData(roundIdentifier, digest, commitSeal);
+
+    return createSignedMessage(commitUnsignedMessageData);
   }
 
   public IbftSignedMessageData<IbftUnsignedRoundChangeMessageData>
@@ -47,6 +69,20 @@ public class IbftMessageFactory {
         new IbftUnsignedRoundChangeMessageData(roundIdentifier, preparedCertificate);
 
     return createSignedMessage(prepareUnsignedMessageData);
+  }
+
+  public IbftSignedMessageData<IbftUnsignedNewRoundMessageData>
+      createIbftSignedNewRoundChangeMessageData(
+          final ConsensusRoundIdentifier roundIdentifier,
+          final IbftRoundChangeCertificate roundChangeCertificate,
+          final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData>
+              ibftPrePrepareMessageData) {
+
+    IbftUnsignedNewRoundMessageData newRoundUnsignedMessageData =
+        new IbftUnsignedNewRoundMessageData(
+            roundIdentifier, roundChangeCertificate, ibftPrePrepareMessageData);
+
+    return createSignedMessage(newRoundUnsignedMessageData);
   }
 
   private <M extends AbstractIbftUnsignedMessageData> IbftSignedMessageData<M> createSignedMessage(

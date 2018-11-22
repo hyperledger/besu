@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.consensus.ibft;
 
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftCommitMessage;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftNewRoundMessage;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftPrePrepareMessage;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftPrepareMessage;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftRoundChangeMessage;
@@ -32,8 +34,14 @@ public class IbftMessages {
       case IbftV2.PREPARE:
         return IbftPrepareMessage.fromMessage(messageData).decode();
 
+      case IbftV2.COMMIT:
+        return IbftCommitMessage.fromMessage(messageData).decode();
+
       case IbftV2.ROUND_CHANGE:
         return IbftRoundChangeMessage.fromMessage(messageData).decode();
+
+      case IbftV2.NEW_ROUND:
+        return IbftNewRoundMessage.fromMessage(messageData).decode();
 
       default:
         throw new IllegalArgumentException(

@@ -18,6 +18,7 @@ public class IbftV2 {
   public static final int PREPARE = 1;
   public static final int COMMIT = 2;
   public static final int ROUND_CHANGE = 3;
+  public static final int NEW_ROUND = 4;
 
-  public static final int MESSAGE_SPACE = 4;
+  public static final int MESSAGE_SPACE = 5;
 }
