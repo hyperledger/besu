@@ -52,4 +52,22 @@ public class DeFramerTest {
 
     verify(peerConnection).disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
   }
+
+  @Test
+  public void shouldHandleFramingExceptionWhenFutureCompletedExceptionally() throws Exception {
+    connectFuture.completeExceptionally(new Exception());
+
+    deFramer.exceptionCaught(ctx, new DecoderException(new FramingException("Test")));
+
+    verify(ctx).close();
+  }
+
+  @Test
+  public void shouldHandleGenericExceptionWhenFutureCompletedExceptionally() throws Exception {
+    connectFuture.completeExceptionally(new Exception());
+
+    deFramer.exceptionCaught(ctx, new DecoderException(new RuntimeException("Test")));
+
+    verify(ctx).close();
+  }
 }
