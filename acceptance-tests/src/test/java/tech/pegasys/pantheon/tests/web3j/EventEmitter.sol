@@ -10,11 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-pragma solidity ^0.4.0;
+pragma solidity >=0.4.0 <0.6.0;
+
 // compile with:
 // solc EventEmitter.sol --bin --abi --optimize --overwrite -o .
 // then create web3j wrappers with:
-// web3j solidity generate ./generated/EventEmitter.bin ./generated/EventEmitter.abi -o ../../../../../ -p tech.pegasys.pantheon.tests.web3j.generated
+// web3j solidity generate -b ./generated/EventEmitter.bin -a ./generated/EventEmitter.abi -o ../../../../../ -p tech.pegasys.pantheon.tests.web3j.generated
 contract EventEmitter {
     address owner;
     event stored(address _to, uint _amount);
@@ -31,11 +32,11 @@ contract EventEmitter {
         _sender = msg.sender;
     }
 
-    function value()  constant public  returns (uint) {
+    function value()  view public  returns (uint) {
         return _value;
     }
 
-    function sender() constant public returns (address) {
+    function sender() view public returns (address) {
         return _sender;
     }
 }

@@ -51,7 +51,7 @@ dependencyManagement {
     dependency('org.openjdk.jmh:jmh-core:1.21')
     dependency('org.openjdk.jmh:jmh-generator-annprocess:1.21')
 
-    dependency('org.web3j:core:3.5.0')
+    dependency('org.web3j:core:4.0.1')
     dependency("com.google.errorprone:error_prone_check_api:2.3.1")
     dependency("com.google.errorprone:error_prone_core:2.3.1")
     dependency("com.google.errorprone:error_prone_annotation:2.3.1")

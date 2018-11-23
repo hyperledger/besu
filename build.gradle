@@ -154,7 +154,7 @@ allprojects {
     ]
 
     options.errorprone {
-      excludedPaths '.*/(generated|.*ReferenceTest_.*)'
+      excludedPaths '.*/(generated/*.*|.*ReferenceTest_.*)'
       check('FutureReturnValueIgnored', CheckSeverity.OFF)
       check('InsecureCryptoUsage', CheckSeverity.WARN)
       check('FieldCanBeFinal', CheckSeverity.WARN)

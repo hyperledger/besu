@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.tests.web3j;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -24,11 +25,12 @@ import tech.pegasys.pantheon.tests.web3j.generated.EventEmitter.StoredEventRespo
 import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.reactivex.Flowable;
+import io.reactivex.disposables.Disposable;
 import org.junit.Before;
 import org.junit.Test;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
-import rx.Observable;
 
 /*
  * This class is based around the EventEmitter solidity contract
@@ -48,16 +50,19 @@ public class EventEmitterAcceptanceTest extends AcceptanceTestBase {
     final EventEmitter eventEmitter =
         node.execute(transactions.createSmartContract(EventEmitter.class));
 
-    final Observable<StoredEventResponse> storedEventResponseObservable =
-        eventEmitter.storedEventObservable(new EthFilter());
+    final Flowable<StoredEventResponse> storedEventResponseObservable =
+        eventEmitter.storedEventFlowable(new EthFilter());
 
     final AtomicBoolean subscriptionReceived = new AtomicBoolean(false);
 
-    storedEventResponseObservable.subscribe(
-        storedEventResponse -> {
-          subscriptionReceived.set(true);
-          assertEquals(BigInteger.valueOf(12), storedEventResponse._amount);
-        });
+    final Disposable subscription =
+        storedEventResponseObservable.subscribe(
+            storedEventResponse -> {
+              subscriptionReceived.set(true);
+              assertEquals(BigInteger.valueOf(12), storedEventResponse._amount);
+            });
+
+    assertFalse(subscription.isDisposed());
 
     final TransactionReceipt receipt = eventEmitter.store(BigInteger.valueOf(12)).send();
 
