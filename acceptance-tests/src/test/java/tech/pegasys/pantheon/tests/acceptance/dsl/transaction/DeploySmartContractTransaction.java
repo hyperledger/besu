@@ -30,7 +30,7 @@ public class DeploySmartContractTransaction<T extends Contract> implements Trans
 
   private final Class<T> clazz;
 
-  public DeploySmartContractTransaction(final Class<T> clazz) {
+  DeploySmartContractTransaction(final Class<T> clazz) {
     this.clazz = clazz;
   }
 
