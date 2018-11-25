@@ -31,10 +31,9 @@ public class VoteTallyUpdater {
   private static final Logger LOG = LogManager.getLogger();
 
   private final EpochManager epochManager;
-  private final VoteBlockInterface blockInterface;
+  private final BlockInterface blockInterface;
 
-  public VoteTallyUpdater(
-      final EpochManager epochManager, final VoteBlockInterface blockInterface) {
+  public VoteTallyUpdater(final EpochManager epochManager, final BlockInterface blockInterface) {
     this.epochManager = epochManager;
     this.blockInterface = blockInterface;
   }

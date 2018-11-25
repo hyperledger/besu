@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.clique.headervalidationrules;
 
-import tech.pegasys.pantheon.consensus.clique.CliqueVotingBlockInterface;
+import tech.pegasys.pantheon.consensus.clique.CliqueBlockInterface;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
@@ -33,7 +33,7 @@ public class VoteValidationRule implements DetachedBlockHeaderValidationRule {
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     final long nonce = header.getNonce();
-    if (!CliqueVotingBlockInterface.isValidVoteValue(nonce)) {
+    if (!CliqueBlockInterface.isValidVoteValue(nonce)) {
       LOG.trace("Nonce value ({}) is neither auth or drop.", nonce);
       return false;
     }

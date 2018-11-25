@@ -12,8 +12,8 @@
  */
 package tech.pegasys.pantheon.consensus.ibft;
 
+import tech.pegasys.pantheon.consensus.common.BlockInterface;
 import tech.pegasys.pantheon.consensus.common.ValidatorVote;
-import tech.pegasys.pantheon.consensus.common.VoteBlockInterface;
 import tech.pegasys.pantheon.consensus.common.VoteType;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -21,7 +21,12 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import java.util.List;
 import java.util.Optional;
 
-public class IbftVotingBlockInterface implements VoteBlockInterface {
+public class IbftBlockInterface implements BlockInterface {
+
+  @Override
+  public Address getProposerOfBlock(final BlockHeader header) {
+    return header.getCoinbase();
+  }
 
   @Override
   public Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header) {
@@ -32,7 +37,7 @@ public class IbftVotingBlockInterface implements VoteBlockInterface {
       final ValidatorVote vote =
           new ValidatorVote(
               headerVote.isAuth() ? VoteType.ADD : VoteType.DROP,
-              header.getCoinbase(),
+              getProposerOfBlock(header),
               headerVote.getRecipient());
       return Optional.of(vote);
     }

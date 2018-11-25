@@ -33,7 +33,7 @@ import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 
-public class IbftLegacyVotingBlockInterfaceTest {
+public class IbftLegacyBlockInterfaceTest {
 
   private static final KeyPair proposerKeys = KeyPair.generate();
   private static final Address proposerAddress =
@@ -41,8 +41,7 @@ public class IbftLegacyVotingBlockInterfaceTest {
   private static final List<Address> validatorList = singletonList(proposerAddress);
 
   private final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
-  private final IbftLegacyVotingBlockInterface blockInterface =
-      new IbftLegacyVotingBlockInterface();
+  private final IbftLegacyBlockInterface blockInterface = new IbftLegacyBlockInterface();
   private final BlockHeaderBuilder builder =
       BlockHeaderBuilder.fromHeader(headerBuilder.buildHeader())
           .blockHashFunction(MainnetBlockHashFunction::createHash);
@@ -86,7 +85,7 @@ public class IbftLegacyVotingBlockInterfaceTest {
     final ValidatorVote vote =
         new ValidatorVote(ADD, AddressHelpers.ofValue(1), AddressHelpers.ofValue(2));
     final BlockHeaderBuilder builderWithVote =
-        IbftLegacyVotingBlockInterface.insertVoteToHeaderBuilder(builder, Optional.of(vote));
+        IbftLegacyBlockInterface.insertVoteToHeaderBuilder(builder, Optional.of(vote));
 
     final BlockHeader header = builderWithVote.buildBlockHeader();
 
@@ -99,7 +98,7 @@ public class IbftLegacyVotingBlockInterfaceTest {
     final ValidatorVote vote =
         new ValidatorVote(DROP, AddressHelpers.ofValue(1), AddressHelpers.ofValue(2));
     final BlockHeaderBuilder builderWithVote =
-        IbftLegacyVotingBlockInterface.insertVoteToHeaderBuilder(builder, Optional.of(vote));
+        IbftLegacyBlockInterface.insertVoteToHeaderBuilder(builder, Optional.of(vote));
 
     final BlockHeader header = builderWithVote.buildBlockHeader();
 
@@ -110,7 +109,7 @@ public class IbftLegacyVotingBlockInterfaceTest {
   @Test
   public void nonVoteBlendedIntoHeaderResultsInACoinbaseOfZero() {
     final BlockHeaderBuilder builderWithVote =
-        IbftLegacyVotingBlockInterface.insertVoteToHeaderBuilder(builder, Optional.empty());
+        IbftLegacyBlockInterface.insertVoteToHeaderBuilder(builder, Optional.empty());
 
     final BlockHeader header = builderWithVote.buildBlockHeader();
 

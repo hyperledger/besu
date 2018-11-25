@@ -12,8 +12,8 @@
  */
 package tech.pegasys.pantheon.consensus.clique;
 
+import tech.pegasys.pantheon.consensus.common.BlockInterface;
 import tech.pegasys.pantheon.consensus.common.ValidatorVote;
-import tech.pegasys.pantheon.consensus.common.VoteBlockInterface;
 import tech.pegasys.pantheon.consensus.common.VoteType;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -25,7 +25,7 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableBiMap;
 
-public class CliqueVotingBlockInterface implements VoteBlockInterface {
+public class CliqueBlockInterface implements BlockInterface {
 
   public static final Address NO_VOTE_SUBJECT =
       Address.wrap(BytesValue.wrap(new byte[Address.SIZE]));
@@ -39,11 +39,16 @@ public class CliqueVotingBlockInterface implements VoteBlockInterface {
           VoteType.DROP, DROP_NONCE);
 
   @Override
+  public Address getProposerOfBlock(final BlockHeader header) {
+    final CliqueExtraData cliqueExtraData = CliqueExtraData.decode(header.getExtraData());
+    return CliqueBlockHashing.recoverProposerAddress(header, cliqueExtraData);
+  }
+
+  @Override
   public Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header) {
     final Address candidate = header.getCoinbase();
     if (!candidate.equals(NO_VOTE_SUBJECT)) {
-      final CliqueExtraData cliqueExtraData = CliqueExtraData.decode(header.getExtraData());
-      final Address proposer = CliqueBlockHashing.recoverProposerAddress(header, cliqueExtraData);
+      final Address proposer = getProposerOfBlock(header);
       final VoteType votePolarity = voteToValue.inverse().get(header.getNonce());
       final Address recipient = header.getCoinbase();
 

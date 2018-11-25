@@ -99,7 +99,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     builder.mixHash(
         Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"));
     builder.ommersHash(Hash.EMPTY_LIST_HASH);
-    builder.nonce(IbftLegacyVotingBlockInterface.DROP_NONCE);
+    builder.nonce(IbftLegacyBlockInterface.DROP_NONCE);
     builder.difficulty(UInt256.ONE);
 
     // Construct an extraData block
