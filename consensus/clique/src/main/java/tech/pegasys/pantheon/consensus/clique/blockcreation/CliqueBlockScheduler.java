@@ -29,6 +29,7 @@ public class CliqueBlockScheduler extends DefaultBlockScheduler {
 
   private final VoteTallyCache voteTallyCache;
   private final Address localNodeAddress;
+  private final Random r = new Random();
 
   public CliqueBlockScheduler(
       final Clock clock,
@@ -64,8 +65,8 @@ public class CliqueBlockScheduler extends DefaultBlockScheduler {
 
   private int calculatorOutOfTurnDelay(final ValidatorProvider validators) {
     final int countSigners = validators.getCurrentValidators().size();
-    final int maxDelay = ((countSigners / 2) + 1) * OUT_OF_TURN_DELAY_MULTIPLIER_MILLIS;
-    final Random r = new Random();
-    return r.nextInt(maxDelay + 1);
+    final double multiplier = (countSigners / 2d) + 1;
+    final int maxDelay = (int) (multiplier * OUT_OF_TURN_DELAY_MULTIPLIER_MILLIS);
+    return r.nextInt(maxDelay) + 1;
   }
 }
