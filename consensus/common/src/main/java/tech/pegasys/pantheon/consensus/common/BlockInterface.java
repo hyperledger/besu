@@ -18,7 +18,9 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import java.util.List;
 import java.util.Optional;
 
-public interface VoteBlockInterface {
+public interface BlockInterface {
+
+  Address getProposerOfBlock(final BlockHeader header);
 
   Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header);
 

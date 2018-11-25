@@ -20,11 +20,11 @@ import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.create
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
+import tech.pegasys.pantheon.consensus.clique.CliqueBlockInterface;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
 import tech.pegasys.pantheon.consensus.clique.CliqueHelpers;
 import tech.pegasys.pantheon.consensus.clique.CliqueProtocolSchedule;
-import tech.pegasys.pantheon.consensus.clique.CliqueVotingBlockInterface;
 import tech.pegasys.pantheon.consensus.clique.TestHelpers;
 import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
@@ -141,7 +141,7 @@ public class CliqueBlockCreatorTest {
             blockchain.getChainHeadHeader());
 
     final Block createdBlock = blockCreator.createBlock(0L);
-    assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueVotingBlockInterface.ADD_NONCE);
+    assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.ADD_NONCE);
     assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(a1);
   }
 
@@ -166,8 +166,7 @@ public class CliqueBlockCreatorTest {
             blockchain.getChainHeadHeader());
 
     final Block createdBlock = blockCreator.createBlock(0L);
-    assertThat(createdBlock.getHeader().getNonce())
-        .isEqualTo(CliqueVotingBlockInterface.DROP_NONCE);
+    assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.DROP_NONCE);
     assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(Address.fromHexString("0"));
   }
 }

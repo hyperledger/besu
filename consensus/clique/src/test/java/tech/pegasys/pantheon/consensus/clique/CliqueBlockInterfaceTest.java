@@ -32,14 +32,14 @@ import java.util.Optional;
 
 import org.junit.Test;
 
-public class CliqueVotingBlockInterfaceTest {
+public class CliqueBlockInterfaceTest {
 
   private static final KeyPair proposerKeys = KeyPair.generate();
   private static final Address proposerAddress =
       Util.publicKeyToAddress(proposerKeys.getPublicKey());
   private static final List<Address> validatorList = singletonList(proposerAddress);
 
-  private final CliqueVotingBlockInterface blockInterface = new CliqueVotingBlockInterface();
+  private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
   private final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
@@ -86,7 +86,7 @@ public class CliqueVotingBlockInterfaceTest {
     final ValidatorVote vote =
         new ValidatorVote(ADD, AddressHelpers.ofValue(1), AddressHelpers.ofValue(2));
     final BlockHeaderBuilder builderWithVote =
-        CliqueVotingBlockInterface.insertVoteToHeaderBuilder(builder, Optional.of(vote));
+        CliqueBlockInterface.insertVoteToHeaderBuilder(builder, Optional.of(vote));
 
     final BlockHeader header = builderWithVote.buildBlockHeader();
 
@@ -100,7 +100,7 @@ public class CliqueVotingBlockInterfaceTest {
     final ValidatorVote vote =
         new ValidatorVote(DROP, AddressHelpers.ofValue(1), AddressHelpers.ofValue(2));
     final BlockHeaderBuilder builderWithVote =
-        CliqueVotingBlockInterface.insertVoteToHeaderBuilder(builder, Optional.of(vote));
+        CliqueBlockInterface.insertVoteToHeaderBuilder(builder, Optional.of(vote));
 
     final BlockHeader header = builderWithVote.buildBlockHeader();
 
@@ -111,7 +111,7 @@ public class CliqueVotingBlockInterfaceTest {
   @Test
   public void nonVoteBlendedIntoHeaderResultsInACoinbaseOfZero() {
     final BlockHeaderBuilder builderWithVote =
-        CliqueVotingBlockInterface.insertVoteToHeaderBuilder(builder, Optional.empty());
+        CliqueBlockInterface.insertVoteToHeaderBuilder(builder, Optional.empty());
 
     final BlockHeader header = builderWithVote.buildBlockHeader();
 

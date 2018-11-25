@@ -13,9 +13,9 @@
 package tech.pegasys.pantheon.consensus.clique.blockcreation;
 
 import tech.pegasys.pantheon.consensus.clique.CliqueBlockHashing;
+import tech.pegasys.pantheon.consensus.clique.CliqueBlockInterface;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
-import tech.pegasys.pantheon.consensus.clique.CliqueVotingBlockInterface;
 import tech.pegasys.pantheon.consensus.common.ValidatorVote;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.crypto.SECP256K1;
@@ -92,7 +92,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
             .getVoteProposer()
             .getVote(Util.publicKeyToAddress(nodeKeys.getPublicKey()), voteTally);
     final BlockHeaderBuilder builderIncludingProposedVotes =
-        CliqueVotingBlockInterface.insertVoteToHeaderBuilder(builder, vote);
+        CliqueBlockInterface.insertVoteToHeaderBuilder(builder, vote);
 
     final CliqueExtraData sealedExtraData =
         constructSignedExtraData(builderIncludingProposedVotes.buildBlockHeader());

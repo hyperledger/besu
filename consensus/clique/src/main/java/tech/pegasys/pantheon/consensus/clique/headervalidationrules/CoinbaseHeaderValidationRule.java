@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.clique.headervalidationrules;
 
-import tech.pegasys.pantheon.consensus.clique.CliqueVotingBlockInterface;
+import tech.pegasys.pantheon.consensus.clique.CliqueBlockInterface;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.mainnet.DetachedBlockHeaderValidationRule;
@@ -30,7 +30,7 @@ public class CoinbaseHeaderValidationRule implements DetachedBlockHeaderValidati
   // are allowed to be cast on epoch blocks
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     if (epochManager.isEpochBlock(header.getNumber())) {
-      return header.getCoinbase().equals(CliqueVotingBlockInterface.NO_VOTE_SUBJECT);
+      return header.getCoinbase().equals(CliqueBlockInterface.NO_VOTE_SUBJECT);
     }
     return true;
   }

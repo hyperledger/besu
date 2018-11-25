@@ -10,14 +10,13 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.consensus.ibftlegacy.blockcreation;
+package tech.pegasys.pantheon.consensus.ibft.blockcreation;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import tech.pegasys.pantheon.consensus.common.BlockInterface;
 import tech.pegasys.pantheon.consensus.common.ValidatorProvider;
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
-import tech.pegasys.pantheon.consensus.ibftlegacy.IbftBlockHashing;
-import tech.pegasys.pantheon.consensus.ibftlegacy.IbftExtraData;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -56,12 +55,16 @@ public class ProposerSelector {
    */
   private final Boolean changeEachBlock;
 
+  private final BlockInterface blockInterface;
+
   public ProposerSelector(
       final Blockchain blockchain,
       final ValidatorProvider validators,
+      final BlockInterface blockInterface,
       final boolean changeEachBlock) {
     this.blockchain = blockchain;
     this.validators = validators;
+    this.blockInterface = blockInterface;
     this.changeEachBlock = changeEachBlock;
   }
 
@@ -152,8 +155,7 @@ public class ProposerSelector {
     final Optional<BlockHeader> maybeBlockHeader = blockchain.getBlockHeader(blockNumber);
     if (maybeBlockHeader.isPresent()) {
       final BlockHeader blockHeader = maybeBlockHeader.get();
-      final IbftExtraData extraData = IbftExtraData.decode(blockHeader.getExtraData());
-      return IbftBlockHashing.recoverProposerAddress(blockHeader, extraData);
+      return blockInterface.getProposerOfBlock(blockHeader);
     } else {
       LOG.trace("Unable to determine proposer for requested block");
       throw new RuntimeException("Unable to determine past proposer");

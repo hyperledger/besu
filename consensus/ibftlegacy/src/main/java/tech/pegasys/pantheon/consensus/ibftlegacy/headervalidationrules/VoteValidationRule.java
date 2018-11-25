@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibftlegacy.headervalidationrules;
 
-import tech.pegasys.pantheon.consensus.ibftlegacy.IbftLegacyVotingBlockInterface;
+import tech.pegasys.pantheon.consensus.ibftlegacy.IbftLegacyBlockInterface;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
@@ -33,7 +33,7 @@ public class VoteValidationRule implements DetachedBlockHeaderValidationRule {
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     final long nonce = header.getNonce();
-    if (!IbftLegacyVotingBlockInterface.isValidVoteValue(nonce)) {
+    if (!IbftLegacyBlockInterface.isValidVoteValue(nonce)) {
       LOG.trace("Nonce value ({}) is neither auth or drop.", nonce);
       return false;
     }

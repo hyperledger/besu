@@ -16,9 +16,9 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.config.CliqueConfigOptions;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
+import tech.pegasys.pantheon.consensus.clique.CliqueBlockInterface;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueProtocolSchedule;
-import tech.pegasys.pantheon.consensus.clique.CliqueVotingBlockInterface;
 import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.clique.blockcreation.CliqueBlockScheduler;
 import tech.pegasys.pantheon.consensus.clique.blockcreation.CliqueMinerExecutor;
@@ -130,7 +130,7 @@ public class CliquePantheonController implements PantheonController<CliqueContex
             new CliqueContext(
                 new VoteTallyCache(
                     blockchain,
-                    new VoteTallyUpdater(epochManger, new CliqueVotingBlockInterface()),
+                    new VoteTallyUpdater(epochManger, new CliqueBlockInterface()),
                     epochManger),
                 new VoteProposer(),
                 epochManger));

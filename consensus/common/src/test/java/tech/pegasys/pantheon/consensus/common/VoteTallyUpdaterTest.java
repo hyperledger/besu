@@ -45,7 +45,7 @@ public class VoteTallyUpdaterTest {
   private final Address validator1 =
       Address.fromHexString("00dae27b350bae20c5652124af5d8b5cba001ec1");
 
-  private final VoteBlockInterface serialiser = mock(VoteBlockInterface.class);
+  private final BlockInterface serialiser = mock(BlockInterface.class);
 
   private final VoteTallyUpdater updater =
       new VoteTallyUpdater(new EpochManager(EPOCH_LENGTH), serialiser);

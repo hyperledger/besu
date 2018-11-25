@@ -58,7 +58,7 @@ public class IbftProtocolSchedule {
                 new IbftBlockImporter(
                     new MainnetBlockImporter<>(
                         blockHeaderValidator, blockBodyValidator, blockProcessor),
-                    new VoteTallyUpdater(epochManager, new IbftVotingBlockInterface())),
+                    new VoteTallyUpdater(epochManager, new IbftBlockInterface())),
             (time, parent, protocolContext) -> BigInteger.ONE)
         .blockReward(Wei.ZERO)
         .blockHashFunction(IbftBlockHashing::calculateHashOfIbftBlockOnChain);
