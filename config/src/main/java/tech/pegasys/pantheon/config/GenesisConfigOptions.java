@@ -21,11 +21,15 @@ public interface GenesisConfigOptions {
 
   boolean isIbft();
 
+  boolean isRevisedIbft();
+
   boolean isClique();
 
   IbftConfigOptions getIbftConfigOptions();
 
   CliqueConfigOptions getCliqueConfigOptions();
+
+  IbftConfigOptions getRevisedIbftConfigOptions();
 
   OptionalLong getHomesteadBlockNumber();
 

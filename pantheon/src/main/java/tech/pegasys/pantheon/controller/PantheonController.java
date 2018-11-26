@@ -57,12 +57,14 @@ public interface PantheonController<C> extends Closeable {
           syncConfig,
           miningParameters,
           nodeKeys);
-    } else if (configOptions.isIbft()) {
+    } else if (configOptions.isRevisedIbft()) {
       return IbftPantheonController.init(
+          storageProvider, genesisConfigFile, syncConfig, miningParameters, networkId, nodeKeys);
+    } else if (configOptions.isIbft()) {
+      return IbftLegacyPantheonController.init(
           storageProvider,
           genesisConfigFile,
           syncConfig,
-          miningParameters,
           ottomanTestnetOperation,
           networkId,
           nodeKeys);

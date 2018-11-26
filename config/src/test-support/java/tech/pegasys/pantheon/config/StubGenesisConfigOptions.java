@@ -41,6 +41,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean isRevisedIbft() {
+    return false;
+  }
+
+  @Override
   public IbftConfigOptions getIbftConfigOptions() {
     return IbftConfigOptions.DEFAULT;
   }
@@ -48,6 +53,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public CliqueConfigOptions getCliqueConfigOptions() {
     return CliqueConfigOptions.DEFAULT;
+  }
+
+  @Override
+  public IbftConfigOptions getRevisedIbftConfigOptions() {
+    return IbftConfigOptions.DEFAULT;
   }
 
   @Override
