@@ -27,8 +27,8 @@ jar {
 
 dependencies {
   implementation project(':crypto')
-  implementation project(':ethereum:rlp')
   implementation project(':ethereum:core')
+  implementation project(':ethereum:rlp')
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
@@ -38,18 +38,18 @@ dependencies {
   runtime 'org.apache.logging.log4j:log4j-core'
 
   // test dependencies.
-  testImplementation project (path: ':ethereum:core', configuration: 'testArtifacts')
+  testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testImplementation project(':testutil')
-
-  testImplementation 'junit:junit'
-  testImplementation 'io.vertx:vertx-unit'
-  testImplementation 'io.vertx:vertx-codegen'
-  testImplementation "org.mockito:mockito-core"
-  testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.awaitility:awaitility'
 
   testImplementation('io.pkts:pkts-core') {
     exclude group: 'io.pkts', module: 'pkts-sdp'
     exclude group: 'io.pkts', module: 'pkts-sip'
   }
+  testImplementation 'io.vertx:vertx-unit'
+  testImplementation 'io.vertx:vertx-codegen'
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.awaitility:awaitility'
+  testImplementation 'org.mockito:mockito-core'
+
 }

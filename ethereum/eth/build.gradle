@@ -36,8 +36,8 @@ dependencies {
 
   testImplementation project(':config')
   testImplementation project(':crypto')
-  testImplementation project( path: ':ethereum:core', configuration: 'testArtifacts')
-  testImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':ethereum:mock-p2p')
   testImplementation project(':testutil')
 

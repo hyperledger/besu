@@ -14,16 +14,15 @@
 import net.ltgt.gradle.errorprone.CheckSeverity
 
 plugins {
-  id 'com.diffplug.gradle.spotless' version '3.13.0'
-  id 'io.spring.dependency-management' version '1.0.4.RELEASE'
-  id 'com.github.hierynomus.license' version '0.14.0'
-  id 'net.ltgt.errorprone' version '0.6'
-  id 'me.champeau.gradle.jmh' version '0.4.5' apply false
+  id 'com.diffplug.gradle.spotless' version '3.16.0'
   id 'com.jfrog.bintray' version '1.8.4'
-  id 'net.researchgate.release' version '2.6.0'
+  id 'com.github.ben-manes.versions' version '0.20.0'
+  id 'com.github.hierynomus.license' version '0.15.0'
+  id 'io.spring.dependency-management' version '1.0.6.RELEASE'
+  id 'me.champeau.gradle.jmh' version '0.4.7' apply false
+  id 'net.ltgt.errorprone' version '0.6'
+  id 'net.researchgate.release' version '2.7.0'
 }
-
-apply from: './versions.gradle'
 
 group = 'tech.pegasys.pantheon'
 
@@ -89,9 +88,9 @@ allprojects {
   }
 
   dependencies {
-    errorprone("com.google.errorprone:error_prone_core:$errorproneCore")
+    errorprone("com.google.errorprone:error_prone_core")
     if (JavaVersion.current().isJava8()) {
-      errorproneJavac("com.google.errorprone:javac:$errorproneJavac")
+      errorproneJavac("com.google.errorprone:javac")
     }
   }
 
@@ -331,7 +330,7 @@ startScripts {
 
 dependencies {
   compile project(':pantheon')
-  errorprone 'com.google.errorprone:error_prone_core:2.3.1'
+  errorprone 'com.google.errorprone:error_prone_core'
 }
 
 distributions {

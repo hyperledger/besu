@@ -39,33 +39,35 @@ dependencies {
 
   runtime 'org.apache.logging.log4j:log4j-core'
 
+  testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path:':ethereum:referencetests', configuration: 'testOutput')
-  testImplementation project( path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
 
+  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
-  testImplementation 'junit:junit'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
+
+  integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-core'
-  integrationTestImplementation 'junit:junit'
 
+  testSupportImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testSupportImplementation project(':testutil')
-  testSupportImplementation project( path: ':config', configuration: 'testSupportArtifacts')
 
+  testSupportImplementation 'junit:junit'
   testSupportImplementation 'org.assertj:assertj-core'
   testSupportImplementation 'org.mockito:mockito-core'
-  testSupportImplementation 'junit:junit'
 
-  jmhImplementation project(':util')
-  jmhImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
   jmhImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   jmhImplementation project(':crypto')
+  jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   jmhImplementation project(':ethereum:rlp')
   jmhImplementation project(':ethereum:trie')
   jmhImplementation project(':services:kvstore')
+  jmhImplementation project(':util')
+
   jmhImplementation 'com.google.guava:guava'
   jmhImplementation 'org.openjdk.jmh:jmh-generator-annprocess'
 }
