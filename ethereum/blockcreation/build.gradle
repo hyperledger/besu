@@ -20,14 +20,15 @@ dependencies {
   implementation project(':crypto')
   implementation project(':services:kvstore')
 
-  implementation 'io.vertx:vertx-core'
   implementation 'com.google.guava:guava'
+  implementation 'io.vertx:vertx-core'
+
+  testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
-  testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
-  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
 }

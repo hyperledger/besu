@@ -13,7 +13,7 @@
 
 // See https://github.com/tbroyer/gradle-errorprone-plugin
 // See https://github.com/tbroyer/gradle-apt-plugin
-plugins { id 'net.ltgt.apt' version '0.14' apply false }
+plugins { id 'net.ltgt.apt' version '0.19' apply false }
 
 // we use this config to get the path of the JDK 9 javac jar, to
 // stick it in the bootclasspath when running tests
@@ -29,17 +29,17 @@ targetCompatibility = 1.8
 
 dependencies {
 
-  implementation "com.google.errorprone:error_prone_core"
-  implementation "com.google.errorprone:error_prone_annotation"
+  implementation 'com.google.errorprone:error_prone_annotation'
+  implementation 'com.google.errorprone:error_prone_core'
+  implementation 'com.google.auto.service:auto-service'
 
-  implementation "com.google.auto.service:auto-service:1.0-rc4"
-  annotationProcessor "com.google.auto.service:auto-service:1.0-rc4"
+  annotationProcessor 'com.google.auto.service:auto-service'
 
-  testImplementation "junit:junit"
-  testImplementation "org.assertj:assertj-core"
   testImplementation 'com.google.errorprone:error_prone_test_helpers'
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
 
-  epJavac "com.google.errorprone:error_prone_check_api"
+  epJavac 'com.google.errorprone:error_prone_check_api'
 }
 
 test {

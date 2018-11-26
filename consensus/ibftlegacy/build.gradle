@@ -13,12 +13,12 @@ jar {
 }
 
 dependencies {
+  implementation project(':config')
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')
-  implementation project(':config')
   implementation project(':crypto')
-  implementation project(':ethereum:core')
   implementation project(':ethereum:blockcreation')
+  implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
   implementation project(':ethereum:jsonrpc')
   implementation project(':ethereum:rlp')
@@ -28,12 +28,11 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
 
-  testImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation project( path: ':consensus:ibft', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':consensus:ibft', configuration: 'testSupportArtifacts')
 
-  testImplementation group: 'junit', name: 'junit', version: '4.12'
-  testImplementation "org.awaitility:awaitility:3.1.2"
-
-  testImplementation "org.assertj:assertj-core:3.10.0"
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
 }

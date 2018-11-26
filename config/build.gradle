@@ -27,17 +27,17 @@ jar {
 
 dependencies {
   implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'io.vertx:vertx-core'
   implementation 'com.google.guava:guava'
+  implementation 'io.vertx:vertx-core'
   implementation 'org.apache.logging.log4j:log4j-api'
 
   runtime 'org.apache.logging.log4j:log4j-core'
 
   testImplementation project(':testutil')
 
+  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
-  testImplementation 'junit:junit'
 }
 
 configurations { testArtifacts }

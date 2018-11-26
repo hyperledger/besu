@@ -38,8 +38,8 @@ dependencies {
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'junit:junit'
-  testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.mockito:mockito-core'
 }
 
 test { exclude 'tech/pegasys/pantheon/ethereum/trie/TrieRefTest.class' }

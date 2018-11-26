@@ -15,13 +15,14 @@ dependencies {
   testRuntime 'org.apache.logging.log4j:log4j-core'
   testRuntime 'org.apache.logging.log4j:log4j-slf4j-impl'
 
-  testImplementation 'junit:junit'
-  testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.web3j:core'
-  testImplementation 'org.awaitility:awaitility'
+  testImplementation project(':pantheon')
+
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'io.vertx:vertx-core'
-  testImplementation project( path: ':pantheon')
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.awaitility:awaitility'
+  testImplementation 'org.web3j:core'
 }
 
 test.enabled = false

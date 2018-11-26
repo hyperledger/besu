@@ -23,15 +23,15 @@ dependencies {
   testImplementation project(':ethereum:jsonrpc')
   testImplementation project(':pantheon')
   testImplementation project(':util')
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
-  testImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation 'junit:junit'
-  testImplementation 'org.awaitility:awaitility'
+  testImplementation 'com.google.guava:guava'
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'io.vertx:vertx-core'
+  testImplementation 'junit:junit'
   testImplementation 'org.apache.logging.log4j:log4j-api'
   testImplementation 'org.assertj:assertj-core'
-  testImplementation 'com.google.guava:guava'
+  testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.web3j:core'
 }
 

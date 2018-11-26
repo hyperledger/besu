@@ -32,31 +32,30 @@ dependencies {
   implementation project(':consensus:clique')
   implementation project(':consensus:ibft')
   implementation project(':consensus:ibftlegacy')
-  implementation project(':consensus:clique')
-  implementation project(':ethereum:eth')
-  implementation project(':ethereum:core')
   implementation project(':ethereum:blockcreation')
-  implementation project(':ethereum:rlp')
-  implementation project(':ethereum:p2p')
+  implementation project(':ethereum:core')
+  implementation project(':ethereum:eth')
   implementation project(':ethereum:jsonrpc')
+  implementation project(':ethereum:p2p')
+  implementation project(':ethereum:rlp')
   implementation project(':services:kvstore')
 
   implementation 'com.google.guava:guava'
-  implementation('info.picocli:picocli')
-  implementation 'net.consensys.cava:cava-toml'
+  implementation 'info.picocli:picocli'
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
+  implementation 'net.consensys.cava:cava-toml'
   implementation 'org.apache.logging.log4j:log4j-api'
 
   runtime 'org.apache.logging.log4j:log4j-core'
 
   testImplementation project(':testutil')
-  testImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'junit:junit'
-  testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
 }
 

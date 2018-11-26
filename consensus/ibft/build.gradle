@@ -29,23 +29,22 @@ dependencies {
   implementation project(':config')
   implementation project(':consensus:common')
   implementation project(':crypto')
-  implementation project(':ethereum:core')
   implementation project(':ethereum:blockcreation')
+  implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
   implementation project(':ethereum:jsonrpc')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:p2p')
   implementation project(':services:kvstore')
 
-  implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
+  implementation 'com.google.guava:guava'
 
-  testImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
-  testImplementation group: 'junit', name: 'junit', version: '4.12'
-  testImplementation "org.awaitility:awaitility:3.1.2"
-
-  testImplementation "org.assertj:assertj-core:3.10.0"
+  testImplementation 'junit:junit'
+  testImplementation 'org.awaitility:awaitility'
+  testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
 }
 

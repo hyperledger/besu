@@ -28,9 +28,9 @@ jar {
 dependencies {
   api project(':util')
 
-  implementation 'com.google.guava:guava'
-  implementation group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
   implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'com.google.guava:guava'
+  implementation 'org.rocksdb:rocksdbjni'
 
   runtime 'org.apache.logging.log4j:log4j-core'
 

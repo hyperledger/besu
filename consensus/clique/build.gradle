@@ -29,6 +29,7 @@ repositories { mavenCentral() }
 
 dependencies {
   implementation project(':config')
+  implementation project(':consensus:common')
   implementation project(':crypto')
   implementation project(':ethereum:core')
   implementation project(':ethereum:blockcreation')
@@ -38,13 +39,14 @@ dependencies {
   implementation project(':ethereum:p2p')
   implementation project(':services:kvstore')
   implementation project(':consensus:common')
-
-  implementation 'com.google.guava:guava'
-  implementation 'io.vertx:vertx-core'
-
   implementation project(':util')
-  testImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation group: 'junit', name: 'junit', version: '4.12'
-  testImplementation "org.assertj:assertj-core:3.10.0"
+
+  implementation 'io.vertx:vertx-core'
+  implementation 'com.google.guava:guava'
+
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
 }
