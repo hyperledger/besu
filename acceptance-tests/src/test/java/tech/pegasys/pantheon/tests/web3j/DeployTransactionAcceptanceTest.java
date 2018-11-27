@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.jsonrpc;
+package tech.pegasys.pantheon.tests.web3j;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
@@ -20,7 +20,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import org.junit.Before;
 import org.junit.Test;
 
-public class EthGetTransactionReceiptAcceptanceTest extends AcceptanceTestBase {
+public class DeployTransactionAcceptanceTest extends AcceptanceTestBase {
 
   private PantheonNode minerNode;
   private Account recipient;
