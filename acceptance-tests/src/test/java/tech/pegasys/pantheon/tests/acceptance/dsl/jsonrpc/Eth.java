@@ -14,15 +14,12 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.EthGetTransactionReceiptEquals;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectEthAccountsException;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectEthGetTransactionReceiptIsAbsent;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectEthGetWorkException;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectSuccessfulEthGetTransactionReceipt;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.SanityCheckEthGetWorkValues;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
-
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 public class Eth {
 
@@ -52,11 +49,5 @@ public class Eth {
   public Condition expectNoTransactionReceipt(final String transactionHash) {
     return new ExpectEthGetTransactionReceiptIsAbsent(
         transactions.getTransactionReceipt(transactionHash));
-  }
-
-  public Condition expectTransactionReceipt(
-      final String transactionHash, final TransactionReceipt receipt) {
-    return new EthGetTransactionReceiptEquals(
-        transactions.getTransactionReceipt(transactionHash), receipt);
   }
 }

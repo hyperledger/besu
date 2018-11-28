@@ -16,6 +16,9 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransaction
 
 public class Accounts {
 
+  public static final String GENESIS_ACCOUNT_ONE_PRIVATE_KEY =
+      "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63";
+
   private final EthTransactions eth;
   private final Account richBenefactorOne;
   private final Account richBenefactorTwo;
@@ -23,10 +26,7 @@ public class Accounts {
   public Accounts(final EthTransactions eth) {
     this.eth = eth;
     richBenefactorOne =
-        Account.fromPrivateKey(
-            eth,
-            "Rich Benefactor One",
-            "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63");
+        Account.fromPrivateKey(eth, "Rich Benefactor One", GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
     richBenefactorTwo =
         Account.fromPrivateKey(
             eth,
