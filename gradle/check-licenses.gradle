@@ -31,6 +31,7 @@ ext.acceptedLicenses = [
     'BSD License',
     'BSD 3-Clause',
     'Eclipse Public License - v 1.0',
+    'Eclipse Public License - v 2.0',
     'Eclipse Public License 1.0',
     'MIT License',
     'Apache License, Version 2.0',
