@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction;
 
+import tech.pegasys.pantheon.tests.acceptance.dsl.account.Accounts;
+
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 
@@ -24,9 +26,9 @@ public class DeploySmartContractTransaction<T extends Contract> implements Trans
 
   private static final BigInteger DEFAULT_GAS_PRICE = BigInteger.valueOf(1000);
   private static final BigInteger DEFAULT_GAS_LIMIT = BigInteger.valueOf(3000000);
-  private static final Credentials GENESIS_ACCOUNT_ONE_PRIVATE_KEY =
-      Credentials.create("0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63");
   private static final Object METHOD_IS_STATIC = null;
+  private static final Credentials BENEFACTOR_ONE =
+      Credentials.create(Accounts.GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
 
   private final Class<T> clazz;
 
@@ -43,11 +45,7 @@ public class DeploySmartContractTransaction<T extends Contract> implements Trans
 
       final Object invoked =
           method.invoke(
-              METHOD_IS_STATIC,
-              node,
-              GENESIS_ACCOUNT_ONE_PRIVATE_KEY,
-              DEFAULT_GAS_PRICE,
-              DEFAULT_GAS_LIMIT);
+              METHOD_IS_STATIC, node, BENEFACTOR_ONE, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT);
 
       return cast(invoked).send();
     } catch (final Exception e) {

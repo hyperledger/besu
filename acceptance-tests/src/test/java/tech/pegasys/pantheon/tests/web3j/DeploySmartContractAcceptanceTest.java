@@ -12,17 +12,12 @@
  */
 package tech.pegasys.pantheon.tests.web3j;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.web3j.generated.SimpleStorage;
 
-import java.util.Optional;
-
 import org.junit.Before;
 import org.junit.Test;
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 public class DeploySmartContractAcceptanceTest extends AcceptanceTestBase {
 
@@ -35,23 +30,13 @@ public class DeploySmartContractAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void deployContractReceiptMustMatchEthGetTransactionReceipt() {
-    final SimpleStorage contract =
+  public void deployingMustGiveValidReceipt() {
+    // Contract address is generated from sender address and transaction nonce
+    final String contractAddress = "0x42699a7612a82f1d9c36148af9c77354759b210b";
+
+    final SimpleStorage simpleStorageContract =
         minerNode.execute(transactions.createSmartContract(SimpleStorage.class));
-    assertThat(contract).isNotNull();
 
-    final Optional<TransactionReceipt> receipt = contract.getTransactionReceipt();
-    assertThat(receipt).isNotNull();
-    assertThat(receipt.isPresent()).isTrue();
-
-    final TransactionReceipt transactionReceipt = receipt.get();
-    assertThat(transactionReceipt.getTransactionHash()).isNotNull();
-
-    // Contract transaction has no 'to' address or contract address
-    assertThat(transactionReceipt.getTo()).isNull();
-    assertThat(transactionReceipt.getContractAddress()).isNotBlank();
-
-    minerNode.verify(
-        eth.expectTransactionReceipt(transactionReceipt.getTransactionHash(), transactionReceipt));
+    contractVerifier.validTransactionReceipt(contractAddress).verify(simpleStorageContract);
   }
 }
