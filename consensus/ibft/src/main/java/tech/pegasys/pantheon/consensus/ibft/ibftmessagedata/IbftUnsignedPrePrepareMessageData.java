@@ -36,7 +36,8 @@ public class IbftUnsignedPrePrepareMessageData extends AbstractIbftUnsignedInRou
 
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
-    final Block block = Block.readFrom(rlpInput, IbftBlockHashing::calculateHashOfIbftBlockOnChain);
+    final Block block =
+        Block.readFrom(rlpInput, IbftBlockHashing::calculateDataHashForCommittedSeal);
     rlpInput.leaveList();
 
     return new IbftUnsignedPrePrepareMessageData(roundIdentifier, block);

@@ -41,6 +41,11 @@ public class IbftBlockHashing {
     return Hash.hash(serializeHeader(header, ibftExtraData::encodeWithoutCommitSeals));
   }
 
+  public static Hash calculateDataHashForCommittedSeal(final BlockHeader header) {
+    final IbftExtraData ibftExtraData = IbftExtraData.decode(header.getExtraData());
+    return Hash.hash(serializeHeader(header, ibftExtraData::encodeWithoutCommitSeals));
+  }
+
   /**
    * Constructs a hash of the block header, but omits the committerSeals and sets round number to 0
    * (as these change on each of the potentially circulated blocks at the current chain height).
