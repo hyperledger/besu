@@ -35,10 +35,10 @@ dependencyManagement {
 
     dependency 'io.pkts:pkts-core:3.0.3'
 
-    dependency 'io.vertx:vertx-codegen:3.5.0'
-    dependency 'io.vertx:vertx-core:3.5.0'
-    dependency 'io.vertx:vertx-unit:3.5.0'
-    dependency 'io.vertx:vertx-web:3.5.0'
+    dependency 'io.vertx:vertx-codegen:3.5.4'
+    dependency 'io.vertx:vertx-core:3.5.4'
+    dependency 'io.vertx:vertx-unit:3.5.4'
+    dependency 'io.vertx:vertx-web:3.5.4'
 
     dependency 'junit:junit:4.12'
 
