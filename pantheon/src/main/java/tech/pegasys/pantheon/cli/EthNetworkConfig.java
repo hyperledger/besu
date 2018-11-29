@@ -12,10 +12,12 @@
  */
 package tech.pegasys.pantheon.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 import static tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
 import static tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.ROPSTEN_BOOTSTRAP_NODES;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
@@ -31,12 +33,12 @@ public class EthNetworkConfig {
   private static final String MAINNET_GENESIS = "mainnet.json";
   private static final String RINKEBY_GENESIS = "rinkeby.json";
   private static final String ROPSTEN_GENESIS = "ropsten.json";
-  private final URI genesisConfig;
+  private final String genesisConfig;
   private final int networkId;
   private final Collection<?> bootNodes;
 
   public EthNetworkConfig(
-      final URI genesisConfig, final int networkId, final Collection<?> bootNodes) {
+      final String genesisConfig, final int networkId, final Collection<?> bootNodes) {
     Preconditions.checkNotNull(genesisConfig);
     Preconditions.checkNotNull(bootNodes);
     this.genesisConfig = genesisConfig;
@@ -44,7 +46,7 @@ public class EthNetworkConfig {
     this.bootNodes = bootNodes;
   }
 
-  public URI getGenesisConfig() {
+  public String getGenesisConfig() {
     return genesisConfig;
   }
 
@@ -88,31 +90,32 @@ public class EthNetworkConfig {
   }
 
   public static EthNetworkConfig mainnet() {
-    final URI genesisConfig = jsonConfigURI(MAINNET_GENESIS);
-    return new EthNetworkConfig(genesisConfig, MAINNET_NETWORK_ID, MAINNET_BOOTSTRAP_NODES);
+    return new EthNetworkConfig(
+        jsonConfig(MAINNET_GENESIS), MAINNET_NETWORK_ID, MAINNET_BOOTSTRAP_NODES);
   }
 
   public static EthNetworkConfig rinkeby() {
-    final URI genesisConfig = jsonConfigURI(RINKEBY_GENESIS);
-    return new EthNetworkConfig(genesisConfig, RINKEBY_NETWORK_ID, RINKEBY_BOOTSTRAP_NODES);
+    return new EthNetworkConfig(
+        jsonConfig(RINKEBY_GENESIS), RINKEBY_NETWORK_ID, RINKEBY_BOOTSTRAP_NODES);
   }
 
   public static EthNetworkConfig ropsten() {
-    final URI genesisConfig = jsonConfigURI(ROPSTEN_GENESIS);
-    return new EthNetworkConfig(genesisConfig, ROPSTEN_NETWORK_ID, ROPSTEN_BOOTSTRAP_NODES);
+    return new EthNetworkConfig(
+        jsonConfig(ROPSTEN_GENESIS), ROPSTEN_NETWORK_ID, ROPSTEN_BOOTSTRAP_NODES);
   }
 
-  private static URI jsonConfigURI(final String resourceName) {
+  private static String jsonConfig(final String resourceName) {
     try {
-      return Resources.getResource(resourceName).toURI();
-    } catch (final URISyntaxException e) {
+      URI uri = Resources.getResource(resourceName).toURI();
+      return Resources.toString(uri.toURL(), UTF_8);
+    } catch (final URISyntaxException | IOException e) {
       throw new IllegalStateException(e);
     }
   }
 
   public static class Builder {
 
-    private URI genesisConfig;
+    private String genesisConfig;
     private int networkId;
     private Collection<?> bootNodes;
 
@@ -122,7 +125,7 @@ public class EthNetworkConfig {
       this.bootNodes = ethNetworkConfig.bootNodes;
     }
 
-    public Builder setGenesisConfig(final URI genesisConfig) {
+    public Builder setGenesisConfig(final String genesisConfig) {
       this.genesisConfig = genesisConfig;
       return this;
     }

@@ -14,12 +14,12 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 import java.util.List;
 
-import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.EthAccounts;
 
 public class EthAccountsTransaction implements Transaction<List<String>> {
@@ -27,7 +27,7 @@ public class EthAccountsTransaction implements Transaction<List<String>> {
   EthAccountsTransaction() {}
 
   @Override
-  public List<String> execute(final Web3j node) {
+  public List<String> execute(final PantheonWeb3j node) {
     try {
       final EthAccounts result = node.ethAccounts().send();
       assertThat(result).isNotNull();

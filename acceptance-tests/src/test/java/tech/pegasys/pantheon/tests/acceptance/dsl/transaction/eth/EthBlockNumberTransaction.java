@@ -14,19 +14,18 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 import java.math.BigInteger;
-
-import org.web3j.protocol.Web3j;
 
 public class EthBlockNumberTransaction implements Transaction<BigInteger> {
 
   EthBlockNumberTransaction() {}
 
   @Override
-  public BigInteger execute(final Web3j node) {
+  public BigInteger execute(final PantheonWeb3j node) {
     try {
       final org.web3j.protocol.core.methods.response.EthBlockNumber result =
           node.ethBlockNumber().send();

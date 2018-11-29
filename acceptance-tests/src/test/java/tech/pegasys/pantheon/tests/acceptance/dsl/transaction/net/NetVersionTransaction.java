@@ -14,11 +14,11 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 
-import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.NetVersion;
 
 public class NetVersionTransaction implements Transaction<String> {
@@ -26,7 +26,7 @@ public class NetVersionTransaction implements Transaction<String> {
   NetVersionTransaction() {}
 
   @Override
-  public String execute(final Web3j node) {
+  public String execute(final PantheonWeb3j node) {
     try {
       final NetVersion result = node.netVersion().send();
       assertThat(result).isNotNull();

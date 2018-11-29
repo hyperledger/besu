@@ -37,7 +37,7 @@ public class DeploySmartContractTransaction<T extends Contract> implements Trans
   }
 
   @Override
-  public T execute(final Web3j node) {
+  public T execute(final PantheonWeb3j node) {
     try {
       final Method method =
           clazz.getMethod(

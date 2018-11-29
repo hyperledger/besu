@@ -14,12 +14,12 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 import java.util.Optional;
 
-import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
@@ -33,7 +33,7 @@ public class EthGetTransactionReceiptTransaction
   }
 
   @Override
-  public Optional<TransactionReceipt> execute(final Web3j node) {
+  public Optional<TransactionReceipt> execute(final PantheonWeb3j node) {
     try {
       final EthGetTransactionReceipt result = node.ethGetTransactionReceipt(input).send();
       assertThat(result.hasError()).isFalse();
