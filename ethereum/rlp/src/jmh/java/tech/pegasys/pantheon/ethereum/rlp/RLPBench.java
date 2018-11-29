@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.rlp;
 
+import tech.pegasys.pantheon.ethereum.rlp.util.RLPTestUtil;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
@@ -62,16 +63,16 @@ public class RLPBench {
   @Setup(Level.Trial)
   public void prepare() {
     toEncode = generate(depth, width, size);
-    toDecode = RLP.encode(toEncode);
+    toDecode = RLPTestUtil.encode(toEncode);
   }
 
   @Benchmark
   public BytesValue getBenchmarkEncoding() {
-    return RLP.encode(toEncode);
+    return RLPTestUtil.encode(toEncode);
   }
 
   @Benchmark
   public Object getBenchmarkDecoding() {
-    return RLP.decode(toDecode);
+    return RLPTestUtil.decode(toDecode);
   }
 }

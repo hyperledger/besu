@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.rlp;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -33,7 +33,18 @@ public class BytesValueRLPOutputTest {
   @Test
   public void empty() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    assertEquals(BytesValue.EMPTY, out.encoded());
+
+    assertThat(out.encoded()).isEqualTo(BytesValue.EMPTY);
+    assertThat(out.encoded().toString()).isEqualTo("0x");
+  }
+
+  @Test
+  public void emptyBytesString() {
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.writeBytesValue(BytesValue.EMPTY);
+
+    assertThat(out.encoded()).isEqualTo(RLP.NULL);
+    assertThat(out.encoded().toString()).isEqualTo("0x80");
   }
 
   @Test
@@ -42,21 +53,21 @@ public class BytesValueRLPOutputTest {
     out.writeByte((byte) 1);
 
     // Single byte should be encoded as itself
-    assertEquals(h("0x01"), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0x01"));
   }
 
   @Test
   public void singleByteLowerBoundary() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeByte((byte) 0);
-    assertEquals(h("0x00"), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0x00"));
   }
 
   @Test
   public void singleByteUpperBoundary() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeByte((byte) 0x7f);
-    assertEquals(h("0x7f"), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0x7f"));
   }
 
   @Test
@@ -65,7 +76,7 @@ public class BytesValueRLPOutputTest {
     out.writeByte((byte) 0xFF);
 
     // Bigger than single byte: 0x80 + length then value, where length is 1.
-    assertEquals(h("0x81FF"), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0x81FF"));
   }
 
   @Test
@@ -74,7 +85,7 @@ public class BytesValueRLPOutputTest {
     out.writeBytesValue(h(times("2b", 55)));
 
     // 55 bytes, so still short: 0x80 + length then value, where length is 55.
-    assertEquals(h("0xb7" + times("2b", 55)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xb7" + times("2b", 55)));
   }
 
   @Test
@@ -84,7 +95,7 @@ public class BytesValueRLPOutputTest {
 
     // 56 bytes, so long element: 0xb7 + length of value size + value, where the value size is 56.
     // 56 is 0x38 so its size is 1 byte.
-    assertEquals(h("0xb838" + times("2b", 56)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xb838" + times("2b", 56)));
   }
 
   @Test
@@ -95,49 +106,49 @@ public class BytesValueRLPOutputTest {
     // 2241 bytes, so long element: 0xb7 + length of value size + value, where the value size is
     // 2241,
     // 2241 is 0x8c1 so its size is 2 bytes.
-    assertEquals(h("0xb908c1" + times("3c", 2241)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xb908c1" + times("3c", 2241)));
   }
 
   @Test
   public void singleLongElementBoundaryCase_1() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeBytesValue(h(times("3c", 255)));
-    assertEquals(h("0xb8ff" + times("3c", 255)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xb8ff" + times("3c", 255)));
   }
 
   @Test
   public void singleLongElementBoundaryCase_2() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeBytesValue(h(times("3c", 256)));
-    assertEquals(h("0xb90100" + times("3c", 256)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xb90100" + times("3c", 256)));
   }
 
   @Test
   public void singleLongElementBoundaryCase_3() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeBytesValue(h(times("3c", 65535)));
-    assertEquals(h("0xb9ffff" + times("3c", 65535)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xb9ffff" + times("3c", 65535)));
   }
 
   @Test
   public void singleLongElementBoundaryCase_4() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeBytesValue(h(times("3c", 65536)));
-    assertEquals(h("0xba010000" + times("3c", 65536)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xba010000" + times("3c", 65536)));
   }
 
   @Test
   public void singleLongElementBoundaryCase_5() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeBytesValue(h(times("3c", 16777215)));
-    assertEquals(h("0xbaffffff" + times("3c", 16777215)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xbaffffff" + times("3c", 16777215)));
   }
 
   @Test
   public void singleLongElementBoundaryCase_6() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeBytesValue(h(times("3c", 16777216)));
-    assertEquals(h("0xbb01000000" + times("3c", 16777216)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xbb01000000" + times("3c", 16777216)));
   }
 
   @Test(expected = IllegalStateException.class)
@@ -161,7 +172,7 @@ public class BytesValueRLPOutputTest {
   private void assertLongScalar(final BytesValue expected, final long toTest) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeLongScalar(toTest);
-    assertEquals(expected, out.encoded());
+    assertThat(out.encoded()).isEqualTo(expected);
   }
 
   @Test
@@ -170,7 +181,7 @@ public class BytesValueRLPOutputTest {
     out.startList();
     out.endList();
 
-    assertEquals(h("0xc0"), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xc0"));
   }
 
   @Test(expected = IllegalStateException.class)
@@ -196,7 +207,7 @@ public class BytesValueRLPOutputTest {
 
     // List with payload size = 2 (both element are single bytes)
     // so 0xc0 + size then payloads
-    assertEquals(h("0xc22c3b"), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xc22c3b"));
   }
 
   @Test
@@ -207,7 +218,7 @@ public class BytesValueRLPOutputTest {
       out.writeByte((byte) 0x3c);
     }
     out.endList();
-    assertEquals(h("0xf7" + times("3c", 55)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xf7" + times("3c", 55)));
   }
 
   @Test
@@ -218,7 +229,7 @@ public class BytesValueRLPOutputTest {
       out.writeByte((byte) 0x3c);
     }
     out.endList();
-    assertEquals(h("0xf838" + times("3c", 56)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xf838" + times("3c", 56)));
   }
 
   @Test
@@ -229,7 +240,7 @@ public class BytesValueRLPOutputTest {
       out.writeByte((byte) 0x3c);
     }
     out.endList();
-    assertEquals(h("0xf8ff" + times("3c", 255)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xf8ff" + times("3c", 255)));
   }
 
   @Test
@@ -240,7 +251,7 @@ public class BytesValueRLPOutputTest {
       out.writeByte((byte) 0x3c);
     }
     out.endList();
-    assertEquals(h("0xf90100" + times("3c", 256)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xf90100" + times("3c", 256)));
   }
 
   @Test
@@ -251,7 +262,7 @@ public class BytesValueRLPOutputTest {
       out.writeByte((byte) 0x3c);
     }
     out.endList();
-    assertEquals(h("0xf9ffff" + times("3c", 65535)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xf9ffff" + times("3c", 65535)));
   }
 
   @Test
@@ -262,7 +273,7 @@ public class BytesValueRLPOutputTest {
       out.writeByte((byte) 0x3c);
     }
     out.endList();
-    assertEquals(h("0xfa010000" + times("3c", 65536)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xfa010000" + times("3c", 65536)));
   }
 
   @Test
@@ -273,7 +284,7 @@ public class BytesValueRLPOutputTest {
       out.writeByte((byte) 0x3c);
     }
     out.endList();
-    assertEquals(h("0xfaffffff" + times("3c", 16777215)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xfaffffff" + times("3c", 16777215)));
   }
 
   @Test
@@ -284,7 +295,7 @@ public class BytesValueRLPOutputTest {
       out.writeByte((byte) 0x3c);
     }
     out.endList();
-    assertEquals(h("0xfb01000000" + times("3c", 16777216)), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xfb01000000" + times("3c", 16777216)));
   }
 
   @Test
@@ -302,6 +313,6 @@ public class BytesValueRLPOutputTest {
 
     // List payload size = 5 (2 single bytes element + nested list of size 3)
     // so 0xc0 + size then payloads
-    assertEquals(h("0xc52cc203123b"), out.encoded());
+    assertThat(out.encoded()).isEqualTo(h("0xc52cc203123b"));
   }
 }

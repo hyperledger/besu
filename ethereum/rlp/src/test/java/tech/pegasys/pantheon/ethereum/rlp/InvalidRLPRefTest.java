@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.rlp;
 
 import static org.junit.Assume.assumeTrue;
 
+import tech.pegasys.pantheon.ethereum.rlp.util.RLPTestUtil;
 import tech.pegasys.pantheon.testutil.JsonTestParameters;
 
 import java.util.Collection;
@@ -48,6 +49,6 @@ public class InvalidRLPRefTest {
   /** Test RLP decoding. */
   @Test(expected = RLPException.class)
   public void decode() throws Exception {
-    RLP.decode(spec.getRLP());
+    RLPTestUtil.decode(spec.getRLP());
   }
 }

@@ -22,8 +22,6 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPDecodingHelpers.Kind;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.MutableBytesValue;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 
 import io.vertx.core.buffer.Buffer;
@@ -79,65 +77,6 @@ public abstract class RLP {
    */
   public static BytesValueRLPInput input(final Buffer buffer, final int offset) {
     return new BytesValueRLPInput(BytesValue.wrapBuffer(buffer, offset), false, false);
-  }
-
-  /**
-   * Fully decodes a RLP encoded value.
-   *
-   * <p>This method is mostly intended for testing as it is often more convenient <b>and</b>
-   * efficient to use a {@link RLPInput} (through {@link #input(BytesValue)}) instead.
-   *
-   * @param value The RLP encoded value to decode.
-   * @return The output of decoding {@code value}. It will be either directly a {@link BytesValue},
-   *     or a list whose elements are either {@link BytesValue}, or similarly composed sub-lists.
-   * @throws RLPException if {@code value} is not a properly formed RLP encoding.
-   */
-  public static Object decode(final BytesValue value) {
-    return decode(input(value));
-  }
-
-  private static Object decode(final RLPInput in) {
-    if (!in.nextIsList()) {
-      return in.readBytesValue();
-    }
-
-    final int size = in.enterList();
-    final List<Object> l = new ArrayList<>(size);
-    for (int i = 0; i < size; i++) l.add(decode(in));
-    in.leaveList();
-    return l;
-  }
-
-  /**
-   * Fully RLP encode an object consisting of recursive lists of {@link BytesValue}.
-   *
-   * <p>This method is mostly intended for testing as it is often more convenient <b>and</b>
-   * efficient to use a {@link RLPOutput} (through {@link #encode(Consumer)} for instance) instead.
-   *
-   * @param obj An object that must be either directly a {@link BytesValue}, or a list whose
-   *     elements are either {@link BytesValue}, or similarly composed sub-lists.
-   * @return The RLP encoding corresponding to {@code obj}.
-   * @throws IllegalArgumentException if {@code obj} is not a valid input (not entirely composed
-   *     from lists and {@link BytesValue}).
-   */
-  public static BytesValue encode(final Object obj) {
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    encode(obj, out);
-    return out.encoded();
-  }
-
-  private static void encode(final Object obj, final RLPOutput out) {
-    if (obj instanceof BytesValue) {
-      out.writeBytesValue((BytesValue) obj);
-    } else if (obj instanceof List) {
-      final List<?> l = (List<?>) obj;
-      out.startList();
-      for (final Object o : l) encode(o, out);
-      out.endList();
-    } else {
-      throw new IllegalArgumentException(
-          format("Invalid input type %s for RLP encoding", obj.getClass()));
-    }
   }
 
   /**
