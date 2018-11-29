@@ -56,10 +56,10 @@ public class MessageValidatorTest {
   private final IbftMessageFactory nonValidatorMessageFactory =
       new IbftMessageFactory(nonValidatorKey);
 
-  private List<Address> validators = Lists.newArrayList();
+  private final List<Address> validators = Lists.newArrayList();
 
   @Mock private BlockHeaderValidator<IbftContext> headerValidator;
-  private BlockHeader parentHeader = mock(BlockHeader.class);
+  private final BlockHeader parentHeader = mock(BlockHeader.class);
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(2, 0);
   private MessageValidator validator;
 
