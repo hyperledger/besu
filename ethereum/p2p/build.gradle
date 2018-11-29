@@ -29,8 +29,10 @@ dependencies {
   implementation project(':crypto')
   implementation project(':ethereum:core')
   implementation project(':ethereum:rlp')
+  implementation project(':metrics')
 
   implementation 'com.google.guava:guava'
+  implementation 'io.prometheus:simpleclient'
   implementation 'io.vertx:vertx-core'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.xerial.snappy:snappy-java'
@@ -51,5 +53,4 @@ dependencies {
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
-
 }

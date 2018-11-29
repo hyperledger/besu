@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminPeers;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.DebugMetrics;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.DebugStorageRangeAt;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.DebugTraceTransaction;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthAccounts;
@@ -75,6 +76,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.BlockResultFactor
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -95,6 +97,7 @@ public class JsonRpcMethodsFactory {
       final TransactionPool transactionPool,
       final ProtocolSchedule<?> protocolSchedule,
       final MiningCoordinator miningCoordinator,
+      final MetricsSystem metricsSystem,
       final Set<Capability> supportedCapabilities,
       final Collection<RpcApi> rpcApis,
       final FilterManager filterManager) {
@@ -109,6 +112,7 @@ public class JsonRpcMethodsFactory {
         filterManager,
         transactionPool,
         miningCoordinator,
+        metricsSystem,
         supportedCapabilities,
         rpcApis);
   }
@@ -122,6 +126,7 @@ public class JsonRpcMethodsFactory {
       final FilterManager filterManager,
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
+      final MetricsSystem metricsSystem,
       final Set<Capability> supportedCapabilities,
       final Collection<RpcApi> rpcApis) {
     final Map<String, JsonRpcMethod> enabledMethods = new HashMap<>();
@@ -189,7 +194,8 @@ public class JsonRpcMethodsFactory {
           enabledMethods,
           new DebugTraceTransaction(
               blockchainQueries, new TransactionTracer(blockReplay), parameter),
-          new DebugStorageRangeAt(parameter, blockchainQueries, blockReplay));
+          new DebugStorageRangeAt(parameter, blockchainQueries, blockReplay),
+          new DebugMetrics(metricsSystem));
     }
     if (rpcApis.contains(RpcApis.NET)) {
       addMethods(

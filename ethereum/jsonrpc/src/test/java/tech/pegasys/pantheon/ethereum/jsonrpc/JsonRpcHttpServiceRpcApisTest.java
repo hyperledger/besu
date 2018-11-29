@@ -28,6 +28,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -176,10 +177,12 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(EthHashMiningCoordinator.class),
+                    new NoOpMetricsSystem(),
                     supportedCapabilities,
                     config.getRpcApis()));
     final JsonRpcHttpService jsonRpcHttpService =
-        new JsonRpcHttpService(vertx, folder.newFolder().toPath(), config, rpcMethods);
+        new JsonRpcHttpService(
+            vertx, folder.newFolder().toPath(), config, new NoOpMetricsSystem(), rpcMethods);
     jsonRpcHttpService.start().join();
 
     baseUrl = jsonRpcHttpService.url();

@@ -32,6 +32,7 @@ dependencies {
   implementation project(':ethereum:eth')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:rlp')
+  implementation project(':metrics')
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'

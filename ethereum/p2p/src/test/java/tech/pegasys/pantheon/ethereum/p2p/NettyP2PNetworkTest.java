@@ -36,6 +36,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.InetAddress;
@@ -73,7 +74,8 @@ public final class NettyP2PNetworkTest {
                     .setRlpx(RlpxConfiguration.create().setBindPort(0)),
                 singletonList(cap),
                 () -> false,
-                new PeerBlacklist());
+                new PeerBlacklist(),
+                new NoOpMetricsSystem());
         final P2PNetwork connector =
             new NettyP2PNetwork(
                 vertx,
@@ -84,7 +86,8 @@ public final class NettyP2PNetworkTest {
                     .setDiscovery(noDiscovery),
                 singletonList(cap),
                 () -> false,
-                new PeerBlacklist())) {
+                new PeerBlacklist(),
+                new NoOpMetricsSystem())) {
 
       final int listenPort = listener.getSelf().getPort();
       listener.run();
@@ -123,7 +126,8 @@ public final class NettyP2PNetworkTest {
                     .setRlpx(RlpxConfiguration.create().setBindPort(0)),
                 capabilities,
                 () -> true,
-                new PeerBlacklist());
+                new PeerBlacklist(),
+                new NoOpMetricsSystem());
         final P2PNetwork connector =
             new NettyP2PNetwork(
                 vertx,
@@ -134,7 +138,8 @@ public final class NettyP2PNetworkTest {
                     .setDiscovery(noDiscovery),
                 capabilities,
                 () -> true,
-                new PeerBlacklist())) {
+                new PeerBlacklist(),
+                new NoOpMetricsSystem())) {
       final int listenPort = listener.getSelf().getPort();
       listener.run();
       connector.run();
@@ -188,7 +193,8 @@ public final class NettyP2PNetworkTest {
                     .setSupportedProtocols(subProtocol),
                 cap,
                 () -> true,
-                new PeerBlacklist());
+                new PeerBlacklist(),
+                new NoOpMetricsSystem());
         final P2PNetwork connector1 =
             new NettyP2PNetwork(
                 vertx,
@@ -199,7 +205,8 @@ public final class NettyP2PNetworkTest {
                     .setSupportedProtocols(subProtocol),
                 cap,
                 () -> true,
-                new PeerBlacklist());
+                new PeerBlacklist(),
+                new NoOpMetricsSystem());
         final P2PNetwork connector2 =
             new NettyP2PNetwork(
                 vertx,
@@ -210,7 +217,8 @@ public final class NettyP2PNetworkTest {
                     .setSupportedProtocols(subProtocol),
                 cap,
                 () -> true,
-                new PeerBlacklist())) {
+                new PeerBlacklist(),
+                new NoOpMetricsSystem())) {
 
       final int listenPort = listener.getSelf().getPort();
       // Setup listener and first connection
@@ -263,7 +271,8 @@ public final class NettyP2PNetworkTest {
                     .setRlpx(RlpxConfiguration.create().setBindPort(0)),
                 singletonList(cap1),
                 () -> false,
-                new PeerBlacklist());
+                new PeerBlacklist(),
+                new NoOpMetricsSystem());
         final P2PNetwork connector =
             new NettyP2PNetwork(
                 vertx,
@@ -274,7 +283,8 @@ public final class NettyP2PNetworkTest {
                     .setDiscovery(noDiscovery),
                 singletonList(cap2),
                 () -> false,
-                new PeerBlacklist())) {
+                new PeerBlacklist(),
+                new NoOpMetricsSystem())) {
       final int listenPort = listener.getSelf().getPort();
       listener.run();
       connector.run();
@@ -314,7 +324,8 @@ public final class NettyP2PNetworkTest {
                     .setRlpx(RlpxConfiguration.create().setBindPort(0)),
                 singletonList(cap),
                 () -> false,
-                localBlacklist);
+                localBlacklist,
+                new NoOpMetricsSystem());
         final P2PNetwork remoteNetwork =
             new NettyP2PNetwork(
                 vertx,
@@ -325,7 +336,8 @@ public final class NettyP2PNetworkTest {
                     .setDiscovery(noDiscovery),
                 singletonList(cap),
                 () -> false,
-                remoteBlacklist)) {
+                remoteBlacklist,
+                new NoOpMetricsSystem())) {
       final int localListenPort = localNetwork.getSelf().getPort();
       final int remoteListenPort = remoteNetwork.getSelf().getPort();
       final Peer localPeer =
@@ -410,9 +422,9 @@ public final class NettyP2PNetworkTest {
 
   @Test
   public void shouldSendClientQuittingWhenNetworkStops() {
-    NettyP2PNetwork nettyP2PNetwork = mockNettyP2PNetwork();
-    Peer peer = mockPeer();
-    PeerConnection peerConnection = mockPeerConnection();
+    final NettyP2PNetwork nettyP2PNetwork = mockNettyP2PNetwork();
+    final Peer peer = mockPeer();
+    final PeerConnection peerConnection = mockPeerConnection();
 
     nettyP2PNetwork.connect(peer).complete(peerConnection);
     nettyP2PNetwork.stop();
@@ -421,9 +433,9 @@ public final class NettyP2PNetworkTest {
   }
 
   private PeerConnection mockPeerConnection() {
-    PeerInfo peerInfo = mock(PeerInfo.class);
+    final PeerInfo peerInfo = mock(PeerInfo.class);
     when(peerInfo.getNodeId()).thenReturn(BytesValue.fromHexString("0x00"));
-    PeerConnection peerConnection = mock(PeerConnection.class);
+    final PeerConnection peerConnection = mock(PeerConnection.class);
     when(peerConnection.getPeer()).thenReturn(peerInfo);
     return peerConnection;
   }
@@ -444,11 +456,12 @@ public final class NettyP2PNetworkTest {
         networkingConfiguration,
         singletonList(cap),
         () -> false,
-        new PeerBlacklist());
+        new PeerBlacklist(),
+        new NoOpMetricsSystem());
   }
 
   private Peer mockPeer() {
-    Peer peer = mock(Peer.class);
+    final Peer peer = mock(Peer.class);
     when(peer.getId())
         .thenReturn(
             BytesValue.fromHexString(

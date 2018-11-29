@@ -17,6 +17,10 @@ import static java.util.Collections.unmodifiableCollection;
 import tech.pegasys.pantheon.ethereum.p2p.api.DisconnectCallback;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Collection;
@@ -27,8 +31,30 @@ public class PeerConnectionRegistry implements DisconnectCallback {
 
   private final ConcurrentMap<BytesValue, PeerConnection> connections = new ConcurrentHashMap<>();
 
+  private final LabelledMetric<Counter> disconnectCounter;
+  private final Counter connectedPeersCounter;
+
+  public PeerConnectionRegistry(final MetricsSystem metricsSystem) {
+    disconnectCounter =
+        metricsSystem.createLabelledCounter(
+            MetricCategory.PEERS,
+            "disconnected_total",
+            "Total number of peers disconnected",
+            "initiator",
+            "disconnectReason");
+    connectedPeersCounter =
+        metricsSystem.createCounter(
+            MetricCategory.PEERS, "connected_total", "Total number of peers connected");
+    metricsSystem.createGauge(
+        MetricCategory.PEERS,
+        "peer_count_current",
+        "Number of peers currently connected",
+        () -> (double) connections.size());
+  }
+
   public void registerConnection(final PeerConnection connection) {
     connections.put(connection.getPeer().getNodeId(), connection);
+    connectedPeersCounter.inc();
   }
 
   public Collection<PeerConnection> getPeerConnections() {
@@ -49,5 +75,6 @@ public class PeerConnectionRegistry implements DisconnectCallback {
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
     connections.remove(connection.getPeer().getNodeId());
+    disconnectCounter.labels(initiatedByPeer ? "remote" : "local", reason.name()).inc();
   }
 }

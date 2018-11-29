@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import org.junit.Before;
@@ -32,7 +33,8 @@ public class PeerConnectionRegistryTest {
   private final PeerConnection connection1 = mock(PeerConnection.class);
   private final PeerConnection connection2 = mock(PeerConnection.class);
 
-  private final PeerConnectionRegistry registry = new PeerConnectionRegistry();
+  private final PeerConnectionRegistry registry =
+      new PeerConnectionRegistry(new NoOpMetricsSystem());
 
   @Before
   public void setUp() {

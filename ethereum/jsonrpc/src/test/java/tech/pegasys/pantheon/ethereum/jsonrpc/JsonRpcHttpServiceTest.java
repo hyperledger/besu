@@ -42,6 +42,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 import tech.pegasys.pantheon.util.uint.UInt256;
@@ -119,6 +120,7 @@ public class JsonRpcHttpServiceTest {
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(EthHashMiningCoordinator.class),
+                    new NoOpMetricsSystem(),
                     supportedCapabilities,
                     JSON_RPC_APIS));
     service = createJsonRpcHttpService();
@@ -131,12 +133,17 @@ public class JsonRpcHttpServiceTest {
 
   protected static JsonRpcHttpService createJsonRpcHttpService(final JsonRpcConfiguration config)
       throws Exception {
-    return new JsonRpcHttpService(vertx, folder.newFolder().toPath(), config, rpcMethods);
+    return new JsonRpcHttpService(
+        vertx, folder.newFolder().toPath(), config, new NoOpMetricsSystem(), rpcMethods);
   }
 
   protected static JsonRpcHttpService createJsonRpcHttpService() throws Exception {
     return new JsonRpcHttpService(
-        vertx, folder.newFolder().toPath(), createJsonRpcConfig(), rpcMethods);
+        vertx,
+        folder.newFolder().toPath(),
+        createJsonRpcConfig(),
+        new NoOpMetricsSystem(),
+        rpcMethods);
   }
 
   protected static JsonRpcConfiguration createJsonRpcConfig() {
