@@ -86,3 +86,23 @@ stage('Pantheon tests') {
         }
     }
 }
+
+// If we're on master and it failed, notify slack
+if (env.BRANCH_NAME == "master") {
+    if (currentBuild.result != 'SUCCESSFUL') {
+        def channel = '#priv-pegasys-prod-dev'
+        if (currentBuild.result == 'FAILURE') {
+            slackSend(
+                color: 'danger',
+                msg: "Pantheon master branch build is FAILING.\nBuild Number: #${env.BUILD_NUMBER}\n${env.BUILD_URL}",
+                channel: channel
+            )
+        } else if (currentBuild.result == 'UNSTABLE') {
+            slackSend(
+                color: 'warning',
+                msg: "Pantheon master branch build is UNSTABLE.\nBuild Number: #${env.BUILD_NUMBER}\n${env.BUILD_URL}",
+                channel: channel
+            )
+        }
+    }
+}
