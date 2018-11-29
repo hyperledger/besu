@@ -16,6 +16,7 @@ import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.FULL;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
+import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.AbstractIbftUnsignedInRoundMessageData;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftSignedMessageData;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftUnsignedCommitMessageData;
@@ -72,6 +73,10 @@ public class MessageValidator {
     }
 
     if (!validatePreprepareMessage(msg)) {
+      return false;
+    }
+
+    if (!validateBlocKMatchesPrepareMessageRound(msg.getUnsignedMessageData())) {
       return false;
     }
 
@@ -200,5 +205,17 @@ public class MessageValidator {
       final IbftUnsignedPrePrepareMessageData right, final IbftUnsignedPrePrepareMessageData left) {
     return right.getBlock().getHash().equals(left.getBlock().getHash())
         && right.getRoundIdentifier().equals(left.getRoundIdentifier());
+  }
+
+  private boolean validateBlocKMatchesPrepareMessageRound(
+      final IbftUnsignedPrePrepareMessageData msgData) {
+    final ConsensusRoundIdentifier msgRound = msgData.getRoundIdentifier();
+    final IbftExtraData extraData =
+        IbftExtraData.decode(msgData.getBlock().getHeader().getExtraData());
+    if (extraData.getRound() != msgRound.getRoundNumber()) {
+      LOG.info("Invalid Preprepare message, round number in block does not match that in message.");
+      return false;
+    }
+    return true;
   }
 }

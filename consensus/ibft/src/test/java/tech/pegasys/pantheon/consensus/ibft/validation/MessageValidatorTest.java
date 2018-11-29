@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
+import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftMessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftSignedMessageData;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftUnsignedCommitMessageData;
@@ -35,8 +36,11 @@ import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.junit.Before;
@@ -84,6 +88,21 @@ public class MessageValidatorTest {
             parentHeader);
 
     when(block.getHash()).thenReturn(Hash.fromHexStringLenient("1"));
+    when(headerValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
+    insertRoundToBlockHeader(0);
+  }
+
+  private void insertRoundToBlockHeader(final int round) {
+    final IbftExtraData extraData =
+        new IbftExtraData(
+            BytesValue.wrap(new byte[32]),
+            Collections.emptyList(),
+            Optional.empty(),
+            round,
+            validators);
+    final BlockHeader header = mock(BlockHeader.class);
+    when(header.getExtraData()).thenReturn(extraData.encode());
+    when(block.getHeader()).thenReturn(header);
   }
 
   @Test
@@ -139,17 +158,12 @@ public class MessageValidatorTest {
   @Test
   public void receivingPrepareFromNonValidatorFails() {
     when(headerValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
-    final Block block = mock(Block.class);
-    final BlockHeader header = mock(BlockHeader.class);
-    when(header.getHash()).thenReturn(Hash.fromHexStringLenient("1")); // arbitrary hash value.
-    when(block.getHeader()).thenReturn(header);
-
     final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> preprepareMsg =
         proposerMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
 
     final IbftSignedMessageData<IbftUnsignedPrepareMessageData> prepareMsg =
         nonValidatorMessageFactory.createIbftSignedPrepareMessageData(
-            roundIdentifier, header.getHash());
+            roundIdentifier, block.getHash());
 
     assertThat(validator.addPreprepareMessage(preprepareMsg)).isTrue();
     assertThat(validator.validatePrepareMessage(prepareMsg)).isFalse();
@@ -180,18 +194,12 @@ public class MessageValidatorTest {
   @Test
   public void receivingPrepareNonProposerValidatorWithCorrectRoundIsSuccessful() {
     when(headerValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
-    final Block block = mock(Block.class);
-    final BlockHeader header = mock(BlockHeader.class);
-    final Hash blockHash = Hash.fromHexStringLenient("1");
-    when(header.getHash()).thenReturn(blockHash); // arbitrary hash value.
-    when(block.getHeader()).thenReturn(header);
-    when(block.getHash()).thenReturn(blockHash);
 
     final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> preprepareMsg =
         proposerMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
     final IbftSignedMessageData<IbftUnsignedPrepareMessageData> prepareMsg =
         validatorMessageFactory.createIbftSignedPrepareMessageData(
-            roundIdentifier, header.getHash());
+            roundIdentifier, block.getHash());
 
     assertThat(validator.addPreprepareMessage(preprepareMsg)).isTrue();
     assertThat(validator.validatePrepareMessage(prepareMsg)).isTrue();
@@ -247,7 +255,6 @@ public class MessageValidatorTest {
 
   @Test
   public void subsequentPreprepareHasDifferentContentFails() {
-    when(headerValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
 
     final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> preprepareMsg =
         proposerMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
@@ -270,5 +277,16 @@ public class MessageValidatorTest {
     final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> secondPreprepareMsg =
         proposerMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
     assertThat(validator.addPreprepareMessage(secondPreprepareMsg)).isTrue();
+  }
+
+  @Test
+  public void blockRoundMisMatchWithMessageRoundFails() {
+    insertRoundToBlockHeader(roundIdentifier.getRoundNumber() + 1);
+
+    when(headerValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
+    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> preprepareMsg =
+        proposerMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
+
+    assertThat(validator.addPreprepareMessage(preprepareMsg)).isFalse();
   }
 }
