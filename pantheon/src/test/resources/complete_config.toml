@@ -13,7 +13,7 @@ rpc-listen="5.6.7.8:5678" # IP:port
 ws-listen="9.10.11.12:9101" # IP:port
 
 # chain
-genesis="~/genesys.json" # Path
+genesis="~/genesis.json" # Path
 sync-mode="fast"# should be FAST or FULL (or fast or full)
 ottoman=false # true means using ottoman testnet if genesys file uses iBFT
 

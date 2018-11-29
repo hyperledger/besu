@@ -21,4 +21,11 @@ public class WaitUtils {
   public static void waitFor(final ThrowingRunnable condition) {
     Awaitility.await().ignoreExceptions().atMost(30, TimeUnit.SECONDS).untilAsserted(condition);
   }
+
+  public static void waitFor(final int timeout, final ThrowingRunnable condition) {
+    Awaitility.await()
+        .ignoreExceptions()
+        .atMost(timeout, TimeUnit.SECONDS)
+        .untilAsserted(condition);
+  }
 }

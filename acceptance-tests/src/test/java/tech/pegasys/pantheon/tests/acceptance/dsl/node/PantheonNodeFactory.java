@@ -12,6 +12,12 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
+import static tech.pegasys.pantheon.consensus.clique.jsonrpc.CliqueRpcApis.CLIQUE;
+
+import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
@@ -20,7 +26,15 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.Arrays;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
+import com.google.common.io.Resources;
 
 public class PantheonNodeFactory {
 
@@ -32,6 +46,8 @@ public class PantheonNodeFactory {
             config.getMiningParameters(),
             config.getJsonRpcConfiguration(),
             config.getWebSocketConfiguration(),
+            config.isDevMode(),
+            config.getGenesisConfigProvider(),
             serverSocket.getLocalPort());
     serverSocket.close();
 
@@ -62,13 +78,72 @@ public class PantheonNodeFactory {
   public PantheonNode createArchiveNodeWithRpcApis(
       final String name, final RpcApi... enabledRpcApis) throws IOException {
     final JsonRpcConfiguration jsonRpcConfig = createJsonRpcConfig();
-    jsonRpcConfig.setRpcApis(Arrays.asList(enabledRpcApis));
+    jsonRpcConfig.setRpcApis(asList(enabledRpcApis));
     final WebSocketConfiguration webSocketConfig = createWebSocketConfig();
-    webSocketConfig.setRpcApis(Arrays.asList(enabledRpcApis));
+    webSocketConfig.setRpcApis(asList(enabledRpcApis));
 
     return create(
         new PantheonFactoryConfiguration(
             name, createMiningParameters(false), jsonRpcConfig, webSocketConfig));
+  }
+
+  public PantheonNode createCliqueNode(final String name) throws IOException {
+    return create(
+        new PantheonFactoryConfiguration(
+            name,
+            createMiningParameters(true),
+            jsonRpcConfigWithClique(),
+            createWebSocketConfig(),
+            false,
+            this::createCliqueGenesisConfig));
+  }
+
+  public PantheonNode createCliqueNodeWithValidators(final String name, final String... validators)
+      throws IOException {
+    return create(
+        new PantheonFactoryConfiguration(
+            name,
+            createMiningParameters(true),
+            jsonRpcConfigWithClique(),
+            createWebSocketConfig(),
+            false,
+            nodes -> createCliqueGenesisConfigForValidators(asList(validators), nodes)));
+  }
+
+  private Optional<String> createCliqueGenesisConfig(final Collection<RunnableNode> validators) {
+    String genesisTemplate = cliqueGenesisTemplateConfig();
+    String cliqueExtraData = encodeCliqueExtraData(validators);
+    String genesis = genesisTemplate.replaceAll("%cliqueExtraData%", cliqueExtraData);
+    return Optional.of(genesis);
+  }
+
+  private Optional<String> createCliqueGenesisConfigForValidators(
+      final Collection<String> validators, final Collection<RunnableNode> pantheonNodes) {
+    List<RunnableNode> collect =
+        pantheonNodes.stream().filter(n -> validators.contains(n.getName())).collect(toList());
+    return createCliqueGenesisConfig(collect);
+  }
+
+  private String cliqueGenesisTemplateConfig() {
+    try {
+      URI uri = Resources.getResource("clique/clique.json").toURI();
+      return Resources.toString(uri.toURL(), Charset.defaultCharset());
+    } catch (URISyntaxException | IOException e) {
+      throw new IllegalStateException("Unable to get test clique genesis config");
+    }
+  }
+
+  private String encodeCliqueExtraData(final Collection<RunnableNode> nodes) {
+    final List<Address> addresses = nodes.stream().map(RunnableNode::getAddress).collect(toList());
+    return CliqueExtraData.createGenesisExtraDataString(addresses);
+  }
+
+  private JsonRpcConfiguration jsonRpcConfigWithClique() {
+    final JsonRpcConfiguration jsonRpcConfig = createJsonRpcConfig();
+    final List<RpcApi> rpcApis = new ArrayList<>(jsonRpcConfig.getRpcApis());
+    rpcApis.add(CLIQUE);
+    jsonRpcConfig.setRpcApis(rpcApis);
+    return jsonRpcConfig;
   }
 
   private MiningParameters createMiningParameters(final boolean miner) {
@@ -95,16 +170,36 @@ public class PantheonNodeFactory {
     private final MiningParameters miningParameters;
     private final JsonRpcConfiguration jsonRpcConfiguration;
     private final WebSocketConfiguration webSocketConfiguration;
+    private final boolean devMode;
+    private final GenesisConfigProvider genesisConfigProvider;
 
     public PantheonFactoryConfiguration(
         final String name,
         final MiningParameters miningParameters,
         final JsonRpcConfiguration jsonRpcConfiguration,
         final WebSocketConfiguration webSocketConfiguration) {
+      this(
+          name,
+          miningParameters,
+          jsonRpcConfiguration,
+          webSocketConfiguration,
+          true,
+          ignore -> Optional.empty());
+    }
+
+    public PantheonFactoryConfiguration(
+        final String name,
+        final MiningParameters miningParameters,
+        final JsonRpcConfiguration jsonRpcConfiguration,
+        final WebSocketConfiguration webSocketConfiguration,
+        final boolean devMode,
+        final GenesisConfigProvider genesisConfigProvider) {
       this.name = name;
       this.miningParameters = miningParameters;
       this.jsonRpcConfiguration = jsonRpcConfiguration;
       this.webSocketConfiguration = webSocketConfiguration;
+      this.devMode = devMode;
+      this.genesisConfigProvider = genesisConfigProvider;
     }
 
     public String getName() {
@@ -121,6 +216,14 @@ public class PantheonNodeFactory {
 
     public WebSocketConfiguration getWebSocketConfiguration() {
       return webSocketConfiguration;
+    }
+
+    public boolean isDevMode() {
+      return devMode;
+    }
+
+    public GenesisConfigProvider getGenesisConfigProvider() {
+      return genesisConfigProvider;
     }
   }
 }

@@ -13,8 +13,10 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.blockchain;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.blockchain.ExpectBeneficiary;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.blockchain.ExpectMinimumBlockNumber;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
 
 public class Blockchain {
@@ -27,5 +29,9 @@ public class Blockchain {
 
   public Condition blockNumberMustBeLatest(final Node node) {
     return new ExpectMinimumBlockNumber(eth, node.execute(eth.blockNumber()));
+  }
+
+  public Condition beneficiaryEquals(final PantheonNode node) {
+    return new ExpectBeneficiary(eth, node);
   }
 }

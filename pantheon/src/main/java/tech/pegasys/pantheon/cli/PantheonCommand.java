@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.cli;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import tech.pegasys.pantheon.Runner;
 import tech.pegasys.pantheon.RunnerBuilder;
@@ -51,6 +52,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import com.google.common.io.Resources;
 import com.google.common.net.HostAndPort;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.Level;
@@ -618,7 +620,7 @@ public class PantheonCommand implements Runnable {
   private EthNetworkConfig updateNetworkConfig(final EthNetworkConfig ethNetworkConfig) {
     final EthNetworkConfig.Builder builder = new EthNetworkConfig.Builder(ethNetworkConfig);
     if (genesisFile != null) {
-      builder.setGenesisConfig(genesisFile.toPath().toUri());
+      builder.setGenesisConfig(genesisConfig());
     }
     if (networkId != null) {
       builder.setNetworkId(networkId);
@@ -627,5 +629,14 @@ public class PantheonCommand implements Runnable {
       builder.setBootNodes(bootstrapNodes);
     }
     return builder.build();
+  }
+
+  private String genesisConfig() {
+    try {
+      return Resources.toString(genesisFile.toURI().toURL(), UTF_8);
+    } catch (IOException e) {
+      throw new ParameterException(
+          new CommandLine(this), String.format("Unable to load genesis file %s.", genesisFile), e);
+    }
   }
 }

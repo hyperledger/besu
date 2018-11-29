@@ -42,6 +42,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -61,10 +62,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 
 public class PantheonCommandTest extends CommandTestAbstract {
-
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
   private static final JsonRpcConfiguration defaultJsonRpcConfiguration;
   private static final WebSocketConfiguration defaultWebSocketConfiguration;
+  private static final String GENESIS_CONFIG_TESTDATA = "genesis_config";
 
   static {
     final JsonRpcConfiguration rpcConf = JsonRpcConfiguration.createDefault();
@@ -160,13 +161,12 @@ public class PantheonCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
     assertThat(miningArg.getValue().getExtraData()).isEqualTo(BytesValue.EMPTY);
     assertThat(networkArg.getValue().getNetworkId()).isEqualTo(1);
-    assertThat(networkArg.getValue().getGenesisConfig().toString()).endsWith("mainnet.json");
     assertThat(networkArg.getValue().getBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
   }
 
   // Testing each option
   @Test
-  public void CallingWithConfigOptionButNoConfigFileShouldDisplayHelp() {
+  public void callingWithConfigOptionButNoConfigFileShouldDisplayHelp() {
 
     parseCommand("--config");
 
@@ -176,7 +176,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void CallingWithConfigOptionButNonExistingFileShouldDisplayHelp() throws IOException {
+  public void callingWithConfigOptionButNonExistingFileShouldDisplayHelp() throws IOException {
     final File tempConfigFile = temp.newFile("an-invalid-file-name-without-extension");
     parseCommand("--config", tempConfigFile.getPath());
 
@@ -186,7 +186,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void CallingWithConfigOptionButTomlFileNotFoundShouldDisplayHelp() {
+  public void callingWithConfigOptionButTomlFileNotFoundShouldDisplayHelp() {
 
     parseCommand("--config", "./an-invalid-file-name-sdsd87sjhqoi34io23.toml");
 
@@ -196,7 +196,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void CallingWithConfigOptionButInvalidContentTomlFileShouldDisplayHelp() throws Exception {
+  public void callingWithConfigOptionButInvalidContentTomlFileShouldDisplayHelp() throws Exception {
 
     // We write a config file to prevent an invalid file in resource folder to raise errors in
     // code checks (CI + IDE)
@@ -217,7 +217,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void CallingWithConfigOptionButInvalidValueTomlFileShouldDisplayHelp() throws Exception {
+  public void callingWithConfigOptionButInvalidValueTomlFileShouldDisplayHelp() throws Exception {
 
     // We write a config file to prevent an invalid file in resource folder to raise errors in
     // code checks (CI + IDE)
@@ -238,8 +238,13 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void OverrideDefaultValuesIfKeyIsPresentInConfigFile() throws IOException {
-    final String configFile = Resources.getResource("complete_config.toml").getFile();
+  public void overrideDefaultValuesIfKeyIsPresentInConfigFile() throws IOException {
+    final URL configFile = Resources.getResource("complete_config.toml");
+    final Path genesisFile = createFakeGenesisFile();
+    final String updatedConfig =
+        Resources.toString(configFile, UTF_8).replaceAll("~/genesis.json", genesisFile.toString());
+    final Path toml = Files.createTempFile("toml", "");
+    Files.write(toml, updatedConfig.getBytes(UTF_8));
 
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
     jsonRpcConfiguration.setEnabled(false);
@@ -258,7 +263,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     webSocketConfiguration.addRpcApi(CliqueRpcApis.CLIQUE);
     webSocketConfiguration.addRpcApi(IbftRpcApis.IBFT);
 
-    parseCommand("--config", configFile);
+    parseCommand("--config", toml.toString());
 
     verify(mockRunnerBuilder)
         .build(
@@ -280,7 +285,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     final EthNetworkConfig networkConfig =
         new Builder(EthNetworkConfig.mainnet())
-            .setGenesisConfig(new File("~/genesys.json").toPath().toUri())
+            .setGenesisConfig(GENESIS_CONFIG_TESTDATA)
             .setBootNodes(nodes)
             .build();
     verify(mockControllerBuilder)
@@ -303,7 +308,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void NoOverrideDefaultValuesIfKeyIsNotPresentInConfigFile() throws IOException {
+  public void noOverrideDefaultValuesIfKeyIsNotPresentInConfigFile() throws IOException {
     final String configFile = Resources.getResource("partial_config.toml").getFile();
 
     parseCommand("--config", configFile);
@@ -386,16 +391,16 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   @Test
   public void genesisPathOptionMustBeUsed() throws Exception {
-    final Path path = Paths.get(".");
+    final Path genesisFile = createFakeGenesisFile();
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
-    parseCommand("--genesis", path.toString());
+    parseCommand("--genesis", genesisFile.toString());
 
     verify(mockControllerBuilder)
         .build(any(), any(), networkArg.capture(), anyBoolean(), any(), anyBoolean(), any());
 
-    assertThat(networkArg.getValue().getGenesisConfig()).isEqualTo(path.toUri());
+    assertThat(networkArg.getValue().getGenesisConfig()).isEqualTo("genesis_config");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -996,7 +1001,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   @Test
   public void rinkebyValuesCanBeOverridden() throws Exception {
     final String[] nodes = {"enode://001@123:4567", "enode://002@123:4567", "enode://003@123:4567"};
-    final Path path = Paths.get(".");
+    final Path genesisFile = createFakeGenesisFile();
     parseCommand(
         "--rinkeby",
         "--network-id",
@@ -1004,7 +1009,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
         "--bootnodes",
         String.join(",", nodes),
         "--genesis",
-        path.toString());
+        genesisFile.toString());
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
@@ -1012,8 +1017,14 @@ public class PantheonCommandTest extends CommandTestAbstract {
         .build(any(), any(), networkArg.capture(), anyBoolean(), any(), anyBoolean(), any());
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(networkArg.getValue().getGenesisConfig()).isEqualTo(path.toUri());
+    assertThat(networkArg.getValue().getGenesisConfig()).isEqualTo("genesis_config");
     assertThat(networkArg.getValue().getBootNodes()).isEqualTo(Arrays.asList(nodes));
     assertThat(networkArg.getValue().getNetworkId()).isEqualTo(1);
+  }
+
+  private Path createFakeGenesisFile() throws IOException {
+    final Path genesisFile = Files.createTempFile("genesisFile", "");
+    Files.write(genesisFile, "genesis_config".getBytes(UTF_8));
+    return genesisFile;
   }
 }

@@ -12,11 +12,15 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import tech.pegasys.pantheon.cli.EthNetworkConfig;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,7 +53,9 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
     params.add("--datadir");
     params.add(dataDir.toAbsolutePath().toString());
 
-    params.add("--dev-mode");
+    if (node.isDevMode()) {
+      params.add("--dev-mode");
+    }
 
     params.add("--p2p-listen");
     params.add(node.p2pListenAddress());
@@ -79,6 +85,15 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
       params.add(apiList(node.webSocketConfiguration().getRpcApis()));
     }
 
+    if (node.ethNetworkConfig().isPresent()) {
+      EthNetworkConfig ethNetworkConfig = node.ethNetworkConfig().get();
+      Path genesisFile = createGenesisFile(node, ethNetworkConfig);
+      params.add("--genesis");
+      params.add(genesisFile.toString());
+      params.add("--network-id");
+      params.add(Integer.toString(ethNetworkConfig.getNetworkId()));
+    }
+
     final ProcessBuilder processBuilder =
         new ProcessBuilder(params)
             .directory(new File(System.getProperty("user.dir")).getParentFile())
@@ -92,6 +107,16 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
     }
 
     waitForPortsFile(dataDir);
+  }
+
+  private Path createGenesisFile(final PantheonNode node, final EthNetworkConfig ethNetworkConfig) {
+    try {
+      Path genesisFile = Files.createTempFile(node.homeDirectory(), "gensis", "");
+      Files.write(genesisFile, ethNetworkConfig.getGenesisConfig().getBytes(UTF_8));
+      return genesisFile;
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   private String apiList(final Collection<RpcApi> rpcApis) {

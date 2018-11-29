@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.cli;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.pantheon.controller.KeyPairUtil.loadKeyPair;
 import static tech.pegasys.pantheon.controller.PantheonController.DATABASE_PATH;
 
@@ -29,8 +28,6 @@ import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-
-import com.google.common.io.Resources;
 
 public class PantheonControllerBuilder {
 
@@ -59,8 +56,7 @@ public class PantheonControllerBuilder {
           miningParameters,
           nodeKeys);
     } else {
-      final String genesisConfig =
-          Resources.toString(ethNetworkConfig.getGenesisConfig().toURL(), UTF_8);
+      final String genesisConfig = ethNetworkConfig.getGenesisConfig();
       final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig);
       return PantheonController.fromConfig(
           genesisConfigFile,

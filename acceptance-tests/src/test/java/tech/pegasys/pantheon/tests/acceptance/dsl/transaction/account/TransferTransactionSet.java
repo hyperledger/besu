@@ -13,12 +13,11 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.web3j.protocol.Web3j;
 
 public class TransferTransactionSet implements Transaction<List<Hash>> {
 
@@ -29,7 +28,7 @@ public class TransferTransactionSet implements Transaction<List<Hash>> {
   }
 
   @Override
-  public List<Hash> execute(final Web3j node) {
+  public List<Hash> execute(final PantheonWeb3j node) {
     final List<Hash> hashes = new ArrayList<>();
 
     for (final TransferTransaction transaction : transactions) {

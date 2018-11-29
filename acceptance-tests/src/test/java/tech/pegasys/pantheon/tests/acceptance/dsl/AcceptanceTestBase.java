@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Accounts;
 import tech.pegasys.pantheon.tests.acceptance.dsl.blockchain.Blockchain;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.CliqueConditions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.contract.ContractVerifier;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eth;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Net;
@@ -21,9 +22,11 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Web3;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Cluster;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique.CliqueTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.web3.Web3Transactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.waitcondition.WaitConditions;
 
 import org.junit.After;
 
@@ -32,24 +35,30 @@ public class AcceptanceTestBase {
   protected final Accounts accounts;
   protected final Blockchain blockchain;
   protected final Cluster cluster;
+  protected final CliqueConditions clique;
+  protected final CliqueTransactions cliqueTransactions;
   protected final Transactions transactions;
   protected final Web3 web3;
   protected final Eth eth;
   protected final Net net;
   protected final PantheonNodeFactory pantheon;
   protected final ContractVerifier contractVerifier;
+  protected final WaitConditions wait;
 
   protected AcceptanceTestBase() {
     final EthTransactions ethTransactions = new EthTransactions();
     accounts = new Accounts(ethTransactions);
     blockchain = new Blockchain(ethTransactions);
     eth = new Eth(ethTransactions);
+    cliqueTransactions = new CliqueTransactions();
+    clique = new CliqueConditions(ethTransactions, cliqueTransactions);
     net = new Net(new NetTransactions());
     cluster = new Cluster(net);
     transactions = new Transactions(accounts);
     web3 = new Web3(new Web3Transactions());
     pantheon = new PantheonNodeFactory();
     contractVerifier = new ContractVerifier(accounts.getPrimaryBenefactor());
+    wait = new WaitConditions(ethTransactions, cliqueTransactions);
   }
 
   @After

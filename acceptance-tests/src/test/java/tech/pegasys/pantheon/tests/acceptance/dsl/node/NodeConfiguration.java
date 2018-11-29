@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
+import tech.pegasys.pantheon.cli.EthNetworkConfig;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -28,4 +30,10 @@ public interface NodeConfiguration {
   String hostName();
 
   boolean jsonRpcEnabled();
+
+  GenesisConfigProvider genesisConfigProvider();
+
+  Optional<EthNetworkConfig> ethNetworkConfig();
+
+  void ethNetworkConfig(Optional<EthNetworkConfig> ethNetworkConfig);
 }

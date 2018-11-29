@@ -14,11 +14,11 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.web3;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 
-import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.Web3Sha3;
 
 public class Web3Sha3Transaction implements Transaction<String> {
@@ -30,7 +30,7 @@ public class Web3Sha3Transaction implements Transaction<String> {
   }
 
   @Override
-  public String execute(final Web3j node) {
+  public String execute(final PantheonWeb3j node) {
     try {
       final Web3Sha3 result = node.web3Sha3(input).send();
       assertThat(result).isNotNull();

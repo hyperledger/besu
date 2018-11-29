@@ -14,12 +14,12 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 import java.math.BigInteger;
 
-import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.NetPeerCount;
 
 public class NetPeerCountTransaction implements Transaction<BigInteger> {
@@ -27,7 +27,7 @@ public class NetPeerCountTransaction implements Transaction<BigInteger> {
   NetPeerCountTransaction() {}
 
   @Override
-  public BigInteger execute(final Web3j node) {
+  public BigInteger execute(final PantheonWeb3j node) {
     try {
       final NetPeerCount result = node.netPeerCount().send();
       assertThat(result).isNotNull();
