@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.p2p.config.NetworkingConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryServiceException;
 import tech.pegasys.pantheon.ethereum.p2p.netty.NettyP2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.NetworkUtility;
 
 import java.io.IOException;
@@ -53,7 +54,8 @@ public class NetworkingServiceLifecycleTest {
             configWithRandomPorts(),
             emptyList(),
             () -> true,
-            new PeerBlacklist())) {
+            new PeerBlacklist(),
+            new NoOpMetricsSystem())) {
       service.run();
       final int port = service.getDiscoverySocketAddress().getPort();
 
@@ -71,7 +73,14 @@ public class NetworkingServiceLifecycleTest {
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindHost(null));
     try (final P2PNetwork broken =
-        new NettyP2PNetwork(vertx, keyPair, config, emptyList(), () -> true, new PeerBlacklist())) {
+        new NettyP2PNetwork(
+            vertx,
+            keyPair,
+            config,
+            emptyList(),
+            () -> true,
+            new PeerBlacklist(),
+            new NoOpMetricsSystem())) {
       Assertions.fail("Expected Exception");
     }
   }
@@ -83,7 +92,14 @@ public class NetworkingServiceLifecycleTest {
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindHost("fake.fake.fake"));
     try (final P2PNetwork broken =
-        new NettyP2PNetwork(vertx, keyPair, config, emptyList(), () -> true, new PeerBlacklist())) {
+        new NettyP2PNetwork(
+            vertx,
+            keyPair,
+            config,
+            emptyList(),
+            () -> true,
+            new PeerBlacklist(),
+            new NoOpMetricsSystem())) {
       Assertions.fail("Expected Exception");
     }
   }
@@ -95,7 +111,14 @@ public class NetworkingServiceLifecycleTest {
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindPort(-1));
     try (final P2PNetwork broken =
-        new NettyP2PNetwork(vertx, keyPair, config, emptyList(), () -> true, new PeerBlacklist())) {
+        new NettyP2PNetwork(
+            vertx,
+            keyPair,
+            config,
+            emptyList(),
+            () -> true,
+            new PeerBlacklist(),
+            new NoOpMetricsSystem())) {
       Assertions.fail("Expected Exception");
     }
   }
@@ -104,7 +127,13 @@ public class NetworkingServiceLifecycleTest {
   public void createPeerDiscoveryAgent_NullKeyPair() throws IOException {
     try (final P2PNetwork broken =
         new NettyP2PNetwork(
-            vertx, null, configWithRandomPorts(), emptyList(), () -> true, new PeerBlacklist())) {
+            vertx,
+            null,
+            configWithRandomPorts(),
+            emptyList(),
+            () -> true,
+            new PeerBlacklist(),
+            new NoOpMetricsSystem())) {
       Assertions.fail("Expected Exception");
     }
   }
@@ -119,7 +148,8 @@ public class NetworkingServiceLifecycleTest {
             configWithRandomPorts(),
             emptyList(),
             () -> true,
-            new PeerBlacklist())) {
+            new PeerBlacklist(),
+            new NoOpMetricsSystem())) {
       service.run();
       service.stop();
       service.run();
@@ -136,7 +166,8 @@ public class NetworkingServiceLifecycleTest {
                 configWithRandomPorts(),
                 emptyList(),
                 () -> true,
-                new PeerBlacklist());
+                new PeerBlacklist(),
+                new NoOpMetricsSystem());
         final NettyP2PNetwork service2 =
             new NettyP2PNetwork(
                 vertx,
@@ -144,7 +175,8 @@ public class NetworkingServiceLifecycleTest {
                 configWithRandomPorts(),
                 emptyList(),
                 () -> true,
-                new PeerBlacklist())) {
+                new PeerBlacklist(),
+                new NoOpMetricsSystem())) {
       service1.run();
       service1.stop();
       service2.run();
@@ -162,13 +194,20 @@ public class NetworkingServiceLifecycleTest {
             configWithRandomPorts(),
             emptyList(),
             () -> true,
-            new PeerBlacklist())) {
+            new PeerBlacklist(),
+            new NoOpMetricsSystem())) {
       service1.run();
       final NetworkingConfiguration config = configWithRandomPorts();
       config.getDiscovery().setBindPort(service1.getDiscoverySocketAddress().getPort());
       try (final NettyP2PNetwork service2 =
           new NettyP2PNetwork(
-              vertx, keyPair, config, emptyList(), () -> true, new PeerBlacklist())) {
+              vertx,
+              keyPair,
+              config,
+              emptyList(),
+              () -> true,
+              new PeerBlacklist(),
+              new NoOpMetricsSystem())) {
         try {
           service2.run();
         } catch (final Exception e) {
@@ -196,7 +235,8 @@ public class NetworkingServiceLifecycleTest {
             configWithRandomPorts(),
             emptyList(),
             () -> true,
-            new PeerBlacklist())) {
+            new PeerBlacklist(),
+            new NoOpMetricsSystem())) {
       assertTrue(agent.getDiscoveryPeers().isEmpty());
       assertEquals(0, agent.getPeers().size());
     }

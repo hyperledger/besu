@@ -35,6 +35,9 @@ dependencyManagement {
 
     dependency 'io.pkts:pkts-core:3.0.3'
 
+    dependency "io.prometheus:simpleclient:0.5.0"
+    dependency "io.prometheus:simpleclient_hotspot:0.5.0"
+
     dependency 'io.vertx:vertx-codegen:3.5.4'
     dependency 'io.vertx:vertx-core:3.5.4'
     dependency 'io.vertx:vertx-unit:3.5.4'

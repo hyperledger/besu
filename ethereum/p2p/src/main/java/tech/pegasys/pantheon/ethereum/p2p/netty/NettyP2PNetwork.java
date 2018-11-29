@@ -30,6 +30,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.net.InetSocketAddress;
@@ -117,7 +118,7 @@ public final class NettyP2PNetwork implements P2PNetwork {
   private final PeerBlacklist peerBlacklist;
   private OptionalLong peerBondedObserverId = OptionalLong.empty();
 
-  private final PeerConnectionRegistry connections = new PeerConnectionRegistry();
+  private final PeerConnectionRegistry connections;
 
   private final AtomicInteger pendingConnections = new AtomicInteger(0);
 
@@ -148,6 +149,7 @@ public final class NettyP2PNetwork implements P2PNetwork {
    * @param supportedCapabilities The wire protocol capabilities to advertise to connected peers.
    * @param peerBlacklist The peers with which this node will not connect
    * @param peerRequirement Queried to determine if enough peers are currently connected.
+   * @param metricsSystem The metrics system to capture metrics with.
    */
   public NettyP2PNetwork(
       final Vertx vertx,
@@ -155,8 +157,10 @@ public final class NettyP2PNetwork implements P2PNetwork {
       final NetworkingConfiguration config,
       final List<Capability> supportedCapabilities,
       final PeerRequirement peerRequirement,
-      final PeerBlacklist peerBlacklist) {
+      final PeerBlacklist peerBlacklist,
+      final MetricsSystem metricsSystem) {
 
+    connections = new PeerConnectionRegistry(metricsSystem);
     this.peerBlacklist = peerBlacklist;
     peerDiscoveryAgent =
         new PeerDiscoveryAgent(
@@ -180,7 +184,7 @@ public final class NettyP2PNetwork implements P2PNetwork {
         future -> {
           final InetSocketAddress socketAddress =
               (InetSocketAddress) server.channel().localAddress();
-          String message =
+          final String message =
               String.format(
                   "Unable start up P2P network on %s:%s.  Check for port conflicts.",
                   config.getRlpx().getBindHost(), config.getRlpx().getBindPort());

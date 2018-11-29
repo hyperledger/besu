@@ -47,6 +47,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.net.URL;
 import java.nio.file.Paths;
@@ -175,11 +176,14 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
                 filterManager,
                 transactionPoolMock,
                 miningCoordinatorMock,
+                new NoOpMetricsSystem(),
                 supportedCapabilities,
                 JSON_RPC_APIS);
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setPort(0);
-    service = new JsonRpcHttpService(vertx, folder.newFolder().toPath(), config, methods);
+    service =
+        new JsonRpcHttpService(
+            vertx, folder.newFolder().toPath(), config, new NoOpMetricsSystem(), methods);
     service.start().join();
 
     client = new OkHttpClient();

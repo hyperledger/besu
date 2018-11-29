@@ -25,6 +25,11 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResp
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcNoResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponseType;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.OperationTimer.TimingContext;
 import tech.pegasys.pantheon.util.NetworkUtility;
 
 import java.net.BindException;
@@ -69,6 +74,7 @@ public class JsonRpcHttpService {
   private final JsonRpcConfiguration config;
   private final Map<String, JsonRpcMethod> jsonRpcMethods;
   private final Path dataDir;
+  private final LabelledMetric<OperationTimer> requestTimer;
 
   private HttpServer httpServer;
 
@@ -76,8 +82,15 @@ public class JsonRpcHttpService {
       final Vertx vertx,
       final Path dataDir,
       final JsonRpcConfiguration config,
+      final MetricsSystem metricsSystem,
       final Map<String, JsonRpcMethod> methods) {
     this.dataDir = dataDir;
+    requestTimer =
+        metricsSystem.createLabelledTimer(
+            MetricCategory.RPC,
+            "request_time",
+            "Time taken to process a JSON-RPC request",
+            "methodName");
     validateConfig(config);
     this.config = config;
     this.vertx = vertx;
@@ -327,7 +340,7 @@ public class JsonRpcHttpService {
     }
 
     // Generate response
-    try {
+    try (final TimingContext context = requestTimer.labels(request.getMethod()).startTimer()) {
       return method.response(request);
     } catch (final InvalidJsonRpcParameters e) {
       LOG.debug(e);

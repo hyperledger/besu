@@ -14,6 +14,8 @@ package tech.pegasys.pantheon.ethereum.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+
 import java.util.HashMap;
 
 import com.google.common.collect.Lists;
@@ -168,7 +170,8 @@ public class JsonRpcHttpServiceCorsTest {
     }
 
     final JsonRpcHttpService jsonRpcHttpService =
-        new JsonRpcHttpService(vertx, folder.newFolder().toPath(), config, new HashMap<>());
+        new JsonRpcHttpService(
+            vertx, folder.newFolder().toPath(), config, new NoOpMetricsSystem(), new HashMap<>());
     jsonRpcHttpService.start().join();
 
     return jsonRpcHttpService;
