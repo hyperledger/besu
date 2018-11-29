@@ -15,6 +15,8 @@ package tech.pegasys.pantheon.consensus.ibft;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
+import java.util.Objects;
+
 import com.google.common.base.MoreObjects;
 
 /**
@@ -88,5 +90,22 @@ public class ConsensusRoundIdentifier implements Comparable<ConsensusRoundIdenti
         .add("Sequence", sequence)
         .add("Round", round)
         .toString();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ConsensusRoundIdentifier that = (ConsensusRoundIdentifier) o;
+    return sequence == that.sequence && round == that.round;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(sequence, round);
   }
 }

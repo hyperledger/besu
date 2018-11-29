@@ -199,6 +199,6 @@ public class MessageValidator {
   private boolean preprepareMessagesAreIdentical(
       final IbftUnsignedPrePrepareMessageData right, final IbftUnsignedPrePrepareMessageData left) {
     return right.getBlock().getHash().equals(left.getBlock().getHash())
-        && (right.getRoundIdentifier().compareTo(left.getRoundIdentifier()) == 0);
+        && right.getRoundIdentifier().equals(left.getRoundIdentifier());
   }
 }
