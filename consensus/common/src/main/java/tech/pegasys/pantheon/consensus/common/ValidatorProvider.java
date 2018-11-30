@@ -14,10 +14,10 @@ package tech.pegasys.pantheon.consensus.common;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 
-import java.util.NavigableSet;
+import java.util.Collection;
 
 public interface ValidatorProvider {
 
   // Returns the current list of validators
-  NavigableSet<Address> getCurrentValidators();
+  Collection<Address> getCurrentValidators();
 }

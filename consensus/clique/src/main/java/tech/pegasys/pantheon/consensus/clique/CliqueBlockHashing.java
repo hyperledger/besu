@@ -50,7 +50,7 @@ public class CliqueBlockHashing {
       final BlockHeader header, final CliqueExtraData cliqueExtraData) {
     if (!cliqueExtraData.getProposerSeal().isPresent()) {
       throw new IllegalArgumentException(
-          "Supplied cliqueExtraData does not include a proposer seal.");
+          "Supplied cliqueExtraData does not include a proposer " + "seal");
     }
     final Hash proposerHash = calculateDataHashForProposerSeal(header, cliqueExtraData);
     return Util.signatureToAddress(cliqueExtraData.getProposerSeal().get(), proposerHash);
