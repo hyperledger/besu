@@ -17,17 +17,23 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import tech.pegasys.pantheon.consensus.clique.CliqueBlockHashing;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
-import tech.pegasys.pantheon.consensus.clique.TestHelpers;
+import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
 import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Util;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.List;
@@ -39,15 +45,15 @@ import org.junit.Test;
 public class CliqueDifficultyValidationRuleTest {
 
   private final KeyPair proposerKeyPair = KeyPair.generate();
-  private final KeyPair otherKeyPair = KeyPair.generate();
   private final List<Address> validatorList = Lists.newArrayList();
   private ProtocolContext<CliqueContext> cliqueProtocolContext;
   private BlockHeaderTestFixture blockHeaderBuilder;
 
   @Before
   public void setup() {
-    validatorList.add(Util.publicKeyToAddress(proposerKeyPair.getPublicKey()));
-    validatorList.add(Util.publicKeyToAddress(otherKeyPair.getPublicKey()));
+    final Address localAddress = Util.publicKeyToAddress(proposerKeyPair.getPublicKey());
+    validatorList.add(localAddress);
+    validatorList.add(AddressHelpers.calculateAddressWithRespectTo(localAddress, 1));
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
@@ -56,7 +62,29 @@ public class CliqueDifficultyValidationRuleTest {
     final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);
     cliqueProtocolContext = new ProtocolContext<>(null, null, cliqueContext);
     blockHeaderBuilder = new BlockHeaderTestFixture();
-    blockHeaderBuilder.number(2);
+  }
+
+  private BlockHeader createCliqueSignedBlock(final BlockHeaderTestFixture blockHeaderBuilder) {
+
+    final CliqueExtraData unsignedExtraData =
+        new CliqueExtraData(BytesValue.wrap(new byte[32]), null, validatorList);
+    blockHeaderBuilder.extraData(unsignedExtraData.encode());
+
+    final Hash signingHash =
+        CliqueBlockHashing.calculateDataHashForProposerSeal(
+            blockHeaderBuilder.buildHeader(), unsignedExtraData);
+
+    final Signature proposerSignature = SECP256K1.sign(signingHash, proposerKeyPair);
+
+    final CliqueExtraData signedExtraData =
+        new CliqueExtraData(
+            unsignedExtraData.getVanityData(),
+            proposerSignature,
+            unsignedExtraData.getValidators());
+
+    blockHeaderBuilder.extraData(signedExtraData.encode());
+
+    return blockHeaderBuilder.buildHeader();
   }
 
   @Test
@@ -64,13 +92,11 @@ public class CliqueDifficultyValidationRuleTest {
     final long IN_TURN_BLOCK_NUMBER = validatorList.size(); // i.e. proposer is 'in turn'
     final UInt256 REPORTED_DIFFICULTY = UInt256.of(2);
 
-    final BlockHeader parentHeader =
-        TestHelpers.createCliqueSignedBlockHeader(blockHeaderBuilder, otherKeyPair, validatorList);
+    blockHeaderBuilder.number(IN_TURN_BLOCK_NUMBER - 1L);
+    final BlockHeader parentHeader = createCliqueSignedBlock(blockHeaderBuilder);
 
     blockHeaderBuilder.number(IN_TURN_BLOCK_NUMBER).difficulty(REPORTED_DIFFICULTY);
-    final BlockHeader newBlock =
-        TestHelpers.createCliqueSignedBlockHeader(
-            blockHeaderBuilder, proposerKeyPair, validatorList);
+    final BlockHeader newBlock = createCliqueSignedBlock(blockHeaderBuilder);
 
     final CliqueDifficultyValidationRule diffValidationRule = new CliqueDifficultyValidationRule();
     assertThat(diffValidationRule.validate(newBlock, parentHeader, cliqueProtocolContext)).isTrue();
@@ -81,14 +107,11 @@ public class CliqueDifficultyValidationRuleTest {
     final long OUT_OF_TURN_BLOCK_NUMBER = validatorList.size() - 1L;
     final UInt256 REPORTED_DIFFICULTY = UInt256.of(1);
 
-    final BlockHeader parentHeader =
-        TestHelpers.createCliqueSignedBlockHeader(
-            blockHeaderBuilder, proposerKeyPair, validatorList);
+    blockHeaderBuilder.number(OUT_OF_TURN_BLOCK_NUMBER - 1L);
+    final BlockHeader parentHeader = createCliqueSignedBlock(blockHeaderBuilder);
 
     blockHeaderBuilder.number(OUT_OF_TURN_BLOCK_NUMBER).difficulty(REPORTED_DIFFICULTY);
-    final BlockHeader newBlock =
-        TestHelpers.createCliqueSignedBlockHeader(
-            blockHeaderBuilder, proposerKeyPair, validatorList);
+    final BlockHeader newBlock = createCliqueSignedBlock(blockHeaderBuilder);
 
     final CliqueDifficultyValidationRule diffValidationRule = new CliqueDifficultyValidationRule();
     assertThat(diffValidationRule.validate(newBlock, parentHeader, cliqueProtocolContext)).isTrue();
@@ -96,16 +119,14 @@ public class CliqueDifficultyValidationRuleTest {
 
   @Test
   public void isFalseIfOutTurnValidatorSuppliesDifficultyOfTwo() {
+    final long OUT_OF_TURN_BLOCK_NUMBER = validatorList.size() - 1L;
     final UInt256 REPORTED_DIFFICULTY = UInt256.of(2);
 
-    final BlockHeader parentHeader =
-        TestHelpers.createCliqueSignedBlockHeader(
-            blockHeaderBuilder, proposerKeyPair, validatorList);
+    blockHeaderBuilder.number(OUT_OF_TURN_BLOCK_NUMBER - 1L);
+    final BlockHeader parentHeader = createCliqueSignedBlock(blockHeaderBuilder);
 
-    blockHeaderBuilder.difficulty(REPORTED_DIFFICULTY);
-    final BlockHeader newBlock =
-        TestHelpers.createCliqueSignedBlockHeader(
-            blockHeaderBuilder, proposerKeyPair, validatorList);
+    blockHeaderBuilder.number(OUT_OF_TURN_BLOCK_NUMBER).difficulty(REPORTED_DIFFICULTY);
+    final BlockHeader newBlock = createCliqueSignedBlock(blockHeaderBuilder);
 
     final CliqueDifficultyValidationRule diffValidationRule = new CliqueDifficultyValidationRule();
     assertThat(diffValidationRule.validate(newBlock, parentHeader, cliqueProtocolContext))
@@ -114,15 +135,14 @@ public class CliqueDifficultyValidationRuleTest {
 
   @Test
   public void isFalseIfInTurnValidatorSuppliesDifficultyOfOne() {
+    final long IN_TURN_BLOCK_NUMBER = validatorList.size();
     final UInt256 REPORTED_DIFFICULTY = UInt256.of(1);
 
-    final BlockHeader parentHeader =
-        TestHelpers.createCliqueSignedBlockHeader(blockHeaderBuilder, otherKeyPair, validatorList);
+    blockHeaderBuilder.number(IN_TURN_BLOCK_NUMBER - 1L);
+    final BlockHeader parentHeader = createCliqueSignedBlock(blockHeaderBuilder);
 
-    blockHeaderBuilder.difficulty(REPORTED_DIFFICULTY);
-    final BlockHeader newBlock =
-        TestHelpers.createCliqueSignedBlockHeader(
-            blockHeaderBuilder, proposerKeyPair, validatorList);
+    blockHeaderBuilder.number(IN_TURN_BLOCK_NUMBER).difficulty(REPORTED_DIFFICULTY);
+    final BlockHeader newBlock = createCliqueSignedBlock(blockHeaderBuilder);
 
     final CliqueDifficultyValidationRule diffValidationRule = new CliqueDifficultyValidationRule();
     assertThat(diffValidationRule.validate(newBlock, parentHeader, cliqueProtocolContext))

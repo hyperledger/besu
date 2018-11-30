@@ -16,7 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static tech.pegasys.pantheon.consensus.clique.TestHelpers.createCliqueSignedBlockHeader;
 
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
@@ -58,30 +57,25 @@ public class CliqueDifficultyCalculatorTest {
     final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);
     cliqueProtocolContext = new ProtocolContext<>(null, null, cliqueContext);
     blockHeaderBuilder = new BlockHeaderTestFixture();
-    blockHeaderBuilder.number(1);
+  }
+
+  @Test
+  public void inTurnValidatorProducesDifficultyOfTwo() {
+    final CliqueDifficultyCalculator calculator = new CliqueDifficultyCalculator(localAddr);
+
+    final BlockHeader parentHeader = blockHeaderBuilder.number(1).buildHeader();
+
+    assertThat(calculator.nextDifficulty(0, parentHeader, cliqueProtocolContext))
+        .isEqualTo(BigInteger.valueOf(2));
   }
 
   @Test
   public void outTurnValidatorProducesDifficultyOfOne() {
-    // The proposer created the last block, so the next block must be a difficulty of 1.
     final CliqueDifficultyCalculator calculator = new CliqueDifficultyCalculator(localAddr);
 
-    BlockHeader parentHeader =
-        createCliqueSignedBlockHeader(blockHeaderBuilder, proposerKeyPair, validatorList);
+    final BlockHeader parentHeader = blockHeaderBuilder.number(2).buildHeader();
 
     assertThat(calculator.nextDifficulty(0, parentHeader, cliqueProtocolContext))
         .isEqualTo(BigInteger.valueOf(1));
-  }
-
-  @Test
-  public void inTurnValidatorCreatesDifficultyOfTwo() {
-    final CliqueDifficultyCalculator calculator =
-        new CliqueDifficultyCalculator(validatorList.get(1)); // i.e. not the proposer.
-
-    BlockHeader parentHeader =
-        createCliqueSignedBlockHeader(blockHeaderBuilder, proposerKeyPair, validatorList);
-
-    assertThat(calculator.nextDifficulty(0, parentHeader, cliqueProtocolContext))
-        .isEqualTo(BigInteger.valueOf(2));
   }
 }
