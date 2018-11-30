@@ -14,13 +14,14 @@ package tech.pegasys.pantheon.consensus.clique.blockcreation;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import tech.pegasys.pantheon.consensus.clique.CliqueBlockInterface;
 import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.NavigableSet;
+import java.util.SortedSet;
 
 /**
  * Responsible for determining which member of the validator pool should create the next block.
@@ -31,6 +32,7 @@ import java.util.List;
 public class CliqueProposerSelector {
 
   private final VoteTallyCache voteTallyCache;
+  private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
   public CliqueProposerSelector(final VoteTallyCache voteTallyCache) {
     checkNotNull(voteTallyCache);
@@ -46,11 +48,26 @@ public class CliqueProposerSelector {
   public Address selectProposerForNextBlock(final BlockHeader parentHeader) {
 
     final VoteTally parentVoteTally = voteTallyCache.getVoteTallyAtBlock(parentHeader);
-    final List<Address> validatorSet = new ArrayList<>(parentVoteTally.getCurrentValidators());
+    final NavigableSet<Address> validatorSet = parentVoteTally.getCurrentValidators();
 
-    final long nextBlockNumber = parentHeader.getNumber() + 1L;
-    final int indexIntoValidators = (int) (nextBlockNumber % validatorSet.size());
+    Address prevBlockProposer = validatorSet.first();
+    if (parentHeader.getNumber() != BlockHeader.GENESIS_BLOCK_NUMBER) {
+      prevBlockProposer = blockInterface.getProposerOfBlock(parentHeader);
+    }
 
-    return validatorSet.get(indexIntoValidators);
+    return selectNextProposer(prevBlockProposer, validatorSet);
+  }
+
+  private Address selectNextProposer(
+      final Address prevBlockProposer, final NavigableSet<Address> validatorSet) {
+    final SortedSet<Address> latterValidators = validatorSet.tailSet(prevBlockProposer, false);
+    if (latterValidators.isEmpty()) {
+      // i.e. prevBlockProposer was at the end of the validator list, so the right validator for
+      // the start of this round is the first.
+      return validatorSet.first();
+    } else {
+      // Else, use the first validator after the dropped entry.
+      return latterValidators.first();
+    }
   }
 }

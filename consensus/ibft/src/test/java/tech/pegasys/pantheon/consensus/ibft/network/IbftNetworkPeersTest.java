@@ -32,6 +32,8 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 
 import com.google.common.collect.Lists;
 import org.junit.Before;
@@ -42,7 +44,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class IbftNetworkPeersTest {
 
-  private final List<Address> validators = Lists.newArrayList();
+  private final NavigableSet<Address> validators = new TreeSet<>();
   private final List<PublicKey> publicKeys = Lists.newArrayList();
 
   private final List<PeerConnection> peerConnections = Lists.newArrayList();

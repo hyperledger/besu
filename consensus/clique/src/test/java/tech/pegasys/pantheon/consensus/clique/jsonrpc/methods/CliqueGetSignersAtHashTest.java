@@ -37,7 +37,9 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessRe
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
+import java.util.NavigableSet;
 import java.util.Optional;
+import java.util.TreeSet;
 
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.bouncycastle.util.encoders.Hex;
@@ -52,7 +54,7 @@ public class CliqueGetSignersAtHashTest {
 
   private CliqueGetSignersAtHash method;
   private BlockHeader blockHeader;
-  private List<Address> validators;
+  private NavigableSet<Address> validators;
   private List<String> validatorsAsStrings;
 
   @Mock private BlockchainQueries blockchainQueries;
@@ -75,10 +77,11 @@ public class CliqueGetSignersAtHashTest {
     blockHeader = blockHeaderTestFixture.extraData(bufferToInject).buildHeader();
 
     validators =
-        asList(
-            fromHexString("0x42eb768f2244c8811c63729a21a3569731535f06"),
-            fromHexString("0x7ffc57839b00206d1ad20c69a1981b489f772031"),
-            fromHexString("0xb279182d99e65703f0076e4812653aab85fca0f0"));
+        new TreeSet<>(
+            asList(
+                fromHexString("0x42eb768f2244c8811c63729a21a3569731535f06"),
+                fromHexString("0x7ffc57839b00206d1ad20c69a1981b489f772031"),
+                fromHexString("0xb279182d99e65703f0076e4812653aab85fca0f0")));
     validatorsAsStrings = validators.stream().map(Object::toString).collect(toList());
   }
 
