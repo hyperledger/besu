@@ -15,22 +15,24 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 class LogsSubscriptionParam {
 
-  private final String address;
+  private final List<String> address;
   private final List<String> topics;
 
   @JsonCreator
   LogsSubscriptionParam(
-      @JsonProperty("address") final String address,
+      @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY) @JsonProperty("address")
+          final List<String> address,
       @JsonProperty("topics") final List<String> topics) {
     this.address = address;
     this.topics = topics;
   }
 
-  String address() {
+  List<String> address() {
     return address;
   }
 
