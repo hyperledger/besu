@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static tech.pegasys.pantheon.consensus.clique.TestHelpers.createCliqueSignedBlockHeader;
 
 import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
@@ -37,7 +38,8 @@ import org.junit.Test;
 public class CliqueBlockSchedulerTest {
 
   private final KeyPair proposerKeyPair = KeyPair.generate();
-  private Address localAddr;
+  private Address localAddr = Util.publicKeyToAddress(proposerKeyPair.getPublicKey());
+  private Address otherAddr = AddressHelpers.calculateAddressWithRespectTo(localAddr, 1);
 
   private final List<Address> validatorList = Lists.newArrayList();
   private VoteTallyCache voteTallyCache;
@@ -45,10 +47,9 @@ public class CliqueBlockSchedulerTest {
 
   @Before
   public void setup() {
-    localAddr = Util.publicKeyToAddress(proposerKeyPair.getPublicKey());
 
     validatorList.add(localAddr);
-    validatorList.add(AddressHelpers.calculateAddressWithRespectTo(localAddr, 1));
+    validatorList.add(otherAddr);
 
     voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
@@ -63,12 +64,11 @@ public class CliqueBlockSchedulerTest {
     final long secondsBetweenBlocks = 5L;
     when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final CliqueBlockScheduler scheduler =
-        new CliqueBlockScheduler(clock, voteTallyCache, localAddr, secondsBetweenBlocks);
+        new CliqueBlockScheduler(clock, voteTallyCache, otherAddr, secondsBetweenBlocks);
 
-    // There are 2 validators, therefore block 2 will put localAddr as the in-turn voter, therefore
-    // parent block should be number 1.
+    blockHeaderBuilder.number(1).timestamp(currentSecondsSinceEpoch);
     final BlockHeader parentHeader =
-        blockHeaderBuilder.number(1).timestamp(currentSecondsSinceEpoch).buildHeader();
+        createCliqueSignedBlockHeader(blockHeaderBuilder, proposerKeyPair, validatorList);
 
     final BlockCreationTimeResult result = scheduler.getNextTimestamp(parentHeader);
 
@@ -86,10 +86,9 @@ public class CliqueBlockSchedulerTest {
     final CliqueBlockScheduler scheduler =
         new CliqueBlockScheduler(clock, voteTallyCache, localAddr, secondsBetweenBlocks);
 
-    // There are 2 validators, therefore block 3 will put localAddr as the out-turn voter, therefore
-    // parent block should be number 2.
+    blockHeaderBuilder.number(2).timestamp(currentSecondsSinceEpoch);
     final BlockHeader parentHeader =
-        blockHeaderBuilder.number(2).timestamp(currentSecondsSinceEpoch).buildHeader();
+        createCliqueSignedBlockHeader(blockHeaderBuilder, proposerKeyPair, validatorList);
 
     final BlockCreationTimeResult result = scheduler.getNextTimestamp(parentHeader);
 
@@ -105,16 +104,13 @@ public class CliqueBlockSchedulerTest {
     final long secondsBetweenBlocks = 5L;
     when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final CliqueBlockScheduler scheduler =
-        new CliqueBlockScheduler(clock, voteTallyCache, localAddr, secondsBetweenBlocks);
+        new CliqueBlockScheduler(clock, voteTallyCache, otherAddr, secondsBetweenBlocks);
 
     // There are 2 validators, therefore block 2 will put localAddr as the in-turn voter, therefore
     // parent block should be number 1.
+    blockHeaderBuilder.number(1).timestamp(currentSecondsSinceEpoch - secondsBetweenBlocks);
     final BlockHeader parentHeader =
-        blockHeaderBuilder
-            .number(1)
-            .timestamp(currentSecondsSinceEpoch - secondsBetweenBlocks)
-            .buildHeader();
-
+        createCliqueSignedBlockHeader(blockHeaderBuilder, proposerKeyPair, validatorList);
     final BlockCreationTimeResult result = scheduler.getNextTimestamp(parentHeader);
 
     assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch);
