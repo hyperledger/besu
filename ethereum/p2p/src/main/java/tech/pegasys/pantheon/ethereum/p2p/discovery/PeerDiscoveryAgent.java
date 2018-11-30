@@ -37,6 +37,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
 import tech.pegasys.pantheon.util.NetworkUtility;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
@@ -222,12 +223,16 @@ public class PeerDiscoveryAgent implements DisconnectCallback {
   }
 
   /**
-   * This is the exception handler for uncontrolled exceptions ocurring in the packet handlers.
+   * For uncontrolled exceptions occurring in the packet handlers.
    *
-   * @param throwable the exception that was raised
+   * @param exception the exception that was raised
    */
-  private void handleException(final Throwable throwable) {
-    System.out.println(throwable);
+  private void handleException(final Throwable exception) {
+    if (exception instanceof IOException) {
+      LOG.debug("Packet handler exception", exception);
+    } else {
+      LOG.error("Packet handler exception", exception);
+    }
   }
 
   /**
