@@ -86,7 +86,7 @@ public class SubscriptionRequestMapper {
 
   private List<String> hasAddresses(final LogsSubscriptionParam logFilterParams) {
     return logFilterParams.address() != null && !logFilterParams.address().isEmpty()
-        ? Arrays.asList(logFilterParams.address())
+        ? logFilterParams.address()
         : Collections.emptyList();
   }
 

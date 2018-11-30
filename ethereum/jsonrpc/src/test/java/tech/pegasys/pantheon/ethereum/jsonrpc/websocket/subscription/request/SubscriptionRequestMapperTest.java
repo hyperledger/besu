@@ -150,10 +150,58 @@ public class SubscriptionRequestMapperTest {
   }
 
   @Test
-  public void mapRequestToLogs() {
+  public void mapRequestWithSingleAddress() {
     final JsonRpcRequest jsonRpcRequest =
         parseWebSocketRpcRequest(
-            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"logs\", {\"address\": \"0x8320fe7702b96808f7bbc0d4a888ed1468216cfd\", \"topics\": [\"0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902\"]}]}");
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"logs\", {\"address\": \"0x8320fe7702b96808f7bbc0d4a888ed1468216cfd\"}]}");
+
+    final FilterParameter expectedFilterParam =
+        new FilterParameter(
+            null,
+            null,
+            Arrays.asList("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd"),
+            Collections.emptyList(),
+            null);
+    final SubscribeRequest expectedSubscribeRequest =
+        new SubscribeRequest(SubscriptionType.LOGS, expectedFilterParam, null, null);
+
+    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+
+    assertThat(subscribeRequest)
+        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+  }
+
+  @Test
+  public void mapRequestWithMultipleAddresses() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"logs\", {\"address\": [\"0x8320fe7702b96808f7bbc0d4a888ed1468216cfd\", \"0xf17f52151EbEF6C7334FAD080c5704D77216b732\"], \"topics\": [\"0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902\"]}]}");
+
+    final FilterParameter expectedFilterParam =
+        new FilterParameter(
+            null,
+            null,
+            Arrays.asList(
+                "0x8320fe7702b96808f7bbc0d4a888ed1468216cfd",
+                "0xf17f52151EbEF6C7334FAD080c5704D77216b732"),
+            Arrays.asList(
+                Arrays.asList(
+                    "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902")),
+            null);
+    final SubscribeRequest expectedSubscribeRequest =
+        new SubscribeRequest(SubscriptionType.LOGS, expectedFilterParam, null, null);
+
+    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+
+    assertThat(subscribeRequest)
+        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+  }
+
+  @Test
+  public void mapRequestWithMultipleTopics() {
+    final JsonRpcRequest jsonRpcRequest =
+        parseWebSocketRpcRequest(
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"logs\", {\"address\": \"0x8320fe7702b96808f7bbc0d4a888ed1468216cfd\", \"topics\": [\"0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902\", \"0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab901\"]}]}");
 
     final FilterParameter expectedFilterParam =
         new FilterParameter(
@@ -162,7 +210,8 @@ public class SubscriptionRequestMapperTest {
             Arrays.asList("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd"),
             Arrays.asList(
                 Arrays.asList(
-                    "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902")),
+                    "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902",
+                    "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab901")),
             null);
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(SubscriptionType.LOGS, expectedFilterParam, null, null);
