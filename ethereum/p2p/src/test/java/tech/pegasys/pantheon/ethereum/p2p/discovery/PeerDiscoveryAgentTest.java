@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static tech.pegasys.pantheon.util.bytes.BytesValue.fromHexString;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
@@ -130,29 +129,37 @@ public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
   @Test
   public void shouldEvictPeerOnDisconnect() {
     final Vertx vertx = Vertx.vertx();
-    final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
-    final BytesValue id =
-        fromHexString(
-            "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b");
 
-    final DefaultPeer peer = new DiscoveryPeer(id, "127.0.0.1", 30303);
-    final PeerDiscoveryAgent peerDiscoveryAgent =
+    final SECP256K1.KeyPair keyPair1 = SECP256K1.KeyPair.generate();
+    final PeerDiscoveryAgent peerDiscoveryAgent1 =
         new PeerDiscoveryAgent(
             vertx,
-            keyPair,
+            keyPair1,
+            DiscoveryConfiguration.create().setBindHost("127.0.0.1").setBindPort(0),
+            () -> true,
+            new PeerBlacklist());
+    peerDiscoveryAgent1.start(0).join();
+    final DefaultPeer peer = peerDiscoveryAgent1.getAdvertisedPeer();
+
+    final SECP256K1.KeyPair keyPair2 = SECP256K1.KeyPair.generate();
+    final PeerDiscoveryAgent peerDiscoveryAgent2 =
+        new PeerDiscoveryAgent(
+            vertx,
+            keyPair2,
             DiscoveryConfiguration.create()
                 .setBindHost("127.0.0.1")
+                .setBindPort(0)
                 .setBootstrapPeers(Lists.newArrayList(peer)),
             () -> true,
             new PeerBlacklist());
-    peerDiscoveryAgent.start(30303).join();
+    peerDiscoveryAgent2.start(0).join();
 
-    assertThat(peerDiscoveryAgent.getPeers().size()).isEqualTo(1);
+    assertThat(peerDiscoveryAgent2.getPeers().size()).isEqualTo(1);
 
-    final PeerConnection peerConnection = createAnonymousPeerConnection(id);
-    peerDiscoveryAgent.onDisconnect(peerConnection, DisconnectReason.REQUESTED, true);
+    final PeerConnection peerConnection = createAnonymousPeerConnection(peer.getId());
+    peerDiscoveryAgent2.onDisconnect(peerConnection, DisconnectReason.REQUESTED, true);
 
-    assertThat(peerDiscoveryAgent.getPeers().size()).isEqualTo(0);
+    assertThat(peerDiscoveryAgent2.getPeers().size()).isEqualTo(0);
   }
 
   @Test

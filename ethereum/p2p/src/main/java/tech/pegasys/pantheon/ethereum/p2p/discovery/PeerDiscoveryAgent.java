@@ -171,7 +171,7 @@ public class PeerDiscoveryAgent implements DisconnectCallback {
                   completion.completeExceptionally(cause);
                   return;
                 }
-                initialize(res.result(), tcpPort);
+                initialize(res.result(), res.result().localAddress().port());
                 this.isActive = true;
                 completion.complete(null);
               });
