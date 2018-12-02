@@ -20,7 +20,7 @@ import tech.pegasys.pantheon.cli.EthNetworkConfig;
 import tech.pegasys.pantheon.cli.PantheonControllerBuilder;
 import tech.pegasys.pantheon.controller.KeyPairUtil;
 import tech.pegasys.pantheon.controller.PantheonController;
-import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration.Builder;
+import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -42,7 +42,6 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
   private final Map<String, Runner> pantheonRunners = new HashMap<>();
   private ExecutorService nodeExecutor = Executors.newCachedThreadPool();
 
-  @SuppressWarnings("rawtypes")
   @Override
   public void startNode(final PantheonNode node) {
     if (nodeExecutor == null || nodeExecutor.isShutdown()) {
@@ -53,35 +52,36 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
     final EthNetworkConfig ethNetworkConfig =
         node.ethNetworkConfig()
             .orElse(new EthNetworkConfig.Builder(mainnet()).setNetworkId(NETWORK_ID).build());
-    PantheonController<?> pantheonController;
+    final PantheonController<?> pantheonController;
     try {
       pantheonController =
-          builder.build(
-              new Builder().build(),
-              node.homeDirectory(),
-              ethNetworkConfig,
-              false,
-              node.getMiningParameters(),
-              node.isDevMode(),
-              KeyPairUtil.getDefaultKeyFile(node.homeDirectory()));
+          builder
+              .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
+              .homePath(node.homeDirectory())
+              .ethNetworkConfig(ethNetworkConfig)
+              .syncWithOttoman(false)
+              .miningParameters(node.getMiningParameters())
+              .devMode(node.isDevMode())
+              .nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory()))
+              .build();
     } catch (final IOException e) {
       throw new RuntimeException("Error building PantheonController", e);
     }
 
     final Runner runner =
         new RunnerBuilder()
-            .build(
-                Vertx.vertx(),
-                pantheonController,
-                true,
-                node.bootnodes(),
-                node.hostName(),
-                node.p2pPort(),
-                25,
-                node.jsonRpcConfiguration(),
-                node.webSocketConfiguration(),
-                node.homeDirectory(),
-                Collections.emptySet());
+            .vertx(Vertx.vertx())
+            .pantheonController(pantheonController)
+            .discovery(true)
+            .bootstrapPeers(node.bootnodes())
+            .discoveryHost(node.hostName())
+            .discoveryPort(node.p2pPort())
+            .maxPeers(25)
+            .jsonRpcConfiguration(node.jsonRpcConfiguration())
+            .webSocketConfiguration(node.webSocketConfiguration())
+            .dataDir(node.homeDirectory())
+            .bannedNodeIds(Collections.emptySet())
+            .build();
 
     nodeExecutor.submit(runner::execute);
 
