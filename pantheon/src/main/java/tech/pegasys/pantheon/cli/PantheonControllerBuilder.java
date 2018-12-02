@@ -31,22 +31,58 @@ import java.nio.file.Path;
 
 public class PantheonControllerBuilder {
 
-  public PantheonController<?> build(
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final Path homePath,
-      final EthNetworkConfig ethNetworkConfig,
-      final boolean syncWithOttoman,
-      final MiningParameters miningParameters,
-      final boolean isDevMode,
-      final File nodePrivateKeyFile)
-      throws IOException {
+  private SynchronizerConfiguration synchronizerConfiguration;
+  private Path homePath;
+  private EthNetworkConfig ethNetworkConfig;
+  private boolean syncWithOttoman;
+  private MiningParameters miningParameters;
+  private boolean devMode;
+  private File nodePrivateKeyFile;
+
+  public PantheonControllerBuilder synchronizerConfiguration(
+      final SynchronizerConfiguration synchronizerConfiguration) {
+    this.synchronizerConfiguration = synchronizerConfiguration;
+    return this;
+  }
+
+  public PantheonControllerBuilder homePath(final Path homePath) {
+    this.homePath = homePath;
+    return this;
+  }
+
+  public PantheonControllerBuilder ethNetworkConfig(final EthNetworkConfig ethNetworkConfig) {
+    this.ethNetworkConfig = ethNetworkConfig;
+    return this;
+  }
+
+  public PantheonControllerBuilder syncWithOttoman(final boolean syncWithOttoman) {
+    this.syncWithOttoman = syncWithOttoman;
+    return this;
+  }
+
+  public PantheonControllerBuilder miningParameters(final MiningParameters miningParameters) {
+    this.miningParameters = miningParameters;
+    return this;
+  }
+
+  public PantheonControllerBuilder devMode(final boolean devMode) {
+    this.devMode = devMode;
+    return this;
+  }
+
+  public PantheonControllerBuilder nodePrivateKeyFile(final File nodePrivateKeyFile) {
+    this.nodePrivateKeyFile = nodePrivateKeyFile;
+    return this;
+  }
+
+  public PantheonController<?> build() throws IOException {
     // instantiate a controller with mainnet config if no genesis file is defined
     // otherwise use the indicated genesis file
     final KeyPair nodeKeys = loadKeyPair(nodePrivateKeyFile);
 
     final StorageProvider storageProvider =
         RocksDbStorageProvider.create(homePath.resolve(DATABASE_PATH));
-    if (isDevMode) {
+    if (devMode) {
       final GenesisConfigFile genesisConfig = GenesisConfigFile.development();
       return MainnetPantheonController.init(
           storageProvider,

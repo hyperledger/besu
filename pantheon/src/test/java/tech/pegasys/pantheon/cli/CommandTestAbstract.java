@@ -75,9 +75,14 @@ public abstract class CommandTestAbstract {
   @Before
   public void initMocks() throws Exception {
     // doReturn used because of generic PantheonController
-    Mockito.doReturn(mockController)
-        .when(mockControllerBuilder)
-        .build(any(), any(), any(), anyBoolean(), any(), anyBoolean(), any());
+    Mockito.doReturn(mockController).when(mockControllerBuilder).build();
+    when(mockControllerBuilder.synchronizerConfiguration(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.homePath(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.ethNetworkConfig(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.syncWithOttoman(anyBoolean())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.miningParameters(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.devMode(anyBoolean())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.nodePrivateKeyFile(any())).thenReturn(mockControllerBuilder);
 
     when(mockSyncConfBuilder.build()).thenReturn(mockSyncConf);
   }
