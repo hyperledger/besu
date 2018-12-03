@@ -33,6 +33,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.util.InvalidConfigurationException;
 import tech.pegasys.pantheon.util.BlockImporter;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -377,6 +378,17 @@ public class PantheonCommand implements Runnable {
   )
   private final BytesValue extraData = DEFAULT_EXTRA_DATA;
 
+  // Permissioning: A list of whitelist nodes can be passed.
+  @Option(
+    names = {"--nodes-whitelist"},
+    paramLabel = "<enode://id@host:port>",
+    description =
+        "Comma separated enode URLs for permissioned networks. You may specify an empty list.",
+    split = ",",
+    arity = "0..*"
+  )
+  private final Collection<String> nodesWhitelist = null;
+
   public PantheonCommand(
       final BlockImporter blockImporter,
       final RunnerBuilder runnerBuilder,
@@ -442,7 +454,8 @@ public class PantheonCommand implements Runnable {
         maxPeers,
         p2pHostAndPort,
         jsonRpcConfiguration(),
-        webSocketConfiguration());
+        webSocketConfiguration(),
+        permissioningConfiguration());
   }
 
   PantheonController<?> buildController() {
@@ -487,6 +500,13 @@ public class PantheonCommand implements Runnable {
     return webSocketConfiguration;
   }
 
+  private PermissioningConfiguration permissioningConfiguration() {
+    final PermissioningConfiguration permissioningConfiguration =
+        PermissioningConfiguration.createDefault();
+    permissioningConfiguration.setNodeWhitelist(nodesWhitelist);
+    return permissioningConfiguration;
+  }
+
   private SynchronizerConfiguration buildSyncConfig(final SyncMode syncMode) {
     checkNotNull(syncMode);
     synchronizerConfigurationBuilder.syncMode(syncMode);
@@ -502,11 +522,12 @@ public class PantheonCommand implements Runnable {
       final int maxPeers,
       final HostAndPort discoveryHostAndPort,
       final JsonRpcConfiguration jsonRpcConfiguration,
-      final WebSocketConfiguration webSocketConfiguration) {
+      final WebSocketConfiguration webSocketConfiguration,
+      final PermissioningConfiguration permissioningConfiguration) {
 
     checkNotNull(runnerBuilder);
 
-    final Runner runner =
+    Runner runner =
         runnerBuilder
             .vertx(Vertx.vertx())
             .pantheonController(controller)
@@ -520,6 +541,7 @@ public class PantheonCommand implements Runnable {
             .webSocketConfiguration(webSocketConfiguration)
             .dataDir(dataDir)
             .bannedNodeIds(bannedNodeIds)
+            .permissioningConfiguration(permissioningConfiguration)
             .build();
 
     addShutdownHook(runner);

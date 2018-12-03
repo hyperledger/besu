@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon;
 
+import tech.pegasys.pantheon.controller.NodeWhitelistController;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -50,6 +51,7 @@ import tech.pegasys.pantheon.ethereum.p2p.netty.NettyP2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
+import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -78,6 +80,7 @@ public class RunnerBuilder {
   private WebSocketConfiguration webSocketConfiguration;
   private Path dataDir;
   private Collection<String> bannedNodeIds;
+  private PermissioningConfiguration permissioningConfiguration;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -121,6 +124,12 @@ public class RunnerBuilder {
 
   public RunnerBuilder webSocketConfiguration(final WebSocketConfiguration webSocketConfiguration) {
     this.webSocketConfiguration = webSocketConfiguration;
+    return this;
+  }
+
+  public RunnerBuilder permissioningConfiguration(
+      final PermissioningConfiguration permissioningConfiguration) {
+    this.permissioningConfiguration = permissioningConfiguration;
     return this;
   }
 
@@ -259,8 +268,17 @@ public class RunnerBuilder {
                   vertx, webSocketConfiguration, subscriptionManager, webSocketsJsonRpcMethods));
     }
 
+    NodeWhitelistController nodeWhitelistController =
+        new NodeWhitelistController(permissioningConfiguration);
+
     return new Runner(
-        vertx, networkRunner, jsonRpcHttpService, webSocketService, pantheonController, dataDir);
+        vertx,
+        networkRunner,
+        jsonRpcHttpService,
+        webSocketService,
+        pantheonController,
+        dataDir,
+        nodeWhitelistController);
   }
 
   private FilterManager createFilterManager(
