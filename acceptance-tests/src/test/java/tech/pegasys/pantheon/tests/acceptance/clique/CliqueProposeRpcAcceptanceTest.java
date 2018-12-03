@@ -19,8 +19,10 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.waitcondition.WaitCondition;
 
 import java.io.IOException;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
 
   @Test

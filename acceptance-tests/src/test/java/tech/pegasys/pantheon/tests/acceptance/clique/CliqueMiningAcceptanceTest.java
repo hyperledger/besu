@@ -18,8 +18,10 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 
 import java.io.IOException;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
 
   @Test

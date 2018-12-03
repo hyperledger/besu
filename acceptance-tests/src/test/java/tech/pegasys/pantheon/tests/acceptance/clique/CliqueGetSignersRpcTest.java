@@ -18,8 +18,10 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class CliqueGetSignersRpcTest extends AcceptanceTestBase {
   private PantheonNode minerNode1;
   private PantheonNode minerNode2;
