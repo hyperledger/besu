@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.cli;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static tech.pegasys.pantheon.cli.DefaultCommandValues.getDefaultPantheonDataDir;
 
 import tech.pegasys.pantheon.Runner;
 import tech.pegasys.pantheon.RunnerBuilder;
@@ -41,11 +42,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -81,7 +78,7 @@ import picocli.CommandLine.ParameterException;
   footerHeading = "%n",
   footer = "Pantheon is licensed under the Apache License 2.0"
 )
-public class PantheonCommand implements Runnable {
+public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   private static final int DEFAULT_MAX_PEERS = 25;
 
@@ -89,18 +86,12 @@ public class PantheonCommand implements Runnable {
   // but we use FULL for the moment as Fast is still in progress
   private static final SyncMode DEFAULT_SYNC_MODE = SyncMode.FULL;
 
-  private static final String PANTHEON_HOME_PROPERTY_NAME = "pantheon.home";
-  private static final String DEFAULT_DATA_DIR_PATH = "./build/data";
-
   private static final String MANDATORY_HOST_AND_PORT_FORMAT_HELP = "<HOST:PORT>";
-  private static final String MANDATORY_PATH_FORMAT_HELP = "<PATH>";
   private static final String MANDATORY_INTEGER_FORMAT_HELP = "<INTEGER>";
   private static final String MANDATORY_MODE_FORMAT_HELP = "<MODE>";
 
   private static final Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
   private static final BytesValue DEFAULT_EXTRA_DATA = BytesValue.EMPTY;
-
-  private static final String CONFIG_FILE_OPTION_NAME = "--config";
 
   public static class RpcApisConverter implements ITypeConverter<RpcApi> {
     @Override
@@ -132,22 +123,11 @@ public class PantheonCommand implements Runnable {
   // Public IP stored to prevent having to research it each time we need it.
   private InetAddress autoDiscoveredDefaultIP = null;
 
+  // Property to indicate whether Pantheon has been launched via docker
+  private final boolean isDocker = Boolean.getBoolean("pantheon.docker");
+
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
-
-  @Option(
-    names = {CONFIG_FILE_OPTION_NAME},
-    paramLabel = MANDATORY_PATH_FORMAT_HELP,
-    description = "TOML config file (default: none)"
-  )
-  private final File configFile = null;
-
-  @Option(
-    names = {"--datadir"},
-    paramLabel = MANDATORY_PATH_FORMAT_HELP,
-    description = "the path to Pantheon data directory (default: ${DEFAULT-VALUE})"
-  )
-  private final Path dataDir = getDefaultPantheonDataDir();
 
   @Option(
     names = {"--node-private-key"},
@@ -156,17 +136,6 @@ public class PantheonCommand implements Runnable {
         "the path to the node's private key file (default: a file named \"key\" in the Pantheon data folder)"
   )
   private final File nodePrivateKeyFile = null;
-
-  // Genesis file path with null default option if the option
-  // is not defined on command line as this default is handled by Runner
-  // to use mainnet json file from resources
-  // NOTE: we have no control over default value here.
-  @Option(
-    names = {"--genesis"},
-    paramLabel = MANDATORY_PATH_FORMAT_HELP,
-    description = "The path to genesis file (default: Pantheon embedded mainnet genesis file)"
-  )
-  private final File genesisFile = null;
 
   // Boolean option to indicate if peers should NOT be discovered, default to false indicates that
   // the peers should be discovered by default.
@@ -400,12 +369,20 @@ public class PantheonCommand implements Runnable {
     this.synchronizerConfigurationBuilder = synchronizerConfigurationBuilder;
   }
 
+  private StandaloneCommand standaloneCommands;
+
   public void parse(
       final AbstractParseResultHandler<List<Object>> resultHandler,
       final DefaultExceptionHandler<List<Object>> exceptionHandler,
       final String... args) {
 
     final CommandLine commandLine = new CommandLine(this);
+
+    standaloneCommands = new StandaloneCommand();
+
+    if (isFullInstantiation()) {
+      commandLine.addMixin("standaloneCommands", standaloneCommands);
+    }
 
     final ImportSubCommand importSubCommand = new ImportSubCommand(blockImporter);
     commandLine.addSubcommand("import", importSubCommand);
@@ -462,7 +439,7 @@ public class PantheonCommand implements Runnable {
     try {
       return controllerBuilder
           .synchronizerConfiguration(buildSyncConfig(syncMode))
-          .homePath(dataDir)
+          .homePath(dataDir())
           .ethNetworkConfig(ethNetworkConfig())
           .syncWithOttoman(syncWithOttoman)
           .miningParameters(
@@ -478,7 +455,9 @@ public class PantheonCommand implements Runnable {
   }
 
   private File getNodePrivateKeyFile() {
-    return nodePrivateKeyFile != null ? nodePrivateKeyFile : KeyPairUtil.getDefaultKeyFile(dataDir);
+    return nodePrivateKeyFile != null
+        ? nodePrivateKeyFile
+        : KeyPairUtil.getDefaultKeyFile(dataDir());
   }
 
   private JsonRpcConfiguration jsonRpcConfiguration() {
@@ -539,7 +518,7 @@ public class PantheonCommand implements Runnable {
             .maxPeers(maxPeers)
             .jsonRpcConfiguration(jsonRpcConfiguration)
             .webSocketConfiguration(webSocketConfiguration)
-            .dataDir(dataDir)
+            .dataDir(dataDir())
             .bannedNodeIds(bannedNodeIds)
             .permissioningConfiguration(permissioningConfiguration)
             .build();
@@ -579,57 +558,6 @@ public class PantheonCommand implements Runnable {
     return HostAndPort.fromParts(autoDiscoverDefaultIP().getHostAddress(), port);
   }
 
-  private Path getDefaultPantheonDataDir() {
-    // this property is retrieved from Gradle tasks or Pantheon running shell script.
-    final String pantheonHomeProperty = System.getProperty(PANTHEON_HOME_PROPERTY_NAME);
-    final Path pantheonHome;
-
-    // If prop is found, then use it
-    if (pantheonHomeProperty != null) {
-      try {
-        pantheonHome = Paths.get(pantheonHomeProperty);
-      } catch (final InvalidPathException e) {
-        throw new ParameterException(
-            new CommandLine(this),
-            String.format(
-                "Unable to define default data directory from %s property.",
-                PANTHEON_HOME_PROPERTY_NAME),
-            e);
-      }
-    } else {
-      // otherwise use a default path.
-      // That may only be used when NOT run from distribution script and Gradle as they all define
-      // the property.
-      try {
-        final String path = new File(DEFAULT_DATA_DIR_PATH).getCanonicalPath();
-        pantheonHome = Paths.get(path);
-      } catch (final IOException e) {
-        throw new ParameterException(
-            new CommandLine(this), "Unable to create default data directory.");
-      }
-    }
-
-    // Try to create it, then verify if the provided path is not already existing and is not a
-    // directory .Otherwise, if it doesn't exist or exists but is already a directory,
-    // Runner will use it to store data.
-    try {
-      Files.createDirectories(pantheonHome);
-    } catch (final FileAlreadyExistsException e) {
-      // Only thrown if it exist but is not a directory
-      throw new ParameterException(
-          new CommandLine(this),
-          String.format(
-              "%s: already exists and is not a directory.", pantheonHome.toAbsolutePath()),
-          e);
-    } catch (final Exception e) {
-      throw new ParameterException(
-          new CommandLine(this),
-          String.format("Error creating directory %s.", pantheonHome.toAbsolutePath()),
-          e);
-    }
-    return pantheonHome;
-  }
-
   private EthNetworkConfig ethNetworkConfig() {
     final EthNetworkConfig predefinedNetworkConfig;
     if (rinkeby) {
@@ -644,7 +572,7 @@ public class PantheonCommand implements Runnable {
 
   private EthNetworkConfig updateNetworkConfig(final EthNetworkConfig ethNetworkConfig) {
     final EthNetworkConfig.Builder builder = new EthNetworkConfig.Builder(ethNetworkConfig);
-    if (genesisFile != null) {
+    if (genesisFile() != null) {
       builder.setGenesisConfig(genesisConfig());
     }
     if (networkId != null) {
@@ -658,10 +586,24 @@ public class PantheonCommand implements Runnable {
 
   private String genesisConfig() {
     try {
-      return Resources.toString(genesisFile.toURI().toURL(), UTF_8);
-    } catch (final IOException e) {
+      return Resources.toString(genesisFile().toURI().toURL(), UTF_8);
+    } catch (IOException e) {
       throw new ParameterException(
-          new CommandLine(this), String.format("Unable to load genesis file %s.", genesisFile), e);
+          new CommandLine(this),
+          String.format("Unable to load genesis file %s.", genesisFile()),
+          e);
     }
+  }
+
+  private File genesisFile() {
+    return isFullInstantiation() ? standaloneCommands.genesisFile : null;
+  }
+
+  private Path dataDir() {
+    return isFullInstantiation() ? standaloneCommands.dataDir : getDefaultPantheonDataDir(this);
+  }
+
+  private boolean isFullInstantiation() {
+    return !isDocker;
   }
 }
