@@ -29,6 +29,8 @@ import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.util.InvalidConfigurationException;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -51,10 +53,23 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
   private final Subscribers<BlockAddedObserver> blockAddedObservers = new Subscribers<>();
 
   public DefaultMutableBlockchain(
-      final Block genesisBlock, final BlockchainStorage blockchainStorage) {
+      final Block genesisBlock,
+      final BlockchainStorage blockchainStorage,
+      final MetricsSystem metricsSystem) {
     checkNotNull(genesisBlock);
     this.blockchainStorage = blockchainStorage;
     this.setGenesis(genesisBlock);
+
+    metricsSystem.createGauge(
+        MetricCategory.BLOCKCHAIN,
+        "height",
+        "Height of the chainhead",
+        () -> (double) this.getChainHeadBlockNumber());
+    metricsSystem.createGauge(
+        MetricCategory.BLOCKCHAIN,
+        "difficulty_total",
+        "Total difficulty of the chainhead",
+        () -> (double) this.getChainHead().getTotalDifficulty().toLong());
   }
 
   @Override

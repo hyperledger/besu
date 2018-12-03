@@ -34,6 +34,9 @@ import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.ArrayList;
@@ -64,6 +67,7 @@ public class BlockPropagationManager<C> {
 
   private final Set<Hash> requestedBlocks = new ConcurrentSet<>();
   private final PendingBlocks pendingBlocks;
+  private final OperationTimer announcedBlockIngestTimer;
 
   BlockPropagationManager(
       final SynchronizerConfiguration config,
@@ -71,7 +75,8 @@ public class BlockPropagationManager<C> {
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final PendingBlocks pendingBlocks) {
+      final PendingBlocks pendingBlocks,
+      final MetricsSystem metricsSystem) {
     this.config = config;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -79,6 +84,12 @@ public class BlockPropagationManager<C> {
 
     this.syncState = syncState;
     this.pendingBlocks = pendingBlocks;
+
+    this.announcedBlockIngestTimer =
+        metricsSystem.createTimer(
+            MetricCategory.BLOCKCHAIN,
+            "pantheon_blockchain_announcedBlock_ingest",
+            "Time to ingest a single announced block");
   }
 
   public void start() {
@@ -241,21 +252,24 @@ public class BlockPropagationManager<C> {
     final PersistBlockTask<C> importTask =
         PersistBlockTask.create(
             protocolSchedule, protocolContext, block, HeaderValidationMode.FULL);
+    final OperationTimer.TimingContext blockTimer = announcedBlockIngestTimer.startTimer();
     return ethContext
         .getScheduler()
         .scheduleWorkerTask(importTask::run)
         .whenComplete(
             (r, t) -> {
               if (t != null) {
+                // TODO do we time failures?  But we cannot drop a label in at this point.
                 LOG.warn(
                     "Failed to import announced block {} ({}).",
                     block.getHeader().getNumber(),
                     block.getHash());
               } else {
+                final double timeInMs = blockTimer.stopTimer() * 1000;
                 LOG.info(
-                    "Successfully imported announced block {} ({}).",
-                    block.getHeader().getNumber(),
-                    block.getHash());
+                    String.format(
+                        "Successfully imported announced block %d (%s) in %01.3fms.",
+                        block.getHeader().getNumber(), block.getHash(), timeInMs));
               }
             });
   }

@@ -61,6 +61,7 @@ import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -115,14 +116,15 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
       final SynchronizerConfiguration taintedSyncConfig,
       final MiningParameters miningParams,
       final int networkId,
-      final KeyPair nodeKeys) {
+      final KeyPair nodeKeys,
+      final MetricsSystem metricsSystem) {
     final ProtocolSchedule<IbftContext> protocolSchedule =
         IbftProtocolSchedule.create(genesisConfig.getConfigOptions());
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(protocolSchedule);
     final MutableBlockchain blockchain =
-        new DefaultMutableBlockchain(genesisState.getBlock(), blockchainStorage);
+        new DefaultMutableBlockchain(genesisState.getBlock(), blockchainStorage, metricsSystem);
 
     final WorldStateStorage worldStateStorage = storageProvider.createWorldStateStorage();
     final WorldStateArchive worldStateArchive = new WorldStateArchive(worldStateStorage);
@@ -160,7 +162,8 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             protocolSchedule,
             protocolContext,
             ethProtocolManager.ethContext(),
-            syncState);
+            syncState,
+            metricsSystem);
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(

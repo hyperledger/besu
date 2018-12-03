@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.ethereum.development.DevelopmentProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +39,7 @@ public class PantheonControllerBuilder {
   private MiningParameters miningParameters;
   private boolean devMode;
   private File nodePrivateKeyFile;
+  private MetricsSystem metricsSystem;
 
   public PantheonControllerBuilder synchronizerConfiguration(
       final SynchronizerConfiguration synchronizerConfiguration) {
@@ -75,6 +77,11 @@ public class PantheonControllerBuilder {
     return this;
   }
 
+  public PantheonControllerBuilder metricsSystem(final MetricsSystem metricsSystem) {
+    this.metricsSystem = metricsSystem;
+    return this;
+  }
+
   public PantheonController<?> build() throws IOException {
     // instantiate a controller with mainnet config if no genesis file is defined
     // otherwise use the indicated genesis file
@@ -90,7 +97,8 @@ public class PantheonControllerBuilder {
           DevelopmentProtocolSchedule.create(genesisConfig.getConfigOptions()),
           synchronizerConfiguration,
           miningParameters,
-          nodeKeys);
+          nodeKeys,
+          metricsSystem);
     } else {
       final String genesisConfig = ethNetworkConfig.getGenesisConfig();
       final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig);
@@ -101,7 +109,8 @@ public class PantheonControllerBuilder {
           syncWithOttoman,
           ethNetworkConfig.getNetworkId(),
           miningParameters,
-          nodeKeys);
+          nodeKeys,
+          metricsSystem);
     }
   }
 }

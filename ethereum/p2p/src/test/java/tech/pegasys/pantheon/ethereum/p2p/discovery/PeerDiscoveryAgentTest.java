@@ -295,7 +295,7 @@ public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
   @Test
   public void shouldBeActiveWhenConfigIsTrue() {
     final DiscoveryConfiguration config = new DiscoveryConfiguration();
-    config.setActive(true);
+    config.setActive(true).setBindPort(0);
 
     final PeerDiscoveryAgent agent = startDiscoveryAgent(config, new PeerBlacklist());
 
@@ -305,7 +305,7 @@ public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
   @Test
   public void shouldNotBeActiveWhenConfigIsFalse() {
     final DiscoveryConfiguration config = new DiscoveryConfiguration();
-    config.setActive(false);
+    config.setActive(false).setBindPort(0);
 
     final PeerDiscoveryAgent agent = startDiscoveryAgent(config, new PeerBlacklist());
 

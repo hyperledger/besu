@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 
 public class InMemoryStorageProvider implements StorageProvider {
@@ -36,7 +37,8 @@ public class InMemoryStorageProvider implements StorageProvider {
     final InMemoryKeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
     return new DefaultMutableBlockchain(
         genesisBlock,
-        new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHashFunction));
+        new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHashFunction),
+        new NoOpMetricsSystem());
   }
 
   public static WorldStateArchive createInMemoryWorldStateArchive() {

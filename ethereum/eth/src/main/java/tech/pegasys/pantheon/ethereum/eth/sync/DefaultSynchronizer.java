@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.PendingBlocks;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,7 +41,8 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
-      final SyncState syncState) {
+      final SyncState syncState,
+      final MetricsSystem metricsSystem) {
     this.syncState = syncState;
     this.blockPropagationManager =
         new BlockPropagationManager<>(
@@ -49,7 +51,8 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             protocolContext,
             ethContext,
             syncState,
-            new PendingBlocks());
+            new PendingBlocks(),
+            metricsSystem);
     this.downloader =
         new Downloader<>(syncConfig, protocolSchedule, protocolContext, ethContext, syncState);
 

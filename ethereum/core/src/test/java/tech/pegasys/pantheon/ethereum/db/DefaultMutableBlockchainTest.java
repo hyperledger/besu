@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator.BlockOptions;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.util.uint.UInt256;
@@ -713,6 +714,7 @@ public class DefaultMutableBlockchainTest {
     return new DefaultMutableBlockchain(
         genesisBlock,
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            kvStore, MainnetBlockHashFunction::createHash));
+            kvStore, MainnetBlockHashFunction::createHash),
+        new NoOpMetricsSystem());
   }
 }

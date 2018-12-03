@@ -53,6 +53,7 @@ import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -72,6 +73,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
   private final KeyPair keyPair;
   private final TransactionPool transactionPool;
   private final Runnable closer;
+  private final MetricsSystem metricsStystem;
 
   IbftLegacyPantheonController(
       final GenesisConfigOptions genesisConfig,
@@ -82,7 +84,8 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
       final Synchronizer synchronizer,
       final KeyPair keyPair,
       final TransactionPool transactionPool,
-      final Runnable closer) {
+      final Runnable closer,
+      final MetricsSystem metricsSystem) {
 
     this.genesisConfig = genesisConfig;
     this.protocolSchedule = protocolSchedule;
@@ -93,6 +96,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
     this.keyPair = keyPair;
     this.transactionPool = transactionPool;
     this.closer = closer;
+    this.metricsStystem = metricsSystem;
   }
 
   public static PantheonController<IbftContext> init(
@@ -101,14 +105,15 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
       final SynchronizerConfiguration taintedSyncConfig,
       final boolean ottomanTestnetOperation,
       final int networkId,
-      final KeyPair nodeKeys) {
+      final KeyPair nodeKeys,
+      final MetricsSystem metricsSystem) {
     final ProtocolSchedule<IbftContext> protocolSchedule =
         IbftProtocolSchedule.create(genesisConfig.getConfigOptions());
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(protocolSchedule);
     final MutableBlockchain blockchain =
-        new DefaultMutableBlockchain(genesisState.getBlock(), blockchainStorage);
+        new DefaultMutableBlockchain(genesisState.getBlock(), blockchainStorage, metricsSystem);
 
     final WorldStateStorage worldStateStorage = storageProvider.createWorldStateStorage();
     final WorldStateArchive worldStateArchive = new WorldStateArchive(worldStateStorage);
@@ -159,7 +164,8 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
             protocolSchedule,
             protocolContext,
             ethProtocolManager.ethContext(),
-            syncState);
+            syncState,
+            metricsSystem);
 
     final Runnable closer =
         () -> {
@@ -183,7 +189,8 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
         synchronizer,
         nodeKeys,
         transactionPool,
-        closer);
+        closer,
+        metricsSystem);
   }
 
   @Override

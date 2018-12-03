@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.core.LogsBloomFilter;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.util.InvalidConfigurationException;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
@@ -73,7 +74,8 @@ public class GenesisBlockMismatchTest {
         new DefaultMutableBlockchain(
             genesisBlock00,
             new KeyValueStoragePrefixedKeyBlockchainStorage(
-                kvStore, MainnetBlockHashFunction::createHash));
+                kvStore, MainnetBlockHashFunction::createHash),
+            new NoOpMetricsSystem());
 
     final BlockHeader genesisHeader01 =
         BlockHeaderBuilder.create()

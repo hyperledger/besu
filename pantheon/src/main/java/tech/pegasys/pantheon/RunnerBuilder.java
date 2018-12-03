@@ -53,7 +53,6 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
-import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.nio.file.Path;
@@ -80,6 +79,7 @@ public class RunnerBuilder {
   private WebSocketConfiguration webSocketConfiguration;
   private Path dataDir;
   private Collection<String> bannedNodeIds;
+  private MetricsSystem metricsSystem;
   private PermissioningConfiguration permissioningConfiguration;
 
   public RunnerBuilder vertx(final Vertx vertx) {
@@ -143,11 +143,15 @@ public class RunnerBuilder {
     return this;
   }
 
+  public RunnerBuilder metricsSystem(final MetricsSystem metricsSystem) {
+    this.metricsSystem = metricsSystem;
+    return this;
+  }
+
   public Runner build() {
 
     Preconditions.checkNotNull(pantheonController);
 
-    final MetricsSystem metricsSystem = PrometheusMetricsSystem.init();
     final DiscoveryConfiguration discoveryConfiguration;
     if (discovery) {
       final Collection<?> bootstrap;
