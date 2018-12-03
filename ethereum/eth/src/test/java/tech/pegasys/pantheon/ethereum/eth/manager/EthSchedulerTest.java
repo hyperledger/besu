@@ -31,7 +31,7 @@ import org.junit.Test;
 public class EthSchedulerTest {
 
   private DeterministicEthScheduler ethScheduler;
-  private MockExecutorService workerExecutor;
+  private MockExecutorService syncWorkerExecutor;
   private MockScheduledExecutor scheduledExecutor;
   private AtomicBoolean shouldTimeout;
 
@@ -39,14 +39,14 @@ public class EthSchedulerTest {
   public void setup() {
     shouldTimeout = new AtomicBoolean(false);
     ethScheduler = new DeterministicEthScheduler(shouldTimeout::get);
-    workerExecutor = ethScheduler.mockWorkerExecutor();
+    syncWorkerExecutor = ethScheduler.mockSyncWorkerExecutor();
     scheduledExecutor = ethScheduler.mockScheduledExecutor();
   }
 
   @Test
   public void scheduleWorkerTask_completesWhenScheduledTaskCompletes() {
     final CompletableFuture<Object> future = new CompletableFuture<>();
-    final CompletableFuture<Object> result = ethScheduler.scheduleWorkerTask(() -> future);
+    final CompletableFuture<Object> result = ethScheduler.scheduleSyncWorkerTask(() -> future);
 
     assertThat(result.isDone()).isFalse();
     future.complete("bla");
@@ -58,7 +58,7 @@ public class EthSchedulerTest {
   @Test
   public void scheduleWorkerTask_completesWhenScheduledTaskFails() {
     final CompletableFuture<Object> future = new CompletableFuture<>();
-    final CompletableFuture<Object> result = ethScheduler.scheduleWorkerTask(() -> future);
+    final CompletableFuture<Object> result = ethScheduler.scheduleSyncWorkerTask(() -> future);
 
     assertThat(result.isDone()).isFalse();
     future.completeExceptionally(new RuntimeException("whoops"));
@@ -70,7 +70,7 @@ public class EthSchedulerTest {
   @Test
   public void scheduleWorkerTask_completesWhenScheduledTaskIsCancelled() {
     final CompletableFuture<Object> future = new CompletableFuture<>();
-    final CompletableFuture<Object> result = ethScheduler.scheduleWorkerTask(() -> future);
+    final CompletableFuture<Object> result = ethScheduler.scheduleSyncWorkerTask(() -> future);
 
     assertThat(result.isDone()).isFalse();
     future.cancel(false);
@@ -82,10 +82,10 @@ public class EthSchedulerTest {
   @Test
   public void scheduleWorkerTask_cancelsScheduledFutureWhenResultIsCancelled() {
     final CompletableFuture<Object> result =
-        ethScheduler.scheduleWorkerTask(() -> new CompletableFuture<>());
+        ethScheduler.scheduleSyncWorkerTask(() -> new CompletableFuture<>());
 
-    assertThat(workerExecutor.getScheduledFutures().size()).isEqualTo(1);
-    final Future<?> future = workerExecutor.getScheduledFutures().get(0);
+    assertThat(syncWorkerExecutor.getScheduledFutures().size()).isEqualTo(1);
+    final Future<?> future = syncWorkerExecutor.getScheduledFutures().get(0);
 
     verify(future, times(0)).cancel(anyBoolean());
     result.cancel(true);

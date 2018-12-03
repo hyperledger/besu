@@ -42,6 +42,6 @@ class TransactionSender implements TransactionBatchAddedListener {
                     transaction -> transactionTracker.addToPeerSendQueue(peer, transaction)));
     ethContext
         .getScheduler()
-        .scheduleWorkerTask(transactionsMessageSender::sendTransactionsToPeers);
+        .scheduleSyncWorkerTask(transactionsMessageSender::sendTransactionsToPeers);
   }
 }

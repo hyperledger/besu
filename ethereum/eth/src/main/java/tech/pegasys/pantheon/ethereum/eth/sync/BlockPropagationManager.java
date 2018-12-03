@@ -128,7 +128,7 @@ public class BlockPropagationManager<C> {
               protocolSchedule, protocolContext, readyForImport, HeaderValidationMode.FULL);
       ethContext
           .getScheduler()
-          .scheduleWorkerTask(importBlocksTask)
+          .scheduleSyncWorkerTask(importBlocksTask)
           .whenComplete(
               (r, t) -> {
                 if (r != null) {
@@ -255,7 +255,7 @@ public class BlockPropagationManager<C> {
     final OperationTimer.TimingContext blockTimer = announcedBlockIngestTimer.startTimer();
     return ethContext
         .getScheduler()
-        .scheduleWorkerTask(importTask::run)
+        .scheduleSyncWorkerTask(importTask::run)
         .whenComplete(
             (r, t) -> {
               if (t != null) {
