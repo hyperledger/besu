@@ -93,6 +93,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     when(mockRunnerBuilder.maxPeers(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.jsonRpcConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.webSocketConfiguration(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.permissioningConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.dataDir(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.bannedNodeIds(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
@@ -420,7 +421,39 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void banNodeIdsOptionMustBeUsed() {
+  public void callingWithNodesWhitelistOptionButNoValueMustNotError() {
+    parseCommand("--nodes-whitelist");
+
+    verify(mockRunnerBuilder)
+        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(permissioningConfigurationArgumentCaptor.getValue().getNodeWhitelist()).isEmpty();
+    assertThat(permissioningConfigurationArgumentCaptor.getValue().isNodeWhitelistSet()).isTrue();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void nodesWhitelistOptionMustBeUsed() {
+    final String[] nodes = {"enode://001@123:4567", "enode://002@123:4567", "enode://003@123:4567"};
+    parseCommand("--nodes-whitelist", String.join(",", nodes));
+
+    verify(mockRunnerBuilder)
+        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(permissioningConfigurationArgumentCaptor.getValue().getNodeWhitelist())
+        .containsExactlyInAnyOrder(nodes);
+    assertThat(permissioningConfigurationArgumentCaptor.getValue().isNodeWhitelistSet()).isTrue();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void bannedNodeIdsOptionMustBeUsed() {
     final String[] nodes = {"0001", "0002", "0003"};
     parseCommand("--banned-nodeids", String.join(",", nodes));
 

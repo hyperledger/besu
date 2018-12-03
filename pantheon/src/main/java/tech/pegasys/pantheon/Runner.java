@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon;
 
+import tech.pegasys.pantheon.controller.NodeWhitelistController;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcHttpService;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketService;
@@ -46,19 +47,23 @@ public class Runner implements AutoCloseable {
   private final PantheonController<?> pantheonController;
   private final Path dataDir;
 
+  private final NodeWhitelistController nodeWhitelistController;
+
   Runner(
       final Vertx vertx,
       final NetworkRunner networkRunner,
       final Optional<JsonRpcHttpService> jsonRpc,
       final Optional<WebSocketService> websocketRpc,
       final PantheonController<?> pantheonController,
-      final Path dataDir) {
+      final Path dataDir,
+      final NodeWhitelistController nodeWhitelistController) {
     this.vertx = vertx;
     this.networkRunner = networkRunner;
     this.jsonRpc = jsonRpc;
     this.websocketRpc = websocketRpc;
     this.pantheonController = pantheonController;
     this.dataDir = dataDir;
+    this.nodeWhitelistController = nodeWhitelistController;
   }
 
   public void execute() {
