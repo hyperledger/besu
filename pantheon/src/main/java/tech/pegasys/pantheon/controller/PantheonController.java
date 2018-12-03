@@ -29,6 +29,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.io.Closeable;
 import java.util.Collection;
@@ -45,7 +46,8 @@ public interface PantheonController<C> extends Closeable {
       final boolean ottomanTestnetOperation,
       final int networkId,
       final MiningParameters miningParameters,
-      final KeyPair nodeKeys) {
+      final KeyPair nodeKeys,
+      final MetricsSystem metricsSystem) {
 
     final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
 
@@ -56,10 +58,17 @@ public interface PantheonController<C> extends Closeable {
           MainnetProtocolSchedule.fromConfig(configOptions),
           syncConfig,
           miningParameters,
-          nodeKeys);
+          nodeKeys,
+          metricsSystem);
     } else if (configOptions.isRevisedIbft()) {
       return IbftPantheonController.init(
-          storageProvider, genesisConfigFile, syncConfig, miningParameters, networkId, nodeKeys);
+          storageProvider,
+          genesisConfigFile,
+          syncConfig,
+          miningParameters,
+          networkId,
+          nodeKeys,
+          metricsSystem);
     } else if (configOptions.isIbft()) {
       return IbftLegacyPantheonController.init(
           storageProvider,
@@ -67,10 +76,17 @@ public interface PantheonController<C> extends Closeable {
           syncConfig,
           ottomanTestnetOperation,
           networkId,
-          nodeKeys);
+          nodeKeys,
+          metricsSystem);
     } else if (configOptions.isClique()) {
       return CliquePantheonController.init(
-          storageProvider, genesisConfigFile, syncConfig, miningParameters, networkId, nodeKeys);
+          storageProvider,
+          genesisConfigFile,
+          syncConfig,
+          miningParameters,
+          networkId,
+          nodeKeys,
+          metricsSystem);
     } else {
       throw new IllegalArgumentException("Unknown consensus mechanism defined");
     }

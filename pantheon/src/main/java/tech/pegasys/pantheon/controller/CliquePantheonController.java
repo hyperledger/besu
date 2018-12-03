@@ -54,6 +54,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.io.IOException;
 import java.time.Clock;
@@ -104,7 +105,8 @@ public class CliquePantheonController implements PantheonController<CliqueContex
       final SynchronizerConfiguration taintedSyncConfig,
       final MiningParameters miningParams,
       final int networkId,
-      final KeyPair nodeKeys) {
+      final KeyPair nodeKeys,
+      final MetricsSystem metricsSystem) {
     final CliqueConfigOptions cliqueConfig =
         genesisConfig.getConfigOptions().getCliqueConfigOptions();
     final long blocksPerEpoch = cliqueConfig.getEpochLength();
@@ -117,7 +119,7 @@ public class CliquePantheonController implements PantheonController<CliqueContex
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(protocolSchedule);
     final MutableBlockchain blockchain =
-        new DefaultMutableBlockchain(genesisState.getBlock(), blockchainStorage);
+        new DefaultMutableBlockchain(genesisState.getBlock(), blockchainStorage, metricsSystem);
 
     final WorldStateStorage worldStateStorage = storageProvider.createWorldStateStorage();
     final WorldStateArchive worldStateArchive = new WorldStateArchive(worldStateStorage);
@@ -152,7 +154,8 @@ public class CliquePantheonController implements PantheonController<CliqueContex
             protocolSchedule,
             protocolContext,
             ethProtocolManager.ethContext(),
-            syncState);
+            syncState,
+            metricsSystem);
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(

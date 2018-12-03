@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 public class NoOpMetricsSystem implements MetricsSystem {
 
   private static final Counter NO_OP_COUNTER = new NoOpCounter();
-  private static final TimingContext NO_OP_TIMING_CONTEXT = () -> {};
+  private static final TimingContext NO_OP_TIMING_CONTEXT = () -> 0;
   private static final OperationTimer NO_OP_TIMER = () -> NO_OP_TIMING_CONTEXT;
 
   @Override

@@ -16,7 +16,8 @@ public enum MetricCategory {
   PEERS("peers"),
   RPC("rpc"),
   JVM("jvm", false),
-  PROCESS("process", false);
+  PROCESS("process", false),
+  BLOCKCHAIN("blockchain");
 
   private final String name;
   private final boolean pantheonSpecific;

@@ -85,6 +85,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.miningParameters(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.devMode(anyBoolean())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.nodePrivateKeyFile(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.metricsSystem(any())).thenReturn(mockControllerBuilder);
 
     when(mockSyncConfBuilder.build()).thenReturn(mockSyncConf);
   }

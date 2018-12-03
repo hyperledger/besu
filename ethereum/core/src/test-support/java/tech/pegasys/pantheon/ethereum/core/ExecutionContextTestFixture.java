@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 
@@ -50,7 +51,8 @@ public class ExecutionContextTestFixture {
         new DefaultMutableBlockchain(
             genesis,
             new KeyValueStoragePrefixedKeyBlockchainStorage(
-                keyValueStorage, MainnetBlockHashFunction::createHash));
+                keyValueStorage, MainnetBlockHashFunction::createHash),
+            new NoOpMetricsSystem());
     this.stateArchive =
         new WorldStateArchive(new KeyValueStorageWorldStateStorage(keyValueStorage));
     this.protocolSchedule = protocolSchedule;

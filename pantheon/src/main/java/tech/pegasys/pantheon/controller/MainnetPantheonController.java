@@ -41,6 +41,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.io.IOException;
 import java.time.Clock;
@@ -90,13 +91,14 @@ public class MainnetPantheonController implements PantheonController<Void> {
       final ProtocolSchedule<Void> protocolSchedule,
       final SynchronizerConfiguration taintedSyncConfig,
       final MiningParameters miningParams,
-      final KeyPair nodeKeys) {
+      final KeyPair nodeKeys,
+      final MetricsSystem metricsSystem) {
 
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(protocolSchedule);
     final MutableBlockchain blockchain =
-        new DefaultMutableBlockchain(genesisState.getBlock(), blockchainStorage);
+        new DefaultMutableBlockchain(genesisState.getBlock(), blockchainStorage, metricsSystem);
 
     final WorldStateArchive worldStateArchive =
         new WorldStateArchive(storageProvider.createWorldStateStorage());
@@ -125,7 +127,8 @@ public class MainnetPantheonController implements PantheonController<Void> {
             protocolSchedule,
             protocolContext,
             ethProtocolManager.ethContext(),
-            syncState);
+            syncState,
+            metricsSystem);
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(

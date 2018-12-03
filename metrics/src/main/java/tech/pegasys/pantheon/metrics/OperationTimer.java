@@ -19,7 +19,8 @@ public interface OperationTimer {
   TimingContext startTimer();
 
   interface TimingContext extends Closeable {
-    void stopTimer();
+    /** @return Elapsed time in seconds. */
+    double stopTimer();
 
     @Override
     default void close() {

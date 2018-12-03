@@ -16,14 +16,15 @@ dependencies {
   testRuntime 'org.apache.logging.log4j:log4j-core'
   testRuntime 'org.apache.logging.log4j:log4j-slf4j-impl'
 
+  testImplementation project(':config')
+  testImplementation project(':consensus:clique')
   testImplementation project(':crypto')
   testImplementation project(':ethereum:eth')
   testImplementation project(':ethereum:core')
   testImplementation project(':ethereum:blockcreation')
   testImplementation project(':ethereum:jsonrpc')
+  testImplementation project(':metrics')
   testImplementation project(':pantheon')
-  testImplementation project(':config')
-  testImplementation project(':consensus:clique')
   testImplementation project(':util')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
