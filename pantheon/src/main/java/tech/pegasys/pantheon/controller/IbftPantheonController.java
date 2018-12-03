@@ -150,7 +150,8 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             protocolContext.getBlockchain(),
             networkId,
             fastSyncEnabled,
-            syncConfig.downloaderParallelism());
+            syncConfig.downloaderParallelism(),
+            syncConfig.transactionsParallelism());
     final SubProtocol ethSubProtocol = EthProtocol.get();
 
     final SyncState syncState =

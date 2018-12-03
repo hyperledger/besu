@@ -29,8 +29,9 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
       final Blockchain blockchain,
       final int networkId,
       final boolean fastSyncEnabled,
-      final int workers) {
-    super(blockchain, networkId, fastSyncEnabled, workers);
+      final int syncWorkers,
+      final int txWorkers) {
+    super(blockchain, networkId, fastSyncEnabled, syncWorkers, txWorkers);
   }
 
   @Override

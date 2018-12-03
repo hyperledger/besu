@@ -32,7 +32,7 @@ class TransactionsMessageHandler implements MessageCallback {
   @Override
   public void exec(final EthMessage message) {
     final TransactionsMessage transactionsMessage = TransactionsMessage.readFrom(message.getData());
-    scheduler.scheduleWorkerTask(
+    scheduler.scheduleTxWorkerTask(
         () ->
             transactionsMessageProcessor.processTransactionsMessage(
                 message.getPeer(), transactionsMessage));

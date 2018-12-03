@@ -41,13 +41,14 @@ public class EthScheduler {
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch shutdown = new CountDownLatch(1);
 
-  protected final ExecutorService workerExecutor;
+  protected final ExecutorService syncWorkerExecutor;
   protected final ScheduledExecutorService scheduler;
+  protected final ExecutorService txWorkerExecutor;
 
-  EthScheduler(final int workerCount) {
+  EthScheduler(final int syncWorkerCount, final int txWorkerCount) {
     this(
         Executors.newFixedThreadPool(
-            workerCount,
+            syncWorkerCount,
             new ThreadFactoryBuilder()
                 .setNameFormat(EthScheduler.class.getSimpleName() + "-Workers")
                 .build()),
@@ -56,19 +57,28 @@ public class EthScheduler {
             new ThreadFactoryBuilder()
                 .setDaemon(true)
                 .setNameFormat(EthScheduler.class.getSimpleName() + "Timer")
+                .build()),
+        Executors.newFixedThreadPool(
+            txWorkerCount,
+            new ThreadFactoryBuilder()
+                .setNameFormat(EthScheduler.class.getSimpleName() + "-Transactions")
                 .build()));
   }
 
   protected EthScheduler(
-      final ExecutorService workerExecutor, final ScheduledExecutorService scheduler) {
-    this.workerExecutor = workerExecutor;
+      final ExecutorService syncWorkerExecutor,
+      final ScheduledExecutorService scheduler,
+      final ExecutorService txWorkerExecutor) {
+    this.syncWorkerExecutor = syncWorkerExecutor;
     this.scheduler = scheduler;
+    this.txWorkerExecutor = txWorkerExecutor;
   }
 
-  public <T> CompletableFuture<T> scheduleWorkerTask(final Supplier<CompletableFuture<T>> future) {
+  public <T> CompletableFuture<T> scheduleSyncWorkerTask(
+      final Supplier<CompletableFuture<T>> future) {
     final CompletableFuture<T> promise = new CompletableFuture<>();
     final Future<?> workerFuture =
-        workerExecutor.submit(
+        syncWorkerExecutor.submit(
             () -> {
               future
                   .get()
@@ -91,8 +101,12 @@ public class EthScheduler {
     return promise;
   }
 
-  public Future<?> scheduleWorkerTask(final Runnable command) {
-    return workerExecutor.submit(command);
+  public Future<?> scheduleSyncWorkerTask(final Runnable command) {
+    return syncWorkerExecutor.submit(command);
+  }
+
+  public Future<?> scheduleTxWorkerTask(final Runnable command) {
+    return txWorkerExecutor.submit(command);
   }
 
   public CompletableFuture<Void> scheduleFutureTask(
@@ -179,7 +193,7 @@ public class EthScheduler {
   public void stop() {
     if (stopped.compareAndSet(false, true)) {
       LOG.trace("Stopping " + getClass().getSimpleName());
-      workerExecutor.shutdown();
+      syncWorkerExecutor.shutdown();
       scheduler.shutdown();
       shutdown.countDown();
     } else {
@@ -189,10 +203,10 @@ public class EthScheduler {
 
   public void awaitStop() throws InterruptedException {
     shutdown.await();
-    if (!workerExecutor.awaitTermination(2L, TimeUnit.MINUTES)) {
+    if (!syncWorkerExecutor.awaitTermination(2L, TimeUnit.MINUTES)) {
       LOG.error("{} worker executor did not shutdown cleanly.", this.getClass().getSimpleName());
-      workerExecutor.shutdownNow();
-      workerExecutor.awaitTermination(2L, TimeUnit.MINUTES);
+      syncWorkerExecutor.shutdownNow();
+      syncWorkerExecutor.awaitTermination(2L, TimeUnit.MINUTES);
     }
     if (!scheduler.awaitTermination(2L, TimeUnit.MINUTES)) {
       LOG.error("{} scheduler did not shutdown cleanly.", this.getClass().getSimpleName());

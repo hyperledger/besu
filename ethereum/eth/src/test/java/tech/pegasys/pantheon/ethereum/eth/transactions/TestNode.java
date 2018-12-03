@@ -99,7 +99,8 @@ public class TestNode implements Closeable {
     genesisState.writeStateTo(worldStateArchive.getMutable());
     final ProtocolContext<Void> protocolContext =
         new ProtocolContext<>(blockchain, worldStateArchive, null);
-    final EthProtocolManager ethProtocolManager = new EthProtocolManager(blockchain, 1, false, 1);
+    final EthProtocolManager ethProtocolManager =
+        new EthProtocolManager(blockchain, 1, false, 1, 1);
 
     final NetworkRunner networkRunner =
         NetworkRunner.builder()

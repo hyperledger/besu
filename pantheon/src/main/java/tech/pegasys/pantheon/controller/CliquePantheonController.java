@@ -144,7 +144,8 @@ public class CliquePantheonController implements PantheonController<CliqueContex
             protocolContext.getBlockchain(),
             networkId,
             fastSyncEnabled,
-            syncConfig.downloaderParallelism());
+            syncConfig.downloaderParallelism(),
+            syncConfig.transactionsParallelism());
     final SyncState syncState =
         new SyncState(
             protocolContext.getBlockchain(), ethProtocolManager.ethContext().getEthPeers());

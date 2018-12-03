@@ -52,6 +52,7 @@ public class SynchronizerConfiguration {
   private final long trailingPeerBlocksBehindThreshold;
   private final int maxTrailingPeers;
   private final int downloaderParallelism;
+  private final int transactionsParallelism;
 
   private SynchronizerConfiguration(
       final SyncMode requestedSyncMode,
@@ -67,7 +68,8 @@ public class SynchronizerConfiguration {
       final int downloaderChainSegmentSize,
       final long trailingPeerBlocksBehindThreshold,
       final int maxTrailingPeers,
-      final int downloaderParallelism) {
+      final int downloaderParallelism,
+      final int transactionsParallelism) {
     this.requestedSyncMode = requestedSyncMode;
     this.fastSyncPivotDistance = fastSyncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
@@ -82,6 +84,7 @@ public class SynchronizerConfiguration {
     this.trailingPeerBlocksBehindThreshold = trailingPeerBlocksBehindThreshold;
     this.maxTrailingPeers = maxTrailingPeers;
     this.downloaderParallelism = downloaderParallelism;
+    this.transactionsParallelism = transactionsParallelism;
   }
 
   /**
@@ -122,7 +125,8 @@ public class SynchronizerConfiguration {
         downloaderChainSegmentSize,
         trailingPeerBlocksBehindThreshold,
         maxTrailingPeers,
-        downloaderParallelism);
+        downloaderParallelism,
+        transactionsParallelism);
   }
 
   public static Builder builder() {
@@ -203,6 +207,10 @@ public class SynchronizerConfiguration {
     return downloaderParallelism;
   }
 
+  public int transactionsParallelism() {
+    return transactionsParallelism;
+  }
+
   /**
    * The rate at which blocks should be fully validated during fast sync. At a rate of 1f, all
    * blocks are fully validated. At rates less than 1f, a subset of blocks will undergo light-weight
@@ -228,6 +236,7 @@ public class SynchronizerConfiguration {
     private long trailingPeerBlocksBehindThreshold;
     private int maxTrailingPeers = Integer.MAX_VALUE;
     private int downloaderParallelism = 2;
+    private int transactionsParallelism = 2;
 
     public Builder fastSyncPivotDistance(final int distance) {
       fastSyncPivotDistance = distance;
@@ -299,6 +308,11 @@ public class SynchronizerConfiguration {
       return this;
     }
 
+    public Builder transactionsParallelism(final int transactionsParallelism) {
+      this.transactionsParallelism = transactionsParallelism;
+      return this;
+    }
+
     public SynchronizerConfiguration build() {
       return new SynchronizerConfiguration(
           syncMode,
@@ -314,7 +328,8 @@ public class SynchronizerConfiguration {
           downloaderChainSegmentSize,
           trailingPeerBlocksBehindThreshold,
           maxTrailingPeers,
-          downloaderParallelism);
+          downloaderParallelism,
+          transactionsParallelism);
     }
   }
 }
