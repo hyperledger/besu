@@ -241,7 +241,7 @@ public final class NettyP2PNetwork implements P2PNetwork {
               }
               // Reject incoming connections that are blacklisted
               if (peerBlacklist.contains(connection)) {
-                connection.disconnect(DisconnectReason.USELESS_PEER);
+                connection.disconnect(DisconnectReason.UNKNOWN);
                 return;
               }
 

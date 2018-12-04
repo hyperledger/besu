@@ -74,7 +74,7 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
           break;
         case WireMessageCodes.DISCONNECT:
           final DisconnectMessage disconnect = DisconnectMessage.readFrom(message);
-          DisconnectReason reason = null;
+          DisconnectReason reason = DisconnectReason.UNKNOWN;
           try {
             reason = disconnect.getReason();
             LOG.debug(
