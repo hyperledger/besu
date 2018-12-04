@@ -38,9 +38,9 @@ public class CliqueHelpers {
       final ProtocolContext<CliqueContext> protocolContext,
       final BlockHeader parent) {
     final VoteTally validatorProvider =
-        protocolContext.getConsensusState().getVoteTallyCache().getVoteTallyAtBlock(parent);
+        protocolContext.getConsensusState().getVoteTallyCache().getVoteTallyAfterBlock(parent);
 
-    if (!validatorProvider.getCurrentValidators().contains(candidate)) {
+    if (!validatorProvider.getValidators().contains(candidate)) {
       return false;
     }
 
@@ -72,7 +72,7 @@ public class CliqueHelpers {
   }
 
   private static int minimumBlocksSincePreviousSigning(final ValidatorProvider validatorProvider) {
-    final int validatorCount = validatorProvider.getCurrentValidators().size();
+    final int validatorCount = validatorProvider.getValidators().size();
     // The number of contiguous blocks in which a signer may only sign 1 (as taken from clique spec)
     final int signerLimit = (validatorCount / 2) + 1;
     return signerLimit - 1;

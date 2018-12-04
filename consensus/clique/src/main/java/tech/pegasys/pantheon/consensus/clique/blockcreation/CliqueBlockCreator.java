@@ -85,7 +85,8 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
             .blockHashFunction(blockHashFunction);
 
     final CliqueContext cliqueContext = protocolContext.getConsensusState();
-    final VoteTally voteTally = cliqueContext.getVoteTallyCache().getVoteTallyAtBlock(parentHeader);
+    final VoteTally voteTally =
+        cliqueContext.getVoteTallyCache().getVoteTallyAfterBlock(parentHeader);
 
     final Optional<ValidatorVote> vote =
         cliqueContext

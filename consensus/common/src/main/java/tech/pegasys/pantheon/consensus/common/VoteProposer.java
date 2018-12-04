@@ -107,7 +107,7 @@ public class VoteProposer {
    *     votes
    */
   public Optional<ValidatorVote> getVote(final Address localAddress, final VoteTally tally) {
-    final Collection<Address> validators = tally.getCurrentValidators();
+    final Collection<Address> validators = tally.getValidators();
     final List<Map.Entry<Address, VoteType>> validVotes = new ArrayList<>();
 
     proposals

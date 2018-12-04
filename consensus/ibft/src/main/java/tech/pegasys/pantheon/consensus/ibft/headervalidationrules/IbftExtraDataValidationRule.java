@@ -73,7 +73,7 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
       final ValidatorProvider validatorProvider = context.getConsensusState().getVoteTally();
       final IbftExtraData ibftExtraData = IbftExtraData.decode(header.getExtraData());
 
-      final Collection<Address> storedValidators = validatorProvider.getCurrentValidators();
+      final Collection<Address> storedValidators = validatorProvider.getValidators();
 
       if (validateCommitSeals) {
         final List<Address> committers =

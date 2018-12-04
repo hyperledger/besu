@@ -82,7 +82,7 @@ public class ProposerSelector {
     final long prevBlockNumber = roundIdentifier.getSequenceNumber() - 1;
     final Address prevBlockProposer = getProposerOfBlock(prevBlockNumber);
 
-    if (!validators.getCurrentValidators().contains(prevBlockProposer)) {
+    if (!validators.getValidators().contains(prevBlockProposer)) {
       return handleMissingProposer(prevBlockProposer, roundIdentifier);
     } else {
       return handleWithExistingProposer(prevBlockProposer, roundIdentifier);
@@ -97,7 +97,7 @@ public class ProposerSelector {
    */
   private Address handleMissingProposer(
       final Address prevBlockProposer, final ConsensusRoundIdentifier roundIdentifier) {
-    final NavigableSet<Address> validatorSet = new TreeSet<>(validators.getCurrentValidators());
+    final NavigableSet<Address> validatorSet = new TreeSet<>(validators.getValidators());
     final SortedSet<Address> latterValidators = validatorSet.tailSet(prevBlockProposer, false);
     final Address nextProposer;
     if (latterValidators.isEmpty()) {
@@ -138,7 +138,7 @@ public class ProposerSelector {
    */
   private Address calculateRoundSpecificValidator(
       final Address baseProposer, final int indexOffset) {
-    final List<Address> currentValidatorList = new ArrayList<>(validators.getCurrentValidators());
+    final List<Address> currentValidatorList = new ArrayList<>(validators.getValidators());
     final int prevProposerIndex = currentValidatorList.indexOf(baseProposer);
     final int roundValidatorIndex = (prevProposerIndex + indexOffset) % currentValidatorList.size();
     return currentValidatorList.get(roundValidatorIndex);

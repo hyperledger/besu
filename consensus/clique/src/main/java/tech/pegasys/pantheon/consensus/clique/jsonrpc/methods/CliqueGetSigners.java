@@ -53,7 +53,7 @@ public class CliqueGetSigners implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequest request) {
     final Optional<BlockHeader> blockHeader = determineBlockHeader(request);
     return blockHeader
-        .map(bh -> voteTallyCache.getVoteTallyAtBlock(bh).getCurrentValidators())
+        .map(bh -> voteTallyCache.getVoteTallyAfterBlock(bh).getValidators())
         .map(addresses -> addresses.stream().map(Objects::toString).collect(Collectors.toList()))
         .<JsonRpcResponse>map(addresses -> new JsonRpcSuccessResponse(request.getId(), addresses))
         .orElse(new JsonRpcErrorResponse(request.getId(), JsonRpcError.INTERNAL_ERROR));

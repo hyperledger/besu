@@ -60,11 +60,11 @@ public class CliqueBlockScheduler extends DefaultBlockScheduler {
     if (nextProposer.equals(localNodeAddress)) {
       return 0;
     }
-    return calculatorOutOfTurnDelay(voteTallyCache.getVoteTallyAtBlock(parentHeader));
+    return calculatorOutOfTurnDelay(voteTallyCache.getVoteTallyAfterBlock(parentHeader));
   }
 
   private int calculatorOutOfTurnDelay(final ValidatorProvider validators) {
-    final int countSigners = validators.getCurrentValidators().size();
+    final int countSigners = validators.getValidators().size();
     final double multiplier = (countSigners / 2d) + 1;
     final int maxDelay = (int) (multiplier * OUT_OF_TURN_DELAY_MULTIPLIER_MILLIS);
     return r.nextInt(maxDelay) + 1;

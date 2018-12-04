@@ -54,7 +54,7 @@ public class CliqueExtraDataValidationRuleTest {
     validatorList.add(AddressHelpers.calculateAddressWithRespectTo(localAddr, 1));
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
+    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
 
     final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, null, null);
     cliqueProtocolContext = new ProtocolContext<>(null, null, cliqueContext);

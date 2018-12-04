@@ -36,7 +36,7 @@ public class IbftExtraDataCalculator implements ExtraDataCalculator {
             vanityData,
             Lists.newArrayList(),
             null,
-            Lists.newArrayList(validatorProvider.getCurrentValidators()));
+            Lists.newArrayList(validatorProvider.getValidators()));
     return baseExtraData.encode();
   }
 }

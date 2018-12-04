@@ -50,7 +50,18 @@ public class VoteTallyCache {
     this.epochManager = epochManager;
   }
 
-  public VoteTally getVoteTallyAtBlock(final BlockHeader header) {
+  /**
+   * Determines the VoteTally for a given block header, by back-tracing the blockchain to a
+   * previously cached value or epoch block. Then appyling votes in each intermediate header such
+   * that representative state can be provided. This function assumes the vote cast in {@code
+   * header} is applied, thus the voteTally returned contains the group of validators who are
+   * permitted to partake in the next block's creation.
+   *
+   * @param header the header of the block after which the VoteTally is to be returned
+   * @return The Vote Tally (and therefore validators) following the application of all votes upto
+   *     and including the requested header.
+   */
+  public VoteTally getVoteTallyAfterBlock(final BlockHeader header) {
     try {
       return voteTallyCache.get(header.getHash(), () -> populateCacheUptoAndIncluding(header));
     } catch (final ExecutionException ex) {
@@ -64,7 +75,8 @@ public class VoteTallyCache {
     VoteTally voteTally = null;
 
     while (true) { // Will run into an epoch block (and thus a VoteTally) to break loop.
-      voteTally = findMostRecentAvailableVoteTally(header, intermediateBlocks);
+      intermediateBlocks.push(header);
+      voteTally = getValidatorsAfter(header);
       if (voteTally != null) {
         break;
       }
@@ -80,25 +92,23 @@ public class VoteTallyCache {
     return constructMissingCacheEntries(intermediateBlocks, voteTally);
   }
 
-  private VoteTally findMostRecentAvailableVoteTally(
-      final BlockHeader header, final Deque<BlockHeader> intermediateBlockHeaders) {
-    intermediateBlockHeaders.push(header);
-    VoteTally voteTally = voteTallyCache.getIfPresent(header.getParentHash());
-    if ((voteTally == null) && (epochManager.isEpochBlock(header.getNumber()))) {
-      final CliqueExtraData extraData = CliqueExtraData.decode(header.getExtraData());
-      voteTally = new VoteTally(extraData.getValidators());
+  private VoteTally getValidatorsAfter(final BlockHeader header) {
+    if (epochManager.isEpochBlock(header.getNumber())) {
+      final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
+      return new VoteTally(blockInterface.validatorsInBlock(header));
     }
 
-    return voteTally;
+    return voteTallyCache.getIfPresent(header.getParentHash());
   }
 
   private VoteTally constructMissingCacheEntries(
       final Deque<BlockHeader> headers, final VoteTally tally) {
+    final VoteTally mutableVoteTally = tally.copy();
     while (!headers.isEmpty()) {
       final BlockHeader h = headers.pop();
-      voteTallyUpdater.updateForBlock(h, tally);
-      voteTallyCache.put(h.getHash(), tally.copy());
+      voteTallyUpdater.updateForBlock(h, mutableVoteTally);
+      voteTallyCache.put(h.getHash(), mutableVoteTally.copy());
     }
-    return tally;
+    return mutableVoteTally;
   }
 }

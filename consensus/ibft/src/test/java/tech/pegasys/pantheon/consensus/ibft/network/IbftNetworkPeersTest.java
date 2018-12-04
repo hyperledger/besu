@@ -67,7 +67,7 @@ public class IbftNetworkPeersTest {
     // Only add the first Peer's address to the validators.
     validators.add(Util.publicKeyToAddress(publicKeys.get(0)));
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
-    when(validatorProvider.getCurrentValidators()).thenReturn(validators);
+    when(validatorProvider.getValidators()).thenReturn(validators);
 
     final IbftNetworkPeers peers = new IbftNetworkPeers(validatorProvider);
     for (final PeerConnection peer : peerConnections) {
@@ -88,7 +88,7 @@ public class IbftNetworkPeersTest {
     validators.add(Util.publicKeyToAddress(publicKeys.get(0)));
 
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
-    when(validatorProvider.getCurrentValidators()).thenReturn(validators);
+    when(validatorProvider.getValidators()).thenReturn(validators);
 
     final IbftNetworkPeers peers = new IbftNetworkPeers(validatorProvider);
 

@@ -45,8 +45,8 @@ public class CliqueProposerSelector {
    */
   public Address selectProposerForNextBlock(final BlockHeader parentHeader) {
 
-    final VoteTally parentVoteTally = voteTallyCache.getVoteTallyAtBlock(parentHeader);
-    final List<Address> validatorSet = new ArrayList<>(parentVoteTally.getCurrentValidators());
+    final VoteTally parentVoteTally = voteTallyCache.getVoteTallyAfterBlock(parentHeader);
+    final List<Address> validatorSet = new ArrayList<>(parentVoteTally.getValidators());
 
     final long nextBlockNumber = parentHeader.getNumber() + 1L;
     final int indexIntoValidators = (int) (nextBlockNumber % validatorSet.size());

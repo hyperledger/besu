@@ -102,7 +102,7 @@ public class VoteTallyUpdaterTest {
     when(blockchain.getBlockHeader(EPOCH_LENGTH)).thenReturn(Optional.of(header));
 
     final VoteTally voteTally = updater.buildVoteTallyFromBlockchain(blockchain);
-    assertThat(voteTally.getCurrentValidators()).containsExactly(subject, validator1);
+    assertThat(voteTally.getValidators()).containsExactly(subject, validator1);
   }
 
   @Test
@@ -115,7 +115,7 @@ public class VoteTallyUpdaterTest {
     when(blockchain.getBlockHeader(EPOCH_LENGTH)).thenReturn(Optional.of(header));
 
     final VoteTally voteTally = updater.buildVoteTallyFromBlockchain(blockchain);
-    assertThat(voteTally.getCurrentValidators()).containsExactly(subject, validator1);
+    assertThat(voteTally.getValidators()).containsExactly(subject, validator1);
   }
 
   @Test
@@ -136,6 +136,6 @@ public class VoteTallyUpdaterTest {
     when(blockchain.getBlockHeader(EPOCH_LENGTH + 1)).thenReturn(Optional.of(voteBlockHeader));
 
     final VoteTally voteTally = updater.buildVoteTallyFromBlockchain(blockchain);
-    assertThat(voteTally.getCurrentValidators()).containsExactly(subject, validator1);
+    assertThat(voteTally.getValidators()).containsExactly(subject, validator1);
   }
 }
