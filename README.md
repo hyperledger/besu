@@ -27,6 +27,7 @@ User and reference documentation available on the Wiki includes:
 ## Pantheon Developers
 
 * [Contribution Guidelines](CONTRIBUTING.md)
+* [Coding Conventions](CODING-CONVENTIONS.md)
 * [Wiki] for running and using Pantheon
 
 ### Development
