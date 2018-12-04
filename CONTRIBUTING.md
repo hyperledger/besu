@@ -16,9 +16,10 @@ Welcome to the Pantheon repository!  The following is a set of guidelines for co
   * [Code Reviews]
 
 [Style Guides](#style-guides)
-  * [Git Commit Messages & Pull Request Messages](#git-commit-messages--pull-request-messages)
   * [Java Style Guide](#java-code-style-guide)
-
+  * [Coding Conventions](#coding-conventions)
+  * [Git Commit Messages & Pull Request Messages](#git-commit-messages--pull-request-messages)
+  
 [Issue and Pull Request Labels](#issue-and-pull-request-labels)
 
 ## Code of Conduct
@@ -145,6 +146,7 @@ Please follow these steps to have your contribution considered by the approvers:
 While the prerequisites above must be satisfied prior to having your pull request reviewed, the reviewer(s) may ask you to complete additional design work, tests, or other changes before your pull request can be ultimately accepted.  Please refer to [Code Reviews].
 
 # Style Guides
+
 ## Java Code Style Guide
 
 We use Google's Java coding conventions for the project. To reformat code, run: 
@@ -155,13 +157,8 @@ We use Google's Java coding conventions for the project. To reformat code, run:
 
 Code style will be checked automatically during a build.
 
-### Other Java Code Conventions
-We have a set of coding conventions that we try to adhere to.  These are not strictly enforced during the build, but should be adhered to and called out in code reviews.
-* Avoid abbreviations in variable names (ie, use message instead of msg)
-* never 2 blank lines in a row
-
-Exceptions:
-* Allowed abbreviation:  Tx instead of Transaction  (it's historical)
+## Coding Conventions
+We have a set of [coding conventions](CODING-CONVENTIONS.md) to which we try to adhere.  These are not strictly enforced during the build, but should be adhered to and called out in code reviews.
 
 ## Git Commit Messages & Pull Request Messages
 * Use the present tense ("Add feature" not "Added feature")
