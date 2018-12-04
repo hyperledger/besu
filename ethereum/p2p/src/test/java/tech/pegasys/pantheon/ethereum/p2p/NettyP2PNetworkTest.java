@@ -378,7 +378,7 @@ public final class NettyP2PNetworkTest {
       assertThat(connectFuture.get(5L, TimeUnit.SECONDS).getPeer().getNodeId()).isEqualTo(localId);
       assertThat(peerFuture.get(5L, TimeUnit.SECONDS).getPeer().getNodeId()).isEqualTo(localId);
       assertThat(reasonFuture.get(5L, TimeUnit.SECONDS))
-          .isEqualByComparingTo(DisconnectReason.USELESS_PEER);
+          .isEqualByComparingTo(DisconnectReason.UNKNOWN);
     }
   }
 

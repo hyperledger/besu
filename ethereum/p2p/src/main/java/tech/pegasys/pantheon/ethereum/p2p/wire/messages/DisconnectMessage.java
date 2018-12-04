@@ -12,18 +12,15 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.wire.messages;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static tech.pegasys.pantheon.util.Preconditions.checkGuard;
-
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
-import tech.pegasys.pantheon.ethereum.p2p.wire.WireProtocolException;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public final class DisconnectMessage extends AbstractMessageData {
@@ -75,15 +72,20 @@ public final class DisconnectMessage extends AbstractMessageData {
 
     public void writeTo(final RLPOutput out) {
       out.startList();
-      out.writeByte(reason.getValue());
+      out.writeBytesValue(reason.getValue());
       out.endList();
     }
 
     public static Data readFrom(final RLPInput in) {
-      final int size = in.enterList();
-      checkGuard(size == 1, WireProtocolException::new, "Expected list size 1, got: %s", size);
-      final DisconnectReason reason = DisconnectReason.forCode(in.readByte());
+      in.enterList();
+      BytesValue reasonData = in.readBytesValue();
       in.leaveList();
+
+      // Disconnect reason should be at most 1 byte, otherwise, just return UNKNOWN
+      final DisconnectReason reason =
+          reasonData.size() == 1
+              ? DisconnectReason.forCode(reasonData.get(0))
+              : DisconnectReason.UNKNOWN;
 
       return new Data(reason);
     }
@@ -100,6 +102,7 @@ public final class DisconnectMessage extends AbstractMessageData {
    *     Protocol</a>
    */
   public enum DisconnectReason {
+    UNKNOWN(null),
     REQUESTED((byte) 0x00),
     TCP_SUBSYSTEM_ERROR((byte) 0x01),
     BREACH_OF_PROTOCOL((byte) 0x02),
@@ -115,29 +118,40 @@ public final class DisconnectMessage extends AbstractMessageData {
     SUBPROTOCOL_TRIGGERED((byte) 0x10);
 
     private static final DisconnectReason[] BY_ID;
-    private final byte code;
+    private final Optional<Byte> code;
 
     static {
       final int maxValue =
-          Stream.of(DisconnectReason.values()).mapToInt(dr -> (int) dr.getValue()).max().getAsInt();
+          Stream.of(DisconnectReason.values())
+              .filter(r -> r.code.isPresent())
+              .mapToInt(r -> (int) r.code.get())
+              .max()
+              .getAsInt();
       BY_ID = new DisconnectReason[maxValue + 1];
-      Stream.of(DisconnectReason.values()).forEach(dr -> BY_ID[dr.getValue()] = dr);
+      Stream.of(DisconnectReason.values())
+          .filter(r -> r.code.isPresent())
+          .forEach(r -> BY_ID[r.code.get()] = r);
     }
 
-    public static DisconnectReason forCode(final byte taintedCode) {
-      final byte code = (byte) (taintedCode & 0xff);
-      checkArgument(code < BY_ID.length, "unrecognized disconnect reason");
-      final DisconnectReason reason = BY_ID[code];
-      checkArgument(reason != null, "unrecognized disconnect reason");
-      return reason;
+    public static DisconnectReason forCode(final Byte code) {
+      if (code == null || code >= BY_ID.length || code < 0 || BY_ID[code] == null) {
+        // Be permissive and just return unknown if the disconnect reason is bad
+        return UNKNOWN;
+      }
+      return BY_ID[code];
     }
 
-    DisconnectReason(final byte code) {
-      this.code = code;
+    DisconnectReason(final Byte code) {
+      this.code = Optional.ofNullable(code);
     }
 
-    public byte getValue() {
-      return code;
+    public BytesValue getValue() {
+      return code.map(BytesValue::of).orElse(BytesValue.EMPTY);
+    }
+
+    @Override
+    public String toString() {
+      return getValue().toString() + " " + name();
     }
   }
 }
