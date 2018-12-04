@@ -59,9 +59,9 @@ public class CliqueExtraDataValidationRule
       final ProtocolContext<CliqueContext> protocolContext) {
     try {
       final VoteTally validatorProvider =
-          protocolContext.getConsensusState().getVoteTallyCache().getVoteTallyAtBlock(parent);
+          protocolContext.getConsensusState().getVoteTallyCache().getVoteTallyAfterBlock(parent);
 
-      final Collection<Address> storedValidators = validatorProvider.getCurrentValidators();
+      final Collection<Address> storedValidators = validatorProvider.getValidators();
       return extraDataIsValid(storedValidators, header);
 
     } catch (final RLPException ex) {

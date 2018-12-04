@@ -51,7 +51,7 @@ public class CliqueBlockSchedulerTest {
     validatorList.add(AddressHelpers.calculateAddressWithRespectTo(localAddr, 1));
 
     voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
+    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
 
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }

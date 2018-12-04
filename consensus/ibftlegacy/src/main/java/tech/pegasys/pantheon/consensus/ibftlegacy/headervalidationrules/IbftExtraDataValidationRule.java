@@ -74,7 +74,7 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
 
       final Address proposer = IbftBlockHashing.recoverProposerAddress(header, ibftExtraData);
 
-      final Collection<Address> storedValidators = validatorProvider.getCurrentValidators();
+      final Collection<Address> storedValidators = validatorProvider.getValidators();
 
       if (!storedValidators.contains(proposer)) {
         LOG.trace("Proposer sealing block is not a member of the validators.");

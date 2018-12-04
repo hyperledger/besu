@@ -43,7 +43,7 @@ public class CliqueProposerSelectorTest {
   @Before
   public void setup() {
     voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(voteTally);
+    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(voteTally);
   }
 
   @Test

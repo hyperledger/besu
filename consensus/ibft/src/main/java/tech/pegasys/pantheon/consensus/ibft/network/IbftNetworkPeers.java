@@ -53,7 +53,7 @@ public class IbftNetworkPeers {
   }
 
   public void multicastToValidators(final MessageData message) {
-    final Collection<Address> validators = validatorProvider.getCurrentValidators();
+    final Collection<Address> validators = validatorProvider.getValidators();
     sendMessageToSpecificAddresses(validators, message);
   }
 

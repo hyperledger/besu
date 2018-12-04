@@ -89,8 +89,8 @@ public class CliqueGetSignersTest {
     when(blockchainQueries.headBlockNumber()).thenReturn(3065995L);
     when(blockchainQueries.blockByNumber(3065995L)).thenReturn(Optional.of(blockWithMetadata));
     when(blockWithMetadata.getHeader()).thenReturn(blockHeader);
-    when(voteTallyCache.getVoteTallyAtBlock(blockHeader)).thenReturn(voteTally);
-    when(voteTally.getCurrentValidators()).thenReturn(validators);
+    when(voteTallyCache.getVoteTallyAfterBlock(blockHeader)).thenReturn(voteTally);
+    when(voteTally.getValidators()).thenReturn(validators);
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
     assertEquals(validatorAsStrings, response.getResult());
@@ -104,8 +104,8 @@ public class CliqueGetSignersTest {
 
     when(blockchainQueries.blockByNumber(3065995L)).thenReturn(Optional.of(blockWithMetadata));
     when(blockWithMetadata.getHeader()).thenReturn(blockHeader);
-    when(voteTallyCache.getVoteTallyAtBlock(blockHeader)).thenReturn(voteTally);
-    when(voteTally.getCurrentValidators()).thenReturn(validators);
+    when(voteTallyCache.getVoteTallyAfterBlock(blockHeader)).thenReturn(voteTally);
+    when(voteTally.getValidators()).thenReturn(validators);
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
     assertEquals(validatorAsStrings, response.getResult());

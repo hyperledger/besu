@@ -19,5 +19,5 @@ import java.util.Collection;
 public interface ValidatorProvider {
 
   // Returns the current list of validators
-  Collection<Address> getCurrentValidators();
+  Collection<Address> getValidators();
 }

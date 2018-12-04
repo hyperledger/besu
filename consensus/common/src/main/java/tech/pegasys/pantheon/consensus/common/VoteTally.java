@@ -107,8 +107,12 @@ public class VoteTally implements ValidatorProvider {
     addVotesBySubject.clear();
   }
 
+  /**
+   * @return The collection of validators after the voting at the most recent block has been
+   *     finalised.
+   */
   @Override
-  public Collection<Address> getCurrentValidators() {
+  public Collection<Address> getValidators() {
     return currentValidators;
   }
 

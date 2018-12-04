@@ -101,8 +101,11 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
     // Building ON TOP of canonical head, if the next block is epoch, include validators.
     if (epochManager.isEpochBlock(parentHeader.getNumber() + 1)) {
       final VoteTally voteTally =
-          protocolContext.getConsensusState().getVoteTallyCache().getVoteTallyAtBlock(parentHeader);
-      validators.addAll(voteTally.getCurrentValidators());
+          protocolContext
+              .getConsensusState()
+              .getVoteTallyCache()
+              .getVoteTallyAfterBlock(parentHeader);
+      validators.addAll(voteTally.getValidators());
     }
 
     final CliqueExtraData extraData = new CliqueExtraData(vanityDataToInsert, null, validators);

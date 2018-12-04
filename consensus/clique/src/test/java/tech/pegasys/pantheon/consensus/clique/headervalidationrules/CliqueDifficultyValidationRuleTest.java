@@ -56,7 +56,7 @@ public class CliqueDifficultyValidationRuleTest {
     validatorList.add(AddressHelpers.calculateAddressWithRespectTo(localAddress, 1));
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
+    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
     final VoteProposer voteProposer = new VoteProposer();
 
     final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);

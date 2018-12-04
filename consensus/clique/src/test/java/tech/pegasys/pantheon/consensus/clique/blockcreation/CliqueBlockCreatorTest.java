@@ -75,7 +75,7 @@ public class CliqueBlockCreatorTest {
     validatorList.add(otherAddress);
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAtBlock(any())).thenReturn(new VoteTally(validatorList));
+    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
     voteProposer = new VoteProposer();
     final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);
 

@@ -109,8 +109,8 @@ public class CliqueGetSignersAtHashTest {
     when(blockchainQueries.blockByHash(Hash.fromHexString(BLOCK_HASH)))
         .thenReturn(Optional.of(blockWithMetadata));
     when(blockWithMetadata.getHeader()).thenReturn(blockHeader);
-    when(voteTallyCache.getVoteTallyAtBlock(blockHeader)).thenReturn(voteTally);
-    when(voteTally.getCurrentValidators()).thenReturn(validators);
+    when(voteTallyCache.getVoteTallyAfterBlock(blockHeader)).thenReturn(voteTally);
+    when(voteTally.getValidators()).thenReturn(validators);
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
     assertEquals(validatorsAsStrings, response.getResult());

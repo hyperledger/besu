@@ -41,7 +41,7 @@ public class VoteTallyTest {
     voteTally.addVote(new ValidatorVote(ADD, validator1, validator5));
     voteTally.addVote(new ValidatorVote(ADD, validator2, validator5));
 
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4);
   }
 
@@ -52,7 +52,7 @@ public class VoteTallyTest {
     voteTally.addVote(new ValidatorVote(ADD, validator2, validator5));
     voteTally.addVote(new ValidatorVote(ADD, validator3, validator5));
 
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4, validator5);
   }
 
@@ -64,7 +64,7 @@ public class VoteTallyTest {
     voteTally.addVote(new ValidatorVote(ADD, validator2, validator4));
     voteTally.addVote(new ValidatorVote(ADD, validator3, validator4));
 
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4, validator5);
   }
 
@@ -75,7 +75,7 @@ public class VoteTallyTest {
     voteTally.addVote(new ValidatorVote(ADD, validator2, validator5));
     voteTally.addVote(new ValidatorVote(ADD, validator2, validator5));
 
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4);
   }
 
@@ -87,7 +87,7 @@ public class VoteTallyTest {
     voteTally.addVote(new ValidatorVote(ADD, validator2, validator5));
     voteTally.addVote(new ValidatorVote(ADD, validator3, validator5));
 
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4);
   }
 
@@ -99,7 +99,7 @@ public class VoteTallyTest {
     voteTally.addVote(new ValidatorVote(ADD, validator3, validator5));
     voteTally.addVote(new ValidatorVote(DROP, validator1, validator5));
 
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4, validator5);
   }
 
@@ -111,20 +111,20 @@ public class VoteTallyTest {
     voteTally.addVote(new ValidatorVote(ADD, validator2, validator5));
     voteTally.addVote(new ValidatorVote(ADD, validator3, validator5));
 
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4, validator5);
 
     // Then vote it back out
     voteTally.addVote(new ValidatorVote(DROP, validator2, validator5));
     voteTally.addVote(new ValidatorVote(DROP, validator3, validator5));
     voteTally.addVote(new ValidatorVote(DROP, validator4, validator5));
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4);
 
     // And then start voting to add it back in, but validator1's vote should have been discarded
     voteTally.addVote(new ValidatorVote(ADD, validator2, validator5));
     voteTally.addVote(new ValidatorVote(ADD, validator3, validator5));
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4);
   }
 
@@ -133,7 +133,7 @@ public class VoteTallyTest {
     final VoteTally voteTally = new VoteTally(singletonList(validator1));
     voteTally.addVote(new ValidatorVote(ADD, validator1, validator2));
 
-    assertThat(voteTally.getCurrentValidators()).containsExactly(validator1, validator2);
+    assertThat(voteTally.getValidators()).containsExactly(validator1, validator2);
   }
 
   @Test
@@ -141,11 +141,10 @@ public class VoteTallyTest {
     final VoteTally voteTally = new VoteTally(asList(validator1, validator2));
     voteTally.addVote(new ValidatorVote(ADD, validator1, validator3));
 
-    assertThat(voteTally.getCurrentValidators()).containsExactly(validator1, validator2);
+    assertThat(voteTally.getValidators()).containsExactly(validator1, validator2);
 
     voteTally.addVote(new ValidatorVote(ADD, validator2, validator3));
-    assertThat(voteTally.getCurrentValidators())
-        .containsExactly(validator1, validator2, validator3);
+    assertThat(voteTally.getValidators()).containsExactly(validator1, validator2, validator3);
   }
 
   @Test
@@ -156,7 +155,7 @@ public class VoteTallyTest {
     voteTally.discardOutstandingVotes();
     voteTally.addVote(new ValidatorVote(ADD, validator3, validator5));
 
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4);
   }
 
@@ -166,7 +165,7 @@ public class VoteTallyTest {
     voteTally.addVote(new ValidatorVote(DROP, validator1, validator4));
     voteTally.addVote(new ValidatorVote(DROP, validator2, validator4));
 
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4);
   }
 
@@ -177,8 +176,7 @@ public class VoteTallyTest {
     voteTally.addVote(new ValidatorVote(DROP, validator2, validator4));
     voteTally.addVote(new ValidatorVote(DROP, validator3, validator4));
 
-    assertThat(voteTally.getCurrentValidators())
-        .containsExactly(validator1, validator2, validator3);
+    assertThat(voteTally.getValidators()).containsExactly(validator1, validator2, validator3);
   }
 
   @Test
@@ -188,8 +186,7 @@ public class VoteTallyTest {
     voteTally.addVote(new ValidatorVote(DROP, validator2, validator3));
     voteTally.addVote(new ValidatorVote(DROP, validator4, validator3));
 
-    assertThat(voteTally.getCurrentValidators())
-        .containsExactly(validator1, validator2, validator4);
+    assertThat(voteTally.getValidators()).containsExactly(validator1, validator2, validator4);
   }
 
   @Test
@@ -199,7 +196,7 @@ public class VoteTallyTest {
     voteTally.addVote(new ValidatorVote(DROP, validator2, validator4));
     voteTally.addVote(new ValidatorVote(DROP, validator2, validator4));
 
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4);
   }
 
@@ -211,7 +208,7 @@ public class VoteTallyTest {
     voteTally.addVote(new ValidatorVote(DROP, validator2, validator4));
     voteTally.addVote(new ValidatorVote(DROP, validator3, validator4));
 
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4);
   }
 
@@ -223,8 +220,7 @@ public class VoteTallyTest {
     voteTally.addVote(new ValidatorVote(DROP, validator3, validator4));
     voteTally.addVote(new ValidatorVote(ADD, validator1, validator4));
 
-    assertThat(voteTally.getCurrentValidators())
-        .containsExactly(validator1, validator2, validator3);
+    assertThat(voteTally.getValidators()).containsExactly(validator1, validator2, validator3);
   }
 
   @Test
@@ -236,16 +232,14 @@ public class VoteTallyTest {
     voteTally.addVote(new ValidatorVote(DROP, validator1, validator4));
     voteTally.addVote(new ValidatorVote(DROP, validator2, validator4));
     voteTally.addVote(new ValidatorVote(DROP, validator3, validator4));
-    assertThat(voteTally.getCurrentValidators())
-        .containsExactly(validator1, validator2, validator3);
+    assertThat(voteTally.getValidators()).containsExactly(validator1, validator2, validator3);
 
     // Now adding only requires 2 votes (>50% of the 3 remaining validators)
     // but validator4's vote no longer counts
     voteTally.addVote(new ValidatorVote(ADD, validator1, validator5));
     voteTally.addVote(new ValidatorVote(DROP, validator1, validator3));
 
-    assertThat(voteTally.getCurrentValidators())
-        .containsExactly(validator1, validator2, validator3);
+    assertThat(voteTally.getValidators()).containsExactly(validator1, validator2, validator3);
   }
 
   @Test
@@ -257,20 +251,20 @@ public class VoteTallyTest {
     voteTally.addVote(new ValidatorVote(DROP, validator2, validator5));
     voteTally.addVote(new ValidatorVote(DROP, validator3, validator5));
 
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4);
 
     // Then vote it back in
     voteTally.addVote(new ValidatorVote(ADD, validator2, validator5));
     voteTally.addVote(new ValidatorVote(ADD, validator3, validator5));
     voteTally.addVote(new ValidatorVote(ADD, validator4, validator5));
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4, validator5);
 
     // And then start voting to drop it again, but validator1's vote should have been discarded
     voteTally.addVote(new ValidatorVote(DROP, validator2, validator5));
     voteTally.addVote(new ValidatorVote(DROP, validator3, validator5));
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4, validator5);
   }
 
@@ -284,21 +278,21 @@ public class VoteTallyTest {
     voteTally.addVote(new ValidatorVote(DROP, validator2, validator1));
 
     // Neither vote has enough votes to complete.
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4);
 
     voteTally.addVote(new ValidatorVote(ADD, validator3, validator5));
     voteTally.addVote(new ValidatorVote(DROP, validator3, validator1));
 
     // Validator 5 now has 3 votes and is added
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator1, validator2, validator3, validator4, validator5);
 
     voteTally.addVote(new ValidatorVote(ADD, validator4, validator5));
     voteTally.addVote(new ValidatorVote(DROP, validator4, validator1));
 
     // Validator 1 now gets dropped.
-    assertThat(voteTally.getCurrentValidators())
+    assertThat(voteTally.getValidators())
         .containsExactly(validator2, validator3, validator4, validator5);
   }
 

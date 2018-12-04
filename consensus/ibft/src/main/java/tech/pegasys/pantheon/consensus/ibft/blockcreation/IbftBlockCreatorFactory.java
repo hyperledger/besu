@@ -89,7 +89,7 @@ public class IbftBlockCreatorFactory {
     final Optional<ValidatorVote> proposal =
         protocolContext.getConsensusState().getVoteProposer().getVote(localAddress, voteTally);
 
-    final List<Address> validators = new ArrayList<>(voteTally.getCurrentValidators());
+    final List<Address> validators = new ArrayList<>(voteTally.getValidators());
 
     final IbftExtraData extraData =
         new IbftExtraData(
