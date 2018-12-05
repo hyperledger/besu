@@ -54,6 +54,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
+import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.io.IOException;
@@ -156,7 +157,8 @@ public class CliquePantheonController implements PantheonController<CliqueContex
             protocolContext,
             ethProtocolManager.ethContext(),
             syncState,
-            metricsSystem);
+            metricsSystem.createLabelledTimer(
+                MetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName"));
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(

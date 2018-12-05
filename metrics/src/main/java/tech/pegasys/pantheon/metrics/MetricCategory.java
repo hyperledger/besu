@@ -17,7 +17,8 @@ public enum MetricCategory {
   RPC("rpc"),
   JVM("jvm", false),
   PROCESS("process", false),
-  BLOCKCHAIN("blockchain");
+  BLOCKCHAIN("blockchain"),
+  SYNCHRONIZER("synchronizer");
 
   private final String name;
   private final boolean pantheonSpecific;

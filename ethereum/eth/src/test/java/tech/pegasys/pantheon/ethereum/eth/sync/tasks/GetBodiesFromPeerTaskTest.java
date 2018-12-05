@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPeerTask.PeerTaskResult;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.PeerMessageTaskTest;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,8 @@ public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> 
   protected EthTask<PeerTaskResult<List<Block>>> createTask(final List<Block> requestedData) {
     final List<BlockHeader> headersToComplete =
         requestedData.stream().map(Block::getHeader).collect(Collectors.toList());
-    return GetBodiesFromPeerTask.forHeaders(protocolSchedule, ethContext, headersToComplete);
+    return GetBodiesFromPeerTask.forHeaders(
+        protocolSchedule, ethContext, headersToComplete, NoOpMetricsSystem.NO_OP_LABELLED_TIMER);
   }
 
   @Override

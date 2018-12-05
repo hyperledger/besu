@@ -21,6 +21,8 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.IncompleteResultsException;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.OperationTimer;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -33,18 +35,26 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private static final Logger LOG = LogManager.getLogger();
 
   private final ProtocolSchedule<?> protocolSchedule;
+  private final LabelledMetric<OperationTimer> ethTasksTimer;
   private final Hash hash;
 
   protected GetBlockFromPeerTask(
-      final ProtocolSchedule<?> protocolSchedule, final EthContext ethContext, final Hash hash) {
-    super(ethContext);
+      final ProtocolSchedule<?> protocolSchedule,
+      final EthContext ethContext,
+      final Hash hash,
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
+    super(ethContext, ethTasksTimer);
     this.protocolSchedule = protocolSchedule;
+    this.ethTasksTimer = ethTasksTimer;
     this.hash = hash;
   }
 
   public static GetBlockFromPeerTask create(
-      final ProtocolSchedule<?> protocolSchedule, final EthContext ethContext, final Hash hash) {
-    return new GetBlockFromPeerTask(protocolSchedule, ethContext, hash);
+      final ProtocolSchedule<?> protocolSchedule,
+      final EthContext ethContext,
+      final Hash hash,
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
+    return new GetBlockFromPeerTask(protocolSchedule, ethContext, hash, ethTasksTimer);
   }
 
   @Override
@@ -70,7 +80,8 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private CompletableFuture<PeerTaskResult<List<BlockHeader>>> downloadHeader(final EthPeer peer) {
     return executeSubTask(
         () ->
-            GetHeadersFromPeerByHashTask.forSingleHash(protocolSchedule, ethContext, hash)
+            GetHeadersFromPeerByHashTask.forSingleHash(
+                    protocolSchedule, ethContext, hash, ethTasksTimer)
                 .assignPeer(peer)
                 .run());
   }
@@ -87,7 +98,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
         () -> {
           final GetBodiesFromPeerTask<?> task =
               GetBodiesFromPeerTask.forHeaders(
-                  protocolSchedule, ethContext, headerResult.getResult());
+                  protocolSchedule, ethContext, headerResult.getResult(), ethTasksTimer);
           task.assignPeer(headerResult.getPeer());
           return task.run();
         });

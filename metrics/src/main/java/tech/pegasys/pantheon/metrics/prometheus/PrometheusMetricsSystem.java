@@ -35,7 +35,7 @@ import io.prometheus.client.Collector.MetricFamilySamples;
 import io.prometheus.client.Collector.MetricFamilySamples.Sample;
 import io.prometheus.client.Collector.Type;
 import io.prometheus.client.Counter;
-import io.prometheus.client.Histogram;
+import io.prometheus.client.Summary;
 import io.prometheus.client.hotspot.BufferPoolsExports;
 import io.prometheus.client.hotspot.ClassLoadingExports;
 import io.prometheus.client.hotspot.GarbageCollectorExports;
@@ -84,9 +84,18 @@ public class PrometheusMetricsSystem implements MetricsSystem {
       final String name,
       final String help,
       final String... labelNames) {
-    final Histogram histogram = Histogram.build(name, help).labelNames(labelNames).create();
-    addCollector(category, histogram);
-    return new PrometheusTimer(histogram);
+    final Summary summary =
+        Summary.build(convertToPrometheusName(category, name), help)
+            .quantile(0.2, 0.02)
+            .quantile(0.5, 0.05)
+            .quantile(0.8, 0.02)
+            .quantile(0.95, 0.005)
+            .quantile(0.99, 0.001)
+            .quantile(1.0, 0)
+            .labelNames(labelNames)
+            .create();
+    addCollector(category, summary);
+    return new PrometheusTimer(summary);
   }
 
   @Override
@@ -127,6 +136,9 @@ public class PrometheusMetricsSystem implements MetricsSystem {
     if (familySamples.type == Type.HISTOGRAM) {
       return convertHistogramSampleNamesToLabels(category, sample, familySamples);
     }
+    if (familySamples.type == Type.SUMMARY) {
+      return convertSummarySampleNamesToLabels(category, sample, familySamples);
+    }
     return new Observation(
         category,
         convertFromPrometheusName(category, sample.name),
@@ -141,6 +153,23 @@ public class PrometheusMetricsSystem implements MetricsSystem {
       labelValues.add(labelValues.size() - 1, "bucket");
     } else {
       labelValues.add(sample.name.substring(sample.name.lastIndexOf("_") + 1));
+    }
+    return new Observation(
+        category,
+        convertFromPrometheusName(category, familySamples.name),
+        sample.value,
+        labelValues);
+  }
+
+  private Observation convertSummarySampleNamesToLabels(
+      final MetricCategory category, final Sample sample, final MetricFamilySamples familySamples) {
+    final List<String> labelValues = new ArrayList<>(sample.labelValues);
+    if (sample.name.endsWith("_sum")) {
+      labelValues.add("sum");
+    } else if (sample.name.endsWith("_count")) {
+      labelValues.add("count");
+    } else {
+      labelValues.add(labelValues.size() - 1, "quantile");
     }
     return new Observation(
         category,

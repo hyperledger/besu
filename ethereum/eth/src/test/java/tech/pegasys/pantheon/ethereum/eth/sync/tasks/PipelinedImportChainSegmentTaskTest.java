@@ -84,7 +84,9 @@ public class PipelinedImportChainSegmentTaskTest
         modifiedContext,
         ethContext,
         1,
-        new BlockHeader[] {previousBlock.getHeader(), lastBlock.getHeader()});
+        ethTasksTimer,
+        previousBlock.getHeader(),
+        lastBlock.getHeader());
   }
 
   @Override
@@ -116,6 +118,7 @@ public class PipelinedImportChainSegmentTaskTest
             modifiedContext,
             ethContext,
             1,
+            ethTasksTimer,
             firstBlock.getHeader(),
             secondBlock.getHeader());
 
@@ -165,6 +168,7 @@ public class PipelinedImportChainSegmentTaskTest
             modifiedContext,
             ethContext,
             1,
+            ethTasksTimer,
             fakeFirstBlock.getHeader(),
             thirdBlock.getHeader());
 
@@ -214,7 +218,7 @@ public class PipelinedImportChainSegmentTaskTest
             protocolContext.getConsensusState());
     final EthTask<List<Block>> task =
         PipelinedImportChainSegmentTask.forCheckpoints(
-            protocolSchedule, modifiedContext, ethContext, 1, checkpointHeaders);
+            protocolSchedule, modifiedContext, ethContext, 1, ethTasksTimer, checkpointHeaders);
 
     // Execute task and wait for response
     final AtomicReference<List<Block>> actualResult = new AtomicReference<>();
@@ -270,7 +274,7 @@ public class PipelinedImportChainSegmentTaskTest
             protocolContext.getConsensusState());
     final EthTask<List<Block>> task =
         PipelinedImportChainSegmentTask.forCheckpoints(
-            protocolSchedule, modifiedContext, ethContext, 2, checkpointHeaders);
+            protocolSchedule, modifiedContext, ethContext, 2, ethTasksTimer, checkpointHeaders);
 
     // Execute task and wait for response
     final AtomicReference<List<Block>> actualResult = new AtomicReference<>();
@@ -330,7 +334,7 @@ public class PipelinedImportChainSegmentTaskTest
             protocolContext.getConsensusState());
     final EthTask<List<Block>> task =
         PipelinedImportChainSegmentTask.forCheckpoints(
-            protocolSchedule, modifiedContext, ethContext, 3, checkpointHeaders);
+            protocolSchedule, modifiedContext, ethContext, 3, ethTasksTimer, checkpointHeaders);
 
     // Execute task and wait for response
     final AtomicReference<List<Block>> actualResult = new AtomicReference<>();

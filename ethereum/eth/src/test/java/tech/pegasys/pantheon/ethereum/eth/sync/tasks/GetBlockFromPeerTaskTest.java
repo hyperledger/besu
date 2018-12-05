@@ -47,7 +47,8 @@ public class GetBlockFromPeerTaskTest
 
   @Override
   protected EthTask<PeerTaskResult<Block>> createTask(final Block requestedData) {
-    return GetBlockFromPeerTask.create(protocolSchedule, ethContext, requestedData.getHash());
+    return GetBlockFromPeerTask.create(
+        protocolSchedule, ethContext, requestedData.getHash(), ethTasksTimer);
   }
 
   @Override

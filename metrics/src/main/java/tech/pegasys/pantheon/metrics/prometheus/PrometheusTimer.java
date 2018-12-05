@@ -15,20 +15,19 @@ package tech.pegasys.pantheon.metrics.prometheus;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 
-import io.prometheus.client.Histogram;
-import io.prometheus.client.Histogram.Child;
+import io.prometheus.client.Summary;
 
 class PrometheusTimer implements LabelledMetric<OperationTimer> {
 
-  private final Histogram histogram;
+  private final Summary summary;
 
-  public PrometheusTimer(final Histogram histogram) {
-    this.histogram = histogram;
+  public PrometheusTimer(final Summary summary) {
+    this.summary = summary;
   }
 
   @Override
   public OperationTimer labels(final String... labels) {
-    final Child metric = histogram.labels(labels);
+    final Summary.Child metric = summary.labels(labels);
     return () -> metric.startTimer()::observeDuration;
   }
 }

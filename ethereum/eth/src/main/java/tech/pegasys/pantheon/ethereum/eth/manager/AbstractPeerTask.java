@@ -16,6 +16,8 @@ import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPeerTask.PeerTaskResul
 import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerDisconnectedException;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.OperationTimer;
 
 import java.util.Optional;
 
@@ -23,7 +25,9 @@ public abstract class AbstractPeerTask<R> extends AbstractEthTask<PeerTaskResult
   protected Optional<EthPeer> assignedPeer = Optional.empty();
   protected final EthContext ethContext;
 
-  protected AbstractPeerTask(final EthContext ethContext) {
+  protected AbstractPeerTask(
+      final EthContext ethContext, final LabelledMetric<OperationTimer> ethTasksTimer) {
+    super(ethTasksTimer);
     this.ethContext = ethContext;
   }
 

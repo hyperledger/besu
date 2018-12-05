@@ -20,6 +20,8 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.util.BlockchainUtil;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.OperationTimer;
 
 import java.util.List;
 import java.util.OptionalInt;
@@ -34,6 +36,7 @@ public class DetermineCommonAncestorTask<C> extends AbstractEthTask<BlockHeader>
   private final EthContext ethContext;
   private final ProtocolSchedule<C> protocolSchedule;
   private final ProtocolContext<C> protocolContext;
+  private final LabelledMetric<OperationTimer> ethTasksTimer;
   private final EthPeer peer;
   private final int headerRequestSize;
 
@@ -47,10 +50,13 @@ public class DetermineCommonAncestorTask<C> extends AbstractEthTask<BlockHeader>
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final EthPeer peer,
-      final int headerRequestSize) {
+      final int headerRequestSize,
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
+    super(ethTasksTimer);
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.protocolContext = protocolContext;
+    this.ethTasksTimer = ethTasksTimer;
     this.peer = peer;
     this.headerRequestSize = headerRequestSize;
 
@@ -65,9 +71,10 @@ public class DetermineCommonAncestorTask<C> extends AbstractEthTask<BlockHeader>
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final EthPeer peer,
-      final int headerRequestSize) {
+      final int headerRequestSize,
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
     return new DetermineCommonAncestorTask<>(
-        protocolSchedule, protocolContext, ethContext, peer, headerRequestSize);
+        protocolSchedule, protocolContext, ethContext, peer, headerRequestSize, ethTasksTimer);
   }
 
   @Override
@@ -89,7 +96,7 @@ public class DetermineCommonAncestorTask<C> extends AbstractEthTask<BlockHeader>
               if (error != null) {
                 result.get().completeExceptionally(error);
               } else if (!result.get().isDone()) {
-                executeTask();
+                executeTaskTimed();
               }
             });
   }
@@ -112,7 +119,8 @@ public class DetermineCommonAncestorTask<C> extends AbstractEthTask<BlockHeader>
                     ethContext,
                     maximumPossibleCommonAncestorNumber,
                     count,
-                    skipInterval)
+                    skipInterval,
+                    ethTasksTimer)
                 .assignPeer(peer)
                 .run());
   }

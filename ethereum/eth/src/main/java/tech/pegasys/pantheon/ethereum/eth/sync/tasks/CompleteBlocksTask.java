@@ -24,6 +24,8 @@ import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.NoAvailablePeersExc
 import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerBreachedProtocolException;
 import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerDisconnectedException;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.OperationTimer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +50,7 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
 
   private final EthContext ethContext;
   private final ProtocolSchedule<C> protocolSchedule;
+  private final LabelledMetric<OperationTimer> ethTasksTimer;
 
   private final List<BlockHeader> headers;
   private final Map<Long, Block> blocks;
@@ -57,11 +60,13 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
       final ProtocolSchedule<C> protocolSchedule,
       final EthContext ethContext,
       final List<BlockHeader> headers,
-      final int maxRetries) {
-    super(ethContext, maxRetries);
+      final int maxRetries,
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
+    super(ethContext, maxRetries, ethTasksTimer);
     checkArgument(headers.size() > 0, "Must supply a non-empty headers list");
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
+    this.ethTasksTimer = ethTasksTimer;
 
     this.headers = headers;
     this.blocks = new HashMap<>();
@@ -71,15 +76,19 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
       final ProtocolSchedule<C> protocolSchedule,
       final EthContext ethContext,
       final List<BlockHeader> headers,
-      final int maxRetries) {
-    return new CompleteBlocksTask<>(protocolSchedule, ethContext, headers, maxRetries);
+      final int maxRetries,
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
+    return new CompleteBlocksTask<>(
+        protocolSchedule, ethContext, headers, maxRetries, ethTasksTimer);
   }
 
   public static <C> CompleteBlocksTask<C> forHeaders(
       final ProtocolSchedule<C> protocolSchedule,
       final EthContext ethContext,
-      final List<BlockHeader> headers) {
-    return new CompleteBlocksTask<>(protocolSchedule, ethContext, headers, DEFAULT_RETRIES);
+      final List<BlockHeader> headers,
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
+    return new CompleteBlocksTask<>(
+        protocolSchedule, ethContext, headers, DEFAULT_RETRIES, ethTasksTimer);
   }
 
   @Override
@@ -111,7 +120,8 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
     return executeSubTask(
         () -> {
           final GetBodiesFromPeerTask<C> task =
-              GetBodiesFromPeerTask.forHeaders(protocolSchedule, ethContext, incompleteHeaders);
+              GetBodiesFromPeerTask.forHeaders(
+                  protocolSchedule, ethContext, incompleteHeaders, ethTasksTimer);
           assignedPeer.ifPresent(task::assignPeer);
           return task.run();
         });

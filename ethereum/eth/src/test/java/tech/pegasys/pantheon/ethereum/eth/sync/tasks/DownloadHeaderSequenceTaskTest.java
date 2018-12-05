@@ -59,7 +59,8 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
         ethContext,
         referenceHeader,
         requestedData.size(),
-        maxRetries);
+        maxRetries,
+        ethTasksTimer);
   }
 
   @Test
@@ -68,10 +69,16 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
 
     // Execute task and wait for response
-    BlockHeader referenceHeader = blockchain.getChainHeadHeader();
+    final BlockHeader referenceHeader = blockchain.getChainHeadHeader();
     final EthTask<List<BlockHeader>> task =
         DownloadHeaderSequenceTask.endingAtHeader(
-            protocolSchedule, protocolContext, ethContext, referenceHeader, 10, maxRetries);
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            referenceHeader,
+            10,
+            maxRetries,
+            ethTasksTimer);
     final CompletableFuture<List<BlockHeader>> future = task.run();
 
     // Respond with only the reference header
@@ -91,23 +98,30 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
 
     // Execute task and wait for response
-    BlockHeader referenceHeader = blockchain.getChainHeadHeader();
+    final BlockHeader referenceHeader = blockchain.getChainHeadHeader();
     final EthTask<List<BlockHeader>> task =
         DownloadHeaderSequenceTask.endingAtHeader(
-            protocolSchedule, protocolContext, ethContext, referenceHeader, 10, maxRetries);
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            referenceHeader,
+            10,
+            maxRetries,
+            ethTasksTimer);
     final CompletableFuture<List<BlockHeader>> future = task.run();
 
     // Filter response to include only reference header and previous header
     final Responder fullResponder = RespondingEthPeer.blockchainResponder(blockchain);
     final Responder responder =
         (cap, message) -> {
-          Optional<MessageData> fullResponse = fullResponder.respond(cap, message);
+          final Optional<MessageData> fullResponse = fullResponder.respond(cap, message);
           if (!fullResponse.isPresent() || message.getCode() != EthPV62.GET_BLOCK_HEADERS) {
             return fullResponse;
           }
-          BlockHeadersMessage headersMessage = BlockHeadersMessage.readFrom(fullResponse.get());
+          final BlockHeadersMessage headersMessage =
+              BlockHeadersMessage.readFrom(fullResponse.get());
           // Filter for a subset of headers
-          List<BlockHeader> headerSubset =
+          final List<BlockHeader> headerSubset =
               Streams.stream(headersMessage.getHeaders(protocolSchedule))
                   .filter(h -> h.getNumber() >= referenceHeader.getNumber() - 1L)
                   .collect(Collectors.toList());

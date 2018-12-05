@@ -17,6 +17,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskTest;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,10 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
     final List<BlockHeader> headersToComplete =
         requestedData.stream().map(Block::getHeader).collect(Collectors.toList());
     return CompleteBlocksTask.forHeaders(
-        protocolSchedule, ethContext, headersToComplete, maxRetries);
+        protocolSchedule,
+        ethContext,
+        headersToComplete,
+        maxRetries,
+        NoOpMetricsSystem.NO_OP_LABELLED_TIMER);
   }
 }

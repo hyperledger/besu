@@ -15,6 +15,8 @@ package tech.pegasys.pantheon.ethereum.eth.manager;
 import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.WaitForPeerTask;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.time.Duration;
@@ -37,13 +39,20 @@ public abstract class AbstractRetryingPeerTask<T extends Collection<?>> extends 
   private final EthContext ethContext;
   private final int maxRetries;
   private int retryCount = 0;
+  private final LabelledMetric<OperationTimer> ethTasksTimer;
 
   /**
    * @param ethContext The context of the current Eth network we are attached to.
    * @param maxRetries Maximum number of retries to accept before completing exceptionally.
+   * @param ethTasksTimer The metrics timer to use to time the duration of the task.
    */
-  public AbstractRetryingPeerTask(final EthContext ethContext, final int maxRetries) {
+  public AbstractRetryingPeerTask(
+      final EthContext ethContext,
+      final int maxRetries,
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
+    super(ethTasksTimer);
     this.ethContext = ethContext;
+    this.ethTasksTimer = ethTasksTimer;
     this.maxRetries = maxRetries;
   }
 
@@ -69,7 +78,7 @@ public abstract class AbstractRetryingPeerTask<T extends Collection<?>> extends 
                 if (peerResult.size() > 0) {
                   retryCount = 0;
                 }
-                executeTask();
+                executeTaskTimed();
               }
             });
   }
@@ -87,13 +96,13 @@ public abstract class AbstractRetryingPeerTask<T extends Collection<?>> extends 
     if (cause instanceof NoAvailablePeersException) {
       LOG.info("No peers available, wait for peer.");
       // Wait for new peer to connect
-      final WaitForPeerTask waitTask = WaitForPeerTask.create(ethContext);
+      final WaitForPeerTask waitTask = WaitForPeerTask.create(ethContext, ethTasksTimer);
       executeSubTask(
           () ->
               ethContext
                   .getScheduler()
                   .timeout(waitTask, Duration.ofSeconds(5))
-                  .whenComplete((r, t) -> executeTask()));
+                  .whenComplete((r, t) -> executeTaskTimed()));
       return;
     }
 
@@ -104,7 +113,9 @@ public abstract class AbstractRetryingPeerTask<T extends Collection<?>> extends 
     // Wait before retrying on failure
     executeSubTask(
         () ->
-            ethContext.getScheduler().scheduleFutureTask(this::executeTask, Duration.ofSeconds(1)));
+            ethContext
+                .getScheduler()
+                .scheduleFutureTask(this::executeTaskTimed, Duration.ofSeconds(1)));
   }
 
   protected abstract boolean isRetryableError(Throwable error);

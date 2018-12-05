@@ -40,6 +40,9 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.ArrayList;
@@ -65,6 +68,7 @@ public class DownloaderTest {
   protected MutableBlockchain localBlockchain;
   private BlockchainSetupUtil<Void> otherBlockchainSetup;
   protected Blockchain otherBlockchain;
+  private LabelledMetric<OperationTimer> ethTashsTimer;
 
   @Before
   public void setupTest() {
@@ -79,10 +83,13 @@ public class DownloaderTest {
     ethProtocolManager = EthProtocolManagerTestUtil.create(localBlockchain);
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
+
+    ethTashsTimer = NoOpMetricsSystem.NO_OP_LABELLED_TIMER;
   }
 
   private Downloader<?> downloader(final SynchronizerConfiguration syncConfig) {
-    return new Downloader<>(syncConfig, protocolSchedule, protocolContext, ethContext, syncState);
+    return new Downloader<>(
+        syncConfig, protocolSchedule, protocolContext, ethContext, syncState, ethTashsTimer);
   }
 
   private Downloader<?> downloader() {
