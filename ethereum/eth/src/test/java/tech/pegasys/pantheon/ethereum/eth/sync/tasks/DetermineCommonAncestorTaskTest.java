@@ -41,6 +41,9 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -56,6 +59,8 @@ public class DetermineCommonAncestorTaskTest {
 
   private final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
   private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
+  private final LabelledMetric<OperationTimer> ethTasksTimer =
+      NoOpMetricsSystem.NO_OP_LABELLED_TIMER;
   private MutableBlockchain localBlockchain;
   private final int defaultHeaderRequestSize = 10;
   Block genesisBlock;
@@ -110,7 +115,8 @@ public class DetermineCommonAncestorTaskTest {
             protocolContext,
             ethContext,
             respondingEthPeer.getEthPeer(),
-            defaultHeaderRequestSize);
+            defaultHeaderRequestSize,
+            ethTasksTimer);
 
     final CompletableFuture<BlockHeader> future = task.run();
     respondingEthPeer.respondWhile(responder, () -> !future.isDone());
@@ -146,7 +152,8 @@ public class DetermineCommonAncestorTaskTest {
             protocolContext,
             ethContext,
             respondingEthPeer.getEthPeer(),
-            defaultHeaderRequestSize);
+            defaultHeaderRequestSize,
+            ethTasksTimer);
 
     // Execute task and wait for response
     final AtomicReference<Throwable> failure = new AtomicReference<>();
@@ -216,7 +223,8 @@ public class DetermineCommonAncestorTaskTest {
             protocolContext,
             ethContext,
             respondingEthPeer.getEthPeer(),
-            defaultHeaderRequestSize);
+            defaultHeaderRequestSize,
+            ethTasksTimer);
     final DetermineCommonAncestorTask<Void> spy = spy(task);
 
     // Execute task
@@ -272,7 +280,8 @@ public class DetermineCommonAncestorTaskTest {
             protocolContext,
             ethContext,
             respondingEthPeer.getEthPeer(),
-            defaultHeaderRequestSize);
+            defaultHeaderRequestSize,
+            ethTasksTimer);
     final DetermineCommonAncestorTask<Void> spy = spy(task);
 
     // Execute task
@@ -343,7 +352,8 @@ public class DetermineCommonAncestorTaskTest {
             protocolContext,
             ethContext,
             respondingEthPeer.getEthPeer(),
-            defaultHeaderRequestSize);
+            defaultHeaderRequestSize,
+            ethTasksTimer);
     final DetermineCommonAncestorTask<Void> spy = spy(task);
 
     // Execute task
@@ -370,7 +380,12 @@ public class DetermineCommonAncestorTaskTest {
 
     final EthTask<BlockHeader> task =
         DetermineCommonAncestorTask.create(
-            protocolSchedule, protocolContext, ethContext, peer, defaultHeaderRequestSize);
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            peer,
+            defaultHeaderRequestSize,
+            ethTasksTimer);
 
     final CompletableFuture<BlockHeader> result = task.run();
     assertThat(result).isCompletedWithValue(genesisBlock.getHeader());

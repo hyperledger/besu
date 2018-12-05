@@ -19,7 +19,8 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.PendingBlocks;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.OperationTimer;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -42,7 +43,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final MetricsSystem metricsSystem) {
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
     this.syncState = syncState;
     this.blockPropagationManager =
         new BlockPropagationManager<>(
@@ -52,12 +53,13 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             ethContext,
             syncState,
             new PendingBlocks(),
-            metricsSystem);
+            ethTasksTimer);
     this.downloader =
-        new Downloader<>(syncConfig, protocolSchedule, protocolContext, ethContext, syncState);
+        new Downloader<>(
+            syncConfig, protocolSchedule, protocolContext, ethContext, syncState, ethTasksTimer);
 
     ChainHeadTracker.trackChainHeadForPeers(
-        ethContext, protocolSchedule, protocolContext.getBlockchain(), syncConfig);
+        ethContext, protocolSchedule, protocolContext.getBlockchain(), syncConfig, ethTasksTimer);
     if (syncConfig.syncMode().equals(SyncMode.FAST)) {
       LOG.info("Fast sync enabled.");
     }

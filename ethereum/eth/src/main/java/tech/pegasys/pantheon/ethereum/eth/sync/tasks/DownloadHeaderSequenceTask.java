@@ -29,6 +29,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.OperationTimer;
 
 import java.util.Arrays;
 import java.util.List;
@@ -52,6 +54,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
   private final EthContext ethContext;
   private final ProtocolContext<C> protocolContext;
   private final ProtocolSchedule<C> protocolSchedule;
+  private final LabelledMetric<OperationTimer> ethTasksTimer;
 
   private final BlockHeader[] headers;
   private final BlockHeader referenceHeader;
@@ -66,13 +69,15 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
       final EthContext ethContext,
       final BlockHeader referenceHeader,
       final int segmentLength,
-      final int maxRetries) {
-    super(ethContext, maxRetries);
+      final int maxRetries,
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
+    super(ethContext, maxRetries, ethTasksTimer);
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.referenceHeader = referenceHeader;
     this.segmentLength = segmentLength;
+    this.ethTasksTimer = ethTasksTimer;
 
     startingBlockNumber = referenceHeader.getNumber() - segmentLength;
     headers = new BlockHeader[segmentLength];
@@ -85,9 +90,16 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
       final EthContext ethContext,
       final BlockHeader referenceHeader,
       final int segmentLength,
-      final int maxRetries) {
+      final int maxRetries,
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
     return new DownloadHeaderSequenceTask<>(
-        protocolSchedule, protocolContext, ethContext, referenceHeader, segmentLength, maxRetries);
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        referenceHeader,
+        segmentLength,
+        maxRetries,
+        ethTasksTimer);
   }
 
   public static <C> DownloadHeaderSequenceTask<C> endingAtHeader(
@@ -95,14 +107,16 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final BlockHeader referenceHeader,
-      final int segmentLength) {
+      final int segmentLength,
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
     return new DownloadHeaderSequenceTask<>(
         protocolSchedule,
         protocolContext,
         ethContext,
         referenceHeader,
         segmentLength,
-        DEFAULT_RETRIES);
+        DEFAULT_RETRIES,
+        ethTasksTimer);
   }
 
   @Override
@@ -149,7 +163,8 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
                   ethContext,
                   referenceHash,
                   referenceHeaderForNextRequest.getNumber(),
-                  count + 1);
+                  count + 1,
+                  ethTasksTimer);
           return headersTask.run();
         });
   }

@@ -12,6 +12,9 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.OperationTimer;
+
 import java.util.Collection;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -22,14 +25,21 @@ import java.util.function.Supplier;
 
 public abstract class AbstractEthTask<T> implements EthTask<T> {
 
+  protected double taskTimeInSec = -1.0D;
+  protected OperationTimer taskTimer;
   protected final AtomicReference<CompletableFuture<T>> result = new AtomicReference<>();
   protected volatile Collection<CompletableFuture<?>> subTaskFutures =
       new ConcurrentLinkedDeque<>();
 
+  /** @param ethTasksTimer The metrics timer to use to time the duration of the task. */
+  protected AbstractEthTask(final LabelledMetric<OperationTimer> ethTasksTimer) {
+    taskTimer = ethTasksTimer.labels(getClass().getSimpleName());
+  }
+
   @Override
   public final CompletableFuture<T> run() {
     if (result.compareAndSet(null, new CompletableFuture<>())) {
-      executeTask();
+      executeTaskTimed();
       result
           .get()
           .whenComplete(
@@ -116,6 +126,20 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
 
   /** Execute core task logic. */
   protected abstract void executeTask();
+
+  /** Executes the task while timed by a timer. */
+  public void executeTaskTimed() {
+    final OperationTimer.TimingContext timingContext = taskTimer.startTimer();
+    try {
+      executeTask();
+    } finally {
+      taskTimeInSec = timingContext.stopTimer();
+    }
+  }
+
+  public double getTaskTimeInSec() {
+    return taskTimeInSec;
+  }
 
   /** Cleanup any resources when task completes. */
   protected void cleanup() {

@@ -32,6 +32,7 @@ import tech.pegasys.pantheon.ethereum.eth.messages.BlockHeadersMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,12 +72,13 @@ public class ImportBlocksTaskTest
             shortBlockchain,
             protocolContext.getWorldStateArchive(),
             protocolContext.getConsensusState());
-    return ImportBlocksTask.<Void>fromHeader(
+    return ImportBlocksTask.fromHeader(
         protocolSchedule,
         modifiedContext,
         ethContext,
         firstBlock.getHeader(),
-        requestedData.size());
+        requestedData.size(),
+        NoOpMetricsSystem.NO_OP_LABELLED_TIMER);
   }
 
   @Override

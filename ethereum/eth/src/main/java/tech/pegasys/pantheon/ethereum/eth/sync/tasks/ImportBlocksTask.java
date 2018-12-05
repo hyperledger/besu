@@ -21,6 +21,8 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.OperationTimer;
 
 import java.util.Collections;
 import java.util.List;
@@ -40,6 +42,7 @@ public class ImportBlocksTask<C> extends AbstractPeerTask<List<Block>> {
 
   private final ProtocolContext<C> protocolContext;
   private final ProtocolSchedule<C> protocolSchedule;
+  private final LabelledMetric<OperationTimer> ethTasksTimer;
   private final long startNumber;
 
   private final BlockHeader referenceHeader;
@@ -51,12 +54,14 @@ public class ImportBlocksTask<C> extends AbstractPeerTask<List<Block>> {
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final BlockHeader referenceHeader,
-      final int maxBlocks) {
-    super(ethContext);
+      final int maxBlocks,
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
+    super(ethContext, ethTasksTimer);
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.referenceHeader = referenceHeader;
     this.maxBlocks = maxBlocks;
+    this.ethTasksTimer = ethTasksTimer;
 
     this.startNumber = referenceHeader.getNumber();
   }
@@ -66,9 +71,10 @@ public class ImportBlocksTask<C> extends AbstractPeerTask<List<Block>> {
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final BlockHeader previousHeader,
-      final int maxBlocks) {
+      final int maxBlocks,
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
     return new ImportBlocksTask<>(
-        protocolSchedule, protocolContext, ethContext, previousHeader, maxBlocks);
+        protocolSchedule, protocolContext, ethContext, previousHeader, maxBlocks, ethTasksTimer);
   }
 
   @Override
@@ -97,7 +103,8 @@ public class ImportBlocksTask<C> extends AbstractPeerTask<List<Block>> {
                 ethContext,
                 referenceHeader.getHash(),
                 referenceHeader.getNumber(),
-                maxBlocks)
+                maxBlocks,
+                ethTasksTimer)
             .assignPeer(peer);
     return executeSubTask(task::run);
   }
@@ -108,7 +115,8 @@ public class ImportBlocksTask<C> extends AbstractPeerTask<List<Block>> {
       return CompletableFuture.completedFuture(Collections.emptyList());
     }
     final CompleteBlocksTask<C> task =
-        CompleteBlocksTask.forHeaders(protocolSchedule, ethContext, headers.getResult())
+        CompleteBlocksTask.forHeaders(
+                protocolSchedule, ethContext, headers.getResult(), ethTasksTimer)
             .assignPeer(peer);
     return executeSubTask(() -> ethContext.getScheduler().timeout(task));
   }
@@ -123,7 +131,7 @@ public class ImportBlocksTask<C> extends AbstractPeerTask<List<Block>> {
     }
     final Supplier<CompletableFuture<List<Block>>> task =
         PersistBlockTask.forSequentialBlocks(
-            protocolSchedule, protocolContext, blocks, HeaderValidationMode.FULL);
+            protocolSchedule, protocolContext, blocks, HeaderValidationMode.FULL, ethTasksTimer);
     return executeWorkerSubTask(ethContext.getScheduler(), task);
   }
 }

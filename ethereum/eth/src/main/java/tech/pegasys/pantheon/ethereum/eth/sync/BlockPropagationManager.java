@@ -34,8 +34,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
-import tech.pegasys.pantheon.metrics.MetricCategory;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -62,12 +61,12 @@ public class BlockPropagationManager<C> {
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
+  private final LabelledMetric<OperationTimer> ethTasksTimer;
 
   private final AtomicBoolean started = new AtomicBoolean(false);
 
   private final Set<Hash> requestedBlocks = new ConcurrentSet<>();
   private final PendingBlocks pendingBlocks;
-  private final OperationTimer announcedBlockIngestTimer;
 
   BlockPropagationManager(
       final SynchronizerConfiguration config,
@@ -76,20 +75,15 @@ public class BlockPropagationManager<C> {
       final EthContext ethContext,
       final SyncState syncState,
       final PendingBlocks pendingBlocks,
-      final MetricsSystem metricsSystem) {
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
     this.config = config;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
+    this.ethTasksTimer = ethTasksTimer;
 
     this.syncState = syncState;
     this.pendingBlocks = pendingBlocks;
-
-    this.announcedBlockIngestTimer =
-        metricsSystem.createTimer(
-            MetricCategory.BLOCKCHAIN,
-            "pantheon_blockchain_announcedBlock_ingest",
-            "Time to ingest a single announced block");
   }
 
   public void start() {
@@ -125,7 +119,11 @@ public class BlockPropagationManager<C> {
     if (!readyForImport.isEmpty()) {
       final Supplier<CompletableFuture<List<Block>>> importBlocksTask =
           PersistBlockTask.forUnorderedBlocks(
-              protocolSchedule, protocolContext, readyForImport, HeaderValidationMode.FULL);
+              protocolSchedule,
+              protocolContext,
+              readyForImport,
+              HeaderValidationMode.FULL,
+              ethTasksTimer);
       ethContext
           .getScheduler()
           .scheduleSyncWorkerTask(importBlocksTask)
@@ -225,7 +223,8 @@ public class BlockPropagationManager<C> {
   private CompletableFuture<Block> processAnnouncedBlock(
       final EthPeer peer, final NewBlockHash newBlock) {
     final AbstractPeerTask<Block> getBlockTask =
-        GetBlockFromPeerTask.create(protocolSchedule, ethContext, newBlock.hash()).assignPeer(peer);
+        GetBlockFromPeerTask.create(protocolSchedule, ethContext, newBlock.hash(), ethTasksTimer)
+            .assignPeer(peer);
 
     return getBlockTask.run().thenCompose((r) -> importOrSavePendingBlock(r.getResult()));
   }
@@ -251,8 +250,7 @@ public class BlockPropagationManager<C> {
     // Import block
     final PersistBlockTask<C> importTask =
         PersistBlockTask.create(
-            protocolSchedule, protocolContext, block, HeaderValidationMode.FULL);
-    final OperationTimer.TimingContext blockTimer = announcedBlockIngestTimer.startTimer();
+            protocolSchedule, protocolContext, block, HeaderValidationMode.FULL, ethTasksTimer);
     return ethContext
         .getScheduler()
         .scheduleSyncWorkerTask(importTask::run)
@@ -265,7 +263,7 @@ public class BlockPropagationManager<C> {
                     block.getHeader().getNumber(),
                     block.getHash());
               } else {
-                final double timeInMs = blockTimer.stopTimer() * 1000;
+                final double timeInMs = importTask.getTaskTimeInSec() * 1000;
                 LOG.info(
                     String.format(
                         "Successfully imported announced block %d (%s) in %01.3fms.",

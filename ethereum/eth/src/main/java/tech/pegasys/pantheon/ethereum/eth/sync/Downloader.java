@@ -33,6 +33,8 @@ import tech.pegasys.pantheon.ethereum.eth.sync.tasks.WaitForPeersTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -60,6 +62,7 @@ public class Downloader<C> {
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
+  private final LabelledMetric<OperationTimer> ethTasksTimer;
 
   private final Deque<BlockHeader> checkpointHeaders = new ConcurrentLinkedDeque<>();
   private int checkpointTimeouts = 0;
@@ -75,7 +78,9 @@ public class Downloader<C> {
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
-      final SyncState syncState) {
+      final SyncState syncState,
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
+    this.ethTasksTimer = ethTasksTimer;
     this.config = config;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -124,13 +129,13 @@ public class Downloader<C> {
   }
 
   private CompletableFuture<?> waitForPeers() {
-    return WaitForPeersTask.create(ethContext, 1).run();
+    return WaitForPeersTask.create(ethContext, 1, ethTasksTimer).run();
   }
 
   private CompletableFuture<?> waitForNewPeer() {
     return ethContext
         .getScheduler()
-        .timeout(WaitForPeerTask.create(ethContext), Duration.ofSeconds(5));
+        .timeout(WaitForPeerTask.create(ethContext, ethTasksTimer), Duration.ofSeconds(5));
   }
 
   private CompletableFuture<SyncTarget> findSyncTarget() {
@@ -159,7 +164,8 @@ public class Downloader<C> {
               protocolContext,
               ethContext,
               bestPeer,
-              config.downloaderHeaderRequestSize())
+              config.downloaderHeaderRequestSize(),
+              ethTasksTimer)
           .run()
           .handle((r, t) -> r)
           .thenCompose(
@@ -325,7 +331,8 @@ public class Downloader<C> {
             lastHeader.getHash(),
             lastHeader.getNumber(),
             config.downloaderHeaderRequestSize() + 1,
-            config.downloaderChainSegmentSize() - 1)
+            config.downloaderChainSegmentSize() - 1,
+            ethTasksTimer)
         .assignPeer(syncTarget.peer());
   }
 
@@ -344,7 +351,8 @@ public class Downloader<C> {
               protocolContext,
               ethContext,
               checkpointHeaders.getFirst(),
-              config.downloaderChainSegmentSize());
+              config.downloaderChainSegmentSize(),
+              ethTasksTimer);
       importedBlocks = importTask.run().thenApply(PeerTaskResult::getResult);
     } else {
       final PipelinedImportChainSegmentTask<C> importTask =
@@ -353,6 +361,7 @@ public class Downloader<C> {
               protocolContext,
               ethContext,
               config.downloaderParallelism(),
+              ethTasksTimer,
               Lists.newArrayList(checkpointHeaders));
       importedBlocks = importTask.run();
     }

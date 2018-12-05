@@ -24,6 +24,9 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -43,6 +46,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
   protected static Blockchain blockchain;
   protected static ProtocolSchedule<Void> protocolSchedule;
   protected static ProtocolContext<Void> protocolContext;
+  protected static LabelledMetric<OperationTimer> ethTasksTimer;
   protected EthProtocolManager ethProtocolManager;
   protected EthContext ethContext;
   protected AtomicBoolean peersDoTimeout;
@@ -55,6 +59,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
     blockchain = blockchainSetupUtil.getBlockchain();
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     protocolContext = blockchainSetupUtil.getProtocolContext();
+    ethTasksTimer = NoOpMetricsSystem.NO_OP_LABELLED_TIMER;
     assert (blockchainSetupUtil.getMaxBlockNumber() >= 20L);
   }
 

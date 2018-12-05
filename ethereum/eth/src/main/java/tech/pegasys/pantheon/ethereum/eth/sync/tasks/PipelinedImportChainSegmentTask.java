@@ -23,6 +23,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.util.ArrayList;
@@ -45,6 +47,7 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
   private final ProtocolContext<C> protocolContext;
   private final ProtocolSchedule<C> protocolSchedule;
   private final List<Block> importedBlocks = new ArrayList<>();
+  private final LabelledMetric<OperationTimer> ethTasksTimer;
 
   // First header is assumed  to already be imported
   private final List<BlockHeader> checkpointHeaders;
@@ -67,10 +70,13 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final int maxActiveChunks,
-      final List<BlockHeader> checkpointHeaders) {
+      final List<BlockHeader> checkpointHeaders,
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
+    super(ethTasksTimer);
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
+    this.ethTasksTimer = ethTasksTimer;
     this.checkpointHeaders = checkpointHeaders;
     this.chunksInTotal = checkpointHeaders.size() - 1;
     this.chunksIssued = 0;
@@ -83,12 +89,14 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final int maxActiveChunks,
+      final LabelledMetric<OperationTimer> ethTasksTimer,
       final BlockHeader... checkpointHeaders) {
     return forCheckpoints(
         protocolSchedule,
         protocolContext,
         ethContext,
         maxActiveChunks,
+        ethTasksTimer,
         Arrays.asList(checkpointHeaders));
   }
 
@@ -97,9 +105,15 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final int maxActiveChunks,
+      final LabelledMetric<OperationTimer> ethTasksTimer,
       final List<BlockHeader> checkpointHeaders) {
     return new PipelinedImportChainSegmentTask<>(
-        protocolSchedule, protocolContext, ethContext, maxActiveChunks, checkpointHeaders);
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        maxActiveChunks,
+        checkpointHeaders,
+        ethTasksTimer);
   }
 
   @Override
@@ -195,7 +209,12 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
     }
     final DownloadHeaderSequenceTask<C> task =
         DownloadHeaderSequenceTask.endingAtHeader(
-            protocolSchedule, protocolContext, ethContext, lastChunkHeader, segmentLength);
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            lastChunkHeader,
+            segmentLength,
+            ethTasksTimer);
     return executeSubTask(task::run)
         .thenApply(
             headers -> {
@@ -239,7 +258,7 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
         headers.get(0).getNumber(),
         headers.get(headers.size() - 1).getNumber());
     final CompleteBlocksTask<C> task =
-        CompleteBlocksTask.forHeaders(protocolSchedule, ethContext, headers);
+        CompleteBlocksTask.forHeaders(protocolSchedule, ethContext, headers, ethTasksTimer);
     return executeSubTask(task::run);
   }
 
@@ -250,7 +269,11 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
         blocks.get(blocks.size() - 1).getHeader().getNumber());
     final Supplier<CompletableFuture<List<Block>>> task =
         PersistBlockTask.forSequentialBlocks(
-            protocolSchedule, protocolContext, blocks, HeaderValidationMode.SKIP_DETACHED);
+            protocolSchedule,
+            protocolContext,
+            blocks,
+            HeaderValidationMode.SKIP_DETACHED,
+            ethTasksTimer);
     return executeWorkerSubTask(ethContext.getScheduler(), task);
   }
 

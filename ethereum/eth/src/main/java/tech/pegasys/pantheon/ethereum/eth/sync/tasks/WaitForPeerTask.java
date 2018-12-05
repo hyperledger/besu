@@ -15,6 +15,8 @@ package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 import tech.pegasys.pantheon.ethereum.eth.manager.AbstractEthTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.OperationTimer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,12 +28,15 @@ public class WaitForPeerTask extends AbstractEthTask<Void> {
   private final EthContext ethContext;
   private volatile Long peerListenerId;
 
-  private WaitForPeerTask(final EthContext ethContext) {
+  private WaitForPeerTask(
+      final EthContext ethContext, final LabelledMetric<OperationTimer> ethTasksTimer) {
+    super(ethTasksTimer);
     this.ethContext = ethContext;
   }
 
-  public static WaitForPeerTask create(final EthContext ethContext) {
-    return new WaitForPeerTask(ethContext);
+  public static WaitForPeerTask create(
+      final EthContext ethContext, final LabelledMetric<OperationTimer> ethTasksTimer) {
+    return new WaitForPeerTask(ethContext, ethTasksTimer);
   }
 
   @Override
