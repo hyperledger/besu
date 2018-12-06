@@ -14,11 +14,10 @@ package tech.pegasys.pantheon.consensus.ibft.ibftmessagedata;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 
-public abstract class AbstractIbftUnsignedInRoundMessageData
-    extends AbstractIbftUnsignedMessageData {
+public abstract class InRoundPayload extends AbstractPayload {
   protected final ConsensusRoundIdentifier roundIdentifier;
 
-  protected AbstractIbftUnsignedInRoundMessageData(final ConsensusRoundIdentifier roundIdentifier) {
+  protected InRoundPayload(final ConsensusRoundIdentifier roundIdentifier) {
     this.roundIdentifier = roundIdentifier;
   }
 

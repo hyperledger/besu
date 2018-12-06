@@ -12,33 +12,32 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.ibftmessage;
 
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftSignedMessageData;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftUnsignedCommitMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparePayload;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-public class IbftCommitMessage extends AbstractIbftMessage {
+public class PrepareMessage extends AbstractIbftMessage {
 
-  private static final int MESSAGE_CODE = IbftV2.COMMIT;
+  private static final int MESSAGE_CODE = IbftV2.PREPARE;
 
-  private IbftCommitMessage(final BytesValue data) {
+  private PrepareMessage(final BytesValue data) {
     super(data);
   }
 
-  public static IbftCommitMessage fromMessage(final MessageData message) {
-    return fromMessage(message, MESSAGE_CODE, IbftCommitMessage.class, IbftCommitMessage::new);
+  public static PrepareMessage fromMessage(final MessageData message) {
+    return fromMessage(message, MESSAGE_CODE, PrepareMessage.class, PrepareMessage::new);
   }
 
   @Override
-  public IbftSignedMessageData<IbftUnsignedCommitMessageData> decode() {
-    return IbftSignedMessageData.readIbftSignedCommitMessageDataFrom(RLP.input(data));
+  public SignedData<PreparePayload> decode() {
+    return SignedData.readSignedPreparePayloadFrom(RLP.input(data));
   }
 
-  public static IbftCommitMessage create(
-      final IbftSignedMessageData<IbftUnsignedCommitMessageData> ibftPrepareMessageDecoded) {
+  public static PrepareMessage create(final SignedData<PreparePayload> signedPayload) {
 
-    return new IbftCommitMessage(ibftPrepareMessageDecoded.encode());
+    return new PrepareMessage(signedPayload.encode());
   }
 
   @Override

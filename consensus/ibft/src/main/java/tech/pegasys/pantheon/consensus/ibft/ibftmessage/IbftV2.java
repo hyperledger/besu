@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.consensus.ibft.ibftmessage;
 
 /** Message codes for iBFT v2 messages */
 public class IbftV2 {
-  public static final int PRE_PREPARE = 0;
+  public static final int PROPOSAL = 0;
   public static final int PREPARE = 1;
   public static final int COMMIT = 2;
   public static final int ROUND_CHANGE = 3;
