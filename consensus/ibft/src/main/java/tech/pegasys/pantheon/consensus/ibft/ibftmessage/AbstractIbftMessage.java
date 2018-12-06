@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.ibftmessage;
 
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftSignedMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -24,7 +24,7 @@ public abstract class AbstractIbftMessage extends AbstractMessageData {
     super(data);
   }
 
-  public abstract IbftSignedMessageData<?> decode();
+  public abstract SignedData<?> decode();
 
   protected static <T extends AbstractIbftMessage> T fromMessage(
       final MessageData message,

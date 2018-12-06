@@ -13,35 +13,31 @@
 package tech.pegasys.pantheon.consensus.ibft.ibftmessagedata;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
+import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftV2;
-import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
-import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
-public class IbftUnsignedCommitMessageData extends AbstractIbftUnsignedInRoundMessageData {
-  private static final int TYPE = IbftV2.COMMIT;
-  private final Hash digest;
-  private final Signature commitSeal;
+public class ProposalPayload extends InRoundPayload {
 
-  public IbftUnsignedCommitMessageData(
-      final ConsensusRoundIdentifier roundIdentifier,
-      final Hash digest,
-      final Signature commitSeal) {
+  private static final int TYPE = IbftV2.PROPOSAL;
+  private final Block block;
+
+  public ProposalPayload(final ConsensusRoundIdentifier roundIdentifier, final Block block) {
     super(roundIdentifier);
-    this.digest = digest;
-    this.commitSeal = commitSeal;
+    this.block = block;
   }
 
-  public static IbftUnsignedCommitMessageData readFrom(final RLPInput rlpInput) {
+  public static ProposalPayload readFrom(final RLPInput rlpInput) {
 
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
-    final Hash digest = readDigest(rlpInput);
-    final Signature commitSeal = rlpInput.readBytesValue(Signature::decode);
+    final Block block =
+        Block.readFrom(rlpInput, IbftBlockHashing::calculateDataHashForCommittedSeal);
     rlpInput.leaveList();
 
-    return new IbftUnsignedCommitMessageData(roundIdentifier, digest, commitSeal);
+    return new ProposalPayload(roundIdentifier, block);
   }
 
   @Override
@@ -49,21 +45,16 @@ public class IbftUnsignedCommitMessageData extends AbstractIbftUnsignedInRoundMe
 
     rlpOutput.startList();
     roundIdentifier.writeTo(rlpOutput);
-    rlpOutput.writeBytesValue(digest);
-    rlpOutput.writeBytesValue(commitSeal.encodedBytes());
+    block.writeTo(rlpOutput);
     rlpOutput.endList();
+  }
+
+  public Block getBlock() {
+    return block;
   }
 
   @Override
   public int getMessageType() {
     return TYPE;
-  }
-
-  public Hash getDigest() {
-    return digest;
-  }
-
-  public Signature getCommitSeal() {
-    return commitSeal;
   }
 }

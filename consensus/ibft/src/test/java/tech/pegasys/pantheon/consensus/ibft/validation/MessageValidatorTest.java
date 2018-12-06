@@ -20,11 +20,11 @@ import static org.mockito.Mockito.when;
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftMessageFactory;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftSignedMessageData;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftUnsignedCommitMessageData;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftUnsignedPrePrepareMessageData;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftUnsignedPrepareMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.CommitPayload;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.MessageFactory;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparePayload;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.ProposalPayload;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -55,10 +55,9 @@ public class MessageValidatorTest {
   private final KeyPair proposerKey = KeyPair.generate();
   private final KeyPair validatorKey = KeyPair.generate();
   private final KeyPair nonValidatorKey = KeyPair.generate();
-  private final IbftMessageFactory proposerMessageFactory = new IbftMessageFactory(proposerKey);
-  private final IbftMessageFactory validatorMessageFactory = new IbftMessageFactory(validatorKey);
-  private final IbftMessageFactory nonValidatorMessageFactory =
-      new IbftMessageFactory(nonValidatorKey);
+  private final MessageFactory proposerMessageFactory = new MessageFactory(proposerKey);
+  private final MessageFactory validatorMessageFactory = new MessageFactory(validatorKey);
+  private final MessageFactory nonValidatorMessageFactory = new MessageFactory(nonValidatorKey);
 
   private final List<Address> validators = Lists.newArrayList();
 
@@ -107,16 +106,16 @@ public class MessageValidatorTest {
 
   @Test
   public void receivingAPrepareMessageBeforePrePrepareFails() {
-    final IbftSignedMessageData<IbftUnsignedPrepareMessageData> prepareMsg =
-        proposerMessageFactory.createIbftSignedPrepareMessageData(roundIdentifier, Hash.ZERO);
+    final SignedData<PreparePayload> prepareMsg =
+        proposerMessageFactory.createSignedPreparePayload(roundIdentifier, Hash.ZERO);
 
     assertThat(validator.validatePrepareMessage(prepareMsg)).isFalse();
   }
 
   @Test
   public void receivingACommitMessageBeforePreprepareFails() {
-    final IbftSignedMessageData<IbftUnsignedCommitMessageData> commitMsg =
-        proposerMessageFactory.createIbftSignedCommitMessageData(
+    final SignedData<CommitPayload> commitMsg =
+        proposerMessageFactory.createSignedCommitPayload(
             roundIdentifier, Hash.ZERO, SECP256K1.sign(Hash.ZERO, proposerKey));
 
     assertThat(validator.validateCommmitMessage(commitMsg)).isFalse();
@@ -124,48 +123,46 @@ public class MessageValidatorTest {
 
   @Test
   public void receivingPreprepareMessageFromNonProposerFails() {
-    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> preprepareMsg =
-        validatorMessageFactory.createIbftSignedPrePrepareMessageData(
-            roundIdentifier, mock(Block.class));
+    final SignedData<ProposalPayload> preprepareMsg =
+        validatorMessageFactory.createSignedProposalPayload(roundIdentifier, mock(Block.class));
 
-    assertThat(validator.addPreprepareMessage(preprepareMsg)).isFalse();
+    assertThat(validator.addSignedProposalPayload(preprepareMsg)).isFalse();
   }
 
   @Test
   public void receivingPreprepareMessageWithIllegalBlockFails() {
     when(headerValidator.validateHeader(any(), any(), any(), any())).thenReturn(false);
-    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> preprepareMsg =
-        proposerMessageFactory.createIbftSignedPrePrepareMessageData(
-            roundIdentifier, mock(Block.class));
+    final SignedData<ProposalPayload> preprepareMsg =
+        proposerMessageFactory.createSignedProposalPayload(roundIdentifier, mock(Block.class));
 
-    assertThat(validator.addPreprepareMessage(preprepareMsg)).isFalse();
+    assertThat(validator.addSignedProposalPayload(preprepareMsg)).isFalse();
   }
 
   @Test
   public void receivingPrepareFromProposerFails() {
     when(headerValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
 
-    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> preprepareMsg =
-        proposerMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
+    final SignedData<ProposalPayload> preprepareMsg =
+        proposerMessageFactory.createSignedProposalPayload(roundIdentifier, block);
 
-    final IbftSignedMessageData<IbftUnsignedPrepareMessageData> prepareMsg =
-        proposerMessageFactory.createIbftSignedPrepareMessageData(roundIdentifier, block.getHash());
+    final SignedData<PreparePayload> prepareMsg =
+        proposerMessageFactory.createSignedPreparePayload(roundIdentifier, block.getHash());
 
-    assertThat(validator.addPreprepareMessage(preprepareMsg)).isTrue();
+    assertThat(validator.addSignedProposalPayload(preprepareMsg)).isTrue();
     assertThat(validator.validatePrepareMessage(prepareMsg)).isFalse();
   }
 
   @Test
   public void receivingPrepareFromNonValidatorFails() {
     when(headerValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
-    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> preprepareMsg =
-        proposerMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
 
-    final IbftSignedMessageData<IbftUnsignedPrepareMessageData> prepareMsg =
-        nonValidatorMessageFactory.createIbftSignedPrepareMessageData(
-            roundIdentifier, block.getHash());
+    final SignedData<ProposalPayload> preprepareMsg =
+        proposerMessageFactory.createSignedProposalPayload(roundIdentifier, block);
 
-    assertThat(validator.addPreprepareMessage(preprepareMsg)).isTrue();
+    final SignedData<PreparePayload> prepareMsg =
+        nonValidatorMessageFactory.createSignedPreparePayload(roundIdentifier, block.getHash());
+
+    assertThat(validator.addSignedProposalPayload(preprepareMsg)).isTrue();
     assertThat(validator.validatePrepareMessage(prepareMsg)).isFalse();
   }
 
@@ -173,20 +170,19 @@ public class MessageValidatorTest {
   public void receivingMessagesWithDifferentRoundIdFromPreprepareFails() {
     when(headerValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
 
-    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> preprepareMsg =
-        proposerMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
+    final SignedData<ProposalPayload> preprepareMsg =
+        proposerMessageFactory.createSignedProposalPayload(roundIdentifier, block);
 
     final ConsensusRoundIdentifier invalidRoundIdentifier =
         new ConsensusRoundIdentifier(
             roundIdentifier.getSequenceNumber(), roundIdentifier.getRoundNumber() + 1);
-    final IbftSignedMessageData<IbftUnsignedPrepareMessageData> prepareMsg =
-        validatorMessageFactory.createIbftSignedPrepareMessageData(
-            invalidRoundIdentifier, block.getHash());
-    final IbftSignedMessageData<IbftUnsignedCommitMessageData> commitMsg =
-        validatorMessageFactory.createIbftSignedCommitMessageData(
+    final SignedData<PreparePayload> prepareMsg =
+        validatorMessageFactory.createSignedPreparePayload(invalidRoundIdentifier, block.getHash());
+    final SignedData<CommitPayload> commitMsg =
+        validatorMessageFactory.createSignedCommitPayload(
             invalidRoundIdentifier, block.getHash(), SECP256K1.sign(block.getHash(), proposerKey));
 
-    assertThat(validator.addPreprepareMessage(preprepareMsg)).isTrue();
+    assertThat(validator.addSignedProposalPayload(preprepareMsg)).isTrue();
     assertThat(validator.validatePrepareMessage(prepareMsg)).isFalse();
     assertThat(validator.validateCommmitMessage(commitMsg)).isFalse();
   }
@@ -195,13 +191,12 @@ public class MessageValidatorTest {
   public void receivingPrepareNonProposerValidatorWithCorrectRoundIsSuccessful() {
     when(headerValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
 
-    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> preprepareMsg =
-        proposerMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
-    final IbftSignedMessageData<IbftUnsignedPrepareMessageData> prepareMsg =
-        validatorMessageFactory.createIbftSignedPrepareMessageData(
-            roundIdentifier, block.getHash());
+    final SignedData<ProposalPayload> preprepareMsg =
+        proposerMessageFactory.createSignedProposalPayload(roundIdentifier, block);
+    final SignedData<PreparePayload> prepareMsg =
+        validatorMessageFactory.createSignedPreparePayload(roundIdentifier, block.getHash());
 
-    assertThat(validator.addPreprepareMessage(preprepareMsg)).isTrue();
+    assertThat(validator.addSignedProposalPayload(preprepareMsg)).isTrue();
     assertThat(validator.validatePrepareMessage(prepareMsg)).isTrue();
   }
 
@@ -209,14 +204,14 @@ public class MessageValidatorTest {
   public void receivingACommitMessageWithAnInvalidCommitSealFails() {
     when(headerValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
 
-    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> preprepareMsg =
-        proposerMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
+    final SignedData<ProposalPayload> preprepareMsg =
+        proposerMessageFactory.createSignedProposalPayload(roundIdentifier, block);
 
-    final IbftSignedMessageData<IbftUnsignedCommitMessageData> commitMsg =
-        proposerMessageFactory.createIbftSignedCommitMessageData(
+    final SignedData<CommitPayload> commitMsg =
+        proposerMessageFactory.createSignedCommitPayload(
             roundIdentifier, block.getHash(), SECP256K1.sign(block.getHash(), nonValidatorKey));
 
-    assertThat(validator.addPreprepareMessage(preprepareMsg)).isTrue();
+    assertThat(validator.addSignedProposalPayload(preprepareMsg)).isTrue();
     assertThat(validator.validateCommmitMessage(commitMsg)).isFalse();
   }
 
@@ -224,18 +219,18 @@ public class MessageValidatorTest {
   public void commitMessageContainingValidSealFromValidatorIsSuccessful() {
     when(headerValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
 
-    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> preprepareMsg =
-        proposerMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
+    final SignedData<ProposalPayload> preprepareMsg =
+        proposerMessageFactory.createSignedProposalPayload(roundIdentifier, block);
 
-    final IbftSignedMessageData<IbftUnsignedCommitMessageData> proposerCommitMsg =
-        proposerMessageFactory.createIbftSignedCommitMessageData(
+    final SignedData<CommitPayload> proposerCommitMsg =
+        proposerMessageFactory.createSignedCommitPayload(
             roundIdentifier, block.getHash(), SECP256K1.sign(block.getHash(), proposerKey));
 
-    final IbftSignedMessageData<IbftUnsignedCommitMessageData> validatorCommitMsg =
-        validatorMessageFactory.createIbftSignedCommitMessageData(
+    final SignedData<CommitPayload> validatorCommitMsg =
+        validatorMessageFactory.createSignedCommitPayload(
             roundIdentifier, block.getHash(), SECP256K1.sign(block.getHash(), validatorKey));
 
-    assertThat(validator.addPreprepareMessage(preprepareMsg)).isTrue();
+    assertThat(validator.addSignedProposalPayload(preprepareMsg)).isTrue();
     assertThat(validator.validateCommmitMessage(proposerCommitMsg)).isTrue();
     assertThat(validator.validateCommmitMessage(validatorCommitMsg)).isTrue();
   }
@@ -244,39 +239,39 @@ public class MessageValidatorTest {
   public void subsequentPreprepareHasDifferentSenderFails() {
     when(headerValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
 
-    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> preprepareMsg =
-        proposerMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
-    assertThat(validator.addPreprepareMessage(preprepareMsg)).isTrue();
+    final SignedData<ProposalPayload> preprepareMsg =
+        proposerMessageFactory.createSignedProposalPayload(roundIdentifier, block);
+    assertThat(validator.addSignedProposalPayload(preprepareMsg)).isTrue();
 
-    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> secondPreprepareMsg =
-        validatorMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
-    assertThat(validator.addPreprepareMessage(secondPreprepareMsg)).isFalse();
+    final SignedData<ProposalPayload> secondPreprepareMsg =
+        validatorMessageFactory.createSignedProposalPayload(roundIdentifier, block);
+    assertThat(validator.addSignedProposalPayload(secondPreprepareMsg)).isFalse();
   }
 
   @Test
   public void subsequentPreprepareHasDifferentContentFails() {
 
-    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> preprepareMsg =
-        proposerMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
-    assertThat(validator.addPreprepareMessage(preprepareMsg)).isTrue();
+    final SignedData<ProposalPayload> preprepareMsg =
+        proposerMessageFactory.createSignedProposalPayload(roundIdentifier, block);
+    assertThat(validator.addSignedProposalPayload(preprepareMsg)).isTrue();
 
     final ConsensusRoundIdentifier newRoundIdentifier = new ConsensusRoundIdentifier(3, 0);
-    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> secondPreprepareMsg =
-        proposerMessageFactory.createIbftSignedPrePrepareMessageData(newRoundIdentifier, block);
-    assertThat(validator.addPreprepareMessage(secondPreprepareMsg)).isFalse();
+    final SignedData<ProposalPayload> secondPreprepareMsg =
+        proposerMessageFactory.createSignedProposalPayload(newRoundIdentifier, block);
+    assertThat(validator.addSignedProposalPayload(secondPreprepareMsg)).isFalse();
   }
 
   @Test
   public void subsequentPreprepareHasIdenticalSenderAndContentIsSuccessful() {
     when(headerValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
 
-    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> preprepareMsg =
-        proposerMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
-    assertThat(validator.addPreprepareMessage(preprepareMsg)).isTrue();
+    final SignedData<ProposalPayload> preprepareMsg =
+        proposerMessageFactory.createSignedProposalPayload(roundIdentifier, block);
+    assertThat(validator.addSignedProposalPayload(preprepareMsg)).isTrue();
 
-    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> secondPreprepareMsg =
-        proposerMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
-    assertThat(validator.addPreprepareMessage(secondPreprepareMsg)).isTrue();
+    final SignedData<ProposalPayload> secondPreprepareMsg =
+        proposerMessageFactory.createSignedProposalPayload(roundIdentifier, block);
+    assertThat(validator.addSignedProposalPayload(secondPreprepareMsg)).isTrue();
   }
 
   @Test
@@ -284,9 +279,9 @@ public class MessageValidatorTest {
     insertRoundToBlockHeader(roundIdentifier.getRoundNumber() + 1);
 
     when(headerValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
-    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> preprepareMsg =
-        proposerMessageFactory.createIbftSignedPrePrepareMessageData(roundIdentifier, block);
+    final SignedData<ProposalPayload> preprepareMsg =
+        proposerMessageFactory.createSignedProposalPayload(roundIdentifier, block);
 
-    assertThat(validator.addPreprepareMessage(preprepareMsg)).isFalse();
+    assertThat(validator.addSignedProposalPayload(preprepareMsg)).isFalse();
   }
 }

@@ -13,34 +13,28 @@
 package tech.pegasys.pantheon.consensus.ibft.ibftmessagedata;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
-import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftV2;
-import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
-// NOTE: Implementation of all methods of this class is still pending. This class was added to show
-// how a PreparedCertificate is encoded and decoded inside a RoundChange message
-public class IbftUnsignedPrePrepareMessageData extends AbstractIbftUnsignedInRoundMessageData {
+public class PreparePayload extends InRoundPayload {
+  private static final int TYPE = IbftV2.PREPARE;
+  private final Hash digest;
 
-  private static final int TYPE = IbftV2.PRE_PREPARE;
-  private final Block block;
-
-  public IbftUnsignedPrePrepareMessageData(
-      final ConsensusRoundIdentifier roundIdentifier, final Block block) {
+  public PreparePayload(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
     super(roundIdentifier);
-    this.block = block;
+    this.digest = digest;
   }
 
-  public static IbftUnsignedPrePrepareMessageData readFrom(final RLPInput rlpInput) {
+  public static PreparePayload readFrom(final RLPInput rlpInput) {
 
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
-    final Block block =
-        Block.readFrom(rlpInput, IbftBlockHashing::calculateDataHashForCommittedSeal);
+    final Hash digest = readDigest(rlpInput);
     rlpInput.leaveList();
 
-    return new IbftUnsignedPrePrepareMessageData(roundIdentifier, block);
+    return new PreparePayload(roundIdentifier, digest);
   }
 
   @Override
@@ -48,16 +42,16 @@ public class IbftUnsignedPrePrepareMessageData extends AbstractIbftUnsignedInRou
 
     rlpOutput.startList();
     roundIdentifier.writeTo(rlpOutput);
-    block.writeTo(rlpOutput);
+    rlpOutput.writeBytesValue(digest);
     rlpOutput.endList();
-  }
-
-  public Block getBlock() {
-    return block;
   }
 
   @Override
   public int getMessageType() {
     return TYPE;
+  }
+
+  public Hash getDigest() {
+    return digest;
   }
 }

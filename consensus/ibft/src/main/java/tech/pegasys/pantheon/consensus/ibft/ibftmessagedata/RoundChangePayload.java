@@ -20,18 +20,18 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
 import java.util.Optional;
 
-public class IbftUnsignedRoundChangeMessageData extends AbstractIbftUnsignedMessageData {
+public class RoundChangePayload extends AbstractPayload {
 
   private static final int TYPE = IbftV2.PREPARE;
 
   private final ConsensusRoundIdentifier roundChangeIdentifier;
 
   // The validator may not hae any prepared certificate
-  private final Optional<IbftPreparedCertificate> preparedCertificate;
+  private final Optional<PreparedCertificate> preparedCertificate;
 
-  public IbftUnsignedRoundChangeMessageData(
+  public RoundChangePayload(
       final ConsensusRoundIdentifier roundIdentifier,
-      final Optional<IbftPreparedCertificate> preparedCertificate) {
+      final Optional<PreparedCertificate> preparedCertificate) {
     this.roundChangeIdentifier = roundIdentifier;
     this.preparedCertificate = preparedCertificate;
   }
@@ -40,7 +40,7 @@ public class IbftUnsignedRoundChangeMessageData extends AbstractIbftUnsignedMess
     return roundChangeIdentifier;
   }
 
-  public Optional<IbftPreparedCertificate> getPreparedCertificate() {
+  public Optional<PreparedCertificate> getPreparedCertificate() {
     return preparedCertificate;
   }
 
@@ -59,21 +59,21 @@ public class IbftUnsignedRoundChangeMessageData extends AbstractIbftUnsignedMess
     ibftMessage.endList();
   }
 
-  public static IbftUnsignedRoundChangeMessageData readFrom(final RLPInput rlpInput) {
+  public static RoundChangePayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
 
-    final Optional<IbftPreparedCertificate> preparedCertificate;
+    final Optional<PreparedCertificate> preparedCertificate;
 
     if (rlpInput.nextIsNull()) {
       rlpInput.skipNext();
       preparedCertificate = Optional.empty();
     } else {
-      preparedCertificate = Optional.of(IbftPreparedCertificate.readFrom(rlpInput));
+      preparedCertificate = Optional.of(PreparedCertificate.readFrom(rlpInput));
     }
     rlpInput.leaveList();
 
-    return new IbftUnsignedRoundChangeMessageData(roundIdentifier, preparedCertificate);
+    return new RoundChangePayload(roundIdentifier, preparedCertificate);
   }
 
   @Override

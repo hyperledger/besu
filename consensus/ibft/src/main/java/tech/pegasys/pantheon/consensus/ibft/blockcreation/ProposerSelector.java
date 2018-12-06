@@ -33,7 +33,7 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * Responsible for determining which member of the validator pool should propose the next block
- * (i.e. send the Preprepare message).
+ * (i.e. send the Proposal message).
  *
  * <p>It does this by extracting the previous block's proposer from the ProposerSeal (stored in the
  * Blocks ExtraData) then iterating through the validator list (stored in {@link

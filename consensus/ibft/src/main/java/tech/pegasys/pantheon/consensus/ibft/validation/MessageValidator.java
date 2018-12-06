@@ -17,11 +17,11 @@ import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.FULL;
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.AbstractIbftUnsignedInRoundMessageData;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftSignedMessageData;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftUnsignedCommitMessageData;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftUnsignedPrePrepareMessageData;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.IbftUnsignedPrepareMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.CommitPayload;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.InRoundPayload;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparePayload;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.ProposalPayload;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
@@ -47,8 +47,7 @@ public class MessageValidator {
   private final ProtocolContext<IbftContext> protocolContext;
   private final BlockHeader parentHeader;
 
-  private Optional<IbftSignedMessageData<IbftUnsignedPrePrepareMessageData>> preprepareMessage =
-      Optional.empty();
+  private Optional<SignedData<ProposalPayload>> proposal = Optional.empty();
 
   public MessageValidator(
       final Collection<Address> validators,
@@ -65,41 +64,39 @@ public class MessageValidator {
     this.parentHeader = parentHeader;
   }
 
-  public boolean addPreprepareMessage(
-      final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> msg) {
+  public boolean addSignedProposalPayload(final SignedData<ProposalPayload> msg) {
 
-    if (preprepareMessage.isPresent()) {
-      return handleSubsequentPreprepareMessage(preprepareMessage.get(), msg);
+    if (proposal.isPresent()) {
+      return handleSubsequentProposal(proposal.get(), msg);
     }
 
-    if (!validatePreprepareMessage(msg)) {
+    if (!validateSignedProposalPayload(msg)) {
       return false;
     }
 
-    if (!validateBlocKMatchesPrepareMessageRound(msg.getUnsignedMessageData())) {
+    if (!validateBlockMatchesProposalRound(msg.getPayload())) {
       return false;
     }
 
-    preprepareMessage = Optional.of(msg);
+    proposal = Optional.of(msg);
     return true;
   }
 
-  private boolean validatePreprepareMessage(
-      final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> msg) {
+  private boolean validateSignedProposalPayload(final SignedData<ProposalPayload> msg) {
 
-    if (!msg.getUnsignedMessageData().getRoundIdentifier().equals(roundIdentifier)) {
-      LOG.info("Invalid Preprepare message, does not match current round.");
+    if (!msg.getPayload().getRoundIdentifier().equals(roundIdentifier)) {
+      LOG.info("Invalid Proposal message, does not match current round.");
       return false;
     }
 
     if (!msg.getSender().equals(expectedProposer)) {
       LOG.info(
-          "Invalid Preprepare message, was not created by the proposer expected for the "
+          "Invalid Proposal message, was not created by the proposer expected for the "
               + "associated round.");
       return false;
     }
 
-    final Block proposedBlock = msg.getUnsignedMessageData().getBlock();
+    final Block proposedBlock = msg.getPayload().getBlock();
     if (!headerValidator.validateHeader(
         proposedBlock.getHeader(), parentHeader, protocolContext, FULL)) {
       LOG.info("Invalid Prepare message, block did not pass header validation.");
@@ -109,30 +106,28 @@ public class MessageValidator {
     return true;
   }
 
-  private boolean handleSubsequentPreprepareMessage(
-      final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> existingMsg,
-      final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> newMsg) {
+  private boolean handleSubsequentProposal(
+      final SignedData<ProposalPayload> existingMsg, final SignedData<ProposalPayload> newMsg) {
     if (!existingMsg.getSender().equals(newMsg.getSender())) {
-      LOG.debug("Received subsequent invalid Preprepare message; sender differs from original.");
+      LOG.debug("Received subsequent invalid Proposal message; sender differs from original.");
       return false;
     }
 
-    final IbftUnsignedPrePrepareMessageData existingData = existingMsg.getUnsignedMessageData();
-    final IbftUnsignedPrePrepareMessageData newData = newMsg.getUnsignedMessageData();
+    final ProposalPayload existingData = existingMsg.getPayload();
+    final ProposalPayload newData = newMsg.getPayload();
 
-    if (!preprepareMessagesAreIdentical(existingData, newData)) {
-      LOG.debug("Received subsequent invalid Preprepare message; content differs from original.");
+    if (!proposalMessagesAreIdentical(existingData, newData)) {
+      LOG.debug("Received subsequent invalid Proposal message; content differs from original.");
       return false;
     }
 
     return true;
   }
 
-  public boolean validatePrepareMessage(
-      final IbftSignedMessageData<IbftUnsignedPrepareMessageData> msg) {
+  public boolean validatePrepareMessage(final SignedData<PreparePayload> msg) {
     final String msgType = "Prepare";
 
-    if (!isMessageForCurrentRoundFromValidatorAndPreprareMessageAvailable(msg, msgType)) {
+    if (!isMessageForCurrentRoundFromValidatorAndProposalAvailable(msg, msgType)) {
       return false;
     }
 
@@ -141,35 +136,32 @@ public class MessageValidator {
       return false;
     }
 
-    return validateDigestMatchesPreprepareBlock(msg.getUnsignedMessageData().getDigest(), msgType);
+    return validateDigestMatchesProposal(msg.getPayload().getDigest(), msgType);
   }
 
-  public boolean validateCommmitMessage(
-      final IbftSignedMessageData<IbftUnsignedCommitMessageData> msg) {
+  public boolean validateCommmitMessage(final SignedData<CommitPayload> msg) {
     final String msgType = "Commit";
 
-    if (!isMessageForCurrentRoundFromValidatorAndPreprareMessageAvailable(msg, msgType)) {
+    if (!isMessageForCurrentRoundFromValidatorAndProposalAvailable(msg, msgType)) {
       return false;
     }
 
-    final Block proposedBlock = preprepareMessage.get().getUnsignedMessageData().getBlock();
+    final Block proposedBlock = proposal.get().getPayload().getBlock();
     final Address commitSealCreator =
-        Util.signatureToAddress(
-            msg.getUnsignedMessageData().getCommitSeal(), proposedBlock.getHash());
+        Util.signatureToAddress(msg.getPayload().getCommitSeal(), proposedBlock.getHash());
 
     if (!commitSealCreator.equals(msg.getSender())) {
       LOG.info("Invalid Commit message. Seal was not created by the message transmitter.");
       return false;
     }
 
-    return validateDigestMatchesPreprepareBlock(msg.getUnsignedMessageData().getDigest(), msgType);
+    return validateDigestMatchesProposal(msg.getPayload().getDigest(), msgType);
   }
 
-  private boolean isMessageForCurrentRoundFromValidatorAndPreprareMessageAvailable(
-      final IbftSignedMessageData<? extends AbstractIbftUnsignedInRoundMessageData> msg,
-      final String msgType) {
+  private boolean isMessageForCurrentRoundFromValidatorAndProposalAvailable(
+      final SignedData<? extends InRoundPayload> msg, final String msgType) {
 
-    if (!msg.getUnsignedMessageData().getRoundIdentifier().equals(roundIdentifier)) {
+    if (!msg.getPayload().getRoundIdentifier().equals(roundIdentifier)) {
       LOG.info("Invalid {} message, does not match current round.", msgType);
       return false;
     }
@@ -181,18 +173,18 @@ public class MessageValidator {
       return false;
     }
 
-    if (!preprepareMessage.isPresent()) {
+    if (!proposal.isPresent()) {
       LOG.info(
-          "Unable to validate {} message. No Preprepare message exists against "
-              + "which to validate block digest.",
+          "Unable to validate {} message. No Proposal exists against which to validate "
+              + "block digest.",
           msgType);
       return false;
     }
     return true;
   }
 
-  private boolean validateDigestMatchesPreprepareBlock(final Hash digest, final String msgType) {
-    final Block proposedBlock = preprepareMessage.get().getUnsignedMessageData().getBlock();
+  private boolean validateDigestMatchesProposal(final Hash digest, final String msgType) {
+    final Block proposedBlock = proposal.get().getPayload().getBlock();
     if (!digest.equals(proposedBlock.getHash())) {
       LOG.info(
           "Illegal {} message, digest does not match the block in the Prepare Message.", msgType);
@@ -201,19 +193,18 @@ public class MessageValidator {
     return true;
   }
 
-  private boolean preprepareMessagesAreIdentical(
-      final IbftUnsignedPrePrepareMessageData right, final IbftUnsignedPrePrepareMessageData left) {
+  private boolean proposalMessagesAreIdentical(
+      final ProposalPayload right, final ProposalPayload left) {
     return right.getBlock().getHash().equals(left.getBlock().getHash())
         && right.getRoundIdentifier().equals(left.getRoundIdentifier());
   }
 
-  private boolean validateBlocKMatchesPrepareMessageRound(
-      final IbftUnsignedPrePrepareMessageData msgData) {
-    final ConsensusRoundIdentifier msgRound = msgData.getRoundIdentifier();
+  private boolean validateBlockMatchesProposalRound(final ProposalPayload payload) {
+    final ConsensusRoundIdentifier msgRound = payload.getRoundIdentifier();
     final IbftExtraData extraData =
-        IbftExtraData.decode(msgData.getBlock().getHeader().getExtraData());
+        IbftExtraData.decode(payload.getBlock().getHeader().getExtraData());
     if (extraData.getRound() != msgRound.getRoundNumber()) {
-      LOG.info("Invalid Preprepare message, round number in block does not match that in message.");
+      LOG.info("Invalid Proposal message, round number in block does not match that in message.");
       return false;
     }
     return true;

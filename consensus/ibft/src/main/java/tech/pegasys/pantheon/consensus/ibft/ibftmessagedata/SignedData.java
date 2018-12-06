@@ -20,15 +20,14 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-public class IbftSignedMessageData<M extends AbstractIbftUnsignedMessageData> {
+public class SignedData<M extends AbstractPayload> {
 
   protected final Address sender;
   protected final Signature signature;
-  protected final M ibftUnsignedMessageData;
+  protected final M unsignedPayload;
 
-  public IbftSignedMessageData(
-      final M ibftUnsignedMessageData, final Address sender, final Signature signature) {
-    this.ibftUnsignedMessageData = ibftUnsignedMessageData;
+  public SignedData(final M unsignedPayload, final Address sender, final Signature signature) {
+    this.unsignedPayload = unsignedPayload;
     this.sender = sender;
     this.signature = signature;
   }
@@ -41,14 +40,14 @@ public class IbftSignedMessageData<M extends AbstractIbftUnsignedMessageData> {
     return signature;
   }
 
-  public M getUnsignedMessageData() {
-    return ibftUnsignedMessageData;
+  public M getPayload() {
+    return unsignedPayload;
   }
 
   public void writeTo(final RLPOutput output) {
 
     output.startList();
-    ibftUnsignedMessageData.writeTo(output);
+    unsignedPayload.writeTo(output);
     output.writeBytesValue(getSignature().encodedBytes());
     output.endList();
   }
@@ -59,72 +58,63 @@ public class IbftSignedMessageData<M extends AbstractIbftUnsignedMessageData> {
     return rlpEncode.encoded();
   }
 
-  public static IbftSignedMessageData<IbftUnsignedPrePrepareMessageData>
-      readIbftSignedPrePrepareMessageDataFrom(final RLPInput rlpInput) {
+  public static SignedData<ProposalPayload> readSignedProposalPayloadFrom(final RLPInput rlpInput) {
 
     rlpInput.enterList();
-    final IbftUnsignedPrePrepareMessageData unsignedMessageData =
-        IbftUnsignedPrePrepareMessageData.readFrom(rlpInput);
+    final ProposalPayload unsignedMessageData = ProposalPayload.readFrom(rlpInput);
     final Signature signature = readSignature(rlpInput);
     rlpInput.leaveList();
 
     return from(unsignedMessageData, signature);
   }
 
-  public static IbftSignedMessageData<IbftUnsignedPrepareMessageData>
-      readIbftSignedPrepareMessageDataFrom(final RLPInput rlpInput) {
+  public static SignedData<PreparePayload> readSignedPreparePayloadFrom(final RLPInput rlpInput) {
 
     rlpInput.enterList();
-    final IbftUnsignedPrepareMessageData unsignedMessageData =
-        IbftUnsignedPrepareMessageData.readFrom(rlpInput);
+    final PreparePayload unsignedMessageData = PreparePayload.readFrom(rlpInput);
     final Signature signature = readSignature(rlpInput);
     rlpInput.leaveList();
 
     return from(unsignedMessageData, signature);
   }
 
-  public static IbftSignedMessageData<IbftUnsignedCommitMessageData>
-      readIbftSignedCommitMessageDataFrom(final RLPInput rlpInput) {
+  public static SignedData<CommitPayload> readSignedCommitPayloadFrom(final RLPInput rlpInput) {
 
     rlpInput.enterList();
-    final IbftUnsignedCommitMessageData unsignedMessageData =
-        IbftUnsignedCommitMessageData.readFrom(rlpInput);
+    final CommitPayload unsignedMessageData = CommitPayload.readFrom(rlpInput);
     final Signature signature = readSignature(rlpInput);
     rlpInput.leaveList();
 
     return from(unsignedMessageData, signature);
   }
 
-  public static IbftSignedMessageData<IbftUnsignedRoundChangeMessageData>
-      readIbftSignedRoundChangeMessageDataFrom(final RLPInput rlpInput) {
+  public static SignedData<RoundChangePayload> readSignedRoundChangePayloadFrom(
+      final RLPInput rlpInput) {
 
     rlpInput.enterList();
-    final IbftUnsignedRoundChangeMessageData unsignedMessageData =
-        IbftUnsignedRoundChangeMessageData.readFrom(rlpInput);
+    final RoundChangePayload unsignedMessageData = RoundChangePayload.readFrom(rlpInput);
     final Signature signature = readSignature(rlpInput);
     rlpInput.leaveList();
 
     return from(unsignedMessageData, signature);
   }
 
-  public static IbftSignedMessageData<IbftUnsignedNewRoundMessageData>
-      readIbftSignedNewRoundMessageDataFrom(final RLPInput rlpInput) {
+  public static SignedData<NewRoundPayload> readSignedNewRoundPayloadFrom(final RLPInput rlpInput) {
 
     rlpInput.enterList();
-    final IbftUnsignedNewRoundMessageData unsignedMessageData =
-        IbftUnsignedNewRoundMessageData.readFrom(rlpInput);
+    final NewRoundPayload unsignedMessageData = NewRoundPayload.readFrom(rlpInput);
     final Signature signature = readSignature(rlpInput);
     rlpInput.leaveList();
 
     return from(unsignedMessageData, signature);
   }
 
-  protected static <M extends AbstractIbftUnsignedMessageData> IbftSignedMessageData<M> from(
+  protected static <M extends AbstractPayload> SignedData<M> from(
       final M unsignedMessageData, final Signature signature) {
 
     final Address sender = recoverSender(unsignedMessageData, signature);
 
-    return new IbftSignedMessageData<>(unsignedMessageData, sender, signature);
+    return new SignedData<>(unsignedMessageData, sender, signature);
   }
 
   protected static Signature readSignature(final RLPInput signedMessage) {
@@ -132,9 +122,8 @@ public class IbftSignedMessageData<M extends AbstractIbftUnsignedMessageData> {
   }
 
   protected static Address recoverSender(
-      final AbstractIbftUnsignedMessageData unsignedMessageData, final Signature signature) {
+      final AbstractPayload unsignedMessageData, final Signature signature) {
 
-    return Util.signatureToAddress(
-        signature, IbftMessageFactory.hashForSignature(unsignedMessageData));
+    return Util.signatureToAddress(signature, MessageFactory.hashForSignature(unsignedMessageData));
   }
 }

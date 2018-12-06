@@ -17,35 +17,35 @@ import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftV2;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
-public class IbftUnsignedNewRoundMessageData extends AbstractIbftUnsignedMessageData {
+public class NewRoundPayload extends AbstractPayload {
 
   private static final int TYPE = IbftV2.NEW_ROUND;
 
   private final ConsensusRoundIdentifier roundChangeIdentifier;
 
-  private final IbftRoundChangeCertificate roundChangeCertificate;
+  private final RoundChangeCertificate roundChangeCertificate;
 
-  private final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> ibftPrePrepareMessage;
+  private final SignedData<ProposalPayload> proposalPayload;
 
-  public IbftUnsignedNewRoundMessageData(
+  public NewRoundPayload(
       final ConsensusRoundIdentifier roundIdentifier,
-      final IbftRoundChangeCertificate roundChangeCertificate,
-      final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> ibftPrePrepareMessage) {
+      final RoundChangeCertificate roundChangeCertificate,
+      final SignedData<ProposalPayload> proposalPayload) {
     this.roundChangeIdentifier = roundIdentifier;
     this.roundChangeCertificate = roundChangeCertificate;
-    this.ibftPrePrepareMessage = ibftPrePrepareMessage;
+    this.proposalPayload = proposalPayload;
   }
 
   public ConsensusRoundIdentifier getRoundChangeIdentifier() {
     return roundChangeIdentifier;
   }
 
-  public IbftRoundChangeCertificate getRoundChangeCertificate() {
+  public RoundChangeCertificate getRoundChangeCertificate() {
     return roundChangeCertificate;
   }
 
-  public IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> getIbftPrePrepareMessage() {
-    return ibftPrePrepareMessage;
+  public SignedData<ProposalPayload> getProposalPayload() {
+    return proposalPayload;
   }
 
   @Override
@@ -54,22 +54,20 @@ public class IbftUnsignedNewRoundMessageData extends AbstractIbftUnsignedMessage
     rlpOutput.startList();
     roundChangeIdentifier.writeTo(rlpOutput);
     roundChangeCertificate.writeTo(rlpOutput);
-    ibftPrePrepareMessage.writeTo(rlpOutput);
+    proposalPayload.writeTo(rlpOutput);
     rlpOutput.endList();
   }
 
-  public static IbftUnsignedNewRoundMessageData readFrom(final RLPInput rlpInput) {
+  public static NewRoundPayload readFrom(final RLPInput rlpInput) {
 
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
-    final IbftRoundChangeCertificate roundChangeCertificate =
-        IbftRoundChangeCertificate.readFrom(rlpInput);
-    final IbftSignedMessageData<IbftUnsignedPrePrepareMessageData> ibftPrePrepareMessage =
-        IbftSignedMessageData.readIbftSignedPrePrepareMessageDataFrom(rlpInput);
+    final RoundChangeCertificate roundChangeCertificate = RoundChangeCertificate.readFrom(rlpInput);
+    final SignedData<ProposalPayload> proposalPayload =
+        SignedData.readSignedProposalPayloadFrom(rlpInput);
     rlpInput.leaveList();
 
-    return new IbftUnsignedNewRoundMessageData(
-        roundIdentifier, roundChangeCertificate, ibftPrePrepareMessage);
+    return new NewRoundPayload(roundIdentifier, roundChangeCertificate, proposalPayload);
   }
 
   @Override
