@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.config.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.NeighborsPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
@@ -26,6 +27,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
@@ -137,7 +139,8 @@ public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
             keyPair1,
             DiscoveryConfiguration.create().setBindHost("127.0.0.1").setBindPort(0),
             () -> true,
-            new PeerBlacklist());
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
     peerDiscoveryAgent1.start(0).join();
     final DefaultPeer peer = peerDiscoveryAgent1.getAdvertisedPeer();
 
@@ -151,7 +154,8 @@ public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
                 .setBindPort(0)
                 .setBootstrapPeers(Lists.newArrayList(peer)),
             () -> true,
-            new PeerBlacklist());
+            new PeerBlacklist(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
     peerDiscoveryAgent2.start(0).join();
 
     assertThat(peerDiscoveryAgent2.getPeers().size()).isEqualTo(1);

@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerRequirement;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
@@ -150,6 +151,7 @@ public final class NettyP2PNetwork implements P2PNetwork {
    * @param peerBlacklist The peers with which this node will not connect
    * @param peerRequirement Queried to determine if enough peers are currently connected.
    * @param metricsSystem The metrics system to capture metrics with.
+   * @param nodeWhitelistController Controls the whitelist of nodes to which this node will connect.
    */
   public NettyP2PNetwork(
       final Vertx vertx,
@@ -158,13 +160,19 @@ public final class NettyP2PNetwork implements P2PNetwork {
       final List<Capability> supportedCapabilities,
       final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final NodeWhitelistController nodeWhitelistController) {
 
     connections = new PeerConnectionRegistry(metricsSystem);
     this.peerBlacklist = peerBlacklist;
     peerDiscoveryAgent =
         new PeerDiscoveryAgent(
-            vertx, keyPair, config.getDiscovery(), peerRequirement, peerBlacklist);
+            vertx,
+            keyPair,
+            config.getDiscovery(),
+            peerRequirement,
+            peerBlacklist,
+            nodeWhitelistController);
     subscribeDisconnect(peerDiscoveryAgent);
     subscribeDisconnect(peerBlacklist);
     subscribeDisconnect(connections);

@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.ethereum.p2p.config.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
@@ -35,12 +36,14 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.MutableBytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 import tech.pegasys.pantheon.util.uint.UInt256Value;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
@@ -67,6 +70,7 @@ public class PeerDiscoveryControllerTest {
   private PeerDiscoveryController controller;
   private DiscoveryPeer peer;
   private PeerTable peerTable;
+  private NodeWhitelistController defaultNodeWhitelistController;
 
   @Before
   public void initializeMocks() {
@@ -76,6 +80,9 @@ public class PeerDiscoveryControllerTest {
     agent = mock(PeerDiscoveryAgent.class);
     when(agent.getAdvertisedPeer()).thenReturn(peer);
     peerTable = new PeerTable(peer.getId());
+
+    defaultNodeWhitelistController =
+        new NodeWhitelistController(PermissioningConfiguration.createDefault());
   }
 
   @After
@@ -270,7 +277,8 @@ public class PeerDiscoveryControllerTest {
             Collections.singletonList(peers[0]),
             TABLE_REFRESH_INTERVAL_MS,
             PEER_REQUIREMENT,
-            new PeerBlacklist());
+            new PeerBlacklist(),
+            defaultNodeWhitelistController);
     controller.setRetryDelayFunction((prev) -> 999999999L);
     controller.start();
 
@@ -331,7 +339,8 @@ public class PeerDiscoveryControllerTest {
             Arrays.asList(peers[0], peers[1]),
             TABLE_REFRESH_INTERVAL_MS,
             PEER_REQUIREMENT,
-            new PeerBlacklist());
+            new PeerBlacklist(),
+            defaultNodeWhitelistController);
     controller.setRetryDelayFunction((prev) -> 999999999L);
     controller.start();
 
@@ -478,7 +487,8 @@ public class PeerDiscoveryControllerTest {
             Collections.singletonList(discoPeer),
             TABLE_REFRESH_INTERVAL_MS,
             PEER_REQUIREMENT,
-            blacklist);
+            blacklist,
+            defaultNodeWhitelistController);
 
     final Endpoint agentEndpoint = agent.getAdvertisedPeer().getEndpoint();
 
@@ -563,7 +573,8 @@ public class PeerDiscoveryControllerTest {
                 Collections.singletonList(discoPeer),
                 TABLE_REFRESH_INTERVAL_MS,
                 PEER_REQUIREMENT,
-                blacklist));
+                blacklist,
+                defaultNodeWhitelistController));
 
     final Endpoint agentEndpoint = agent.getAdvertisedPeer().getEndpoint();
 
@@ -632,7 +643,8 @@ public class PeerDiscoveryControllerTest {
                 Collections.singletonList(discoPeer),
                 TABLE_REFRESH_INTERVAL_MS,
                 PEER_REQUIREMENT,
-                blacklist));
+                blacklist,
+                defaultNodeWhitelistController));
 
     final Endpoint agentEndpoint = agent.getAdvertisedPeer().getEndpoint();
 
@@ -686,7 +698,8 @@ public class PeerDiscoveryControllerTest {
                 Collections.singletonList(discoPeer),
                 TABLE_REFRESH_INTERVAL_MS,
                 PEER_REQUIREMENT,
-                blacklist));
+                blacklist,
+                defaultNodeWhitelistController));
 
     final Endpoint agentEndpoint = agent.getAdvertisedPeer().getEndpoint();
 
@@ -739,7 +752,8 @@ public class PeerDiscoveryControllerTest {
                 Collections.singletonList(discoPeer),
                 TABLE_REFRESH_INTERVAL_MS,
                 PEER_REQUIREMENT,
-                blacklist));
+                blacklist,
+                defaultNodeWhitelistController));
 
     final Endpoint agentEndpoint = agent.getAdvertisedPeer().getEndpoint();
 
@@ -796,7 +810,8 @@ public class PeerDiscoveryControllerTest {
             Arrays.asList(peers[0]),
             TABLE_REFRESH_INTERVAL_MS,
             PEER_REQUIREMENT,
-            new PeerBlacklist());
+            new PeerBlacklist(),
+            defaultNodeWhitelistController);
     controller.setRetryDelayFunction((prev) -> 999999999L);
     controller.start();
 
@@ -882,6 +897,111 @@ public class PeerDiscoveryControllerTest {
     assertThat(controller.getPeers()).doesNotContain(peers[1]);
   }
 
+  @Test
+  public void shouldNotBondWithNonWhitelistedPeer()
+      throws InterruptedException, ExecutionException, TimeoutException {
+    final DiscoveryPeer[] peers = createPeersInLastBucket(peer, 3);
+    final DiscoveryPeer discoPeer = peers[0];
+    final DiscoveryPeer otherPeer = peers[1];
+    final DiscoveryPeer otherPeer2 = peers[2];
+
+    final PeerBlacklist blacklist = new PeerBlacklist();
+    final PermissioningConfiguration config = new PermissioningConfiguration();
+    NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
+
+    // Whitelist peers
+    nodeWhitelistController.addNode(discoPeer);
+    nodeWhitelistController.addNode(otherPeer2);
+
+    controller =
+        spy(
+            new PeerDiscoveryController(
+                vertx,
+                agent,
+                peerTable,
+                Collections.singletonList(discoPeer),
+                TABLE_REFRESH_INTERVAL_MS,
+                PEER_REQUIREMENT,
+                blacklist,
+                nodeWhitelistController));
+
+    final Endpoint agentEndpoint = agent.getAdvertisedPeer().getEndpoint();
+
+    // Setup ping to be sent to discoPeer
+    SECP256K1.KeyPair[] keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(1);
+    PingPacketData pingPacketData = PingPacketData.create(agentEndpoint, discoPeer.getEndpoint());
+    final Packet discoPeerPing = Packet.create(PacketType.PING, pingPacketData, keyPairs[0]);
+    doReturn(discoPeerPing).when(agent).sendPacket(eq(discoPeer), eq(PacketType.PING), any());
+
+    controller.start();
+    await()
+        .atMost(5, TimeUnit.SECONDS)
+        .untilAsserted(
+            () -> {
+              verify(agent, atLeast(1)).sendPacket(any(), eq(PacketType.PING), any());
+            });
+
+    final Packet pongFromDiscoPeer =
+        MockPacketDataFactory.mockPongPacket(discoPeer, discoPeerPing.getHash());
+    controller.onMessage(pongFromDiscoPeer, discoPeer);
+
+    await()
+        .atMost(1, TimeUnit.SECONDS)
+        .untilAsserted(
+            () -> {
+              verify(agent, atLeast(1))
+                  .sendPacket(eq(discoPeer), eq(PacketType.FIND_NEIGHBORS), any());
+            });
+
+    // Setup ping to be sent to otherPeer after neighbors packet is received
+    keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(1);
+    pingPacketData = PingPacketData.create(agentEndpoint, otherPeer.getEndpoint());
+    final Packet pingPacket = Packet.create(PacketType.PING, pingPacketData, keyPairs[0]);
+    doReturn(pingPacket).when(agent).sendPacket(eq(otherPeer), eq(PacketType.PING), any());
+
+    // Setup ping to be sent to otherPeer2 after neighbors packet is received
+    keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(1);
+    pingPacketData = PingPacketData.create(agentEndpoint, otherPeer2.getEndpoint());
+    final Packet pingPacket2 = Packet.create(PacketType.PING, pingPacketData, keyPairs[0]);
+    doReturn(pingPacket2).when(agent).sendPacket(eq(otherPeer2), eq(PacketType.PING), any());
+
+    final Packet neighborsPacket =
+        MockPacketDataFactory.mockNeighborsPacket(discoPeer, otherPeer, otherPeer2);
+    controller.onMessage(neighborsPacket, discoPeer);
+
+    verify(controller, times(0)).bond(otherPeer, false);
+    verify(controller, times(1)).bond(otherPeer2, false);
+  }
+
+  @Test
+  public void shouldNotRespondToPingFromNonWhitelistedDiscoveryPeer() {
+    final DiscoveryPeer[] peers = createPeersInLastBucket(peer, 3);
+    final DiscoveryPeer discoPeer = peers[0];
+
+    final PeerBlacklist blacklist = new PeerBlacklist();
+
+    // don't add disco peer to whitelist
+    PermissioningConfiguration config = PermissioningConfiguration.createDefault();
+    config.setNodeWhitelist(new ArrayList<>());
+    NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
+
+    controller =
+        spy(
+            new PeerDiscoveryController(
+                vertx,
+                agent,
+                peerTable,
+                Collections.singletonList(discoPeer),
+                TABLE_REFRESH_INTERVAL_MS,
+                PEER_REQUIREMENT,
+                blacklist,
+                nodeWhitelistController));
+
+    final Packet pingPacket = mockPingPacket(peers[0], peer);
+    controller.onMessage(pingPacket, peers[0]);
+    assertThat(controller.getPeers()).doesNotContain(peers[0]);
+  }
+
   private static Packet mockPingPacket(final Peer from, final Peer to) {
     final Packet packet = mock(Packet.class);
 
@@ -937,7 +1057,8 @@ public class PeerDiscoveryControllerTest {
             Arrays.asList(bootstrapPeers),
             TABLE_REFRESH_INTERVAL_MS,
             PEER_REQUIREMENT,
-            new PeerBlacklist());
+            new PeerBlacklist(),
+            defaultNodeWhitelistController);
     controller.setRetryDelayFunction(retryDelayFunction);
     controller.start();
   }

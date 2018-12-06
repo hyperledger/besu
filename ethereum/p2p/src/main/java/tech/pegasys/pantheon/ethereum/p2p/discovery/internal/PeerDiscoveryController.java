@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerDropp
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -65,7 +66,7 @@ import org.apache.logging.log4j.Logger;
  *                                                    |           +---+----------------+           |
  * +------------+         +-----------+         +-----+----+          |                      +-----v-----+
  * |            |         |           |         |          <----------+                      |           |
- * |  KNOWN  +--------->  BONDING  +--------->  BONDED  |                                 |  DROPPED  |
+ * |  KNOWN  +--------->  BONDING  +--------->  BONDED     |                                 |  DROPPED  |
  * |            |         |           |         |          ^                                 |           |
  * +------------+         +-----------+         +----------+                                 +-----------+
  *
@@ -106,6 +107,7 @@ public class PeerDiscoveryController {
 
   private final PeerDiscoveryAgent agent;
   private final PeerBlacklist peerBlacklist;
+  private final NodeWhitelistController nodeWhitelist;
 
   private RetryDelayFunction retryDelayFunction = RetryDelayFunction.linear(1.5, 2000, 60000);
 
@@ -130,7 +132,8 @@ public class PeerDiscoveryController {
       final Collection<DiscoveryPeer> bootstrapNodes,
       final long tableRefreshIntervalMs,
       final PeerRequirement peerRequirement,
-      final PeerBlacklist peerBlacklist) {
+      final PeerBlacklist peerBlacklist,
+      final NodeWhitelistController nodeWhitelist) {
     this.vertx = vertx;
     this.agent = agent;
     this.bootstrapNodes = bootstrapNodes;
@@ -138,6 +141,7 @@ public class PeerDiscoveryController {
     this.tableRefreshIntervalMs = tableRefreshIntervalMs;
     this.peerRequirement = peerRequirement;
     this.peerBlacklist = peerBlacklist;
+    this.nodeWhitelist = nodeWhitelist;
   }
 
   public CompletableFuture<?> start() {
@@ -148,6 +152,7 @@ public class PeerDiscoveryController {
     bootstrapNodes
         .stream()
         .filter(node -> peerTable.tryAdd(node).getOutcome() == Outcome.ADDED)
+        .filter(node -> nodeWhitelist.contains(node))
         .forEach(node -> bond(node, true));
 
     final long timerId =
@@ -195,6 +200,10 @@ public class PeerDiscoveryController {
       return;
     }
 
+    if (!nodeWhitelist.contains(sender)) {
+      return;
+    }
+
     // Load the peer from the table, or use the instance that comes in.
     final Optional<DiscoveryPeer> maybeKnownPeer = peerTable.get(sender);
     final DiscoveryPeer peer = maybeKnownPeer.orElse(sender);
@@ -238,7 +247,9 @@ public class PeerDiscoveryController {
                           .orElse(emptyList());
 
                   for (final DiscoveryPeer neighbor : neighbors) {
-                    if (peerBlacklist.contains(neighbor) || peerTable.get(neighbor).isPresent()) {
+                    if (!nodeWhitelist.contains(neighbor)
+                        || peerBlacklist.contains(neighbor)
+                        || peerTable.get(neighbor).isPresent()) {
                       continue;
                     }
                     bond(neighbor, false);
