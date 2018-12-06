@@ -386,10 +386,7 @@ configure(subprojects.findAll {it.name != 'errorprone-checks'}) {
   dependencies { annotationProcessor project(":errorprone-checks") }
 
   tasks.withType(JavaCompile) {
-    options.compilerArgs += [
-      '-processorpath',
-      configurations.annotationProcessor.asPath
-    ]
+    options.annotationProcessorPath = configurations.annotationProcessor
   }
 }
 

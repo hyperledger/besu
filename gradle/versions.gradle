@@ -38,6 +38,8 @@ dependencyManagement {
     dependency "io.prometheus:simpleclient:0.5.0"
     dependency "io.prometheus:simpleclient_hotspot:0.5.0"
 
+    dependency 'io.reactivex.rxjava2:rxjava:2.2.2'
+
     dependency 'io.vertx:vertx-codegen:3.5.4'
     dependency 'io.vertx:vertx-core:3.5.4'
     dependency 'io.vertx:vertx-unit:3.5.4'
@@ -57,6 +59,8 @@ dependencyManagement {
 
     dependency 'org.bouncycastle:bcprov-jdk15on:1.60'
 
+    dependency 'org.java-websocket:Java-WebSocket:1.3.8'
+
     dependency 'org.mockito:mockito-core:2.23.4'
 
     dependency 'org.openjdk.jmh:jmh-core:1.21'
@@ -64,7 +68,9 @@ dependencyManagement {
 
     dependency 'org.rocksdb:rocksdbjni:5.15.10'
 
+    dependency 'org.web3j:abi:4.0.1'
     dependency 'org.web3j:core:4.0.1'
+    dependency 'org.web3j:crypto:4.0.1'
 
     dependency 'org.xerial.snappy:snappy-java:1.1.7.2'
   }
