@@ -10,40 +10,42 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.controller;
+package tech.pegasys.pantheon.ethereum.p2p.permissioning;
 
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.config.PermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class NodeWhitelistController {
 
-  private static final Logger LOG = LogManager.getLogger();
-
-  private static List<String> nodeWhitelist;
-  private static boolean nodeWhitelistSet = false;
+  private final List<Peer> nodeWhitelist;
+  private boolean nodeWhitelistSet = false;
 
   public NodeWhitelistController(final PermissioningConfiguration configuration) {
     nodeWhitelist = new ArrayList<>();
     if (configuration != null && configuration.getNodeWhitelist() != null) {
-      nodeWhitelist.addAll(configuration.getNodeWhitelist());
-      nodeWhitelistSet = true;
+      for (String urlString : configuration.getNodeWhitelist()) {
+        nodeWhitelist.add(DefaultPeer.fromURI(urlString));
+      }
+      if (configuration.isNodeWhitelistSet()) {
+        nodeWhitelistSet = true;
+      }
     }
   }
 
-  public boolean addNode(final String nodeId) {
-    return nodeWhitelist.add(nodeId);
+  public boolean addNode(final Peer node) {
+    nodeWhitelistSet = true;
+    return nodeWhitelist.add(node);
   }
 
-  public boolean removeNode(final String nodeId) {
-    return nodeWhitelist.remove(nodeId);
+  public boolean removeNode(final Peer node) {
+    return nodeWhitelist.remove(node);
   }
 
-  public static boolean isNodeWhitelistSet() {
-    return nodeWhitelistSet;
+  public boolean contains(final Peer node) {
+    return (!nodeWhitelistSet || (nodeWhitelistSet && nodeWhitelist.contains(node)));
   }
 }

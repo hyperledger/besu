@@ -33,6 +33,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeerId;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
 import tech.pegasys.pantheon.util.NetworkUtility;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -118,7 +119,8 @@ public class PeerDiscoveryAgent implements DisconnectCallback {
       final SECP256K1.KeyPair keyPair,
       final DiscoveryConfiguration config,
       final PeerRequirement peerRequirement,
-      final PeerBlacklist peerBlacklist) {
+      final PeerBlacklist peerBlacklist,
+      final NodeWhitelistController nodeWhitelistController) {
     checkArgument(vertx != null, "vertx instance cannot be null");
     checkArgument(keyPair != null, "keypair cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
@@ -140,7 +142,8 @@ public class PeerDiscoveryAgent implements DisconnectCallback {
             bootstrapPeers,
             PEER_REFRESH_INTERVAL_MS,
             peerRequirement,
-            peerBlacklist);
+            peerBlacklist,
+            nodeWhitelistController);
   }
 
   public CompletableFuture<?> start(final int tcpPort) {

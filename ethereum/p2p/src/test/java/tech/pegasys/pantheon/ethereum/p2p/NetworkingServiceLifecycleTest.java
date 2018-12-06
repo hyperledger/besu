@@ -22,9 +22,11 @@ import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.config.NetworkingConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.config.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryServiceException;
 import tech.pegasys.pantheon.ethereum.p2p.netty.NettyP2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.NetworkUtility;
 
@@ -55,7 +57,8 @@ public class NetworkingServiceLifecycleTest {
             emptyList(),
             () -> true,
             new PeerBlacklist(),
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()))) {
       service.run();
       final int port = service.getDiscoverySocketAddress().getPort();
 
@@ -80,7 +83,8 @@ public class NetworkingServiceLifecycleTest {
             emptyList(),
             () -> true,
             new PeerBlacklist(),
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()))) {
       Assertions.fail("Expected Exception");
     }
   }
@@ -99,7 +103,8 @@ public class NetworkingServiceLifecycleTest {
             emptyList(),
             () -> true,
             new PeerBlacklist(),
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()))) {
       Assertions.fail("Expected Exception");
     }
   }
@@ -118,7 +123,8 @@ public class NetworkingServiceLifecycleTest {
             emptyList(),
             () -> true,
             new PeerBlacklist(),
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()))) {
       Assertions.fail("Expected Exception");
     }
   }
@@ -133,7 +139,8 @@ public class NetworkingServiceLifecycleTest {
             emptyList(),
             () -> true,
             new PeerBlacklist(),
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()))) {
       Assertions.fail("Expected Exception");
     }
   }
@@ -149,7 +156,8 @@ public class NetworkingServiceLifecycleTest {
             emptyList(),
             () -> true,
             new PeerBlacklist(),
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()))) {
       service.run();
       service.stop();
       service.run();
@@ -167,7 +175,8 @@ public class NetworkingServiceLifecycleTest {
                 emptyList(),
                 () -> true,
                 new PeerBlacklist(),
-                new NoOpMetricsSystem());
+                new NoOpMetricsSystem(),
+                new NodeWhitelistController(PermissioningConfiguration.createDefault()));
         final NettyP2PNetwork service2 =
             new NettyP2PNetwork(
                 vertx,
@@ -176,7 +185,8 @@ public class NetworkingServiceLifecycleTest {
                 emptyList(),
                 () -> true,
                 new PeerBlacklist(),
-                new NoOpMetricsSystem())) {
+                new NoOpMetricsSystem(),
+                new NodeWhitelistController(PermissioningConfiguration.createDefault()))) {
       service1.run();
       service1.stop();
       service2.run();
@@ -195,7 +205,8 @@ public class NetworkingServiceLifecycleTest {
             emptyList(),
             () -> true,
             new PeerBlacklist(),
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()))) {
       service1.run();
       final NetworkingConfiguration config = configWithRandomPorts();
       config.getDiscovery().setBindPort(service1.getDiscoverySocketAddress().getPort());
@@ -207,7 +218,8 @@ public class NetworkingServiceLifecycleTest {
               emptyList(),
               () -> true,
               new PeerBlacklist(),
-              new NoOpMetricsSystem())) {
+              new NoOpMetricsSystem(),
+              new NodeWhitelistController(PermissioningConfiguration.createDefault()))) {
         try {
           service2.run();
         } catch (final Exception e) {
@@ -236,7 +248,8 @@ public class NetworkingServiceLifecycleTest {
             emptyList(),
             () -> true,
             new PeerBlacklist(),
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            new NodeWhitelistController(PermissioningConfiguration.createDefault()))) {
       assertTrue(agent.getDiscoveryPeers().isEmpty());
       assertEquals(0, agent.getPeers().size());
     }
