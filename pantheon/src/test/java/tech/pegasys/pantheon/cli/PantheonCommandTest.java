@@ -54,6 +54,7 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
+import org.apache.commons.text.StringEscapeUtils;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -251,7 +252,8 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final URL configFile = Resources.getResource("complete_config.toml");
     final Path genesisFile = createFakeGenesisFile();
     final String updatedConfig =
-        Resources.toString(configFile, UTF_8).replaceAll("~/genesis.json", genesisFile.toString());
+        Resources.toString(configFile, UTF_8)
+            .replace("~/genesis.json", escapeTomlString(genesisFile.toString()));
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, updatedConfig.getBytes(UTF_8));
 
@@ -1003,5 +1005,9 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   private boolean isFullInstantiation() {
     return !Boolean.getBoolean("pantheon.docker");
+  }
+
+  private static String escapeTomlString(final String s) {
+    return StringEscapeUtils.escapeJava(s);
   }
 }
