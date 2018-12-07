@@ -57,6 +57,7 @@ public class DockerQuickstartTest {
   private static final String DEFAULT_RPC_HOST =
       Optional.ofNullable(System.getenv("DOCKER_PORT_2375_TCP_ADDR")).orElse("localhost");
   private static final String DEFAULT_HTTP_RPC_HOST = "http://" + DEFAULT_RPC_HOST;
+  private static final String DEFAULT_HOST_HEADER = "localhost";
   private final Map<ServicesIdentifier, Service> services = new EnumMap<>(ServicesIdentifier.class);
   private final Map<EndpointsIdentifier, String> endpoints =
       new EnumMap<>(EndpointsIdentifier.class);
@@ -104,19 +105,17 @@ public class DockerQuickstartTest {
     assertThat(services).isNotNull().isNotEmpty();
     assertThat(endpoints).isNotNull().isNotEmpty();
 
-    web3HttpClient =
-        Web3j.build(
-            new HttpService(
-                DEFAULT_HTTP_RPC_HOST
-                    + ":"
-                    + services
-                        .get(ServicesIdentifier.RPCNODE)
-                        .exposedPorts
-                        .get(DEFAULT_HTTP_RPC_PORT)
-                        .externalPort),
-            2000,
-            Async.defaultExecutorService());
-
+    HttpService httpService =
+        new HttpService(
+            DEFAULT_HTTP_RPC_HOST
+                + ":"
+                + services
+                    .get(ServicesIdentifier.RPCNODE)
+                    .exposedPorts
+                    .get(DEFAULT_HTTP_RPC_PORT)
+                    .externalPort);
+    httpService.addHeader("Host", DEFAULT_HOST_HEADER);
+    web3HttpClient = Web3j.build(httpService, 2000, Async.defaultExecutorService());
     assertThat(web3HttpClient).isNotNull();
   }
 

@@ -20,7 +20,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 public class JsonRpcConfiguration {
-  public static final String DEFAULT_JSON_RPC_HOST = "127.0.0.1";
+  private static final String DEFAULT_JSON_RPC_HOST = "127.0.0.1";
   public static final int DEFAULT_JSON_RPC_PORT = 8545;
 
   private boolean enabled;
@@ -28,6 +28,7 @@ public class JsonRpcConfiguration {
   private String host;
   private Collection<String> corsAllowedDomains = Collections.emptyList();
   private Collection<RpcApi> rpcApis;
+  private Collection<String> hostsWhitelist = Collections.singletonList("localhost");
 
   public static JsonRpcConfiguration createDefault() {
     final JsonRpcConfiguration config = new JsonRpcConfiguration();
@@ -87,6 +88,14 @@ public class JsonRpcConfiguration {
     rpcApis.add(rpcApi);
   }
 
+  public Collection<String> getHostsWhitelist() {
+    return Collections.unmodifiableCollection(this.hostsWhitelist);
+  }
+
+  public void setHostsWhitelist(final Collection<String> hostsWhitelist) {
+    this.hostsWhitelist = hostsWhitelist;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -94,6 +103,7 @@ public class JsonRpcConfiguration {
         .add("port", port)
         .add("host", host)
         .add("corsAllowedDomains", corsAllowedDomains)
+        .add("hostsWhitelist", hostsWhitelist)
         .add("rpcApis", rpcApis)
         .toString();
   }
@@ -111,11 +121,12 @@ public class JsonRpcConfiguration {
         && port == that.port
         && Objects.equal(host, that.host)
         && Objects.equal(corsAllowedDomains, that.corsAllowedDomains)
+        && Objects.equal(hostsWhitelist, that.hostsWhitelist)
         && Objects.equal(rpcApis, that.rpcApis);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(enabled, port, host, corsAllowedDomains, rpcApis);
+    return Objects.hashCode(enabled, port, host, corsAllowedDomains, hostsWhitelist, rpcApis);
   }
 }

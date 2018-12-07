@@ -19,6 +19,7 @@ import static tech.pegasys.pantheon.cli.DefaultCommandValues.getDefaultPantheonD
 import tech.pegasys.pantheon.Runner;
 import tech.pegasys.pantheon.RunnerBuilder;
 import tech.pegasys.pantheon.cli.custom.CorsAllowedOriginsProperty;
+import tech.pegasys.pantheon.cli.custom.JsonRPCWhitelistHostsProperty;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.CliqueRpcApis;
 import tech.pegasys.pantheon.consensus.ibft.jsonrpc.IbftRpcApis;
 import tech.pegasys.pantheon.controller.KeyPairUtil;
@@ -312,6 +313,16 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Collection<RpcApi> wsApis = null;
 
   @Option(
+    names = {"--host-whitelist"},
+    paramLabel = "<hostname>",
+    description =
+        "Comma separated list of hostnames to whitelist for RPC access.  default: ${DEFAULT-VALUE}",
+    defaultValue = "localhost",
+    converter = JsonRPCWhitelistHostsProperty.JsonRPCWhitelistHostsConverter.class
+  )
+  private final JsonRPCWhitelistHostsProperty hostsWhitelist = new JsonRPCWhitelistHostsProperty();
+
+  @Option(
     names = {"--dev-mode"},
     description =
         "set during development to have a custom genesis with specific chain id "
@@ -483,6 +494,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setPort(rpcHostAndPort.getPort());
     jsonRpcConfiguration.setCorsAllowedDomains(rpcCorsAllowedOrigins.getDomains());
     jsonRpcConfiguration.setRpcApis(rpcApis);
+    jsonRpcConfiguration.setHostsWhitelist(hostsWhitelist.hostnamesWhitelist());
     return jsonRpcConfiguration;
   }
 

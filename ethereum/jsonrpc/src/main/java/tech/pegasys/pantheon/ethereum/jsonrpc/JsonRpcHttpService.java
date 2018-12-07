@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Streams.stream;
 import static java.util.stream.Collectors.toList;
 import static tech.pegasys.pantheon.util.NetworkUtility.urlForSocketAddress;
 
@@ -38,13 +39,17 @@ import java.net.SocketException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
@@ -113,6 +118,10 @@ public class JsonRpcHttpService {
 
     // Handle json rpc requests
     final Router router = Router.router(vertx);
+
+    // Verify Host header to avoid rebind attack.
+    router.route().handler(checkWhitelistHostHeader());
+
     router
         .route()
         .handler(
@@ -159,6 +168,42 @@ public class JsonRpcHttpService {
             });
 
     return resultFuture;
+  }
+
+  private Handler<RoutingContext> checkWhitelistHostHeader() {
+    return event -> {
+      Optional<String> hostHeader = getAndValidateHostHeader(event);
+      if (config.getHostsWhitelist().contains("*")
+          || (hostHeader.isPresent() && hostIsInWhitelist(hostHeader))) {
+        event.next();
+      } else {
+        event
+            .response()
+            .setStatusCode(403)
+            .putHeader("Content-Type", "application/json; charset=utf-8")
+            .end("{\"message\":\"Host not authorized.\"}");
+      }
+    };
+  }
+
+  private Optional<String> getAndValidateHostHeader(final RoutingContext event) {
+    Iterable<String> splitHostHeader = Splitter.on(':').split(event.request().host());
+    long hostPieces = stream(splitHostHeader).count();
+    if (hostPieces > 1) {
+      // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
+      if (hostPieces > 2 || !Iterables.get(splitHostHeader, 1).matches("\\d{1,5}+")) {
+        return Optional.empty();
+      }
+    }
+    return Optional.ofNullable(Iterables.get(splitHostHeader, 0));
+  }
+
+  private boolean hostIsInWhitelist(final Optional<String> hostHeader) {
+    return config
+        .getHostsWhitelist()
+        .stream()
+        .anyMatch(
+            whitelistEntry -> whitelistEntry.toLowerCase().equals(hostHeader.get().toLowerCase()));
   }
 
   public CompletableFuture<?> stop() {
