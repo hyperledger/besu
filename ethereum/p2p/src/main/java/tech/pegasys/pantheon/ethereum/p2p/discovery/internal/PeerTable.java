@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Comparator.comparingInt;
 import static java.util.stream.Collectors.toList;
+import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistanceCalculator.distance;
 
 import tech.pegasys.pantheon.crypto.Hash;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
@@ -201,38 +202,6 @@ public class PeerTable {
   private int distanceFrom(final PeerId peer) {
     final Integer distance = distanceCache.get(peer.getId());
     return distance == null ? distance(keccak256, peer.keccak256()) : distance;
-  }
-
-  /**
-   * Calculates the XOR distance between two values.
-   *
-   * @param v1 the first value
-   * @param v2 the second value
-   * @return the distance
-   */
-  static int distance(final BytesValue v1, final BytesValue v2) {
-    assert (v1.size() == v2.size());
-    final byte[] v1b = v1.extractArray();
-    final byte[] v2b = v2.extractArray();
-
-    if (Arrays.equals(v1b, v2b)) {
-      return 0;
-    }
-
-    int distance = v1b.length * 8;
-    for (int i = 0; i < v1b.length; i++) {
-      final byte xor = (byte) (0xff & (v1b[i] ^ v2b[i]));
-      if (xor == 0) {
-        distance -= 8;
-      } else {
-        int p = 7;
-        while (((xor >> p--) & 0x01) == 0) {
-          distance--;
-        }
-        break;
-      }
-    }
-    return distance;
   }
 
   /** A class that encapsulates the result of a peer addition to the table. */
