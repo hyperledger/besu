@@ -839,11 +839,60 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void ropstenValuesAreUsed() throws Exception {
+    parseCommand("--ropsten");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilder).ethNetworkConfig(networkArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.ropsten());
+  }
+
+  @Test
+  public void goerliValuesAreUsed() throws Exception {
+    parseCommand("--goerli");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilder).ethNetworkConfig(networkArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.goerli());
+  }
+
+  @Test
+  public void noSeveralNetworkOptions() throws Exception {
+    parseCommand("--goerli", "--rinkeby");
+
+    verifyZeroInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).contains("Unable to connect to multiple networks");
+  }
+
+  @Test
   public void rinkebyValuesCanBeOverridden() throws Exception {
+    networkValuesCanBeOverridden("rinkeby");
+  }
+
+  @Test
+  public void goerliValuesCanBeOverridden() throws Exception {
+    networkValuesCanBeOverridden("goerli");
+  }
+
+  private void networkValuesCanBeOverridden(final String network) throws Exception {
     final String[] nodes = {"enode://001@123:4567", "enode://002@123:4567", "enode://003@123:4567"};
     final Path genesisFile = createFakeGenesisFile();
     parseCommand(
-        "--rinkeby",
+        "--" + network,
         "--network-id",
         "1",
         "--bootnodes",

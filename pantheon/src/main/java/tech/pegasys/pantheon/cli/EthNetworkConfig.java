@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
 import static tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 import static tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
 import static tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.ROPSTEN_BOOTSTRAP_NODES;
@@ -30,9 +31,11 @@ public class EthNetworkConfig {
   private static final int MAINNET_NETWORK_ID = 1;
   private static final int RINKEBY_NETWORK_ID = 4;
   private static final int ROPSTEN_NETWORK_ID = 3;
+  private static final int GOERLI_NETWORK_ID = 6284;
   private static final String MAINNET_GENESIS = "mainnet.json";
   private static final String RINKEBY_GENESIS = "rinkeby.json";
   private static final String ROPSTEN_GENESIS = "ropsten.json";
+  private static final String GOERLI_GENESIS = "goerli.json";
   private final String genesisConfig;
   private final int networkId;
   private final Collection<?> bootNodes;
@@ -102,6 +105,11 @@ public class EthNetworkConfig {
   public static EthNetworkConfig ropsten() {
     return new EthNetworkConfig(
         jsonConfig(ROPSTEN_GENESIS), ROPSTEN_NETWORK_ID, ROPSTEN_BOOTSTRAP_NODES);
+  }
+
+  public static EthNetworkConfig goerli() {
+    return new EthNetworkConfig(
+        jsonConfig(GOERLI_GENESIS), GOERLI_NETWORK_ID, GOERLI_BOOTSTRAP_NODES);
   }
 
   private static String jsonConfig(final String resourceName) {
