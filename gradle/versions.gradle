@@ -73,5 +73,6 @@ dependencyManagement {
     dependency 'org.web3j:crypto:4.0.1'
 
     dependency 'org.xerial.snappy:snappy-java:1.1.7.2'
+    dependency 'org.apache.commons:commons-text:1.6'
   }
 }
