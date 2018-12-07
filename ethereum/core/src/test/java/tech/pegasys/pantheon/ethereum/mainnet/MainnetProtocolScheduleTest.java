@@ -37,7 +37,9 @@ public class MainnetProtocolScheduleTest {
         .isEqualTo("TangerineWhistle");
     Assertions.assertThat(sched.getByBlockNumber(2_675_000L).getName()).isEqualTo("SpuriousDragon");
     Assertions.assertThat(sched.getByBlockNumber(4_730_000L).getName()).isEqualTo("Byzantium");
-    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Byzantium");
+    Assertions.assertThat(sched.getByBlockNumber(7_080_000L).getName()).isEqualTo("Constantinople");
+    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName())
+        .isEqualTo("Constantinople");
   }
 
   @Test
