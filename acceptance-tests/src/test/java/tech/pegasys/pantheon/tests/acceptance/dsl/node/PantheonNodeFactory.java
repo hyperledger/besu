@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static tech.pegasys.pantheon.consensus.clique.jsonrpc.CliqueRpcApis.CLIQUE;
 
@@ -154,6 +155,7 @@ public class PantheonNodeFactory {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setEnabled(true);
     config.setPort(0);
+    config.setHostsWhitelist(singletonList("*"));
     return config;
   }
 
