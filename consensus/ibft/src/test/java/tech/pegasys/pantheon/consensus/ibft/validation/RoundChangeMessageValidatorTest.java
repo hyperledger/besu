@@ -50,8 +50,10 @@ public class RoundChangeMessageValidatorTest {
   private final MessageFactory validatorMessageFactory = new MessageFactory(validatorKey);
   private final MessageFactory nonValidatorMessageFactory = new MessageFactory(nonValidatorKey);
 
-  private final ConsensusRoundIdentifier currentRound = new ConsensusRoundIdentifier(2, 3);
-  private final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(2, 4);
+  private final long chainHeight = 2;
+  private final ConsensusRoundIdentifier currentRound =
+      new ConsensusRoundIdentifier(chainHeight, 3);
+  private final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(chainHeight, 4);
 
   private final Block block = mock(Block.class);
 
@@ -60,7 +62,7 @@ public class RoundChangeMessageValidatorTest {
 
   private final MessageValidatorFactory validatorFactory = mock(MessageValidatorFactory.class);
   private final RoundChangeMessageValidator validator =
-      new RoundChangeMessageValidator(validatorFactory, validators, 1, currentRound);
+      new RoundChangeMessageValidator(validatorFactory, validators, 1, chainHeight);
 
   @Before
   public void setup() {
@@ -92,7 +94,7 @@ public class RoundChangeMessageValidatorTest {
   }
 
   @Test
-  public void roundChangeContainingInvalidPreprepareFails() {
+  public void roundChangeContainingInvalidProposalFails() {
     final PreparedCertificate prepareCertificate =
         new PreparedCertificate(
             proposerMessageFactory.createSignedProposalPayload(currentRound, block),
@@ -114,7 +116,7 @@ public class RoundChangeMessageValidatorTest {
   }
 
   @Test
-  public void roundChangeContainingValidPreprepareButNoPrepareMessagesFails() {
+  public void roundChangeContainingValidProposalButNoPrepareMessagesFails() {
     final PreparedCertificate prepareCertificate =
         new PreparedCertificate(
             proposerMessageFactory.createSignedProposalPayload(currentRound, block),
@@ -164,7 +166,7 @@ public class RoundChangeMessageValidatorTest {
   }
 
   @Test
-  public void roundChangeWithPreprepareFromARoundAheadOfRoundChangeTargetFails() {
+  public void roundChangeWithProposalFromARoundAheadOfRoundChangeTargetFails() {
     final ConsensusRoundIdentifier futureRound =
         new ConsensusRoundIdentifier(
             currentRound.getSequenceNumber(), currentRound.getRoundNumber() + 2);
@@ -187,7 +189,7 @@ public class RoundChangeMessageValidatorTest {
   }
 
   @Test
-  public void roudnChangeWithPastPreprepareForCurrentHeightIsSuccessful() {
+  public void roundChangeWithPastProposalForCurrentHeightIsSuccessful() {
     final SignedData<PreparePayload> prepareMsg =
         validatorMessageFactory.createSignedPreparePayload(currentRound, block.getHash());
     final PreparedCertificate prepareCertificate =

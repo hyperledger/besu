@@ -16,6 +16,9 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
 import java.util.Collection;
+import java.util.List;
+
+import com.google.common.collect.Lists;
 
 public class RoundChangeCertificate {
 
@@ -44,5 +47,19 @@ public class RoundChangeCertificate {
 
   public Collection<SignedData<RoundChangePayload>> getRoundChangePayloads() {
     return roundChangePayloads;
+  }
+
+  public static class Builder {
+    private final List<SignedData<RoundChangePayload>> roundChangePayloads = Lists.newArrayList();
+
+    public Builder() {}
+
+    public void appendRoundChangeMessage(final SignedData<RoundChangePayload> msg) {
+      roundChangePayloads.add(msg);
+    }
+
+    public RoundChangeCertificate buildCertificate() {
+      return new RoundChangeCertificate(roundChangePayloads);
+    }
   }
 }

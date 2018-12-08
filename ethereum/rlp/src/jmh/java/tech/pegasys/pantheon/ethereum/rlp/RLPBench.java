@@ -27,6 +27,7 @@ import org.openjdk.jmh.annotations.State;
 
 @State(Scope.Benchmark)
 public class RLPBench {
+
   private static Object generate(final int depth, final int width, final int size) {
     final byte[] bytes = new byte[size];
     for (int i = 0; i < size; i++) {
