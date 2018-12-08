@@ -32,17 +32,17 @@ public class RoundChangeMessageValidator {
   private final MessageValidatorFactory messageValidatorFactory;
   private final Collection<Address> validators;
   private final long minimumPrepareMessages;
-  private final ConsensusRoundIdentifier currentRound;
+  private final long chainHeight;
 
   public RoundChangeMessageValidator(
       final MessageValidatorFactory messageValidatorFactory,
       final Collection<Address> validators,
       final long minimumPrepareMessages,
-      final ConsensusRoundIdentifier currentRound) {
+      final long chainHeight) {
     this.messageValidatorFactory = messageValidatorFactory;
     this.validators = validators;
     this.minimumPrepareMessages = minimumPrepareMessages;
-    this.currentRound = currentRound;
+    this.chainHeight = chainHeight;
   }
 
   public boolean validateMessage(final SignedData<RoundChangePayload> msg) {
@@ -56,7 +56,7 @@ public class RoundChangeMessageValidator {
 
     final ConsensusRoundIdentifier targetRound = msg.getPayload().getRoundChangeIdentifier();
 
-    if (targetRound.getSequenceNumber() != currentRound.getSequenceNumber()) {
+    if (targetRound.getSequenceNumber() != chainHeight) {
       LOG.info("Invalid RoundChange message, not valid for local chain height.");
       return false;
     }
@@ -74,14 +74,15 @@ public class RoundChangeMessageValidator {
       final PreparedCertificate certificate, final ConsensusRoundIdentifier roundChangeTarget) {
     final SignedData<ProposalPayload> proposalMessage = certificate.getProposalPayload();
 
-    final ConsensusRoundIdentifier prepareCertRound =
+    final ConsensusRoundIdentifier proposalRoundIdentifier =
         proposalMessage.getPayload().getRoundIdentifier();
 
-    if (!validatePreparedCertificateRound(prepareCertRound, roundChangeTarget)) {
+    if (!validatePreparedCertificateRound(proposalRoundIdentifier, roundChangeTarget)) {
       return false;
     }
 
-    final MessageValidator messageValidator = messageValidatorFactory.createAt(prepareCertRound);
+    final MessageValidator messageValidator =
+        messageValidatorFactory.createAt(proposalRoundIdentifier);
     return validateConsistencyOfPrepareCertificateMessages(certificate, messageValidator);
   }
 
@@ -121,7 +122,7 @@ public class RoundChangeMessageValidator {
 
     if (prepareCertRound.getRoundNumber() >= roundChangeTarget.getRoundNumber()) {
       LOG.info(
-          "Invalid RoundChange message, PreparedCertificate is newer than RoundChange target.");
+          "Invalid RoundChange message, PreparedCertificate not older than RoundChange target.");
       return false;
     }
     return true;

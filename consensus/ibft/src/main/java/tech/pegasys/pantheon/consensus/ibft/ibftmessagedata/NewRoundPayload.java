@@ -17,6 +17,8 @@ import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftV2;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
+import java.util.Collections;
+
 public class NewRoundPayload extends AbstractPayload {
 
   private static final int TYPE = IbftV2.NEW_ROUND;
@@ -73,5 +75,47 @@ public class NewRoundPayload extends AbstractPayload {
   @Override
   public int getMessageType() {
     return TYPE;
+  }
+
+  public static class Builder {
+
+    private ConsensusRoundIdentifier roundChangeIdentifier = new ConsensusRoundIdentifier(1, 0);
+
+    private RoundChangeCertificate roundChangeCertificate =
+        new RoundChangeCertificate(Collections.emptyList());
+
+    private SignedData<ProposalPayload> proposalPayload = null;
+
+    public Builder() {}
+
+    public Builder(
+        final ConsensusRoundIdentifier roundChangeIdentifier,
+        final RoundChangeCertificate roundChangeCertificate,
+        final SignedData<ProposalPayload> proposalPayload) {
+      this.roundChangeIdentifier = roundChangeIdentifier;
+      this.roundChangeCertificate = roundChangeCertificate;
+      this.proposalPayload = proposalPayload;
+    }
+
+    public static Builder fromExisting(final NewRoundPayload payload) {
+      return new Builder(
+          payload.roundChangeIdentifier, payload.roundChangeCertificate, payload.proposalPayload);
+    }
+
+    public void setRoundChangeIdentifier(final ConsensusRoundIdentifier roundChangeIdentifier) {
+      this.roundChangeIdentifier = roundChangeIdentifier;
+    }
+
+    public void setRoundChangeCertificate(final RoundChangeCertificate roundChangeCertificate) {
+      this.roundChangeCertificate = roundChangeCertificate;
+    }
+
+    public void setProposalPayload(final SignedData<ProposalPayload> proposalPayload) {
+      this.proposalPayload = proposalPayload;
+    }
+
+    public NewRoundPayload build() {
+      return new NewRoundPayload(roundChangeIdentifier, roundChangeCertificate, proposalPayload);
+    }
   }
 }

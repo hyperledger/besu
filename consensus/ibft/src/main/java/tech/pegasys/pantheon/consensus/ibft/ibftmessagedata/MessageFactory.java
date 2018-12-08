@@ -84,7 +84,7 @@ public class MessageFactory {
         payload, Util.publicKeyToAddress(validatorKeyPair.getPublicKey()), signature);
   }
 
-  static Hash hashForSignature(final AbstractPayload unsignedMessageData) {
+  public static Hash hashForSignature(final AbstractPayload unsignedMessageData) {
     return Hash.hash(
         BytesValues.concatenate(
             BytesValues.ofUnsignedByte(unsignedMessageData.getMessageType()),
@@ -92,7 +92,6 @@ public class MessageFactory {
   }
 
   private static Signature sign(final AbstractPayload unsignedMessageData, final KeyPair nodeKeys) {
-
     return SECP256K1.sign(hashForSignature(unsignedMessageData), nodeKeys);
   }
 }
