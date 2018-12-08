@@ -31,6 +31,7 @@ import org.apache.logging.log4j.Logger;
 public abstract class AbstractMiningCoordinator<
         C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>>
     implements BlockAddedObserver, MiningCoordinator {
+
   private static final Logger LOG = getLogger();
   protected boolean isEnabled = false;
   protected volatile Optional<M> currentRunningMiner = Optional.empty();
@@ -95,7 +96,9 @@ public abstract class AbstractMiningCoordinator<
   @Override
   public void onBlockAdded(final BlockAddedEvent event, final Blockchain blockchain) {
     synchronized (this) {
-      if (isEnabled && event.isNewCanonicalHead()) {
+      if (isEnabled
+          && event.isNewCanonicalHead()
+          && newChainHeadInvalidatesMiningOperation(event.getBlock().getHeader())) {
         haltCurrentMiningOperation();
         if (syncState.isInSync()) {
           startAsyncMiningOperation();
@@ -135,4 +138,7 @@ public abstract class AbstractMiningCoordinator<
   public void setExtraData(final BytesValue extraData) {
     executor.setExtraData(extraData);
   }
+
+  protected abstract boolean newChainHeadInvalidatesMiningOperation(
+      final BlockHeader newChainHeadHeader);
 }

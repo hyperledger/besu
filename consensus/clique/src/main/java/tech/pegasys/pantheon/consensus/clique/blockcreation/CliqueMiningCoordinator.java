@@ -13,15 +13,52 @@
 package tech.pegasys.pantheon.consensus.clique.blockcreation;
 
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
+import tech.pegasys.pantheon.consensus.clique.CliqueMiningTracker;
 import tech.pegasys.pantheon.ethereum.blockcreation.AbstractMiningCoordinator;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 
 public class CliqueMiningCoordinator
     extends AbstractMiningCoordinator<CliqueContext, CliqueBlockMiner> {
 
+  private final CliqueMiningTracker miningTracker;
+
   public CliqueMiningCoordinator(
-      final Blockchain blockchain, final CliqueMinerExecutor executor, final SyncState syncState) {
+      final Blockchain blockchain,
+      final CliqueMinerExecutor executor,
+      final SyncState syncState,
+      final CliqueMiningTracker miningTracker) {
     super(blockchain, executor, syncState);
+    this.miningTracker = miningTracker;
+  }
+
+  @Override
+  protected boolean newChainHeadInvalidatesMiningOperation(final BlockHeader newChainHeadHeader) {
+    if (!currentRunningMiner.isPresent()) {
+      return true;
+    }
+
+    if (miningTracker.blockCreatedLocally(newChainHeadHeader)) {
+      return true;
+    }
+
+    return networkBlockBetterThanCurrentMiner(newChainHeadHeader);
+  }
+
+  private boolean networkBlockBetterThanCurrentMiner(final BlockHeader newChainHeadHeader) {
+    final BlockHeader parentHeader = currentRunningMiner.get().getParentHeader();
+    final long currentMinerTargetHeight = parentHeader.getNumber() + 1;
+    if (currentMinerTargetHeight < newChainHeadHeader.getNumber()) {
+      return true;
+    }
+
+    final boolean nodeIsMining = miningTracker.canMakeBlockNextRound(parentHeader);
+    final boolean nodeIsInTurn = miningTracker.isProposerAfter(parentHeader);
+
+    if (nodeIsMining && nodeIsInTurn) {
+      return false;
+    }
+    return true;
   }
 }

@@ -65,6 +65,7 @@ public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnabl
 
   @Override
   public void run() {
+
     boolean blockMined = false;
     while (!blockMined) {
       try {
@@ -84,6 +85,7 @@ public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnabl
     // Ensure the block is allowed to be mined - i.e. the timestamp on the new block is sufficiently
     // ahead of the parent, and still within allowable clock tolerance.
     LOG.trace("Started a mining operation.");
+
     final long newBlockTimestamp = scheduler.waitUntilNextBlockCanBeMined(parentHeader);
 
     LOG.trace("Mining a new block with timestamp {}", newBlockTimestamp);
@@ -111,5 +113,9 @@ public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnabl
 
   private void notifyNewBlockListeners(final Block block) {
     observers.forEach(obs -> obs.blockMined(block));
+  }
+
+  public BlockHeader getParentHeader() {
+    return parentHeader;
   }
 }
