@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 
@@ -133,6 +134,11 @@ public class AbstractMiningCoordinatorTest {
         final AbstractMinerExecutor<Void, EthHashBlockMiner> executor,
         final SyncState syncState) {
       super(blockchain, executor, syncState);
+    }
+
+    @Override
+    public boolean newChainHeadInvalidatesMiningOperation(final BlockHeader newChainHeadHeader) {
+      return true;
     }
   }
 }
