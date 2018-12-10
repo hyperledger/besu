@@ -1,5 +1,97 @@
 # Changelog
 
+## 0.8.3 
+
+### Breaking Change to JSON RPC-API 
+
+From v0.8.3, incoming HTTP requests are only accepted from hostnames specified using the `--host-whitelist` command-line option. If not specified, the default value for `--host-whitelist` is `localhost`. 
+
+If using the URL `http://127.0.0.1` to make JSON-RPC calls, use `--host-whitelist` to specify the hostname `127.0.0.1` or update the hostname to `localhost`. 
+
+If your application publishes RPC ports, specify the hostnames when starting Pantheon. For example:  
+
+```json
+pantheon --host-whitelist=example.com
+```
+ 
+Specify `*` or `all` for `--host-whitelist` to effectively disable host protection and replicate pre-v0.8.3 behavior. This is not recommended for production code. 
+
+### Bug Fixes 
+
+- Repair Clique Proposer Selection [\#339](https://github.com/PegaSysEng/pantheon/pull/339) 
+- High TX volume swamps block processing [\#337](https://github.com/PegaSysEng/pantheon/pull/337) 
+- Check if the connectFuture has completed successfully [\#293](https://github.com/PegaSysEng/pantheon/pull/293) 
+- Switch back to Xerial Snappy Library [\#284](https://github.com/PegaSysEng/pantheon/pull/284) 
+- ShortHex of 0 should be '0x0', not '0x' [\#272](https://github.com/PegaSysEng/pantheon/pull/272) 
+- Fix pantheon CLI default values infinite loop [\#266](https://github.com/PegaSysEng/pantheon/pull/266) 
+
+### Additions and Improvements 
+
+- Added `--nodes-whitelist` parameter to CLI and NodeWhitelistController [\#346](https://github.com/PegaSysEng/pantheon/pull/346) 
+- Discovery wiring for `--node-whitelist` [\#365](https://github.com/PegaSysEng/pantheon/pull/365) 
+- Plumb in three more metrics [\#344](https://github.com/PegaSysEng/pantheon/pull/344) 
+- `ProposerSelection` to support multiple IBFT implementations [\#307](https://github.com/PegaSysEng/pantheon/pull/307) 
+- Configuration to support IBFT original and revised [\#306](https://github.com/PegaSysEng/pantheon/pull/306) 
+- Added host whitelist for JSON-RPC. [**Breaking Change**](#breaking-change-to-json-rpc-api) [\#295](https://github.com/PegaSysEng/pantheon/pull/295) 
+- Reduce `Block creation processed cancelled` log message to debug [\#294](https://github.com/PegaSysEng/pantheon/pull/294) 
+- Implement iterative peer search [\#268](https://github.com/PegaSysEng/pantheon/pull/268) 
+- Added RLP enc/dec for PrePrepare, Commit and NewRound messages [\#200](https://github.com/PegaSysEng/pantheon/pull/200) 
+- IBFT block mining [\#169](https://github.com/PegaSysEng/pantheon/pull/169) 
+- Added `--goerli` CLI option [\#370](https://github.com/PegaSysEng/pantheon/pull/370) (Thanks to [@Nashatyrev](https://github.com/Nashatyrev))
+- Begin capturing metrics to better understand Pantheon's behaviour [\#326](https://github.com/PegaSysEng/pantheon/pull/326)
+- Documentation updates include:
+   * Added Coding Conventions [\#342](https://github.com/PegaSysEng/pantheon/pull/342)
+   * Reorganised [Installation documentation](https://github.com/PegaSysEng/pantheon/wiki/Installation) and added [Chocolatey installation](https://github.com/PegaSysEng/pantheon/wiki/Install-Binaries#windows-with-chocolatey) for Windows 
+   * Reorganised [JSON-RPC API documentation](https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API)
+   * Updated [RPC Pub/Sub API documentation](https://github.com/PegaSysEng/pantheon/wiki/RPC-PubSub)
+   
+### Technical Improvements 
+
+- Extracted non-Docker CLI parameters to picoCLI mixin. [\#323](https://github.com/PegaSysEng/pantheon/pull/323) 
+- IBFT preprepare to validate round matches block [\#329](https://github.com/PegaSysEng/pantheon/pull/329) 
+- Fix acceptance test [\#324](https://github.com/PegaSysEng/pantheon/pull/324) 
+- Added the `IbftFinalState` [\#385](https://github.com/PegaSysEng/pantheon/pull/385) 
+- Constantinople Fork Block [\#382](https://github.com/PegaSysEng/pantheon/pull/382) 
+- Fix `pantheon.cli.PantheonCommandTest` test on Windows [\#380](https://github.com/PegaSysEng/pantheon/pull/380) 
+- JDK smoke testing is being configured differently now [\#374](https://github.com/PegaSysEng/pantheon/pull/374) 
+- Re-enable clique AT [\#373](https://github.com/PegaSysEng/pantheon/pull/373) 
+- Ignoring acceptance test [\#372](https://github.com/PegaSysEng/pantheon/pull/372) 
+- Changes to support Gradle 5.0 [\#371](https://github.com/PegaSysEng/pantheon/pull/371) 
+- Clique: Prevent out of turn blocks interrupt in-turn mining [\#364](https://github.com/PegaSysEng/pantheon/pull/364) 
+- Time all tasks [\#361](https://github.com/PegaSysEng/pantheon/pull/361) 
+- Rework `VoteTallyCache` to better represent purpose [\#360](https://github.com/PegaSysEng/pantheon/pull/360) 
+- Add an `UNKNOWN` `DisconnectReason` [\#359](https://github.com/PegaSysEng/pantheon/pull/359) 
+- New round validation [\#353](https://github.com/PegaSysEng/pantheon/pull/353) 
+- Update get validators for block hash test to start from block 1 [\#352](https://github.com/PegaSysEng/pantheon/pull/352) 
+- Idiomatic Builder Pattern [\#345](https://github.com/PegaSysEng/pantheon/pull/345) 
+- Revert `Repair Clique Proposer Selection` \#339 - Breaks Görli testnet [\#343](https://github.com/PegaSysEng/pantheon/pull/343) 
+- No fixed ports in tests [\#340](https://github.com/PegaSysEng/pantheon/pull/340) 
+- Update clique acceptance test genesis file to use correct clique property names [\#338](https://github.com/PegaSysEng/pantheon/pull/338) 
+- Supporting list of addresses in logs subscription [\#336](https://github.com/PegaSysEng/pantheon/pull/336) 
+- Render handler exception to `System.err` instead of `.out` [\#334](https://github.com/PegaSysEng/pantheon/pull/334) 
+- Renamed IBFT message classes [\#333](https://github.com/PegaSysEng/pantheon/pull/333) 
+- Add additional RLP tests [\#332](https://github.com/PegaSysEng/pantheon/pull/332) 
+- Downgrading spotless to 3.13.0 to fix threading issues [\#325](https://github.com/PegaSysEng/pantheon/pull/325) 
+- `eth_getTransactionReceipt` acceptance test [\#322](https://github.com/PegaSysEng/pantheon/pull/322) 
+- Upgrade vertx to 3.5.4 [\#316](https://github.com/PegaSysEng/pantheon/pull/316) 
+- Round change validation [\#315](https://github.com/PegaSysEng/pantheon/pull/315) 
+- Basic IBFT message validators [\#314](https://github.com/PegaSysEng/pantheon/pull/314) 
+- Minor repairs to clique block scheduling [\#308](https://github.com/PegaSysEng/pantheon/pull/308) 
+- Dependencies Version upgrade [\#303](https://github.com/PegaSysEng/pantheon/pull/303)
+- Build multiple JVM [\#301](https://github.com/PegaSysEng/pantheon/pull/301) 
+- Smart contract acceptance test [\#296](https://github.com/PegaSysEng/pantheon/pull/296) 
+- Fixing WebSocket error response [\#292](https://github.com/PegaSysEng/pantheon/pull/292) 
+- Reword error messages following exceptions during mining [\#291](https://github.com/PegaSysEng/pantheon/pull/291) 
+- Clique acceptance tests [\#290](https://github.com/PegaSysEng/pantheon/pull/290) 
+- Delegate creation of additional JSON-RPC methods to the PantheonController [\#289](https://github.com/PegaSysEng/pantheon/pull/289) 
+- Remove unnecessary `RlpInput` and `RlpOutput` classes [\#287](https://github.com/PegaSysEng/pantheon/pull/287) 
+- Remove `RlpUtils` [\#285](https://github.com/PegaSysEng/pantheon/pull/285) 
+- Enabling previously ignored acceptance tests [\#282](https://github.com/PegaSysEng/pantheon/pull/282) 
+- IPv6 peers [\#281](https://github.com/PegaSysEng/pantheon/pull/281) 
+- IPv6 Bootnode [\#280](https://github.com/PegaSysEng/pantheon/pull/280) 
+- Acceptance test for `getTransactionReceipt` JSON-RPC method [\#278](https://github.com/PegaSysEng/pantheon/pull/278)
+- Inject `StorageProvider` into `PantheonController` instances [\#259](https://github.com/PegaSysEng/pantheon/pull/259)
+
 ## 0.8.2
  
 ### Removed
