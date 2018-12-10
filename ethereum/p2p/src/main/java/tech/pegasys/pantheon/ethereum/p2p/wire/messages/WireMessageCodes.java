@@ -19,4 +19,19 @@ public final class WireMessageCodes {
   public static final int PONG = 0x03;
 
   private WireMessageCodes() {}
+
+  public static String messageName(final int code) {
+    switch (code) {
+      case HELLO:
+        return "Hello";
+      case DISCONNECT:
+        return "Disconnect";
+      case PING:
+        return "Ping";
+      case PONG:
+        return "Pong";
+      default:
+        return "invalid";
+    }
+  }
 }

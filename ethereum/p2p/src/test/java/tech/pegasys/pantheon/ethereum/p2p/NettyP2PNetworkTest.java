@@ -411,6 +411,11 @@ public final class NettyP2PNetworkTest {
       public boolean isValidMessageCode(final int protocolVersion, final int code) {
         return true;
       }
+
+      @Override
+      public String messageName(final int protocolVersion, final int code) {
+        return INVALID_MESSAGE_NAME;
+      }
     };
   }
 
@@ -429,6 +434,11 @@ public final class NettyP2PNetworkTest {
       @Override
       public boolean isValidMessageCode(final int protocolVersion, final int code) {
         return true;
+      }
+
+      @Override
+      public String messageName(final int protocolVersion, final int code) {
+        return INVALID_MESSAGE_NAME;
       }
     };
   }

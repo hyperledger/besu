@@ -69,6 +69,40 @@ public class Istanbul64Protocol implements SubProtocol {
     return false;
   }
 
+  @Override
+  public String messageName(final int protocolVersion, final int code) {
+    switch (code) {
+      case EthPV62.STATUS:
+        return "Status";
+      case EthPV62.NEW_BLOCK_HASHES:
+        return "NewBlockHashes";
+      case EthPV62.TRANSACTIONS:
+        return "Transactions";
+      case EthPV62.GET_BLOCK_HEADERS:
+        return "GetBlockHeaders";
+      case EthPV62.BLOCK_HEADERS:
+        return "BlockHeaders";
+      case EthPV62.GET_BLOCK_BODIES:
+        return "GetBlockBodies";
+      case EthPV62.BLOCK_BODIES:
+        return "BlockBodies";
+      case EthPV62.NEW_BLOCK:
+        return "NewBlock";
+      case EthPV63.GET_NODE_DATA:
+        return "GetNodeData";
+      case EthPV63.NODE_DATA:
+        return "NodeData";
+      case EthPV63.GET_RECEIPTS:
+        return "GetReceipts";
+      case EthPV63.RECEIPTS:
+        return "Receipts";
+      case INSTANBUL_MSG:
+        return "InstanbulMsg";
+      default:
+        return INVALID_MESSAGE_NAME;
+    }
+  }
+
   public static Istanbul64Protocol get() {
     return INSTANCE;
   }

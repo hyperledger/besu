@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.Framer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.FramingException;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Collections;
@@ -42,7 +43,8 @@ public class DeFramerTest {
           Collections.emptyList(),
           new PeerInfo(5, "abc", Collections.emptyList(), 0, BytesValue.fromHexString("0x01")),
           callbacks,
-          connectFuture);
+          connectFuture,
+          NoOpMetricsSystem.NO_OP_LABELLED_COUNTER);
 
   @Test
   public void shouldDisconnectForBreachOfProtocolWhenFramingExceptionThrown() throws Exception {

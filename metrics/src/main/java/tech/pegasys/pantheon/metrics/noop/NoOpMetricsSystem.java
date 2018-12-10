@@ -29,6 +29,7 @@ public class NoOpMetricsSystem implements MetricsSystem {
   private static final TimingContext NO_OP_TIMING_CONTEXT = () -> 0;
   private static final OperationTimer NO_OP_TIMER = () -> NO_OP_TIMING_CONTEXT;
   public static final LabelledMetric<OperationTimer> NO_OP_LABELLED_TIMER = label -> NO_OP_TIMER;
+  public static final LabelledMetric<Counter> NO_OP_LABELLED_COUNTER = label -> NO_OP_COUNTER;
 
   @Override
   public LabelledMetric<Counter> createLabelledCounter(

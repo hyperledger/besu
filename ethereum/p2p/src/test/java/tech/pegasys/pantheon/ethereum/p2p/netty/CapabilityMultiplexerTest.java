@@ -105,6 +105,11 @@ public class CapabilityMultiplexerTest {
       public boolean isValidMessageCode(final int protocolVersion, final int code) {
         return true;
       }
+
+      @Override
+      public String messageName(final int protocolVersion, final int code) {
+        return INVALID_MESSAGE_NAME;
+      }
     };
   }
 }

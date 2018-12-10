@@ -21,6 +21,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Eth protocol messages as defined in
+ * https://github.com/ethereum/wiki/wiki/Ethereum-Wire-Protocol#new-model-syncing-pv62}
+ */
 public class EthProtocol implements SubProtocol {
   public static final String NAME = "eth";
   public static final Capability ETH62 = Capability.create(NAME, EthVersion.V62);
@@ -72,6 +76,30 @@ public class EthProtocol implements SubProtocol {
         return eth63Messages.contains(code);
       default:
         return false;
+    }
+  }
+
+  @Override
+  public String messageName(final int protocolVersion, final int code) {
+    switch (code) {
+      case EthPV62.STATUS:
+        return "Status";
+      case EthPV62.NEW_BLOCK_HASHES:
+        return "NewBlockHashes";
+      case EthPV62.TRANSACTIONS:
+        return "Transactions";
+      case EthPV62.GET_BLOCK_HEADERS:
+        return "GetBlockHeaders";
+      case EthPV62.BLOCK_HEADERS:
+        return "BlockHeaders";
+      case EthPV62.GET_BLOCK_BODIES:
+        return "GetBlockBodies";
+      case EthPV62.BLOCK_BODIES:
+        return "BlockBodies";
+      case EthPV62.NEW_BLOCK:
+        return "NewBlock";
+      default:
+        return INVALID_MESSAGE_NAME;
     }
   }
 

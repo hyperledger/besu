@@ -22,6 +22,8 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.HelloMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.WireMessageCodes;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
@@ -50,17 +52,21 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
   private final CompletableFuture<PeerConnection> connectionFuture;
   private final List<SubProtocol> subProtocols;
 
+  private final LabelledMetric<Counter> outboundMessagesCounter;
+
   AbstractHandshakeHandler(
       final List<SubProtocol> subProtocols,
       final PeerInfo ourInfo,
       final CompletableFuture<PeerConnection> connectionFuture,
       final Callbacks callbacks,
-      final PeerConnectionRegistry peerConnectionRegistry) {
+      final PeerConnectionRegistry peerConnectionRegistry,
+      final LabelledMetric<Counter> outboundMessagesCounter) {
     this.subProtocols = subProtocols;
     this.ourInfo = ourInfo;
     this.connectionFuture = connectionFuture;
     this.callbacks = callbacks;
     this.peerConnectionRegistry = peerConnectionRegistry;
+    this.outboundMessagesCounter = outboundMessagesCounter;
   }
 
   /**
@@ -101,7 +107,8 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
       final Framer framer = new Framer(handshaker.secrets());
 
       final ByteToMessageDecoder deFramer =
-          new DeFramer(framer, subProtocols, ourInfo, callbacks, connectionFuture);
+          new DeFramer(
+              framer, subProtocols, ourInfo, callbacks, connectionFuture, outboundMessagesCounter);
 
       ctx.channel()
           .pipeline()
