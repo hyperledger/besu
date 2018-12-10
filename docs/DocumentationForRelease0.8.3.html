@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Pantheon Documentation v0.8.2</title>
+    <title>Documentation for Pantheon v0.8.3 </title>
     <style>/*!
  * Bootstrap v3.3.7 (http://getbootstrap.com)
  * Copyright 2011-2016 Twitter, Inc.
@@ -697,7 +697,7 @@ this.activeTarget=b,this.clear();var c=this.selector+'[data-target="'+b+'"],'+th
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand doc-title" href="#page-top">Pantheon Documentation v0.8.2</a>
+          <a class="navbar-brand doc-title" href="#page-top">Documentation for Pantheon v0.8.3</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
@@ -711,7 +711,7 @@ this.activeTarget=b,this.clear();var c=this.selector+'[data-target="'+b+'"],'+th
           <div class="nav-container">
             <div class="nav-inner" id="scroll-spy" style="width: min-content; overflow: auto; top: 60px; bottom: 0; padding 10px 0 10px 0;">
               <span class="toc"></span>
-              <ul class="nav"><li class="active"><a href="#Overview">Overview</a></li><li><a href="#Getting-Started">Getting Started</a><ul class="nav"><li><a href="#Installation">Installation</a></li><li><a href="#Quickstart">Basic Quickstart</a></li><li><a href="#Private-Network-Quickstart">Private Network Quickstart</a></li><li><a href="#Starting-Pantheon">Starting Pantheon</a></li><li><a href="#Run-Docker-Image">Running Pantheon from Docker Image</a></li></ul></li><li><span>Configuring Pantheon</span><ul class="nav"><li><a href="#NetworkID-And-ChainID">Network ID and Chain ID</a></li><li><a href="#Node-Keys">Node Keys</a></li><li><a href="#Networking">Networking</a></li><li><a href="#Accounts-for-Testing">Accounts for Testing</a></li><li><a href="#Logging">Logging</a></li><li><a href="#Testing-Developing-Nodes">Testing and Developing Nodes</a></li><li><a href="#Proof-of-Authority">Proof of Authority</a></li><li><a href="#Passing-JVM-Options">Passing JVM Options</a></li></ul></li><li><span>Using Pantheon</span><ul class="nav"><li><a href="#Transactions">Creating and Sending Transactions</a></li><li><a href="#Account-Management">Using Wallets for Account Management</a></li><li><a href="#Mining">Mining</a></li><li><a href="#RPC-PubSub">RPC Pub/Sub</a></li><li><a href="#Debugging">Debugging Pantheon</a></li></ul></li><li><span>Reference</span><ul class="nav"><li><a href="#Pantheon-CLI-Syntax">Pantheon CLI Reference</a></li><li><a href="#JSON-RPC-API">JSON-RPC API Reference</a></li></ul></li></ul>
+              <ul class="nav"><li class="active"><a href="#Overview">Overview</a></li><li><a href="#Installation">Installation</a><ul class="nav"><li><a href="#Install-Binaries">Install Binary Distribution</a></li><li><a href="#Build-From-Source">Build from Source</a></li></ul></li><li><a href="#Getting-Started">Getting Started</a><ul class="nav"><li><a href="#Starting-Pantheon">Starting Pantheon</a></li><li><a href="#Run-Docker-Image">Running Pantheon from Docker Image</a></li><li><a href="#Private-Network-Quickstart">Private Network Quickstart</a> </li></ul></li><li><span>Configuring Pantheon</span><ul class="nav"><li><a href="#NetworkID-And-ChainID">Network ID and Chain ID</a></li><li><a href="#Node-Keys">Node Keys</a></li><li><a href="#Networking">Networking</a></li><li><a href="#Accounts-for-Testing">Accounts for Testing</a></li><li><a href="#Logging">Logging</a></li><li><a href="#Testing-Developing-Nodes">Testing and Developing Nodes</a></li><li><a href="#Proof-of-Authority">Proof of Authority</a></li><li><a href="#Passing-JVM-Options">Passing JVM Options</a></li></ul></li><li><span>Using Pantheon</span><ul class="nav"><li><a href="#Transactions">Creating and Sending Transactions</a></li><li><a href="#Account-Management">Using Wallets for Account Management</a></li><li><a href="#Mining">Mining</a></li><li><a href="#RPC-PubSub">RPC Pub/Sub</a></li><li><a href="#Debugging">Debugging Pantheon</a></li></ul></li><li><span>Reference</span><ul class="nav"><li><a href="#Pantheon-CLI-Syntax">Pantheon CLI Reference</a></li><li><a href="#JSON-RPC-API">Pantheon JSON-RPC API</a><ul class="nav"><li><a href="#Using-JSON-RPC-API">Using the JSON-RPC API</a></li><li><a href="#JSON-RPC-API-Methods">JSON-RPC API Methods</a></li><li><a href="#Objects">JSON-RPC API Objects</a>  </li></ul></li></ul></li></ul>
               
             </div>
           </div>
@@ -740,39 +740,61 @@ this.activeTarget=b,this.clear();var c=this.selector+'[data-target="'+b+'"],'+th
 </ul>
 <p>The Pantheon client supports common smart contract and Dapp development, deployment, and operational use cases, using tools such as <a href="http://truffleframework.com/">Truffle</a>, <a href="https://github.com/ethereum/remix">Remix</a>, and <a href="https://web3j.io/">web3j</a>. The client supports common JSON-RPC API methods such as eth, net, web3, debug, and miner.</p>
 <p>Pantheon doesn&#39;t support <a href="https://github.com/PegaSysEng/pantheon/wiki/Account-Management">Account management</a>.</p>
-<p class="page" id="Getting-Started"></p><h1>Getting Started</h1>
-<h1 id="getting-started">Getting Started</h1>
-<p>You can get started with Pantheon by:</p>
-<ul>
-<li>Cloning the Pantheon repository and <a href="#Installation">building from source</a>. </li>
-<li>Cloning the Pantheon repository and using the <a href="#Private-Network-Quickstart">Private Network Quickstart</a>. </li>
-<li>Downloading the Pantheon <a href="https://bintray.com/consensys/pegasys-repo/pantheon/0.8.1#files">packaged binaries</a>. </li>
-<li>Running from the <a href="#Run-Docker-Image">Pantheon docker image</a>. </li>
-</ul>
-<p>To run a single node to connect the Ethereum mainnet or a public testnet, running from the Pantheon <a href="#Run-Docker-Image">docker image</a> or <a href="https://bintray.com/consensys/pegasys-repo/pantheon/0.8.1#files">downloading the packaged binaries</a> is the fastest way to get started. </p>
-<p>To run a private network on which you can make JSON-RPC requests and send transactions, or explore Pantheon and Ethereum networks, the <a href="#Private-Network-Quickstart">Private Network Quickstart</a> runs a private network of Pantheon nodes in a Docker container. </p>
 <p class="page" id="Installation"></p><h1>Installation</h1>
 <h1 id="pantheon-installation">Pantheon Installation</h1>
+<p>You can install Pantheon by:</p>
+<ul>
+<li><a href="#Install-Binaries">Installing the binary distribution</a> </li>
+<li><a href="#Build-From-Source">Building from source</a> </li>
+</ul>
 <blockquote>
-<p><strong>Note</strong>  If you have installed Pantheon from the <a href="https://bintray.com/consensys/pegasys-repo/pantheon/0.8.1#files">packaged binaries</a> or are running the <a href="https://hub.docker.com/r/pegasyseng/pantheon/">Docker image</a>, you do not need to follow the procedures in this section. You can proceed with the <a href="#Quickstart">Basic Quickstart</a> or <a href="#Starting-Pantheon">Starting Pantheon</a>.</p>
+<p><strong>Note</strong> To run a single node to connect the Ethereum mainnet or a public testnet, running from the <a href="#Run-Docker-Image">Pantheon docker image</a> is the fastest way to get started.</p>
 </blockquote>
+<h2 id="disk-space-and-ram-requirements">Disk Space and RAM Requirements</h2>
+<p>Your computer should have at least 4 GB RAM. </p>
+<p>Disk space needed varies depending on the network on which you run nodes. A small test network might require 200 MB while a mainnet node might require 1.5TB. If syncing a node on mainnet, allow 1.5 TB to 2 TB for the full blockchain archive.</p>
+<p class="page" id="Install-Binaries"></p><h1>Install Binary Distribution</h1>
+<h1 id="installation-from-binary-distribution">Installation from Binary Distribution</h1>
 <h2 id="contents">Contents</h2>
 <ul>
-<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#mac-os">Mac OS</a></li>
+<li><a href="#windows">Windows</a></li>
+<li><a href="#linux--unix">Linux / Unix</a></li>
 </ul>
-<h3 id="running-locally">Running Locally</h3>
+<h2 id="mac-os">Mac OS</h2>
+<h3 id="prerequisites">Prerequisites</h3>
 <ul>
-<li><a href="#installation-on-linux--unix--mac-os-x">Installation on Linux / Unix / Mac OS X</a></li>
-<li><a href="#installation-on-windows">Installation on Windows</a></li>
+<li><a href="https://brew.sh/">Homebrew</a></li>
 </ul>
-<h3 id="running-virtually">Running Virtually</h3>
+<h3 id="install-using-homebrew">Install Using Homebrew</h3>
+<pre class="hljs">brew tap pegasyseng/pantheon
+brew install pantheon</pre><p>Display Pantheon command line help to confirm installation: </p>
+<pre class="hljs">pantheon --help</pre><h2 id="windows-with-chocolatey">Windows with Chocolatey</h2>
+<h3 id="prerequisites">Prerequisites</h3>
 <ul>
-<li><a href="#installation-on-vm">Installation on VM</a></li>
+<li><a href="#Install-Chocolatey">Chocolatey</a></li>
 </ul>
+<h3 id="install-using-chocolatey">Install Using Chocolatey</h3>
+<p>To install from <a href="https://chocolatey.org/packages/pantheon/0.8.2">Chocolatey package</a>: </p>
+<pre class="hljs">choco install pantheon</pre><p>Display Pantheon command line help to confirm installation: </p>
+<pre class="hljs">pantheon --help</pre><h2 id="linux-unix-windows-without-chocolatey">Linux / Unix / Windows without Chocolatey</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li><p><a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">Java JDK</a></p>
+<blockquote>
+<p><strong>Note</strong> Pantheon requires Java 8+ to compile; earlier versions are not supported.</p>
+<p><strong>Note</strong>  Pantheon is currently supported only on 64-bit versions of Windows, and requires a 64-bit version of JDK/JRE. We recommend that you also remove any 32-bit JDK/JRE installations.</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="install-from-packaged-binaries">Install from Packaged Binaries</h3>
+<p>Download the Pantheon <a href="https://bintray.com/consensys/pegasys-repo/pantheon/_latestVersion#filesß">packaged binaries</a>.</p>
+<p>Unpackage the downloaded files and change into the <code>pantheon-&lt;release&gt;</code> directory. </p>
+<p>Display Pantheon command line help to confirm installation: </p>
+<pre class="hljs">bin/pantheon --help</pre><p class="page" id="Build-From-Source"></p><h1>Build from Source</h1>
+<h1 id="building-pantheon-from-source">Building Pantheon from Source</h1>
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
-<li><p>Disk space and RAM: Your computer should have at least 4 GB RAM. Disk space needed varies depending on the network on which you run nodes. A small test network might require 200 MB while a mainnet node might require 1.5TB. If syncing a node on mainnet, allow 1.5 TB to 2 TB for the full blockchain archive.</p>
-</li>
 <li><p><a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">Java JDK</a></p>
 <blockquote>
 <p><strong>IMPORTANT:</strong> Pantheon requires Java 8+ to compile; earlier versions are not supported.</p>
@@ -781,28 +803,44 @@ this.activeTarget=b,this.clear();var c=this.selector+'[data-target="'+b+'"],'+th
 <li><p><a href="https://git-scm.com/downloads">Git</a> or <a href="https://desktop.github.com/">GitHub Desktop</a></p>
 </li>
 </ul>
+<h2 id="running-locally">Running Locally</h2>
+<ul>
+<li><a href="#installation-on-linux--unix--mac-os-x">Installation on Linux / Unix / Mac OS X</a></li>
+<li><a href="#installation-on-windows">Installation on Windows</a></li>
+</ul>
+<h2 id="running-virtually">Running Virtually</h2>
+<ul>
+<li><a href="#installation-on-vm">Installation on VM</a></li>
+</ul>
 <h2 id="installation-on-linux-unix-mac-os-x">Installation on Linux / Unix / Mac OS X</h2>
 <h4 id="clone-the-pantheon-repository">Clone the Pantheon Repository</h4>
 <p>Clone the <strong>PegaSysEng/pantheon</strong> repo to your home directory (<code>/home/&lt;user&gt;</code>):</p>
 <pre class="hljs">git <span class="hljs-keyword">clone</span> <span class="hljs-title">--recursive</span> https://github.com/PegaSysEng/pantheon.git</pre><h4 id="build-pantheon">Build Pantheon</h4>
-<p>After the cloning process completes, go to the <code>pantheon</code> repo directory and run <code>git branch</code> to make sure you&#39;re in the branch in which you cloned the Pantheon source code (by default this is the <code>master</code> branch).</p>
-<p>Build the pantheon executable using <code>gradlew</code>. You can use the <code>-x test</code> option to exclude tests, which can take a long time to run and are not necessary for initial build:</p>
-<pre class="hljs">./gradlew <span class="hljs-keyword">build </span>-x test</pre><p>Continue with <a href="#Quickstart">Basic Quickstart</a>, <a href="#Private-Network-Quickstart">Private Network Quickstart</a>, or <a href="#Starting-Pantheon">Starting Pantheon</a>.</p>
+<p>After cloning, go to the <code>pantheon</code> directory.</p>
+<p>Build Pantheon with the Gradle wrapper <code>gradlew</code>, omitting tests as follows:</p>
+<pre class="hljs">./gradlew <span class="hljs-keyword">build </span>-x test</pre><p>Go to the distribution directory: </p>
+<pre class="hljs">cd build/distributions/</pre><p>Expand the distribution archive: </p>
+<pre class="hljs">tar -xzf pantheon-&lt;version&gt;.tar.gz</pre><p>Move to the expanded folder and display the Pantheon help to confirm installation. </p>
+<pre class="hljs">cd pantheon-&lt;version&gt;/
+bin/pantheon --help</pre><p>Continue with the <a href="#Private-Network-Quickstart">Private Network Quickstart</a> or <a href="#Starting-Pantheon">Starting Pantheon</a>.</p>
 <h2 id="installation-on-windows">Installation on Windows</h2>
 <blockquote>
 <p><strong>Note</strong>  Pantheon is currently supported only on 64-bit versions of Windows, and requires a 64-bit version of JDK/JRE. We recommend that you also remove any 32-bit JDK/JRE installations.</p>
 </blockquote>
 <h4 id="install-pantheon">Install Pantheon</h4>
 <p>In Git bash, go to your working directory for repositories. Clone the <code>PegaSysEng/pantheon</code> repo into this directory:</p>
-<pre class="hljs">git <span class="hljs-keyword">clone</span> <span class="hljs-title">--recursive</span> https://github.com/PegaSysEng/pantheon</pre><p>This creates a <code>pantheon</code> directory under Git revision control that will contain the cloned repo contents.</p>
-<h4 id="build-pantheon">Build Pantheon</h4>
+<pre class="hljs">git <span class="hljs-keyword">clone</span> <span class="hljs-title">--recursive</span> https://github.com/PegaSysEng/pantheon</pre><h4 id="build-pantheon">Build Pantheon</h4>
 <p>Go to the <code>pantheon</code> directory:</p>
-<pre class="hljs"><span class="hljs-built_in">cd</span> pantheon</pre><p>Open a Windows command prompt (the following won&#39;t work in Git bash). Build Pantheon with the Gradle wrapper <code>gradlew</code>, omitting tests as follows:</p>
+<pre class="hljs"><span class="hljs-built_in">cd</span> pantheon</pre><p>Open a Windows command prompt. Build Pantheon with the Gradle wrapper <code>gradlew</code>, omitting tests as follows:</p>
 <pre class="hljs"><span class="hljs-symbol">gradlew</span> <span class="hljs-keyword">build </span>-x test</pre><blockquote>
 <p><strong>Note</strong> To run <code>gradlew</code>, you must have the <strong>JAVA_HOME</strong> system variable set to the Java installation directory.
 For example: <code>JAVA_HOME = C:\Program Files\Java\jdk1.8.0_181</code>.</p>
 </blockquote>
-<p>After the build completes, your system is ready to run Pantheon. See <a href="#Starting-Pantheon">Starting Pantheon</a> and other sections of <a href="#Getting-Started">Getting Started</a> for guidance on using Pantheon.</p>
+<p>Go to the distribution directory: </p>
+<pre class="hljs">cd build\distributions</pre><p>Expand the distribution archive: </p>
+<pre class="hljs">tar -xzf pantheon-&lt;version&gt;.tar.gz</pre><p>Move to the expanded folder and display the Pantheon help to confirm installation. </p>
+<pre class="hljs">cd pantheon-&lt;version&gt;
+bin\pantheon --help</pre><p>Continue with the <a href="#Private-Network-Quickstart">Private Network Quickstart</a> or <a href="#Starting-Pantheon">Starting Pantheon</a>.</p>
 <h2 id="installation-on-vm">Installation on VM</h2>
 <p>You can run Pantheon on a virtual machine (VM) on a cloud service such as AWS or Azure, or locally using a VM manager such as <a href="https://www.virtualbox.org/">VirtualBox</a>.</p>
 <p>If you set up your own VM locally using a VM manager such as <a href="https://www.virtualbox.org/">VirtualBox</a>, there are a few considerations:</p>
@@ -823,58 +861,131 @@ For example: <code>JAVA_HOME = C:\Program Files\Java\jdk1.8.0_181</code>.</p>
 <li><p>(Optional) You can create a shared directory in order to copy block files or genesis files from the host computer to the VM. For details on how to create a shared directory, see &quot;Share Folders&quot; in <a href="https://linus.nci.nih.gov/bdge/installUbuntu.html">Install Ubuntu on Oracle VirtualBox</a>.</p>
 </li>
 </ul>
-<p class="page" id="Quickstart"></p><h1>Basic Quickstart</h1>
-<h1 id="pantheon-quickstart">Pantheon Quickstart</h1>
-<p>This tutorial shows you how to install Pantheon and invoke the Pantheon CLI to run a single node in default mode:</p>
+<p class="page" id="Getting-Started"></p><h1>Getting Started</h1>
+<h1 id="getting-started">Getting Started</h1>
+<p>You can get started with Pantheon by:</p>
 <ul>
-<li>The node runs on the Ethereum mainnet and uses the default embedded mainnet genesis file.</li>
-<li>The node does not perform mining.</li>
-<li>P2P peer discovery is enabled on the default P2P port. There are a maximum of 25 P2P peer connections.</li>
-<li>Listen on the default RPC over HTTP host/port.</li>
-<li>Use full synchronization mode.</li>
+<li>Starting a node as described in <a href="#Starting-Pantheon">Starting Pantheon</a></li>
+<li>Running from the <a href="#Run-Docker-Image">Pantheon docker image</a></li>
+<li>Using the <a href="#Private-Network-Quickstart">Private Network Quickstart</a> </li>
 </ul>
-<p>During the tutorial, you&#39;ll import a test block file to provide the initial blocks for the node to use, then run the node. You&#39;ll then use <code>curl</code> to make a call using Pantheon JSON-RPC API; this will make a request to verify that the node is running.</p>
-<h2 id="installation">Installation</h2>
-<p>Install Java, Git, and Pantheon for your platform as described in <a href="#Installation">Installation</a>, then proceed through the following steps.</p>
-<h2 id="run-pantheon">Run Pantheon</h2>
-<p>In this tutorial, you&#39;ll build and run Pantheon in one terminal (bash) window and run <code>curl</code> commands to make JSON-RPC requests in another terminal window. To do this, either open two separate instances of <code>Terminal</code>, or run a utility such as <a href="https://github.com/tmux/tmux/wiki">tmux</a> to run a split screen terminal.</p>
-<p>In the first terminal, go to the <code>~/pantheon</code> folder:</p>
-<pre class="hljs"><span class="hljs-built_in">cd</span> pantheon</pre><p>Build Pantheon as described in <a href="#Installation">Installation</a>.</p>
-<p>To run <code>pantheon</code>, go to the distribution folder:</p>
-<pre class="hljs"><span class="hljs-built_in">cd</span> build/distributions/</pre><p>Expand the distribution archive:</p>
-<pre class="hljs">tar -xzf pantheon-&lt;version&gt;.tar.gz</pre><p>Move to the expanded folder and run <code>pantheon</code> using the script to display command help:</p>
-<pre class="hljs"><span class="hljs-built_in">cd</span> pantheon-&lt;version&gt;/
-bin/pantheon --<span class="hljs-built_in">help</span></pre><p>Import initial blocks for the node to work with from a blocks file. You can use the provided sample blocks file as shown in the following command:</p>
-<pre class="hljs">bin/pantheon import ~/pantheon/testutil/src/main/resources/1000.blocks</pre><p>When the import completes successfully, you should see messages containing the following:</p>
-<pre class="hljs">ImportSubCommand | Runs import sub <span class="hljs-built_in">command</span> with blocksImportPath
-
-KeyPairUtil | Generated new key &lt;key&gt; and stored it to ~/pantheon/build/distributions/pantheon-&lt;version&gt;/key</pre><p>For more information on using the <code>pantheon import</code> subcommand, see <a href="#Pantheon-CLI-Syntax">Pantheon CLI Syntax</a>.</p>
-<p>After the import successfully completes, run Pantheon with only the <code>--rpc-enabled</code> option:</p>
-<pre class="hljs">bin/pantheon <span class="hljs-comment">--rpc-enabled</span></pre><p>This runs Pantheon in default mode, meaning it runs in mainnet with the default genesis file, and peer discovery is enabled.</p>
-<p>The <code>--rpc-enabled</code> option starts the JSON-RPC service.  </p>
-<p>The terminal output will indicate that the node is synchronizing.</p>
-<h2 id="test-the-pantheon-node">Test the Pantheon Node</h2>
-<h4 id="make-json-rpc-requests-using-curl">Make JSON-RPC Requests using curl</h4>
-<p>While the node is running, make a request on it using curl and the JSON-RPC API.</p>
-<p>Switch to the bottom window using <code>Ctrl+b o</code> and run the following <code>curl</code> command:</p>
-<pre class="hljs">curl -X POST --data '{<span class="hljs-string">"jsonrpc"</span>:<span class="hljs-string">"2.0"</span>,<span class="hljs-string">"method"</span>:<span class="hljs-string">"eth_syncing"</span>,<span class="hljs-string">"params"</span>:<span class="hljs-string">[]</span>,<span class="hljs-string">"id"</span>:<span class="hljs-number">1</span>}' <span class="hljs-number">127.0.0.1:8545</span></pre><p>Note the endpoint IP and default port. You should see a result similar to the following:</p>
-<pre class="hljs">{
-  <span class="hljs-attr">"jsonrpc"</span> : <span class="hljs-string">"2.0"</span>,
-  <span class="hljs-attr">"id"</span> : <span class="hljs-number">1</span>,
-  <span class="hljs-attr">"result"</span> : {
-    <span class="hljs-attr">"startingBlock"</span> : <span class="hljs-string">"0x3e7"</span>,
-    <span class="hljs-attr">"currentBlock"</span> : <span class="hljs-string">"0x3e7"</span>,
-    <span class="hljs-attr">"highestBlock"</span> : <span class="hljs-string">"0x0"</span>
-  }
-}</pre><p>You can now call other JSON-RPC commands listed in <a href="https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API">Pantheon JSON RPC API</a>.</p>
-<h2 id="close-the-terminal-session">Close the Terminal Session</h2>
-<p>After you&#39;re finished running the demo, you can stop the Pantheon client by returning to the terminal window that runs the node and entering <code>Ctrl+c</code>.</p>
-<p class="page" id="Private-Network-Quickstart"></p><h1>Private Network Quickstart</h1>
+<p>To run a single node to connect the Ethereum mainnet or a public testnet, running from the Pantheon <a href="#Run-Docker-Image">docker image</a> or <a href="#Install-Binaries">installing the packaged binaries</a> is the fastest way to get started. </p>
+<p>To run a private network on which you can make JSON-RPC requests and send transactions, or explore Pantheon and Ethereum networks, the <a href="#Private-Network-Quickstart">Private Network Quickstart</a> runs a private network of Pantheon nodes in a Docker container. </p>
+<p class="page" id="Starting-Pantheon"></p><h1>Starting Pantheon</h1>
+<h1 id="starting-pantheon">Starting Pantheon</h1>
+<p>Pantheon nodes can be used for varying purposes as described in the <a href="#Overview">Overview</a>. Nodes can connect to the Ethereum mainnet, public testnets such as Ropsten, or private networks.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<p><a href="#Installation">Pantheon Installed</a></p>
+<h2 id="local-block-data">Local Block Data</h2>
+<p>When connecting to a network other than the network previously connected to, you must either delete the local block data or use the <code>--datadir</code> option to specify a different data directory. </p>
+<p>To delete the local block data, delete the <code>database</code> directory in the <code>pantheon/build/distribution/pantheon-&lt;version&gt;</code> directory.</p>
+<h2 id="genesis-configuration">Genesis Configuration</h2>
+<p>Pantheon specifies the genesis configuration, and sets the network ID and bootnodes when connecting to <a href="#run-a-node-on-ethereum--mainnet">mainnet</a>, <a href="#run-a-node-on-rinkeby-testnet">Rinkeby</a>, and <a href="#run-a-node-on-ropsten-testnet">Ropsten</a>. </p>
+<p>When <code>--dev-mode</code> is specified, Pantheon uses the development mode genesis configuration.</p>
+<p>The genesis files defining the genesis configurations are in the <a href="https://github.com/PegaSysEng/pantheon/tree/master/config/src/main/resources">Pantheon source files</a>. </p>
+<p>To define a genesis configuration, create a genesis file (for example, <code>genesis.json</code>) and specify the file using the <code>--genesis</code> option.</p>
+<h2 id="confirm-node-is-running">Confirm Node is Running</h2>
+<p>If you have started Pantheon with the <code>--rpc-enabled</code> option, use <a href="https://curl.haxx.se/">cURL</a> to call <a href="#JSON-RPC-API">JSON-RPC API methods</a> to confirm the node is running. For example:</p>
+<ul>
+<li><p><code>eth_chainId</code> returns the chain ID of the network. </p>
+<pre class="hljs">  curl -X POST --data '{<span class="hljs-string">"jsonrpc"</span>:<span class="hljs-string">"2.0"</span>,<span class="hljs-string">"method"</span>:<span class="hljs-string">"eth_chainId"</span>,<span class="hljs-string">"params"</span>:<span class="hljs-string">[]</span>,<span class="hljs-string">"id"</span>:<span class="hljs-number">1</span>}' <span class="hljs-number">127.0.0.1:8545</span></pre></li>
+<li><p><code>eth_syncing</code> returns the starting, current, and highest block. </p>
+<pre class="hljs"> curl -X POST --data '{"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":1}' 127.0.0.1:8545</pre><p>  For example, after connecting to mainnet <code>eth_syncing</code> will return something similar to: </p>
+<pre class="hljs">  {
+    <span class="hljs-attr">"jsonrpc"</span> : <span class="hljs-string">"2.0"</span>,
+    <span class="hljs-attr">"id"</span> : <span class="hljs-number">1</span>,
+    <span class="hljs-attr">"result"</span> : {
+      <span class="hljs-attr">"startingBlock"</span> : <span class="hljs-string">"0x0"</span>,
+      <span class="hljs-attr">"currentBlock"</span> : <span class="hljs-string">"0x2d0"</span>,
+      <span class="hljs-attr">"highestBlock"</span> : <span class="hljs-string">"0x66c0"</span>
+    }</pre></li>
+</ul>
+<h2 id="run-a-node-on-ethereum-mainnet">Run a Node on Ethereum  Mainnet</h2>
+<p>To run a node on the Ethereum mainnet: </p>
+<p><code>$ bin/pantheon</code></p>
+<p>To run a node on mainnet with the HTTP JSON-RPC service enabled: </p>
+<p><code>$ bin/pantheon --rpc-enabled</code></p>
+<h2 id="run-a-node-on-ropsten-testnet">Run a Node on Ropsten Testnet</h2>
+<blockquote>
+<p><strong>Note</strong> From v0.8.2, use the <a href="#Pantheon-CLI-Syntaxoptions"><code>--ropsten</code> option</a> instead of the following options. For v0.8.1, use the following options.</p>
+</blockquote>
+<p>To run a node on Ropsten: </p>
+<p><code>$ bin/pantheon --network-id=3 --genesis=&lt;path&gt;/pantheon/ethereum/core/src/main/resources/ropsten.json --bootnodes=enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303</code></p>
+<p>To run a node on Ropsten with the HTTP JSON-RPC service enabled and allow Remix to access the node: </p>
+<p><code>$ bin/pantheon --rpc-enabled --rpc-cors-origins &quot;http://remix.ethereum.org&quot; --network-id=3 --genesis=&lt;path&gt;/pantheon/ethereum/core/src/main/resources/ropsten.json --bootnodes=enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303</code></p>
+<p>Where <code>&lt;path&gt;</code> is the path to the <code>/pantheon</code> directory. </p>
+<h2 id="run-a-node-on-rinkeby-testnet">Run a Node on Rinkeby Testnet</h2>
+<p>To run a node on Rinkeby specifying a data directory: </p>
+<p><code>$ bin/pantheon --rinkeby --datadir=&lt;path&gt;/&lt;rinkebyDataDir&gt;</code></p>
+<p>Where <code>&lt;path&gt;</code> and <code>&lt;rinkebyDataDir&gt;</code> are the path and file where the Rinkeby chain data is to be saved.</p>
+<h2 id="run-a-node-on-goerli-testnet">Run a Node on Goerli Testnet</h2>
+<p>To run a node on <a href="https://github.com/goerli/testnet">Goerli</a> specifying a data directory: </p>
+<p><code>$ bin/pantheon --goerli --datadir=&lt;path&gt;/&lt;goerliDataDir&gt;</code></p>
+<p>Where <code>&lt;path&gt;</code> and <code>&lt;goerliDataDir&gt;</code> are the path and file where the Goerli chain data is to be saved. </p>
+<blockquote>
+<p><strong>Note:</strong> This option is only available from v0.8.3.</p>
+</blockquote>
+<h2 id="run-a-node-for-testing">Run a Node for Testing</h2>
+<p>To run a node that mines blocks at a rate suitable for testing purposes: </p>
+<p><code>$ bin/pantheon --dev-mode --network-id=&quot;2018&quot; --bootnodes= --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-cors-origins &quot;all&quot; --ws-enabled --rpc-enabled</code></p>
+<p class="page" id="Run-Docker-Image"></p><h1>Running Pantheon from Docker Image</h1>
+<h1 id="run-pantheon-from-docker-image">Run Pantheon from Docker Image</h1>
+<p>A Docker image is provided to run a Pantheon node in a Docker container. </p>
+<p>Use this Docker image to run a single Pantheon node without installing Pantheon. </p>
+<h2 id="prerequisites">Prerequisites</h2>
+<p>To run Pantheon from the Docker image, you must have <a href="https://docs.docker.com/install/">Docker</a> installed.  </p>
+<h2 id="quickstart">Quickstart</h2>
+<p>To run a Pantheon node in a container connected to the Ethereum mainnet: </p>
+<pre class="hljs">docker run pegasyseng/pantheon:latest</pre><h2 id="command-line-options">Command Line Options</h2>
+<p>You cannot use the following Pantheon command line options when running Pantheon from the Docker image: </p>
+<ul>
+<li><code>--datadir</code>, see <a href="#persisting-data">Persisting Data</a></li>
+<li><code>--config</code>, see <a href="#custom-configuration-file">Custom Configuration File</a></li>
+<li><code>--genesis</code>, see <a href="#custom-genesis-file">Custom Genesis File</a>.</li>
+<li><code>--rpc-listen</code>, <code>--p2plisten</code>, <code>--ws-listen</code>, see <a href="#exposing-ports">Exposing Ports</a></li>
+</ul>
+<p>All other <a href="https://github.com/PegaSysEng/pantheon/wiki/Pantheon-CLI-Syntax">Pantheon command line options</a> work in the same way as when Pantheon is installed locally.</p>
+<h3 id="persisting-data">Persisting Data</h3>
+<p>Specify a Docker volume to persist data between stopping and restarting the container. This is the equivalent of specifying the <code>-datadir</code> option. </p>
+<p>If a Docker volume is not specified, all data saved to the data directory is removed each time the container is stopped. </p>
+<p>To run Pantheon specifying a volume for the data directory: </p>
+<pre class="hljs">docker run --mount type=bind,source=/&lt;pantheonDataDir&gt;,target=/var/lib/pantheon pegasyseng/pantheon:latest
+</pre><p>Where <code>&lt;pantheonDataDir&gt;</code> is the volume to which the data is saved.  </p>
+<h3 id="custom-configuration-file">Custom Configuration File</h3>
+<p>Specify a custom configuration file to provide a file containing key/value pairs for command line options. This is the equivalent of specifying the <code>--config</code> option. </p>
+<p>To run Pantheon specifying a custom configuration file: </p>
+<pre class="hljs">docker run --mount type=bind,source=/&lt;path/myconf.toml&gt;,target=/etc/pantheon/pantheon.conf pegasyseng/pantheon:latest
+</pre><p>Where <code>myconf.toml</code> is your custom configuration file and <code>path</code> is the absolute path to the file. For example:</p>
+<pre class="hljs">docker run --mount type=bind,source=/Users/username/pantheon/myconf.toml,target=/etc/pantheon/pantheon.conf pegasyseng/pantheon:latest</pre><h3 id="custom-genesis-file">Custom Genesis File</h3>
+<p>Specify a custom genesis file to configure the blockchain. This is equivalent to specifying the <code>--genesis</code> option.</p>
+<p>To run Pantheon specifying a custom genesis file: </p>
+<pre class="hljs">docker run --mount type=bind,source=&lt;/path/mygenesis.json&gt;,target=/etc/pantheon/genesis.json pegasyseng/pantheon:latest</pre><p>Where <code>mygenesis.json</code> is your custom configuration file and <code>path</code> is the absolute path to the file. For example:</p>
+<pre class="hljs">docker run --mount type=bind,source=/Users/username/pantheon/mygenesis.json,target=/etc/pantheon/genesis.json pegasyseng/pantheon:latest</pre><h3 id="exposing-ports">Exposing Ports</h3>
+<p>Expose ports for P2P peer discovery, JSON-RPC service, and WebSockets. This is required to use the defaults ports or specify different ports (the equivalent of specifying the <code>--rpc-listen</code>, <code>--p2p-listen</code>, <code>--ws-listen</code> options).</p>
+<p>To run Pantheon exposing local ports for access: </p>
+<pre class="hljs">docker run -p &lt;localportJSON-RPC&gt;:8545 -p &lt;localportWS&gt;:8546 -p &lt;localportP2P&gt;:30303 pegasyseng/pantheon:latest --rpc-enabled --ws-enabled</pre><p>For example, to enable RPC calls to <a href="http://127.0.0.1:8545">http://127.0.0.1:8545</a> and P2P discovery on <a href="http://127.0.0.1:13001">http://127.0.0.1:13001</a>:</p>
+<pre class="hljs">docker run -p 8545:8545 -p 13001:30303 pegasyseng/pantheon:latest --rpc-enabled</pre><h2 id="starting-pantheon">Starting Pantheon</h2>
+<h3 id="run-a-node-on-ethereum-mainnet">Run a Node on Ethereum Mainnet</h3>
+<p>To run a node on the Ethereum mainnet: </p>
+<pre class="hljs">docker run -p 30303:30303 --mount type=bind,source=/&lt;myvolume/pantheon&gt;,target=/var/lib/pantheon pegasyseng/pantheon:latest</pre><p>To run a node on mainnet with the HTTP JSON-RPC service enabled: </p>
+<pre class="hljs">docker run -p 8545:8545 -p 30303:30303 --mount type=bind,source=/&lt;myvolume/pantheon&gt;,target=/var/lib/pantheon pegasyseng/pantheon:latest --rpc-enabled</pre><h2 id="run-a-node-on-ropsten-testnet">Run a Node on Ropsten Testnet</h2>
+<p>Save a local copy of the <a href="https://github.com/PegaSysEng/pantheon/blob/master/config/src/main/resources/ropsten.json">Ropsten genesis file</a>. </p>
+<p>To run a node on Ropsten: </p>
+<pre class="hljs">docker run -p 30303:30303 --mount type=bind,source=/&lt;myvolume/pantheon/ropsten&gt;,target=/var/lib/pantheon --mount type=bind,source=/&lt;path&gt;/ropsten.json,target=/etc/pantheon/genesis.json pegasyseng/pantheon:latest --network-id=3 --bootnodes=enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303</pre><h2 id="run-a-node-on-rinkeby-testnet">Run a Node on Rinkeby Testnet</h2>
+<p>To run a node on Rinkeby: </p>
+<pre class="hljs">docker run -p 30303:30303 --mount type=bind,source=/&lt;myvolume/pantheon/rinkeby&gt;,target=/var/lib/pantheon pegasyseng/pantheon:latest --rinkeby</pre><h2 id="run-a-node-for-testing">Run a Node for Testing</h2>
+<p>To run a node that mines blocks at a rate suitable for testing purposes with WebSockets enabled: </p>
+<pre class="hljs">docker run -p 8546:8546 --mount type=bind,source=/&lt;myvolume/pantheon/testnode&gt;,target=/var/lib/pantheon pegasyseng/pantheon:latest --dev-mode --bootnodes= --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-cors-origins "all" --ws-enabled</pre><h2 id="stopping-pantheon-and-cleaning-up-resources">Stopping Pantheon and Cleaning up Resources</h2>
+<p>When you&#39;re done running nodes, you can shut down the node container without deleting resources. Alternatively, you can delete the container (after stopping it) and its associated volume. Run <code>docker container ls</code> and <code>docker volume ls</code> to obtain the container and volume names. Then run the following commands:</p>
+<p>To stop a container:</p>
+<pre class="hljs">docker stop &lt;container-name&gt;</pre><p>To delete a container:</p>
+<pre class="hljs">docker rm &lt;container-name&gt;</pre><p>To delete a container volume (optional):</p>
+<pre class="hljs">docker volume rm &lt;volume-name&gt;</pre><p class="page" id="Private-Network-Quickstart"></p><h1>Private Network Quickstart</h1>
 <h1 id="private-network-quickstart-tutorial">Private Network Quickstart Tutorial</h1>
 <p>This tutorial describes how to use Pantheon to run a private network of Pantheon nodes in a Docker container.</p>
 <blockquote>
-<p><strong>Note</strong> To run the Private Network Quickstart, you must install Pantheon by <a href="https://github.com/PegaSysEng/pantheon/wiki/Installation">cloning and building</a>. </p>
-<p>If you have installed Pantheon from the <a href="https://pegasys.tech/">packaged binaries</a> or are running the <a href="https://hub.docker.com/u/pegasyseng/">Docker image</a>, you can proceed with the <a href="#Quickstart">Basic Quickstart</a> or <a href="#Starting-Pantheon">Starting Pantheon</a>.</p>
+<p><strong>Note</strong> To run the Private Network Quickstart, you must install Pantheon by <a href="https://github.com/PegaSysEng/pantheon/wiki/Build-From-Source">cloning and building</a>. </p>
+<p>If you have installed Pantheon from the <a href="#Install-Binaries">packaged binaries</a> or are running the <a href="https://hub.docker.com/u/pegasyseng/">Docker image</a>, you can proceed with <a href="#Starting-Pantheon">Starting Pantheon</a>.</p>
 </blockquote>
 <h2 id="prerequisites">Prerequisites</h2>
 <p>To run this tutorial, you must have the following installed:</p>
@@ -1011,7 +1122,7 @@ created during the genesis of this test network.</p>
 <li>Initial balance : 0x90000000000000000000000 (2785365088392105618523029504 in decimal)</li>
 </ul>
 <blockquote>
-<p><strong>Note:</strong> Pantheon does not provide an accounts management system, so if you want to create your own account, you will have to use a third party tool like Metamask.</p>
+<p><strong>Note</strong> Pantheon does not provide an accounts management system, so if you want to create your own account, you will have to use a third party tool like Metamask.</p>
 </blockquote>
 <h3 id="creating-a-transaction-using-metamask">Creating a Transaction Using MetaMask</h3>
 <p>After you sign in to MetaMask, connect to the private network RPC endpoint by:</p>
@@ -1034,27 +1145,30 @@ on the main network but on a local private network.</em></p>
 <p><a href="https://metamask.zendesk.com/hc/en-us/articles/360015488991-Sending-Ether-New-UI-">Send some ether</a> 
 from the first account (containing some ether) to the new one (that have a zero balance).</p>
 <p>Click refresh on the browser page displaying the new account. The updated balance is displayed and reflects the transaction completed using MetaMask. </p>
-<h3 id="playing-with-the-truffle-pet-shop-tutorial">Playing with the Truffle Pet Shop Tutorial</h3>
-<p>This step is inspired by <a href="https://truffleframework.com/tutorials/pet-shop">the PetShop tutorial on Truffle website</a>.</p>
-<p>Use the following instructions to run it with the quick-start Pantheon Docker network and a wallet to manage keys.</p>
+<h3 id="truffle-pet-shop-tutorial">Truffle Pet Shop Tutorial</h3>
+<p>With a couple of modifications, we can use the private network in this tutorial as the blockchain for the <a href="https://truffleframework.com/tutorials/pet-shop">PetShop tutorial on Truffle website</a>.</p>
 <h4 id="prerequisites">Prerequisites</h4>
 <ul>
-<li>Install Truffle :</li>
+<li><a href="https://nodejs.org/en/">Node.js v6+ LTS and npm</a> (comes with Node)</li>
 </ul>
-<pre class="hljs">npm install -g truffle</pre><ul>
-<li>Grab the tutorial <a href="https://truffleframework.com/tutorials/pet-shop#creating-a-truffle-project-using-a-truffle-box">as indicated in the Truffle site</a>:</li>
-</ul>
+<h4 id="install-truffle-and-unpack-truffle-box">Install Truffle and Unpack Truffle Box</h4>
+<p>Install Truffle :</p>
+<pre class="hljs">npm install -g truffle</pre><blockquote>
+<p><strong>Note</strong> <code>npm</code> requires <code>sudo</code> on Linux.  </p>
+</blockquote>
+<p>Create a <code>pet-shop-tutorial</code> directory and move into it:</p>
 <pre class="hljs">mkdir pet-shop-tutorial
-<span class="hljs-built_in">cd</span> pet-shop-tutorial
-truffle unbox pet-shop</pre><ul>
-<li>Install the <a href="https://www.npmjs.com/package/truffle-privatekey-provider">Wallet</a> by running the following command:</li>
-</ul>
-<pre class="hljs">npm install truffle-privatekey-provider</pre><h4 id="modify-the-pet-shop-example">Modify the Pet Shop Example</h4>
-<p>We are going to modify the <code>truffle.js</code> file to add our wallet provider.
-So modify the file to look like the following :</p>
+<span class="hljs-built_in">cd</span> pet-shop-tutorial</pre><p>Unpack Pet Shop <a href="https://truffleframework.com/boxes">truffle box</a>: </p>
+<p><code>truffle unbox pet-shop</code></p>
+<p>Install the <a href="https://www.npmjs.com/package/truffle-privatekey-provider">wallet</a>:</p>
+<pre class="hljs">npm install truffle-privatekey-provider</pre><blockquote>
+<p><strong>Note</strong> <code>npm</code> requires <code>sudo</code> on Linux.</p>
+</blockquote>
+<h4 id="modify-the-pet-shop-example">Modify the Pet Shop Example</h4>
+<p>Modify the <code>truffle.js</code> file in the <code>pet-shop-tutorial</code> directory to add our wallet provider:</p>
 <pre class="hljs"><span class="hljs-keyword">const</span> PrivateKeyProvider = <span class="hljs-built_in">require</span>(<span class="hljs-string">"truffle-privatekey-provider"</span>);
 <span class="hljs-keyword">const</span> privateKey = <span class="hljs-string">"8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"</span>;
-<span class="hljs-keyword">const</span> privateKeyProvider = <span class="hljs-keyword">new</span> PrivateKeyProvider(privateKey, <span class="hljs-string">"[YOUR HTTP RPC NODE ENDPOINT]"</span>);
+<span class="hljs-keyword">const</span> privateKeyProvider = <span class="hljs-keyword">new</span> PrivateKeyProvider(privateKey, <span class="hljs-string">"&lt;YOUR HTTP RPC NODE ENDPOINT&gt;"</span>);
 
 <span class="hljs-built_in">module</span>.exports = {
   <span class="hljs-comment">// See &lt;http://truffleframework.com/docs/advanced/configuration&gt;</span>
@@ -1070,11 +1184,50 @@ So modify the file to look like the following :</p>
       <span class="hljs-attr">network_id</span>: <span class="hljs-string">"*"</span>
     },
   }
-};</pre><p>Then replace the <code>[YOUR HTTP RPC NODE ENDPOINT]</code> placeholder with your HTTP RPC node endpoint. <code>http://localhost:32770/jsonrpc</code> in this case.</p>
-<p>The private address indicated in the file is the miner address so we know we will have funds in it. You don&#39;t need to change it.</p>
-<p>Once this is done, you can go through the regular tutorial steps.</p>
-<p>When you have to run a truffle command, you only have to indicate the right network to use, as in the following command using the <code>--network quickstartWallet</code> option :</p>
-<pre class="hljs">truffle migrate --network quickstartWallet</pre><p>You&#39;re now able to see the transactions and contracts deployed on your local docker network on the block explorer.</p>
+};</pre><p>Replace <code>&lt;YOUR HTTP RPC NODE ENDPOINT&gt;</code> with your HTTP RPC node endpoint (for example, <code>http://localhost:32770/jsonrpc</code>).</p>
+<p>The private key is the miner address which means it will have funds. </p>
+<p>Once this is done, you can continue with the <a href="https://truffleframework.com/tutorials/pet-shop#directory-structure">regular tutorial steps</a> on the Truffle website until Step 3 in the <a href="https://truffleframework.com/tutorials/pet-shop#migration">Migration section</a>.</p>
+<h4 id="use-pantheon-private-network-instead-of-genache">Use Pantheon Private Network Instead of Genache</h4>
+<p>We are going to use our private network instead of Genache, so skip steps 3, 4, and 5 in the <a href="https://truffleframework.com/tutorials/pet-shop#migration">Migration section</a>. </p>
+<p>In step 4, specify our private network: </p>
+<pre class="hljs">truffle migrate --network quickstartWallet</pre><p>Output similar to the following is displayed (your addresses will differ):</p>
+<pre class="hljs">Using network 'quickstartWallet'.
+
+Running migration: 1_initial_migration.js
+  Deploying Migrations...
+  ... 0xfc1dbc1eaa14fa283c2c4415364579da0d195b3f2f2fefd7e0edb600a6235bdb
+  Migrations: 0x9a3dbca554e9f6b9257aaa24010da8377c57c17e
+Saving successful migration to network...
+  ... 0x77cc6e9966b886fb74268f118b3ff44cf973d32b616ed4f050b3eabf0a31a30e
+Saving artifacts...
+Running migration: 2_deploy_contracts.js
+  Deploying Adoption...
+  ... 0x5035fe3ea7dab1d81482acc1259450b8bf8fefecfbe1749212aca86dc765660a
+  Adoption: 0x2e1f232a9439c3d459fceca0beef13acc8259dd8
+Saving successful migration to network...
+  ... 0xa7b5a36e0ebc9c25445ce29ff1339a19082d0dda516e5b72c06ee6b99a901ec0
+Saving artifacts...</pre><p>Search for the deployed contracts and transactions in the block explorer using the addresses displayed in your output.</p>
+<p>Continue with the regular tutorial steps in the <a href="https://truffleframework.com/tutorials/pet-shop#testing-the-smart-contract">Testing the smart contract section</a>.</p>
+<p>To run the tests in the <a href="https://truffleframework.com/tutorials/pet-shop#running-the-tests">Running the tests section</a>, specify our private network: </p>
+<pre class="hljs">truffle <span class="hljs-built_in">test</span> --network quickstartWallet</pre><p>Output similar to the following is displayed: </p>
+<pre class="hljs">Using network 'quickstartWallet'.
+
+Compiling ./contracts/Adoption.sol...
+Compiling ./test/TestAdoption.sol...
+Compiling truffle/Assert.sol...
+Compiling truffle/DeployedAddresses.sol...
+
+
+  TestAdoption
+    ✓ testUserCanAdoptPet (2071ms)
+    ✓ testGetAdopterAddressByPetId (6070ms)
+    ✓ testGetAdopterAddressByPetIdInArray (6077ms)
+
+
+  3 passing (37s)</pre><p>Continue with the regular tutorial steps in the <a href="https://truffleframework.com/tutorials/pet-shop#creating-a-user-interface-to-interact-with-the-smart-contract">Creating a user interface to interact with the smart contract section</a>.</p>
+<p>We have already connected our private network to MetaMask so you can skip the <a href="https://truffleframework.com/tutorials/pet-shop#installing-and-configuring-metamask">Installing and configuring MetaMask section</a>.</p>
+<p>Continue with the regular tutorial steps from the <a href="https://truffleframework.com/tutorials/pet-shop#installing-and-configuring-lite-server">Installing and configuring lite-server section</a> to the end of the tutorial.</p>
+<p>When you adopt pets in the browser and approve the transaction in MetaMask, you will be able to see the transactions in the block explorer. </p>
 <h2 id="shut-down-the-network-and-remove-the-containers">Shut Down the Network and Remove the Containers</h2>
 <p>To shut down the network and delete all containers:</p>
 <blockquote>
@@ -1102,95 +1255,11 @@ So modify the file to look like the following :</p>
 <blockquote>
 <p>On Windows, run the following docker command:</p>
 <pre class="hljs">docker-compose start</pre></blockquote>
-<p class="page" id="Starting-Pantheon"></p><h1>Starting Pantheon</h1>
-<h1 id="starting-pantheon">Starting Pantheon</h1>
-<p>Pantheon nodes can be used for varying purposes as described in the <a href="#Overview">Overview</a>. Nodes can connect to the Ethereum mainnet, public testnets such as Ropsten, or private networks.</p>
-<h2 id="local-block-data">Local Block Data</h2>
-<p>When connecting to a network other than the network previously connected to, you must either delete the local block data or use the <code>--datadir</code> option to specify a different data directory. </p>
-<p>To delete the local block data, delete the <code>database</code> directory in the <code>pantheon/build/distribution/pantheon-0.8.0-&lt;version&gt;</code> directory.</p>
-<h2 id="genesis-configuration">Genesis Configuration</h2>
-<p>Pantheon specifies the genesis configuration, and sets the network ID and bootnodes when connecting to <a href="#run-a-node-on-ethereum--mainnet">mainnet</a>, <a href="#run-a-node-on-rinkeby-testnet">Rinkeby</a>, and <a href="#run-a-node-on-ropsten-testnet">Ropsten</a>. </p>
-<p>When <code>--dev-mode</code> is specified, Pantheon uses the development mode genesis configuration.</p>
-<p>The genesis files defining the genesis configurations are in the <a href="https://github.com/PegaSysEng/pantheon/tree/master/config/src/main/resources">Pantheon source files</a>. </p>
-<p>To define a genesis configuration, create a genesis file (for example, <code>genesis.json</code>) and specify the file using the <code>--genesis</code> option.</p>
-<h2 id="run-a-node-on-ethereum-mainnet">Run a Node on Ethereum  Mainnet</h2>
-<p>To run a node on the Ethereum mainnet: </p>
-<p><code>$ bin/pantheon</code></p>
-<p>To run a node on mainnet with the HTTP JSON-RPC service enabled: </p>
-<p><code>$ bin/pantheon --rpc-enabled</code></p>
-<h2 id="run-a-node-on-ropsten-testnet">Run a Node on Ropsten Testnet</h2>
-<blockquote>
-<p><strong>Note</strong> From v0.8.2 or when <a href="#Installation">building from source</a>, use the <a href="#Pantheon-CLI-Syntaxoptions"><code>--ropsten</code> option</a> instead of the following options. For v0.8.1, use the following options.</p>
-</blockquote>
-<p>Replace <code>&lt;path&gt;</code> with the path to the <code>/pantheon</code> directory. </p>
-<p>To run a node on Ropsten: </p>
-<p><code>$ bin/pantheon --network-id=3 --genesis=&lt;path&gt;/pantheon/ethereum/core/src/main/resources/ropsten.json --bootnodes=enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303</code></p>
-<p>To run a node on Ropsten with the HTTP JSON-RPC service enabled and allow Remix to access the node: </p>
-<p><code>$ bin/pantheon --rpc-enabled --rpc-cors-origins &quot;http://remix.ethereum.org&quot; --network-id=3 --genesis=&lt;path&gt;/pantheon/ethereum/core/src/main/resources/ropsten.json --bootnodes=enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303</code></p>
-<h2 id="run-a-node-on-rinkeby-testnet">Run a Node on Rinkeby Testnet</h2>
-<p>Replace <code>&lt;path&gt;</code> with the path where the Rinkeby chain data is to be saved. </p>
-<p>To run a node on Rinkeby specifying a data directory: </p>
-<p><code>$ bin/pantheon --rinkeby --datadir=&lt;path&gt;/rinkebyDataDir</code></p>
-<h2 id="run-a-node-for-testing">Run a Node for Testing</h2>
-<p>To run a node that mines blocks at a rate suitable for testing purposes: </p>
-<p><code>$ bin/pantheon --dev-mode --bootnodes= --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-cors-origins &quot;all&quot; --ws-enabled --rpc-enabled</code></p>
-<p class="page" id="Run-Docker-Image"></p><h1>Running Pantheon from Docker Image</h1>
-<h1 id="run-pantheon-from-docker-image">Run Pantheon from Docker Image</h1>
-<p>A Docker image is provided to run a Pantheon node in a Docker container. </p>
-<p>Use this Docker image to run a single Pantheon node without installing Pantheon. </p>
-<h2 id="prerequisites">Prerequisites</h2>
-<p>To run Pantheon from the Docker image, you must have <a href="https://docs.docker.com/install/">Docker</a> installed.  </p>
-<h2 id="quickstart">Quickstart</h2>
-<p>To run a Pantheon node in a container connected to the Ethereum mainnet: </p>
-<pre class="hljs">docker run pegasyseng/pantheon:latest</pre><h2 id="command-line-options">Command Line Options</h2>
-<p>You cannot use the following Pantheon command line options when running Pantheon from the Docker image: </p>
-<ul>
-<li><code>--datadir</code>, see <a href="#persisting-data">Persisting Data</a></li>
-<li><code>--config</code>, see <a href="#custom-configuration-file">Custom Configuration File</a></li>
-<li><code>--genesis</code>, see <a href="#custom-genesis-file">Custom Genesis File</a>.</li>
-<li><code>--rpc-listen</code>, <code>--p2plisten</code>, <code>--ws-listen</code>, see <a href="#exposing-ports">Exposing Ports</a></li>
-</ul>
-<p>All other <a href="https://github.com/PegaSysEng/pantheon/wiki/Pantheon-CLI-Syntax">Pantheon command line options</a> work in the same way as when Pantheon is installed locally.</p>
-<h3 id="persisting-data">Persisting Data</h3>
-<p>Specify a Docker volume to persist data between stopping and restarting the container. This is the equivalent of specifying the <code>-datadir</code> option. </p>
-<p>If a Docker volume is not specified, all data saved to the data directory is removed each time the container is stopped. </p>
-<p>To run Pantheon specifying a volume for the data directory: </p>
-<pre class="hljs">docker run --mount type=bind,source=/&lt;pantheonDataDir&gt;,target=/var/lib/pantheon pegasyseng/pantheon:latest
-</pre><p>Where <code>&lt;pantheonDataDir&gt;</code> is the volume to which the data is saved.  </p>
-<h3 id="custom-configuration-file">Custom Configuration File</h3>
-<p>Specify a custom configuration file to provide a file containing key/value pairs for command line options. This is the equivalent of specifying the <code>--config</code> option. </p>
-<p>To run Pantheon specifying a custom configuration file: </p>
-<pre class="hljs">docker run --mount type=bind,source=/&lt;path/myconf.toml&gt;,target=/etc/pantheon/pantheon.conf pegasyseng/pantheon:latest
-</pre><p>Where <code>myconf.toml</code> is your custom configuration file and <code>path</code> is the absolute path to the file. For example:</p>
-<pre class="hljs">docker run --mount type=bind,source=/Users/username/pantheon/myconf.toml,target=/etc/pantheon/pantheon.conf pegasyseng/pantheon:latest</pre><h3 id="custom-genesis-file">Custom Genesis File</h3>
-<p>Specify a custom genesis file to configure the blockchain. This is equivalent to specifying the <code>--genesis</code> option.</p>
-<p>To run Pantheon specifying a custom genesis file: </p>
-<pre class="hljs">docker run --mount type=bind,source=&lt;/path/mygenesis.json&gt;,target=/etc/pantheon/genesis.json pegasyseng/pantheon:latest</pre><p>Where <code>mygenesis.json</code> is your custom configuration file and <code>path</code> is the absolute path to the file. For example:</p>
-<pre class="hljs">docker run --mount type=bind,source=/Users/username/pantheon/mygenesis.json,target=/etc/pantheon/genesis.json pegasyseng/pantheon:latest</pre><h3 id="exposing-ports">Exposing Ports</h3>
-<p>Expose ports for P2P peer discovery, JSON-RPC service, and WebSockets. This is required to use the defaults ports or specify different ports (the equivalent of specifying the <code>--rpc-listen</code>, <code>--p2p-listen</code>, <code>--ws-listen</code> options).</p>
-<p>To run Pantheon exposing local ports for access: </p>
-<pre class="hljs">docker run -p &lt;localportJSON-RPC&gt;:8545 -p &lt;localportWS&gt;:8546 -p &lt;localportP2P&gt;:30303 pegasyseng/pantheon:latest --rpc-enabled --ws-enabled</pre><p>For example, to enable RPC calls to <a href="http://127.0.0.1:8545">http://127.0.0.1:8545</a> and P2P discovery on <a href="http://127.0.0.1:13001">http://127.0.0.1:13001</a>:</p>
-<pre class="hljs">docker run -p 8545:8545 -p 13001:30303 pegasyseng/pantheon:latest --rpc-enabled</pre><h2 id="starting-pantheon">Starting Pantheon</h2>
-<h3 id="run-a-node-on-ethereum-mainnet">Run a Node on Ethereum Mainnet</h3>
-<p>To run a node on the Ethereum mainnet: </p>
-<pre class="hljs">docker run -p 30303:30303 --mount type=bind,source=/&lt;myvolume/pantheon&gt;,target=/var/lib/pantheon pegasyseng/pantheon:latest</pre><p>To run a node on mainnet with the HTTP JSON-RPC service enabled: </p>
-<pre class="hljs">docker run -p 8545:8545 -p 30303:30303 --mount type=bind,source=/&lt;myvolume/pantheon&gt;,target=/var/lib/pantheon pegasyseng/pantheon:latest --rpc-enabled</pre><h2 id="run-a-node-on-ropsten-testnet">Run a Node on Ropsten Testnet</h2>
-<p>Save a local copy of the <a href="https://github.com/PegaSysEng/pantheon/blob/master/config/src/main/resources/ropsten.json">Ropsten genesis file</a>. </p>
-<p>To run a node on Ropsten: </p>
-<pre class="hljs">docker run -p 30303:30303 --mount type=bind,source=/&lt;myvolume/pantheon/ropsten&gt;,target=/var/lib/pantheon --mount type=bind,source=/&lt;path&gt;/ropsten.json,target=/etc/pantheon/genesis.json pegasyseng/pantheon:latest --network-id=3 --bootnodes=enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303</pre><h2 id="run-a-node-on-rinkeby-testnet">Run a Node on Rinkeby Testnet</h2>
-<p>To run a node on Rinkeby: </p>
-<pre class="hljs">docker run -p 30303:30303 --mount type=bind,source=/&lt;myvolume/pantheon/rinkeby&gt;,target=/var/lib/pantheon pegasyseng/pantheon:latest --rinkeby</pre><h2 id="run-a-node-for-testing">Run a Node for Testing</h2>
-<p>To run a node that mines blocks at a rate suitable for testing purposes with WebSockets enabled: </p>
-<pre class="hljs">docker run -p 8546:8546 --mount type=bind,source=/&lt;myvolume/pantheon/testnode&gt;,target=/var/lib/pantheon pegasyseng/pantheon:latest --dev-mode --bootnodes= --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-cors-origins "all" --ws-enabled</pre><h2 id="stopping-pantheon-and-cleaning-up-resources">Stopping Pantheon and Cleaning up Resources</h2>
-<p>When you&#39;re done running nodes, you can shut down the node container without deleting resources. Alternatively, you can delete the container (after stopping it) and its associated volume. Run <code>docker container ls</code> and <code>docker volume ls</code> to obtain the container and volume names. Then run the following commands:</p>
-<p>To stop a container:</p>
-<pre class="hljs">docker stop &lt;container-name&gt;</pre><p>To delete a container:</p>
-<pre class="hljs">docker rm &lt;container-name&gt;</pre><p>To delete a container volume (optional):</p>
-<pre class="hljs">docker volume rm &lt;volume-name&gt;</pre><p class="page" id="NetworkID-And-ChainID"></p><h1>Network ID and Chain ID</h1>
+<p class="page" id="NetworkID-And-ChainID"></p><h1>Network ID and Chain ID</h1>
 <h1 id="network-id-and-chain-id">Network ID and Chain ID</h1>
 <p>Ethereum networks have a network ID and a chain ID. The network ID is specified using the <code>--network-id</code> option and the chain ID is specified in the genesis file.</p>
 <p>For most networks including mainnet and the public testnets, the network ID and the chain ID are the same. </p>
-<p>The network ID is defined by Pantheon when connecting to the Ethereum mainnet (<code>1</code>), Rinkeby (<code>4</code>), and Ropsten(<code>3</code>).</p>
+<p>The network ID is automatically set by Pantheon when connecting to the Ethereum mainnet (<code>1</code>), Rinkeby (<code>4</code>), and Ropsten(<code>3</code>).</p>
 <p>When using the <code>--dev-mode</code> or <code>--genesis</code> options, specify the network ID using the <code>--network-id</code> option. </p>
 <p class="page" id="Node-Keys"></p><h1>Node Keys</h1>
 <h1 id="node-keys">Node Keys</h1>
@@ -1226,6 +1295,8 @@ So modify the file to look like the following :</p>
 <p>Trailing peers cannot be used to get new blocks and are more likely to be requesting blocks from you. Limiting trailing peers may reduce the time taken to catch up to the chain head when synchronizing. </p>
 <h2 id="no-discovery">No Discovery</h2>
 <p>The <code>--no-discovery</code> command line option disables P2P peer discovery.  Only use this option if you are running a test node or a test network with fixed nodes.</p>
+<h2 id="monitoring-peer-connections">Monitoring Peer Connections</h2>
+<p>Use the <a href="#JSON-RPC-API-Methodsdebug_metrics"><code>debug_metrics</code></a> JSON-RPC API method to obtain information about peer connections.   </p>
 <p class="page" id="Accounts-for-Testing"></p><h1>Accounts for Testing</h1>
 <h3 id="accounts-for-testing">Accounts for Testing</h3>
 <p>You can use existing accounts for testing by including them in the genesis file for a private network. Alternatively, Pantheon provides predefined accounts in development mode. </p>
@@ -1325,17 +1396,6 @@ So modify the file to look like the following :</p>
 <h2 id="proof-of-authority">Proof of Authority</h2>
 <p>Pantheon implements the Clique Proof-of-Authority (PoA) consensus protocol. Clique is used by the Rinkeby testnet and can be used for private networks. </p>
 <p>In PoA networks, transactions and blocks are validated by approved accounts, known as signers. Signers take turns to create the next block. Existing signers propose and vote to add or remove signers. </p>
-<h3 id="initial-signers">Initial Signers</h3>
-<p>Before starting a private network using Clique, create at least one </p>
-<p>Specify at least 1 but preferably </p>
-<ul>
-<li>Must create 1 or more (preferably at least 3) private keys (Pantheon doesn&#39;t do account management so probably externally or start nodes with different data directories to get private key)</li>
-<li>32 bytes/64 characters of vanity data</li>
-<li>signers nX40 characters for each one - left pad with zeros</li>
-<li>followed by 65 bytes/130 - usually this is the signature for the block but because this is the genesis block it&#39;s unsigned </li>
-</ul>
-<p>Then need to start network with the nodes specified as initial signers - refer to Node Keys topic. </p>
-<p>Process as per Slack DM. Trent getting back to me. </p>
 <h2 id="genesis-file">Genesis File</h2>
 <p>To use Clique in a private network, Pantheon requires a PoA genesis file. When connecting to Rinkeby, Pantheon uses the <a href="https://github.com/PegaSysEng/pantheon/blob/master/ethereum/core/src/main/resources/rinkeby.json"><code>rinkeby.json</code></a> genesis file in the <code>/pantheon/ethereum/core/src/main/resources</code> directory.</p>
 <p>A PoA genesis file defines properties specific to Clique:</p>
@@ -1354,16 +1414,16 @@ So modify the file to look like the following :</p>
 <ul>
 <li><code>period</code> - Block time in seconds. </li>
 <li><code>epoch</code> - Number of blocks after which to reset all votes.</li>
-<li><code>extraData</code> - Specifies <a href="#specifying-initial-signers">initial signers</a>. </li>
+<li><code>extraData</code> - Initial signers are specified after the 32 bytes reserved for vanity data. </li>
 </ul>
 <p>To connect to the Rinkeby testnet, start Pantheon with the <code>--rinkeby</code> option. To start a node on a PoA private network, use the <code>--network-id</code> and <code>--genesis</code> options. </p>
 <h3 id="adding-and-removing-signers">Adding and Removing Signers</h3>
 <p>To propose adding or removing signers using the JSON-RPC methods, you must enable the RPC interface using the <a href="#Pantheon-CLI-Syntaxoptions"><code>--rpc-enabled</code> option</a>. If also using the <a href="#Pantheon-CLI-Syntaxoptions"><code>--rpc-api</code> option</a>, include <code>CLIQUE</code>.</p>
 <p>The JSON-RPC methods to add or remove signers are:</p>
 <ul>
-<li><a href="#JSON-RPC-APIclique_propose">clique_propose</a></li>
-<li><a href="#JSON-RPC-APIclique_getsigners">clique_getSigners</a></li>
-<li><a href="#JSON-RPC-APIclique_discard">clique_discard</a></li>
+<li><a href="#JSON-RPC-API-Methodsclique_propose">clique_propose</a></li>
+<li><a href="#JSON-RPC-API-Methodsclique_getsigners">clique_getSigners</a></li>
+<li><a href="#JSON-RPC-API-Methodsclique_discard">clique_discard</a></li>
 </ul>
 <p>To propose adding a signer, call <code>clique_propose</code> specifying the address of the proposed signer and <code>true</code>. For example, </p>
 <pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"clique_propose","params":["0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73", true], "id":1}' &lt;JSON-RPC-endpoint:port&gt;</pre><p>When the next block is created by the signer, a vote is added to the block for the proposed signer.  </p>
@@ -1381,8 +1441,8 @@ So modify the file to look like the following :</p>
 <p>For Bash-based executions, you can set the variable for only the scope of the program execution by setting it before starting Pantheon. For example:</p>
 <pre class="hljs">PANTHEON_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,<span class="hljs-built_in">suspend</span>=n,address=5005 bin/pantheon --rinkeby</pre><p class="page" id="Transactions"></p><h1>Creating and Sending Transactions</h1>
 <h1 id="transactions">Transactions</h1>
-<p>You can send signed transactions using the <a href="https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API#eth_sendrawtransaction"><code>eth_sendRawTransaction</code></a> JSON-RPC API method.</p>
-<p>These examples describe how to create a signed raw transaction that can be passed to <a href="https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API#eth_sendrawtransaction"><code>eth_sendRawTransaction</code></a>.</p>
+<p>You can send signed transactions using the <a href="#JSON-RPC-API-Methodseth_sendrawtransaction"><code>eth_sendRawTransaction</code></a> JSON-RPC API method.</p>
+<p>These examples describe how to create a signed raw transaction that can be passed to <a href="#JSON-RPC-API-Methodseth_sendrawtransaction"><code>eth_sendRawTransaction</code></a>.</p>
 <p><strong>To avoid exposing your private keys, create signed transactions offline.</strong>  </p>
 <p>The examples use the following libraries to create signed transactions:</p>
 <ul>
@@ -1484,7 +1544,7 @@ const serializedTx = tx.serialize();
 const rawTxHex = <span class="hljs-string">'0x'</span> + serializedTx.toString(<span class="hljs-string">'hex'</span>);
 
 console.log(<span class="hljs-string">"Raw transaction string="</span> + rawTxHex); </pre><h2 id="eth_call-or-eth_sendrawtransaction">eth_call or eth_sendRawTransaction</h2>
-<p>You can interact with contracts using <a href="#JSON-RPC-APIeth_call">eth_call</a> or <a href="#JSON-RPC-APIeth_sendrawtransaction">eth_sendRawTransaction</a>. </p>
+<p>You can interact with contracts using <a href="#JSON-RPC-API-Methodseth_call">eth_call</a> or <a href="#JSON-RPC-API-Methodseth_sendrawtransaction">eth_sendRawTransaction</a>. </p>
 <table>
 <thead>
 <tr>
@@ -1524,8 +1584,8 @@ console.log(<span class="hljs-string">"Raw transaction string="</span> + rawTxHe
 <p>Pantheon does not implement private key management. Use third-party tools (for example, <a href="https://consensys.zendesk.com/hc/en-us/articles/360004685212-Generating-MetaMask-Wallet-New-UI-">MetaMask</a> and <a href="https://web3j.io/">web3j</a>) for creating accounts. </p>
 <p>In Pantheon, you can use the JSON-RPC methods:</p>
 <ul>
-<li><a href="#JSON-RPC-APIeth_getbalance">eth_getBalance</a> to obtain the account balance</li>
-<li><a href="#JSON-RPC-APIeth_sendrawtransaction">eth_sendRawTransaction</a> to transfer ether or create and interact with contracts (for more information, refer to <a href="#Transactionstransactions">Transactions</a>).  </li>
+<li><a href="#JSON-RPC-API-Methodseth_getbalance">eth_getBalance</a> to obtain the account balance</li>
+<li><a href="#JSON-RPC-API-Methodseth_sendrawtransaction">eth_sendRawTransaction</a> to transfer ether or create and interact with contracts (for more information, refer to <a href="#Transactionstransactions">Transactions</a>).  </li>
 </ul>
 <p class="page" id="Mining"></p><h1>Mining</h1>
 <h1 id="mining">Mining</h1>
@@ -1533,139 +1593,188 @@ console.log(<span class="hljs-string">"Raw transaction string="</span> + rawTxHe
 <pre class="hljs">bin/pantheon --miner-enabled --miner-coinbase &lt;account&gt;</pre><p>Where <code>&lt;account&gt;</code> is the account to which mining rewards are to be paid. For example, <code>fe3b557e8fb62b89f4916b721be55ceb828dbd73</code>.</p>
 <p>JSON-RPC API methods for mining are: </p>
 <ul>
-<li><a href="#JSON-RPC-APIminer_start"><code>miner_start</code></a> to start mining. </li>
-<li><a href="#JSON-RPC-APIminer_stop"><code>miner_stop</code></a> to stop mining. </li>
-<li><a href="#JSON-RPC-APIeth_mining"><code>eth_mining</code></a> to determine whether the client is actively mining new blocks.   </li>
+<li><a href="#JSON-RPC-API-Methodsminer_start"><code>miner_start</code></a> to start mining. </li>
+<li><a href="#JSON-RPC-API-Methodsminer_stop"><code>miner_stop</code></a> to stop mining. </li>
+<li><a href="#JSON-RPC-API-Methodseth_mining"><code>eth_mining</code></a> to determine whether the client is actively mining new blocks.   </li>
 </ul>
 <p class="page" id="RPC-PubSub"></p><h1>RPC Pub/Sub</h1>
 <h1 id="rpc-pub-sub">RPC Pub/Sub</h1>
 <h2 id="contents">Contents</h2>
 <ul>
-<li>Event Publication and Subscription</li>
-<li>Creating Subscriptions</li>
-<li>Canceling Subscriptions</li>
+<li><a href="#introduction">Introduction</a> </li>
+<li><a href="#subscribing">Subscribing</a></li>
+<li><a href="#unsubscribing">Unsubscribing</a></li>
 </ul>
-<h2 id="event-publication-and-subscription">Event Publication and Subscription</h2>
-<p>Pantheon supports event publication and subscription with the RPC Pub/Sub methods. Using these methods, your client can wait for events instead of polling for them. You invoke the RPC Pub/Sub methods over WebSockets. (Note that these methods cannot be called over HTTP.)</p>
+<h2 id="introduction">Introduction</h2>
+<p>Use the RPC Pub/Sub API to wait for events instead of polling for them. For example, a Dapp can subscribe to logs to be notified when a specific event has occurred.   </p>
+<p>The RPC Pub/Sub methods are: </p>
 <ul>
-<li>Your client calls <code>eth_subscribe</code> to create a subscription that waits for particular events.</li>
-<li>Your client calls <code>eth_unsubscribe</code> to cancel an existing subscription.</li>
-<li>The server invokes <code>eth_subscription</code> to publish (report) notifications of event occurrences to your client. Your client never calls this method.</li>
+<li><code>eth_subscribe</code> - create a subscription for specific events.</li>
+<li><code>eth_unsubscribe</code> - cancel a subscription.</li>
 </ul>
-<h3 id="subscriptions">Subscriptions</h3>
-<p>When you subscribe to particular events (using <code>eth_subscribe</code>), the node returns a subscription ID. For each matching event that occurs, the node uses <code>eth_subscription</code> to return a notification with relevant data and the subscription ID.</p>
-<p>Subscriptions require a full duplex connection, so you need to invoke the RPC Pub/Sub methods over WebSockets. You can use a tool such as <a href="https://github.com/websockets/wscat">wscat</a>, a Node.js based command-line tool.</p>
-<p>Subscriptions are coupled to a connection. If the connection is closed, all subscriptions that have been created over this connection will be removed.</p>
-<p>The types of events that you can subscribe to are:</p>
-<h4 id="new-headers-newheads-">New Headers (newHeads)</h4>
-<p>This subscription sends a notification each time a new header is appended to the chain. This includes chain reorganizations. You can use the bloom filter to determine if the block contains logs of interest. In case of a chain reorganization the subscription will emit all new headers for the new chain. Therefore the subscription can emit multiple headers on the same height.</p>
-<p>You can filter blocks using elements from the <a href="https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API#block-object">Block Object</a>. For example, you can use the <code>logsBloom</code> parameter to filter blocks containing logs of interest to you.</p>
-<p>The following is an example of <code>newHeads</code> notifications:</p>
-<pre class="hljs">&gt;&gt; {"id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
-&lt;&lt; {"jsonrpc":"2.0","id":2,"result":"0x1"}
-
-&lt;&lt; {
-  "jsonrpc": "2.0",
-  "method": "eth_subscription",
-  "params": {
-    "result": {
-      "difficulty": "0x15d9223a23aa",
-      "extraData": "0xd983010305844765746887676f312e342e328777696e646f7773",
-      "gasLimit": "0x47e7c4",
-      "gasUsed": "0x38658",
-      "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-      "miner": "0xf8b483dba2c3b7176a3da549ad41a48bb3121069",
-      "nonce": "0x084149998194cc5f",
-      "number": "0x1348c9",
-      "parentHash": "0x7736fab79e05dc611604d22470dadad26f56fe494421b5b333de816ce1f25701",
-      "receiptRoot": "0x2fab35823ad00c7bb388595cb46652fe7886e00660a01e867824d3dceb1c8d36",
-      "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-      "stateRoot": "0xb3346685172db67de536d8765c43c31009d0eb3bd9c501c9be3229203f15f378",
-      "timestamp": "0x56ffeff8",
-      "transactionsRoot": "0x0167ffa60e3ebc0b080cdb95f7c0087dd6c0e61413140e39d94d3468d7c9689f"
-    },
-    "subscription": "0x1"
+<blockquote>
+<p><strong>Note</strong> Unlike other <a href="#JSON-RPC-API-Methods">JSON RPC-API methods</a>, the RPC Pub/Sub methods cannot be called over HTTP. </p>
+</blockquote>
+<h3 id="using-rpc-pub-sub">Using RPC Pub/Sub</h3>
+<p>The RPC Pub/Sub API requires a persistent connection. Connect to the RPC Pub/Sub API using a tool such as <a href="#Using-JSON-RPC-APIendpoint-address-and-port">WebSockets</a>. </p>
+<p>Use <code>eth_subscribe</code> to create subscriptions. Once subscribed, notifications are published by the API using <code>eth_subscription</code>.</p>
+<blockquote>
+<p><strong>Note</strong> Notifications are published by <code>eth_subscription</code>; you do not need to call <code>eth_subscription</code>.</p>
+</blockquote>
+<p>Subscriptions are coupled to a connection. If the connection is closed, all subscriptions created over this connection are removed.</p>
+<h3 id="subscription-id">Subscription ID</h3>
+<p><code>eth_subscribe</code> returns a subscription ID for each subscription created. Notifications include the subscription ID. For example, to create a synchronizing subscription:</p>
+<pre class="hljs">{<span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>, <span class="hljs-attr">"method"</span>: <span class="hljs-string">"eth_subscribe"</span>, <span class="hljs-attr">"params"</span>: [<span class="hljs-string">"syncing"</span>]}</pre><p>The result includes the subscription ID of <code>&quot;0x1&quot;</code>: </p>
+<pre class="hljs">{<span class="hljs-attr">"jsonrpc"</span>:<span class="hljs-string">"2.0"</span>,<span class="hljs-attr">"id"</span>:<span class="hljs-number">1</span>,<span class="hljs-attr">"result"</span>:<span class="hljs-string">"0x1"</span>}</pre><p>The notifications also include the subscription ID of <code>&quot;0x1&quot;</code>: </p>
+<pre class="hljs">{<span class="hljs-attr">"jsonrpc"</span>:<span class="hljs-string">"2.0"</span>,<span class="hljs-attr">"method"</span>:<span class="hljs-string">"eth_subscription"</span>,<span class="hljs-attr">"params"</span>:{<span class="hljs-attr">"subscription"</span>:<span class="hljs-string">"0x1"</span>,<span class="hljs-attr">"result"</span>:{<span class="hljs-attr">"startingBlock"</span>:<span class="hljs-string">"0x0"</span>,<span class="hljs-attr">"currentBlock"</span>:<span class="hljs-string">"0x50"</span>,<span class="hljs-attr">"highestBlock"</span>:<span class="hljs-string">"0x343c19"</span>}}}</pre><h3 id="notifications-when-synchronizing">Notifications when Synchronizing</h3>
+<p>Subscribing to some events (for example, logs) can cause a flood of notifications while the node is synchronizing.</p>
+<h2 id="subscribing">Subscribing</h2>
+<p>Use <code>eth_subscribe</code> to create subscriptions for the following event types:</p>
+<ul>
+<li><a href="#new-headers">New headers</a></li>
+<li><a href="#logs">Logs</a></li>
+<li><a href="#pending-transactions">Pending transactions</a></li>
+<li><a href="#synchronizing">Synchronizing</a> </li>
+</ul>
+<h4 id="new-headers">New Headers</h4>
+<p>Use the <code>newHeads</code> parameter with <code>eth_subscribe</code> to be notified each time a block is added to the blockchain.  </p>
+<p>If a chain reorganization occurs, the subscription publishes notifications for blocks in the new chain. This means the subscription can publish notifications for multiple blocks at the same height on the blockchain.</p>
+<p>The new headers subscription returns <a href="#Objectsblock-object">Block Objects</a>. </p>
+<p>To subscribe to new header notifications:</p>
+<pre class="hljs">{<span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>, <span class="hljs-attr">"method"</span>: <span class="hljs-string">"eth_subscribe"</span>, <span class="hljs-attr">"params"</span>: [<span class="hljs-string">"newHeads"</span>, {<span class="hljs-attr">"includeTransactions"</span>: <span class="hljs-literal">true</span>}]}</pre><p>The second parameter is optional.  If specified, whole <a href="#Objectstransaction-object">transaction objects</a> are included in the notifications. Otherwise, the transaction hashes are included. </p>
+<p>Example result: </p>
+<pre class="hljs">{<span class="hljs-attr">"jsonrpc"</span>:<span class="hljs-string">"2.0"</span>,<span class="hljs-attr">"id"</span>:<span class="hljs-number">2</span>,<span class="hljs-attr">"result"</span>:<span class="hljs-string">"0x1"</span>}</pre><p>Example notification without the <code>{&quot;includeTransactions&quot;: true}</code> parameter included: </p>
+<pre class="hljs">{
+  <span class="hljs-attr">"jsonrpc"</span>: <span class="hljs-string">"2.0"</span>,
+  <span class="hljs-attr">"method"</span>: <span class="hljs-string">"eth_subscription"</span>,
+  <span class="hljs-attr">"params"</span>:{
+    <span class="hljs-attr">"subscription"</span>:<span class="hljs-string">"0x1"</span>,
+    <span class="hljs-attr">"result"</span>: {
+      <span class="hljs-attr">"number"</span>:<span class="hljs-string">"0x40c22"</span>,
+      <span class="hljs-attr">"hash"</span>:<span class="hljs-string">"0x16af2ee1672203c7ac13ff280822008be0f38e1e5bdc675760015ae3192c0e3a"</span>,
+      <span class="hljs-attr">"parentHash"</span>:<span class="hljs-string">"0x1fcf5dadfaf2ab4d985eb05d40eaa23605b0db25d736610c4b87173bfe438f91"</span>,
+      <span class="hljs-attr">"nonce"</span>:<span class="hljs-string">"0x0000000000000000"</span>,
+      <span class="hljs-attr">"sha3Uncles"</span>:<span class="hljs-string">"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"</span>,
+      <span class="hljs-attr">"logsBloom"</span>:<span class="hljs-string">"0x00008000000000080000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000040000000000000000000000000000000000000000001000000000000000000000040000000000000000000000000000000000000400000000010000000000000000100000000000020000000000000000000000000000000000010000000000000000000000000000000000000000000"</span>,
+      <span class="hljs-attr">"transactionsRoot"</span>:<span class="hljs-string">"0x5b2e3c1a49352f1ca9fb5dfe74b7ffbbb6d70e23a12693444e26058d8a8e6296"</span>,
+      <span class="hljs-attr">"stateRoot"</span>:<span class="hljs-string">"0xbe8d3bc58bd982421a3ea8b66753404502df0f464ae78a17661d157c406dd38b"</span>,
+      <span class="hljs-attr">"receiptsRoot"</span>:<span class="hljs-string">"0x81b175ec1f4d44fbbd6ba08f1bd3950663b307b7cb35751c067b535cc0b58f12"</span>,
+      <span class="hljs-attr">"miner"</span>:<span class="hljs-string">"0x0000000000000000000000000000000000000000"</span>,
+      <span class="hljs-attr">"difficulty"</span>:<span class="hljs-string">"0x1"</span>,
+      <span class="hljs-attr">"totalDifficulty"</span>:<span class="hljs-string">"0x7c16e"</span>,
+      <span class="hljs-attr">"extraData"</span>:<span class="hljs-string">"0xd783010600846765746887676f312e372e33856c696e757800000000000000002160f780bb1f61eda045c67cdb1297ba37d8349df8035533cb0cf82a7e45f23f3d72bbec125a9f499b3eb110b7d1918d466cb2ede90b38296cfe2aaf452c513f00"</span>,
+      <span class="hljs-attr">"size"</span>:<span class="hljs-string">"0x3a1"</span>,
+      <span class="hljs-attr">"gasLimit"</span>:<span class="hljs-string">"0x47e7c4"</span>,
+      <span class="hljs-attr">"gasUsed"</span>:<span class="hljs-string">"0x11ac3a"</span>,
+      <span class="hljs-attr">"timestamp"</span>:<span class="hljs-string">"0x592afc24"</span>,
+      <span class="hljs-attr">"uncles"</span>:[],
+      <span class="hljs-attr">"transactions"</span>:[<span class="hljs-string">"0x419c69d21b14e2e8f911def22bb6d0156c876c0e1c61067de836713043364d6c"</span>,<span class="hljs-string">"0x70a5b2cb2cee6e0b199232a1757fc2a9d6053a4691a7afef8508fd88aeeec703"</span>,<span class="hljs-string">"0x4b3035f1d32339fe1a4f88147dc197a0fe5bbd63d3b9dec2dad96a3b46e4fddd"</span>],
+      },
   }
-}</pre><h4 id="logs-logs-">Logs (logs)</h4>
-<p>Returns logs included in new imported blocks and match the given filter criteria. In a chain reorganization, previous sent logs from the old chain are resent with the removed property set to <code>true</code>. Logs from transactions included in the new chain are sent. Therefore a subscription can send logs for the same transaction multiple times.</p>
-<p><code>logs</code> subscriptions can take as a parameter an <code>object</code> with the following fields:</p>
+}</pre><p>Example notification with the <code>{&quot;includeTransactions&quot;: true}</code> parameter included: </p>
+<pre class="hljs">{
+  "jsonrpc":"2.0",
+  "method":"eth_subscription",
+  "params":{
+    "subscription":"0x1",
+    "result": {
+       ....
+       "transactions":[
+         {
+           "blockHash":"0xa30ee4d7c271ae5150aec494131c5f1f34089c7aa8fb58bd8bb916a55275bb90",
+           "blockNumber":"0x63",
+           "from":"0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+           "gas":"0x5208",
+           "gasPrice":"0x3b9aca00",
+           "hash":"0x11f66c3e96a92e3c14c1c33ad77381221bf8b58a887b4fed6aee456fc6f39b24",
+           "input":"0x",
+           "nonce":"0x1",
+           "to":"0x627306090abab3a6e1400e9345bc60c78a8bef57",
+           "transactionIndex":"0x0",
+           "value":"0x56bc75e2d63100000",
+           "v":"0xfe8",
+           "r":"0x4b57d179c74885ef5f9326fd000665ea7fae44095c1e2016a2817fc671beb8cc",
+           "s":"0x7ec060b115746dda392777df07ae1feacc0b83b3646f0a3de9a5fc3615af9bb8",
+          }
+        ],
+     },
+   },
+}
+</pre><h4 id="logs">Logs</h4>
+<p>Use the <code>logs</code> parameter with <code>eth_subscribe</code> to be notified of logs included in new blocks. You can specify a <a href="#Objectsfilter-options-object">filter object</a> to receive notifications only for logs matching your filter.  </p>
+<p>Logs subscriptions have an filter object parameter with the following fields:</p>
 <ul>
 <li><code>address</code> - (optional) Either an address or an array of addresses. Returns only logs created from these addresses.</li>
 <li><code>topics</code> - (optional) Returns only logs that match the specified topics.</li>
 </ul>
-<p>The following is an example of <code>logs</code> notifications:</p>
-<pre class="hljs">&gt;&gt; {"id": 1, "method": "eth_subscribe", "params": ["logs", {"address": "0x8320fe7702b96808f7bbc0d4a888ed1468216cfd", "topics": ["0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902"]}]}
-&lt;&lt; {"jsonrpc":"2.0","id":2,"result":"0x3"}
-
-&lt;&lt; {"jsonrpc":"2.0","method":"eth_subscription","params": {"subscription":"0x3","result":{"address":"0x8320fe7702b96808f7bbc0d4a888ed1468216cfd","blockHash":"0x61cdb2a09ab99abf791d474f20c2ea89bf8de2923a2d42bb49944c8c993cbf04","blockNumber":"0x29e87","data":"0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000003","logIndex":"0x0","topics":["0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902"],"transactionHash":"0xe044554a0a55067caafd07f8020ab9f2af60bdfe337e395ecd84b4877a3d1ab4","transactionIndex":"0x0"}}}</pre><h4 id="pending-transactions-pendingtransactions-">Pending Transactions (pendingTransactions)</h4>
-<p>Returns the hash of transactions in the pending state and signed with a key available in the node. If a transaction that was previously part of the canonical chain isn&#39;t in the new canonical chain after a reorganization, it will be sent again.</p>
-<p><code>pendingTransactions</code> takes no parameters.</p>
-<p>The returned data is a transaction hash.</p>
-<p>The following is an example of <code>pendingTransactions</code> notifications:</p>
-<pre class="hljs">&gt;&gt; {"id": 1, "method": "eth_subscribe", "params": ["pendingTransactions"]}
-&lt;&lt; {"jsonrpc":"2.0","id":2,"result":"0x2"}
-
-&lt;&lt; {
-        "jsonrpc":"2.0",
-        "method":"eth_subscription",
-        "params":{
-            "subscription":"0x2",
-            "result":"0xd6fdc5cc41a9959e922f30cb772a9aef46f4daea279307bc5f7024edc4ccd7fa"
-        }
-    }</pre><h4 id="syncing-syncing-">Syncing (syncing)</h4>
-<p>Indicates whether the node is currently synchronizing. The result can either be a <code>boolean</code> indicating that the synchronization has finished (<code>false</code>) or an <code>object</code> with various progress indicators, indicating that synchronization is in progress.</p>
-<pre class="hljs">&gt;&gt; {"id": 1, "method": "eth_subscribe", "params": ["syncing"]}
-&lt;&lt; {"jsonrpc":"2.0","id":2,"result":"0x4"}
-
-&lt;&lt; {
-    "jsonrpc":"2.0",
-    "method":"eth_subscription",
-    "params":{"subscription":"0x6",
-      "result":{"startingBlock":"0x0",
-      "currentBlock":"0x3e80",
-      "highestBlock":"0x67b93c"}
-    }
-}</pre><h3 id="notifications">Notifications</h3>
-<p>Notifications are sent for current events only, not past events.</p>
-<p>Notifications are stored in an internal buffer to be sent to the client. If the client falls behind and the number of buffered notifications reaches a limit (currently 10k), the connection will be closed. Keep in mind that subscribing to certain events can cause a flood of notifications; for example, listening for all logs when the node synchronizes.</p>
-<h2 id="creating-subscriptions">Creating Subscriptions</h2>
-<p><code>eth_subscribe</code> creates a subscription that waits for particular events. If successful, it returns the subscription ID.</p>
-<h4 id="parameters">Parameters</h4>
-<p>When you call <code>eth_subscribe</code>, supply the type of event to subscribe to, plus optional arguments.</p>
-<p><code>subscriptionType</code> : <code>string</code> - A type of event to which to subscribe:</p>
-<ul>
-<li><code>newHeads</code></li>
-<li><code>logs</code></li>
-<li><code>pendingTransactions</code></li>
-<li><code>syncing</code></li>
-</ul>
-<p>Optional arguments are described above for each of the subscription types.</p>
-<h4 id="returns">Returns</h4>
-<p><code>subscriptionID</code> : - The ID of the subscription.</p>
-<h4 id="request">Request</h4>
-<pre class="hljs">&gt;&gt; {"id": 1, "method": "eth_subscribe", "params": ["newHeads", {"includeTransactions": true}]}</pre><h4 id="result">Result</h4>
-<pre class="hljs">&lt;&lt; {"id": 1, "jsonrpc": "2.0", "result": "0x5"}</pre><h2 id="canceling-subscriptions">Canceling Subscriptions</h2>
-<p><code>eth_unsubscribe</code> cancels an existing subscription. It returns a boolean indicating whether the subscription was cancelled successfully.</p>
 <blockquote>
-<p><strong>Note:</strong> Only the connection that created a subscription is able to unsubscribe from it. If another connection tries to unsubscribe, it will receive a <code>SubscriptionNotFound</code> response with no information about existing subscriptions.</p>
+<p><strong>Note</strong> The <code>fromBlock</code> and <code>toBlock</code> attributes are not included in the filter object for the logs subscription because the subscription waits for logs rather than requesting them. </p>
 </blockquote>
-<h4 id="parameters">Parameters</h4>
-<p><code>subscriptionID</code> : - The ID of the subscription to cancel. You receive this ID from <code>eth_subscribe</code>.</p>
-<h4 id="returns">Returns</h4>
-<p><code>result</code> : <code>boolean</code> - <code>true</code> if the subscription was cancelled successfully; otherwise <code>false</code>.</p>
-<h4 id="request">Request</h4>
-<pre class="hljs">&gt;&gt; {"id": 1, "method": "eth_unsubscribe", "params": ["0x1"]}</pre><h4 id="result">Result</h4>
-<pre class="hljs">&lt;&lt; {"jsonrpc":"2.0","id":1,"result":true}</pre><h2 id="publishing-subscriptions">Publishing Subscriptions</h2>
-<p><code>eth_subscription</code> is the method the node uses to publish (report) notifications of event occurrences. You do not call this method. The node invokes <code>eth_subscription</code> to return a notification with relevant data and the subscription ID for each matching event that occurs.</p>
-<h4 id="parameters">Parameters</h4>
-<p>None</p>
-<h4 id="returns">Returns</h4>
-<p><code>subscription</code> : <code>string</code> - The subscription ID. </p>
-<p><code>result</code> : <code>object</code> - An object containing relevant block data. For example, for pending transactions the returned data is a transaction hash. For detailed information on this data, see <a href="https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API#block-object">Block Object</a>.</p>
-<p class="page" id="Debugging"></p><h1>Debugging Pantheon</h1>
+<p>If a chain reorganization occurs, the subscription publishes notifications for logs from the old chain with the <code>removed</code> property in the <a href="#Objectslog-object">log object</a> set to <code>true</code>. This means the subscription can publish notifications for multiple logs for the same transaction.</p>
+<p>The logs subscription returns <a href="#Objectslog-object">Log objects</a>. </p>
+<p>To subscribe to all logs notifications:</p>
+<pre class="hljs"> {<span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>, <span class="hljs-attr">"method"</span>: <span class="hljs-string">"eth_subscribe"</span>, <span class="hljs-attr">"params"</span>: [<span class="hljs-string">"logs"</span>,{}]}</pre><p>To subscribe to logs for a specific address and topic: </p>
+<pre class="hljs">{<span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>, <span class="hljs-attr">"method"</span>: <span class="hljs-string">"eth_subscribe"</span>, <span class="hljs-attr">"params"</span>: [<span class="hljs-string">"logs"</span>, {<span class="hljs-attr">"address"</span>: <span class="hljs-string">"0x8320fe7702b96808f7bbc0d4a888ed1468216cfd"</span>, <span class="hljs-attr">"topics"</span>: [<span class="hljs-string">"0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902"</span>]}]}</pre><p>Example result:</p>
+<pre class="hljs">{<span class="hljs-attr">"jsonrpc"</span>:<span class="hljs-string">"2.0"</span>,<span class="hljs-attr">"id"</span>:<span class="hljs-number">1</span>,<span class="hljs-attr">"result"</span>:<span class="hljs-string">"0x2"</span>}</pre><p>Example notification: </p>
+<pre class="hljs">{
+  <span class="hljs-attr">"jsonrpc"</span>:<span class="hljs-string">"2.0"</span>,
+  <span class="hljs-attr">"method"</span>:<span class="hljs-string">"eth_subscription"</span>,
+  <span class="hljs-attr">"params"</span>:{
+    <span class="hljs-attr">"subscription"</span>:<span class="hljs-string">"0x2"</span>,
+    <span class="hljs-attr">"result"</span>:{
+      <span class="hljs-attr">"logIndex"</span>:<span class="hljs-string">"0x0"</span>,
+      <span class="hljs-attr">"removed"</span>:<span class="hljs-literal">false</span>,
+      <span class="hljs-attr">"blockNumber"</span>:<span class="hljs-string">"0x2174"</span>,
+      <span class="hljs-attr">"blockHash"</span>:<span class="hljs-string">"0x7bc83837534aa13df55ff7db77784b1d1ba666d4c4bdd223cae9fe09c7c37eba"</span>,
+      <span class="hljs-attr">"transactionHash"</span>:<span class="hljs-string">"0x942179373e413824c6bc7045e92295aff91b679215446549b4aeb084da46495b"</span>,
+      <span class="hljs-attr">"transactionIndex"</span>:<span class="hljs-string">"0x0"</span>,
+      <span class="hljs-attr">"address"</span>:<span class="hljs-string">"0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"</span>,
+      <span class="hljs-attr">"data"</span>:<span class="hljs-string">"0x"</span>,
+      <span class="hljs-attr">"topics"</span>:[<span class="hljs-string">"0x199cd93e851e4c78c437891155e2112093f8f15394aa89dab09e38d6ca072787"</span>,<span class="hljs-string">"0x0000000000000000000000000000000000000000000000000000000000000005"</span>],
+     },
+   },
+}</pre><h4 id="pending-transactions">Pending Transactions</h4>
+<p>Use the <code>newPendingTransactions</code> parameter with <code>eth_subscribe</code> to be notified of pending transactions added to the transaction pool for the node. </p>
+<p>The pending transactions subscription returns the transaction hashes of the pending transactions. </p>
+<p>If a chain reorganization occurs, transactions are resubmitted to be included in the new canonical chain. This means the subscription can publish notifications for the same pending transaction more than once.</p>
+<p>To subscribe to pending transaction notifications:</p>
+<pre class="hljs">{<span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>, <span class="hljs-attr">"method"</span>: <span class="hljs-string">"eth_subscribe"</span>, <span class="hljs-attr">"params"</span>: [<span class="hljs-string">"newPendingTransactions"</span>]}</pre><p>Example result:</p>
+<pre class="hljs">{<span class="hljs-attr">"jsonrpc"</span>:<span class="hljs-string">"2.0"</span>,<span class="hljs-attr">"id"</span>:<span class="hljs-number">1</span>,<span class="hljs-attr">"result"</span>:<span class="hljs-string">"0x1"</span>}</pre><p>Example notification: </p>
+<pre class="hljs">{
+  <span class="hljs-attr">"jsonrpc"</span>:<span class="hljs-string">"2.0"</span>,
+  <span class="hljs-attr">"method"</span>:<span class="hljs-string">"eth_subscription"</span>,
+  <span class="hljs-attr">"params"</span>:{
+    <span class="hljs-attr">"subscription"</span>:<span class="hljs-string">"0x1"</span>,
+    <span class="hljs-attr">"result"</span>:<span class="hljs-string">"0x5705bc8bf875ff03e98adb98489428835892dc6ba6a6b139fee1becbc26db0b8"</span>
+  }
+}</pre><h4 id="synchronizing">Synchronizing</h4>
+<p>Use the <code>syncing</code> parameter with <code>eth_subscribe</code> to be notified about synchronization progress.</p>
+<p>The sychronizing subscription returns an object indicating the synchronization progress.</p>
+<p>To subscribe to synchronizing notifications:</p>
+<pre class="hljs">{<span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>, <span class="hljs-attr">"method"</span>: <span class="hljs-string">"eth_subscribe"</span>, <span class="hljs-attr">"params"</span>: [<span class="hljs-string">"syncing"</span>]}</pre><p>Example result:</p>
+<pre class="hljs">{<span class="hljs-attr">"jsonrpc"</span>:<span class="hljs-string">"2.0"</span>,<span class="hljs-attr">"id"</span>:<span class="hljs-number">1</span>,<span class="hljs-attr">"result"</span>:<span class="hljs-string">"0x4"</span>}</pre><p>Example notification: </p>
+<pre class="hljs">{
+  <span class="hljs-attr">"jsonrpc"</span>:<span class="hljs-string">"2.0"</span>,
+  <span class="hljs-attr">"method"</span>:<span class="hljs-string">"eth_subscription"</span>,
+  <span class="hljs-attr">"params"</span>:{
+    <span class="hljs-attr">"subscription"</span>:<span class="hljs-string">"0x4"</span>,
+    <span class="hljs-attr">"result"</span>:{
+      <span class="hljs-attr">"startingBlock"</span>:<span class="hljs-string">"0x0"</span>,
+      <span class="hljs-attr">"currentBlock"</span>:<span class="hljs-string">"0x3e80"</span>,
+      <span class="hljs-attr">"highestBlock"</span>:<span class="hljs-string">"0x67b93c"</span>,
+     }
+  }
+}</pre><h2 id="unsubscribing">Unsubscribing</h2>
+<p>Use the <a href="#subscription-id">subscription ID</a> with <code>eth_unsubscribe</code> to cancel a subscription. Only the connection that created a subscription can unsubscribe from it. </p>
+<p>To unsubscribe from a subsciption with subscription ID of <code>0x1</code>:</p>
+<pre class="hljs">{<span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>, <span class="hljs-attr">"method"</span>: <span class="hljs-string">"eth_unsubscribe"</span>, <span class="hljs-attr">"params"</span>: [<span class="hljs-string">"0x1"</span>]}</pre><p><code>eth_unsubscribe</code> returns <code>true</code> if subscription succuessfully unsubscribed; otherwise, an error is returned. </p>
+<p>Example result: </p>
+<pre class="hljs">{<span class="hljs-attr">"jsonrpc"</span>:<span class="hljs-string">"2.0"</span>,<span class="hljs-attr">"id"</span>:<span class="hljs-number">1</span>,<span class="hljs-attr">"result"</span>:<span class="hljs-literal">true</span>}</pre><p class="page" id="Debugging"></p><h1>Debugging Pantheon</h1>
 <h1 id="faq">FAQ</h1>
 <h3 id="my-command-line-options-are-not-working-as-i-expected-">My command line options are not working as I expected?</h3>
 <p>Ensure quotes have not been automatically converted to smart quotes or hyphens combined if copying and pasting. </p>
+<h3 id="how-can-i-monitor-node-performance-and-connectivity-">How can I monitor node performance and connectivity?</h3>
+<p>Using the <a href="#JSON-RPC-API-Methodsdebug_metrics"><code>debug_metrics</code></a> JSON-RPC API method.  </p>
 <p class="page" id="Pantheon-CLI-Syntax"></p><h1>Pantheon CLI Reference</h1>
 <h2 id="pantheon-command-line-interface-reference">Pantheon Command Line Interface Reference</h2>
 <p>This reference describes the syntax of the Pantheon Command Line Interface (CLI) options and subcommands.</p>
@@ -1674,9 +1783,9 @@ console.log(<span class="hljs-string">"Raw transaction string="</span> + rawTxHe
 <dl>
 <dt><code>--banned-nodeids=&lt;bannedNodeId&amp;gt[,&lt;bannedNodeId&gt;...]...</code></dt>
 
-  <dd>List of node IDs to ban from the P2P network. The node ID is the public key of the node. The banned node IDs can be specified with or without the <code>0x</code> prefix.</dd>
+  <dd>List of node IDs with which this node will not peer. The node ID is the public key of the node. You can specify the banned node IDs with or without the <code>0x</code> prefix.</dd>
 
-  &gt;<strong>Note</strong> This option is only available from v0.8.2 or when <a href="#Installation">building from source</a>. 
+  &gt;<strong>Note</strong> This option is only available from v0.8.2. 
 
   <dt><code>--bootnodes=&lt;enode://id@host:port&gt;[,&lt;enode://id@host:port&gt;...]...</code></dt>
 
@@ -1700,7 +1809,6 @@ ws-listen=&quot;9.10.11.12:9101&quot; # IP:port
 
 # Chain
 genesis=&quot;~/genesis.json&quot; # Path to the custom genesis file
-sync-mode=&quot;fast&quot;# should be FAST or FULL (or fast or full)
 
 # Mining
 miner-enabled=true
@@ -1724,8 +1832,23 @@ miner-coinbase=&quot;0x0000000000000000000000000000000000000002&quot;</code>
   <dd>The path to the genesis file. The default is the embedded genesis file for the Ethereum mainnet. When using this option, it is recommended to also set the <code>--network-id</code> option.</dd>
 
 &gt; <strong>Note:</strong> This option is not used when running Pantheon from the <a href="#Run-Docker-Imagecustom-genesis-file">Docker image</a>. 
+<br>
 
-&gt; <strong>Note:</strong> The <code>--genesis</code> option is overriden by the <code>--dev-mode</code> option. If both are specified, the specified genesis file is ignored and the development mode configuration used. 
+&gt; <strong>Note:</strong> The <code>--genesis</code> option is overridden by the <code>--dev-mode</code> option. If both are specified, the specified genesis file is ignored and the development mode configuration used. 
+<br>
+
+<dt><code>--goerli</code></dt>
+  <dd>Uses the Goerli test network. Default is <code>false</code>.</dd>
+
+&gt; <strong>Note:</strong> This option is only available from v0.8.3.<br><br>
+
+ <dt><code>--host-whitelist=&lt;hostname&gt;</code></dt>
+
+<dd>Comma-separated list of hostnames to allow access to the HTTP JSON-RPC API. Default is <code>localhost</code>. </dd>
+
+To allow all hostnames, use <code>*</code> or <code>all</code>. We don&#39;t recommend this for production code.
+
+&gt; <strong>Note:</strong> This option is only available from v0.8.3. Earlier versions allow access by all hostnames. 
 <br>
   <dt><code>--max-peers=&lt;INTEGER&gt;</code></dt>
   <dd>Specifies the maximum P2P peer connections that can be established. The default is 25.</dd>
@@ -1734,10 +1857,15 @@ miner-coinbase=&quot;0x0000000000000000000000000000000000000002&quot;</code>
   <dd>Specifies the maximum P2P peer connections for peers that are trailing behind the local chain head. The default is unlimited but the number of trailing peers cannot exceed the value specified by <code>--max-peers</code>.</dd>
 <br>
   <dt><code>--miner-coinbase=&lt;Ethereum account address&gt;</code></dt>
-  <dd>The account to which mining rewards are to be paid. You must specify a coinbase if you enable mining.</dd>
+  <dd>Account to which mining rewards are paid. You must specify a valid coinbase when you enable mining using the <code>--miner-enabled</code> option or the <code>miner_start</code> JSON RPC-API method.</dd>
+
+&gt; <strong>Note:</strong> This option is ignored in networks using the <a href="https://github.com/PegaSysEng/pantheon/wiki/Proof-of-Authority">Clique Proof-of-Authority (PoA) consensus protocol</a>. 
 <br>
+
   <dt><code>--miner-enabled</code></dt>
-  <dd>Set this option to <code>true</code> when the node performs mining. The default is <code>false</code>.</dd>
+  <dd>Enables mining when the node is starts. Default is <code>false</code>.
+
+  </dd>
 <br>
   <dt><code>--miner-extraData=&lt;Extra data&gt;</code></dt>
   <dd>A hex string representing the 32 bytes to be included in the extra data field of a mined block. The default is 0x.</dd>
@@ -1760,7 +1888,16 @@ miner-coinbase=&quot;0x0000000000000000000000000000000000000002&quot;</code>
 
  &gt; <strong>Note</strong> The private key is not encrypted.
 
- &gt;<strong>Note</strong> This option is only available from v0.8.2 or when <a href="#Installation">building from source</a>. 
+ &gt;<strong>Note</strong> This option is only available from v0.8.2. 
+
+<br>
+  <dt><code>--nodes-whitelist[=&lt;enode://id@host:port&gt;[,&lt;enode://id@host:port&gt;...]...]</code></dt>
+  <dd>Comma-separated enode URLs for permissioned networks. If you specify an empty list or <code>--nodes-whitelist</code> without a list, your node will not connect to any other nodes.
+</dd>
+
+ &gt;<strong>Note</strong> This option is only available from v0.8.3. 
+
+&gt; <strong>Note:</strong> Permissioning is not currently supported. Support for permissioning is in active development.
 
 <br>
   <dt><code>--ottoman</code></dt>
@@ -1775,10 +1912,13 @@ miner-coinbase=&quot;0x0000000000000000000000000000000000000002&quot;</code>
 <br>
   <dt><code>--rinkeby</code></dt>
   <dd>Uses the Rinkeby test network. Default is <code>false</code>.</dd>
+
+  <br>
+  <br>
   <dt><code>--ropsten</code></dt>
   <dd>Uses the Ropsten test network. Default is <code>false</code>.</dd>
 
-&gt; <strong>Note</strong> This option is only available when <a href="#Installation">building from source</a>. For v0.8.1, refer <a href="#Starting-Pantheonrun-a-node-on-ropsten-testnet">here</a>. 
+&gt; <strong>Note</strong> This option is only available only from v0.8.2. For v0.8.1, refer <a href="#Starting-Pantheonrun-a-node-on-ropsten-testnet">here</a>. 
 <br>
   <dt><code>--rpc-enabled</code></dt>
   <dd>Set to <code>true</code> to enable the JSON-RPC service (RPC over HTTP). The default is <code>false</code>.</dd>
@@ -1855,24 +1995,33 @@ For development purposes, you can use <code>&quot;all&quot;</code> to accept req
 <p>### </p>
 <hr>
 <p>Pantheon is licensed under Apache License 2.0.</p>
-<p class="page" id="JSON-RPC-API"></p><h1>JSON-RPC API Reference</h1>
-<h2 id="contents">Contents</h2>
-<ul>
-<li><a href="#pantheon-json-rpc-api">Pantheon JSON-RPC API</a></li>
-<li><a href="#using-the-pantheon-json-rpc-api">Using the Pantheon JSON-RPC API</a><ul>
-<li><a href="#endpoint-address-and-port">Endpoint Address and Port</a></li>
-<li><a href="#http-and-websocket-requests">HTTP and WebSocket Requests</a></li>
-<li><a href="#block-parameter">Block Parameter</a></li>
-<li><a href="#json-rpc-methods">JSON-RPC Methods</a></li>
-</ul>
-</li>
-<li><a href="#json-rpc-api-reference">JSON-RPC API Reference</a></li>
-<li><a href="#objects">Object Reference</a></li>
-</ul>
+<p class="page" id="JSON-RPC-API"></p><h1>Pantheon JSON-RPC API</h1>
 <h2 id="pantheon-json-rpc-api">Pantheon JSON-RPC API</h2>
 <p>The Pantheon JSON-RPC API uses the <a href="http://json.org/">JSON</a> (RFC 4627) data format, which can represent objects and data fields as collections of name/value pairs, in a relatively readable, hierarchical form. Values have specific data types such as QUANTITIES (decimal integers, hexadecimal numbers, strings) and UNFORMATTED DATA (byte arrays, account addresses, hashes, and bytecode arrays).</p>
 <p>RPC is the remote procedure call protocol (RFC 1831), which is stateless and transport agnostic in that the concepts can be used within the same process, over sockets, over HTTP, or in many various message passing environments.</p>
+<ul>
+<li><a href="#Using-JSON-RPC-API">Using the Pantheon JSON-RPC API</a></li>
+<li><a href="#JSON-RPC-API-Methods">JSON-RPC API Methods</a></li>
+<li><a href="#Objects">JSON-RPC API Objects</a></li>
+</ul>
+<p class="page" id="Using-JSON-RPC-API"></p><h1>Using the JSON-RPC API</h1>
+<h2 id="contents">Contents</h2>
+<ul>
+<li><a href="#postman">Postman</a></li>
+<li><a href="#endpoint-address-and-port">Endpoint Address and Port</a></li>
+<li><a href="#http-and-websocket-requests">HTTP and WebSocket Requests</a></li>
+<li><a href="#block-parameter">Block Parameter</a></li>
+<li><a href="#not-supported-by-pantheon">Not Supported by Pantheon</a></li>
+</ul>
+<h2 id="breaking-change-in-v0-8-3">Breaking Change in v0.8.3</h2>
+<p>From v0.8.3, incoming HTTP requests are only accepted from hostnames specified using the <code>--host-whitelist</code> option. If not specified, the default value for <code>--host-whitelist</code> is <code>localhost</code>. </p>
+<p>If using the URL <code>http://127.0.0.1</code> to make JSON-RPC calls, use <code>--host-whitelist</code> to specify the hostname <code>127.0.0.1</code> or update the hostname to <code>localhost</code>. </p>
+<p>If your application publishes RPC ports, specify the hostnames when starting Pantheon. For example:  </p>
+<pre class="hljs">pantheon --host-whitelist=foo.com</pre><p>Specify <code>*</code> or <code>all</code> for <code>--host-whitelist</code> to effectively disable host protection and replicate pre-v0.8.3 behavior. This is not recommended for production code. </p>
 <h2 id="using-the-pantheon-json-rpc-api">Using the Pantheon JSON-RPC API</h2>
+<h3 id="postman">Postman</h3>
+<p>Use the button to import our collection of examples to <a href="https://www.getpostman.com/">Postman</a>. </p>
+<p><a href="https://app.getpostman.com/run-collection/cffe1bc034b3ab139fa7"><img src="https://run.pstmn.io/button.svg" /></a></p>
 <h3 id="endpoint-address-and-port">Endpoint Address and Port</h3>
 <p>In this reference, the placeholder
 <code>&lt;JSON-RPC-http-endpoint:port&gt;</code> and <code>&lt;JSON-RPC-ws-endpoint:port&gt;</code> means an endpoint (IP address and port) of the JSON-RPC service of a Pantheon node respectively for http endpoint and for WebSocket endpoint.
@@ -1889,24 +2038,32 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <p>To make requests over WebSockets, this reference uses <a href="https://github.com/websockets/wscat">wscat</a>, a Node.js based command-line tool.</p>
 <p>First connect to the WebSockets server using <code>wscat</code> (you only need to connect once per session):</p>
 <pre class="hljs">wscat -c ws://&lt;JSON-RPC-ws-endpoint:port&gt;</pre><p>After the connection is established, the terminal will display a &#39;&gt;&#39; prompt. Send individual requests as a JSON data package at each prompt:</p>
-<pre class="hljs">{<span class="hljs-attr">"jsonrpc"</span>:<span class="hljs-string">"2.0"</span>,<span class="hljs-attr">"method"</span>:<span class="hljs-string">"web3_clientVersion"</span>,<span class="hljs-attr">"params"</span>:[],<span class="hljs-attr">"id"</span>:<span class="hljs-number">53</span>}</pre><h3 id="block-parameter">Block Parameter</h3>
-<p>When you make requests that might have different results depending on the block accessed, the block parameter specifies the block. Several methods, such as <a href="#eth_gettransactionbyblocknumberandindex">eth_getTransactionByBlockNumberAndIndex</a>, have a block parameter.</p>
+<pre class="hljs">{<span class="hljs-attr">"jsonrpc"</span>:<span class="hljs-string">"2.0"</span>,<span class="hljs-attr">"method"</span>:<span class="hljs-string">"web3_clientVersion"</span>,<span class="hljs-attr">"params"</span>:[],<span class="hljs-attr">"id"</span>:<span class="hljs-number">53</span>}</pre><p>The <a href="#RPC-PubSub">RPC Pub/Sub methods</a> can also be used over WebSockets.</p>
+<h3 id="block-parameter">Block Parameter</h3>
+<p>When you make requests that might have different results depending on the block accessed, the block parameter specifies the block. Several methods, such as <a href="#JSON-RPC-API-Methodseth_gettransactionbyblocknumberandindex">eth_getTransactionByBlockNumberAndIndex</a>, have a block parameter.</p>
 <p>The block parameter can have the following values:</p>
 <ul>
 <li><code>blockNumber</code> : <code>quantity</code> - Block number. Can be specified in hexadecimal or decimal. 0 represents the genesis block.</li>
 <li><code>earliest</code> : <code>tag</code> - Earliest (genesis) block. </li>
 <li><code>latest</code> : <code>tag</code> - Last block mined.</li>
-<li><code>pending</code> : <code>tag</code> - Last block mined plus pending transactions. Use only with <a href="#eth_gettransactioncount">eth_getTransactionCount</a>.  </li>
+<li><code>pending</code> : <code>tag</code> - Last block mined plus pending transactions. Use only with <a href="#JSON-RPC-API-Methodseth_gettransactioncount">eth_getTransactionCount</a>.  </li>
 </ul>
 <h2 id="not-supported-by-pantheon">Not Supported by Pantheon</h2>
 <h3 id="account-management">Account Management</h3>
 <p>Account management relies on private key management in the client which is not implemented by Pantheon. </p>
-<p>Use <a href="#eth_sendrawtransaction"><code>eth_sendRawTransaction</code></a> to send signed transactions; <code>eth_sendTransaction</code> is not implemented. </p>
+<p>Use <a href="#JSON-RPC-API-Methodseth_sendrawtransaction"><code>eth_sendRawTransaction</code></a> to send signed transactions; <code>eth_sendTransaction</code> is not implemented. </p>
 <p>Use third-party wallets for <a href="#Account-Management">account management</a>. </p>
 <h3 id="protocols">Protocols</h3>
 <p>Pantheon does not implement the Whisper and Swarm protocols. </p>
+<p class="page" id="JSON-RPC-API-Methods"></p><h1>JSON-RPC API Methods</h1>
+<h2 id="breaking-change-in-v0-8-3">Breaking Change in v0.8.3</h2>
+<p>From v0.8.3, incoming HTTP requests are only accepted from hostnames specified using the <a href="#Using-JSON-RPC-APIbreaking-change-in-v083"><code>--host-whitelist</code> option</a>. </p>
 <h2 id="json-rpc-methods">JSON-RPC Methods</h2>
 <p>The following lists the Pantheon JSON-RPC API commands:</p>
+<h4 id="admin-methods">admin Methods</h4>
+<ul>
+<li><a href="#admin_peers">admin_peers</a></li>
+</ul>
 <h4 id="web3-methods">web3 Methods</h4>
 <ul>
 <li><a href="#web3_clientversion">web3_clientVersion</a></li>
@@ -1955,7 +2112,8 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 </ul>
 <h3 id="debug-methods">debug Methods</h3>
 <ul>
-<li><a href="#debug_tracetransaction">debug_TraceTransaction</a></li>
+<li><a href="#debug_metrics">debug_metrics</a></li>
+<li><a href="#debug_tracetransaction">debug_traceTransaction</a></li>
 </ul>
 <h3 id="miner-methods">miner Methods</h3>
 <ul>
@@ -1975,15 +2133,55 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <hr>
 <h2 id="json-rpc-api-reference">JSON-RPC API Reference</h2>
 <hr>
+<h4 id="admin_peers">admin_peers</h4>
+<p>Returns networking information about connected nodes. </p>
+<h5 id="parameters">Parameters</h5>
+<p>None</p>
+<h5 id="returns">Returns</h5>
+<p><code>result</code> : <em>array</em> of <em>objects</em> - Object returned for each remote node. </p>
+<p>Properties of the remote node object are: </p>
+<ul>
+<li><code>version</code> - P2P protocol version</li>
+<li><code>name</code> - Client name</li>
+<li><code>caps</code> - P2P message capabilities </li>
+<li><code>network</code> - Addresses of local node and remote node</li>
+<li><code>port</code> - Port on remote node on which P2P peer discovery is listening</li>
+<li><code>id</code> - Node public key. Excluding the <code>0x</code> prefix, the node public key is the ID in the enode URL <code>enode://&lt;id ex 0x&gt;@&lt;host:port&gt;</code>. </li>
+</ul>
+<h5 id="request">Request</h5>
+<pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"admin_peers","params":[],"id":1}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
+<pre class="hljs">{
+  <span class="hljs-attr">"jsonrpc"</span> : <span class="hljs-string">"2.0"</span>,
+  <span class="hljs-attr">"id"</span> : <span class="hljs-number">1</span>,
+  <span class="hljs-attr">"result"</span> : [ 
+    {
+      <span class="hljs-attr">"version"</span>: <span class="hljs-string">"0x5"</span>,
+      <span class="hljs-attr">"name"</span>: <span class="hljs-string">"Parity-Ethereum/v2.3.0-nightly-1c2e121-20181116/x86_64-linux-gnu/rustc1.30.0"</span>,
+      <span class="hljs-attr">"caps"</span>: [
+         <span class="hljs-string">"eth/62"</span>,
+         <span class="hljs-string">"eth/63"</span>,
+         <span class="hljs-string">"par/1"</span>,
+         <span class="hljs-string">"par/2"</span>,
+         <span class="hljs-string">"par/3"</span>,
+         <span class="hljs-string">"pip/1"</span>
+      ],
+      <span class="hljs-attr">"network"</span>: {
+         <span class="hljs-attr">"localAddress"</span>: <span class="hljs-string">"192.168.1.229:50115"</span>,
+         <span class="hljs-attr">"remoteAddress"</span>: <span class="hljs-string">"168.61.153.255:40303"</span>
+      },
+      <span class="hljs-attr">"port"</span>: <span class="hljs-string">"0x9d6f"</span>,
+      <span class="hljs-attr">"id"</span>: <span class="hljs-string">"0xea26ccaf0867771ba1fec32b3589c0169910cb4917017dba940efbef1d2515ce864f93a9abc846696ebad40c81de7c74d7b2b46794a71de8f95a0d019f494ff3"</span>
+    } 
+  ]
+}</pre><hr>
 <h4 id="web3_clientversion">web3_clientVersion</h4>
 <p>Returns the current client version.</p>
 <h5 id="parameters">Parameters</h5>
 <p>None</p>
 <h5 id="returns">Returns</h5>
 <p><code>result</code> : <em>string</em> - Current client version.</p>
-<h5 id="request-data">Request Data</h5>
-<pre class="hljs">{<span class="hljs-attr">"jsonrpc"</span>:<span class="hljs-string">"2.0"</span>,<span class="hljs-attr">"method"</span>:<span class="hljs-string">"web3_clientVersion"</span>,<span class="hljs-attr">"params"</span>:[],<span class="hljs-attr">"id"</span>:<span class="hljs-number">53</span>}</pre><p>For an explanation of how to make an HTTP or WebSockets request using this data, see <a href="#http-and-websocket-requests">HTTP and WebSocket Requests</a>.</p>
-<h5 id="result">Result</h5>
+<h5 id="request">Request</h5>
+<pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":1}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
 <pre class="hljs">{
   <span class="hljs-attr">"jsonrpc"</span> : <span class="hljs-string">"2.0"</span>,
   <span class="hljs-attr">"id"</span> : <span class="hljs-number">53</span>,
@@ -2033,7 +2231,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <h5 id="parameters">Parameters</h5>
 <p>None</p>
 <h5 id="returns">Returns</h5>
-<p><code>result</code> (<em>BOOLEAN</em>) - <code>true</code> if the client is actively listening for network connections; otherwise false.</p>
+<p><code>result</code> (<em>BOOLEAN</em>) - <code>true</code> if the client is actively listening for network connections; otherwise <code>false</code>.</p>
 <h5 id="request">Request</h5>
 <pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"net_listening","params":[],"id":53}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
 <pre class="hljs">{
@@ -2055,15 +2253,20 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
   <span class="hljs-attr">"result"</span> : <span class="hljs-string">"0x5"</span>
 }</pre><hr>
 <h4 id="eth_syncing">eth_syncing</h4>
-<p>Returns an object with data about the sync status, or FALSE if not syncing.</p>
+<p>Returns an object with data about the synchronization status, or <code>false</code> if not synchronizing.</p>
 <h5 id="parameters">Parameters</h5>
 <p>None</p>
 <h5 id="returns">Returns</h5>
-<p><code>result</code> : <em>Object|Boolean</em> - An object with sync status data or FALSE, when not syncing:</p>
+<p><code>result</code> : <em>Object|Boolean</em> - Object with synchronization status data or <code>false</code>, when not synchronizing:</p>
 <ul>
-<li><code>startingBlock</code> : <em>QUANTITY</em> - The block at which the import started (will only be reset, after the sync reached his head).</li>
-<li><code>currentBlock</code> : <em>QUANTITY</em> - The current block, same as <a href="#eth_blocknumber">eth_blockNumber</a>.</li>
-<li><code>highestBlock</code>: <em>QUANTITY</em> - The estimated highest block.</li>
+<li><p><code>startingBlock</code> : <em>quantity</em> - Index of the highest block on the blockchain when the network synchronization starts.</p>
+<p>If you start with an empty blockchain, the starting block is the beginning of the blockchain (<code>startingBlock</code> = 0).</p>
+<p>If you import a block file using <code>pantheon import &lt;block-file&gt;</code>, the synchronization starts at the head of the blockchain, and the starting block is the next block synchronized. For example, if you imported 1000 blocks, the import would include blocks 0 to 999, so in that case <code>startingBlock</code> = 1000.</p>
+</li>
+<li><p><code>currentBlock</code> : <em>quantity</em> - Index of the latest block (also known as the best block) for the current node. This is the same index that <a href="#eth_blocknumber">eth_blockNumber</a> returns.</p>
+</li>
+<li><p><code>highestBlock</code>: <em>quantity</em> - Index of the highest known block in the peer network (that is, the highest block so far discovered among peer nodes). This is the same value as <code>currentBlock</code> if the current node has no peers.</p>
+</li>
 </ul>
 <h5 id="request">Request</h5>
 <pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":51}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
@@ -2071,14 +2274,14 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
   <span class="hljs-attr">"jsonrpc"</span> : <span class="hljs-string">"2.0"</span>,
   <span class="hljs-attr">"id"</span> : <span class="hljs-number">51</span>,
   <span class="hljs-attr">"result"</span> : {
-    <span class="hljs-attr">"startingBlock"</span> : <span class="hljs-string">"0x1d4bff"</span>,
-    <span class="hljs-attr">"currentBlock"</span> : <span class="hljs-string">"0x1d4bff"</span>,
-    <span class="hljs-attr">"highestBlock"</span> : <span class="hljs-string">"0x0"</span>
+    <span class="hljs-attr">"startingBlock"</span> : <span class="hljs-string">"0x5a0"</span>,
+    <span class="hljs-attr">"currentBlock"</span> : <span class="hljs-string">"0xad9"</span>,
+    <span class="hljs-attr">"highestBlock"</span> : <span class="hljs-string">"0xad9"</span>
   }</pre><hr>
 <h4 id="eth_chainid">eth_chainId</h4>
-<p>Returns chain ID.</p>
+<p>Returns the <a href="#NetworkID-And-ChainID">chain ID</a>.</p>
 <blockquote>
-<p><strong>Note</strong> This method is only available from v0.8.2 or when <a href="#Installation">building from source</a>. </p>
+<p><strong>Note</strong> This method is only available from v0.8.2. </p>
 </blockquote>
 <h5 id="parameters">Parameters</h5>
 <p>None</p>
@@ -2092,27 +2295,18 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
   <span class="hljs-attr">"result"</span> : <span class="hljs-string">"0x7e2"</span>
 }</pre><hr>
 <h4 id="eth_coinbase">eth_coinbase</h4>
-<p>Returns the client coinbase address.</p>
-<p>To set a coinbase address, call the pantheon CLI with the <code>--miner-coinbase</code> option set to a valid Ethereum account address. You can get the Ethereum account address from a client such as MetaMask or Etherscan. For example:</p>
-<pre class="hljs">bin/pantheon --genesis=/home/donn/pantheon/ethereum/core/src/main/resources/ropsten.json --miner-coinbase=<span class="hljs-string">"0xDD37f65dB31c107F773E82a4F85C693058fEf7a9"</span> --dev-mode=<span class="hljs-literal">true</span> --rpc-enabled</pre><h5 id="parameters">Parameters</h5>
+<p>Returns the client coinbase address. The coinbase address is the account to which mining rewards are paid. </p>
+<p>To set a coinbase address, start Pantheon with the <code>--miner-coinbase</code> option set to a valid Ethereum account address. You can get the Ethereum account address from a client such as MetaMask or Etherscan. For example:</p>
+<pre class="hljs">bin/pantheon --miner-coinbase=<span class="hljs-string">"0xDD37f65dB31c107F773E82a4F85C693058fEf7a9"</span> --rpc-enabled</pre><h5 id="parameters">Parameters</h5>
 <p>None</p>
 <h5 id="returns">Returns</h5>
-<p><code>result</code> (<em>DATA, 20 bytes</em>) - Current coinbase address.</p>
+<p><code>result</code> : <em>data</em> - Coinbase address.</p>
 <h5 id="request">Request</h5>
 <pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"eth_coinbase","params":[],"id":53}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
 <pre class="hljs">{
   <span class="hljs-attr">"jsonrpc"</span> : <span class="hljs-string">"2.0"</span>,
   <span class="hljs-attr">"id"</span> : <span class="hljs-number">53</span>,
   <span class="hljs-attr">"result"</span> : <span class="hljs-string">"0xdd37f65db31c107f773e82a4f85c693058fef7a9"</span>
-}</pre><h5 id="errors">Errors</h5>
-<p>If you have not specified a coinbase, you will receive this message:</p>
-<pre class="hljs">{
-  <span class="hljs-attr">"jsonrpc"</span> : <span class="hljs-string">"2.0"</span>,
-  <span class="hljs-attr">"id"</span> : <span class="hljs-number">53</span>,
-  <span class="hljs-attr">"error"</span> : {
-    <span class="hljs-attr">"code"</span> : <span class="hljs-number">-32000</span>,
-    <span class="hljs-attr">"message"</span> : <span class="hljs-string">"Coinbase must be explicitly specified"</span>
-  }
 }</pre><hr>
 <h4 id="eth_mining">eth_mining</h4>
 <p>Indicates whether the client is actively mining new blocks. Mining is paused while the client synchronizes with the network regardless of command settings or methods called. </p>
@@ -2132,7 +2326,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <h5 id="parameters">Parameters</h5>
 <p>None</p>
 <h5 id="returns">Returns</h5>
-<p><code>result</code> (<em>QUANTITY</em>) - Integer value representing the current gas unit price in wei.</p>
+<p><code>result</code> : <em>quantity</em> - Current gas unit price in wei as a hexadecimal value.</p>
 <h5 id="request">Request</h5>
 <pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"eth_gasPrice","params":[],"id":53}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
 <pre class="hljs">{
@@ -2142,7 +2336,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 }</pre><hr>
 <h4 id="eth_accounts">eth_accounts</h4>
 <p>Returns a list of account addresses that the client owns.</p>
-<p><strong>NOTE:</strong> This method returns an empty object because Pantheon <a href="#account-management-not-supported-by-pantheon">does not support account management</a>.</p>
+<p><strong>NOTE:</strong> This method returns an empty object because Pantheon <a href="#Using-JSON-RPC-APIaccount-management-not-supported-by-pantheon">does not support account management</a>.</p>
 <h5 id="parameters">Parameters</h5>
 <p>None</p>
 <h5 id="returns">Returns</h5>
@@ -2171,7 +2365,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <p>Returns the account balance of the specified address.</p>
 <h5 id="parameters">Parameters</h5>
 <p><code>DATA</code> - 20-byte account address from which to retrieve the balance.</p>
-<p><code>QUANTITY|TAG</code> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#block-parameter">Block Parameter</a>.</p>
+<p><code>QUANTITY|TAG</code> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#Using-JSON-RPC-APIblock-parameter">Block Parameter</a>.</p>
 <h5 id="returns">Returns</h5>
 <p><code>result</code> : <em>QUANTITY</em> - Integer value of the current balance in wei.</p>
 <h5 id="request">Request</h5>
@@ -2186,7 +2380,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <h5 id="parameters">Parameters</h5>
 <p><code>DATA</code> - A 20-byte storage address.</p>
 <p><code>QUANTITY</code> - Integer index of the storage position.</p>
-<p><code>QUANTITY|TAG</code> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#block-parameter">Block Parameter</a>.</p>
+<p><code>QUANTITY|TAG</code> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#Objectsblock-parameter">Block Parameter</a>.</p>
 <h5 id="returns">Returns</h5>
 <p><code>result</code> : <em>DATA</em> - The value at the specified storage position.</p>
 <h5 id="request">Request</h5>
@@ -2201,7 +2395,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <p>Returns the number of transactions sent from a specified address.</p>
 <h5 id="parameters">Parameters</h5>
 <p><code>DATA</code> - 20-byte account address.</p>
-<p><code>QUANTITY|TAG</code> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#block-parameter">Block Parameter</a>.</p>
+<p><code>QUANTITY|TAG</code> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#Using-JSON-RPC-APIblock-parameter">Block Parameter</a>.</p>
 <h5 id="returns">Returns</h5>
 <p><code>result</code> : <em>QUANTITY</em> - Integer representing the number of transactions sent from the specified address.</p>
 <h5 id="request">Request</h5>
@@ -2227,7 +2421,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <h4 id="eth_getblocktransactioncountbynumber">eth_getBlockTransactionCountByNumber</h4>
 <p>Returns the number of transactions in a block matching the specified block number.</p>
 <h5 id="parameters">Parameters</h5>
-<p><code>QUANTITY|TAG</code> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#block-parameter">Block Parameter</a>.</p>
+<p><code>QUANTITY|TAG</code> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#Using-JSON-RPC-APIblock-parameter">Block Parameter</a>.</p>
 <h5 id="returns">Returns</h5>
 <p><code>result</code> : <em>QUANTITY</em> - Integer representing the number of transactions in the specified block.</p>
 <h5 id="request">Request</h5>
@@ -2253,7 +2447,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <h4 id="eth_getunclecountbyblocknumber">eth_getUncleCountByBlockNumber</h4>
 <p>Returns the number of uncles in a block matching the specified block number.</p>
 <h5 id="parameters">Parameters</h5>
-<p><code>QUANTITY|TAG</code> - Integer representing either the 0-based index of the block within the blockchain, or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#block-parameter">Block Parameter</a>.</p>
+<p><code>QUANTITY|TAG</code> - Integer representing either the 0-based index of the block within the blockchain, or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#Using-JSON-RPC-APIblock-parameter">Block Parameter</a>.</p>
 <h5 id="returns">Returns</h5>
 <p><code>result</code> : <em>QUANTITY</em> - Integer representing the number of uncles in the specified block.</p>
 <h5 id="request">Request</h5>
@@ -2267,7 +2461,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <p>Returns the code of the smart contract at the specified address. Compiled smart contract code is stored as a hexadecimal value. </p>
 <h5 id="parameters">Parameters</h5>
 <p><code>DATA</code> - 20-byte contract address.</p>
-<p><code>QUANTITY|TAG</code> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#block-parameter">Block Parameter</a>.</p>
+<p><code>QUANTITY|TAG</code> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#Using-JSON-RPC-APIblock-parameter">Block Parameter</a>.</p>
 <h5 id="returns">Returns</h5>
 <p><code>result</code> : <em>DATA</em> - Code stored at the specified address.</p>
 <h5 id="request">Request</h5>
@@ -2281,7 +2475,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <p>Sends a signed transaction. A transaction can send ether, deploy a contract, or interact with a contract.  </p>
 <p>You can interact with contracts using <a href="#Transactionseth_call-or-eth_sendrawtransaction">eth_sendRawTransaction or eth_call</a>.</p>
 <p>To avoid exposing your private key, create signed transactions offline and send the signed transaction data using this method. For information on creating signed transactions and using <code>eth_sendRawTransaction</code>, refer to <a href="#Transactions">Using Pantheon</a>.  </p>
-<p><strong>Note: Pantheon does not implement <a href="#account-management-not-supported-by-pantheon">eth_sendTransaction</a>.</strong>  </p>
+<p><strong>Note: Pantheon does not implement <a href="#Using-JSON-RPC-APIaccount-management-not-supported-by-pantheon">eth_sendTransaction</a>.</strong>  </p>
 <h5 id="parameters">Parameters</h5>
 <p><code>DATA</code> - Hash of the signed raw transaction in hexadecimal format; for example:</p>
 <pre class="hljs">params: ["0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675"]</pre><h5 id="returns">Returns</h5>
@@ -2297,8 +2491,8 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <p>Invokes a contract function locally and does not change the state of the blockchain. </p>
 <p>You can interact with contracts using <a href="#Transactionseth_call-or-eth_sendrawtransaction">eth_sendRawTransaction or eth_call</a>.</p>
 <h5 id="parameters">Parameters</h5>
-<p><em>OBJECT</em> - <a href="#transaction-call-object">Transaction call object</a>.</p>
-<p><em>QUANTITY|TAG</em> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#block-parameter">Block Parameter</a>.</p>
+<p><em>OBJECT</em> - <a href="#Objectstransaction-call-object">Transaction call object</a>.</p>
+<p><em>QUANTITY|TAG</em> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#Objectsblock-parameter">Block Parameter</a>.</p>
 <h5 id="returns">Returns</h5>
 <p><code>result</code> (<em>DATA</em>) - Return value of the executed contract.</p>
 <h5 id="request">Request</h5>
@@ -2314,8 +2508,8 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <blockquote>
 <p><strong>NOTE:</strong> Parameters are the same as the eth_call parameters, except that all properties are optional. If you do not specify a <code>gas</code> limit, Pantheon uses the gas limit from the pending block as an upper bound. As a result, the returned estimate might not be enough to execute the call or transaction when the amount of gas is higher than the pending block&#39;s gas limit.</p>
 </blockquote>
-<p><em>OBJECT</em> - <a href="#transaction-call-object">Transaction call object</a>.</p>
-<p><em>QUANTITY|TAG</em> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#block-parameter">Block Parameter</a>.</p>
+<p><em>OBJECT</em> - <a href="#Objectstransaction-call-object">Transaction call object</a>.</p>
+<p><em>QUANTITY|TAG</em> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#Using-JSON-RPC-APIblock-parameter">Block Parameter</a>.</p>
 <h5 id="returns">Returns</h5>
 <p><code>result</code> (<em>QUANTITY</em>) -  Amount of gas used.</p>
 <h5 id="request">Request</h5>
@@ -2330,9 +2524,9 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <p>Returns information about the block by hash.</p>
 <h5 id="parameters">Parameters</h5>
 <p><code>DATA</code> - 32-byte hash of a block.</p>
-<p><code>Boolean</code> - If <code>true</code>, returns the full <a href="#transaction-object">transaction objects</a>; if <code>false</code>, returns the transaction hashes.</p>
+<p><code>Boolean</code> - If <code>true</code>, returns the full <a href="#Objectstransaction-object">transaction objects</a>; if <code>false</code>, returns the transaction hashes.</p>
 <h5 id="returns">Returns</h5>
-<p><code>result</code> : <em>OBJECT</em> - <a href="#block-object">Block object</a> , or <code>null</code> when no block is found. </p>
+<p><code>result</code> : <em>OBJECT</em> - <a href="#Objectsblock-object">Block object</a> , or <code>null</code> when no block is found. </p>
 <h5 id="request">Request</h5>
 <pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getBlockByHash","params":["0x16b69965a5949262642cfb5e86368ddbbe57ab9f17d999174a65fd0e66580d8f", false],"id":53}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
 <pre class="hljs">{
@@ -2363,10 +2557,10 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <h4 id="eth_getblockbynumber">eth_getBlockByNumber</h4>
 <p>Returns information about a block by block number.</p>
 <h5 id="parameters">Parameters</h5>
-<p><code>QUANTITY|TAG</code> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#block-parameter">Block Parameter</a>.</p>
-<p><code>Boolean</code> - If <code>true</code>, returns the full <a href="#transaction-object">transaction objects</a>; if <code>false</code>, returns only the hashes of the transactions.</p>
+<p><code>QUANTITY|TAG</code> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#Using-JSON-RPC-APIblock-parameter">Block Parameter</a>.</p>
+<p><code>Boolean</code> - If <code>true</code>, returns the full <a href="#Objectstransaction-object">transaction objects</a>; if <code>false</code>, returns only the hashes of the transactions.</p>
 <h5 id="returns">Returns</h5>
-<p><code>result</code> : <em>OBJECT</em> - <a href="#block-object">Block object</a> , or <code>null</code> when no block is found. </p>
+<p><code>result</code> : <em>OBJECT</em> - <a href="#Objectsblock-object">Block object</a> , or <code>null</code> when no block is found. </p>
 <h5 id="request">Request</h5>
 <pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["0x64", true],"id":1}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
 <pre class="hljs">{
@@ -2399,7 +2593,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <h5 id="parameters">Parameters</h5>
 <p><code>DATA</code> - 32-byte transaction hash.</p>
 <h5 id="returns">Returns</h5>
-<p>Object - <a href="#transaction-object">Transaction object</a>, or <code>null</code> when no transaction is found.</p>
+<p>Object - <a href="#Objectstransaction-object">Transaction object</a>, or <code>null</code> when no transaction is found.</p>
 <h5 id="request">Request</h5>
 <pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["0xa52be92809541220ee0aaaede6047d9a6c5d0cd96a517c854d944ee70a0ebb44"],"id":53}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
 <pre class="hljs">{
@@ -2428,10 +2622,10 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <p><code>DATA</code> - 32-byte hash of a block.</p>
 <p><code>QUANTITY</code> - Integer representing the transaction index position.</p>
 <h5 id="returns">Returns</h5>
-<p>Object - <a href="#transaction-object">Transaction object</a>, or <code>null</code> when no transaction is found.</p>
+<p>Object - <a href="#Objectstransaction-object">Transaction object</a>, or <code>null</code> when no transaction is found.</p>
 <h5 id="request">Request</h5>
-<p>This request returns the 3rd transaction in the 82990 block on the Ropsten testnet. You can also view this <a href="https://ropsten.etherscan.io/txs?block=82990">block</a> and <a href="https://ropsten.etherscan.io/tx/0xfc766a71c406950d4a4955a340a092626c35083c64c7be907060368a5e6811d6">transaction</a> on Etherscan. </p>
-<p><strong>Note:</strong> You must be synchronized to at least the block containing the transaction for the request to return it.  </p>
+<p>This request returns the third transaction in the 82990 block on the Ropsten testnet. You can also view this <a href="https://ropsten.etherscan.io/txs?block=82990">block</a> and <a href="https://ropsten.etherscan.io/tx/0xfc766a71c406950d4a4955a340a092626c35083c64c7be907060368a5e6811d6">transaction</a> on Etherscan. </p>
+<p><strong>Note:</strong> Your node must be synchronized to at least the block containing the transaction for the request to return it.  </p>
 <pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionByBlockHashAndIndex","params":["0xbf137c3a7a1ebdfac21252765e5d7f40d115c2757e4a4abee929be88c624fdb7", "0x2"], "id":1}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
 <pre class="hljs">{
   <span class="hljs-attr">"jsonrpc"</span> : <span class="hljs-string">"2.0"</span>,
@@ -2456,13 +2650,13 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <h4 id="eth_gettransactionbyblocknumberandindex">eth_getTransactionByBlockNumberAndIndex</h4>
 <p>Returns transaction information for the specified block number and transaction index position.</p>
 <h5 id="parameters">Parameters</h5>
-<p><code>QUANTITY|TAG</code> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#block-parameter">Block Parameter</a>.</p>
+<p><code>QUANTITY|TAG</code> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#Using-JSON-RPC-APIblock-parameter">Block Parameter</a>.</p>
 <p><code>QUANTITY</code> - The transaction index position.</p>
 <h5 id="returns">Returns</h5>
-<p>Object - <a href="#transaction-object">Transaction object</a>, or <code>null</code> when no transaction is found.</p>
+<p>Object - <a href="#Objectstransaction-object">Transaction object</a>, or <code>null</code> when no transaction is found.</p>
 <h5 id="request">Request</h5>
-<p>This request returns the 3rd transaction in the 82990 block on the Ropsten testnet. You can also view this <a href="https://ropsten.etherscan.io/txs?block=82990">block</a> and <a href="https://ropsten.etherscan.io/tx/0xfc766a71c406950d4a4955a340a092626c35083c64c7be907060368a5e6811d6">transaction</a> on Etherscan. </p>
-<p><strong>Note:</strong> You must be synchronized to at least the block containing the transaction for the request to return it.</p>
+<p>This request returns the third transaction in the 82990 block on the Ropsten testnet. You can also view this <a href="https://ropsten.etherscan.io/txs?block=82990">block</a> and <a href="https://ropsten.etherscan.io/tx/0xfc766a71c406950d4a4955a340a092626c35083c64c7be907060368a5e6811d6">transaction</a> on Etherscan.</p>
+<p><strong>Note:</strong> Your node must be synchronized to at least the block containing the transaction for the request to return it.</p>
 <pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionByBlockNumberAndIndex","params":["82990", "0x2"], "id":1}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
 <pre class="hljs">{
   <span class="hljs-attr">"jsonrpc"</span> : <span class="hljs-string">"2.0"</span>,
@@ -2489,7 +2683,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <h5 id="parameters">Parameters</h5>
 <p><code>DATA</code> - 32-byte hash of a transaction.</p>
 <h5 id="returns">Returns</h5>
-<p><code>Object</code> - <a href="#transaction-receipt-object">Transaction receipt object</a>, or <code>null</code> when no receipt is found.</p>
+<p><code>Object</code> - <a href="#Objectstransaction-receipt-object">Transaction receipt object</a>, or <code>null</code> when no receipt is found.</p>
 <h5 id="request">Request</h5>
 <pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionReceipt","params":["0x504ce587a65bdbdb6414a0c6c16d86a04dd79bfcc4f2950eec9634b30ce5370f"],"id":53}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
 <pre class="hljs">{
@@ -2513,7 +2707,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <h4 id="eth_newfilter">eth_newFilter</h4>
 <p>Creates a topic filter with the specified options to notify (log) when the state changes. To determine whether the state has changed, call <a href="#eth_getfilterchanges">eth_getFilterChanges</a>.</p>
 <h5 id="parameters">Parameters</h5>
-<p><code>Object</code> - <a href="#filter-options-object">Filter options object</a>. </p>
+<p><code>Object</code> - <a href="#Objectsfilter-options-object">Filter options object</a>. </p>
 <p><strong>Note:</strong> Topics are order-dependent. A transaction with a log containing topics <code>[A, B]</code> would be matched with the following topic filters:</p>
 <ul>
 <li>[] - Match any topic</li>
@@ -2529,7 +2723,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
   "address": "0xc94770007dda54cF92009BFF0dE90c06F603a09f",
   "topics": ["0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b", null, ["0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b", "0x0000000000000000000000000aff3454fce5edbc8cca8697c15331677e6ebccc"]]
 }]</pre><h5 id="returns">Returns</h5>
-<p><code>result</code> : <em>QUANTITY</em> - The filter ID.</p>
+<p><code>result</code> : <em>QUANTITY</em> - Filter ID.</p>
 <h5 id="request">Request</h5>
 <pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"eth_newFilter","params":[{"topics":[]}],"id":53}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
 <pre class="hljs">{
@@ -2601,7 +2795,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 </li>
 <li><p>For filters created with <code>eth_newPendingTransactionFilter</code>, returns transaction hashes (32-byte <em>DATA</em>); for example <code>[&quot;0x6345343454645...&quot;]</code>.</p>
 </li>
-<li><p>For filters created with <code>eth_newFilter</code>, returns <a href="#log-object">log objects</a>. </p>
+<li><p>For filters created with <code>eth_newFilter</code>, returns <a href="#Objectslog-object">log objects</a>. </p>
 </li>
 </ul>
 <h5 id="request">Request</h5>
@@ -2639,12 +2833,12 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <h4 id="eth_getlogs">eth_getLogs</h4>
 <p>Returns an array of all logs matching a specified filter object.</p>
 <h5 id="parameters">Parameters</h5>
-<p><code>Object</code> - <a href="#filter-options-object">Filter options object</a></p>
+<p><code>Object</code> - <a href="#Objectsfilter-options-object">Filter options object</a></p>
 <h5 id="returns">Returns</h5>
 <p>Same as <a href="#eth_getfilterchanges">eth_getFilterChanges</a>.</p>
 <h5 id="request">Request</h5>
 <p>The request above returns the logs for the 82893 block on the Ropsten testnet. You can also view this <a href="https://ropsten.etherscan.io/block/82983">block</a> on Etherscan. </p>
-<p><strong>Note:</strong> You must be synchronised to at least the requested block for the request to return the logs.</p>
+<p><strong>Note:</strong> You must be synchronized to at least the requested block for the request to return the logs.</p>
 <pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getLogs","params":[{"blockhash":"0x677bf4b962464e6dfd548d6a30b6c703dd78c7cc3602825a7013a6e90a001d2a"}], "id":1}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
 <pre class="hljs">{
   <span class="hljs-attr">"jsonrpc"</span> : <span class="hljs-string">"2.0"</span>,
@@ -2697,7 +2891,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 }</pre><h4 id="clique_getsigners">clique_getSigners</h4>
 <p>Lists signers for the specified block. </p>
 <h5 id="parameters">Parameters</h5>
-<p><code>quantity|tag</code> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#default-block-parameter">Default Block Parameter</a>. </p>
+<p><code>quantity|tag</code> - Integer representing a block number or one of the string tags <code>latest</code>, <code>earliest</code>, or <code>pending</code>, as described in <a href="#Using-JSON-RPC-APIblock-parameter">Block Parameter</a>. </p>
 <h5 id="returns">Returns</h5>
 <p><code>result: array of data</code> - List of 20-byte addresses of signers. </p>
 <h5 id="request">Request</h5>
@@ -2748,57 +2942,180 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
         <span class="hljs-attr">"0x12eb759f2222d7711c63729a45c3585731521d01"</span>: <span class="hljs-literal">true</span>
     }
 }</pre><hr>
-<h4 id="debug_tracetransaction">debug_traceTransaction</h4>
-<p>Attempts to run the transaction as it was executed on the network. It will replay transactions that might already have been executed before it attempts to execute the transaction that corresponds to the specified hash.</p>
-<p>You can use this method with tools such as Remix when you want to execute a transaction step-by-step.</p>
-<h5 id="parameters">Parameters</h5>
-<p><code>transactionHash</code> : <code>data</code> - The transaction hash.</p>
-<p><code>options</code> : <code>string</code> - (Optional) Specifies request options as follows:</p>
+<h4 id="debug_metrics">debug_metrics</h4>
+<blockquote>
+<p><strong>Note</strong> This method is only available only from v0.8.3.</p>
+</blockquote>
+<p>Returns metrics providing information on the internal operation of Pantheon. </p>
+<p>The available metrics may change over time. The JVM metrics may vary based on the JVM implementation being used. </p>
+<p>The metric types are: </p>
 <ul>
-<li><code>disableStorage</code> : <code>BOOL</code> - <code>true</code> disables storage capture. The default is <code>false</code>.</li>
-<li><code>disableMemory</code> : <code>BOOL</code> - <code>true</code> disables memory capture. The default is <code>false</code>.</li>
-<li><code>disableStack</code> : <code>BOOL</code> - <code>true</code> disables stack capture. The default is <code>false</code>.</li>
-<li><code>tracer</code> : <code>STRING</code> - A tracer object that enables JavaScript-based transaction tracing. If you specify a tracer object, the previous four arguments are ignored. A tracer object has two methods, <code>step</code> and <code>result</code>:<ul>
-<li><code>step</code> is a function that takes two arguments, <code>log</code> and <code>db</code>. This function is called for each step of the EVM, or when an error occurs, as the specified transaction is traced.</li>
-<li><code>log</code> has the following fields:<ul>
-<li><code>pc</code> : <code>number</code> - The current program counter.</li>
-<li><code>op</code> : <code>object</code> - An <code>OpCode</code> object representing the current opcode.</li>
-<li><code>gas</code> : <code>number</code> - The amount of gas remaining.</li>
-<li><code>gasPrice</code> : <code>number</code> - The cost in wei of each unit of gas.</li>
-<li><code>memory</code> : <code>object</code> - A structure representing the contract&#39;s memory space.</li>
-<li><code>stack</code> : <code>array[big.Int]</code> - The EVM execution stack.</li>
-<li><code>depth</code> : <code>number</code> - The execution depth.</li>
-<li><code>account</code> : <code>data</code> - The address of the account executing the current operation.</li>
-<li><code>err</code> : If an error occured, this field contains information about the error. If <code>err</code> is non-null, you can ignore all other fields.</li>
+<li>Timer</li>
+<li>Counter</li>
+<li>Gauge</li>
 </ul>
-</li>
-</ul>
-</li>
-<li><code>timeout</code> : <code>STRING</code> - A duration string that overrides the default timeout of 5 seconds for JavaScript-based tracing calls. A duration string is a signed sequence of decimal numbers, each with an optional fraction and a unit suffix, such as &quot;300ms&quot;, &quot;-1.5h&quot; or &quot;2h45m&quot;. Valid time units are &quot;ns&quot;, &quot;us&quot; (or &quot;µs&quot;), &quot;ms&quot;, &quot;s&quot;, &quot;m&quot;, &quot;h&quot;.</li>
-</ul>
-<h5 id="returns">Returns</h5>
-<p>A <code>tracer</code> object, as described above.</p>
-<h5 id="request">Request</h5>
-<pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"debug_traceTransaction","params”:[“0xaaaaaaaaaaaaaaaaaaa”,{“disableStorage":true}],"id”:1}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
-<pre class="hljs">{...}</pre><hr>
-<h4 id="miner_start">miner_start</h4>
-<p>Starts the CPU mining process on the client.</p>
 <h5 id="parameters">Parameters</h5>
 <p>None</p>
 <h5 id="returns">Returns</h5>
-<p><code>result</code> :  <code>boolean | integer</code> - <code>true</code> if the mining start request was received successfully; otherwise returns an error. An example of an error condition would be when a coinbase has not been specified.</p>
+<p><code>result</code>:<code>object</code></p>
+<h5 id="request">Request</h5>
+<pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"debug_metrics","params":[],"id":1}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
+<pre class="hljs">{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+        "jvm": {
+            "memory_bytes_init": {
+                "heap": 268435456,
+                "nonheap": 2555904
+            },
+            "threads_current": 41,
+            "memory_bytes_used": {
+                "heap": 696923976,
+                "nonheap": 63633456
+            },
+            "memory_pool_bytes_used": {
+                "PS Eden Space": 669119360,
+                "Code Cache": 19689024,
+                "Compressed Class Space": 4871144,
+                "PS Survivor Space": 2716320,
+                "PS Old Gen": 25088296,
+                "Metaspace": 39073288
+            },
+            ...
+        },
+        "process": {
+            "open_fds": 546,
+            "cpu_seconds_total": 67.148992,
+            "start_time_seconds": 1543897699.589,
+            "max_fds": 10240
+        },
+        "rpc": {
+            "request_time": {
+                "debug_metrics": {
+                    "bucket": {
+                        "+Inf": 2,
+                        "0.01": 1,
+                        "0.075": 2,
+                        "0.75": 2,
+                        "0.005": 1,
+                        "0.025": 2,
+                        "0.1": 2,
+                        "1.0": 2,
+                        "0.05": 2,
+                        "10.0": 2,
+                        "0.25": 2,
+                        "0.5": 2,
+                        "5.0": 2,
+                        "2.5": 2,
+                        "7.5": 2
+                    },
+                    "count": 2,
+                    "sum": 0.015925392
+                }
+            }
+        },
+        "blockchain": {
+            "difficulty_total": 3533501,
+            "announcedBlock_ingest": {
+                "bucket": {
+                    "+Inf": 0,
+                    "0.01": 0,
+                    "0.075": 0,
+                    "0.75": 0,
+                    "0.005": 0,
+                    "0.025": 0,
+                    "0.1": 0,
+                    "1.0": 0,
+                    "0.05": 0,
+                    "10.0": 0,
+                    "0.25": 0,
+                    "0.5": 0,
+                    "5.0": 0,
+                    "2.5": 0,
+                    "7.5": 0
+                },
+                "count": 0,
+                "sum": 0
+            },
+            "height": 1908793
+        },
+        "peers": {
+            "disconnected_total": {
+                "remote": {
+                    "SUBPROTOCOL_TRIGGERED": 5
+                },
+                "local": {
+                    "TCP_SUBSYSTEM_ERROR": 1,
+                    "SUBPROTOCOL_TRIGGERED": 2,
+                    "USELESS_PEER": 3
+                }
+            },
+            "peer_count_current": 2,
+            "connected_total": 10
+        }
+    }
+}</pre><hr>
+<h4 id="debug_tracetransaction">debug_traceTransaction</h4>
+<p><a href="https://remix.ethereum.org/">Remix</a> uses <code>debug_traceTransaction</code> to implement debugging. Use the <em>Debugger</em> tab in Remix rather than calling <code>debug_traceTransaction</code> directly.  </p>
+<p>Reruns the transaction with the same state as when the transaction was executed. </p>
+<h5 id="parameters">Parameters</h5>
+<p><code>transactionHash</code> : <code>data</code> - Transaction hash.</p>
+<p><code>Object</code> - request options (all optional and default to <code>false</code>):</p>
+<ul>
+<li><code>disableStorage</code> : <code>boolean</code> - <code>true</code> disables storage capture. </li>
+<li><code>disableMemory</code> : <code>boolean</code> - <code>true</code> disables memory capture. </li>
+<li><code>disableStack</code> : <code>boolean</code> - <code>true</code> disables stack capture. </li>
+</ul>
+<h5 id="returns">Returns</h5>
+<p><code>result</code>:<code>object</code> - <a href="#Objectstrace-object">Trace object</a>. </p>
+<h5 id="request">Request</h5>
+<pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"debug_traceTransaction","params":["0x2cc6c94c21685b7e0f8ddabf277a5ccf98db157c62619cde8baea696a74ed18e",{"disableStorage":true}],"id":1}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
+<pre class="hljs">{
+  <span class="hljs-attr">"jsonrpc"</span> : <span class="hljs-string">"2.0"</span>,
+  <span class="hljs-attr">"id"</span> : <span class="hljs-number">1</span>,
+  <span class="hljs-attr">"result"</span> : {
+    <span class="hljs-attr">"gas"</span> : <span class="hljs-number">21000</span>,
+    <span class="hljs-attr">"failed"</span> : <span class="hljs-literal">false</span>,
+    <span class="hljs-attr">"returnValue"</span> : <span class="hljs-string">""</span>,
+    <span class="hljs-attr">"structLogs"</span> : [ {
+      <span class="hljs-attr">"pc"</span> : <span class="hljs-number">0</span>,
+      <span class="hljs-attr">"op"</span> : <span class="hljs-string">"STOP"</span>,
+      <span class="hljs-attr">"gas"</span> : <span class="hljs-number">0</span>,
+      <span class="hljs-attr">"gasCost"</span> : <span class="hljs-number">0</span>,
+      <span class="hljs-attr">"depth"</span> : <span class="hljs-number">1</span>,
+      <span class="hljs-attr">"stack"</span> : [ ],
+      <span class="hljs-attr">"memory"</span> : [ ],
+      <span class="hljs-attr">"storage"</span> : <span class="hljs-literal">null</span>
+    } ]
+  }
+}</pre><hr>
+<h4 id="miner_start">miner_start</h4>
+<p>Starts the CPU mining process. To start mining, a miner coinbase must have been previously specified using the <a href="#Pantheon-CLI-Syntax"><code>--miner-coinbase</code></a> command line option.  </p>
+<h5 id="parameters">Parameters</h5>
+<p>None</p>
+<h5 id="returns">Returns</h5>
+<p><code>result</code> :  <code>boolean</code> - <code>true</code> if the mining start request was received successfully; otherwise returns an error. </p>
 <h5 id="request">Request</h5>
 <pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"miner_start","params":[],"id":1}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
-<pre class="hljs">{...}</pre><hr>
+<pre class="hljs">{
+    <span class="hljs-attr">"jsonrpc"</span>: <span class="hljs-string">"2.0"</span>,
+    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>,
+    <span class="hljs-attr">"result"</span>: <span class="hljs-literal">true</span>
+}</pre><hr>
 <h4 id="miner_stop">miner_stop</h4>
 <p>Stops the CPU mining process on the client.</p>
 <h5 id="parameters">Parameters</h5>
 <p>None</p>
 <h5 id="returns">Returns</h5>
-<p><code>result</code> :  <code>boolean | integer</code> - <code>true</code> if the mining stop request was received successfully; otherwise returns an error. An example of an error condition would be when a coinbase has not been specified.</p>
+<p><code>result</code> :  <code>boolean</code> - <code>true</code> if the mining stop request was received successfully; otherwise returns an error. </p>
 <h5 id="request">Request</h5>
 <pre class="hljs">curl -X POST --data '{"jsonrpc":"2.0","method":"miner_stop","params":[],"id":1}' &lt;JSON-RPC-endpoint:port&gt;</pre><h5 id="result">Result</h5>
-<pre class="hljs">{...}</pre><hr>
+<pre class="hljs">{
+    <span class="hljs-attr">"jsonrpc"</span>: <span class="hljs-string">"2.0"</span>,
+    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>,
+    <span class="hljs-attr">"result"</span>: <span class="hljs-literal">true</span>
+}</pre><p class="page" id="Objects"></p><h1>JSON-RPC API Objects</h1>
 <h2 id="objects">Objects</h2>
 <p>The following objects are parameters for or returned by JSON-RPC Methods:</p>
 <ul>
@@ -2810,7 +3127,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <li><a href="#transaction-receipt-object">Transaction Receipt</a></li>
 </ul>
 <h4 id="block-object">Block Object</h4>
-<p>Returned by <a href="#eth_getblockbyhash">eth_getBlockByHash</a> and <a href="#eth_getblockbynumber">eth_getBlockByNumber</a>.</p>
+<p>Returned by <a href="#JSON-RPC-API-Methodseth_getblockbyhash">eth_getBlockByHash</a> and <a href="#JSON-RPC-API-Methodseth_getblockbynumber">eth_getBlockByNumber</a>.</p>
 <table>
 <thead>
 <tr>
@@ -2918,7 +3235,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 </tbody>
 </table>
 <h4 id="filter-options-object">Filter Options Object</h4>
-<p>Parameter for <a href="#eth_newfilter">eth_newFilter</a> and <a href="#eth_getlogs">eth_getLogs</a>. </p>
+<p>Parameter for <a href="#JSON-RPC-API-Methodseth_newfilter">eth_newFilter</a> and <a href="#JSON-RPC-API-Methodseth_getlogs">eth_getLogs</a>. </p>
 <table>
 <thead>
 <tr>
@@ -2933,13 +3250,13 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 <td><code>fromBlock</code></td>
 <td style="text-align:center">Quantity &#124;Tag</td>
 <td style="text-align:center">Optional</td>
-<td>Integer block number or <code>latest</code>, <code>pending</code>, <code>earliest</code>. See <a href="#block-parameter">Block Parameter</a>. Default is <code>latest</code>.</td>
+<td>Integer block number or <code>latest</code>, <code>pending</code>, <code>earliest</code>. See <a href="#Using-JSON-RPC-APIblock-parameter">Block Parameter</a>. Default is <code>latest</code>.</td>
 </tr>
 <tr>
 <td><code>toBlock</code></td>
 <td style="text-align:center">Quantity &#124;Tag</td>
 <td style="text-align:center">Optional</td>
-<td>Integer block number or <code>latest</code>, <code>pending</code>, <code>earliest</code>. See <a href="#block-parameter">Block Parameter</a>. Default is <code>latest</code>.</td>
+<td>Integer block number or <code>latest</code>, <code>pending</code>, <code>earliest</code>. See <a href="#Using-JSON-RPC-APIblock-parameter">Block Parameter</a>. Default is <code>latest</code>.</td>
 </tr>
 <tr>
 <td><code>address</code></td>
@@ -2955,7 +3272,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 </tr>
 </tbody>
 </table>
-<p><a href="#eth_getlogs">eth_getLogs</a> has an additional key. </p>
+<p><a href="#JSON-RPC-API-Methodseth_getlogs">eth_getLogs</a> has an additional key. </p>
 <table>
 <thead>
 <tr>
@@ -2975,7 +3292,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 </tbody>
 </table>
 <h4 id="log-object">Log Object</h4>
-<p>Returned by <a href="#eth_getfilterchanges">eth_getFilterChanges</a> and <a href="#transaction-receipt-object">transaction receipt objects</a> can contain an array of log objects.  </p>
+<p>Returned by <a href="#JSON-RPC-API-Methodseth_getfilterchanges">eth_getFilterChanges</a> and <a href="#Objectstransaction-receipt-object">transaction receipt objects</a> can contain an array of log objects.  </p>
 <table>
 <thead>
 <tr>
@@ -3032,8 +3349,99 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 </tr>
 </tbody>
 </table>
+<h3 id="trace-object">Trace Object</h3>
+<p>Returned by <a href="#JSON-RPC-API-Methodsdebug_traceTransaction">debug_traceTransaction</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th style="text-align:center">Type</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gas</code></td>
+<td style="text-align:center">Integer</td>
+<td>Gas used by the transaction</td>
+</tr>
+<tr>
+<td><code>failed</code></td>
+<td style="text-align:center">Boolean</td>
+<td>True if transaction failed; otherwise, false</td>
+</tr>
+<tr>
+<td><code>returnValue</code></td>
+<td style="text-align:center">String</td>
+<td>Bytes returned from transaction execution (without a <code>0x</code> prefix)</td>
+</tr>
+<tr>
+<td><code>structLogs</code></td>
+<td style="text-align:center">Array</td>
+<td>Array of structured log objects</td>
+</tr>
+</tbody>
+</table>
+<h4 id="structured-log-object">Structured Log Object</h4>
+<p>Log information returned as part of the <a href="#trace-object">Trace object</a>. </p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th style="text-align:center">Type</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pc</code></td>
+<td style="text-align:center">Integer</td>
+<td>Current program counter</td>
+</tr>
+<tr>
+<td><code>op</code></td>
+<td style="text-align:center">String</td>
+<td>Current OpCode</td>
+</tr>
+<tr>
+<td><code>gas</code></td>
+<td style="text-align:center">Integer</td>
+<td>Gas remaining</td>
+</tr>
+<tr>
+<td><code>gasCost</code></td>
+<td style="text-align:center">Integer</td>
+<td>Cost in wei of each gas unit</td>
+</tr>
+<tr>
+<td><code>depth</code></td>
+<td style="text-align:center">Integer</td>
+<td>Execution depth</td>
+</tr>
+<tr>
+<td><code>exceptionalHaltReasons</code></td>
+<td style="text-align:center">Array</td>
+<td>One or more strings representing an error condition that caused the EVM execution to terminate. These indicate that EVM execution terminated for reasons such as running out of gas or attempting to execute an unknown instruction.  Generally a single exceptional halt reason is returned but it is possible for more than one to occur at once.</td>
+</tr>
+<tr>
+<td><code>stack</code></td>
+<td style="text-align:center">Array of 32 byte arrays</td>
+<td>EVM execution stack before executing current operation</td>
+</tr>
+<tr>
+<td><code>memory</code></td>
+<td style="text-align:center">Array of 32 byte arrays</td>
+<td>Memory space of the contract before executing current operation</td>
+</tr>
+<tr>
+<td><code>storage</code></td>
+<td style="text-align:center">Object</td>
+<td>Storage entries changed by the current transaction</td>
+</tr>
+</tbody>
+</table>
 <h3 id="transaction-object">Transaction Object</h3>
-<p>Returned by <a href="#eth_gettransactionbyhash">eth_getTransactionByHash</a>, <a href="#eth_gettransactionbyblockhashandindex">eth_getTransactionByBlockHashAndIndex</a>, and <a href="#eth_gettransactionbyblocknumberandindex">eth_getTransactionsByBlockNumberAndIndex</a>.</p>
+<p>Returned by <a href="#JSON-RPC-API-Methodseth_gettransactionbyhash">eth_getTransactionByHash</a>, <a href="#JSON-RPC-API-Methodseth_gettransactionbyblockhashandindex">eth_getTransactionByBlockHashAndIndex</a>, and <a href="#JSON-RPC-API-Methodseth_gettransactionbyblocknumberandindex">eth_getTransactionsByBlockNumberAndIndex</a>.</p>
 <table>
 <thead>
 <tr>
@@ -3116,8 +3524,8 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 </tbody>
 </table>
 <h3 id="transaction-call-object">Transaction Call Object</h3>
-<p>Parameter for <a href="#eth_call">eth_call</a> and <a href="#eth_estimategas">eth_estimateGas</a>.</p>
-<p><strong>Note:</strong> All parameters are optional for <a href="#eth_estimategas">eth_estimateGas</a></p>
+<p>Parameter for <a href="#JSON-RPC-API-Methodseth_call">eth_call</a> and <a href="#JSON-RPC-API-Methodseth_estimategas">eth_estimateGas</a>.</p>
+<p><strong>Note:</strong> All parameters are optional for <a href="#JSON-RPC-API-Methodseth_estimategas">eth_estimateGas</a></p>
 <table>
 <thead>
 <tr>
@@ -3167,7 +3575,7 @@ To activate JSON-RPC using http or WebSocket, see <a href="https://github.com/Pe
 </tbody>
 </table>
 <h3 id="transaction-receipt-object">Transaction Receipt Object</h3>
-<p>Returned by <a href="#eth_gettransactionreceipt">eth_getTransactionReceipt</a>.</p>
+<p>Returned by <a href="#JSON-RPC-API-Methodseth_gettransactionreceipt">eth_getTransactionReceipt</a>.</p>
 <table>
 <thead>
 <tr>
