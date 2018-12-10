@@ -18,7 +18,8 @@ public enum MetricCategory {
   JVM("jvm", false),
   PROCESS("process", false),
   BLOCKCHAIN("blockchain"),
-  SYNCHRONIZER("synchronizer");
+  SYNCHRONIZER("synchronizer"),
+  NETWORK("network");
 
   private final String name;
   private final boolean pantheonSpecific;

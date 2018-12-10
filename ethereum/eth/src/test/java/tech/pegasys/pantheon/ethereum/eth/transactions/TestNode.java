@@ -119,6 +119,7 @@ public class TestNode implements Closeable {
                         new PeerBlacklist(),
                         new NoOpMetricsSystem(),
                         new NodeWhitelistController(PermissioningConfiguration.createDefault())))
+            .metricsSystem(new NoOpMetricsSystem())
             .build();
     network = networkRunner.getNetwork();
     this.port = network.getSelf().getPort();

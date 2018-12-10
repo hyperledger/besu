@@ -17,6 +17,8 @@ import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.Handshaker;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
@@ -41,8 +43,15 @@ public final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
       final PeerInfo ourInfo,
       final CompletableFuture<PeerConnection> connectionFuture,
       final Callbacks callbacks,
-      final PeerConnectionRegistry peerConnectionRegistry) {
-    super(subProtocols, ourInfo, connectionFuture, callbacks, peerConnectionRegistry);
+      final PeerConnectionRegistry peerConnectionRegistry,
+      final LabelledMetric<Counter> outboundMessagesCounter) {
+    super(
+        subProtocols,
+        ourInfo,
+        connectionFuture,
+        callbacks,
+        peerConnectionRegistry,
+        outboundMessagesCounter);
     handshaker.prepareInitiator(kp, SECP256K1.PublicKey.create(peerId));
     this.first = handshaker.firstMessage();
   }

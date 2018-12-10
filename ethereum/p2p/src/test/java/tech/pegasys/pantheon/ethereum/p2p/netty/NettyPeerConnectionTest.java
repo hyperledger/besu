@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.HelloMessage;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import io.netty.channel.Channel;
@@ -47,7 +48,9 @@ public class NettyPeerConnectionTest {
     when(context.channel()).thenReturn(channel);
     when(channel.closeFuture()).thenReturn(closeFuture);
     when(channel.eventLoop()).thenReturn(eventLoop);
-    connection = new NettyPeerConnection(context, peerInfo, multiplexer, callbacks);
+    connection =
+        new NettyPeerConnection(
+            context, peerInfo, multiplexer, callbacks, NoOpMetricsSystem.NO_OP_LABELLED_COUNTER);
   }
 
   @Test

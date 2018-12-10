@@ -214,6 +214,7 @@ public class RunnerBuilder {
                         peerBlacklist,
                         metricsSystem,
                         nodeWhitelistController))
+            .metricsSystem(metricsSystem)
             .build();
 
     final Synchronizer synchronizer = pantheonController.getSynchronizer();

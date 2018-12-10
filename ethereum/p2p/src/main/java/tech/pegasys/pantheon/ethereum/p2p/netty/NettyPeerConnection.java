@@ -22,6 +22,9 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.WireMessageCodes;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
 
 import java.net.SocketAddress;
 import java.util.HashMap;
@@ -49,12 +52,14 @@ final class NettyPeerConnection implements PeerConnection {
   private final AtomicBoolean disconnected = new AtomicBoolean(false);
   private final Callbacks callbacks;
   private final CapabilityMultiplexer multiplexer;
+  private final LabelledMetric<Counter> outboundMessagesCounter;
 
   public NettyPeerConnection(
       final ChannelHandlerContext ctx,
       final PeerInfo peerInfo,
       final CapabilityMultiplexer multiplexer,
-      final Callbacks callbacks) {
+      final Callbacks callbacks,
+      final LabelledMetric<Counter> outboundMessagesCounter) {
     this.ctx = ctx;
     this.peerInfo = peerInfo;
     this.multiplexer = multiplexer;
@@ -63,6 +68,7 @@ final class NettyPeerConnection implements PeerConnection {
       protocolToCapability.put(cap.getName(), cap);
     }
     this.callbacks = callbacks;
+    this.outboundMessagesCounter = outboundMessagesCounter;
     ctx.channel().closeFuture().addListener(f -> terminateConnection(TCP_SUBSYSTEM_ERROR, false));
   }
 
@@ -82,6 +88,19 @@ final class NettyPeerConnection implements PeerConnection {
                 + ") via cap "
                 + capability);
       }
+      outboundMessagesCounter
+          .labels(
+              capability.toString(),
+              subProtocol.messageName(capability.getVersion(), message.getCode()),
+              Integer.toString(message.getCode()))
+          .inc();
+    } else {
+      outboundMessagesCounter
+          .labels(
+              "Wire",
+              WireMessageCodes.messageName(message.getCode()),
+              Integer.toString(message.getCode()))
+          .inc();
     }
 
     LOG.trace("Writing {} to {} via protocol {}", message, peerInfo, capability);
@@ -152,9 +171,7 @@ final class NettyPeerConnection implements PeerConnection {
         .add("nodeId", peerInfo.getNodeId())
         .add(
             "caps",
-            String.join(
-                ", ",
-                agreedCapabilities.stream().map(Capability::toString).collect(Collectors.toList())))
+            agreedCapabilities.stream().map(Capability::toString).collect(Collectors.joining(", ")))
         .toString();
   }
 }

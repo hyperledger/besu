@@ -31,6 +31,9 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.Subscribers;
 
@@ -137,6 +140,8 @@ public final class NettyP2PNetwork implements P2PNetwork {
 
   private final List<SubProtocol> subProtocols;
 
+  private final LabelledMetric<Counter> outboundMessagesCounter;
+
   /**
    * Creates a peer networking service for production purposes.
    *
@@ -173,6 +178,16 @@ public final class NettyP2PNetwork implements P2PNetwork {
             peerRequirement,
             peerBlacklist,
             nodeWhitelistController);
+
+    outboundMessagesCounter =
+        metricsSystem.createLabelledCounter(
+            MetricCategory.NETWORK,
+            "p2p_messages_outbound",
+            "Count of each P2P message sent outbound.",
+            "protocol",
+            "name",
+            "code");
+
     subscribeDisconnect(peerDiscoveryAgent);
     subscribeDisconnect(peerBlacklist);
     subscribeDisconnect(connections);
@@ -234,7 +249,13 @@ public final class NettyP2PNetwork implements P2PNetwork {
                             new TimeoutException(
                                 "Timed out waiting to fully establish incoming connection"))),
                 new HandshakeHandlerInbound(
-                    keyPair, subProtocols, ourPeerInfo, connectionFuture, callbacks, connections));
+                    keyPair,
+                    subProtocols,
+                    ourPeerInfo,
+                    connectionFuture,
+                    callbacks,
+                    connections,
+                    outboundMessagesCounter));
 
         connectionFuture.thenAccept(
             connection -> {
@@ -305,7 +326,8 @@ public final class NettyP2PNetwork implements P2PNetwork {
                             ourPeerInfo,
                             connectionFuture,
                             callbacks,
-                            connections));
+                            connections,
+                            outboundMessagesCounter));
               }
             })
         .connect()

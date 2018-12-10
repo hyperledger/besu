@@ -23,6 +23,8 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.Discon
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.HelloMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.WireMessageCodes;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
 
 import java.io.IOException;
 import java.util.List;
@@ -49,18 +51,21 @@ final class DeFramer extends ByteToMessageDecoder {
   private final PeerInfo ourInfo;
   private final List<SubProtocol> subProtocols;
   private boolean hellosExchanged;
+  private final LabelledMetric<Counter> outboundMessagesCounter;
 
   DeFramer(
       final Framer framer,
       final List<SubProtocol> subProtocols,
       final PeerInfo ourInfo,
       final Callbacks callbacks,
-      final CompletableFuture<PeerConnection> connectFuture) {
+      final CompletableFuture<PeerConnection> connectFuture,
+      final LabelledMetric<Counter> outboundMessagesCounter) {
     this.framer = framer;
     this.subProtocols = subProtocols;
     this.ourInfo = ourInfo;
     this.connectFuture = connectFuture;
     this.callbacks = callbacks;
+    this.outboundMessagesCounter = outboundMessagesCounter;
   }
 
   @Override
@@ -90,7 +95,8 @@ final class DeFramer extends ByteToMessageDecoder {
             new CapabilityMultiplexer(
                 subProtocols, ourInfo.getCapabilities(), peerInfo.getCapabilities());
         final PeerConnection connection =
-            new NettyPeerConnection(ctx, peerInfo, capabilityMultiplexer, callbacks);
+            new NettyPeerConnection(
+                ctx, peerInfo, capabilityMultiplexer, callbacks, outboundMessagesCounter);
         if (capabilityMultiplexer.getAgreedCapabilities().size() == 0) {
           LOG.debug(
               "Disconnecting from {} because no capabilities are shared.", peerInfo.getClientId());
