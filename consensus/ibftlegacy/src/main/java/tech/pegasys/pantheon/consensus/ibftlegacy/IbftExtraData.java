@@ -22,7 +22,7 @@ import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * Represents the data structure stored in the extraData field of the BlockHeader used when
@@ -33,15 +33,15 @@ public class IbftExtraData {
   public static final int EXTRA_VANITY_LENGTH = 32;
 
   private final BytesValue vanityData;
-  private final List<Signature> seals;
+  private final Collection<Signature> seals;
   private final Signature proposerSeal;
-  private final List<Address> validators;
+  private final Collection<Address> validators;
 
   public IbftExtraData(
       final BytesValue vanityData,
-      final List<Signature> seals,
+      final Collection<Signature> seals,
       final Signature proposerSeal,
-      final List<Address> validators) {
+      final Collection<Address> validators) {
 
     checkNotNull(vanityData);
     checkNotNull(seals);
@@ -64,9 +64,10 @@ public class IbftExtraData {
     final RLPInput rlpInput = new BytesValueRLPInput(rlpData, false);
 
     rlpInput.enterList(); // This accounts for the "root node" which contains IBFT data items.
-    final List<Address> validators = rlpInput.readList(Address::readFrom);
+    final Collection<Address> validators = rlpInput.readList(Address::readFrom);
     final Signature proposerSeal = parseProposerSeal(rlpInput);
-    final List<Signature> seals = rlpInput.readList(rlp -> Signature.decode(rlp.readBytesValue()));
+    final Collection<Signature> seals =
+        rlpInput.readList(rlp -> Signature.decode(rlp.readBytesValue()));
     rlpInput.leaveList();
 
     return new IbftExtraData(vanityData, seals, proposerSeal, validators);
@@ -97,7 +98,7 @@ public class IbftExtraData {
     return vanityData;
   }
 
-  public List<Signature> getSeals() {
+  public Collection<Signature> getSeals() {
     return seals;
   }
 
@@ -105,7 +106,7 @@ public class IbftExtraData {
     return proposerSeal;
   }
 
-  public List<Address> getValidators() {
+  public Collection<Address> getValidators() {
     return validators;
   }
 }

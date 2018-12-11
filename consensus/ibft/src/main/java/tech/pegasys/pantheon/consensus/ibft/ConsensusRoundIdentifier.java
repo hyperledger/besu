@@ -100,7 +100,7 @@ public class ConsensusRoundIdentifier implements Comparable<ConsensusRoundIdenti
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ConsensusRoundIdentifier that = (ConsensusRoundIdentifier) o;
+    final ConsensusRoundIdentifier that = (ConsensusRoundIdentifier) o;
     return sequence == that.sequence && round == that.round;
   }
 

@@ -18,7 +18,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -35,7 +34,7 @@ public class VoteTally implements ValidatorProvider {
   private final Map<Address, Set<Address>> addVotesBySubject;
   private final Map<Address, Set<Address>> removeVotesBySubject;
 
-  public VoteTally(final List<Address> initialValidators) {
+  public VoteTally(final Collection<Address> initialValidators) {
     this(new TreeSet<>(initialValidators), new HashMap<>(), new HashMap<>());
   }
 

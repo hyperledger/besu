@@ -20,7 +20,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableBiMap;
@@ -71,7 +71,7 @@ public class CliqueBlockInterface implements BlockInterface {
   }
 
   @Override
-  public List<Address> validatorsInBlock(final BlockHeader header) {
+  public Collection<Address> validatorsInBlock(final BlockHeader header) {
     return CliqueExtraData.decode(header.getExtraData()).getValidators();
   }
 

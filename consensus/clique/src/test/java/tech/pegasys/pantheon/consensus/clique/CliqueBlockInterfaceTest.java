@@ -27,6 +27,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -123,7 +124,7 @@ public class CliqueBlockInterfaceTest {
   public void extractsValidatorsFromHeader() {
     final BlockHeader header =
         TestHelpers.createCliqueSignedBlockHeader(headerBuilder, proposerKeys, validatorList);
-    final List<Address> extractedValidators = blockInterface.validatorsInBlock(header);
+    final Collection<Address> extractedValidators = blockInterface.validatorsInBlock(header);
 
     assertThat(extractedValidators).isEqualTo(validatorList);
   }
