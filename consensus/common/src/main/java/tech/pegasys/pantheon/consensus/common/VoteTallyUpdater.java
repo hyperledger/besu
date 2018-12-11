@@ -16,7 +16,7 @@ import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
@@ -49,7 +49,7 @@ public class VoteTallyUpdater {
     final long epochBlockNumber = epochManager.getLastEpochBlock(chainHeadBlockNumber);
     LOG.info("Loading validator voting state starting from block {}", epochBlockNumber);
     final BlockHeader epochBlock = blockchain.getBlockHeader(epochBlockNumber).get();
-    final List<Address> initialValidators = blockInterface.validatorsInBlock(epochBlock);
+    final Collection<Address> initialValidators = blockInterface.validatorsInBlock(epochBlock);
     final VoteTally voteTally = new VoteTally(initialValidators);
     for (long blockNumber = epochBlockNumber + 1;
         blockNumber <= chainHeadBlockNumber;

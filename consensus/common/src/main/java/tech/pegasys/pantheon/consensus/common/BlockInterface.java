@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.consensus.common;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 
 public interface BlockInterface {
@@ -24,5 +24,5 @@ public interface BlockInterface {
 
   Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header);
 
-  List<Address> validatorsInBlock(final BlockHeader header);
+  Collection<Address> validatorsInBlock(final BlockHeader header);
 }

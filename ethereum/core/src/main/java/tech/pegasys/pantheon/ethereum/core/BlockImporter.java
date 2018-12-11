@@ -27,7 +27,7 @@ import java.util.List;
 public interface BlockImporter<C> {
 
   /**
-   * Attempts to import the given block to the specificed blockchain and world state.
+   * Attempts to import the given block to the specified blockchain and world state.
    *
    * @param context The context to attempt to update
    * @param block The block
@@ -43,7 +43,7 @@ public interface BlockImporter<C> {
   }
 
   /**
-   * Attempts to import the given block to the specificed blockchain and world state.
+   * Attempts to import the given block to the specified blockchain and world state.
    *
    * @param context The context to attempt to update
    * @param block The block

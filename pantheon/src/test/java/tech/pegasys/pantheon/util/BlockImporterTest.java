@@ -65,7 +65,8 @@ public final class BlockImporterTest {
   @Test
   public void ibftImport() throws IOException {
     final Path source = folder.newFile().toPath();
-    final String config = Resources.toString(Resources.getResource("ibft_genesis.json"), UTF_8);
+    final String config =
+        Resources.toString(Resources.getResource("ibftlegacy_genesis.json"), UTF_8);
 
     try {
       Files.write(
