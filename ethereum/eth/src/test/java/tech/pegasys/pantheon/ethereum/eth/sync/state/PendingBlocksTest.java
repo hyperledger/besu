@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.ethereum.eth.sync.state;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.core.Block;
-import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
+import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 
 import java.util.Arrays;
 import java.util.Collections;

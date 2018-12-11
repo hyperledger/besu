@@ -19,6 +19,8 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
+import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
+import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator.BlockOptions;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
@@ -32,8 +34,6 @@ import tech.pegasys.pantheon.ethereum.eth.messages.EthPV63;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
-import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
-import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator.BlockOptions;
 
 import java.util.ArrayList;
 import java.util.Collections;

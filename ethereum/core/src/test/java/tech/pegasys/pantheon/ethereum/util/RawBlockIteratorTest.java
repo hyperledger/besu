@@ -15,11 +15,11 @@ package tech.pegasys.pantheon.ethereum.util;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
-import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
 
 import java.io.DataOutputStream;
 import java.io.File;

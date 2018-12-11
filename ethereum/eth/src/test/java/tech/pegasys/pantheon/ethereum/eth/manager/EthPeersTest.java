@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
+import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import org.junit.Before;
