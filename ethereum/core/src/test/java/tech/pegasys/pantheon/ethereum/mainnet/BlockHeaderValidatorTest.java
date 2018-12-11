@@ -24,9 +24,9 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator.Builder;
-import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
 
 import java.util.Optional;
 

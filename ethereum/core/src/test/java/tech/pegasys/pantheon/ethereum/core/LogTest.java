@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.ethereum.core;
 import static org.junit.Assert.assertEquals;
 
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
-import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
 
 import org.junit.Test;
 

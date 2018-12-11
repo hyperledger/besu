@@ -15,9 +15,9 @@ package tech.pegasys.pantheon.ethereum.eth.transactions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
-import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
 
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;

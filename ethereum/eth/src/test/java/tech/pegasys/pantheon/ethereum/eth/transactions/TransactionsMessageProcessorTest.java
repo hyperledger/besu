@@ -16,11 +16,11 @@ import static java.util.Arrays.asList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.messages.TransactionsMessage;
-import tech.pegasys.pantheon.ethereum.testutil.BlockDataGenerator;
 
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
