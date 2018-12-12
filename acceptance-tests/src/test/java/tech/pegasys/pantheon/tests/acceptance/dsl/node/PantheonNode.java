@@ -293,10 +293,11 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     return LOCALHOST + ":" + p2pPort;
   }
 
-  List<String> bootnodes() {
+  List<URI> bootnodes() {
     return bootnodes
         .stream()
         .filter(node -> !node.equals(this.enodeUrl()))
+        .map(URI::create)
         .collect(Collectors.toList());
   }
 

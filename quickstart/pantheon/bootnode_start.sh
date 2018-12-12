@@ -15,4 +15,4 @@
 /opt/pantheon/bin/pantheon $@ --no-discovery export-pub-key /opt/pantheon/public-keys/bootnode
 
 # run bootnode with discovery but no bootnodes as it's our bootnode.
-/opt/pantheon/bin/pantheon $@ --bootnodes=""
+/opt/pantheon/bin/pantheon $@
