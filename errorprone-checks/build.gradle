@@ -43,13 +43,11 @@ dependencies {
 }
 
 test {
-  if (!JavaVersion.current().isJava8()) {
+  if (JavaVersion.current().isJava8()) {
     enabled = false
     logger.info("Disabling {} because errorprone tests always fail in Java {}",
       project.name, JavaVersion.current().majorVersion)
   }
-
-  jvmArgs "-Xbootclasspath/p:${configurations.epJavac.asPath}"
 
   testLogging { showStandardStreams = true }
 }

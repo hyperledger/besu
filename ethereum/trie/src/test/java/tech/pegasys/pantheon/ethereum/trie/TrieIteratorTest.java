@@ -109,7 +109,7 @@ public class TrieIteratorTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "MathAbsoluteRandom"})
   public void shouldIterateArbitraryStructureAccurately() {
     Node<String> root = NullNode.instance();
     final NavigableSet<Bytes32> expectedKeyHashes = new TreeSet<>();

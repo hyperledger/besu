@@ -23,7 +23,6 @@ import tech.pegasys.pantheon.consensus.ibft.TestHelpers;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.ProposerSelector;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.NewRoundPayload;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.NewRoundPayload.Builder;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparedCertificate;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.RoundChangeCertificate;
@@ -65,7 +64,8 @@ public class NewRoundMessageValidatorTest {
 
   private final SignedData<NewRoundPayload> validMsg =
       createValidNewRoundMessageSignedBy(proposerKey);
-  private final NewRoundPayload.Builder msgBuilder = Builder.fromExisting(validMsg.getPayload());
+  private final NewRoundPayload.Builder msgBuilder =
+      NewRoundPayload.Builder.fromExisting(validMsg.getPayload());
 
   @Before
   public void setup() {

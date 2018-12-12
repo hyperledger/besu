@@ -42,6 +42,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
@@ -212,6 +213,7 @@ public class DockerQuickstartTest {
   }
 
   @Test
+  @Ignore
   public void rpcNodeShouldReturnCorrectVersion() {
     final String expectedVersion = PantheonInfo.version();
     Awaitility.await()

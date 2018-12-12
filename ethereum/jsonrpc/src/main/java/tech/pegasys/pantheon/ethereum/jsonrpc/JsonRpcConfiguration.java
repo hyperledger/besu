@@ -18,6 +18,7 @@ import java.util.Collections;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 
 public class JsonRpcConfiguration {
   private static final String DEFAULT_JSON_RPC_HOST = "127.0.0.1";
@@ -120,9 +121,11 @@ public class JsonRpcConfiguration {
     return enabled == that.enabled
         && port == that.port
         && Objects.equal(host, that.host)
-        && Objects.equal(corsAllowedDomains, that.corsAllowedDomains)
-        && Objects.equal(hostsWhitelist, that.hostsWhitelist)
-        && Objects.equal(rpcApis, that.rpcApis);
+        && Objects.equal(
+            Lists.newArrayList(corsAllowedDomains), Lists.newArrayList(that.corsAllowedDomains))
+        && Objects.equal(
+            Lists.newArrayList(hostsWhitelist), Lists.newArrayList(that.hostsWhitelist))
+        && Objects.equal(Lists.newArrayList(rpcApis), Lists.newArrayList(that.rpcApis));
   }
 
   @Override

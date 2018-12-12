@@ -33,8 +33,8 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
   @Override
   public Optional<BytesValue> get(final BytesValue key) {
     final Lock lock = rwLock.readLock();
+    lock.lock();
     try {
-      lock.lock();
       return Optional.ofNullable(hashValueStore.get(key));
     } finally {
       lock.unlock();
@@ -44,8 +44,8 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
   @Override
   public void put(final BytesValue key, final BytesValue value) {
     final Lock lock = rwLock.writeLock();
+    lock.lock();
     try {
-      lock.lock();
       hashValueStore.put(key, value);
     } finally {
       lock.unlock();
@@ -55,8 +55,8 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
   @Override
   public void remove(final BytesValue key) throws StorageException {
     final Lock lock = rwLock.writeLock();
+    lock.lock();
     try {
-      lock.lock();
       hashValueStore.remove(key);
     } finally {
       lock.unlock();
@@ -71,8 +71,8 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
   @Override
   public Stream<Entry> entries() {
     final Lock lock = rwLock.readLock();
+    lock.lock();
     try {
-      lock.lock();
       // Ensure we have collected all entries before releasing the lock and returning
       return hashValueStore
           .entrySet()
@@ -108,8 +108,8 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
     @Override
     protected void doCommit() {
       final Lock lock = rwLock.writeLock();
+      lock.lock();
       try {
-        lock.lock();
         hashValueStore.putAll(updatedValues);
         removedKeys.forEach(k -> hashValueStore.remove(k));
         updatedValues = null;

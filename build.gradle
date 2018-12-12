@@ -154,9 +154,18 @@ allprojects {
 
     options.errorprone {
       excludedPaths '.*/(generated/*.*|.*ReferenceTest_.*)'
+
+      // Our equals need to be symmetric, this checker doesn't respect that.
+      check('EqualsGetClass', CheckSeverity.OFF)
+      // We like to use futures with no return values.
       check('FutureReturnValueIgnored', CheckSeverity.OFF)
-      check('InsecureCryptoUsage', CheckSeverity.WARN)
+      // We use the JSR-305 annotations instead of the Google annotations.
+      check('ImmutableEnumChecker', CheckSeverity.OFF)
+      // This is a style check instead of an error-prone pattern.
+      check('UnnecessaryParentheses', CheckSeverity.OFF)
+
       check('FieldCanBeFinal', CheckSeverity.WARN)
+      check('InsecureCryptoUsage', CheckSeverity.WARN)
       check('WildcardImport', CheckSeverity.WARN)
     }
 

@@ -32,6 +32,7 @@ import org.junit.Test;
 public class EntriesFromIntegrationTest {
 
   @Test
+  @SuppressWarnings("MathAbsoluteRandom")
   public void shouldCollectStateEntries() {
     final MutableWorldState worldState = createInMemoryWorldStateArchive().getMutable();
     final WorldUpdater updater = worldState.updater();

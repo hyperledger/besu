@@ -258,7 +258,9 @@ public abstract class AbstractFqp<T extends AbstractFqp> implements FieldElement
       return false;
     }
 
-    final AbstractFqp other = (AbstractFqp) obj;
+    final AbstractFqp<?> other = (AbstractFqp<?>) obj;
+    if (degree != other.degree) return false;
+    if (!Arrays.equals(modulusCoefficients, other.modulusCoefficients)) return false;
     return Arrays.equals(coefficients, other.coefficients);
   }
 

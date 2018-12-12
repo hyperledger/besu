@@ -21,7 +21,6 @@ import tech.pegasys.pantheon.services.kvstore.KeyValueStorage.Transaction;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 
-import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -128,9 +127,7 @@ public abstract class AbstractKeyValueStorageTest {
       assertTrue(actual.equals(a) || actual.equals(b));
     }
 
-    if (store instanceof Closeable) {
-      ((Closeable) store).close();
-    }
+    store.close();
   }
 
   @Test
@@ -328,8 +325,6 @@ public abstract class AbstractKeyValueStorageTest {
     assertArrayEquals(expectedValues, finalValues);
     assertTrue(finalValues[0].equals(a) || finalValues[0].equals(b));
 
-    if (store instanceof Closeable) {
-      ((Closeable) store).close();
-    }
+    store.close();
   }
 }

@@ -22,7 +22,6 @@ import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.Request.Builder;
 import okhttp3.Response;
 import org.junit.After;
 import org.junit.Before;
@@ -53,7 +52,10 @@ public class JsonRpcHttpServiceCorsTest {
     jsonRpcHttpService = createJsonRpcHttpServiceWithAllowedDomains("http://foo.io");
 
     final Request request =
-        new Builder().url(jsonRpcHttpService.url()).header("Origin", "http://bar.me").build();
+        new Request.Builder()
+            .url(jsonRpcHttpService.url())
+            .header("Origin", "http://bar.me")
+            .build();
 
     try (final Response response = client.newCall(request).execute()) {
       assertThat(response.isSuccessful()).isFalse();
@@ -65,7 +67,10 @@ public class JsonRpcHttpServiceCorsTest {
     jsonRpcHttpService = createJsonRpcHttpServiceWithAllowedDomains("http://foo.io");
 
     final Request request =
-        new Builder().url(jsonRpcHttpService.url()).header("Origin", "http://foo.io").build();
+        new Request.Builder()
+            .url(jsonRpcHttpService.url())
+            .header("Origin", "http://foo.io")
+            .build();
 
     try (final Response response = client.newCall(request).execute()) {
       assertThat(response.isSuccessful()).isTrue();
@@ -78,7 +83,10 @@ public class JsonRpcHttpServiceCorsTest {
         createJsonRpcHttpServiceWithAllowedDomains("http://foo.io", "http://bar.me");
 
     final Request request =
-        new Builder().url(jsonRpcHttpService.url()).header("Origin", "http://bar.me").build();
+        new Request.Builder()
+            .url(jsonRpcHttpService.url())
+            .header("Origin", "http://bar.me")
+            .build();
 
     try (final Response response = client.newCall(request).execute()) {
       assertThat(response.isSuccessful()).isTrue();
@@ -91,7 +99,10 @@ public class JsonRpcHttpServiceCorsTest {
         createJsonRpcHttpServiceWithAllowedDomains("http://foo.io", "http://bar.me");
 
     final Request request =
-        new Builder().url(jsonRpcHttpService.url()).header("Origin", "http://hel.lo").build();
+        new Request.Builder()
+            .url(jsonRpcHttpService.url())
+            .header("Origin", "http://hel.lo")
+            .build();
 
     try (final Response response = client.newCall(request).execute()) {
       assertThat(response.isSuccessful()).isFalse();
@@ -102,7 +113,7 @@ public class JsonRpcHttpServiceCorsTest {
   public void requestWithNoOriginShouldSucceedWhenNoCorsConfigSet() throws Exception {
     jsonRpcHttpService = createJsonRpcHttpServiceWithAllowedDomains();
 
-    final Request request = new Builder().url(jsonRpcHttpService.url()).build();
+    final Request request = new Request.Builder().url(jsonRpcHttpService.url()).build();
 
     try (final Response response = client.newCall(request).execute()) {
       assertThat(response.isSuccessful()).isTrue();
@@ -113,7 +124,7 @@ public class JsonRpcHttpServiceCorsTest {
   public void requestWithNoOriginShouldSucceedWhenCorsIsSet() throws Exception {
     jsonRpcHttpService = createJsonRpcHttpServiceWithAllowedDomains("http://foo.io");
 
-    final Request request = new Builder().url(jsonRpcHttpService.url()).build();
+    final Request request = new Request.Builder().url(jsonRpcHttpService.url()).build();
 
     try (final Response response = client.newCall(request).execute()) {
       assertThat(response.isSuccessful()).isTrue();
@@ -125,7 +136,10 @@ public class JsonRpcHttpServiceCorsTest {
     jsonRpcHttpService = createJsonRpcHttpServiceWithAllowedDomains("");
 
     final Request request =
-        new Builder().url(jsonRpcHttpService.url()).header("Origin", "http://bar.me").build();
+        new Request.Builder()
+            .url(jsonRpcHttpService.url())
+            .header("Origin", "http://bar.me")
+            .build();
 
     try (final Response response = client.newCall(request).execute()) {
       assertThat(response.isSuccessful()).isFalse();
@@ -137,7 +151,10 @@ public class JsonRpcHttpServiceCorsTest {
     jsonRpcHttpService = createJsonRpcHttpServiceWithAllowedDomains("*");
 
     final Request request =
-        new Builder().url(jsonRpcHttpService.url()).header("Origin", "http://bar.me").build();
+        new Request.Builder()
+            .url(jsonRpcHttpService.url())
+            .header("Origin", "http://bar.me")
+            .build();
 
     try (final Response response = client.newCall(request).execute()) {
       assertThat(response.isSuccessful()).isTrue();
@@ -149,7 +166,7 @@ public class JsonRpcHttpServiceCorsTest {
     jsonRpcHttpService = createJsonRpcHttpServiceWithAllowedDomains("http://foo.io");
 
     final Request request =
-        new Builder()
+        new Request.Builder()
             .url(jsonRpcHttpService.url())
             .method("OPTIONS", null)
             .header("Access-Control-Request-Method", "OPTIONS")

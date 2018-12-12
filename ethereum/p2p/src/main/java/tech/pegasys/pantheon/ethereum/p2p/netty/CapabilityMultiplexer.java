@@ -30,7 +30,6 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableRangeMap;
-import com.google.common.collect.ImmutableRangeMap.Builder;
 import com.google.common.collect.Range;
 
 public class CapabilityMultiplexer {
@@ -120,7 +119,7 @@ public class CapabilityMultiplexer {
     caps.sort(CAPABILITY_COMPARATOR);
     caps.retainAll(b);
 
-    final Builder<Integer, Capability> builder = ImmutableRangeMap.builder();
+    final ImmutableRangeMap.Builder<Integer, Capability> builder = ImmutableRangeMap.builder();
     // Reserve some messages for WireProtocol
     int offset = WIRE_PROTOCOL_MESSAGE_SPACE;
     String prevProtocol = null;

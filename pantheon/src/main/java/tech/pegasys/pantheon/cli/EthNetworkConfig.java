@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Objects;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 
 public class EthNetworkConfig {
@@ -72,7 +73,7 @@ public class EthNetworkConfig {
     final EthNetworkConfig that = (EthNetworkConfig) o;
     return networkId == that.networkId
         && Objects.equals(genesisConfig, that.genesisConfig)
-        && Objects.equals(bootNodes, that.bootNodes);
+        && Objects.equals(Lists.newArrayList(bootNodes), Lists.newArrayList(that.bootNodes));
   }
 
   @Override
