@@ -6,7 +6,11 @@ datadir="~/pantheondata" # Path
 
 # network
 no-discovery=true # true=no discovery of peers or false=discover peers please
-bootnodes=["enode://001@123:4567", "enode://002@123:4567", "enode://003@123:4567"]
+bootnodes=[
+  "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
+  "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
+  "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567"
+]
 p2p-listen="1.2.3.4:1234" # IP:port
 max-peers=42
 rpc-listen="5.6.7.8:5678" # IP:port

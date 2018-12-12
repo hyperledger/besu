@@ -28,6 +28,7 @@ import tech.pegasys.pantheon.util.BlockImporter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -73,6 +74,7 @@ public abstract class CommandTestAbstract {
   @Captor ArgumentCaptor<JsonRpcConfiguration> jsonRpcConfigArgumentCaptor;
   @Captor ArgumentCaptor<WebSocketConfiguration> wsRpcConfigArgumentCaptor;
   @Captor ArgumentCaptor<PermissioningConfiguration> permissioningConfigurationArgumentCaptor;
+  @Captor ArgumentCaptor<Collection<URI>> uriListArgumentCaptor;
 
   @Before
   public void initMocks() throws Exception {

@@ -12,15 +12,16 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.config;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class PermissioningConfiguration {
-  private List<String> nodeWhitelist;
+  private List<URI> nodeWhitelist;
   private boolean nodeWhitelistSet;
 
-  public List<String> getNodeWhitelist() {
+  public List<URI> getNodeWhitelist() {
     return nodeWhitelist;
   }
 
@@ -30,7 +31,7 @@ public class PermissioningConfiguration {
     return config;
   }
 
-  public void setNodeWhitelist(final Collection<String> nodeWhitelist) {
+  public void setNodeWhitelist(final Collection<URI> nodeWhitelist) {
     if (nodeWhitelist != null) {
       this.nodeWhitelist.addAll(nodeWhitelist);
       this.nodeWhitelistSet = true;

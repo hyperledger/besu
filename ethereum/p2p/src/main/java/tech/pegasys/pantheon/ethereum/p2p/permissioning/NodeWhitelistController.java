@@ -16,6 +16,7 @@ import tech.pegasys.pantheon.ethereum.p2p.config.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,8 +28,8 @@ public class NodeWhitelistController {
   public NodeWhitelistController(final PermissioningConfiguration configuration) {
     nodeWhitelist = new ArrayList<>();
     if (configuration != null && configuration.getNodeWhitelist() != null) {
-      for (String urlString : configuration.getNodeWhitelist()) {
-        nodeWhitelist.add(DefaultPeer.fromURI(urlString));
+      for (URI uri : configuration.getNodeWhitelist()) {
+        nodeWhitelist.add(DefaultPeer.fromURI(uri));
       }
       if (configuration.isNodeWhitelistSet()) {
         nodeWhitelistSet = true;

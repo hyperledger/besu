@@ -17,6 +17,7 @@ import static java.util.stream.Collectors.toList;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -136,14 +137,9 @@ public class DiscoveryConfiguration {
   }
 
   public DiscoveryConfiguration setBootstrapPeers(final Collection<?> bootstrapPeers) {
-    if (bootstrapPeers.stream().allMatch(String.class::isInstance)) {
+    if (bootstrapPeers.stream().allMatch(URI.class::isInstance)) {
       this.bootstrapPeers =
-          bootstrapPeers
-              .stream()
-              .map(String.class::cast)
-              .filter(string -> !string.isEmpty())
-              .map(DefaultPeer::fromURI)
-              .collect(toList());
+          bootstrapPeers.stream().map(URI.class::cast).map(DefaultPeer::fromURI).collect(toList());
     } else if (bootstrapPeers.stream().allMatch(Peer.class::isInstance)) {
       this.bootstrapPeers = bootstrapPeers.stream().map(Peer.class::cast).collect(toList());
     } else {

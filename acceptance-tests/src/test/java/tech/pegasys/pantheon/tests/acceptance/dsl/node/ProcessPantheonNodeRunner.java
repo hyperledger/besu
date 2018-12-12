@@ -67,7 +67,7 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
     }
 
     params.add("--bootnodes");
-    params.add(String.join(",", node.bootnodes()));
+    params.add(String.join(",", node.bootnodes().toString()));
 
     if (node.jsonRpcEnabled()) {
       params.add("--rpc-enabled");
