@@ -27,7 +27,6 @@ public class SyncingSubscriptionService {
 
   private final SubscriptionManager subscriptionManager;
   private final Synchronizer synchronizer;
-  private final long currentRefreshDelay = 5000;
 
   private Optional<SyncStatus> previousSyncStatus;
   private long timerId;
@@ -76,7 +75,7 @@ public class SyncingSubscriptionService {
           subscriptionManager
               .getVertx()
               .setTimer(
-                  currentRefreshDelay,
+                  subscriptionManager.getRefreshDelay(),
                   (id) -> {
                     sendSyncingToMatchingSubscriptions();
                     engageNextTimerTick();

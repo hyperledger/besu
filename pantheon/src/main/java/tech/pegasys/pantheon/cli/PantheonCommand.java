@@ -96,6 +96,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   private static final Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
   private static final BytesValue DEFAULT_EXTRA_DATA = BytesValue.EMPTY;
+  private static final long DEFAULT_MAX_REFRESH_DELAY = 3600000;
+  private static final long DEFAULT_MIN_REFRESH_DELAY = 1;
 
   public static class RpcApisConverter implements ITypeConverter<RpcApi> {
     @Override
@@ -312,6 +314,29 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   )
   private final Collection<RpcApi> wsApis = null;
 
+  private Long refreshDelay;
+
+  @Option(
+    names = {"--ws-refresh-delay"},
+    paramLabel = "<refresh delay>",
+    arity = "1",
+    description =
+        "Refresh delay of websocket subscription sync in milliseconds. "
+            + "default: ${DEFAULT-VALUE}",
+    defaultValue = "" + WebSocketConfiguration.DEFAULT_WEBSOCKET_REFRESH_DELAY
+  )
+  private void setRefreshDelay(final Long refreshDelay) {
+    if (refreshDelay < DEFAULT_MIN_REFRESH_DELAY || refreshDelay > DEFAULT_MAX_REFRESH_DELAY) {
+      throw new ParameterException(
+          new CommandLine(this),
+          String.format(
+              "refreshDelay must be a positive integer between %s and %s",
+              String.valueOf(DEFAULT_MIN_REFRESH_DELAY),
+              String.valueOf(DEFAULT_MAX_REFRESH_DELAY)));
+    }
+    this.refreshDelay = refreshDelay;
+  }
+
   @Option(
     names = {"--host-whitelist"},
     paramLabel = "<hostname>",
@@ -504,6 +529,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setHost(wsHostAndPort.getHost());
     webSocketConfiguration.setPort(wsHostAndPort.getPort());
     webSocketConfiguration.setRpcApis(wsApis);
+    webSocketConfiguration.setRefreshDelay(refreshDelay);
     return webSocketConfiguration;
   }
 
