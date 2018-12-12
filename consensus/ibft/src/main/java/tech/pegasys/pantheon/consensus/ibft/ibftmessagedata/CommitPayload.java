@@ -19,8 +19,12 @@ import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
-public class CommitPayload extends InRoundPayload {
+import java.util.Objects;
+import java.util.StringJoiner;
+
+public class CommitPayload implements InRoundPayload {
   private static final int TYPE = IbftV2.COMMIT;
+  private final ConsensusRoundIdentifier roundIdentifier;
   private final Hash digest;
   private final Signature commitSeal;
 
@@ -28,16 +32,15 @@ public class CommitPayload extends InRoundPayload {
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
       final Signature commitSeal) {
-    super(roundIdentifier);
+    this.roundIdentifier = roundIdentifier;
     this.digest = digest;
     this.commitSeal = commitSeal;
   }
 
   public static CommitPayload readFrom(final RLPInput rlpInput) {
-
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
-    final Hash digest = readDigest(rlpInput);
+    final Hash digest = Payload.readDigest(rlpInput);
     final Signature commitSeal = rlpInput.readBytesValue(Signature::decode);
     rlpInput.leaveList();
 
@@ -46,7 +49,6 @@ public class CommitPayload extends InRoundPayload {
 
   @Override
   public void writeTo(final RLPOutput rlpOutput) {
-
     rlpOutput.startList();
     roundIdentifier.writeTo(rlpOutput);
     rlpOutput.writeBytesValue(digest);
@@ -65,5 +67,38 @@ public class CommitPayload extends InRoundPayload {
 
   public Signature getCommitSeal() {
     return commitSeal;
+  }
+
+  @Override
+  public ConsensusRoundIdentifier getRoundIdentifier() {
+    return roundIdentifier;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final CommitPayload that = (CommitPayload) o;
+    return Objects.equals(roundIdentifier, that.roundIdentifier)
+        && Objects.equals(digest, that.digest)
+        && Objects.equals(commitSeal, that.commitSeal);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(roundIdentifier, digest, commitSeal);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", CommitPayload.class.getSimpleName() + "[", "]")
+        .add("roundIdentifier=" + roundIdentifier)
+        .add("digest=" + digest)
+        .add("commitSeal=" + commitSeal)
+        .toString();
   }
 }

@@ -18,20 +18,20 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-public abstract class AbstractPayload {
+public interface Payload {
 
-  public abstract void writeTo(final RLPOutput rlpOutput);
+  void writeTo(final RLPOutput rlpOutput);
 
-  public BytesValue encoded() {
+  default BytesValue encoded() {
     BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     writeTo(rlpOutput);
 
     return rlpOutput.encoded();
   }
 
-  public abstract int getMessageType();
+  int getMessageType();
 
-  protected static Hash readDigest(final RLPInput ibftMessageData) {
+  static Hash readDigest(final RLPInput ibftMessageData) {
     return Hash.wrap(ibftMessageData.readBytes32());
   }
 }

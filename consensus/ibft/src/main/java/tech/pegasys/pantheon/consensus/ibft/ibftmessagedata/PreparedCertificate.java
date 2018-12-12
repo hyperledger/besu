@@ -16,9 +16,10 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
 import java.util.Collection;
+import java.util.Objects;
+import java.util.StringJoiner;
 
 public class PreparedCertificate {
-
   private final SignedData<ProposalPayload> proposalPayload;
   private final Collection<SignedData<PreparePayload>> preparePayloads;
 
@@ -54,5 +55,31 @@ public class PreparedCertificate {
 
   public Collection<SignedData<PreparePayload>> getPreparePayloads() {
     return preparePayloads;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final PreparedCertificate that = (PreparedCertificate) o;
+    return Objects.equals(proposalPayload, that.proposalPayload)
+        && Objects.equals(preparePayloads, that.preparePayloads);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(proposalPayload, preparePayloads);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", PreparedCertificate.class.getSimpleName() + "[", "]")
+        .add("proposalPayload=" + proposalPayload)
+        .add("preparePayloads=" + preparePayloads)
+        .toString();
   }
 }
