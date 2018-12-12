@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import static java.lang.System.arraycopy;
 import static java.util.Arrays.asList;
-import static java.util.Arrays.copyOf;
 import static java.util.Collections.unmodifiableList;
 
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
@@ -135,7 +134,7 @@ public class Bucket {
    * @return immutable view of the peer array
    */
   synchronized List<DiscoveryPeer> peers() {
-    return unmodifiableList(asList(copyOf(kBucket, tailIndex + 1)));
+    return unmodifiableList(asList(Arrays.copyOf(kBucket, tailIndex + 1)));
   }
 
   @Override

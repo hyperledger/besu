@@ -18,7 +18,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static tech.pegasys.pantheon.util.bytes.BytesValue.fromHexString;
 import static tech.pegasys.pantheon.util.bytes.BytesValue.fromHexStringLenient;
-import static tech.pegasys.pantheon.util.bytes.BytesValue.of;
 import static tech.pegasys.pantheon.util.bytes.BytesValue.wrap;
 import static tech.pegasys.pantheon.util.bytes.BytesValue.wrapBuffer;
 
@@ -158,55 +157,56 @@ public class BytesValueTest {
 
   @Test
   public void bytes() {
-    assertArrayEquals(new byte[] {}, of().extractArray());
-    assertArrayEquals(new byte[] {1, 2}, of((byte) 1, (byte) 2).extractArray());
+    assertArrayEquals(new byte[] {}, BytesValue.of().extractArray());
+    assertArrayEquals(new byte[] {1, 2}, BytesValue.of((byte) 1, (byte) 2).extractArray());
     assertArrayEquals(
         new byte[] {1, 2, 3, 4, 5},
-        of((byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5).extractArray());
+        BytesValue.of((byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5).extractArray());
 
-    assertArrayEquals(new byte[] {-1, 2, -3}, of((byte) -1, (byte) 2, (byte) -3).extractArray());
+    assertArrayEquals(
+        new byte[] {-1, 2, -3}, BytesValue.of((byte) -1, (byte) 2, (byte) -3).extractArray());
   }
 
   @Test
   public void integers() {
-    assertArrayEquals(new byte[] {1, 2}, of(1, 2).extractArray());
-    assertArrayEquals(new byte[] {1, 2, 3, 4, 5}, of(1, 2, 3, 4, 5).extractArray());
-    assertArrayEquals(new byte[] {-1, 127, -128}, of(0xff, 0x7f, 0x80).extractArray());
+    assertArrayEquals(new byte[] {1, 2}, BytesValue.of(1, 2).extractArray());
+    assertArrayEquals(new byte[] {1, 2, 3, 4, 5}, BytesValue.of(1, 2, 3, 4, 5).extractArray());
+    assertArrayEquals(new byte[] {-1, 127, -128}, BytesValue.of(0xff, 0x7f, 0x80).extractArray());
   }
 
   @Test
   public void integerTooBig() {
     thrown.expect(IllegalArgumentException.class);
     thrown.expectMessage("3th value 256 does not fit a byte");
-    of(2, 3, 256);
+    BytesValue.of(2, 3, 256);
   }
 
   @Test
   public void integerTooLow() {
     thrown.expect(IllegalArgumentException.class);
     thrown.expectMessage("2th value -1 does not fit a byte");
-    of(2, -1, 3);
+    BytesValue.of(2, -1, 3);
   }
 
   @Test
   public void hexStringLenient() {
-    assertEquals(of(), fromHexStringLenient(""));
-    assertEquals(of(), fromHexStringLenient("0x"));
+    assertEquals(BytesValue.of(), fromHexStringLenient(""));
+    assertEquals(BytesValue.of(), fromHexStringLenient("0x"));
 
-    assertEquals(of(0), fromHexStringLenient("0"));
-    assertEquals(of(0), fromHexStringLenient("0x0"));
-    assertEquals(of(0), fromHexStringLenient("00"));
-    assertEquals(of(0), fromHexStringLenient("0x00"));
-    assertEquals(of(1), fromHexStringLenient("0x1"));
-    assertEquals(of(1), fromHexStringLenient("0x01"));
+    assertEquals(BytesValue.of(0), fromHexStringLenient("0"));
+    assertEquals(BytesValue.of(0), fromHexStringLenient("0x0"));
+    assertEquals(BytesValue.of(0), fromHexStringLenient("00"));
+    assertEquals(BytesValue.of(0), fromHexStringLenient("0x00"));
+    assertEquals(BytesValue.of(1), fromHexStringLenient("0x1"));
+    assertEquals(BytesValue.of(1), fromHexStringLenient("0x01"));
 
-    assertEquals(of(0x01, 0xff, 0x2a), fromHexStringLenient("1FF2A"));
-    assertEquals(of(0x01, 0xff, 0x2a), fromHexStringLenient("0x1FF2A"));
-    assertEquals(of(0x01, 0xff, 0x2a), fromHexStringLenient("0x1ff2a"));
-    assertEquals(of(0x01, 0xff, 0x2a), fromHexStringLenient("0x1fF2a"));
-    assertEquals(of(0x01, 0xff, 0x2a), fromHexStringLenient("01FF2A"));
-    assertEquals(of(0x01, 0xff, 0x2a), fromHexStringLenient("0x01FF2A"));
-    assertEquals(of(0x01, 0xff, 0x2a), fromHexStringLenient("0x01ff2A"));
+    assertEquals(BytesValue.of(0x01, 0xff, 0x2a), fromHexStringLenient("1FF2A"));
+    assertEquals(BytesValue.of(0x01, 0xff, 0x2a), fromHexStringLenient("0x1FF2A"));
+    assertEquals(BytesValue.of(0x01, 0xff, 0x2a), fromHexStringLenient("0x1ff2a"));
+    assertEquals(BytesValue.of(0x01, 0xff, 0x2a), fromHexStringLenient("0x1fF2a"));
+    assertEquals(BytesValue.of(0x01, 0xff, 0x2a), fromHexStringLenient("01FF2A"));
+    assertEquals(BytesValue.of(0x01, 0xff, 0x2a), fromHexStringLenient("0x01FF2A"));
+    assertEquals(BytesValue.of(0x01, 0xff, 0x2a), fromHexStringLenient("0x01ff2A"));
   }
 
   @Test
@@ -218,25 +218,25 @@ public class BytesValueTest {
 
   @Test
   public void hexStringLenientLeftPadding() {
-    assertEquals(of(), fromHexStringLenient("", 0));
-    assertEquals(of(0), fromHexStringLenient("", 1));
-    assertEquals(of(0, 0), fromHexStringLenient("", 2));
-    assertEquals(of(0, 0), fromHexStringLenient("0x", 2));
+    assertEquals(BytesValue.of(), fromHexStringLenient("", 0));
+    assertEquals(BytesValue.of(0), fromHexStringLenient("", 1));
+    assertEquals(BytesValue.of(0, 0), fromHexStringLenient("", 2));
+    assertEquals(BytesValue.of(0, 0), fromHexStringLenient("0x", 2));
 
-    assertEquals(of(0, 0, 0), fromHexStringLenient("0", 3));
-    assertEquals(of(0, 0, 0), fromHexStringLenient("0x0", 3));
-    assertEquals(of(0, 0, 0), fromHexStringLenient("00", 3));
-    assertEquals(of(0, 0, 0), fromHexStringLenient("0x00", 3));
-    assertEquals(of(0, 0, 1), fromHexStringLenient("0x1", 3));
-    assertEquals(of(0, 0, 1), fromHexStringLenient("0x01", 3));
+    assertEquals(BytesValue.of(0, 0, 0), fromHexStringLenient("0", 3));
+    assertEquals(BytesValue.of(0, 0, 0), fromHexStringLenient("0x0", 3));
+    assertEquals(BytesValue.of(0, 0, 0), fromHexStringLenient("00", 3));
+    assertEquals(BytesValue.of(0, 0, 0), fromHexStringLenient("0x00", 3));
+    assertEquals(BytesValue.of(0, 0, 1), fromHexStringLenient("0x1", 3));
+    assertEquals(BytesValue.of(0, 0, 1), fromHexStringLenient("0x01", 3));
 
-    assertEquals(of(0x01, 0xff, 0x2a), fromHexStringLenient("1FF2A", 3));
-    assertEquals(of(0x00, 0x01, 0xff, 0x2a), fromHexStringLenient("0x1FF2A", 4));
-    assertEquals(of(0x00, 0x00, 0x01, 0xff, 0x2a), fromHexStringLenient("0x1ff2a", 5));
-    assertEquals(of(0x00, 0x01, 0xff, 0x2a), fromHexStringLenient("0x1fF2a", 4));
-    assertEquals(of(0x00, 0x01, 0xff, 0x2a), fromHexStringLenient("01FF2A", 4));
-    assertEquals(of(0x01, 0xff, 0x2a), fromHexStringLenient("0x01FF2A", 3));
-    assertEquals(of(0x01, 0xff, 0x2a), fromHexStringLenient("0x01ff2A", 3));
+    assertEquals(BytesValue.of(0x01, 0xff, 0x2a), fromHexStringLenient("1FF2A", 3));
+    assertEquals(BytesValue.of(0x00, 0x01, 0xff, 0x2a), fromHexStringLenient("0x1FF2A", 4));
+    assertEquals(BytesValue.of(0x00, 0x00, 0x01, 0xff, 0x2a), fromHexStringLenient("0x1ff2a", 5));
+    assertEquals(BytesValue.of(0x00, 0x01, 0xff, 0x2a), fromHexStringLenient("0x1fF2a", 4));
+    assertEquals(BytesValue.of(0x00, 0x01, 0xff, 0x2a), fromHexStringLenient("01FF2A", 4));
+    assertEquals(BytesValue.of(0x01, 0xff, 0x2a), fromHexStringLenient("0x01FF2A", 3));
+    assertEquals(BytesValue.of(0x01, 0xff, 0x2a), fromHexStringLenient("0x01ff2A", 3));
   }
 
   @Test
@@ -255,16 +255,16 @@ public class BytesValueTest {
 
   @Test
   public void hexString() {
-    assertEquals(of(), fromHexString("0x"));
+    assertEquals(BytesValue.of(), fromHexString("0x"));
 
-    assertEquals(of(0), fromHexString("00"));
-    assertEquals(of(0), fromHexString("0x00"));
-    assertEquals(of(1), fromHexString("0x01"));
+    assertEquals(BytesValue.of(0), fromHexString("00"));
+    assertEquals(BytesValue.of(0), fromHexString("0x00"));
+    assertEquals(BytesValue.of(1), fromHexString("0x01"));
 
-    assertEquals(of(1, 0xff, 0x2a), fromHexString("01FF2A"));
-    assertEquals(of(1, 0xff, 0x2a), fromHexString("0x01FF2A"));
-    assertEquals(of(1, 0xff, 0x2a), fromHexString("0x01ff2a"));
-    assertEquals(of(1, 0xff, 0x2a), fromHexString("0x01fF2a"));
+    assertEquals(BytesValue.of(1, 0xff, 0x2a), fromHexString("01FF2A"));
+    assertEquals(BytesValue.of(1, 0xff, 0x2a), fromHexString("0x01FF2A"));
+    assertEquals(BytesValue.of(1, 0xff, 0x2a), fromHexString("0x01ff2a"));
+    assertEquals(BytesValue.of(1, 0xff, 0x2a), fromHexString("0x01fF2a"));
   }
 
   @Test
@@ -283,18 +283,18 @@ public class BytesValueTest {
 
   @Test
   public void hexStringLeftPadding() {
-    assertEquals(of(), fromHexString("0x", 0));
-    assertEquals(of(0, 0), fromHexString("0x", 2));
-    assertEquals(of(0, 0, 0, 0), fromHexString("0x", 4));
+    assertEquals(BytesValue.of(), fromHexString("0x", 0));
+    assertEquals(BytesValue.of(0, 0), fromHexString("0x", 2));
+    assertEquals(BytesValue.of(0, 0, 0, 0), fromHexString("0x", 4));
 
-    assertEquals(of(0, 0), fromHexString("00", 2));
-    assertEquals(of(0, 0), fromHexString("0x00", 2));
-    assertEquals(of(0, 0, 1), fromHexString("0x01", 3));
+    assertEquals(BytesValue.of(0, 0), fromHexString("00", 2));
+    assertEquals(BytesValue.of(0, 0), fromHexString("0x00", 2));
+    assertEquals(BytesValue.of(0, 0, 1), fromHexString("0x01", 3));
 
-    assertEquals(of(0x00, 0x01, 0xff, 0x2a), fromHexString("01FF2A", 4));
-    assertEquals(of(0x01, 0xff, 0x2a), fromHexString("0x01FF2A", 3));
-    assertEquals(of(0x00, 0x00, 0x01, 0xff, 0x2a), fromHexString("0x01ff2a", 5));
-    assertEquals(of(0x00, 0x00, 0x01, 0xff, 0x2a), fromHexString("0x01fF2a", 5));
+    assertEquals(BytesValue.of(0x00, 0x01, 0xff, 0x2a), fromHexString("01FF2A", 4));
+    assertEquals(BytesValue.of(0x01, 0xff, 0x2a), fromHexString("0x01FF2A", 3));
+    assertEquals(BytesValue.of(0x00, 0x00, 0x01, 0xff, 0x2a), fromHexString("0x01ff2a", 5));
+    assertEquals(BytesValue.of(0x00, 0x00, 0x01, 0xff, 0x2a), fromHexString("0x01fF2a", 5));
   }
 
   @Test

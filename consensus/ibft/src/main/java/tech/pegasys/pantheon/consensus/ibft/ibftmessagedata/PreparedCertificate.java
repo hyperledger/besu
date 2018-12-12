@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.consensus.ibft.ibftmessagedata;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -67,7 +68,7 @@ public class PreparedCertificate {
     }
     final PreparedCertificate that = (PreparedCertificate) o;
     return Objects.equals(proposalPayload, that.proposalPayload)
-        && Objects.equals(preparePayloads, that.preparePayloads);
+        && Objects.equals(new ArrayList<>(preparePayloads), new ArrayList<>(that.preparePayloads));
   }
 
   @Override

@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.consensus.ibft.ibftmessagedata;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -73,7 +74,8 @@ public class RoundChangeCertificate {
       return false;
     }
     final RoundChangeCertificate that = (RoundChangeCertificate) o;
-    return Objects.equals(roundChangePayloads, that.roundChangePayloads);
+    return Objects.equals(
+        new ArrayList<>(roundChangePayloads), new ArrayList<>(that.roundChangePayloads));
   }
 
   @Override

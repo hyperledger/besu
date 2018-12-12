@@ -21,6 +21,7 @@ import java.util.Collection;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 
 public class WebSocketConfiguration {
   public static final String DEFAULT_WEBSOCKET_HOST = "127.0.0.1";
@@ -106,7 +107,7 @@ public class WebSocketConfiguration {
     return enabled == that.enabled
         && port == that.port
         && Objects.equal(host, that.host)
-        && Objects.equal(rpcApis, that.rpcApis);
+        && Objects.equal(Lists.newArrayList(rpcApis), Lists.newArrayList(that.rpcApis));
   }
 
   @Override

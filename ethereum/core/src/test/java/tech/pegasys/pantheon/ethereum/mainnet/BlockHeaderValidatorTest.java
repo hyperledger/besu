@@ -26,7 +26,6 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator.Builder;
 
 import java.util.Optional;
 
@@ -235,7 +234,12 @@ public class BlockHeaderValidatorTest {
     final AttachedBlockHeaderValidationRule<Void> rule4 = createPassingAttachedRule();
 
     final BlockHeaderValidator<Void> validator =
-        new Builder<Void>().addRule(rule1).addRule(rule2).addRule(rule3).addRule(rule4).build();
+        new BlockHeaderValidator.Builder<Void>()
+            .addRule(rule1)
+            .addRule(rule2)
+            .addRule(rule3)
+            .addRule(rule4)
+            .build();
 
     final BlockHeader header = generator.header();
     final BlockHeader parent = generator.header();
