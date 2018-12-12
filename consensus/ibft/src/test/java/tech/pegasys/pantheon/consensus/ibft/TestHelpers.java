@@ -12,11 +12,39 @@
  */
 package tech.pegasys.pantheon.consensus.ibft;
 
+import static java.util.Collections.singletonList;
+
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
+import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator.BlockOptions;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+
+import java.util.Optional;
+
+import com.google.common.collect.Lists;
+
 public class TestHelpers {
 
   public static ConsensusRoundIdentifier createFrom(
       final ConsensusRoundIdentifier initial, final int offSetSequence, final int offSetRound) {
     return new ConsensusRoundIdentifier(
         initial.getSequenceNumber() + offSetSequence, initial.getRoundNumber() + offSetRound);
+  }
+
+  public static Block createProposalBlock() {
+    final BytesValue extraData =
+        new IbftExtraData(
+                BytesValue.wrap(new byte[32]),
+                Lists.newArrayList(),
+                Optional.empty(),
+                0,
+                singletonList(Address.fromHexString(String.format("%020d", 1))))
+            .encode();
+    final BlockOptions blockOptions =
+        BlockOptions.create()
+            .setExtraData(extraData)
+            .setBlockHashFunction(IbftBlockHashing::calculateDataHashForCommittedSeal);
+    return new BlockDataGenerator().block(blockOptions);
   }
 }

@@ -14,16 +14,15 @@ package tech.pegasys.pantheon.consensus.ibft.ibftmessagedata;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftV2;
-import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
+import java.util.Objects;
 import java.util.Optional;
+import java.util.StringJoiner;
 
-public class RoundChangePayload extends AbstractPayload {
-
-  private static final int TYPE = IbftV2.PREPARE;
-
+public class RoundChangePayload implements Payload {
+  private static final int TYPE = IbftV2.ROUND_CHANGE;
   private final ConsensusRoundIdentifier roundChangeIdentifier;
 
   // The validator may not hae any prepared certificate
@@ -47,16 +46,15 @@ public class RoundChangePayload extends AbstractPayload {
   @Override
   public void writeTo(final RLPOutput rlpOutput) {
     // RLP encode of the message data content (round identifier and prepared certificate)
-    BytesValueRLPOutput ibftMessage = new BytesValueRLPOutput();
-    ibftMessage.startList();
-    roundChangeIdentifier.writeTo(ibftMessage);
+    rlpOutput.startList();
+    roundChangeIdentifier.writeTo(rlpOutput);
 
     if (preparedCertificate.isPresent()) {
-      preparedCertificate.get().writeTo(ibftMessage);
+      preparedCertificate.get().writeTo(rlpOutput);
     } else {
-      ibftMessage.writeNull();
+      rlpOutput.writeNull();
     }
-    ibftMessage.endList();
+    rlpOutput.endList();
   }
 
   public static RoundChangePayload readFrom(final RLPInput rlpInput) {
@@ -79,5 +77,31 @@ public class RoundChangePayload extends AbstractPayload {
   @Override
   public int getMessageType() {
     return TYPE;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final RoundChangePayload that = (RoundChangePayload) o;
+    return Objects.equals(roundChangeIdentifier, that.roundChangeIdentifier)
+        && Objects.equals(preparedCertificate, that.preparedCertificate);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(roundChangeIdentifier, preparedCertificate);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", RoundChangePayload.class.getSimpleName() + "[", "]")
+        .add("roundChangeIdentifier=" + roundChangeIdentifier)
+        .add("preparedCertificate=" + preparedCertificate)
+        .toString();
   }
 }

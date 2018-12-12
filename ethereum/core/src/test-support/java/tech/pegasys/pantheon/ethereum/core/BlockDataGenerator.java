@@ -167,10 +167,10 @@ public class BlockDataGenerator {
         .gasLimit(gasLimit)
         .gasUsed(gasUsed)
         .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
-        .extraData(bytes32())
+        .extraData(options.getExtraData(bytes32()))
         .mixHash(hash())
         .nonce(blockNonce)
-        .blockHashFunction(MainnetBlockHashFunction::createHash)
+        .blockHashFunction(options.getBlockHashFunction(MainnetBlockHashFunction::createHash))
         .buildBlockHeader();
   }
 
@@ -308,6 +308,8 @@ public class BlockDataGenerator {
     private Optional<Hash> stateRoot = Optional.empty();
     private Optional<UInt256> difficulty = Optional.empty();
     private Optional<List<Transaction>> transactions = Optional.empty();
+    private Optional<BytesValue> extraData = Optional.empty();
+    private Optional<BlockHashFunction> blockHashFunction = Optional.empty();
 
     public static BlockOptions create() {
       return new BlockOptions();
@@ -331,6 +333,14 @@ public class BlockDataGenerator {
 
     public UInt256 getDifficulty(final UInt256 defaultValue) {
       return difficulty.orElse(defaultValue);
+    }
+
+    public BytesValue getExtraData(final Bytes32 defaultValue) {
+      return extraData.orElse(defaultValue);
+    }
+
+    public BlockHashFunction getBlockHashFunction(final BlockHashFunction defaultValue) {
+      return blockHashFunction.orElse(defaultValue);
     }
 
     public BlockOptions addTransaction(final Transaction... tx) {
@@ -358,6 +368,16 @@ public class BlockDataGenerator {
 
     public BlockOptions setDifficulty(final UInt256 difficulty) {
       this.difficulty = Optional.of(difficulty);
+      return this;
+    }
+
+    public BlockOptions setExtraData(final BytesValue extraData) {
+      this.extraData = Optional.of(extraData);
+      return this;
+    }
+
+    public BlockOptions setBlockHashFunction(final BlockHashFunction blockHashFunction) {
+      this.blockHashFunction = Optional.of(blockHashFunction);
       return this;
     }
   }

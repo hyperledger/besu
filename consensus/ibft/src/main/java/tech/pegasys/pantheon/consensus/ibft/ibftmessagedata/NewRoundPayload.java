@@ -18,15 +18,13 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
 import java.util.Collections;
+import java.util.Objects;
+import java.util.StringJoiner;
 
-public class NewRoundPayload extends AbstractPayload {
-
+public class NewRoundPayload implements Payload {
   private static final int TYPE = IbftV2.NEW_ROUND;
-
   private final ConsensusRoundIdentifier roundChangeIdentifier;
-
   private final RoundChangeCertificate roundChangeCertificate;
-
   private final SignedData<ProposalPayload> proposalPayload;
 
   public NewRoundPayload(
@@ -70,6 +68,34 @@ public class NewRoundPayload extends AbstractPayload {
     rlpInput.leaveList();
 
     return new NewRoundPayload(roundIdentifier, roundChangeCertificate, proposalPayload);
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final NewRoundPayload that = (NewRoundPayload) o;
+    return Objects.equals(roundChangeIdentifier, that.roundChangeIdentifier)
+        && Objects.equals(roundChangeCertificate, that.roundChangeCertificate)
+        && Objects.equals(proposalPayload, that.proposalPayload);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(roundChangeIdentifier, roundChangeCertificate, proposalPayload);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", NewRoundPayload.class.getSimpleName() + "[", "]")
+        .add("roundChangeIdentifier=" + roundChangeIdentifier)
+        .add("roundChangeCertificate=" + roundChangeCertificate)
+        .add("proposalPayload=" + proposalPayload)
+        .toString();
   }
 
   @Override

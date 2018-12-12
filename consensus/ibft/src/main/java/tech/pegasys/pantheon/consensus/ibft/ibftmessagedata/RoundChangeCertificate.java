@@ -17,11 +17,12 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
 
 import com.google.common.collect.Lists;
 
 public class RoundChangeCertificate {
-
   private final Collection<SignedData<RoundChangePayload>> roundChangePayloads;
 
   public RoundChangeCertificate(
@@ -61,5 +62,29 @@ public class RoundChangeCertificate {
     public RoundChangeCertificate buildCertificate() {
       return new RoundChangeCertificate(roundChangePayloads);
     }
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final RoundChangeCertificate that = (RoundChangeCertificate) o;
+    return Objects.equals(roundChangePayloads, that.roundChangePayloads);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(roundChangePayloads);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", RoundChangeCertificate.class.getSimpleName() + "[", "]")
+        .add("roundChangePayloads=" + roundChangePayloads)
+        .toString();
   }
 }

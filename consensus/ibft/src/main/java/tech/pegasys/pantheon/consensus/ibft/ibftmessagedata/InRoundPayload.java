@@ -14,33 +14,6 @@ package tech.pegasys.pantheon.consensus.ibft.ibftmessagedata;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 
-import java.util.Objects;
-
-public abstract class InRoundPayload extends AbstractPayload {
-  protected final ConsensusRoundIdentifier roundIdentifier;
-
-  protected InRoundPayload(final ConsensusRoundIdentifier roundIdentifier) {
-    this.roundIdentifier = roundIdentifier;
-  }
-
-  public ConsensusRoundIdentifier getRoundIdentifier() {
-    return roundIdentifier;
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    final InRoundPayload that = (InRoundPayload) o;
-    return Objects.equals(roundIdentifier, that.roundIdentifier);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(roundIdentifier);
-  }
+public interface InRoundPayload extends Payload {
+  ConsensusRoundIdentifier getRoundIdentifier();
 }
