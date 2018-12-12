@@ -61,10 +61,28 @@ public class PantheonNodeFactory {
             name, createMiningParameters(true), createJsonRpcConfig(), createWebSocketConfig()));
   }
 
+  public PantheonNode createMinerNodeWithCustomRefreshDelay(
+      final String name, final Long refreshDelay) throws IOException {
+    WebSocketConfiguration wsConfig = createWebSocketConfig();
+    wsConfig.setRefreshDelay(refreshDelay);
+    return create(
+        new PantheonFactoryConfiguration(
+            name, createMiningParameters(true), createJsonRpcConfig(), wsConfig));
+  }
+
   public PantheonNode createArchiveNode(final String name) throws IOException {
     return create(
         new PantheonFactoryConfiguration(
             name, createMiningParameters(false), createJsonRpcConfig(), createWebSocketConfig()));
+  }
+
+  public PantheonNode createArchiveNodeWithCustomRefreshDelay(
+      final String name, final Long refreshDelay) throws IOException {
+    WebSocketConfiguration wsConfig = createWebSocketConfig();
+    wsConfig.setRefreshDelay(refreshDelay);
+    return create(
+        new PantheonFactoryConfiguration(
+            name, createMiningParameters(false), createJsonRpcConfig(), wsConfig));
   }
 
   public PantheonNode createArchiveNodeWithRpcDisabled(final String name) throws IOException {

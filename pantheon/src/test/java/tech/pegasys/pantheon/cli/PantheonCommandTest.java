@@ -444,6 +444,28 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void callingWithRefreshDelayWithValueMustUseValue() {
+    parseCommand("--ws-refresh-delay", "2000");
+
+    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(wsRpcConfigArgumentCaptor.getValue().getRefreshDelay()).isEqualTo(2000);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void callingWithRefreshDelayWithNegativeValueMustError() {
+    parseCommand("--ws-refresh-delay", "-2000");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    final String expectedErrorMsg = "refreshDelay must be a positive integer between";
+    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorMsg);
+  }
+
+  @Test
   public void callingWithNodesWhitelistOptionButNoValueMustNotError() {
     parseCommand("--nodes-whitelist");
 

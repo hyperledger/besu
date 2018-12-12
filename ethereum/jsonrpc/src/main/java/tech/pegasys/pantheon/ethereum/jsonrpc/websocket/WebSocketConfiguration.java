@@ -27,11 +27,13 @@ public class WebSocketConfiguration {
   public static final int DEFAULT_WEBSOCKET_PORT = 8546;
   public static final Collection<RpcApi> DEFAULT_WEBSOCKET_APIS =
       Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
+  public static final long DEFAULT_WEBSOCKET_REFRESH_DELAY = 5000;
 
   private boolean enabled;
   private int port;
   private String host;
   private Collection<RpcApi> rpcApis;
+  private long refreshDelay;
 
   public static WebSocketConfiguration createDefault() {
     final WebSocketConfiguration config = new WebSocketConfiguration();
@@ -39,6 +41,7 @@ public class WebSocketConfiguration {
     config.setHost(DEFAULT_WEBSOCKET_HOST);
     config.setPort(DEFAULT_WEBSOCKET_PORT);
     config.setRpcApis(DEFAULT_WEBSOCKET_APIS);
+    config.setRefreshDelay(DEFAULT_WEBSOCKET_REFRESH_DELAY);
     return config;
   }
 
@@ -109,5 +112,13 @@ public class WebSocketConfiguration {
   @Override
   public int hashCode() {
     return Objects.hashCode(enabled, port, host, rpcApis);
+  }
+
+  public void setRefreshDelay(final long refreshDelay) {
+    this.refreshDelay = refreshDelay;
+  }
+
+  public long getRefreshDelay() {
+    return refreshDelay;
   }
 }
