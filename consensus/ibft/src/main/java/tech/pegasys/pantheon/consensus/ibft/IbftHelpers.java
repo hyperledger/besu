@@ -12,8 +12,14 @@
  */
 package tech.pegasys.pantheon.consensus.ibft;
 
+import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Util;
+
+import java.util.Collection;
 
 public class IbftHelpers {
 
@@ -22,5 +28,27 @@ public class IbftHelpers {
 
   public static int calculateRequiredValidatorQuorum(final int validatorCount) {
     return Util.fastDivCeiling(2 * validatorCount, 3);
+  }
+
+  public static Block createSealedBlock(
+      final Block block, final Collection<Signature> commitSeals) {
+    final BlockHeader initialHeader = block.getHeader();
+    final IbftExtraData initialExtraData = IbftExtraData.decode(initialHeader.getExtraData());
+
+    final IbftExtraData sealedExtraData =
+        new IbftExtraData(
+            initialExtraData.getVanityData(),
+            commitSeals,
+            initialExtraData.getVote(),
+            initialExtraData.getRound(),
+            initialExtraData.getValidators());
+
+    final BlockHeader sealedHeader =
+        BlockHeaderBuilder.fromHeader(initialHeader)
+            .extraData(sealedExtraData.encode())
+            .blockHashFunction(IbftBlockHashing::calculateHashOfIbftBlockOnChain)
+            .buildBlockHeader();
+
+    return new Block(sealedHeader, block.getBody());
   }
 }

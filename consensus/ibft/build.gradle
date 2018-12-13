@@ -41,6 +41,7 @@ dependencies {
   implementation 'com.google.guava:guava'
 
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':config:', configuration:'testSupportArtifacts')
 
   testImplementation 'junit:junit'
   testImplementation 'org.awaitility:awaitility'

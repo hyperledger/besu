@@ -60,27 +60,30 @@ public class RoundState {
   }
 
   public boolean setProposedBlock(final SignedData<ProposalPayload> msg) {
-    if (validator.addSignedProposalPayload(msg)) {
-      proposalMessage = Optional.of(msg);
-    } else {
-      return false;
+
+    if (!proposalMessage.isPresent()) {
+      if (validator.addSignedProposalPayload(msg)) {
+        proposalMessage = Optional.of(msg);
+        preparePayloads.removeIf(p -> !validator.validatePrepareMessage(p));
+        commitPayloads.removeIf(p -> !validator.validateCommmitMessage(p));
+        updateState();
+        return true;
+      }
     }
-    preparePayloads.removeIf(p -> !validator.validatePrepareMessage(p));
-    commitPayloads.removeIf(p -> !validator.validateCommmitMessage(p));
-    updateState();
-    return true;
+
+    return false;
   }
 
-  public void addPreparedPeer(final SignedData<PreparePayload> prepareMsg) {
-    if (!proposalMessage.isPresent() || validator.validatePrepareMessage(prepareMsg)) {
-      preparePayloads.add(prepareMsg);
+  public void addPrepareMessage(final SignedData<PreparePayload> msg) {
+    if (!proposalMessage.isPresent() || validator.validatePrepareMessage(msg)) {
+      preparePayloads.add(msg);
     }
     updateState();
   }
 
-  public void addCommitSeal(final SignedData<CommitPayload> commitPayload) {
-    if (!proposalMessage.isPresent() || validator.validateCommmitMessage(commitPayload)) {
-      commitPayloads.add(commitPayload);
+  public void addCommitMessage(final SignedData<CommitPayload> msg) {
+    if (!proposalMessage.isPresent() || validator.validateCommmitMessage(msg)) {
+      commitPayloads.add(msg);
     }
 
     updateState();
