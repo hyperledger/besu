@@ -49,4 +49,4 @@ Instructions for how to get started with developing on the Pantheon codebase. Pl
 
 ## Release Notes
 
-[v0.8.2 Release Notes](CHANGELOG.md)
+[v0.8.3 Release Notes](CHANGELOG.md)
