@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,14 +35,14 @@ public class IbftExtraData {
   public static final int EXTRA_VANITY_LENGTH = 32;
 
   private final BytesValue vanityData;
-  private final List<Signature> seals;
+  private final Collection<Signature> seals;
   private final Optional<Vote> vote;
   private final int round;
   private final List<Address> validators;
 
   public IbftExtraData(
       final BytesValue vanityData,
-      final List<Signature> seals,
+      final Collection<Signature> seals,
       final Optional<Vote> vote,
       final int round,
       final List<Address> validators) {
@@ -127,7 +128,7 @@ public class IbftExtraData {
     return vanityData;
   }
 
-  public List<Signature> getSeals() {
+  public Collection<Signature> getSeals() {
     return seals;
   }
 
