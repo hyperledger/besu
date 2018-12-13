@@ -17,6 +17,7 @@ dependencies {
 
   testImplementation project(':pantheon')
 
+  testImplementation 'com.google.guava:guava'
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'io.vertx:vertx-core'
   testImplementation 'junit:junit'
