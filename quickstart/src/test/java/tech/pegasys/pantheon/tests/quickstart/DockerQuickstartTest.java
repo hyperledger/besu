@@ -27,12 +27,14 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.common.base.Splitter;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.RequestOptions;
@@ -42,12 +44,14 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.utils.Async;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class DockerQuickstartTest {
 
   private static final String PROJECT_ROOT =
@@ -106,7 +110,7 @@ public class DockerQuickstartTest {
     assertThat(services).isNotNull().isNotEmpty();
     assertThat(endpoints).isNotNull().isNotEmpty();
 
-    HttpService httpService =
+    final HttpService httpService =
         new HttpService(
             DEFAULT_HTTP_RPC_HOST
                 + ":"
@@ -170,10 +174,11 @@ public class DockerQuickstartTest {
   }
 
   @Test
-  public void servicesShouldBeUp() {
+  // Method starts with an underscore so it lexicographically sorts first.
+  public void _servicesShouldBeUp() {
     Awaitility.await()
         .ignoreExceptions()
-        .atMost(60, TimeUnit.SECONDS)
+        .atMost(90, TimeUnit.SECONDS)
         .untilAsserted(
             () ->
                 Arrays.stream(ServicesIdentifier.values())
@@ -213,16 +218,17 @@ public class DockerQuickstartTest {
   }
 
   @Test
-  @Ignore
   public void rpcNodeShouldReturnCorrectVersion() {
-    final String expectedVersion = PantheonInfo.version();
+    final Iterator<String> versionParts = Splitter.on("/").split(PantheonInfo.version()).iterator();
+    final String versionPrefix = versionParts.next() + "/" + versionParts.next() + "/";
+
     Awaitility.await()
         .ignoreExceptions()
         .atMost(60, TimeUnit.SECONDS)
         .untilAsserted(
             () ->
                 assertThat(web3HttpClient.web3ClientVersion().send().getWeb3ClientVersion())
-                    .isEqualTo(expectedVersion));
+                    .startsWith(versionPrefix));
   }
 
   @Test
@@ -258,7 +264,7 @@ public class DockerQuickstartTest {
 
       Awaitility.await()
           .ignoreExceptions()
-          .atMost(30, TimeUnit.SECONDS)
+          .atMost(45, TimeUnit.SECONDS)
           .untilAsserted(() -> assertThat(wsConnection[0]).isNotNull());
     } finally {
       assertThat(wsConnection[0]).isNotNull();
