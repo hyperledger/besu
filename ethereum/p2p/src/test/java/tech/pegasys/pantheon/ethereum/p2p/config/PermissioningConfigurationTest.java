@@ -21,6 +21,12 @@ import org.junit.Test;
 
 public class PermissioningConfigurationTest {
 
+  final URI[] nodes = {
+    URI.create("enode://001@123:4567"),
+    URI.create("enode://002@123:4567"),
+    URI.create("enode://003@123:4567")
+  };
+
   @Test
   public void defaultConfiguration() {
     final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
@@ -30,11 +36,6 @@ public class PermissioningConfigurationTest {
 
   @Test
   public void setNodeWhitelist() {
-    final URI[] nodes = {
-      URI.create("enode://001@123:4567"),
-      URI.create("enode://002@123:4567"),
-      URI.create("enode://003@123:4567")
-    };
     final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
     configuration.setNodeWhitelist(Arrays.asList(nodes));
     assertThat(configuration.getNodeWhitelist()).containsExactlyInAnyOrder(nodes);
@@ -42,10 +43,17 @@ public class PermissioningConfigurationTest {
   }
 
   @Test
-  public void setNodeWhiteListPassingNull() {
+  public void setNodeWhiteListPassingNullShouldNotChangeWhitelistSetFlag() {
     final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
     configuration.setNodeWhitelist(null);
     assertThat(configuration.getNodeWhitelist()).isEmpty();
     assertThat(configuration.isNodeWhitelistSet()).isFalse();
+  }
+
+  @Test
+  public void contains() {
+    final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
+    configuration.setNodeWhitelist(Arrays.asList(nodes));
+    assertThat(configuration.contains(URI.create("enode://001@123:4567"))).isTrue();
   }
 }
