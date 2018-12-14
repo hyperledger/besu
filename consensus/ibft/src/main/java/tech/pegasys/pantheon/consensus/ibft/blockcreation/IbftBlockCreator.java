@@ -12,25 +12,26 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.blockcreation;
 
+import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
+import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
+import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.AbstractBlockCreator;
 import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
-import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.SealableBlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
 
 import java.util.function.Function;
 
 // This class is responsible for creating a block without committer seals (basically it was just
 // too hard to coordinate with the state machine).
 public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
+
   public IbftBlockCreator(
       final Address localAddress,
       final ExtraDataCalculator extraDataCalculator,
@@ -55,15 +56,16 @@ public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
   @Override
   protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
 
-    final BlockHashFunction blockHashFunction =
-        ScheduleBasedBlockHashFunction.create(protocolSchedule);
+    final IbftExtraData extraData = IbftExtraData.decode(sealableBlockHeader.getExtraData());
 
     final BlockHeaderBuilder builder =
         BlockHeaderBuilder.create()
             .populateFrom(sealableBlockHeader)
-            .mixHash(Hash.ZERO)
+            .mixHash(IbftHelpers.EXPECTED_MIX_HASH)
             .nonce(0L)
-            .blockHashFunction(blockHashFunction);
+            .blockHashFunction(
+                blockHeader ->
+                    IbftBlockHashing.calculateDataHashForCommittedSeal(blockHeader, extraData));
 
     return builder.buildBlockHeader();
   }
