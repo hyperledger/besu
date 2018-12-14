@@ -121,7 +121,7 @@ public class RoundChangeManager {
   }
 
   private RoundChangeStatus storeRoundChangeMessage(final SignedData<RoundChangePayload> msg) {
-    final ConsensusRoundIdentifier msgTargetRound = msg.getPayload().getRoundChangeIdentifier();
+    final ConsensusRoundIdentifier msgTargetRound = msg.getPayload().getRoundIdentifier();
 
     final RoundChangeStatus roundChangeStatus =
         roundChangeCache.computeIfAbsent(

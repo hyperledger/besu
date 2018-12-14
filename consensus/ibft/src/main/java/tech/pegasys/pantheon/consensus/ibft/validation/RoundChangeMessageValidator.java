@@ -54,7 +54,7 @@ public class RoundChangeMessageValidator {
       return false;
     }
 
-    final ConsensusRoundIdentifier targetRound = msg.getPayload().getRoundChangeIdentifier();
+    final ConsensusRoundIdentifier targetRound = msg.getPayload().getRoundIdentifier();
 
     if (targetRound.getSequenceNumber() != chainHeight) {
       LOG.info("Invalid RoundChange message, not valid for local chain height.");

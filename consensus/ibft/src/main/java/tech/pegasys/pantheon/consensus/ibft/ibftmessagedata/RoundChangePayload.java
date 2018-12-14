@@ -35,7 +35,8 @@ public class RoundChangePayload implements Payload {
     this.preparedCertificate = preparedCertificate;
   }
 
-  public ConsensusRoundIdentifier getRoundChangeIdentifier() {
+  @Override
+  public ConsensusRoundIdentifier getRoundIdentifier() {
     return roundChangeIdentifier;
   }
 
