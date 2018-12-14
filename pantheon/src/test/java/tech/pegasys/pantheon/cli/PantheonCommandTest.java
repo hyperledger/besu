@@ -49,6 +49,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -72,6 +73,17 @@ public class PantheonCommandTest extends CommandTestAbstract {
   private static final JsonRpcConfiguration defaultJsonRpcConfiguration;
   private static final WebSocketConfiguration defaultWebSocketConfiguration;
   private static final String GENESIS_CONFIG_TESTDATA = "genesis_config";
+
+  final String[] validENodeStrings = {
+    "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
+    "enode://" + VALID_NODE_ID + "@192.168.0.2:4567",
+    "enode://" + VALID_NODE_ID + "@192.168.0.3:4567"
+  };
+
+  final String[] ropstenBootnodes = {
+    "enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303",
+    "enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303"
+  };
 
   static {
     final JsonRpcConfiguration rpcConf = JsonRpcConfiguration.createDefault();
@@ -447,18 +459,13 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   @Test
   public void bootnodesOptionMustBeUsed() {
-    final String[] nodes = {
-      "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
-      "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
-      "enode://" + VALID_NODE_ID + "@192.168.0.1:4567"
-    };
-    parseCommand("--bootnodes", String.join(",", nodes));
+    parseCommand("--bootnodes", String.join(",", validENodeStrings));
 
     verify(mockRunnerBuilder).bootstrapPeers(uriListArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(uriListArgumentCaptor.getValue())
-        .isEqualTo(Stream.of(nodes).map(URI::create).collect(Collectors.toList()));
+        .isEqualTo(Stream.of(validENodeStrings).map(URI::create).collect(Collectors.toList()));
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -487,21 +494,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void callingWithNodesWhitelistOptionButNoValueMustNotError() {
-    parseCommand("--nodes-whitelist");
-
-    verify(mockRunnerBuilder)
-        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(permissioningConfigurationArgumentCaptor.getValue().getNodeWhitelist()).isEmpty();
-    assertThat(permissioningConfigurationArgumentCaptor.getValue().isNodeWhitelistSet()).isTrue();
-
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
-  }
-
-  @Test
   public void callingWithInvalidNodesWhitelistMustDisplayErrorAndUsage() {
     parseCommand("--nodes-whitelist", "invalid_enode_url");
     assertThat(commandOutput.toString()).isEmpty();
@@ -516,29 +508,117 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   @Test
   public void nodesWhitelistOptionMustBeUsed() {
-    final String[] nodes = {
-      "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
-      "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
-      "enode://" + VALID_NODE_ID + "@192.168.0.1:4567"
-    };
-    parseCommand("--nodes-whitelist", String.join(",", nodes));
+    parseCommand(
+        "--nodes-whitelist",
+        String.join(",", validENodeStrings),
+        "--bootnodes",
+        validENodeStrings[0]);
 
     verify(mockRunnerBuilder)
         .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(
-            permissioningConfigurationArgumentCaptor
-                .getValue()
-                .getNodeWhitelist()
-                .stream()
-                .map(URI::toString)
-                .collect(Collectors.toList()))
-        .containsExactlyInAnyOrder(nodes);
+    final List<String> enodeURLAsStringList =
+        permissioningConfigurationArgumentCaptor
+            .getValue()
+            .getNodeWhitelist()
+            .stream()
+            .map(URI::toString)
+            .collect(Collectors.toList());
+
+    assertThat(enodeURLAsStringList).containsExactlyInAnyOrder(validENodeStrings);
     assertThat(permissioningConfigurationArgumentCaptor.getValue().isNodeWhitelistSet()).isTrue();
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void nodesWhitelistOptionMustIncludeBootnodes() {
+    parseCommand(
+        "--bootnodes",
+        String.join(",", validENodeStrings[0], validENodeStrings[1]),
+        "--nodes-whitelist",
+        String.join(",", validENodeStrings));
+
+    verify(mockRunnerBuilder)
+        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    final List<String> enodeURLAsStringList =
+        permissioningConfigurationArgumentCaptor
+            .getValue()
+            .getNodeWhitelist()
+            .stream()
+            .map(URI::toString)
+            .collect(Collectors.toList());
+
+    assertThat(enodeURLAsStringList).containsExactlyInAnyOrder(validENodeStrings);
+    assertThat(permissioningConfigurationArgumentCaptor.getValue().isNodeWhitelistSet()).isTrue();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void nodesWhitelistOptionWhichDoesNotIncludeBootnodesMustDisplayError() {
+    final String bootNodeNotWhitelisted = "enode://" + VALID_NODE_ID + "@192.168.0.9:4567";
+    parseCommand(
+        "--bootnodes",
+        String.join(",", bootNodeNotWhitelisted, validENodeStrings[2]),
+        "--nodes-whitelist",
+        String.join(",", validENodeStrings));
+
+    verifyZeroInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains("Cannot start node with bootnode(s) that are not in nodes-whitelist");
+  }
+
+  @Test
+  public void ropstenWithNodesWhitelistOptionWhichDoesIncludeRopstenBootnodesMustNotDisplayError() {
+    parseCommand("--ropsten", "--nodes-whitelist", String.join(",", ropstenBootnodes));
+
+    verify(mockRunnerBuilder)
+        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    final List<String> enodeURLAsStringList =
+        permissioningConfigurationArgumentCaptor
+            .getValue()
+            .getNodeWhitelist()
+            .stream()
+            .map(URI::toString)
+            .collect(Collectors.toList());
+
+    assertThat(enodeURLAsStringList).containsExactlyInAnyOrder(ropstenBootnodes);
+    assertThat(permissioningConfigurationArgumentCaptor.getValue().isNodeWhitelistSet()).isTrue();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void ropstenWithNodesWhitelistOptionWhichDoesNotIncludeRopstenBootnodesMustDisplayError() {
+    parseCommand("--ropsten", "--nodes-whitelist", String.join(",", validENodeStrings));
+
+    verifyZeroInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains("Cannot start node with bootnode(s) that are not in nodes-whitelist");
+  }
+
+  @Test
+  public void nodesWhitelistWithEmptyListAndNonEmptyBootnodesMustDisplayError() {
+    parseCommand("--bootnodes", String.join(",", validENodeStrings[0]), "--nodes-whitelist");
+
+    verifyZeroInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains("Cannot start node with bootnode(s) that are not in nodes-whitelist");
   }
 
   @Test
@@ -649,6 +729,16 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void rpcApisPropertyWithInvalidEntryMustDisplayError() {
+    parseCommand("--rpc-api", "BOB");
+
+    verifyZeroInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).contains("Invalid value for option '--rpc-api'");
   }
 
   @Test
@@ -1013,18 +1103,13 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   private void networkValuesCanBeOverridden(final String network) throws Exception {
-    final String[] nodes = {
-      "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
-      "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
-      "enode://" + VALID_NODE_ID + "@192.168.0.1:4567"
-    };
     final Path genesisFile = createFakeGenesisFile();
     parseCommand(
         "--" + network,
         "--network-id",
         "1",
         "--bootnodes",
-        String.join(",", nodes),
+        String.join(",", validENodeStrings),
         "--genesis",
         genesisFile.toString());
 
@@ -1038,7 +1123,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(networkArg.getValue().getGenesisConfig()).isEqualTo("genesis_config");
     assertThat(networkArg.getValue().getBootNodes())
-        .isEqualTo(Stream.of(nodes).map(URI::create).collect(Collectors.toList()));
+        .isEqualTo(Stream.of(validENodeStrings).map(URI::create).collect(Collectors.toList()));
     assertThat(networkArg.getValue().getNetworkId()).isEqualTo(1);
   }
 
