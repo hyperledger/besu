@@ -18,7 +18,7 @@ import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.CommitPayload;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.InRoundPayload;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.Payload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparePayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
@@ -159,7 +159,7 @@ public class MessageValidator {
   }
 
   private boolean isMessageForCurrentRoundFromValidatorAndProposalAvailable(
-      final SignedData<? extends InRoundPayload> msg, final String msgType) {
+      final SignedData<? extends Payload> msg, final String msgType) {
 
     if (!msg.getPayload().getRoundIdentifier().equals(roundIdentifier)) {
       LOG.info("Invalid {} message, does not match current round.", msgType);

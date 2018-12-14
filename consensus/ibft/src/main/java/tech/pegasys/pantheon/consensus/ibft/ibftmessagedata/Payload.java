@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.ibftmessagedata;
 
+import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
@@ -21,6 +22,8 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 public interface Payload {
 
   void writeTo(final RLPOutput rlpOutput);
+
+  ConsensusRoundIdentifier getRoundIdentifier();
 
   default BytesValue encoded() {
     BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();

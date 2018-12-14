@@ -22,7 +22,7 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class ProposalPayload implements InRoundPayload {
+public class ProposalPayload implements Payload {
   private static final int TYPE = IbftV2.PROPOSAL;
   private final ConsensusRoundIdentifier roundIdentifier;
   private final Block block;

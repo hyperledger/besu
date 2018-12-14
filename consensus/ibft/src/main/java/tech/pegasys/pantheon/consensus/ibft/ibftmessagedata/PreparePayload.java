@@ -21,7 +21,7 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class PreparePayload implements InRoundPayload {
+public class PreparePayload implements Payload {
   private static final int TYPE = IbftV2.PREPARE;
   private final ConsensusRoundIdentifier roundIdentifier;
   private final Hash digest;

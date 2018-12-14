@@ -54,7 +54,7 @@ public class NewRoundPayloadTest {
     final NewRoundPayload newRoundPayload = NewRoundPayload.readFrom(rlpInput);
     assertThat(newRoundPayload.getProposalPayload()).isEqualTo(proposalPayloadSignedData);
     assertThat(newRoundPayload.getRoundChangeCertificate()).isEqualTo(roundChangeCertificate);
-    assertThat(newRoundPayload.getRoundChangeIdentifier()).isEqualTo(ROUND_IDENTIFIER);
+    assertThat(newRoundPayload.getRoundIdentifier()).isEqualTo(ROUND_IDENTIFIER);
     assertThat(newRoundPayload.getMessageType()).isEqualTo(IbftV2.NEW_ROUND);
   }
 
@@ -87,7 +87,7 @@ public class NewRoundPayloadTest {
     final NewRoundPayload newRoundPayload = NewRoundPayload.readFrom(rlpInput);
     assertThat(newRoundPayload.getProposalPayload()).isEqualTo(signedProposal);
     assertThat(newRoundPayload.getRoundChangeCertificate()).isEqualTo(roundChangeCertificate);
-    assertThat(newRoundPayload.getRoundChangeIdentifier()).isEqualTo(ROUND_IDENTIFIER);
+    assertThat(newRoundPayload.getRoundIdentifier()).isEqualTo(ROUND_IDENTIFIER);
     assertThat(newRoundPayload.getMessageType()).isEqualTo(IbftV2.NEW_ROUND);
   }
 }

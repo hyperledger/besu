@@ -55,7 +55,7 @@ public class NewRoundMessageValidator {
   public boolean validateNewRoundMessage(final SignedData<NewRoundPayload> msg) {
 
     final NewRoundPayload payload = msg.getPayload();
-    final ConsensusRoundIdentifier rootRoundIdentifier = payload.getRoundChangeIdentifier();
+    final ConsensusRoundIdentifier rootRoundIdentifier = payload.getRoundIdentifier();
     final Address expectedProposer = proposerSelector.selectProposerForRound(rootRoundIdentifier);
     final RoundChangeCertificate roundChangeCert = payload.getRoundChangeCertificate();
 
@@ -64,12 +64,12 @@ public class NewRoundMessageValidator {
       return false;
     }
 
-    if (msg.getPayload().getRoundChangeIdentifier().getSequenceNumber() != chainHeight) {
+    if (msg.getPayload().getRoundIdentifier().getSequenceNumber() != chainHeight) {
       LOG.info("Invalid NewRound message, not valid for local chain height.");
       return false;
     }
 
-    if (msg.getPayload().getRoundChangeIdentifier().getRoundNumber() == 0) {
+    if (msg.getPayload().getRoundIdentifier().getRoundNumber() == 0) {
       LOG.info("Invalid NewRound message, illegally targets a new round of 0.");
       return false;
     }
@@ -110,7 +110,7 @@ public class NewRoundMessageValidator {
     if (!roundChangeCert
         .getRoundChangePayloads()
         .stream()
-        .allMatch(p -> p.getPayload().getRoundChangeIdentifier().equals(expectedRound))) {
+        .allMatch(p -> p.getPayload().getRoundIdentifier().equals(expectedRound))) {
       LOG.info(
           "Invalid NewRound message, not all embedded RoundChange messages have a "
               + "matching target round.");
