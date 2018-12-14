@@ -411,6 +411,11 @@ def calculateVersion() {
 
 def getCheckedOutGitCommitHash() {
   def gitFolder = "$projectDir/.git/"
+  if (!file(gitFolder).isDirectory()) {
+    // We are in a submodule.  The file's contents are `gitdir: <gitFolder>\n`.
+    // Read the file, cut off the front, and trim the whitespace.
+    gitFolder = file(gitFolder).text.substring(8).trim() + "/"
+  }
   def takeFromHash = 8
   /*
    * '.git/HEAD' contains either
