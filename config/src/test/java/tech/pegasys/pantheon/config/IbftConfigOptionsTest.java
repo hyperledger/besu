@@ -25,7 +25,7 @@ public class IbftConfigOptionsTest {
 
   private static final int EXPECTED_DEFAULT_EPOCH_LENGTH = 30_000;
   private static final int EXPECTED_DEFAULT_BLOCK_PERIOD = 1;
-  private static final int EXPECTED_DEFAULT_REQUEST_TIMEOUT = 10_000;
+  private static final int EXPECTED_DEFAULT_REQUEST_TIMEOUT = 1;
 
   @Test
   public void shouldGetEpochLengthFromConfig() {
@@ -64,19 +64,19 @@ public class IbftConfigOptionsTest {
 
   @Test
   public void shouldGetRequestTimeoutFromConfig() {
-    final IbftConfigOptions config = fromConfigOptions(singletonMap("RequestTimeout", 5));
-    assertThat(config.getRequestTimeoutMillis()).isEqualTo(5);
+    final IbftConfigOptions config = fromConfigOptions(singletonMap("RequestTimeoutSeconds", 5));
+    assertThat(config.getRequestTimeoutSeconds()).isEqualTo(5);
   }
 
   @Test
   public void shouldFallbackToDefaultRequestTimeout() {
     final IbftConfigOptions config = fromConfigOptions(emptyMap());
-    assertThat(config.getRequestTimeoutMillis()).isEqualTo(EXPECTED_DEFAULT_REQUEST_TIMEOUT);
+    assertThat(config.getRequestTimeoutSeconds()).isEqualTo(EXPECTED_DEFAULT_REQUEST_TIMEOUT);
   }
 
   @Test
   public void shouldGetDefaultRequestTimeoutFromDefaultConfig() {
-    assertThat(IbftConfigOptions.DEFAULT.getRequestTimeoutMillis())
+    assertThat(IbftConfigOptions.DEFAULT.getRequestTimeoutSeconds())
         .isEqualTo(EXPECTED_DEFAULT_REQUEST_TIMEOUT);
   }
 

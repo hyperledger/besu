@@ -59,22 +59,22 @@ public class RoundTimerTest {
 
   @Test
   public void startTimerSchedulesTimerCorrectlyForRound0() {
-    checkTimerForRound(0, 1);
+    checkTimerForRound(0, 1000);
   }
 
   @Test
   public void startTimerSchedulesTimerCorrectlyForRound1() {
-    checkTimerForRound(1, 2);
+    checkTimerForRound(1, 2000);
   }
 
   @Test
   public void startTimerSchedulesTimerCorrectlyForRound2() {
-    checkTimerForRound(2, 4);
+    checkTimerForRound(2, 4000);
   }
 
   @Test
   public void startTimerSchedulesTimerCorrectlyForRound3() {
-    checkTimerForRound(3, 8);
+    checkTimerForRound(3, 8000);
   }
 
   private void checkTimerForRound(final int roundNumber, final long timeout) {

@@ -187,7 +187,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
 
     final IbftStateMachine ibftStateMachine = new IbftStateMachine(blockCreatorFactory);
     final IbftProcessor ibftProcessor =
-        new IbftProcessor(ibftEventQueue, ibftConfig.getRequestTimeoutMillis(), ibftStateMachine);
+        new IbftProcessor(ibftEventQueue, ibftConfig.getRequestTimeoutSeconds(), ibftStateMachine);
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
     processorExecutor.submit(ibftProcessor);
 

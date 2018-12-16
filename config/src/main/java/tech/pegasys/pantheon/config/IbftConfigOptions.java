@@ -20,7 +20,7 @@ public class IbftConfigOptions {
 
   private static final long DEFAULT_EPOCH_LENGTH = 30_000;
   private static final int DEFAULT_BLOCK_PERIOD_SECONDS = 1;
-  private static final int DEFAULT_ROUND_EXPIRY_MILLISECONDS = 10000;
+  private static final int DEFAULT_ROUND_EXPIRY_SECONDS = 1;
 
   private final JsonObject ibftConfigRoot;
 
@@ -36,7 +36,7 @@ public class IbftConfigOptions {
     return ibftConfigRoot.getInteger("blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
   }
 
-  public int getRequestTimeoutMillis() {
-    return ibftConfigRoot.getInteger("requesttimeout", DEFAULT_ROUND_EXPIRY_MILLISECONDS);
+  public int getRequestTimeoutSeconds() {
+    return ibftConfigRoot.getInteger("requesttimeoutseconds", DEFAULT_ROUND_EXPIRY_SECONDS);
   }
 }

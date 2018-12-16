@@ -30,17 +30,17 @@ public class RoundTimer {
    * Construct a RoundTimer with primed executor service ready to start timers
    *
    * @param queue The queue in which to put round expiry events
-   * @param baseExpiryMillis The initial round length for round 0
+   * @param baseExpirySeconds The initial round length for round 0
    * @param timerExecutor executor service that timers can be scheduled with
    */
   public RoundTimer(
       final IbftEventQueue queue,
-      final long baseExpiryMillis,
+      final long baseExpirySeconds,
       final ScheduledExecutorService timerExecutor) {
     this.queue = queue;
     this.timerExecutor = timerExecutor;
     this.currentTimerTask = Optional.empty();
-    this.baseExpiryMillis = baseExpiryMillis;
+    this.baseExpiryMillis = baseExpirySeconds * 1000;
   }
 
   /** Cancels the current running round timer if there is one */
