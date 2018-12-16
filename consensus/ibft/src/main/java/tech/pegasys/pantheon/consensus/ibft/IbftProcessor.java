@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 
 /** Execution context for draining queued ibft events and applying them to a maintained state */
 public class IbftProcessor implements Runnable {
+
   private static final Logger LOG = LogManager.getLogger();
 
   private final IbftEventQueue incomingQueue;
@@ -35,18 +36,18 @@ public class IbftProcessor implements Runnable {
    * Construct a new IbftProcessor
    *
    * @param incomingQueue The event queue from which to drain new events
-   * @param baseRoundExpiryMillis The expiry time in milliseconds of round 0
+   * @param baseRoundExpirySeconds The expiry time in milliseconds of round 0
    * @param stateMachine an IbftStateMachine ready to process events and maintain state
    */
   public IbftProcessor(
       final IbftEventQueue incomingQueue,
-      final int baseRoundExpiryMillis,
+      final int baseRoundExpirySeconds,
       final IbftStateMachine stateMachine) {
     // Spawning the round timer with a single thread as we should never have more than 1 timer in
     // flight at a time
     this(
         incomingQueue,
-        baseRoundExpiryMillis,
+        baseRoundExpirySeconds,
         stateMachine,
         Executors.newSingleThreadScheduledExecutor());
   }
@@ -54,13 +55,14 @@ public class IbftProcessor implements Runnable {
   @VisibleForTesting
   IbftProcessor(
       final IbftEventQueue incomingQueue,
-      final int baseRoundExpiryMillis,
+      final int baseRoundExpirySeconds,
       final IbftStateMachine stateMachine,
       final ScheduledExecutorService roundTimerExecutor) {
     this.incomingQueue = incomingQueue;
     this.roundTimerExecutor = roundTimerExecutor;
 
-    this.roundTimer = new RoundTimer(incomingQueue, baseRoundExpiryMillis, roundTimerExecutor);
+    this.roundTimer =
+        new RoundTimer(incomingQueue, baseRoundExpirySeconds * 1000, roundTimerExecutor);
     this.stateMachine = stateMachine;
   }
 

@@ -10,7 +10,7 @@
         "ibft": {
             "epochLength": 30000,
             "blockPeriodSeconds" : 1,
-            "requestTimeout": 10000
+            "requestTimeoutSeconds": 10
         }
     },
     "nonce": "0x0",
