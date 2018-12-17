@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.statemachine;
 
+import static tech.pegasys.pantheon.consensus.ibft.IbftHelpers.findLatestPreparedCertificate;
+
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
@@ -23,6 +25,7 @@ import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparePayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparedCertificate;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.ProposalPayload;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.RoundChangeCertificate;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
@@ -31,6 +34,7 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
@@ -84,6 +88,49 @@ public class IbftRound {
 
     updateStateWithProposedBlock(
         messageFactory.createSignedProposalPayload(roundState.getRoundIdentifier(), block));
+  }
+
+  public void startRoundWith(
+      final RoundChangeCertificate roundChangeCertificate, final long headerTimestamp) {
+    final Optional<PreparedCertificate> latestCertificate =
+        findLatestPreparedCertificate(roundChangeCertificate.getRoundChangePayloads());
+    if (!latestCertificate.isPresent()) {
+      final Block block = blockCreator.createBlock(headerTimestamp);
+      transmitter.multicastNewRound(
+          getRoundIdentifier(),
+          roundChangeCertificate,
+          messageFactory.createSignedProposalPayload(getRoundIdentifier(), block));
+    } else {
+      final SignedData<ProposalPayload> proposal =
+          createProposalFromPreparedCertificate(latestCertificate.get());
+      transmitter.multicastNewRound(getRoundIdentifier(), roundChangeCertificate, proposal);
+      updateStateWithProposedBlock(proposal);
+    }
+  }
+
+  private SignedData<ProposalPayload> createProposalFromPreparedCertificate(
+      final PreparedCertificate preparedCertificate) {
+    final Block block = preparedCertificate.getProposalPayload().getPayload().getBlock();
+
+    final IbftExtraData prevExtraData = IbftExtraData.decode(block.getHeader().getExtraData());
+    final IbftExtraData extraDataToPublish =
+        new IbftExtraData(
+            prevExtraData.getVanityData(),
+            prevExtraData.getSeals(),
+            prevExtraData.getVote(),
+            getRoundIdentifier().getRoundNumber(),
+            prevExtraData.getValidators());
+
+    final BlockHeaderBuilder headerBuilder = BlockHeaderBuilder.fromHeader(block.getHeader());
+    headerBuilder
+        .extraData(extraDataToPublish.encode())
+        .blockHashFunction(
+            blockHeader ->
+                IbftBlockHashing.calculateDataHashForCommittedSeal(
+                    blockHeader, extraDataToPublish));
+    final BlockHeader newHeader = headerBuilder.buildBlockHeader();
+    final Block newBlock = new Block(newHeader, block.getBody());
+    return messageFactory.createSignedProposalPayload(getRoundIdentifier(), newBlock);
   }
 
   public void handleProposalMessage(final SignedData<ProposalPayload> msg) {

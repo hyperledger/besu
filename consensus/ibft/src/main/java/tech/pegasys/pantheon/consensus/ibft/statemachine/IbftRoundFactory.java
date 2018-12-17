@@ -48,7 +48,7 @@ public class IbftRoundFactory {
         new ConsensusRoundIdentifier(nextBlockHeight, round);
     final IbftBlockCreator blockCreator = blockCreatorFactory.create(parentHeader, round);
 
-    final RoundState roundContext =
+    final RoundState roundState =
         new RoundState(
             roundIdentifier,
             finalState.getQuorumSize(),
@@ -60,11 +60,20 @@ public class IbftRoundFactory {
                 protocolContext,
                 parentHeader));
 
+    return createNewRoundWithState(parentHeader, roundState);
+  }
+
+  public IbftRound createNewRoundWithState(
+      final BlockHeader parentHeader, final RoundState roundState) {
+    final ConsensusRoundIdentifier roundIdentifier = roundState.getRoundIdentifier();
+    final IbftBlockCreator blockCreator =
+        blockCreatorFactory.create(parentHeader, roundIdentifier.getRoundNumber());
+
     return new IbftRound(
-        roundContext,
+        roundState,
         blockCreator,
         protocolContext,
-        protocolSchedule.getByBlockNumber(nextBlockHeight).getBlockImporter(),
+        protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockImporter(),
         minedBlockObservers,
         finalState.getNodeKeys(),
         finalState.getMessageFactory(),

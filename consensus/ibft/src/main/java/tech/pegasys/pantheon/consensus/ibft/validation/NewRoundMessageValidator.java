@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.validation;
 
+import static tech.pegasys.pantheon.consensus.ibft.IbftHelpers.findLatestPreparedCertificate;
+
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.ProposerSelector;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.NewRoundPayload;
@@ -159,29 +161,5 @@ public class NewRoundMessageValidator {
     }
 
     return true;
-  }
-
-  private Optional<PreparedCertificate> findLatestPreparedCertificate(
-      final Collection<SignedData<RoundChangePayload>> msgs) {
-
-    Optional<PreparedCertificate> result = Optional.empty();
-
-    for (SignedData<RoundChangePayload> roundChangeMsg : msgs) {
-      final RoundChangePayload payload = roundChangeMsg.getPayload();
-      if (payload.getPreparedCertificate().isPresent()) {
-        if (!result.isPresent()) {
-          result = Optional.of(payload.getPreparedCertificate().get());
-        } else {
-          final PreparedCertificate currentLatest = result.get();
-          final PreparedCertificate nextCert = payload.getPreparedCertificate().get();
-
-          if (currentLatest.getProposalPayload().getPayload().getRoundIdentifier().getRoundNumber()
-              < nextCert.getProposalPayload().getPayload().getRoundIdentifier().getRoundNumber()) {
-            result = Optional.of(nextCert);
-          }
-        }
-      }
-    }
-    return result;
   }
 }
