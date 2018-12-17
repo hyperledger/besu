@@ -18,6 +18,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvent;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.NewChainHead;
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;

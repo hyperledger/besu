@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.consensus.ibft;
 
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockCreatorFactory;
+import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvent;
 
 /** Stateful evaluator for ibft events */
 public class IbftStateMachine {

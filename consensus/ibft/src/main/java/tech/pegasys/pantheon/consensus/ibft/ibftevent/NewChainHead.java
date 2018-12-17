@@ -12,8 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.ibftevent;
 
-import tech.pegasys.pantheon.consensus.ibft.IbftEvent;
-import tech.pegasys.pantheon.consensus.ibft.IbftEvents.Type;
+import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvents.Type;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 
 import java.util.Objects;

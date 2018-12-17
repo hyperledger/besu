@@ -12,9 +12,9 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.protocol;
 
-import tech.pegasys.pantheon.consensus.ibft.IbftEvent;
 import tech.pegasys.pantheon.consensus.ibft.IbftEventQueue;
-import tech.pegasys.pantheon.consensus.ibft.IbftEvents;
+import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvent;
+import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvents;
 import tech.pegasys.pantheon.consensus.ibft.network.IbftNetworkPeers;
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;

@@ -10,19 +10,25 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.consensus.ibft;
+package tech.pegasys.pantheon.consensus.ibft.ibftevent;
 
-import tech.pegasys.pantheon.ethereum.p2p.api.Message;
+import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvents.Type;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 
-/** Static helper functions for producing and working with IbftEvent objects */
-public class IbftEvents {
-  public static IbftEvent fromMessage(final Message message) {
-    throw new IllegalStateException("No IbftEvents are implemented yet");
+public class IbftReceivedMessageEvent implements IbftEvent {
+
+  private final MessageData messageData;
+
+  public IbftReceivedMessageEvent(final MessageData messageData) {
+    this.messageData = messageData;
   }
 
-  public enum Type {
-    ROUND_EXPIRY,
-    NEW_CHAIN_HEAD,
-    BLOCK_TIMER_EXPIRY
+  public MessageData getMessageData() {
+    return messageData;
+  }
+
+  @Override
+  public Type getType() {
+    return Type.MESSAGE;
   }
 }
