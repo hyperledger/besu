@@ -26,7 +26,7 @@ import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparePayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparedCertificate;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.RoundChangePayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
-import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator.MessageValidatorFactory;
+import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator.MessageValidatorForHeightFactory;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
@@ -60,7 +60,8 @@ public class RoundChangeMessageValidatorTest {
   private final MessageValidator basicValidator = mock(MessageValidator.class);
   private final List<Address> validators = Lists.newArrayList();
 
-  private final MessageValidatorFactory validatorFactory = mock(MessageValidatorFactory.class);
+  private final MessageValidatorForHeightFactory validatorFactory =
+      mock(MessageValidatorForHeightFactory.class);
   private final RoundChangeMessageValidator validator =
       new RoundChangeMessageValidator(validatorFactory, validators, 1, chainHeight);
 

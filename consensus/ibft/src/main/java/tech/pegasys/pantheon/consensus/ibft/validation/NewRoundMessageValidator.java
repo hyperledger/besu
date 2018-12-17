@@ -20,7 +20,7 @@ import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.RoundChangeCertificate;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.RoundChangePayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
-import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator.MessageValidatorFactory;
+import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator.MessageValidatorForHeightFactory;
 import tech.pegasys.pantheon.ethereum.core.Address;
 
 import java.util.Collection;
@@ -35,14 +35,14 @@ public class NewRoundMessageValidator {
 
   private final Collection<Address> validators;
   private final ProposerSelector proposerSelector;
-  private final MessageValidatorFactory messageValidatorFactory;
+  private final MessageValidatorForHeightFactory messageValidatorFactory;
   private final long quorumSize;
   private final long chainHeight;
 
   public NewRoundMessageValidator(
       final Collection<Address> validators,
       final ProposerSelector proposerSelector,
-      final MessageValidatorFactory messageValidatorFactory,
+      final MessageValidatorForHeightFactory messageValidatorFactory,
       final long quorumSize,
       final long chainHeight) {
     this.validators = validators;
