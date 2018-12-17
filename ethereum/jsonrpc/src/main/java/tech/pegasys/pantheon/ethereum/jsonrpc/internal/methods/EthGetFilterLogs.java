@@ -48,6 +48,6 @@ public class EthGetFilterLogs implements JsonRpcMethod {
       return new JsonRpcSuccessResponse(request.getId(), new LogsResult(logs));
     }
 
-    return new JsonRpcErrorResponse(request.getId(), JsonRpcError.FILTER_NOT_FOUND);
+    return new JsonRpcErrorResponse(request.getId(), JsonRpcError.LOGS_FILTER_NOT_FOUND);
   }
 }
