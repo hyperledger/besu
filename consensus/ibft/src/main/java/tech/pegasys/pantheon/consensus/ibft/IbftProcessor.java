@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.consensus.ibft;
 
+import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvent;
+
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;

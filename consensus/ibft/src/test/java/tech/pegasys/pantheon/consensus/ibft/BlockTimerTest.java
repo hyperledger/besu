@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.BlockTimerExpiry;
+import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvent;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 

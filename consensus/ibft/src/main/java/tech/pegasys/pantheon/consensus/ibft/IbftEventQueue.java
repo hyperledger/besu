@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.consensus.ibft;
 
+import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvent;
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;

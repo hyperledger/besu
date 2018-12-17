@@ -10,11 +10,14 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.consensus.ibft;
+package tech.pegasys.pantheon.consensus.ibft.statemachine;
 
-import tech.pegasys.pantheon.consensus.ibft.IbftEvents.Type;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 
-/** Category of events that will effect and are interpretable by the Ibft processing mechanism */
-public interface IbftEvent {
-  Type getType();
+/** This no-op version will be replaced with an implementation in another PR */
+public class IbftBlockHeightManagerFactory {
+
+  public IbftBlockHeightManager create(final BlockHeader parentHeader) {
+    return new IbftBlockHeightManager();
+  }
 }
