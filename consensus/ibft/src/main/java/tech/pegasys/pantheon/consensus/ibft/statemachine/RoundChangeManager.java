@@ -18,7 +18,7 @@ import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.RoundChangeCertifica
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.RoundChangePayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
 import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator;
-import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator.MessageValidatorFactory;
+import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator.MessageValidatorForHeightFactory;
 import tech.pegasys.pantheon.ethereum.core.Address;
 
 import java.util.Collection;
@@ -85,7 +85,7 @@ public class RoundChangeManager {
   public RoundChangeManager(
       final long sequenceNumber,
       final Collection<Address> validators,
-      final MessageValidatorFactory messageValidityFactory) {
+      final MessageValidatorForHeightFactory messageValidityFactory) {
     this.quorumSize = IbftHelpers.calculateRequiredValidatorQuorum(validators.size());
     this.roundChangeMessageValidator =
         new RoundChangeMessageValidator(
