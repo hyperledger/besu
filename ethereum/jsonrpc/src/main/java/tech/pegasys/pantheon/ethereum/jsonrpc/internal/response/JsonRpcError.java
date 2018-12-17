@@ -28,6 +28,7 @@ public enum JsonRpcError {
 
   // Filter & Subscription Errors
   FILTER_NOT_FOUND(-32000, "Filter not found"),
+  LOGS_FILTER_NOT_FOUND(-32000, "Logs filter not found"),
   SUBSCRIPTION_NOT_FOUND(-32000, "Subscription not found"),
   NO_MINING_WORK_FOUND(-32000, "No mining work available yet"),
 

@@ -88,7 +88,7 @@ public class EthGetFilterLogsTest {
   public void shouldReturnFilterNotFoundWhenFilterManagerReturnsNull() {
     final JsonRpcRequest request = requestWithFilterId("NOT FOUND");
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.FILTER_NOT_FOUND);
+        new JsonRpcErrorResponse(null, JsonRpcError.LOGS_FILTER_NOT_FOUND);
     when(filterManager.logs(eq("NOT FOUND"))).thenReturn(null);
 
     final JsonRpcResponse response = method.response(request);
