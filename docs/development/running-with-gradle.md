@@ -1,4 +1,4 @@
-# Running Pantheon
+# Running Pantheon with Gradle
 
 You can build and run Pantheon with default options via:
 

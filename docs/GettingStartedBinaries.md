@@ -8,8 +8,9 @@ After you download and unpackage Pantheon:
     ./bin/pantheon --help
    ```
 
-A [basic quickstart](https://github.com/PegaSysEng/pantheon/wiki/Quickstart) and other options for [starting Pantheon](https://github.com/PegaSysEng/pantheon/wiki/Starting-Pantheon) are included in the documentation. 
+A [basic quickstart](Getting-Started/Getting-Started.md) and other options for [starting Pantheon](Getting-Started/Starting-Pantheon.md) are included in the documentation. 
 
-The documentation is included in this release package and on the [Pantheon Wiki](https://github.com/PegaSysEng/pantheon/wiki). 
+The documentation is included in this release package and on the [Pantheon documentation site](https://pantheon.readthedocs.io/). 
 
->**Note** Starting Pantheon by double-clicking the `pantheon` or `pantheon.bat` executables starts a node synchronizing with the Ethereum mainnet. 
+!!!note
+    Starting Pantheon by double-clicking the `pantheon` or `pantheon.bat` executables starts a node synchronizing with the Ethereum mainnet. 

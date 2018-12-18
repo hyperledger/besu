@@ -1,4 +1,4 @@
-## Code coverage
+# Code coverage
 
 We use the jacoco test coverage plugin, which will generate coverage data whenever tests are run.
 

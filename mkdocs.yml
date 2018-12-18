@@ -1,0 +1,113 @@
+# Copyright 2018 ConsenSys AG.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+# the License. You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+# an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations under the License.
+    
+# Project information
+site_name: Pantheon
+site_url: https://pantheon.readthedocs.io/
+site_description: Pantheon Java Ethereum client documentation.
+site_author: Pantheon community
+copyright: Pantheon and its documentation are licensed under Apache 2.0 license /
+  This <a href="https://readthedocs.org/">Readthedocs.org</a> documentation is maintained with love by <a href="https://pegasys.tech/">PegaSys</a>.
+#google_analytics: ['UA-36723568-3', 'pantheon.readthedocs.io']
+
+#extra project info and template customisation
+extra:
+  support:
+    gitter: https://gitter.im/PegaSysEng/pantheon
+    email: support@pegasys.tech
+    footer_layout:
+      background_color: lightseagreen
+      links_color: white
+
+
+# Repository
+repo_name: PegaSysEng/pantheon
+repo_url: https://github.com/PegaSysEng/pantheon
+edit_uri: ""
+
+theme:
+    name: material
+    custom_dir: docs/custom_theme
+    highlightjs: true
+    hljs_languages:
+        - java
+        - bash
+        - bat
+        - toml
+        - json
+        - yaml
+    palette:
+        primary: blue-grey
+        accent: teal
+    favicon: favicon.ico
+    logo:
+      icon: account_balance
+nav:
+    - Installation:
+        - Installation Overview: Installation/Overview.md
+        - Install Binary Distribution: Installation/Install-Binaries.md
+        - Build from Source: Installation/Build-From-Source.md
+    - Getting Started:
+        - Getting Started Overview: Getting-Started/Getting-Started.md
+        - Starting Pantheon: Getting-Started/Starting-Pantheon.md
+        - Running Pantheon from Docker Image: Getting-Started/Run-Docker-Image.md
+        - Private Network Quickstart Tutorial: Getting-Started/Private-Network-Quickstart.md
+    - Configuring Pantheon:
+        - Network ID and Chain ID: Configuring-Pantheon/NetworkID-And-ChainID.md
+        - Node Keys: Configuring-Pantheon/Node-Keys.md
+        - Networking: Configuring-Pantheon/Networking.md
+        - Accounts for Testing: Configuring-Pantheon/Accounts-for-Testing.md
+        - Logging: Configuring-Pantheon/Logging.md
+        - Testing and Developing Nodes: Configuring-Pantheon/Testing-Developing-Nodes.md
+        - Proof of Authority: Configuring-Pantheon/Proof-of-Authority.md
+        - Passing JVM Options: Configuring-Pantheon/Passing-JVM-Options.md
+    - Using Pantheon:
+        - Creating and Sending Transactions: Using-Pantheon/Transactions.md
+        - Using Wallets for Account Management: Using-Pantheon/Account-Management.md
+        - Mining: Using-Pantheon/Mining.md
+        - RPC Pub/Sub: Using-Pantheon/RPC-PubSub.md
+        - Debugging Pantheon: Using-Pantheon/Debugging.md
+    - Reference:
+        - Pantheon Command Line: Reference/Pantheon-CLI-Syntax.md
+        - Pantheon JSON-RPC API:
+          - JSON-RPC API Overview: Reference/JSON-RPC-API.md
+          - Using the JSON-RPC API: Reference/Using-JSON-RPC-API.md
+          - JSON-RPC API Methods: Reference/JSON-RPC-API-Methods.md
+          - JSON-RPC API Objects: Reference/JSON-RPC-API-Objects.md
+
+markdown_extensions:
+    - toc:
+        permalink: 
+    - markdown_include.include:
+        base_path: docs
+    - admonition
+    - footnotes
+    - def_list
+    - pymdownx.arithmatex
+    - pymdownx.betterem:
+          smart_enable: all
+    - pymdownx.caret
+    - pymdownx.keys
+    - pymdownx.critic
+    - pymdownx.details
+    - pymdownx.emoji
+    - pymdownx.magiclink
+    - pymdownx.mark
+    - pymdownx.smartsymbols
+    - pymdownx.superfences
+    - pymdownx.tasklist:
+          custom_checkbox: true
+    - pymdownx.tilde
+    - meta
+    - smarty
+
+plugins:
+    - search
