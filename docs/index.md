@@ -1,14 +1,21 @@
-title: Pantheon Enterprise Ethereum client
+title: Pantheon Enterprise Ethereum Client
 description: Pantheon is an open-source Enterprise Ethereum client developed under the Apache 2.0 license and written in Java. It runs on the Ethereum public network, private networks, and test networks.
 <!--- END of page meta data -->
 
+# Pantheon Enterprise Ethereum Client
+
 ## What is Pantheon?
 
-Pantheon is an open-source Ethereum client developed under the Apache 2.0 license and written in Java. It runs on the Ethereum public network, private networks, and test networks such as Rinkeby and Ropsten. Pantheon implements Proof of Work (Ethash) and Proof of Authority (Clique) consensus mechanisms. 
+Pantheon is an open-source Ethereum client developed under the Apache 2.0 license and written in Java. 
+It runs on the Ethereum public network, private networks, and test networks such as Rinkeby, Ropsten,
+and Görli. Pantheon implements Proof of Work (Ethash) and Proof of Authority (Clique) consensus
+mechanisms. 
 
-You can use Pantheon to develop enterprise applications requiring secure, high-performance transaction processing in a private network. 
+You can use Pantheon to develop enterprise applications requiring secure, high-performance transaction 
+processing in a private network. 
 
-Our roadmap includes Pantheon with privacy features, alternative consensus mechanisms, and other enterprise features.
+Our roadmap includes Pantheon with privacy features, alternative consensus mechanisms, and other 
+enterprise features.
 
 
 ## What can you do with Pantheon?
