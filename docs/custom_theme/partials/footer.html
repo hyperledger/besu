@@ -1,0 +1,146 @@
+<!--
+  Copyright (c) 2016-2018 Martin Donath <martin.donath@squidfunk.com>
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to
+  deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+  sell copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+  IN THE SOFTWARE.
+-->
+
+{% import "partials/language.html" as lang with context %}
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
+
+<style>
+  .feedback{
+    padding: 1em;
+    text-align: center;
+    background-color: {{config.extra.support.footer_layout.background_color}};
+  }
+  .feedback a {
+    color: {{config.extra.support.footer_layout.links_color}} !important;
+  }
+  .md-nav--secondary .md-nav__item .md-nav__item a.md-nav__link {
+    font-weight: normal;
+    font-size: inherit;
+  }
+  .md-nav--secondary a.md-nav__link {
+      font-weight: bolder;
+      <!--font-size: larger;-->
+  }
+  .rst-versions {
+    border-color: lightseagreen !important;
+    border-style: solid !important;
+    font-size: large;
+  }
+
+  .rst-versions .rst-current-version {
+    background-color: #475c64 !important;
+  }
+
+  .headerlink {
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: small;
+  }
+</style>
+
+<div class="feedback md-typeset">
+      Questions or feedback? You can discuss issues and obtain free support on <a href="{{config.extra.support.gitter}}">Pegasys Pantheon Gitter room</a>.
+      <br/>
+      For paid professional support by <a href="https://pegasys.tech/">PegaSys</a>, contact us at <a href="mailto:{{config.extra.support.email}}">{{config.extra.support.email}}</a>
+</div>
+
+<!-- Application footer -->
+<footer class="md-footer">
+
+  <!-- Link to previous and/or next page -->
+  {% if page.previous_page or page.next_page %}
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+
+        <!-- Link to previous page -->
+        {% if page.previous_page %}
+          <a href="{{ page.previous_page.url | url }}"
+              title="{{ page.previous_page.title }}"
+              class="md-flex md-footer-nav__link md-footer-nav__link--prev"
+              rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back
+                    md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch
+                  md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  {{ lang.t("footer.previous") }}
+                </span>
+                {{ page.previous_page.title }}
+              </span>
+            </div>
+          </a>
+        {% endif %}
+
+        <!-- Link to next page -->
+        {% if page.next_page %}
+          <a href="{{ page.next_page.url | url }}"
+              title="{{ page.next_page.title }}"
+              class="md-flex md-footer-nav__link md-footer-nav__link--next"
+              rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch
+                  md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  {{ lang.t("footer.next") }}
+                </span>
+                {{ page.next_page.title }}
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward
+                    md-footer-nav__button"></i>
+            </div>
+          </a>
+        {% endif %}
+      </nav>
+    </div>
+  {% endif %}
+
+  <!-- Further information -->
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+
+      <!-- Copyright and theme information -->
+      <div class="md-footer-copyright" style="padding-top: 0px; padding-bottom: 0px;">
+        {% if config.copyright %}
+          <div class="md-footer-copyright__highlight">
+            {{ config.copyright }}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Social links -->
+      {% block social %}
+        {% include "partials/social.html" %}
+      {% endblock %}
+    </div>
+  </div>
+</footer>
+
+<script
+    src="https://code.jquery.com/jquery-1.12.4.min.js"
+    integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="
+    crossorigin="anonymous"></script>

@@ -1,6 +1,8 @@
-# Community membership
+description: Community organisation and members responsibilities
+<!--- END of page meta data -->
 
-**Note:** This document is in progress
+!!!note
+    This document is in progress
 
 This doc outlines the various responsibilities of contributor roles in
 this project.
@@ -170,4 +172,4 @@ This document is adapted from the following sources:
 [two-factor authentication]: https://help.github.com/articles/about-two-factor-authentication
 [pantheon-dev@pegasys.tech]: mailto:pantheon-dev@pegasys.tech
 [Pantheon Gitter]: https://gitter.im/PegaSysEng/pantheon
-[Pantheon Wiki]: https://github.com/PegaSysEng/pantheon/wiki
+[Pantheon Documentation]: https://pantheon.readthedocs.io/
