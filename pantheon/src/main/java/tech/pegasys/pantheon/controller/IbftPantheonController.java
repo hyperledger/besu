@@ -16,23 +16,32 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.config.IbftConfigOptions;
+import tech.pegasys.pantheon.consensus.common.BlockInterface;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.consensus.common.VoteTallyUpdater;
-import tech.pegasys.pantheon.consensus.ibft.IbftChainObserver;
+import tech.pegasys.pantheon.consensus.ibft.BlockTimer;
+import tech.pegasys.pantheon.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
+import tech.pegasys.pantheon.consensus.ibft.IbftBlockInterface;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftEventQueue;
 import tech.pegasys.pantheon.consensus.ibft.IbftProcessor;
-import tech.pegasys.pantheon.consensus.ibft.IbftStateMachine;
+import tech.pegasys.pantheon.consensus.ibft.IbftProtocolSchedule;
+import tech.pegasys.pantheon.consensus.ibft.RoundTimer;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockCreatorFactory;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftMiningCoordinator;
+import tech.pegasys.pantheon.consensus.ibft.blockcreation.ProposerSelector;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.jsonrpc.IbftJsonRpcMethodsFactory;
 import tech.pegasys.pantheon.consensus.ibft.network.IbftNetworkPeers;
 import tech.pegasys.pantheon.consensus.ibft.protocol.IbftProtocolManager;
 import tech.pegasys.pantheon.consensus.ibft.protocol.IbftSubProtocol;
-import tech.pegasys.pantheon.consensus.ibftlegacy.IbftLegacyBlockInterface;
-import tech.pegasys.pantheon.consensus.ibftlegacy.IbftProtocolSchedule;
+import tech.pegasys.pantheon.consensus.ibft.statemachine.IbftBlockHeightManagerFactory;
+import tech.pegasys.pantheon.consensus.ibft.statemachine.IbftController;
+import tech.pegasys.pantheon.consensus.ibft.statemachine.IbftFinalState;
+import tech.pegasys.pantheon.consensus.ibft.statemachine.IbftRoundFactory;
+import tech.pegasys.pantheon.consensus.ibft.validation.MessageValidatorFactory;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
@@ -55,6 +64,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolFactory;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
+import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
@@ -65,6 +75,7 @@ import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.io.IOException;
+import java.time.Clock;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -131,12 +142,13 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
     final WorldStateArchive worldStateArchive = new WorldStateArchive(worldStateStorage);
     genesisState.writeStateTo(worldStateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
 
-    final IbftConfigOptions ibftConfig = genesisConfig.getConfigOptions().getIbftConfigOptions();
+    final IbftConfigOptions ibftConfig =
+        genesisConfig.getConfigOptions().getRevisedIbftConfigOptions();
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
 
+    final BlockInterface blockInterface = new IbftBlockInterface();
     final VoteTally voteTally =
-        new VoteTallyUpdater(epochManager, new IbftLegacyBlockInterface())
-            .buildVoteTallyFromBlockchain(blockchain);
+        new VoteTallyUpdater(epochManager, blockInterface).buildVoteTallyFromBlockchain(blockchain);
 
     final VoteProposer voteProposer = new VoteProposer();
 
@@ -174,8 +186,6 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
 
     final IbftEventQueue ibftEventQueue = new IbftEventQueue();
 
-    blockchain.observeBlockAdded(new IbftChainObserver(ibftEventQueue));
-
     final IbftBlockCreatorFactory blockCreatorFactory =
         new IbftBlockCreatorFactory(
             (gasLimit) -> gasLimit,
@@ -185,13 +195,56 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             miningParams,
             Util.publicKeyToAddress(nodeKeys.getPublicKey()));
 
-    final IbftStateMachine ibftStateMachine = new IbftStateMachine(blockCreatorFactory);
-    final IbftProcessor ibftProcessor =
-        new IbftProcessor(ibftEventQueue, ibftConfig.getRequestTimeoutSeconds(), ibftStateMachine);
+    final ProposerSelector proposerSelector =
+        new ProposerSelector(blockchain, voteTally, blockInterface, true);
+    final IbftNetworkPeers peers =
+        new IbftNetworkPeers(protocolContext.getConsensusState().getVoteTally());
+
+    final BlockHeaderValidator<IbftContext> blockHeaderValidator =
+        IbftBlockHeaderValidationRulesetFactory.ibftProposedBlockValidator(
+            ibftConfig.getBlockPeriodSeconds());
+
+    final IbftFinalState finalState =
+        new IbftFinalState(
+            voteTally,
+            nodeKeys,
+            Util.publicKeyToAddress(nodeKeys.getPublicKey()),
+            proposerSelector,
+            peers,
+            new RoundTimer(
+                ibftEventQueue,
+                ibftConfig.getRequestTimeoutSeconds(),
+                Executors.newScheduledThreadPool(1)),
+            new BlockTimer(
+                ibftEventQueue,
+                ibftConfig.getBlockPeriodSeconds(),
+                Executors.newScheduledThreadPool(1),
+                Clock.systemUTC()),
+            blockCreatorFactory,
+            new MessageFactory(nodeKeys),
+            blockHeaderValidator,
+            Clock.systemUTC());
+
+    final MessageValidatorFactory messageValidatorFactory =
+        new MessageValidatorFactory(proposerSelector, blockHeaderValidator, protocolContext);
+
+    final IbftController ibftController =
+        new IbftController(
+            blockchain,
+            finalState,
+            new IbftBlockHeightManagerFactory(
+                finalState,
+                new IbftRoundFactory(finalState, protocolContext, protocolSchedule),
+                messageValidatorFactory,
+                protocolContext));
+
+    final IbftProcessor ibftProcessor = new IbftProcessor(ibftEventQueue, ibftController);
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
     processorExecutor.submit(ibftProcessor);
 
-    final MiningCoordinator ibftMiningCoordinator = new IbftMiningCoordinator(blockCreatorFactory);
+    final MiningCoordinator ibftMiningCoordinator =
+        new IbftMiningCoordinator(ibftProcessor, blockCreatorFactory, blockchain, ibftEventQueue);
+    ibftMiningCoordinator.enable();
 
     final Runnable closer =
         () -> {
@@ -209,9 +262,6 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             LOG.error("Failed to close storage provider", e);
           }
         };
-
-    final IbftNetworkPeers peers =
-        new IbftNetworkPeers(protocolContext.getConsensusState().getVoteTally());
 
     return new IbftPantheonController(
         protocolSchedule,

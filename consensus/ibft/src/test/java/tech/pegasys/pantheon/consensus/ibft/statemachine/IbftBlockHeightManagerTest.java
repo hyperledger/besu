@@ -77,7 +77,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class IbftBlockHeightManagerTest {
 
-  private KeyPair localNodeKeys = KeyPair.generate();
+  private final KeyPair localNodeKeys = KeyPair.generate();
   private final MessageFactory messageFactory = new MessageFactory(localNodeKeys);
   private final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
 
@@ -96,11 +96,11 @@ public class IbftBlockHeightManagerTest {
   @Captor private ArgumentCaptor<Optional<PreparedCertificate>> preparedCaptor;
 
   private final List<KeyPair> validatorKeys = Lists.newArrayList();
-  private List<Address> validators = Lists.newArrayList();
-  private List<MessageFactory> validatorMessageFactory = Lists.newArrayList();
+  private final List<Address> validators = Lists.newArrayList();
+  private final List<MessageFactory> validatorMessageFactory = Lists.newArrayList();
 
   private ProtocolContext<IbftContext> protocolContext;
-  private ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
+  private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private Block createdBlock;
 
   private void buildCreatedBlock() {
