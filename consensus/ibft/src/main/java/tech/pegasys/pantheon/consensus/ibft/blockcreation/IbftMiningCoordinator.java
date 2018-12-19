@@ -12,23 +12,51 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.blockcreation;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
+import tech.pegasys.pantheon.consensus.ibft.IbftEventQueue;
+import tech.pegasys.pantheon.consensus.ibft.IbftProcessor;
+import tech.pegasys.pantheon.consensus.ibft.ibftevent.NewChainHead;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
+import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
+import tech.pegasys.pantheon.ethereum.chain.BlockAddedObserver;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-public class IbftMiningCoordinator implements MiningCoordinator {
+import org.apache.logging.log4j.Logger;
+
+public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObserver {
 
   private final IbftBlockCreatorFactory blockCreatorFactory;
+  private static final Logger LOG = getLogger();
+  protected final Blockchain blockchain;
+  private final IbftEventQueue eventQueue;
+  private final IbftProcessor ibftProcessor;
 
-  public IbftMiningCoordinator(final IbftBlockCreatorFactory blockCreatorFactory) {
+  public IbftMiningCoordinator(
+      final IbftProcessor ibftProcessor,
+      final IbftBlockCreatorFactory blockCreatorFactory,
+      final Blockchain blockchain,
+      final IbftEventQueue eventQueue) {
+    this.ibftProcessor = ibftProcessor;
     this.blockCreatorFactory = blockCreatorFactory;
+    this.eventQueue = eventQueue;
+
+    this.blockchain = blockchain;
+    this.blockchain.observeBlockAdded(this);
   }
 
   @Override
-  public void enable() {}
+  public void enable() {
+    ibftProcessor.start();
+    // IbftProcessor is implicitly running (but maybe should have a discard" all)
+  }
 
   @Override
-  public void disable() {}
+  public void disable() {
+    ibftProcessor.stop();
+  }
 
   @Override
   public boolean isRunning() {
@@ -36,15 +64,25 @@ public class IbftMiningCoordinator implements MiningCoordinator {
   }
 
   @Override
-  public void setMinTransactionGasPrice(final Wei minGasPrice) {}
+  public void setMinTransactionGasPrice(final Wei minGasPrice) {
+    blockCreatorFactory.setMinTransactionGasPrice(minGasPrice);
+  }
 
   @Override
   public Wei getMinTransactionGasPrice() {
-    return null;
+    return blockCreatorFactory.getMinTransactionGasPrice();
   }
 
   @Override
   public void setExtraData(final BytesValue extraData) {
     blockCreatorFactory.setExtraData(extraData);
+  }
+
+  @Override
+  public void onBlockAdded(final BlockAddedEvent event, final Blockchain blockchain) {
+    LOG.info("New canonical head detected. {} ", event.isNewCanonicalHead());
+    if (event.isNewCanonicalHead()) {
+      eventQueue.add(new NewChainHead(event.getBlock().getHeader()));
+    }
   }
 }
