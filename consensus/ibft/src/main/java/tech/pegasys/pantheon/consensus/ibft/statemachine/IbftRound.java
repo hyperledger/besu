@@ -94,18 +94,18 @@ public class IbftRound {
       final RoundChangeCertificate roundChangeCertificate, final long headerTimestamp) {
     final Optional<PreparedCertificate> latestCertificate =
         findLatestPreparedCertificate(roundChangeCertificate.getRoundChangePayloads());
+
+    SignedData<ProposalPayload> proposal;
     if (!latestCertificate.isPresent()) {
+      LOG.info("Multicasting NewRound with new block.");
       final Block block = blockCreator.createBlock(headerTimestamp);
-      transmitter.multicastNewRound(
-          getRoundIdentifier(),
-          roundChangeCertificate,
-          messageFactory.createSignedProposalPayload(getRoundIdentifier(), block));
+      proposal = messageFactory.createSignedProposalPayload(getRoundIdentifier(), block);
     } else {
-      final SignedData<ProposalPayload> proposal =
-          createProposalFromPreparedCertificate(latestCertificate.get());
-      transmitter.multicastNewRound(getRoundIdentifier(), roundChangeCertificate, proposal);
-      updateStateWithProposedBlock(proposal);
+      LOG.info("Multicasting NewRound from PreparedCertificate.");
+      proposal = createProposalFromPreparedCertificate(latestCertificate.get());
     }
+    transmitter.multicastNewRound(getRoundIdentifier(), roundChangeCertificate, proposal);
+    updateStateWithProposedBlock(proposal);
   }
 
   private SignedData<ProposalPayload> createProposalFromPreparedCertificate(
@@ -134,7 +134,7 @@ public class IbftRound {
   }
 
   public void handleProposalMessage(final SignedData<ProposalPayload> msg) {
-    LOG.info("Received a Proposal message.");
+    LOG.info("Handling a Proposal message.");
     final Block block = msg.getPayload().getBlock();
     final boolean wasCommitted = roundState.isCommitted();
 
