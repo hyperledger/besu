@@ -57,7 +57,7 @@ public class BlockTimerTest {
 
   @Test
   public void cancelTimerCancelsWhenNoTimer() {
-    final BlockTimer timer = new BlockTimer(mockQueue, 15_000, mockExecutorService, mockClock);
+    final BlockTimer timer = new BlockTimer(mockQueue, 15, mockExecutorService, mockClock);
     // Starts with nothing running
     assertThat(timer.isRunning()).isFalse();
     // cancel shouldn't die if there's nothing running
@@ -68,14 +68,14 @@ public class BlockTimerTest {
 
   @Test
   public void startTimerSchedulesCorrectlyWhenExpiryIsInTheFuture() {
-    final long MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS = 15_000;
+    final long MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS = 15;
     final long NOW_MILLIS = 505_000L;
     final long BLOCK_TIME_STAMP = 500L;
     final long EXPECTED_DELAY = 10_000L;
 
     final BlockTimer timer =
         new BlockTimer(
-            mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS, mockExecutorService, mockClock);
+            mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, mockExecutorService, mockClock);
 
     when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
@@ -96,8 +96,7 @@ public class BlockTimerTest {
 
   @Test
   public void aBlockTimerExpiryEventIsAddedToTheQueueOnExpiry() {
-
-    final long MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS = 1_000;
+    final long MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS = 1;
     final long NOW_MILLIS = 300_500L;
     final long BLOCK_TIME_STAMP = 300;
     final long EXPECTED_DELAY = 500;
@@ -112,7 +111,7 @@ public class BlockTimerTest {
     final BlockTimer timer =
         new BlockTimer(
             mockQueue,
-            MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS,
+            MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS,
             Executors.newSingleThreadScheduledExecutor(),
             mockClock);
     timer.startTimer(round, header);
@@ -135,13 +134,13 @@ public class BlockTimerTest {
 
   @Test
   public void eventIsImmediatelyAddedToTheQueueIfAbsoluteExpiryIsEqualToNow() {
-    final long MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS = 15_000;
+    final long MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS = 15;
     final long NOW_MILLIS = 515_000L;
     final long BLOCK_TIME_STAMP = 500;
 
     final BlockTimer timer =
         new BlockTimer(
-            mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS, mockExecutorService, mockClock);
+            mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, mockExecutorService, mockClock);
 
     when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
@@ -163,13 +162,13 @@ public class BlockTimerTest {
 
   @Test
   public void eventIsImmediatelyAddedToTheQueueIfAbsoluteExpiryIsInThePast() {
-    final long MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS = 15_000;
+    final long MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS = 15;
     final long NOW_MILLIS = 520_000L;
     final long BLOCK_TIME_STAMP = 500L;
 
     final BlockTimer timer =
         new BlockTimer(
-            mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS, mockExecutorService, mockClock);
+            mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, mockExecutorService, mockClock);
 
     when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
@@ -191,13 +190,13 @@ public class BlockTimerTest {
 
   @Test
   public void startTimerCancelsExistingTimer() {
-    final long MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS = 15_0000;
+    final long MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS = 15;
     final long NOW_MILLIS = 500_000L;
     final long BLOCK_TIME_STAMP = 500L;
 
     final BlockTimer timer =
         new BlockTimer(
-            mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS, mockExecutorService, mockClock);
+            mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, mockExecutorService, mockClock);
 
     when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
@@ -218,13 +217,13 @@ public class BlockTimerTest {
 
   @Test
   public void runningFollowsTheStateOfTheTimer() {
-    final long MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS = 15_0000;
+    final long MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS = 15;
     final long NOW_MILLIS = 500_000L;
     final long BLOCK_TIME_STAMP = 500L;
 
     final BlockTimer timer =
         new BlockTimer(
-            mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_MILLIS, mockExecutorService, mockClock);
+            mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, mockExecutorService, mockClock);
 
     when(mockClock.millis()).thenReturn(NOW_MILLIS);
 

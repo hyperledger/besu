@@ -62,9 +62,7 @@ public class IbftProcessor implements Runnable {
       final ScheduledExecutorService roundTimerExecutor) {
     this.incomingQueue = incomingQueue;
     this.roundTimerExecutor = roundTimerExecutor;
-
-    this.roundTimer =
-        new RoundTimer(incomingQueue, baseRoundExpirySeconds * 1000, roundTimerExecutor);
+    this.roundTimer = new RoundTimer(incomingQueue, baseRoundExpirySeconds, roundTimerExecutor);
     this.stateMachine = stateMachine;
   }
 
