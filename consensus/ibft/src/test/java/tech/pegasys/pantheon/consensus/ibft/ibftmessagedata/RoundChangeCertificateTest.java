@@ -12,12 +12,14 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.ibftmessagedata;
 
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.TestHelpers;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftV2;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
+import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
@@ -51,7 +53,8 @@ public class RoundChangeCertificateTest {
 
   @Test
   public void rlpRoundTripWithPreparedCertificate() {
-    final Block block = TestHelpers.createProposalBlock();
+    final Block block =
+        TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), 0);
     final ProposalPayload proposalPayload = new ProposalPayload(ROUND_IDENTIFIER, block);
     final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
     SignedData<ProposalPayload> signedProposal = SignedData.from(proposalPayload, signature);

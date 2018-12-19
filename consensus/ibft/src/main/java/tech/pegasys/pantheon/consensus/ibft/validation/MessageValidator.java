@@ -99,7 +99,7 @@ public class MessageValidator {
     final Block proposedBlock = msg.getPayload().getBlock();
     if (!headerValidator.validateHeader(
         proposedBlock.getHeader(), parentHeader, protocolContext, FULL)) {
-      LOG.info("Invalid Prepare message, block did not pass header validation.");
+      LOG.info("Invalid Proposal message, block did not pass header validation.");
       return false;
     }
 

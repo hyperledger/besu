@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.ibftmessagedata;
 
+import static java.util.Collections.singletonList;
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,6 +20,7 @@ import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.TestHelpers;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftV2;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
+import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
@@ -33,6 +35,7 @@ import org.assertj.core.util.Lists;
 import org.junit.Test;
 
 public class RoundChangePayloadTest {
+
   private static final ConsensusRoundIdentifier ROUND_IDENTIFIER =
       new ConsensusRoundIdentifier(0x1234567890ABCDEFL, 0xFEDCBA98);
   private static final Signature SIGNATURE =
@@ -95,7 +98,8 @@ public class RoundChangePayloadTest {
   }
 
   private SignedData<ProposalPayload> signedProposal() {
-    final Block block = TestHelpers.createProposalBlock();
+    final Block block =
+        TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), 0);
     final ProposalPayload proposalPayload = new ProposalPayload(ROUND_IDENTIFIER, block);
     final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
     return SignedData.from(proposalPayload, signature);
