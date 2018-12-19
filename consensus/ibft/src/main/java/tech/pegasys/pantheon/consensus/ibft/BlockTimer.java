@@ -33,19 +33,19 @@ public class BlockTimer {
    * Construct a BlockTimer with primed executor service ready to start timers
    *
    * @param queue The queue in which to put block expiry events
-   * @param minimumTimeBetweenBlocksMillis Minimum timestamp difference between blocks
+   * @param minimumTimeBetweenBlocksSeconds Minimum timestamp difference between blocks
    * @param timerExecutor Executor service that timers can be scheduled with
    * @param clock System clock
    */
   public BlockTimer(
       final IbftEventQueue queue,
-      final long minimumTimeBetweenBlocksMillis,
+      final long minimumTimeBetweenBlocksSeconds,
       final ScheduledExecutorService timerExecutor,
       final Clock clock) {
     this.queue = queue;
     this.timerExecutor = timerExecutor;
     this.currentTimerTask = Optional.empty();
-    this.minimumTimeBetweenBlocksMillis = minimumTimeBetweenBlocksMillis;
+    this.minimumTimeBetweenBlocksMillis = minimumTimeBetweenBlocksSeconds * 1000;
     this.clock = clock;
   }
 
