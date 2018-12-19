@@ -89,7 +89,7 @@ public class RoundChangeManager {
     this.quorumSize = IbftHelpers.calculateRequiredValidatorQuorum(validators.size());
     this.roundChangeMessageValidator =
         new RoundChangeMessageValidator(
-            messageValidityFactory, validators, quorumSize, sequenceNumber);
+            messageValidityFactory, validators, quorumSize - 1, sequenceNumber);
   }
 
   /**

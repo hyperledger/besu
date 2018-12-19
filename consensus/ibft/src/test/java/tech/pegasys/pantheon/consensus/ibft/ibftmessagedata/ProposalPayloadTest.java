@@ -12,11 +12,13 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.ibftmessagedata;
 
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.TestHelpers;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftV2;
+import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
@@ -25,12 +27,14 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import org.junit.Test;
 
 public class ProposalPayloadTest {
+
   private static final ConsensusRoundIdentifier ROUND_IDENTIFIER =
       new ConsensusRoundIdentifier(0x1234567890ABCDEFL, 0xFEDCBA98);
 
   @Test
   public void roundTripRlp() {
-    final Block block = TestHelpers.createProposalBlock();
+    final Block block =
+        TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), 0);
     final ProposalPayload expectedProposalPayload = new ProposalPayload(ROUND_IDENTIFIER, block);
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     expectedProposalPayload.writeTo(rlpOut);
