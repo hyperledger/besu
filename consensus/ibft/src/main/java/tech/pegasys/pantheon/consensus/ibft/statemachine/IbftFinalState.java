@@ -27,6 +27,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 
+import java.time.Clock;
 import java.util.Collection;
 
 /** This is the full data set, or context, required for many of the aspects of the IBFT workflow. */
@@ -42,6 +43,7 @@ public class IbftFinalState {
   private final MessageFactory messageFactory;
   private final BlockHeaderValidator<IbftContext> ibftContextBlockHeaderValidator;
   private final IbftMessageTransmitter messageTransmitter;
+  private final Clock clock;
 
   public IbftFinalState(
       final ValidatorProvider validatorProvider,
@@ -53,7 +55,8 @@ public class IbftFinalState {
       final BlockTimer blockTimer,
       final IbftBlockCreatorFactory blockCreatorFactory,
       final MessageFactory messageFactory,
-      final BlockHeaderValidator<IbftContext> ibftContextBlockHeaderValidator) {
+      final BlockHeaderValidator<IbftContext> ibftContextBlockHeaderValidator,
+      final Clock clock) {
     this.validatorProvider = validatorProvider;
     this.nodeKeys = nodeKeys;
     this.localAddress = localAddress;
@@ -65,6 +68,7 @@ public class IbftFinalState {
     this.messageFactory = messageFactory;
     this.ibftContextBlockHeaderValidator = ibftContextBlockHeaderValidator;
     this.messageTransmitter = new IbftMessageTransmitter(messageFactory, peers);
+    this.clock = clock;
   }
 
   public int getQuorumSize() {
@@ -121,5 +125,9 @@ public class IbftFinalState {
 
   public IbftMessageTransmitter getTransmitter() {
     return messageTransmitter;
+  }
+
+  public Clock getClock() {
+    return clock;
   }
 }

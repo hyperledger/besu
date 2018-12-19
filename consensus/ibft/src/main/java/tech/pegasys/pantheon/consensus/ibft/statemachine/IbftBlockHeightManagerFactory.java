@@ -12,12 +12,43 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.statemachine;
 
+import tech.pegasys.pantheon.consensus.ibft.IbftContext;
+import tech.pegasys.pantheon.consensus.ibft.validation.MessageValidatorFactory;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 
-/** This no-op version will be replaced with an implementation in another PR */
+import java.time.Clock;
+
 public class IbftBlockHeightManagerFactory {
 
+  private final IbftRoundFactory roundFactory;
+  private final IbftFinalState finalState;
+  private final ProtocolContext<IbftContext> protocolContext;
+  private final MessageValidatorFactory messageValidatorFactory;
+
+  public IbftBlockHeightManagerFactory(
+      final IbftFinalState finalState,
+      final IbftRoundFactory roundFactory,
+      final MessageValidatorFactory messageValidatorFactory,
+      final ProtocolContext<IbftContext> protocolContext) {
+    this.roundFactory = roundFactory;
+    this.finalState = finalState;
+    this.protocolContext = protocolContext;
+    this.messageValidatorFactory = messageValidatorFactory;
+  }
+
   public IbftBlockHeightManager create(final BlockHeader parentHeader) {
-    return new IbftBlockHeightManager();
+    long nextChainHeight = parentHeader.getNumber() + 1;
+    return new IbftBlockHeightManager(
+        parentHeader,
+        finalState,
+        new RoundChangeManager(
+            nextChainHeight,
+            finalState.getValidators(),
+            (roundIdentifier) ->
+                messageValidatorFactory.createMessageValidator(roundIdentifier, parentHeader)),
+        roundFactory,
+        Clock.systemUTC(),
+        messageValidatorFactory);
   }
 }

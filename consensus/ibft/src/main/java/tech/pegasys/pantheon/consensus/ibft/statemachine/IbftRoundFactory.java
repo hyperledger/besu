@@ -46,7 +46,6 @@ public class IbftRoundFactory {
     long nextBlockHeight = parentHeader.getNumber() + 1;
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(nextBlockHeight, round);
-    final IbftBlockCreator blockCreator = blockCreatorFactory.create(parentHeader, round);
 
     final RoundState roundState =
         new RoundState(
