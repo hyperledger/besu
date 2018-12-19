@@ -36,14 +36,6 @@ edit_uri: ""
 theme:
     name: material
     custom_dir: docs/custom_theme
-    highlightjs: true
-    hljs_languages:
-        - java
-        - bash
-        - bat
-        - toml
-        - json
-        - yaml
     palette:
         primary: blue-grey
         accent: teal
@@ -86,11 +78,14 @@ nav:
 markdown_extensions:
     - toc:
         permalink: 
+        toc_depth: 3
+    - pymdownx.highlight:
     - markdown_include.include:
         base_path: docs
     - admonition
     - footnotes
     - def_list
+    - abbr
     - pymdownx.arithmatex
     - pymdownx.betterem:
           smart_enable: all
