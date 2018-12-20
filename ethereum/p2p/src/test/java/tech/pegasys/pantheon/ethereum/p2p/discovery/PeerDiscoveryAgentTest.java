@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
@@ -71,6 +72,7 @@ public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
   }
 
   @Test
+  @Ignore("This test is failing intermittently - disabling while we investigate")
   public void neighborsPacketLimited() {
     // Start 20 agents with no bootstrap peers.
     final List<PeerDiscoveryAgent> agents = startDiscoveryAgents(20, Collections.emptyList());
