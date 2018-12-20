@@ -86,6 +86,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
             .dataDir(node.homeDirectory())
             .bannedNodeIds(Collections.emptySet())
             .metricsSystem(noOpMetricsSystem)
+            .permissioningConfiguration(node.getPermissioningConfiguration())
             .build();
 
     nodeExecutor.submit(runner::execute);

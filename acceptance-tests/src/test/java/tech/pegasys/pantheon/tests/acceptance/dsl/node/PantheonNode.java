@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.config.PermissioningConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
@@ -68,6 +69,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
   private final MiningParameters miningParameters;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
+  private final PermissioningConfiguration permissioningConfiguration;
   private final GenesisConfigProvider genesisConfigProvider;
   private final boolean devMode;
 
@@ -80,6 +82,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
       final MiningParameters miningParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
+      final PermissioningConfiguration permissioningConfiguration,
       final boolean devMode,
       final GenesisConfigProvider genesisConfigProvider,
       final int p2pPort)
@@ -91,6 +94,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
+    this.permissioningConfiguration = permissioningConfiguration;
     this.genesisConfigProvider = genesisConfigProvider;
     this.devMode = devMode;
     LOG.info("Created PantheonNode {}", this.toString());
@@ -312,6 +316,10 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
 
   public boolean isDevMode() {
     return devMode;
+  }
+
+  PermissioningConfiguration getPermissioningConfiguration() {
+    return permissioningConfiguration;
   }
 
   @Override
