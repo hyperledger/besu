@@ -30,6 +30,7 @@ dependencies {
   implementation project(':crypto')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
+  implementation project(':ethereum:permissioning')
   implementation project(':metrics')
   implementation project(':services:kvstore')
 

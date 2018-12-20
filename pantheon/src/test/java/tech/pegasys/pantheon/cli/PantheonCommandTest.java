@@ -534,6 +534,40 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void callingWithAccountsWhitelistOptionButNoValueMustNotError() {
+    parseCommand("--accounts-whitelist");
+
+    verify(mockRunnerBuilder)
+        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(permissioningConfigurationArgumentCaptor.getValue().getAccountWhitelist()).isEmpty();
+    assertThat(permissioningConfigurationArgumentCaptor.getValue().isAccountWhitelistSet())
+        .isTrue();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void accountsWhitelistOptionMustBeUsed() {
+    final String[] accounts = {"1111111111111111", "2222222222222222", "ffffffffffffffff"};
+    parseCommand("--accounts-whitelist", String.join(",", accounts));
+
+    verify(mockRunnerBuilder)
+        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(permissioningConfigurationArgumentCaptor.getValue().getAccountWhitelist())
+        .containsExactlyInAnyOrder(accounts);
+    assertThat(permissioningConfigurationArgumentCaptor.getValue().isAccountWhitelistSet())
+        .isTrue();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void nodesWhitelistOptionMustIncludeBootnodes() {
     parseCommand(
         "--bootnodes",

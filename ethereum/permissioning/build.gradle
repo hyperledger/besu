@@ -14,7 +14,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'pantheon-eth'
+  baseName 'pantheon-permissioning'
   manifest {
     attributes(
       'Specification-Title': baseName,
@@ -26,25 +26,8 @@ jar {
 }
 
 dependencies {
-  implementation project(':ethereum:core')
-  implementation project(':ethereum:p2p')
-  implementation project(':ethereum:rlp')
-  implementation project(':ethereum:permissioning')
-  implementation project(':metrics')
-  implementation project(':services:kvstore')
-
-  implementation 'io.vertx:vertx-core'
-  implementation 'com.google.guava:guava'
-
-  testImplementation project(':config')
-  testImplementation project(':crypto')
-  testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
-  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation project(':ethereum:mock-p2p')
-  testImplementation project(':testutil')
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
 }

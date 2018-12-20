@@ -12,9 +12,9 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.permissioning;
 
-import tech.pegasys.pantheon.ethereum.p2p.config.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 
 import java.net.URI;
 import java.util.ArrayList;
