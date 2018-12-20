@@ -98,17 +98,6 @@ public class BlockchainQueries {
   }
 
   /**
-   * Returns the nonce of the given account at a specific block number.
-   *
-   * @param address The address of the account being queried.
-   * @param blockNumber The block number being queried.
-   * @return The nonce of the account.
-   */
-  public UInt256 getAccountNonce(final Address address, final long blockNumber) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
    * Returns the balance of the given account at a specific block number.
    *
    * @param address The address of the account being queried.
@@ -178,15 +167,6 @@ public class BlockchainQueries {
         .getBlockBody(blockHeaderHash)
         .map(body -> body.getTransactions().size())
         .orElse(-1);
-  }
-
-  /**
-   * Returns the number of transactions in the latest block.
-   *
-   * @return The number of transactions contained in the latest block.
-   */
-  public Optional<Integer> getTransactionCount() {
-    throw new UnsupportedOperationException();
   }
 
   /**
@@ -467,16 +447,6 @@ public class BlockchainQueries {
     }
     return new TransactionWithMetadata(
         txs.get(txIndex), header.getNumber(), blockHeaderHash, txIndex);
-  }
-
-  /**
-   * Returns the transaction at the given index for the latest block.
-   *
-   * @param txIndex The index of the transaction to return.
-   * @return The transaction at the specified location.
-   */
-  public Optional<TransactionWithMetadata> transactionByIndex(final int txIndex) {
-    throw new UnsupportedOperationException();
   }
 
   /**
