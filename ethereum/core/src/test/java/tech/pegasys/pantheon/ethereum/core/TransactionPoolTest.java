@@ -30,6 +30,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT;
 import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.NONCE_TOO_LOW;
+import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED;
 import static tech.pegasys.pantheon.ethereum.mainnet.ValidationResult.valid;
 
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
@@ -40,6 +41,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
+import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.List;
@@ -70,6 +72,8 @@ public class TransactionPoolTest {
   private final Transaction transaction2 = createTransaction(2);
   private TransactionPool transactionPool;
   private long genesisBlockGasLimit;
+  private final AccountWhitelistController accountWhitelistController =
+      mock(AccountWhitelistController.class);
 
   @Before
   public void setUp() {
@@ -353,6 +357,45 @@ public class TransactionPoolTest {
   public void shouldNotNotifyBatchListenerIfNoTransactionsAreAdded() {
     transactionPool.addRemoteTransactions(emptyList());
     verifyZeroInteractions(batchAddedListener);
+  }
+
+  @Test
+  public void shouldAllowWhitelistedTransactionWhenWhitelistEnabled() {
+    transactionPool.setAccountWhitelist(accountWhitelistController);
+    givenTransactionIsValid(transaction1);
+
+    when(accountWhitelistController.isAccountWhiteListSet()).thenReturn(true);
+    when(accountWhitelistController.contains(transaction1.getSender().toString())).thenReturn(true);
+
+    assertThat(transactionPool.addLocalTransaction(transaction1)).isEqualTo(valid());
+
+    assertTransactionPending(transaction1);
+  }
+
+  @Test
+  public void shouldRejectNonWhitelistedTransactionWhenWhitelistEnabled() {
+    transactionPool.setAccountWhitelist(accountWhitelistController);
+    givenTransactionIsValid(transaction1);
+
+    when(accountWhitelistController.isAccountWhiteListSet()).thenReturn(true);
+    when(accountWhitelistController.contains(transaction1.getSender().toString()))
+        .thenReturn(false);
+
+    assertThat(transactionPool.addLocalTransaction(transaction1))
+        .isEqualTo(ValidationResult.invalid(TX_SENDER_NOT_AUTHORIZED));
+
+    assertTransactionNotPending(transaction1);
+    verifyZeroInteractions(batchAddedListener);
+  }
+
+  @Test
+  public void shouldAllowTransactionWhenAccountWhitelistControllerIsNotPresent() {
+    givenTransactionIsValid(transaction1);
+    assertThat(transactionPool.useWhitelist()).isFalse();
+
+    assertThat(transactionPool.addLocalTransaction(transaction1)).isEqualTo(valid());
+
+    assertTransactionPending(transaction1);
   }
 
   private void assertTransactionPending(final Transaction t) {

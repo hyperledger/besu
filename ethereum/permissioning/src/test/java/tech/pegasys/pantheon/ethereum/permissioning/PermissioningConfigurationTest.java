@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.p2p.config;
+package tech.pegasys.pantheon.ethereum.permissioning;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,6 +32,8 @@ public class PermissioningConfigurationTest {
     final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
     assertThat(configuration.getNodeWhitelist()).isEmpty();
     assertThat(configuration.isNodeWhitelistSet()).isFalse();
+    assertThat(configuration.getAccountWhitelist()).isEmpty();
+    assertThat(configuration.isAccountWhitelistSet()).isFalse();
   }
 
   @Test
@@ -43,7 +45,7 @@ public class PermissioningConfigurationTest {
   }
 
   @Test
-  public void setNodeWhiteListPassingNullShouldNotChangeWhitelistSetFlag() {
+  public void setNodeWhiteListPassingNull() {
     final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
     configuration.setNodeWhitelist(null);
     assertThat(configuration.getNodeWhitelist()).isEmpty();
@@ -51,9 +53,19 @@ public class PermissioningConfigurationTest {
   }
 
   @Test
-  public void contains() {
+  public void setAccountWhitelist() {
+    final String[] accounts = {"1111111111111111", "2222222222222222", "ffffffffffffffff"};
     final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
-    configuration.setNodeWhitelist(Arrays.asList(nodes));
-    assertThat(configuration.contains(URI.create("enode://001@123:4567"))).isTrue();
+    configuration.setAccountWhitelist(Arrays.asList(accounts));
+    assertThat(configuration.getAccountWhitelist()).containsExactlyInAnyOrder(accounts);
+    assertThat(configuration.isAccountWhitelistSet()).isTrue();
+  }
+
+  @Test
+  public void setAccountWhiteListPassingNull() {
+    final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
+    configuration.setAccountWhitelist(null);
+    assertThat(configuration.getAccountWhitelist()).isEmpty();
+    assertThat(configuration.isAccountWhitelistSet()).isFalse();
   }
 }

@@ -18,7 +18,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
-import tech.pegasys.pantheon.ethereum.p2p.config.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController;
@@ -26,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;

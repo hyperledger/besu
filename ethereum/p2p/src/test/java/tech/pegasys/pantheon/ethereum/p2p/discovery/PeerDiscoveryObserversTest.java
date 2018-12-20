@@ -19,11 +19,11 @@ import static org.awaitility.Awaitility.await;
 import static tech.pegasys.pantheon.ethereum.p2p.NetworkingTestHelper.configWithRandomPorts;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
-import tech.pegasys.pantheon.ethereum.p2p.config.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 
 import java.util.ArrayList;
 import java.util.Collections;

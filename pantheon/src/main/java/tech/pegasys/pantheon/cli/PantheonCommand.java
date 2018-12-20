@@ -35,9 +35,9 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
-import tech.pegasys.pantheon.ethereum.p2p.config.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.util.InvalidConfigurationException;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
@@ -404,12 +404,24 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     names = {"--nodes-whitelist"},
     paramLabel = "<enode://id@host:port>",
     description =
-        "Comma separated enode URLs for permissioned networks. Not intended to be used with mainnet or public testnets.",
+        "Comma separated enode URLs for permissioned networks. "
+            + "Not intended to be used with mainnet or public testnets.",
     split = ",",
     arity = "0..*",
     converter = EnodeToURIPropertyConverter.class
   )
   private final Collection<URI> nodesWhitelist = null;
+
+  @Option(
+    names = {"--accounts-whitelist"},
+    paramLabel = "<hex string of account public key>",
+    description =
+        "Comma separated hex strings of account public keys "
+            + "for permissioned/role-based transactions. You may specify an empty list.",
+    split = ",",
+    arity = "0..*"
+  )
+  private final Collection<String> accountsWhitelist = null;
 
   public PantheonCommand(
       final BlockImporter blockImporter,
@@ -570,6 +582,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     final PermissioningConfiguration permissioningConfiguration =
         PermissioningConfiguration.createDefault();
     permissioningConfiguration.setNodeWhitelist(nodesWhitelist);
+    permissioningConfiguration.setAccountWhitelist(accountsWhitelist);
     return permissioningConfiguration;
   }
 

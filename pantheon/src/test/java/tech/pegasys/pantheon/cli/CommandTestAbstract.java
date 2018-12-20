@@ -22,7 +22,7 @@ import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
-import tech.pegasys.pantheon.ethereum.p2p.config.PermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.BlockImporter;
 
 import java.io.ByteArrayOutputStream;

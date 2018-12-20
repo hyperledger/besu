@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.p2p.config;
+package tech.pegasys.pantheon.ethereum.permissioning;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -19,7 +19,9 @@ import java.util.List;
 
 public class PermissioningConfiguration {
   private List<URI> nodeWhitelist;
+  private List<String> accountWhitelist;
   private boolean nodeWhitelistSet;
+  private boolean accountWhitelistSet;
 
   public List<URI> getNodeWhitelist() {
     return nodeWhitelist;
@@ -28,6 +30,7 @@ public class PermissioningConfiguration {
   public static PermissioningConfiguration createDefault() {
     final PermissioningConfiguration config = new PermissioningConfiguration();
     config.nodeWhitelist = new ArrayList<>();
+    config.accountWhitelist = new ArrayList<>();
     return config;
   }
 
@@ -42,7 +45,18 @@ public class PermissioningConfiguration {
     return nodeWhitelistSet;
   }
 
-  public boolean contains(final URI node) {
-    return !isNodeWhitelistSet() || nodeWhitelist.contains(node);
+  public List<String> getAccountWhitelist() {
+    return accountWhitelist;
+  }
+
+  public void setAccountWhitelist(final Collection<String> accountWhitelist) {
+    if (accountWhitelist != null) {
+      this.accountWhitelist.addAll(accountWhitelist);
+      this.accountWhitelistSet = true;
+    }
+  }
+
+  public boolean isAccountWhitelistSet() {
+    return accountWhitelistSet;
   }
 }
