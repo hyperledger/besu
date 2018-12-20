@@ -22,42 +22,6 @@
 
 {% import "partials/language.html" as lang with context %}
 
-<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
-
-<style>
-  .feedback{
-    padding: 1em;
-    text-align: center;
-    background-color: {{config.extra.support.footer_layout.background_color}};
-  }
-  .feedback a {
-    color: {{config.extra.support.footer_layout.links_color}} !important;
-  }
-  .md-nav--secondary .md-nav__item .md-nav__item a.md-nav__link {
-    font-weight: normal;
-    font-size: inherit;
-  }
-  .md-nav--secondary a.md-nav__link {
-      font-weight: bolder;
-      <!--font-size: larger;-->
-  }
-  .rst-versions {
-    border-color: lightseagreen !important;
-    border-style: solid !important;
-    font-size: large;
-  }
-
-  .rst-versions .rst-current-version {
-    background-color: #475c64 !important;
-  }
-
-  .headerlink {
-    font-family: "Font Awesome 5 Free";
-    font-weight: 900;
-    font-size: small;
-  }
-</style>
-
 <div class="feedback md-typeset">
       Questions or feedback? You can discuss issues and obtain free support on <a href="{{config.extra.support.gitter}}">Pegasys Pantheon Gitter room</a>.
       <br/>
@@ -139,8 +103,3 @@
     </div>
   </div>
 </footer>
-
-<script
-    src="https://code.jquery.com/jquery-1.12.4.min.js"
-    integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="
-    crossorigin="anonymous"></script>
