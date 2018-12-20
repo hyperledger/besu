@@ -202,8 +202,7 @@ public class JsonRpcMethodsFactory {
           enabledMethods,
           new NetVersion(protocolSchedule.getChainId()),
           new NetListening(p2pNetwork),
-          new NetPeerCount(p2pNetwork),
-          new AdminPeers(p2pNetwork));
+          new NetPeerCount(p2pNetwork));
     }
     if (rpcApis.contains(RpcApis.WEB3)) {
       addMethods(enabledMethods, new Web3ClientVersion(clientVersion), new Web3Sha3());
@@ -216,6 +215,9 @@ public class JsonRpcMethodsFactory {
           new MinerStop(miningCoordinator),
           minerSetCoinbase,
           new MinerSetEtherbase(minerSetCoinbase));
+    }
+    if (rpcApis.contains(RpcApis.ADMIN)) {
+      addMethods(enabledMethods, new AdminPeers(p2pNetwork));
     }
     // @formatter:off
     return enabledMethods;

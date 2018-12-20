@@ -94,7 +94,7 @@ public class JsonRpcHttpServiceTest {
   protected static BlockchainQueries blockchainQueries;
   protected static Synchronizer synchronizer;
   protected static final Collection<RpcApi> JSON_RPC_APIS =
-      Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
+      Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3, RpcApis.ADMIN);
   protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
 
   @BeforeClass
