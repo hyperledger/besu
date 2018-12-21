@@ -2,7 +2,7 @@
 ## Checkout source code
 
 ```
-git clone --recursive git@github.com:PegasysEng/Pantheon.git
+git clone --recursive git@github.com:PegasysEng/pantheon.git
 ```
 OR
 ```
