@@ -16,7 +16,6 @@ site_description: Pantheon Java Ethereum client documentation.
 site_author: Pantheon community
 copyright: Pantheon and its documentation are licensed under Apache 2.0 license /
   This <a href="https://readthedocs.org/">Readthedocs.org</a> documentation is maintained with love by <a href="https://pegasys.tech/">PegaSys</a>.
-google_analytics: ['UA-117921923-2', 'doc.pantheon.pegasys.tech']
 
 #extra project info and template customisation
 extra:
@@ -26,6 +25,9 @@ extra:
     footer_layout:
       background_color: lightseagreen
       links_color: white
+  google:
+    analytics_id: 'UA-117921923-2'
+    site_verification: 'za1cLzyS6LXDGO-pMzvfQdYTZ0Zc67uZtY0asA4YXZ0'
 
 
 # Repository
