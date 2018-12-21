@@ -4,7 +4,7 @@ description: Pantheon JSON-RPC API methods reference
 # JSON-RPC API Methods
 
 !!! danger "Breaking Change in v0.8.3"
-    From v0.8.3, incoming HTTP requests are only accepted from hostnames specified using the [`--host-whitelist`](Using-JSON-RPC-API.md#breaking-change-in-v083) option. 
+    From v0.8.3, incoming HTTP requests are only accepted from hostnames specified using the [`--host-whitelist`](Using-JSON-RPC-API.md) option. 
 
 The following lists the Pantheon JSON-RPC API commands:
 
@@ -26,10 +26,10 @@ Properties of the remote node object are:
 
 * `version` - P2P protocol version
 * `name` - Client name
-* `caps` - P2P message capabilities 
+* `caps` - List of Ethereum sub-protocol capabilities 
 * `network` - Addresses of local node and remote node
-* `port` - Port
-* `id` - Node public key. Excluding the `0x` prefix, the node public key is the ID in the enode URL `enode://<id ex 0x>@<host:port>`. 
+* `port` - Port on the remote node on which P2P peer discovery is listening
+* `id` - Node public key. Excluding the `0x` prefix, the node public key is the ID in the enode URL `enode://<id ex 0x>@<host>:<port>`. 
 
 !!! example
     ```bash tab="curl HTTP request"
@@ -46,18 +46,22 @@ Properties of the remote node object are:
       "id" : 1,
       "result" : [ 
         {
-          "version" : "0x5",
-          "name" : "Geth/v1.8.20-unstable-92639b67/linux-amd64/go1.11.1",
-          "caps" : [
-            "eth/62", 
-            "eth/63"
-            ],
-          "network" : {
-            "localAddress" : "192.168.1.229:51279",
-            "remoteAddress" : "52.3.158.184:30303"
-          },
-          "port" : "0x0",
-          "id" : "0x343149e4feefa15d882d9fe4ac7d88f885bd05ebb735e547f12e12080a9fa07c8014ca6fd7f373123488102fe5e34111f8509cf0b7de3f5b44339c9f25e87cb8"
+          "version": "0x5",
+          "name": "Parity-Ethereum/v2.3.0-nightly-1c2e121-20181116/x86_64-linux-gnu/rustc1.30.0",
+          "caps": [
+             "eth/62",
+             "eth/63",
+             "par/1",
+             "par/2",
+             "par/3",
+             "pip/1"
+          ],
+           "network": {
+              "localAddress": "192.168.1.229:50115",
+              "remoteAddress": "168.61.153.255:40303"
+           },
+           "port": "0x9d6f",
+           "id": "0xea26ccaf0867771ba1fec32b3589c0169910cb4917017dba940efbef1d2515ce864f93a9abc846696ebad40c81de7c74d7b2b46794a71de8f95a0d019f494ff3"
         } 
       ]
     }
@@ -277,7 +281,7 @@ None
 Returns the [chain ID](../Configuring-Pantheon/NetworkID-And-ChainID.md).
 
 !!!note
-    This method is only available from v0.8.2 or when you [build from source](../Installation/Build-From-Source.md). 
+    This method is only available from v0.8.2. 
 
 **Parameters**
 
@@ -404,7 +408,7 @@ None
 Returns a list of account addresses that the client owns.
 
 !!!note
-    This method returns an empty object because Pantheon [does not support account management](Using-JSON-RPC-API.md#account-management-not-supported-by-pantheon).
+    This method returns an empty object because Pantheon [does not support account management](Using-JSON-RPC-API.md#account-management).
 
 **Parameters**
 
@@ -502,7 +506,7 @@ Returns the value of a storage position at a specified address.
 
 `QUANTITY` - Integer index of the storage position.
 
-`QUANTITY|TAG` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](JSON-RPC-API-Objects.md#block-parameter).
+`QUANTITY|TAG` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](Using-JSON-RPC-API.md#block-parameter).
 
 **Returns**
 
@@ -714,7 +718,7 @@ You can interact with contracts using [eth_sendRawTransaction or eth_call](../Us
 To avoid exposing your private key, create signed transactions offline and send the signed transaction data using this method. For information on creating signed transactions and using `eth_sendRawTransaction`, refer to [Using Pantheon](../Using-Pantheon/Transactions.md).  
 
 !!!important
-    Pantheon does not implement [eth_sendTransaction](Using-JSON-RPC-API.md#account-management-not-supported-by-pantheon).
+    Pantheon does not implement [eth_sendTransaction](Using-JSON-RPC-API.md#account-management).
 
 **Parameters**
 
@@ -754,7 +758,7 @@ You can interact with contracts using [eth_sendRawTransaction or eth_call](../Us
 
 *OBJECT* - [Transaction call object](JSON-RPC-API-Objects.md#transaction-call-object).
 
-*QUANTITY|TAG* - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](JSON-RPC-API-Objects.md#block-parameter).
+*QUANTITY|TAG* - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](Using-JSON-RPC-API.md#block-parameter).
 
 **Returns**
 
@@ -1098,78 +1102,47 @@ Returns the receipt of a transaction by transaction hash. Receipts for pending t
 
 ### eth_newFilter
 
-Creates a topic filter with the specified options to notify (log) when the state changes. To determine whether the state has changed, call [eth_getFilterChanges](#eth_getfilterchanges).
+Creates a logs filter to log state changes. To poll for state changes, use [eth_getFilterChanges](#eth_getfilterchanges).
 
 **Parameters**
 
 `Object` - [Filter options object](JSON-RPC-API-Objects.md#filter-options-object). 
 
-!!!note
-    Topics are order-dependent. A transaction with a log containing topics `[A, B]` would be matched with the following topic filters:
-    
+Topics are order-dependent. A transaction with a log containing topics `[A, B]` would be matched with the following topic filters:
+
     * [] - Match any topic
     * [A] - Match A in first position (and any topic thereafter)
     * [null, B] - Match any topic in first position AND B in second position (and any topic thereafter)
     * [A, B] - Match A in first position AND B in second position (and any topic thereafter)
     * [[A, B], [A, B]] - Match (A OR B) in first position AND (A OR B) in second position (and any topic thereafter)
 
-    For example, params could be specified as follows:
-    !!!example
-        ```json
-        [{
-          "fromBlock": "earliest",
-          "toBlock": "0x4",
-          "address": "0xc94770007dda54cF92009BFF0dE90c06F603a09f",
-          "topics": ["0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b", null, ["0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b", "0x0000000000000000000000000aff3454fce5edbc8cca8697c15331677e6ebccc"]]
-        }]
-        ```
-
+!!!note
+    `fromBlock` and `toBlock` in the filter options object default to `latest`. To obtain logs using `eth_getFilterLogs`, set `fromBlock` and `toBlock` appropriately.
+    
 **Returns**
 
-`result` : *QUANTITY* - Filter ID.
+`data` - Filter ID hash
 
 !!! example
     ```bash tab="curl HTTP request"
-    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_newFilter","params":[{"topics":[]}],"id":53}' <JSON-RPC-http-endpoint:port>
+    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_newFilter","params":[{"fromBlock":"earliest", "toBlock":"latest", "topics":[]}],"id":1}' <JSON-RPC-endpoint:port>
     ```
     
     ```bash tab="wscat WS request"
-    {"jsonrpc":"2.0","method":"eth_newFilter","params":[{"topics":[]}],"id":53}
+    {"jsonrpc":"2.0","method":"eth_newFilter","params":[{"fromBlock":"earliest", "toBlock":"latest", "topics":[]}],"id":1}
     ```
     
     ```json tab="JSON result"
     {
-      "jsonrpc" : "2.0",
-      "id" : 53,
-      "result" : "0x3"
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x1ddf0c00989044e9b41cc0ae40272df3"
     }
     ```
-
-Invalid params error:
-
-!!! example
-    ```bash tab="curl HTTP request"
-    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_newFilter","params":[{"fromBlock": "earliest","toBlock": "latest","address": "0xDD37f65dB31c107F773E82a4F85C693058fEf7a9","topics": []}],"id":53}' <JSON-RPC-http-endpoint:port>
-    ```
     
-    ```bash tab="wscat WS request"
-    {"jsonrpc":"2.0","method":"eth_newFilter","params":[{"fromBlock": "earliest","toBlock": "latest","address": "0xDD37f65dB31c107F773E82a4F85C693058fEf7a9","topics": []}],"id":53}
-    ```
-    
-    ```json tab="JSON result"
-    {
-      "jsonrpc" : "2.0",
-      "id" : 53,
-      "error" : {
-        "code" : -32602,
-        "message" : "Invalid params"
-      }
-    }
-    ```
-
 ### eth_newBlockFilter
 
-Creates a filter in the node that notifies when a new block arrives. To determine whether the state has changed, call [eth_getFilterChanges](#eth_getfilterchanges).
+Creates a filter to log when a new block arrives. To poll for new blocks, use [eth_getFilterChanges](#eth_getfilterchanges).
 
 **Parameters**
 
@@ -1177,28 +1150,28 @@ None
 
 **Returns**
 
-`QUANTITY` - Hexadecimal integer filter ID. Each time you call this method, it creates a new filter, and the index is incremented by 1.
+`data` - Filter ID hash
 
 !!! example
     ```bash tab="curl HTTP request"
-    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_newBlockFilter","params":[],"id":53}' <JSON-RPC-http-endpoint:port>
+    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_newBlockFilter","params":[],"id":1}' <JSON-RPC-http-endpoint:port>
     ```
     
     ```bash tab="wscat WS request"
-    {"jsonrpc":"2.0","method":"eth_newBlockFilter","params":[],"id":53}
+    {"jsonrpc":"2.0","method":"eth_newBlockFilter","params":[],"id":1}
     ```
     
     ```json tab="JSON result"
     {
-      "jsonrpc" : "2.0",
-      "id" : 53,
-      "result" : "0x3"
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x9d78b6780f844228b96ecc65a320a825"
     }
     ```
 
 ### eth_newPendingTransactionFilter
 
-Creates a filter in the node that notifies when new pending transactions arrive. To check if the state has changed, call [eth_getFilterChanges](#eth_getfilterchanges).
+Creates a filter to log when new pending transactions arrive. To poll for new pending transactions, use [eth_getFilterChanges](#eth_getfilterchanges).
 
 **Parameters**
 
@@ -1206,35 +1179,34 @@ None
 
 **Returns**
 
-`QUANTITY` - Hexadecimal integer filter ID. Each time you call this method, it creates a new filter, and the index is incremented by 1.
+`data` - Filter ID hash
 
 !!! example
     ```bash tab="curl HTTP request"
-    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_newPendingTransactionFilter","params":[],"id":53}' <JSON-RPC-http-endpoint:port>
+    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_newPendingTransactionFilter","params":[],"id":1}' <JSON-RPC-http-endpoint:port>
     ```
     
     ```bash tab="wscat WS request"
-    {"jsonrpc":"2.0","method":"eth_newPendingTransactionFilter","params":[],"id":53}
+    {"jsonrpc":"2.0","method":"eth_newPendingTransactionFilter","params":[],"id":1}
     ```
     
     ```json tab="JSON result"
     {
-      "jsonrpc" : "2.0",
-      "id" : 53,
-      "result" : "0x4"
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x443d6a77c4964707a8554c92f7e4debd"
     }
     ```
 
 ### eth_uninstallFilter
 
-Uninstalls a filter with the specified ID. This method should always be called when notification is no longer needed. Note that filters time out when they are not requested with [eth_getFilterChanges](#eth_getfilterchanges) for a period of time.
+Uninstalls a filter with the specified ID. When a filter is no longer required, call this method.
 
-This method deletes filters of any type: block filters, pending transaction filters, and state (topic) filters.
-
+Filters time out when they are not requested by [eth_getFilterChanges](#eth_getfilterchanges) for a period of time.
 
 **Parameters**
 
-`QUANTITY` - Hexadecimal integer filter ID specifying the filter to be deleted.
+`data` - Filter ID hash
 
 **Returns**
 
@@ -1244,75 +1216,133 @@ This method deletes filters of any type: block filters, pending transaction filt
     The following request deletes the block filter with an ID of 0x4:
 
     ```bash tab="curl HTTP request"
-    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_uninstallFilter","params":["0x4"],"id":53}' <JSON-RPC-http-endpoint:port>
+    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_uninstallFilter","params":["0x70355a0b574b437eaa19fe95adfedc0a"],"id":1}' <JSON-RPC-http-endpoint:port>
     ```
     
     ```bash tab="wscat WS request"
-    {"jsonrpc":"2.0","method":"eth_uninstallFilter","params":["0x4"],"id":53}
+    {"jsonrpc":"2.0","method":"eth_uninstallFilter","params":["0x70355a0b574b437eaa19fe95adfedc0a"],"id":1}
     ```
     
     ```json tab="JSON result"
     {
       "jsonrpc" : "2.0",
-      "id" : 53,
+      "id" : 1,
       "result" : true
     }
     ```
 
 ### eth_getFilterChanges
 
-Polls the specified filter and returns an array of logs that have occurred since the last poll.
+Polls the specified filter and returns an array of changes that have occurred since the last poll.
 
 **Parameters**
 
-`QUANTITY` - Hexadecimal integer filter ID.
+`data` - Filter ID hash
 
 **Returns**
 
-`result` : `Array of Object` - List of logs, or an empty array if nothing has changed since the last poll.
+`result` : `Array of Object` - If nothing has changed since the last poll, an empty list. Otherwise:
 
-* For filters created with `eth_newBlockFilter`, returns 32-byte *DATA* block hashes; for example `["0x3454645634534..."]`.
-* For filters created with `eth_newPendingTransactionFilter`, returns transaction hashes (32-byte *DATA*); for example `["0x6345343454645..."]`.
+* For filters created with `eth_newBlockFilter`, returns block hashes.
+* For filters created with `eth_newPendingTransactionFilter`, returns transaction hashes.
 * For filters created with `eth_newFilter`, returns [log objects](JSON-RPC-API-Objects.md#log-object). 
 
 !!! example
     ```bash tab="curl HTTP request"
-    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getFilterChanges","params":["0xa"]:"id":53}' <JSON-RPC-http-endpoint:port>
+    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getFilterChanges","params":["0xf8bf5598d9e04fbe84523d42640b9b0e"],"id":1}' <JSON-RPC-http-endpoint:port>
     ```
     
     ```bash tab="wscat WS request"
-    {"jsonrpc":"2.0","method":"eth_getFilterChanges","params":["0xa"]:"id":53}
+    {"jsonrpc":"2.0","method":"eth_getFilterChanges","params":["0xf8bf5598d9e04fbe84523d42640b9b0e"],"id":1}
     ```
     
     ```json tab="JSON result"
+    
+    Example result from a filter created with `eth_newBlockFilter`:
     {
-      "jsonrpc" : "2.0",
-      "id" : 53,
-      "result" : [ ]
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": [
+            "0xda2bfe44bf85394f0d6aa702b5af89ae50ae22c0928c18b8903d9269abe17e0b",
+            "0x88cd3a37306db1306f01f7a0e5b25a9df52719ad2f87b0f88ee0e6753ed4a812",
+            "0x4d4c731fe129ff32b425e6060d433d3fde278b565bbd1fd624d5a804a34f8786"
+        ]
     }
+    
+    Example result from a filter created with `eth_newPendingTransactionFilter`:
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": [
+            "0x1e977049b6db09362da09491bee3949d9362080ce3f4fc19721196d508580d46",
+            "0xa3abc4b9a4e497fd58dc59cdff52e9bb5609136bcd499e760798aa92802769be"
+        ]
+    }
+    
+    Example result from a filter created with `eth_newFilter`:
+    
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": [
+            {
+                "logIndex": "0x0",
+                "removed": false,
+                "blockNumber": "0x233",
+                "blockHash": "0xfc139f5e2edee9e9c888d8df9a2d2226133a9bd87c88ccbd9c930d3d4c9f9ef5",
+                "transactionHash": "0x66e7a140c8fa27fe98fde923defea7562c3ca2d6bb89798aabec65782c08f63d",
+                "transactionIndex": "0x0",
+                "address": "0x42699a7612a82f1d9c36148af9c77354759b210b",
+                "data": "0x0000000000000000000000000000000000000000000000000000000000000004",
+                "topics": [
+                    "0x04474795f5b996ff80cb47c148d4c5ccdbe09ef27551820caa9c2f8ed149cce3"
+                ]
+            },
+            {
+                "logIndex": "0x0",
+                "removed": false,
+                "blockNumber": "0x238",
+                "blockHash": "0x98b0ec0f9fea0018a644959accbe69cd046a8582e89402e1ab0ada91cad644ed",
+                "transactionHash": "0xdb17aa1c2ce609132f599155d384c0bc5334c988a6c368056d7e167e23eee058",
+                "transactionIndex": "0x0",
+                "address": "0x42699a7612a82f1d9c36148af9c77354759b210b",
+                "data": "0x0000000000000000000000000000000000000000000000000000000000000007",
+                "topics": [
+                    "0x04474795f5b996ff80cb47c148d4c5ccdbe09ef27551820caa9c2f8ed149cce3"
+                ]
+            }
+        ]
+    }
+
     ```
+    
+    
 
 ### eth_getFilterLogs
 
-Returns an array of logs matching the filter with the specified ID.
+Returns an array of logs for the specified filter.
+
+!!!note
+     `eth_getFilterLogs` is only used for filters created with `eth_newFilter`. 
+      
+      You can use `eth_getLogs` to specify a filter object and get logs without without creating a filter.
 
 **Parameters**
 
-`QUANTITY` - Integer representing the filter ID.
+`data` - Filter ID hash
 
 **Returns**
 
-Same as [eth_getFilterChanges](#eth_getfilterchanges).
+`array` - [Log objects](JSON-RPC-API-Objects.md#log-object)
 
 !!! example
-    The following example requests logs for filter ID 0x16 (22 decimal):
 
     ```bash tab="curl HTTP request"
-    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getFilterLogs","params":["0x3"]"id":53}' <JSON-RPC-http-endpoint:port>
+    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getFilterLogs","params":["0x5ace5de3985749b6a1b2b0d3f3e1fb69"],"id":1}' <JSON-RPC-http-endpoint:port>
     ```
     
     ```bash tab="wscat WS request"
-    {"jsonrpc":"2.0","method":"eth_getFilterLogs","params":["0x3"]"id":53}
+    {"jsonrpc":"2.0","method":"eth_getFilterLogs","params":["0x5ace5de3985749b6a1b2b0d3f3e1fb69"],"id":1}
     ```
     
     ```json tab="JSON result"
@@ -1322,20 +1352,30 @@ Same as [eth_getFilterChanges](#eth_getfilterchanges).
       "result" : [ {
         "logIndex" : "0x0",
         "removed" : false,
-        "blockNumber" : "0x14427",
-        "blockHash" : "0x677bf4b962464e6dfd548d6a30b6c703dd78c7cc3602825a7013a6e90a001d2a",
-        "transactionHash" : "0x7bf9876a9de3c0add38495e21a17b96c81b3f18e0990a4a3aecdf9f47fea0eed",
+        "blockNumber" : "0xb3",
+        "blockHash" : "0xe7cd776bfee2fad031d9cc1c463ef947654a031750b56fed3d5732bee9c61998",
+        "transactionHash" : "0xff36c03c0fba8ac4204e4b975a6632c862a3f08aa01b004f570cc59679ed4689",
         "transactionIndex" : "0x0",
-        "address" : "0xe8fe77d1576d0972d453b49bfaa84d716173d133",
-        "data" : "0x0000000000000000000000001046c9bdec0e634fbd7cf91afebd93cc854432b10000000000000000000000002101416eeaf73acb66d124f79efde9631662a83a0000000000000000000000006f72045702a34c473da863945221965c61528bd3",
-        "topics" : [ "0xc36800ebd6079fdafc3a7100d0d1172815751804a6d1b7eb365b85f6c9c80e61", "0x000000000000000000000000b344324aa2a82a6fda8459e40923e1fd65bfac36" ]
+        "address" : "0x2e1f232a9439c3d459fceca0beef13acc8259dd8",
+        "data" : "0x0000000000000000000000000000000000000000000000000000000000000003",
+        "topics" : [ "0x04474795f5b996ff80cb47c148d4c5ccdbe09ef27551820caa9c2f8ed149cce3" ]
+      }, {
+        "logIndex" : "0x0",
+        "removed" : false,
+        "blockNumber" : "0xb6",
+        "blockHash" : "0x3f4cf35e7ed2667b0ef458cf9e0acd00269a4bc394bb78ee07733d7d7dc87afc",
+        "transactionHash" : "0x117a31d0dbcd3e2b9180c40aca476586a648bc400aa2f6039afdd0feab474399",
+        "transactionIndex" : "0x0",
+        "address" : "0x2e1f232a9439c3d459fceca0beef13acc8259dd8",
+        "data" : "0x0000000000000000000000000000000000000000000000000000000000000005",
+        "topics" : [ "0x04474795f5b996ff80cb47c148d4c5ccdbe09ef27551820caa9c2f8ed149cce3" ]
       } ]
     }
     ```
 
 ### eth_getLogs
 
-Returns an array of all logs matching a specified filter object.
+Returns an array of logs matching a specified filter object.
 
 **Parameters**
 
@@ -1343,20 +1383,17 @@ Returns an array of all logs matching a specified filter object.
 
 **Returns**
 
-Same as [eth_getFilterChanges](#eth_getfilterchanges).
-
-!!!note
-    You must be synchronized to at least the requested block for the request to return the logs.
+`array` - [Log objects](JSON-RPC-API-Objects.md#log-object)
 
 !!! example
-    The request above returns the logs for the 82893 block on the Ropsten testnet. You can also view this [block](https://ropsten.etherscan.io/block/82983) on Etherscan. 
+    The following request returns all logs for the contract at address `0x2e1f232a9439c3d459fceca0beef13acc8259dd8`. 
 
     ```bash tab="curl HTTP request"
-    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getLogs","params":[{"blockhash":"0x677bf4b962464e6dfd548d6a30b6c703dd78c7cc3602825a7013a6e90a001d2a"}], "id":1}' <JSON-RPC-http-endpoint:port>
+    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getLogs","params":[{"fromBlock":"earliest", "toBlock":"latest", "address": "0x2e1f232a9439c3d459fceca0beef13acc8259dd8", "topics":[]}], "id":1}' <JSON-RPC-http-endpoint:port>
     ```
     
     ```bash tab="wscat WS request"
-    {"jsonrpc":"2.0","method":"eth_getLogs","params":[{"blockhash":"0x677bf4b962464e6dfd548d6a30b6c703dd78c7cc3602825a7013a6e90a001d2a"}], "id":1}
+    {"jsonrpc":"2.0","method":"eth_getLogs","params":[{"fromBlock":"earliest", "toBlock":"latest", "address": "0x2e1f232a9439c3d459fceca0beef13acc8259dd8", "topics":[]}], "id":1}
     ```
     
     ```json tab="JSON result"
@@ -1366,13 +1403,23 @@ Same as [eth_getFilterChanges](#eth_getfilterchanges).
       "result" : [ {
         "logIndex" : "0x0",
         "removed" : false,
-        "blockNumber" : "0x14427",
-        "blockHash" : "0x677bf4b962464e6dfd548d6a30b6c703dd78c7cc3602825a7013a6e90a001d2a",
-        "transactionHash" : "0x7bf9876a9de3c0add38495e21a17b96c81b3f18e0990a4a3aecdf9f47fea0eed",
+        "blockNumber" : "0xb3",
+        "blockHash" : "0xe7cd776bfee2fad031d9cc1c463ef947654a031750b56fed3d5732bee9c61998",
+        "transactionHash" : "0xff36c03c0fba8ac4204e4b975a6632c862a3f08aa01b004f570cc59679ed4689",
         "transactionIndex" : "0x0",
-        "address" : "0xe8fe77d1576d0972d453b49bfaa84d716173d133",
-        "data" : "0x0000000000000000000000001046c9bdec0e634fbd7cf91afebd93cc854432b10000000000000000000000002101416eeaf73acb66d124f79efde9631662a83a0000000000000000000000006f72045702a34c473da863945221965c61528bd3",
-        "topics" : [ "0xc36800ebd6079fdafc3a7100d0d1172815751804a6d1b7eb365b85f6c9c80e61", "0x000000000000000000000000b344324aa2a82a6fda8459e40923e1fd65bfac36" ]
+        "address" : "0x2e1f232a9439c3d459fceca0beef13acc8259dd8",
+        "data" : "0x0000000000000000000000000000000000000000000000000000000000000003",
+        "topics" : [ "0x04474795f5b996ff80cb47c148d4c5ccdbe09ef27551820caa9c2f8ed149cce3" ]
+      }, {
+        "logIndex" : "0x0",
+        "removed" : false,
+        "blockNumber" : "0xb6",
+        "blockHash" : "0x3f4cf35e7ed2667b0ef458cf9e0acd00269a4bc394bb78ee07733d7d7dc87afc",
+        "transactionHash" : "0x117a31d0dbcd3e2b9180c40aca476586a648bc400aa2f6039afdd0feab474399",
+        "transactionIndex" : "0x0",
+        "address" : "0x2e1f232a9439c3d459fceca0beef13acc8259dd8",
+        "data" : "0x0000000000000000000000000000000000000000000000000000000000000005",
+        "topics" : [ "0x04474795f5b996ff80cb47c148d4c5ccdbe09ef27551820caa9c2f8ed149cce3" ]
       } ]
     }
     ```
@@ -1574,7 +1621,7 @@ If the boolean value is `true`, the proposal is to add a signer. If `false`, the
 ### debug_metrics
 
 !!!note
-    This method is only available only from v0.8.3 or when [building from source](Installation).
+    This method is only available only from v0.8.3.
 
 Returns metrics providing information on the internal operation of Pantheon. 
 

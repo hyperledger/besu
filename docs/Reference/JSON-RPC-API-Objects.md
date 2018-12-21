@@ -67,7 +67,7 @@ Returned by [eth_getFilterChanges](JSON-RPC-API-Methods.md#eth_getfilterchanges)
 
 ## Trace Object
 
-Returned by [debug_traceTransaction](JSON-RPC-API-Methods.md#debug_traceTransaction).
+Returned by [debug_traceTransaction](JSON-RPC-API-Methods.md#debug_tracetransaction).
 
 | Key             | Type    | Value                                                             |
 |-----------------|:-------:|-------------------------------------------------------------------|
@@ -79,7 +79,7 @@ Returned by [debug_traceTransaction](JSON-RPC-API-Methods.md#debug_traceTransact
 
 ### Structured Log Object
 
-Part of the [Trace object](#trace-object). 
+Log information returned as part of the [Trace object](#trace-object). 
 
 | Key                        | Type                         | Value                                                                                                                                                                                                                                                                                                                                               |
 |----------------------------|:----------------------------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

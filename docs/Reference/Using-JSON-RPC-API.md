@@ -5,14 +5,14 @@ description: How to use Pantheon JSON-RPC API
 
 !!!attention "Breaking Change in v0.8.3"
 
-    From v0.8.3, incoming HTTP requests are only accepted from hostnames specified using the [`--host-whitelist`](Pantheon-CLI-Syntax.md#host-whitelist) option.
-    If not specified, the default value for [`--host-whitelist`](Pantheon-CLI-Syntax.md#host-whitelist) is `localhost`. 
+    From v0.8.3, to prevent an issue known as DNS rebinding incoming HTTP requests are only accepted from hostnames specified using the [`--host-whitelist`](Pantheon-CLI-Syntax.md#host-whitelist) option.
+    The default value for [`--host-whitelist`](Pantheon-CLI-Syntax.md#host-whitelist) is `localhost`. 
 
-    If using the URL `http://127.0.0.1` to make JSON-RPC calls, use [`--host-whitelist`](Pantheon-CLI-Syntax.md#host-whitelist) to specify the hostname `127.0.0.1` or update the hostname to `localhost`. 
+    If using the URL `http://127.0.0.1` to make JSON-RPC calls, use [`--host-whitelist`](Pantheon-CLI-Syntax.md#host-whitelist) to specify the hostname `127.0.0.1` or update the hostname in the JSON-RPC call to `localhost`. 
 
     If your application publishes RPC ports, specify the hostnames when starting Pantheon. For example:  
     ```bash
-    pantheon --host-whitelist=foo.com
+    pantheon --host-whitelist=example.com
     ```
  
     Specify `*` or `all` for [`--host-whitelist`](Pantheon-CLI-Syntax.md#host-whitelist) to effectively disable host protection and replicate pre-v0.8.3 behavior.
