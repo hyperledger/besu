@@ -26,7 +26,7 @@ Runs the Pantheon Ethereum full node client.
 List of node IDs with which this node will not peer. The node ID is the public key of the node. You can specify the banned node IDs with or without the `0x` prefix.
   
 !!!info
-    This option is only available from v0.8.2 or when [building from source](../Installation/Build-From-Source.md). 
+    This option is only available from v0.8.2. 
  
 ### bootnodes
 
@@ -138,10 +138,22 @@ When using this option, it is recommended to also set the [`--network-id`](#netw
     If both are specified, the specified genesis file is ignored and the development mode configuration used. 
 
 
+### goerli
+
+```bash tab="Syntax"
+--goerli
+```
+
+Uses the Goerli test network. Default is false.
+
+!!!note
+    This option is only available from v0.8.3.
+
+
 ### host-whitelist
 
 ```bash tab="Syntax"
---host-whitelist=<hostname>[,<hostname>...]...
+--host-whitelist=<hostname>[,<hostname>...]... or * or all
 ```
 
 ```bash tab="Example"
@@ -151,11 +163,10 @@ When using this option, it is recommended to also set the [`--network-id`](#netw
 Comma-separated list of hostnames to allow access to the HTTP JSON-RPC API. Default is `localhost`. 
 
 !!!tip
-    To allow all hostnames, use `*` or `all`. We don't recommend this for production code.
+    To allow all hostnames, use `*` or `all`. We don't recommend allowing all hostnames for production code.
 
 !!!note
-    This option is only available from v0.8.3 or when [building from source](../Installation/Build-From-Source.md).
-    Earlier versions allow access by all hostnames. 
+    This option is only available from v0.8.3. Earlier versions allow access by all hostnames. 
 
 ### max-peers
 
@@ -277,7 +288,7 @@ otherwise, the existing key file specifies the node private key.
     The private key is not encrypted.
   
 !!!note
-    This option is only available from v0.8.2 or when [building from source](../Installation/Build-From-Source.md). 
+    This option is only available from v0.8.2. 
 
 ### nodes-whitelist
 
@@ -294,7 +305,7 @@ If you specify an empty list or [`--nodes-whitelist`](#nodes-whitelist) without 
 
 
 !!!note
-    This option is only available from v0.8.3 or when [building from source](../Installation/Build-From-Source.md). 
+    This option is only available from v0.8.3. 
 
 !!!note
     :construction: Permissioning is not currently supported. Support for permissioning is in active development.
@@ -347,8 +358,7 @@ Uses the Ropsten test network.
 Default is `false`.
 
 !!!note
-    This option is only available only from v0.8.2 or when [building from source](../Installation/Build-From-Source.md). 
-    For v0.8.1, refer to [Ropsten section on Starting Pantheon page](../Getting-Started/Starting-Pantheon.md#run-a-node-on-ropsten-testnet). 
+    This option is only available only from v0.8.2. For v0.8.1, refer to [Starting Pantheon](../Getting-Started/Starting-Pantheon.md#run-a-node-on-ropsten-testnet). 
 
 ### rpc-enabled
 

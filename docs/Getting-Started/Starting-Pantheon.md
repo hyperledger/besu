@@ -19,8 +19,8 @@ To delete the local block data, delete the `database` directory in the `pantheon
 
 ## Genesis Configuration 
 
-Pantheon specifies the genesis configuration, and sets the network ID and bootnodes when connecting to [Mainnet](#run-a-node-on-ethereum-mainnet), 
-[Rinkeby](#run-a-node-on-rinkeby-testnet), and [Ropsten](#run-a-node-on-ropsten-testnet). 
+Pantheon specifies the genesis configuration, and sets the network ID and bootnodes when connecting 
+to [Mainnet](#run-a-node-on-ethereum-mainnet), [Goerli](#run-a-node-on-goerli-testnet), [Rinkeby](#run-a-node-on-rinkeby-testnet), and [Ropsten](#run-a-node-on-ropsten-testnet). 
 
 When [`--dev-mode`](../Reference/Pantheon-CLI-Syntax.md#dev-mode) is specified, Pantheon uses the development mode genesis configuration.
 
@@ -62,7 +62,7 @@ call [JSON-RPC API methods](../Reference/JSON-RPC-API-Methods.md) to confirm the
         }
         ```
 
-## Run a Node on Ethereum  Mainnet 
+## Run a Node on Ethereum Mainnet 
 
 To run a node on the Ethereum mainnet: 
 
@@ -79,10 +79,8 @@ $ bin/pantheon --rpc-enabled
 ## Run a Node on Ropsten Testnet 
 
 !!!note
-    From v0.8.2 or when [building from source](../Installation/Overview.md), use the [`--ropsten` option](../Reference/Pantheon-CLI-Syntax.md#options) 
+    From v0.8.2, use the [`--ropsten` option](../Reference/Pantheon-CLI-Syntax.md#options) 
     instead of the following options. For v0.8.1, use the following options.
-
-Replace `<path>` with the path to the `/pantheon` directory. 
 
 To run a node on Ropsten: 
 
@@ -96,15 +94,29 @@ To run a node on Ropsten with the HTTP JSON-RPC service enabled and allow Remix 
 $ bin/pantheon --rpc-enabled --rpc-cors-origins "http://remix.ethereum.org" --network-id=3 --genesis=<path>/pantheon/ethereum/core/src/main/resources/ropsten.json --bootnodes=enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303
 ```
 
-## Run a Node on Rinkeby Testnet
+Where `<path>` is the path to the `/pantheon` directory. 
 
-Replace `<path>` with the path where the Rinkeby chain data is to be saved. 
+## Run a Node on Rinkeby Testnet
 
 To run a node on Rinkeby specifying a data directory: 
 
 ```bash
 $ bin/pantheon --rinkeby --datadir=<path>/rinkebyDataDir
 ```
+Where `<path>` and `<rinkebyDataDir>` are the path and directory where the Rinkeby chain data is to be saved.
+
+## Run a Node on Goerli Testnet
+
+To run a node on [Goerli](https://github.com/goerli/testnet) specifying a data directory: 
+
+```bash
+$ bin/pantheon --goerli --datadir=<path>/<goerliDataDir>
+```
+
+Where `<path>` and `<goerliDataDir>` are the path and directory where the Goerli chain data is to be saved. 
+   
+!!!note
+    This option is only available from v0.8.3.
 
 ## Run a Node for Testing 
 

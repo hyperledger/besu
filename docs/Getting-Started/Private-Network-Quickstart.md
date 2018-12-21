@@ -15,7 +15,12 @@ This tutorial describes how to use Pantheon to run a private network of Pantheon
 
 To run this tutorial, you must have the following installed:
 
-- [Docker and Docker-compose](https://docs.docker.com/compose/install/) 
+- For MacOS and Linux, [Docker and Docker-compose](https://docs.docker.com/compose/install/) 
+
+- For Windows, [Docker for Windows](https://docs.docker.com/docker-for-windows/install/)
+
+!!!important
+    Docker for Windows requires Windows 10 Pro, Enterpise, or Education. The Private Network Quickstart does not support Docker Toolbox.
 
 - [Git command line](https://git-scm.com/)
 

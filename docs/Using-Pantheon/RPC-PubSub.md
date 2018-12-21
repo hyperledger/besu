@@ -5,23 +5,27 @@ description: Using RPC Pub/Sub with Pantheon Web Socket API
 
 ## Introduction 
 
-Use the RPC Pub/Sub methods over [WebSockets](../Reference/Using-JSON-RPC-API.md#endpoint-address-and-port) 
-to wait for events instead of polling for them. For example, if a Dapp submits a transaction to the network, 
-you can use the RPC Pub/Sub interface to wait for the transaction confirmation followed by a specified 
-number of new blocks before confirming the transaction to the user.
+Use the RPC Pub/Sub API to wait for events instead of polling for them. For example, a Dapp can subscribe to logs to be notified when a specific event has occurred.
 
 The RPC Pub/Sub methods are: 
 
-* `eth_subscribe` - call to create a subscription for specific events.
-* `eth_unsubscribe` - call to cancel a subscription.
-* `eth_subscription` - invoked to publish event notifications to your client. 
-
-!!!info
-    Notifications are published by `eth_subscription`; you do not need to call `eth_subscription`.
+* `eth_subscribe` - create a subscription for specific events.
+* `eth_unsubscribe` - cancel a subscription.
 
 !!!important
     Unlike other [JSON RPC-API methods](../Reference/JSON-RPC-API-Methods.md), 
-    the RPC Pub/Sub methods cannot be called over HTTP as well as WebSockets. 
+    the RPC Pub/Sub methods cannot be called over HTTP.
+    
+### Using RPC Pub/Sub
+
+The RPC Pub/Sub API requires a persistent connection. Connect to the RPC Pub/Sub API using a tool such as [WebSockets](../Reference/Using-JSON-RPC-API.md#endpoint-address-and-port). 
+
+Use `eth_subscribe` to create subscriptions. Once subscribed, notifications are published by the API using `eth_subscription`. 
+
+!!!note 
+    Notifications are published by `eth_subscription`; you do not need to call `eth_subscription`. 
+
+Subscriptions are coupled to a connection. If the connection is closed, all subscriptions created over this connection are removed.
 
 ### Subscription ID
 
@@ -47,9 +51,6 @@ The RPC Pub/Sub methods are:
 
 Subscribing to some events (for example, logs) can cause a flood of notifications while the node is synchronizing.
 
-Notifications are stored in an internal buffer to be sent to the client. 
-If the client falls behind and the number of buffered notifications reaches the limit of ==10,000==, the connection is closed.
-
 ## Subscribing
 
 Use `eth_subscribe` to create subscriptions for the following event types:
@@ -59,23 +60,22 @@ Use `eth_subscribe` to create subscriptions for the following event types:
 * [Pending transactions](#pending-transactions)
 * [Sychronizng](#synchronizing) 
 
-If the WebSockets connection is closed, all subscriptions are removed. 
-
 ### New Headers
 
-Use the `newHeads` parameter with `eth_subscribe` to be notified each time a new header is added to the blockchain.  
+Use the `newHeads` parameter with `eth_subscribe` to be notified each time a block is added to the blockchain.  
 
-If a chain reorganization occurs, the subscription publishes notifications for headers in the new chain. 
-This means the subscription can publish notifications for multiple headers at the same height on the blockchain.
+If a chain reorganization occurs, the subscription publishes notifications for blocks in the new chain. 
+This means the subscription can publish notifications for multiple blocks at the same height on the blockchain.
 
-The new headers notification returns [Block Objects](Objects#block-object). Use the `logsBloom` parameter 
-to filter blocks to determine which blocks have logs of interest to you. 
+The new headers notification returns [block objects](../Reference/JSON-RPC-API-Objects.md#block-object). The 
+second parameter is optional.  If specified, whole [transaction objects](../Reference/JSON-RPC-API-Objects.md#transaction-object) 
+are included in the notifications. Otherwise, the transaction hashes are included. 
 
 !!!example
     To subscribe to new header notifications:
     
     ```json
-    {"id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
+    {"id": 1, "method": "eth_subscribe", "params": ["newHeads", {"includeTransactions": true}]}
     ```
     
     Example result:
@@ -83,7 +83,7 @@ to filter blocks to determine which blocks have logs of interest to you.
     {"jsonrpc":"2.0","id":2,"result":"0x1"}
     ```
     
-    Example notification:
+    Example notification without the `{"includeTransactions": true}` parameter included:
     ```json
     {
       "jsonrpc": "2.0",
@@ -109,20 +109,58 @@ to filter blocks to determine which blocks have logs of interest to you.
           "gasUsed":"0x11ac3a",
           "timestamp":"0x592afc24",
           "uncles":[],
-          "transactions":["0x419c69d21b14e2e8f911def22bb6d0156c876c0e1c61067de836713043364d6c","0x70a5b2cb2cee6e0b199232a1757fc2a9d6053a4691a7afef8508fd88aeeec703","0x4b3035f1d32339fe1a4f88147dc197a0fe5bbd63d3b9dec2dad96a3b46e4fddd"]
-          }
+          "transactions":["0x419c69d21b14e2e8f911def22bb6d0156c876c0e1c61067de836713043364d6c","0x70a5b2cb2cee6e0b199232a1757fc2a9d6053a4691a7afef8508fd88aeeec703","0x4b3035f1d32339fe1a4f88147dc197a0fe5bbd63d3b9dec2dad96a3b46e4fddd"],
+          },
       }
     }
     ```
+    
+    Example notification with the `{"includeTransactions": true}` parameter included: 
+        ```json
+        {
+          "jsonrpc": "2.0",
+          "method": "eth_subscription",
+          "params":{
+            "subscription":"0x1",
+            "result": {
+               ....
+               "transactions":[
+                 {
+                   "blockHash":"0xa30ee4d7c271ae5150aec494131c5f1f34089c7aa8fb58bd8bb916a55275bb90",
+                   "blockNumber":"0x63",
+                   "from":"0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+                   "gas":"0x5208",
+                   "gasPrice":"0x3b9aca00",
+                   "hash":"0x11f66c3e96a92e3c14c1c33ad77381221bf8b58a887b4fed6aee456fc6f39b24",
+                   "input":"0x",
+                   "nonce":"0x1",
+                   "to":"0x627306090abab3a6e1400e9345bc60c78a8bef57",
+                   "transactionIndex":"0x0",
+                   "value":"0x56bc75e2d63100000",
+                   "v":"0xfe8",
+                   "r":"0x4b57d179c74885ef5f9326fd000665ea7fae44095c1e2016a2817fc671beb8cc",
+                   "s":"0x7ec060b115746dda392777df07ae1feacc0b83b3646f0a3de9a5fc3615af9bb8",
+                 }
+               ],
+            },
+          }
+        }
+        ```
 
 #### Logs
 
-Use the `logs` parameter with `eth_subscribe` to be notified of logs included in new blocks.  
+Use the `logs` parameter with `eth_subscribe` to be notified of logs included in new blocks. You can 
+specify a [filter object](../Reference/JSON-RPC-API-Objects.md#filter-options-object) to receive notifications 
+only for logs matching your filter.   
 
-Logs subscriptions have an `object` parameter with the following fields:
+Logs subscriptions have an filter object parameter with the following fields:
 
   - `address` - (optional) Either an address or an array of addresses. Returns only logs created from these addresses.
   - `topics` - (optional) Returns only logs that match the specified topics.
+
+!!!note
+    The `fromBlock` and `toBlock` attributes are not included in the filter object for the logs subscription 
+    because the subscription waits for logs rather than requesting them.
 
 If a chain reorganization occurs, the subscription publishes notifications for logs from the old chain 
 with the `removed` property in the [log object](../Reference/JSON-RPC-API-Objects.md#log-object) set to `true`. 
@@ -168,7 +206,8 @@ The logs subscription returns [Log objects](../Reference/JSON-RPC-API-Objects.md
 
 #### Pending Transactions
 
-Use the `newPendingTransactions` parameter with `eth_subscribe` to be notified of new pending transactions of which your node is aware. 
+Use the `newPendingTransactions` parameter with `eth_subscribe` to be notified of pending transactions 
+added to the transaction pool for the node. 
 
 The pending transactions subscription returns the transaction hashes of the pending transactions. 
 
@@ -204,8 +243,7 @@ This means the subscription can publish notifications for the same pending trans
 
 Use the `syncing` parameter with `eth_subscribe` to be notified about synchronization progress.
 
-The sychronizing subscription either returns `false` indicating the synchronization has finished 
-or an `object` indicating the synchronization progress.
+The sychronizing subscription returns an object indicating the synchronization progress.
 
 !!!example
     To subscribe to synchronizing notifications:
@@ -237,15 +275,16 @@ or an `object` indicating the synchronization progress.
 
 ## Unsubscribing
 
-Use the [subscription ID](#subscription-id) with `eth_unsubscribe` to cancel a subscription. 
+Use the [subscription ID](#subscription-id) with `eth_unsubscribe` to cancel a subscription. Only the 
+connection that created a subscription can unsubscribe from it. 
+
+`eth_unsubscribe` returns `true` if subscription succuessfully unsubscribed; otherwise, an error is returned. 
 
 !!!example
     To unsubscribe from a subsciption with subscription ID of `0x1`:
     ```json
     {"id": 1, "method": "eth_unsubscribe", "params": ["0x1"]}
     ```
-    
-    `eth_unsubscribe` returns `true` if subscription succuessfully unsubscribed; otherwise, an error is returned. 
     
     Example result: 
     ```json
