@@ -20,6 +20,8 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.TransactionWithMetadata;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.TransactionCompleteResult;
 
+import java.util.Optional;
+
 public class EthGetTransactionByBlockNumberAndIndex extends AbstractBlockParameterMethod {
 
   public EthGetTransactionByBlockNumberAndIndex(
@@ -41,10 +43,8 @@ public class EthGetTransactionByBlockNumberAndIndex extends AbstractBlockParamet
   protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
     final int index =
         parameters().required(request.getParams(), 1, UnsignedIntParameter.class).getValue();
-    final TransactionWithMetadata transactionWithMetadata =
+    final Optional<TransactionWithMetadata> transactionWithMetadata =
         blockchainQueries().transactionByBlockNumberAndIndex(blockNumber, index);
-    return transactionWithMetadata == null
-        ? null
-        : new TransactionCompleteResult(transactionWithMetadata);
+    return transactionWithMetadata.map(TransactionCompleteResult::new).orElse(null);
   }
 }

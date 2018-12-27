@@ -23,6 +23,8 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessRe
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.TransactionCompleteResult;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.TransactionResult;
 
+import java.util.Optional;
+
 public class EthGetTransactionByBlockHashAndIndex implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
@@ -44,13 +46,10 @@ public class EthGetTransactionByBlockHashAndIndex implements JsonRpcMethod {
     final Hash hash = parameters.required(request.getParams(), 0, Hash.class);
     final int index =
         parameters.required(request.getParams(), 1, UnsignedIntParameter.class).getValue();
-    final TransactionWithMetadata transactionWithMetadata =
+    final Optional<TransactionWithMetadata> transactionWithMetadata =
         blockchain.transactionByBlockHashAndIndex(hash, index);
     final TransactionResult result =
-        transactionWithMetadata == null
-            ? null
-            : new TransactionCompleteResult(transactionWithMetadata);
-
+        transactionWithMetadata.map(TransactionCompleteResult::new).orElse(null);
     return new JsonRpcSuccessResponse(request.getId(), result);
   }
 }

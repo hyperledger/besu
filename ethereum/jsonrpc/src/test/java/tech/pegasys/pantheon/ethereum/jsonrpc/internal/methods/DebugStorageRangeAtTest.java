@@ -93,7 +93,7 @@ public class DebugStorageRangeAtTest {
             });
 
     when(blockchainQueries.transactionByBlockHashAndIndex(blockHash, TRANSACTION_INDEX))
-        .thenReturn(transactionWithMetadata);
+        .thenReturn(Optional.of(transactionWithMetadata));
     when(worldState.get(accountAddress)).thenReturn(account);
     when(blockReplay.afterTransactionInBlock(eq(blockHash), eq(transactionHash), any()))
         .thenAnswer(this::callAction);
