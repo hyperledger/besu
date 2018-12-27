@@ -408,11 +408,13 @@ public class BlockchainQueries {
    * @param txIndex The index of the transaction to return.
    * @return The transaction at the specified location.
    */
-  public TransactionWithMetadata transactionByBlockNumberAndIndex(
+  public Optional<TransactionWithMetadata> transactionByBlockNumberAndIndex(
       final long blockNumber, final int txIndex) {
     checkArgument(txIndex >= 0);
-    final BlockHeader header = blockchain.getBlockHeader(blockNumber).get();
-    return transactionByHeaderAndIndex(header, txIndex);
+    return blockchain
+        .getBlockHeader(blockNumber)
+        .map(header -> Optional.ofNullable(transactionByHeaderAndIndex(header, txIndex)))
+        .orElse(Optional.empty());
   }
 
   /**
@@ -422,11 +424,13 @@ public class BlockchainQueries {
    * @param txIndex The index of the transaction to return.
    * @return The transaction at the specified location.
    */
-  public TransactionWithMetadata transactionByBlockHashAndIndex(
+  public Optional<TransactionWithMetadata> transactionByBlockHashAndIndex(
       final Hash blockHeaderHash, final int txIndex) {
     checkArgument(txIndex >= 0);
-    final BlockHeader header = blockchain.getBlockHeader(blockHeaderHash).get();
-    return transactionByHeaderAndIndex(header, txIndex);
+    return blockchain
+        .getBlockHeader(blockHeaderHash)
+        .map(header -> Optional.ofNullable(transactionByHeaderAndIndex(header, txIndex)))
+        .orElse(Optional.empty());
   }
 
   /**
@@ -528,10 +532,14 @@ public class BlockchainQueries {
 
   public List<LogWithMetadata> matchingLogs(final Hash blockhash, final LogsQuery query) {
     final List<LogWithMetadata> matchingLogs = Lists.newArrayList();
+    Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockhash);
+    if (!blockHeader.isPresent()) {
+      return matchingLogs;
+    }
     final List<TransactionReceipt> receipts = blockchain.getTxReceipts(blockhash).get();
     final List<Transaction> transaction =
         blockchain.getBlockBody(blockhash).get().getTransactions();
-    final long number = blockchain.getBlockHeader(blockhash).get().getNumber();
+    final long number = blockHeader.get().getNumber();
     final boolean logHasBeenRemoved = !blockchain.blockIsOnCanonicalChain(blockhash);
     return generateLogWithMetadata(
         receipts, number, query, blockhash, matchingLogs, transaction, logHasBeenRemoved);

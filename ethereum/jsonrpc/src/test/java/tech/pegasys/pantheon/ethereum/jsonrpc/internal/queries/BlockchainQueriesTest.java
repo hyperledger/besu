@@ -67,6 +67,16 @@ public class BlockchainQueriesTest {
   }
 
   @Test
+  public void transactionByBlockHashAndIndexForInvalidHash() {
+    final BlockchainWithData data = setupBlockchain(2);
+    final BlockchainQueries queries = data.blockchainQueries;
+
+    final Optional<TransactionWithMetadata> transactionWithMetadata =
+        queries.transactionByBlockHashAndIndex(gen.hash(), 1);
+    assertFalse(transactionWithMetadata.isPresent());
+  }
+
+  @Test
   public void getBlockByHashForInvalidHash() {
     final BlockchainWithData data = setupBlockchain(2);
     final BlockchainQueries queries = data.blockchainQueries;
@@ -330,6 +340,14 @@ public class BlockchainQueriesTest {
         data.blockchainQueries.matchingLogs(targetBlock.getHash(), new LogsQuery.Builder().build());
     assertThat(logs).isNotEmpty();
     assertThat(logs).allMatch(LogWithMetadata::isRemoved);
+  }
+
+  @Test
+  public void matchingLogsShouldReturnAnEmptyListWhenGivenAnInvalidBlockHash() {
+    final BlockchainWithData data = setupBlockchain(3);
+    final BlockchainQueries queries = data.blockchainQueries;
+    List<LogWithMetadata> logs = queries.matchingLogs(Hash.ZERO, new LogsQuery.Builder().build());
+    assertThat(logs).isEmpty();
   }
 
   @Test

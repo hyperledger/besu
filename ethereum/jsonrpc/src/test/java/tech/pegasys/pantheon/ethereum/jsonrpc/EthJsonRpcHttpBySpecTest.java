@@ -94,6 +94,7 @@ public class EthJsonRpcHttpBySpecTest extends AbstractEthJsonRpcHttpServiceTest 
 
     specs.put(EthGetLogs.class, "eth_getLogs_invalidInput");
     specs.put(EthGetLogs.class, "eth_getLogs_blockhash");
+    specs.put(EthGetLogs.class, "eth_getLogs_blockhash_missingBlockHash");
     specs.put(EthGetLogs.class, "eth_getLogs_toBlockOutOfRange");
     specs.put(EthGetLogs.class, "eth_getLogs_fromBlockExceedToBlock");
     specs.put(EthGetLogs.class, "eth_getLogs_nullParam");

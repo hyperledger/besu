@@ -28,6 +28,7 @@ import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.NavigableMap;
+import java.util.Optional;
 
 public class DebugStorageRangeAt implements JsonRpcMethod {
 
@@ -57,15 +58,18 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
     final Hash startKey = parameters.required(request.getParams(), 3, Hash.class);
     final int limit = parameters.required(request.getParams(), 4, Integer.class);
 
-    final TransactionWithMetadata transactionWithMetadata =
+    final Optional<TransactionWithMetadata> optional =
         blockchainQueries.transactionByBlockHashAndIndex(blockHash, transactionIndex);
-
-    return blockReplay
-        .afterTransactionInBlock(
-            blockHash,
-            transactionWithMetadata.getTransaction().hash(),
-            (transaction, blockHeader, blockchain, worldState, transactionProcessor) ->
-                extractStorageAt(request, accountAddress, startKey, limit, worldState))
+    return optional
+        .map(
+            transactionWithMetadata ->
+                (blockReplay
+                    .afterTransactionInBlock(
+                        blockHash,
+                        transactionWithMetadata.getTransaction().hash(),
+                        (transaction, blockHeader, blockchain, worldState, transactionProcessor) ->
+                            extractStorageAt(request, accountAddress, startKey, limit, worldState))
+                    .orElseGet(() -> new JsonRpcSuccessResponse(request.getId(), null))))
         .orElseGet(() -> new JsonRpcSuccessResponse(request.getId(), null));
   }
 
