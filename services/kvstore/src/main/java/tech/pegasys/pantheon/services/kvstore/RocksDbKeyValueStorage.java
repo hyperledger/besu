@@ -73,27 +73,7 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
   }
 
   @Override
-  public void put(final BytesValue key, final BytesValue value) throws StorageException {
-    throwIfClosed();
-    try {
-      db.put(key.extractArray(), value.extractArray());
-    } catch (final RocksDBException e) {
-      throw new StorageException(e);
-    }
-  }
-
-  @Override
-  public void remove(final BytesValue key) throws StorageException {
-    throwIfClosed();
-    try {
-      db.delete(key.extractArray());
-    } catch (final RocksDBException e) {
-      throw new StorageException(e);
-    }
-  }
-
-  @Override
-  public Transaction getStartTransaction() throws StorageException {
+  public Transaction startTransaction() throws StorageException {
     throwIfClosed();
     final WriteOptions options = new WriteOptions();
     return new RocksDbTransaction(db.beginTransaction(options), options);

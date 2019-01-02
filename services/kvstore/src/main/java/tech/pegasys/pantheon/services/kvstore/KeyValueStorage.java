@@ -31,24 +31,11 @@ public interface KeyValueStorage extends Closeable {
   Optional<BytesValue> get(BytesValue key) throws StorageException;
 
   /**
-   * @param key Index into persistent data repository.
-   * @param value The value persisted at the key index.
-   */
-  void put(BytesValue key, BytesValue value) throws StorageException;
-
-  /**
-   * Remove the data corresponding to the given key.
-   *
-   * @param key Index into persistent data repository.
-   */
-  void remove(BytesValue key) throws StorageException;
-
-  /**
    * Begins a transaction. Returns a transaction object that can be updated and committed.
    *
    * @return An object representing the transaction.
    */
-  Transaction getStartTransaction() throws StorageException;
+  Transaction startTransaction() throws StorageException;
 
   /**
    * Stream all stored key-value pairs.

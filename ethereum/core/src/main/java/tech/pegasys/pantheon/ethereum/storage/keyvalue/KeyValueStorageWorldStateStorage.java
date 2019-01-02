@@ -45,7 +45,7 @@ public class KeyValueStorageWorldStateStorage implements WorldStateStorage {
 
   @Override
   public Updater updater() {
-    return new Updater(keyValueStorage.getStartTransaction());
+    return new Updater(keyValueStorage.startTransaction());
   }
 
   public static class Updater implements WorldStateStorage.Updater {
