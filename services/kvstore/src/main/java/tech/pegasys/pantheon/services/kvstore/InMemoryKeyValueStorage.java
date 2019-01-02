@@ -42,29 +42,7 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
-  public void put(final BytesValue key, final BytesValue value) {
-    final Lock lock = rwLock.writeLock();
-    lock.lock();
-    try {
-      hashValueStore.put(key, value);
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  @Override
-  public void remove(final BytesValue key) throws StorageException {
-    final Lock lock = rwLock.writeLock();
-    lock.lock();
-    try {
-      hashValueStore.remove(key);
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  @Override
-  public Transaction getStartTransaction() {
+  public Transaction startTransaction() {
     return new InMemoryTransaction();
   }
 

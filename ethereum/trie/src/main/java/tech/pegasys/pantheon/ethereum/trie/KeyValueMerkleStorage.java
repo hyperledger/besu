@@ -49,7 +49,7 @@ public class KeyValueMerkleStorage implements MerkleStorage {
       // Nothing to do
       return;
     }
-    final KeyValueStorage.Transaction kvTx = keyValueStorage.getStartTransaction();
+    final KeyValueStorage.Transaction kvTx = keyValueStorage.startTransaction();
     for (final Map.Entry<Bytes32, BytesValue> entry : pendingUpdates.entrySet()) {
       kvTx.put(entry.getKey(), entry.getValue());
     }

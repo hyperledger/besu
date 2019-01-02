@@ -105,7 +105,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
   @Override
   public Updater updater() {
-    return new Updater(storage.getStartTransaction());
+    return new Updater(storage.startTransaction());
   }
 
   private List<TransactionReceipt> rlpDecodeTransactionReceipts(final BytesValue bytes) {
