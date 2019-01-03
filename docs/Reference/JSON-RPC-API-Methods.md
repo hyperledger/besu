@@ -1102,19 +1102,19 @@ Returns the receipt of a transaction by transaction hash. Receipts for pending t
 
 ### eth_newFilter
 
-Creates a logs filter to log state changes. To poll for state changes, use [eth_getFilterChanges](#eth_getfilterchanges).
+Creates a log filter. To poll for logs associated with the created filter, use [eth_getFilterChanges](#eth_getfilterchanges).
 
 **Parameters**
 
 `Object` - [Filter options object](JSON-RPC-API-Objects.md#filter-options-object). 
 
-Topics are order-dependent. A transaction with a log containing topics `[A, B]` would be matched with the following topic filters:
+Topics are order-dependent. A transaction with a log containing topics `[A, B]` is matched with the following topic filters:
 
-    * [] - Match any topic
-    * [A] - Match A in first position (and any topic thereafter)
-    * [null, B] - Match any topic in first position AND B in second position (and any topic thereafter)
-    * [A, B] - Match A in first position AND B in second position (and any topic thereafter)
-    * [[A, B], [A, B]] - Match (A OR B) in first position AND (A OR B) in second position (and any topic thereafter)
+* `[]` - Match any topic
+* `[A]` - Match A in first position (and any topic thereafter)
+* `[null, B]` - Match any topic in first position AND B in second position (and any topic thereafter)
+* `[A, B]` - Match A in first position AND B in second position (and any topic thereafter)
+* `[[A, B], [A, B]]` - Match (A OR B) in first position AND (A OR B) in second position (and any topic thereafter)
 
 !!!note
     `fromBlock` and `toBlock` in the filter options object default to `latest`. To obtain logs using `eth_getFilterLogs`, set `fromBlock` and `toBlock` appropriately.
@@ -1142,7 +1142,7 @@ Topics are order-dependent. A transaction with a log containing topics `[A, B]` 
     
 ### eth_newBlockFilter
 
-Creates a filter to log when a new block arrives. To poll for new blocks, use [eth_getFilterChanges](#eth_getfilterchanges).
+Creates a filter to retrieve new block hashes. To poll for new blocks, use [eth_getFilterChanges](#eth_getfilterchanges).
 
 **Parameters**
 
@@ -1171,7 +1171,7 @@ None
 
 ### eth_newPendingTransactionFilter
 
-Creates a filter to log when new pending transactions arrive. To poll for new pending transactions, use [eth_getFilterChanges](#eth_getfilterchanges).
+Creates a filter to retrieve new pending transactions hashes. To poll for new pending transactions, use [eth_getFilterChanges](#eth_getfilterchanges).
 
 **Parameters**
 
@@ -1202,7 +1202,7 @@ None
 
 Uninstalls a filter with the specified ID. When a filter is no longer required, call this method.
 
-Filters time out when they are not requested by [eth_getFilterChanges](#eth_getfilterchanges) for a period of time.
+Filters time out when not requested by [eth_getFilterChanges](#eth_getfilterchanges) for 10 minutes.
 
 **Parameters**
 
@@ -1241,7 +1241,7 @@ Polls the specified filter and returns an array of changes that have occurred si
 
 **Returns**
 
-`result` : `Array of Object` - If nothing has changed since the last poll, an empty list. Otherwise:
+`result` : `Array of Object` - If nothing changed since the last poll, an empty list. Otherwise:
 
 * For filters created with `eth_newBlockFilter`, returns block hashes.
 * For filters created with `eth_newPendingTransactionFilter`, returns transaction hashes.
@@ -1325,7 +1325,7 @@ Returns an array of logs for the specified filter.
 !!!note
      `eth_getFilterLogs` is only used for filters created with `eth_newFilter`. 
       
-      You can use `eth_getLogs` to specify a filter object and get logs without without creating a filter.
+      You can use `eth_getLogs` to specify a filter object and get logs without creating a filter.
 
 **Parameters**
 
