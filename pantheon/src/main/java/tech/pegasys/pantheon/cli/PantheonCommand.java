@@ -595,7 +595,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     return webSocketConfiguration;
   }
 
-  private MetricsConfiguration metricsConfiguration() {
+  MetricsConfiguration metricsConfiguration() {
     final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
     metricsConfiguration.setEnabled(isMetricsEnabled);
     metricsConfiguration.setHost(metricsHostAndPort.getHost());
@@ -736,5 +736,9 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   private boolean isFullInstantiation() {
     return !isDocker;
+  }
+
+  public MetricsSystem getMetricsSystem() {
+    return metricsSystem;
   }
 }

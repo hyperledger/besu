@@ -14,12 +14,16 @@ package tech.pegasys.pantheon.cli;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
+import tech.pegasys.pantheon.metrics.prometheus.MetricsHttpService;
 import tech.pegasys.pantheon.util.BlockImporter;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 
+import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
@@ -55,7 +59,16 @@ class ImportSubCommand implements Runnable {
     checkNotNull(parentCommand);
     checkNotNull(blockImporter);
 
+    Optional<MetricsHttpService> metricsHttpService = Optional.empty();
     try {
+      final MetricsConfiguration metricsConfiguration = parentCommand.metricsConfiguration();
+      if (metricsConfiguration.isEnabled()) {
+        metricsHttpService =
+            Optional.of(
+                new MetricsHttpService(
+                    Vertx.vertx(), metricsConfiguration, parentCommand.getMetricsSystem()));
+        metricsHttpService.ifPresent(MetricsHttpService::start);
+      }
       blockImporter.importBlockchain(blocksImportPath, parentCommand.buildController());
     } catch (final FileNotFoundException e) {
       throw new ExecutionException(
@@ -63,6 +76,8 @@ class ImportSubCommand implements Runnable {
     } catch (final IOException e) {
       throw new ExecutionException(
           new CommandLine(this), "Unable to import blocks from " + blocksImportPath, e);
+    } finally {
+      metricsHttpService.ifPresent(MetricsHttpService::stop);
     }
   }
 }
