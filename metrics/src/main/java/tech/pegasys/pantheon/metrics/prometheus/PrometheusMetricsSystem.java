@@ -34,6 +34,7 @@ import io.prometheus.client.Collector;
 import io.prometheus.client.Collector.MetricFamilySamples;
 import io.prometheus.client.Collector.MetricFamilySamples.Sample;
 import io.prometheus.client.Collector.Type;
+import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Counter;
 import io.prometheus.client.Summary;
 import io.prometheus.client.hotspot.BufferPoolsExports;
@@ -47,20 +48,22 @@ public class PrometheusMetricsSystem implements MetricsSystem {
 
   private static final String PANTHEON_PREFIX = "pantheon_";
   private final Map<MetricCategory, Collection<Collector>> collectors = new ConcurrentHashMap<>();
+  private final CollectorRegistry registry = new CollectorRegistry(true);
 
   PrometheusMetricsSystem() {}
 
   public static MetricsSystem init() {
     final PrometheusMetricsSystem metricsSystem = new PrometheusMetricsSystem();
-    metricsSystem.collectors.put(MetricCategory.PROCESS, singleton(new StandardExports()));
+    metricsSystem.collectors.put(
+        MetricCategory.PROCESS, singleton(new StandardExports().register(metricsSystem.registry)));
     metricsSystem.collectors.put(
         MetricCategory.JVM,
         asList(
-            new MemoryPoolsExports(),
-            new BufferPoolsExports(),
-            new GarbageCollectorExports(),
-            new ThreadExports(),
-            new ClassLoadingExports()));
+            new MemoryPoolsExports().register(metricsSystem.registry),
+            new BufferPoolsExports().register(metricsSystem.registry),
+            new GarbageCollectorExports().register(metricsSystem.registry),
+            new ThreadExports().register(metricsSystem.registry),
+            new ClassLoadingExports().register(metricsSystem.registry)));
     return metricsSystem;
   }
 
@@ -108,10 +111,11 @@ public class PrometheusMetricsSystem implements MetricsSystem {
     addCollector(category, new CurrentValueCollector(metricName, help, valueSupplier));
   }
 
-  private void addCollector(final MetricCategory category, final Collector counter) {
+  private void addCollector(final MetricCategory category, final Collector metric) {
+    metric.register(registry);
     collectors
         .computeIfAbsent(category, key -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
-        .add(counter);
+        .add(metric);
   }
 
   @Override
@@ -191,5 +195,9 @@ public class PrometheusMetricsSystem implements MetricsSystem {
     return category.isPantheonSpecific()
         ? PANTHEON_PREFIX + category.getName() + "_"
         : category.getName() + "_";
+  }
+
+  CollectorRegistry getRegistry() {
+    return registry;
   }
 }

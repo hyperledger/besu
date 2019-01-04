@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
@@ -69,6 +70,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
   private final MiningParameters miningParameters;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
+  private final MetricsConfiguration metricsConfiguration;
   private final PermissioningConfiguration permissioningConfiguration;
   private final GenesisConfigProvider genesisConfigProvider;
   private final boolean devMode;
@@ -82,6 +84,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
       final MiningParameters miningParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
+      final MetricsConfiguration metricsConfiguration,
       final PermissioningConfiguration permissioningConfiguration,
       final boolean devMode,
       final GenesisConfigProvider genesisConfigProvider,
@@ -94,6 +97,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
+    this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
     this.genesisConfigProvider = genesisConfigProvider;
     this.devMode = devMode;
@@ -287,6 +291,10 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
   Optional<String> wsRpcListenAddress() {
     return Optional.of(
         webSocketConfiguration().getHost() + ":" + webSocketConfiguration().getPort());
+  }
+
+  MetricsConfiguration metricsConfiguration() {
+    return metricsConfiguration;
   }
 
   int p2pPort() {

@@ -37,6 +37,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
+import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.File;
@@ -72,6 +73,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
   private static final JsonRpcConfiguration defaultJsonRpcConfiguration;
   private static final WebSocketConfiguration defaultWebSocketConfiguration;
+  private static final MetricsConfiguration defaultMetricsConfiguration;
   private static final String GENESIS_CONFIG_TESTDATA = "genesis_config";
 
   final String[] validENodeStrings = {
@@ -95,6 +97,9 @@ public class PantheonCommandTest extends CommandTestAbstract {
     websocketConf.addRpcApi(CliqueRpcApis.CLIQUE);
     websocketConf.addRpcApi(IbftRpcApis.IBFT);
     defaultWebSocketConfiguration = websocketConf;
+
+    final MetricsConfiguration metricsConf = MetricsConfiguration.createDefault();
+    defaultMetricsConfiguration = metricsConf;
   }
 
   @Before
@@ -120,6 +125,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     when(mockRunnerBuilder.dataDir(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.bannedNodeIds(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.metricsSystem(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.metricsConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
   }
 
@@ -157,6 +163,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).maxPeers(eq(25));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(defaultJsonRpcConfiguration));
     verify(mockRunnerBuilder).webSocketConfiguration(eq(defaultWebSocketConfiguration));
+    verify(mockRunnerBuilder).metricsConfiguration(eq(defaultMetricsConfiguration));
     verify(mockRunnerBuilder).build();
 
     final ArgumentCaptor<MiningParameters> miningArg =
@@ -290,6 +297,11 @@ public class PantheonCommandTest extends CommandTestAbstract {
     webSocketConfiguration.addRpcApi(CliqueRpcApis.CLIQUE);
     webSocketConfiguration.addRpcApi(IbftRpcApis.IBFT);
 
+    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
+    metricsConfiguration.setEnabled(false);
+    metricsConfiguration.setHost("8.6.7.5");
+    metricsConfiguration.setPort(309);
+
     parseCommand("--config", toml.toString());
 
     verify(mockRunnerBuilder).discovery(eq(false));
@@ -299,6 +311,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).maxPeers(eq(42));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(jsonRpcConfiguration));
     verify(mockRunnerBuilder).webSocketConfiguration(eq(webSocketConfiguration));
+    verify(mockRunnerBuilder).metricsConfiguration(eq(metricsConfiguration));
     verify(mockRunnerBuilder).build();
 
     final Collection<URI> nodes =
@@ -341,6 +354,8 @@ public class PantheonCommandTest extends CommandTestAbstract {
     webSocketConfiguration.addRpcApi(CliqueRpcApis.CLIQUE);
     webSocketConfiguration.addRpcApi(IbftRpcApis.IBFT);
 
+    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
+
     verify(mockRunnerBuilder).discovery(eq(true));
     verify(mockRunnerBuilder).bootstrapPeers(MAINNET_BOOTSTRAP_NODES);
     verify(mockRunnerBuilder).discoveryHost(eq("127.0.0.1"));
@@ -348,6 +363,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).maxPeers(eq(25));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(jsonRpcConfiguration));
     verify(mockRunnerBuilder).webSocketConfiguration(eq(webSocketConfiguration));
+    verify(mockRunnerBuilder).metricsConfiguration(eq(metricsConfiguration));
     verify(mockRunnerBuilder).build();
 
     verify(mockControllerBuilder).syncWithOttoman(eq(false));
@@ -1006,6 +1022,48 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     assertThat(wsRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
     assertThat(wsRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void metricsEnabledPropertyDefaultIsFalse() {
+    parseCommand();
+
+    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(metricsConfigArgumentCaptor.getValue().isEnabled()).isFalse();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void metricsEnabledPropertyMustBeUsed() {
+    parseCommand("--metrics-enabled");
+
+    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(metricsConfigArgumentCaptor.getValue().isEnabled()).isTrue();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void metricsHostAndPortOptionMustBeUsed() {
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    parseCommand("--metrics-listen", String.format("%1$s:%2$s", host, port));
+
+    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(metricsConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+    assertThat(metricsConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();

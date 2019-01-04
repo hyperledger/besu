@@ -16,6 +16,7 @@ import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.GenesisConfigProvider;
 
 class PantheonFactoryConfiguration {
@@ -24,6 +25,7 @@ class PantheonFactoryConfiguration {
   private final MiningParameters miningParameters;
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
+  private final MetricsConfiguration metricsConfiguration;
   private final PermissioningConfiguration permissioningConfiguration;
   private final boolean devMode;
   private final GenesisConfigProvider genesisConfigProvider;
@@ -33,6 +35,7 @@ class PantheonFactoryConfiguration {
       final MiningParameters miningParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
+      final MetricsConfiguration metricsConfiguration,
       final PermissioningConfiguration permissioningConfiguration,
       final boolean devMode,
       final GenesisConfigProvider genesisConfigProvider) {
@@ -40,6 +43,7 @@ class PantheonFactoryConfiguration {
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
+    this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
     this.devMode = devMode;
     this.genesisConfigProvider = genesisConfigProvider;
@@ -59,6 +63,10 @@ class PantheonFactoryConfiguration {
 
   public WebSocketConfiguration getWebSocketConfiguration() {
     return webSocketConfiguration;
+  }
+
+  public MetricsConfiguration getMetricsConfiguration() {
+    return metricsConfiguration;
   }
 
   public PermissioningConfiguration getPermissioningConfiguration() {
