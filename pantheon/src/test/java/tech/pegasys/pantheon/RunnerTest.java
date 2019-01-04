@@ -39,6 +39,7 @@ import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.io.IOException;
@@ -124,6 +125,7 @@ public final class RunnerTest {
     final ExecutorService executorService = Executors.newFixedThreadPool(2);
     final JsonRpcConfiguration aheadJsonRpcConfiguration = jsonRpcConfiguration();
     final WebSocketConfiguration aheadWebSocketConfiguration = wsRpcConfiguration();
+    final MetricsConfiguration aheadMetricsConfiguration = metricsConfiguration();
     final PermissioningConfiguration aheadPermissioningConfiguration = permissioningConfiguration();
     final RunnerBuilder runnerBuilder =
         new RunnerBuilder()
@@ -141,6 +143,7 @@ public final class RunnerTest {
             .bootstrapPeers(Collections.emptyList())
             .jsonRpcConfiguration(aheadJsonRpcConfiguration)
             .webSocketConfiguration(aheadWebSocketConfiguration)
+            .metricsConfiguration(aheadMetricsConfiguration)
             .dataDir(dbAhead)
             .permissioningConfiguration(aheadPermissioningConfiguration)
             .build();
@@ -149,6 +152,7 @@ public final class RunnerTest {
       executorService.submit(runnerAhead::execute);
       final JsonRpcConfiguration behindJsonRpcConfiguration = jsonRpcConfiguration();
       final WebSocketConfiguration behindWebSocketConfiguration = wsRpcConfiguration();
+      final MetricsConfiguration behindMetricsConfiguration = metricsConfiguration();
 
       // Setup runner with no block data
       final PantheonController<Void> controllerBehind =
@@ -172,6 +176,7 @@ public final class RunnerTest {
                           runnerAhead.getP2pTcpPort())))
               .jsonRpcConfiguration(behindJsonRpcConfiguration)
               .webSocketConfiguration(behindWebSocketConfiguration)
+              .metricsConfiguration(behindMetricsConfiguration)
               .dataDir(temp.newFolder().toPath())
               .metricsSystem(noOpMetricsSystem)
               .build();
@@ -260,6 +265,13 @@ public final class RunnerTest {
     final WebSocketConfiguration configuration = WebSocketConfiguration.createDefault();
     configuration.setPort(0);
     configuration.setEnabled(true);
+    return configuration;
+  }
+
+  private MetricsConfiguration metricsConfiguration() {
+    final MetricsConfiguration configuration = MetricsConfiguration.createDefault();
+    configuration.setPort(0);
+    configuration.setEnabled(false);
     return configuration;
   }
 

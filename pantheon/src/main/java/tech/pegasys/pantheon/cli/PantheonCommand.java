@@ -40,6 +40,7 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.util.InvalidConfigurationException;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 import tech.pegasys.pantheon.util.BlockImporter;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -343,6 +344,21 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   }
 
   @Option(
+    names = {"--metrics-enabled"},
+    description = "Set if the metrics exporter should be started (default: ${DEFAULT-VALUE})"
+  )
+  private final Boolean isMetricsEnabled = false;
+
+  @Option(
+    names = {"--metrics-listen"},
+    paramLabel = MANDATORY_HOST_AND_PORT_FORMAT_HELP,
+    description = "Host and port for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
+    arity = "1"
+  )
+  private final HostAndPort metricsHostAndPort =
+      getDefaultHostAndPort(MetricsConfiguration.DEFAULT_METRICS_PORT);
+
+  @Option(
     names = {"--host-whitelist"},
     paramLabel = "<hostname>",
     description =
@@ -501,6 +517,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         p2pHostAndPort,
         jsonRpcConfiguration(),
         webSocketConfiguration(),
+        metricsConfiguration(),
         permissioningConfiguration);
   }
 
@@ -578,6 +595,15 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     return webSocketConfiguration;
   }
 
+  private MetricsConfiguration metricsConfiguration() {
+    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
+    metricsConfiguration.setEnabled(isMetricsEnabled);
+    metricsConfiguration.setHost(metricsHostAndPort.getHost());
+    metricsConfiguration.setPort(metricsHostAndPort.getPort());
+    metricsConfiguration.setHostsWhitelist(hostsWhitelist.hostnamesWhitelist());
+    return metricsConfiguration;
+  }
+
   private PermissioningConfiguration permissioningConfiguration() {
     final PermissioningConfiguration permissioningConfiguration =
         PermissioningConfiguration.createDefault();
@@ -602,6 +628,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       final HostAndPort discoveryHostAndPort,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
+      final MetricsConfiguration metricsConfiguration,
       final PermissioningConfiguration permissioningConfiguration) {
 
     checkNotNull(runnerBuilder);
@@ -621,6 +648,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             .dataDir(dataDir())
             .bannedNodeIds(bannedNodeIds)
             .metricsSystem(metricsSystem)
+            .metricsConfiguration(metricsConfiguration)
             .permissioningConfiguration(permissioningConfiguration)
             .build();
 

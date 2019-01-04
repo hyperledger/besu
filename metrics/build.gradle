@@ -26,15 +26,21 @@ jar {
 }
 
 dependencies {
+  implementation project(':util')
+
   implementation 'com.google.guava:guava'
-  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'io.prometheus:simpleclient'
+  implementation 'io.prometheus:simpleclient_common'
   implementation 'io.prometheus:simpleclient_hotspot'
+  implementation 'io.vertx:vertx-core'
+  implementation 'io.vertx:vertx-web'
+  implementation 'org.apache.logging.log4j:log4j-api'
 
   runtime 'org.apache.logging.log4j:log4j-core'
 
   // test dependencies.
   testImplementation 'junit:junit'
-  testImplementation "org.mockito:mockito-core"
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.mockito:mockito-core'
+  testImplementation 'com.squareup.okhttp3:okhttp'
 }

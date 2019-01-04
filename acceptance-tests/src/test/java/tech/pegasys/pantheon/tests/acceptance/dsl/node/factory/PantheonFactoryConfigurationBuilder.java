@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.GenesisConfigProvider;
 
 import java.util.Optional;
@@ -30,6 +31,7 @@ public class PantheonFactoryConfigurationBuilder {
       new MiningParametersTestBuilder().enabled(false).build();
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
+  private MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
   private PermissioningConfiguration permissioningConfiguration =
       PermissioningConfiguration.createDefault();
   private boolean devMode = true;
@@ -73,6 +75,12 @@ public class PantheonFactoryConfigurationBuilder {
     return this;
   }
 
+  public PantheonFactoryConfigurationBuilder setMetricsConfiguration(
+      final MetricsConfiguration metricsConfiguration) {
+    this.metricsConfiguration = metricsConfiguration;
+    return this;
+  }
+
   public PantheonFactoryConfigurationBuilder webSocketEnabled() {
     final WebSocketConfiguration config = WebSocketConfiguration.createDefault();
     config.setEnabled(true);
@@ -105,6 +113,7 @@ public class PantheonFactoryConfigurationBuilder {
         miningParameters,
         jsonRpcConfiguration,
         webSocketConfiguration,
+        metricsConfiguration,
         permissioningConfiguration,
         devMode,
         genesisConfigProvider);

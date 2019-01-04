@@ -36,6 +36,7 @@ dependencyManagement {
     dependency 'io.pkts:pkts-core:3.0.3'
 
     dependency "io.prometheus:simpleclient:0.5.0"
+    dependency "io.prometheus:simpleclient_common:0.5.0"
     dependency "io.prometheus:simpleclient_hotspot:0.5.0"
 
     dependency 'io.reactivex.rxjava2:rxjava:2.2.2'
