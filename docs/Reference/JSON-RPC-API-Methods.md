@@ -374,6 +374,35 @@ None
     }
     ```
 
+### eth_hashrate
+
+Returns the number of hashes per second with which the node is mining. 
+
+**Parameters**
+
+None
+
+**Returns**
+
+`result` : `quantity` - Number of hashes per second
+
+!!! example
+    ```bash tab="curl HTTP request"
+    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_hashrate","params":[],"id":1}' <JSON-RPC-http-endpoint:port>
+    ```
+    
+    ```bash tab="wscat WS request"
+    {"jsonrpc":"2.0","method":"eth_hashrate","params":[],"id":1}
+    ```
+    
+    ```json tab="JSON result"
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x12b"
+    }
+    ```
+
 ### eth_gasPrice
 
 Returns the current gas unit price in wei.
