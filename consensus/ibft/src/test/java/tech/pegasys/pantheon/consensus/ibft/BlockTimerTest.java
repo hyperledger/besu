@@ -13,8 +13,6 @@
 package tech.pegasys.pantheon.consensus.ibft;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -30,7 +28,6 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 
 import java.time.Clock;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -44,6 +41,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class BlockTimerTest {
+
   private ScheduledExecutorService mockExecutorService;
   private IbftEventQueue mockQueue;
   private Clock mockClock;
@@ -95,7 +93,7 @@ public class BlockTimerTest {
   }
 
   @Test
-  public void aBlockTimerExpiryEventIsAddedToTheQueueOnExpiry() {
+  public void aBlockTimerExpiryEventIsAddedToTheQueueOnExpiry() throws InterruptedException {
     final long MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS = 1;
     final long NOW_MILLIS = 300_500L;
     final long BLOCK_TIME_STAMP = 300;
@@ -108,27 +106,33 @@ public class BlockTimerTest {
     final ConsensusRoundIdentifier round =
         new ConsensusRoundIdentifier(0xFEDBCA9876543210L, 0x12345678);
 
+    final ScheduledFuture<?> mockedFuture = mock(ScheduledFuture.class);
+    Mockito.<ScheduledFuture<?>>when(
+            mockExecutorService.schedule(any(Runnable.class), anyLong(), any()))
+        .thenReturn(mockedFuture);
+
+    final IbftEventQueue eventQueue = new IbftEventQueue();
     final BlockTimer timer =
         new BlockTimer(
-            mockQueue,
-            MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS,
-            Executors.newSingleThreadScheduledExecutor(),
-            mockClock);
+            eventQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, mockExecutorService, mockClock);
     timer.startTimer(round, header);
 
     // Verify that the event will not be added to the queue immediately
-    verify(mockQueue, never()).add(any());
+    assertThat(eventQueue.isEmpty()).isTrue();
 
-    await()
-        .atMost(EXPECTED_DELAY + 200, TimeUnit.MILLISECONDS)
-        .atLeast(EXPECTED_DELAY - 200, TimeUnit.MILLISECONDS)
-        .until(timer::isRunning, equalTo(false));
+    // Verify that a task is sceheduled for EXPECTED_DELAY milliseconds in the future
+    ArgumentCaptor<Runnable> expiryTask = ArgumentCaptor.forClass(Runnable.class);
+    verify(mockExecutorService, times(1))
+        .schedule(expiryTask.capture(), eq(EXPECTED_DELAY), eq(TimeUnit.MILLISECONDS));
 
-    final ArgumentCaptor<IbftEvent> ibftEventCaptor = ArgumentCaptor.forClass(IbftEvent.class);
-    verify(mockQueue).add(ibftEventCaptor.capture());
-
-    assertThat(ibftEventCaptor.getValue() instanceof BlockTimerExpiry).isTrue();
-    assertThat(((BlockTimerExpiry) ibftEventCaptor.getValue()).getRoundIndentifier())
+    // assert that the task puts a BlockExpired event into the queue
+    final Runnable scheduledTask = expiryTask.getValue();
+    assertThat(eventQueue.isEmpty()).isTrue();
+    scheduledTask.run();
+    assertThat(eventQueue.size()).isEqualTo(1);
+    final IbftEvent queuedEvent = eventQueue.poll(0, TimeUnit.SECONDS);
+    assertThat(queuedEvent).isInstanceOf(BlockTimerExpiry.class);
+    assertThat(((BlockTimerExpiry) queuedEvent).getRoundIndentifier())
         .isEqualToComparingFieldByField(round);
   }
 
