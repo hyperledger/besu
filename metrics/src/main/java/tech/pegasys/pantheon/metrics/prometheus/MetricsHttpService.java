@@ -75,24 +75,27 @@ public class MetricsHttpService {
   }
 
   public CompletableFuture<?> start() {
-    LOG.info("Starting JsonRPC service on {}:{}", config.getHost(), config.getPort());
+    LOG.info("Starting Metrics service on {}:{}", config.getHost(), config.getPort());
     // Create the HTTP server and a router object.
     httpServer =
         vertx.createHttpServer(
             new HttpServerOptions().setHost(config.getHost()).setPort(config.getPort()));
 
-    // Handle json rpc requests
     final Router router = Router.router(vertx);
 
-    // Verify Host header to avoid rebind attack.
+    // Verify Host header.
     router.route().handler(checkWhitelistHostHeader());
 
+    // Endpoint for AWS health check.
     router.route("/").method(HttpMethod.GET).handler(this::handleEmptyRequest);
+
+    // Endpoint for Prometheus metrics monitoring.
     router
         .route("/metrics")
         .method(HttpMethod.GET)
         .produces(TextFormat.CONTENT_TYPE_004)
         .handler(this::metricsRequest);
+
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     httpServer
         .requestHandler(router::accept)
@@ -118,7 +121,6 @@ public class MetricsHttpService {
               }
               resultFuture.completeExceptionally(cause);
             });
-
     return resultFuture;
   }
 
