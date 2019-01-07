@@ -137,10 +137,10 @@ The process described here has several goals:
 
 Please follow these steps to have your contribution considered by the approvers:
 
-1. Complete the ICLA, as described in [CLA.md]
+1. Complete the CLA, as described in [CLA.md]
 2. Follow all instructions in [PULL-REQUEST-TEMPLATE.md](.github/pull_request_template.md)
 3. Include appropriate test coverage.  Testing is 100% automated.  There is no such thing as a manual test.
-4. Follow the [styleguides](#Style Guides)
+4. Follow the [Style Guides](#style-guides)
 5. After you submit your pull request, verify that all [status checks](https://help.github.com/articles/about-status-checks/) are passing <details><summary>What if the status checks are failing?</summary>If a status check is failing, and you believe that the failure is unrelated to your change, please leave a comment on the pull request explaining why you believe the failure is unrelated. A maintainer will re-run the status check for you. If we conclude that the failure was a false positive, then we will open an issue to track that problem with our status check suite.</details>
 
 While the prerequisites above must be satisfied prior to having your pull request reviewed, the reviewer(s) may ask you to complete additional design work, tests, or other changes before your pull request can be ultimately accepted.  Please refer to [Code Reviews].
@@ -166,7 +166,7 @@ We have a set of [coding conventions](CODING-CONVENTIONS.md) to which we try to 
 * Provide a summary on the first line with more details on additional lines as needed
 * Reference issues and pull requests liberally
 
-#Issue and Pull Request Labels
+# Issue and Pull Request Labels
 #### Type of Issue and Issue State
 
 | Label name | Search Link :mag_right: | Description |
@@ -220,6 +220,7 @@ We have a set of [coding conventions](CODING-CONVENTIONS.md) to which we try to 
 [search-label-duplicate]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Aduplicate
 [search-label-wontfix]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Awontfix
 [search-label-invalid]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Ainvalid
+[search-label-do-we-want-this]: https://github.com/search?q=is%3Aopen+is%3Aissue+repo%3APegasysEng%2FPantheon+label%3Ado%20we%20want%20this
 [search-label-work-in-progress]: https://github.com/search?q=is%3Aopen+is%3Apr+repo%3APegasysEng%2FPantheon+label%3Awork%20in%20progress
 [search-label-requires-changes]: https://github.com/search?q=is%3Aopen+is%3Apr+repo%3APegasysEng%2FPantheon+label%3Arequires%20changes
 
