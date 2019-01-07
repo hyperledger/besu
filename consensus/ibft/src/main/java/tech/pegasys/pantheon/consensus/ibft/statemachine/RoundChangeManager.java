@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.statemachine;
 
+import static tech.pegasys.pantheon.consensus.ibft.IbftHelpers.prepareMessageCountForQuorum;
+
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.RoundChangeCertificate;
@@ -89,7 +91,10 @@ public class RoundChangeManager {
     this.quorumSize = IbftHelpers.calculateRequiredValidatorQuorum(validators.size());
     this.roundChangeMessageValidator =
         new RoundChangeMessageValidator(
-            messageValidityFactory, validators, quorumSize - 1, sequenceNumber);
+            messageValidityFactory,
+            validators,
+            prepareMessageCountForQuorum(quorumSize),
+            sequenceNumber);
   }
 
   /**

@@ -34,6 +34,10 @@ public class IbftHelpers {
     return Util.fastDivCeiling(2 * validatorCount, 3);
   }
 
+  public static long prepareMessageCountForQuorum(final long quorum) {
+    return quorum - 1;
+  }
+
   public static Block createSealedBlock(
       final Block block, final Collection<Signature> commitSeals) {
     final BlockHeader initialHeader = block.getHeader();
