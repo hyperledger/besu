@@ -128,7 +128,7 @@ public class NewRoundMessageValidatorTest {
   }
 
   @Test
-  public void newRoundTargettingRoundZeroFails() {
+  public void newRoundTargetingRoundZeroFails() {
     msgBuilder.setRoundChangeIdentifier(
         new ConsensusRoundIdentifier(roundIdentifier.getSequenceNumber(), 0));
 
@@ -205,7 +205,7 @@ public class NewRoundMessageValidatorTest {
   public void roundChangeMessagesDoNotAllTargetRoundOfNewRoundMsgFails() {
     final ConsensusRoundIdentifier prevRound = TestHelpers.createFrom(roundIdentifier, 0, -1);
 
-    RoundChangeCertificate.Builder roundChangeBuilder = new RoundChangeCertificate.Builder();
+    final RoundChangeCertificate.Builder roundChangeBuilder = new RoundChangeCertificate.Builder();
     roundChangeBuilder.appendRoundChangeMessage(
         proposerMessageFactory.createSignedRoundChangePayload(roundIdentifier, Optional.empty()));
     roundChangeBuilder.appendRoundChangeMessage(
@@ -222,7 +222,7 @@ public class NewRoundMessageValidatorTest {
   public void invalidEmbeddedRoundChangeMessageFails() {
     final ConsensusRoundIdentifier prevRound = TestHelpers.createFrom(roundIdentifier, 0, -1);
 
-    RoundChangeCertificate.Builder roundChangeBuilder = new RoundChangeCertificate.Builder();
+    final RoundChangeCertificate.Builder roundChangeBuilder = new RoundChangeCertificate.Builder();
     roundChangeBuilder.appendRoundChangeMessage(
         proposerMessageFactory.createSignedRoundChangePayload(
             roundIdentifier,
@@ -260,8 +260,6 @@ public class NewRoundMessageValidatorTest {
                 differentProposal,
                 Lists.newArrayList(
                     validatorMessageFactory.createSignedPreparePayload(
-                        roundIdentifier, proposedBlock.getHash()),
-                    otherValidatorMessageFactory.createSignedPreparePayload(
                         roundIdentifier, proposedBlock.getHash()))));
 
     // An earlier PrepareCert is added to ensure the path to find the latest PrepareCert
@@ -277,8 +275,6 @@ public class NewRoundMessageValidatorTest {
                 earlierProposal,
                 Lists.newArrayList(
                     validatorMessageFactory.createSignedPreparePayload(
-                        earlierPreparedRound, proposedBlock.getHash()),
-                    otherValidatorMessageFactory.createSignedPreparePayload(
                         earlierPreparedRound, proposedBlock.getHash()))));
 
     final SignedData<NewRoundPayload> msg =
@@ -287,9 +283,7 @@ public class NewRoundMessageValidatorTest {
             new RoundChangeCertificate(
                 Lists.newArrayList(
                     proposerMessageFactory.createSignedRoundChangePayload(
-                        roundIdentifier, earlierPreparedCert),
-                    proposerMessageFactory.createSignedRoundChangePayload(
-                        roundIdentifier, preparedCert))),
+                        roundIdentifier, earlierPreparedCert))),
             proposal);
     proposerMessageFactory.createSignedProposalPayload(roundIdentifier, proposedBlock);
 

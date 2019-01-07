@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.validation;
 
+import static tech.pegasys.pantheon.consensus.ibft.IbftHelpers.prepareMessageCountForQuorum;
+
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
@@ -56,7 +58,8 @@ public class MessageValidatorFactory {
     return new RoundChangeMessageValidator(
         roundIdentifier -> createMessageValidator(roundIdentifier, parentHeader),
         validators,
-        IbftHelpers.calculateRequiredValidatorQuorum(validators.size()),
+        prepareMessageCountForQuorum(
+            IbftHelpers.calculateRequiredValidatorQuorum(validators.size())),
         parentHeader.getNumber() + 1);
   }
 

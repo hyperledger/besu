@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.statemachine;
 
+import static tech.pegasys.pantheon.consensus.ibft.IbftHelpers.prepareMessageCountForQuorum;
+
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.CommitPayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparePayload;
@@ -92,7 +94,9 @@ public class RoundState {
   private void updateState() {
     // NOTE: The quorumSize for Prepare messages is 1 less than the quorum size as the proposer
     // does not supply a prepare message
-    prepared = (preparePayloads.size() >= (quorumSize - 1)) && proposalMessage.isPresent();
+    prepared =
+        (preparePayloads.size() >= prepareMessageCountForQuorum(quorumSize))
+            && proposalMessage.isPresent();
     committed = (commitPayloads.size() >= quorumSize) && proposalMessage.isPresent();
   }
 
