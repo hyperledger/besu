@@ -54,6 +54,8 @@ nav:
         - Starting Pantheon: Getting-Started/Starting-Pantheon.md
         - Running Pantheon from Docker Image: Getting-Started/Run-Docker-Image.md
         - Private Network Quickstart Tutorial: Getting-Started/Private-Network-Quickstart.md
+    - Tutorials:
+        - Creating a Private Network: Tutorials/Create-Private-Network.md
     - Configuring Pantheon:
         - Network ID and Chain ID: Configuring-Pantheon/NetworkID-And-ChainID.md
         - Node Keys: Configuring-Pantheon/Node-Keys.md
