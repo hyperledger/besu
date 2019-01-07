@@ -20,7 +20,9 @@ enterprise features.
 
 ## What can you do with Pantheon?
 
-Pantheon includes a [command line interface](Reference/Pantheon-CLI-Syntax.md) and [JSON-RPC API](Reference/JSON-RPC-API.md) for running, maintaining, debugging, and monitoring node operations in an Ethereum network. You can use the API via RPC over HTTP or via WebSockets transport, and Pub/Sub is supported. The API supports typical Ethereum functionalities such as:
+Pantheon includes a [command line interface](Reference/Pantheon-CLI-Syntax.md) and [JSON-RPC API](Reference/JSON-RPC-API.md)
+for running, maintaining, debugging, and monitoring node operations in an Ethereum network. You can use the API via RPC
+over HTTP or via WebSockets transport, and Pub/Sub is supported. The API supports typical Ethereum functionalities such as:
 
 * Ether token mining
 * Smart contract development
