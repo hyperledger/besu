@@ -370,6 +370,10 @@ public class BlockchainQueries {
     return blockchain.getBlockHashByNumber(blockNumber).flatMap(this::blockByHashWithTxHashes);
   }
 
+  public Optional<BlockHeader> getBlockHeaderByNumber(final long number) {
+    return blockchain.getBlockHeader(number);
+  }
+
   /**
    * Returns the latest block with metadata and a list of transaction hashes rather than full
    * transactions.

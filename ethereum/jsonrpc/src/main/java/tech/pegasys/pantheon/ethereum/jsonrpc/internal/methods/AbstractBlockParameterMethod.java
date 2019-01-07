@@ -21,7 +21,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessRe
 
 import java.util.OptionalLong;
 
-abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
+public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
 
   private final BlockchainQueries blockchainQueries;
   private final JsonRpcParameter parameters;
