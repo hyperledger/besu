@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
@@ -138,6 +139,21 @@ public class PantheonNodeFactory {
             .build());
   }
 
+  public PantheonNode createNodeWithAccountsWhitelist(
+      final String name, final List<String> accountsWhitelist) throws IOException {
+    PermissioningConfiguration permissioningConfiguration =
+        PermissioningConfiguration.createDefault();
+    permissioningConfiguration.setAccountWhitelist(accountsWhitelist);
+
+    return create(
+        new PantheonFactoryConfigurationBuilder()
+            .setName(name)
+            .miningEnabled()
+            .setJsonRpcConfiguration(jsonRpcConfigWithPermissioning())
+            .setPermissioningConfiguration(permissioningConfiguration)
+            .build());
+  }
+
   public PantheonNode createCliqueNode(final String name) throws IOException {
     return create(
         new PantheonFactoryConfigurationBuilder()
@@ -214,5 +230,13 @@ public class PantheonNodeFactory {
     config.setEnabled(true);
     config.setPort(0);
     return config;
+  }
+
+  private JsonRpcConfiguration jsonRpcConfigWithPermissioning() {
+    final JsonRpcConfiguration jsonRpcConfig = createJsonRpcEnabledConfig();
+    final List<RpcApi> rpcApis = new ArrayList<>(jsonRpcConfig.getRpcApis());
+    rpcApis.add(RpcApis.PERM);
+    jsonRpcConfig.setRpcApis(rpcApis);
+    return jsonRpcConfig;
   }
 }

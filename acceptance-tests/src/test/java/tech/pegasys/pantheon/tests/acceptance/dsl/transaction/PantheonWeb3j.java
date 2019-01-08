@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
@@ -78,4 +79,33 @@ public class PantheonWeb3j extends JsonRpc2_0Web3j {
   public static class SignersBlockResponse extends Response<List<Address>> {}
 
   public static class ProposalsResponse extends Response<Map<Address, Boolean>> {}
+
+  public Request<?, AddAccountsToWhitelistResponse> addAccountsToWhitelist(
+      final List<String> accounts) {
+    return new Request<>(
+        "perm_addAccountsToWhitelist",
+        Collections.singletonList(accounts),
+        web3jService,
+        AddAccountsToWhitelistResponse.class);
+  }
+
+  public Request<?, RemoveAccountsFromWhitelistResponse> removeAccountsFromWhitelist(
+      final List<String> accounts) {
+    return new Request<>(
+        "perm_removeAccountsFromWhitelist",
+        Collections.singletonList(accounts),
+        web3jService,
+        RemoveAccountsFromWhitelistResponse.class);
+  }
+
+  public Request<?, GetAccountsWhitelistResponse> getAccountsWhitelist() {
+    return new Request<>(
+        "perm_getAccountsWhitelist", null, web3jService, GetAccountsWhitelistResponse.class);
+  }
+
+  public static class AddAccountsToWhitelistResponse extends Response<Boolean> {}
+
+  public static class RemoveAccountsFromWhitelistResponse extends Response<Boolean> {}
+
+  public static class GetAccountsWhitelistResponse extends Response<List<String>> {}
 }

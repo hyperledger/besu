@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Optional;
 
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
@@ -36,31 +37,50 @@ public class TransferTransaction implements Transaction<Hash> {
   private final Account recipient;
   private final String amount;
   private final Unit unit;
+  private final Optional<BigInteger> nonce;
 
   public TransferTransaction(
       final Account sender, final Account recipient, final String amount, final Unit unit) {
+    this(sender, recipient, amount, unit, null);
+  }
+
+  public TransferTransaction(
+      final Account sender,
+      final Account recipient,
+      final String amount,
+      final Unit unit,
+      final BigInteger nonce) {
     this.sender = sender;
     this.recipient = recipient;
     this.amount = amount;
     this.unit = unit;
+    if (nonce != null) {
+      this.nonce = Optional.of(nonce);
+    } else {
+      this.nonce = Optional.empty();
+    }
   }
 
   @Override
   public Hash execute(final PantheonWeb3j node) {
-    final RawTransaction transaction =
-        RawTransaction.createEtherTransaction(
-            sender.getNextNonce(),
-            MINIMUM_GAS_PRICE,
-            TRANSFER_GAS_COST,
-            recipient.getAddress(),
-            Convert.toWei(amount, unit).toBigIntegerExact());
-    final String signedTransactionData =
-        toHexString(TransactionEncoder.signMessage(transaction, sender.web3jCredentials()));
+    final String signedTransactionData = signedTransactionData();
     try {
       return Hash.fromHexString(
           node.ethSendRawTransaction(signedTransactionData).send().getTransactionHash());
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public String signedTransactionData() {
+    final RawTransaction transaction =
+        RawTransaction.createEtherTransaction(
+            nonce.orElse(nonce.orElseGet(sender::getNextNonce)),
+            MINIMUM_GAS_PRICE,
+            TRANSFER_GAS_COST,
+            recipient.getAddress(),
+            Convert.toWei(amount, unit).toBigIntegerExact());
+
+    return toHexString(TransactionEncoder.signMessage(transaction, sender.web3jCredentials()));
   }
 }

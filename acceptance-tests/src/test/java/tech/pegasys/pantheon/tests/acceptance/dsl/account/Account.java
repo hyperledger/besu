@@ -54,12 +54,12 @@ public class Account {
         keyPair.getPrivateKey().toString(), keyPair.getPublicKey().toString());
   }
 
-  public String getAddress() {
-    return Address.extract(Hash.hash(keyPair.getPublicKey().getEncodedBytes())).toString();
-  }
-
   public BigInteger getNextNonce() {
     return BigInteger.valueOf(nonce++);
+  }
+
+  public String getAddress() {
+    return Address.extract(Hash.hash(keyPair.getPublicKey().getEncodedBytes())).toString();
   }
 
   public Condition balanceEquals(final String expectedBalance, final Unit balanceUnit) {

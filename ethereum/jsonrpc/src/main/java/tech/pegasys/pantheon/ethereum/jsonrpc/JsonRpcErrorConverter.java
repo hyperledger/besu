@@ -32,6 +32,8 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
       case EXCEEDS_BLOCK_GAS_LIMIT:
         return JsonRpcError.EXCEEDS_BLOCK_GAS_LIMIT;
+      case TX_SENDER_NOT_AUTHORIZED:
+        return JsonRpcError.TX_SENDER_NOT_AUTHORIZED;
 
       default:
         return JsonRpcError.INVALID_PARAMS;

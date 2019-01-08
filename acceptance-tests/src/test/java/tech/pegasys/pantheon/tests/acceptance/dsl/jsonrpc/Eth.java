@@ -17,6 +17,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectEthAccountsException;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectEthGetTransactionReceiptIsAbsent;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectEthGetWorkException;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectEthSendRawTransactionException;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectSuccessfulEthGetTransactionReceipt;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.SanityCheckEthGetWorkValues;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
@@ -49,5 +50,11 @@ public class Eth {
   public Condition expectNoTransactionReceipt(final String transactionHash) {
     return new ExpectEthGetTransactionReceiptIsAbsent(
         transactions.getTransactionReceipt(transactionHash));
+  }
+
+  public Condition sendRawTransactionExceptional(
+      final String transactionData, final String expectedMessage) {
+    return new ExpectEthSendRawTransactionException(
+        transactions.sendRawTransactionTransaction(transactionData), expectedMessage);
   }
 }

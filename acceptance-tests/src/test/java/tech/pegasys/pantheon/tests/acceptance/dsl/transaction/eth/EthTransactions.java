@@ -46,4 +46,9 @@ public class EthTransactions {
   public EthGetTransactionReceiptTransaction getTransactionReceipt(final String transactionHash) {
     return new EthGetTransactionReceiptTransaction(transactionHash);
   }
+
+  public EthSendRawTransactionTransaction sendRawTransactionTransaction(
+      final String transactionData) {
+    return new EthSendRawTransactionTransaction(transactionData);
+  }
 }

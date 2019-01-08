@@ -76,6 +76,10 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
       params.add("--nodes-whitelist");
       params.add(String.join(",", permissioningConfiguration.getNodeWhitelist().toString()));
     }
+    if (permissioningConfiguration.isAccountWhitelistSet()) {
+      params.add("--accounts-whitelist");
+      params.add(String.join(",", permissioningConfiguration.getAccountWhitelist().toString()));
+    }
 
     if (node.jsonRpcEnabled()) {
       params.add("--rpc-enabled");
