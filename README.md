@@ -8,27 +8,28 @@ Pantheon is an Apache 2.0 licensed, MainNet compatible, Ethereum client written 
 
 ## Pantheon Users
 
-The process for installing and running Pantheon as a user is different to when developing. All user documentation is on our [Wiki] and some processes are different to those described in this Readme. 
+The process for installing and running Pantheon as a user is different to when developing. Some processes in our [user documentation](https://docs.pantheon.pegasys.tech/en/latest/) are different to those described in this Readme. 
 
 ### Install and Run Pantheon
 
-Installing and running Pantheon is described in the Wiki:
+Installing and running Pantheon:
 * [Installation]
-* [Quickstart]
+* [Getting Started]
 
 ### Documentation 
 
-User and reference documentation available on the Wiki includes:
+User and reference documentation available includes:
 * [Command Line Options]
 * [JSON-RPC API]
-* [Docker Quickstart Tutorial]
+* [Private Network Quickstart]
+* [Configuring Pantheon]
 * [Using Pantheon]
 
 ## Pantheon Developers
 
 * [Contribution Guidelines](CONTRIBUTING.md)
 * [Coding Conventions](CODING-CONVENTIONS.md)
-* [Wiki] for running and using Pantheon
+* [User Documentation] for running and using Pantheon
 
 ### Development
 Instructions for how to get started with developing on the Pantheon codebase. Please also read the
@@ -39,13 +40,14 @@ Instructions for how to get started with developing on the Pantheon codebase. Pl
 * [Code Coverage](docs/development/code-coverage.md)
 * [Logging](docs/development/logging.md)
 
-[Wiki]: https://github.com/PegaSysEng/pantheon/wiki
-[Installation]: https://github.com/PegaSysEng/pantheon/wiki/Installation
-[Quickstart]: https://github.com/PegaSysEng/pantheon/wiki/Quickstart
-[Docker Quickstart Tutorial]: https://github.com/PegaSysEng/pantheon/wiki/Docker-Quickstart
-[Command Line Options]: https://github.com/PegaSysEng/pantheon/wiki/Pantheon-CLI-Syntax
-[JSON-RPC API]: https://github.com/PegaSysEng/pantheon/wiki/JSON-RPC-API
-[Using Pantheon]: https://github.com/PegaSysEng/pantheon/wiki/Transactions
+[User Documentation]: https://docs.pantheon.pegasys.tech/en/latest/
+[Installation]: https://docs.pantheon.pegasys.tech/en/latest/Installation/Overview/
+[Getting Started]: https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Getting-Started/
+[Private Network Quickstart]: https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Private-Network-Quickstart/
+[Command Line Options]: https://docs.pantheon.pegasys.tech/en/latest/Reference/Pantheon-CLI-Syntax/
+[JSON-RPC API]: https://docs.pantheon.pegasys.tech/en/latest/Reference/Using-JSON-RPC-API/
+[Configuring Pantheon]: https://docs.pantheon.pegasys.tech/en/latest/Configuring-Pantheon/NetworkID-And-ChainID/
+[Using Pantheon]: https://docs.pantheon.pegasys.tech/en/latest/Using-Pantheon/Transactions/
 
 ## Release Notes
 
