@@ -62,7 +62,8 @@ public class ConfigOptionSearchAndRunHandlerTest {
   private final DefaultExceptionHandler<List<Object>> exceptionHandler =
       new DefaultExceptionHandler<List<Object>>().useErr(errPrintStream).useAnsi(Ansi.OFF);
   private final ConfigOptionSearchAndRunHandler configParsingHandler =
-      new ConfigOptionSearchAndRunHandler(resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME);
+      new ConfigOptionSearchAndRunHandler(
+          resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, false);
 
   @Mock ParseResult mockParseResult;
   @Mock CommandLine mockCommandLine;
