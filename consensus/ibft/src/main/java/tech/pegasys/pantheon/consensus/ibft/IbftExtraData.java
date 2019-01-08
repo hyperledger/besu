@@ -38,14 +38,14 @@ public class IbftExtraData {
   private final Collection<Signature> seals;
   private final Optional<Vote> vote;
   private final int round;
-  private final List<Address> validators;
+  private final Collection<Address> validators;
 
   public IbftExtraData(
       final BytesValue vanityData,
       final Collection<Signature> seals,
       final Optional<Vote> vote,
       final int round,
-      final List<Address> validators) {
+      final Collection<Address> validators) {
 
     checkNotNull(vanityData);
     checkNotNull(seals);
@@ -132,7 +132,7 @@ public class IbftExtraData {
     return seals;
   }
 
-  public List<Address> getValidators() {
+  public Collection<Address> getValidators() {
     return validators;
   }
 

@@ -22,7 +22,7 @@ import tech.pegasys.pantheon.consensus.ibft.RoundTimer;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockCreatorFactory;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.ProposerSelector;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.MessageFactory;
-import tech.pegasys.pantheon.consensus.ibft.network.IbftNetworkPeers;
+import tech.pegasys.pantheon.consensus.ibft.network.IbftMulticaster;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
@@ -36,7 +36,7 @@ public class IbftFinalState {
   private final KeyPair nodeKeys;
   private final Address localAddress;
   private final ProposerSelector proposerSelector;
-  private final IbftNetworkPeers peers;
+  private final IbftMulticaster peers;
   private final RoundTimer roundTimer;
   private final BlockTimer blockTimer;
   private final IbftBlockCreatorFactory blockCreatorFactory;
@@ -50,7 +50,7 @@ public class IbftFinalState {
       final KeyPair nodeKeys,
       final Address localAddress,
       final ProposerSelector proposerSelector,
-      final IbftNetworkPeers peers,
+      final IbftMulticaster peers,
       final RoundTimer roundTimer,
       final BlockTimer blockTimer,
       final IbftBlockCreatorFactory blockCreatorFactory,
@@ -95,7 +95,7 @@ public class IbftFinalState {
     return getProposerForRound(roundIdentifier).equals(localAddress);
   }
 
-  public IbftNetworkPeers getPeers() {
+  public IbftMulticaster getPeers() {
     return peers;
   }
 

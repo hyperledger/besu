@@ -27,7 +27,7 @@ import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.RoundChangeCertificate;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.RoundChangePayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
-import tech.pegasys.pantheon.consensus.ibft.network.IbftNetworkPeers;
+import tech.pegasys.pantheon.consensus.ibft.network.IbftMulticaster;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
@@ -37,12 +37,12 @@ import java.util.Optional;
 public class IbftMessageTransmitter {
 
   private final MessageFactory messageFactory;
-  private final IbftNetworkPeers networkPeers;
+  private final IbftMulticaster multicaster;
 
   public IbftMessageTransmitter(
-      final MessageFactory messageFactory, final IbftNetworkPeers networkPeers) {
+      final MessageFactory messageFactory, final IbftMulticaster multicaster) {
     this.messageFactory = messageFactory;
-    this.networkPeers = networkPeers;
+    this.multicaster = multicaster;
   }
 
   public void multicastProposal(final ConsensusRoundIdentifier roundIdentifier, final Block block) {
@@ -51,7 +51,7 @@ public class IbftMessageTransmitter {
 
     final ProposalMessage message = ProposalMessage.create(signedPayload);
 
-    networkPeers.multicastToValidators(message);
+    multicaster.multicastToValidators(message);
   }
 
   public void multicastPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
@@ -60,7 +60,7 @@ public class IbftMessageTransmitter {
 
     final PrepareMessage message = PrepareMessage.create(signedPayload);
 
-    networkPeers.multicastToValidators(message);
+    multicaster.multicastToValidators(message);
   }
 
   public void multicastCommit(
@@ -72,7 +72,7 @@ public class IbftMessageTransmitter {
 
     final CommitMessage message = CommitMessage.create(signedPayload);
 
-    networkPeers.multicastToValidators(message);
+    multicaster.multicastToValidators(message);
   }
 
   public void multicastRoundChange(
@@ -84,7 +84,7 @@ public class IbftMessageTransmitter {
 
     final RoundChangeMessage message = RoundChangeMessage.create(signedPayload);
 
-    networkPeers.multicastToValidators(message);
+    multicaster.multicastToValidators(message);
   }
 
   public void multicastNewRound(
@@ -98,6 +98,6 @@ public class IbftMessageTransmitter {
 
     final NewRoundMessage message = NewRoundMessage.create(signedPayload);
 
-    networkPeers.multicastToValidators(message);
+    multicaster.multicastToValidators(message);
   }
 }
