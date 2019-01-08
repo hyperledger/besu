@@ -18,7 +18,7 @@ import tech.pegasys.pantheon.consensus.common.VoteType;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 
 public class IbftBlockInterface implements BlockInterface {
@@ -45,7 +45,7 @@ public class IbftBlockInterface implements BlockInterface {
   }
 
   @Override
-  public List<Address> validatorsInBlock(final BlockHeader header) {
+  public Collection<Address> validatorsInBlock(final BlockHeader header) {
     final IbftExtraData ibftExtraData = IbftExtraData.decode(header.getExtraData());
     return ibftExtraData.getValidators();
   }

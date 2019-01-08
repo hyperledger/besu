@@ -29,7 +29,7 @@ import com.google.common.collect.Maps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class IbftNetworkPeers {
+public class IbftNetworkPeers implements IbftMulticaster {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -52,6 +52,7 @@ public class IbftNetworkPeers {
     peerConnections.remove(peerAddress);
   }
 
+  @Override
   public void multicastToValidators(final MessageData message) {
     final Collection<Address> validators = validatorProvider.getValidators();
     sendMessageToSpecificAddresses(validators, message);
