@@ -277,8 +277,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   // A list of origins URLs that are accepted by the JsonRpcHttpServer (CORS)
   @Option(
     names = {"--rpc-cors-origins"},
-    description = "Comma separated origin domain URLs for CORS validation (default: none)",
-    converter = CorsAllowedOriginsProperty.CorsAllowedOriginsPropertyConverter.class
+    description = "Comma separated origin domain URLs for CORS validation (default: none)"
   )
   private final CorsAllowedOriginsProperty rpcCorsAllowedOrigins = new CorsAllowedOriginsProperty();
 
@@ -331,7 +330,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             + "default: ${DEFAULT-VALUE}",
     defaultValue = "" + WebSocketConfiguration.DEFAULT_WEBSOCKET_REFRESH_DELAY
   )
-  private void setRefreshDelay(final Long refreshDelay) {
+  private Long configureRefreshDelay(final Long refreshDelay) {
     if (refreshDelay < DEFAULT_MIN_REFRESH_DELAY || refreshDelay > DEFAULT_MAX_REFRESH_DELAY) {
       throw new ParameterException(
           new CommandLine(this),
@@ -341,6 +340,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
               String.valueOf(DEFAULT_MAX_REFRESH_DELAY)));
     }
     this.refreshDelay = refreshDelay;
+    return refreshDelay;
   }
 
   @Option(
@@ -363,8 +363,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     paramLabel = "<hostname>",
     description =
         "Comma separated list of hostnames to whitelist for RPC access.  default: ${DEFAULT-VALUE}",
-    defaultValue = "localhost",
-    converter = JsonRPCWhitelistHostsProperty.JsonRPCWhitelistHostsConverter.class
+    defaultValue = "localhost"
   )
   private final JsonRPCWhitelistHostsProperty hostsWhitelist = new JsonRPCWhitelistHostsProperty();
 
@@ -579,9 +578,9 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setEnabled(isJsonRpcEnabled);
     jsonRpcConfiguration.setHost(rpcHostAndPort.getHost());
     jsonRpcConfiguration.setPort(rpcHostAndPort.getPort());
-    jsonRpcConfiguration.setCorsAllowedDomains(rpcCorsAllowedOrigins.getDomains());
+    jsonRpcConfiguration.setCorsAllowedDomains(rpcCorsAllowedOrigins);
     jsonRpcConfiguration.setRpcApis(rpcApis);
-    jsonRpcConfiguration.setHostsWhitelist(hostsWhitelist.hostnamesWhitelist());
+    jsonRpcConfiguration.setHostsWhitelist(hostsWhitelist);
     return jsonRpcConfiguration;
   }
 
@@ -600,7 +599,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     metricsConfiguration.setEnabled(isMetricsEnabled);
     metricsConfiguration.setHost(metricsHostAndPort.getHost());
     metricsConfiguration.setPort(metricsHostAndPort.getPort());
-    metricsConfiguration.setHostsWhitelist(hostsWhitelist.hostnamesWhitelist());
+    metricsConfiguration.setHostsWhitelist(hostsWhitelist);
     return metricsConfiguration;
   }
 

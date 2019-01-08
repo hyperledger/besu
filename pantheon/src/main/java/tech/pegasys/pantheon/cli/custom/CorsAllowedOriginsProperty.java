@@ -12,72 +12,80 @@
  */
 package tech.pegasys.pantheon.cli.custom;
 
+import java.util.AbstractCollection;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import javax.annotation.Nonnull;
 
-import com.google.common.collect.Lists;
-import picocli.CommandLine.ITypeConverter;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 
-public class CorsAllowedOriginsProperty {
+public class CorsAllowedOriginsProperty extends AbstractCollection<String> {
 
-  private List<String> domains = Collections.emptyList();
-
-  public CorsAllowedOriginsProperty(final List<String> domains) {
-    this.domains = domains;
-  }
+  private final List<String> domains = new ArrayList<>();
 
   public CorsAllowedOriginsProperty() {}
 
-  public List<String> getDomains() {
-    return domains;
+  @Override
+  @Nonnull
+  public Iterator<String> iterator() {
+    if (domains.size() == 1 && domains.get(0).equals("none")) {
+      return Collections.emptyIterator();
+    } else {
+      return domains.iterator();
+    }
   }
 
-  public static class CorsAllowedOriginsPropertyConverter
-      implements ITypeConverter<CorsAllowedOriginsProperty> {
+  @Override
+  public int size() {
+    return domains.size();
+  }
 
-    @Override
-    public CorsAllowedOriginsProperty convert(final String value) throws IllegalArgumentException {
-      final List<String> domains;
-      if (value != null && !value.isEmpty()) {
-        domains = new ArrayList<>(Arrays.asList(value.split("\\s*,\\s*")));
-      } else {
-        throw new IllegalArgumentException("Property can't be null/empty string");
+  @Override
+  public boolean add(final String string) {
+    return addAll(Collections.singleton(string));
+  }
+
+  @Override
+  public boolean addAll(final Collection<? extends String> collection) {
+    final int initialSize = domains.size();
+    for (final String string : collection) {
+      if (Strings.isNullOrEmpty(string)) {
+        throw new IllegalArgumentException("Domain cannot be empty string or null string.");
       }
-
-      if (domains.contains("none")) {
-        if (domains.size() > 1) {
-          throw new IllegalArgumentException("Value 'none' can't be used with other domains");
+      for (final String s : Splitter.onPattern("\\s*,+\\s*").split(string)) {
+        if ("all".equals(s)) {
+          domains.add("*");
         } else {
-          return new CorsAllowedOriginsProperty(Collections.emptyList());
+          domains.add(s);
         }
       }
+    }
 
-      if (domains.contains("all") || domains.contains("*")) {
-        if (domains.size() > 1) {
-          throw new IllegalArgumentException("Value 'all' can't be used with other domains");
-        } else {
-          return new CorsAllowedOriginsProperty(Lists.newArrayList("*"));
-        }
+    if (domains.contains("none")) {
+      if (domains.size() > 1) {
+        throw new IllegalArgumentException("Value 'none' can't be used with other domains");
       }
-
+    } else if (domains.contains("*")) {
+      if (domains.size() > 1) {
+        throw new IllegalArgumentException("Values '*' or 'all' can't be used with other domains");
+      }
+    } else {
       try {
         final StringJoiner stringJoiner = new StringJoiner("|");
-        domains.stream().filter(s -> !s.isEmpty()).forEach(stringJoiner::add);
+        domains.forEach(stringJoiner::add);
         Pattern.compile(stringJoiner.toString());
       } catch (final PatternSyntaxException e) {
         throw new IllegalArgumentException("Domain values result in invalid regex pattern", e);
       }
-
-      if (domains.size() > 0) {
-        return new CorsAllowedOriginsProperty(domains);
-      } else {
-        return new CorsAllowedOriginsProperty();
-      }
     }
+
+    return domains.size() != initialSize;
   }
 }

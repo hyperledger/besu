@@ -12,59 +12,70 @@
  */
 package tech.pegasys.pantheon.cli.custom;
 
+import java.util.AbstractCollection;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nonnull;
 
-import picocli.CommandLine;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 
-public class JsonRPCWhitelistHostsProperty {
-  private List<String> hostnamesWhitelist = Collections.emptyList();
+public class JsonRPCWhitelistHostsProperty extends AbstractCollection<String> {
 
-  private JsonRPCWhitelistHostsProperty(final List<String> hostnamesWhitelist) {
-    this.hostnamesWhitelist = hostnamesWhitelist;
-  }
+  private final List<String> hostnamesWhitelist = new ArrayList<>();
 
   public JsonRPCWhitelistHostsProperty() {}
 
-  public List<String> hostnamesWhitelist() {
-    return hostnamesWhitelist;
+  @Override
+  @Nonnull
+  public Iterator<String> iterator() {
+    if (hostnamesWhitelist.size() == 1 && hostnamesWhitelist.get(0).equals("none")) {
+      return Collections.emptyIterator();
+    } else {
+      return hostnamesWhitelist.iterator();
+    }
   }
 
-  public static class JsonRPCWhitelistHostsConverter
-      implements CommandLine.ITypeConverter<JsonRPCWhitelistHostsProperty> {
+  @Override
+  public int size() {
+    return hostnamesWhitelist.size();
+  }
 
-    @Override
-    public JsonRPCWhitelistHostsProperty convert(final String value) {
-      final List<String> hostNames;
-      if (value != null && !value.isEmpty()) {
-        hostNames = new ArrayList<>(Arrays.asList(value.split("\\s*,\\s*")));
-      } else {
-        throw new IllegalArgumentException("Property can't be null/empty string");
+  @Override
+  public boolean add(final String string) {
+    return addAll(Collections.singleton(string));
+  }
+
+  @Override
+  public boolean addAll(final Collection<? extends String> collection) {
+    final int initialSize = hostnamesWhitelist.size();
+    for (final String string : collection) {
+      if (Strings.isNullOrEmpty(string)) {
+        throw new IllegalArgumentException("Hostname cannot be empty string or null string.");
       }
-
-      if (hostNames.contains("all")) {
-        if (hostNames.size() > 1) {
-          throw new IllegalArgumentException("Value 'all' can't be used with other hostnames");
+      for (final String s : Splitter.onPattern("\\s*,+\\s*").split(string)) {
+        if ("all".equals(s)) {
+          hostnamesWhitelist.add("*");
         } else {
-          return new JsonRPCWhitelistHostsProperty(Collections.singletonList("*"));
+          hostnamesWhitelist.add(s);
         }
-      }
-
-      if (hostNames.contains("*")) {
-        if (hostNames.size() > 1) {
-          throw new IllegalArgumentException("Value '*' can't be used with other hostnames");
-        } else {
-          return new JsonRPCWhitelistHostsProperty(Collections.singletonList("*"));
-        }
-      }
-
-      if (hostNames.size() > 0) {
-        return new JsonRPCWhitelistHostsProperty(hostNames);
-      } else {
-        return new JsonRPCWhitelistHostsProperty();
       }
     }
+
+    if (hostnamesWhitelist.contains("none")) {
+      if (hostnamesWhitelist.size() > 1) {
+        throw new IllegalArgumentException("Value 'none' can't be used with other hostnames");
+      }
+    } else if (hostnamesWhitelist.contains("*")) {
+      if (hostnamesWhitelist.size() > 1) {
+        throw new IllegalArgumentException(
+            "Values '*' or 'all' can't be used with other hostnames");
+      }
+    }
+
+    return hostnamesWhitelist.size() != initialSize;
   }
 }

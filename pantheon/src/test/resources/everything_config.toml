@@ -1,0 +1,63 @@
+# Every possible CLI should be in this file.
+# The odds are you are reading this because you added a CLI and didn't add it
+# here and a test broke.  To fix the test add your CLI to this file.
+#
+# Please use a plausable value, Pantheon has to at least be able to parse it.
+# If it is a multi-valued CLI make it a TOML array.
+# If it is a number or boolean make it a number or boolean
+# All other config options are strings, and must be quoted.
+# Please provide some sensible grouping.
+
+# Node Information
+datadir="~/pantheondata"
+logging="INFO"
+node-private-key="0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+
+# P2P network
+no-discovery=true
+bootnodes=[
+  "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
+  "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
+  "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567"
+]
+banned-nodeids=["0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"]
+p2p-listen="1.2.3.4:1234"
+max-peers=42
+max-trailing-peers=5
+host-whitelist=["all"]
+
+# chain
+genesis="~/genesis.json"
+#sync-mode="fast"
+ottoman=false
+ropsten=false
+goerli=false
+network-id=303
+rinkeby=false
+dev-mode=false
+
+# JSON-RPC
+rpc-enabled=false
+rpc-listen="5.6.7.8:5678"
+rpc-api=["DEBUG","ETH"]
+rpc-cors-origins=["none"]
+
+# WebSockets API
+ws-enabled=false
+ws-api=["DEBUG","ETH"]
+ws-listen="9.10.11.12:9101"
+ws-refresh-delay=500
+
+# Prometheus Metrics Endpoint
+metrics-enabled=false
+metrics-listen="8.6.7.5:309"
+
+# Mining
+miner-enabled=false
+miner-coinbase="0x0000000000000000000000000000000000000002"
+miner-extraData="Protocol Engineering Group And SYStems"
+miner-minTransactionGasPriceWei="1"
+
+# Permissioning
+accounts-whitelist=["0x0000000000000000000000000000000000000009"]
+nodes-whitelist=["all"]
