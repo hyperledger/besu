@@ -23,6 +23,7 @@ public class RpcApis {
   public static final RpcApi NET = new RpcApi("NET");
   public static final RpcApi WEB3 = new RpcApi("WEB3");
   public static final RpcApi ADMIN = new RpcApi("ADMIN");
+  public static final RpcApi PERM = new RpcApi("PERM");
 
   public static final Collection<RpcApi> DEFAULT_JSON_RPC_APIS = Arrays.asList(ETH, NET, WEB3);
 
@@ -39,6 +40,8 @@ public class RpcApis {
       return Optional.of(WEB3);
     } else if (name.equals(ADMIN.getCliValue())) {
       return Optional.of(ADMIN);
+    } else if (name.equals(PERM.getCliValue())) {
+      return Optional.of(PERM);
     } else {
       return Optional.empty();
     }

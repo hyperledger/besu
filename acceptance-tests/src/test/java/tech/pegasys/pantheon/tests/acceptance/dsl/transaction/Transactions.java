@@ -16,8 +16,14 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Accounts;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account.TransferTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account.TransferTransactionSet;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthGetTransactionCountTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermAddAccountsToWhitelistTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermGetAccountsWhitelistTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermRemoveAccountsFromWhitelistTransaction;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.web3j.tx.Contract;
@@ -40,6 +46,11 @@ public class Transactions {
     return new TransferTransaction(sender, recipient, String.valueOf(amount), Unit.ETHER);
   }
 
+  public TransferTransaction createTransfer(
+      final Account sender, final Account recipient, final int amount, final BigInteger nonce) {
+    return new TransferTransaction(sender, recipient, String.valueOf(amount), Unit.ETHER, nonce);
+  }
+
   public TransferTransactionSet createIncrementalTransfers(
       final Account sender, final Account recipient, final int etherAmount) {
     final List<TransferTransaction> transfers = new ArrayList<>();
@@ -54,5 +65,22 @@ public class Transactions {
   public <T extends Contract> DeploySmartContractTransaction<T> createSmartContract(
       final Class<T> clazz) {
     return new DeploySmartContractTransaction<>(clazz);
+  }
+
+  public PermAddAccountsToWhitelistTransaction addAccountsToWhitelist(final String... accounts) {
+    return new PermAddAccountsToWhitelistTransaction(Arrays.asList(accounts));
+  }
+
+  public PermRemoveAccountsFromWhitelistTransaction removeAccountsFromWhitelist(
+      final String... accounts) {
+    return new PermRemoveAccountsFromWhitelistTransaction(Arrays.asList(accounts));
+  }
+
+  public PermGetAccountsWhitelistTransaction getAccountsWhiteList() {
+    return new PermGetAccountsWhitelistTransaction();
+  }
+
+  public EthGetTransactionCountTransaction getTransactionCount(final String accountAddress) {
+    return new EthGetTransactionCountTransaction(accountAddress);
   }
 }

@@ -230,9 +230,9 @@ public class RunnerBuilder {
     final TransactionPool transactionPool = pantheonController.getTransactionPool();
     final MiningCoordinator miningCoordinator = pantheonController.getMiningCoordinator();
 
+    final AccountWhitelistController accountWhitelistController =
+        new AccountWhitelistController(permissioningConfiguration);
     if (permissioningConfiguration.isAccountWhitelistSet()) {
-      AccountWhitelistController accountWhitelistController =
-          new AccountWhitelistController(permissioningConfiguration);
       transactionPool.setAccountWhitelist(accountWhitelistController);
     }
 
@@ -252,7 +252,8 @@ public class RunnerBuilder {
               metricsSystem,
               supportedCapabilities,
               jsonRpcConfiguration.getRpcApis(),
-              filterManager);
+              filterManager,
+              accountWhitelistController);
       jsonRpcHttpService =
           Optional.of(
               new JsonRpcHttpService(
@@ -273,7 +274,8 @@ public class RunnerBuilder {
               metricsSystem,
               supportedCapabilities,
               webSocketConfiguration.getRpcApis(),
-              filterManager);
+              filterManager,
+              accountWhitelistController);
 
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(
@@ -331,7 +333,8 @@ public class RunnerBuilder {
       final MetricsSystem metricsSystem,
       final Set<Capability> supportedCapabilities,
       final Collection<RpcApi> jsonRpcApis,
-      final FilterManager filterManager) {
+      final FilterManager filterManager,
+      final AccountWhitelistController accountWhitelistController) {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -346,7 +349,8 @@ public class RunnerBuilder {
                 metricsSystem,
                 supportedCapabilities,
                 jsonRpcApis,
-                filterManager);
+                filterManager,
+                accountWhitelistController);
     methods.putAll(pantheonController.getAdditionalJsonRpcMethods(jsonRpcApis));
     return methods;
   }

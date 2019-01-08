@@ -12,40 +12,85 @@
  */
 package tech.pegasys.pantheon.ethereum.permissioning;
 
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class AccountWhitelistController {
 
-  private final List<String> accountWhitelist;
-  private boolean accountWhitelistSet = false;
+  private static final int ACCOUNT_BYTES_SIZE = 20;
+  private final List<String> accountWhitelist = new ArrayList<>();
+  private boolean isAccountWhitelistSet = false;
 
   public AccountWhitelistController(final PermissioningConfiguration configuration) {
-    accountWhitelist = new ArrayList<>();
-    if (configuration != null && configuration.getAccountWhitelist() != null) {
-      for (String hexString : configuration.getAccountWhitelist()) {
-        accountWhitelist.add(hexString);
-      }
-      if (configuration.isNodeWhitelistSet()) {
-        accountWhitelistSet = true;
-      }
+    if (configuration != null && configuration.isAccountWhitelistSet()) {
+      addAccounts(configuration.getAccountWhitelist());
     }
   }
 
-  public boolean addAccount(final String account) {
-    accountWhitelistSet = true;
-    return accountWhitelist.add(account);
+  public AddResult addAccounts(final List<String> accounts) {
+    if (containsInvalidAccount(accounts)) {
+      return AddResult.ERROR_INVALID_ENTRY;
+    }
+
+    boolean hasDuplicatedAccount = accounts.stream().anyMatch(accountWhitelist::contains);
+    if (hasDuplicatedAccount) {
+      return AddResult.ERROR_DUPLICATED_ENTRY;
+    }
+
+    this.isAccountWhitelistSet = true;
+    this.accountWhitelist.addAll(accounts);
+    return AddResult.SUCCESS;
   }
 
-  public boolean removeAccount(final String account) {
-    return accountWhitelist.remove(account);
+  public RemoveResult removeAccounts(final List<String> accounts) {
+    if (containsInvalidAccount(accounts)) {
+      return RemoveResult.ERROR_INVALID_ENTRY;
+    }
+
+    if (!accountWhitelist.containsAll(accounts)) {
+      return RemoveResult.ERROR_ABSENT_ENTRY;
+    }
+
+    this.accountWhitelist.removeAll(accounts);
+    return RemoveResult.SUCCESS;
   }
 
   public boolean contains(final String account) {
-    return (!accountWhitelistSet || (accountWhitelistSet && accountWhitelist.contains(account)));
+    return (!isAccountWhitelistSet || accountWhitelist.contains(account));
   }
 
   public boolean isAccountWhiteListSet() {
-    return accountWhitelistSet;
+    return isAccountWhitelistSet;
+  }
+
+  public List<String> getAccountWhitelist() {
+    return new ArrayList<>(accountWhitelist);
+  }
+
+  private boolean containsInvalidAccount(final List<String> accounts) {
+    return !accounts.stream().allMatch(this::isValidAccountString);
+  }
+
+  private boolean isValidAccountString(final String account) {
+    try {
+      BytesValue bytesValue = BytesValue.fromHexString(account);
+      return bytesValue.size() == ACCOUNT_BYTES_SIZE;
+    } catch (NullPointerException | IndexOutOfBoundsException | IllegalArgumentException e) {
+      return false;
+    }
+  }
+
+  public enum AddResult {
+    SUCCESS,
+    ERROR_DUPLICATED_ENTRY,
+    ERROR_INVALID_ENTRY
+  }
+
+  public enum RemoveResult {
+    SUCCESS,
+    ERROR_ABSENT_ENTRY,
+    ERROR_INVALID_ENTRY
   }
 }

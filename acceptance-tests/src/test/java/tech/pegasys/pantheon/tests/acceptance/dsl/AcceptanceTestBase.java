@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.CliqueConditi
 import tech.pegasys.pantheon.tests.acceptance.dsl.contract.ContractVerifier;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eth;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Net;
+import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Perm;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Web3;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.Cluster;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.factory.PantheonNodeFactory;
@@ -41,6 +42,7 @@ public class AcceptanceTestBase {
   protected final Web3 web3;
   protected final Eth eth;
   protected final Net net;
+  protected final Perm perm;
   protected final PantheonNodeFactory pantheon;
   protected final ContractVerifier contractVerifier;
   protected final WaitConditions wait;
@@ -55,6 +57,7 @@ public class AcceptanceTestBase {
     net = new Net(new NetTransactions());
     cluster = new Cluster(net);
     transactions = new Transactions(accounts);
+    perm = new Perm(transactions);
     web3 = new Web3(new Web3Transactions());
     pantheon = new PantheonNodeFactory();
     contractVerifier = new ContractVerifier(accounts.getPrimaryBenefactor());

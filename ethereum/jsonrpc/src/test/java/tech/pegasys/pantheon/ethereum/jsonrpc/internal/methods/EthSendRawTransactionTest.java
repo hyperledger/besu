@@ -137,6 +137,12 @@ public class EthSendRawTransactionTest {
         TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT, JsonRpcError.EXCEEDS_BLOCK_GAS_LIMIT);
   }
 
+  @Test
+  public void transactionWithNotWhitelistedSenderAccountIsRejected() {
+    verifyErrorForInvalidTransaction(
+        TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED, JsonRpcError.TX_SENDER_NOT_AUTHORIZED);
+  }
+
   private void verifyErrorForInvalidTransaction(
       final TransactionInvalidReason transactionInvalidReason, final JsonRpcError expectedError) {
     when(parameter.required(any(Object[].class), anyInt(), any())).thenReturn(VALID_TRANSACTION);

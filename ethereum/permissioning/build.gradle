@@ -26,6 +26,7 @@ jar {
 }
 
 dependencies {
+  implementation project(':util')
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
