@@ -16,6 +16,7 @@ import static tech.pegasys.pantheon.consensus.ibft.IbftHelpers.findLatestPrepare
 import static tech.pegasys.pantheon.consensus.ibft.IbftHelpers.prepareMessageCountForQuorum;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
+import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.ProposerSelector;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.NewRoundPayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparedCertificate;
@@ -25,6 +26,7 @@ import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.RoundChangePayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
 import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator.MessageValidatorForHeightFactory;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -77,15 +79,11 @@ public class NewRoundMessageValidator {
       return false;
     }
 
-    final SignedData<ProposalPayload> proposalMessage = payload.getProposalPayload();
-
-    if (!msg.getSender().equals(proposalMessage.getSender())) {
-      LOG.info("Invalid NewRound message, embedded Proposal message not signed by sender.");
-      return false;
-    }
-
-    if (!proposalMessage.getPayload().getRoundIdentifier().equals(rootRoundIdentifier)) {
-      LOG.info("Invalid NewRound message, embedded Proposal has mismatched round.");
+    final SignedData<ProposalPayload> proposalPayload = payload.getProposalPayload();
+    final MessageValidator proposalValidator =
+        messageValidatorFactory.createAt(rootRoundIdentifier);
+    if (!proposalValidator.addSignedProposalPayload(proposalPayload)) {
+      LOG.info("Invalid NewRound message, embedded proposal failed validation");
       return false;
     }
 
@@ -152,13 +150,22 @@ public class NewRoundMessageValidator {
           "No round change messages have a preparedCertificate, any valid block may be proposed.");
       return true;
     }
-    if (!latestPreparedCertificate
-        .get()
-        .getProposalPayload()
-        .getPayload()
-        .getBlock()
-        .getHash()
-        .equals(payload.getProposalPayload().getPayload().getBlock().getHash())) {
+
+    // Get the hash of the block in latest prepareCert, not including the Round field.
+    final Hash roundAgnosticBlockHashPreparedCert =
+        IbftBlockHashing.calculateHashOfIbftBlockOnChain(
+            latestPreparedCertificate
+                .get()
+                .getProposalPayload()
+                .getPayload()
+                .getBlock()
+                .getHeader());
+
+    final Hash roundAgnosticBlockHashProposal =
+        IbftBlockHashing.calculateHashOfIbftBlockOnChain(
+            payload.getProposalPayload().getPayload().getBlock().getHeader());
+
+    if (!roundAgnosticBlockHashPreparedCert.equals(roundAgnosticBlockHashProposal)) {
       LOG.info(
           "Invalid NewRound message, block in latest RoundChange does not match proposed block.");
       return false;
