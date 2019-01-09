@@ -32,12 +32,12 @@ public class NewRoundMessageTest {
   @Mock private SignedData<NewRoundPayload> newRoundPayload;
   @Mock private BytesValue messageBytes;
   @Mock private MessageData messageData;
-  @Mock private NewRoundMessage newRoundMessage;
+  @Mock private NewRoundMessageData newRoundMessage;
 
   @Test
   public void createMessageFromNewRoundChangeMessageData() {
     when(newRoundPayload.encode()).thenReturn(messageBytes);
-    NewRoundMessage prepareMessage = NewRoundMessage.create(newRoundPayload);
+    NewRoundMessageData prepareMessage = NewRoundMessageData.create(newRoundPayload);
 
     assertThat(prepareMessage.getData()).isEqualTo(messageBytes);
     assertThat(prepareMessage.getCode()).isEqualTo(IbftV2.NEW_ROUND);
@@ -46,7 +46,7 @@ public class NewRoundMessageTest {
 
   @Test
   public void createMessageFromNewRoundMessage() {
-    NewRoundMessage message = NewRoundMessage.fromMessage(newRoundMessage);
+    NewRoundMessageData message = NewRoundMessageData.fromMessageData(newRoundMessage);
     assertThat(message).isSameAs(newRoundMessage);
   }
 
@@ -54,7 +54,7 @@ public class NewRoundMessageTest {
   public void createMessageFromGenericMessageData() {
     when(messageData.getData()).thenReturn(messageBytes);
     when(messageData.getCode()).thenReturn(IbftV2.NEW_ROUND);
-    NewRoundMessage newRoundMessage = NewRoundMessage.fromMessage(messageData);
+    NewRoundMessageData newRoundMessage = NewRoundMessageData.fromMessageData(messageData);
 
     assertThat(newRoundMessage.getData()).isEqualTo(messageData.getData());
     assertThat(newRoundMessage.getCode()).isEqualTo(IbftV2.NEW_ROUND);
@@ -63,8 +63,8 @@ public class NewRoundMessageTest {
   @Test
   public void createMessageFailsWhenIncorrectMessageCode() {
     when(messageData.getCode()).thenReturn(42);
-    assertThatThrownBy(() -> NewRoundMessage.fromMessage(messageData))
+    assertThatThrownBy(() -> NewRoundMessageData.fromMessageData(messageData))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Message has code 42 and thus is not a NewRoundMessage");
+        .hasMessageContaining("MessageData has code 42 and thus is not a NewRoundMessageData");
   }
 }

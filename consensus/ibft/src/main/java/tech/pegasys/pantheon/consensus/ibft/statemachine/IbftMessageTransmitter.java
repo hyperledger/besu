@@ -13,11 +13,11 @@
 package tech.pegasys.pantheon.consensus.ibft.statemachine;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.CommitMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.NewRoundMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.PrepareMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.ProposalMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.RoundChangeMessage;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.CommitMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.NewRoundMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.PrepareMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.ProposalMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.RoundChangeMessageData;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.CommitPayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.NewRoundPayload;
@@ -49,7 +49,7 @@ public class IbftMessageTransmitter {
     final SignedData<ProposalPayload> signedPayload =
         messageFactory.createSignedProposalPayload(roundIdentifier, block);
 
-    final ProposalMessage message = ProposalMessage.create(signedPayload);
+    final ProposalMessageData message = ProposalMessageData.create(signedPayload);
 
     multicaster.multicastToValidators(message);
   }
@@ -58,7 +58,7 @@ public class IbftMessageTransmitter {
     final SignedData<PreparePayload> signedPayload =
         messageFactory.createSignedPreparePayload(roundIdentifier, digest);
 
-    final PrepareMessage message = PrepareMessage.create(signedPayload);
+    final PrepareMessageData message = PrepareMessageData.create(signedPayload);
 
     multicaster.multicastToValidators(message);
   }
@@ -70,7 +70,7 @@ public class IbftMessageTransmitter {
     final SignedData<CommitPayload> signedPayload =
         messageFactory.createSignedCommitPayload(roundIdentifier, digest, commitSeal);
 
-    final CommitMessage message = CommitMessage.create(signedPayload);
+    final CommitMessageData message = CommitMessageData.create(signedPayload);
 
     multicaster.multicastToValidators(message);
   }
@@ -82,7 +82,7 @@ public class IbftMessageTransmitter {
     final SignedData<RoundChangePayload> signedPayload =
         messageFactory.createSignedRoundChangePayload(roundIdentifier, preparedCertificate);
 
-    final RoundChangeMessage message = RoundChangeMessage.create(signedPayload);
+    final RoundChangeMessageData message = RoundChangeMessageData.create(signedPayload);
 
     multicaster.multicastToValidators(message);
   }
@@ -96,7 +96,7 @@ public class IbftMessageTransmitter {
         messageFactory.createSignedNewRoundPayload(
             roundIdentifier, roundChangeCertificate, proposalPayload);
 
-    final NewRoundMessage message = NewRoundMessage.create(signedPayload);
+    final NewRoundMessageData message = NewRoundMessageData.create(signedPayload);
 
     multicaster.multicastToValidators(message);
   }

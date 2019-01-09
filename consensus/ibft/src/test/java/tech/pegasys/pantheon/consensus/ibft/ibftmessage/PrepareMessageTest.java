@@ -32,12 +32,12 @@ public class PrepareMessageTest {
   @Mock private SignedData<PreparePayload> preparePayload;
   @Mock private BytesValue messageBytes;
   @Mock private MessageData messageData;
-  @Mock private PrepareMessage prepareMessage;
+  @Mock private PrepareMessageData prepareMessage;
 
   @Test
   public void createMessageFromPrepareMessageData() {
     when(preparePayload.encode()).thenReturn(messageBytes);
-    PrepareMessage prepareMessage = PrepareMessage.create(preparePayload);
+    PrepareMessageData prepareMessage = PrepareMessageData.create(preparePayload);
 
     assertThat(prepareMessage.getData()).isEqualTo(messageBytes);
     assertThat(prepareMessage.getCode()).isEqualTo(IbftV2.PREPARE);
@@ -46,7 +46,7 @@ public class PrepareMessageTest {
 
   @Test
   public void createMessageFromPrepareMessage() {
-    PrepareMessage message = PrepareMessage.fromMessage(prepareMessage);
+    PrepareMessageData message = PrepareMessageData.fromMessageData(prepareMessage);
     assertThat(message).isSameAs(prepareMessage);
   }
 
@@ -54,7 +54,7 @@ public class PrepareMessageTest {
   public void createMessageFromGenericMessageData() {
     when(messageData.getData()).thenReturn(messageBytes);
     when(messageData.getCode()).thenReturn(IbftV2.PREPARE);
-    PrepareMessage prepareMessage = PrepareMessage.fromMessage(messageData);
+    PrepareMessageData prepareMessage = PrepareMessageData.fromMessageData(messageData);
 
     assertThat(prepareMessage.getData()).isEqualTo(messageData.getData());
     assertThat(prepareMessage.getCode()).isEqualTo(IbftV2.PREPARE);
@@ -63,8 +63,8 @@ public class PrepareMessageTest {
   @Test
   public void createMessageFailsWhenIncorrectMessageCode() {
     when(messageData.getCode()).thenReturn(42);
-    assertThatThrownBy(() -> PrepareMessage.fromMessage(messageData))
+    assertThatThrownBy(() -> PrepareMessageData.fromMessageData(messageData))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Message has code 42 and thus is not a PrepareMessage");
+        .hasMessageContaining("MessageData has code 42 and thus is not a PrepareMessageData");
   }
 }

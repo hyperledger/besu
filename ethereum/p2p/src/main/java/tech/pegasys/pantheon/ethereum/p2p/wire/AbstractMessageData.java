@@ -15,6 +15,8 @@ package tech.pegasys.pantheon.ethereum.p2p.wire;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import com.google.common.base.Objects;
+
 public abstract class AbstractMessageData implements MessageData {
 
   protected final BytesValue data;
@@ -31,5 +33,22 @@ public abstract class AbstractMessageData implements MessageData {
   @Override
   public BytesValue getData() {
     return data;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final AbstractMessageData that = (AbstractMessageData) o;
+    return Objects.equal(data, that.data);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(data);
   }
 }

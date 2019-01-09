@@ -32,12 +32,12 @@ public class RoundChangeMessageTest {
   @Mock private SignedData<RoundChangePayload> roundChangePayload;
   @Mock private BytesValue messageBytes;
   @Mock private MessageData messageData;
-  @Mock private RoundChangeMessage roundChangeMessage;
+  @Mock private RoundChangeMessageData roundChangeMessage;
 
   @Test
   public void createMessageFromRoundChangeMessageData() {
     when(roundChangePayload.encode()).thenReturn(messageBytes);
-    RoundChangeMessage roundChangeMessage = RoundChangeMessage.create(roundChangePayload);
+    RoundChangeMessageData roundChangeMessage = RoundChangeMessageData.create(roundChangePayload);
 
     assertThat(roundChangeMessage.getData()).isEqualTo(messageBytes);
     assertThat(roundChangeMessage.getCode()).isEqualTo(IbftV2.ROUND_CHANGE);
@@ -46,7 +46,7 @@ public class RoundChangeMessageTest {
 
   @Test
   public void createMessageFromRoundChangeMessage() {
-    RoundChangeMessage message = RoundChangeMessage.fromMessage(roundChangeMessage);
+    RoundChangeMessageData message = RoundChangeMessageData.fromMessageData(roundChangeMessage);
     assertThat(message).isSameAs(roundChangeMessage);
   }
 
@@ -54,7 +54,7 @@ public class RoundChangeMessageTest {
   public void createMessageFromGenericMessageData() {
     when(messageData.getData()).thenReturn(messageBytes);
     when(messageData.getCode()).thenReturn(IbftV2.ROUND_CHANGE);
-    RoundChangeMessage roundChangeMessage = RoundChangeMessage.fromMessage(messageData);
+    RoundChangeMessageData roundChangeMessage = RoundChangeMessageData.fromMessageData(messageData);
 
     assertThat(roundChangeMessage.getData()).isEqualTo(messageData.getData());
     assertThat(roundChangeMessage.getCode()).isEqualTo(IbftV2.ROUND_CHANGE);
@@ -63,8 +63,8 @@ public class RoundChangeMessageTest {
   @Test
   public void createMessageFailsWhenIncorrectMessageCode() {
     when(messageData.getCode()).thenReturn(42);
-    assertThatThrownBy(() -> RoundChangeMessage.fromMessage(messageData))
+    assertThatThrownBy(() -> RoundChangeMessageData.fromMessageData(messageData))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Message has code 42 and thus is not a RoundChangeMessage");
+        .hasMessageContaining("MessageData has code 42 and thus is not a RoundChangeMessageData");
   }
 }

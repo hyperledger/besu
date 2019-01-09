@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.statemachine;
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.util.Lists.newArrayList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
@@ -22,16 +22,17 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
+import tech.pegasys.pantheon.consensus.ibft.IbftGossip;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.BlockTimerExpiry;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftReceivedMessageEvent;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.NewChainHead;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.RoundExpiry;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.CommitMessage;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.CommitMessageData;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftV2;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.NewRoundMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.PrepareMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.ProposalMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.RoundChangeMessage;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.NewRoundMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.PrepareMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.ProposalMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.RoundChangeMessageData;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.CommitPayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.NewRoundPayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparePayload;
@@ -41,7 +42,8 @@ import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.api.Message;
+import tech.pegasys.pantheon.ethereum.p2p.wire.DefaultMessage;
 
 import java.util.HashMap;
 import java.util.List;
@@ -64,39 +66,46 @@ public class IbftControllerTest {
   @Mock private IbftBlockHeightManager blockHeightManager;
 
   @Mock private SignedData<ProposalPayload> signedProposal;
-  @Mock private ProposalMessage proposalMessage;
+  private Message proposalMessage;
+  @Mock private ProposalMessageData proposalMessageData;
   @Mock private ProposalPayload proposalPayload;
 
   @Mock private SignedData<PreparePayload> signedPrepare;
-  @Mock private PrepareMessage prepareMessage;
+  private Message prepareMessage;
+  @Mock private PrepareMessageData prepareMessageData;
   @Mock private PreparePayload preparePayload;
 
   @Mock private SignedData<CommitPayload> signedCommit;
-  @Mock private CommitMessage commitMessage;
+  private Message commitMessage;
+  @Mock private CommitMessageData commitMessageData;
   @Mock private CommitPayload commitPayload;
 
   @Mock private SignedData<NewRoundPayload> signedNewRound;
-  @Mock private NewRoundMessage newRoundMessage;
+  private Message newRoundMessage;
+  @Mock private NewRoundMessageData newRoundMessageData;
   @Mock private NewRoundPayload newRoundPayload;
 
   @Mock private SignedData<RoundChangePayload> signedRoundChange;
-  @Mock private RoundChangeMessage roundChangeMessage;
+  private Message roundChangeMessage;
+  @Mock private RoundChangeMessageData roundChangeMessageData;
   @Mock private RoundChangePayload roundChangePayload;
 
-  private final Map<Long, List<MessageData>> futureMessages = new HashMap<>();
+  private final Map<Long, List<Message>> futureMessages = new HashMap<>();
   private final Address validator = Address.fromHexString("0x0");
   private final Address unknownValidator = Address.fromHexString("0x2");
   private final ConsensusRoundIdentifier futureRoundIdentifier = new ConsensusRoundIdentifier(2, 0);
   private ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(0, 0);
+  @Mock private IbftGossip ibftGossip;
   private IbftController ibftController;
 
   @Before
   public void setup() {
-    ibftController =
-        new IbftController(blockChain, ibftFinalState, blockHeightManagerFactory, futureMessages);
     when(blockChain.getChainHeadHeader()).thenReturn(blockHeader);
     when(blockHeightManagerFactory.create(blockHeader)).thenReturn(blockHeightManager);
     when(ibftFinalState.getValidators()).thenReturn(ImmutableList.of(validator));
+    ibftController =
+        new IbftController(
+            blockChain, ibftFinalState, blockHeightManagerFactory, futureMessages, ibftGossip);
   }
 
   @Test
@@ -115,9 +124,9 @@ public class IbftControllerTest {
     setupRoundChange(futureRoundIdentifier, validator);
     setupNewRound(roundIdentifierHeight3, validator);
 
-    final List<MessageData> height2Msgs =
+    final List<Message> height2Msgs =
         newArrayList(prepareMessage, commitMessage, roundChangeMessage);
-    final List<MessageData> height3Msgs = newArrayList(proposalMessage, newRoundMessage);
+    final List<Message> height3Msgs = newArrayList(proposalMessage, newRoundMessage);
     futureMessages.put(2L, height2Msgs);
     futureMessages.put(3L, height3Msgs);
     when(blockHeightManager.getChainHeight()).thenReturn(2L);
@@ -128,11 +137,14 @@ public class IbftControllerTest {
     verify(blockHeightManagerFactory).create(blockHeader);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verify(blockHeightManager).start();
-    verify(blockHeightManager, never()).handleProposalMessage(signedProposal);
-    verify(blockHeightManager).handlePrepareMessage(signedPrepare);
-    verify(blockHeightManager).handleCommitMessage(signedCommit);
-    verify(blockHeightManager).handleRoundChangeMessage(signedRoundChange);
-    verify(blockHeightManager, never()).handleNewRoundMessage(signedNewRound);
+    verify(blockHeightManager, never()).handleProposalPayload(signedProposal);
+    verify(blockHeightManager).handlePreparePayload(signedPrepare);
+    verify(ibftGossip).gossipMessage(prepareMessage);
+    verify(blockHeightManager).handleCommitPayload(signedCommit);
+    verify(ibftGossip).gossipMessage(commitMessage);
+    verify(blockHeightManager).handleRoundChangePayload(signedRoundChange);
+    verify(ibftGossip).gossipMessage(roundChangeMessage);
+    verify(blockHeightManager, never()).handleNewRoundPayload(signedNewRound);
   }
 
   @Test
@@ -155,11 +167,16 @@ public class IbftControllerTest {
     verify(blockHeightManagerFactory).create(blockHeader);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verify(blockHeightManager).start();
-    verify(blockHeightManager).handleProposalMessage(signedProposal);
-    verify(blockHeightManager).handlePrepareMessage(signedPrepare);
-    verify(blockHeightManager).handleCommitMessage(signedCommit);
-    verify(blockHeightManager).handleRoundChangeMessage(signedRoundChange);
-    verify(blockHeightManager).handleNewRoundMessage(signedNewRound);
+    verify(blockHeightManager).handleProposalPayload(signedProposal);
+    verify(ibftGossip).gossipMessage(proposalMessage);
+    verify(blockHeightManager).handlePreparePayload(signedPrepare);
+    verify(ibftGossip).gossipMessage(prepareMessage);
+    verify(blockHeightManager).handleCommitPayload(signedCommit);
+    verify(ibftGossip).gossipMessage(commitMessage);
+    verify(blockHeightManager).handleRoundChangePayload(signedRoundChange);
+    verify(ibftGossip).gossipMessage(roundChangeMessage);
+    verify(blockHeightManager).handleNewRoundPayload(signedNewRound);
+    verify(ibftGossip).gossipMessage(newRoundMessage);
   }
 
   @Test
@@ -189,7 +206,8 @@ public class IbftControllerTest {
     ibftController.handleMessageEvent(new IbftReceivedMessageEvent(proposalMessage));
 
     assertThat(futureMessages).isEmpty();
-    verify(blockHeightManager).handleProposalMessage(signedProposal);
+    verify(blockHeightManager).handleProposalPayload(signedProposal);
+    verify(ibftGossip).gossipMessage(proposalMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verify(blockHeightManager).start();
     verifyNoMoreInteractions(blockHeightManager);
@@ -202,7 +220,8 @@ public class IbftControllerTest {
     ibftController.handleMessageEvent(new IbftReceivedMessageEvent(prepareMessage));
 
     assertThat(futureMessages).isEmpty();
-    verify(blockHeightManager).handlePrepareMessage(signedPrepare);
+    verify(blockHeightManager).handlePreparePayload(signedPrepare);
+    verify(ibftGossip).gossipMessage(prepareMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verify(blockHeightManager).start();
     verifyNoMoreInteractions(blockHeightManager);
@@ -215,7 +234,8 @@ public class IbftControllerTest {
     ibftController.handleMessageEvent(new IbftReceivedMessageEvent(commitMessage));
 
     assertThat(futureMessages).isEmpty();
-    verify(blockHeightManager).handleCommitMessage(signedCommit);
+    verify(blockHeightManager).handleCommitPayload(signedCommit);
+    verify(ibftGossip).gossipMessage(commitMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verify(blockHeightManager).start();
     verifyNoMoreInteractions(blockHeightManager);
@@ -229,7 +249,8 @@ public class IbftControllerTest {
     ibftController.handleMessageEvent(new IbftReceivedMessageEvent(newRoundMessage));
 
     assertThat(futureMessages).isEmpty();
-    verify(blockHeightManager).handleNewRoundMessage(signedNewRound);
+    verify(blockHeightManager).handleNewRoundPayload(signedNewRound);
+    verify(ibftGossip).gossipMessage(newRoundMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verify(blockHeightManager).start();
     verifyNoMoreInteractions(blockHeightManager);
@@ -243,7 +264,8 @@ public class IbftControllerTest {
     ibftController.handleMessageEvent(new IbftReceivedMessageEvent(roundChangeMessage));
 
     assertThat(futureMessages).isEmpty();
-    verify(blockHeightManager).handleRoundChangeMessage(signedRoundChange);
+    verify(blockHeightManager).handleRoundChangePayload(signedRoundChange);
+    verify(ibftGossip).gossipMessage(roundChangeMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verify(blockHeightManager).start();
     verifyNoMoreInteractions(blockHeightManager);
@@ -337,7 +359,7 @@ public class IbftControllerTest {
   @Test
   public void proposalForFutureHeightIsBuffered() {
     setupProposal(futureRoundIdentifier, validator);
-    final Map<Long, List<MessageData>> expectedFutureMsgs =
+    final Map<Long, List<Message>> expectedFutureMsgs =
         ImmutableMap.of(2L, ImmutableList.of(proposalMessage));
     verifyHasFutureMessages(new IbftReceivedMessageEvent(proposalMessage), expectedFutureMsgs);
   }
@@ -345,7 +367,7 @@ public class IbftControllerTest {
   @Test
   public void prepareForFutureHeightIsBuffered() {
     setupPrepare(futureRoundIdentifier, validator);
-    final Map<Long, List<MessageData>> expectedFutureMsgs =
+    final Map<Long, List<Message>> expectedFutureMsgs =
         ImmutableMap.of(2L, ImmutableList.of(prepareMessage));
     verifyHasFutureMessages(new IbftReceivedMessageEvent(prepareMessage), expectedFutureMsgs);
   }
@@ -353,7 +375,7 @@ public class IbftControllerTest {
   @Test
   public void commitForFutureHeightIsBuffered() {
     setupCommit(futureRoundIdentifier, validator);
-    final Map<Long, List<MessageData>> expectedFutureMsgs =
+    final Map<Long, List<Message>> expectedFutureMsgs =
         ImmutableMap.of(2L, ImmutableList.of(commitMessage));
     verifyHasFutureMessages(new IbftReceivedMessageEvent(commitMessage), expectedFutureMsgs);
   }
@@ -361,7 +383,7 @@ public class IbftControllerTest {
   @Test
   public void newRoundForFutureHeightIsBuffered() {
     setupNewRound(futureRoundIdentifier, validator);
-    final Map<Long, List<MessageData>> expectedFutureMsgs =
+    final Map<Long, List<Message>> expectedFutureMsgs =
         ImmutableMap.of(2L, ImmutableList.of(newRoundMessage));
     verifyHasFutureMessages(new IbftReceivedMessageEvent(newRoundMessage), expectedFutureMsgs);
   }
@@ -369,7 +391,7 @@ public class IbftControllerTest {
   @Test
   public void roundChangeForFutureHeightIsBuffered() {
     setupRoundChange(futureRoundIdentifier, validator);
-    final Map<Long, List<MessageData>> expectedFutureMsgs =
+    final Map<Long, List<Message>> expectedFutureMsgs =
         ImmutableMap.of(2L, ImmutableList.of(roundChangeMessage));
     verifyHasFutureMessages(new IbftReceivedMessageEvent(roundChangeMessage), expectedFutureMsgs);
   }
@@ -385,7 +407,7 @@ public class IbftControllerTest {
   }
 
   private void verifyHasFutureMessages(
-      final IbftReceivedMessageEvent msg, final Map<Long, List<MessageData>> expectedFutureMsgs) {
+      final IbftReceivedMessageEvent msg, final Map<Long, List<Message>> expectedFutureMsgs) {
     ibftController.start();
     ibftController.handleMessageEvent(msg);
 
@@ -401,8 +423,9 @@ public class IbftControllerTest {
     when(signedProposal.getPayload()).thenReturn(proposalPayload);
     when(signedProposal.getSender()).thenReturn(validator);
     when(proposalPayload.getRoundIdentifier()).thenReturn(roundIdentifier);
-    when(proposalMessage.getCode()).thenReturn(IbftV2.PROPOSAL);
-    when(proposalMessage.decode()).thenReturn(signedProposal);
+    when(proposalMessageData.getCode()).thenReturn(IbftV2.PROPOSAL);
+    when(proposalMessageData.decode()).thenReturn(signedProposal);
+    proposalMessage = new DefaultMessage(null, proposalMessageData);
   }
 
   private void setupPrepare(
@@ -410,8 +433,9 @@ public class IbftControllerTest {
     when(signedPrepare.getPayload()).thenReturn(preparePayload);
     when(signedPrepare.getSender()).thenReturn(validator);
     when(preparePayload.getRoundIdentifier()).thenReturn(roundIdentifier);
-    when(prepareMessage.getCode()).thenReturn(IbftV2.PREPARE);
-    when(prepareMessage.decode()).thenReturn(signedPrepare);
+    when(prepareMessageData.getCode()).thenReturn(IbftV2.PREPARE);
+    when(prepareMessageData.decode()).thenReturn(signedPrepare);
+    prepareMessage = new DefaultMessage(null, prepareMessageData);
   }
 
   private void setupCommit(
@@ -419,8 +443,9 @@ public class IbftControllerTest {
     when(signedCommit.getPayload()).thenReturn(commitPayload);
     when(signedCommit.getSender()).thenReturn(validator);
     when(commitPayload.getRoundIdentifier()).thenReturn(roundIdentifier);
-    when(commitMessage.getCode()).thenReturn(IbftV2.COMMIT);
-    when(commitMessage.decode()).thenReturn(signedCommit);
+    when(commitMessageData.getCode()).thenReturn(IbftV2.COMMIT);
+    when(commitMessageData.decode()).thenReturn(signedCommit);
+    commitMessage = new DefaultMessage(null, commitMessageData);
   }
 
   private void setupNewRound(
@@ -428,8 +453,9 @@ public class IbftControllerTest {
     when(signedNewRound.getPayload()).thenReturn(newRoundPayload);
     when(signedNewRound.getSender()).thenReturn(validator);
     when(newRoundPayload.getRoundIdentifier()).thenReturn(roundIdentifier);
-    when(newRoundMessage.getCode()).thenReturn(IbftV2.NEW_ROUND);
-    when(newRoundMessage.decode()).thenReturn(signedNewRound);
+    when(newRoundMessageData.getCode()).thenReturn(IbftV2.NEW_ROUND);
+    when(newRoundMessageData.decode()).thenReturn(signedNewRound);
+    newRoundMessage = new DefaultMessage(null, newRoundMessageData);
   }
 
   private void setupRoundChange(
@@ -437,7 +463,8 @@ public class IbftControllerTest {
     when(signedRoundChange.getPayload()).thenReturn(roundChangePayload);
     when(signedRoundChange.getSender()).thenReturn(validator);
     when(roundChangePayload.getRoundIdentifier()).thenReturn(roundIdentifier);
-    when(roundChangeMessage.getCode()).thenReturn(IbftV2.ROUND_CHANGE);
-    when(roundChangeMessage.decode()).thenReturn(signedRoundChange);
+    when(roundChangeMessageData.getCode()).thenReturn(IbftV2.ROUND_CHANGE);
+    when(roundChangeMessageData.decode()).thenReturn(signedRoundChange);
+    roundChangeMessage = new DefaultMessage(null, roundChangeMessageData);
   }
 }

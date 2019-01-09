@@ -32,12 +32,12 @@ public class CommitMessageTest {
   @Mock private SignedData<CommitPayload> commitPayload;
   @Mock private BytesValue messageBytes;
   @Mock private MessageData messageData;
-  @Mock private CommitMessage commitMessage;
+  @Mock private CommitMessageData commitMessage;
 
   @Test
   public void createMessageFromCommitMessageData() {
     when(commitPayload.encode()).thenReturn(messageBytes);
-    CommitMessage commitMessage = CommitMessage.create(commitPayload);
+    CommitMessageData commitMessage = CommitMessageData.create(commitPayload);
 
     assertThat(commitMessage.getData()).isEqualTo(messageBytes);
     assertThat(commitMessage.getCode()).isEqualTo(IbftV2.COMMIT);
@@ -46,7 +46,7 @@ public class CommitMessageTest {
 
   @Test
   public void createMessageFromCommitMessage() {
-    CommitMessage message = CommitMessage.fromMessage(commitMessage);
+    CommitMessageData message = CommitMessageData.fromMessageData(commitMessage);
     assertThat(message).isSameAs(commitMessage);
   }
 
@@ -54,7 +54,7 @@ public class CommitMessageTest {
   public void createMessageFromGenericMessageData() {
     when(messageData.getData()).thenReturn(messageBytes);
     when(messageData.getCode()).thenReturn(IbftV2.COMMIT);
-    CommitMessage commitMessage = CommitMessage.fromMessage(messageData);
+    CommitMessageData commitMessage = CommitMessageData.fromMessageData(messageData);
 
     assertThat(commitMessage.getData()).isEqualTo(messageData.getData());
     assertThat(commitMessage.getCode()).isEqualTo(IbftV2.COMMIT);
@@ -63,8 +63,8 @@ public class CommitMessageTest {
   @Test
   public void createMessageFailsWhenIncorrectMessageCode() {
     when(messageData.getCode()).thenReturn(42);
-    assertThatThrownBy(() -> CommitMessage.fromMessage(messageData))
+    assertThatThrownBy(() -> CommitMessageData.fromMessageData(messageData))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Message has code 42 and thus is not a CommitMessage");
+        .hasMessageContaining("MessageData has code 42 and thus is not a CommitMessageData");
   }
 }

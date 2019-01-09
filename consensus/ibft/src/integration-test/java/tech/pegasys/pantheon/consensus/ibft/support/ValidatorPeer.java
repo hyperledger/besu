@@ -15,11 +15,11 @@ package tech.pegasys.pantheon.consensus.ibft.support;
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvents;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftReceivedMessageEvent;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.CommitMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.NewRoundMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.PrepareMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.ProposalMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.RoundChangeMessage;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.CommitMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.NewRoundMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.PrepareMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.ProposalMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.RoundChangeMessageData;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.CommitPayload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.NewRoundPayload;
@@ -37,6 +37,7 @@ import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.wire.DefaultMessage;
 
 import java.util.Collections;
@@ -51,6 +52,7 @@ public class ValidatorPeer {
   private final Address nodeAddress;
   private final KeyPair nodeKeys;
   private final MessageFactory messageFactory;
+  private final PeerConnection peerConnection = new StubbedPeerConnection();
   private List<MessageData> receivedMessages = Lists.newArrayList();
 
   private final IbftController localNodeController;
@@ -65,11 +67,16 @@ public class ValidatorPeer {
     this.localNodeController = localNodeController;
   }
 
+  public Address getNodeAddress() {
+    return nodeAddress;
+  }
+
   public SignedData<ProposalPayload> injectProposal(
       final ConsensusRoundIdentifier rId, final Block block) {
     final SignedData<ProposalPayload> payload =
         messageFactory.createSignedProposalPayload(rId, block);
-    injectMessage(ProposalMessage.create(payload));
+
+    injectMessage(ProposalMessageData.create(payload));
     return payload;
   }
 
@@ -77,7 +84,7 @@ public class ValidatorPeer {
       final ConsensusRoundIdentifier rId, final Hash digest) {
     final SignedData<PreparePayload> payload =
         messageFactory.createSignedPreparePayload(rId, digest);
-    injectMessage(PrepareMessage.create(payload));
+    injectMessage(PrepareMessageData.create(payload));
     return payload;
   }
 
@@ -86,7 +93,7 @@ public class ValidatorPeer {
     final Signature commitSeal = SECP256K1.sign(digest, nodeKeys);
     final SignedData<CommitPayload> payload =
         messageFactory.createSignedCommitPayload(rId, digest, commitSeal);
-    injectMessage(CommitMessage.create(payload));
+    injectMessage(CommitMessageData.create(payload));
     return payload;
   }
 
@@ -97,7 +104,7 @@ public class ValidatorPeer {
 
     final SignedData<NewRoundPayload> payload =
         messageFactory.createSignedNewRoundPayload(rId, roundChangeCertificate, proposalPayload);
-    injectMessage(NewRoundMessage.create(payload));
+    injectMessage(NewRoundMessageData.create(payload));
     return payload;
   }
 
@@ -105,7 +112,7 @@ public class ValidatorPeer {
       final ConsensusRoundIdentifier rId, final Optional<PreparedCertificate> preparedCertificate) {
     final SignedData<RoundChangePayload> payload =
         messageFactory.createSignedRoundChangePayload(rId, preparedCertificate);
-    injectMessage(RoundChangeMessage.create(payload));
+    injectMessage(RoundChangeMessageData.create(payload));
     return payload;
   }
 
@@ -122,7 +129,7 @@ public class ValidatorPeer {
   }
 
   public void injectMessage(final MessageData msgData) {
-    final DefaultMessage message = new DefaultMessage(null, msgData);
+    final DefaultMessage message = new DefaultMessage(peerConnection, msgData);
     localNodeController.handleMessageEvent(
         (IbftReceivedMessageEvent) IbftEvents.fromMessage(message));
   }

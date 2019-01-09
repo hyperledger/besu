@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.ibftmessage;
 
+import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.Payload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
@@ -19,29 +20,30 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.function.Function;
 
-public abstract class AbstractIbftMessage extends AbstractMessageData {
-  protected AbstractIbftMessage(final BytesValue data) {
+public abstract class AbstractIbftMessageData extends AbstractMessageData {
+  protected AbstractIbftMessageData(final BytesValue data) {
     super(data);
   }
 
-  public abstract SignedData<?> decode();
+  public abstract SignedData<? extends Payload> decode();
 
-  protected static <T extends AbstractIbftMessage> T fromMessage(
-      final MessageData message,
+  protected static <T extends AbstractIbftMessageData> T fromMessageData(
+      final MessageData messageData,
       final int messageCode,
       final Class<T> clazz,
       final Function<BytesValue, T> constructor) {
-    if (clazz.isInstance(message)) {
+    if (clazz.isInstance(messageData)) {
       @SuppressWarnings("unchecked")
-      T castMessage = (T) message;
+      T castMessage = (T) messageData;
       return castMessage;
     }
-    final int code = message.getCode();
+    final int code = messageData.getCode();
     if (code != messageCode) {
       throw new IllegalArgumentException(
-          String.format("Message has code %d and thus is not a %s", code, clazz.getSimpleName()));
+          String.format(
+              "MessageData has code %d and thus is not a %s", code, clazz.getSimpleName()));
     }
 
-    return constructor.apply(message.getData());
+    return constructor.apply(messageData.getData());
   }
 }
