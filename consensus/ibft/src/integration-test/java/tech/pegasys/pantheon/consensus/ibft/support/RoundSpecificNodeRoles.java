@@ -41,4 +41,8 @@ public class RoundSpecificNodeRoles {
   public List<ValidatorPeer> getNonProposingPeers() {
     return nonProposingPeers;
   }
+
+  public ValidatorPeer getNonProposingPeer(final int index) {
+    return nonProposingPeers.get(index);
+  }
 }
