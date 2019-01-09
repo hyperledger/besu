@@ -18,8 +18,11 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account.TransferTr
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account.TransferTransactionSet;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthGetTransactionCountTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermAddAccountsToWhitelistTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermAddNodeTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermGetAccountsWhitelistTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermGetNodesWhitelistTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermRemoveAccountsFromWhitelistTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermRemoveNodeTransaction;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -82,5 +85,17 @@ public class Transactions {
 
   public EthGetTransactionCountTransaction getTransactionCount(final String accountAddress) {
     return new EthGetTransactionCountTransaction(accountAddress);
+  }
+
+  public PermAddNodeTransaction addNodesToWhitelist(final List<String> enodeList) {
+    return new PermAddNodeTransaction(enodeList);
+  }
+
+  public PermRemoveNodeTransaction removeNodesFromWhitelist(final List<String> enodeList) {
+    return new PermRemoveNodeTransaction(enodeList);
+  }
+
+  public PermGetNodesWhitelistTransaction getNodesWhiteList() {
+    return new PermGetNodesWhitelistTransaction();
   }
 }

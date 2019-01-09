@@ -142,6 +142,8 @@ public final class NettyP2PNetwork implements P2PNetwork {
 
   private final LabelledMetric<Counter> outboundMessagesCounter;
 
+  private final NodeWhitelistController nodeWhitelistController;
+
   /**
    * Creates a peer networking service for production purposes.
    *
@@ -170,6 +172,7 @@ public final class NettyP2PNetwork implements P2PNetwork {
 
     connections = new PeerConnectionRegistry(metricsSystem);
     this.peerBlacklist = peerBlacklist;
+    this.nodeWhitelistController = nodeWhitelistController;
     peerDiscoveryAgent =
         new PeerDiscoveryAgent(
             vertx,
@@ -439,6 +442,11 @@ public final class NettyP2PNetwork implements P2PNetwork {
   @Override
   public boolean isListening() {
     return peerDiscoveryAgent.isActive();
+  }
+
+  @Override
+  public NodeWhitelistController getNodeWhitelistController() {
+    return nodeWhitelistController;
   }
 
   private void onConnectionEstablished(final PeerConnection connection) {

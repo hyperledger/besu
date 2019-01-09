@@ -134,7 +134,7 @@ public class PantheonNodeFactory {
     return create(
         new PantheonFactoryConfigurationBuilder()
             .setName(name)
-            .jsonRpcEnabled()
+            .setJsonRpcConfiguration(jsonRpcConfigWithPermissioning())
             .setPermissioningConfiguration(permissioningConfiguration)
             .build());
   }
@@ -150,6 +150,27 @@ public class PantheonNodeFactory {
             .setName(name)
             .miningEnabled()
             .setJsonRpcConfiguration(jsonRpcConfigWithPermissioning())
+            .setPermissioningConfiguration(permissioningConfiguration)
+            .build());
+  }
+
+  public PantheonNode createNodeWithNodesWhitelistAndPermRPC(
+      final String name, final List<URI> nodesWhitelist) throws IOException {
+    PermissioningConfiguration permissioningConfiguration =
+        PermissioningConfiguration.createDefault();
+    permissioningConfiguration.setNodeWhitelist(nodesWhitelist);
+
+    JsonRpcConfiguration rpcConfig = JsonRpcConfiguration.createDefault();
+
+    rpcConfig.setEnabled(true);
+    rpcConfig.setPort(0);
+    rpcConfig.setHostsWhitelist(singletonList("*"));
+    rpcConfig.addRpcApi(RpcApis.PERM);
+
+    return create(
+        new PantheonFactoryConfigurationBuilder()
+            .setName(name)
+            .setJsonRpcConfiguration(rpcConfig)
             .setPermissioningConfiguration(permissioningConfiguration)
             .build());
   }

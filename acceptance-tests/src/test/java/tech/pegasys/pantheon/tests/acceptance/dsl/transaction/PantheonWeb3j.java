@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
+import org.assertj.core.util.Lists;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.JsonRpc2_0Web3j;
 import org.web3j.protocol.core.Request;
@@ -108,4 +109,31 @@ public class PantheonWeb3j extends JsonRpc2_0Web3j {
   public static class RemoveAccountsFromWhitelistResponse extends Response<Boolean> {}
 
   public static class GetAccountsWhitelistResponse extends Response<List<String>> {}
+
+  public Request<?, AddNodeResponse> addNodesToWhitelist(final List<String> enodeList) {
+    return new Request<>(
+        "perm_addNodesToWhitelist",
+        Collections.singletonList(enodeList),
+        web3jService,
+        AddNodeResponse.class);
+  }
+
+  public Request<?, RemoveNodeResponse> removeNodesFromWhitelist(final List<String> enodeList) {
+    return new Request<>(
+        "perm_removeNodesFromWhitelist",
+        Collections.singletonList(enodeList),
+        web3jService,
+        RemoveNodeResponse.class);
+  }
+
+  public Request<?, GetNodesWhitelistResponse> getNodesWhitelist() {
+    return new Request<>(
+        "perm_getNodesWhitelist", Lists.emptyList(), web3jService, GetNodesWhitelistResponse.class);
+  }
+
+  public static class AddNodeResponse extends Response<Boolean> {}
+
+  public static class RemoveNodeResponse extends Response<Boolean> {}
+
+  public static class GetNodesWhitelistResponse extends Response<List<String>> {}
 }
