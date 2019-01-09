@@ -28,25 +28,25 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class PrePrepareMessageTest {
-  @Mock private SignedData<ProposalPayload> prePrepareMessageData;
+public class ProposalMessageTest {
+  @Mock private SignedData<ProposalPayload> proposalMessageData;
   @Mock private BytesValue messageBytes;
   @Mock private MessageData messageData;
-  @Mock private ProposalMessage proposalMessage;
+  @Mock private ProposalMessageData proposalMessage;
 
   @Test
   public void createMessageFromPrePrepareMessageData() {
-    when(prePrepareMessageData.encode()).thenReturn(messageBytes);
-    ProposalMessage proposalMessage = ProposalMessage.create(prePrepareMessageData);
+    when(proposalMessageData.encode()).thenReturn(messageBytes);
+    final ProposalMessageData proposalMessage = ProposalMessageData.create(proposalMessageData);
 
     assertThat(proposalMessage.getData()).isEqualTo(messageBytes);
     assertThat(proposalMessage.getCode()).isEqualTo(IbftV2.PROPOSAL);
-    verify(prePrepareMessageData).encode();
+    verify(proposalMessageData).encode();
   }
 
   @Test
   public void createMessageFromPrePrepareMessage() {
-    ProposalMessage message = ProposalMessage.fromMessage(proposalMessage);
+    final ProposalMessageData message = ProposalMessageData.fromMessageData(proposalMessage);
     assertThat(message).isSameAs(proposalMessage);
   }
 
@@ -54,7 +54,7 @@ public class PrePrepareMessageTest {
   public void createMessageFromGenericMessageData() {
     when(messageData.getCode()).thenReturn(IbftV2.PROPOSAL);
     when(messageData.getData()).thenReturn(messageBytes);
-    ProposalMessage proposalMessage = ProposalMessage.fromMessage(messageData);
+    final ProposalMessageData proposalMessage = ProposalMessageData.fromMessageData(messageData);
 
     assertThat(proposalMessage.getData()).isEqualTo(messageData.getData());
     assertThat(proposalMessage.getCode()).isEqualTo(IbftV2.PROPOSAL);
@@ -63,8 +63,8 @@ public class PrePrepareMessageTest {
   @Test
   public void createMessageFailsWhenIncorrectMessageCode() {
     when(messageData.getCode()).thenReturn(42);
-    assertThatThrownBy(() -> ProposalMessage.fromMessage(messageData))
+    assertThatThrownBy(() -> ProposalMessageData.fromMessageData(messageData))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Message has code 42 and thus is not a ProposalMessage");
+        .hasMessageContaining("MessageData has code 42 and thus is not a ProposalMessageData");
   }
 }

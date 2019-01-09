@@ -17,7 +17,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.Message;
 /** Static helper functions for producing and working with IbftEvent objects */
 public class IbftEvents {
   public static IbftEvent fromMessage(final Message message) {
-    return new IbftReceivedMessageEvent(message.getData());
+    return new IbftReceivedMessageEvent(message);
   }
 
   public enum Type {

@@ -14,6 +14,9 @@ package tech.pegasys.pantheon.ethereum.p2p.wire;
 
 import static tech.pegasys.pantheon.util.bytes.BytesValue.wrap;
 
+import tech.pegasys.pantheon.crypto.SECP256K1.PublicKey;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -80,6 +83,11 @@ public class PeerInfo {
 
   public BytesValue getNodeId() {
     return nodeId;
+  }
+
+  public Address getAddress() {
+    final PublicKey remotePublicKey = PublicKey.create(nodeId);
+    return Util.publicKeyToAddress(remotePublicKey);
   }
 
   public void writeTo(final RLPOutput out) {

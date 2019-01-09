@@ -14,12 +14,12 @@ package tech.pegasys.pantheon.consensus.ibft.support;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.CommitMessage;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.CommitMessageData;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftV2;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.NewRoundMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.PrepareMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.ProposalMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.RoundChangeMessage;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.NewRoundMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.PrepareMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.ProposalMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.RoundChangeMessageData;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.Payload;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
@@ -60,15 +60,15 @@ public class MessageReceptionHelpers {
 
     switch (expectedPayload.getMessageType()) {
       case IbftV2.PROPOSAL:
-        return ProposalMessage.fromMessage(actual).decode().equals(expected);
+        return ProposalMessageData.fromMessageData(actual).decode().equals(expected);
       case IbftV2.PREPARE:
-        return PrepareMessage.fromMessage(actual).decode().equals(expected);
+        return PrepareMessageData.fromMessageData(actual).decode().equals(expected);
       case IbftV2.COMMIT:
-        return CommitMessage.fromMessage(actual).decode().equals(expected);
+        return CommitMessageData.fromMessageData(actual).decode().equals(expected);
       case IbftV2.NEW_ROUND:
-        return NewRoundMessage.fromMessage(actual).decode().equals(expected);
+        return NewRoundMessageData.fromMessageData(actual).decode().equals(expected);
       case IbftV2.ROUND_CHANGE:
-        return RoundChangeMessage.fromMessage(actual).decode().equals(expected);
+        return RoundChangeMessageData.fromMessageData(actual).decode().equals(expected);
       default:
         return false;
     }

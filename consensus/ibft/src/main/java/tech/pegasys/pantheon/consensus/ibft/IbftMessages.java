@@ -12,12 +12,12 @@
  */
 package tech.pegasys.pantheon.consensus.ibft;
 
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.CommitMessage;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.CommitMessageData;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftV2;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.NewRoundMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.PrepareMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.ProposalMessage;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.RoundChangeMessage;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.NewRoundMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.PrepareMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.ProposalMessageData;
+import tech.pegasys.pantheon.consensus.ibft.ibftmessage.RoundChangeMessageData;
 import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
@@ -29,19 +29,19 @@ public class IbftMessages {
 
     switch (messageData.getCode()) {
       case IbftV2.PROPOSAL:
-        return ProposalMessage.fromMessage(messageData).decode();
+        return ProposalMessageData.fromMessageData(messageData).decode();
 
       case IbftV2.PREPARE:
-        return PrepareMessage.fromMessage(messageData).decode();
+        return PrepareMessageData.fromMessageData(messageData).decode();
 
       case IbftV2.COMMIT:
-        return CommitMessage.fromMessage(messageData).decode();
+        return CommitMessageData.fromMessageData(messageData).decode();
 
       case IbftV2.ROUND_CHANGE:
-        return RoundChangeMessage.fromMessage(messageData).decode();
+        return RoundChangeMessageData.fromMessageData(messageData).decode();
 
       case IbftV2.NEW_ROUND:
-        return NewRoundMessage.fromMessage(messageData).decode();
+        return NewRoundMessageData.fromMessageData(messageData).decode();
 
       default:
         throw new IllegalArgumentException(

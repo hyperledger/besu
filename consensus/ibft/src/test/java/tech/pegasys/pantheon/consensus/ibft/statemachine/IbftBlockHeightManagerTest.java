@@ -233,7 +233,7 @@ public class IbftBlockHeightManagerTest {
     manager.start();
     verify(roundFactory).createNewRound(any(), eq(0));
 
-    manager.handleRoundChangeMessage(roundChangePayload);
+    manager.handleRoundChangePayload(roundChangePayload);
 
     verify(roundChangeManager, times(1)).appendRoundChangeMessage(roundChangePayload);
     verify(roundFactory, times(1))
@@ -279,7 +279,7 @@ public class IbftBlockHeightManagerTest {
             messageValidatorFactory);
     manager.start();
 
-    manager.handleRoundChangeMessage(roundChangePayload);
+    manager.handleRoundChangePayload(roundChangePayload);
 
     verify(messageTransmitter, times(1))
         .multicastNewRound(eq(futureRoundIdentifier), eq(roundChangCert), any());
@@ -311,8 +311,8 @@ public class IbftBlockHeightManagerTest {
                 Hash.fromHexStringLenient("0"),
                 Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 1));
 
-    manager.handlePrepareMessage(preparePayload);
-    manager.handleCommitMessage(commitPayload);
+    manager.handlePreparePayload(preparePayload);
+    manager.handleCommitPayload(commitPayload);
 
     // Force a new round to be started at new round number.
     final SignedData<NewRoundPayload> newRound =
@@ -321,7 +321,7 @@ public class IbftBlockHeightManagerTest {
             new RoundChangeCertificate(Collections.emptyList()),
             messageFactory.createSignedProposalPayload(futureRoundIdentifier, createdBlock));
 
-    manager.handleNewRoundMessage(newRound);
+    manager.handleNewRoundPayload(newRound);
 
     // Final state sets the Quorum Size to 3, so should send a Prepare and also a commit
     verify(messageTransmitter, times(1)).multicastPrepare(eq(futureRoundIdentifier), any());
@@ -349,8 +349,8 @@ public class IbftBlockHeightManagerTest {
         validatorMessageFactory
             .get(1)
             .createSignedPreparePayload(roundIdentifier, Hash.fromHexStringLenient("0"));
-    manager.handlePrepareMessage(preparePayload);
-    manager.handlePrepareMessage(secondPreparePayload);
+    manager.handlePreparePayload(preparePayload);
+    manager.handlePreparePayload(secondPreparePayload);
 
     manager.roundExpired(new RoundExpiry(roundIdentifier));
 

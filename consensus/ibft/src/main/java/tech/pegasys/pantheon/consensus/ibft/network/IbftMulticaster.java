@@ -12,9 +12,15 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.network;
 
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+
+import java.util.Collection;
 
 public interface IbftMulticaster {
 
   void multicastToValidators(final MessageData message);
+
+  void multicastToValidatorsExcept(
+      final MessageData message, final Collection<Address> exceptAddresses);
 }

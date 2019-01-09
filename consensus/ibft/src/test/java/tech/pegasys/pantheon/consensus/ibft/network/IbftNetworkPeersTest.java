@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.network;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -33,7 +34,6 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.math.BigInteger;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,21 +42,22 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class IbftNetworkPeersTest {
 
-  private final List<Address> validators = Lists.newArrayList();
-  private final List<PublicKey> publicKeys = Lists.newArrayList();
+  private final List<Address> validators = newArrayList();
+  private final List<PublicKey> publicKeys = newArrayList();
 
-  private final List<PeerConnection> peerConnections = Lists.newArrayList();
+  private final List<PeerConnection> peerConnections = newArrayList();
 
   @Before
   public void setup() {
     for (int i = 0; i < 4; i++) {
       final PublicKey pubKey = PublicKey.create(BigInteger.valueOf(i));
       publicKeys.add(pubKey);
+      final Address address = Util.publicKeyToAddress(pubKey);
 
       final PeerInfo peerInfo = mock(PeerInfo.class);
       final PeerConnection peerConnection = mock(PeerConnection.class);
       when(peerConnection.getPeer()).thenReturn(peerInfo);
-      when(peerInfo.getNodeId()).thenReturn(pubKey.getEncodedBytes());
+      when(peerInfo.getAddress()).thenReturn(address);
 
       peerConnections.add(peerConnection);
     }
@@ -93,13 +94,36 @@ public class IbftNetworkPeersTest {
     final IbftNetworkPeers peers = new IbftNetworkPeers(validatorProvider);
 
     // only add peer connections 1, 2 & 3, none of which should be invoked.
-    Lists.newArrayList(1, 2, 3).forEach(i -> peers.peerAdded(peerConnections.get(i)));
+    newArrayList(1, 2, 3).forEach(i -> peers.peerAdded(peerConnections.get(i)));
 
     final MessageData messageToSend = new RawMessage(1, BytesValue.EMPTY);
     peers.multicastToValidators(messageToSend);
 
     verify(peerConnections.get(0), never()).sendForProtocol(any(), any());
     verify(peerConnections.get(1), never()).sendForProtocol(any(), any());
+    verify(peerConnections.get(2), never()).sendForProtocol(any(), any());
+    verify(peerConnections.get(3), never()).sendForProtocol(any(), any());
+  }
+
+  @Test
+  public void onlyValidatorsAreSentAMessageNotInExcludes() throws PeerNotConnected {
+    // Only add the first Peer's address to the validators.
+    final Address validatorAddress = Util.publicKeyToAddress(publicKeys.get(0));
+    validators.add(validatorAddress);
+    validators.add(Util.publicKeyToAddress(publicKeys.get(1)));
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidators()).thenReturn(validators);
+
+    final IbftNetworkPeers peers = new IbftNetworkPeers(validatorProvider);
+    for (final PeerConnection peer : peerConnections) {
+      peers.peerAdded(peer);
+    }
+
+    final MessageData messageToSend = new RawMessage(1, BytesValue.EMPTY);
+    peers.multicastToValidatorsExcept(messageToSend, newArrayList(validatorAddress));
+
+    verify(peerConnections.get(0), never()).sendForProtocol(any(), any());
+    verify(peerConnections.get(1), times(1)).sendForProtocol(any(), any());
     verify(peerConnections.get(2), never()).sendForProtocol(any(), any());
     verify(peerConnections.get(3), never()).sendForProtocol(any(), any());
   }

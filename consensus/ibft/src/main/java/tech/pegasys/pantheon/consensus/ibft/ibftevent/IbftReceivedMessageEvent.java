@@ -13,18 +13,18 @@
 package tech.pegasys.pantheon.consensus.ibft.ibftevent;
 
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvents.Type;
-import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.api.Message;
 
 public class IbftReceivedMessageEvent implements IbftEvent {
 
-  private final MessageData messageData;
+  private final Message message;
 
-  public IbftReceivedMessageEvent(final MessageData messageData) {
-    this.messageData = messageData;
+  public IbftReceivedMessageEvent(final Message message) {
+    this.message = message;
   }
 
-  public MessageData getMessageData() {
-    return messageData;
+  public Message getMessage() {
+    return message;
   }
 
   @Override
