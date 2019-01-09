@@ -250,7 +250,7 @@ public final class RunnerTest {
   }
 
   private StorageProvider createKeyValueStorageProvider(final Path dbAhead) throws IOException {
-    return RocksDbStorageProvider.create(dbAhead);
+    return RocksDbStorageProvider.create(dbAhead, new NoOpMetricsSystem());
   }
 
   private JsonRpcConfiguration jsonRpcConfiguration() {

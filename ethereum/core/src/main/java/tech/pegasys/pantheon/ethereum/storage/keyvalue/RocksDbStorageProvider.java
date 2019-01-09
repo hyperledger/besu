@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.storage.keyvalue;
 
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.RocksDbKeyValueStorage;
 
@@ -22,8 +23,10 @@ import java.nio.file.Path;
 
 public class RocksDbStorageProvider {
 
-  public static StorageProvider create(final Path databaseDir) throws IOException {
-    final KeyValueStorage kv = RocksDbKeyValueStorage.create(Files.createDirectories(databaseDir));
+  public static StorageProvider create(final Path databaseDir, final MetricsSystem metricsSystem)
+      throws IOException {
+    final KeyValueStorage kv =
+        RocksDbKeyValueStorage.create(Files.createDirectories(databaseDir), metricsSystem);
     return new KeyValueStorageProvider(kv);
   }
 }
