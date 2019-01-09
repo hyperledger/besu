@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.services.kvstore;
 
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
@@ -21,6 +23,6 @@ public class RocksDbKeyValueStorageTest extends AbstractKeyValueStorageTest {
 
   @Override
   protected KeyValueStorage createStore() throws Exception {
-    return RocksDbKeyValueStorage.create(folder.newFolder().toPath());
+    return RocksDbKeyValueStorage.create(folder.newFolder().toPath(), new NoOpMetricsSystem());
   }
 }
