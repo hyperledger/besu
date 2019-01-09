@@ -10,28 +10,25 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters;
 
-apply plugin: 'java-library'
+import java.util.ArrayList;
+import java.util.List;
 
-jar {
-  baseName 'pantheon-mock-p2p'
-  manifest {
-    attributes(
-      'Specification-Title': baseName,
-      'Specification-Version': project.version,
-      'Implementation-Title': baseName,
-      'Implementation-Version': calculateVersion()
-      )
+import com.fasterxml.jackson.annotation.JsonCreator;
+
+public class StringListParameter {
+
+  private final List<String> stringList = new ArrayList<>();
+
+  @JsonCreator
+  public StringListParameter(final List<String> strings) {
+    if (strings != null) {
+      stringList.addAll(strings);
+    }
   }
-}
 
-dependencies {
-  implementation project(':ethereum:p2p')
-  implementation project(':ethereum:permissioning')
-  implementation project(':util')
-
-  implementation 'io.vertx:vertx-core'
-
-  testImplementation "junit:junit"
-  testImplementation 'org.assertj:assertj-core'
+  public List<String> getStringList() {
+    return stringList;
+  }
 }

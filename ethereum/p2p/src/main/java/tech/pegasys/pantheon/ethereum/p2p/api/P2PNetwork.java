@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.p2p.api;
 
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 
@@ -85,4 +86,6 @@ public interface P2PNetwork extends Closeable, Runnable {
    * @return true if the node is listening for network connections, false, otherwise.
    */
   boolean isListening();
+
+  NodeWhitelistController getNodeWhitelistController();
 }
