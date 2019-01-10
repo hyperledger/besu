@@ -42,8 +42,8 @@ public class RoundState {
 
   // Must track the actual Prepare message, not just the sender, as these may need to be reused
   // to send out in a PrepareCertificate.
-  private final Set<SignedData<PreparePayload>> preparePayloads = Sets.newHashSet();
-  private final Set<SignedData<CommitPayload>> commitPayloads = Sets.newHashSet();
+  private final Set<SignedData<PreparePayload>> preparePayloads = Sets.newLinkedHashSet();
+  private final Set<SignedData<CommitPayload>> commitPayloads = Sets.newLinkedHashSet();
 
   private boolean prepared = false;
   private boolean committed = false;

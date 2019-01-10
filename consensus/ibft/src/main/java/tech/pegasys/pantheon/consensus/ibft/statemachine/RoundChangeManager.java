@@ -48,7 +48,7 @@ public class RoundChangeManager {
 
     // Store only 1 round change per round per validator
     @VisibleForTesting
-    final Map<Address, SignedData<RoundChangePayload>> receivedMessages = Maps.newHashMap();
+    final Map<Address, SignedData<RoundChangePayload>> receivedMessages = Maps.newLinkedHashMap();
 
     private boolean actioned = false;
 
@@ -58,7 +58,7 @@ public class RoundChangeManager {
 
     public void addMessage(final SignedData<RoundChangePayload> msg) {
       if (!actioned) {
-        receivedMessages.put(msg.getSender(), msg);
+        receivedMessages.putIfAbsent(msg.getSender(), msg);
       }
     }
 

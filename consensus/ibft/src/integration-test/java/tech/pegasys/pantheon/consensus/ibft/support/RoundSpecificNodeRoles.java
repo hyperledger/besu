@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.consensus.ibft.support;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class RoundSpecificNodeRoles {
@@ -35,11 +36,11 @@ public class RoundSpecificNodeRoles {
   }
 
   public Collection<ValidatorPeer> getAllPeers() {
-    return peers;
+    return Collections.unmodifiableCollection(peers);
   }
 
   public List<ValidatorPeer> getNonProposingPeers() {
-    return nonProposingPeers;
+    return Collections.unmodifiableList(nonProposingPeers);
   }
 
   public ValidatorPeer getNonProposingPeer(final int index) {
