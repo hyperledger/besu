@@ -301,14 +301,14 @@ otherwise, the existing key file specifies the node private key.
 ```
 
 Comma-separated enode URLs for permissioned networks.
-If you specify an empty list or [`--nodes-whitelist`](#nodes-whitelist) without a list, your node will not connect to any other nodes.
+Not intended for use with mainnet or public testnets. 
 
 
 !!!note
     This option is only available from v0.8.3. 
 
 !!!note
-    :construction: Permissioning is not currently supported. Support for permissioning is in active development.
+    Permissioning is under development and will be available in v1.0.
 
 ### ottoman
 
