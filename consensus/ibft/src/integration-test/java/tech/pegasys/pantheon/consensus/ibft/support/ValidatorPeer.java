@@ -53,7 +53,7 @@ public class ValidatorPeer {
   private final KeyPair nodeKeys;
   private final MessageFactory messageFactory;
   private final PeerConnection peerConnection = new StubbedPeerConnection();
-  private List<MessageData> receivedMessages = Lists.newArrayList();
+  private final List<MessageData> receivedMessages = Lists.newArrayList();
 
   private final IbftController localNodeController;
 

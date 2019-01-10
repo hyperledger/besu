@@ -35,7 +35,7 @@ NetworkLayout and RoundSpecificNodeRoles concepts.
  */
 public class TestContext {
 
-  private Map<Address, ValidatorPeer> remotePeers;
+  private final Map<Address, ValidatorPeer> remotePeers;
   private final MutableBlockchain blockchain;
   private final IbftController controller;
   private final IbftFinalState finalState;
