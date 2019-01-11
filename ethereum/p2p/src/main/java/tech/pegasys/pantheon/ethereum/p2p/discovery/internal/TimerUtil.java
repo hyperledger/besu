@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,14 +12,15 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
-import java.util.Collection;
+public interface TimerUtil {
+  long setPeriodic(long delay, TimerHandler handler);
 
-@FunctionalInterface
-public interface PeerRequirement {
+  long setTimer(long delay, TimerHandler handler);
 
-  boolean hasSufficientPeers();
+  void cancelTimer(long timerId);
 
-  static PeerRequirement aggregateOf(final Collection<? extends PeerRequirement> peers) {
-    return () -> peers.stream().allMatch(PeerRequirement::hasSufficientPeers);
+  @FunctionalInterface
+  interface TimerHandler {
+    void handle();
   }
 }

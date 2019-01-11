@@ -152,6 +152,6 @@ public class Runner implements AutoCloseable {
   }
 
   public int getP2pTcpPort() {
-    return networkRunner.getNetwork().getSelf().getPort();
+    return networkRunner.getNetwork().getLocalPeerInfo().getPort();
   }
 }

@@ -19,15 +19,17 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.AddResult.Outcome;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 
+import java.util.List;
+
 import org.junit.Test;
 
 public class PeerTableTest {
+  private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
   @Test
   public void addPeer() {
     final PeerTable table = new PeerTable(Peer.randomId(), 16);
-    final DiscoveryPeer[] peers =
-        PeerDiscoveryTestHelper.generateDiscoveryPeers(PeerDiscoveryTestHelper.generateKeyPairs(5));
+    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(5);
 
     for (final DiscoveryPeer peer : peers) {
       final PeerTable.AddResult result = table.tryAdd(peer);
@@ -39,9 +41,9 @@ public class PeerTableTest {
 
   @Test
   public void addSelf() {
-    final DiscoveryPeer self = new DiscoveryPeer(Peer.randomId(), "127.0.0.1", 12345, 12345);
-    final PeerTable table = new PeerTable(self.getId(), 16);
-    final PeerTable.AddResult result = table.tryAdd(self);
+    final DiscoveryPeer localPeer = new DiscoveryPeer(Peer.randomId(), "127.0.0.1", 12345, 12345);
+    final PeerTable table = new PeerTable(localPeer.getId(), 16);
+    final PeerTable.AddResult result = table.tryAdd(localPeer);
 
     assertThat(result.getOutcome()).isEqualTo(Outcome.SELF);
     assertThat(table.getAllPeers()).hasSize(0);
@@ -50,9 +52,7 @@ public class PeerTableTest {
   @Test
   public void peerExists() {
     final PeerTable table = new PeerTable(Peer.randomId(), 16);
-    final DiscoveryPeer peer =
-        PeerDiscoveryTestHelper.generateDiscoveryPeers(PeerDiscoveryTestHelper.generateKeyPairs(1))[
-            0];
+    final DiscoveryPeer peer = helper.createDiscoveryPeer();
 
     assertThat(table.tryAdd(peer).getOutcome()).isEqualTo(Outcome.ADDED);
 
