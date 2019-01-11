@@ -4,12 +4,13 @@
     "homesteadBlock": 1,
     "eip150Block": 2,
     "eip150Hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-    "eip155Block": 0,
-    "eip158Block": 0,
-    "byzantiumBlock": 0,
-    "clique": {
-      "blockperiodseconds": 10,
-      "epochlength": 30000
+    "eip155Block": 3,
+    "eip158Block": 3,
+    "byzantiumBlock": 1035301,
+    "revisedibft": {
+      "blockperiodseconds": 1,
+      "epochlength": 30000,
+      "requesttimeoutseconds": 5
     }
   },
   "nonce": "0x0",
@@ -17,7 +18,7 @@
   "extraData": "%extraData%",
   "gasLimit": "0x47b760",
   "difficulty": "0x1",
-  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "mixHash": "0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365",
   "coinbase": "0x0000000000000000000000000000000000000000",
   "alloc": {
     "fe3b557e8fb62b89f4916b721be55ceb828dbd73": {

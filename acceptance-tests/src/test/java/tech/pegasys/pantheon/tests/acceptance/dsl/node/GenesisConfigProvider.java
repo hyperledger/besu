@@ -12,10 +12,10 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 
 @FunctionalInterface
 public interface GenesisConfigProvider {
-  Optional<String> createGenesisConfig(final List<RunnableNode> validators);
+  Optional<String> createGenesisConfig(final Collection<? extends RunnableNode> validators);
 }

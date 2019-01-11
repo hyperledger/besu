@@ -36,6 +36,8 @@ public interface PantheonNodeRunner {
 
   void shutdown();
 
+  boolean isActive(String nodeName);
+
   default void waitForPortsFile(final Path dataDir) {
     final File file = new File(dataDir.toFile(), "pantheon.ports");
     Awaitility.waitAtMost(30, TimeUnit.SECONDS)

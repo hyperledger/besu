@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -121,6 +122,17 @@ public class IbftExtraData {
     encoder.endList();
 
     return encoder.encoded();
+  }
+
+  public static String createGenesisExtraDataString(final List<Address> validators) {
+    final IbftExtraData extraData =
+        new IbftExtraData(
+            BytesValue.wrap(new byte[32]),
+            Collections.emptyList(),
+            Optional.empty(),
+            0,
+            validators);
+    return extraData.encode().toString();
   }
 
   // Accessors

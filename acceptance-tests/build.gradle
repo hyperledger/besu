@@ -18,6 +18,7 @@ dependencies {
 
   testImplementation project(':config')
   testImplementation project(':consensus:clique')
+  testImplementation project(':consensus:ibft')
   testImplementation project(':crypto')
   testImplementation project(':ethereum:eth')
   testImplementation project(':ethereum:core')

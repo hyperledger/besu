@@ -59,7 +59,7 @@ public class Cluster implements AutoCloseable {
             .collect(Collectors.toList()));
   }
 
-  public void start(final List<RunnableNode> nodes) {
+  public void start(final List<? extends RunnableNode> nodes) {
     this.nodes.clear();
 
     final List<String> bootNodes = new ArrayList<>();
@@ -110,6 +110,14 @@ public class Cluster implements AutoCloseable {
     for (final Node node : nodes.values()) {
       expected.verify(node);
     }
+  }
+
+  public void verifyOnActiveNodes(final Condition condition) {
+    nodes
+        .values()
+        .stream()
+        .filter(node -> pantheonNodeRunner.isActive(node.getName()))
+        .forEach(condition::verify);
   }
 
   public void waitUntil(final WaitCondition condition) {

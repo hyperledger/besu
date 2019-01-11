@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique;
+package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
 
 import static java.util.Collections.emptyList;
 import static tech.pegasys.pantheon.ethereum.core.Hash.fromHexString;
@@ -20,7 +20,12 @@ import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.blockchain.ExpectBlockNotCreated;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.ExpectNonceVote;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.ExpectNonceVote.CLIQUE_NONCE_VOTE;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.ExpectProposals;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.ExpectValidators;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.ExpectValidatorsAtBlock;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.ExpectValidatorsAtBlockHash;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique.CliqueTransactions;
@@ -36,11 +41,11 @@ import java.util.stream.Collectors;
 import com.google.common.collect.ImmutableMap;
 import org.web3j.protocol.core.DefaultBlockParameter;
 
-public class CliqueConditions {
+public class Clique {
   private final EthTransactions eth;
   private final CliqueTransactions clique;
 
-  public CliqueConditions(final EthTransactions eth, final CliqueTransactions clique) {
+  public Clique(final EthTransactions eth, final CliqueTransactions clique) {
     this.eth = eth;
     this.clique = clique;
   }

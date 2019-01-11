@@ -150,6 +150,12 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
     localMap.forEach(this::killPantheonProcess);
   }
 
+  @Override
+  public boolean isActive(final String nodeName) {
+    final Process process = pantheonProcesses.get(nodeName);
+    return process.isAlive();
+  }
+
   private void killPantheonProcess(final String name, final Process process) {
     LOG.info("Killing " + name + " process");
 
@@ -158,6 +164,7 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
             () -> {
               if (process.isAlive()) {
                 process.destroy();
+                pantheonProcesses.remove(name);
                 return false;
               } else {
                 pantheonProcesses.remove(name);
