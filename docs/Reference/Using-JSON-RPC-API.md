@@ -70,6 +70,15 @@ Send individual requests as a JSON data package at each prompt:
 
 The [RPC Pub/Sub methods](../Using-Pantheon/RPC-PubSub.md) can also be used over WebSockets.
 
+### APIs Enabled by Default
+
+The `ETH`, `NET`, `WEB3`, `CLIQUE`, and `IBFT` APIs are enabled by default. 
+
+Use the [`--rpc-api` option](Pantheon-CLI-Syntax.md#rpc-api) to enable the `ADMIN`, `DEBUG`, and `MINER` APIs.
+
+!!!note
+    :construction: IBFT is not currently supported. Support for IBFT is in active development. 
+
 ### Block Parameter
 
 When you make requests that might have different results depending on the block accessed, 

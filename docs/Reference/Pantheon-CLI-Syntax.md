@@ -413,7 +413,7 @@ The default is 127.0.0.1:8545.
 
 Comma-separated APIs to enable on the JSON-RPC channel.
 When you use this option, the `--rpc-enabled` option must also be specified.
-The available API options are: `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`, `DEBUG`, and `MINER`.
+The available API options are: `ADMIN`, `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`, `DEBUG`, and `MINER`.
 The default is: `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`.
 
 !!!note
