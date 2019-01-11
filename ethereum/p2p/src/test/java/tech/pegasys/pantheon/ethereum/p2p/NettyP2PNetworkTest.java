@@ -93,7 +93,7 @@ public final class NettyP2PNetworkTest {
                 new NoOpMetricsSystem(),
                 new NodeWhitelistController(PermissioningConfiguration.createDefault()))) {
 
-      final int listenPort = listener.getSelf().getPort();
+      final int listenPort = listener.getLocalPeerInfo().getPort();
       listener.run();
       connector.run();
       final BytesValue listenId = listenKp.getPublicKey().getEncodedBytes();
@@ -146,7 +146,7 @@ public final class NettyP2PNetworkTest {
                 new PeerBlacklist(),
                 new NoOpMetricsSystem(),
                 new NodeWhitelistController(PermissioningConfiguration.createDefault()))) {
-      final int listenPort = listener.getSelf().getPort();
+      final int listenPort = listener.getLocalPeerInfo().getPort();
       listener.run();
       connector.run();
       final BytesValue listenId = listenKp.getPublicKey().getEncodedBytes();
@@ -229,7 +229,7 @@ public final class NettyP2PNetworkTest {
                 new NoOpMetricsSystem(),
                 new NodeWhitelistController(PermissioningConfiguration.createDefault()))) {
 
-      final int listenPort = listener.getSelf().getPort();
+      final int listenPort = listener.getLocalPeerInfo().getPort();
       // Setup listener and first connection
       listener.run();
       connector1.run();
@@ -296,7 +296,7 @@ public final class NettyP2PNetworkTest {
                 new PeerBlacklist(),
                 new NoOpMetricsSystem(),
                 new NodeWhitelistController(PermissioningConfiguration.createDefault()))) {
-      final int listenPort = listener.getSelf().getPort();
+      final int listenPort = listener.getLocalPeerInfo().getPort();
       listener.run();
       connector.run();
       final BytesValue listenId = listenKp.getPublicKey().getEncodedBytes();
@@ -351,8 +351,8 @@ public final class NettyP2PNetworkTest {
                 remoteBlacklist,
                 new NoOpMetricsSystem(),
                 new NodeWhitelistController(PermissioningConfiguration.createDefault()))) {
-      final int localListenPort = localNetwork.getSelf().getPort();
-      final int remoteListenPort = remoteNetwork.getSelf().getPort();
+      final int localListenPort = localNetwork.getLocalPeerInfo().getPort();
+      final int remoteListenPort = remoteNetwork.getLocalPeerInfo().getPort();
       final Peer localPeer =
           new DefaultPeer(
               localId,

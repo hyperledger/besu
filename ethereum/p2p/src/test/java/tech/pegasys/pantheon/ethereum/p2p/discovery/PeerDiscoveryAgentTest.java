@@ -13,152 +13,116 @@
 package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
-import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
-import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper.AgentBuilder;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent.IncomingPacket;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.NeighborsPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
-import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.SocketAddress;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Lists;
-import io.vertx.core.Vertx;
-import org.junit.Ignore;
 import org.junit.Test;
 
-public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
+public class PeerDiscoveryAgentTest {
+  private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
   @Test
-  public void neighborsPacketFromUnbondedPeerIsDropped() throws Exception {
+  public void neighborsPacketFromUnbondedPeerIsDropped() {
     // Start an agent with no bootstrap peers.
-    final PeerDiscoveryAgent agent = startDiscoveryAgent(Collections.emptyList());
+    final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(Collections.emptyList());
     assertThat(agent.getPeers()).isEmpty();
 
-    // Start a test peer and send a PING packet to the agent under test.
-    final DiscoveryTestSocket discoveryTestSocket = startTestSocket();
-
-    // Peer is unbonded, as it has not replied with a PONG.
+    // Start a test peer
+    final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
 
     // Generate an out-of-band NEIGHBORS message.
-    final DiscoveryPeer[] peers =
-        PeerDiscoveryTestHelper.generatePeers(PeerDiscoveryTestHelper.generateKeyPairs(5));
-    final NeighborsPacketData data = NeighborsPacketData.create(Arrays.asList(peers));
-    final Packet packet =
-        Packet.create(PacketType.NEIGHBORS, data, discoveryTestSocket.getKeyPair());
-    discoveryTestSocket.sendToAgent(agent, packet);
+    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(5);
+    final NeighborsPacketData data = NeighborsPacketData.create(peers);
+    final Packet packet = Packet.create(PacketType.NEIGHBORS, data, otherNode.getKeyPair());
+    helper.sendMessageBetweenAgents(otherNode, agent, packet);
 
-    TimeUnit.SECONDS.sleep(1);
     assertThat(agent.getPeers()).isEmpty();
   }
 
   @Test
-  @Ignore("This test is failing intermittently - disabling while we investigate")
   public void neighborsPacketLimited() {
     // Start 20 agents with no bootstrap peers.
-    final List<PeerDiscoveryAgent> agents = startDiscoveryAgents(20, Collections.emptyList());
-    final List<DiscoveryPeer> agentPeers =
-        agents.stream().map(PeerDiscoveryAgent::getAdvertisedPeer).collect(Collectors.toList());
+    final List<MockPeerDiscoveryAgent> otherAgents =
+        helper.startDiscoveryAgents(20, Collections.emptyList());
+    final List<DiscoveryPeer> otherPeers =
+        otherAgents
+            .stream()
+            .map(MockPeerDiscoveryAgent::getAdvertisedPeer)
+            .collect(Collectors.toList());
 
-    // Start another bootstrap peer pointing to those 20 agents.
-    final PeerDiscoveryAgent agent = startDiscoveryAgent(agentPeers);
-    await()
-        .atMost(10, TimeUnit.SECONDS)
-        .untilAsserted(
-            () -> {
-              assertThat(agent.getPeers()).hasSize(20);
-              assertThat(agent.getPeers())
-                  .allMatch(p -> p.getStatus() == PeerDiscoveryStatus.BONDED);
-            });
+    // Start another peer pointing to those 20 agents.
+    final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(otherPeers);
+    assertThat(agent.getPeers()).hasSize(20);
+    assertThat(agent.getPeers()).allMatch(p -> p.getStatus() == PeerDiscoveryStatus.BONDED);
+
+    // Use additional agent to exchange messages with agent
+    final MockPeerDiscoveryAgent testAgent = helper.startDiscoveryAgent();
 
     // Send a PING so we can exchange messages with the latter agent.
-    final DiscoveryTestSocket testSocket = startTestSocket();
-    Packet packet =
-        Packet.create(
-            PacketType.PING,
-            PingPacketData.create(
-                testSocket.getPeer().getEndpoint(), testSocket.getPeer().getEndpoint()),
-            testSocket.getKeyPair());
-    testSocket.sendToAgent(agent, packet);
-
-    // Wait until PONG is received.
-    final Packet pong = testSocket.compulsoryPoll();
-    assertThat(pong.getType()).isEqualTo(PacketType.PONG);
+    Packet packet = helper.createPingPacket(testAgent, agent);
+    helper.sendMessageBetweenAgents(testAgent, agent, packet);
 
     // Send a FIND_NEIGHBORS message.
     packet =
         Packet.create(
             PacketType.FIND_NEIGHBORS,
-            FindNeighborsPacketData.create(agents.get(0).getAdvertisedPeer().getId()),
-            testSocket.getKeyPair());
-    testSocket.sendToAgent(agent, packet);
+            FindNeighborsPacketData.create(otherAgents.get(0).getAdvertisedPeer().getId()),
+            testAgent.getKeyPair());
+    helper.sendMessageBetweenAgents(testAgent, agent, packet);
 
-    // Wait until NEIGHBORS is received.
-    packet = testSocket.compulsoryPoll();
-    assertThat(packet.getType()).isEqualTo(PacketType.NEIGHBORS);
+    // Check response packet
+    List<IncomingPacket> incomingPackets =
+        testAgent
+            .getIncomingPackets()
+            .stream()
+            .filter(p -> p.packet.getType().equals(PacketType.NEIGHBORS))
+            .collect(Collectors.toList());
+    assertThat(incomingPackets.size()).isEqualTo(1);
+    IncomingPacket neighborsPacket = incomingPackets.get(0);
+    assertThat(neighborsPacket.fromAgent).isEqualTo(agent);
 
     // Assert that we only received 16 items.
-    final NeighborsPacketData neighbors = packet.getPacketData(NeighborsPacketData.class).get();
+    final NeighborsPacketData neighbors =
+        neighborsPacket.packet.getPacketData(NeighborsPacketData.class).get();
     assertThat(neighbors).isNotNull();
     assertThat(neighbors.getNodes()).hasSize(16);
 
     // Assert that after removing those 16 items we're left with either 4 or 5.
     // If we are left with 5, the test peer was returned as an item, assert that this is the case.
-    agentPeers.removeAll(neighbors.getNodes());
-    assertThat(agentPeers.size()).isBetween(4, 5);
-    if (agentPeers.size() == 5) {
-      assertThat(neighbors.getNodes()).contains(testSocket.getPeer());
+    otherPeers.removeAll(neighbors.getNodes());
+    assertThat(otherPeers.size()).isBetween(4, 5);
+    if (otherPeers.size() == 5) {
+      assertThat(neighbors.getNodes()).contains(testAgent.getAdvertisedPeer());
     }
   }
 
   @Test
   public void shouldEvictPeerOnDisconnect() {
-    final Vertx vertx = Vertx.vertx();
+    final MockPeerDiscoveryAgent peerDiscoveryAgent1 = helper.startDiscoveryAgent();
+    peerDiscoveryAgent1.start().join();
+    final DiscoveryPeer peer = peerDiscoveryAgent1.getAdvertisedPeer();
 
-    final SECP256K1.KeyPair keyPair1 = SECP256K1.KeyPair.generate();
-    final PeerDiscoveryAgent peerDiscoveryAgent1 =
-        new PeerDiscoveryAgent(
-            vertx,
-            keyPair1,
-            DiscoveryConfiguration.create().setBindHost("127.0.0.1").setBindPort(0),
-            () -> true,
-            new PeerBlacklist(),
-            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
-    peerDiscoveryAgent1.start(0).join();
-    final DefaultPeer peer = peerDiscoveryAgent1.getAdvertisedPeer();
-
-    final SECP256K1.KeyPair keyPair2 = SECP256K1.KeyPair.generate();
-    final PeerDiscoveryAgent peerDiscoveryAgent2 =
-        new PeerDiscoveryAgent(
-            vertx,
-            keyPair2,
-            DiscoveryConfiguration.create()
-                .setBindHost("127.0.0.1")
-                .setBindPort(0)
-                .setBootstrapPeers(Lists.newArrayList(peer)),
-            () -> true,
-            new PeerBlacklist(),
-            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
-    peerDiscoveryAgent2.start(0).join();
+    final MockPeerDiscoveryAgent peerDiscoveryAgent2 = helper.startDiscoveryAgent(peer);
+    peerDiscoveryAgent2.start().join();
 
     assertThat(peerDiscoveryAgent2.getPeers().size()).isEqualTo(1);
 
@@ -169,16 +133,17 @@ public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
   }
 
   @Test
-  public void doesNotBlacklistPeerForNormalDisconnect() throws Exception {
+  public void doesNotBlacklistPeerForNormalDisconnect() {
     // Start an agent with no bootstrap peers.
     final PeerBlacklist blacklist = new PeerBlacklist();
-    final PeerDiscoveryAgent agent = startDiscoveryAgent(Collections.emptyList(), blacklist);
+    final MockPeerDiscoveryAgent agent =
+        helper.startDiscoveryAgent(Collections.emptyList(), blacklist);
     // Setup peer
-    final DiscoveryTestSocket peerSocket = startTestSocket();
-    final PeerConnection wirePeer = createAnonymousPeerConnection(peerSocket.getPeer().getId());
+    final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
+    final PeerConnection wirePeer = createAnonymousPeerConnection(otherNode.getId());
 
     // Bond to peer
-    bondViaIncomingPing(agent, peerSocket);
+    bondViaIncomingPing(agent, otherNode);
     assertThat(agent.getPeers()).hasSize(1);
 
     // Disconnect with innocuous reason
@@ -188,23 +153,30 @@ public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
     assertThat(agent.getPeers()).hasSize(0);
 
     // Bond again
-    bondViaIncomingPing(agent, peerSocket);
+    bondViaIncomingPing(agent, otherNode);
 
     // Check peer was allowed to connect
     assertThat(agent.getPeers()).hasSize(1);
   }
 
+  protected void bondViaIncomingPing(
+      final MockPeerDiscoveryAgent agent, final MockPeerDiscoveryAgent otherNode) {
+    Packet pingPacket = helper.createPingPacket(otherNode, agent);
+    helper.sendMessageBetweenAgents(otherNode, agent, pingPacket);
+  }
+
   @Test
-  public void blacklistPeerForBadBehavior() throws Exception {
+  public void blacklistPeerForBadBehavior() {
     // Start an agent with no bootstrap peers.
     final PeerBlacklist blacklist = new PeerBlacklist();
-    final PeerDiscoveryAgent agent = startDiscoveryAgent(Collections.emptyList(), blacklist);
+    final MockPeerDiscoveryAgent agent =
+        helper.startDiscoveryAgent(Collections.emptyList(), blacklist);
     // Setup peer
-    final DiscoveryTestSocket peerSocket = startTestSocket();
-    final PeerConnection wirePeer = createAnonymousPeerConnection(peerSocket.getPeer().getId());
+    final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
+    final PeerConnection wirePeer = createAnonymousPeerConnection(otherNode.getId());
 
     // Bond to peer
-    bondViaIncomingPing(agent, peerSocket);
+    bondViaIncomingPing(agent, otherNode);
     assertThat(agent.getPeers()).hasSize(1);
 
     // Disconnect with problematic reason
@@ -214,7 +186,7 @@ public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
     assertThat(agent.getPeers()).hasSize(0);
 
     // Bond again
-    bondViaIncomingPing(agent, peerSocket);
+    bondViaIncomingPing(agent, otherNode);
 
     // Check peer was not allowed to connect
     assertThat(agent.getPeers()).hasSize(0);
@@ -224,13 +196,14 @@ public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
   public void doesNotBlacklistPeerForOurBadBehavior() throws Exception {
     // Start an agent with no bootstrap peers.
     final PeerBlacklist blacklist = new PeerBlacklist();
-    final PeerDiscoveryAgent agent = startDiscoveryAgent(Collections.emptyList(), blacklist);
+    final MockPeerDiscoveryAgent agent =
+        helper.startDiscoveryAgent(Collections.emptyList(), blacklist);
     // Setup peer
-    final DiscoveryTestSocket peerSocket = startTestSocket();
-    final PeerConnection wirePeer = createAnonymousPeerConnection(peerSocket.getPeer().getId());
+    final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
+    final PeerConnection wirePeer = createAnonymousPeerConnection(otherNode.getId());
 
     // Bond to peer
-    bondViaIncomingPing(agent, peerSocket);
+    bondViaIncomingPing(agent, otherNode);
     assertThat(agent.getPeers()).hasSize(1);
 
     // Disconnect with problematic reason
@@ -240,7 +213,7 @@ public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
     assertThat(agent.getPeers()).hasSize(0);
 
     // Bond again
-    bondViaIncomingPing(agent, peerSocket);
+    bondViaIncomingPing(agent, otherNode);
 
     // Check peer was allowed to connect
     assertThat(agent.getPeers()).hasSize(1);
@@ -250,13 +223,14 @@ public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
   public void blacklistIncompatiblePeer() throws Exception {
     // Start an agent with no bootstrap peers.
     final PeerBlacklist blacklist = new PeerBlacklist();
-    final PeerDiscoveryAgent agent = startDiscoveryAgent(Collections.emptyList(), blacklist);
+    final MockPeerDiscoveryAgent agent =
+        helper.startDiscoveryAgent(Collections.emptyList(), blacklist);
     // Setup peer
-    final DiscoveryTestSocket peerSocket = startTestSocket();
-    final PeerConnection wirePeer = createAnonymousPeerConnection(peerSocket.getPeer().getId());
+    final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
+    final PeerConnection wirePeer = createAnonymousPeerConnection(otherNode.getId());
 
     // Bond to peer
-    bondViaIncomingPing(agent, peerSocket);
+    bondViaIncomingPing(agent, otherNode);
     assertThat(agent.getPeers()).hasSize(1);
 
     // Disconnect
@@ -266,7 +240,7 @@ public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
     assertThat(agent.getPeers()).hasSize(0);
 
     // Bond again
-    bondViaIncomingPing(agent, peerSocket);
+    bondViaIncomingPing(agent, otherNode);
 
     // Check peer was not allowed to connect
     assertThat(agent.getPeers()).hasSize(0);
@@ -276,13 +250,14 @@ public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
   public void blacklistIncompatiblePeerWhoIssuesDisconnect() throws Exception {
     // Start an agent with no bootstrap peers.
     final PeerBlacklist blacklist = new PeerBlacklist();
-    final PeerDiscoveryAgent agent = startDiscoveryAgent(Collections.emptyList(), blacklist);
+    final MockPeerDiscoveryAgent agent =
+        helper.startDiscoveryAgent(Collections.emptyList(), blacklist);
     // Setup peer
-    final DiscoveryTestSocket peerSocket = startTestSocket();
-    final PeerConnection wirePeer = createAnonymousPeerConnection(peerSocket.getPeer().getId());
+    final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
+    final PeerConnection wirePeer = createAnonymousPeerConnection(otherNode.getId());
 
     // Bond to peer
-    bondViaIncomingPing(agent, peerSocket);
+    bondViaIncomingPing(agent, otherNode);
     assertThat(agent.getPeers()).hasSize(1);
 
     // Disconnect
@@ -292,7 +267,7 @@ public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
     assertThat(agent.getPeers()).hasSize(0);
 
     // Bond again
-    bondViaIncomingPing(agent, peerSocket);
+    bondViaIncomingPing(agent, otherNode);
 
     // Check peer was not allowed to connect
     assertThat(agent.getPeers()).hasSize(0);
@@ -300,20 +275,16 @@ public class PeerDiscoveryAgentTest extends AbstractPeerDiscoveryTest {
 
   @Test
   public void shouldBeActiveWhenConfigIsTrue() {
-    final DiscoveryConfiguration config = new DiscoveryConfiguration();
-    config.setActive(true).setBindPort(0);
-
-    final PeerDiscoveryAgent agent = startDiscoveryAgent(config, new PeerBlacklist());
+    AgentBuilder agentBuilder = helper.agentBuilder().active(true);
+    final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(agentBuilder);
 
     assertThat(agent.isActive()).isTrue();
   }
 
   @Test
   public void shouldNotBeActiveWhenConfigIsFalse() {
-    final DiscoveryConfiguration config = new DiscoveryConfiguration();
-    config.setActive(false).setBindPort(0);
-
-    final PeerDiscoveryAgent agent = startDiscoveryAgent(config, new PeerBlacklist());
+    AgentBuilder agentBuilder = helper.agentBuilder().active(false);
+    final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(agentBuilder);
 
     assertThat(agent.isActive()).isFalse();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,14 +12,11 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
-import java.util.Collection;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 
 @FunctionalInterface
-public interface PeerRequirement {
+public interface OutboundMessageHandler {
+  public static OutboundMessageHandler NOOP = (peer, packet) -> {};
 
-  boolean hasSufficientPeers();
-
-  static PeerRequirement aggregateOf(final Collection<? extends PeerRequirement> peers) {
-    return () -> peers.stream().allMatch(PeerRequirement::hasSufficientPeers);
-  }
+  void send(final DiscoveryPeer toPeer, final Packet packet);
 }

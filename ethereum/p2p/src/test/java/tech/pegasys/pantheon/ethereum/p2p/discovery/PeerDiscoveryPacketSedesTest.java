@@ -15,8 +15,6 @@ package tech.pegasys.pantheon.ethereum.p2p.discovery;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.assertNotNull;
-import static tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper.generateKeyPairs;
-import static tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper.generatePeers;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
@@ -29,7 +27,6 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.MutableBytesValue;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -37,6 +34,7 @@ import io.vertx.core.buffer.Buffer;
 import org.junit.Test;
 
 public class PeerDiscoveryPacketSedesTest {
+  private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
   @Test
   public void serializeDeserializeEntirePacket() {
@@ -79,7 +77,7 @@ public class PeerDiscoveryPacketSedesTest {
 
   @Test
   public void neighborsPacketData() {
-    final List<DiscoveryPeer> peers = Arrays.asList(generatePeers(generateKeyPairs(5)));
+    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(5);
 
     final NeighborsPacketData packet = NeighborsPacketData.create(peers);
     final BytesValue serialized = RLP.encode(packet::writeTo);

@@ -180,7 +180,7 @@ public final class MockNetwork {
     public void close() {}
 
     @Override
-    public PeerInfo getSelf() {
+    public PeerInfo getLocalPeerInfo() {
       return new PeerInfo(
           5, self.getId().toString(), new ArrayList<>(capabilities), 0, self.getId());
     }

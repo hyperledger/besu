@@ -78,7 +78,7 @@ public interface P2PNetwork extends Closeable, Runnable {
    *
    * @return the PeerInfo for this node.
    */
-  PeerInfo getSelf();
+  PeerInfo getLocalPeerInfo();
 
   /**
    * Checks if the node is listening for network connections

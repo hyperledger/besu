@@ -12,48 +12,41 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
-import static io.vertx.core.Vertx.vertx;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.awaitility.Awaitility.await;
-import static tech.pegasys.pantheon.ethereum.p2p.NetworkingTestHelper.configWithRandomPorts;
 
-import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
-import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.awaitility.core.ConditionTimeoutException;
 import org.junit.Test;
 
-public class PeerDiscoveryObserversTest extends AbstractPeerDiscoveryTest {
+public class PeerDiscoveryObserversTest {
   private static final Logger LOG = LogManager.getLogger();
   private static final int BROADCAST_TCP_PORT = 26422;
+  private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
   @Test
   public void addAndRemoveObservers() {
-    final PeerDiscoveryAgent agent = startDiscoveryAgent(Collections.emptyList());
+    final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(Collections.emptyList());
     assertThat(agent.getObserverCount()).isEqualTo(0);
 
     final long id1 = agent.observePeerBondedEvents((event) -> {});
     final long id2 = agent.observePeerBondedEvents((event) -> {});
     final long id3 = agent.observePeerBondedEvents((event) -> {});
-    final long id4 = agent.observePeerDroppedEvents((event) -> {});
-    final long id5 = agent.observePeerDroppedEvents((event) -> {});
-    final long id6 = agent.observePeerDroppedEvents((event) -> {});
+    final long id4 = agent.observePeerBondedEvents((event) -> {});
+    final long id5 = agent.observePeerBondedEvents((event) -> {});
+    final long id6 = agent.observePeerBondedEvents((event) -> {});
     assertThat(agent.getObserverCount()).isEqualTo(6);
 
     agent.removePeerBondedObserver(id1);
@@ -61,25 +54,25 @@ public class PeerDiscoveryObserversTest extends AbstractPeerDiscoveryTest {
     assertThat(agent.getObserverCount()).isEqualTo(4);
 
     agent.removePeerBondedObserver(id3);
-    agent.removePeerDroppedObserver(id4);
+    agent.removePeerBondedObserver(id4);
     assertThat(agent.getObserverCount()).isEqualTo(2);
 
-    agent.removePeerDroppedObserver(id5);
-    agent.removePeerDroppedObserver(id6);
+    agent.removePeerBondedObserver(id5);
+    agent.removePeerBondedObserver(id6);
     assertThat(agent.getObserverCount()).isEqualTo(0);
 
     final long id7 = agent.observePeerBondedEvents((event) -> {});
-    final long id8 = agent.observePeerDroppedEvents((event) -> {});
+    final long id8 = agent.observePeerBondedEvents((event) -> {});
     assertThat(agent.getObserverCount()).isEqualTo(2);
 
     agent.removePeerBondedObserver(id7);
-    agent.removePeerDroppedObserver(id8);
+    agent.removePeerBondedObserver(id8);
     assertThat(agent.getObserverCount()).isEqualTo(0);
   }
 
   @Test
   public void removeInexistingObserver() {
-    final PeerDiscoveryAgent agent = startDiscoveryAgent(Collections.emptyList());
+    final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(Collections.emptyList());
     assertThat(agent.getObserverCount()).isEqualTo(0);
 
     agent.observePeerBondedEvents((event) -> {});
@@ -89,14 +82,21 @@ public class PeerDiscoveryObserversTest extends AbstractPeerDiscoveryTest {
   @Test
   public void peerBondedObserverTriggered() throws TimeoutException, InterruptedException {
     // Create 3 discovery agents with no bootstrap peers.
-    final List<PeerDiscoveryAgent> others1 = startDiscoveryAgents(3, Collections.emptyList());
+    final List<MockPeerDiscoveryAgent> others1 =
+        helper.startDiscoveryAgents(3, Collections.emptyList());
     final List<DiscoveryPeer> peers1 =
-        others1.stream().map(PeerDiscoveryAgent::getAdvertisedPeer).collect(Collectors.toList());
+        others1
+            .stream()
+            .map(MockPeerDiscoveryAgent::getAdvertisedPeer)
+            .collect(Collectors.toList());
 
     // Create two discovery agents pointing to the above as bootstrap peers.
-    final List<PeerDiscoveryAgent> others2 = startDiscoveryAgents(2, peers1);
+    final List<MockPeerDiscoveryAgent> others2 = helper.startDiscoveryAgents(2, peers1);
     final List<DiscoveryPeer> peers2 =
-        others2.stream().map(PeerDiscoveryAgent::getAdvertisedPeer).collect(Collectors.toList());
+        others2
+            .stream()
+            .map(MockPeerDiscoveryAgent::getAdvertisedPeer)
+            .collect(Collectors.toList());
 
     // A list of all peers.
     final List<DiscoveryPeer> allPeers = new ArrayList<>(peers1);
@@ -104,42 +104,26 @@ public class PeerDiscoveryObserversTest extends AbstractPeerDiscoveryTest {
 
     // Create a discovery agent (which we'll assert on), using the above two peers as bootstrap
     // peers.
-    final PeerDiscoveryAgent agent =
-        new PeerDiscoveryAgent(
-            vertx(),
-            SECP256K1.KeyPair.generate(),
-            configWithRandomPorts().getDiscovery().setBootstrapPeers(peers2),
-            () -> true,
-            new PeerBlacklist(),
-            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
-
+    final MockPeerDiscoveryAgent agent = helper.createDiscoveryAgent(peers2);
     // A queue for storing peer bonded events.
-    final ArrayBlockingQueue<PeerBondedEvent> queue = new ArrayBlockingQueue<>(10);
-    agent.observePeerBondedEvents(queue::add);
-    assertThatCode(() -> agent.start(BROADCAST_TCP_PORT).get(5, TimeUnit.SECONDS))
-        .doesNotThrowAnyException();
+    final List<PeerBondedEvent> events = new ArrayList<>(10);
+    agent.observePeerBondedEvents(events::add);
+    agent.start();
 
-    // Wait until we've received 5 events.
-    try {
-      await()
-          .atMost(5, TimeUnit.SECONDS)
-          .untilAsserted(() -> assertThat(queue.size()).isEqualTo(5));
-    } catch (final ConditionTimeoutException | AssertionError e) {
-      final List<String> events = new ArrayList<>();
-      queue.forEach(evt -> events.add(evt.toString()));
-      LOG.error("Queue:\n" + String.join("\n", events), e);
-      throw e;
-    }
-    // Wait one second and check we've received no more events.
-    Thread.sleep(1000);
-    assertThat(queue.size()).isEqualTo(5);
+    final HashSet<BytesValue> seenPeers = new HashSet<>();
+    List<DiscoveryPeer> discoveredPeers =
+        events
+            .stream()
+            .map(PeerDiscoveryEvent::getPeer)
+            // We emit some duplicate events when the tcp port differs (in terms of presence) for a
+            // peer,
+            // filter peers by id to remove duplicates (See: DefaultPeer::equals).
+            // TODO: Should we evaluate peer equality based on id??
+            .filter((p) -> seenPeers.add(p.getId()))
+            .collect(Collectors.toList());
+    assertThat(discoveredPeers.size()).isEqualTo(allPeers.size());
 
-    // Extract all events and perform asserts on them.
-    final List<PeerBondedEvent> events = new ArrayList<>(5);
-    queue.drainTo(events, 5);
-
-    assertThat(events)
-        .extracting(PeerDiscoveryEvent::getPeer)
+    assertThat(discoveredPeers)
         .extracting(DiscoveryPeer::getId)
         .containsExactlyInAnyOrderElementsOf(
             allPeers.stream().map(DiscoveryPeer::getId).collect(Collectors.toList()));
@@ -149,38 +133,33 @@ public class PeerDiscoveryObserversTest extends AbstractPeerDiscoveryTest {
   @Test
   public void multiplePeerBondedObserversTriggered() {
     // Create 3 discovery agents with no bootstrap peers.
-    final List<PeerDiscoveryAgent> others = startDiscoveryAgents(3, Collections.emptyList());
-    final Peer peer = others.stream().map(PeerDiscoveryAgent::getAdvertisedPeer).findFirst().get();
+    final List<MockPeerDiscoveryAgent> others =
+        helper.startDiscoveryAgents(3, Collections.emptyList());
+    final DiscoveryPeer peer = others.get(0).getAdvertisedPeer();
 
     // Create a discovery agent (which we'll assert on), using the above two peers as bootstrap
     // peers.
-    final PeerDiscoveryAgent agent =
-        new PeerDiscoveryAgent(
-            vertx(),
-            SECP256K1.KeyPair.generate(),
-            configWithRandomPorts()
-                .getDiscovery()
-                .setBootstrapPeers(Collections.singletonList(peer)),
-            () -> true,
-            new PeerBlacklist(),
-            new NodeWhitelistController(PermissioningConfiguration.createDefault()));
+    final MockPeerDiscoveryAgent agent = helper.createDiscoveryAgent(peer);
 
     // Create 5 queues and subscribe them to peer bonded events.
-    final List<ArrayBlockingQueue<PeerBondedEvent>> queues =
-        Stream.generate(() -> new ArrayBlockingQueue<PeerBondedEvent>(10))
+    final List<List<PeerBondedEvent>> queues =
+        Stream.generate(() -> new ArrayList<PeerBondedEvent>(10))
             .limit(5)
             .collect(Collectors.toList());
     queues.forEach(q -> agent.observePeerBondedEvents(q::add));
 
     // Start the agent and wait until each queue receives one event.
-    agent.start(BROADCAST_TCP_PORT);
-    await()
-        .atMost(5, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(queues).allMatch(q -> q.size() == 1));
+    agent.start();
+    for (List<PeerBondedEvent> eventQueue : queues) {
+      assertThat(eventQueue.size()).isEqualTo(1);
+    }
 
     // All events are for the same peer.
     final List<PeerBondedEvent> events =
-        queues.stream().map(ArrayBlockingQueue::poll).collect(Collectors.toList());
+        Stream.of(queues)
+            .flatMap(Collection::stream)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toList());
     assertThat(events).extracting(PeerDiscoveryEvent::getPeer).allMatch(p -> p.equals(peer));
 
     // We can event check that the event instance is the same across all queues.
