@@ -372,10 +372,10 @@ distZip {
 }
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
-  additionalSourceDirs = files(subprojects.sourceSets.main.allSource.srcDirs)
-  sourceDirectories = files(subprojects.sourceSets.main.allSource.srcDirs)
-  classDirectories = files(subprojects.sourceSets.main.output)
-  executionData = files(subprojects.jacocoTestReport.executionData)  //how to exclude some package/classes com.test.**
+  additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
+  sourceDirectories.from files(subprojects.sourceSets.main.allSource.srcDirs)
+  classDirectories.from files(subprojects.sourceSets.main.output)
+  executionData.from files(subprojects.jacocoTestReport.executionData) //how to exclude some package/classes com.test.**
   reports {
     xml.enabled true
     csv.enabled true
