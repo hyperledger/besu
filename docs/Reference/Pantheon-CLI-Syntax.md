@@ -11,6 +11,9 @@ pantheon [OPTIONS] [COMMAND]
 
 Runs the Pantheon Ethereum full node client.
 
+!!!tip
+    Use a [configuration file](../Configuring-Pantheon/Using-Configuration-File.md) to save the command line options in a file.
+
 ## Options
 
 ### accounts-whitelist
@@ -34,8 +37,12 @@ Comma separated account public keys for permissioned transactions. You can speci
 --banned-nodeids=<bannedNodeId>[,<bannedNodeId>...]...
 ```
 
-```bash tab="Example"
---banned-nodeids=enode://c35c3...d615f@1.2.3.4:30303,enode://f42c13...fc456@1.2.3.5:30303
+```bash tab="Example Command Line"
+--banned-nodeids=0xc35c3...d615f,0xf42c13...fc456
+```
+
+```bash tab="Example Configuration File"
+banned-nodeids=["0xc35c3...d615f","0xf42c13...fc456"]
 ```
 
 List of node IDs with which this node will not peer. The node ID is the public key of the node. You can specify the banned node IDs with or without the `0x` prefix.
@@ -49,15 +56,18 @@ List of node IDs with which this node will not peer. The node ID is the public k
 --bootnodes=<enode://id@host:port>[,<enode://id@host:port>...]...
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 --bootnodes=enode://c35c3...d615f@1.2.3.4:30303,enode://f42c13...fc456@1.2.3.5:30303
+```
+
+```bash tab="Example Configuration File"
+bootnodes=["enode://c35c3...d615f@1.2.3.4:30303","enode://f42c13...fc456@1.2.3.5:30303"]
 ```
   
 List of comma-separated enode URLs for P2P discovery bootstrap. 
   
-When connecting to mainnet and Rinkeby, the default is a predefined list of enode URLs. 
-Specify bootnodes when [connecting to Ropsten](../Getting-Started/Starting-Pantheon.md#run-a-node-on-ropsten-testnet) or
-a [private network](../Configuring-Pantheon/Testing-Developing-Nodes.md#bootnodes).
+When connecting to mainnet or public testnets, the default is a predefined list of enode URLs. 
+Specify bootnodes when connecting to a [private network](../Configuring-Pantheon/Testing-Developing-Nodes.md#bootnodes).
 
 ### config
 
@@ -65,39 +75,15 @@ a [private network](../Configuring-Pantheon/Testing-Developing-Nodes.md#bootnode
 --config=<PATH>
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 --config=/home/me/me_node/config.toml
 ```
 
-The path to the TOML configuration file.
+The path to the [TOML configuration file](../Configuring-Pantheon/Using-Configuration-File.md).
 The default is `none`.
-The TOML file is composed of key/value pairs.
-Each key is the same as the corresponding CLI option name without the leading dashes (`--`).
-The config option is not used in the config file.
-Values must be treated according to TOML specifications for string, numbers, arrays and Booleans.
-
-!!!example "Example TOML configuration file"
-    ```toml
-    # Valid TOML config file
-    datadir="~/pantheondata" # Path
-    
-    # Network
-    bootnodes=["enode://001@123:4567", "enode://002@123:4567", "enode://003@123:4567"]
-    p2p-listen="1.2.3.4:1234" # IP:port
-    max-peers=42
-    rpc-listen="5.6.7.8:5678" # IP:port
-    ws-listen="9.10.11.12:9101" # IP:port
-    
-    # Chain
-    genesis="~/genesis.json" # Path to the custom genesis file
-    
-    # Mining
-    miner-enabled=true
-    miner-coinbase="0x0000000000000000000000000000000000000002"
-    ```
 
 !!!note
-    This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#custom-configuration-file).
+    This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#custom-configuration-file) or in a [configuration file](../Configuring-Pantheon/Using-Configuration-File.md).
     
 ### datadir
 
@@ -105,11 +91,15 @@ Values must be treated according to TOML specifications for string, numbers, arr
 --datadir=<PATH>
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 --datadir=/home/me/me_node
 ```
 
-The path to the Pantheon data directory. The default location is the `/build/distributions/pantheon-<version>` directory in the Pantheon installation directory.
+```bash tab="Example Configuration File"
+datadir="/home/me/me_node"
+```
+
+The path to the Pantheon data directory. The default is the `/build/distributions/pantheon-<version>` directory in the Pantheon installation directory.
 
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#persisting-data). 
@@ -119,6 +109,10 @@ The path to the Pantheon data directory. The default location is the `/build/dis
 
 ```bash tab="Syntax"
 --dev-mode
+```
+
+```bash tab="Example Configuration File"
+dev-mode=true
 ```
   
 Set this option to `true` to run in development mode. 
@@ -138,8 +132,12 @@ Default is `false`.
 --genesis=<PATH>
 ```
 
-```bash tab="Example"
---genesis=/home/me/me_node/genesis_calling_all_stations.json
+```bash tab="Example Command Line"
+--genesis=/home/me/me_node/customGenesisFile.json
+```
+
+```bash tab="Example Configuration File"
+genesis="/home/me/me_node/customGenesisFile.json"
 ```
 
 The path to the genesis file. The default is the embedded genesis file for the Ethereum mainnet. 
@@ -159,6 +157,10 @@ When using this option, it is recommended to also set the [`--network-id`](#netw
 --goerli
 ```
 
+```bash tab="Example Configuration File"
+goerli=true
+```
+
 Uses the Goerli test network. Default is false.
 
 !!!note
@@ -171,8 +173,12 @@ Uses the Goerli test network. Default is false.
 --host-whitelist=<hostname>[,<hostname>...]... or * or all
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 --host-whitelist=medomain.com,meotherdomain.com
+```
+
+```bash tab="Example Configuration File"
+host-whitelist=["medomain.com", "meotherdomain.com"]
 ```
 
 Comma-separated list of hostnames to allow access to the HTTP JSON-RPC API. Default is `localhost`. 
@@ -189,8 +195,12 @@ Comma-separated list of hostnames to allow access to the HTTP JSON-RPC API. Defa
 --max-peers=<INTEGER>
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 --max-peers=42
+```
+
+```bash tab="Example Configuration File"
+max-peers=42
 ```
 
 Specifies the maximum P2P peer connections that can be established.
@@ -202,8 +212,12 @@ The default is 25.
 --max-trailing-peers=<INTEGER>
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 --max-trailing-peers=2
+```
+
+```bash tab="Example Configuration File"
+max-trailing-peers=2
 ```
 
 Specifies the maximum P2P peer connections for peers that are trailing behind the local chain head. 
@@ -215,8 +229,12 @@ The default is unlimited but the number of trailing peers cannot exceed the valu
 --miner-coinbase=<Ethereum account address>
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 --miner-coinbase=fe3b557e8fb62b89f4916b721be55ceb828dbd73
+```
+
+```bash tab="Example Configuration File"
+--miner-coinbase="0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"
 ```
 
 Account to which mining rewards are paid.
@@ -232,7 +250,11 @@ option or the [`miner_start`](JSON-RPC-API-Methods.md#miner_start) JSON RPC-API 
 --miner-enabled
 ```
 
-Enables mining when the node is starts.
+```bash tab="Example Configuration File"
+miner-enabled=true
+```
+
+Enables mining when the node is started.
 Default is `false`.
   
 ### miner-extraData
@@ -241,8 +263,12 @@ Default is `false`.
 --miner-extraData=<Extra data>
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 --miner-extraData=0x444F4E27542050414E4943202120484F444C2C20484F444C2C20484F444C2021
+```
+
+```bash tab="Example Configuration File"
+miner-extraData="0x444F4E27542050414E4943202120484F444C2C20484F444C2C20484F444C2021"
 ```
 
 A hex string representing the 32 bytes to be included in the extra data field of a mined block.
@@ -254,8 +280,12 @@ The default is 0x.
 --miner-minTransactionGasPriceWei=<minTransactionGasPrice>
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 --miner-minTransactionGasPriceWei=1337
+```
+
+```bash tab="Example Configuration File"
+miner-minTransactionGasPriceWei="1337"
 ```
 
 The minimum price that a transaction offers for it to be included in a mined block.
@@ -267,8 +297,12 @@ The default is 1000.
 --network-id=<INTEGER>
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 --network-id=8675309
+```
+
+```bash tab="Example Configuration File"
+network-id="8675309"
 ```
 
 P2P network identifier.
@@ -280,6 +314,10 @@ The default is set to mainnet with value `1`.
 --no-discovery
 ```
 
+```bash tab="Example Configuration File"
+no-discovery=true
+```
+
 Disables P2P peer discovery.
 The default is `false`.
 
@@ -289,8 +327,12 @@ The default is `false`.
 --node-private-key=<PATH>
 ```
 
-```bash tab="Example"
---node-private-key=/home/me/me_node/my_precious
+```bash tab="Example Command Line"
+--node-private-key=/home/me/me_node/myPrivateKey
+```
+
+```bash tab="Example Configuration File"
+node-private-key="/home/me/me_node/myPrivateKey"
 ```
 
 `<PATH>` is the path of the private key file of the node.
@@ -308,11 +350,15 @@ otherwise, the existing key file specifies the node private key.
 ### nodes-whitelist
 
 ```bash tab="Syntax"
---nodes-whitelist=[=<enode://id@host:port>[,<enode://id@host:port>...]...]
+--nodes-whitelist[=<enode://id@host:port>[,<enode://id@host:port>...]...]
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 --nodes-whitelist=enode://c35c3...d615f@3.14.15.92:30303,enode://f42c13...fc456@65.35.89.79:30303
+```
+
+```bash tab="Example Configuration File"
+nodes-whitelist=["enode://c35c3...d615f@3.14.15.92:30303","enode://f42c13...fc456@65.35.89.79:30303"]
 ```
 
 Comma-separated enode URLs for permissioned networks.
@@ -331,6 +377,10 @@ Not intended for use with mainnet or public testnets.
 --ottoman
 ```
 
+```bash tab="Example Configuration File"
+ottoman=true
+```
+
 Synchronize against the Ottoman test network. This is only useful if you are using an IBFT genesis file.  The default is `false`.
 
 !!!note
@@ -342,9 +392,13 @@ Synchronize against the Ottoman test network. This is only useful if you are usi
 --p2p-listen=<HOST:PORT>
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 # to listen on all interfaces on port 1789
 --p2p-listen=0.0.0.0:1789
+```
+
+```bash tab="Example Configuration File"
+p2p-listen="0.0.0.0:1789"
 ```
 
 Specifies the host and port on which P2P peer discovery listens.
@@ -359,6 +413,10 @@ The default is 127.0.0.1:30303.
 --rinkeby
 ```
 
+```bash tab="Example Configuration File"
+rinkeby=true
+```
+
 Uses the Rinkeby test network.
 Default is `false`.
   
@@ -367,6 +425,10 @@ Default is `false`.
 
 ```bash tab="Syntax"
 --ropsten
+```
+
+```bash tab="Example Configuration File"
+ropsten=true
 ```
 
 Uses the Ropsten test network.
@@ -381,6 +443,10 @@ Default is `false`.
 --rpc-enabled
 ```
 
+```bash tab="Example Configuration File"
+rpc-enabled=true
+```
+
 Set to `true` to enable the JSON-RPC service (RPC over HTTP).
 The default is `false`.
 
@@ -390,9 +456,13 @@ The default is `false`.
 --rpc-listen=<HOST:PORT>
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 # to listen on all interfaces on port 3435
---rpc-listen=0.0.0.0:3435.
+--rpc-listen=0.0.0.0:3435
+```
+
+```bash tab="Example Configuration File"
+rpc-listen="0.0.0.0:3435"
 ```
 
 Specifies the host and port on which JSON-RPC listens.
@@ -407,8 +477,12 @@ The default is 127.0.0.1:8545.
 --rpc-api=<api name>[,<api name>...]...
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 --rpc-api=ETH,NET,WEB3
+```
+
+```bash tab="Example Configuration File"
+rpc-api=["ETH","NET","WEB3"]
 ```
 
 Comma-separated APIs to enable on the JSON-RPC channel.
@@ -422,25 +496,23 @@ The default is: `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`.
 ### rpc-cors-origins
 
 ```bash tab="Syntax"
---rpc-cors-origins=<rpcCorsAllowedOrigins>
+--rpc-cors-origins=<rpcCorsAllowedOrigins> or all
 ```
 
-```bash tab="Single domain xample"
-# You can whitelist one single domains.
-
---rpc-cors-origins="http://medomain.com"
-```
-
-```bash tab="Multiple domains example"
+```bash tab="Example Command Line"
 # You can whitelist one or more domains with a comma-separated list.
 
 --rpc-cors-origins="http://medomain.com","https://meotherdomain.com"
 ```
 
+```bash tab="Example Configuration File"
+rpc-cors-origins=["http://medomain.com","https://meotherdomain.com"]
+```
+
 ```bash tab="Remix IDE domain example"
 # The following allows Remix to interact with your Pantheon node without using MetaMask.
 
---rpc-cors-origins "http://remix.ethereum.org"
+--rpc-cors-origins="http://remix.ethereum.org"
 ```
 
 Specifies domain URLs for CORS validation.
@@ -466,6 +538,10 @@ If you don't whitelist any domains, you won't be able to use webapps to interact
 --ws-enabled
 ```
 
+```bash tab="Example Configuration File"
+ws-enabled=true
+```
+
 Set to `true` to enable the WS-RPC (WebSockets) service.
 The default is `false`.
 
@@ -475,8 +551,12 @@ The default is `false`.
 --ws-api=<api name>[,<api name>...]...
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 --ws-api=ETH,NET,WEB3
+```
+
+```bash tab="Example Configuration File"
+ws-api=["ETH","NET","WEB3"]
 ```
 
 Comma-separated APIs to enable on Websockets channel.
@@ -493,9 +573,13 @@ The default is: `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`.
 --ws-listen=<HOST:PORT>
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 # to listen on all interfaces on port 6174
 --ws-listen=0.0.0.0:6174
+```
+
+```bash tab="Example Configuration File"
+ws-listen="0.0.0.0:6174"
 ```
 
 Host and port for WS-RPC (Websocket) to listen on.
@@ -532,8 +616,12 @@ Show the help message and exit.
 -l, --logging=<LEVEL>
 ```
 
-```bash tab="Example"
+```bash tab="Example Command Line"
 --logging=DEBUG
+```
+
+```bash tab="Example Configration File"
+logging="DEBUG"
 ```
 
 Sets the logging verbosity.

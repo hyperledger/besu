@@ -62,18 +62,25 @@ call [JSON-RPC API methods](../Reference/JSON-RPC-API-Methods.md) to confirm the
         }
         ```
 
-## Run a Node on Ethereum Mainnet 
+## Run a Node for Testing 
 
-To run a node on the Ethereum mainnet: 
+To run a node that mines blocks at a rate suitable for testing purposes: 
 
 ```bash
-$ bin/pantheon
+pantheon --dev-mode --network-id="2018" --bootnodes= --miner-enabled --miner-coinbase=0xfe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-cors-origins="all" --ws-enabled --rpc-enabled --datadir=/tmp/tmpDatdir
 ```
 
-To run a node on mainnet with the HTTP JSON-RPC service enabled: 
-
-```bash
-$ bin/pantheon --rpc-enabled
+Alternatively, use the following [configuration file](../Configuring-Pantheon/) to start a node with the same options as the above command line: 
+```toml
+dev-mode=true
+network-id="2018"
+bootnodes=[]
+miner-enabled=true
+miner-coinbase="0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"
+rpc-cors-origins="all"
+ws-enabled=true
+rpc-enabled=true
+datadir="/tmp/tmpDatadir"
 ```
 
 ## Run a Node on Ropsten Testnet 
@@ -85,13 +92,13 @@ $ bin/pantheon --rpc-enabled
 To run a node on Ropsten: 
 
 ```bash
-$ bin/pantheon --network-id=3 --genesis=<path>/pantheon/ethereum/core/src/main/resources/ropsten.json --bootnodes=enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303
+pantheon --network-id=3 --genesis=<path>/pantheon/ethereum/core/src/main/resources/ropsten.json --bootnodes=enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303
 ```
 
 To run a node on Ropsten with the HTTP JSON-RPC service enabled and allow Remix to access the node: 
 
 ```bash
-$ bin/pantheon --rpc-enabled --rpc-cors-origins "http://remix.ethereum.org" --network-id=3 --genesis=<path>/pantheon/ethereum/core/src/main/resources/ropsten.json --bootnodes=enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303
+pantheon --rpc-enabled --rpc-cors-origins "http://remix.ethereum.org" --network-id=3 --genesis=<path>/pantheon/ethereum/core/src/main/resources/ropsten.json --bootnodes=enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303,enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303
 ```
 
 Where `<path>` is the path to the `/pantheon` directory. 
@@ -101,7 +108,7 @@ Where `<path>` is the path to the `/pantheon` directory.
 To run a node on Rinkeby specifying a data directory: 
 
 ```bash
-$ bin/pantheon --rinkeby --datadir=<path>/rinkebyDataDir
+pantheon --rinkeby --datadir=<path>/rinkebyDataDir
 ```
 Where `<path>` and `<rinkebyDataDir>` are the path and directory where the Rinkeby chain data is to be saved.
 
@@ -110,7 +117,7 @@ Where `<path>` and `<rinkebyDataDir>` are the path and directory where the Rinke
 To run a node on [Goerli](https://github.com/goerli/testnet) specifying a data directory: 
 
 ```bash
-$ bin/pantheon --goerli --datadir=<path>/<goerliDataDir>
+pantheon --goerli --datadir=<path>/<goerliDataDir>
 ```
 
 Where `<path>` and `<goerliDataDir>` are the path and directory where the Goerli chain data is to be saved. 
@@ -118,10 +125,16 @@ Where `<path>` and `<goerliDataDir>` are the path and directory where the Goerli
 !!!note
     This option is only available from v0.8.3.
 
-## Run a Node for Testing 
+## Run a Node on Ethereum Mainnet 
 
-To run a node that mines blocks at a rate suitable for testing purposes: 
+To run a node on the Ethereum mainnet: 
 
 ```bash
-$ bin/pantheon --dev-mode --network-id="2018" --bootnodes= --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-cors-origins "all" --ws-enabled --rpc-enabled
+pantheon
+```
+
+To run a node on mainnet with the HTTP JSON-RPC service enabled: 
+
+```bash
+pantheon --rpc-enabled
 ```
