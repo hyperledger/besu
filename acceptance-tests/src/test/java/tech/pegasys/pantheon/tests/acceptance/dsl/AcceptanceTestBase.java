@@ -14,9 +14,10 @@ package tech.pegasys.pantheon.tests.acceptance.dsl;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Accounts;
 import tech.pegasys.pantheon.tests.acceptance.dsl.blockchain.Blockchain;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.CliqueConditions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.contract.ContractVerifier;
+import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Clique;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eth;
+import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Ibft;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Net;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Perm;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Web3;
@@ -36,9 +37,10 @@ public class AcceptanceTestBase {
   protected final Accounts accounts;
   protected final Blockchain blockchain;
   protected final Cluster cluster;
-  protected final CliqueConditions clique;
   protected final CliqueTransactions cliqueTransactions;
   protected final Transactions transactions;
+  protected final Clique clique;
+  protected final Ibft ibft;
   protected final Web3 web3;
   protected final Eth eth;
   protected final Net net;
@@ -53,7 +55,8 @@ public class AcceptanceTestBase {
     blockchain = new Blockchain(ethTransactions);
     eth = new Eth(ethTransactions);
     cliqueTransactions = new CliqueTransactions();
-    clique = new CliqueConditions(ethTransactions, cliqueTransactions);
+    clique = new Clique(ethTransactions, cliqueTransactions);
+    ibft = new Ibft();
     net = new Net(new NetTransactions());
     cluster = new Cluster(net);
     transactions = new Transactions(accounts);
