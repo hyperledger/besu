@@ -11,8 +11,6 @@
  * specific language governing permissions and limitations under the License.
  */
 
-enableFeaturePreview('STABLE_PUBLISHING')
-
 rootProject.name='pantheon'
 include 'acceptance-tests'
 include 'consensus'
