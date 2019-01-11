@@ -504,6 +504,20 @@ The default is 127.0.0.1:8546.
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
 
+### ws-refresh-delay
+
+```bash tab="Syntax"
+--ws-refresh-delay=<refresh delay>
+```
+
+```bash tab="Example"
+--ws-refresh-delay="10000"
+```
+
+Refresh delay for Websocket synchronizing subscription in milliseconds. 
+The default is 5000. 
+
+
 ### help
 
 ```bash tab="Syntax"
