@@ -232,18 +232,18 @@ meaning that the miner address successfully received the mining reward.
 _Also you can see this information in the block explorer. It does exactly the same thing as we 
 did manually, connecting to the rpc node using http JSON-RPC, but displays information on a web page._
 
-### Additional Requests
+### Creating a Transaction Using MetaMask
 
-Now that you are familiar with basic RPC requests you can run JSON-RPC commands to send transactions. 
-In order to send transactions, you will first need to create an account or use one of the 3 accounts 
-created during the genesis of this test network, see .
+Now we'll use [MetaMask](https://metamask.io/) to send transactions. 
+
+To send transactions, you first need to create an account or use one of the 3 accounts below created during
+the genesis of this test network. 
 
 {!global/test_accounts.md!}
 
 !!!note
     Pantheon does not provide an accounts management system, so if you want to create your own account, you will have to use a third party tool like Metamask.
 
-### Creating a Transaction Using MetaMask
 
 After you sign in to MetaMask, connect to the private network RPC endpoint by:
 
