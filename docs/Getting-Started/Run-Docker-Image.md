@@ -7,6 +7,29 @@ A Docker image is provided to run a Pantheon node in a Docker container.
 
 Use this Docker image to run a single Pantheon node without installing Pantheon. 
 
+!!!caution
+    If you have been running a node using the v0.8.3 Docker image, the node was not saving data to the 
+    specified [data directory](#data-directory), or referring to the custom [configuration file](#custom-configuration-file)
+    or [genesis file](#custom-genesis-file). 
+   
+    To recover the node key and data directory from the Docker container:
+    
+    `docker cp <container>:/opt/pantheon/key <destination_file>`
+    
+    `docker cp <container>:/opt/pantheon/database <destination_directory>` 
+   
+    Where `container` is the name or ID of the Docker container containing the Pantheon node. 
+   
+    The container can be running or stopped when you copy the key and data directory. If your node was 
+    fully synchronized to MainNet, the data directory will be ~2TB.  
+   
+    When restarting your node with the v0.8.4 Docker image:
+
+    * Save the node key in the [`key` file](../Configuring-Pantheon/Node-Keys.md#node-private-key) in the data 
+    directory or specify the location using the [`--node-private-key` option](../Configuring-Pantheon/Node-Keys.md#specifying-a-custom-node-private-key-file).  
+    
+    * Specify the `<destination_directory` as a [volume for the data directory](#data-directory). 
+
 ## Prerequisites
 
 To run Pantheon from the Docker image, you must have [Docker](https://docs.docker.com/install/) installed.  
@@ -31,11 +54,9 @@ docker run pegasyseng/pantheon:latest
     
     All other [Pantheon command line options](/Reference/Pantheon-CLI-Syntax) work in the same way as when Pantheon is installed locally.
 
-### Persisting Data 
+### Data Directory 
 
-Specify a Docker volume to persist data between stopping and restarting the container. This is the equivalent of specifying the [`--datadir`](../Reference/Pantheon-CLI-Syntax.md#datadir) option. 
-
-If a Docker volume is not specified, all data saved to the data directory is removed each time the container is stopped. 
+Specify a Docker volume for the data directory. This is the equivalent of specifying the [`--datadir`](../Reference/Pantheon-CLI-Syntax.md#datadir) option. 
 
 To run Pantheon specifying a volume for the data directory: 
 
