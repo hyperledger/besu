@@ -37,6 +37,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import java.time.Clock;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -125,7 +126,7 @@ public class IbftBlockHeightManager {
 
   public void roundExpired(final RoundExpiry expire) {
     if (!expire.getView().equals(currentRound.getRoundIdentifier())) {
-      LOG.debug("Ignoring Round timer expired which does not match current round.");
+      LOG.info("Ignoring Round timer expired which does not match current round.");
       return;
     }
 
@@ -200,7 +201,7 @@ public class IbftBlockHeightManager {
       }
 
       if (finalState.isLocalNodeProposerForRound(targetRound)) {
-        currentRound.startRoundWith(result.get(), clock.millis() / 1000);
+        currentRound.startRoundWith(result.get(), TimeUnit.MILLISECONDS.toSeconds(clock.millis()));
       }
     }
   }
