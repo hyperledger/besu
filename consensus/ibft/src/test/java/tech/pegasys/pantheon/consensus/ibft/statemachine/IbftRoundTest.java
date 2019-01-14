@@ -68,14 +68,14 @@ public class IbftRoundTest {
   private final KeyPair localNodeKeys = KeyPair.generate();
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 1);
   private final MessageFactory messageFactory = new MessageFactory(localNodeKeys);
+  private final Subscribers<MinedBlockObserver> subscribers = new Subscribers<>();
   private ProtocolContext<IbftContext> protocolContext;
 
   @Mock private MutableBlockchain blockChain;
   @Mock private WorldStateArchive worldStateArchive;
   @Mock private BlockImporter<IbftContext> blockImporter;
-  @Mock private Subscribers<MinedBlockObserver> subscribers;
   @Mock private IbftMessageTransmitter transmitter;
-
+  @Mock private MinedBlockObserver minedBlockObserver;
   @Mock private IbftBlockCreator blockCreator;
   @Mock private MessageValidator messageValidator;
 
@@ -117,6 +117,8 @@ public class IbftRoundTest {
     when(blockCreator.createBlock(anyLong())).thenReturn(proposedBlock);
 
     when(blockImporter.importBlock(any(), any(), any())).thenReturn(true);
+
+    subscribers.subscribe(minedBlockObserver);
   }
 
   @Test
@@ -354,5 +356,22 @@ public class IbftRoundTest {
     round.handlePrepareMessage(
         messageFactory.createSignedPreparePayload(roundIdentifier, proposedBlock.getHash()));
     assertThat(roundState.isPrepared()).isTrue();
+  }
+
+  @Test
+  public void creatingNewBlockNotifiesBlockMiningObservers() {
+    final RoundState roundState = new RoundState(roundIdentifier, 1, messageValidator);
+    final IbftRound round =
+        new IbftRound(
+            roundState,
+            blockCreator,
+            protocolContext,
+            blockImporter,
+            subscribers,
+            localNodeKeys,
+            messageFactory,
+            transmitter);
+    round.createAndSendProposalMessage(15);
+    verify(minedBlockObserver).blockMined(any());
   }
 }
