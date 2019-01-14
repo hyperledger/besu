@@ -1,0 +1,47 @@
+properties([
+        parameters([
+                string(name: 'BENCHMARKS_FORK', defaultValue: 'PegaSysEng', description: 'The user or org from which to checkout the benchmarks repo', trim: true),
+                string(name: 'BENCHMARKS_BRANCH', defaultValue: 'master', description: 'The benchmarks branch to be checked out', trim: true),
+                string(name: 'NETWORK', defaultValue: 'mainnet', description: 'The name of the network being tested', trim: true),
+                string(name: 'DATASET', defaultValue: 'from-0', description: 'The name of the directory containing the benchmark data', trim: true),
+                string(name: 'IMPORT_FILE', defaultValue: '0-999.blocks', description: 'The name of the file to import', trim: true)
+        ])
+])
+
+pipeline {
+    agent {
+        docker {
+            image "pantheon-benchmarks/${params.NETWORK}-${params.DATASET}-pantheon:latest"
+            label 'jenkins-benchmark-1'
+            args '-v /benchmarks/block-import:/benchmarks-data'
+        }
+    }
+
+    stages {
+        stage('Pull pantheon-benchmark') {
+            steps {
+                script {
+                    checkout([$class: 'GitSCM', branches: [[name: "*/${params.BENCHMARKS_BRANCH}"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'pantheon-benchmarks']], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'f3f67c22-eead-47db-a8c1-fe32b483583a', url: "git@github.com:${params.BENCHMARKS_FORK}/pantheon-benchmark.git"]]])
+                }
+            }
+        }
+        stage('Run benchmarks jenkinsfile') {
+            steps {
+                withEnv([
+                        "DATA_DIR=/data",
+                        "BENCHMARKS_DATA=/benchmarks-data",
+                        "NETWORK=${params.NETWORK}",
+                        "DATASET=${params.DATASET}",
+                        "IMPORT_FILE=${params.IMPORT_FILE}",
+                        "PANTHEON_SRC_DIR=${WORKSPACE}"
+                ]) {
+                    dir('pantheon-benchmarks') {
+                        script {
+                            evaluate(readFile('jenkins/Jenkinsfile.pantheon-block-import'))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
