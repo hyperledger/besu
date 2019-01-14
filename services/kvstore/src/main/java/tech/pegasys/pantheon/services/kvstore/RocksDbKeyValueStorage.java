@@ -16,6 +16,7 @@ import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.util.InvalidConfigurationException;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.Closeable;
@@ -54,13 +55,24 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
   private final OperationTimer commitLatency;
   private final Counter rollbackCount;
 
-  static {
-    RocksDB.loadLibrary();
-  }
-
   public static KeyValueStorage create(
       final Path storageDirectory, final MetricsSystem metricsSystem) throws StorageException {
+    loadNativeLibrary();
     return new RocksDbKeyValueStorage(storageDirectory, metricsSystem);
+  }
+
+  private static void loadNativeLibrary() {
+    try {
+      RocksDB.loadLibrary();
+    } catch (final ExceptionInInitializerError e) {
+      if (e.getCause() instanceof UnsupportedOperationException) {
+        LOG.info("Unable to load RocksDB library", e);
+        throw new InvalidConfigurationException(
+            "Unsupported platform detected. On Windows, ensure you have 64bit Java installed.");
+      } else {
+        throw e;
+      }
+    }
   }
 
   private RocksDbKeyValueStorage(final Path storageDirectory, final MetricsSystem metricsSystem) {
