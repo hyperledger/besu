@@ -179,7 +179,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         "Comma separated enode URLs for P2P discovery bootstrap. "
             + "Default is a predefined list.",
     split = ",",
-    arity = "1..*",
+    arity = "0..*",
     converter = EnodeToURIPropertyConverter.class
   )
   private final Collection<URI> bootstrapNodes = null;
