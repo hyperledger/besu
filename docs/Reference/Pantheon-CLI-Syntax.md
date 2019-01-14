@@ -3,6 +3,11 @@ description: Pantheon commande line interface reference
 
 # Pantheon Command Line
 
+!!! important "Breaking Changes in v0.9"
+    In v0.9, changes will be made to the command line options to improve usability. These will be breaking changes; that is, 
+    in many cases the v0.8 command line options will no longer work. This reference and the rest of the documentation will be 
+    updated to reflect these changes. Any further information required about the changes will be included in the v0.9 release notes. 
+
 This reference describes the syntax of the Pantheon Command Line Interface (CLI) options and subcommands.
 
 ```bash
