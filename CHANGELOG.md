@@ -1,5 +1,110 @@
 # Changelog
 
+## Upcoming Changes in v0.9
+
+### Breaking Changes to Command Line 
+
+In v0.9, changes will be made to the command line options to improve usability. These will be breaking changes; that is, 
+in many cases the v0.8 command line options will no longer work. The 
+[Pantheon documentation](https://docs.pantheon.pegasys.tech/en/latest/Reference/Pantheon-CLI-Syntax/) will be 
+updated to reflect these changes. Any further information required about the changes will be included in the v0.9 release notes. 
+
+### Private Network Quickstart 
+
+In v0.9, the Private Network Quickstart will be moved to a separate repository and the existing Private Network 
+Quickstart removed from the Pantheon repository. The [Private Network Quickstart tutorial](https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Private-Network-Quickstart/) 
+will be updated and use the Private Network Quickstart in the separate repository.
+
+## 0.8.4
+
+### Docker Image
+
+If you have been running a node using the v0.8.3 Docker image, the node was not saving data to the 
+specified [data directory](https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Run-Docker-Image/#data-directory),
+or referring to the custom [configuration file](https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Run-Docker-Image/#custom-configuration-file)
+or [genesis file](https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Run-Docker-Image/#custom-genesis-file). 
+
+To recover the node key and data directory from the Docker container:
+`docker cp <container>:/opt/pantheon/key <destination_file>`
+`docker cp <container>:/opt/pantheon/database <destination_directory>` 
+
+Where `container` is the name or ID of the Docker container containing the Pantheon node. 
+
+The container can be running or stopped when you copy the key and data directory. If your node was 
+fully synchronized to MainNet, the data directory will be ~2TB.  
+
+When restarting your node with the v0.8.4 Docker image:
+
+* Save the node key in the [`key` file](https://docs.pantheon.pegasys.tech/en/latest/Configuring-Pantheon/Node-Keys/#node-private-key) in the data 
+    directory or specify the location using the [`--node-private-key` option](https://docs.pantheon.pegasys.tech/en/latest/Configuring-Pantheon/Node-Keys/#specifying-a-custom-node-private-key-file).  
+* Specify the `<destination_directory` as a [volume for the data directory](https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Run-Docker-Image/#data-directory). 
+
+### Bug Fixes
+- Fixing default resource locations inside docker [\#529](https://github.com/PegaSysEng/pantheon/pull/529)
+- NewRoundMessageValidator ignores Round Number when comparing blocks [\#523](https://github.com/PegaSysEng/pantheon/pull/523) 
+- Fix Array Configurable command line options [\#514](https://github.com/PegaSysEng/pantheon/pull/514) 
+
+## Additions and Improvements
+- RocksDB Metrics [\#531](https://github.com/PegaSysEng/pantheon/pull/531) 
+- Added `ibft_getValidatorsByBlockHash` JSON RPC [\#519](https://github.com/PegaSysEng/pantheon/pull/519) 
+- Expose metrics to Prometheus [\#506](https://github.com/PegaSysEng/pantheon/pull/506)
+- Added `ibft_getValidatorsByBlockNumber` [\#499](https://github.com/PegaSysEng/pantheon/pull/499) 
+- Added `Roadmap.md` file. [\#494](https://github.com/PegaSysEng/pantheon/pull/494) 
+- Added JSON RPC `eth hashrate` method. [\#488](https://github.com/PegaSysEng/pantheon/pull/488) 
+- Account whitelist API [\#487](https://github.com/PegaSysEng/pantheon/pull/487) 
+- Added nodes whitelist JSON-RPC APIs [\#476](https://github.com/PegaSysEng/pantheon/pull/476) 
+- Added account whitelisting [\#460](https://github.com/PegaSysEng/pantheon/pull/460) 
+- Added configurable refresh delay for SyncingSubscriptionService on start up [\#383](https://github.com/PegaSysEng/pantheon/pull/383) 
+- Added the Command Line Style Guide  [\#530](https://github.com/PegaSysEng/pantheon/pull/530)
+- Documentation updates include:
+  * Migrated to new [documentation site](https://docs.pantheon.pegasys.tech/en/latest/)  
+  * Added [configuration file content](https://docs.pantheon.pegasys.tech/en/latest/Configuring-Pantheon/Using-Configuration-File/)
+  * Added [tutorial to create private network](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Create-Private-Network/)
+  * Added content on [enabling non-default APIs](https://docs.pantheon.pegasys.tech/en/latest/Reference/JSON-RPC-API-Methods/)
+  
+## Technical Improvements
+
+-  Updated `--bootnodes` command option to take zero arguments [\#548](https://github.com/PegaSysEng/pantheon/pull/548) 
+- IBFT Integration Testing - Local Node is proposer [\#527](https://github.com/PegaSysEng/pantheon/pull/527) 
+- Remove vertx from discovery tests [\#539](https://github.com/PegaSysEng/pantheon/pull/539)
+- IBFT Integration testing - Round Change [\#537](https://github.com/PegaSysEng/pantheon/pull/537) 
+- NewRoundMessageValidator creates RoundChangeValidator with correct value [\#518](https://github.com/PegaSysEng/pantheon/pull/518) 
+- Remove time dependency from BlockTimer tests [\#513](https://github.com/PegaSysEng/pantheon/pull/513) 
+- Gradle 5.1 [\#512](https://github.com/PegaSysEng/pantheon/pull/512) 
+- Metrics measurement adjustment [\#511](https://github.com/PegaSysEng/pantheon/pull/511) 
+- Metrics export for import command. [\#509](https://github.com/PegaSysEng/pantheon/pull/509) 
+- IBFT Integration test framework [\#502](https://github.com/PegaSysEng/pantheon/pull/502) 
+- IBFT message gossiping [\#501](https://github.com/PegaSysEng/pantheon/pull/501) 
+- Remove non-transactional mutation from KeyValueStore [\#500](https://github.com/PegaSysEng/pantheon/pull/500) 
+- Ensured that the blockchain queries class handles optionals better. [\#486](https://github.com/PegaSysEng/pantheon/pull/486) 
+- IBFT mining acceptance test [\#483](https://github.com/PegaSysEng/pantheon/pull/483) 
+- Set base directory name to be lowercase in building.md [\#474](https://github.com/PegaSysEng/pantheon/pull/474) (Thanks to [Matthalp](https://github.com/Matthalp))
+- Moved admin\_peers to Admin API group [\#473](https://github.com/PegaSysEng/pantheon/pull/473) 
+- Nodes whitelist acceptance test [\#472](https://github.com/PegaSysEng/pantheon/pull/472) 
+- Rework RoundChangeManagerTest to not reuse validators [\#469](https://github.com/PegaSysEng/pantheon/pull/469) 
+- Ignore node files to support truffle. [\#467](https://github.com/PegaSysEng/pantheon/pull/467) 
+- IBFT pantheon controller [\#461](https://github.com/PegaSysEng/pantheon/pull/461) 
+- IBFT Round to update internal state on reception of NewRound Message [\#451](https://github.com/PegaSysEng/pantheon/pull/451) 
+- Update RoundChangeManager correctly create its message validator [\#450](https://github.com/PegaSysEng/pantheon/pull/450) 
+- Use seconds for block timer time unit [\#445](https://github.com/PegaSysEng/pantheon/pull/445) 
+- IBFT controller and future msgs handling [\#431](https://github.com/PegaSysEng/pantheon/pull/431) 
+- Allow IBFT Round to be created using PreparedCert [\#429](https://github.com/PegaSysEng/pantheon/pull/429) 
+- Added MessageValidatorFactory [\#425](https://github.com/PegaSysEng/pantheon/pull/425) 
+- Inround payload [\#423](https://github.com/PegaSysEng/pantheon/pull/423) 
+- Updated IbftConfig Fields [\#422](https://github.com/PegaSysEng/pantheon/pull/422) 
+- Repair IbftBlockCreator and add tests [\#421](https://github.com/PegaSysEng/pantheon/pull/421) 
+- Make Pantheon behave as a submodule [\#419](https://github.com/PegaSysEng/pantheon/pull/419) 
+- Ibft Height Manager [\#418](https://github.com/PegaSysEng/pantheon/pull/418) 
+- Ensure bootnodes are a subset of node whitelist [\#414](https://github.com/PegaSysEng/pantheon/pull/414) 
+- IBFT Consensus Round Classes [\#405](https://github.com/PegaSysEng/pantheon/pull/405) 
+- IBFT message payload tests [\#404](https://github.com/PegaSysEng/pantheon/pull/404) 
+- Validate enodeurl syntax from command line [\#403](https://github.com/PegaSysEng/pantheon/pull/403) 
+- Update errorprone [\#401](https://github.com/PegaSysEng/pantheon/pull/401) 
+- IBFT round change manager [\#393](https://github.com/PegaSysEng/pantheon/pull/393) 
+- IBFT RoundState [\#392](https://github.com/PegaSysEng/pantheon/pull/392) 
+- Move Block data generator test helper to test support package [\#391](https://github.com/PegaSysEng/pantheon/pull/391) 
+- IBFT message tests [\#367](https://github.com/PegaSysEng/pantheon/pull/367) 
+
 ## 0.8.3 
 
 ### Breaking Change to JSON RPC-API 
