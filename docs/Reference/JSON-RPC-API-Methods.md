@@ -1937,6 +1937,6 @@ None
     }
     ```
 
-## ibft Methods
+## IBFT 2.0 and Permissioning Methods
 
-:construction: IBFT is not currently supported. Support for IBFT is in active development. 
+IBFT 2.0 and permissioning are under development and will be available in v1.0. 
