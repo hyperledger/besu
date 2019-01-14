@@ -489,6 +489,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
+  @Ignore("NC-2015 - Temporarily enabling zero-arg --bootnodes to permit 'bootnode' configuration")
   @Test
   public void callingWithBootnodesOptionButNoValueMustDisplayErrorAndUsage() {
     parseCommand("--bootnodes");
@@ -499,11 +500,34 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void callingWithBootnodesOptionButNoValueMustPassEmptyBootnodeList() {
+    parseCommand("--bootnodes");
+
+    verify(mockRunnerBuilder).bootstrapPeers(uriListArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(uriListArgumentCaptor.getValue()).isEmpty();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Ignore(
+      "NC-2015 - Temporarily enabling zero-arg --bootnodes to permit 'bootnode' configuration, which changes the error.")
+  @Test
   public void callingWithInvalidBootnodesMustDisplayErrorAndUsage() {
     parseCommand("--bootnodes", "invalid_enode_url");
     assertThat(commandOutput.toString()).isEmpty();
     final String expectedErrorOutputStart =
         "Invalid value for option '--bootnodes' at index 0 (<enode://id@host:port>)";
+    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+  }
+
+  @Test
+  public void callingWithInvalidBootnodesAndZeroArityMustDisplayAlternateErrorAndUsage() {
+    parseCommand("--bootnodes", "invalid_enode_url");
+    assertThat(commandOutput.toString()).isEmpty();
+    final String expectedErrorOutputStart = "Unmatched argument: invalid_enode_url";
     assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
   }
 
