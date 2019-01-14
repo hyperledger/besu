@@ -39,9 +39,11 @@ import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -49,7 +51,6 @@ import java.util.stream.Collectors;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
-import io.netty.util.internal.ConcurrentSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -65,7 +66,8 @@ public class BlockPropagationManager<C> {
 
   private final AtomicBoolean started = new AtomicBoolean(false);
 
-  private final Set<Hash> requestedBlocks = new ConcurrentSet<>();
+  private final Set<Hash> requestedBlocks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<Hash> importingBlocks = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final PendingBlocks pendingBlocks;
 
   BlockPropagationManager(
@@ -202,6 +204,9 @@ public class BlockPropagationManager<C> {
         if (pendingBlocks.contains(announcedBlock.hash())) {
           continue;
         }
+        if (importingBlocks.contains(announcedBlock.hash())) {
+          continue;
+        }
         if (blockchain.contains(announcedBlock.hash())) {
           continue;
         }
@@ -247,6 +252,17 @@ public class BlockPropagationManager<C> {
       }
     }
 
+    if (!importingBlocks.add(block.getHash())) {
+      // We're already importing this block.
+      return CompletableFuture.completedFuture(block);
+    }
+
+    if (protocolContext.getBlockchain().contains(block.getHash())) {
+      // We've already imported this block.
+      importingBlocks.remove(block.getHash());
+      return CompletableFuture.completedFuture(block);
+    }
+
     // Import block
     final PersistBlockTask<C> importTask =
         PersistBlockTask.create(
@@ -256,8 +272,8 @@ public class BlockPropagationManager<C> {
         .scheduleSyncWorkerTask(importTask::run)
         .whenComplete(
             (r, t) -> {
+              importingBlocks.remove(block.getHash());
               if (t != null) {
-                // TODO do we time failures?  But we cannot drop a label in at this point.
                 LOG.warn(
                     "Failed to import announced block {} ({}).",
                     block.getHeader().getNumber(),

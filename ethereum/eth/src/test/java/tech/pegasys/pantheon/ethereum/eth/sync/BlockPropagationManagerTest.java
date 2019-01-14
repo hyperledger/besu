@@ -14,9 +14,11 @@ package tech.pegasys.pantheon.ethereum.eth.sync;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
@@ -24,8 +26,12 @@ import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator.BlockOptions;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthMessages;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUtil;
@@ -41,6 +47,8 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -529,5 +537,32 @@ public class BlockPropagationManagerTest {
         .isEqualTo(nextBlock.getHeader().getNumber());
     assertThat(peer.getEthPeer().chainState().getBestBlock().getTotalDifficulty())
         .isEqualTo(totalDifficulty);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void shouldNotImportBlocksThatAreAlreadyBeingImported() {
+    final EthScheduler ethScheduler = mock(EthScheduler.class);
+    when(ethScheduler.scheduleSyncWorkerTask(any(Supplier.class)))
+        .thenReturn(new CompletableFuture<>());
+    final EthContext ethContext =
+        new EthContext("eth", new EthPeers("eth"), new EthMessages(), ethScheduler);
+    final BlockPropagationManager<Void> blockPropagationManager =
+        new BlockPropagationManager<>(
+            syncConfig,
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            syncState,
+            pendingBlocks,
+            ethTasksTimer);
+
+    blockchainUtil.importFirstBlocks(2);
+    final Block nextBlock = blockchainUtil.getBlock(2);
+
+    blockPropagationManager.importOrSavePendingBlock(nextBlock);
+    blockPropagationManager.importOrSavePendingBlock(nextBlock);
+
+    verify(ethScheduler, times(1)).scheduleSyncWorkerTask(any(Supplier.class));
   }
 }
