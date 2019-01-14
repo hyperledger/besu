@@ -24,9 +24,9 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 public class SignedData<M extends Payload> {
-  protected final Address sender;
-  protected final Signature signature;
-  protected final M unsignedPayload;
+  private final Address sender;
+  private final Signature signature;
+  private final M unsignedPayload;
 
   public SignedData(final M unsignedPayload, final Address sender, final Signature signature) {
     this.unsignedPayload = unsignedPayload;
