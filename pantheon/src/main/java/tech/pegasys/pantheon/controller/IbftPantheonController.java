@@ -46,6 +46,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
+import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
@@ -73,6 +74,7 @@ import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.util.Subscribers;
 
 import java.io.IOException;
 import java.time.Clock;
@@ -204,6 +206,9 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
         IbftBlockHeaderValidationRulesetFactory.ibftProposedBlockValidator(
             ibftConfig.getBlockPeriodSeconds());
 
+    final Subscribers<MinedBlockObserver> minedBlockObservers = new Subscribers<>();
+    minedBlockObservers.subscribe(ethProtocolManager);
+
     final IbftFinalState finalState =
         new IbftFinalState(
             voteTally,
@@ -234,7 +239,8 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             finalState,
             new IbftBlockHeightManagerFactory(
                 finalState,
-                new IbftRoundFactory(finalState, protocolContext, protocolSchedule),
+                new IbftRoundFactory(
+                    finalState, protocolContext, protocolSchedule, minedBlockObservers),
                 messageValidatorFactory,
                 protocolContext));
 

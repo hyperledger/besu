@@ -44,6 +44,7 @@ import tech.pegasys.pantheon.consensus.ibft.statemachine.IbftRoundFactory;
 import tech.pegasys.pantheon.consensus.ibft.validation.MessageValidatorFactory;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
@@ -59,6 +60,7 @@ import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -258,13 +260,16 @@ public class TestContextFactory {
     // Disable Gossiping for integration tests.
     final IbftGossip gossiper = mock(IbftGossip.class);
 
+    final Subscribers<MinedBlockObserver> minedBlockObservers = new Subscribers<>();
+
     final IbftController ibftController =
         new IbftController(
             blockChain,
             finalState,
             new IbftBlockHeightManagerFactory(
                 finalState,
-                new IbftRoundFactory(finalState, protocolContext, protocolSchedule),
+                new IbftRoundFactory(
+                    finalState, protocolContext, protocolSchedule, minedBlockObservers),
                 messageValidatorFactory,
                 protocolContext),
             new HashMap<>(),

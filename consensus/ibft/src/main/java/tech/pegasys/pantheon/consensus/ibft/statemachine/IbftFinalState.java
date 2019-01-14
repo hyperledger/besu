@@ -67,8 +67,8 @@ public class IbftFinalState {
     this.blockCreatorFactory = blockCreatorFactory;
     this.messageFactory = messageFactory;
     this.ibftContextBlockHeaderValidator = ibftContextBlockHeaderValidator;
-    this.messageTransmitter = new IbftMessageTransmitter(messageFactory, peers);
     this.clock = clock;
+    this.messageTransmitter = new IbftMessageTransmitter(messageFactory, peers);
   }
 
   public int getQuorumSize() {
