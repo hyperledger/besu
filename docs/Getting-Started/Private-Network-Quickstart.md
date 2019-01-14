@@ -24,7 +24,8 @@ To run this tutorial, you must have the following installed:
 - For Windows, [Docker for Windows](https://docs.docker.com/docker-for-windows/install/)
 
 !!!important
-    Docker for Windows requires Windows 10 Pro, Enterpise, or Education. The Private Network Quickstart does not support Docker Toolbox.
+    Docker for Windows requires Windows 10 Pro, Enterprise, or Education.
+    The Private Network Quickstart does not support Docker Toolbox.
 
 - [Git command line](https://git-scm.com/)
 
