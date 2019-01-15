@@ -108,7 +108,7 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
 
   @BeforeClass
   public static void setupConstants() throws Exception {
-    PROTOCOL_SCHEDULE = MainnetProtocolSchedule.create();
+    PROTOCOL_SCHEDULE = MainnetProtocolSchedule.create(new NoOpMetricsSystem());
 
     final URL blocksUrl =
         EthJsonRpcHttpBySpecTest.class
@@ -177,7 +177,7 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
                 peerDiscoveryMock,
                 blockchainQueries,
                 synchronizerMock,
-                MainnetProtocolSchedule.create(),
+                MainnetProtocolSchedule.create(new NoOpMetricsSystem()),
                 filterManager,
                 transactionPoolMock,
                 miningCoordinatorMock,

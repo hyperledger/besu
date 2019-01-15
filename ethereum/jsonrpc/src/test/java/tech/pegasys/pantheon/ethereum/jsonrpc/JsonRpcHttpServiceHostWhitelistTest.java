@@ -88,7 +88,8 @@ public class JsonRpcHttpServiceHostWhitelistTest {
                     blockchainQueries,
                     synchronizer,
                     MainnetProtocolSchedule.fromConfig(
-                        new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID)),
+                        new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID),
+                        new NoOpMetricsSystem()),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(EthHashMiningCoordinator.class),

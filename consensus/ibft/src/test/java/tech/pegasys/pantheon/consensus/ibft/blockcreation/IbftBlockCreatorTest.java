@@ -38,6 +38,7 @@ import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.time.Instant;
@@ -73,7 +74,8 @@ public class IbftBlockCreatorTest {
     final ProtocolSchedule<IbftContext> protocolSchedule =
         IbftProtocolSchedule.create(
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
-                .getConfigOptions());
+                .getConfigOptions(),
+            new NoOpMetricsSystem());
     final ProtocolContext<IbftContext> protContext =
         new ProtocolContext<>(
             blockchain,

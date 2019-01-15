@@ -170,7 +170,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(P2PNetwork.class),
                     blockchainQueries,
                     mock(Synchronizer.class),
-                    MainnetProtocolSchedule.create(),
+                    MainnetProtocolSchedule.create(new NoOpMetricsSystem()),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(EthHashMiningCoordinator.class),
