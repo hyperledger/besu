@@ -58,7 +58,7 @@ List of node IDs with which this node will not peer. The node ID is the public k
 ### bootnodes
 
 ```bash tab="Syntax"
---bootnodes=<enode://id@host:port>[,<enode://id@host:port>...]...
+--bootnodes[=<enode://id@host:port>[,<enode://id@host:port>...]...]
 ```
 
 ```bash tab="Example Command Line"
@@ -69,10 +69,18 @@ List of node IDs with which this node will not peer. The node ID is the public k
 bootnodes=["enode://c35c3...d615f@1.2.3.4:30303","enode://f42c13...fc456@1.2.3.5:30303"]
 ```
   
+```bash tab="Example Node Acting as Bootnode"
+--bootnodes
+```  
+  
 List of comma-separated enode URLs for P2P discovery bootstrap. 
   
 When connecting to mainnet or public testnets, the default is a predefined list of enode URLs. 
 Specify bootnodes when connecting to a [private network](../Configuring-Pantheon/Testing-Developing-Nodes.md#bootnodes).
+
+!!! note
+    Specifying a node is a [bootnode](../Configuring-Pantheon/Testing-Developing-Nodes.md#bootnodes) 
+    must be done on the command line not in a [configuration file](../Configuring-Pantheon/Using-Configuration-File.md).  
 
 ### config
 

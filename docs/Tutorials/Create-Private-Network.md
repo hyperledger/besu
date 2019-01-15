@@ -132,17 +132,17 @@ The `database` directory is created when the node is started and contains the bl
 
 Restart Node-1 specifying:
 
-* An empty string for the [`--bootnodes` option](../Reference/Pantheon-CLI-Syntax.md#bootnodes) because this is your bootnode.
+* No arguments for the [`--bootnodes` option](../Reference/Pantheon-CLI-Syntax.md#bootnodes) because this is your bootnode.
 * Mining is enabled and the account to which mining rewards are paid using the [`--miner-enabled`](../Reference/Pantheon-CLI-Syntax.md#miner-enabled) 
 and [`--miner-coinbase` options](../Reference/Pantheon-CLI-Syntax.md#miner-coinbase).
 * JSON-RPC API is enabled using the [`--rpc-enabled` option](../Reference/Pantheon-CLI-Syntax.md#rpc-enabled). 
 
 ```bash tab="MacOS"
-pantheon --datadir=Node-1-Datadir --genesis=../privateNetworkGenesis.json --bootnodes="" --network-id 123 --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-enabled      
+pantheon --datadir=Node-1-Datadir --genesis=../privateNetworkGenesis.json --bootnodes --network-id 123 --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-enabled      
 ```
 
 ```bash tab="Windows"
-pantheon --datadir=Node-1-Datadir --genesis=..\privateNetworkGenesis.json --bootnodes="" --network-id 123 --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-enabled      
+pantheon --datadir=Node-1-Datadir --genesis=..\privateNetworkGenesis.json --bootnodes --network-id 123 --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-enabled      
 ```
 
 !!! info
