@@ -19,7 +19,6 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import java.io.IOException;
 import java.util.List;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class IbftMiningAcceptanceTest extends AcceptanceTestBase {
@@ -67,7 +66,6 @@ public class IbftMiningAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  @Ignore("Temporarily disabled until ibft new block events are being sent")
   public void shouldMineOnMultipleNodesEvenWhenClusterContainsNonValidator() throws IOException {
     final String[] validators = {"validator1", "validator2", "validator3"};
     final PantheonNode validator1 = pantheon.createIbftNodeWithValidators("validator1", validators);
