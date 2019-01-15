@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import org.junit.Test;
 
@@ -41,7 +42,7 @@ public class CliqueProtocolScheduleTest {
 
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule<CliqueContext> protocolSchedule =
-        CliqueProtocolSchedule.create(config, NODE_KEYS);
+        CliqueProtocolSchedule.create(config, NODE_KEYS, new NoOpMetricsSystem());
 
     final ProtocolSpec<CliqueContext> homesteadSpec = protocolSchedule.getByBlockNumber(1);
     final ProtocolSpec<CliqueContext> tangerineWhistleSpec = protocolSchedule.getByBlockNumber(2);
@@ -56,7 +57,8 @@ public class CliqueProtocolScheduleTest {
   @Test
   public void parametersAlignWithMainnetWithAdjustments() {
     final ProtocolSpec<CliqueContext> homestead =
-        CliqueProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions(), NODE_KEYS)
+        CliqueProtocolSchedule.create(
+                GenesisConfigFile.DEFAULT.getConfigOptions(), NODE_KEYS, new NoOpMetricsSystem())
             .getByBlockNumber(0);
 
     assertThat(homestead.getName()).isEqualTo("Frontier");

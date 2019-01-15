@@ -55,7 +55,7 @@ public interface PantheonController<C> extends Closeable {
       return MainnetPantheonController.init(
           storageProvider,
           genesisConfigFile,
-          MainnetProtocolSchedule.fromConfig(configOptions),
+          MainnetProtocolSchedule.fromConfig(configOptions, metricsSystem),
           syncConfig,
           miningParameters,
           nodeKeys,

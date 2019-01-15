@@ -57,7 +57,8 @@ import org.junit.Test;
 
 public class DetermineCommonAncestorTaskTest {
 
-  private final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
+  private final ProtocolSchedule<Void> protocolSchedule =
+      MainnetProtocolSchedule.create(new NoOpMetricsSystem());
   private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private final LabelledMetric<OperationTimer> ethTasksTimer =
       NoOpMetricsSystem.NO_OP_LABELLED_TIMER;

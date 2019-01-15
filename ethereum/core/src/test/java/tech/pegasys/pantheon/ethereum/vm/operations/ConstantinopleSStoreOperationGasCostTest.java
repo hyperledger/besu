@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame.State;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import org.junit.Before;
@@ -34,7 +35,8 @@ import org.junit.runners.Parameterized.Parameters;
 public class ConstantinopleSStoreOperationGasCostTest {
 
   private static final ProtocolSchedule<Void> protocolSchedule =
-      MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().constantinopleBlock(0));
+      MainnetProtocolSchedule.fromConfig(
+          new StubGenesisConfigOptions().constantinopleBlock(0), new NoOpMetricsSystem());
 
   @Parameters(name = "Code: {0}, Original: {1}")
   public static Object[][] scenarios() {

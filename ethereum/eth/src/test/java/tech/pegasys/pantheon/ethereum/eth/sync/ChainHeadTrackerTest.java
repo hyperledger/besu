@@ -44,7 +44,8 @@ public class ChainHeadTrackerTest {
           blockchain.getChainHead().getTotalDifficulty(),
           0);
   private final ProtocolSchedule<Void> protocolSchedule =
-      DevelopmentProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions());
+      DevelopmentProtocolSchedule.create(
+          GenesisConfigFile.DEFAULT.getConfigOptions(), new NoOpMetricsSystem());
   private final TrailingPeerLimiter trailingPeerLimiter = mock(TrailingPeerLimiter.class);
   private final ChainHeadTracker chainHeadTracker =
       new ChainHeadTracker(

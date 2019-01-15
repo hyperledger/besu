@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -45,7 +46,7 @@ public final class GenesisStateTest {
     final GenesisState genesisState =
         GenesisState.fromJson(
             Resources.toString(GenesisStateTest.class.getResource("genesis1.json"), Charsets.UTF_8),
-            MainnetProtocolSchedule.create());
+            MainnetProtocolSchedule.create(new NoOpMetricsSystem()));
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getStateRoot())
         .isEqualTo(
@@ -75,7 +76,7 @@ public final class GenesisStateTest {
     final GenesisState genesisState =
         GenesisState.fromJson(
             Resources.toString(GenesisStateTest.class.getResource("genesis2.json"), Charsets.UTF_8),
-            MainnetProtocolSchedule.create());
+            MainnetProtocolSchedule.create(new NoOpMetricsSystem()));
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getStateRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(header.getTransactionsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
@@ -91,7 +92,7 @@ public final class GenesisStateTest {
         GenesisState.fromJson(
             Resources.toString(
                 GenesisStateTest.class.getResource("genesis-olympic.json"), Charsets.UTF_8),
-            MainnetProtocolSchedule.create());
+            MainnetProtocolSchedule.create(new NoOpMetricsSystem()));
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     genesisState.getBlock().writeTo(tmp);
     assertThat(Hex.toHexString(genesisState.getBlock().getHeader().getHash().extractArray()))
