@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Optional;
 
 public class RpcApis {
+
   public static final RpcApi ETH = new RpcApi("ETH");
   public static final RpcApi DEBUG = new RpcApi("DEBUG");
   public static final RpcApi MINER = new RpcApi("MINER");
@@ -24,6 +25,7 @@ public class RpcApis {
   public static final RpcApi PERM = new RpcApi("PERM");
   public static final RpcApi WEB3 = new RpcApi("WEB3");
   public static final RpcApi ADMIN = new RpcApi("ADMIN");
+  public static final RpcApi EEA = new RpcApi("EEA");
 
   public static final Collection<RpcApi> DEFAULT_JSON_RPC_APIS = Arrays.asList(ETH, NET, WEB3);
 
@@ -42,8 +44,8 @@ public class RpcApis {
       return Optional.of(WEB3);
     } else if (name.equals(ADMIN.getCliValue())) {
       return Optional.of(ADMIN);
-    } else if (name.equals(PERM.getCliValue())) {
-      return Optional.of(PERM);
+    } else if (name.equals(EEA.getCliValue())) {
+      return Optional.of(EEA);
     } else {
       return Optional.empty();
     }
