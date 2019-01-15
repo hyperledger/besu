@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.protocol;
 
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftV2;
+import tech.pegasys.pantheon.consensus.ibft.messagedata.IbftV2;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 

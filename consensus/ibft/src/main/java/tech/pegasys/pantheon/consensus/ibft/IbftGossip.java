@@ -12,14 +12,14 @@
  */
 package tech.pegasys.pantheon.consensus.ibft;
 
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.CommitMessageData;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.IbftV2;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.NewRoundMessageData;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.PrepareMessageData;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.ProposalMessageData;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessage.RoundChangeMessageData;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
+import tech.pegasys.pantheon.consensus.ibft.messagedata.CommitMessageData;
+import tech.pegasys.pantheon.consensus.ibft.messagedata.IbftV2;
+import tech.pegasys.pantheon.consensus.ibft.messagedata.NewRoundMessageData;
+import tech.pegasys.pantheon.consensus.ibft.messagedata.PrepareMessageData;
+import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
+import tech.pegasys.pantheon.consensus.ibft.messagedata.RoundChangeMessageData;
 import tech.pegasys.pantheon.consensus.ibft.network.IbftMulticaster;
+import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;

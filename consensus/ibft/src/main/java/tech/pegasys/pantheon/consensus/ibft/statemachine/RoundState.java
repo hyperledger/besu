@@ -15,11 +15,11 @@ package tech.pegasys.pantheon.consensus.ibft.statemachine;
 import static tech.pegasys.pantheon.consensus.ibft.IbftHelpers.prepareMessageCountForQuorum;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.CommitPayload;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparePayload;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparedCertificate;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.ProposalPayload;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
+import tech.pegasys.pantheon.consensus.ibft.payload.CommitPayload;
+import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
+import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
+import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
+import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.consensus.ibft.validation.MessageValidator;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Block;

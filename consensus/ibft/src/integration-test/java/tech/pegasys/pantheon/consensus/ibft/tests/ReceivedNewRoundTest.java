@@ -18,14 +18,14 @@ import static tech.pegasys.pantheon.consensus.ibft.support.MessageReceptionHelpe
 import static tech.pegasys.pantheon.consensus.ibft.support.TestHelpers.createValidPreparedCertificate;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.CommitPayload;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.MessageFactory;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparePayload;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparedCertificate;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.ProposalPayload;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.RoundChangeCertificate;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.RoundChangePayload;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
+import tech.pegasys.pantheon.consensus.ibft.payload.CommitPayload;
+import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
+import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
+import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
+import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
+import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
+import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangePayload;
+import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.consensus.ibft.support.RoundSpecificNodeRoles;
 import tech.pegasys.pantheon.consensus.ibft.support.TestContext;
 import tech.pegasys.pantheon.consensus.ibft.support.TestContextFactory;

@@ -16,9 +16,9 @@ import static tech.pegasys.pantheon.consensus.ibft.IbftHelpers.prepareMessageCou
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.RoundChangeCertificate;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.RoundChangePayload;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
+import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
+import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangePayload;
+import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator;
 import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator.MessageValidatorForHeightFactory;
 import tech.pegasys.pantheon.ethereum.core.Address;

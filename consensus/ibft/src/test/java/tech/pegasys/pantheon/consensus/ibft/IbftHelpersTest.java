@@ -17,10 +17,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.consensus.ibft.IbftHelpers.calculateRequiredValidatorQuorum;
 
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.MessageFactory;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.PreparedCertificate;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.ProposalPayload;
-import tech.pegasys.pantheon.consensus.ibft.ibftmessagedata.SignedData;
+import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
+import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
+import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
+import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
