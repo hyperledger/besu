@@ -15,6 +15,17 @@ In v0.9, the Private Network Quickstart will be moved to a separate repository a
 Quickstart removed from the Pantheon repository. The [Private Network Quickstart tutorial](https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Private-Network-Quickstart/) 
 will be updated and use the Private Network Quickstart in the separate repository.
 
+## 0.8.5
+
+Indefinitely delays the roll-out of Constantinople on Ethereum Mainnet due to a [potential security issue](https://blog.ethereum.org/2019/01/15/security-alert-ethereum-constantinople-postponement/) detected.
+
+## Additions and Improvements
+- Remove Constantinople fork block [\#574](https://github.com/PegaSysEng/pantheon/pull/574)
+
+## Technical Improvements
+- Rename IBFT message packages [\#568](https://github.com/PegaSysEng/pantheon/pull/568)
+
+
 ## 0.8.4
 
 ### Docker Image
