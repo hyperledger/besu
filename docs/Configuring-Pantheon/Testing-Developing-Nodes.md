@@ -30,13 +30,13 @@ To start a bootnode for a private network:
     
 2. Start the bootnode, specifying:
 
-    * Empty string for the [`--bootnodes`](../Reference/Pantheon-CLI-Syntax.md#bootnodes) option because this is the bootnode. 
+    * No arguments for the [`--bootnodes` option](../Reference/Pantheon-CLI-Syntax.md#bootnodes) because this is the bootnode. 
     * Network ID for your private network.
     * Genesis file and data directory as in the previous step. 
     
     !!! example
         ```
-        pantheon --bootnodes="" --genesis=privateNetworkGenesis.json --datadir=nodeDataDir --network-id 123 
+        pantheon --bootnodes --genesis=privateNetworkGenesis.json --datadir=nodeDataDir --network-id 123 
          ```
      
 To specify this bootnode for another node, the enode URL for the `--bootnodes` option is `enode://<id>@<host:port>` where:
