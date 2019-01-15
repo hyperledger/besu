@@ -109,6 +109,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private static final String DOCKER_DATADIR_LOCATION = "/var/lib/pantheon";
 
   public static class RpcApisConverter implements ITypeConverter<RpcApi> {
+
     @Override
     public RpcApi convert(final String name) throws RpcApisConversionException {
       final String uppercaseName = name.trim().toUpperCase();
@@ -124,6 +125,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   }
 
   public static class RpcApisConversionException extends Exception {
+
     RpcApisConversionException(final String s) {
       super(s);
     }
