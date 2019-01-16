@@ -271,8 +271,7 @@ public class TestContextFactory {
                 finalState,
                 new IbftRoundFactory(
                     finalState, protocolContext, protocolSchedule, minedBlockObservers),
-                messageValidatorFactory,
-                protocolContext),
+                messageValidatorFactory),
             new HashMap<>(),
             gossiper);
     //////////////////////////// END IBFT PantheonController ////////////////////////////
