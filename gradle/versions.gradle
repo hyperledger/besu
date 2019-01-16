@@ -13,7 +13,7 @@
 
 dependencyManagement {
   dependencies {
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.9.7'
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
 
     dependency 'com.github.docker-java:docker-java:3.0.14'
 
@@ -27,28 +27,30 @@ dependencyManagement {
 
     dependency 'com.google.guava:guava:27.0.1-jre'
 
-    dependency 'com.squareup.okhttp3:okhttp:3.12.0'
+    dependency 'com.squareup.okhttp3:okhttp:3.12.1'
 
     dependency 'commons-cli:commons-cli:1.4'
 
-    dependency 'info.picocli:picocli:3.8.0'
+    dependency 'info.picocli:picocli:3.9.1'
 
     dependency 'io.pkts:pkts-core:3.0.3'
 
-    dependency "io.prometheus:simpleclient:0.5.0"
-    dependency "io.prometheus:simpleclient_common:0.5.0"
-    dependency "io.prometheus:simpleclient_hotspot:0.5.0"
+    dependency "io.prometheus:simpleclient:0.6.0"
+    dependency "io.prometheus:simpleclient_common:0.6.0"
+    dependency "io.prometheus:simpleclient_hotspot:0.6.0"
 
-    dependency 'io.reactivex.rxjava2:rxjava:2.2.2'
+    dependency 'io.reactivex.rxjava2:rxjava:2.2.5'
 
-    dependency 'io.vertx:vertx-codegen:3.5.4'
-    dependency 'io.vertx:vertx-core:3.5.4'
-    dependency 'io.vertx:vertx-unit:3.5.4'
-    dependency 'io.vertx:vertx-web:3.5.4'
+    dependency 'io.vertx:vertx-codegen:3.6.2'
+    dependency 'io.vertx:vertx-core:3.6.2'
+    dependency 'io.vertx:vertx-unit:3.6.2'
+    dependency 'io.vertx:vertx-web:3.6.2'
 
     dependency 'junit:junit:4.12'
 
-    dependency 'net.consensys.cava:cava-toml:0.4.0'
+    dependency 'net.consensys.cava:cava-toml:0.5.0'
+
+    dependency 'org.apache.commons:commons-text:1.6'
 
     dependency 'org.apache.logging.log4j:log4j-api:2.11.1'
     dependency 'org.apache.logging.log4j:log4j-core:2.11.1'
@@ -56,24 +58,23 @@ dependencyManagement {
 
     dependency 'org.assertj:assertj-core:3.11.1'
 
-    dependency 'org.awaitility:awaitility:3.1.3'
+    dependency 'org.awaitility:awaitility:3.1.5'
 
     dependency 'org.bouncycastle:bcprov-jdk15on:1.60'
 
-    dependency 'org.java-websocket:Java-WebSocket:1.3.8'
+    dependency 'org.java-websocket:Java-WebSocket:1.3.9'
 
     dependency 'org.mockito:mockito-core:2.23.4'
 
     dependency 'org.openjdk.jmh:jmh-core:1.21'
     dependency 'org.openjdk.jmh:jmh-generator-annprocess:1.21'
 
-    dependency 'org.rocksdb:rocksdbjni:5.15.10'
+    dependency 'org.rocksdb:rocksdbjni:5.17.2'
 
-    dependency 'org.web3j:abi:4.0.1'
-    dependency 'org.web3j:core:4.0.1'
-    dependency 'org.web3j:crypto:4.0.1'
+    dependency 'org.web3j:abi:4.1.0'
+    dependency 'org.web3j:core:4.1.0'
+    dependency 'org.web3j:crypto:4.1.0'
 
     dependency 'org.xerial.snappy:snappy-java:1.1.7.2'
-    dependency 'org.apache.commons:commons-text:1.6'
   }
 }
