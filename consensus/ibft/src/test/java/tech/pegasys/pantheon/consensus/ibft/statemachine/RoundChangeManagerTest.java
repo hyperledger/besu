@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
+import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
 import tech.pegasys.pantheon.consensus.ibft.TestHelpers;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
@@ -113,7 +114,14 @@ public class RoundChangeManagerTest {
                     protocolContext,
                     parentHeader));
 
-    manager = new RoundChangeManager(2, validators, messageValidatorFactory);
+    final RoundChangeMessageValidator roundChangeMessageValidator =
+        new RoundChangeMessageValidator(
+            messageValidatorFactory,
+            validators,
+            IbftHelpers.calculateRequiredValidatorQuorum(
+                IbftHelpers.calculateRequiredValidatorQuorum(validators.size())),
+            2);
+    manager = new RoundChangeManager(2, roundChangeMessageValidator);
   }
 
   private SignedData<RoundChangePayload> makeRoundChangeMessage(
@@ -248,7 +256,8 @@ public class RoundChangeManagerTest {
     assertThat(manager.roundChangeCache.get(ri2)).isNull();
 
     roundChangeData =
-        makeRoundChangeMessageWithPreparedCert(proposerKey, ri2, Lists.newArrayList(validator1Key));
+        makeRoundChangeMessageWithPreparedCert(
+            proposerKey, ri2, Lists.newArrayList(validator1Key, validator2Key));
     assertThat(manager.appendRoundChangeMessage(roundChangeData)).isEmpty();
     assertThat(manager.roundChangeCache.get(ri2).receivedMessages.size()).isEqualTo(1);
   }

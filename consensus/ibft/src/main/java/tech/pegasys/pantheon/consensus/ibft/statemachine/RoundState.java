@@ -36,7 +36,7 @@ public class RoundState {
 
   private final ConsensusRoundIdentifier roundIdentifier;
   private final MessageValidator validator;
-  private final long quorumSize;
+  private final long quorum;
 
   private Optional<SignedData<ProposalPayload>> proposalMessage = Optional.empty();
 
@@ -50,10 +50,10 @@ public class RoundState {
 
   public RoundState(
       final ConsensusRoundIdentifier roundIdentifier,
-      final int quorumSize,
+      final int quorum,
       final MessageValidator validator) {
     this.roundIdentifier = roundIdentifier;
-    this.quorumSize = quorumSize;
+    this.quorum = quorum;
     this.validator = validator;
   }
 
@@ -92,12 +92,12 @@ public class RoundState {
   }
 
   private void updateState() {
-    // NOTE: The quorumSize for Prepare messages is 1 less than the quorum size as the proposer
+    // NOTE: The quorum for Prepare messages is 1 less than the quorum size as the proposer
     // does not supply a prepare message
     prepared =
-        (preparePayloads.size() >= prepareMessageCountForQuorum(quorumSize))
+        (preparePayloads.size() >= prepareMessageCountForQuorum(quorum))
             && proposalMessage.isPresent();
-    committed = (commitPayloads.size() >= quorumSize) && proposalMessage.isPresent();
+    committed = (commitPayloads.size() >= quorum) && proposalMessage.isPresent();
   }
 
   public Optional<Block> getProposedBlock() {

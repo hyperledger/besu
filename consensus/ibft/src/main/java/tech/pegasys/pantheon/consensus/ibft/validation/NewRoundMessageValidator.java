@@ -41,19 +41,19 @@ public class NewRoundMessageValidator {
   private final Collection<Address> validators;
   private final ProposerSelector proposerSelector;
   private final MessageValidatorForHeightFactory messageValidatorFactory;
-  private final long quorumSize;
+  private final long quorum;
   private final long chainHeight;
 
   public NewRoundMessageValidator(
       final Collection<Address> validators,
       final ProposerSelector proposerSelector,
       final MessageValidatorForHeightFactory messageValidatorFactory,
-      final long quorumSize,
+      final long quorum,
       final long chainHeight) {
     this.validators = validators;
     this.proposerSelector = proposerSelector;
     this.messageValidatorFactory = messageValidatorFactory;
-    this.quorumSize = quorumSize;
+    this.quorum = quorum;
     this.chainHeight = chainHeight;
   }
 
@@ -101,7 +101,7 @@ public class NewRoundMessageValidator {
     final Collection<SignedData<RoundChangePayload>> roundChangeMsgs =
         roundChangeCert.getRoundChangePayloads();
 
-    if (roundChangeMsgs.size() < quorumSize) {
+    if (roundChangeMsgs.size() < quorum) {
       LOG.info(
           "Invalid NewRound message, RoundChange certificate has insufficient "
               + "RoundChange messages.");
@@ -124,7 +124,7 @@ public class NewRoundMessageValidator {
           new RoundChangeMessageValidator(
               messageValidatorFactory,
               validators,
-              prepareMessageCountForQuorum(quorumSize),
+              prepareMessageCountForQuorum(quorum),
               chainHeight);
 
       if (!roundChangeValidator.validateMessage(roundChangeMsg)) {

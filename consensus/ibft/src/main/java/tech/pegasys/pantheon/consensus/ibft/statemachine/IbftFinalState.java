@@ -71,7 +71,7 @@ public class IbftFinalState {
     this.messageTransmitter = new IbftMessageTransmitter(messageFactory, peers);
   }
 
-  public int getQuorumSize() {
+  public int getQuorum() {
     return calculateRequiredValidatorQuorum(validatorProvider.getValidators().size());
   }
 
