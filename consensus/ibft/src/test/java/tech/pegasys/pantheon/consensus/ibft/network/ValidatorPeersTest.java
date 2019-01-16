@@ -40,7 +40,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class IbftNetworkPeersTest {
+public class ValidatorPeersTest {
 
   private final List<Address> validators = newArrayList();
   private final List<PublicKey> publicKeys = newArrayList();
@@ -70,13 +70,13 @@ public class IbftNetworkPeersTest {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidators()).thenReturn(validators);
 
-    final IbftNetworkPeers peers = new IbftNetworkPeers(validatorProvider);
+    final ValidatorPeers peers = new ValidatorPeers(validatorProvider);
     for (final PeerConnection peer : peerConnections) {
-      peers.peerAdded(peer);
+      peers.add(peer);
     }
 
     final MessageData messageToSend = new RawMessage(1, BytesValue.EMPTY);
-    peers.multicastToValidators(messageToSend);
+    peers.send(messageToSend);
 
     verify(peerConnections.get(0), times(1)).sendForProtocol("IBF", messageToSend);
     verify(peerConnections.get(1), never()).sendForProtocol(any(), any());
@@ -91,13 +91,13 @@ public class IbftNetworkPeersTest {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidators()).thenReturn(validators);
 
-    final IbftNetworkPeers peers = new IbftNetworkPeers(validatorProvider);
+    final ValidatorPeers peers = new ValidatorPeers(validatorProvider);
 
     // only add peer connections 1, 2 & 3, none of which should be invoked.
-    newArrayList(1, 2, 3).forEach(i -> peers.peerAdded(peerConnections.get(i)));
+    newArrayList(1, 2, 3).forEach(i -> peers.add(peerConnections.get(i)));
 
     final MessageData messageToSend = new RawMessage(1, BytesValue.EMPTY);
-    peers.multicastToValidators(messageToSend);
+    peers.send(messageToSend);
 
     verify(peerConnections.get(0), never()).sendForProtocol(any(), any());
     verify(peerConnections.get(1), never()).sendForProtocol(any(), any());
@@ -114,13 +114,13 @@ public class IbftNetworkPeersTest {
     final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
     when(validatorProvider.getValidators()).thenReturn(validators);
 
-    final IbftNetworkPeers peers = new IbftNetworkPeers(validatorProvider);
+    final ValidatorPeers peers = new ValidatorPeers(validatorProvider);
     for (final PeerConnection peer : peerConnections) {
-      peers.peerAdded(peer);
+      peers.add(peer);
     }
 
     final MessageData messageToSend = new RawMessage(1, BytesValue.EMPTY);
-    peers.multicastToValidatorsExcept(messageToSend, newArrayList(validatorAddress));
+    peers.send(messageToSend, newArrayList(validatorAddress));
 
     verify(peerConnections.get(0), never()).sendForProtocol(any(), any());
     verify(peerConnections.get(1), times(1)).sendForProtocol(any(), any());

@@ -22,8 +22,8 @@ import tech.pegasys.pantheon.consensus.ibft.messagedata.NewRoundMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.PrepareMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.RoundChangeMessageData;
-import tech.pegasys.pantheon.consensus.ibft.network.IbftNetworkPeers;
 import tech.pegasys.pantheon.consensus.ibft.network.MockPeerFactory;
+import tech.pegasys.pantheon.consensus.ibft.network.ValidatorMulticaster;
 import tech.pegasys.pantheon.consensus.ibft.payload.Payload;
 import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
@@ -46,13 +46,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class IbftGossipTest {
   private IbftGossip ibftGossip;
-  @Mock private IbftNetworkPeers ibftNetworkPeers;
+  @Mock private ValidatorMulticaster validatorMulticaster;
   private PeerConnection peerConnection;
   private static final Address senderAddress = AddressHelpers.ofValue(9);
 
   @Before
   public void setup() {
-    ibftGossip = new IbftGossip(ibftNetworkPeers, 10);
+    ibftGossip = new IbftGossip(validatorMulticaster, 10);
     peerConnection = MockPeerFactory.create(senderAddress);
   }
 
@@ -66,8 +66,8 @@ public class IbftGossipTest {
 
     final boolean gossipResult = ibftGossip.gossipMessage(message);
     assertThat(gossipResult).isTrue();
-    verify(ibftNetworkPeers)
-        .multicastToValidatorsExcept(messageData, newArrayList(senderAddress, payload.getSender()));
+    verify(validatorMulticaster)
+        .send(messageData, newArrayList(senderAddress, payload.getSender()));
   }
 
   private <P extends Payload> void assertRebroadcastOnlyOnce(
@@ -82,8 +82,8 @@ public class IbftGossipTest {
     final boolean gossip2Result = ibftGossip.gossipMessage(message);
     assertThat(gossip1Result).isTrue();
     assertThat(gossip2Result).isFalse();
-    verify(ibftNetworkPeers, times(1))
-        .multicastToValidatorsExcept(messageData, newArrayList(senderAddress, payload.getSender()));
+    verify(validatorMulticaster, times(1))
+        .send(messageData, newArrayList(senderAddress, payload.getSender()));
   }
 
   @Test
@@ -155,8 +155,8 @@ public class IbftGossipTest {
     final boolean gossip2Result = ibftGossip.gossipMessage(message);
     assertThat(gossip1Result).isTrue();
     assertThat(gossip2Result).isFalse();
-    verify(ibftNetworkPeers, times(1))
-        .multicastToValidatorsExcept(messageData, newArrayList(senderAddress, payload.getSender()));
+    verify(validatorMulticaster, times(1))
+        .send(messageData, newArrayList(senderAddress, payload.getSender()));
 
     for (int i = 1; i <= 9; i++) {
       final SignedData<ProposalPayload> nextPayload =
@@ -169,8 +169,8 @@ public class IbftGossipTest {
 
     final boolean gossip3Result = ibftGossip.gossipMessage(message);
     assertThat(gossip3Result).isFalse();
-    verify(ibftNetworkPeers, times(1))
-        .multicastToValidatorsExcept(messageData, newArrayList(senderAddress, payload.getSender()));
+    verify(validatorMulticaster, times(1))
+        .send(messageData, newArrayList(senderAddress, payload.getSender()));
 
     {
       final SignedData<ProposalPayload> nextPayload =
@@ -183,12 +183,12 @@ public class IbftGossipTest {
 
     final boolean gossip4Result = ibftGossip.gossipMessage(message);
     assertThat(gossip4Result).isTrue();
-    verify(ibftNetworkPeers, times(2))
-        .multicastToValidatorsExcept(messageData, newArrayList(senderAddress, payload.getSender()));
+    verify(validatorMulticaster, times(2))
+        .send(messageData, newArrayList(senderAddress, payload.getSender()));
 
     final boolean gossip5Result = ibftGossip.gossipMessage(message);
     assertThat(gossip5Result).isFalse();
-    verify(ibftNetworkPeers, times(2))
-        .multicastToValidatorsExcept(messageData, newArrayList(senderAddress, payload.getSender()));
+    verify(validatorMulticaster, times(2))
+        .send(messageData, newArrayList(senderAddress, payload.getSender()));
   }
 }

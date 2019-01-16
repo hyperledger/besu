@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.support;
 
-import tech.pegasys.pantheon.consensus.ibft.network.IbftMulticaster;
+import tech.pegasys.pantheon.consensus.ibft.network.ValidatorMulticaster;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 
@@ -21,27 +21,26 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
-public class StubIbftMulticaster implements IbftMulticaster {
+public class StubValidatorMulticaster implements ValidatorMulticaster {
 
   private final List<ValidatorPeer> validatorNodes = Lists.newArrayList();
 
-  public StubIbftMulticaster() {}
+  public StubValidatorMulticaster() {}
 
   public void addNetworkPeers(final Collection<ValidatorPeer> nodes) {
     validatorNodes.addAll(nodes);
   }
 
   @Override
-  public void multicastToValidators(final MessageData message) {
+  public void send(final MessageData message) {
     validatorNodes.forEach(peer -> peer.handleReceivedMessage(message));
   }
 
   @Override
-  public void multicastToValidatorsExcept(
-      final MessageData message, final Collection<Address> exceptAddresses) {
+  public void send(final MessageData message, final Collection<Address> blackList) {
     validatorNodes
         .stream()
-        .filter(peer -> !exceptAddresses.contains(peer.getNodeAddress()))
+        .filter(peer -> !blackList.contains(peer.getNodeAddress()))
         .forEach(peer -> peer.handleReceivedMessage(message));
   }
 }

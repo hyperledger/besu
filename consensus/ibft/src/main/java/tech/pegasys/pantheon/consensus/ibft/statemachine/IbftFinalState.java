@@ -21,7 +21,8 @@ import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.RoundTimer;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockCreatorFactory;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.ProposerSelector;
-import tech.pegasys.pantheon.consensus.ibft.network.IbftMulticaster;
+import tech.pegasys.pantheon.consensus.ibft.network.IbftMessageTransmitter;
+import tech.pegasys.pantheon.consensus.ibft.network.ValidatorMulticaster;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -36,7 +37,7 @@ public class IbftFinalState {
   private final KeyPair nodeKeys;
   private final Address localAddress;
   private final ProposerSelector proposerSelector;
-  private final IbftMulticaster peers;
+  private final ValidatorMulticaster validatorMulticaster;
   private final RoundTimer roundTimer;
   private final BlockTimer blockTimer;
   private final IbftBlockCreatorFactory blockCreatorFactory;
@@ -50,7 +51,7 @@ public class IbftFinalState {
       final KeyPair nodeKeys,
       final Address localAddress,
       final ProposerSelector proposerSelector,
-      final IbftMulticaster peers,
+      final ValidatorMulticaster validatorMulticaster,
       final RoundTimer roundTimer,
       final BlockTimer blockTimer,
       final IbftBlockCreatorFactory blockCreatorFactory,
@@ -61,14 +62,14 @@ public class IbftFinalState {
     this.nodeKeys = nodeKeys;
     this.localAddress = localAddress;
     this.proposerSelector = proposerSelector;
-    this.peers = peers;
+    this.validatorMulticaster = validatorMulticaster;
     this.roundTimer = roundTimer;
     this.blockTimer = blockTimer;
     this.blockCreatorFactory = blockCreatorFactory;
     this.messageFactory = messageFactory;
     this.ibftContextBlockHeaderValidator = ibftContextBlockHeaderValidator;
     this.clock = clock;
-    this.messageTransmitter = new IbftMessageTransmitter(messageFactory, peers);
+    this.messageTransmitter = new IbftMessageTransmitter(messageFactory, validatorMulticaster);
   }
 
   public int getQuorum() {
@@ -95,8 +96,8 @@ public class IbftFinalState {
     return getProposerForRound(roundIdentifier).equals(localAddress);
   }
 
-  public IbftMulticaster getPeers() {
-    return peers;
+  public ValidatorMulticaster getValidatorMulticaster() {
+    return validatorMulticaster;
   }
 
   public RoundTimer getRoundTimer() {
