@@ -120,7 +120,7 @@ public class BlockHeaderValidator<C> {
     private final List<Rule<C>> rules = new ArrayList<>();
 
     public Builder<C> addRule(final AttachedBlockHeaderValidationRule<C> rule) {
-      this.rules.add(new Rule<>(false, rule, true));
+      this.rules.add(new Rule<>(false, rule, rule.includeInLightValidation()));
       return this;
     }
 

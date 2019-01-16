@@ -26,4 +26,8 @@ public interface AttachedBlockHeaderValidationRule<C> {
    * @return {@code true} if valid; otherwise {@code false}
    */
   boolean validate(BlockHeader header, BlockHeader parent, ProtocolContext<C> protocolContext);
+
+  default boolean includeInLightValidation() {
+    return true;
+  }
 }
