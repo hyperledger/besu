@@ -1,10 +1,10 @@
 .feedback{
   padding: 1em;
   text-align: center;
-  background-color: {{config.extra.support.footer_layout.background_color}};
+  background-color: lightseagreen;
 }
 .feedback a {
-  color: {{config.extra.support.footer_layout.links_color}} !important;
+  color: white !important;
 }
 .md-nav--secondary .md-nav__item .md-nav__item a.md-nav__link {
   font-weight: normal;
