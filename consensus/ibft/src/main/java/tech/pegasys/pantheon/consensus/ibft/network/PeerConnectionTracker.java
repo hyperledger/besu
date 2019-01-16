@@ -12,15 +12,11 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.network;
 
-import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 
-import java.util.Collection;
+public interface PeerConnectionTracker {
 
-public interface IbftMulticaster {
+  void add(final PeerConnection newConnection);
 
-  void multicastToValidators(final MessageData message);
-
-  void multicastToValidatorsExcept(
-      final MessageData message, final Collection<Address> exceptAddresses);
+  void remove(final PeerConnection removedConnection);
 }

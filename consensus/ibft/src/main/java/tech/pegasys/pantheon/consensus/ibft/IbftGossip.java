@@ -18,7 +18,7 @@ import tech.pegasys.pantheon.consensus.ibft.messagedata.NewRoundMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.PrepareMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.RoundChangeMessageData;
-import tech.pegasys.pantheon.consensus.ibft.network.IbftMulticaster;
+import tech.pegasys.pantheon.consensus.ibft.network.ValidatorMulticaster;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -35,7 +35,7 @@ import com.google.common.collect.Lists;
 
 /** Class responsible for rebroadcasting IBFT messages to known validators */
 public class IbftGossip {
-  private final IbftMulticaster peers;
+  private final ValidatorMulticaster multicaster;
 
   // Size of the seenMessages cache, should end up utilising 65bytes * this number + some meta data
   private final int maxSeenMessages;
@@ -50,18 +50,18 @@ public class IbftGossip {
             }
           });
 
-  IbftGossip(final IbftMulticaster peers, final int maxSeenMessages) {
+  IbftGossip(final ValidatorMulticaster multicaster, final int maxSeenMessages) {
     this.maxSeenMessages = maxSeenMessages;
-    this.peers = peers;
+    this.multicaster = multicaster;
   }
 
   /**
-   * Constructor that attaches gossip logic to a set of peers
+   * Constructor that attaches gossip logic to a set of multicaster
    *
-   * @param peers The always up to date set of connected peers that understand IBFT
+   * @param multicaster Network connections to the remote validators
    */
-  public IbftGossip(final IbftMulticaster peers) {
-    this(peers, 10_000);
+  public IbftGossip(final ValidatorMulticaster multicaster) {
+    this(multicaster, 10_000);
   }
 
   /**
@@ -100,7 +100,7 @@ public class IbftGossip {
       final List<Address> excludeAddressesList =
           Lists.newArrayList(
               message.getConnection().getPeer().getAddress(), signedData.getSender());
-      peers.multicastToValidatorsExcept(messageData, excludeAddressesList);
+      multicaster.send(messageData, excludeAddressesList);
       seenMessages.add(signature);
       return true;
     }

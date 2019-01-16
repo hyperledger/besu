@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.consensus.ibft.protocol;
 import tech.pegasys.pantheon.consensus.ibft.IbftEventQueue;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvent;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvents;
-import tech.pegasys.pantheon.consensus.ibft.network.IbftNetworkPeers;
+import tech.pegasys.pantheon.consensus.ibft.network.PeerConnectionTracker;
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
@@ -32,15 +32,16 @@ public class IbftProtocolManager implements ProtocolManager {
   private final IbftEventQueue ibftEventQueue;
 
   private final Logger LOG = LogManager.getLogger();
-  private final IbftNetworkPeers peers;
+  private final PeerConnectionTracker peers;
 
   /**
    * Constructor for the ibft protocol manager
    *
    * @param ibftEventQueue Entry point into the ibft event processor
-   * @param peers iBFT network peers
+   * @param peers Used to track all connected IBFT peers.
    */
-  public IbftProtocolManager(final IbftEventQueue ibftEventQueue, final IbftNetworkPeers peers) {
+  public IbftProtocolManager(
+      final IbftEventQueue ibftEventQueue, final PeerConnectionTracker peers) {
     this.ibftEventQueue = ibftEventQueue;
     this.peers = peers;
   }
@@ -84,7 +85,7 @@ public class IbftProtocolManager implements ProtocolManager {
 
   @Override
   public void handleNewConnection(final PeerConnection peerConnection) {
-    peers.peerAdded(peerConnection);
+    peers.add(peerConnection);
   }
 
   @Override
@@ -92,7 +93,7 @@ public class IbftProtocolManager implements ProtocolManager {
       final PeerConnection peerConnection,
       final DisconnectReason disconnectReason,
       final boolean initiatedByPeer) {
-    peers.peerRemoved(peerConnection);
+    peers.remove(peerConnection);
   }
 
   @Override

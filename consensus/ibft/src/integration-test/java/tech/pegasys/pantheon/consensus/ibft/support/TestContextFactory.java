@@ -125,10 +125,10 @@ public class TestContextFactory {
     final KeyPair nodeKeys = networkNodes.getLocalNode().getNodeKeyPair();
 
     // Use a stubbed version of the multicaster, to prevent creating PeerConnections etc.
-    final StubIbftMulticaster stubbedNetworkPeers = new StubIbftMulticaster();
+    final StubValidatorMulticaster stubbedMulticaster = new StubValidatorMulticaster();
 
     final ControllerAndState controllerAndState =
-        createControllerAndFinalState(blockChain, stubbedNetworkPeers, nodeKeys, clock);
+        createControllerAndFinalState(blockChain, stubbedMulticaster, nodeKeys, clock);
 
     // Add each networkNode to the Multicaster (such that each can receive msgs from local node).
     // NOTE: the remotePeers needs to be ordered based on Address (as this is used to determine
@@ -150,7 +150,7 @@ public class TestContextFactory {
                     },
                     LinkedHashMap::new));
 
-    stubbedNetworkPeers.addNetworkPeers(remotePeers.values());
+    stubbedMulticaster.addNetworkPeers(remotePeers.values());
 
     return new TestContext(
         remotePeers,
@@ -186,7 +186,7 @@ public class TestContextFactory {
 
   private static ControllerAndState createControllerAndFinalState(
       final MutableBlockchain blockChain,
-      final StubIbftMulticaster stubbedNetworkPeers,
+      final StubValidatorMulticaster stubbedMulticaster,
       final KeyPair nodeKeys,
       final Clock clock) {
 
@@ -242,7 +242,7 @@ public class TestContextFactory {
             nodeKeys,
             Util.publicKeyToAddress(nodeKeys.getPublicKey()),
             proposerSelector,
-            stubbedNetworkPeers,
+            stubbedMulticaster,
             new RoundTimer(
                 ibftEventQueue, ROUND_TIMER_SEC * 1000, Executors.newScheduledThreadPool(1)),
             new BlockTimer(

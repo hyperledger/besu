@@ -27,7 +27,11 @@ import com.google.common.collect.Maps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class IbftNetworkPeers implements IbftMulticaster {
+/**
+ * Responsible for tracking the network peers which have a connection to this node, then
+ * multicasting packets to ONLY the peers which have been identified as being validators.
+ */
+public class ValidatorPeers implements ValidatorMulticaster, PeerConnectionTracker {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -36,34 +40,35 @@ public class IbftNetworkPeers implements IbftMulticaster {
   private final Map<Address, PeerConnection> peerConnections = Maps.newConcurrentMap();
   private final ValidatorProvider validatorProvider;
 
-  public IbftNetworkPeers(final ValidatorProvider validatorProvider) {
+  public ValidatorPeers(final ValidatorProvider validatorProvider) {
     this.validatorProvider = validatorProvider;
   }
 
-  public void peerAdded(final PeerConnection newConnection) {
+  @Override
+  public void add(final PeerConnection newConnection) {
     final Address peerAddress = newConnection.getPeer().getAddress();
     peerConnections.put(peerAddress, newConnection);
   }
 
-  public void peerRemoved(final PeerConnection removedConnection) {
+  @Override
+  public void remove(final PeerConnection removedConnection) {
     final Address peerAddress = removedConnection.getPeer().getAddress();
     peerConnections.remove(peerAddress);
   }
 
   @Override
-  public void multicastToValidators(final MessageData message) {
+  public void send(final MessageData message) {
     final Collection<Address> validators = validatorProvider.getValidators();
     sendMessageToSpecificAddresses(validators, message);
   }
 
   @Override
-  public void multicastToValidatorsExcept(
-      final MessageData message, final Collection<Address> exceptAddresses) {
+  public void send(final MessageData message, final Collection<Address> blackList) {
     final Collection<Address> includedValidators =
         validatorProvider
             .getValidators()
             .stream()
-            .filter(a -> !exceptAddresses.contains(a))
+            .filter(a -> !blackList.contains(a))
             .collect(Collectors.toSet());
     sendMessageToSpecificAddresses(includedValidators, message);
   }

@@ -61,7 +61,7 @@ public class IbftController {
         ibftFinalState,
         ibftBlockHeightManagerFactory,
         Maps.newHashMap(),
-        new IbftGossip(ibftFinalState.getPeers()));
+        new IbftGossip(ibftFinalState.getValidatorMulticaster()));
   }
 
   @VisibleForTesting

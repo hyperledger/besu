@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.consensus.ibft.statemachine;
+package tech.pegasys.pantheon.consensus.ibft.network;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.CommitMessageData;
@@ -18,7 +18,6 @@ import tech.pegasys.pantheon.consensus.ibft.messagedata.NewRoundMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.PrepareMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.RoundChangeMessageData;
-import tech.pegasys.pantheon.consensus.ibft.network.IbftMulticaster;
 import tech.pegasys.pantheon.consensus.ibft.payload.CommitPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.payload.NewRoundPayload;
@@ -37,10 +36,10 @@ import java.util.Optional;
 public class IbftMessageTransmitter {
 
   private final MessageFactory messageFactory;
-  private final IbftMulticaster multicaster;
+  private final ValidatorMulticaster multicaster;
 
   public IbftMessageTransmitter(
-      final MessageFactory messageFactory, final IbftMulticaster multicaster) {
+      final MessageFactory messageFactory, final ValidatorMulticaster multicaster) {
     this.messageFactory = messageFactory;
     this.multicaster = multicaster;
   }
@@ -51,7 +50,7 @@ public class IbftMessageTransmitter {
 
     final ProposalMessageData message = ProposalMessageData.create(signedPayload);
 
-    multicaster.multicastToValidators(message);
+    multicaster.send(message);
   }
 
   public void multicastPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
@@ -60,7 +59,7 @@ public class IbftMessageTransmitter {
 
     final PrepareMessageData message = PrepareMessageData.create(signedPayload);
 
-    multicaster.multicastToValidators(message);
+    multicaster.send(message);
   }
 
   public void multicastCommit(
@@ -72,7 +71,7 @@ public class IbftMessageTransmitter {
 
     final CommitMessageData message = CommitMessageData.create(signedPayload);
 
-    multicaster.multicastToValidators(message);
+    multicaster.send(message);
   }
 
   public void multicastRoundChange(
@@ -84,7 +83,7 @@ public class IbftMessageTransmitter {
 
     final RoundChangeMessageData message = RoundChangeMessageData.create(signedPayload);
 
-    multicaster.multicastToValidators(message);
+    multicaster.send(message);
   }
 
   public void multicastNewRound(
@@ -98,6 +97,6 @@ public class IbftMessageTransmitter {
 
     final NewRoundMessageData message = NewRoundMessageData.create(signedPayload);
 
-    multicaster.multicastToValidators(message);
+    multicaster.send(message);
   }
 }
