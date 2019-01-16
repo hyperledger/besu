@@ -13,7 +13,8 @@
 package tech.pegasys.pantheon.consensus.ibft;
 
 import tech.pegasys.pantheon.consensus.ibft.headervalidationrules.IbftCoinbaseValidationRule;
-import tech.pegasys.pantheon.consensus.ibft.headervalidationrules.IbftExtraDataValidationRule;
+import tech.pegasys.pantheon.consensus.ibft.headervalidationrules.IbftCommitSealsValidationRule;
+import tech.pegasys.pantheon.consensus.ibft.headervalidationrules.IbftValidatorsValidationRule;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
@@ -53,7 +54,9 @@ public class IbftBlockHeaderValidationRulesetFactory {
 
   private static BlockHeaderValidator<IbftContext> createValidator(
       final long secondsBetweenBlocks, final boolean validateCommitSeals) {
-    return new BlockHeaderValidator.Builder<IbftContext>()
+
+    final BlockHeaderValidator.Builder<IbftContext> builder = new BlockHeaderValidator.Builder<>();
+    builder
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
         .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))
@@ -69,8 +72,11 @@ public class IbftBlockHeaderValidationRulesetFactory {
             new ConstantFieldValidationRule<>(
                 "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
         .addRule(new ConstantFieldValidationRule<>("Nonce", BlockHeader::getNonce, 0L))
-        .addRule(new IbftExtraDataValidationRule(validateCommitSeals))
-        .addRule(new IbftCoinbaseValidationRule())
-        .build();
+        .addRule(new IbftValidatorsValidationRule())
+        .addRule(new IbftCoinbaseValidationRule());
+    if (validateCommitSeals) {
+      builder.addRule(new IbftCommitSealsValidationRule());
+    }
+    return builder.build();
   }
 }
