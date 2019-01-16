@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,55 +15,30 @@ package tech.pegasys.pantheon.consensus.ibft.headervalidationrules;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.consensus.ibft.headervalidationrules.HeaderValidationTestHelpers.createProposedBlockHeader;
 
 import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
-import tech.pegasys.pantheon.consensus.ibft.IbftExtraDataFixture;
-import tech.pegasys.pantheon.consensus.ibft.Vote;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Util;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
-public class IbftExtraDataValidationRuleTest {
+public class IbftCommitSealsValidationRuleTest {
 
-  public static BlockHeader createProposedBlockHeader(
-      final List<Address> validators,
-      final List<KeyPair> committerKeyPairs,
-      final boolean useDifferentRoundNumbersForCommittedSeals) {
-    final int BASE_ROUND_NUMBER = 5;
-    final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
-    builder.number(1); // must NOT be block 0, as that should not contain seals at all
-
-    final BlockHeader header = builder.buildHeader();
-
-    final IbftExtraData ibftExtraData =
-        IbftExtraDataFixture.createExtraData(
-            header,
-            BytesValue.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
-            Optional.of(Vote.authVote(Address.fromHexString("1"))),
-            validators,
-            committerKeyPairs,
-            BASE_ROUND_NUMBER,
-            useDifferentRoundNumbersForCommittedSeals);
-
-    builder.extraData(ibftExtraData.encode());
-    return builder.buildHeader();
-  }
+  private final IbftCommitSealsValidationRule commitSealsValidationRule =
+      new IbftCommitSealsValidationRule();
 
   @Test
   public void correctlyConstructedHeaderPassesValidation() {
@@ -81,12 +56,9 @@ public class IbftExtraDataValidationRuleTest {
     final ProtocolContext<IbftContext> context =
         new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
 
-    final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
-
     BlockHeader header = createProposedBlockHeader(committerAddresses, committerKeyPairs, false);
 
-    assertThat(extraDataValidationRule.validate(header, null, context)).isTrue();
+    assertThat(commitSealsValidationRule.validate(header, null, context)).isTrue();
   }
 
   @Test
@@ -100,64 +72,13 @@ public class IbftExtraDataValidationRuleTest {
     final ProtocolContext<IbftContext> context =
         new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
 
-    final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
-
     final BlockHeader header = createProposedBlockHeader(validators, emptyList(), false);
 
     // Note that no committer seals are in the header's IBFT extra data.
     final IbftExtraData headerExtraData = IbftExtraData.decode(header.getExtraData());
     assertThat(headerExtraData.getSeals().size()).isEqualTo(0);
 
-    assertThat(extraDataValidationRule.validate(header, null, context)).isFalse();
-  }
-
-  @Test
-  public void outOfOrderValidatorListFailsValidation() {
-    final List<KeyPair> committerKeyPairs =
-        IntStream.range(0, 2).mapToObj(i -> KeyPair.generate()).collect(Collectors.toList());
-
-    final List<Address> committerAddresses =
-        committerKeyPairs
-            .stream()
-            .map(keyPair -> Util.publicKeyToAddress(keyPair.getPublicKey()))
-            .sorted()
-            .collect(Collectors.toList());
-
-    final List<Address> validators = Lists.reverse(committerAddresses);
-
-    final VoteTally voteTally = new VoteTally(validators);
-    final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
-
-    final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
-
-    BlockHeader header = createProposedBlockHeader(validators, committerKeyPairs, false);
-
-    assertThat(extraDataValidationRule.validate(header, null, context)).isFalse();
-  }
-
-  @Test
-  public void mismatchingReportedValidatorsVsLocallyStoredListFailsValidation() {
-    final List<KeyPair> committerKeyPairs =
-        IntStream.range(0, 2).mapToObj(i -> KeyPair.generate()).collect(Collectors.toList());
-
-    final List<Address> validators =
-        IntStream.range(0, 2)
-            .mapToObj(i -> Util.publicKeyToAddress(KeyPair.generate().getPublicKey()))
-            .collect(Collectors.toList());
-
-    final VoteTally voteTally = new VoteTally(validators);
-    final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
-
-    final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
-
-    BlockHeader header = createProposedBlockHeader(validators, committerKeyPairs, false);
-
-    assertThat(extraDataValidationRule.validate(header, null, context)).isFalse();
+    assertThat(commitSealsValidationRule.validate(header, null, context)).isFalse();
   }
 
   @Test
@@ -176,10 +97,8 @@ public class IbftExtraDataValidationRuleTest {
 
     final ProtocolContext<IbftContext> context =
         new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
-    final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
 
-    assertThat(extraDataValidationRule.validate(header, null, context)).isFalse();
+    assertThat(commitSealsValidationRule.validate(header, null, context)).isFalse();
   }
 
   @Test
@@ -245,9 +164,7 @@ public class IbftExtraDataValidationRuleTest {
 
     final ProtocolContext<IbftContext> context =
         new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
-    final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
 
-    return extraDataValidationRule.validate(header, null, context);
+    return commitSealsValidationRule.validate(header, null, context);
   }
 }
