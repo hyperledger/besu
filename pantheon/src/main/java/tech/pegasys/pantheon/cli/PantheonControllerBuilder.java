@@ -94,7 +94,7 @@ public class PantheonControllerBuilder {
       return MainnetPantheonController.init(
           storageProvider,
           genesisConfig,
-          DevelopmentProtocolSchedule.create(genesisConfig.getConfigOptions(), metricsSystem),
+          DevelopmentProtocolSchedule.create(genesisConfig.getConfigOptions()),
           synchronizerConfiguration,
           miningParameters,
           nodeKeys,

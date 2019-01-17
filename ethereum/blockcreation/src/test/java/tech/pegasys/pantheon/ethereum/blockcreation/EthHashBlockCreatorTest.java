@@ -20,9 +20,8 @@ import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolver;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHasher.Light;
-import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleFactory;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationTestUtils;
-import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -47,11 +46,8 @@ public class EthHashBlockCreatorTest {
   private final ExecutionContextTestFixture executionContextTestFixture =
       ExecutionContextTestFixture.builder()
           .protocolSchedule(
-              new ProtocolScheduleFactory<>(
-                      new NoOpMetricsSystem(),
-                      GenesisConfigFile.DEFAULT.getConfigOptions(),
-                      42,
-                      Function.identity())
+              new ProtocolScheduleBuilder<>(
+                      GenesisConfigFile.DEFAULT.getConfigOptions(), 42, Function.identity())
                   .createProtocolSchedule())
           .build();
 

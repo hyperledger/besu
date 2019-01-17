@@ -45,7 +45,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.ethereum.vm.TestBlockchain;
 import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
-import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
@@ -64,8 +63,7 @@ public class BlockTransactionSelectorTest {
   @Test
   public void emptyPendingTransactionsResultsInEmptyVettingResult() {
     final ProtocolSchedule<Void> protocolSchedule =
-        DevelopmentProtocolSchedule.create(
-            GenesisConfigFile.DEFAULT.getConfigOptions(), new NoOpMetricsSystem());
+        DevelopmentProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions());
     final Blockchain blockchain = new TestBlockchain();
     final TransactionProcessor transactionProcessor =
         protocolSchedule.getByBlockNumber(0).getTransactionProcessor();

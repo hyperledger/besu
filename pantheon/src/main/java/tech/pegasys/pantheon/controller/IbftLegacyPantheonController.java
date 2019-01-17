@@ -109,7 +109,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
       final KeyPair nodeKeys,
       final MetricsSystem metricsSystem) {
     final ProtocolSchedule<IbftContext> protocolSchedule =
-        IbftProtocolSchedule.create(genesisConfig.getConfigOptions(), metricsSystem);
+        IbftProtocolSchedule.create(genesisConfig.getConfigOptions());
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(protocolSchedule);

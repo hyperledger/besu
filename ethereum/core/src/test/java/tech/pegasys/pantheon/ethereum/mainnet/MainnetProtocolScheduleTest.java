@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.mainnet;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
-import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.nio.charset.StandardCharsets;
 
@@ -26,7 +25,7 @@ public class MainnetProtocolScheduleTest {
 
   @Test
   public void shouldReturnDefaultProtocolSpecsWhenCustomNumbersAreNotUsed() {
-    final ProtocolSchedule<Void> sched = MainnetProtocolSchedule.create(new NoOpMetricsSystem());
+    final ProtocolSchedule<Void> sched = MainnetProtocolSchedule.create();
     Assertions.assertThat(sched.getByBlockNumber(1L).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockNumber(1_150_000L).getName()).isEqualTo("Homestead");
     Assertions.assertThat(sched.getByBlockNumber(1_920_000L).getName())
@@ -47,8 +46,7 @@ public class MainnetProtocolScheduleTest {
   public void shouldOnlyUseFrontierWhenEmptyJsonConfigIsUsed() {
     final JsonObject json = new JsonObject("{}");
     final ProtocolSchedule<Void> sched =
-        MainnetProtocolSchedule.fromConfig(
-            GenesisConfigFile.fromConfig(json).getConfigOptions(), new NoOpMetricsSystem());
+        MainnetProtocolSchedule.fromConfig(GenesisConfigFile.fromConfig(json).getConfigOptions());
     Assertions.assertThat(sched.getByBlockNumber(1L).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Frontier");
   }
@@ -59,8 +57,7 @@ public class MainnetProtocolScheduleTest {
         new JsonObject(
             "{\"config\": {\"homesteadBlock\": 2, \"daoForkBlock\": 3, \"eip150Block\": 14, \"eip158Block\": 15, \"byzantiumBlock\": 16, \"constantinopleBlock\": 18, \"chainId\":1234}}");
     final ProtocolSchedule<Void> sched =
-        MainnetProtocolSchedule.fromConfig(
-            GenesisConfigFile.fromConfig(json).getConfigOptions(), new NoOpMetricsSystem());
+        MainnetProtocolSchedule.fromConfig(GenesisConfigFile.fromConfig(json).getConfigOptions());
     Assertions.assertThat(sched.getByBlockNumber(1).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockNumber(2).getName()).isEqualTo("Homestead");
     Assertions.assertThat(sched.getByBlockNumber(3).getName()).isEqualTo("DaoRecoveryInit");
@@ -79,8 +76,7 @@ public class MainnetProtocolScheduleTest {
             GenesisConfigFile.fromConfig(
                     Resources.toString(
                         Resources.getResource("ropsten.json"), StandardCharsets.UTF_8))
-                .getConfigOptions(),
-            new NoOpMetricsSystem());
+                .getConfigOptions());
     Assertions.assertThat(sched.getByBlockNumber(0).getName()).isEqualTo("TangerineWhistle");
     Assertions.assertThat(sched.getByBlockNumber(1).getName()).isEqualTo("TangerineWhistle");
     Assertions.assertThat(sched.getByBlockNumber(10).getName()).isEqualTo("SpuriousDragon");

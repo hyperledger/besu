@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.ethereum.mainnet;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.function.Function;
 
@@ -23,8 +22,8 @@ public class MainnetProtocolSchedule {
 
   public static final int DEFAULT_CHAIN_ID = 1;
 
-  public static ProtocolSchedule<Void> create(final MetricsSystem metricsSystem) {
-    return fromConfig(GenesisConfigFile.mainnet().getConfigOptions(), metricsSystem);
+  public static ProtocolSchedule<Void> create() {
+    return fromConfig(GenesisConfigFile.mainnet().getConfigOptions());
   }
 
   /**
@@ -32,13 +31,10 @@ public class MainnetProtocolSchedule {
    *
    * @param config {@link GenesisConfigOptions} containing the config options for the milestone
    *     starting points
-   * @param metricsSystem the {@link MetricsSystem} to use to record metrics
    * @return A configured mainnet protocol schedule
    */
-  public static ProtocolSchedule<Void> fromConfig(
-      final GenesisConfigOptions config, final MetricsSystem metricsSystem) {
-    return new ProtocolScheduleFactory<>(
-            metricsSystem, config, DEFAULT_CHAIN_ID, Function.identity())
+  public static ProtocolSchedule<Void> fromConfig(final GenesisConfigOptions config) {
+    return new ProtocolScheduleBuilder<>(config, DEFAULT_CHAIN_ID, Function.identity())
         .createProtocolSchedule();
   }
 }
