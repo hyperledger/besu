@@ -135,12 +135,6 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      final BlockHeader parentHeader =
-          protocolContext
-              .getBlockchain()
-              .getBlockHeader(processableBlockHeader.getParentHash())
-              .get();
-
       final SealableBlockHeader sealableBlockHeader =
           BlockHeaderBuilder.create()
               .populateFrom(processableBlockHeader)
