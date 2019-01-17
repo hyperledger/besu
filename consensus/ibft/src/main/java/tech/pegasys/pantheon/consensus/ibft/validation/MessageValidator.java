@@ -12,8 +12,6 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.validation;
 
-import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.FULL;
-
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
@@ -22,13 +20,15 @@ import tech.pegasys.pantheon.consensus.ibft.payload.Payload;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
+import tech.pegasys.pantheon.ethereum.BlockValidator;
+import tech.pegasys.pantheon.ethereum.BlockValidator.BlockProcessingOutputs;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Util;
-import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
+import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -43,7 +43,7 @@ public class MessageValidator {
   private final Collection<Address> validators;
   private final Address expectedProposer;
   private final ConsensusRoundIdentifier roundIdentifier;
-  private final BlockHeaderValidator<IbftContext> headerValidator;
+  private final BlockValidator<IbftContext> blockValidator;
   private final ProtocolContext<IbftContext> protocolContext;
   private final BlockHeader parentHeader;
 
@@ -53,13 +53,13 @@ public class MessageValidator {
       final Collection<Address> validators,
       final Address expectedProposer,
       final ConsensusRoundIdentifier roundIdentifier,
-      final BlockHeaderValidator<IbftContext> headerValidator,
+      final BlockValidator<IbftContext> blockValidator,
       final ProtocolContext<IbftContext> protocolContext,
       final BlockHeader parentHeader) {
     this.validators = validators;
     this.expectedProposer = expectedProposer;
     this.roundIdentifier = roundIdentifier;
-    this.headerValidator = headerValidator;
+    this.blockValidator = blockValidator;
     this.protocolContext = protocolContext;
     this.parentHeader = parentHeader;
   }
@@ -97,9 +97,13 @@ public class MessageValidator {
     }
 
     final Block proposedBlock = msg.getPayload().getBlock();
-    if (!headerValidator.validateHeader(
-        proposedBlock.getHeader(), parentHeader, protocolContext, FULL)) {
-      LOG.info("Invalid Proposal message, block did not pass header validation.");
+
+    final Optional<BlockProcessingOutputs> validationResult =
+        blockValidator.validateAndProcessBlock(
+            protocolContext, proposedBlock, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);
+
+    if (!validationResult.isPresent()) {
+      LOG.info("Invalid Proposal message, block did not pass validation.");
       return false;
     }
 

@@ -73,4 +73,9 @@ public class IbftCommitSealsValidationRule
 
     return true;
   }
+
+  @Override
+  public boolean includeInLightValidation() {
+    return false;
+  }
 }

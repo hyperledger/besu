@@ -18,35 +18,39 @@ import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.ProposerSelector;
+import tech.pegasys.pantheon.ethereum.BlockValidator;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collection;
 
 public class MessageValidatorFactory {
 
   private final ProposerSelector proposerSelector;
-  private final BlockHeaderValidator<IbftContext> blockHeaderValidator;
   private final ProtocolContext<IbftContext> protocolContext;
+  private final ProtocolSchedule<IbftContext> protocolSchedule;
 
   public MessageValidatorFactory(
       final ProposerSelector proposerSelector,
-      final BlockHeaderValidator<IbftContext> blockHeaderValidator,
+      final ProtocolSchedule<IbftContext> protocolSchedule,
       final ProtocolContext<IbftContext> protocolContext) {
     this.proposerSelector = proposerSelector;
-    this.blockHeaderValidator = blockHeaderValidator;
+    this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
   }
 
   public MessageValidator createMessageValidator(
       final ConsensusRoundIdentifier roundIdentifier, final BlockHeader parentHeader) {
+    final BlockValidator<IbftContext> blockValidator =
+        protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockValidator();
+
     return new MessageValidator(
         protocolContext.getConsensusState().getVoteTally().getValidators(),
         proposerSelector.selectProposerForRound(roundIdentifier),
         roundIdentifier,
-        blockHeaderValidator,
+        blockValidator,
         protocolContext,
         parentHeader);
   }
