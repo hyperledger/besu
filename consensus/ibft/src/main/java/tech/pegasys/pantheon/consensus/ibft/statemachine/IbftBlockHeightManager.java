@@ -236,7 +236,7 @@ public class IbftBlockHeightManager {
       if (messageAge == FUTURE_ROUND) {
         startNewRound(payload.getRoundIdentifier().getRoundNumber());
       }
-      currentRound.handleProposalMessage(payload.getProposalPayload());
+      currentRound.handleProposalFromNewRound(signedPayload);
     }
   }
 
