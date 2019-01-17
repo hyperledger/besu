@@ -80,7 +80,8 @@ public class DownloaderTest {
 
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
     protocolContext = localBlockchainSetup.getProtocolContext();
-    ethProtocolManager = EthProtocolManagerTestUtil.create(localBlockchain);
+    ethProtocolManager =
+        EthProtocolManagerTestUtil.create(localBlockchain, localBlockchainSetup.getWorldArchive());
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
 

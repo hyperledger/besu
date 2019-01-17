@@ -29,6 +29,7 @@ import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
+import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
@@ -72,10 +73,10 @@ public class DetermineCommonAncestorTaskTest {
   public void setup() {
     genesisBlock = blockDataGenerator.genesisBlock();
     localBlockchain = createInMemoryBlockchain(genesisBlock);
-    ethProtocolManager = EthProtocolManagerTestUtil.create(localBlockchain);
+    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+    ethProtocolManager = EthProtocolManagerTestUtil.create(localBlockchain, worldStateArchive);
     ethContext = ethProtocolManager.ethContext();
-    protocolContext =
-        new ProtocolContext<>(localBlockchain, createInMemoryWorldStateArchive(), null);
+    protocolContext = new ProtocolContext<>(localBlockchain, worldStateArchive, null);
   }
 
   @Test

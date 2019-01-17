@@ -86,7 +86,8 @@ public class BlockPropagationManagerTest {
             blockchain,
             tempProtocolContext.getWorldStateArchive(),
             tempProtocolContext.getConsensusState());
-    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain);
+    ethProtocolManager =
+        EthProtocolManagerTestUtil.create(blockchain, blockchainUtil.getWorldArchive());
     syncConfig =
         SynchronizerConfiguration.builder()
             .blockPropagationRange(-3, 5)

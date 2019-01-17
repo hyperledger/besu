@@ -161,6 +161,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(
             protocolContext.getBlockchain(),
+            protocolContext.getWorldStateArchive(),
             networkId,
             fastSyncEnabled,
             syncConfig.downloaderParallelism(),

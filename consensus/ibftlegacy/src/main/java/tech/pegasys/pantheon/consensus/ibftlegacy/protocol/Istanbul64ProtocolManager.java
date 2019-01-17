@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.consensus.ibftlegacy.protocol;
 
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;
@@ -27,11 +28,12 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
 
   public Istanbul64ProtocolManager(
       final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
       final int networkId,
       final boolean fastSyncEnabled,
       final int syncWorkers,
       final int txWorkers) {
-    super(blockchain, networkId, fastSyncEnabled, syncWorkers, txWorkers);
+    super(blockchain, worldStateArchive, networkId, fastSyncEnabled, syncWorkers, txWorkers);
   }
 
   @Override

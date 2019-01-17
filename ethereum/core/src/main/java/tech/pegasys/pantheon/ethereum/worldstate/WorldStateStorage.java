@@ -26,6 +26,8 @@ public interface WorldStateStorage {
 
   Optional<BytesValue> getAccountStorageTrieNode(Bytes32 nodeHash);
 
+  Optional<BytesValue> getNodeData(Hash hash);
+
   Updater updater();
 
   interface Updater {

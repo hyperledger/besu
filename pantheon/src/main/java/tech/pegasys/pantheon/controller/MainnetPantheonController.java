@@ -113,6 +113,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(
             protocolContext.getBlockchain(),
+            protocolContext.getWorldStateArchive(),
             genesisConfig
                 .getConfigOptions()
                 .getChainId()

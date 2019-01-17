@@ -44,6 +44,11 @@ public class KeyValueStorageWorldStateStorage implements WorldStateStorage {
   }
 
   @Override
+  public Optional<BytesValue> getNodeData(final Hash hash) {
+    return keyValueStorage.get(hash);
+  }
+
+  @Override
   public Updater updater() {
     return new Updater(keyValueStorage.startTransaction());
   }

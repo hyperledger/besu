@@ -20,7 +20,7 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 public final class NodeDataMessage extends AbstractMessageData {
 
@@ -53,10 +53,10 @@ public final class NodeDataMessage extends AbstractMessageData {
     return EthPV63.NODE_DATA;
   }
 
-  public Iterable<BytesValue> nodeData() {
+  public List<BytesValue> nodeData() {
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
-    final Collection<BytesValue> nodeData = new ArrayList<>();
+    final List<BytesValue> nodeData = new ArrayList<>();
     while (!input.isEndOfCurrentList()) {
       nodeData.add(input.readBytesValue());
     }
