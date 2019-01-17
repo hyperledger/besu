@@ -13,11 +13,13 @@
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.ChainHead;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
+import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.manager.DeterministicEthScheduler.TimeoutPolicy;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
@@ -29,15 +31,23 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 public class EthProtocolManagerTestUtil {
 
   public static EthProtocolManager create(
-      final Blockchain blockchain, final TimeoutPolicy timeoutPolicy) {
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final TimeoutPolicy timeoutPolicy) {
     final int networkId = 1;
     final EthScheduler ethScheduler = new DeterministicEthScheduler(timeoutPolicy);
     return new EthProtocolManager(
-        blockchain, networkId, false, EthProtocolManager.DEFAULT_REQUEST_LIMIT, ethScheduler);
+        blockchain,
+        worldStateArchive,
+        networkId,
+        false,
+        EthProtocolManager.DEFAULT_REQUEST_LIMIT,
+        ethScheduler);
   }
 
-  public static EthProtocolManager create(final Blockchain blockchain) {
-    return create(blockchain, () -> false);
+  public static EthProtocolManager create(
+      final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
+    return create(blockchain, worldStateArchive, () -> false);
   }
 
   public static EthProtocolManager create() {
@@ -45,7 +55,8 @@ public class EthProtocolManagerTestUtil {
     final GenesisConfigFile config = GenesisConfigFile.mainnet();
     final GenesisState genesisState = GenesisState.fromConfig(config, protocolSchedule);
     final Blockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
-    return create(blockchain);
+    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+    return create(blockchain, worldStateArchive);
   }
 
   public static void broadcastMessage(

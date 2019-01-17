@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
@@ -20,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
+import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.messages.BlockBodiesMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.BlockHeadersMessage;
@@ -177,6 +179,11 @@ public class RespondingEthPeer {
   }
 
   public static Responder blockchainResponder(final Blockchain blockchain) {
+    return blockchainResponder(blockchain, createInMemoryWorldStateArchive());
+  }
+
+  public static Responder blockchainResponder(
+      final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     return (cap, msg) -> {
       MessageData response = null;
       switch (msg.getCode()) {
@@ -190,7 +197,7 @@ public class RespondingEthPeer {
           response = EthServer.constructGetReceiptsResponse(blockchain, msg, 200);
           break;
         case EthPV63.GET_NODE_DATA:
-          response = EthServer.constructGetNodeDataResponse(msg, 200);
+          response = EthServer.constructGetNodeDataResponse(worldStateArchive, msg, 200);
           break;
       }
       return Optional.ofNullable(response);

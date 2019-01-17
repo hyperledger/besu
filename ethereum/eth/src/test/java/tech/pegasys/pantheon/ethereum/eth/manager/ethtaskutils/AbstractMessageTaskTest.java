@@ -69,7 +69,9 @@ public abstract class AbstractMessageTaskTest<T, R> {
     peerCountToTimeout = new AtomicInteger(0);
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
-            blockchain, () -> peerCountToTimeout.getAndDecrement() > 0 || peersDoTimeout.get());
+            blockchain,
+            protocolContext.getWorldStateArchive(),
+            () -> peerCountToTimeout.getAndDecrement() > 0 || peersDoTimeout.get());
     ethContext = ethProtocolManager.ethContext();
   }
 

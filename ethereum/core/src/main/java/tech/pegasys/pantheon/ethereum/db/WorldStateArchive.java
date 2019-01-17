@@ -18,6 +18,9 @@ import tech.pegasys.pantheon.ethereum.core.WorldState;
 import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
 import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+
+import java.util.Optional;
 
 public class WorldStateArchive {
   private final WorldStateStorage storage;
@@ -41,5 +44,9 @@ public class WorldStateArchive {
 
   public MutableWorldState getMutable() {
     return getMutable(EMPTY_ROOT_HASH);
+  }
+
+  public Optional<BytesValue> getNodeData(final Hash hash) {
+    return storage.getNodeData(hash);
   }
 }

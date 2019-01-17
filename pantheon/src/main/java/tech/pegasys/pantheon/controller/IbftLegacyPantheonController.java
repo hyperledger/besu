@@ -143,6 +143,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
       ethProtocolManager =
           new Istanbul64ProtocolManager(
               protocolContext.getBlockchain(),
+              protocolContext.getWorldStateArchive(),
               networkId,
               fastSyncEnabled,
               syncConfig.downloaderParallelism(),
@@ -152,6 +153,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
       ethProtocolManager =
           new EthProtocolManager(
               protocolContext.getBlockchain(),
+              protocolContext.getWorldStateArchive(),
               networkId,
               fastSyncEnabled,
               syncConfig.downloaderParallelism(),
