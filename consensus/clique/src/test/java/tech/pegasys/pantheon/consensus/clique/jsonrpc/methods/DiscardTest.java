@@ -102,7 +102,6 @@ public class DiscardTest {
   public void discardWithoutAddress() {
     final VoteProposer proposer = new VoteProposer();
     final Discard discard = new Discard(proposer, new JsonRpcParameter());
-    final Address a0 = Address.fromHexString("0");
 
     assertThatThrownBy(() -> discard.response(requestWithParams()))
         .hasMessage("Missing required json rpc parameter at index 0")

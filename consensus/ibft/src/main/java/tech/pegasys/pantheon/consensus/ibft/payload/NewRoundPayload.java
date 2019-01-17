@@ -113,8 +113,6 @@ public class NewRoundPayload implements Payload {
 
     private SignedData<ProposalPayload> proposalPayload = null;
 
-    public Builder() {}
-
     public Builder(
         final ConsensusRoundIdentifier roundChangeIdentifier,
         final RoundChangeCertificate roundChangeCertificate,
@@ -135,10 +133,6 @@ public class NewRoundPayload implements Payload {
 
     public void setRoundChangeCertificate(final RoundChangeCertificate roundChangeCertificate) {
       this.roundChangeCertificate = roundChangeCertificate;
-    }
-
-    public void setProposalPayload(final SignedData<ProposalPayload> proposalPayload) {
-      this.proposalPayload = proposalPayload;
     }
 
     public NewRoundPayload build() {

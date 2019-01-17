@@ -31,7 +31,6 @@ public class PrepareMessageData extends AbstractIbftMessageData {
         messageData, MESSAGE_CODE, PrepareMessageData.class, PrepareMessageData::new);
   }
 
-  @Override
   public SignedData<PreparePayload> decode() {
     return SignedData.readSignedPreparePayloadFrom(RLP.input(data));
   }

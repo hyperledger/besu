@@ -31,7 +31,6 @@ public class CommitMessageData extends AbstractIbftMessageData {
         messageData, MESSAGE_CODE, CommitMessageData.class, CommitMessageData::new);
   }
 
-  @Override
   public SignedData<CommitPayload> decode() {
     return SignedData.readSignedCommitPayloadFrom(RLP.input(data));
   }

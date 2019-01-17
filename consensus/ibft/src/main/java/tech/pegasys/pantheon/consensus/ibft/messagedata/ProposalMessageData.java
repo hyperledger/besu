@@ -31,7 +31,6 @@ public class ProposalMessageData extends AbstractIbftMessageData {
         messageData, MESSAGE_CODE, ProposalMessageData.class, ProposalMessageData::new);
   }
 
-  @Override
   public SignedData<ProposalPayload> decode() {
     return SignedData.readSignedProposalPayloadFrom(RLP.input(data));
   }

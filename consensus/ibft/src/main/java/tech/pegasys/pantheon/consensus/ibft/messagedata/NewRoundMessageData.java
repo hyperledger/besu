@@ -31,7 +31,6 @@ public class NewRoundMessageData extends AbstractIbftMessageData {
         messageData, MESSAGE_CODE, NewRoundMessageData.class, NewRoundMessageData::new);
   }
 
-  @Override
   public SignedData<NewRoundPayload> decode() {
     return SignedData.readSignedNewRoundPayloadFrom(RLP.input(data));
   }

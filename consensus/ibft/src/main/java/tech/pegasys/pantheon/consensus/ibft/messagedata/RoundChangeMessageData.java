@@ -31,7 +31,6 @@ public class RoundChangeMessageData extends AbstractIbftMessageData {
         messageData, MESSAGE_CODE, RoundChangeMessageData.class, RoundChangeMessageData::new);
   }
 
-  @Override
   public SignedData<RoundChangePayload> decode() {
     return SignedData.readSignedRoundChangePayloadFrom(RLP.input(data));
   }
