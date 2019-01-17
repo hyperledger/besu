@@ -103,7 +103,7 @@ public final class RunnerTest {
         MainnetPantheonController.init(
             createKeyValueStorageProvider(dbAhead),
             GenesisConfigFile.mainnet(),
-            MainnetProtocolSchedule.create(new NoOpMetricsSystem()),
+            MainnetProtocolSchedule.create(),
             fastSyncConfig,
             new MiningParametersTestBuilder().enabled(false).build(),
             aheadDbNodeKeys,
@@ -116,7 +116,7 @@ public final class RunnerTest {
         MainnetPantheonController.init(
             createKeyValueStorageProvider(dbAhead),
             GenesisConfigFile.mainnet(),
-            MainnetProtocolSchedule.create(new NoOpMetricsSystem()),
+            MainnetProtocolSchedule.create(),
             fastSyncConfig,
             new MiningParametersTestBuilder().enabled(false).build(),
             aheadDbNodeKeys,
@@ -159,7 +159,7 @@ public final class RunnerTest {
           MainnetPantheonController.init(
               new InMemoryStorageProvider(),
               GenesisConfigFile.mainnet(),
-              MainnetProtocolSchedule.create(new NoOpMetricsSystem()),
+              MainnetProtocolSchedule.create(),
               fastSyncConfig,
               new MiningParametersTestBuilder().enabled(false).build(),
               KeyPair.generate(),

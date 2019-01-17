@@ -19,11 +19,6 @@ import tech.pegasys.pantheon.ethereum.core.Gas;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame.State;
 import tech.pegasys.pantheon.ethereum.vm.ehalt.ExceptionalHaltException;
 import tech.pegasys.pantheon.ethereum.vm.ehalt.ExceptionalHaltManager;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricCategory;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
-import tech.pegasys.pantheon.metrics.OperationTimer;
-import tech.pegasys.pantheon.metrics.OperationTimer.TimingContext;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.EnumSet;
@@ -38,17 +33,10 @@ public class EVM {
   private static final int STOP_OPCODE = 0x00;
   private final OperationRegistry operations;
   private final Operation invalidOperation;
-  private final LabelledMetric<OperationTimer> labelledTimer;
 
-  public EVM(
-      final OperationRegistry operations,
-      final Operation invalidOperation,
-      final MetricsSystem metricsSystem) {
+  public EVM(final OperationRegistry operations, final Operation invalidOperation) {
     this.operations = operations;
     this.invalidOperation = invalidOperation;
-    labelledTimer =
-        metricsSystem.createLabelledTimer(
-            MetricCategory.EVM, "operation_execution", "Timing for EVM operations", "operation");
   }
 
   public void runToHalt(final MessageFrame frame, final OperationTracer operationTracer)
@@ -82,11 +70,7 @@ public class EVM {
           checkForExceptionalHalt(frame);
           logState(frame, currentGasCost);
           decrementRemainingGas(frame, currentGasCost);
-          final Operation currentOperation = frame.getCurrentOperation();
-          try (final TimingContext ignored =
-              labelledTimer.labels(currentOperation.getName()).startTimer()) {
-            currentOperation.execute(frame);
-          }
+          frame.getCurrentOperation().execute(frame);
           incrementProgramCounter(frame);
         });
   }

@@ -31,7 +31,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
-import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.io.IOException;
 import java.net.URL;
@@ -93,8 +92,7 @@ public class BlockchainSetupUtil<C> {
   }
 
   public static BlockchainSetupUtil<Void> forTesting() {
-    final ProtocolSchedule<Void> protocolSchedule =
-        MainnetProtocolSchedule.create(new NoOpMetricsSystem());
+    final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
     final TemporaryFolder temp = new TemporaryFolder();
     try {
       temp.create();

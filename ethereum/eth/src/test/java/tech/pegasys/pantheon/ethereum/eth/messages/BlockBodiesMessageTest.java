@@ -23,7 +23,6 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
-import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -66,8 +65,7 @@ public final class BlockBodiesMessageTest {
     final Iterator<BlockBody> readBodies =
         message
             .bodies(
-                DevelopmentProtocolSchedule.create(
-                    GenesisConfigFile.DEFAULT.getConfigOptions(), new NoOpMetricsSystem()))
+                DevelopmentProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions()))
             .iterator();
     for (int i = 0; i < 50; ++i) {
       Assertions.assertThat(readBodies.next()).isEqualTo(bodies.get(i));

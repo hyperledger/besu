@@ -49,10 +49,6 @@ public class PrometheusMetricsSystem implements MetricsSystem {
   private static final String PANTHEON_PREFIX = "pantheon_";
   private final Map<MetricCategory, Collection<Collector>> collectors = new ConcurrentHashMap<>();
   private final CollectorRegistry registry = new CollectorRegistry(true);
-  private final Map<String, LabelledMetric<tech.pegasys.pantheon.metrics.Counter>>
-      labelledCounters = new ConcurrentHashMap<>();
-  private final Map<String, LabelledMetric<tech.pegasys.pantheon.metrics.OperationTimer>>
-      labelledTimers = new ConcurrentHashMap<>();
 
   PrometheusMetricsSystem() {}
 
@@ -77,16 +73,12 @@ public class PrometheusMetricsSystem implements MetricsSystem {
       final String name,
       final String help,
       final String... labelNames) {
-    return labelledCounters.computeIfAbsent(
-        name,
-        key -> {
-          final Counter counter =
-              Counter.build(convertToPrometheusName(category, name), help)
-                  .labelNames(labelNames)
-                  .create();
-          addCollector(category, counter);
-          return new PrometheusCounter(counter);
-        });
+    final Counter counter =
+        Counter.build(convertToPrometheusName(category, name), help)
+            .labelNames(labelNames)
+            .create();
+    addCollector(category, counter);
+    return new PrometheusCounter(counter);
   }
 
   @Override
@@ -95,22 +87,18 @@ public class PrometheusMetricsSystem implements MetricsSystem {
       final String name,
       final String help,
       final String... labelNames) {
-    return labelledTimers.computeIfAbsent(
-        name,
-        key -> {
-          final Summary summary =
-              Summary.build(convertToPrometheusName(category, name), help)
-                  .quantile(0.2, 0.02)
-                  .quantile(0.5, 0.05)
-                  .quantile(0.8, 0.02)
-                  .quantile(0.95, 0.005)
-                  .quantile(0.99, 0.001)
-                  .quantile(1.0, 0)
-                  .labelNames(labelNames)
-                  .create();
-          addCollector(category, summary);
-          return new PrometheusTimer(summary);
-        });
+    final Summary summary =
+        Summary.build(convertToPrometheusName(category, name), help)
+            .quantile(0.2, 0.02)
+            .quantile(0.5, 0.05)
+            .quantile(0.8, 0.02)
+            .quantile(0.95, 0.005)
+            .quantile(0.99, 0.001)
+            .quantile(1.0, 0)
+            .labelNames(labelNames)
+            .create();
+    addCollector(category, summary);
+    return new PrometheusTimer(summary);
   }
 
   @Override

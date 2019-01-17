@@ -91,7 +91,6 @@ import tech.pegasys.pantheon.ethereum.vm.operations.SubOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.SwapOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.TimestampOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.XorOperation;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.List;
 import java.util.function.Function;
@@ -117,9 +116,7 @@ public abstract class MainnetEvmRegistries {
   }
 
   private static EVM createAndPopulate(
-      final List<OperationFactory> factories,
-      final GasCalculator gasCalculator,
-      final MetricsSystem metricsSystem) {
+      final List<OperationFactory> factories, final GasCalculator gasCalculator) {
     final OperationRegistry registry = new OperationRegistry();
 
     for (final OperationFactory factory : factories) {
@@ -127,26 +124,23 @@ public abstract class MainnetEvmRegistries {
       registry.put(operation.getOpcode(), operation);
     }
 
-    return new EVM(registry, new InvalidOperation(gasCalculator), metricsSystem);
+    return new EVM(registry, new InvalidOperation(gasCalculator));
   }
 
-  public static EVM frontier(final GasCalculator gasCalculator, final MetricsSystem metricsSystem) {
-    return createAndPopulate(FRONTIER_OPERATION_FACTORIES, gasCalculator, metricsSystem);
+  public static EVM frontier(final GasCalculator gasCalculator) {
+    return createAndPopulate(FRONTIER_OPERATION_FACTORIES, gasCalculator);
   }
 
-  public static EVM homestead(
-      final GasCalculator gasCalculator, final MetricsSystem metricsSystem) {
-    return createAndPopulate(HOMESTEAD_OPERATION_FACTORIES, gasCalculator, metricsSystem);
+  public static EVM homestead(final GasCalculator gasCalculator) {
+    return createAndPopulate(HOMESTEAD_OPERATION_FACTORIES, gasCalculator);
   }
 
-  public static EVM byzantium(
-      final GasCalculator gasCalculator, final MetricsSystem metricsSystem) {
-    return createAndPopulate(BYZANTIUM_OPERATION_FACTORIES, gasCalculator, metricsSystem);
+  public static EVM byzantium(final GasCalculator gasCalculator) {
+    return createAndPopulate(BYZANTIUM_OPERATION_FACTORIES, gasCalculator);
   }
 
-  public static EVM constantinople(
-      final GasCalculator gasCalculator, final MetricsSystem metricsSystem) {
-    return createAndPopulate(CONSTANTINOPLE_OPERATION_FACTORIES, gasCalculator, metricsSystem);
+  public static EVM constantinople(final GasCalculator gasCalculator) {
+    return createAndPopulate(CONSTANTINOPLE_OPERATION_FACTORIES, gasCalculator);
   }
 
   private static List<OperationFactory> buildFrontierFactories() {

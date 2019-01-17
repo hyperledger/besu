@@ -21,7 +21,6 @@ import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockProcessor.TransactionReceiptFactory;
 import tech.pegasys.pantheon.ethereum.vm.EVM;
 import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -33,7 +32,7 @@ public class ProtocolSpecBuilder<T> {
   private BlockHashFunction blockHashFunction;
   private TransactionReceiptFactory transactionReceiptFactory;
   private DifficultyCalculator<T> difficultyCalculator;
-  private BiFunction<GasCalculator, MetricsSystem, EVM> evmBuilder;
+  private Function<GasCalculator, EVM> evmBuilder;
   private Function<GasCalculator, TransactionValidator> transactionValidatorBuilder;
   private Function<DifficultyCalculator<T>, BlockHeaderValidator<T>> blockHeaderValidatorBuilder;
   private Function<DifficultyCalculator<T>, BlockHeaderValidator<T>> ommerHeaderValidatorBuilder;
@@ -49,7 +48,6 @@ public class ProtocolSpecBuilder<T> {
   private TransactionReceiptType transactionReceiptType;
   private String name;
   private MiningBeneficiaryCalculator miningBeneficiaryCalculator;
-  private MetricsSystem metricsSystem;
 
   public ProtocolSpecBuilder<T> gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -78,8 +76,7 @@ public class ProtocolSpecBuilder<T> {
     return this;
   }
 
-  public ProtocolSpecBuilder<T> evmBuilder(
-      final BiFunction<GasCalculator, MetricsSystem, EVM> evmBuilder) {
+  public ProtocolSpecBuilder<T> evmBuilder(final Function<GasCalculator, EVM> evmBuilder) {
     this.evmBuilder = evmBuilder;
     return this;
   }
@@ -171,11 +168,6 @@ public class ProtocolSpecBuilder<T> {
     return this;
   }
 
-  public ProtocolSpecBuilder<T> metricsSystem(final MetricsSystem metricsSystem) {
-    this.metricsSystem = metricsSystem;
-    return this;
-  }
-
   public <R> ProtocolSpecBuilder<R> changeConsensusContextType(
       final Function<DifficultyCalculator<R>, BlockHeaderValidator<R>> blockHeaderValidatorBuilder,
       final Function<DifficultyCalculator<R>, BlockHeaderValidator<R>> ommerHeaderValidatorBuilder,
@@ -227,10 +219,9 @@ public class ProtocolSpecBuilder<T> {
     checkNotNull(name, "Missing name");
     checkNotNull(miningBeneficiaryCalculator, "Missing Mining Beneficiary Calculator");
     checkNotNull(protocolSchedule, "Missing protocol schedule");
-    checkNotNull(metricsSystem, "Missing metrics system");
 
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
-    final EVM evm = evmBuilder.apply(gasCalculator, metricsSystem);
+    final EVM evm = evmBuilder.apply(gasCalculator);
     final TransactionValidator transactionValidator =
         transactionValidatorBuilder.apply(gasCalculator);
     final AbstractMessageProcessor contractCreationProcessor =

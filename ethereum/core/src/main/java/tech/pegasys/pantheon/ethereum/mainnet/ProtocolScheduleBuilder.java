@@ -13,24 +13,20 @@
 package tech.pegasys.pantheon.ethereum.mainnet;
 
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.OptionalLong;
 import java.util.function.Function;
 
-public class ProtocolScheduleFactory<C> {
+public class ProtocolScheduleBuilder<C> {
 
-  private final MetricsSystem metricsSystem;
   private final GenesisConfigOptions config;
   private final Function<ProtocolSpecBuilder<Void>, ProtocolSpecBuilder<C>> protocolSpecAdapter;
   private final int defaultChainId;
 
-  public ProtocolScheduleFactory(
-      final MetricsSystem metricsSystem,
+  public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final int defaultChainId,
       final Function<ProtocolSpecBuilder<Void>, ProtocolSpecBuilder<C>> protocolSpecAdapter) {
-    this.metricsSystem = metricsSystem;
     this.config = config;
     this.protocolSpecAdapter = protocolSpecAdapter;
     this.defaultChainId = defaultChainId;
@@ -95,10 +91,6 @@ public class ProtocolScheduleFactory<C> {
     blockNumber.ifPresent(
         number ->
             protocolSchedule.putMilestone(
-                number,
-                protocolSpecAdapter
-                    .apply(definition)
-                    .metricsSystem(metricsSystem)
-                    .build(protocolSchedule)));
+                number, protocolSpecAdapter.apply(definition).build(protocolSchedule)));
   }
 }

@@ -54,7 +54,6 @@ import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.DefaultMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
-import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.ArrayList;
@@ -693,8 +692,7 @@ public final class EthProtocolManagerTest {
         .isEqualTo(Collections.singletonList(EthProtocol.ETH63));
 
     // assert that all messages transmitted contain the expected block & total difficulty.
-    final ProtocolSchedule<Void> protocolSchdeule =
-        MainnetProtocolSchedule.create(new NoOpMetricsSystem());
+    final ProtocolSchedule<Void> protocolSchdeule = MainnetProtocolSchedule.create();
     for (final NewBlockMessage msg : messageSentCaptor.getAllValues()) {
       assertThat(msg.block(protocolSchdeule)).isEqualTo(minedBlock);
       assertThat(msg.totalDifficulty(protocolSchdeule)).isEqualTo(expectedTotalDifficulty);

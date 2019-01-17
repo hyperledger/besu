@@ -21,7 +21,7 @@ import tech.pegasys.pantheon.ethereum.db.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleFactory;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
@@ -112,11 +112,8 @@ public class ExecutionContextTestFixture {
     public ExecutionContextTestFixture build() {
       if (protocolSchedule == null) {
         protocolSchedule =
-            new ProtocolScheduleFactory<>(
-                    new NoOpMetricsSystem(),
-                    new StubGenesisConfigOptions().constantinopleBlock(0),
-                    42,
-                    Function.identity())
+            new ProtocolScheduleBuilder<>(
+                    new StubGenesisConfigOptions().constantinopleBlock(0), 42, Function.identity())
                 .createProtocolSchedule();
       }
       if (keyValueStorage == null) {

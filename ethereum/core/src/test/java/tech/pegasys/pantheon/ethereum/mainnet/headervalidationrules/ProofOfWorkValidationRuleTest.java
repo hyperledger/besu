@@ -22,7 +22,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationTestUtils;
-import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.io.IOException;
@@ -110,8 +109,7 @@ public class ProofOfWorkValidationRuleTest {
   }
 
   private BlockHashFunction mainnetBlockHashFunction() {
-    final ProtocolSchedule<Void> protocolSchedule =
-        MainnetProtocolSchedule.create(new NoOpMetricsSystem());
+    final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
     return ScheduleBasedBlockHashFunction.create(protocolSchedule);
   }
 }
