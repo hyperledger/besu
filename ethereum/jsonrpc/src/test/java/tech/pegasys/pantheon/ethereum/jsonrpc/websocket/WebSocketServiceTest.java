@@ -65,7 +65,7 @@ public class WebSocketServiceTest {
 
     websocketConfiguration.setPort(websocketService.socketAddress().getPort());
 
-    HttpClientOptions httpClientOptions =
+    final HttpClientOptions httpClientOptions =
         new HttpClientOptions()
             .setDefaultHost(websocketConfiguration.getHost())
             .setDefaultPort(websocketConfiguration.getPort());
@@ -135,6 +135,7 @@ public class WebSocketServiceTest {
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
 
+  @SuppressWarnings("deprecation") // No alternative available in vertx 3.
   @Test
   public void websocketServiceMustReturnErrorOnHttpRequest(final TestContext context) {
     final Async async = context.async();

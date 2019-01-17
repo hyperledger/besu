@@ -98,7 +98,7 @@ public class MetricsHttpService {
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     httpServer
-        .requestHandler(router::accept)
+        .requestHandler(router)
         .listen(
             res -> {
               if (!res.failed()) {

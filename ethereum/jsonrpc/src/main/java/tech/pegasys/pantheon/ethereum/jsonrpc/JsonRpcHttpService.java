@@ -33,7 +33,6 @@ import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.OperationTimer.TimingContext;
 import tech.pegasys.pantheon.util.NetworkUtility;
 
-import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.file.Path;
@@ -143,7 +142,7 @@ public class JsonRpcHttpService {
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     httpServer
-        .requestHandler(router::accept)
+        .requestHandler(router)
         .listen(
             res -> {
               if (!res.failed()) {
@@ -156,7 +155,7 @@ public class JsonRpcHttpService {
               }
               httpServer = null;
               final Throwable cause = res.cause();
-              if (cause instanceof BindException || cause instanceof SocketException) {
+              if (cause instanceof SocketException) {
                 resultFuture.completeExceptionally(
                     new JsonRpcServiceException(
                         String.format(
@@ -172,7 +171,7 @@ public class JsonRpcHttpService {
 
   private Handler<RoutingContext> checkWhitelistHostHeader() {
     return event -> {
-      Optional<String> hostHeader = getAndValidateHostHeader(event);
+      final Optional<String> hostHeader = getAndValidateHostHeader(event);
       if (config.getHostsWhitelist().contains("*")
           || (hostHeader.isPresent() && hostIsInWhitelist(hostHeader))) {
         event.next();
@@ -187,8 +186,8 @@ public class JsonRpcHttpService {
   }
 
   private Optional<String> getAndValidateHostHeader(final RoutingContext event) {
-    Iterable<String> splitHostHeader = Splitter.on(':').split(event.request().host());
-    long hostPieces = stream(splitHostHeader).count();
+    final Iterable<String> splitHostHeader = Splitter.on(':').split(event.request().host());
+    final long hostPieces = stream(splitHostHeader).count();
     if (hostPieces > 1) {
       // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
       if (hostPieces > 2 || !Iterables.get(splitHostHeader, 1).matches("\\d{1,5}+")) {
@@ -351,7 +350,7 @@ public class JsonRpcHttpService {
                       .list()
                       .stream()
                       .map(JsonRpcResponse.class::cast)
-                      .filter(r -> isNonEmptyResponses(r))
+                      .filter(this::isNonEmptyResponses)
                       .toArray(JsonRpcResponse[]::new);
 
               routingContext.response().end(Json.encode(completed));
@@ -385,7 +384,7 @@ public class JsonRpcHttpService {
     }
 
     // Generate response
-    try (final TimingContext context = requestTimer.labels(request.getMethod()).startTimer()) {
+    try (final TimingContext ignored = requestTimer.labels(request.getMethod()).startTimer()) {
       return method.response(request);
     } catch (final InvalidJsonRpcParameters e) {
       LOG.debug(e);
