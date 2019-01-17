@@ -1174,19 +1174,11 @@ Returns the receipt of a transaction by transaction hash. Receipts for pending t
 
 ### eth_newFilter
 
-Creates a log filter. To poll for logs associated with the created filter, use [eth_getFilterChanges](#eth_getfilterchanges).
+Creates a [log filter](../Using-Pantheon/Events-and-Logs.md). To poll for logs associated with the created filter, use [eth_getFilterChanges](#eth_getfilterchanges).
 
 **Parameters**
 
 `Object` - [Filter options object](JSON-RPC-API-Objects.md#filter-options-object). 
-
-Topics are order-dependent. A transaction with a log containing topics `[A, B]` is matched with the following topic filters:
-
-* `[]` - Match any topic
-* `[A]` - Match A in first position (and any topic thereafter)
-* `[null, B]` - Match any topic in first position AND B in second position (and any topic thereafter)
-* `[A, B]` - Match A in first position AND B in second position (and any topic thereafter)
-* `[[A, B], [A, B]]` - Match (A OR B) in first position AND (A OR B) in second position (and any topic thereafter)
 
 !!!note
     `fromBlock` and `toBlock` in the filter options object default to `latest`. To obtain logs using `eth_getFilterLogs`, set `fromBlock` and `toBlock` appropriately.
@@ -1392,7 +1384,7 @@ Polls the specified filter and returns an array of changes that have occurred si
 
 ### eth_getFilterLogs
 
-Returns an array of logs for the specified filter.
+Returns an array of [logs](../Using-Pantheon/Events-and-Logs.md) for the specified filter.
 
 !!!note
      `eth_getFilterLogs` is only used for filters created with `eth_newFilter`. 
@@ -1447,7 +1439,7 @@ Returns an array of logs for the specified filter.
 
 ### eth_getLogs
 
-Returns an array of logs matching a specified filter object.
+Returns an array of [logs](../Using-Pantheon/Events-and-Logs.md) matching a specified filter object.
 
 **Parameters**
 
