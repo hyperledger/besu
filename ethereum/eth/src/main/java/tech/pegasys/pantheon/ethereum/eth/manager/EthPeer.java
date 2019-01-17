@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV63;
 import tech.pegasys.pantheon.ethereum.eth.messages.GetBlockBodiesMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.GetBlockHeadersMessage;
+import tech.pegasys.pantheon.ethereum.eth.messages.GetNodeDataMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.GetReceiptsMessage;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
@@ -58,6 +59,7 @@ public class EthPeer {
   private final RequestManager headersRequestManager = new RequestManager(this);
   private final RequestManager bodiesRequestManager = new RequestManager(this);
   private final RequestManager receiptsRequestManager = new RequestManager(this);
+  private final RequestManager nodeDataRequestManager = new RequestManager(this);
 
   private final AtomicReference<Consumer<EthPeer>> onStatusesExchanged = new AtomicReference<>();
   private final PeerReputation reputation = new PeerReputation();
@@ -120,6 +122,8 @@ public class EthPeer {
         return sendBodiesRequest(messageData);
       case EthPV63.GET_RECEIPTS:
         return sendReceiptsRequest(messageData);
+      case EthPV63.GET_NODE_DATA:
+        return sendNodeDataRequest(messageData);
       default:
         connection.sendForProtocol(protocolName, messageData);
         return null;
@@ -168,6 +172,17 @@ public class EthPeer {
         () -> connection.sendForProtocol(protocolName, messageData));
   }
 
+  public ResponseStream getNodeData(final Iterable<Hash> nodeHashes) throws PeerNotConnected {
+    final GetNodeDataMessage message = GetNodeDataMessage.create(nodeHashes);
+    return sendNodeDataRequest(message);
+  }
+
+  private ResponseStream sendNodeDataRequest(final MessageData messageData)
+      throws PeerNotConnected {
+    return nodeDataRequestManager.dispatchRequest(
+        () -> connection.sendForProtocol(protocolName, messageData));
+  }
+
   boolean validateReceivedMessage(final EthMessage message) {
     checkArgument(message.getPeer().equals(this), "Mismatched message sent to peer for dispatch");
     switch (message.getData().getCode()) {
@@ -186,6 +201,12 @@ public class EthPeer {
       case EthPV63.RECEIPTS:
         if (receiptsRequestManager.outstandingRequests() == 0) {
           LOG.warn("Unsolicited receipts received.");
+          return false;
+        }
+        break;
+      case EthPV63.NODE_DATA:
+        if (nodeDataRequestManager.outstandingRequests() == 0) {
+          LOG.warn("Unsolicited node data received.");
           return false;
         }
         break;
@@ -215,6 +236,10 @@ public class EthPeer {
         reputation.resetTimeoutCount(EthPV63.GET_RECEIPTS);
         receiptsRequestManager.dispatchResponse(message);
         break;
+      case EthPV63.NODE_DATA:
+        reputation.resetTimeoutCount(EthPV63.GET_NODE_DATA);
+        nodeDataRequestManager.dispatchResponse(message);
+        break;
       default:
         // Nothing to do
     }
@@ -228,6 +253,7 @@ public class EthPeer {
     headersRequestManager.close();
     bodiesRequestManager.close();
     receiptsRequestManager.close();
+    nodeDataRequestManager.close();
     disconnectCallbacks.forEach(callback -> callback.onDisconnect(this));
   }
 
@@ -294,7 +320,8 @@ public class EthPeer {
   public int outstandingRequests() {
     return headersRequestManager.outstandingRequests()
         + bodiesRequestManager.outstandingRequests()
-        + receiptsRequestManager.outstandingRequests();
+        + receiptsRequestManager.outstandingRequests()
+        + nodeDataRequestManager.outstandingRequests();
   }
 
   public BytesValue nodeId() {
