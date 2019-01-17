@@ -26,8 +26,4 @@ public class CliqueRpcApis {
       return Optional.empty();
     }
   }
-
-  public static final String getName(final RpcApi rpcapi) {
-    return rpcapi.getCliValue();
-  }
 }

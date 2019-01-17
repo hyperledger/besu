@@ -55,11 +55,6 @@ public class VoteProposer {
     proposals.remove(address);
   }
 
-  /** Discards all pending votes */
-  public void clear() {
-    proposals.clear();
-  }
-
   public Map<Address, VoteType> getProposals() {
     return proposals;
   }

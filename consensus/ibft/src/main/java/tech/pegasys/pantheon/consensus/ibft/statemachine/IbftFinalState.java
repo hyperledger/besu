@@ -88,10 +88,6 @@ public class IbftFinalState {
     return localAddress;
   }
 
-  public ProposerSelector getProposerSelector() {
-    return proposerSelector;
-  }
-
   public boolean isLocalNodeProposerForRound(final ConsensusRoundIdentifier roundIdentifier) {
     return getProposerForRound(roundIdentifier).equals(localAddress);
   }

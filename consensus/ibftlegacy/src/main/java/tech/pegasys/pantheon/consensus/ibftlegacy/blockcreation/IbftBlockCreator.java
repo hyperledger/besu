@@ -34,17 +34,12 @@ import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
 
 import java.util.function.Function;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 /**
  * Responsible for producing a Block which conforms to IBFT validation rules (other than missing
  * commit seals). Transactions and associated Hashes (stateroot, receipts etc.) are loaded into the
  * Block in the base class as part of the transaction selection process.
  */
 public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
-
-  private static final Logger LOG = LogManager.getLogger();
 
   private final KeyPair nodeKeys;
 

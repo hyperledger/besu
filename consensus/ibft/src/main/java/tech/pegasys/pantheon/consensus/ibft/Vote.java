@@ -79,10 +79,6 @@ public class Vote {
     return Objects.hashCode(recipient, voteType);
   }
 
-  public VoteType getVoteType() {
-    return voteType;
-  }
-
   public void writeTo(final RLPOutput rlpOutput) {
     rlpOutput.startList();
     rlpOutput.writeBytesValue(recipient);
