@@ -103,11 +103,12 @@ public class IbftBlockCreatorTest {
     final Block block = blockCreator.createBlock(Instant.now().getEpochSecond());
 
     final BlockHeaderValidator<IbftContext> rules =
-        IbftBlockHeaderValidationRulesetFactory.ibftProposedBlockValidator(0);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(0);
 
+    // NOTE: The header will not contain commit seals, so can only do light validation on header.
     final boolean validationResult =
         rules.validateHeader(
-            block.getHeader(), parentHeader, protContext, HeaderValidationMode.FULL);
+            block.getHeader(), parentHeader, protContext, HeaderValidationMode.LIGHT);
 
     assertThat(validationResult).isTrue();
 

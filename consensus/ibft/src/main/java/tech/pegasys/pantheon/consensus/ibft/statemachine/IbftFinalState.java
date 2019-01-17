@@ -17,7 +17,6 @@ import static tech.pegasys.pantheon.consensus.ibft.IbftHelpers.calculateRequired
 import tech.pegasys.pantheon.consensus.common.ValidatorProvider;
 import tech.pegasys.pantheon.consensus.ibft.BlockTimer;
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
-import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.RoundTimer;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockCreatorFactory;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.ProposerSelector;
@@ -26,7 +25,6 @@ import tech.pegasys.pantheon.consensus.ibft.network.ValidatorMulticaster;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 
 import java.time.Clock;
 import java.util.Collection;
@@ -42,7 +40,6 @@ public class IbftFinalState {
   private final BlockTimer blockTimer;
   private final IbftBlockCreatorFactory blockCreatorFactory;
   private final MessageFactory messageFactory;
-  private final BlockHeaderValidator<IbftContext> ibftContextBlockHeaderValidator;
   private final IbftMessageTransmitter messageTransmitter;
   private final Clock clock;
 
@@ -56,7 +53,6 @@ public class IbftFinalState {
       final BlockTimer blockTimer,
       final IbftBlockCreatorFactory blockCreatorFactory,
       final MessageFactory messageFactory,
-      final BlockHeaderValidator<IbftContext> ibftContextBlockHeaderValidator,
       final Clock clock) {
     this.validatorProvider = validatorProvider;
     this.nodeKeys = nodeKeys;
@@ -67,7 +63,6 @@ public class IbftFinalState {
     this.blockTimer = blockTimer;
     this.blockCreatorFactory = blockCreatorFactory;
     this.messageFactory = messageFactory;
-    this.ibftContextBlockHeaderValidator = ibftContextBlockHeaderValidator;
     this.clock = clock;
     this.messageTransmitter = new IbftMessageTransmitter(messageFactory, validatorMulticaster);
   }
@@ -114,10 +109,6 @@ public class IbftFinalState {
 
   public Address getProposerForRound(final ConsensusRoundIdentifier roundIdentifier) {
     return proposerSelector.selectProposerForRound(roundIdentifier);
-  }
-
-  public BlockHeaderValidator<IbftContext> getBlockHeaderValidator() {
-    return ibftContextBlockHeaderValidator;
   }
 
   public IbftMessageTransmitter getTransmitter() {

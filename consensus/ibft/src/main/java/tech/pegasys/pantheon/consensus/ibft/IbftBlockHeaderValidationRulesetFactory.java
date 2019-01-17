@@ -37,26 +37,7 @@ public class IbftBlockHeaderValidationRulesetFactory {
    */
   public static BlockHeaderValidator<IbftContext> ibftBlockHeaderValidator(
       final long secondsBetweenBlocks) {
-    return createValidator(secondsBetweenBlocks, true);
-  }
-
-  /**
-   * Produces a BlockHeaderValidator configured for assessing IBFT proposed blocks (i.e. blocks
-   * which need to be vetted by the validators, and do not contain commit seals).
-   *
-   * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
-   * @return BlockHeaderValidator configured for assessing ibft block headers
-   */
-  public static BlockHeaderValidator<IbftContext> ibftProposedBlockValidator(
-      final long secondsBetweenBlocks) {
-    return createValidator(secondsBetweenBlocks, false);
-  }
-
-  private static BlockHeaderValidator<IbftContext> createValidator(
-      final long secondsBetweenBlocks, final boolean validateCommitSeals) {
-
-    final BlockHeaderValidator.Builder<IbftContext> builder = new BlockHeaderValidator.Builder<>();
-    builder
+    return new BlockHeaderValidator.Builder<IbftContext>()
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
         .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))
@@ -73,10 +54,8 @@ public class IbftBlockHeaderValidationRulesetFactory {
                 "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
         .addRule(new ConstantFieldValidationRule<>("Nonce", BlockHeader::getNonce, 0L))
         .addRule(new IbftValidatorsValidationRule())
-        .addRule(new IbftCoinbaseValidationRule());
-    if (validateCommitSeals) {
-      builder.addRule(new IbftCommitSealsValidationRule());
-    }
-    return builder.build();
+        .addRule(new IbftCoinbaseValidationRule())
+        .addRule(new IbftCommitSealsValidationRule())
+        .build();
   }
 }

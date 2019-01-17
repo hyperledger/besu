@@ -30,6 +30,8 @@ import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.consensus.ibft.validation.MessageValidator;
 import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.ethereum.BlockValidator;
+import tech.pegasys.pantheon.ethereum.BlockValidator.BlockProcessingOutputs;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -37,7 +39,6 @@ import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
-import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 
 import java.util.Collections;
 import java.util.List;
@@ -75,9 +76,10 @@ public class RoundChangeManagerTest {
             mock(MutableBlockchain.class), mock(WorldStateArchive.class), mock(IbftContext.class));
 
     @SuppressWarnings("unchecked")
-    BlockHeaderValidator<IbftContext> headerValidator =
-        (BlockHeaderValidator<IbftContext>) mock(BlockHeaderValidator.class);
-    when(headerValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
+    BlockValidator<IbftContext> blockValidator =
+        (BlockValidator<IbftContext>) mock(BlockValidator.class);
+    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
+        .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
     BlockHeader parentHeader = mock(BlockHeader.class);
 
     RoundChangeMessageValidator.MessageValidatorForHeightFactory messageValidatorFactory =
@@ -90,7 +92,7 @@ public class RoundChangeManagerTest {
                     validators,
                     Util.publicKeyToAddress(proposerKey.getPublicKey()),
                     ri1,
-                    headerValidator,
+                    blockValidator,
                     protocolContext,
                     parentHeader));
     when(messageValidatorFactory.createAt(ri2))
@@ -100,7 +102,7 @@ public class RoundChangeManagerTest {
                     validators,
                     Util.publicKeyToAddress(validator1Key.getPublicKey()),
                     ri2,
-                    headerValidator,
+                    blockValidator,
                     protocolContext,
                     parentHeader));
     when(messageValidatorFactory.createAt(ri3))
@@ -110,7 +112,7 @@ public class RoundChangeManagerTest {
                     validators,
                     Util.publicKeyToAddress(validator2Key.getPublicKey()),
                     ri3,
-                    headerValidator,
+                    blockValidator,
                     protocolContext,
                     parentHeader));
 
