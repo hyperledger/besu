@@ -149,26 +149,21 @@ are included in the notifications. Otherwise, the transaction hashes are include
 
 ### Logs
 
-Use the `logs` parameter with `eth_subscribe` to be notified of logs included in new blocks. You can 
-specify a [filter object](../Reference/JSON-RPC-API-Objects.md#filter-options-object) to receive notifications 
-only for logs matching your filter.   
+Use the `logs` parameter with `eth_subscribe` to be notified of [logs](Events-and-Logs.md) included in new blocks. You can 
+specify a filter object to receive notifications only for logs matching your filter.   
 
 Logs subscriptions have an filter object parameter with the following fields:
 
   - `address` - (optional) Either an address or an array of addresses. Returns only logs created from these addresses.
-  - `topics` - (optional) Returns only logs that match the specified topics.
-
-!!!note
-    The `fromBlock` and `toBlock` attributes are not included in the filter object for the logs subscription 
-    because the subscription waits for logs rather than requesting them.
+  - `topics` - (optional) Returns only logs that match the [specified topics](Events-and-Logs.md#topic-filters).
 
 If a chain reorganization occurs, the subscription publishes notifications for logs from the old chain 
 with the `removed` property in the [log object](../Reference/JSON-RPC-API-Objects.md#log-object) set to `true`. 
 This means the subscription can publish notifications for multiple logs for the same transaction.
 
-The logs subscription returns [Log objects](../Reference/JSON-RPC-API-Objects.md#log-object). 
+The logs subscription returns [log objects](../Reference/JSON-RPC-API-Objects.md#log-object). 
 
-!!!exemple
+!!!example
     To subscribe to all logs notifications:
     ```json
      {"id": 1, "method": "eth_subscribe", "params": ["logs",{}]}

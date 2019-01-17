@@ -34,14 +34,14 @@ Returned by [eth_getBlockByHash](JSON-RPC-API-Methods.md#eth_getblockbyhash) and
 
 ## Filter Options Object
 
-Parameter for [eth_newFilter](JSON-RPC-API-Methods.md#eth_newfilter) and [eth_getLogs](JSON-RPC-API-Methods.md#eth_getlogs). 
+Parameter for [eth_newFilter](JSON-RPC-API-Methods.md#eth_newfilter) and [eth_getLogs](JSON-RPC-API-Methods.md#eth_getlogs). Used to [filter logs](../Using-Pantheon/Accessing-Logs-Using-JSON-RPC.md). 
 
 | Key           | Type                              | Required/Optional | Value                                                                                                                                       |
 |---------------|:---------------------------------:|:-----------------:|---------------------------------------------------------------------------------------------------------------------------------------------|
 | **fromBlock** | Quantity &#124; Tag               | Optional          | Integer block number or `latest`, `pending`, `earliest`. See [Block Parameter](Using-JSON-RPC-API.md#block-parameter). Default is `latest`. |
 | **toBlock**   | Quantity &#124; Tag               | Optional          | Integer block number or `latest`, `pending`, `earliest`. See [Block Parameter](Using-JSON-RPC-API.md#block-parameter). Default is `latest`. |
-| **address**   | Data &#124; Array                 | Optional          | Contract address or array of addresses from which logs originate.                                                                           |
-| **topics**    | Array of Data, 32&nbsp;bytes each | Optional          | Array of 32-byte topics. Topics are order-dependent. Each topic can also be an array of DATA with "or" options.                             |
+| **address**   | Data &#124; Array                 | Optional          | Contract address or array of addresses from which [logs](../Using-Pantheon/Events-and-Logs.md) originate.                                                                           |
+| **topics**    | Array of Data, 32&nbsp;bytes each | Optional          | Array of topics by which to [filter logs](../Using-Pantheon/Events-and-Logs.md#topic-filters).                             |
 
 [eth_getLogs](JSON-RPC-API-Methods.md#eth_getlogs) has an additional key. 
 
@@ -63,7 +63,7 @@ Returned by [eth_getFilterChanges](JSON-RPC-API-Methods.md#eth_getfilterchanges)
 | **blockNumber**      | Quantity                          | Number of block in which log included. `null` when log is pending.                                                                                                                                                  |
 | **address**          | Data, 20&nbsp;bytes               | Address from which log originated.                                                                                                                                                                                  |
 | **data**             | Data                              | Non-indexed arguments of log.                                                                                                                                                                                       |
-| **topics**           | Array of Data, 32&nbsp;bytes each | 0 to 4 indexed log arguments. In Solidity, the first topic is the hash of the signature of the event (for example, `Deposit(address, bytes32, unit256)`) except you declare the event with an anonymous specifier.) |
+| **topics**           | Array of Data, 32&nbsp;bytes each | [Event signature hash](../Using-Pantheon/Events-and-Logs.md#event-signature-hash) and 0 to 3 [indexed log arguments](../Using-Pantheon/Events-and-Logs.md#event-parameters).  |
 
 ## Trace Object
 
