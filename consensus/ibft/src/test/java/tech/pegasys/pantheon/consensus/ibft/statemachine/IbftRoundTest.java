@@ -67,7 +67,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class IbftRoundTest {
 
   private final KeyPair localNodeKeys = KeyPair.generate();
-  private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 1);
+  private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final MessageFactory messageFactory = new MessageFactory(localNodeKeys);
   private final Subscribers<MinedBlockObserver> subscribers = new Subscribers<>();
   private ProtocolContext<IbftContext> protocolContext;
@@ -374,5 +374,56 @@ public class IbftRoundTest {
             transmitter);
     round.createAndSendProposalMessage(15);
     verify(minedBlockObserver).blockMined(any());
+  }
+
+  @Test
+  public void blockIsOnlyImportedOnceWhenCommitsAreReceivedBeforeProposal() {
+    final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
+    final int QUORUM_SIZE = 2;
+    final RoundState roundState = new RoundState(roundIdentifier, QUORUM_SIZE, messageValidator);
+    final IbftRound round =
+        new IbftRound(
+            roundState,
+            blockCreator,
+            protocolContext,
+            blockImporter,
+            subscribers,
+            localNodeKeys,
+            messageFactory,
+            transmitter);
+
+    round.handleCommitMessage(
+        messageFactory.createSignedCommitPayload(
+            roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
+
+    round.handleProposalMessage(
+        messageFactory.createSignedProposalPayload(roundIdentifier, proposedBlock));
+
+    verify(blockImporter, times(1)).importBlock(any(), any(), any());
+  }
+
+  @Test
+  public void blockIsImportedOnlyOnceIfQuorumCommitsAreReceivedPriorToProposal() {
+    final int QUORUM_SIZE = 1;
+    final RoundState roundState = new RoundState(roundIdentifier, QUORUM_SIZE, messageValidator);
+    final IbftRound round =
+        new IbftRound(
+            roundState,
+            blockCreator,
+            protocolContext,
+            blockImporter,
+            subscribers,
+            localNodeKeys,
+            messageFactory,
+            transmitter);
+
+    round.handleCommitMessage(
+        messageFactory.createSignedCommitPayload(
+            roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
+
+    round.handleProposalMessage(
+        messageFactory.createSignedProposalPayload(roundIdentifier, proposedBlock));
+
+    verify(blockImporter, times(1)).importBlock(any(), any(), any());
   }
 }
