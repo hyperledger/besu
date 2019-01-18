@@ -52,7 +52,8 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
 
     // Setup a partially responsive peer and a non-responsive peer
     final Responder partialResponder =
-        RespondingEthPeer.partialResponder(blockchain, protocolSchedule, 0.5f);
+        RespondingEthPeer.partialResponder(
+            blockchain, protocolContext.getWorldStateArchive(), protocolSchedule, 0.5f);
     final Responder emptyResponder = RespondingEthPeer.emptyResponder();
     final RespondingEthPeer respondingPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
@@ -96,10 +97,18 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
     final CompletableFuture<T> future = task.run();
 
     // Respond with partial data up until complete.
-    respondingPeer.respond(RespondingEthPeer.partialResponder(blockchain, protocolSchedule, 0.25f));
-    respondingPeer.respond(RespondingEthPeer.partialResponder(blockchain, protocolSchedule, 0.50f));
-    respondingPeer.respond(RespondingEthPeer.partialResponder(blockchain, protocolSchedule, 0.75f));
-    respondingPeer.respond(RespondingEthPeer.partialResponder(blockchain, protocolSchedule, 1.0f));
+    respondingPeer.respond(
+        RespondingEthPeer.partialResponder(
+            blockchain, protocolContext.getWorldStateArchive(), protocolSchedule, 0.25f));
+    respondingPeer.respond(
+        RespondingEthPeer.partialResponder(
+            blockchain, protocolContext.getWorldStateArchive(), protocolSchedule, 0.50f));
+    respondingPeer.respond(
+        RespondingEthPeer.partialResponder(
+            blockchain, protocolContext.getWorldStateArchive(), protocolSchedule, 0.75f));
+    respondingPeer.respond(
+        RespondingEthPeer.partialResponder(
+            blockchain, protocolContext.getWorldStateArchive(), protocolSchedule, 1.0f));
 
     assertThat(future.isDone()).isTrue();
     assertResultMatchesExpectation(requestedData, future.get(), respondingPeer.getEthPeer());

@@ -42,7 +42,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -103,7 +102,7 @@ public class GetBodiesFromPeerTask<C> extends AbstractPeerRequestTask<List<Block
     }
 
     final BlockBodiesMessage bodiesMessage = BlockBodiesMessage.readFrom(message);
-    final List<BlockBody> bodies = Lists.newArrayList(bodiesMessage.bodies(protocolSchedule));
+    final List<BlockBody> bodies = bodiesMessage.bodies(protocolSchedule);
     if (bodies.size() == 0) {
       // Message contains no data - nothing to do
       return Optional.empty();

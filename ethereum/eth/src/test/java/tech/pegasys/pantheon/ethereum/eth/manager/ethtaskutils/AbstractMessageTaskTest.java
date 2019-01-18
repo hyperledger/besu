@@ -29,7 +29,6 @@ import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -83,9 +82,10 @@ public abstract class AbstractMessageTaskTest<T, R> {
       T requestedData, R response, EthPeer respondingPeer);
 
   @Test
-  public void completesWhenPeersAreResponsive() throws ExecutionException, InterruptedException {
+  public void completesWhenPeersAreResponsive() {
     // Setup a responsive peer
-    final Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
+    final Responder responder =
+        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
     final RespondingEthPeer respondingPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
@@ -109,8 +109,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
   }
 
   @Test
-  public void doesNotCompleteWhenPeersDoNotRespond()
-      throws ExecutionException, InterruptedException {
+  public void doesNotCompleteWhenPeersDoNotRespond() {
     // Setup a unresponsive peer
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
@@ -129,7 +128,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
   }
 
   @Test
-  public void cancel() throws ExecutionException, InterruptedException {
+  public void cancel() {
     // Setup a unresponsive peer
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 

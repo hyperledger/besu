@@ -22,6 +22,8 @@ import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.List;
+
 public final class BlockBodiesMessage extends AbstractMessageData {
 
   public static BlockBodiesMessage readFrom(final MessageData message) {
@@ -53,7 +55,7 @@ public final class BlockBodiesMessage extends AbstractMessageData {
     return EthPV62.BLOCK_BODIES;
   }
 
-  public <C> Iterable<BlockBody> bodies(final ProtocolSchedule<C> protocolSchedule) {
+  public <C> List<BlockBody> bodies(final ProtocolSchedule<C> protocolSchedule) {
     final BlockHashFunction blockHashFunction =
         ScheduleBasedBlockHashFunction.create(protocolSchedule);
     return new BytesValueRLPInput(data, false)

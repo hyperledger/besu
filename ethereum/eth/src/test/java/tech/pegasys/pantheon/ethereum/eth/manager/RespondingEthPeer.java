@@ -211,11 +211,12 @@ public class RespondingEthPeer {
    */
   public static <C> Responder partialResponder(
       final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
       final ProtocolSchedule<C> protocolSchedule,
       final float portion) {
     checkArgument(portion >= 0.0 && portion <= 1.0, "Portion is in the range [0.0..1.0]");
 
-    final Responder fullResponder = blockchainResponder(blockchain);
+    final Responder fullResponder = blockchainResponder(blockchain, worldStateArchive);
     return (cap, msg) -> {
       final Optional<MessageData> maybeResponse = fullResponder.respond(cap, msg);
       if (!maybeResponse.isPresent()) {
