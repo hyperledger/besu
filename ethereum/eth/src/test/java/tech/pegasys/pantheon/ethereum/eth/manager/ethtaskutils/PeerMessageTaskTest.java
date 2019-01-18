@@ -41,7 +41,8 @@ public abstract class PeerMessageTaskTest<T> extends AbstractMessageTaskTest<T, 
   public void completesWhenPeerReturnsPartialResult() {
     // Setup a partially responsive peer
     final Responder responder =
-        RespondingEthPeer.partialResponder(blockchain, protocolSchedule, 0.5f);
+        RespondingEthPeer.partialResponder(
+            blockchain, protocolContext.getWorldStateArchive(), protocolSchedule, 0.5f);
     final RespondingEthPeer respondingEthPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
