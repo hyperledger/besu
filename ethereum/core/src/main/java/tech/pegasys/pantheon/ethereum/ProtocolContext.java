@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.ethereum;
 
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
-import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 
 /**
  * Holds the mutable state used to track the current context of the protocol. This is primarily the
