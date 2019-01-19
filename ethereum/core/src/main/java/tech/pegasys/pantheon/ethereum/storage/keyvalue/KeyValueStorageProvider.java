@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.storage.keyvalue;
 
-import tech.pegasys.pantheon.ethereum.db.BlockchainStorage;
+import tech.pegasys.pantheon.ethereum.chain.BlockchainStorage;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;

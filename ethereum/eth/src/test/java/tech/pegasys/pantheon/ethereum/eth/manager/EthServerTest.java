@@ -20,9 +20,9 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.db.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.eth.messages.GetNodeDataMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.NodeDataMessage;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Optional;
