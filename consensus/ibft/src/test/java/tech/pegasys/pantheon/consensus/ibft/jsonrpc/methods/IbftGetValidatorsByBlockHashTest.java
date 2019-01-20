@@ -63,10 +63,11 @@ public class IbftGetValidatorsByBlockHashTest {
   public void shouldReturnListOfValidatorsFromBlock() {
     when(blockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.of(blockHeader));
     final List<Address> addresses = Collections.singletonList(Address.ID);
+    final List<String> expectedOutput = Collections.singletonList(Address.ID.toString());
     when(ibftBlockInterface.validatorsInBlock(blockHeader)).thenReturn(addresses);
     request = requestWithParams(ZERO_HASH);
     JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
-    Assertions.assertThat(response.getResult()).isEqualTo(addresses);
+    Assertions.assertThat(response.getResult()).isEqualTo(expectedOutput);
   }
 
   private JsonRpcRequest requestWithParams(final Object... params) {

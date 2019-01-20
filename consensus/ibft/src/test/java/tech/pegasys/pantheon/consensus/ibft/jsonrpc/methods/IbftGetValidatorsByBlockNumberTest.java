@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.jsonrpc.methods;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.consensus.ibft.IbftBlockInterface;
@@ -26,7 +27,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,20 +53,21 @@ public class IbftGetValidatorsByBlockNumberTest {
   public void blockParameterIsParameter0() {
     request = new JsonRpcRequest("?", "ignore", new String[] {"0x1245"});
     BlockParameter blockParameter = method.blockParameter(request);
-    Assertions.assertThat(blockParameter.getNumber().getAsLong()).isEqualTo(0x1245);
+    assertThat(blockParameter.getNumber().getAsLong()).isEqualTo(0x1245);
   }
 
   @Test
   public void nameShouldBeCorrect() {
-    Assertions.assertThat(method.getName()).isEqualTo("ibft_getValidatorsByBlockNumber");
+    assertThat(method.getName()).isEqualTo("ibft_getValidatorsByBlockNumber");
   }
 
   @Test
   public void shouldReturnListOfValidatorsFromBlock() {
     when(blockchainQueries.getBlockHeaderByNumber(12)).thenReturn(Optional.of(blockHeader));
     final List<Address> addresses = Collections.singletonList(Address.ID);
+    final List<String> expectedOutput = Collections.singletonList(Address.ID.toString());
     when(ibftBlockInterface.validatorsInBlock(blockHeader)).thenReturn(addresses);
     Object result = method.resultByBlockNumber(request, 12);
-    Assertions.assertThat(result).isEqualTo(addresses);
+    assertThat(result).isEqualTo(expectedOutput);
   }
 }
