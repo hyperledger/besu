@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.jsonrpc.methods;
 
-import tech.pegasys.pantheon.consensus.ibft.IbftBlockInterface;
+import tech.pegasys.pantheon.consensus.common.BlockInterface;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
@@ -28,15 +28,15 @@ import java.util.stream.Collectors;
 public class IbftGetValidatorsByBlockHash implements JsonRpcMethod {
 
   private final Blockchain blockchain;
-  private final IbftBlockInterface ibftBlockInterface;
+  private final BlockInterface blockInterface;
   private final JsonRpcParameter parameters;
 
   public IbftGetValidatorsByBlockHash(
       final Blockchain blockchain,
-      final IbftBlockInterface ibftBlockInterface,
+      final BlockInterface blockInterface,
       final JsonRpcParameter parameters) {
     this.blockchain = blockchain;
-    this.ibftBlockInterface = ibftBlockInterface;
+    this.blockInterface = blockInterface;
     this.parameters = parameters;
   }
 
@@ -56,7 +56,7 @@ public class IbftGetValidatorsByBlockHash implements JsonRpcMethod {
     return blockHeader
         .map(
             header ->
-                ibftBlockInterface
+                blockInterface
                     .validatorsInBlock(header)
                     .stream()
                     .map(validator -> validator.toString())
