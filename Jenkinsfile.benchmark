@@ -2,9 +2,9 @@ properties([
         parameters([
                 string(name: 'BENCHMARKS_FORK', defaultValue: 'PegaSysEng', description: 'The user or org from which to checkout the benchmarks repo', trim: true),
                 string(name: 'BENCHMARKS_BRANCH', defaultValue: 'master', description: 'The benchmarks branch to be checked out', trim: true),
-                string(name: 'NETWORK', defaultValue: 'mainnet', description: 'The name of the network being tested', trim: true),
-                string(name: 'DATASET', defaultValue: 'from-0', description: 'The name of the directory containing the benchmark data', trim: true),
-                string(name: 'IMPORT_FILE', defaultValue: '0-999.blocks', description: 'The name of the file to import', trim: true)
+                string(name: 'NETWORK', defaultValue: 'ropsten', description: 'The name of the network being tested', trim: true),
+                string(name: 'DATASET', defaultValue: 'from-0-by-100k', description: 'The name of the directory containing the benchmark data', trim: true),
+                string(name: 'IMPORT_FILE', defaultValue: 'ropsten-000k-100k.blocks', description: 'The name of the file to import', trim: true)
         ])
 ])
 
