@@ -21,8 +21,8 @@ To create a private network:
 
 1. [Create Folders](#1-create-folders)
 1. [Create Genesis File](#2-create-genesis-file)
-1. [Start First Node and Get Node Public Key](#3-start-first-node-and-get-node-public-key)
-1. [Restart First Node as Bootnode](#4-restart-first-node-as-bootnode)
+1. [Get Public Key of First Node](#3-get-public-key-of-first-node)
+1. [Start First Node as Bootnode](#4-restart-first-node-as-bootnode)
 1. [Start Additional Nodes](#5-start-additional-nodes)
 1. [Confirm Private Network Working](#6-confirm-private-network-working)
 
@@ -80,34 +80,13 @@ Copy the following genesis definition to a file called `privateNetworkGenesis.js
     Do not use the accounts in the genesis file above on mainnet or any public network except for testing.
     The private keys are displayed so the accounts are not secure. 
    
-### 3. Start First Node and Get Node Public Key 
+### 3. Get Public Key of First Node
 
 To enable nodes to discover each other, a network requires one or more nodes to be bootnodes. 
-For this private network, we will use Node-1 as the bootnode. This requires starting and stopping the 
-node and obtaining the node public key for the enode URL. 
+For this private network, we will use Node-1 as the bootnode. This requires obtaining the public key for the enode URL. 
 
-In the `Node-1` directory, start the node specifying the data directory created in step 1, 
-the genesis file created in step 2, and a network ID for your private network (`123` in this example):
-
-```bash tab="MacOS"
-pantheon --genesis=../privateNetworkGenesis.json --network-id 123 --datadir=Node-1-DataDir
-``` 
-
-```bash tab="Windows"
-pantheon --genesis=..\privateNetworkGenesis.json --network-id 123 --datadir=Node-1-DataDir
-``` 
-
-A node private key for Node-1 is generated and written to the `key` file. 
-
-Wait until the node public key is displayed. For example:  
-
-`2019-01-01 05:03:27.430+10:00 | main | INFO  | KeyPairUtil | Generated new key 0x5ca7eca7a9b6b8128d8b9375fe2683c43023fd1504bca31f5123bd9b086155d81d0b05a08b63c7fa1027bbd9cfa338b6c54539c72b05a56c1f52f802c87ad09c and stored it to /Users/username/Private-Network/Node-3/Node-3-DataDir/key
-20`
-
-Stop the node using ++ctrl+c++. 
-
-Use the [`export-pub-key` subcommand](../Reference/Pantheon-CLI-Syntax.md#export-pub-key) to write 
-the [node public key](../Configuring-Pantheon/Node-Keys.md) to the specified file (`publicKeyNode1` in this example): 
+In the `Node-1` directory, use the [`export-pub-key` subcommand](../Reference/Pantheon-CLI-Syntax.md#export-pub-key) to write 
+the [node public key](../Configuring-Pantheon/Node-Keys.md) to the specified file (`publicKeyNode1` in this example):
 
 ```bash tab="MacOS"
 pantheon --datadir=Node-1-Datadir --genesis=../privateNetworkGenesis.json export-pub-key Node-1-Datadir/publicKeyNode1
@@ -121,16 +100,16 @@ Your node 1 directory now contains:
 ```bash
 ├── Node-1
     ├── Node-1-Datadir
-        ├── database
+        ├── database
         ├── key
         ├── publicKeyNode1
 ```
- 
-The `database` directory is created when the node is started and contains the blockchain data. 
       
-### 4. Restart First Node as Bootnode 
+The `database` directory contains the blockchain data. 
 
-Restart Node-1 specifying:
+### 4. Start First Node as Bootnode 
+
+Start Node-1 specifying:
 
 * No arguments for the [`--bootnodes` option](../Reference/Pantheon-CLI-Syntax.md#bootnodes) because this is your bootnode.
 * Mining is enabled and the account to which mining rewards are paid using the [`--miner-enabled`](../Reference/Pantheon-CLI-Syntax.md#miner-enabled) 
