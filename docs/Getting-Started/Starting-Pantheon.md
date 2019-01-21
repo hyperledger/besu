@@ -67,7 +67,7 @@ call [JSON-RPC API methods](../Reference/JSON-RPC-API-Methods.md) to confirm the
 To run a node that mines blocks at a rate suitable for testing purposes: 
 
 ```bash
-pantheon --dev-mode --network-id="2018" --bootnodes --miner-enabled --miner-coinbase=0xfe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-cors-origins="all" --ws-enabled --rpc-enabled --datadir=/tmp/tmpDatdir
+pantheon --dev-mode --network-id="2018" --bootnodes --miner-enabled --miner-coinbase=0xfe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-cors-origins="all" --host-whitelist="all" --ws-enabled --rpc-enabled --datadir=/tmp/tmpDatdir
 ```
 
 Alternatively, use the following [configuration file](../Configuring-Pantheon/Using-Configuration-File.md) and `--bootnodes` on the command line to start a node with the same options as above: 
@@ -76,7 +76,8 @@ dev-mode=true
 network-id="2018"
 miner-enabled=true
 miner-coinbase="0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"
-rpc-cors-origins="all"
+rpc-cors-origins=["all"]
+host-whitelist=["all"]
 ws-enabled=true
 rpc-enabled=true
 datadir="/tmp/tmpDatadir"
