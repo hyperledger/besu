@@ -27,8 +27,10 @@ jar {
 
 dependencies {
   implementation project(':ethereum:core')
+  implementation project(':ethereum:jsonrpc')
   implementation project(':util')
 
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
 
   testImplementation project(':crypto')
@@ -37,4 +39,14 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation "org.assertj:assertj-core"
   testImplementation 'org.mockito:mockito-core'
+}
+configurations { testArtifacts }
+task testJar (type: Jar) {
+  baseName = "${project.name}-test"
+  from sourceSets.test.output
+}
+
+artifacts {
+  testArtifacts testJar
+  testSupportArtifacts testSupportJar
 }
