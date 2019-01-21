@@ -76,7 +76,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Iterables;
 
-public class TestContextFactory {
+public class TestContextBuilder {
 
   private static class ControllerAndState {
 
@@ -101,17 +101,33 @@ public class TestContextFactory {
   public static final int BLOCK_TIMER_SEC = 3;
   public static final int ROUND_TIMER_SEC = 12;
 
-  public static TestContext createTestEnvWithArbitraryClock(
-      final int validatorCount, final int indexOfFirstLocallyProposedBlock) {
-    return createTestEnvironment(
-        validatorCount,
-        indexOfFirstLocallyProposedBlock,
-        Clock.fixed(Instant.MIN, ZoneId.of("UTC")));
+  private Clock clock = Clock.fixed(Instant.MIN, ZoneId.of("UTC"));
+  private IbftEventQueue ibftEventQueue = new IbftEventQueue();
+  private int validatorCount = 4;
+  private int indexOfFirstLocallyProposedBlock = 0; // Meaning first block is from remote peer.
+
+  public TestContextBuilder clock(final Clock clock) {
+    this.clock = clock;
+    return this;
   }
 
-  public static TestContext createTestEnvironment(
-      final int validatorCount, final int indexOfFirstLocallyProposedBlock, final Clock clock) {
+  public TestContextBuilder ibftEventQueue(final IbftEventQueue ibftEventQueue) {
+    this.ibftEventQueue = ibftEventQueue;
+    return this;
+  }
 
+  public TestContextBuilder validatorCount(final int validatorCount) {
+    this.validatorCount = validatorCount;
+    return this;
+  }
+
+  public TestContextBuilder indexOfFirstLocallyProposedBlock(
+      final int indexOfFirstLocallyProposedBlock) {
+    this.indexOfFirstLocallyProposedBlock = indexOfFirstLocallyProposedBlock;
+    return this;
+  }
+
+  public TestContext build() {
     final NetworkLayout networkNodes =
         NetworkLayout.createNetworkLayout(validatorCount, indexOfFirstLocallyProposedBlock);
 
@@ -125,7 +141,8 @@ public class TestContextFactory {
     final StubValidatorMulticaster stubbedMulticaster = new StubValidatorMulticaster();
 
     final ControllerAndState controllerAndState =
-        createControllerAndFinalState(blockChain, stubbedMulticaster, nodeKeys, clock);
+        createControllerAndFinalState(
+            blockChain, stubbedMulticaster, nodeKeys, clock, ibftEventQueue);
 
     // Add each networkNode to the Multicaster (such that each can receive msgs from local node).
     // NOTE: the remotePeers needs to be ordered based on Address (as this is used to determine
@@ -185,7 +202,8 @@ public class TestContextFactory {
       final MutableBlockchain blockChain,
       final StubValidatorMulticaster stubbedMulticaster,
       final KeyPair nodeKeys,
-      final Clock clock) {
+      final Clock clock,
+      final IbftEventQueue ibftEventQueue) {
 
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
@@ -215,8 +233,6 @@ public class TestContextFactory {
     final ProtocolContext<IbftContext> protocolContext =
         new ProtocolContext<>(
             blockChain, worldStateArchive, new IbftContext(voteTally, voteProposer));
-
-    final IbftEventQueue ibftEventQueue = new IbftEventQueue();
 
     final IbftBlockCreatorFactory blockCreatorFactory =
         new IbftBlockCreatorFactory(

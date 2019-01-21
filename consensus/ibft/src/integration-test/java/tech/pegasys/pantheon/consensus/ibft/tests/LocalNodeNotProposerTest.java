@@ -24,7 +24,7 @@ import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.consensus.ibft.support.RoundSpecificNodeRoles;
 import tech.pegasys.pantheon.consensus.ibft.support.TestContext;
-import tech.pegasys.pantheon.consensus.ibft.support.TestContextFactory;
+import tech.pegasys.pantheon.consensus.ibft.support.TestContextBuilder;
 import tech.pegasys.pantheon.consensus.ibft.support.ValidatorPeer;
 import tech.pegasys.pantheon.ethereum.core.Block;
 
@@ -33,9 +33,15 @@ import org.junit.Test;
 
 public class LocalNodeNotProposerTest {
 
+  final int NETWORK_SIZE = 4;
   // By setting the indexOfFirstLocallyProposedBlock to 0 (and that the blockchain has only the
   // genesis block) guarantees the local node is not responsible for proposing the first block).
-  private final TestContext context = TestContextFactory.createTestEnvWithArbitraryClock(4, 0);
+
+  private final TestContext context =
+      new TestContextBuilder()
+          .validatorCount(NETWORK_SIZE)
+          .indexOfFirstLocallyProposedBlock(0)
+          .build();
   private final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(1, 0);
   private final RoundSpecificNodeRoles roles = context.getRoundSpecificRoles(roundId);
 
