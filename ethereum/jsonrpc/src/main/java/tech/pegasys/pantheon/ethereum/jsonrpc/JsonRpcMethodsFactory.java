@@ -17,6 +17,7 @@ import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminAddPeer;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminPeers;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.DebugMetrics;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.DebugStorageRangeAt;
@@ -238,6 +239,7 @@ public class JsonRpcMethodsFactory {
     }
     if (rpcApis.contains(RpcApis.ADMIN)) {
       addMethods(enabledMethods, new AdminPeers(p2pNetwork));
+      addMethods(enabledMethods, new AdminAddPeer(p2pNetwork, parameter));
     }
     if (rpcApis.contains(RpcApis.PERM)) {
       addMethods(

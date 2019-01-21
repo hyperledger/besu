@@ -17,6 +17,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,8 +53,11 @@ import java.util.concurrent.TimeUnit;
 import io.vertx.core.Vertx;
 import org.junit.After;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link NettyP2PNetwork}. */
+@RunWith(MockitoJUnitRunner.StrictStubs.class)
 public final class NettyP2PNetworkTest {
 
   private final Vertx vertx = Vertx.vertx();
@@ -401,11 +407,10 @@ public final class NettyP2PNetworkTest {
     final SECP256K1.KeyPair localKp = SECP256K1.KeyPair.generate();
     final SECP256K1.KeyPair remoteKp = SECP256K1.KeyPair.generate();
     final BytesValue localId = localKp.getPublicKey().getEncodedBytes();
-    final BytesValue remoteId = remoteKp.getPublicKey().getEncodedBytes();
     final PeerBlacklist localBlacklist = new PeerBlacklist();
     final PeerBlacklist remoteBlacklist = new PeerBlacklist();
     final PermissioningConfiguration config = PermissioningConfiguration.createDefault();
-    NodeWhitelistController localWhitelist = new NodeWhitelistController(config);
+    final NodeWhitelistController localWhitelist = new NodeWhitelistController(config);
     // turn on whitelisting by adding a different node NOT remote node
     localWhitelist.addNode(mockPeer());
 
@@ -469,6 +474,69 @@ public final class NettyP2PNetworkTest {
     }
   }
 
+  @Test
+  public void addingMaintainedNetworkPeerStartsConnection() {
+    final NettyP2PNetwork network = spy(mockNettyP2PNetwork());
+    final Peer peer = mockPeer();
+
+    assertThat(network.addMaintainConnectionPeer(peer)).isTrue();
+
+    assertThat(network.peerMaintainConnectionList).contains(peer);
+    verify(network, times(1)).connect(peer);
+  }
+
+  @Test
+  public void addingRepeatMaintainedPeersReturnsFalse() {
+    final NettyP2PNetwork network = mockNettyP2PNetwork();
+    final Peer peer = mockPeer();
+    assertThat(network.addMaintainConnectionPeer(peer)).isTrue();
+    assertThat(network.addMaintainConnectionPeer(peer)).isFalse();
+  }
+
+  @Test
+  public void checkMaintainedConnectionPeersTriesToConnect() {
+    final NettyP2PNetwork network = spy(mockNettyP2PNetwork());
+    final Peer peer = mockPeer();
+    network.peerMaintainConnectionList.add(peer);
+
+    network.checkMaintainedConnectionPeers();
+    verify(network, times(1)).connect(peer);
+  }
+
+  @Test
+  public void checkMaintainedConnectionPeersDoesntReconnectPendingPeers() {
+    final NettyP2PNetwork network = spy(mockNettyP2PNetwork());
+    final Peer peer = mockPeer();
+
+    network.pendingConnections.put(peer, new CompletableFuture<>());
+
+    network.checkMaintainedConnectionPeers();
+    verify(network, times(0)).connect(peer);
+  }
+
+  @Test
+  public void checkMaintainedConnectionPeersDoesntReconnectConnectedPeers() {
+    final NettyP2PNetwork network = spy(mockNettyP2PNetwork());
+    final Peer peer = mockPeer();
+    verify(network, never()).connect(peer);
+    assertThat(network.addMaintainConnectionPeer(peer)).isTrue();
+    verify(network, times(1)).connect(peer);
+
+    {
+      final CompletableFuture<PeerConnection> connection;
+      connection = network.pendingConnections.remove(peer);
+      assertThat(connection).isNotNull();
+      assertThat(connection.cancel(true)).isTrue();
+    }
+
+    {
+      final PeerConnection peerConnection = mockPeerConnection(peer.getId());
+      network.connections.registerConnection(peerConnection);
+      network.checkMaintainedConnectionPeers();
+      verify(network, times(1)).connect(peer);
+    }
+  }
+
   private SubProtocol subProtocol() {
     return new SubProtocol() {
       @Override
@@ -529,12 +597,25 @@ public final class NettyP2PNetworkTest {
     verify(peerConnection).disconnect(eq(DisconnectReason.CLIENT_QUITTING));
   }
 
-  private PeerConnection mockPeerConnection() {
+  @Test
+  public void shouldntAttemptNewConnectionToPendingPeer() {
+    final NettyP2PNetwork nettyP2PNetwork = mockNettyP2PNetwork();
+    final Peer peer = mockPeer();
+
+    final CompletableFuture<PeerConnection> connectingFuture = nettyP2PNetwork.connect(peer);
+    assertThat(nettyP2PNetwork.connect(peer)).isEqualTo(connectingFuture);
+  }
+
+  private PeerConnection mockPeerConnection(final BytesValue id) {
     final PeerInfo peerInfo = mock(PeerInfo.class);
-    when(peerInfo.getNodeId()).thenReturn(BytesValue.fromHexString("0x00"));
+    when(peerInfo.getNodeId()).thenReturn(id);
     final PeerConnection peerConnection = mock(PeerConnection.class);
     when(peerConnection.getPeer()).thenReturn(peerInfo);
     return peerConnection;
+  }
+
+  private PeerConnection mockPeerConnection() {
+    return mockPeerConnection(BytesValue.fromHexString("0x00"));
   }
 
   private NettyP2PNetwork mockNettyP2PNetwork() {
@@ -560,10 +641,8 @@ public final class NettyP2PNetworkTest {
 
   private Peer mockPeer() {
     final Peer peer = mock(Peer.class);
-    when(peer.getId())
-        .thenReturn(
-            BytesValue.fromHexString(
-                "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"));
+    final BytesValue id = SECP256K1.KeyPair.generate().getPublicKey().getEncodedBytes();
+    when(peer.getId()).thenReturn(id);
     when(peer.getEndpoint()).thenReturn(new Endpoint("127.0.0.1", 30303, OptionalInt.of(30303)));
     return peer;
   }
