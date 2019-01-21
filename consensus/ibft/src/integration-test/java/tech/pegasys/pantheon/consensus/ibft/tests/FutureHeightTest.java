@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.util.Lists.emptyList;
 import static tech.pegasys.pantheon.consensus.ibft.support.MessageReceptionHelpers.assertPeersReceivedExactly;
 import static tech.pegasys.pantheon.consensus.ibft.support.MessageReceptionHelpers.assertPeersReceivedNoMessages;
-import static tech.pegasys.pantheon.consensus.ibft.support.TestHelpers.createSignedCommentPayload;
+import static tech.pegasys.pantheon.consensus.ibft.support.TestHelpers.createSignedCommitPayload;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
@@ -107,7 +107,7 @@ public class FutureHeightTest {
             futureHeightRoundId, futureHeightBlock.getHash());
 
     final SignedData<CommitPayload> expectedCommitMessage =
-        createSignedCommentPayload(
+        createSignedCommitPayload(
             futureHeightRoundId, futureHeightBlock, context.getLocalNodeParams().getNodeKeyPair());
 
     assertPeersReceivedExactly(roles.getAllPeers(), expectedPrepareMessage, expectedCommitMessage);
@@ -172,7 +172,7 @@ public class FutureHeightTest {
     roles.getNonProposingPeer(1).injectPrepare(roundId, currentHeightBlock.getHash());
 
     final SignedData<CommitPayload> expectedCommitMessage =
-        createSignedCommentPayload(
+        createSignedCommitPayload(
             roundId, currentHeightBlock, context.getLocalNodeParams().getNodeKeyPair());
     assertPeersReceivedExactly(roles.getAllPeers(), expectedCommitMessage);
   }
@@ -247,7 +247,7 @@ public class FutureHeightTest {
             futureHeightRoundId, futureHeightBlock.getHash());
 
     final SignedData<CommitPayload> expectedCommitMessage =
-        createSignedCommentPayload(
+        createSignedCommitPayload(
             futureHeightRoundId, futureHeightBlock, context.getLocalNodeParams().getNodeKeyPair());
 
     // Assert ONLY a prepare message was received, not any commits (i.e. futureHeightRoundId

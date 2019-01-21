@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.consensus.common.VoteTallyUpdater;
 import tech.pegasys.pantheon.consensus.ibft.BlockTimer;
+import tech.pegasys.pantheon.consensus.ibft.EventMultiplexer;
 import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
 import tech.pegasys.pantheon.consensus.ibft.IbftBlockInterface;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
@@ -82,10 +83,15 @@ public class TestContextBuilder {
 
     private IbftController controller;
     private IbftFinalState finalState;
+    private EventMultiplexer eventMultiplexer;
 
-    public ControllerAndState(final IbftController controller, final IbftFinalState finalState) {
+    public ControllerAndState(
+        final IbftController controller,
+        final IbftFinalState finalState,
+        final EventMultiplexer eventMultiplexer) {
       this.controller = controller;
       this.finalState = finalState;
+      this.eventMultiplexer = eventMultiplexer;
     }
 
     public IbftController getController() {
@@ -94,6 +100,10 @@ public class TestContextBuilder {
 
     public IbftFinalState getFinalState() {
       return finalState;
+    }
+
+    public EventMultiplexer getEventMultiplexer() {
+      return eventMultiplexer;
     }
   }
 
@@ -158,7 +168,7 @@ public class TestContextBuilder {
                         new ValidatorPeer(
                             nodeParams,
                             new MessageFactory(nodeParams.getNodeKeyPair()),
-                            controllerAndState.getController()),
+                            controllerAndState.getEventMultiplexer()),
                     (u, v) -> {
                       throw new IllegalStateException(String.format("Duplicate key %s", u));
                     },
@@ -170,7 +180,8 @@ public class TestContextBuilder {
         remotePeers,
         blockChain,
         controllerAndState.getController(),
-        controllerAndState.getFinalState());
+        controllerAndState.getFinalState(),
+        controllerAndState.getEventMultiplexer());
   }
 
   private static Block createGenesisBlock(final Set<Address> validators) {
@@ -283,8 +294,10 @@ public class TestContextBuilder {
                 messageValidatorFactory),
             new HashMap<>(),
             gossiper);
+
+    final EventMultiplexer eventMultiplexer = new EventMultiplexer(ibftController);
     //////////////////////////// END IBFT PantheonController ////////////////////////////
 
-    return new ControllerAndState(ibftController, finalState);
+    return new ControllerAndState(ibftController, finalState, eventMultiplexer);
   }
 }

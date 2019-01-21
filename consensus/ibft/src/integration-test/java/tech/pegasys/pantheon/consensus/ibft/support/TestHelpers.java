@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 
 public class TestHelpers {
 
-  public static SignedData<CommitPayload> createSignedCommentPayload(
+  public static SignedData<CommitPayload> createSignedCommitPayload(
       final ConsensusRoundIdentifier roundId, final Block block, final KeyPair signingKeyPair) {
 
     final IbftExtraData extraData = IbftExtraData.decode(block.getHeader().getExtraData());

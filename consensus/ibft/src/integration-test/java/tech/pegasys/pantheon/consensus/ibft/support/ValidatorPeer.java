@@ -13,8 +13,8 @@
 package tech.pegasys.pantheon.consensus.ibft.support;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
+import tech.pegasys.pantheon.consensus.ibft.EventMultiplexer;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvents;
-import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftReceivedMessageEvent;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.CommitMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.NewRoundMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.PrepareMessageData;
@@ -29,7 +29,6 @@ import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
-import tech.pegasys.pantheon.consensus.ibft.statemachine.IbftController;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
@@ -55,20 +54,24 @@ public class ValidatorPeer {
   private final PeerConnection peerConnection = new StubbedPeerConnection();
   private final List<MessageData> receivedMessages = Lists.newArrayList();
 
-  private final IbftController localNodeController;
+  private final EventMultiplexer localEventMultiplexer;
 
   public ValidatorPeer(
       final NodeParams nodeParams,
       final MessageFactory messageFactory,
-      final IbftController localNodeController) {
+      final EventMultiplexer localEventMultiplexer) {
     this.nodeKeys = nodeParams.getNodeKeyPair();
     this.nodeAddress = nodeParams.getAddress();
     this.messageFactory = messageFactory;
-    this.localNodeController = localNodeController;
+    this.localEventMultiplexer = localEventMultiplexer;
   }
 
   public Address getNodeAddress() {
     return nodeAddress;
+  }
+
+  public KeyPair getNodeKeys() {
+    return nodeKeys;
   }
 
   public SignedData<ProposalPayload> injectProposal(
@@ -94,7 +97,13 @@ public class ValidatorPeer {
 
   public SignedData<CommitPayload> injectCommit(
       final ConsensusRoundIdentifier rId, final Hash digest) {
-    final Signature commitSeal = getBlockSignature(digest);
+    final Signature commitSeal = SECP256K1.sign(digest, nodeKeys);
+
+    return injectCommit(rId, digest, commitSeal);
+  }
+
+  public SignedData<CommitPayload> injectCommit(
+      final ConsensusRoundIdentifier rId, final Hash digest, final Signature commitSeal) {
     final SignedData<CommitPayload> payload =
         messageFactory.createSignedCommitPayload(rId, digest, commitSeal);
     injectMessage(CommitMessageData.create(payload));
@@ -134,8 +143,7 @@ public class ValidatorPeer {
 
   public void injectMessage(final MessageData msgData) {
     final DefaultMessage message = new DefaultMessage(peerConnection, msgData);
-    localNodeController.handleMessageEvent(
-        (IbftReceivedMessageEvent) IbftEvents.fromMessage(message));
+    localEventMultiplexer.handleIbftEvent(IbftEvents.fromMessage(message));
   }
 
   public MessageFactory getMessageFactory() {

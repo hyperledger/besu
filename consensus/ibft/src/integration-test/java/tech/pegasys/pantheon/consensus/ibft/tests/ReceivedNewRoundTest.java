@@ -233,7 +233,7 @@ public class ReceivedNewRoundTest {
     nextRoles.getNonProposingPeer(1).injectPrepare(nextRoundId, reproposedBlock.getHash());
 
     final SignedData<CommitPayload> expectedCommit =
-        TestHelpers.createSignedCommentPayload(
+        TestHelpers.createSignedCommitPayload(
             nextRoundId, reproposedBlock, context.getLocalNodeParams().getNodeKeyPair());
 
     assertPeersReceivedExactly(nextRoles.getAllPeers(), expectedCommit);

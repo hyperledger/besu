@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.consensus.ibft.tests;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.pantheon.consensus.ibft.support.MessageReceptionHelpers.assertPeersReceivedExactly;
 import static tech.pegasys.pantheon.consensus.ibft.support.MessageReceptionHelpers.assertPeersReceivedNoMessages;
-import static tech.pegasys.pantheon.consensus.ibft.support.TestHelpers.createSignedCommentPayload;
+import static tech.pegasys.pantheon.consensus.ibft.support.TestHelpers.createSignedCommitPayload;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.payload.CommitPayload;
@@ -58,7 +58,7 @@ public class LocalNodeNotProposerTest {
         localNodeMessageFactory.createSignedPreparePayload(roundId, blockToPropose.getHash());
 
     expectedTxCommit =
-        createSignedCommentPayload(
+        createSignedCommitPayload(
             roundId, blockToPropose, context.getLocalNodeParams().getNodeKeyPair());
 
     context.getController().start();
