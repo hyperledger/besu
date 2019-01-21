@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.consensus.clique.jsonrpc.methods;
+package tech.pegasys.pantheon.consensus.ibft.jsonrpc.methods;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
 
@@ -20,9 +20,9 @@ import tech.pegasys.pantheon.consensus.common.jsonrpc.AbstractVoteProposerMethod
 import org.junit.Before;
 import org.junit.Test;
 
-public class CliqueProposalsTest extends AbstractVoteProposerMethodTest {
+public class IbftGetPendingVotesTest extends AbstractVoteProposerMethodTest {
 
-  private CliqueProposals method;
+  private IbftGetPendingVotes method;
 
   @Override
   protected AbstractVoteProposerMethod getMethod() {
@@ -31,12 +31,12 @@ public class CliqueProposalsTest extends AbstractVoteProposerMethodTest {
 
   @Override
   protected String getMethodName() {
-    return "clique_proposals";
+    return "ibft_getPendingVotes";
   }
 
   @Before
   public void setup() {
-    method = new CliqueProposals(getVoteProposer());
+    method = new IbftGetPendingVotes(getVoteProposer());
   }
 
   @Test

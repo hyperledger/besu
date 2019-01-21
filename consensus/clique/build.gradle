@@ -45,6 +45,7 @@ dependencies {
   implementation 'com.google.guava:guava'
 
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
