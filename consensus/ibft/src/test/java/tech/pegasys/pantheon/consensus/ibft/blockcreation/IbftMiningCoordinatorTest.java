@@ -59,7 +59,6 @@ public class IbftMiningCoordinatorTest {
   @Test
   public void enablesMining() {
     ibftMiningCoordinator.enable();
-    verify(ibftProcessor).start();
   }
 
   @Test

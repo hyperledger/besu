@@ -23,7 +23,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.RoundExpiry;
-import tech.pegasys.pantheon.consensus.ibft.statemachine.IbftController;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,12 +39,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class IbftProcessorTest {
   private ScheduledExecutorService mockExecutorService;
-  private IbftController mockIbftController;
+  private EventMultiplexer mockeEventMultiplexer;
 
   @Before
   public void initialise() {
     mockExecutorService = mock(ScheduledExecutorService.class);
-    mockIbftController = mock(IbftController.class);
+    mockeEventMultiplexer = mock(EventMultiplexer.class);
   }
 
   @Test
@@ -53,7 +52,7 @@ public class IbftProcessorTest {
     final IbftEventQueue mockQueue = mock(IbftEventQueue.class);
     Mockito.when(mockQueue.poll(anyLong(), any())).thenReturn(null);
     final IbftProcessor processor =
-        new IbftProcessor(mockQueue, mockIbftController, mockExecutorService);
+        new IbftProcessor(mockQueue, mockeEventMultiplexer, mockExecutorService);
 
     // Start the IbftProcessor
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
@@ -82,7 +81,7 @@ public class IbftProcessorTest {
   @Test
   public void cleanupExecutorsAfterShutdownNow() throws InterruptedException {
     final IbftProcessor processor =
-        new IbftProcessor(new IbftEventQueue(), mockIbftController, mockExecutorService);
+        new IbftProcessor(new IbftEventQueue(), mockeEventMultiplexer, mockExecutorService);
 
     // Start the IbftProcessor
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
@@ -112,7 +111,7 @@ public class IbftProcessorTest {
     Mockito.when(mockQueue.poll(anyLong(), any())).thenThrow(new InterruptedException());
 
     final IbftProcessor processor =
-        new IbftProcessor(mockQueue, mockIbftController, mockExecutorService);
+        new IbftProcessor(mockQueue, mockeEventMultiplexer, mockExecutorService);
 
     // Start the IbftProcessor
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
@@ -145,7 +144,7 @@ public class IbftProcessorTest {
   public void drainEventsIntoStateMachine() throws InterruptedException {
     final IbftEventQueue queue = new IbftEventQueue();
     final IbftProcessor processor =
-        new IbftProcessor(queue, mockIbftController, mockExecutorService);
+        new IbftProcessor(queue, mockeEventMultiplexer, mockExecutorService);
 
     // Start the IbftProcessor
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
@@ -161,6 +160,6 @@ public class IbftProcessorTest {
     processor.stop();
     processorExecutor.shutdown();
 
-    verify(mockIbftController, times(2)).handleRoundExpiry(eq(roundExpiryEvent));
+    verify(mockeEventMultiplexer, times(2)).handleIbftEvent(eq(roundExpiryEvent));
   }
 }

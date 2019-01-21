@@ -48,10 +48,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   }
 
   @Override
-  public void enable() {
-    ibftProcessor.start();
-    // IbftProcessor is implicitly running (but maybe should have a discard" all)
-  }
+  public void enable() {}
 
   @Override
   public void disable() {
