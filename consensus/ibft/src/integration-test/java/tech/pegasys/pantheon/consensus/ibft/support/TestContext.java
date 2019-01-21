@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.consensus.ibft.support;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
+import tech.pegasys.pantheon.consensus.ibft.EventMultiplexer;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.statemachine.IbftController;
 import tech.pegasys.pantheon.consensus.ibft.statemachine.IbftFinalState;
@@ -39,16 +40,19 @@ public class TestContext {
   private final MutableBlockchain blockchain;
   private final IbftController controller;
   private final IbftFinalState finalState;
+  private final EventMultiplexer eventMultiplexer;
 
   public TestContext(
       final Map<Address, ValidatorPeer> remotePeers,
       final MutableBlockchain blockchain,
       final IbftController controller,
-      final IbftFinalState finalState) {
+      final IbftFinalState finalState,
+      final EventMultiplexer eventMultiplexer) {
     this.remotePeers = remotePeers;
     this.blockchain = blockchain;
     this.controller = controller;
     this.finalState = finalState;
+    this.eventMultiplexer = eventMultiplexer;
   }
 
   public MutableBlockchain getBlockchain() {
@@ -57,6 +61,10 @@ public class TestContext {
 
   public IbftController getController() {
     return controller;
+  }
+
+  public EventMultiplexer getEventMultiplexer() {
+    return eventMultiplexer;
   }
 
   public MessageFactory getLocalNodeMessageFactory() {
