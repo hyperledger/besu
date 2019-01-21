@@ -31,7 +31,7 @@ import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.consensus.ibft.support.RoundSpecificNodeRoles;
 import tech.pegasys.pantheon.consensus.ibft.support.TestContext;
-import tech.pegasys.pantheon.consensus.ibft.support.TestContextFactory;
+import tech.pegasys.pantheon.consensus.ibft.support.TestContextBuilder;
 import tech.pegasys.pantheon.consensus.ibft.support.ValidatorPeer;
 import tech.pegasys.pantheon.ethereum.core.Block;
 
@@ -54,8 +54,13 @@ public class RoundChangeTest {
 
   private final int NETWORK_SIZE = 5;
 
+  // Configuration ensures remote peer will provide proposal for first block
   private final TestContext context =
-      TestContextFactory.createTestEnvironment(NETWORK_SIZE, 0, fixedClock);
+      new TestContextBuilder()
+          .validatorCount(NETWORK_SIZE)
+          .indexOfFirstLocallyProposedBlock(0)
+          .clock(fixedClock)
+          .build();
   private final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(1, 0);
   private final RoundSpecificNodeRoles roles = context.getRoundSpecificRoles(roundId);
 

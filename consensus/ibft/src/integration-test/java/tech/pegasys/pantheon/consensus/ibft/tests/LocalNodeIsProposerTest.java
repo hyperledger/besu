@@ -25,7 +25,7 @@ import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.consensus.ibft.support.RoundSpecificNodeRoles;
 import tech.pegasys.pantheon.consensus.ibft.support.TestContext;
-import tech.pegasys.pantheon.consensus.ibft.support.TestContextFactory;
+import tech.pegasys.pantheon.consensus.ibft.support.TestContextBuilder;
 import tech.pegasys.pantheon.ethereum.core.Block;
 
 import java.time.Clock;
@@ -45,8 +45,15 @@ public class LocalNodeIsProposerTest {
   private final Clock fixedClock =
       Clock.fixed(Instant.ofEpochSecond(blockTimeStamp), ZoneId.systemDefault());
 
-  // Local node will propose the first block
-  private final TestContext context = TestContextFactory.createTestEnvironment(4, 1, fixedClock);
+  final int NETWORK_SIZE = 4;
+
+  // Configuration ensures unit under test will be responsible for sending first proposal
+  private final TestContext context =
+      new TestContextBuilder()
+          .validatorCount(NETWORK_SIZE)
+          .indexOfFirstLocallyProposedBlock(1)
+          .clock(fixedClock)
+          .build();
   private final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(1, 0);
   private final RoundSpecificNodeRoles roles = context.getRoundSpecificRoles(roundId);
 
