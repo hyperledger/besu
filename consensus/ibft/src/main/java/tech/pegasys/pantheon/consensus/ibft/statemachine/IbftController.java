@@ -44,6 +44,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class IbftController {
+
   private static final Logger LOG = LogManager.getLogger();
   private final Blockchain blockchain;
   private final IbftFinalState ibftFinalState;
@@ -141,7 +142,22 @@ public class IbftController {
   }
 
   public void handleNewBlockEvent(final NewChainHead newChainHead) {
-    startNewHeightManager(newChainHead.getNewChainHeadHeader());
+    final BlockHeader newBlockHeader = newChainHead.getNewChainHeadHeader();
+    final BlockHeader currentMiningParent = currentHeightManager.getParentBlockHeader();
+    if (newBlockHeader.getNumber() < currentMiningParent.getNumber()) {
+      LOG.info("Discarding NewChainHead event, was for previous block height.");
+      return;
+    }
+
+    if (newBlockHeader.getNumber() == currentMiningParent.getNumber()) {
+      if (newBlockHeader.getHash().equals(currentMiningParent.getHash())) {
+        LOG.info("Discarding duplicate NewChainHead event.");
+      } else {
+        LOG.error("Subsequent NewChainHead event at same block height indicates chain fork.");
+      }
+      return;
+    }
+    startNewHeightManager(newBlockHeader);
   }
 
   public void handleBlockTimerExpiry(final BlockTimerExpiry blockTimerExpiry) {

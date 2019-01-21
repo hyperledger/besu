@@ -244,6 +244,10 @@ public class IbftBlockHeightManager {
     return currentRound.getRoundIdentifier().getSequenceNumber();
   }
 
+  public BlockHeader getParentBlockHeader() {
+    return parentHeader;
+  }
+
   private MessageAge determineAgeOfPayload(final Payload payload) {
     final int messageRoundNumber = payload.getRoundIdentifier().getRoundNumber();
     final int currentRoundNumber = currentRound.getRoundIdentifier().getRoundNumber();

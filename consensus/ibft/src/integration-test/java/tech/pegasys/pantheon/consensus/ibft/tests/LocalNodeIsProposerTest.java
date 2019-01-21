@@ -58,13 +58,13 @@ public class LocalNodeIsProposerTest {
 
   @Before
   public void setup() {
-    expectedProposedBlock = context.createBlockForProposal(0, blockTimeStamp);
+    expectedProposedBlock = context.createBlockForProposalFromChainHead(0, blockTimeStamp);
     expectedTxProposal =
         localNodeMessageFactory.createSignedProposalPayload(roundId, expectedProposedBlock);
 
     expectedTxCommit =
         createSignedCommentPayload(
-            expectedProposedBlock, context.getLocalNodeParams().getNodeKeyPair(), roundId);
+            roundId, expectedProposedBlock, context.getLocalNodeParams().getNodeKeyPair());
 
     // Start the Controller, and trigger "block timer" to send proposal.
     context.getController().start();

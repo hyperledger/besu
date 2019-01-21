@@ -58,7 +58,8 @@ public class ReceivedNewRoundTest {
   @Test
   public void newRoundMessageWithEmptyPrepareCertificatesOfferNewBlock() {
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
-    final Block blockToPropose = context.createBlockForProposal(nextRoundId.getRoundNumber(), 15);
+    final Block blockToPropose =
+        context.createBlockForProposalFromChainHead(nextRoundId.getRoundNumber(), 15);
     final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 1);
 
     final List<SignedData<RoundChangePayload>> roundChanges =
@@ -84,7 +85,8 @@ public class ReceivedNewRoundTest {
   @Test
   public void newRoundMessageFromIllegalSenderIsDiscardedAndNoPrepareForNewRoundIsSent() {
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
-    final Block blockToPropose = context.createBlockForProposal(nextRoundId.getRoundNumber(), 15);
+    final Block blockToPropose =
+        context.createBlockForProposalFromChainHead(nextRoundId.getRoundNumber(), 15);
 
     final List<SignedData<RoundChangePayload>> roundChanges =
         roles
@@ -108,8 +110,8 @@ public class ReceivedNewRoundTest {
 
   @Test
   public void newRoundWithPrepareCertificateResultsInNewRoundStartingWithExpectedBlock() {
-    final Block initialBlock = context.createBlockForProposal(0, 15);
-    final Block reproposedBlock = context.createBlockForProposal(1, 15);
+    final Block initialBlock = context.createBlockForProposalFromChainHead(0, 15);
+    final Block reproposedBlock = context.createBlockForProposalFromChainHead(1, 15);
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
     final PreparedCertificate preparedCertificate =
@@ -163,7 +165,8 @@ public class ReceivedNewRoundTest {
     final SignedData<ProposalPayload> proposal =
         interimRoundProposer
             .getMessageFactory()
-            .createSignedProposalPayload(interimRound, context.createBlockForProposal(1, 30));
+            .createSignedProposalPayload(
+                interimRound, context.createBlockForProposalFromChainHead(1, 30));
 
     interimRoundProposer.injectNewRound(
         interimRound, new RoundChangeCertificate(roundChangePayloads), proposal);
@@ -173,8 +176,8 @@ public class ReceivedNewRoundTest {
 
   @Test
   public void receiveRoundStateIsNotLostIfASecondNewRoundMessageIsReceivedForCurrentRound() {
-    final Block initialBlock = context.createBlockForProposal(0, 15);
-    final Block reproposedBlock = context.createBlockForProposal(1, 15);
+    final Block initialBlock = context.createBlockForProposalFromChainHead(0, 15);
+    final Block reproposedBlock = context.createBlockForProposalFromChainHead(1, 15);
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
     final PreparedCertificate preparedCertificate =
@@ -224,7 +227,7 @@ public class ReceivedNewRoundTest {
 
     final SignedData<CommitPayload> expectedCommit =
         TestHelpers.createSignedCommentPayload(
-            reproposedBlock, context.getLocalNodeParams().getNodeKeyPair(), nextRoundId);
+            nextRoundId, reproposedBlock, context.getLocalNodeParams().getNodeKeyPair());
 
     assertPeersReceivedExactly(nextRoles.getAllPeers(), expectedCommit);
   }
