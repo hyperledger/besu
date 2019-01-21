@@ -88,9 +88,13 @@ public class ValidatorPeer {
     return payload;
   }
 
+  public Signature getBlockSignature(final Hash digest) {
+    return SECP256K1.sign(digest, nodeKeys);
+  }
+
   public SignedData<CommitPayload> injectCommit(
       final ConsensusRoundIdentifier rId, final Hash digest) {
-    final Signature commitSeal = SECP256K1.sign(digest, nodeKeys);
+    final Signature commitSeal = getBlockSignature(digest);
     final SignedData<CommitPayload> payload =
         messageFactory.createSignedCommitPayload(rId, digest, commitSeal);
     injectMessage(CommitMessageData.create(payload));

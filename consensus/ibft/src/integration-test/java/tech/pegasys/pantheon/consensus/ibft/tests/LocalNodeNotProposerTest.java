@@ -15,10 +15,9 @@ package tech.pegasys.pantheon.consensus.ibft.tests;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.pantheon.consensus.ibft.support.MessageReceptionHelpers.assertPeersReceivedExactly;
 import static tech.pegasys.pantheon.consensus.ibft.support.MessageReceptionHelpers.assertPeersReceivedNoMessages;
+import static tech.pegasys.pantheon.consensus.ibft.support.TestHelpers.createSignedCommentPayload;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
-import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
-import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
 import tech.pegasys.pantheon.consensus.ibft.payload.CommitPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
@@ -27,8 +26,6 @@ import tech.pegasys.pantheon.consensus.ibft.support.RoundSpecificNodeRoles;
 import tech.pegasys.pantheon.consensus.ibft.support.TestContext;
 import tech.pegasys.pantheon.consensus.ibft.support.TestContextFactory;
 import tech.pegasys.pantheon.consensus.ibft.support.ValidatorPeer;
-import tech.pegasys.pantheon.crypto.SECP256K1;
-import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Block;
 
 import org.junit.Before;
@@ -44,7 +41,7 @@ public class LocalNodeNotProposerTest {
 
   private final MessageFactory localNodeMessageFactory = context.getLocalNodeMessageFactory();
 
-  private final Block blockToPropose = context.createBlockForProposal(0, 15);
+  private final Block blockToPropose = context.createBlockForProposalFromChainHead(0, 15);
 
   private SignedData<PreparePayload> expectedTxPrepare;
   private SignedData<CommitPayload> expectedTxCommit;
@@ -54,16 +51,9 @@ public class LocalNodeNotProposerTest {
     expectedTxPrepare =
         localNodeMessageFactory.createSignedPreparePayload(roundId, blockToPropose.getHash());
 
-    final IbftExtraData extraData = IbftExtraData.decode(blockToPropose.getHeader().getExtraData());
-    final Signature commitSeal =
-        SECP256K1.sign(
-            IbftBlockHashing.calculateDataHashForCommittedSeal(
-                blockToPropose.getHeader(), extraData),
-            context.getLocalNodeParams().getNodeKeyPair());
-
     expectedTxCommit =
-        localNodeMessageFactory.createSignedCommitPayload(
-            roundId, blockToPropose.getHash(), commitSeal);
+        createSignedCommentPayload(
+            roundId, blockToPropose, context.getLocalNodeParams().getNodeKeyPair());
 
     context.getController().start();
   }
