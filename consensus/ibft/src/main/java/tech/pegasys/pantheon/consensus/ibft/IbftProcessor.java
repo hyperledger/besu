@@ -12,12 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft;
 
-import tech.pegasys.pantheon.consensus.ibft.ibftevent.BlockTimerExpiry;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvent;
-import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftReceivedMessageEvent;
-import tech.pegasys.pantheon.consensus.ibft.ibftevent.NewChainHead;
-import tech.pegasys.pantheon.consensus.ibft.ibftevent.RoundExpiry;
-import tech.pegasys.pantheon.consensus.ibft.statemachine.IbftController;
 
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -30,37 +25,35 @@ import org.apache.logging.log4j.Logger;
 
 /** Execution context for draining queued ibft events and applying them to a maintained state */
 public class IbftProcessor implements Runnable {
+
   private static final Logger LOG = LogManager.getLogger();
 
   private final IbftEventQueue incomingQueue;
   private final ScheduledExecutorService roundTimerExecutor;
   private volatile boolean shutdown = false;
-  private final IbftController ibftController;
+  private final EventMultiplexer eventMultiplexer;
 
   /**
    * Construct a new IbftProcessor
    *
    * @param incomingQueue The event queue from which to drain new events
-   * @param ibftController an object capable of handling any/all IBFT events
+   * @param eventMultiplexer an object capable of handling any/all IBFT events
    */
-  public IbftProcessor(final IbftEventQueue incomingQueue, final IbftController ibftController) {
+  public IbftProcessor(
+      final IbftEventQueue incomingQueue, final EventMultiplexer eventMultiplexer) {
     // Spawning the round timer with a single thread as we should never have more than 1 timer in
     // flight at a time
-    this(incomingQueue, ibftController, Executors.newSingleThreadScheduledExecutor());
+    this(incomingQueue, eventMultiplexer, Executors.newSingleThreadScheduledExecutor());
   }
 
   @VisibleForTesting
   IbftProcessor(
       final IbftEventQueue incomingQueue,
-      final IbftController ibftController,
+      final EventMultiplexer eventMultiplexer,
       final ScheduledExecutorService roundTimerExecutor) {
     this.incomingQueue = incomingQueue;
-    this.ibftController = ibftController;
+    this.eventMultiplexer = eventMultiplexer;
     this.roundTimerExecutor = roundTimerExecutor;
-  }
-
-  public void start() {
-    ibftController.start();
   }
 
   /** Indicate to the processor that it should gracefully stop at its next opportunity */
@@ -71,37 +64,10 @@ public class IbftProcessor implements Runnable {
   @Override
   public void run() {
     while (!shutdown) {
-      nextIbftEvent().ifPresent(this::handleIbftEvent);
+      nextIbftEvent().ifPresent(event -> eventMultiplexer.handleIbftEvent(event));
     }
     // Clean up the executor service the round timer has been utilising
     roundTimerExecutor.shutdownNow();
-  }
-
-  private void handleIbftEvent(final IbftEvent ibftEvent) {
-    try {
-      switch (ibftEvent.getType()) {
-        case MESSAGE:
-          final IbftReceivedMessageEvent rxEvent = (IbftReceivedMessageEvent) ibftEvent;
-          ibftController.handleMessageEvent(rxEvent);
-          break;
-        case ROUND_EXPIRY:
-          final RoundExpiry roundExpiryEvent = (RoundExpiry) ibftEvent;
-          ibftController.handleRoundExpiry(roundExpiryEvent);
-          break;
-        case NEW_CHAIN_HEAD:
-          final NewChainHead newChainHead = (NewChainHead) ibftEvent;
-          ibftController.handleNewBlockEvent(newChainHead);
-          break;
-        case BLOCK_TIMER_EXPIRY:
-          final BlockTimerExpiry blockTimerExpiry = (BlockTimerExpiry) ibftEvent;
-          ibftController.handleBlockTimerExpiry(blockTimerExpiry);
-          break;
-        default:
-          throw new RuntimeException("Illegal event in queue.");
-      }
-    } catch (final Exception e) {
-      LOG.error("State machine threw exception while processing event {" + ibftEvent + "}", e);
-    }
   }
 
   private Optional<IbftEvent> nextIbftEvent() {
