@@ -13,9 +13,12 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.PeerResult;
+import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 
 import java.util.List;
@@ -45,6 +48,8 @@ public class AdminPeers implements JsonRpcMethod {
           peerDiscoveryAgent.getPeers().stream().map(PeerResult::new).collect(Collectors.toList());
       final JsonRpcResponse result = new JsonRpcSuccessResponse(req.getId(), peers);
       return result;
+    } catch (P2pDisabledException e) {
+      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
     } catch (final Exception e) {
       LOG.error("Error processing request: " + req, e);
       throw e;

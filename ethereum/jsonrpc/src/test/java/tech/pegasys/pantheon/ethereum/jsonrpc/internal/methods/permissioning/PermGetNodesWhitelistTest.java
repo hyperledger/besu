@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
@@ -118,6 +119,18 @@ public class PermGetNodesWhitelistTest {
 
     verify(nodeWhitelistController, times(1)).nodeWhitelistSet();
     verifyNoMoreInteractions(nodeWhitelistController);
+  }
+
+  @Test
+  public void shouldFailWhenP2pDisabled() {
+    when(p2pNetwork.getNodeWhitelistController())
+        .thenThrow(new P2pDisabledException("P2P disabled."));
+
+    final JsonRpcRequest request = buildRequest();
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.P2P_DISABLED);
+
+    assertThat(method.response(request)).isEqualToComparingFieldByField(expectedResponse);
   }
 
   private JsonRpcRequest buildRequest() {

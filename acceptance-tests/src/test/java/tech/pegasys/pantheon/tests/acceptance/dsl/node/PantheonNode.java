@@ -65,6 +65,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
   private final KeyPair keyPair;
   private final int p2pPort;
   private final Properties portsProperties = new Properties();
+  private final Boolean p2pEnabled;
 
   private final String name;
   private final MiningParameters miningParameters;
@@ -88,7 +89,8 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
       final PermissioningConfiguration permissioningConfiguration,
       final boolean devMode,
       final GenesisConfigProvider genesisConfigProvider,
-      final int p2pPort)
+      final int p2pPort,
+      final Boolean p2pEnabled)
       throws IOException {
     this.homeDirectory = Files.createTempDirectory("acctest");
     this.keyPair = KeyPairUtil.loadKeyPair(homeDirectory);
@@ -101,6 +103,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     this.permissioningConfiguration = permissioningConfiguration;
     this.genesisConfigProvider = genesisConfigProvider;
     this.devMode = devMode;
+    this.p2pEnabled = p2pEnabled;
     LOG.info("Created PantheonNode {}", this.toString());
   }
 
@@ -313,6 +316,10 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
         .collect(Collectors.toList());
   }
 
+  Boolean p2pEnabled() {
+    return p2pEnabled;
+  }
+
   @Override
   public void bootnodes(final List<String> bootnodes) {
     this.bootnodes = bootnodes;
@@ -337,6 +344,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
         .add("p2pPort", p2pPort)
         .add("homeDirectory", homeDirectory)
         .add("keyPair", keyPair)
+        .add("p2pEnabled", p2pEnabled)
         .toString();
   }
 

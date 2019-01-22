@@ -89,6 +89,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
             .metricsSystem(noOpMetricsSystem)
             .metricsConfiguration(node.metricsConfiguration())
             .permissioningConfiguration(node.getPermissioningConfiguration())
+            .p2pEnabled(node.p2pEnabled())
             .build();
 
     nodeExecutor.submit(runner::execute);

@@ -13,9 +13,12 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
+import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 
 public class NetPeerCount implements JsonRpcMethod {
@@ -32,6 +35,10 @@ public class NetPeerCount implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest req) {
-    return new JsonRpcSuccessResponse(req.getId(), Quantity.create(p2pNetwork.getPeers().size()));
+    try {
+      return new JsonRpcSuccessResponse(req.getId(), Quantity.create(p2pNetwork.getPeers().size()));
+    } catch (P2pDisabledException e) {
+      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
+    }
   }
 }
