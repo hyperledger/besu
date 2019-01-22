@@ -50,7 +50,7 @@ public class IbftController {
   private final IbftFinalState ibftFinalState;
   private final IbftBlockHeightManagerFactory ibftBlockHeightManagerFactory;
   private final Map<Long, List<Message>> futureMessages;
-  private IbftBlockHeightManager currentHeightManager;
+  private BlockHeightManager currentHeightManager;
   private final IbftGossip gossiper;
 
   public IbftController(
@@ -188,7 +188,7 @@ public class IbftController {
   private boolean processMessage(final SignedData<? extends Payload> msg, final Message rawMsg) {
     final ConsensusRoundIdentifier msgRoundIdentifier = msg.getPayload().getRoundIdentifier();
     if (isMsgForCurrentHeight(msgRoundIdentifier)) {
-      return isMsgFromKnownValidator(msg);
+      return isMsgFromKnownValidator(msg) && ibftFinalState.isLocalNodeValidator();
     } else if (isMsgForFutureChainHeight(msgRoundIdentifier)) {
       addMessageToFutureMessageBuffer(msgRoundIdentifier.getSequenceNumber(), rawMsg);
     } else {

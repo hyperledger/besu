@@ -66,7 +66,7 @@ public class IbftControllerTest {
   @Mock private IbftBlockHeightManagerFactory blockHeightManagerFactory;
   @Mock private BlockHeader chainHeadBlockHeader;
   @Mock private BlockHeader nextBlock;
-  @Mock private IbftBlockHeightManager blockHeightManager;
+  @Mock private BlockHeightManager blockHeightManager;
 
   @Mock private SignedData<ProposalPayload> signedProposal;
   private Message proposalMessage;
@@ -116,6 +116,8 @@ public class IbftControllerTest {
     when(blockHeightManager.getParentBlockHeader()).thenReturn(chainHeadBlockHeader);
 
     when(nextBlock.getNumber()).thenReturn(2L);
+
+    when(ibftFinalState.isLocalNodeValidator()).thenReturn(true);
   }
 
   @Test
