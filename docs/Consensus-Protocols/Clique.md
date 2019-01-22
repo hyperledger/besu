@@ -3,15 +3,15 @@ path: blob/master/config/src/main/resources/
 source: rinkeby.json
 <!--- END of page meta data -->
 
-# Proof of Authority
+# Clique
 
 Pantheon implements the Clique Proof-of-Authority (PoA) consensus protocol. Clique is used by the Rinkeby testnet and can be used for private networks. 
 
-In PoA networks, transactions and blocks are validated by approved accounts, known as signers. Signers take turns to create the next block. Existing signers propose and vote to add or remove signers. 
+In Clique networks, transactions and blocks are validated by approved accounts, known as signers. Signers take turns to create the next block. Existing signers propose and vote to add or remove signers. 
 
 ## Genesis File
 
-To use Clique in a private network, Pantheon requires a PoA genesis file. When connecting to Rinkeby, Pantheon uses the [`rinkeby.json`](https://github.com/PegaSysEng/pantheon/blob/master/config/src/main/resources/rinkeby.json) genesis file in the `/pantheon/config/src/main/resources` directory.
+To use Clique in a private network, Pantheon requires a Clique genesis file. When connecting to Rinkeby, Pantheon uses the [`rinkeby.json`](https://github.com/PegaSysEng/pantheon/blob/master/config/src/main/resources/rinkeby.json) genesis file in the `/pantheon/config/src/main/resources` directory.
 
 A PoA genesis file defines properties specific to Clique:
 
@@ -37,11 +37,14 @@ The properties specific to Clique are:
 * `epoch` - Number of blocks after which to reset all votes.
 * `extraData` - Initial signers are specified after the 32 bytes reserved for vanity data. 
 
-To connect to the Rinkeby testnet, start Pantheon with the [`--rinkeby`](../Reference/Pantheon-CLI-Syntax.md#rinkeby) command line option. To start a node on a PoA private network, use the [`--network-id`](../Reference/Pantheon-CLI-Syntax.md#network-id) command line option and [`--genesis`](../Reference/Pantheon-CLI-Syntax.md#genesis`) option. 
+To connect to the Rinkeby testnet, start Pantheon with the [`--rinkeby`](../Reference/Pantheon-CLI-Syntax.md#rinkeby) command line option. To start a node on a Clique private network, use the [`--genesis`](../Reference/Pantheon-CLI-Syntax.md#genesis`) option to specify the custom genesis file. 
 
-### Adding and Removing Signers
+## Adding and Removing Signers
 
-To propose adding or removing signers using the JSON-RPC methods, you must enable the RPC interface using the [`--rpc-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-enabled) option. If also using the [`--rpc-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-api) option, include `CLIQUE`.
+To propose adding or removing signers using the JSON-RPC methods, enable the HTTP interface 
+using [`--rpc-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-enabled) or WebSockets interface using 
+[`--ws-enabled`](../Reference/Pantheon-CLI-Syntax.md#ws-enabled). If also using the [`--rpc-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-api) 
+ or [`--ws-api`](../Reference/Pantheon-CLI-Syntax.md#ws-api) options, include `CLIQUE`.
 
 The JSON-RPC methods to add or remove signers are:
 
@@ -73,8 +76,10 @@ To discard your proposal after confirming the signer was added, call `clique_dis
 
 The process for removing a signer is the same as adding a signer except you specify `false` as the second parameter of `clique_propose`. 
 
-#### Epoch Transition
+### Epoch Transition
 
 At each epoch transition, all pending votes collected from received blocks are discarded. Existing proposals remain in effect and signers re-add their vote the next time they create a block. 
 
 Define the number of blocks between epoch transitions in the genesis file. 
+
+*[vanity data]: Signers can include anything they like as vanity data.
