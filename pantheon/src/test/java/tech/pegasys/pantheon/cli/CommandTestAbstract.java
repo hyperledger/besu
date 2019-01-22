@@ -14,6 +14,8 @@ package tech.pegasys.pantheon.cli;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.Runner;
@@ -38,6 +40,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -79,6 +83,14 @@ public abstract class CommandTestAbstract {
   @Captor ArgumentCaptor<PermissioningConfiguration> permissioningConfigurationArgumentCaptor;
   @Captor ArgumentCaptor<Collection<URI>> uriListArgumentCaptor;
 
+  @Rule public final TemporaryFolder temp = new TemporaryFolder();
+
+  @Before
+  @After
+  public void resetSystemProps() {
+    System.setProperty("pantheon.docker", "false");
+  }
+
   @Before
   public void initMocks() throws Exception {
     // doReturn used because of generic PantheonController
@@ -93,6 +105,23 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.metricsSystem(any())).thenReturn(mockControllerBuilder);
 
     when(mockSyncConfBuilder.build()).thenReturn(mockSyncConf);
+
+    when(mockRunnerBuilder.vertx(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.pantheonController(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.discovery(anyBoolean())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.bootstrapPeers(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.discoveryHost(anyString())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.discoveryPort(anyInt())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.maxPeers(anyInt())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.p2pEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.jsonRpcConfiguration(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.webSocketConfiguration(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.permissioningConfiguration(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.dataDir(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.bannedNodeIds(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.metricsSystem(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.metricsConfiguration(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.build()).thenReturn(mockRunner);
   }
 
   // Display outputs for debug purpose

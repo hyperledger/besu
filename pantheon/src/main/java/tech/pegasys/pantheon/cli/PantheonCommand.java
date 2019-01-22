@@ -14,7 +14,14 @@ package tech.pegasys.pantheon.cli;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static tech.pegasys.pantheon.cli.DefaultCommandValues.getDefaultPantheonDataDir;
+import static tech.pegasys.pantheon.cli.DefaultCommandValues.getDefaultPantheonDataPath;
+import static tech.pegasys.pantheon.cli.NetworkName.MAINNET;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_REFRESH_DELAY;
+import static tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer.DEFAULT_PORT;
+import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
+import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.createDefault;
 
 import tech.pegasys.pantheon.Runner;
 import tech.pegasys.pantheon.RunnerBuilder;
@@ -62,6 +69,7 @@ import java.util.stream.Stream;
 
 import com.google.common.io.Resources;
 import com.google.common.net.HostAndPort;
+import com.google.common.net.HostSpecifier;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
@@ -89,24 +97,6 @@ import picocli.CommandLine.ParameterException;
   footer = "Pantheon is licensed under the Apache License 2.0"
 )
 public class PantheonCommand implements DefaultCommandValues, Runnable {
-
-  private static final int DEFAULT_MAX_PEERS = 25;
-
-  // Default should be FAST for the next release
-  // but we use FULL for the moment as Fast is still in progress
-  private static final SyncMode DEFAULT_SYNC_MODE = SyncMode.FULL;
-
-  private static final String MANDATORY_HOST_AND_PORT_FORMAT_HELP = "<HOST:PORT>";
-  private static final String MANDATORY_INTEGER_FORMAT_HELP = "<INTEGER>";
-  private static final String MANDATORY_MODE_FORMAT_HELP = "<MODE>";
-
-  private static final Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
-  private static final BytesValue DEFAULT_EXTRA_DATA = BytesValue.EMPTY;
-  private static final long DEFAULT_MAX_REFRESH_DELAY = 3600000;
-  private static final long DEFAULT_MIN_REFRESH_DELAY = 1;
-
-  private static final String DOCKER_GENESIS_LOCATION = "/etc/pantheon/genesis.json";
-  private static final String DOCKER_DATADIR_LOCATION = "/var/lib/pantheon";
 
   public static class RpcApisConverter implements ITypeConverter<RpcApi> {
 
@@ -149,7 +139,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   // Options parsing is done with CLI library Picocli https://picocli.info/
 
   @Option(
-    names = {"--node-private-key"},
+    names = {"--node-private-key-file"},
     paramLabel = MANDATORY_PATH_FORMAT_HELP,
     description =
         "the path to the node's private key file (default: a file named \"key\" in the Pantheon data folder)"
@@ -202,6 +192,12 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   )
   private final Integer maxPeers = DEFAULT_MAX_PEERS;
 
+  /**
+   * @deprecated This option is not exposed anymore even if still available as it's bounded by
+   *     max-peers value. It's not useful enough to figure in the help. Will probably completely
+   *     removed in next version.
+   */
+  @Deprecated
   @Option(
     names = {"--max-trailing-peers"},
     paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
@@ -211,7 +207,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Integer maxTrailingPeers = Integer.MAX_VALUE;
 
   @Option(
-    names = {"--banned-nodeids"},
+    names = {"--banned-node-ids", "--banned-node-id"},
+    paramLabel = MANDATORY_NODE_ID_FORMAT_HELP,
     description = "A list of node IDs to ban from the p2p network.",
     split = ",",
     arity = "1..*"
@@ -228,6 +225,17 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   //  )
   private final SyncMode syncMode = DEFAULT_SYNC_MODE;
 
+  @Option(
+    names = {"--network"},
+    paramLabel = MANDATORY_NETWORK_FORMAT_HELP,
+    description =
+        "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
+            + " (default: ${DEFAULT-VALUE})"
+  )
+  private final NetworkName network = MAINNET;
+
+  /** @deprecated Deprecated in favour of --network option */
+  @Deprecated
   // Boolean option to indicate if the client have to sync against the ottoman test network
   // (see https://github.com/ethereum/EIPs/issues/650).
   @Option(
@@ -238,6 +246,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   )
   private final Boolean syncWithOttoman = false;
 
+  /** @deprecated Deprecated in favour of --network option */
+  @Deprecated
   @Option(
     names = {"--rinkeby"},
     description =
@@ -246,12 +256,16 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   )
   private final Boolean rinkeby = false;
 
+  /** @deprecated Deprecated in favour of --network option */
+  @Deprecated
   @Option(
     names = {"--ropsten"},
     description = "Use the Ropsten test network (default: ${DEFAULT-VALUE})"
   )
   private final Boolean ropsten = false;
 
+  /** @deprecated Deprecated in favour of --network option */
+  @Deprecated
   @Option(
     names = {"--goerli"},
     description = "Use the Goerli test network (default: ${DEFAULT-VALUE})"
@@ -259,13 +273,24 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Boolean goerli = false;
 
   @Option(
-    names = {"--p2p-listen"},
-    paramLabel = MANDATORY_HOST_AND_PORT_FORMAT_HELP,
-    description = "Host and port for p2p peers discovery to listen on (default: ${DEFAULT-VALUE})",
+    names = {"--p2p-host"},
+    paramLabel = MANDATORY_HOST_FORMAT_HELP,
+    description = "Host for p2p peers discovery to listen on (default: ${DEFAULT-VALUE})",
     arity = "1"
   )
-  private final HostAndPort p2pHostAndPort = getDefaultHostAndPort(DefaultPeer.DEFAULT_PORT);
+  private final HostSpecifier p2pHost =
+      HostSpecifier.fromValid(autoDiscoverDefaultIP().getHostAddress());
 
+  @Option(
+    names = {"--p2p-port"},
+    paramLabel = MANDATORY_PORT_FORMAT_HELP,
+    description = "Port for p2p peers discovery to listen on (default: ${DEFAULT-VALUE})",
+    arity = "1"
+  )
+  private final Integer p2pPort = DEFAULT_PORT;
+
+  /** @deprecated Deprecated in favour of --network option */
+  @Deprecated
   @Option(
     names = {"--network-id"},
     paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
@@ -275,29 +300,38 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Integer networkId = null;
 
   @Option(
-    names = {"--rpc-enabled"},
+    names = {"--rpc-http-enabled"},
     description = "Set if the JSON-RPC service should be started (default: ${DEFAULT-VALUE})"
   )
-  private final Boolean isJsonRpcEnabled = false;
+  private final Boolean isHttpRpcEnabled = false;
 
   @Option(
-    names = {"--rpc-listen"},
-    paramLabel = MANDATORY_HOST_AND_PORT_FORMAT_HELP,
-    description = "Host and port for JSON-RPC to listen on (default: ${DEFAULT-VALUE})",
+    names = {"--rpc-http-host"},
+    paramLabel = MANDATORY_HOST_FORMAT_HELP,
+    description = "Host for HTTP JSON-RPC to listen on (default: ${DEFAULT-VALUE})",
     arity = "1"
   )
-  private final HostAndPort rpcHostAndPort =
-      getDefaultHostAndPort(JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT);
+  private final HostSpecifier rpcHttpHost =
+      HostSpecifier.fromValid(autoDiscoverDefaultIP().getHostAddress());
+
+  @Option(
+    names = {"--rpc-http-port"},
+    paramLabel = MANDATORY_PORT_FORMAT_HELP,
+    description = "Port for HTTP JSON-RPC to listen on (default: ${DEFAULT-VALUE})",
+    arity = "1"
+  )
+  private final Integer rpcHttpPort = DEFAULT_JSON_RPC_PORT;
 
   // A list of origins URLs that are accepted by the JsonRpcHttpServer (CORS)
   @Option(
-    names = {"--rpc-cors-origins"},
+    names = {"--rpc-http-cors-origins"},
     description = "Comma separated origin domain URLs for CORS validation (default: none)"
   )
-  private final CorsAllowedOriginsProperty rpcCorsAllowedOrigins = new CorsAllowedOriginsProperty();
+  private final CorsAllowedOriginsProperty rpcHttpCorsAllowedOrigins =
+      new CorsAllowedOriginsProperty();
 
   @Option(
-    names = {"--rpc-api"},
+    names = {"--rpc-http-api", "--rpc-http-apis"},
     paramLabel = "<api name>",
     split = ",",
     arity = "1..*",
@@ -305,26 +339,34 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     description = "Comma separated APIs to enable on JSON-RPC channel. default: ${DEFAULT-VALUE}",
     defaultValue = "ETH,NET,WEB3,CLIQUE,IBFT"
   )
-  private final Collection<RpcApi> rpcApis = null;
+  private final Collection<RpcApi> rpcHttpApis = null;
 
   @Option(
-    names = {"--ws-enabled"},
+    names = {"--rpc-ws-enabled"},
     description =
         "Set if the WS-RPC (WebSocket) service should be started (default: ${DEFAULT-VALUE})"
   )
-  private final Boolean isWsRpcEnabled = false;
+  private final Boolean isRpcWsEnabled = false;
 
   @Option(
-    names = {"--ws-listen"},
-    paramLabel = MANDATORY_HOST_AND_PORT_FORMAT_HELP,
-    description = "Host and port for WS-RPC (WebSocket) to listen on (default: ${DEFAULT-VALUE})",
+    names = {"--rpc-ws-host"},
+    paramLabel = MANDATORY_HOST_FORMAT_HELP,
+    description = "Host for WebSocket JSON-RPC to listen on (default: ${DEFAULT-VALUE})",
     arity = "1"
   )
-  private final HostAndPort wsHostAndPort =
-      getDefaultHostAndPort(WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT);
+  private final HostSpecifier rpcWsHost =
+      HostSpecifier.fromValid(autoDiscoverDefaultIP().getHostAddress());
 
   @Option(
-    names = {"--ws-api"},
+    names = {"--rpc-ws-port"},
+    paramLabel = MANDATORY_PORT_FORMAT_HELP,
+    description = "Port for WebSocket JSON-RPC to listen on (default: ${DEFAULT-VALUE})",
+    arity = "1"
+  )
+  private final Integer rpcWsPort = DEFAULT_WEBSOCKET_PORT;
+
+  @Option(
+    names = {"--rpc-ws-api", "--rpc-ws-apis"},
     paramLabel = "<api name>",
     split = ",",
     arity = "1..*",
@@ -332,29 +374,29 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     description = "Comma separated APIs to enable on WebSocket channel. default: ${DEFAULT-VALUE}",
     defaultValue = "ETH,NET,WEB3,CLIQUE,IBFT"
   )
-  private final Collection<RpcApi> wsApis = null;
+  private final Collection<RpcApi> rpcWsApis = null;
 
-  private Long refreshDelay;
+  private Long rpcWsRefreshDelay;
 
   @Option(
-    names = {"--ws-refresh-delay"},
+    names = {"--rpc-ws-refresh-delay"},
     paramLabel = "<refresh delay>",
     arity = "1",
     description =
         "Refresh delay of websocket subscription sync in milliseconds. "
             + "default: ${DEFAULT-VALUE}",
-    defaultValue = "" + WebSocketConfiguration.DEFAULT_WEBSOCKET_REFRESH_DELAY
+    defaultValue = "" + DEFAULT_WEBSOCKET_REFRESH_DELAY
   )
   private Long configureRefreshDelay(final Long refreshDelay) {
     if (refreshDelay < DEFAULT_MIN_REFRESH_DELAY || refreshDelay > DEFAULT_MAX_REFRESH_DELAY) {
       throw new ParameterException(
           new CommandLine(this),
           String.format(
-              "refreshDelay must be a positive integer between %s and %s",
+              "Refresh delay must be a positive integer between %s and %s",
               String.valueOf(DEFAULT_MIN_REFRESH_DELAY),
               String.valueOf(DEFAULT_MAX_REFRESH_DELAY)));
     }
-    this.refreshDelay = refreshDelay;
+    this.rpcWsRefreshDelay = refreshDelay;
     return refreshDelay;
   }
 
@@ -365,23 +407,33 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Boolean isMetricsEnabled = false;
 
   @Option(
-    names = {"--metrics-listen"},
-    paramLabel = MANDATORY_HOST_AND_PORT_FORMAT_HELP,
-    description = "Host and port for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
+    names = {"--metrics-host"},
+    paramLabel = MANDATORY_HOST_FORMAT_HELP,
+    description = "Host for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
     arity = "1"
   )
-  private final HostAndPort metricsHostAndPort =
-      getDefaultHostAndPort(MetricsConfiguration.DEFAULT_METRICS_PORT);
+  private final HostSpecifier metricsHost =
+      HostSpecifier.fromValid(autoDiscoverDefaultIP().getHostAddress());
+
+  @Option(
+    names = {"--metrics-port"},
+    paramLabel = MANDATORY_PORT_FORMAT_HELP,
+    description = "Port for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
+    arity = "1"
+  )
+  private final Integer metricsPort = DEFAULT_METRICS_PORT;
 
   @Option(
     names = {"--host-whitelist"},
-    paramLabel = "<hostname>",
+    paramLabel = "<hostname>[,<hostname>...]... or * or all",
     description =
-        "Comma separated list of hostnames to whitelist for RPC access.  default: ${DEFAULT-VALUE}",
+        "Comma separated list of hostnames to whitelist for RPC access or * or all to accept any host.  default: ${DEFAULT-VALUE}",
     defaultValue = "localhost"
   )
   private final JsonRPCWhitelistHostsProperty hostsWhitelist = new JsonRPCWhitelistHostsProperty();
 
+  /** @deprecated Deprecated in favour of --network option */
+  @Deprecated
   @Option(
     names = {"--dev-mode"},
     description =
@@ -392,7 +444,9 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   @Option(
     names = {"--logging", "-l"},
-    description = "Logging verbosity: OFF, FATAL, WARN, INFO, DEBUG, TRACE, ALL (default: INFO)."
+    paramLabel = "<LOG VERBOSITY LEVEL>",
+    description =
+        "Logging verbosity levels: OFF, FATAL, WARN, INFO, DEBUG, TRACE, ALL (default: INFO)."
   )
   private final Level logLevel = null;
 
@@ -405,23 +459,23 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   @Option(
     names = {"--miner-coinbase"},
     description =
-        "the account to which mining rewards are to be paid, must be specified if "
-            + "mining is enabled.",
+        "account to which mining rewards are paid. You must specify a valid coinbase if "
+            + "mining is enabled using --miner-enabled option.",
     arity = "1"
   )
   private final Address coinbase = null;
 
   @Option(
-    names = {"--miner-minTransactionGasPriceWei"},
+    names = {"--min-gas-price"},
     description =
-        "the minimum price offered by a transaction for it to be included in a mined "
+        "the minimum price (in Wei) offered by a transaction for it to be included in a mined "
             + "block (default: ${DEFAULT-VALUE}).",
     arity = "1"
   )
   private final Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 
   @Option(
-    names = {"--miner-extraData"},
+    names = {"--miner-extra-data"},
     description =
         "a hex string representing the (32) bytes to be included in the extra data "
             + "field of a mined block. (default: ${DEFAULT-VALUE}).",
@@ -432,7 +486,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   // Permissioning: A list of whitelist nodes can be passed.
   @Option(
     names = {"--nodes-whitelist"},
-    paramLabel = "<enode://id@host:port>",
     description =
         "Comma separated enode URLs for permissioned networks. "
             + "Not intended to be used with mainnet or public testnets.",
@@ -479,13 +532,15 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       commandLine.addMixin("standaloneCommands", standaloneCommands);
     }
 
-    final ImportSubCommand importSubCommand = new ImportSubCommand(blockImporter);
-    commandLine.addSubcommand("import", importSubCommand);
-    commandLine.addSubcommand("export-pub-key", new ExportPublicKeySubCommand());
+    commandLine.addSubcommand(
+        BlocksSubCommand.COMMAND_NAME, new BlocksSubCommand(blockImporter, resultHandler.out()));
+    commandLine.addSubcommand(
+        PublicKeySubCommand.COMMAND_NAME, new PublicKeySubCommand(resultHandler.out()));
 
     commandLine.registerConverter(Address.class, Address::fromHexString);
     commandLine.registerConverter(BytesValue.class, BytesValue::fromHexString);
     commandLine.registerConverter(HostAndPort.class, HostAndPort::fromString);
+    commandLine.registerConverter(HostSpecifier.class, HostSpecifier::from);
     commandLine.registerConverter(Level.class, Level::valueOf);
     commandLine.registerConverter(SyncMode.class, SyncMode::fromString);
     commandLine.registerConverter(Wei.class, (arg) -> Wei.of(Long.parseUnsignedLong(arg)));
@@ -534,7 +589,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         noPeerDiscovery,
         ethNetworkConfig.getBootNodes(),
         maxPeers,
-        p2pHostAndPort,
+        HostAndPort.fromParts(p2pHost.toString(), p2pPort),
         jsonRpcConfiguration(),
         webSocketConfiguration(),
         metricsConfiguration(),
@@ -571,7 +626,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   PantheonController<?> buildController() {
     try {
       return controllerBuilder
-          .synchronizerConfiguration(buildSyncConfig(syncMode))
+          .synchronizerConfiguration(buildSyncConfig())
           .homePath(dataDir())
           .ethNetworkConfig(ethNetworkConfig())
           .syncWithOttoman(syncWithOttoman)
@@ -596,30 +651,30 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   private JsonRpcConfiguration jsonRpcConfiguration() {
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
-    jsonRpcConfiguration.setEnabled(isJsonRpcEnabled);
-    jsonRpcConfiguration.setHost(rpcHostAndPort.getHost());
-    jsonRpcConfiguration.setPort(rpcHostAndPort.getPort());
-    jsonRpcConfiguration.setCorsAllowedDomains(rpcCorsAllowedOrigins);
-    jsonRpcConfiguration.setRpcApis(rpcApis);
+    jsonRpcConfiguration.setEnabled(isHttpRpcEnabled);
+    jsonRpcConfiguration.setHost(rpcHttpHost.toString());
+    jsonRpcConfiguration.setPort(rpcHttpPort);
+    jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
+    jsonRpcConfiguration.setRpcApis(rpcHttpApis);
     jsonRpcConfiguration.setHostsWhitelist(hostsWhitelist);
     return jsonRpcConfiguration;
   }
 
   private WebSocketConfiguration webSocketConfiguration() {
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
-    webSocketConfiguration.setEnabled(isWsRpcEnabled);
-    webSocketConfiguration.setHost(wsHostAndPort.getHost());
-    webSocketConfiguration.setPort(wsHostAndPort.getPort());
-    webSocketConfiguration.setRpcApis(wsApis);
-    webSocketConfiguration.setRefreshDelay(refreshDelay);
+    webSocketConfiguration.setEnabled(isRpcWsEnabled);
+    webSocketConfiguration.setHost(rpcWsHost.toString());
+    webSocketConfiguration.setPort(rpcWsPort);
+    webSocketConfiguration.setRpcApis(rpcWsApis);
+    webSocketConfiguration.setRefreshDelay(rpcWsRefreshDelay);
     return webSocketConfiguration;
   }
 
   MetricsConfiguration metricsConfiguration() {
-    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
+    final MetricsConfiguration metricsConfiguration = createDefault();
     metricsConfiguration.setEnabled(isMetricsEnabled);
-    metricsConfiguration.setHost(metricsHostAndPort.getHost());
-    metricsConfiguration.setPort(metricsHostAndPort.getPort());
+    metricsConfiguration.setHost(metricsHost.toString());
+    metricsConfiguration.setPort(metricsPort);
     metricsConfiguration.setHostsWhitelist(hostsWhitelist);
     return metricsConfiguration;
   }
@@ -632,8 +687,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     return permissioningConfiguration;
   }
 
-  private SynchronizerConfiguration buildSyncConfig(final SyncMode syncMode) {
-    checkNotNull(syncMode);
+  private SynchronizerConfiguration buildSyncConfig() {
     synchronizerConfigurationBuilder.syncMode(syncMode);
     synchronizerConfigurationBuilder.maxTrailingPeers(maxTrailingPeers);
     return synchronizerConfigurationBuilder.build();
@@ -705,10 +759,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     return autoDiscoveredDefaultIP;
   }
 
-  private HostAndPort getDefaultHostAndPort(final int port) {
-    return HostAndPort.fromParts(autoDiscoverDefaultIP().getHostAddress(), port);
-  }
-
   private EthNetworkConfig ethNetworkConfig() {
     final EthNetworkConfig predefinedNetworkConfig;
     if (rinkeby) {
@@ -765,11 +815,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   private Path dataDir() {
     if (isFullInstantiation()) {
-      return standaloneCommands.dataDir;
+      return standaloneCommands.dataPath;
     } else if (isDocker) {
       return Paths.get(DOCKER_DATADIR_LOCATION);
     } else {
-      return getDefaultPantheonDataDir(this);
+      return getDefaultPantheonDataPath(this);
     }
   }
 
