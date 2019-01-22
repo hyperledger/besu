@@ -122,6 +122,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     when(mockRunnerBuilder.discoveryHost(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.discoveryPort(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.maxPeers(anyInt())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.p2pEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.jsonRpcConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.webSocketConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.permissioningConfiguration(any())).thenReturn(mockRunnerBuilder);
@@ -526,6 +527,35 @@ public class PantheonCommandTest extends CommandTestAbstract {
     parseCommand("--genesis", path.toString());
     assertThat(commandErrorOutput.toString()).startsWith("Unknown options: --genesis, .");
     assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void p2pEnabledOptionFlagDefaultTrue() {
+    parseCommand("--p2p-enabled");
+
+    verify(mockRunnerBuilder.p2pEnabled(eq(true))).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void p2pEnabledOptionValueMustBeUsed() {
+    parseCommand("--p2p-enabled", "false");
+
+    verify(mockRunnerBuilder.p2pEnabled(eq(false))).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void p2pEnabledOptionFalseValueCannotAlsoHaveBootnodesSpecified() {
+    parseCommand("--p2p-enabled", "false", "--bootnodes", String.join(",", validENodeStrings));
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains("Unable to specify bootnodes if p2p is disabled.");
   }
 
   @Test

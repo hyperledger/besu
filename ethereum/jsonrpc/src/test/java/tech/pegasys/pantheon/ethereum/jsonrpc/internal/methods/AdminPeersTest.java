@@ -17,9 +17,12 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.jsonrpc.MockPeerConnection;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.PeerResult;
+import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
@@ -81,6 +84,17 @@ public class AdminPeersTest {
     final JsonRpcResponse response = adminPeers.response(request);
 
     assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
+  }
+
+  @Test
+  public void shouldFailIfP2pDisabled() {
+    when(p2pNetwork.getPeers()).thenThrow(new P2pDisabledException("P2P disabled."));
+
+    final JsonRpcRequest request = adminPeers();
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.P2P_DISABLED);
+
+    assertThat(adminPeers.response(request)).isEqualToComparingFieldByField(expectedResponse);
   }
 
   private Collection<PeerConnection> peerList() {

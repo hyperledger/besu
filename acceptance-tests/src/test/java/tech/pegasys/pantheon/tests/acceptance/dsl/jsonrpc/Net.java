@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.AwaitNetPeerCount;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.AwaitNetPeerCountException;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionConnectionException;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionConnectionExceptionWithCause;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionIsNotBlank;
@@ -43,5 +44,9 @@ public class Net {
 
   public Condition netVersionExceptional(final Class<? extends Throwable> cause) {
     return new ExpectNetVersionConnectionExceptionWithCause(transactions.netVersion(), cause);
+  }
+
+  public Condition awaitPeerCountExceptional() {
+    return new AwaitNetPeerCountException(transactions.peerCount());
   }
 }

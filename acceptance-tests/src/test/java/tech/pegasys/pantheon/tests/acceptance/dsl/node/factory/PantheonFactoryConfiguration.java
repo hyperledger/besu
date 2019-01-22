@@ -29,6 +29,7 @@ class PantheonFactoryConfiguration {
   private final PermissioningConfiguration permissioningConfiguration;
   private final boolean devMode;
   private final GenesisConfigProvider genesisConfigProvider;
+  private final Boolean p2pEnabled;
 
   PantheonFactoryConfiguration(
       final String name,
@@ -38,7 +39,8 @@ class PantheonFactoryConfiguration {
       final MetricsConfiguration metricsConfiguration,
       final PermissioningConfiguration permissioningConfiguration,
       final boolean devMode,
-      final GenesisConfigProvider genesisConfigProvider) {
+      final GenesisConfigProvider genesisConfigProvider,
+      final Boolean p2pEnabled) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
@@ -47,6 +49,7 @@ class PantheonFactoryConfiguration {
     this.permissioningConfiguration = permissioningConfiguration;
     this.devMode = devMode;
     this.genesisConfigProvider = genesisConfigProvider;
+    this.p2pEnabled = p2pEnabled;
   }
 
   public String getName() {
@@ -79,5 +82,9 @@ class PantheonFactoryConfiguration {
 
   public GenesisConfigProvider getGenesisConfigProvider() {
     return genesisConfigProvider;
+  }
+
+  public Boolean getP2pEnabled() {
+    return p2pEnabled;
   }
 }

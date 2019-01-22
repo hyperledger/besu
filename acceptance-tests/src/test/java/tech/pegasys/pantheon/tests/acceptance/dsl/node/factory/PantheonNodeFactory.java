@@ -57,7 +57,8 @@ public class PantheonNodeFactory {
             config.getPermissioningConfiguration(),
             config.isDevMode(),
             config.getGenesisConfigProvider(),
-            serverSocket.getLocalPort());
+            serverSocket.getLocalPort(),
+            config.getP2pEnabled());
     serverSocket.close();
 
     return node;
@@ -93,6 +94,16 @@ public class PantheonNodeFactory {
         new PantheonFactoryConfigurationBuilder()
             .setName(name)
             .jsonRpcEnabled()
+            .webSocketEnabled()
+            .build());
+  }
+
+  public PantheonNode createArchiveNodeWithP2pDisabled(final String name) throws IOException {
+    return create(
+        new PantheonFactoryConfigurationBuilder()
+            .setName(name)
+            .setP2pEnabled(false)
+            .setJsonRpcConfiguration(jsonRpcConfigWithPermissioning())
             .webSocketEnabled()
             .build());
   }

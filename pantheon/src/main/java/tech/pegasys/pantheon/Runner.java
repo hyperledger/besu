@@ -40,7 +40,6 @@ public class Runner implements AutoCloseable {
   private final ExecutorService exec = Executors.newCachedThreadPool();
 
   private final NetworkRunner networkRunner;
-
   private final Optional<JsonRpcHttpService> jsonRpc;
   private final Optional<WebSocketService> websocketRpc;
   private final Optional<MetricsHttpService> metrics;
@@ -89,6 +88,7 @@ public class Runner implements AutoCloseable {
   public void close() throws Exception {
     networkRunner.stop();
     networkRunner.awaitStop();
+
     exec.shutdown();
     try {
       jsonRpc.ifPresent(service -> service.stop().join());
@@ -109,10 +109,12 @@ public class Runner implements AutoCloseable {
 
   private void writePantheonPortsToFile() {
     final Properties properties = new Properties();
+
     if (networkRunner.getNetwork().isListening()) {
       properties.setProperty("discovery", String.valueOf(getP2pUdpPort()));
       properties.setProperty("p2p", String.valueOf(getP2pTcpPort()));
     }
+
     if (getJsonRpcPort().isPresent()) {
       properties.setProperty("json-rpc", String.valueOf(getJsonRpcPort().get()));
     }
