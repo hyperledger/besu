@@ -12,6 +12,10 @@
  */
 package tech.pegasys.pantheon.cli;
 
+import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
@@ -23,13 +27,30 @@ import java.nio.file.Paths;
 import picocli.CommandLine;
 
 interface DefaultCommandValues {
-  String CONFIG_FILE_OPTION_NAME = "--config";
+  String CONFIG_FILE_OPTION_NAME = "--config-file";
 
   String MANDATORY_PATH_FORMAT_HELP = "<PATH>";
+  String MANDATORY_FILE_FORMAT_HELP = "<FILE>";
   String PANTHEON_HOME_PROPERTY_NAME = "pantheon.home";
   String DEFAULT_DATA_DIR_PATH = "./build/data";
+  String MANDATORY_INTEGER_FORMAT_HELP = "<INTEGER>";
+  String MANDATORY_MODE_FORMAT_HELP = "<MODE>";
+  String MANDATORY_NETWORK_FORMAT_HELP = "<CHAIN>";
+  String MANDATORY_NODE_ID_FORMAT_HELP = "<NODEID>";
+  Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
+  BytesValue DEFAULT_EXTRA_DATA = BytesValue.EMPTY;
+  long DEFAULT_MAX_REFRESH_DELAY = 3600000;
+  long DEFAULT_MIN_REFRESH_DELAY = 1;
+  String DOCKER_GENESIS_LOCATION = "/etc/pantheon/genesis.json";
+  String DOCKER_DATADIR_LOCATION = "/var/lib/pantheon";
+  String MANDATORY_HOST_FORMAT_HELP = "<HOST>";
+  String MANDATORY_PORT_FORMAT_HELP = "<PORT>";
+  // Default should be FAST for the next release
+  // but we use FULL for the moment as Fast is still in progress
+  SyncMode DEFAULT_SYNC_MODE = SyncMode.FULL;
+  int DEFAULT_MAX_PEERS = 25;
 
-  static Path getDefaultPantheonDataDir(final Object command) {
+  static Path getDefaultPantheonDataPath(final Object command) {
     // this property is retrieved from Gradle tasks or Pantheon running shell script.
     final String pantheonHomeProperty = System.getProperty(PANTHEON_HOME_PROPERTY_NAME);
     final Path pantheonHome;

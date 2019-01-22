@@ -9,9 +9,9 @@
 # Please provide some sensible grouping.
 
 # Node Information
-datadir="~/pantheondata"
+data-path="~/pantheondata"
 logging="INFO"
-node-private-key="./path/to/privateKey"
+node-private-key-file="./path/to/privateKey"
 
 # P2P network
 p2p-enabled=true
@@ -21,14 +21,17 @@ bootnodes=[
   "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
   "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567"
 ]
-banned-nodeids=["0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"]
-p2p-listen="1.2.3.4:1234"
+banned-node-ids=["0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0","0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"]
+banned-node-id=["0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"]
+p2p-host="1.2.3.4"
+p2p-port=1234
 max-peers=42
 max-trailing-peers=5
 host-whitelist=["all"]
 
 # chain
-genesis="~/genesis.json"
+network="MAINNET"
+private-genesis-file="~/genesis.json"
 #sync-mode="fast"
 ottoman=false
 ropsten=false
@@ -38,26 +41,30 @@ rinkeby=false
 dev-mode=false
 
 # JSON-RPC
-rpc-enabled=false
-rpc-listen="5.6.7.8:5678"
-rpc-api=["DEBUG","ETH"]
-rpc-cors-origins=["none"]
+rpc-http-enabled=false
+rpc-http-host="5.6.7.8"
+rpc-http-port=5678
+rpc-http-api=["DEBUG","ETH"]
+rpc-http-apis=["DEBUG","ETH"]
+rpc-http-cors-origins=["none"]
 
 # WebSockets API
-ws-enabled=false
-ws-api=["DEBUG","ETH"]
-ws-listen="9.10.11.12:9101"
-ws-refresh-delay=500
+rpc-ws-enabled=false
+rpc-ws-api=["DEBUG","ETH"]
+rpc-ws-host="9.10.11.12"
+rpc-ws-port=9101
+rpc-ws-refresh-delay=500
 
 # Prometheus Metrics Endpoint
 metrics-enabled=false
-metrics-listen="8.6.7.5:309"
+metrics-host="8.6.7.5"
+metrics-port=309
 
 # Mining
 miner-enabled=false
 miner-coinbase="0x0000000000000000000000000000000000000002"
-miner-extraData="Protocol Engineering Group And SYStems"
-miner-minTransactionGasPriceWei="1"
+miner-extra-data="Protocol Engineering Group And SYStems"
+min-gas-price="1"
 
 # Permissioning
 accounts-whitelist=["0x0000000000000000000000000000000000000009"]
