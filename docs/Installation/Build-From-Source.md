@@ -86,7 +86,7 @@ cd pantheon
 Open a Windows command prompt. Build Pantheon with the Gradle wrapper `gradlew`, omitting tests as follows:
 
 ```bat
-gradlew build -x test
+.\gradlew build -x test
 ```
 
 !!!note
