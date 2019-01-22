@@ -38,6 +38,7 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'net.consensys:orion:0.1.0-SNAPSHOT'
 }
 
 configurations { testArtifacts }
