@@ -54,6 +54,7 @@ nav:
     - Tutorials:
         - Creating a Private Network: Tutorials/Create-Private-Network.md
     - Configuring Pantheon:
+        - Consensus Mechanisms: Configuring-Pantheon/Consensus-Mechanisms.md
         - Using a Configuration File: Configuring-Pantheon/Using-Configuration-File.md
         - Network ID and Chain ID: Configuring-Pantheon/NetworkID-And-ChainID.md
         - Node Keys: Configuring-Pantheon/Node-Keys.md
