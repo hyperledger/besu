@@ -186,16 +186,17 @@ public class IbftBlockHeightManager {
   }
 
   public void handleRoundChangePayload(final SignedData<RoundChangePayload> signedPayload) {
-    final Optional<RoundChangeCertificate> result =
-        roundChangeManager.appendRoundChangeMessage(signedPayload);
+    final ConsensusRoundIdentifier targetRound = signedPayload.getPayload().getRoundIdentifier();
+    LOG.info("Received a RoundChange Payload for {}", targetRound.toString());
+
     final MessageAge messageAge = determineAgeOfPayload(signedPayload.getPayload());
     if (messageAge == PRIOR_ROUND) {
       LOG.info("Received RoundChange Payload for a prior round.");
       return;
     }
-    final ConsensusRoundIdentifier targetRound = signedPayload.getPayload().getRoundIdentifier();
-    LOG.info("Received a RoundChange Payload for {}", targetRound.toString());
 
+    final Optional<RoundChangeCertificate> result =
+        roundChangeManager.appendRoundChangeMessage(signedPayload);
     if (result.isPresent()) {
       if (messageAge == FUTURE_ROUND) {
         startNewRound(targetRound.getRoundNumber());
