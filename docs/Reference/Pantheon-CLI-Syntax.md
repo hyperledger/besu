@@ -461,14 +461,10 @@ Not intended for use with mainnet or public testnets.
 --ottoman
 ```
 
-```bash tab="Example Configuration File"
-ottoman=true
-```
-
-Synchronize against the Ottoman test network. This is only useful if you are using an IBFT genesis file.  The default is `false`.
+Enables accepting of blocks in an IBFT 1.0 network.  The default is `false`.
 
 !!!note
-    :construction: IBFT is not currently supported. Support for IBFT is in active development. 
+    A Pantheon node cannot be a validator in an IBFT 1.0 network. Pantheon implements [IBFT 2.0](../Consensus-Protocols/IBFT.md).
 
 ### p2p-host
 
