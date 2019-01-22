@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -10,24 +10,31 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
+package tech.pegasys.pantheon.orion.types;
 
-apply plugin: 'java-library'
+public class ReceiveContent {
+  private String key;
+  private String to;
 
-jar {
-  baseName 'pantheon-util-test'
-  manifest {
-    attributes(
-      'Specification-Title': baseName,
-      'Specification-Version': project.version,
-      'Implementation-Title': baseName,
-      'Implementation-Version': calculateVersion()
-      )
+  public ReceiveContent(final String key, final String to) {
+
+    this.key = key;
+    this.to = to;
   }
-}
 
-dependencies {
-  implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'com.google.guava:guava'
-  implementation 'com.squareup.okhttp3:okhttp'
-  implementation 'net.consensys:orion:0.1.0-SNAPSHOT'
+  public String getKey() {
+    return key;
+  }
+
+  public void setKey(final String key) {
+    this.key = key;
+  }
+
+  public String getTo() {
+    return to;
+  }
+
+  public void setTo(final String to) {
+    this.to = to;
+  }
 }
