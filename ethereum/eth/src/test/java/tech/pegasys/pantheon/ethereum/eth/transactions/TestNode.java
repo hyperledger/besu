@@ -115,7 +115,7 @@ public class TestNode implements Closeable {
                         this.kp,
                         networkingConfiguration,
                         capabilities,
-                        ethProtocolManager,
+                        () -> true,
                         new PeerBlacklist(),
                         new NoOpMetricsSystem(),
                         new NodeWhitelistController(PermissioningConfiguration.createDefault())))

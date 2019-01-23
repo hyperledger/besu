@@ -24,4 +24,6 @@ public interface Synchronizer {
    *     empty
    */
   Optional<SyncStatus> getSyncStatus();
+
+  boolean hasSufficientPeers();
 }

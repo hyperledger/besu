@@ -95,9 +95,4 @@ public class IbftProtocolManager implements ProtocolManager {
       final boolean initiatedByPeer) {
     peers.remove(peerConnection);
   }
-
-  @Override
-  public boolean hasSufficientPeers() {
-    return true;
-  }
 }
