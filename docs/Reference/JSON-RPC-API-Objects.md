@@ -122,14 +122,14 @@ Parameter for [eth_call](JSON-RPC-API-Methods.md#eth_call) and [eth_estimateGas]
 !!!note
     All parameters are optional for [eth_estimateGas](JSON-RPC-API-Methods.md#eth_estimategas)
 
-| Key          | Type                | Required/Optional | Value                                                                                                                          |
-|--------------|:-------------------:|:-----------------:|--------------------------------------------------------------------------------------------------------------------------------|
-| **from**     | Data, 20&nbsp;bytes | Optional          | Address from which transaction sent.                                                                                           |
-| **to**       | Data, 20&nbsp;bytes | Required          | Address to which transaction is directed.                                                                                      |
-| **gas**      | Quantity, Integer   | Optional          | Gas provided for the transaction execution. `eth_call` consumes zero gas, but this parameter may be needed by some executions. |
-| **gasPrice** | Quantity, Integer   | Optional          | gasPrice used for each paid gas.                                                                                               |
-| **value**    | Quantity, Integer   | Optional          | Value sent with this transaction.                                                                                              |
-| **data**     | Data                | Optional          | Hash of the method signature and encoded parameters. For details see Ethereum Contract ABI.                                    |
+| Key          | Type                | Required/Optional | Value                                                                                                                                                                  |
+|--------------|:-------------------:|:-----------------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **from**     | Data, 20&nbsp;bytes | Optional          | Address from which transaction is sent.                                                                                                                                |
+| **to**       | Data, 20&nbsp;bytes | Required          | Address to which transaction is directed.                                                                                                                              |
+| **gas**      | Quantity, Integer   | Optional          | Gas provided for the transaction execution. `eth_call` consumes zero gas, but this parameter might be needed by some executions. `eth_estimateGas` ignores this value. |
+| **gasPrice** | Quantity, Integer   | Optional          | Price used for each paid gas.                                                                                                                                          |
+| **value**    | Quantity, Integer   | Optional          | Value sent with this transaction.                                                                                                                                      |
+| **data**     | Data                | Optional          | Hash of the method signature and encoded parameters. For details, see [Ethereum Contract ABI](https://github.com/ethereum/wiki/wiki/Ethereum-Contract-ABI).            |
 
 ## Transaction Receipt Object 
 
