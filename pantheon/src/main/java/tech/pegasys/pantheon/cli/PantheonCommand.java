@@ -149,11 +149,10 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   // Completely disables p2p within Pantheon.
   @Option(
     names = {"--p2p-enabled"},
-    description = "Enable/disable all p2p functionality (default: {DEFAULT-VALUE})",
-    arity = "0..1"
+    description = "Enable/disable all p2p functionality (default: ${DEFAULT-VALUE})",
+    arity = "1"
   )
-  @SuppressWarnings("FieldCanBeFinal")
-  private Boolean p2pEnabled = true;
+  private final Boolean p2pEnabled = true;
 
   // Boolean option to indicate if peers should NOT be discovered, default to false indicates that
   // the peers should be discovered by default.

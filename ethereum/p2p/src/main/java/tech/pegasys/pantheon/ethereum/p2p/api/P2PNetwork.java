@@ -102,5 +102,12 @@ public interface P2PNetwork extends Closeable, Runnable {
    */
   boolean isListening();
 
+  /**
+   * Returns whether the P2P network is enabled
+   *
+   * @return true if the P2P network is enabled, false, otherwise.
+   */
+  boolean isP2pEnabled();
+
   NodeWhitelistController getNodeWhitelistController();
 }

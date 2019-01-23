@@ -501,6 +501,11 @@ public class NettyP2PNetwork implements P2PNetwork {
   }
 
   @Override
+  public boolean isP2pEnabled() {
+    return true;
+  }
+
+  @Override
   public NodeWhitelistController getNodeWhitelistController() {
     return nodeWhitelistController;
   }

@@ -68,7 +68,9 @@ public class Runner implements AutoCloseable {
     try {
       LOG.info("Starting Ethereum main loop ... ");
       networkRunner.start();
-      pantheonController.getSynchronizer().start();
+      if (networkRunner.getNetwork().isP2pEnabled()) {
+        pantheonController.getSynchronizer().start();
+      }
       jsonRpc.ifPresent(service -> service.start().join());
       websocketRpc.ifPresent(service -> service.start().join());
       metrics.ifPresent(service -> service.start().join());
