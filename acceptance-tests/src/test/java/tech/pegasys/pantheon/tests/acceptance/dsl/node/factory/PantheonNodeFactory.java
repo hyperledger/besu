@@ -58,7 +58,8 @@ public class PantheonNodeFactory {
             config.isDevMode(),
             config.getGenesisConfigProvider(),
             serverSocket.getLocalPort(),
-            config.getP2pEnabled());
+            config.getP2pEnabled(),
+            config.isDiscoveryEnabled());
     serverSocket.close();
 
     return node;
@@ -188,6 +189,11 @@ public class PantheonNodeFactory {
             .setJsonRpcConfiguration(rpcConfig)
             .setPermissioningConfiguration(permissioningConfiguration)
             .build());
+  }
+
+  public PantheonNode createNodeWithNoDiscovery(final String name) throws IOException {
+    return create(
+        new PantheonFactoryConfigurationBuilder().setName(name).setDiscoveryEnabled(false).build());
   }
 
   public PantheonNode createCliqueNode(final String name) throws IOException {

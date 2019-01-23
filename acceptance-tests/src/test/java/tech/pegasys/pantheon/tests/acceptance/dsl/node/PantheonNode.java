@@ -75,6 +75,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
   private final PermissioningConfiguration permissioningConfiguration;
   private final GenesisConfigProvider genesisConfigProvider;
   private final boolean devMode;
+  private final boolean discoveryEnabled;
 
   private List<String> bootnodes = new ArrayList<>();
   private PantheonWeb3j pantheonWeb3j;
@@ -90,7 +91,8 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
       final boolean devMode,
       final GenesisConfigProvider genesisConfigProvider,
       final int p2pPort,
-      final Boolean p2pEnabled)
+      final Boolean p2pEnabled,
+      final boolean discovery)
       throws IOException {
     this.homeDirectory = Files.createTempDirectory("acctest");
     this.keyPair = KeyPairUtil.loadKeyPair(homeDirectory);
@@ -104,6 +106,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     this.genesisConfigProvider = genesisConfigProvider;
     this.devMode = devMode;
     this.p2pEnabled = p2pEnabled;
+    this.discoveryEnabled = discovery;
     LOG.info("Created PantheonNode {}", this.toString());
   }
 
@@ -333,6 +336,10 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     return devMode;
   }
 
+  public boolean isDiscoveryEnabled() {
+    return discoveryEnabled;
+  }
+
   PermissioningConfiguration getPermissioningConfiguration() {
     return permissioningConfiguration;
   }
@@ -345,6 +352,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
         .add("homeDirectory", homeDirectory)
         .add("keyPair", keyPair)
         .add("p2pEnabled", p2pEnabled)
+        .add("discoveryEnabled", discoveryEnabled)
         .toString();
   }
 

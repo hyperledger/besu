@@ -24,8 +24,7 @@ import java.util.Objects;
 /**
  * Represents a client capability.
  *
- * @see <a href=
- *     "https://github.com/ethereum/wiki/wiki/%C3%90%CE%9EVp2p-Wire-Protocol#p2p">Capability wire
+ * @see <a href= "https://github.com/ethereum/devp2p/blob/master/devp2p.md">Capability wire
  *     format</a>
  */
 public class Capability {
