@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.MainnetBlockValidator;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockBodyValidator;
@@ -46,7 +47,8 @@ public class CliqueProtocolSchedule {
             DEFAULT_CHAIN_ID,
             builder ->
                 applyCliqueSpecificModifications(
-                    epochManager, cliqueConfig.getBlockPeriodSeconds(), localNodeAddress, builder))
+                    epochManager, cliqueConfig.getBlockPeriodSeconds(), localNodeAddress, builder),
+            PrivacyParameters.noPrivacy())
         .createProtocolSchedule();
   }
 

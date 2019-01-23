@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.vm;
 
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.config.StubGenesisConfigOptions;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 
@@ -60,7 +61,8 @@ public class ReferenceTestProtocolSchedules {
   }
 
   private static ProtocolSchedule<Void> createSchedule(final GenesisConfigOptions options) {
-    return new ProtocolScheduleBuilder<>(options, CHAIN_ID, Function.identity())
+    return new ProtocolScheduleBuilder<>(
+            options, CHAIN_ID, Function.identity(), PrivacyParameters.noPrivacy())
         .createProtocolSchedule();
   }
 }

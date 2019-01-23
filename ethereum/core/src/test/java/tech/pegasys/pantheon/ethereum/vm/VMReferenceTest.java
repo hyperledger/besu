@@ -20,6 +20,7 @@ import static tech.pegasys.pantheon.ethereum.vm.OperationTracer.NO_TRACING;
 
 import tech.pegasys.pantheon.ethereum.core.Gas;
 import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSpecs;
 import tech.pegasys.pantheon.ethereum.mainnet.MutableProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
@@ -115,7 +116,9 @@ public class VMReferenceTest extends AbstractRetryingTest {
     final EnvironmentInformation execEnv = spec.getExec();
 
     final ProtocolSpec<Void> protocolSpec =
-        MainnetProtocolSpecs.frontierDefinition().build(new MutableProtocolSchedule<>(CHAIN_ID));
+        MainnetProtocolSpecs.frontierDefinition()
+            .privacyParameters(PrivacyParameters.noPrivacy())
+            .build(new MutableProtocolSchedule<>(CHAIN_ID));
 
     final TestBlockchain blockchain = new TestBlockchain(execEnv.getBlockHeader().getNumber());
     final MessageFrame frame =

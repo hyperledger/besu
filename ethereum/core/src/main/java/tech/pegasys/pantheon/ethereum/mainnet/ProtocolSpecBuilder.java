@@ -17,6 +17,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import tech.pegasys.pantheon.ethereum.BlockValidator;
 import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockProcessor.TransactionReceiptFactory;
 import tech.pegasys.pantheon.ethereum.vm.EVM;
@@ -38,7 +39,8 @@ public class ProtocolSpecBuilder<T> {
   private Function<DifficultyCalculator<T>, BlockHeaderValidator<T>> ommerHeaderValidatorBuilder;
   private Function<ProtocolSchedule<T>, BlockBodyValidator<T>> blockBodyValidatorBuilder;
   private BiFunction<GasCalculator, EVM, AbstractMessageProcessor> contractCreationProcessorBuilder;
-  private Function<GasCalculator, PrecompileContractRegistry> precompileContractRegistryBuilder;
+  private Function<PrecompiledContractConfiguration, PrecompileContractRegistry>
+      precompileContractRegistryBuilder;
   private BiFunction<EVM, PrecompileContractRegistry, AbstractMessageProcessor>
       messageCallProcessorBuilder;
   private TransactionProcessorBuilder transactionProcessorBuilder;
@@ -48,6 +50,7 @@ public class ProtocolSpecBuilder<T> {
   private TransactionReceiptType transactionReceiptType;
   private String name;
   private MiningBeneficiaryCalculator miningBeneficiaryCalculator;
+  private PrivacyParameters privacyParameters;
 
   public ProtocolSpecBuilder<T> gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -115,8 +118,18 @@ public class ProtocolSpecBuilder<T> {
   }
 
   public ProtocolSpecBuilder<T> precompileContractRegistryBuilder(
-      final Function<GasCalculator, PrecompileContractRegistry> precompileContractRegistryBuilder) {
-    this.precompileContractRegistryBuilder = precompileContractRegistryBuilder;
+      final Function<PrecompiledContractConfiguration, PrecompileContractRegistry>
+          precompileContractRegistryBuilder) {
+    this.precompileContractRegistryBuilder =
+        (precompiledContractConfiguration) -> {
+          final PrecompileContractRegistry registry =
+              precompileContractRegistryBuilder.apply(precompiledContractConfiguration);
+          if (precompiledContractConfiguration.getPrivacyParameters().isEnabled()) {
+            MainnetPrecompiledContractRegistries.appendPrivacy(
+                registry, precompiledContractConfiguration);
+          }
+          return registry;
+        };
     return this;
   }
 
@@ -168,6 +181,11 @@ public class ProtocolSpecBuilder<T> {
     return this;
   }
 
+  public ProtocolSpecBuilder<T> privacyParameters(final PrivacyParameters privacyParameters) {
+    this.privacyParameters = privacyParameters;
+    return this;
+  }
+
   public <R> ProtocolSpecBuilder<R> changeConsensusContextType(
       final Function<DifficultyCalculator<R>, BlockHeaderValidator<R>> blockHeaderValidatorBuilder,
       final Function<DifficultyCalculator<R>, BlockHeaderValidator<R>> ommerHeaderValidatorBuilder,
@@ -180,6 +198,7 @@ public class ProtocolSpecBuilder<T> {
         .evmBuilder(evmBuilder)
         .transactionValidatorBuilder(transactionValidatorBuilder)
         .contractCreationProcessorBuilder(contractCreationProcessorBuilder)
+        .privacyParameters(privacyParameters)
         .precompileContractRegistryBuilder(precompileContractRegistryBuilder)
         .messageCallProcessorBuilder(messageCallProcessorBuilder)
         .transactionProcessorBuilder(transactionProcessorBuilder)
@@ -219,15 +238,18 @@ public class ProtocolSpecBuilder<T> {
     checkNotNull(name, "Missing name");
     checkNotNull(miningBeneficiaryCalculator, "Missing Mining Beneficiary Calculator");
     checkNotNull(protocolSchedule, "Missing protocol schedule");
+    checkNotNull(privacyParameters, "Missing privacy parameters");
 
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
     final EVM evm = evmBuilder.apply(gasCalculator);
+    final PrecompiledContractConfiguration precompiledContractConfiguration =
+        new PrecompiledContractConfiguration(gasCalculator, privacyParameters);
     final TransactionValidator transactionValidator =
         transactionValidatorBuilder.apply(gasCalculator);
     final AbstractMessageProcessor contractCreationProcessor =
         contractCreationProcessorBuilder.apply(gasCalculator, evm);
     final PrecompileContractRegistry precompileContractRegistry =
-        precompileContractRegistryBuilder.apply(gasCalculator);
+        precompileContractRegistryBuilder.apply(precompiledContractConfiguration);
     final AbstractMessageProcessor messageCallProcessor =
         messageCallProcessorBuilder.apply(evm, precompileContractRegistry);
     final TransactionProcessor transactionProcessor =

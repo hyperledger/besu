@@ -34,6 +34,7 @@ import tech.pegasys.pantheon.controller.KeyPairUtil;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
@@ -528,6 +529,24 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   )
   private final Collection<String> accountsWhitelist = null;
 
+  @Option(
+    names = {"--privacy-url"},
+    description = "The URL on which enclave is running "
+  )
+  private final URI privacyUrl = PrivacyParameters.DEFAULT_ORION_URL;
+
+  @Option(
+    names = {"--privacy-public-key-file"},
+    description = "the path to the enclave's public key "
+  )
+  private final File privacyPublicKeyFile = null;
+
+  @Option(
+    names = {"--privacy-enabled"},
+    description = "Set if private transaction should be enabled (default: ${DEFAULT-VALUE})"
+  )
+  private final Boolean privacyEnabled = false;
+
   public PantheonCommand(
       final BlockImporter blockImporter,
       final RunnerBuilder runnerBuilder,
@@ -657,6 +676,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           .devMode(isDevMode)
           .nodePrivateKeyFile(getNodePrivateKeyFile())
           .metricsSystem(metricsSystem)
+          .privacyParameters(orionConfiguration())
           .build();
     } catch (final InvalidConfigurationException e) {
       throw new ExecutionException(new CommandLine(this), e.getMessage());
@@ -710,6 +730,14 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     permissioningConfiguration.setNodeWhitelist(nodesWhitelist);
     permissioningConfiguration.setAccountWhitelist(accountsWhitelist);
     return permissioningConfiguration;
+  }
+
+  private PrivacyParameters orionConfiguration() {
+    final PrivacyParameters privacyParameters = PrivacyParameters.noPrivacy();
+    privacyParameters.setEnabled(privacyEnabled);
+    privacyParameters.setUrl(privacyUrl.toString());
+    privacyParameters.setPublicKey(privacyPublicKeyFile);
+    return privacyParameters;
   }
 
   private SynchronizerConfiguration buildSyncConfig() {
