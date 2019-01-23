@@ -50,13 +50,17 @@ public class EthProtocolManagerTestUtil {
     return create(blockchain, worldStateArchive, () -> false);
   }
 
-  public static EthProtocolManager create() {
+  public static EthProtocolManager create(final TimeoutPolicy timeoutPolicy) {
     final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
     final GenesisConfigFile config = GenesisConfigFile.mainnet();
     final GenesisState genesisState = GenesisState.fromConfig(config, protocolSchedule);
     final Blockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
-    return create(blockchain, worldStateArchive);
+    return create(blockchain, worldStateArchive, timeoutPolicy);
+  }
+
+  public static EthProtocolManager create() {
+    return create(() -> false);
   }
 
   public static void broadcastMessage(

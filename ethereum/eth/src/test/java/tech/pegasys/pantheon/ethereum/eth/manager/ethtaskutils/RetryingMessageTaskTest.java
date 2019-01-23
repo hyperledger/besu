@@ -73,11 +73,11 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
 
     // Respond max times with no data
     respondingPeer.respondTimes(emptyResponder, maxRetries);
-    assertThat(future.isDone()).isFalse();
+    assertThat(future).isNotDone();
 
     // Next retry should fail
     respondingPeer.respond(emptyResponder);
-    assertThat(future.isDone()).isTrue();
+    assertThat(future).isDone();
     assertThat(future.isCompletedExceptionally()).isTrue();
     assertThatThrownBy(future::get).hasCauseInstanceOf(MaxRetriesReachedException.class);
   }

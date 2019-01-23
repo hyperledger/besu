@@ -14,6 +14,8 @@ package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.NoAvailablePeersException;
+import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerBreachedProtocolException;
+import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerDisconnectedException;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.WaitForPeerTask;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
@@ -21,7 +23,9 @@ import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,7 +33,7 @@ import org.apache.logging.log4j.Logger;
 /**
  * A task that will retry a fixed number of times before completing the associated CompletableFuture
  * exceptionally with a new {@link MaxRetriesReachedException}. If the future returned from {@link
- * #executePeerTask()} is complete with a non-empty list the retry counter is reset.
+ * #executePeerTask(Optional)} is complete with a non-empty list the retry counter is reset.
  *
  * @param <T> The type as a typed list that the peer task can get partial or full results in.
  */
@@ -40,6 +44,7 @@ public abstract class AbstractRetryingPeerTask<T extends Collection<?>> extends 
   private final int maxRetries;
   private int retryCount = 0;
   private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private Optional<EthPeer> assignedPeer = Optional.empty();
 
   /**
    * @param ethContext The context of the current Eth network we are attached to.
@@ -56,6 +61,10 @@ public abstract class AbstractRetryingPeerTask<T extends Collection<?>> extends 
     this.maxRetries = maxRetries;
   }
 
+  public void assignPeer(final EthPeer peer) {
+    assignedPeer = Optional.of(peer);
+  }
+
   @Override
   protected void executeTask() {
     if (result.get().isDone()) {
@@ -68,7 +77,7 @@ public abstract class AbstractRetryingPeerTask<T extends Collection<?>> extends 
     }
 
     retryCount += 1;
-    executePeerTask()
+    executePeerTask(assignedPeer)
         .whenComplete(
             (peerResult, error) -> {
               if (error != null) {
@@ -83,7 +92,7 @@ public abstract class AbstractRetryingPeerTask<T extends Collection<?>> extends 
             });
   }
 
-  protected abstract CompletableFuture<T> executePeerTask();
+  protected abstract CompletableFuture<T> executePeerTask(Optional<EthPeer> assignedPeer);
 
   private void handleTaskError(final Throwable error) {
     final Throwable cause = ExceptionUtils.rootCause(error);
@@ -118,5 +127,12 @@ public abstract class AbstractRetryingPeerTask<T extends Collection<?>> extends 
                 .scheduleFutureTask(this::executeTaskTimed, Duration.ofSeconds(1)));
   }
 
-  protected abstract boolean isRetryableError(Throwable error);
+  private boolean isRetryableError(final Throwable error) {
+    final boolean isPeerError =
+        error instanceof PeerBreachedProtocolException
+            || error instanceof PeerDisconnectedException
+            || error instanceof NoAvailablePeersException;
+
+    return error instanceof TimeoutException || (!assignedPeer.isPresent() && isPeerError);
+  }
 }

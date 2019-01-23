@@ -32,7 +32,7 @@ host-whitelist=["all"]
 # chain
 network="MAINNET"
 private-genesis-file="~/genesis.json"
-#sync-mode="fast"
+sync-mode="fast"
 ottoman=false
 ropsten=false
 goerli=false

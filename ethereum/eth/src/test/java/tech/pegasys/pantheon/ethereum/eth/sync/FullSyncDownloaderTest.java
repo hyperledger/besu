@@ -55,7 +55,7 @@ import java.util.function.Function;
 import org.junit.Before;
 import org.junit.Test;
 
-public class DownloaderTest {
+public class FullSyncDownloaderTest {
 
   protected ProtocolSchedule<Void> protocolSchedule;
   protected EthProtocolManager ethProtocolManager;
@@ -88,12 +88,12 @@ public class DownloaderTest {
     ethTashsTimer = NoOpMetricsSystem.NO_OP_LABELLED_TIMER;
   }
 
-  private Downloader<?> downloader(final SynchronizerConfiguration syncConfig) {
-    return new Downloader<>(
+  private FullSyncDownloader<?> downloader(final SynchronizerConfiguration syncConfig) {
+    return new FullSyncDownloader<>(
         syncConfig, protocolSchedule, protocolContext, ethContext, syncState, ethTashsTimer);
   }
 
-  private Downloader<?> downloader() {
+  private FullSyncDownloader<?> downloader() {
     final SynchronizerConfiguration syncConfig =
         SynchronizerConfiguration.builder().build().validated(localBlockchain);
     return downloader(syncConfig);
@@ -115,7 +115,7 @@ public class DownloaderTest {
             .downloaderChainSegmentSize(10)
             .build()
             .validated(localBlockchain);
-    final Downloader<?> downloader = downloader(syncConfig);
+    final FullSyncDownloader<?> downloader = downloader(syncConfig);
     downloader.start();
 
     while (!syncState.syncTarget().isPresent()) {
@@ -147,7 +147,7 @@ public class DownloaderTest {
             .downloaderChainSegmentSize(10)
             .build()
             .validated(localBlockchain);
-    final Downloader<?> downloader = downloader(syncConfig);
+    final FullSyncDownloader<?> downloader = downloader(syncConfig);
     downloader.start();
 
     while (!syncState.syncTarget().isPresent()) {
@@ -179,7 +179,7 @@ public class DownloaderTest {
             .downloaderChainSegmentSize(4)
             .build()
             .validated(localBlockchain);
-    final Downloader<?> downloader = downloader(syncConfig);
+    final FullSyncDownloader<?> downloader = downloader(syncConfig);
     downloader.start();
 
     while (!syncState.syncTarget().isPresent()) {
@@ -206,7 +206,7 @@ public class DownloaderTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, otherBlockchain);
     final Responder responder = RespondingEthPeer.blockchainResponder(otherBlockchain);
 
-    final Downloader<?> downloader = downloader();
+    final FullSyncDownloader<?> downloader = downloader();
     downloader.start();
 
     peer.respond(responder);
@@ -246,7 +246,7 @@ public class DownloaderTest {
             .downloaderChainSegmentSize(10)
             .build()
             .validated(localBlockchain);
-    final Downloader<?> downloader = downloader(syncConfig);
+    final FullSyncDownloader<?> downloader = downloader(syncConfig);
     downloader.start();
 
     while (localBlockchain.getChainHeadBlockNumber() < targetBlock) {
@@ -268,7 +268,7 @@ public class DownloaderTest {
     final RespondingEthPeer peerB =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(200));
 
-    final Downloader<?> downloader = downloader();
+    final FullSyncDownloader<?> downloader = downloader();
     downloader.start();
 
     // Process until the sync target is selected
@@ -291,7 +291,7 @@ public class DownloaderTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(200), 0);
     peerA.getEthPeer().chainState().update(gen.hash(), 50);
 
-    final Downloader<?> downloader = downloader();
+    final FullSyncDownloader<?> downloader = downloader();
     downloader.start();
 
     // Process until the sync target is selected
@@ -319,7 +319,7 @@ public class DownloaderTest {
             .downloaderChangeTargetThresholdByHeight(10)
             .build()
             .validated(localBlockchain);
-    final Downloader<?> downloader = downloader(syncConfig);
+    final FullSyncDownloader<?> downloader = downloader(syncConfig);
     downloader.start();
 
     // Process until the sync target is selected
@@ -359,7 +359,7 @@ public class DownloaderTest {
             .downloaderChangeTargetThresholdByHeight(1000)
             .build()
             .validated(localBlockchain);
-    final Downloader<?> downloader = downloader(syncConfig);
+    final FullSyncDownloader<?> downloader = downloader(syncConfig);
     downloader.start();
 
     // Process until the sync target is selected
@@ -399,7 +399,7 @@ public class DownloaderTest {
             .downloaderChangeTargetThresholdByTd(UInt256.of(10))
             .build()
             .validated(localBlockchain);
-    final Downloader<?> downloader = downloader(syncConfig);
+    final FullSyncDownloader<?> downloader = downloader(syncConfig);
     downloader.start();
 
     // Process until the sync target is selected
@@ -446,7 +446,7 @@ public class DownloaderTest {
             .downloaderChangeTargetThresholdByTd(UInt256.of(100_000_000L))
             .build()
             .validated(localBlockchain);
-    final Downloader<?> downloader = downloader(syncConfig);
+    final FullSyncDownloader<?> downloader = downloader(syncConfig);
     downloader.start();
 
     // Process until the sync target is selected
@@ -491,7 +491,7 @@ public class DownloaderTest {
             .downloaderHeadersRequestSize(3)
             .build()
             .validated(localBlockchain);
-    final Downloader<?> downloader = downloader(syncConfig);
+    final FullSyncDownloader<?> downloader = downloader(syncConfig);
 
     final long bestPeerChainHead = otherBlockchain.getChainHeadBlockNumber();
     final RespondingEthPeer bestPeer =
@@ -565,7 +565,7 @@ public class DownloaderTest {
             .downloaderHeadersRequestSize(3)
             .build()
             .validated(localBlockchain);
-    final Downloader<?> downloader = downloader(syncConfig);
+    final FullSyncDownloader<?> downloader = downloader(syncConfig);
 
     // Setup the best peer we should use as our sync target
     final long bestPeerChainHead = otherBlockchain.getChainHeadBlockNumber();
