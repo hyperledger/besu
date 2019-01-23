@@ -237,11 +237,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     }
   }
 
-  @Override
-  public boolean hasSufficientPeers() {
-    return ethPeers.availablePeerCount() > 0;
-  }
-
   private void handleStatusMessage(final EthPeer peer, final MessageData data) {
     final StatusMessage status = StatusMessage.readFrom(data);
     try {

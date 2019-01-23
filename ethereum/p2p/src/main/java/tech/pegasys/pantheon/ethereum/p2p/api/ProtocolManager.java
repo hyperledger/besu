@@ -12,14 +12,13 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.api;
 
-import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerRequirement;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 
 import java.util.List;
 
 /** Represents an object responsible for managing a wire subprotocol. */
-public interface ProtocolManager extends AutoCloseable, PeerRequirement {
+public interface ProtocolManager extends AutoCloseable {
 
   String getSupportedProtocol();
 
