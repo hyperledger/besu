@@ -12,9 +12,9 @@
  */
 package tech.pegasys.pantheon.orion;
 
-import tech.pegasys.pantheon.orion.types.ReceiveContent;
+import tech.pegasys.pantheon.orion.types.ReceiveRequest;
 import tech.pegasys.pantheon.orion.types.ReceiveResponse;
-import tech.pegasys.pantheon.orion.types.SendContent;
+import tech.pegasys.pantheon.orion.types.SendRequest;
 import tech.pegasys.pantheon.orion.types.SendResponse;
 
 import java.io.IOException;
@@ -36,8 +36,8 @@ public class Orion {
   private String url;
   private OkHttpClient client;
 
-  public Orion(final OrionConfiguration orionConfiguration) {
-    this.url = orionConfiguration.getUrl();
+  public Orion(final String orionUrl) {
+    this.url = orionUrl;
     this.client = new OkHttpClient();
   }
 
@@ -52,11 +52,11 @@ public class Orion {
     }
   }
 
-  public SendResponse send(final SendContent content) throws IOException {
+  public SendResponse send(final SendRequest content) throws IOException {
     return executePost("/send", objectMapper.writeValueAsString(content), SendResponse.class);
   }
 
-  public ReceiveResponse receive(final ReceiveContent content) throws IOException {
+  public ReceiveResponse receive(final ReceiveRequest content) throws IOException {
     return executePost("/receive", objectMapper.writeValueAsString(content), ReceiveResponse.class);
   }
 
