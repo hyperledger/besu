@@ -523,12 +523,20 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void discoveryOptionMustBeUsed() {
-    parseCommand("--no-discovery");
+  public void discoveryOptionValueTrueMustBeUsed() {
+    parseCommand("--no-discovery", "true");
     // Discovery stored in runner is the negative of the option passed to CLI
-    // So as passing the option means noDiscovery will be true, then discovery is false in runner
-
     verify(mockRunnerBuilder.discovery(eq(false))).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void discoveryOptionValueFalseMustBeUsed() {
+    parseCommand("--no-discovery", "false");
+    // Discovery stored in runner is the negative of the option passed to CLI
+    verify(mockRunnerBuilder.discovery(eq(true))).build();
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();

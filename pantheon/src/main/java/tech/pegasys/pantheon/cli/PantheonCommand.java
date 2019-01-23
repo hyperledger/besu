@@ -165,7 +165,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   // meaning that it's probably the right way to handle disabling options.
   @Option(
     names = {"--no-discovery"},
-    description = "Disable p2p peer discovery (default: ${DEFAULT-VALUE})"
+    description = "Disable p2p peer discovery (default: ${DEFAULT-VALUE})",
+    arity = "1"
   )
   private final Boolean noPeerDiscovery = false;
 
