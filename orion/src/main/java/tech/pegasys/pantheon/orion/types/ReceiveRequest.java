@@ -12,11 +12,11 @@
  */
 package tech.pegasys.pantheon.orion.types;
 
-public class ReceiveContent {
+public class ReceiveRequest {
   private String key;
   private String to;
 
-  public ReceiveContent(final String key, final String to) {
+  public ReceiveRequest(final String key, final String to) {
 
     this.key = key;
     this.to = to;

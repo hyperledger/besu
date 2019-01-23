@@ -14,12 +14,12 @@ package tech.pegasys.pantheon.orion.types;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class SendContent {
+public class SendRequest {
   private byte[] payload;
   private String from;
   private String[] to;
 
-  public SendContent(final String payload, final String from, final String[] to) {
+  public SendRequest(final String payload, final String from, final String[] to) {
     this.payload = payload.getBytes(UTF_8);
     this.from = from;
     this.to = to;
