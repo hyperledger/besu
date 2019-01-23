@@ -57,7 +57,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
-import tech.pegasys.pantheon.metrics.prometheus.MetricsHttpService;
+import tech.pegasys.pantheon.metrics.prometheus.MetricsService;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.nio.file.Path;
@@ -305,7 +305,7 @@ public class RunnerBuilder {
                   vertx, webSocketConfiguration, subscriptionManager, webSocketsJsonRpcMethods));
     }
 
-    Optional<MetricsHttpService> metricsService = Optional.empty();
+    Optional<MetricsService> metricsService = Optional.empty();
     if (metricsConfiguration.isEnabled()) {
       metricsService = Optional.of(createMetricsService(vertx, metricsConfiguration));
     }
@@ -416,8 +416,8 @@ public class RunnerBuilder {
     return new WebSocketService(vertx, configuration, websocketRequestHandler);
   }
 
-  private MetricsHttpService createMetricsService(
+  private MetricsService createMetricsService(
       final Vertx vertx, final MetricsConfiguration configuration) {
-    return new MetricsHttpService(vertx, configuration, metricsSystem);
+    return MetricsService.create(vertx, configuration, metricsSystem);
   }
 }

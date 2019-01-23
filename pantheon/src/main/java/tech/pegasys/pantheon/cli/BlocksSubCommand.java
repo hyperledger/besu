@@ -18,7 +18,7 @@ import static tech.pegasys.pantheon.cli.DefaultCommandValues.MANDATORY_FILE_FORM
 
 import tech.pegasys.pantheon.cli.BlocksSubCommand.ImportSubCommand;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
-import tech.pegasys.pantheon.metrics.prometheus.MetricsHttpService;
+import tech.pegasys.pantheon.metrics.prometheus.MetricsService;
 import tech.pegasys.pantheon.util.BlockImporter;
 
 import java.io.File;
@@ -104,25 +104,25 @@ class BlocksSubCommand implements Runnable {
       checkNotNull(parentCommand.parentCommand);
       checkNotNull(parentCommand.blockImporter);
 
-      Optional<MetricsHttpService> metricsHttpService = Optional.empty();
+      Optional<MetricsService> metricsService = Optional.empty();
       try {
         final MetricsConfiguration metricsConfiguration =
             parentCommand.parentCommand.metricsConfiguration();
         if (metricsConfiguration.isEnabled()) {
-          metricsHttpService =
+          metricsService =
               Optional.of(
-                  new MetricsHttpService(
+                  MetricsService.create(
                       Vertx.vertx(),
                       metricsConfiguration,
                       parentCommand.parentCommand.getMetricsSystem()));
-          metricsHttpService.ifPresent(MetricsHttpService::start);
+          metricsService.ifPresent(MetricsService::start);
         }
 
         // As blocksImportFile even if initialized as null is injected by PicoCLI and param is
         // mandatory
         // So we are sure it's always not null, we can remove the warning
         //noinspection ConstantConditions
-        Path path = blocksImportFile.toPath();
+        final Path path = blocksImportFile.toPath();
 
         parentCommand.blockImporter.importBlockchain(
             path, parentCommand.parentCommand.buildController());
@@ -133,7 +133,7 @@ class BlocksSubCommand implements Runnable {
         throw new ExecutionException(
             new CommandLine(this), "Unable to import blocks from " + blocksImportFile, e);
       } finally {
-        metricsHttpService.ifPresent(MetricsHttpService::stop);
+        metricsService.ifPresent(MetricsService::stop);
       }
     }
   }

@@ -57,8 +57,11 @@ rpc-ws-refresh-delay=500
 
 # Prometheus Metrics Endpoint
 metrics-enabled=false
+metrics-mode="pull"
 metrics-host="8.6.7.5"
 metrics-port=309
+metrics-push-interval=42
+metrics-prometheus-job="pantheon-everything"
 
 # Mining
 miner-enabled=false
