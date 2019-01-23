@@ -199,6 +199,11 @@ public final class MockNetwork {
     }
 
     @Override
+    public boolean isP2pEnabled() {
+      return true;
+    }
+
+    @Override
     public NodeWhitelistController getNodeWhitelistController() {
       return new NodeWhitelistController(PermissioningConfiguration.createDefault());
     }

@@ -78,6 +78,11 @@ public class NoopP2PNetwork implements P2PNetwork {
   }
 
   @Override
+  public boolean isP2pEnabled() {
+    return false;
+  }
+
+  @Override
   public NodeWhitelistController getNodeWhitelistController() {
     throw new P2pDisabledException("P2P networking disabled.  Node whitelist unavailable.");
   }
