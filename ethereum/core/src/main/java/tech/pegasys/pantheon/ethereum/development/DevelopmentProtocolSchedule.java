@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.development;
 import static tech.pegasys.pantheon.ethereum.mainnet.MainnetTransactionValidator.NO_CHAIN_ID;
 
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 
@@ -25,7 +26,8 @@ public class DevelopmentProtocolSchedule {
     return new ProtocolScheduleBuilder<>(
             config,
             NO_CHAIN_ID,
-            builder -> builder.difficultyCalculator(DevelopmentDifficultyCalculators.DEVELOPER))
+            builder -> builder.difficultyCalculator(DevelopmentDifficultyCalculators.DEVELOPER),
+            PrivacyParameters.noPrivacy())
         .createProtocolSchedule();
   }
 }

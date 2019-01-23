@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.precompiles.ECRECPrecompiledContra
 import tech.pegasys.pantheon.ethereum.mainnet.precompiles.IDPrecompiledContract;
 import tech.pegasys.pantheon.ethereum.mainnet.precompiles.RIPEMD160PrecompiledContract;
 import tech.pegasys.pantheon.ethereum.mainnet.precompiles.SHA256PrecompiledContract;
+import tech.pegasys.pantheon.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
 
 /** Provides the various precompiled contracts used on mainnet hard forks. */
@@ -36,20 +37,38 @@ public abstract class MainnetPrecompiledContractRegistries {
     registry.put(Address.ID, new IDPrecompiledContract(gasCalculator));
   }
 
-  public static PrecompileContractRegistry frontier(final GasCalculator gasCalculator) {
+  public static PrecompileContractRegistry frontier(
+      final PrecompiledContractConfiguration precompiledContractConfiguration) {
     final PrecompileContractRegistry registry = new PrecompileContractRegistry();
-    populateForFrontier(registry, gasCalculator);
+    populateForFrontier(registry, precompiledContractConfiguration.getGasCalculator());
     return registry;
   }
 
-  public static PrecompileContractRegistry byzantium(final GasCalculator gasCalculator) {
-    final PrecompileContractRegistry registry = new PrecompileContractRegistry();
+  private static void populateForByzantium(
+      final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForFrontier(registry, gasCalculator);
     registry.put(
         Address.MODEXP, new BigIntegerModularExponentiationPrecompiledContract(gasCalculator));
     registry.put(Address.ALTBN128_ADD, new AltBN128AddPrecompiledContract(gasCalculator));
     registry.put(Address.ALTBN128_MUL, new AltBN128MulPrecompiledContract(gasCalculator));
     registry.put(Address.ALTBN128_PAIRING, new AltBN128PairingPrecompiledContract(gasCalculator));
+  }
+
+  public static PrecompileContractRegistry byzantium(
+      final PrecompiledContractConfiguration precompiledContractConfiguration) {
+    final PrecompileContractRegistry registry = new PrecompileContractRegistry();
+    populateForByzantium(registry, precompiledContractConfiguration.getGasCalculator());
+    return registry;
+  }
+
+  public static PrecompileContractRegistry appendPrivacy(
+      final PrecompileContractRegistry registry,
+      final PrecompiledContractConfiguration precompiledContractConfiguration) {
+    registry.put(
+        Address.DEFAULT_PRIVACY,
+        new PrivacyPrecompiledContract(
+            precompiledContractConfiguration.getGasCalculator(),
+            precompiledContractConfiguration.getPrivacyParameters()));
     return registry;
   }
 }

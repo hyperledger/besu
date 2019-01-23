@@ -72,3 +72,8 @@ min-gas-price="1"
 # Permissioning
 accounts-whitelist=["0x0000000000000000000000000000000000000009"]
 nodes-whitelist=["all"]
+
+# Privacy
+privacy-url="http://127.0.0.1:8888"
+privacy-public-key-file="./pubKey.pub"
+privacy-enabled=false

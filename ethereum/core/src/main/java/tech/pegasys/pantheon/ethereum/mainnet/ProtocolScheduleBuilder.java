@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.mainnet;
 
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 
 import java.util.OptionalLong;
 import java.util.function.Function;
@@ -22,14 +23,17 @@ public class ProtocolScheduleBuilder<C> {
   private final GenesisConfigOptions config;
   private final Function<ProtocolSpecBuilder<Void>, ProtocolSpecBuilder<C>> protocolSpecAdapter;
   private final int defaultChainId;
+  private final PrivacyParameters privacyParameters;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final int defaultChainId,
-      final Function<ProtocolSpecBuilder<Void>, ProtocolSpecBuilder<C>> protocolSpecAdapter) {
+      final Function<ProtocolSpecBuilder<Void>, ProtocolSpecBuilder<C>> protocolSpecAdapter,
+      final PrivacyParameters privacyParameters) {
     this.config = config;
     this.protocolSpecAdapter = protocolSpecAdapter;
     this.defaultChainId = defaultChainId;
+    this.privacyParameters = privacyParameters;
   }
 
   public ProtocolSchedule<C> createProtocolSchedule() {
@@ -91,6 +95,10 @@ public class ProtocolScheduleBuilder<C> {
     blockNumber.ifPresent(
         number ->
             protocolSchedule.putMilestone(
-                number, protocolSpecAdapter.apply(definition).build(protocolSchedule)));
+                number,
+                protocolSpecAdapter
+                    .apply(definition)
+                    .privacyParameters(privacyParameters)
+                    .build(protocolSchedule)));
   }
 }

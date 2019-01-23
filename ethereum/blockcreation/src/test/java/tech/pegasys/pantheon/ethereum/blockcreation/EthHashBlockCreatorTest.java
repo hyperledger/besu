@@ -17,6 +17,7 @@ import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.ExecutionContextTestFixture;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolver;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHasher.Light;
@@ -47,7 +48,10 @@ public class EthHashBlockCreatorTest {
       ExecutionContextTestFixture.builder()
           .protocolSchedule(
               new ProtocolScheduleBuilder<>(
-                      GenesisConfigFile.DEFAULT.getConfigOptions(), 42, Function.identity())
+                      GenesisConfigFile.DEFAULT.getConfigOptions(),
+                      42,
+                      Function.identity(),
+                      PrivacyParameters.noPrivacy())
                   .createProtocolSchedule())
           .build();
 

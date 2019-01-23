@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.consensus.common.VoteTallyUpdater;
 import tech.pegasys.pantheon.consensus.ibft.IbftBlockImporter;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.ethereum.MainnetBlockValidator;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockBodyValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockImporter;
@@ -44,7 +45,8 @@ public class IbftProtocolSchedule {
     return new ProtocolScheduleBuilder<>(
             config,
             DEFAULT_CHAIN_ID,
-            builder -> applyIbftChanges(blockPeriod, epochManager, builder))
+            builder -> applyIbftChanges(blockPeriod, epochManager, builder),
+            PrivacyParameters.noPrivacy())
         .createProtocolSchedule();
   }
 

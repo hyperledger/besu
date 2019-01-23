@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.controller.MainnetPantheonController;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.development.DevelopmentProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
@@ -40,6 +41,7 @@ public class PantheonControllerBuilder {
   private boolean devMode;
   private File nodePrivateKeyFile;
   private MetricsSystem metricsSystem;
+  private PrivacyParameters privacyParameters;
 
   public PantheonControllerBuilder synchronizerConfiguration(
       final SynchronizerConfiguration synchronizerConfiguration) {
@@ -82,6 +84,11 @@ public class PantheonControllerBuilder {
     return this;
   }
 
+  public PantheonControllerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
+    this.privacyParameters = privacyParameters;
+    return this;
+  }
+
   public PantheonController<?> build() throws IOException {
     // instantiate a controller with mainnet config if no genesis file is defined
     // otherwise use the indicated genesis file
@@ -110,7 +117,8 @@ public class PantheonControllerBuilder {
           ethNetworkConfig.getNetworkId(),
           miningParameters,
           nodeKeys,
-          metricsSystem);
+          metricsSystem,
+          privacyParameters);
     }
   }
 }
