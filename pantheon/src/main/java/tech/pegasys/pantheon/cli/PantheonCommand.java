@@ -407,6 +407,13 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Boolean isMetricsEnabled = false;
 
   @Option(
+    names = {"--metrics-mode"},
+    description =
+        "Mode for the metrics service to run in, 'push' or 'pull' (default: ${DEFAULT-VALUE})"
+  )
+  private String metricsMode = MetricsConfiguration.MODE_SERVER_PULL;
+
+  @Option(
     names = {"--metrics-host"},
     paramLabel = MANDATORY_HOST_FORMAT_HELP,
     description = "Host for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
@@ -422,6 +429,22 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     arity = "1"
   )
   private final Integer metricsPort = DEFAULT_METRICS_PORT;
+
+  @Option(
+    names = {"--metrics-push-interval"},
+    paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+    description =
+        "Interval in seconds to push metrics when in push mode (default: ${DEFAULT-VALUE})",
+    arity = "1"
+  )
+  private final Integer metricsPushInterval = 15;
+
+  @Option(
+    names = {"--metrics-prometheus-job"},
+    description = "Job name to use when in push mode (default: ${DEFAULT-VALUE})",
+    arity = "1"
+  )
+  private String metricsPrometheusJob = "pantheon-client";
 
   @Option(
     names = {"--host-whitelist"},
@@ -673,8 +696,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   MetricsConfiguration metricsConfiguration() {
     final MetricsConfiguration metricsConfiguration = createDefault();
     metricsConfiguration.setEnabled(isMetricsEnabled);
+    metricsConfiguration.setMode(metricsMode);
     metricsConfiguration.setHost(metricsHost.toString());
     metricsConfiguration.setPort(metricsPort);
+    metricsConfiguration.setPushInterval(metricsPushInterval);
+    metricsConfiguration.setPrometheusJob(metricsPrometheusJob);
     metricsConfiguration.setHostsWhitelist(hostsWhitelist);
     return metricsConfiguration;
   }

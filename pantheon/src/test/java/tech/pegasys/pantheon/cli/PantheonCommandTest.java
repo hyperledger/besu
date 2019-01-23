@@ -1341,6 +1341,46 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void metricsModeOptionMustBeUsed() {
+    parseCommand("--metrics-mode", "pull");
+
+    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(metricsConfigArgumentCaptor.getValue().getMode()).isEqualTo("pull");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void metricsPushIntervalMustBeUsed() {
+    parseCommand("--metrics-push-interval", "42");
+
+    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(metricsConfigArgumentCaptor.getValue().getPushInterval()).isEqualTo(42);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void metricsPrometheusJobMustBeUsed() {
+    parseCommand("--metrics-prometheus-job", "pantheon-command-test");
+
+    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(metricsConfigArgumentCaptor.getValue().getPrometheusJob())
+        .isEqualTo("pantheon-command-test");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void pantheonDoesNotStartInMiningModeIfCoinbaseNotSet() {
     parseCommand("--miner-enabled");
 

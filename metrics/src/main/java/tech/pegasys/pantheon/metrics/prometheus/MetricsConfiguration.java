@@ -22,9 +22,15 @@ public class MetricsConfiguration {
   private static final String DEFAULT_METRICS_HOST = "127.0.0.1";
   public static final int DEFAULT_METRICS_PORT = 9545;
 
+  public static final String MODE_PUSH_GATEWAY = "push";
+  public static final String MODE_SERVER_PULL = "pull";
+
   private boolean enabled;
   private int port;
   private String host;
+  private String mode;
+  private int pushInterval;
+  private String prometheusJob;
   private Collection<String> hostsWhitelist = Collections.singletonList("localhost");
 
   public static MetricsConfiguration createDefault() {
@@ -32,6 +38,9 @@ public class MetricsConfiguration {
     metricsConfiguration.setEnabled(false);
     metricsConfiguration.setPort(DEFAULT_METRICS_PORT);
     metricsConfiguration.setHost(DEFAULT_METRICS_HOST);
+    metricsConfiguration.setMode(MODE_SERVER_PULL);
+    metricsConfiguration.setPushInterval(15);
+    metricsConfiguration.setPrometheusJob("pantheon-client");
 
     return metricsConfiguration;
   }
@@ -60,6 +69,30 @@ public class MetricsConfiguration {
 
   public void setHost(final String host) {
     this.host = host;
+  }
+
+  public String getMode() {
+    return mode;
+  }
+
+  public void setMode(final String mode) {
+    this.mode = mode;
+  }
+
+  public int getPushInterval() {
+    return pushInterval;
+  }
+
+  public void setPushInterval(final int pushInterval) {
+    this.pushInterval = pushInterval;
+  }
+
+  public String getPrometheusJob() {
+    return prometheusJob;
+  }
+
+  public void setPrometheusJob(final String prometheusJob) {
+    this.prometheusJob = prometheusJob;
   }
 
   Collection<String> getHostsWhitelist() {

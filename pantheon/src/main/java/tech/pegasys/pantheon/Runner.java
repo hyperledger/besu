@@ -16,7 +16,7 @@ import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcHttpService;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketService;
 import tech.pegasys.pantheon.ethereum.p2p.NetworkRunner;
-import tech.pegasys.pantheon.metrics.prometheus.MetricsHttpService;
+import tech.pegasys.pantheon.metrics.prometheus.MetricsService;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -42,7 +42,7 @@ public class Runner implements AutoCloseable {
   private final NetworkRunner networkRunner;
   private final Optional<JsonRpcHttpService> jsonRpc;
   private final Optional<WebSocketService> websocketRpc;
-  private final Optional<MetricsHttpService> metrics;
+  private final Optional<MetricsService> metrics;
 
   private final PantheonController<?> pantheonController;
   private final Path dataDir;
@@ -52,7 +52,7 @@ public class Runner implements AutoCloseable {
       final NetworkRunner networkRunner,
       final Optional<JsonRpcHttpService> jsonRpc,
       final Optional<WebSocketService> websocketRpc,
-      final Optional<MetricsHttpService> metrics,
+      final Optional<MetricsService> metrics,
       final PantheonController<?> pantheonController,
       final Path dataDir) {
     this.vertx = vertx;
@@ -148,7 +148,11 @@ public class Runner implements AutoCloseable {
   }
 
   public Optional<Integer> getMetricsPort() {
-    return metrics.map(service -> service.socketAddress().getPort());
+    if (metrics.isPresent()) {
+      return metrics.get().getPort();
+    } else {
+      return Optional.empty();
+    }
   }
 
   public int getP2pUdpPort() {

@@ -46,7 +46,7 @@ import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class MetricsHttpService {
+class MetricsHttpService implements MetricsService {
   private static final Logger LOG = LogManager.getLogger();
 
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
@@ -57,7 +57,7 @@ public class MetricsHttpService {
 
   private HttpServer httpServer;
 
-  public MetricsHttpService(
+  MetricsHttpService(
       final Vertx vertx,
       final MetricsConfiguration configuration,
       final MetricsSystem metricsSystem) {
@@ -72,8 +72,16 @@ public class MetricsHttpService {
         config.getPort() == 0 || NetworkUtility.isValidPort(config.getPort()),
         "Invalid port configuration.");
     checkArgument(config.getHost() != null, "Required host is not configured.");
+    checkArgument(
+        MetricsConfiguration.MODE_SERVER_PULL.equals(config.getMode()),
+        "Metrics Http Service cannot start up outside of '"
+            + MetricsConfiguration.MODE_SERVER_PULL
+            + "' mode, requested mode is '"
+            + config.getMode()
+            + "'.");
   }
 
+  @Override
   public CompletableFuture<?> start() {
     LOG.info("Starting Metrics service on {}:{}", config.getHost(), config.getPort());
     // Create the HTTP server and a router object.
@@ -159,6 +167,7 @@ public class MetricsHttpService {
         .anyMatch(whitelistEntry -> whitelistEntry.toLowerCase().equals(hostHeader.toLowerCase()));
   }
 
+  @Override
   public CompletableFuture<?> stop() {
     if (httpServer == null) {
       return CompletableFuture.completedFuture(null);
@@ -211,11 +220,19 @@ public class MetricsHttpService {
         });
   }
 
-  public InetSocketAddress socketAddress() {
+  InetSocketAddress socketAddress() {
     if (httpServer == null) {
       return EMPTY_SOCKET_ADDRESS;
     }
     return new InetSocketAddress(config.getHost(), httpServer.actualPort());
+  }
+
+  @Override
+  public Optional<Integer> getPort() {
+    if (httpServer == null) {
+      return Optional.empty();
+    }
+    return Optional.of(httpServer.actualPort());
   }
 
   @VisibleForTesting
