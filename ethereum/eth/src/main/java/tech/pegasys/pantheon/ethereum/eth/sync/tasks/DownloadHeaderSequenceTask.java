@@ -21,9 +21,7 @@ import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPeerTask.PeerTaskResult;
 import tech.pegasys.pantheon.ethereum.eth.manager.AbstractRetryingPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
-import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.NoAvailablePeersException;
-import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerBreachedProtocolException;
-import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerDisconnectedException;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -34,8 +32,8 @@ import tech.pegasys.pantheon.metrics.OperationTimer;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeoutException;
 
 import com.google.common.primitives.Ints;
 import org.apache.logging.log4j.LogManager;
@@ -120,11 +118,12 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
   }
 
   @Override
-  protected CompletableFuture<List<BlockHeader>> executePeerTask() {
+  protected CompletableFuture<List<BlockHeader>> executePeerTask(
+      final Optional<EthPeer> assignedPeer) {
     LOG.debug(
         "Downloading headers from {} to {}.", startingBlockNumber, referenceHeader.getNumber() - 1);
     final CompletableFuture<List<BlockHeader>> task =
-        downloadHeaders().thenCompose(this::processHeaders);
+        downloadHeaders(assignedPeer).thenCompose(this::processHeaders);
     return task.whenComplete(
         (r, t) -> {
           // We're done if we've filled all requested headers
@@ -138,15 +137,8 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
         });
   }
 
-  @Override
-  protected boolean isRetryableError(final Throwable error) {
-    return error instanceof NoAvailablePeersException
-        || error instanceof TimeoutException
-        || error instanceof PeerBreachedProtocolException
-        || error instanceof PeerDisconnectedException;
-  }
-
-  private CompletableFuture<PeerTaskResult<List<BlockHeader>>> downloadHeaders() {
+  private CompletableFuture<PeerTaskResult<List<BlockHeader>>> downloadHeaders(
+      final Optional<EthPeer> assignedPeer) {
     // Figure out parameters for our headers request
     final boolean partiallyFilled = lastFilledHeaderIndex < segmentLength;
     final BlockHeader referenceHeaderForNextRequest =
@@ -165,6 +157,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
                   referenceHeaderForNextRequest.getNumber(),
                   count + 1,
                   ethTasksTimer);
+          assignedPeer.ifPresent(headersTask::assignPeer);
           return headersTask.run();
         });
   }

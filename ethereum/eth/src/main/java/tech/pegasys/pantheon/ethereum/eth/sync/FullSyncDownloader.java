@@ -54,7 +54,7 @@ import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class Downloader<C> {
+public class FullSyncDownloader<C> {
   private static final Logger LOG = LogManager.getLogger();
 
   private final SynchronizerConfiguration config;
@@ -73,7 +73,7 @@ public class Downloader<C> {
   private long syncTargetDisconnectListenerId;
   protected CompletableFuture<?> currentTask;
 
-  Downloader(
+  FullSyncDownloader(
       final SynchronizerConfiguration config,
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,

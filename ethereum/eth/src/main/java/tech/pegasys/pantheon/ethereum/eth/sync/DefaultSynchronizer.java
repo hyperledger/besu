@@ -16,11 +16,16 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.SyncStatus;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncActions;
+import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncDownloader;
+import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncException;
+import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.PendingBlocks;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,7 +40,8 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   private final SyncState syncState;
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final BlockPropagationManager<C> blockPropagationManager;
-  private final Downloader<C> downloader;
+  private final FullSyncDownloader<C> fullSyncDownloader;
+  private final Optional<FastSyncDownloader<C>> fastSyncDownloader;
 
   public DefaultSynchronizer(
       final SynchronizerConfiguration syncConfig,
@@ -54,26 +60,58 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             syncState,
             new PendingBlocks(),
             ethTasksTimer);
-    this.downloader =
-        new Downloader<>(
+    this.fullSyncDownloader =
+        new FullSyncDownloader<>(
             syncConfig, protocolSchedule, protocolContext, ethContext, syncState, ethTasksTimer);
 
     ChainHeadTracker.trackChainHeadForPeers(
         ethContext, protocolSchedule, protocolContext.getBlockchain(), syncConfig, ethTasksTimer);
-    if (syncConfig.syncMode().equals(SyncMode.FAST)) {
+    if (syncConfig.syncMode() == SyncMode.FAST) {
       LOG.info("Fast sync enabled.");
+      this.fastSyncDownloader =
+          Optional.of(
+              new FastSyncDownloader<>(
+                  new FastSyncActions<>(
+                      syncConfig, protocolSchedule, protocolContext, ethContext, ethTasksTimer)));
+    } else {
+      this.fastSyncDownloader = Optional.empty();
     }
   }
 
   @Override
   public void start() {
     if (started.compareAndSet(false, true)) {
-      LOG.info("Starting synchronizer.");
-      blockPropagationManager.start();
-      downloader.start();
+      if (fastSyncDownloader.isPresent()) {
+        fastSyncDownloader.get().start().whenComplete(this::handleFastSyncResult);
+      } else {
+        startFullSync();
+      }
     } else {
       throw new IllegalStateException("Attempt to start an already started synchronizer.");
     }
+  }
+
+  private void handleFastSyncResult(final FastSyncState result, final Throwable error) {
+
+    final Throwable rootCause = ExceptionUtils.rootCause(error);
+    if (rootCause instanceof FastSyncException) {
+      LOG.error(
+          "Fast sync failed ({}), switching to full sync.",
+          ((FastSyncException) rootCause).getError());
+    } else if (error != null) {
+      LOG.error("Fast sync failed, switching to full sync.", error);
+    } else {
+      LOG.info(
+          "Fast sync completed successfully with pivot block {}",
+          result.getPivotBlockNumber().getAsLong());
+    }
+    startFullSync();
+  }
+
+  private void startFullSync() {
+    LOG.info("Starting synchronizer.");
+    blockPropagationManager.start();
+    fullSyncDownloader.start();
   }
 
   @Override

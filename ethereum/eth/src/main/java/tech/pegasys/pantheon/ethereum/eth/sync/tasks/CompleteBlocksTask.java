@@ -20,9 +20,6 @@ import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPeerTask.PeerTaskResul
 import tech.pegasys.pantheon.ethereum.eth.manager.AbstractRetryingPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
-import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.NoAvailablePeersException;
-import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerBreachedProtocolException;
-import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerDisconnectedException;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
@@ -32,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -54,7 +50,6 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
 
   private final List<BlockHeader> headers;
   private final Map<Long, Block> blocks;
-  private Optional<EthPeer> assignedPeer = Optional.empty();
 
   private CompleteBlocksTask(
       final ProtocolSchedule<C> protocolSchedule,
@@ -92,26 +87,12 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
   }
 
   @Override
-  protected CompletableFuture<List<Block>> executePeerTask() {
-    return requestBodies().thenCompose(this::processBodiesResult);
+  protected CompletableFuture<List<Block>> executePeerTask(final Optional<EthPeer> assignedPeer) {
+    return requestBodies(assignedPeer).thenCompose(this::processBodiesResult);
   }
 
-  @Override
-  protected boolean isRetryableError(final Throwable error) {
-    final boolean isPeerError =
-        error instanceof PeerBreachedProtocolException
-            || error instanceof PeerDisconnectedException
-            || error instanceof NoAvailablePeersException;
-
-    return error instanceof TimeoutException || (!assignedPeer.isPresent() && isPeerError);
-  }
-
-  public CompleteBlocksTask<C> assignPeer(final EthPeer peer) {
-    assignedPeer = Optional.of(peer);
-    return this;
-  }
-
-  private CompletableFuture<PeerTaskResult<List<Block>>> requestBodies() {
+  private CompletableFuture<PeerTaskResult<List<Block>>> requestBodies(
+      final Optional<EthPeer> assignedPeer) {
     final List<BlockHeader> incompleteHeaders = incompleteHeaders();
     LOG.debug(
         "Requesting bodies to complete {} blocks, starting with {}.",

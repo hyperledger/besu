@@ -116,8 +116,8 @@ public class ImportBlocksTask<C> extends AbstractPeerTask<List<Block>> {
     }
     final CompleteBlocksTask<C> task =
         CompleteBlocksTask.forHeaders(
-                protocolSchedule, ethContext, headers.getResult(), ethTasksTimer)
-            .assignPeer(peer);
+            protocolSchedule, ethContext, headers.getResult(), ethTasksTimer);
+    task.assignPeer(peer);
     return executeSubTask(() -> ethContext.getScheduler().timeout(task));
   }
 
