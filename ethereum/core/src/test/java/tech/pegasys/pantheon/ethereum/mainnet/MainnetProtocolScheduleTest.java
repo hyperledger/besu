@@ -40,7 +40,10 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockNumber(4_730_000L).getName()).isEqualTo("Byzantium");
     // Constantinople was originally scheduled for 7_080_000, but postponed
     Assertions.assertThat(sched.getByBlockNumber(7_080_000L).getName()).isEqualTo("Byzantium");
-    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Byzantium");
+    Assertions.assertThat(sched.getByBlockNumber(7_280_000L).getName())
+        .isEqualTo("ConstantinopleFix");
+    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName())
+        .isEqualTo("ConstantinopleFix");
   }
 
   @Test
@@ -57,7 +60,7 @@ public class MainnetProtocolScheduleTest {
   public void createFromConfigWithSettings() {
     final JsonObject json =
         new JsonObject(
-            "{\"config\": {\"homesteadBlock\": 2, \"daoForkBlock\": 3, \"eip150Block\": 14, \"eip158Block\": 15, \"byzantiumBlock\": 16, \"constantinopleBlock\": 18, \"chainId\":1234}}");
+            "{\"config\": {\"homesteadBlock\": 2, \"daoForkBlock\": 3, \"eip150Block\": 14, \"eip158Block\": 15, \"byzantiumBlock\": 16, \"constantinopleBlock\": 18, \"constantinopleFixBlock\": 19, \"chainId\":1234}}");
     final ProtocolSchedule<Void> sched =
         MainnetProtocolSchedule.fromConfig(
             GenesisConfigFile.fromConfig(json).getConfigOptions(), PrivacyParameters.noPrivacy());
@@ -70,6 +73,22 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockNumber(15).getName()).isEqualTo("SpuriousDragon");
     Assertions.assertThat(sched.getByBlockNumber(16).getName()).isEqualTo("Byzantium");
     Assertions.assertThat(sched.getByBlockNumber(18).getName()).isEqualTo("Constantinople");
+    Assertions.assertThat(sched.getByBlockNumber(19).getName()).isEqualTo("ConstantinopleFix");
+  }
+
+  @Test
+  public void outOfOrderForksFails() {
+    final JsonObject json =
+        new JsonObject(
+            "{\"config\": {\"homesteadBlock\": 2, \"daoForkBlock\": 3, \"eip150Block\": 14, \"eip158Block\": 15, \"byzantiumBlock\": 16, \"constantinopleBlock\": 18, \"constantinopleFixBlock\": 17, \"chainId\":1234}}");
+    Assertions.assertThatExceptionOfType(RuntimeException.class)
+        .describedAs(
+            "Genesis Config Error: 'ConstantinopleFix' is scheduled for block 17 but it must be on or after block 18.")
+        .isThrownBy(
+            () ->
+                MainnetProtocolSchedule.fromConfig(
+                    GenesisConfigFile.fromConfig(json).getConfigOptions(),
+                    PrivacyParameters.noPrivacy()));
   }
 
   @Test
@@ -86,7 +105,8 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockNumber(10).getName()).isEqualTo("SpuriousDragon");
     Assertions.assertThat(sched.getByBlockNumber(1700000).getName()).isEqualTo("Byzantium");
     Assertions.assertThat(sched.getByBlockNumber(4230000).getName()).isEqualTo("Constantinople");
+    Assertions.assertThat(sched.getByBlockNumber(4939394).getName()).isEqualTo("ConstantinopleFix");
     Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName())
-        .isEqualTo("Constantinople");
+        .isEqualTo("ConstantinopleFix");
   }
 }

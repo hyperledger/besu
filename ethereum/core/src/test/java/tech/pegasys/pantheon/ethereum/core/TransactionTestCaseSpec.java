@@ -96,7 +96,7 @@ public class TransactionTestCaseSpec {
     final Expectation expectation = expectations.get(milestone);
 
     if (expectation == null) {
-      throw new IllegalStateException("Expectation for milestone %s not found" + milestone);
+      throw new IllegalStateException("Expectation for milestone " + milestone + " not found");
     }
 
     return expectation;

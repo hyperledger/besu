@@ -113,7 +113,7 @@ public class ExecutionContextTestFixture {
       if (protocolSchedule == null) {
         protocolSchedule =
             new ProtocolScheduleBuilder<>(
-                    new StubGenesisConfigOptions().constantinopleBlock(0),
+                    new StubGenesisConfigOptions().constantinopleFixBlock(0),
                     42,
                     Function.identity(),
                     PrivacyParameters.noPrivacy())

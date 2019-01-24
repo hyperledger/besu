@@ -7,6 +7,7 @@
     "eip155Block": 3,
     "eip158Block": 3,
     "byzantiumBlock": 1035301,
+    "constantinopleBlock": 3660663,
     "clique": {
       "period": 15,
       "epoch": 30000

@@ -8,6 +8,7 @@
     "eip158Block": 0,
     "byzantiumBlock": 0,
     "constantinopleBlock": 0,
+    "constantinopleFixBlock": 0,
     "ethash": {
     }
   },

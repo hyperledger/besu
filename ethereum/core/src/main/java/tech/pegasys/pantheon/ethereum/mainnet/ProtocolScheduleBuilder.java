@@ -40,6 +40,8 @@ public class ProtocolScheduleBuilder<C> {
     final int chainId = config.getChainId().orElse(defaultChainId);
     final MutableProtocolSchedule<C> protocolSchedule = new MutableProtocolSchedule<>(chainId);
 
+    validateForkOrdering();
+
     addProtocolSpec(
         protocolSchedule, OptionalLong.of(0), MainnetProtocolSpecs.frontierDefinition());
     addProtocolSpec(
@@ -84,6 +86,10 @@ public class ProtocolScheduleBuilder<C> {
         protocolSchedule,
         config.getConstantinopleBlockNumber(),
         MainnetProtocolSpecs.constantinopleDefinition(chainId));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getConstantinopleFixBlockNumber(),
+        MainnetProtocolSpecs.constantinopleFixDefinition(chainId));
 
     return protocolSchedule;
   }
@@ -100,5 +106,35 @@ public class ProtocolScheduleBuilder<C> {
                     .apply(definition)
                     .privacyParameters(privacyParameters)
                     .build(protocolSchedule)));
+  }
+
+  private long validateForkOrder(
+      final String forkName, final OptionalLong thisForkBlock, final long lastForkBlock) {
+    final long referenceForkBlock = thisForkBlock.orElse(lastForkBlock);
+    if (lastForkBlock > referenceForkBlock) {
+      throw new RuntimeException(
+          String.format(
+              "Genesis Config Error: '%s' is scheduled for block %d but it must be on or after block %d.",
+              forkName, thisForkBlock.getAsLong(), lastForkBlock));
+    }
+    return referenceForkBlock;
+  }
+
+  private void validateForkOrdering() {
+    long lastForkBlock = 0;
+    lastForkBlock = validateForkOrder("Homestead", config.getHomesteadBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("DaoFork", config.getDaoForkBlock(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder(
+            "TangerineWhistle", config.getTangerineWhistleBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("SpuriousDragon", config.getSpuriousDragonBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Byzantium", config.getByzantiumBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("Constantinople", config.getConstantinopleBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder(
+            "ConstantinopleFix", config.getConstantinopleFixBlockNumber(), lastForkBlock);
+    assert (lastForkBlock >= 0);
   }
 }

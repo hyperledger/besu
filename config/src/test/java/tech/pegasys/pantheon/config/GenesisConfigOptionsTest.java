@@ -102,6 +102,13 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldGetConstantinopleFixBlockNumber() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(singletonMap("constantinopleFixBlock", 1000));
+    assertThat(config.getConstantinopleFixBlockNumber()).hasValue(1000);
+  }
+
+  @Test
   public void shouldNotReturnEmptyOptionalWhenBlockNumberNotSpecified() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
@@ -110,6 +117,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getSpuriousDragonBlockNumber()).isEmpty();
     assertThat(config.getByzantiumBlockNumber()).isEmpty();
     assertThat(config.getConstantinopleBlockNumber()).isEmpty();
+    assertThat(config.getConstantinopleFixBlockNumber()).isEmpty();
   }
 
   @Test

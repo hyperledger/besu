@@ -47,6 +47,9 @@ public class ReferenceTestProtocolSchedules {
     builder.put("Byzantium", createSchedule(new StubGenesisConfigOptions().byzantiumBlock(0)));
     builder.put(
         "Constantinople", createSchedule(new StubGenesisConfigOptions().constantinopleBlock(0)));
+    builder.put(
+        "ConstantinopleFix",
+        createSchedule(new StubGenesisConfigOptions().constantinopleFixBlock(0)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 

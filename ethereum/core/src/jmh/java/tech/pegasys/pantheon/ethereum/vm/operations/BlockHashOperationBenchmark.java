@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.vm.operations;
 
-import tech.pegasys.pantheon.ethereum.mainnet.ConstantinopleGasCalculator;
+import tech.pegasys.pantheon.ethereum.mainnet.ConstantinopleFixGasCalculator;
 import tech.pegasys.pantheon.ethereum.vm.BlockHashLookup;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
@@ -42,7 +42,7 @@ public class BlockHashOperationBenchmark {
   @Setup
   public void prepare() throws Exception {
     operationBenchmarkHelper = OperationBenchmarkHelper.create();
-    operation = new BlockHashOperation(new ConstantinopleGasCalculator());
+    operation = new BlockHashOperation(new ConstantinopleFixGasCalculator());
     frame = operationBenchmarkHelper.createMessageFrame();
   }
 

@@ -9,6 +9,8 @@
     "eip155Block": 2675000,
     "eip158Block": 2675000,
     "byzantiumBlock": 4370000,
+    "constantinopleBlock": 7280000,
+    "constantinopleFixBlock": 7280000,
     "ethash": {
 
     }
