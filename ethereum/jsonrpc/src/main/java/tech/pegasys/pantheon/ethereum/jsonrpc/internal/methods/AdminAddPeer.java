@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
@@ -52,6 +53,8 @@ public class AdminAddPeer implements JsonRpcMethod {
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INVALID_PARAMS);
     } catch (final IllegalArgumentException e) {
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.PARSE_ERROR);
+    } catch (final P2pDisabledException e) {
+      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
     } catch (final Exception e) {
       LOG.error("Error processing request: " + req, e);
       throw e;
