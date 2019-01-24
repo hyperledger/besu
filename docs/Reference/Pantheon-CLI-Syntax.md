@@ -618,7 +618,7 @@ rpc-http-api=["ETH","NET","WEB3"]
 Comma-separated APIs to enable on the HTTP JSON-RPC channel.
 When you use this option, the `--rpc-http-enabled` option must also be specified.
 The available API options are: `ADMIN`, `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`, `DEBUG`, and `MINER`.
-The default is: `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`.
+The default is: `ETH`, `NET`, `WEB3`.
 
 !!!note
     :construction: IBFT is not currently supported. Support for IBFT is in active development. 
@@ -697,7 +697,7 @@ rpc-ws-api=["ETH","NET","WEB3"]
 Comma-separated APIs to enable on Websockets channel.
 When you use this option, the `--rpc-ws-enabled` option must also be specified.
 The available API options are: `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`, `DEBUG`, and `MINER`.
-The default is: `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`.
+The default is: `ETH`, `NET`, `WEB3`.
 
 !!!note
     :construction: IBFT is not currently supported. Support for IBFT is in active development. 
