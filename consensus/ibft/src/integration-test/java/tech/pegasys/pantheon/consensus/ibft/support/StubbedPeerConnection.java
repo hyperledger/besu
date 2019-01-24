@@ -25,6 +25,11 @@ import java.net.SocketAddress;
 import java.util.Set;
 
 public class StubbedPeerConnection implements PeerConnection {
+  private final BytesValue nodeId;
+
+  public StubbedPeerConnection(final BytesValue nodeId) {
+    this.nodeId = nodeId;
+  }
 
   @Override
   public void send(final Capability capability, final MessageData message)
@@ -37,7 +42,7 @@ public class StubbedPeerConnection implements PeerConnection {
 
   @Override
   public PeerInfo getPeer() {
-    return new PeerInfo(0, "IbftIntTestPeer", emptyList(), 0, BytesValue.EMPTY);
+    return new PeerInfo(0, "IbftIntTestPeer", emptyList(), 0, nodeId);
   }
 
   @Override

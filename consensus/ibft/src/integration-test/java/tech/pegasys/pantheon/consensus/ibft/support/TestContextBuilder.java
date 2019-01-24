@@ -115,6 +115,7 @@ public class TestContextBuilder {
   private IbftEventQueue ibftEventQueue = new IbftEventQueue();
   private int validatorCount = 4;
   private int indexOfFirstLocallyProposedBlock = 0; // Meaning first block is from remote peer.
+  private boolean useGossip = false;
 
   public TestContextBuilder clock(final Clock clock) {
     this.clock = clock;
@@ -137,6 +138,11 @@ public class TestContextBuilder {
     return this;
   }
 
+  public TestContextBuilder useGossip(final boolean useGossip) {
+    this.useGossip = useGossip;
+    return this;
+  }
+
   public TestContext build() {
     final NetworkLayout networkNodes =
         NetworkLayout.createNetworkLayout(validatorCount, indexOfFirstLocallyProposedBlock);
@@ -148,11 +154,13 @@ public class TestContextBuilder {
     final KeyPair nodeKeys = networkNodes.getLocalNode().getNodeKeyPair();
 
     // Use a stubbed version of the multicaster, to prevent creating PeerConnections etc.
-    final StubValidatorMulticaster stubbedMulticaster = new StubValidatorMulticaster();
+    final StubValidatorMulticaster multicaster = new StubValidatorMulticaster();
+
+    final IbftGossip gossiper = useGossip ? new IbftGossip(multicaster) : mock(IbftGossip.class);
 
     final ControllerAndState controllerAndState =
         createControllerAndFinalState(
-            blockChain, stubbedMulticaster, nodeKeys, clock, ibftEventQueue);
+            blockChain, multicaster, nodeKeys, clock, ibftEventQueue, gossiper);
 
     // Add each networkNode to the Multicaster (such that each can receive msgs from local node).
     // NOTE: the remotePeers needs to be ordered based on Address (as this is used to determine
@@ -174,7 +182,7 @@ public class TestContextBuilder {
                     },
                     LinkedHashMap::new));
 
-    stubbedMulticaster.addNetworkPeers(remotePeers.values());
+    multicaster.addNetworkPeers(remotePeers.values());
 
     return new TestContext(
         remotePeers,
@@ -214,7 +222,8 @@ public class TestContextBuilder {
       final StubValidatorMulticaster stubbedMulticaster,
       final KeyPair nodeKeys,
       final Clock clock,
-      final IbftEventQueue ibftEventQueue) {
+      final IbftEventQueue ibftEventQueue,
+      final IbftGossip gossiper) {
 
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
@@ -277,9 +286,6 @@ public class TestContextBuilder {
 
     final MessageValidatorFactory messageValidatorFactory =
         new MessageValidatorFactory(proposerSelector, protocolSchedule, protocolContext);
-
-    // Disable Gossiping for integration tests.
-    final IbftGossip gossiper = mock(IbftGossip.class);
 
     final Subscribers<MinedBlockObserver> minedBlockObservers = new Subscribers<>();
 
