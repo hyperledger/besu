@@ -111,6 +111,11 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
       params.add(Integer.toString(ethNetworkConfig.getNetworkId()));
     }
 
+    if (!node.p2pEnabled()) {
+      params.add("--p2p-enabled");
+      params.add("false");
+    }
+
     final ProcessBuilder processBuilder =
         new ProcessBuilder(params)
             .directory(new File(System.getProperty("user.dir")).getParentFile())
