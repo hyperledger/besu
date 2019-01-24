@@ -101,6 +101,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getConstantinopleFixBlockNumber() {
+    return getOptionalLong("constantinoplefixblock");
+  }
+
+  @Override
   public OptionalInt getChainId() {
     return configRoot.containsKey("chainid")
         ? OptionalInt.of(configRoot.getInteger("chainid"))

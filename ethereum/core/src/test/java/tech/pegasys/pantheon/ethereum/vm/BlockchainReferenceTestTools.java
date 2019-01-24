@@ -43,7 +43,7 @@ public class BlockchainReferenceTestTools {
         System.getProperty(
             "test.ethereum.blockchain.eips",
             "FrontierToHomesteadAt5,HomesteadToEIP150At5,HomesteadToDaoAt5,EIP158ToByzantiumAt5,"
-                + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople");
+                + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix");
     NETWORKS_TO_RUN = Arrays.asList(networks.split(","));
   }
 
@@ -64,7 +64,8 @@ public class BlockchainReferenceTestTools {
     params.blacklist("RevertPrecompiledTouch_d0g0v0_(EIP158|Byzantium)");
 
     // Consumes a huge amount of memory
-    params.blacklist("static_Call1MB1024Calldepth_d1g0v0_(Byzantium|Constantinople)");
+    params.blacklist(
+        "static_Call1MB1024Calldepth_d1g0v0_(Byzantium|Constantinople|ConstantinopleFix)");
   }
 
   public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {

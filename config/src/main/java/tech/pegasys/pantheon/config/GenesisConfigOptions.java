@@ -43,5 +43,7 @@ public interface GenesisConfigOptions {
 
   OptionalLong getConstantinopleBlockNumber();
 
+  OptionalLong getConstantinopleFixBlockNumber();
+
   OptionalInt getChainId();
 }

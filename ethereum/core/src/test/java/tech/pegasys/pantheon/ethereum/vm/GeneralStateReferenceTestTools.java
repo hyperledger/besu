@@ -51,7 +51,7 @@ public class GeneralStateReferenceTestTools {
     final String eips =
         System.getProperty(
             "test.ethereum.state.eips",
-            "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople");
+            "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix");
     EIPS_TO_RUN = Arrays.asList(eips.split(","));
   }
 
@@ -84,7 +84,7 @@ public class GeneralStateReferenceTestTools {
     // Gas integer value is too large to construct a valid transaction.
     params.blacklist("OverflowGasRequire");
     // Consumes a huge amount of memory
-    params.blacklist("static_Call1MB1024Calldepth-(Byzantium|Constantinople)");
+    params.blacklist("static_Call1MB1024Calldepth-(Byzantium|Constantinople|ConstantinopleFix)");
   }
 
   public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {
