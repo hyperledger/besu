@@ -52,7 +52,7 @@ public class MessageReceptionHelpers {
             messageMatchesExpected(rxMsgData, msg);
           });
     }
-    allPeers.forEach(p -> p.clearReceivedMessages());
+    allPeers.forEach(ValidatorPeer::clearReceivedMessages);
   }
 
   public static void messageMatchesExpected(
