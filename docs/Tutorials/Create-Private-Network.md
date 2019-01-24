@@ -190,7 +190,7 @@ The result confirms Node-1 (the node running the JSON-RPC service) has two peers
 
 ## Next Steps 
 
-Import accounts to MetaMask and send transactions as described in the [Private Network Quickstart Tutorial](../Getting-Started/Private-Network-Quickstart.md#creating-a-transaction-using-metamask)
+Import accounts to MetaMask and send transactions as described in the [Private Network Quickstart Tutorial](Private-Network-Quickstart.md#creating-a-transaction-using-metamask)
 
 !!! info 
     Pantheon does not implement [private key management](../Using-Pantheon/Account-Management.md).

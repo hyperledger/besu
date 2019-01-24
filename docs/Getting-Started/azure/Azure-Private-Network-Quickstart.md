@@ -113,7 +113,7 @@ following :
 * for the Web Socket RPC endpoint: **ws://&lt;your VM public IP>/jsonws**
 
 You can now follow the quickstart tutorial starting from 
-[the part where we show how to create RPC requests](../Private-Network-Quickstart.md#run-json-rpc-requests).
+[the part where we show how to create RPC requests](../../Tutorials/Private-Network-Quickstart.md#run-json-rpc-requests).
 
 ## Shutting down the quickstart
 

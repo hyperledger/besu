@@ -28,11 +28,11 @@ Example Javascript scripts are provided to create signed raw transaction strings
 !!!attention
     [Node.js](https://nodejs.org/en/download/) must be installed to run these Javascript scripts. 
 
-The example Javascript scripts can be used to create raw transactions to send in the private network created 
-by the [Private Network Quickstart](../Getting-Started/Private-Network-Quickstart.md).
+You can use the example Javascript scripts to create and send raw transactions in the private network created by the 
+[Private Network Quickstart](../Tutorials/Private-Network-Quickstart.md).
 
-The `JSON-RPC endpoint` in the examples must be updated to the endpoint for the private network displayed 
-after running the `quickstart/runPantheonPrivateNetwork.sh` script. 
+You must update the `JSON-RPC endpoint` in the examples to the endpoint for the private network displayed after running 
+the `run.sh` script.
 
 To create and display the transaction string, run the Javascript script.
 

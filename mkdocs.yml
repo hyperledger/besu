@@ -50,8 +50,8 @@ nav:
         - Getting Started Overview: Getting-Started/Getting-Started.md
         - Starting Pantheon: Getting-Started/Starting-Pantheon.md
         - Running Pantheon from Docker Image: Getting-Started/Run-Docker-Image.md
-        - Private Network Quickstart Tutorial: Getting-Started/Private-Network-Quickstart.md
     - Tutorials:
+        - Private Network Quickstart: Tutorials/Private-Network-Quickstart.md
         - Creating a Private Network: Tutorials/Create-Private-Network.md
     - Consensus Protocols:
         - Pantheon Consensus Protocols: Consensus-Protocols/Overview-Consensus.md
