@@ -80,7 +80,7 @@ public class TestContext {
     return createBlockForProposal(blockchain.getChainHeadHeader(), round, timestamp);
   }
 
-  public RoundSpecificNodeRoles getRoundSpecificRoles(final ConsensusRoundIdentifier roundId) {
+  public RoundSpecificPeers roundSpecificPeers(final ConsensusRoundIdentifier roundId) {
     // This will return NULL if the LOCAL node is the proposer for the specified round
     final Address proposerAddress = finalState.getProposerForRound(roundId);
     final ValidatorPeer proposer = remotePeers.getOrDefault(proposerAddress, null);
@@ -88,7 +88,7 @@ public class TestContext {
     final List<ValidatorPeer> nonProposers = new ArrayList<>(remotePeers.values());
     nonProposers.remove(proposer);
 
-    return new RoundSpecificNodeRoles(proposer, remotePeers.values(), nonProposers);
+    return new RoundSpecificPeers(proposer, remotePeers.values(), nonProposers);
   }
 
   public NodeParams getLocalNodeParams() {
