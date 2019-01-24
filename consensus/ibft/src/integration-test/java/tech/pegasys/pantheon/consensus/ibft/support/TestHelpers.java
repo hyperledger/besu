@@ -12,8 +12,6 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.support;
 
-import static java.util.Optional.empty;
-
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
 import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
@@ -30,9 +28,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Block;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class TestHelpers {
 
@@ -53,31 +49,18 @@ public class TestHelpers {
 
   public static PreparedCertificate createValidPreparedCertificate(
       final TestContext context, final ConsensusRoundIdentifier preparedRound, final Block block) {
-    final RoundSpecificNodeRoles roles = context.getRoundSpecificRoles(preparedRound);
+    final RoundSpecificPeers peers = context.roundSpecificPeers(preparedRound);
 
     return new PreparedCertificate(
-        roles.getProposer().getMessageFactory().createSignedProposalPayload(preparedRound, block),
-        roles
-            .getNonProposingPeers()
-            .stream()
-            .map(
-                role ->
-                    role.getMessageFactory()
-                        .createSignedPreparePayload(preparedRound, block.getHash()))
-            .collect(Collectors.toList()));
+        peers.getProposer().getMessageFactory().createSignedProposalPayload(preparedRound, block),
+        peers.createSignedPreparePayloadOfNonProposing(preparedRound, block.getHash()));
   }
 
   public static SignedData<NewRoundPayload> injectEmptyNewRound(
       final ConsensusRoundIdentifier targetRoundId,
       final ValidatorPeer proposer,
-      final Collection<ValidatorPeer> peers,
+      final List<SignedData<RoundChangePayload>> roundChangePayloads,
       final Block blockToPropose) {
-
-    final List<SignedData<RoundChangePayload>> roundChangePayloads =
-        peers
-            .stream()
-            .map(p -> p.getMessageFactory().createSignedRoundChangePayload(targetRoundId, empty()))
-            .collect(Collectors.toList());
 
     final SignedData<ProposalPayload> proposal =
         proposer.getMessageFactory().createSignedProposalPayload(targetRoundId, blockToPropose);
