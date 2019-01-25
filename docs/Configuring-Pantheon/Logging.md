@@ -15,11 +15,16 @@ Pantheon uses Log4J2 for logging. There are two methods to configure logging beh
 
 ## Basic Log Level Setting
 
-Use the [`--logging`](../Reference/Pantheon-CLI-Syntax.md#logging) command line option to specify the logging verbosity. The [`--logging`](../Reference/Pantheon-CLI-Syntax.md#logging) option changes the volume of events displayed in the log. 
+Use the [`--logging`](../Reference/Pantheon-CLI-Syntax.md#logging) command line option to specify 
+the logging verbosity. The [`--logging`](../Reference/Pantheon-CLI-Syntax.md#logging) option changes
+the volume of events displayed in the log. 
 
 ## Advanced Custom Logging
 
-You can provide your own logging configuration using the standard Log4J2 configuration mechanisms.  For example, the following Log4J2 configuration is the same as the [default configuration](https://github.com/PegaSysEng/pantheon/blob/master/pantheon/src/main/resources/log4j2.xml) except logging of stack traces for exceptions is excluded.
+You can provide your own logging configuration using the standard Log4J2 configuration mechanisms.
+For example, the following Log4J2 configuration is the same as the 
+[default configuration](https://github.com/PegaSysEng/pantheon/blob/master/pantheon/src/main/resources/log4j2.xml) 
+except logging of stack traces for exceptions is excluded.
 
 ```xml tab="log4j2.xml"
 <?xml version="1.0" encoding="UTF-8"?>
@@ -41,12 +46,18 @@ You can provide your own logging configuration using the standard Log4J2 configu
 </Configuration>
 ```
 
-To use your custom configuration, set the environment variable `LOG4J_CONFIGURATION_FILE` to the location of your configuration file.  
+To use your custom configuration, set the environment variable `LOG4J_CONFIGURATION_FILE` to the 
+location of your configuration file.  
 
-If you have more specific requirements, you can create your own [log4j2 configuration](https://logging.apache.org/log4j/2.x/manual/configuration.html).
+If you have more specific requirements, you can create your own 
+[log4j2 configuration](https://logging.apache.org/log4j/2.x/manual/configuration.html).
 
-For Bash-based executions, you can set the variable for only the scope of the program execution by setting it before starting Pantheon.  For example, to set the debug logging and start Pantheon connected to the Rinkeby testnet:
+For Bash-based executions, you can set the variable for only the scope of the program execution by 
+setting it before starting Pantheon.  
 
-```bash
-$ LOG4J_CONFIGURATION_FILE=./debug.xml bin/pantheon --rinkeby
-```
+!!!example
+    To set the debug logging and start Pantheon connected to the Rinkeby testnet:
+
+    ```bash
+    $ LOG4J_CONFIGURATION_FILE=./debug.xml bin/pantheon --network=rinkeby
+    ```

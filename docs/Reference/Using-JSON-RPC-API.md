@@ -33,8 +33,8 @@ In this reference, the placeholder
 `<JSON-RPC-http-endpoint:port>` and `<JSON-RPC-ws-endpoint:port>` means an endpoint (IP address and port) 
 of the JSON-RPC service of a Pantheon node respectively for http endpoint and for WebSocket endpoint.
 
-To activate JSON-RPC using http or WebSocket, see [`--rpc-listen`](../Reference/Pantheon-CLI-Syntax.md#rpc-listen) 
-and [`--ws-listen`](../Reference/Pantheon-CLI-Syntax.md#ws-listen) options in the CLI documentation.
+To activate JSON-RPC using http or WebSocket, see [`--rpc-http-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled) 
+and [`--rpc-ws-listen`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-listen) options in the CLI documentation.
 
 The transport attributes are:
 

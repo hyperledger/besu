@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
-import static tech.pegasys.pantheon.cli.EthNetworkConfig.mainnet;
+import static tech.pegasys.pantheon.cli.NetworkName.MAINNET;
 
 import tech.pegasys.pantheon.Runner;
 import tech.pegasys.pantheon.RunnerBuilder;
@@ -55,7 +55,10 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
     final PantheonControllerBuilder builder = new PantheonControllerBuilder();
     final EthNetworkConfig ethNetworkConfig =
         node.ethNetworkConfig()
-            .orElse(new EthNetworkConfig.Builder(mainnet()).setNetworkId(NETWORK_ID).build());
+            .orElse(
+                new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET))
+                    .setNetworkId(NETWORK_ID)
+                    .build());
     final PantheonController<?> pantheonController;
     try {
       pantheonController =

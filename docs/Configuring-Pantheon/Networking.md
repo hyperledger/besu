@@ -20,7 +20,9 @@ If connections are not getting through the firewalls, ensure the peer discovery 
 
 ## Peer Discovery Port
 
-The [`--p2p-listen`](../Reference/Pantheon-CLI-Syntax.md#p2p-listen) option specifies the host and port on which P2P peer discovery listens. The default is ==127.0.0.1:30303==.
+The [`--p2p-host`](../Reference/Pantheon-CLI-Syntax.md#p2p-host) and [`--p2p-port`](../Reference/Pantheon-CLI-Syntax.md#p2p-port)
+options specifies the host and port on which P2P peer discovery listens. The default is ==127.0.0.1==
+for host and ==30303== for port.
  
 ## Limiting Peers
 

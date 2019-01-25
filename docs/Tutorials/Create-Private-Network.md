@@ -35,11 +35,11 @@ Create directories for your private network, each of the three nodes, and a data
 ```bash
 Private-Network/
 ├── Node-1
-│   ├── Node-1-Datadir
+│   ├── Node-1-data-path
 ├── Node-2
-│   ├── Node-2-Datadir
+│   ├── Node-2-data-path
 └── Node-3
-    ├── Node-3-Datadir
+    ├── Node-3-data-path
 ```
 
 ### 2. Create Genesis File 
@@ -89,17 +89,17 @@ In the `Node-1` directory, use the [`export-pub-key` subcommand](../Reference/Pa
 the [node public key](../Configuring-Pantheon/Node-Keys.md) to the specified file (`publicKeyNode1` in this example):
 
 ```bash tab="MacOS"
-pantheon --datadir=Node-1-Datadir --genesis=../privateNetworkGenesis.json export-pub-key Node-1-Datadir/publicKeyNode1
+pantheon --data-path=Node-1-data-path --genesis-file=../privateNetworkGenesis.json export-pub-key Node-1-data-path/publicKeyNode1
 ```
 
 ```bash tab="Windows"
-pantheon --datadir=Node-1-Datadir --genesis=..\privateNetworkGenesis.json export-pub-key Node-1-Datadir\publicKeyNode1
+pantheon --data-path=Node-1-data-path --genesis-file=..\privateNetworkGenesis.json export-pub-key Node-1-data-path\publicKeyNode1
 ```
 
 Your node 1 directory now contains: 
 ```bash
 ├── Node-1
-    ├── Node-1-Datadir
+    ├── Node-1-data-path
         ├── database
         ├── key
         ├── publicKeyNode1
@@ -114,14 +114,14 @@ Start Node-1 specifying:
 * No arguments for the [`--bootnodes` option](../Reference/Pantheon-CLI-Syntax.md#bootnodes) because this is your bootnode.
 * Mining is enabled and the account to which mining rewards are paid using the [`--miner-enabled`](../Reference/Pantheon-CLI-Syntax.md#miner-enabled) 
 and [`--miner-coinbase` options](../Reference/Pantheon-CLI-Syntax.md#miner-coinbase).
-* JSON-RPC API is enabled using the [`--rpc-enabled` option](../Reference/Pantheon-CLI-Syntax.md#rpc-enabled). 
+* JSON-RPC API is enabled using the [`--rpc-http-enabled` option](../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled). 
 
 ```bash tab="MacOS"
-pantheon --datadir=Node-1-Datadir --genesis=../privateNetworkGenesis.json --bootnodes --network-id 123 --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-enabled      
+pantheon --data-path=Node-1-data-path --genesis-file=../privateNetworkGenesis.json --bootnodes --network-id 123 --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-enabled      
 ```
 
 ```bash tab="Windows"
-pantheon --datadir=Node-1-Datadir --genesis=..\privateNetworkGenesis.json --bootnodes --network-id 123 --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-enabled      
+pantheon --data-path=Node-1-data-path --genesis-file=..\privateNetworkGenesis.json --bootnodes --network-id 123 --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-enabled      
 ```
 
 !!! info
@@ -144,31 +144,31 @@ The enode URL is `enode://<id>@<host:port>` where:
 
 Start another terminal, change to the `Node-2` directory and start Node-2 specifying:
  
-* Different port to Node-1 for P2P peer discovery using the [`--p2p-listen` option](../Reference/Pantheon-CLI-Syntax.md#p2p-listen).
+* Different port to Node-1 for P2P peer discovery using the [`--p2p-port` option](../Reference/Pantheon-CLI-Syntax.md#p2p-port).
 * Enode URL for Node-1 using the [`--bootnodes` option](../Reference/Pantheon-CLI-Syntax.md#bootnodes).
-* Data directory for Node-2 using the [`--datadir` option](../Reference/Pantheon-CLI-Syntax.md#datadir).
+* Data directory for Node-2 using the [`--data-path` option](../Reference/Pantheon-CLI-Syntax.md#data-path).
 * Genesis file and network ID as for Node-1.  
 
 ```bash tab="MacOS"
-pantheon --datadir=Node-2-Datadir --genesis=../privateNetworkGenesis.json --bootnodes="enode://<node public key ex 0x>@127.0.0.1:30303" --network-id 123 --p2p-listen=127.0.0.1:30304      
+pantheon --data-path=Node-2-data-path --genesis-file=../privateNetworkGenesis.json --bootnodes="enode://<node public key ex 0x>@127.0.0.1:30303" --network-id 123 --p2p-port=30304      
 ```
 
 ```bash tab="Windows"
-pantheon --datadir=Node-2-Datadir --genesis=..\privateNetworkGenesis.json --bootnodes="enode://<node public key ex 0x>@127.0.0.1:30303" --network-id 123 --p2p-listen=127.0.0.1:30304      
+pantheon --data-path=Node-2-data-path --genesis-file=..\privateNetworkGenesis.json --bootnodes="enode://<node public key ex 0x>@127.0.0.1:30303" --network-id 123 --p2p-port=30304      
 ```
 
 Start another terminal, change to the `Node-3` directory and start Node-3 specifying: 
  
  * Different port to Node-1 and Node-2 for P2P peer discovery.
- * Data directory for Node-3 using the [`--datadir` option](../Reference/Pantheon-CLI-Syntax.md#datadir).
+ * Data directory for Node-3 using the [`--data-path` option](../Reference/Pantheon-CLI-Syntax.md#data-path).
  * Bootnode, genesis file, and network ID as for Node-2. 
 
 ```bash tab="MacOS"
-pantheon --datadir=Node-3-Datadir --genesis=../privateNetworkGenesis.json --bootnodes="enode://<node public key ex 0x>@127.0.0.1:30303" --network-id 123 --p2p-listen=127.0.0.1:30305      
+pantheon --data-path=Node-3-data-path --genesis-file=../privateNetworkGenesis.json --bootnodes="enode://<node public key ex 0x>@127.0.0.1:30303" --network-id 123 --p2p-port30305      
 ```
 
 ```bash tab="Windows"
-pantheon --datadir=Node-3-Datadir --genesis=..\privateNetworkGenesis.json --bootnodes="enode://<node public key ex 0x>@127.0.0.1:30303" --network-id 123 --p2p-listen=127.0.0.1:30305      
+pantheon --data-path=Node-3-data-path --genesis-file=..\privateNetworkGenesis.json --bootnodes="enode://<node public key ex 0x>@127.0.0.1:30303" --network-id 123 --p2p-port=30305      
 ```
 
 ### 6. Confirm Private Network is Working 
@@ -199,7 +199,7 @@ Send transactions using `eth_sendRawTransaction` to [send ether or, deploy or in
 
 Use the [JSON-RPC API](../Reference/Using-JSON-RPC-API.md). 
 
-Start a node with the `--ws-enabled` option and use the [RPC Pub/Sub API](../Using-Pantheon/RPC-PubSub.md).       
+Start a node with the `--rpc-ws-enabled` option and use the [RPC Pub/Sub API](../Using-Pantheon/RPC-PubSub.md).       
 
 ## Stop Nodes
 

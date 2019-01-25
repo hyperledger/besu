@@ -3,7 +3,7 @@
 To specify command line options in a file, use a TOML configuration file. 
 
 The configuration file can be saved and reused across node startups. To specify the configuration file,
-use the [`--config` option](../Reference/Pantheon-CLI-Syntax.md#config). 
+use the [`--config-file` option](../Reference/Pantheon-CLI-Syntax.md#config). 
 
 To override an option specified in the configuration file, specify the same option on the command line. 
 When an option is specified in both places, Pantheon is started with the command line value.  
@@ -25,17 +25,23 @@ Specific differences between the command line and the TOML file format are:
 !!!example "Example TOML configuration file"
     ```toml
     # Valid TOML config file
-    datadir="~/pantheondata" # Path
+    data-path="~/pantheondata" # Path
     
     # Network
     bootnodes=["enode://001@123:4567", "enode://002@123:4567", "enode://003@123:4567"]
-    p2p-listen="1.2.3.4:1234" # IP:port
+    
+    p2p-host="1.2.3.4"
+    p2p-port=1234
     max-peers=42
-    rpc-listen="5.6.7.8:5678" # IP:port
-    ws-listen="9.10.11.12:9101" # IP:port
+    
+    rpc-http-host="5.6.7.8"
+    rpc-http-port=5678
+    
+    rpc-ws-host="9.10.11.12"
+    rpc-ws-port=9101
     
     # Chain
-    genesis="~/genesis.json" # Path to the custom genesis file
+    genesis-file="~/genesis.json" # Path to the custom genesis file
     
     # Mining
     miner-enabled=true
@@ -44,5 +50,5 @@ Specific differences between the command line and the TOML file format are:
     
 !!!example "Starting Pantheon with a Configuration File"
     ```bash
-    pantheon --config=/home/me/me_node/config.toml
+    pantheon --config-file=/home/me/me_node/config.toml
     ```

@@ -37,13 +37,14 @@ class StandaloneCommand implements DefaultCommandValues {
 
   // Genesis file path with null default option if the option
   // is not defined on command line as this default is handled by Runner
-  // to use mainnet json file from resources
-  // NOTE: we have no control over default value here.
+  // to use mainnet json file from resources as indicated in the
+  // default network option
+  // Then we have no control over genesis default value here.
   @CommandLine.Option(
-    names = {"--private-genesis-file"},
+    names = {"--genesis-file"},
     paramLabel = MANDATORY_FILE_FORMAT_HELP,
     description =
-        "The path to genesis file. Setting this will also override --chain option to be CUSTOM"
+        "The path to genesis file. Setting this option makes --network option ignored and requires --network-id to be set."
   )
   final File genesisFile = null;
 }

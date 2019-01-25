@@ -3,11 +3,21 @@ description: Pantheon network ID and chain ID implementation
 
 # Network ID and Chain ID
 
-Ethereum networks have a **network ID** and a **chain ID**. The network ID is specified using the [`--network-id`](../Reference/Pantheon-CLI-Syntax.md#network-id) option and the chain ID is specified in the genesis file.
+Ethereum networks have a **network ID** and a **chain ID**. The network ID can be specified using the 
+[`--network-id`](../Reference/Pantheon-CLI-Syntax.md#network-id) option and the chain ID is specified 
+in the genesis file.
 
-For most networks including mainnet and the public testnets, the network ID and the chain ID are the same. 
+For most networks including MainNet and the public testnets, the network ID and the chain ID are the
+same and Pantheon network id default values are defined according to the genesis chain id value.
 
-The network ID is automatically set by Pantheon when connecting to the Ethereum mainnet ==1==, Rinkeby ==4==, and Ropsten ==3==.
+The network ID is automatically set by Pantheon to the chain ID when connecting to the Ethereum networks:
 
-When using the [`--dev-mode`](../Reference/Pantheon-CLI-Syntax.md#dev-mode) or [`--genesis`](../Reference/Pantheon-CLI-Syntax.md#genesis) options, specify the network ID using the [`--network-id`](../Reference/Pantheon-CLI-Syntax.md#network-id) option. 
+- **MainNet:** chain-id ==1==, network-id ==1==
+- **Rinkeby:** chain-id  ==4==, network-id ==4==
+- **Ropsten:** chain-id ==3==, network-id ==3==
+- **Dev:** chain-id ==2018==, network-id ==2018==
+
+When using the [`--network=dev`](../Reference/Pantheon-CLI-Syntax.md#network) or 
+[`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file) options, you can override the 
+network ID using the [`--network-id`](../Reference/Pantheon-CLI-Syntax.md#network-id) option. 
 

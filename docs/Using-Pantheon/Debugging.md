@@ -56,8 +56,8 @@ block of the `prometheus.yml` file:
  a single node for testing with metrics enabled:
 
     ```bash tab="Example"
-    pantheon --dev-mode --network-id="2018" --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73
-    --rpc-cors-origins="all" --rpc-enabled --metrics-enabled
+    pantheon --network=dev --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73
+    --rpc-http-cors-origins="all" --rpc-http-enabled --metrics-enabled
     ```
 
 4. In another terminal, run Prometheus specifying the `prometheus.yml` file: 
