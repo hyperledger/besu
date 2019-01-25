@@ -33,7 +33,8 @@ pipeline {
                         "NETWORK=${params.NETWORK}",
                         "DATASET=${params.DATASET}",
                         "IMPORT_FILE=${params.IMPORT_FILE}",
-                        "PANTHEON_SRC_DIR=${WORKSPACE}"
+                        "PANTHEON_SRC_DIR=${WORKSPACE}",
+                        "DESCRIPTION=automatic_${params.IMPORT_FILE}"
                 ]) {
                     dir('pantheon-benchmarks') {
                         script {
