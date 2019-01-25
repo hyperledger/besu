@@ -36,7 +36,9 @@ Trailing peers cannot be used to get new blocks and are more likely to be reques
 
 ## No Discovery
 
-The [`--no-discovery`](../Reference/Pantheon-CLI-Syntax.md#no-discovery) command line option disables P2P peer discovery.  Only use this option if you are running a test node or a test network with fixed nodes.
+The [`--rpc-ws-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-enabled) command line option 
+enables P2P peer discovery.
+Only set this option to `false` if you are running a test node or a test network with fixed nodes.
 
 ## Monitoring Peer Connections
 
