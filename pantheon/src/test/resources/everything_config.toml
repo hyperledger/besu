@@ -72,3 +72,4 @@ nodes-whitelist=["all"]
 privacy-url="http://127.0.0.1:8888"
 privacy-public-key-file="./pubKey.pub"
 privacy-enabled=false
+privacy-precompiled-address=9

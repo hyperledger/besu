@@ -16,10 +16,10 @@ import java.io.File;
 import java.net.URI;
 
 public class PrivacyParameters {
-
   private static final String ORION_URL = "http://localhost:8888";
   public static final URI DEFAULT_ORION_URL = URI.create(ORION_URL);
 
+  private Integer privacyAddress;
   private boolean enabled;
   private String url;
   private File publicKey;
@@ -36,6 +36,7 @@ public class PrivacyParameters {
     final PrivacyParameters config = new PrivacyParameters();
     config.setEnabled(false);
     config.setUrl(ORION_URL);
+    config.setPrivacyAddress(Address.PRIVACY);
     return config;
   }
 
@@ -58,5 +59,13 @@ public class PrivacyParameters {
 
   public void setEnabled(final boolean enabled) {
     this.enabled = enabled;
+  }
+
+  public Integer getPrivacyAddress() {
+    return privacyAddress;
+  }
+
+  public void setPrivacyAddress(final Integer privacyAddress) {
+    this.privacyAddress = privacyAddress;
   }
 }

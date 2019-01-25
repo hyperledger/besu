@@ -39,7 +39,8 @@ public class Address extends DelegatingBytesValue {
   public static final Address ALTBN128_PAIRING = Address.precompiled(8);
 
   // Last address that can be generated for a pre-compiled contract
-  public static final Address DEFAULT_PRIVACY = Address.precompiled(Byte.MAX_VALUE - 1);
+  public static final Integer PRIVACY = Byte.MAX_VALUE - 1;
+  public static final Address DEFAULT_PRIVACY = Address.precompiled(PRIVACY);
 
   protected Address(final BytesValue bytes) {
     super(bytes);
@@ -101,6 +102,10 @@ public class Address extends DelegatingBytesValue {
     final byte[] address = new byte[SIZE];
     address[SIZE - 1] = (byte) value;
     return new Address(BytesValue.wrap(address));
+  }
+
+  public static Address privacyPrecompiled(final int value) {
+    return precompiled(value);
   }
 
   /**
