@@ -77,8 +77,8 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event, final Blockchain blockchain) {
-    LOG.info("New canonical head detected. {} ", event.isNewCanonicalHead());
     if (event.isNewCanonicalHead()) {
+      LOG.info("New canonical head detected");
       eventQueue.add(new NewChainHead(event.getBlock().getHeader()));
     }
   }
