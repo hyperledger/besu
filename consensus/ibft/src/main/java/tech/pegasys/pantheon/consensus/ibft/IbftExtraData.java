@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 /**
  * Represents the data structure stored in the extraData field of the BlockHeader used when
@@ -154,5 +155,16 @@ public class IbftExtraData {
 
   public int getRound() {
     return round;
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", IbftExtraData.class.getSimpleName() + "[", "]")
+        .add("vanityData=" + vanityData)
+        .add("seals=" + seals)
+        .add("vote=" + vote)
+        .add("round=" + round)
+        .add("validators=" + validators)
+        .toString();
   }
 }

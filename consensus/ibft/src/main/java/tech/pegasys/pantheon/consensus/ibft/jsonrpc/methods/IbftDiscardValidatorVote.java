@@ -20,7 +20,11 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParamet
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class IbftDiscardValidatorVote implements JsonRpcMethod {
+  private static final Logger LOG = LogManager.getLogger();
   private final VoteProposer voteProposer;
   private final JsonRpcParameter parameters;
 
@@ -37,9 +41,8 @@ public class IbftDiscardValidatorVote implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest req) {
-
     final Address validatorAddress = parameters.required(req.getParams(), 0, Address.class);
-
+    LOG.trace("Received RPC rpcName={} address={}", getName(), validatorAddress);
     voteProposer.discard(validatorAddress);
 
     return new JsonRpcSuccessResponse(req.getId(), true);

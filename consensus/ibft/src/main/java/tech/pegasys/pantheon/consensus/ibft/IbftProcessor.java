@@ -67,6 +67,7 @@ public class IbftProcessor implements Runnable {
       nextIbftEvent().ifPresent(event -> eventMultiplexer.handleIbftEvent(event));
     }
     // Clean up the executor service the round timer has been utilising
+    LOG.info("Shutting down IBFT event processor");
     roundTimerExecutor.shutdownNow();
   }
 

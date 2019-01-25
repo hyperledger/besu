@@ -24,8 +24,12 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class IbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
     implements JsonRpcMethod {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final BlockInterface blockInterface;
 
@@ -46,6 +50,7 @@ public class IbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
   protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
     final Optional<BlockHeader> blockHeader =
         blockchainQueries().getBlockHeaderByNumber(blockNumber);
+    LOG.trace("Received RPC rpcName={} block={}", getName(), blockNumber);
     return blockHeader
         .map(
             header ->

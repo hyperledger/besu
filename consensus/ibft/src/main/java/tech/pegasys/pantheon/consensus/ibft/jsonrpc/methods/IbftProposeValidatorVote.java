@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.consensus.ibft.jsonrpc.methods;
 
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
+import tech.pegasys.pantheon.consensus.common.VoteType;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
@@ -20,7 +21,11 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParamet
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class IbftProposeValidatorVote implements JsonRpcMethod {
+  private static final Logger LOG = LogManager.getLogger();
   private final VoteProposer voteProposer;
   private final JsonRpcParameter parameters;
 
@@ -40,6 +45,11 @@ public class IbftProposeValidatorVote implements JsonRpcMethod {
 
     final Address validatorAddress = parameters.required(req.getParams(), 0, Address.class);
     final Boolean add = parameters.required(req.getParams(), 1, Boolean.class);
+    LOG.trace(
+        "Received RPC rpcName={} voteType={} address={}",
+        getName(),
+        add ? VoteType.ADD : VoteType.DROP,
+        validatorAddress);
 
     if (add) {
       voteProposer.auth(validatorAddress);

@@ -25,7 +25,11 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessRe
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class IbftGetValidatorsByBlockHash implements JsonRpcMethod {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final Blockchain blockchain;
   private final BlockInterface blockInterface;
@@ -52,6 +56,7 @@ public class IbftGetValidatorsByBlockHash implements JsonRpcMethod {
 
   private Object blockResult(final JsonRpcRequest request) {
     final Hash hash = parameters.required(request.getParams(), 0, Hash.class);
+    LOG.trace("Received RPC rpcName={} blockHash={}", getName(), hash);
     final Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(hash);
     return blockHeader
         .map(

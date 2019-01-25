@@ -30,9 +30,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 // Data items used to define how a round will operate
 public class RoundState {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final ConsensusRoundIdentifier roundIdentifier;
   private final MessageValidator validator;
@@ -79,6 +82,7 @@ public class RoundState {
   public void addPrepareMessage(final SignedData<PreparePayload> msg) {
     if (!proposalMessage.isPresent() || validator.validatePrepareMessage(msg)) {
       preparePayloads.add(msg);
+      LOG.debug("Round state added prepare message prepare={}", msg);
     }
     updateState();
   }
@@ -86,6 +90,7 @@ public class RoundState {
   public void addCommitMessage(final SignedData<CommitPayload> msg) {
     if (!proposalMessage.isPresent() || validator.validateCommmitMessage(msg)) {
       commitPayloads.add(msg);
+      LOG.debug("Round state added commit message commit={}", msg);
     }
 
     updateState();
@@ -94,10 +99,15 @@ public class RoundState {
   private void updateState() {
     // NOTE: The quorum for Prepare messages is 1 less than the quorum size as the proposer
     // does not supply a prepare message
-    prepared =
-        (preparePayloads.size() >= prepareMessageCountForQuorum(quorum))
-            && proposalMessage.isPresent();
+    final long prepareQuorum = prepareMessageCountForQuorum(quorum);
+    prepared = (preparePayloads.size() >= prepareQuorum) && proposalMessage.isPresent();
     committed = (commitPayloads.size() >= quorum) && proposalMessage.isPresent();
+    LOG.debug(
+        "Round state updated prepared={} committed={} prepareQuorum={} quorum={}",
+        prepared,
+        committed,
+        prepareQuorum,
+        quorum);
   }
 
   public Optional<Block> getProposedBlock() {

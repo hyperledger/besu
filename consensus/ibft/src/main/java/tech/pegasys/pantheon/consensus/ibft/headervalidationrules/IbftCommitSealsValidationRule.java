@@ -67,7 +67,10 @@ public class IbftCommitSealsValidationRule
     }
 
     if (!storedValidators.containsAll(committers)) {
-      LOGGER.trace("Not all committers are in the locally maintained validator list.");
+      LOGGER.trace(
+          "Not all committers are in the locally maintained validator list. validators={} committers={}",
+          storedValidators,
+          committers);
       return false;
     }
 
