@@ -21,41 +21,45 @@ To start a bootnode for a private network:
 
     !!! example
         ```bash
-        pantheon --genesis=privateNetworkGenesis.json --datadir=nodeDataDir export-pub-key bootnode
+        pantheon --genesis-file=privateNetworkGenesis.json --data-path=nodeDataPath export-pub-key bootnode
         ```
-        Where `privateNetworkGenesis.json` and `nodeDataDir` are changed to the relevant values for 
+        Where `privateNetworkGenesis.json` and `nodeDataPath` are changed to the relevant values for 
         your private network. 
         
         The node public key is exported to the `bootnode` file.
     
 2. Start the bootnode, specifying:
 
-    * No arguments for the [`--bootnodes` option](../Reference/Pantheon-CLI-Syntax.md#bootnodes) because this is the bootnode. 
-    * Network ID for your private network.
     * Genesis file and data directory as in the previous step. 
     
     !!! example
         ```
-        pantheon --bootnodes --genesis=privateNetworkGenesis.json --datadir=nodeDataDir --network-id 123 
+        pantheon --genesis-file=privateNetworkGenesis.json --data-path=nodeDataPath
          ```
      
-To specify this bootnode for another node, the enode URL for the `--bootnodes` option is `enode://<id>@<host:port>` where:
+To specify this bootnode for another node, the enode URL for the [`--bootnodes`](../Reference/Pantheon-CLI-Syntax.md#bootnodes) 
+option is `enode://<id>@<host:port>` where:
 
 * `<id>` is the node public key written to the specified file (`bootnode` in the above example) excluding the initial 0x. 
-* `<host:port>` is the host and port the bootnode is listening on for P2P peer discovery. Specified by the `--p2p-listen` option for the bootnode (default is `127.0.0.1:30303`).
+* `<host:port>` is the host and port the bootnode is listening on for P2P peer discovery. 
+Specified by the [`--p2p-host` option](../Reference/Pantheon-CLI-Syntax.md#p2p-host) and 
+[`--p2p-port` option](../Reference/Pantheon-CLI-Syntax.md#p2p-port) option for the bootnode
+(default host is `127.0.0.1` and port is `30303`).
 
 !!! example
-    If the `--p2p-listen` option is not specified and the node public key exported is `0xc35c3ec90a8a51fd5703594c6303382f3ae6b2ecb9589bab2c04b3794f2bc3fc2631dabb0c08af795787a6c004d8f532230ae6e9925cbbefb0b28b79295d615f`
+    If the [`--p2p-host`](../Reference/Pantheon-CLI-Syntax.md#p2p-host) or [`--p2p-port`](../Reference/Pantheon-CLI-Syntax.md#p2p-port) options are not specified and the node public key exported is `0xc35c3ec90a8a51fd5703594c6303382f3ae6b2ecb9589bab2c04b3794f2bc3fc2631dabb0c08af795787a6c004d8f532230ae6e9925cbbefb0b28b79295d615f`
     
     The enode URL is:
     `enode://c35c3ec90a8a51fd5703594c6303382f3ae6b2ecb9589bab2c04b3794f2bc3fc2631dabb0c08af795787a6c004d8f532230ae6e9925cbbefb0b28b79295d615f@127.0.0.1:30303` 
 
 !!! info
-    The default host and port for P2P peer discovery is `127.0.0.1:30303`. Use the `--p2p-listen` option to specify a host and port. 
+    The default host and port for P2P peer discovery is `127.0.0.1:30303`.
+    Use the [`--p2p-host`](../Reference/Pantheon-CLI-Syntax.md#p2p-host) and
+    [`--p2p-port`](../Reference/Pantheon-CLI-Syntax.md#p2p-port) option to specify a host and port. 
 
 To start a node specifying the bootnode for P2P discovery:
 
 !!! example
     ```bash
-    pantheon --genesis=privateNetworkGenesis.json --datadir=nodeDataDir --p2p-listen=127.0.0.1:30301 --network-id=123 --bootnodes=enode://c35c3ec90a8a51fd5703594c6303382f3ae6b2ecb99bab2c04b3794f2bc3fc2631dabb0c08af795787a6c004d8f532230ae6e9925cbbefb0b28b79295d615f@127.0.0.1:30303
+    pantheon --genesis-file=privateNetworkGenesis.json --data-path=nodeDataPath --p2p-host=127.0.0.1 --p2p-port=30301 --network-id=123 --bootnodes=enode://c35c3ec90a8a51fd5703594c6303382f3ae6b2ecb99bab2c04b3794f2bc3fc2631dabb0c08af795787a6c004d8f532230ae6e9925cbbefb0b28b79295d615f@127.0.0.1:30303
     ``` 

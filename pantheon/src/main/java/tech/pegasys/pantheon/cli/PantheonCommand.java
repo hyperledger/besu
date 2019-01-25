@@ -29,6 +29,7 @@ import tech.pegasys.pantheon.RunnerBuilder;
 import tech.pegasys.pantheon.cli.custom.CorsAllowedOriginsProperty;
 import tech.pegasys.pantheon.cli.custom.EnodeToURIPropertyConverter;
 import tech.pegasys.pantheon.cli.custom.JsonRPCWhitelistHostsProperty;
+import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.CliqueRpcApis;
 import tech.pegasys.pantheon.consensus.ibft.jsonrpc.IbftRpcApis;
 import tech.pegasys.pantheon.controller.KeyPairUtil;
@@ -61,7 +62,6 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -73,6 +73,7 @@ import com.google.common.io.Resources;
 import com.google.common.net.HostAndPort;
 import com.google.common.net.HostSpecifier;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.DecodeException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
 import picocli.CommandLine;
@@ -185,7 +186,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     arity = "0..*",
     converter = EnodeToURIPropertyConverter.class
   )
-  private final Collection<URI> bootstrapNodes = null;
+  private final Collection<URI> bootNodes = null;
 
   @Option(
     names = {"--max-peers"},
@@ -231,47 +232,9 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     paramLabel = MANDATORY_NETWORK_FORMAT_HELP,
     description =
         "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
-            + " (default: ${DEFAULT-VALUE})"
+            + " (default: MAINNET)"
   )
-  private final NetworkName network = MAINNET;
-
-  /** @deprecated Deprecated in favour of --network option */
-  @Deprecated
-  // Boolean option to indicate if the client have to sync against the ottoman test network
-  // (see https://github.com/ethereum/EIPs/issues/650).
-  @Option(
-    names = {"--ottoman"},
-    description =
-        "Synchronize against the Ottoman test network, only useful if using an iBFT genesis file"
-            + " - see https://github.com/ethereum/EIPs/issues/650 (default: ${DEFAULT-VALUE})"
-  )
-  private final Boolean syncWithOttoman = false;
-
-  /** @deprecated Deprecated in favour of --network option */
-  @Deprecated
-  @Option(
-    names = {"--rinkeby"},
-    description =
-        "Use the Rinkeby test network"
-            + " - see https://github.com/ethereum/EIPs/issues/225 (default: ${DEFAULT-VALUE})"
-  )
-  private final Boolean rinkeby = false;
-
-  /** @deprecated Deprecated in favour of --network option */
-  @Deprecated
-  @Option(
-    names = {"--ropsten"},
-    description = "Use the Ropsten test network (default: ${DEFAULT-VALUE})"
-  )
-  private final Boolean ropsten = false;
-
-  /** @deprecated Deprecated in favour of --network option */
-  @Deprecated
-  @Option(
-    names = {"--goerli"},
-    description = "Use the Goerli test network (default: ${DEFAULT-VALUE})"
-  )
-  private final Boolean goerli = false;
+  private final NetworkName network = null;
 
   @Option(
     names = {"--p2p-host"},
@@ -290,12 +253,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   )
   private final Integer p2pPort = DEFAULT_PORT;
 
-  /** @deprecated Deprecated in favour of --network option */
-  @Deprecated
   @Option(
     names = {"--network-id"},
     paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-    description = "P2P network identifier (default: ${DEFAULT-VALUE})",
+    description =
+        "P2P network identifier. (default: the selected network chain ID or custom genesis chain ID)",
     arity = "1"
   )
   private final Integer networkId = null;
@@ -454,16 +416,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   )
   private final JsonRPCWhitelistHostsProperty hostsWhitelist = new JsonRPCWhitelistHostsProperty();
 
-  /** @deprecated Deprecated in favour of --network option */
-  @Deprecated
-  @Option(
-    names = {"--dev-mode"},
-    description =
-        "set during development to have a custom genesis with specific chain id "
-            + "and reduced difficulty to enable CPU mining (default: ${DEFAULT-VALUE})."
-  )
-  private final Boolean isDevMode = false;
-
   @Option(
     names = {"--logging", "-l"},
     paramLabel = "<LOG VERBOSITY LEVEL>",
@@ -566,6 +518,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
     final CommandLine commandLine = new CommandLine(this);
 
+    commandLine.setCaseInsensitiveEnumValuesAllowed(true);
+
     standaloneCommands = new StandaloneCommand();
 
     if (isFullInstantiation()) {
@@ -601,7 +555,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       Configurator.setAllLevels("", logLevel);
     }
 
-    if (!p2pEnabled && (bootstrapNodes != null && !bootstrapNodes.isEmpty())) {
+    if (!p2pEnabled && (bootNodes != null && !bootNodes.isEmpty())) {
       throw new ParameterException(
           new CommandLine(this), "Unable to specify bootnodes if p2p is disabled.");
     }
@@ -613,13 +567,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled)"
               + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
     }
-    if (trueCount(ropsten, rinkeby, goerli) > 1) {
-      throw new ParameterException(
-          new CommandLine(this),
-          "Unable to connect to multiple networks simultaneously. Specify one of --ropsten, --rinkeby or --goerli");
-    }
 
-    final EthNetworkConfig ethNetworkConfig = ethNetworkConfig();
+    final EthNetworkConfig ethNetworkConfig = updateNetworkConfig(getNetwork());
     final PermissioningConfiguration permissioningConfiguration = permissioningConfiguration();
     ensureAllBootnodesAreInWhitelist(ethNetworkConfig, permissioningConfiguration);
 
@@ -634,6 +583,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         webSocketConfiguration(),
         metricsConfiguration(),
         permissioningConfiguration);
+  }
+
+  private NetworkName getNetwork() {
+    //noinspection ConstantConditions network is not always null but injected by PicoCLI if used
+    return network == null ? MAINNET : network;
   }
 
   private void ensureAllBootnodesAreInWhitelist(
@@ -659,20 +613,16 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private static int trueCount(final Boolean... b) {
-    return (int) Arrays.stream(b).filter(bool -> bool).count();
-  }
-
   PantheonController<?> buildController() {
     try {
       return controllerBuilder
           .synchronizerConfiguration(buildSyncConfig())
           .homePath(dataDir())
-          .ethNetworkConfig(ethNetworkConfig())
-          .syncWithOttoman(syncWithOttoman)
+          .ethNetworkConfig(updateNetworkConfig(getNetwork()))
+          .syncWithOttoman(false) // ottoman feature is still there but it's now removed from CLI
           .miningParameters(
               new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled))
-          .devMode(isDevMode)
+          .devMode(NetworkName.DEV.equals(getNetwork()))
           .nodePrivateKeyFile(getNodePrivateKeyFile())
           .metricsSystem(metricsSystem)
           .privacyParameters(orionConfiguration())
@@ -811,31 +761,69 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     return autoDiscoveredDefaultIP;
   }
 
-  private EthNetworkConfig ethNetworkConfig() {
-    final EthNetworkConfig predefinedNetworkConfig;
-    if (rinkeby) {
-      predefinedNetworkConfig = EthNetworkConfig.rinkeby();
-    } else if (ropsten) {
-      predefinedNetworkConfig = EthNetworkConfig.ropsten();
-    } else if (goerli) {
-      predefinedNetworkConfig = EthNetworkConfig.goerli();
-    } else {
-      predefinedNetworkConfig = EthNetworkConfig.mainnet();
-    }
-    return updateNetworkConfig(predefinedNetworkConfig);
-  }
+  private EthNetworkConfig updateNetworkConfig(final NetworkName network) {
+    final EthNetworkConfig.Builder builder =
+        new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(network));
 
-  private EthNetworkConfig updateNetworkConfig(final EthNetworkConfig ethNetworkConfig) {
-    final EthNetworkConfig.Builder builder = new EthNetworkConfig.Builder(ethNetworkConfig);
-    if (genesisFile() != null) {
+    // custom genesis file use comes with specific default values for the genesis file itself
+    // but also for the network id and the bootnodes list.
+    File genesisFile = genesisFile();
+    if (genesisFile != null) {
+
+      //noinspection ConstantConditions network is not always null but injected by PicoCLI if used
+      if (this.network != null) {
+        // We check if network option was really provided by user and not only looking at the
+        // default value.
+        // if user provided it and provided the genesis file option at the same time, it raises a
+        // conflict error
+        throw new ParameterException(
+            new CommandLine(this),
+            "--network option and --genesis-file option can't be used at the same time."
+                + "Please refer to CLI reference for more details about this constraint.");
+      }
+
       builder.setGenesisConfig(genesisConfig());
+
+      if (networkId == null) {
+        // if no network id option is defined on the CLI we have to set a default value from the
+        // genesis file.
+        // We do the genesis parsing only in this case as we already have network id constants
+        // for known networks to speed up the process.
+        // Also we have to parse the genesis as we don't already have a parsed version at this
+        // stage.
+        // If no chain id is found in the genesis as it's an optional, we use mainnet network id.
+        try {
+          GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
+          builder.setNetworkId(
+              genesisConfigFile
+                  .getConfigOptions()
+                  .getChainId()
+                  .orElse(EthNetworkConfig.getNetworkConfig(MAINNET).getNetworkId()));
+        } catch (DecodeException e) {
+          throw new ParameterException(
+              new CommandLine(this),
+              String.format("Unable to parse genesis file %s.", genesisFile),
+              e);
+        }
+      }
+
+      if (bootNodes == null) {
+        // We default to an empty bootnodes list if the option is not provided on CLI because
+        // mainnet bootnodes won't work as the default value for a custom genesis,
+        // so it's better to have an empty list as default value that forces to create a custom one
+        // than a useless one that may make user think that it can work when it can't.
+        builder.setBootNodes(new ArrayList<>());
+      }
     }
+
     if (networkId != null) {
       builder.setNetworkId(networkId);
     }
-    if (bootstrapNodes != null) {
-      builder.setBootNodes(bootstrapNodes);
+
+    if (bootNodes != null) {
+      builder.setBootNodes(bootNodes);
     }
+
     return builder.build();
   }
 

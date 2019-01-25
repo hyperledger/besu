@@ -22,7 +22,8 @@ metrics-host="8.6.7.5"
 metrics-port=309
 
 # chain
-private-genesis-file="~/genesis.json" # Path
+genesis-file="~/genesis.json" # Path
+network-id=42
 sync-mode="fast"# should be FAST or FULL (or fast or full)
 ottoman=false # true means using ottoman testnet if genesys file uses iBFT
 
