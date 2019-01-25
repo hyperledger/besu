@@ -167,11 +167,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   // Also many other software use the same negative option scheme for false defaults
   // meaning that it's probably the right way to handle disabling options.
   @Option(
-    names = {"--no-discovery"},
-    description = "Disable p2p peer discovery (default: ${DEFAULT-VALUE})",
+    names = {"--discovery-enabled"},
+    description = "Enable p2p peer discovery (default: ${DEFAULT-VALUE})",
     arity = "1"
   )
-  private final Boolean noPeerDiscovery = false;
+  private final Boolean peerDiscoveryEnabled = true;
 
   // A list of bootstrap nodes can be passed
   // and a hardcoded list will be used otherwise by the Runner.
@@ -582,7 +582,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     synchronize(
         buildController(),
         p2pEnabled,
-        noPeerDiscovery,
+        peerDiscoveryEnabled,
         ethNetworkConfig.getBootNodes(),
         maxPeers,
         HostAndPort.fromParts(p2pHost.toString(), p2pPort),
@@ -707,7 +707,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private void synchronize(
       final PantheonController<?> controller,
       final boolean p2pEnabled,
-      final boolean noPeerDiscovery,
+      final boolean peerDiscoveryEnabled,
       final Collection<?> bootstrapNodes,
       final int maxPeers,
       final HostAndPort discoveryHostAndPort,
@@ -723,8 +723,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             .vertx(Vertx.vertx())
             .pantheonController(controller)
             .p2pEnabled(p2pEnabled)
-            // BEWARE: Peer discovery boolean must be inverted as it's negated in the options !
-            .discovery(!noPeerDiscovery)
+            .discovery(peerDiscoveryEnabled)
             .bootstrapPeers(bootstrapNodes)
             .discoveryHost(discoveryHostAndPort.getHost())
             .discoveryPort(discoveryHostAndPort.getPort())
