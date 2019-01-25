@@ -64,8 +64,11 @@ public abstract class MainnetPrecompiledContractRegistries {
   public static PrecompileContractRegistry appendPrivacy(
       final PrecompileContractRegistry registry,
       final PrecompiledContractConfiguration precompiledContractConfiguration) {
+    Address address =
+        Address.privacyPrecompiled(
+            precompiledContractConfiguration.getPrivacyParameters().getPrivacyAddress());
     registry.put(
-        Address.DEFAULT_PRIVACY,
+        address,
         new PrivacyPrecompiledContract(
             precompiledContractConfiguration.getGasCalculator(),
             precompiledContractConfiguration.getPrivacyParameters()));
