@@ -99,6 +99,17 @@ public class PantheonNodeFactory {
             .build());
   }
 
+  public PantheonNode createArchiveNodeWithDiscoveryDisabledAndAdmin(final String name)
+      throws IOException {
+    return create(
+        new PantheonFactoryConfigurationBuilder()
+            .setName(name)
+            .setJsonRpcConfiguration(jsonRpcConfigWithAdmin())
+            .webSocketEnabled()
+            .setDiscoveryEnabled(false)
+            .build());
+  }
+
   public PantheonNode createArchiveNodeWithP2pDisabled(final String name) throws IOException {
     return create(
         new PantheonFactoryConfigurationBuilder()
@@ -322,6 +333,10 @@ public class PantheonNodeFactory {
 
   private JsonRpcConfiguration jsonRpcConfigWithPermissioning() {
     return createJsonRpcConfigWithRpcApiEnabled(RpcApis.PERM);
+  }
+
+  private JsonRpcConfiguration jsonRpcConfigWithAdmin() {
+    return createJsonRpcConfigWithRpcApiEnabled(RpcApis.ADMIN);
   }
 
   private JsonRpcConfiguration createJsonRpcConfigWithRpcApiEnabled(final RpcApi rpcApi) {
