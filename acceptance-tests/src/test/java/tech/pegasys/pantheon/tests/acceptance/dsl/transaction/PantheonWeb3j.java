@@ -136,4 +136,14 @@ public class PantheonWeb3j extends JsonRpc2_0Web3j {
   public static class RemoveNodeResponse extends Response<Boolean> {}
 
   public static class GetNodesWhitelistResponse extends Response<List<String>> {}
+
+  public static class AdminAddPeerResponse extends Response<Boolean> {}
+
+  public Request<?, AdminAddPeerResponse> adminAddPeer(final String enodeAddress) {
+    return new Request<>(
+        "admin_addPeer",
+        Collections.singletonList(enodeAddress),
+        web3jService,
+        AdminAddPeerResponse.class);
+  }
 }

@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl;
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Accounts;
 import tech.pegasys.pantheon.tests.acceptance.dsl.blockchain.Blockchain;
 import tech.pegasys.pantheon.tests.acceptance.dsl.contract.ContractVerifier;
+import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Admin;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Clique;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eth;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Ibft;
@@ -45,6 +46,7 @@ public class AcceptanceTestBase {
   protected final Eth eth;
   protected final Net net;
   protected final Perm perm;
+  protected final Admin admin;
   protected final PantheonNodeFactory pantheon;
   protected final ContractVerifier contractVerifier;
   protected final WaitConditions wait;
@@ -61,6 +63,7 @@ public class AcceptanceTestBase {
     cluster = new Cluster(net);
     transactions = new Transactions(accounts);
     perm = new Perm(transactions);
+    admin = new Admin();
     web3 = new Web3(new Web3Transactions());
     pantheon = new PantheonNodeFactory();
     contractVerifier = new ContractVerifier(accounts.getPrimaryBenefactor());

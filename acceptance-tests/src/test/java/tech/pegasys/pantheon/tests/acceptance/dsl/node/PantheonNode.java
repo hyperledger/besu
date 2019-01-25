@@ -92,7 +92,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
       final GenesisConfigProvider genesisConfigProvider,
       final int p2pPort,
       final Boolean p2pEnabled,
-      final boolean discovery)
+      final boolean discoveryEnabled)
       throws IOException {
     this.homeDirectory = Files.createTempDirectory("acctest");
     this.keyPair = KeyPairUtil.loadKeyPair(homeDirectory);
@@ -106,7 +106,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     this.genesisConfigProvider = genesisConfigProvider;
     this.devMode = devMode;
     this.p2pEnabled = p2pEnabled;
-    this.discoveryEnabled = discovery;
+    this.discoveryEnabled = discoveryEnabled;
     LOG.info("Created PantheonNode {}", this.toString());
   }
 
@@ -188,7 +188,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     final WebSocketService webSocketService = new WebSocketService(url, true);
     try {
       webSocketService.connect();
-    } catch (ConnectException e) {
+    } catch (final ConnectException e) {
       throw new RuntimeException("Error connection to WebSocket endpoint", e);
     }
 
@@ -200,7 +200,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
   }
 
   private void checkIfWebSocketEndpointIsAvailable(final String url) {
-    WebSocketClient webSocketClient = new WebSocketClient(URI.create(url));
+    final WebSocketClient webSocketClient = new WebSocketClient(URI.create(url));
     // Web3j implementation always invoke the listener (even when one hasn't been set). We are using
     // this stub implementation to avoid a NullPointerException.
     webSocketClient.setListener(
@@ -226,7 +226,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     webSocketClient.connect();
     try {
       Awaitility.await().atMost(5, TimeUnit.SECONDS).until(webSocketClient::isOpen);
-    } catch (ConditionTimeoutException e) {
+    } catch (final ConditionTimeoutException e) {
       throw new WebsocketNotConnectedException();
     } finally {
       webSocketClient.close();
