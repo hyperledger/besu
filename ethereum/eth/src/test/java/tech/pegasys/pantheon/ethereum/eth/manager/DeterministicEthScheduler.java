@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** Schedules tasks that run immediately and synchronously for testing. */
 public class DeterministicEthScheduler extends EthScheduler {
@@ -23,7 +24,7 @@ public class DeterministicEthScheduler extends EthScheduler {
   private final TimeoutPolicy timeoutPolicy;
 
   DeterministicEthScheduler() {
-    this(() -> false);
+    this(TimeoutPolicy.NEVER);
   }
 
   DeterministicEthScheduler(final TimeoutPolicy timeoutPolicy) {
@@ -55,6 +56,19 @@ public class DeterministicEthScheduler extends EthScheduler {
 
   @FunctionalInterface
   public interface TimeoutPolicy {
+    TimeoutPolicy NEVER = () -> false;
+
     boolean shouldTimeout();
+
+    static TimeoutPolicy timeoutXTimes(final int times) {
+      final AtomicInteger timeouts = new AtomicInteger(times);
+      return () -> {
+        if (timeouts.get() <= 0) {
+          return false;
+        }
+        timeouts.decrementAndGet();
+        return true;
+      };
+    }
   }
 }

@@ -54,7 +54,7 @@ public class BlockchainSetupUtil<C> {
   private final List<Block> blocks;
   private long maxBlockNumber;
 
-  public BlockchainSetupUtil(
+  private BlockchainSetupUtil(
       final GenesisState genesisState,
       final MutableBlockchain blockchain,
       final ProtocolContext<C> protocolContext,

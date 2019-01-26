@@ -87,7 +87,7 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
     return node;
   }
 
-  public Node<V> retrieve(final Bytes32 hash) throws MerkleStorageException {
+  public Optional<Node<V>> retrieve(final Bytes32 hash) throws MerkleTrieException {
     return nodeLoader
         .getNode(hash)
         .map(
@@ -97,16 +97,19 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
               assert (hash.equals(node.getHash()))
                   : "Node hash " + node.getHash() + " not equal to expected " + hash;
               return node;
-            })
-        .orElseThrow(() -> new MerkleStorageException("Missing value for hash " + hash));
+            });
+  }
+
+  public Node<V> decode(final BytesValue rlp) {
+    return decode(rlp, () -> String.format("Failed to decode value %s", rlp.toString()));
   }
 
   private Node<V> decode(final BytesValue rlp, final Supplier<String> errMessage)
-      throws MerkleStorageException {
+      throws MerkleTrieException {
     try {
       return decode(RLP.input(rlp), errMessage);
     } catch (final RLPException ex) {
-      throw new MerkleStorageException(errMessage.get(), ex);
+      throw new MerkleTrieException(errMessage.get(), ex);
     }
   }
 
@@ -123,8 +126,7 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
           try {
             path = CompactEncoding.decode(encodedPath);
           } catch (final IllegalArgumentException ex) {
-            throw new MerkleStorageException(
-                errMessage.get() + ": invalid path " + encodedPath, ex);
+            throw new MerkleTrieException(errMessage.get() + ": invalid path " + encodedPath, ex);
           }
 
           final int size = path.size();
@@ -138,7 +140,7 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
           return decodeBranch(nodeRLPs, errMessage);
 
         default:
-          throw new MerkleStorageException(
+          throw new MerkleTrieException(
               errMessage.get() + format(": invalid list size %s", nodesCount));
       }
     } finally {
@@ -189,7 +191,7 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
   private LeafNode<V> decodeLeaf(
       final BytesValue path, final RLPInput valueRlp, final Supplier<String> errMessage) {
     if (valueRlp.nextIsNull()) {
-      throw new MerkleStorageException(errMessage.get() + ": leaf has null value");
+      throw new MerkleTrieException(errMessage.get() + ": leaf has null value");
     }
     final V value = decodeValue(valueRlp, errMessage);
     return new LeafNode<>(path, value, this, valueSerializer);
@@ -198,7 +200,7 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
   @SuppressWarnings("unchecked")
   private NullNode<V> decodeNull(final RLPInput nodeRLPs, final Supplier<String> errMessage) {
     if (!nodeRLPs.nextIsNull()) {
-      throw new MerkleStorageException(errMessage.get() + ": list size 1 but not null");
+      throw new MerkleTrieException(errMessage.get() + ": list size 1 but not null");
     }
     nodeRLPs.skipNext();
     return NULL_NODE;
@@ -209,7 +211,7 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
     try {
       bytes = valueRlp.readBytesValue();
     } catch (final RLPException ex) {
-      throw new MerkleStorageException(
+      throw new MerkleTrieException(
           errMessage.get() + ": failed decoding value rlp " + valueRlp, ex);
     }
     return deserializeValue(errMessage, bytes);
@@ -220,8 +222,7 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
     try {
       value = valueDeserializer.apply(bytes);
     } catch (final IllegalArgumentException ex) {
-      throw new MerkleStorageException(
-          errMessage.get() + ": failed deserializing value " + bytes, ex);
+      throw new MerkleTrieException(errMessage.get() + ": failed deserializing value " + bytes, ex);
     }
     return value;
   }
