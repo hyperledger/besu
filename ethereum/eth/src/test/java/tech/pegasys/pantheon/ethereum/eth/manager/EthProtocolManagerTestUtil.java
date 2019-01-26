@@ -47,7 +47,11 @@ public class EthProtocolManagerTestUtil {
 
   public static EthProtocolManager create(
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
-    return create(blockchain, worldStateArchive, () -> false);
+    return create(blockchain, worldStateArchive, TimeoutPolicy.NEVER);
+  }
+
+  public static EthProtocolManager create() {
+    return create(TimeoutPolicy.NEVER);
   }
 
   public static EthProtocolManager create(final TimeoutPolicy timeoutPolicy) {
@@ -57,10 +61,6 @@ public class EthProtocolManagerTestUtil {
     final Blockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     return create(blockchain, worldStateArchive, timeoutPolicy);
-  }
-
-  public static EthProtocolManager create() {
-    return create(() -> false);
   }
 
   public static void broadcastMessage(

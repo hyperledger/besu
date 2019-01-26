@@ -14,7 +14,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'pantheon-eth'
+  baseName 'pantheon-queue'
   manifest {
     attributes(
       'Specification-Title': baseName,
@@ -26,27 +26,13 @@ jar {
 }
 
 dependencies {
-  implementation project(':ethereum:core')
-  implementation project(':ethereum:p2p')
-  implementation project(':ethereum:rlp')
-  implementation project(':ethereum:trie')
-  implementation project(':ethereum:permissioning')
+  api project(':util')
   implementation project(':metrics')
-  implementation project(':services:kvstore')
-  implementation project(':services:queue')
 
-  implementation 'io.vertx:vertx-core'
+  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'com.google.guava:guava'
 
-  testImplementation project(':config')
-  testImplementation project(':crypto')
-  testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
-  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation project(':ethereum:mock-p2p')
-  testImplementation project(':testutil')
+  runtime 'org.apache.logging.log4j:log4j-core'
 
   testImplementation 'junit:junit'
-  testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.awaitility:awaitility'
-  testImplementation 'org.mockito:mockito-core'
 }

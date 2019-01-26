@@ -23,6 +23,8 @@ import tech.pegasys.pantheon.util.bytes.MutableBytesValue;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -73,6 +75,11 @@ class BranchNode<V> implements Node<V> {
     return value;
   }
 
+  @Override
+  public Optional<List<Node<V>>> getChildren() {
+    return Optional.of(Collections.unmodifiableList(children));
+  }
+
   public Node<V> child(final byte index) {
     return children.get(index);
   }
@@ -103,11 +110,10 @@ class BranchNode<V> implements Node<V> {
 
   @Override
   public BytesValue getRlpRef() {
-    final BytesValue rlp = getRlp();
-    if (rlp.size() < 32) {
-      return rlp;
-    } else {
+    if (isReferencedByHash()) {
       return RLP.encodeOne(getHash());
+    } else {
+      return getRlp();
     }
   }
 

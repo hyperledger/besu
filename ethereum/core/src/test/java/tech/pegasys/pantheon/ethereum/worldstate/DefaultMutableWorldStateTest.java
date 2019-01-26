@@ -58,10 +58,10 @@ public class DefaultMutableWorldStateTest {
   @Test
   public void rootHash_Empty() {
     final MutableWorldState worldState = createEmpty();
-    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_ROOT_HASH, worldState.rootHash());
+    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
 
     worldState.persist();
-    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_ROOT_HASH, worldState.rootHash());
+    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
   }
 
   @Test
@@ -88,10 +88,10 @@ public class DefaultMutableWorldStateTest {
     final WorldUpdater updater = worldState.updater();
     updater.deleteAccount(ADDRESS);
     updater.commit();
-    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_ROOT_HASH, worldState.rootHash());
+    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
 
     worldState.persist();
-    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_ROOT_HASH, worldState.rootHash());
+    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
   }
 
   @Test
@@ -101,10 +101,10 @@ public class DefaultMutableWorldStateTest {
     updater.createAccount(ADDRESS).setBalance(Wei.of(100000));
     updater.deleteAccount(ADDRESS);
     updater.commit();
-    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_ROOT_HASH, worldState.rootHash());
+    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
 
     worldState.persist();
-    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_ROOT_HASH, worldState.rootHash());
+    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
   }
 
   @Test
@@ -115,7 +115,7 @@ public class DefaultMutableWorldStateTest {
     updater.createAccount(ADDRESS).setBalance(Wei.of(100000));
     updater.commit();
     assertNotNull(worldState.get(ADDRESS));
-    assertNotEquals(MerklePatriciaTrie.EMPTY_TRIE_ROOT_HASH, worldState.rootHash());
+    assertNotEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
 
     // Delete account
     updater = worldState.updater();
@@ -125,7 +125,7 @@ public class DefaultMutableWorldStateTest {
     updater.commit();
     assertNull(updater.get(ADDRESS));
 
-    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_ROOT_HASH, worldState.rootHash());
+    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
   }
 
   @Test
@@ -137,7 +137,7 @@ public class DefaultMutableWorldStateTest {
     updater.commit();
     worldState.persist();
     assertNotNull(worldState.get(ADDRESS));
-    assertNotEquals(MerklePatriciaTrie.EMPTY_TRIE_ROOT_HASH, worldState.rootHash());
+    assertNotEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
 
     // Delete account
     updater = worldState.updater();
@@ -151,7 +151,7 @@ public class DefaultMutableWorldStateTest {
     worldState.persist();
     assertNull(updater.get(ADDRESS));
 
-    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_ROOT_HASH, worldState.rootHash());
+    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
   }
 
   @Test
@@ -377,7 +377,7 @@ public class DefaultMutableWorldStateTest {
     updater.commit();
     worldState.persist();
     assertNotNull(worldState.get(ADDRESS));
-    assertNotEquals(MerklePatriciaTrie.EMPTY_TRIE_ROOT_HASH, worldState.rootHash());
+    assertNotEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
 
     // Clear storage
     account = updater.getMutable(ADDRESS);

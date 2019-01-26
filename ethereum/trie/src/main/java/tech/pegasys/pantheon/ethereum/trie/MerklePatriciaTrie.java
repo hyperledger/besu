@@ -16,6 +16,7 @@ import static tech.pegasys.pantheon.crypto.Hash.keccak256;
 
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Map;
 import java.util.Optional;
@@ -23,7 +24,8 @@ import java.util.Optional;
 /** An Merkle Patricial Trie. */
 public interface MerklePatriciaTrie<K, V> {
 
-  Bytes32 EMPTY_TRIE_ROOT_HASH = keccak256(RLP.NULL);
+  BytesValue EMPTY_TRIE_NODE = RLP.NULL;
+  Bytes32 EMPTY_TRIE_NODE_HASH = keccak256(EMPTY_TRIE_NODE);
 
   /**
    * Returns an {@code Optional} of value mapped to the hash if it exists; otherwise empty.

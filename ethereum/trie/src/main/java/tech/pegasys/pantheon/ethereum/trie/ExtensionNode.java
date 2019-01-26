@@ -22,6 +22,8 @@ import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 class ExtensionNode<V> implements Node<V> {
@@ -58,7 +60,12 @@ class ExtensionNode<V> implements Node<V> {
 
   @Override
   public Optional<V> getValue() {
-    throw new UnsupportedOperationException();
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<List<Node<V>>> getChildren() {
+    return Optional.of(Collections.singletonList(child));
   }
 
   public Node<V> getChild() {
@@ -85,11 +92,10 @@ class ExtensionNode<V> implements Node<V> {
 
   @Override
   public BytesValue getRlpRef() {
-    final BytesValue rlp = getRlp();
-    if (rlp.size() < 32) {
-      return rlp;
-    } else {
+    if (isReferencedByHash()) {
       return RLP.encodeOne(getHash());
+    } else {
+      return getRlp();
     }
   }
 

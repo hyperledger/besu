@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,17 +12,25 @@
  */
 package tech.pegasys.pantheon.ethereum.trie;
 
-/**
- * This exception is thrown when there is an issue retrieving or decoding values from {@link
- * MerkleStorage}.
- */
-public class MerkleStorageException extends RuntimeException {
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-  public MerkleStorageException(final String message) {
-    super(message);
+import java.util.Optional;
+import java.util.function.Function;
+
+public class TrieNodeDecoder {
+
+  private final StoredNodeFactory<BytesValue> nodeFactory;
+
+  private TrieNodeDecoder() {
+    nodeFactory =
+        new StoredNodeFactory<>((h) -> Optional.empty(), Function.identity(), Function.identity());
   }
 
-  public MerkleStorageException(final String message, final Exception cause) {
-    super(message, cause);
+  public static TrieNodeDecoder create() {
+    return new TrieNodeDecoder();
+  }
+
+  public Node<BytesValue> decode(final BytesValue rlp) {
+    return nodeFactory.decode(rlp);
   }
 }
