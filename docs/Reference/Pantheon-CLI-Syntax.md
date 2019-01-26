@@ -451,6 +451,23 @@ Not intended for use with mainnet or public testnets.
 !!!note
     Permissioning is under development and will be available in v1.0.
 
+### p2p-enabled
+
+```bash tab="Syntax"
+--p2p-enabled=<true|false>
+```
+
+```bash tab="Command line"
+--p2p-enabled=false
+```
+
+```bash tab="Example Configuration File"
+p2p-enabled=false
+```
+
+Enables or disables all p2p communication.
+The default is true.
+
 ### p2p-host
 
 ```bash tab="Syntax"
