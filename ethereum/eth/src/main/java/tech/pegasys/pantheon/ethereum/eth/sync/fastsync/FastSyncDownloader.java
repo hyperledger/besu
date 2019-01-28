@@ -12,8 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 
-import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.FAST_SYNC_UNAVAILABLE;
-
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
@@ -22,9 +20,12 @@ import org.apache.logging.log4j.Logger;
 public class FastSyncDownloader<C> {
   private static final Logger LOG = LogManager.getLogger();
   private final FastSyncActions<C> fastSyncActions;
+  private final WorldStateDownloader worldStateDownloader;
 
-  public FastSyncDownloader(final FastSyncActions<C> fastSyncActions) {
+  public FastSyncDownloader(
+      final FastSyncActions<C> fastSyncActions, final WorldStateDownloader worldStateDownloader) {
     this.fastSyncActions = fastSyncActions;
+    this.worldStateDownloader = worldStateDownloader;
   }
 
   public CompletableFuture<FastSyncState> start() {
@@ -33,10 +34,28 @@ public class FastSyncDownloader<C> {
         .waitForSuitablePeers()
         .thenApply(state -> fastSyncActions.selectPivotBlock())
         .thenCompose(fastSyncActions::downloadPivotBlockHeader)
-        .thenCompose(
-            state -> {
-              LOG.info("Reached end of current fast sync implementation with state {}", state);
-              throw new FastSyncException(FAST_SYNC_UNAVAILABLE);
-            });
+        .thenCompose(this::downloadChainAndWorldState);
+  }
+
+  private CompletableFuture<FastSyncState> downloadChainAndWorldState(
+      final FastSyncState currentState) {
+    final CompletableFuture<Void> worldStateFuture =
+        worldStateDownloader.downloadWorldState(currentState.getPivotBlockHeader().get());
+    final CompletableFuture<Void> chainFuture = fastSyncActions.downloadChain(currentState);
+
+    // If either download fails, cancel the other one.
+    chainFuture.exceptionally(
+        error -> {
+          worldStateFuture.cancel(true);
+          return null;
+        });
+    worldStateFuture.exceptionally(
+        error -> {
+          chainFuture.cancel(true);
+          return null;
+        });
+
+    return CompletableFuture.allOf(worldStateFuture, chainFuture)
+        .thenApply(complete -> currentState);
   }
 }
