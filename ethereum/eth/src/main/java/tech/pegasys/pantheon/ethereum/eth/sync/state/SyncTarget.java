@@ -24,7 +24,7 @@ public class SyncTarget {
   private final EthPeer peer;
   private BlockHeader commonAncestor;
 
-  SyncTarget(final EthPeer peer, final BlockHeader commonAncestor) {
+  public SyncTarget(final EthPeer peer, final BlockHeader commonAncestor) {
     this.peer = peer;
     this.commonAncestor = commonAncestor;
   }

@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.eth.sync;
+package tech.pegasys.pantheon.ethereum.eth.sync.fullsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -36,6 +36,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUtil;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.messages.GetBlockHeadersMessage;
+import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
@@ -333,8 +334,8 @@ public class FullSyncDownloaderTest {
     peerB.getEthPeer().chainState().update(gen.hash(), 100);
 
     // Process through first task cycle
-    final CompletableFuture<?> firstTask = downloader.currentTask;
-    while (downloader.currentTask == firstTask) {
+    final CompletableFuture<?> firstTask = downloader.getCurrentTask();
+    while (downloader.getCurrentTask() == firstTask) {
       RespondingEthPeer.respondOnce(responder, peerA, peerB);
     }
 
@@ -373,8 +374,8 @@ public class FullSyncDownloaderTest {
     otherPeer.getEthPeer().chainState().update(gen.hash(), 100);
 
     // Process through first task cycle
-    final CompletableFuture<?> firstTask = downloader.currentTask;
-    while (downloader.currentTask == firstTask) {
+    final CompletableFuture<?> firstTask = downloader.getCurrentTask();
+    while (downloader.getCurrentTask() == firstTask) {
       RespondingEthPeer.respondOnce(responder, bestPeer, otherPeer);
     }
 
@@ -416,8 +417,8 @@ public class FullSyncDownloaderTest {
         .update(gen.header(), syncState.chainHeadTotalDifficulty().plus(300));
 
     // Process through first task cycle
-    final CompletableFuture<?> firstTask = downloader.currentTask;
-    while (downloader.currentTask == firstTask) {
+    final CompletableFuture<?> firstTask = downloader.getCurrentTask();
+    while (downloader.getCurrentTask() == firstTask) {
       RespondingEthPeer.respondOnce(responder, peerA, peerB);
     }
 
@@ -467,8 +468,8 @@ public class FullSyncDownloaderTest {
         .update(gen.header(1000), syncState.chainHeadTotalDifficulty().plus(300));
 
     // Process through first task cycle
-    final CompletableFuture<?> firstTask = downloader.currentTask;
-    while (downloader.currentTask == firstTask) {
+    final CompletableFuture<?> firstTask = downloader.getCurrentTask();
+    while (downloader.getCurrentTask() == firstTask) {
       RespondingEthPeer.respondOnce(responder, bestPeer, otherPeer);
     }
 
