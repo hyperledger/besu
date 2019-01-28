@@ -52,9 +52,6 @@ banned-nodeids=["0xc35c3...d615f","0xf42c13...fc456"]
 ```
 
 List of node IDs with which this node will not peer. The node ID is the public key of the node. You can specify the banned node IDs with or without the `0x` prefix.
-  
-!!!info
-    This option is only available from v0.8.2. 
 
 !!!tip
     The singular `--banned-node-id` and plural `--banned-node-ids` are available and are just two
@@ -126,6 +123,19 @@ The path to the Pantheon data directory. The default is the `/build/distribution
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#persisting-data). 
 
+### discovery-enabled
+
+```bash tab="Syntax"
+--discovery-enabled=false
+```
+
+```bash tab="Example Configuration File"
+discovery-enabled=false
+```
+
+Enables or disables P2P peer discovery.
+The default is `true`.
+
 ### genesis-file
 
 Genesis file is used to create a custom network.
@@ -172,9 +182,6 @@ Comma-separated list of hostnames to allow access to the HTTP JSON-RPC API. Defa
 
 !!!tip
     To allow all hostnames, use `*` or `all`. We don't recommend allowing all hostnames for production code.
-
-!!!note
-    This option is only available from v0.8.3. Earlier versions allow access by all hostnames. 
 
 ### max-peers
 
@@ -388,19 +395,6 @@ P2P network identifier.
 This option can be used to override your current network ID.
 The default value is the current network chain ID which is defined in the genesis file.
 
-### discovery-enabled
-
-```bash tab="Syntax"
---discovery-enabled=false
-```
-
-```bash tab="Example Configuration File"
-discovery-enabled=false
-```
-
-Enables or disables P2P peer discovery.
-The default is `true`.
-
 ### node-private-key-file
 
 ```bash tab="Syntax"
@@ -423,9 +417,6 @@ otherwise, the existing key file specifies the node private key.
 
 !!!attention
     The private key is not encrypted.
-  
-!!!note
-    This option is only available from v0.8.2. 
 
 ### nodes-whitelist
 
@@ -443,10 +434,6 @@ nodes-whitelist=["enode://c35c3...d615f@3.14.15.92:30303","enode://f42c13...fc45
 
 Comma-separated enode URLs for permissioned networks.
 Not intended for use with mainnet or public testnets. 
-
-
-!!!note
-    This option is only available from v0.8.3. 
 
 !!!note
     Permissioning is under development and will be available in v1.0.
