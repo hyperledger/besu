@@ -111,6 +111,25 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
         ethTasksTimer);
   }
 
+  public static AbstractGetHeadersFromPeerTask endingAtHash(
+      final ProtocolSchedule<?> protocolSchedule,
+      final EthContext ethContext,
+      final Hash lastHash,
+      final long lastBlockNumber,
+      final int segmentLength,
+      final int skip,
+      final LabelledMetric<OperationTimer> ethTasksTimer) {
+    return new GetHeadersFromPeerByHashTask(
+        protocolSchedule,
+        ethContext,
+        lastHash,
+        lastBlockNumber,
+        segmentLength,
+        skip,
+        true,
+        ethTasksTimer);
+  }
+
   public static AbstractGetHeadersFromPeerTask forSingleHash(
       final ProtocolSchedule<?> protocolSchedule,
       final EthContext ethContext,
