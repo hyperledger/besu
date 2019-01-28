@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 
 import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.CHAIN_TOO_SHORT;
+import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.FAST_SYNC_UNAVAILABLE;
 import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.NO_PEERS_AVAILABLE;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -142,5 +143,9 @@ public class FastSyncActions<C> {
             ethTasksTimer,
             currentState.getPivotBlockNumber().getAsLong())
         .downloadPivotBlockHeader();
+  }
+
+  public CompletableFuture<Void> downloadChain(final FastSyncState currentState) {
+    throw new FastSyncException(FAST_SYNC_UNAVAILABLE);
   }
 }
