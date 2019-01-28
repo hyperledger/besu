@@ -46,8 +46,6 @@ public class WorldStateDownloader {
   }
 
   private final EthContext ethContext;
-  // The target header for which we want to retrieve world state
-  private final BlockHeader header;
   private final BigQueue<NodeDataRequest> pendingRequests;
   private final WorldStateStorage.Updater worldStateStorageUpdater;
   private final int hashCountPerRequest;
@@ -62,30 +60,20 @@ public class WorldStateDownloader {
   public WorldStateDownloader(
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
-      final BlockHeader header,
       final BigQueue<NodeDataRequest> pendingRequests,
       final int hashCountPerRequest,
       final int maxOutstandingRequests,
       final LabelledMetric<OperationTimer> ethTasksTimer) {
     this.ethContext = ethContext;
     this.worldStateStorage = worldStateStorage;
-    this.header = header;
     this.pendingRequests = pendingRequests;
     this.hashCountPerRequest = hashCountPerRequest;
     this.maxOutstandingRequests = maxOutstandingRequests;
     this.ethTasksTimer = ethTasksTimer;
     this.worldStateStorageUpdater = worldStateStorage.updater();
-
-    Hash stateRoot = header.getStateRoot();
-    if (stateRoot.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-      // If we're requesting data for an empty world state, we're already done
-      markDone();
-    } else {
-      pendingRequests.enqueue(NodeDataRequest.createAccountDataRequest(header.getStateRoot()));
-    }
   }
 
-  public CompletableFuture<Void> run() {
+  public CompletableFuture<Void> run(final BlockHeader header) {
     synchronized (this) {
       if (status == Status.DONE || status == Status.RUNNING) {
         return future;
@@ -94,18 +82,26 @@ public class WorldStateDownloader {
       future = new CompletableFuture<>();
     }
 
-    requestNodeData();
+    Hash stateRoot = header.getStateRoot();
+    if (stateRoot.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
+      // If we're requesting data for an empty world state, we're already done
+      markDone();
+    } else {
+      pendingRequests.enqueue(NodeDataRequest.createAccountDataRequest(stateRoot));
+      requestNodeData(header);
+    }
+
     return future;
   }
 
-  private void requestNodeData() {
+  private void requestNodeData(final BlockHeader header) {
     if (sendingRequests.compareAndSet(false, true)) {
       while (shouldRequestNodeData()) {
         Optional<EthPeer> maybePeer = ethContext.getEthPeers().idlePeer(header.getNumber());
 
         if (!maybePeer.isPresent()) {
           // If no peer is available, wait and try again
-          waitForNewPeer().whenComplete((r, t) -> requestNodeData());
+          waitForNewPeer().whenComplete((r, t) -> requestNodeData(header));
           break;
         } else {
           EthPeer peer = maybePeer.get();
@@ -131,7 +127,7 @@ public class WorldStateDownloader {
                       markDone();
                     } else {
                       // Send out additional requests
-                      requestNodeData();
+                      requestNodeData(header);
                     }
                   });
         }
