@@ -4,10 +4,10 @@ description: Pantheon commande line interface reference
 # Pantheon Command Line
 
 !!! important "Breaking Changes in v0.9"
-    In v0.9 the command line changed to improve usability. These are breaking changes; that is, 
-    in many cases the v0.8 command line options will no longer work. This reference and the rest of 
-    the documentation will be updated to reflect these changes. Any further information required 
-    about the changes are included in the v0.9 release notes. 
+    In v0.9, the command line changed to improve usability. These are breaking changes; that is, 
+    in many cases the v0.8 command line options no longer work. 
+    This reference and the rest of the documentation has been updated to reflect these changes. The [release notes](https://github.com/PegaSysEng/pantheon/blob/master/CHANGELOG.md) 
+    include a mapping of the previous command line options to the new options. 
 
 This reference describes the syntax of the Pantheon Command Line Interface (CLI) options and subcommands.
 
