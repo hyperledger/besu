@@ -85,7 +85,7 @@ public class WorldStateDownloaderTest {
   public void downloadEmptyWorldState() {
     BlockDataGenerator dataGen = new BlockDataGenerator(1);
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
-    BlockHeader header =
+    final BlockHeader header =
         dataGen
             .block(BlockOptions.create().setStateRoot(EMPTY_TRIE_ROOT).setBlockNumber(10))
             .getHeader();
@@ -104,13 +104,12 @@ public class WorldStateDownloaderTest {
         new WorldStateDownloader(
             ethProtocolManager.ethContext(),
             localStorage,
-            header,
             queue,
             10,
             10,
             NoOpMetricsSystem.NO_OP_LABELLED_TIMER);
 
-    CompletableFuture<Void> future = downloader.run();
+    CompletableFuture<Void> future = downloader.run(header);
     assertThat(future).isDone();
 
     // Peers should not have been queried
@@ -135,7 +134,7 @@ public class WorldStateDownloaderTest {
     final List<Account> accounts = dataGen.createRandomAccounts(remoteWorldState, 20);
     final Hash stateRoot = remoteWorldState.rootHash();
     assertThat(stateRoot).isNotEqualTo(EMPTY_TRIE_ROOT); // Sanity check
-    BlockHeader header =
+    final BlockHeader header =
         dataGen.block(BlockOptions.create().setStateRoot(stateRoot).setBlockNumber(10)).getHeader();
 
     // Create some peers
@@ -152,13 +151,12 @@ public class WorldStateDownloaderTest {
         new WorldStateDownloader(
             ethProtocolManager.ethContext(),
             localStorage,
-            header,
             queue,
             10,
             10,
             NoOpMetricsSystem.NO_OP_LABELLED_TIMER);
 
-    CompletableFuture<Void> result = downloader.run();
+    CompletableFuture<Void> result = downloader.run(header);
 
     // Respond to node data requests
     Responder responder =
@@ -195,7 +193,7 @@ public class WorldStateDownloaderTest {
     final List<Account> accounts = dataGen.createRandomAccounts(remoteWorldState, accountCount);
     final Hash stateRoot = remoteWorldState.rootHash();
     assertThat(stateRoot).isNotEqualTo(EMPTY_TRIE_ROOT); // Sanity check
-    BlockHeader header =
+    final BlockHeader header =
         dataGen.block(BlockOptions.create().setStateRoot(stateRoot).setBlockNumber(10)).getHeader();
 
     // Generate more data that should not be downloaded
@@ -215,7 +213,6 @@ public class WorldStateDownloaderTest {
         new WorldStateDownloader(
             ethProtocolManager.ethContext(),
             localStorage,
-            header,
             queue,
             hashesPerRequest,
             maxOutstandingRequests,
@@ -237,7 +234,7 @@ public class WorldStateDownloaderTest {
             .collect(Collectors.toList());
 
     // Start downloader
-    CompletableFuture<?> result = downloader.run();
+    CompletableFuture<?> result = downloader.run(header);
 
     // Respond to node data requests
     Responder responder =
