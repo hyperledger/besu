@@ -44,7 +44,7 @@ Instructions for how to get started with developing on the Pantheon codebase. Pl
 [User Documentation]: https://docs.pantheon.pegasys.tech/en/latest/
 [Installation]: https://docs.pantheon.pegasys.tech/en/latest/Installation/Overview/
 [Getting Started]: https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Getting-Started/
-[Private Network Quickstart]: https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Private-Network-Quickstart/
+[Private Network Quickstart]: https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Private-Network-Quickstart/
 [Command Line Options]: https://docs.pantheon.pegasys.tech/en/latest/Reference/Pantheon-CLI-Syntax/
 [JSON-RPC API]: https://docs.pantheon.pegasys.tech/en/latest/Reference/Using-JSON-RPC-API/
 [Configuring Pantheon]: https://docs.pantheon.pegasys.tech/en/latest/Configuring-Pantheon/NetworkID-And-ChainID/
