@@ -283,9 +283,6 @@ None
 
 Returns the [chain ID](../Configuring-Pantheon/NetworkID-And-ChainID.md).
 
-!!!note
-    This method is only available from v0.8.2. 
-
 **Parameters**
 
 None
