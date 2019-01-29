@@ -44,6 +44,9 @@ public class AdminAddPeer implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest req) {
+    if (req.getParamLength() != 1) {
+      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INVALID_PARAMS);
+    }
     try {
       final String enodeString = parameters.required(req.getParams(), 0, String.class);
       final Peer peer = DefaultPeer.fromURI(enodeString);
