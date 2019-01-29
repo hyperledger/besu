@@ -41,6 +41,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
@@ -101,8 +102,8 @@ public class MainnetPantheonController implements PantheonController<Void> {
     final MutableBlockchain blockchain =
         new DefaultMutableBlockchain(genesisState.getBlock(), blockchainStorage, metricsSystem);
 
-    final WorldStateArchive worldStateArchive =
-        new WorldStateArchive(storageProvider.createWorldStateStorage());
+    final WorldStateStorage worldStateStorage = storageProvider.createWorldStateStorage();
+    final WorldStateArchive worldStateArchive = new WorldStateArchive(worldStateStorage);
     genesisState.writeStateTo(worldStateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
 
     final ProtocolContext<Void> protocolContext =
@@ -129,6 +130,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
             syncConfig,
             protocolSchedule,
             protocolContext,
+            worldStateStorage,
             ethProtocolManager.ethContext(),
             syncState,
             metricsSystem.createLabelledTimer(

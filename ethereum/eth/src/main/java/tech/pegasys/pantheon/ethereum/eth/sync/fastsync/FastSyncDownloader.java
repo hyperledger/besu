@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 
+import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.WorldStateDownloader;
+
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
@@ -40,7 +42,7 @@ public class FastSyncDownloader<C> {
   private CompletableFuture<FastSyncState> downloadChainAndWorldState(
       final FastSyncState currentState) {
     final CompletableFuture<Void> worldStateFuture =
-        worldStateDownloader.downloadWorldState(currentState.getPivotBlockHeader().get());
+        worldStateDownloader.run(currentState.getPivotBlockHeader().get());
     final CompletableFuture<Void> chainFuture = fastSyncActions.downloadChain(currentState);
 
     // If either download fails, cancel the other one.

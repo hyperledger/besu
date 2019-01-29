@@ -168,6 +168,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
             syncConfig,
             protocolSchedule,
             protocolContext,
+            worldStateStorage,
             ethProtocolManager.ethContext(),
             syncState,
             metricsSystem.createLabelledTimer(
