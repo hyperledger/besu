@@ -35,6 +35,9 @@ import java.util.NavigableMap;
  */
 public interface Account {
 
+  long DEFAULT_NONCE = 0L;
+  Wei DEFAULT_BALANCE = Wei.ZERO;
+
   /**
    * The Keccak-256 hash of the account address.
    *

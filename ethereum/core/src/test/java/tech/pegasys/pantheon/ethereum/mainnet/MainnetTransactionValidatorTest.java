@@ -24,6 +24,7 @@ import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.Transa
 
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Account;
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Gas;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionTestFixture;
@@ -84,16 +85,6 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
-  public void shouldRejectTransactionWhenSenderAccountHasInsufficentBalance() {
-    final MainnetTransactionValidator validator =
-        new MainnetTransactionValidator(gasCalculator, false, 1);
-
-    final Account account = accountWithBalance(basicTransaction.getUpfrontCost().minus(Wei.of(1)));
-    assertThat(validator.validateForSender(basicTransaction, account, OptionalLong.empty()))
-        .isEqualTo(ValidationResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE));
-  }
-
-  @Test
   public void shouldRejectTransactionWhenTransactionNonceBelowAccountNonce() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(gasCalculator, false, 1);
@@ -150,6 +141,22 @@ public class MainnetTransactionValidatorTest {
 
     assertThat(validator.validateForSender(transaction, account, OptionalLong.of(10)))
         .isEqualTo(ValidationResult.invalid(INCORRECT_NONCE));
+  }
+
+  @Test
+  public void transactionWithNullSenderCanBeValidIfGasPriceAndValueIsZero() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(gasCalculator, false, 1);
+
+    final TransactionTestFixture builder = new TransactionTestFixture();
+    final KeyPair senderKeyPair = KeyPair.generate();
+    final Address arbitrarySender = Address.fromHexString("1");
+    builder.gasPrice(Wei.ZERO).nonce(0).sender(arbitrarySender).value(Wei.ZERO);
+
+    assertThat(
+            validator.validateForSender(
+                builder.createTransaction(senderKeyPair), null, OptionalLong.of(10)))
+        .isEqualTo(ValidationResult.valid());
   }
 
   private Account accountWithNonce(final long nonce) {
