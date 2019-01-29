@@ -58,42 +58,48 @@ public abstract class SyncTargetManager<C> {
   }
 
   public CompletableFuture<SyncTarget> findSyncTarget() {
-    final Optional<SyncTarget> maybeSyncTarget = syncState.syncTarget();
-    if (maybeSyncTarget.isPresent()) {
-      // Nothing to do
-      return CompletableFuture.completedFuture(maybeSyncTarget.get());
-    }
-
-    final Optional<EthPeer> maybeBestPeer = selectBestAvailableSyncTarget();
-    if (maybeBestPeer.isPresent()) {
-      final EthPeer bestPeer = maybeBestPeer.get();
-      return DetermineCommonAncestorTask.create(
-              protocolSchedule,
-              protocolContext,
-              ethContext,
-              bestPeer,
-              config.downloaderHeaderRequestSize(),
-              ethTasksTimer)
-          .run()
-          .handle((r, t) -> r)
-          .thenCompose(
-              (target) -> {
-                if (target == null) {
-                  return waitForPeerAndThenSetSyncTarget();
-                }
-                final SyncTarget syncTarget = syncState.setSyncTarget(bestPeer, target);
-                LOG.info(
-                    "Found common ancestor with peer {} at block {}", bestPeer, target.getNumber());
-                syncTargetDisconnectListenerId =
-                    bestPeer.subscribeDisconnect(this::onSyncTargetPeerDisconnect);
-                return CompletableFuture.completedFuture(syncTarget);
-              });
-    } else {
-      return waitForPeerAndThenSetSyncTarget();
-    }
+    return syncState
+        .syncTarget()
+        .map(CompletableFuture::completedFuture) // Return an existing sync target if present
+        .orElseGet(this::selectNewSyncTarget);
   }
 
-  protected abstract Optional<EthPeer> selectBestAvailableSyncTarget();
+  private CompletableFuture<SyncTarget> selectNewSyncTarget() {
+    return selectBestAvailableSyncTarget()
+        .thenCompose(
+            maybeBestPeer -> {
+              if (maybeBestPeer.isPresent()) {
+                final EthPeer bestPeer = maybeBestPeer.get();
+                return DetermineCommonAncestorTask.create(
+                        protocolSchedule,
+                        protocolContext,
+                        ethContext,
+                        bestPeer,
+                        config.downloaderHeaderRequestSize(),
+                        ethTasksTimer)
+                    .run()
+                    .handle((r, t) -> r)
+                    .thenCompose(
+                        (target) -> {
+                          if (target == null) {
+                            return waitForPeerAndThenSetSyncTarget();
+                          }
+                          final SyncTarget syncTarget = syncState.setSyncTarget(bestPeer, target);
+                          LOG.info(
+                              "Found common ancestor with peer {} at block {}",
+                              bestPeer,
+                              target.getNumber());
+                          syncTargetDisconnectListenerId =
+                              bestPeer.subscribeDisconnect(this::onSyncTargetPeerDisconnect);
+                          return CompletableFuture.completedFuture(syncTarget);
+                        });
+              } else {
+                return waitForPeerAndThenSetSyncTarget();
+              }
+            });
+  }
+
+  protected abstract CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget();
 
   private CompletableFuture<SyncTarget> waitForPeerAndThenSetSyncTarget() {
     return waitForNewPeer().handle((r, t) -> r).thenCompose((r) -> findSyncTarget());

@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 
 import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.CHAIN_TOO_SHORT;
-import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.FAST_SYNC_UNAVAILABLE;
 import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.NO_PEERS_AVAILABLE;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -21,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.WaitForPeersTask;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
@@ -41,6 +41,7 @@ public class FastSyncActions<C> {
   private final ProtocolSchedule<C> protocolSchedule;
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
+  private final SyncState syncState;
   private final LabelledMetric<OperationTimer> ethTasksTimer;
 
   public FastSyncActions(
@@ -48,11 +49,13 @@ public class FastSyncActions<C> {
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
+      final SyncState syncState,
       final LabelledMetric<OperationTimer> ethTasksTimer) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
+    this.syncState = syncState;
     this.ethTasksTimer = ethTasksTimer;
   }
 
@@ -146,6 +149,16 @@ public class FastSyncActions<C> {
   }
 
   public CompletableFuture<Void> downloadChain(final FastSyncState currentState) {
-    throw new FastSyncException(FAST_SYNC_UNAVAILABLE);
+    final FastSyncChainDownloader<C> downloader =
+        new FastSyncChainDownloader<>(
+            syncConfig,
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            syncState,
+            ethTasksTimer,
+            currentState.getPivotBlockHeader().get());
+    downloader.start();
+    return new CompletableFuture<>();
   }
 }

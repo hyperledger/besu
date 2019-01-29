@@ -32,7 +32,7 @@ public class SynchronizerConfiguration {
   public static int DEFAULT_PIVOT_DISTANCE_FROM_HEAD = 500;
   public static float DEFAULT_FULL_VALIDATION_RATE = .1f;
   public static int DEFAULT_FAST_SYNC_MINIMUM_PEERS = 5;
-  private static final Duration DEFAULT_FAST_SYNC_MAXIMUM_PEER_WAIT_TIME = Duration.ofMinutes(3);
+  private static final Duration DEFAULT_FAST_SYNC_MAXIMUM_PEER_WAIT_TIME = Duration.ofMinutes(5);
   private static final int DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST = 200;
   private static final int DEFAULT_WORLD_STATE_REQUEST_PARALLELISM = 10;
 
