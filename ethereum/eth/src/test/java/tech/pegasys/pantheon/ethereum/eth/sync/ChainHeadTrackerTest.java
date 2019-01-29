@@ -18,7 +18,8 @@ import static org.mockito.Mockito.mock;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.development.DevelopmentProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
+import tech.pegasys.pantheon.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.eth.manager.ChainState;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
@@ -44,7 +45,9 @@ public class ChainHeadTrackerTest {
           blockchain.getChainHead().getTotalDifficulty(),
           0);
   private final ProtocolSchedule<Void> protocolSchedule =
-      DevelopmentProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions());
+      FixedDifficultyProtocolSchedule.create(
+          GenesisConfigFile.development().getConfigOptions(), PrivacyParameters.noPrivacy());
+
   private final TrailingPeerLimiter trailingPeerLimiter = mock(TrailingPeerLimiter.class);
   private final ChainHeadTracker chainHeadTracker =
       new ChainHeadTracker(

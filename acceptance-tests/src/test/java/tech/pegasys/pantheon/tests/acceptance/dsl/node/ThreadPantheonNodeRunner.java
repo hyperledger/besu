@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.cli.EthNetworkConfig;
 import tech.pegasys.pantheon.cli.PantheonControllerBuilder;
 import tech.pegasys.pantheon.controller.KeyPairUtil;
 import tech.pegasys.pantheon.controller.PantheonController;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
@@ -71,6 +72,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
               .devMode(node.isDevMode())
               .nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory()))
               .metricsSystem(noOpMetricsSystem)
+              .privacyParameters(PrivacyParameters.noPrivacy())
               .build();
     } catch (final IOException e) {
       throw new RuntimeException("Error building PantheonController", e);

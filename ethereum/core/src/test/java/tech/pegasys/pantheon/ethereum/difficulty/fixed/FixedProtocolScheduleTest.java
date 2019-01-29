@@ -10,24 +10,26 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.development;
+package tech.pegasys.pantheon.ethereum.difficulty.fixed;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 
 import org.junit.Test;
 
-public class DevelopmentProtocolScheduleTest {
+public class FixedProtocolScheduleTest {
 
   @Test
   public void reportedDifficultyForAllBlocksIsAFixedValue() {
 
     final ProtocolSchedule<Void> schedule =
-        DevelopmentProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions());
+        FixedDifficultyProtocolSchedule.create(
+            GenesisConfigFile.development().getConfigOptions(), PrivacyParameters.noPrivacy());
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
@@ -38,20 +40,20 @@ public class DevelopmentProtocolScheduleTest {
                 .getByBlockNumber(0)
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
-        .isEqualTo(DevelopmentDifficultyCalculators.MINIMUM_DIFFICULTY);
+        .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
 
     assertThat(
             schedule
                 .getByBlockNumber(500)
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
-        .isEqualTo(DevelopmentDifficultyCalculators.MINIMUM_DIFFICULTY);
+        .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
 
     assertThat(
             schedule
                 .getByBlockNumber(500_000)
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
-        .isEqualTo(DevelopmentDifficultyCalculators.MINIMUM_DIFFICULTY);
+        .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
   }
 }

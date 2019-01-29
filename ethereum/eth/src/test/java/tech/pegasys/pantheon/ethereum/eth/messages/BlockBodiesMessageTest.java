@@ -15,8 +15,9 @@ package tech.pegasys.pantheon.ethereum.eth.messages;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
-import tech.pegasys.pantheon.ethereum.development.DevelopmentProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
@@ -65,7 +66,9 @@ public final class BlockBodiesMessageTest {
     final Iterator<BlockBody> readBodies =
         message
             .bodies(
-                DevelopmentProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions()))
+                FixedDifficultyProtocolSchedule.create(
+                    GenesisConfigFile.development().getConfigOptions(),
+                    PrivacyParameters.noPrivacy()))
             .iterator();
     for (int i = 0; i < 50; ++i) {
       Assertions.assertThat(readBodies.next()).isEqualTo(bodies.get(i));

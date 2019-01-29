@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.development;
+package tech.pegasys.pantheon.ethereum.difficulty.fixed;
 
 import static tech.pegasys.pantheon.ethereum.mainnet.MainnetTransactionValidator.NO_CHAIN_ID;
 
@@ -20,14 +20,15 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 
 /** A ProtocolSchedule which behaves similarly to MainNet, but with a much reduced difficulty. */
-public class DevelopmentProtocolSchedule {
+public class FixedDifficultyProtocolSchedule {
 
-  public static ProtocolSchedule<Void> create(final GenesisConfigOptions config) {
+  public static ProtocolSchedule<Void> create(
+      final GenesisConfigOptions config, final PrivacyParameters privacyParameters) {
     return new ProtocolScheduleBuilder<>(
             config,
             NO_CHAIN_ID,
-            builder -> builder.difficultyCalculator(DevelopmentDifficultyCalculators.DEVELOPER),
-            PrivacyParameters.noPrivacy())
+            builder -> builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config)),
+            privacyParameters)
         .createProtocolSchedule();
   }
 }

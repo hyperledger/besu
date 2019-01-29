@@ -62,6 +62,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public EthashConfigOptions getEthashConfigOptions() {
+    return EthashConfigOptions.DEFAULT;
+  }
+
+  @Override
   public OptionalLong getHomesteadBlockNumber() {
     return homesteadBlockNumber;
   }

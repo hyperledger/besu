@@ -10,6 +10,7 @@
     "constantinopleBlock": 0,
     "constantinopleFixBlock": 0,
     "ethash": {
+      "fixeddifficulty": 100
     }
   },
   "nonce": "0x42",
