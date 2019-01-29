@@ -306,7 +306,7 @@ public class RunnerBuilder {
     }
 
     Optional<MetricsService> metricsService = Optional.empty();
-    if (metricsConfiguration.isEnabled()) {
+    if (metricsConfiguration.isEnabled() || metricsConfiguration.isPushEnabled()) {
       metricsService = Optional.of(createMetricsService(vertx, metricsConfiguration));
     }
 

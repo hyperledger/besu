@@ -79,7 +79,7 @@ class MetricsHttpService implements MetricsService {
 
   @Override
   public CompletableFuture<?> start() {
-    LOG.info("Starting Metrics service on {}:{}", config.getHost(), config.getPort());
+    LOG.info("Starting metrics http service on {}:{}", config.getHost(), config.getPort());
     // Create the HTTP server and a router object.
     httpServer =
         vertx.createHttpServer(

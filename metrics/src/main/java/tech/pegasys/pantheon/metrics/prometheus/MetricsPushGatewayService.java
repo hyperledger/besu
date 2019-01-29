@@ -58,7 +58,10 @@ class MetricsPushGatewayService implements MetricsService {
 
   @Override
   public CompletableFuture<?> start() {
-    LOG.info("Starting Metrics service on {}:{}", config.getPushHost(), config.getPushPort());
+    LOG.info(
+        "Starting metrics push gateway service pushing to {}:{}",
+        config.getPushHost(),
+        config.getPushPort());
 
     pushGateway = new PushGateway(config.getPushHost() + ":" + config.getPushPort());
 
