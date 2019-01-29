@@ -50,6 +50,7 @@ interface DefaultCommandValues {
   // but we use FULL for the moment as Fast is still in progress
   SyncMode DEFAULT_SYNC_MODE = SyncMode.FULL;
   int DEFAULT_MAX_PEERS = 25;
+  int MAX_TRAILING_PEERS = Integer.MAX_VALUE;
 
   static Path getDefaultPantheonDataPath(final Object command) {
     // this property is retrieved from Gradle tasks or Pantheon running shell script.

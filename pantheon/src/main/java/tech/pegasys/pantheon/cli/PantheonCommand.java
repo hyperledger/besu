@@ -193,20 +193,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   )
   private final Integer maxPeers = DEFAULT_MAX_PEERS;
 
-  /**
-   * @deprecated This option is not exposed anymore even if still available as it's bounded by
-   *     max-peers value. It's not useful enough to figure in the help. Will probably completely
-   *     removed in next version.
-   */
-  @Deprecated
-  @Option(
-    names = {"--max-trailing-peers"},
-    paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-    description =
-        "Maximum p2p peer connections for peers that are trailing behind our chain head (default: unlimited)"
-  )
-  private final Integer maxTrailingPeers = Integer.MAX_VALUE;
-
   @Option(
     names = {"--banned-node-ids", "--banned-node-id"},
     paramLabel = MANDATORY_NODE_ID_FORMAT_HELP,
@@ -703,7 +689,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   private SynchronizerConfiguration buildSyncConfig() {
     synchronizerConfigurationBuilder.syncMode(syncMode);
-    synchronizerConfigurationBuilder.maxTrailingPeers(maxTrailingPeers);
+    synchronizerConfigurationBuilder.maxTrailingPeers(MAX_TRAILING_PEERS);
     return synchronizerConfigurationBuilder.build();
   }
 
