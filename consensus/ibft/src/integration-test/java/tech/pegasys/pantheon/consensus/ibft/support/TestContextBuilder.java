@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.consensus.common.VoteTallyUpdater;
 import tech.pegasys.pantheon.consensus.ibft.BlockTimer;
 import tech.pegasys.pantheon.consensus.ibft.EventMultiplexer;
+import tech.pegasys.pantheon.consensus.ibft.Gossiper;
 import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
 import tech.pegasys.pantheon.consensus.ibft.IbftBlockInterface;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
@@ -34,6 +35,7 @@ import tech.pegasys.pantheon.consensus.ibft.IbftGossip;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
 import tech.pegasys.pantheon.consensus.ibft.IbftProtocolSchedule;
 import tech.pegasys.pantheon.consensus.ibft.RoundTimer;
+import tech.pegasys.pantheon.consensus.ibft.UniqueMessageMulticaster;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockCreatorFactory;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.ProposerSelector;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
@@ -156,7 +158,9 @@ public class TestContextBuilder {
     // Use a stubbed version of the multicaster, to prevent creating PeerConnections etc.
     final StubValidatorMulticaster multicaster = new StubValidatorMulticaster();
 
-    final IbftGossip gossiper = useGossip ? new IbftGossip(multicaster) : mock(IbftGossip.class);
+    final UniqueMessageMulticaster uniqueMulticaster = new UniqueMessageMulticaster(multicaster);
+
+    final Gossiper gossiper = useGossip ? new IbftGossip(uniqueMulticaster) : mock(Gossiper.class);
 
     final ControllerAndState controllerAndState =
         createControllerAndFinalState(
@@ -219,11 +223,11 @@ public class TestContextBuilder {
 
   private static ControllerAndState createControllerAndFinalState(
       final MutableBlockchain blockChain,
-      final StubValidatorMulticaster stubbedMulticaster,
+      final StubValidatorMulticaster multicaster,
       final KeyPair nodeKeys,
       final Clock clock,
       final IbftEventQueue ibftEventQueue,
-      final IbftGossip gossiper) {
+      final Gossiper gossiper) {
 
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
@@ -272,7 +276,7 @@ public class TestContextBuilder {
             nodeKeys,
             Util.publicKeyToAddress(nodeKeys.getPublicKey()),
             proposerSelector,
-            stubbedMulticaster,
+            multicaster,
             new RoundTimer(
                 ibftEventQueue, ROUND_TIMER_SEC * 1000, Executors.newScheduledThreadPool(1)),
             new BlockTimer(
@@ -298,8 +302,8 @@ public class TestContextBuilder {
                 new IbftRoundFactory(
                     finalState, protocolContext, protocolSchedule, minedBlockObservers),
                 messageValidatorFactory),
-            new HashMap<>(),
-            gossiper);
+            gossiper,
+            new HashMap<>());
 
     final EventMultiplexer eventMultiplexer = new EventMultiplexer(ibftController);
     //////////////////////////// END IBFT PantheonController ////////////////////////////

@@ -108,7 +108,7 @@ public class IbftControllerTest {
     when(ibftFinalState.getValidators()).thenReturn(ImmutableList.of(validator));
     ibftController =
         new IbftController(
-            blockChain, ibftFinalState, blockHeightManagerFactory, futureMessages, ibftGossip);
+            blockChain, ibftFinalState, blockHeightManagerFactory, ibftGossip, futureMessages);
 
     when(chainHeadBlockHeader.getNumber()).thenReturn(1L);
     when(chainHeadBlockHeader.getHash()).thenReturn(Hash.ZERO);
@@ -151,11 +151,11 @@ public class IbftControllerTest {
     verify(blockHeightManager).start();
     verify(blockHeightManager, never()).handleProposalPayload(signedProposal);
     verify(blockHeightManager).handlePreparePayload(signedPrepare);
-    verify(ibftGossip).gossipMessage(prepareMessage);
+    verify(ibftGossip).send(prepareMessage);
     verify(blockHeightManager).handleCommitPayload(signedCommit);
-    verify(ibftGossip).gossipMessage(commitMessage);
+    verify(ibftGossip).send(commitMessage);
     verify(blockHeightManager).handleRoundChangePayload(signedRoundChange);
-    verify(ibftGossip).gossipMessage(roundChangeMessage);
+    verify(ibftGossip).send(roundChangeMessage);
     verify(blockHeightManager, never()).handleNewRoundPayload(signedNewRound);
   }
 
@@ -181,15 +181,15 @@ public class IbftControllerTest {
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verify(blockHeightManager, times(2)).start(); // once at beginning, and again on newChainHead.
     verify(blockHeightManager).handleProposalPayload(signedProposal);
-    verify(ibftGossip).gossipMessage(proposalMessage);
+    verify(ibftGossip).send(proposalMessage);
     verify(blockHeightManager).handlePreparePayload(signedPrepare);
-    verify(ibftGossip).gossipMessage(prepareMessage);
+    verify(ibftGossip).send(prepareMessage);
     verify(blockHeightManager).handleCommitPayload(signedCommit);
-    verify(ibftGossip).gossipMessage(commitMessage);
+    verify(ibftGossip).send(commitMessage);
     verify(blockHeightManager).handleRoundChangePayload(signedRoundChange);
-    verify(ibftGossip).gossipMessage(roundChangeMessage);
+    verify(ibftGossip).send(roundChangeMessage);
     verify(blockHeightManager).handleNewRoundPayload(signedNewRound);
-    verify(ibftGossip).gossipMessage(newRoundMessage);
+    verify(ibftGossip).send(newRoundMessage);
   }
 
   @Test
@@ -239,7 +239,7 @@ public class IbftControllerTest {
 
     assertThat(futureMessages).isEmpty();
     verify(blockHeightManager).handleProposalPayload(signedProposal);
-    verify(ibftGossip).gossipMessage(proposalMessage);
+    verify(ibftGossip).send(proposalMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verify(blockHeightManager).start();
     verifyNoMoreInteractions(blockHeightManager);
@@ -253,7 +253,7 @@ public class IbftControllerTest {
 
     assertThat(futureMessages).isEmpty();
     verify(blockHeightManager).handlePreparePayload(signedPrepare);
-    verify(ibftGossip).gossipMessage(prepareMessage);
+    verify(ibftGossip).send(prepareMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verify(blockHeightManager).start();
     verifyNoMoreInteractions(blockHeightManager);
@@ -267,7 +267,7 @@ public class IbftControllerTest {
 
     assertThat(futureMessages).isEmpty();
     verify(blockHeightManager).handleCommitPayload(signedCommit);
-    verify(ibftGossip).gossipMessage(commitMessage);
+    verify(ibftGossip).send(commitMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verify(blockHeightManager).start();
     verifyNoMoreInteractions(blockHeightManager);
@@ -282,7 +282,7 @@ public class IbftControllerTest {
 
     assertThat(futureMessages).isEmpty();
     verify(blockHeightManager).handleNewRoundPayload(signedNewRound);
-    verify(ibftGossip).gossipMessage(newRoundMessage);
+    verify(ibftGossip).send(newRoundMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verify(blockHeightManager).start();
     verifyNoMoreInteractions(blockHeightManager);
@@ -297,7 +297,7 @@ public class IbftControllerTest {
 
     assertThat(futureMessages).isEmpty();
     verify(blockHeightManager).handleRoundChangePayload(signedRoundChange);
-    verify(ibftGossip).gossipMessage(roundChangeMessage);
+    verify(ibftGossip).send(roundChangeMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
     verify(blockHeightManager).start();
     verifyNoMoreInteractions(blockHeightManager);
