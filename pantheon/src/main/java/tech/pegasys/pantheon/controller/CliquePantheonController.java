@@ -159,6 +159,7 @@ public class CliquePantheonController implements PantheonController<CliqueContex
             syncConfig,
             protocolSchedule,
             protocolContext,
+            worldStateStorage,
             ethProtocolManager.ethContext(),
             syncState,
             metricsSystem.createLabelledTimer(
