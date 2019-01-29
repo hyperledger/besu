@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync.fullsync;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.ChainState;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
@@ -27,6 +29,7 @@ import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -52,11 +55,11 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
   }
 
   @Override
-  protected Optional<EthPeer> selectBestAvailableSyncTarget() {
+  protected CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget() {
     final Optional<EthPeer> maybeBestPeer = ethContext.getEthPeers().bestPeer();
     if (!maybeBestPeer.isPresent()) {
       LOG.info("No sync target, wait for peers.");
-      return Optional.empty();
+      return completedFuture(Optional.empty());
     } else {
       final EthPeer bestPeer = maybeBestPeer.get();
       final long peerHeight = bestPeer.chainState().getEstimatedHeight();
@@ -65,9 +68,9 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
           && peerHeight <= syncState.chainHeadNumber()) {
         // We're caught up to our best peer, try again when a new peer connects
         LOG.debug("Caught up to best peer: " + bestPeer.chainState().getEstimatedHeight());
-        return Optional.empty();
+        return completedFuture(Optional.empty());
       }
-      return maybeBestPeer;
+      return completedFuture(maybeBestPeer);
     }
   }
 

@@ -44,7 +44,7 @@ public class RetryingGetHeaderFromPeerByNumberTask
     this.pivotBlockNumber = pivotBlockNumber;
   }
 
-  public static RetryingGetHeaderFromPeerByNumberTask forPivotBlock(
+  public static RetryingGetHeaderFromPeerByNumberTask forSingleNumber(
       final ProtocolSchedule<?> protocolSchedule,
       final EthContext ethContext,
       final LabelledMetric<OperationTimer> ethTasksTimer,

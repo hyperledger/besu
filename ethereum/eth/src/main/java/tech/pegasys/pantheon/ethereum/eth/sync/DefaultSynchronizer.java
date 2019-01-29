@@ -89,7 +89,12 @@ public class DefaultSynchronizer<C> implements Synchronizer {
           Optional.of(
               new FastSyncDownloader<>(
                   new FastSyncActions<>(
-                      syncConfig, protocolSchedule, protocolContext, ethContext, ethTasksTimer),
+                      syncConfig,
+                      protocolSchedule,
+                      protocolContext,
+                      ethContext,
+                      syncState,
+                      ethTasksTimer),
                   worldStateDownloader));
     } else {
       this.fastSyncDownloader = Optional.empty();

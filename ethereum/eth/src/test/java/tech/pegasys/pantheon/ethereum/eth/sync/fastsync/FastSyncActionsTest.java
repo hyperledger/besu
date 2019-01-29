@@ -20,6 +20,7 @@ import static tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem.NO_OP_LABELLE
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
@@ -27,6 +28,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUtil;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
@@ -68,12 +70,14 @@ public class FastSyncActionsTest {
             blockchain,
             blockchainSetupUtil.getWorldArchive(),
             () -> timeoutCount.getAndDecrement() > 0);
+    final EthContext ethContext = ethProtocolManager.ethContext();
     fastSyncActions =
         new FastSyncActions<>(
             syncConfig,
             protocolSchedule,
             protocolContext,
-            ethProtocolManager.ethContext(),
+            ethContext,
+            new SyncState(blockchain, ethContext.getEthPeers()),
             ethTasksTimer);
   }
 
