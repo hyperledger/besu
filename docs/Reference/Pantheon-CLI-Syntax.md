@@ -200,27 +200,6 @@ max-peers=42
 Specifies the maximum P2P peer connections that can be established.
 The default is 25.
 
-### max-trailing-peers
-
-!!!important
-    This option is deprecated in favor of a intelligent default setting and will be removed in 0.9
-    release.
-    
-```bash tab="Syntax"
---max-trailing-peers=<INTEGER>
-```
-
-```bash tab="Example Command Line"
---max-trailing-peers=2
-```
-
-```bash tab="Example Configuration File"
-max-trailing-peers=2
-```
-
-Specifies the maximum P2P peer connections for peers that are trailing behind the local chain head. 
-The default is unlimited but the number of trailing peers cannot exceed the value specified by [`--max-peers`](#max-peers).
-
 ### metrics-enabled
 
 ```bash tab="Syntax"

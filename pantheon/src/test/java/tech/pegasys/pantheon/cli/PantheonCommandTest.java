@@ -769,15 +769,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void maxTrailingPeersMustBeUsed() {
-    parseCommand("--max-trailing-peers", "3");
-    verify(mockSyncConfBuilder).maxTrailingPeers(3);
-
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
-  }
-
-  @Test
   public void jsonRpcEnabledPropertyDefaultIsFalse() {
     parseCommand();
 
