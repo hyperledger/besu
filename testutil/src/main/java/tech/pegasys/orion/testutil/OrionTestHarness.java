@@ -16,7 +16,6 @@ import static com.google.common.io.Files.readLines;
 import static net.consensys.cava.io.file.Files.copyResource;
 
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +23,7 @@ import java.util.stream.Collectors;
 import com.google.common.base.Charsets;
 import net.consensys.orion.cmd.Orion;
 import net.consensys.orion.config.Config;
+import okhttp3.HttpUrl;
 
 public class OrionTestHarness {
 
@@ -40,12 +40,6 @@ public class OrionTestHarness {
 
   public static OrionTestHarness create(final Path tempDir) throws Exception {
 
-    int nodePort = freePort();
-    int clientPort = freePort();
-
-    String nodeUrl = String.format("http://%s:%s", HOST, nodePort);
-    String clientUrl = String.format("http://%s:%s", HOST, clientPort);
-
     Path key1pub = copyResource("orion_key_0.pub", tempDir.resolve("orion_key_0.pub"));
     Path key1key = copyResource("orion_key_0.key", tempDir.resolve("orion_key_0.key"));
 
@@ -57,28 +51,13 @@ public class OrionTestHarness {
         "tls=\"off\"\n"
             + "tlsservertrust=\"tofu\"\n"
             + "tlsclienttrust=\"tofu\"\n"
-            + "nodeurl = \""
-            + nodeUrl
-            + "\"\n"
-            + "nodeport = "
-            + nodePort
-            + "\n"
             + "nodenetworkinterface = \""
             + HOST
             + "\"\n"
-            + "clienturl = \""
-            + clientUrl
-            + "\"\n"
-            + "clientport = "
-            + clientPort
-            + "\n"
             + "clientnetworkinterface = \""
             + HOST
             + "\"\n"
             + "storage = \"leveldb:database/orion_node\"\n"
-            + "othernodes = [\""
-            + nodeUrl
-            + "\"]\n"
             + "publickeys = ["
             + joinPathsAsTomlListEntry(key1pub, key2pub)
             + "]\n"
@@ -94,6 +73,7 @@ public class OrionTestHarness {
 
     final Orion orion = new Orion();
     orion.run(System.out, System.err, config);
+
     return new OrionTestHarness(orion, config);
   }
 
@@ -130,12 +110,6 @@ public class OrionTestHarness {
     }
   }
 
-  private static int freePort() throws Exception {
-    try (ServerSocket socket = new ServerSocket(0)) {
-      return socket.getLocalPort();
-    }
-  }
-
   private static String joinPathsAsTomlListEntry(final Path... paths) {
     StringBuilder builder = new StringBuilder();
     boolean first = true;
@@ -147,5 +121,14 @@ public class OrionTestHarness {
       builder.append("\"").append(path.toAbsolutePath().toString()).append("\"");
     }
     return builder.toString();
+  }
+
+  public String clientUrl() {
+    return new HttpUrl.Builder()
+        .scheme("http")
+        .host(HOST)
+        .port(orion.clientPort())
+        .build()
+        .toString();
   }
 }
