@@ -72,6 +72,8 @@ dependencyManagement {
 
     dependency 'org.rocksdb:rocksdbjni:5.17.2'
 
+    dependency 'org.springframework.security:spring-security-crypto:5.1.3.RELEASE'
+    
     dependency 'org.web3j:abi:4.1.0'
     dependency 'org.web3j:core:4.1.0'
     dependency 'org.web3j:crypto:4.1.0'
