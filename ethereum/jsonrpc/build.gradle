@@ -38,6 +38,8 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
+  implementation 'net.consensys.cava:cava-toml'
+  implementation 'org.springframework.security:spring-security-crypto'
 
   testImplementation project(':config')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
