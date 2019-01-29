@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.util;
 
+import com.google.common.base.Throwables;
+
 public class ExceptionUtils {
 
   private ExceptionUtils() {}
@@ -23,16 +25,6 @@ public class ExceptionUtils {
    * @return The root cause
    */
   public static Throwable rootCause(final Throwable throwable) {
-    Throwable cause = throwable;
-
-    while (cause != null) {
-      if (cause.getCause() == null) {
-        break;
-      }
-
-      cause = cause.getCause();
-    }
-
-    return cause;
+    return throwable != null ? Throwables.getRootCause(throwable) : null;
   }
 }
