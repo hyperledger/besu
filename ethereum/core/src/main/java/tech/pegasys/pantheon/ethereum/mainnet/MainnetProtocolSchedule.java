@@ -15,6 +15,8 @@ package tech.pegasys.pantheon.ethereum.mainnet;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
+import tech.pegasys.pantheon.ethereum.difficulty.fixed.FixedDifficultyCalculators;
+import tech.pegasys.pantheon.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 
 import java.util.function.Function;
 
@@ -38,6 +40,9 @@ public class MainnetProtocolSchedule {
    */
   public static ProtocolSchedule<Void> fromConfig(
       final GenesisConfigOptions config, final PrivacyParameters privacyParameters) {
+    if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
+      return FixedDifficultyProtocolSchedule.create(config, privacyParameters);
+    }
     return new ProtocolScheduleBuilder<>(
             config, DEFAULT_CHAIN_ID, Function.identity(), privacyParameters)
         .createProtocolSchedule();

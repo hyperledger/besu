@@ -71,6 +71,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public EthashConfigOptions getEthashConfigOptions() {
+    return isEthHash()
+        ? new EthashConfigOptions(configRoot.getJsonObject(ETHASH_CONFIG_KEY))
+        : EthashConfigOptions.DEFAULT;
+  }
+
+  @Override
   public OptionalLong getHomesteadBlockNumber() {
     return getOptionalLong("homesteadblock");
   }
@@ -113,8 +120,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   private OptionalLong getOptionalLong(final String key) {
-    return configRoot.containsKey(key)
-        ? OptionalLong.of(configRoot.getLong(key))
-        : OptionalLong.empty();
+    return ConfigUtil.getOptionalLong(configRoot, key);
   }
 }

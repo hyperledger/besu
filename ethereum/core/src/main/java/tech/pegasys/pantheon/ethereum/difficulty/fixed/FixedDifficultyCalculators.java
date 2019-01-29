@@ -10,8 +10,9 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.development;
+package tech.pegasys.pantheon.ethereum.difficulty.fixed;
 
+import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.ethereum.mainnet.DifficultyCalculator;
 
 import java.math.BigInteger;
@@ -21,12 +22,16 @@ import java.math.BigInteger;
  * development (typically) uses CPU based mining, a negligible difficulty ensures tests etc. execute
  * quickly.
  */
-public class DevelopmentDifficultyCalculators {
+public class FixedDifficultyCalculators {
 
-  public static final BigInteger MINIMUM_DIFFICULTY = BigInteger.valueOf(500L);
+  public static final int DEFAULT_DIFFICULTY = 100;
 
-  public static DifficultyCalculator<Void> DEVELOPER =
-      (time, parent, context) -> {
-        return MINIMUM_DIFFICULTY;
-      };
+  public static boolean isFixedDifficultyInConfig(final GenesisConfigOptions config) {
+    return config.getEthashConfigOptions().getFixedDifficulty().isPresent();
+  }
+
+  public static DifficultyCalculator<Void> calculator(final GenesisConfigOptions config) {
+    long difficulty = config.getEthashConfigOptions().getFixedDifficulty().getAsLong();
+    return (time, parent, context) -> BigInteger.valueOf(difficulty);
+  }
 }
