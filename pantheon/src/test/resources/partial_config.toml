@@ -1,4 +1,4 @@
-# this is a valid prtial TOML config file
+# this is a valid partial TOML config file
 
 #mining
 miner-coinbase="0x0000000000000000000000000000000000000002"

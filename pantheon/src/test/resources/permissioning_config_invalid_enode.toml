@@ -1,0 +1,4 @@
+# Permissioning TOML file
+
+accounts-whitelist=["0x0000000000000000000000000000000000000009"]
+nodes-whitelist=["enode://bob@192.168.0.9:4567"]

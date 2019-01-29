@@ -25,7 +25,7 @@ metrics-port=309
 genesis-file="~/genesis.json" # Path
 network-id=42
 sync-mode="fast"# should be FAST or FULL (or fast or full)
-ottoman=false # true means using ottoman testnet if genesys file uses iBFT
+ottoman=false # true means using ottoman testnet if genesis file uses iBFT
 
 #mining
 miner-coinbase="0x0000000000000000000000000000000000000002"

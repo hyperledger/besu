@@ -24,6 +24,7 @@ import static tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer.DEFAULT_PORT;
 import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
 import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.createDefault;
 
+import tech.pegasys.pantheon.PermissioningConfigurationBuilder;
 import tech.pegasys.pantheon.Runner;
 import tech.pegasys.pantheon.RunnerBuilder;
 import tech.pegasys.pantheon.cli.custom.CorsAllowedOriginsProperty;
@@ -44,15 +45,13 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
-import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
-import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 import tech.pegasys.pantheon.util.BlockImporter;
 import tech.pegasys.pantheon.util.InvalidConfigurationException;
+import tech.pegasys.pantheon.util.PermissioningConfigurationValidator;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.File;
@@ -66,7 +65,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.io.Resources;
@@ -457,6 +455,18 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   )
   private final BytesValue extraData = DEFAULT_EXTRA_DATA;
 
+  @Option(
+    names = {"--permissions-nodes-enabled"},
+    description = "Set if node level permissions should be enabled (default: ${DEFAULT-VALUE})"
+  )
+  private final Boolean permissionsNodesEnabled = false;
+
+  @Option(
+    names = {"--permissions-accounts-enabled"},
+    description = "Set if account level permissions should be enabled (default: ${DEFAULT-VALUE})"
+  )
+  private final Boolean permissionsAccountsEnabled = false;
+
   // Permissioning: A list of whitelist nodes can be passed.
   @Option(
     names = {"--nodes-whitelist"},
@@ -600,23 +610,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private void ensureAllBootnodesAreInWhitelist(
       final EthNetworkConfig ethNetworkConfig,
       final PermissioningConfiguration permissioningConfiguration) {
-    final List<Peer> bootnodes =
-        DiscoveryConfiguration.getBootstrapPeersFromGenericCollection(
-            ethNetworkConfig.getBootNodes());
-    if (permissioningConfiguration.isNodeWhitelistSet() && bootnodes != null) {
-      final List<Peer> whitelist =
-          permissioningConfiguration
-              .getNodeWhitelist()
-              .stream()
-              .map(DefaultPeer::fromURI)
-              .collect(Collectors.toList());
-      for (final Peer bootnode : bootnodes) {
-        if (!whitelist.contains(bootnode)) {
-          throw new ParameterException(
-              new CommandLine(this),
-              "Cannot start node with bootnode(s) that are not in nodes-whitelist " + bootnode);
-        }
-      }
+    try {
+      PermissioningConfigurationValidator.areAllBootnodesAreInWhitelist(
+          ethNetworkConfig, permissioningConfiguration);
+    } catch (Exception e) {
+      throw new ParameterException(new CommandLine(this), e.getMessage());
     }
   }
 
@@ -681,10 +679,16 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   }
 
   private PermissioningConfiguration permissioningConfiguration() {
+
+    if (!permissionsAccountsEnabled && !permissionsNodesEnabled) {
+      return PermissioningConfiguration.createDefault();
+    }
+
     final PermissioningConfiguration permissioningConfiguration =
-        PermissioningConfiguration.createDefault();
-    permissioningConfiguration.setNodeWhitelist(nodesWhitelist);
-    permissioningConfiguration.setAccountWhitelist(accountsWhitelist);
+        PermissioningConfigurationBuilder.permissioningConfigurationFromToml(
+            DefaultCommandValues.PERMISSIONING_CONFIG_LOCATION,
+            permissionsNodesEnabled,
+            permissionsAccountsEnabled);
     return permissioningConfiguration;
   }
 

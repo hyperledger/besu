@@ -41,7 +41,7 @@ class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<List<Ob
     this.configFileOptionName = configFileOptionName;
     this.isDocker = isDocker;
     // use the same output as the regular options handler to ensure that outputs are all going
-    // the in the same place. No need to do this for the exception handler as we reuse it directly.
+    // in the same place. No need to do this for the exception handler as we reuse it directly.
     this.useOut(resultHandler.out());
   }
 
