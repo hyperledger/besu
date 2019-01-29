@@ -73,12 +73,8 @@ class MetricsHttpService implements MetricsService {
         "Invalid port configuration.");
     checkArgument(config.getHost() != null, "Required host is not configured.");
     checkArgument(
-        MetricsConfiguration.MODE_SERVER_PULL.equals(config.getMode()),
-        "Metrics Http Service cannot start up outside of '"
-            + MetricsConfiguration.MODE_SERVER_PULL
-            + "' mode, requested mode is '"
-            + config.getMode()
-            + "'.");
+        !(config.isEnabled() && config.isPushEnabled()),
+        "Metrics Http Service cannot run concurrent with push metrics.");
   }
 
   @Override

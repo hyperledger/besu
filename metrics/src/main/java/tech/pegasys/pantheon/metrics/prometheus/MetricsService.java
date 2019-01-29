@@ -25,13 +25,12 @@ public interface MetricsService {
       final Vertx vertx,
       final MetricsConfiguration configuration,
       final MetricsSystem metricsSystem) {
-    switch (configuration.getMode()) {
-      case MetricsConfiguration.MODE_PUSH_GATEWAY:
-        return new MetricsPushGatewayService(configuration, metricsSystem);
-      case MetricsConfiguration.MODE_SERVER_PULL:
-        return new MetricsHttpService(vertx, configuration, metricsSystem);
-      default:
-        throw new RuntimeException("No metrics service for mode '" + configuration.getMode() + "'");
+    if (configuration.isEnabled()) {
+      return new MetricsPushGatewayService(configuration, metricsSystem);
+    } else if (configuration.isPushEnabled()) {
+      return new MetricsHttpService(vertx, configuration, metricsSystem);
+    } else {
+      throw new RuntimeException("No metrics service enabled.");
     }
   }
 

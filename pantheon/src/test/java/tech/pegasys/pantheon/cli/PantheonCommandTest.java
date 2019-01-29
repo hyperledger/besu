@@ -1248,13 +1248,29 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void metricsModeOptionMustBeUsed() {
-    parseCommand("--metrics-mode", "pull");
+  public void metricsPushEnabledPropertyMustBeUsed() {
+    parseCommand("--metrics-push-enabled");
 
     verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(metricsConfigArgumentCaptor.getValue().getMode()).isEqualTo("pull");
+    assertThat(metricsConfigArgumentCaptor.getValue().isPushEnabled()).isTrue();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void metricsPushHostAndPushPortOptionMustBeUsed() {
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    parseCommand("--metrics-push-host", host, "--metrics-push-port", String.valueOf(port));
+
+    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(metricsConfigArgumentCaptor.getValue().getPushHost()).isEqualTo(host);
+    assertThat(metricsConfigArgumentCaptor.getValue().getPushPort()).isEqualTo(port);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1275,7 +1291,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   @Test
   public void metricsPrometheusJobMustBeUsed() {
-    parseCommand("--metrics-prometheus-job", "pantheon-command-test");
+    parseCommand("--metrics-push-prometheus-job", "pantheon-command-test");
 
     verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
@@ -1285,6 +1301,23 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void metricsAndMetricsPushMustNotBeUsedTogether() throws Exception {
+    assumeTrue(isFullInstantiation());
+
+    final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    parseCommand("--metrics-enabled", "--metrics-push-enabled");
+
+    verifyZeroInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .startsWith("--metrics-enabled option and --metrics-push-enabled option can't be used");
   }
 
   @Test
