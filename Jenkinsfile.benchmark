@@ -1,10 +1,11 @@
 properties([
         parameters([
-                string(name: 'BENCHMARKS_FORK', defaultValue: 'PegaSysEng', description: 'The user or org from which to checkout the benchmarks repo', trim: true),
-                string(name: 'BENCHMARKS_BRANCH', defaultValue: 'master', description: 'The benchmarks branch to be checked out', trim: true),
-                string(name: 'NETWORK', defaultValue: 'ropsten', description: 'The name of the network being tested', trim: true),
-                string(name: 'DATASET', defaultValue: 'from-0-by-100k', description: 'The name of the directory containing the benchmark data', trim: true),
-                string(name: 'IMPORT_FILE', defaultValue: 'ropsten-000k-100k.blocks', description: 'The name of the file to import', trim: true)
+                string(name: 'BENCHMARK_GITHUB_ORG', defaultValue: 'PegaSysEng', description: 'The user or org from which to checkout the benchmark repo', trim: true),
+                string(name: 'BENCHMARK_REPO', defaultValue: 'pantheon-benchmark', description: 'The benchmark repo to be checked out', trim: true),
+                string(name: 'BENCHMARK_BRANCH', defaultValue: 'master', description: 'The benchmark branch to be checked out', trim: true),
+                choice(name: 'NETWORK', choices: ['ropsten', 'mainnet'], description: 'The name of the network being tested', trim: true),
+                choice(name: 'DATASET', choices: ['from-0-by-100k', 'from-0-to-1m', 'from-0', 'from-6784589'], description: 'Ropsten: choose from-0-by-100k or from-0-to-1m, Mainnet choose from-0 or from-from-6784589', trim: true),
+                choice(name: 'IMPORT_FILE', choices: ['ropsten-000k-100k.blocks', 'ropsten-0-1M.blocks', '0-999.blocks', '6784590-6785589.blocks'], description: 'The name of the file to import, same ordial position as DATASET', trim: true)
         ])
 ])
 
@@ -21,7 +22,10 @@ pipeline {
         stage('Pull pantheon-benchmark') {
             steps {
                 script {
-                    checkout([$class: 'GitSCM', branches: [[name: "*/${params.BENCHMARKS_BRANCH}"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'pantheon-benchmarks']], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'f3f67c22-eead-47db-a8c1-fe32b483583a', url: "git@github.com:${params.BENCHMARKS_FORK}/pantheon-benchmark.git"]]])
+                    // because of JENKINS-28447 we can't rely on late eval
+                    def URL = 'git@github.com:' + params.BENCHMARK_GITHUB_ORG + '/' + params.BENCHMARK_REPO + '.git'
+                    def branch = '*/' + params.BENCHMARK_BRANCH
+                    checkout([$class: 'GitSCM', branches: [[name: branch]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'pantheon-benchmarks']], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'f3f67c22-eead-47db-a8c1-fe32b483583a', url: URL]]])
                 }
             }
         }
@@ -30,11 +34,8 @@ pipeline {
                 withEnv([
                         "DATA_DIR=/data",
                         "BENCHMARKS_DATA=/benchmarks-data",
-                        "NETWORK=${params.NETWORK}",
-                        "DATASET=${params.DATASET}",
-                        "IMPORT_FILE=${params.IMPORT_FILE}",
                         "PANTHEON_SRC_DIR=${WORKSPACE}",
-                        "DESCRIPTION=automatic_${params.IMPORT_FILE}"
+                        "DESCRIPTION=automatic"
                 ]) {
                     dir('pantheon-benchmarks') {
                         script {
