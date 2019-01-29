@@ -6,6 +6,9 @@ Pantheon implements the Clique and IBFT 2.0 Proof of Authority consensus protoco
 consensus protocols are used when participants are known to each other and there is a level of trust between them. 
 For example, in a permissioned consortium network. 
 
+!!! note 
+    IBFT 2.0 is under development and will be available in v1.0. 
+
 Proof of Authority consensus protocols allow faster block times and have a much greater throughput of transactions 
 than the Ethash Proof of Work consensus protocol used on the Ethereum MainNet. 
 

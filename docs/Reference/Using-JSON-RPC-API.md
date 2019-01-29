@@ -76,8 +76,8 @@ The `ETH`, `NET`, `WEB3`, `CLIQUE`, and `IBFT` APIs are enabled by default.
 
 Use the [`--rpc-api` option](Pantheon-CLI-Syntax.md#rpc-api) to enable the `ADMIN`, `DEBUG`, and `MINER` APIs.
 
-!!!note
-    :construction: IBFT is not currently supported. Support for IBFT is in active development. 
+!!! note 
+    IBFT 2.0 and Permissioning are under development and will be available in v1.0. 
 
 ### Block Parameter
 
