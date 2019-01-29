@@ -417,6 +417,33 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void nodekeyOptionDisabledUnderDocker() {
+    System.setProperty("pantheon.docker", "true");
+
+    assumeFalse(isFullInstantiation());
+
+    final File file = new File("./specific/key");
+
+    parseCommand("--node-private-key-file", file.getPath());
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Unknown options: --node-private-key-file, .");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void nodekeyDefaultedUnderDocker() {
+    System.setProperty("pantheon.docker", "true");
+
+    assumeFalse(isFullInstantiation());
+
+    parseCommand();
+
+    verify(mockControllerBuilder).nodePrivateKeyFile(fileArgumentCaptor.capture());
+    assertThat(fileArgumentCaptor.getValue()).isEqualTo(new File("/var/lib/pantheon/key"));
+  }
+
+  @Test
   public void dataDirOptionMustBeUsed() throws Exception {
     assumeTrue(isFullInstantiation());
 
