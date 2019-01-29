@@ -13,19 +13,14 @@
 package tech.pegasys.pantheon.consensus.ibft;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import tech.pegasys.pantheon.consensus.ibft.messagedata.CommitMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.NewRoundMessageData;
-import tech.pegasys.pantheon.consensus.ibft.messagedata.PrepareMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.RoundChangeMessageData;
 import tech.pegasys.pantheon.consensus.ibft.network.MockPeerFactory;
 import tech.pegasys.pantheon.consensus.ibft.network.ValidatorMulticaster;
 import tech.pegasys.pantheon.consensus.ibft.payload.Payload;
-import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -52,7 +47,7 @@ public class IbftGossipTest {
 
   @Before
   public void setup() {
-    ibftGossip = new IbftGossip(validatorMulticaster, 10);
+    ibftGossip = new IbftGossip(validatorMulticaster);
     peerConnection = MockPeerFactory.create(senderAddress);
   }
 
@@ -64,25 +59,8 @@ public class IbftGossipTest {
     final MessageData messageData = createMessageData.apply(payload);
     final Message message = new DefaultMessage(peerConnection, messageData);
 
-    final boolean gossipResult = ibftGossip.gossipMessage(message);
-    assertThat(gossipResult).isTrue();
+    ibftGossip.send(message);
     verify(validatorMulticaster)
-        .send(messageData, newArrayList(senderAddress, payload.getSender()));
-  }
-
-  private <P extends Payload> void assertRebroadcastOnlyOnce(
-      final Function<KeyPair, SignedData<P>> createPayload,
-      final Function<SignedData<P>, MessageData> createMessageData) {
-    final KeyPair keypair = KeyPair.generate();
-    final SignedData<P> payload = createPayload.apply(keypair);
-    final MessageData messageData = createMessageData.apply(payload);
-    final Message message = new DefaultMessage(peerConnection, messageData);
-
-    final boolean gossip1Result = ibftGossip.gossipMessage(message);
-    final boolean gossip2Result = ibftGossip.gossipMessage(message);
-    assertThat(gossip1Result).isTrue();
-    assertThat(gossip2Result).isFalse();
-    verify(validatorMulticaster, times(1))
         .send(messageData, newArrayList(senderAddress, payload.getSender()));
   }
 
@@ -93,42 +71,8 @@ public class IbftGossipTest {
   }
 
   @Test
-  public void assertRebroadcastsProposalOnlyOnce() {
-    assertRebroadcastOnlyOnce(
-        TestHelpers::createSignedProposalPayload, ProposalMessageData::create);
-  }
-
-  @Test
-  public void assertRebroadcastsPrepareToAllExceptSignerAndSender() {
-    assertRebroadcastToAllExceptSignerAndSender(
-        TestHelpers::createSignedPreparePayload, PrepareMessageData::create);
-  }
-
-  @Test
-  public void assertRebroadcastsPrepareOnlyOnce() {
-    assertRebroadcastOnlyOnce(TestHelpers::createSignedPreparePayload, PrepareMessageData::create);
-  }
-
-  @Test
-  public void assertRebroadcastsCommitToAllExceptSignerAndSender() {
-    assertRebroadcastToAllExceptSignerAndSender(
-        TestHelpers::createSignedCommitPayload, CommitMessageData::create);
-  }
-
-  @Test
-  public void assertRebroadcastsCommitOnlyOnce() {
-    assertRebroadcastOnlyOnce(TestHelpers::createSignedCommitPayload, CommitMessageData::create);
-  }
-
-  @Test
   public void assertRebroadcastsRoundChangeToAllExceptSignerAndSender() {
     assertRebroadcastToAllExceptSignerAndSender(
-        TestHelpers::createSignedRoundChangePayload, RoundChangeMessageData::create);
-  }
-
-  @Test
-  public void assertRebroadcastsRoundChangeOnlyOnce() {
-    assertRebroadcastOnlyOnce(
         TestHelpers::createSignedRoundChangePayload, RoundChangeMessageData::create);
   }
 
@@ -136,59 +80,5 @@ public class IbftGossipTest {
   public void assertRebroadcastsNewRoundToAllExceptSignerAndSender() {
     assertRebroadcastToAllExceptSignerAndSender(
         TestHelpers::createSignedNewRoundPayload, NewRoundMessageData::create);
-  }
-
-  @Test
-  public void assertRebroadcastsNewRoundOnlyOnce() {
-    assertRebroadcastOnlyOnce(
-        TestHelpers::createSignedNewRoundPayload, NewRoundMessageData::create);
-  }
-
-  @Test
-  public void evictMessageRecordAtCapacity() {
-    final KeyPair keypair = KeyPair.generate();
-    final SignedData<ProposalPayload> payload =
-        TestHelpers.createSignedProposalPayloadWithRound(keypair, 0);
-    final MessageData messageData = ProposalMessageData.create(payload);
-    final Message message = new DefaultMessage(peerConnection, messageData);
-    final boolean gossip1Result = ibftGossip.gossipMessage(message);
-    final boolean gossip2Result = ibftGossip.gossipMessage(message);
-    assertThat(gossip1Result).isTrue();
-    assertThat(gossip2Result).isFalse();
-    verify(validatorMulticaster, times(1))
-        .send(messageData, newArrayList(senderAddress, payload.getSender()));
-
-    for (int i = 1; i <= 9; i++) {
-      final SignedData<ProposalPayload> nextPayload =
-          TestHelpers.createSignedProposalPayloadWithRound(keypair, i);
-      final MessageData nextMessageData = ProposalMessageData.create(nextPayload);
-      final Message nextMessage = new DefaultMessage(peerConnection, nextMessageData);
-      final boolean nextGossipResult = ibftGossip.gossipMessage(nextMessage);
-      assertThat(nextGossipResult).isTrue();
-    }
-
-    final boolean gossip3Result = ibftGossip.gossipMessage(message);
-    assertThat(gossip3Result).isFalse();
-    verify(validatorMulticaster, times(1))
-        .send(messageData, newArrayList(senderAddress, payload.getSender()));
-
-    {
-      final SignedData<ProposalPayload> nextPayload =
-          TestHelpers.createSignedProposalPayloadWithRound(keypair, 10);
-      final MessageData nextMessageData = ProposalMessageData.create(nextPayload);
-      final Message nextMessage = new DefaultMessage(peerConnection, nextMessageData);
-      final boolean nextGossipResult = ibftGossip.gossipMessage(nextMessage);
-      assertThat(nextGossipResult).isTrue();
-    }
-
-    final boolean gossip4Result = ibftGossip.gossipMessage(message);
-    assertThat(gossip4Result).isTrue();
-    verify(validatorMulticaster, times(2))
-        .send(messageData, newArrayList(senderAddress, payload.getSender()));
-
-    final boolean gossip5Result = ibftGossip.gossipMessage(message);
-    assertThat(gossip5Result).isFalse();
-    verify(validatorMulticaster, times(2))
-        .send(messageData, newArrayList(senderAddress, payload.getSender()));
   }
 }

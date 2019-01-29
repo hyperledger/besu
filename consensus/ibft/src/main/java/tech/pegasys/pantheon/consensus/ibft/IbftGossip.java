@@ -20,40 +20,18 @@ import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.RoundChangeMessageData;
 import tech.pegasys.pantheon.consensus.ibft.network.ValidatorMulticaster;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
-import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import com.google.common.collect.Lists;
 
 /** Class responsible for rebroadcasting IBFT messages to known validators */
-public class IbftGossip {
+public class IbftGossip implements Gossiper {
+
   private final ValidatorMulticaster multicaster;
-
-  // Size of the seenMessages cache, should end up utilising 65bytes * this number + some meta data
-  private final int maxSeenMessages;
-
-  // Set that starts evicting members when it hits capacity
-  private final Set<Signature> seenMessages =
-      Collections.newSetFromMap(
-          new LinkedHashMap<Signature, Boolean>() {
-            @Override
-            protected boolean removeEldestEntry(final Map.Entry<Signature, Boolean> eldest) {
-              return size() > maxSeenMessages;
-            }
-          });
-
-  IbftGossip(final ValidatorMulticaster multicaster, final int maxSeenMessages) {
-    this.maxSeenMessages = maxSeenMessages;
-    this.multicaster = multicaster;
-  }
 
   /**
    * Constructor that attaches gossip logic to a set of multicaster
@@ -61,16 +39,16 @@ public class IbftGossip {
    * @param multicaster Network connections to the remote validators
    */
   public IbftGossip(final ValidatorMulticaster multicaster) {
-    this(multicaster, 10_000);
+    this.multicaster = multicaster;
   }
 
   /**
    * Retransmit a given IBFT message to other known validators nodes
    *
    * @param message The raw message to be gossiped
-   * @return Whether the message was rebroadcast or has been ignored as a repeat
    */
-  public boolean gossipMessage(final Message message) {
+  @Override
+  public void send(final Message message) {
     final MessageData messageData = message.getData();
     final SignedData<?> signedData;
     switch (messageData.getCode()) {
@@ -93,16 +71,9 @@ public class IbftGossip {
         throw new IllegalArgumentException(
             "Received message does not conform to any recognised IBFT message structure.");
     }
-    final Signature signature = signedData.getSignature();
-    if (seenMessages.contains(signature)) {
-      return false;
-    } else {
-      final List<Address> excludeAddressesList =
-          Lists.newArrayList(
-              message.getConnection().getPeer().getAddress(), signedData.getSender());
-      multicaster.send(messageData, excludeAddressesList);
-      seenMessages.add(signature);
-      return true;
-    }
+    final List<Address> excludeAddressesList =
+        Lists.newArrayList(message.getConnection().getPeer().getAddress(), signedData.getSender());
+
+    multicaster.send(messageData, excludeAddressesList);
   }
 }
