@@ -3,6 +3,8 @@ path: blob/master/config/src/main/resources/
 source: rinkeby.json
 <!--- END of page meta data -->
 
+*[vanity data]: Signers can include anything they like as vanity data.
+
 # Clique
 
 Pantheon implements the Clique Proof-of-Authority (PoA) consensus protocol. Clique is used by the
@@ -49,9 +51,10 @@ command line option. To start a node on a Clique private network, use the
 
 To propose adding or removing signers using the JSON-RPC methods, enable the HTTP interface 
 using [`--rpc-http-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled) or WebSockets interface using 
-[`--rpc-ws-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-enabled). If also using the 
-[`--rpc-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-api) 
-or [`--ws-api`](../Reference/Pantheon-CLI-Syntax.md#ws-api) options, include `CLIQUE`.
+[`--rpc-ws-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-enabled). 
+
+The Clique API methods are not enabled by default. To enable, specify the [`--rpc-http-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-api) 
+or [`--rpc-ws-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-api) option and include `CLIQUE`.
 
 The JSON-RPC methods to add or remove signers are:
 
@@ -93,4 +96,3 @@ Existing proposals remain in effect and signers re-add their vote the next time 
 
 Define the number of blocks between epoch transitions in the genesis file. 
 
-*[vanity data]: Signers can include anything they like as vanity data.
