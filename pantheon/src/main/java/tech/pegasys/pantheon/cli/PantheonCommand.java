@@ -453,29 +453,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   )
   private final Boolean permissionsAccountsEnabled = false;
 
-  // Permissioning: A list of whitelist nodes can be passed.
-  @Option(
-    names = {"--nodes-whitelist"},
-    description =
-        "Comma separated enode URLs for permissioned networks. "
-            + "Not intended to be used with mainnet or public testnets.",
-    split = ",",
-    arity = "0..*",
-    converter = EnodeToURIPropertyConverter.class
-  )
-  private final Collection<URI> nodesWhitelist = null;
-
-  @Option(
-    names = {"--accounts-whitelist"},
-    paramLabel = "<hex string of account public key>",
-    description =
-        "Comma separated hex strings of account public keys "
-            + "for permissioned/role-based transactions. You may specify an empty list.",
-    split = ",",
-    arity = "0..*"
-  )
-  private final Collection<String> accountsWhitelist = null;
-
   @Option(
     names = {"--privacy-url"},
     description = "The URL on which enclave is running "

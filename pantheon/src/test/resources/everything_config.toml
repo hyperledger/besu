@@ -64,8 +64,6 @@ miner-extra-data="0x444F4E27542050414E4943202120484F444C2C20484F444C2C20484F444C
 min-gas-price="1"
 
 # Permissioning
-accounts-whitelist=["0x0000000000000000000000000000000000000009"]
-nodes-whitelist=["all"]
 permissions-nodes-enabled=false
 permissions-accounts-enabled=false
 
