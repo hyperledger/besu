@@ -22,6 +22,7 @@ import static tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfigur
 import static tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_REFRESH_DELAY;
 import static tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer.DEFAULT_PORT;
 import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
+import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
 import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.createDefault;
 
 import tech.pegasys.pantheon.PermissioningConfigurationBuilder;
@@ -352,13 +353,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Boolean isMetricsEnabled = false;
 
   @Option(
-    names = {"--metrics-mode"},
-    description =
-        "Mode for the metrics service to run in, 'push' or 'pull' (default: ${DEFAULT-VALUE})"
-  )
-  private String metricsMode = MetricsConfiguration.MODE_SERVER_PULL;
-
-  @Option(
     names = {"--metrics-host"},
     paramLabel = MANDATORY_HOST_FORMAT_HELP,
     description = "Host for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
@@ -376,6 +370,30 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Integer metricsPort = DEFAULT_METRICS_PORT;
 
   @Option(
+    names = {"--metrics-push-enabled"},
+    description =
+        "Set if the metrics push gateway integration should be started (default: ${DEFAULT-VALUE})"
+  )
+  private Boolean isMetricsPushEnabled = false;
+
+  @Option(
+    names = {"--metrics-push-host"},
+    paramLabel = MANDATORY_HOST_FORMAT_HELP,
+    description = "Host of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
+    arity = "1"
+  )
+  private final HostSpecifier metricsPushHost =
+      HostSpecifier.fromValid(autoDiscoverDefaultIP().getHostAddress());
+
+  @Option(
+    names = {"--metrics-push-port"},
+    paramLabel = MANDATORY_PORT_FORMAT_HELP,
+    description = "Port of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
+    arity = "1"
+  )
+  private final Integer metricsPushPort = DEFAULT_METRICS_PUSH_PORT;
+
+  @Option(
     names = {"--metrics-push-interval"},
     paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
     description =
@@ -385,7 +403,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Integer metricsPushInterval = 15;
 
   @Option(
-    names = {"--metrics-prometheus-job"},
+    names = {"--metrics-push-prometheus-job"},
     description = "Job name to use when in push mode (default: ${DEFAULT-VALUE})",
     arity = "1"
   )
@@ -630,11 +648,20 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   }
 
   MetricsConfiguration metricsConfiguration() {
+    if (isMetricsEnabled && isMetricsPushEnabled) {
+      throw new ParameterException(
+          new CommandLine(this),
+          "--metrics-enabled option and --metrics-push-enabled option can't be used at the same "
+              + "time.  Please refer to CLI reference for more details about this constraint.");
+    }
+
     final MetricsConfiguration metricsConfiguration = createDefault();
     metricsConfiguration.setEnabled(isMetricsEnabled);
-    metricsConfiguration.setMode(metricsMode);
     metricsConfiguration.setHost(metricsHost.toString());
     metricsConfiguration.setPort(metricsPort);
+    metricsConfiguration.setPushEnabled(isMetricsPushEnabled);
+    metricsConfiguration.setPushHost(metricsPushHost.toString());
+    metricsConfiguration.setPushPort(metricsPushPort);
     metricsConfiguration.setPushInterval(metricsPushInterval);
     metricsConfiguration.setPrometheusJob(metricsPrometheusJob);
     metricsConfiguration.setHostsWhitelist(hostsWhitelist);
@@ -752,8 +779,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         // conflict error
         throw new ParameterException(
             new CommandLine(this),
-            "--network option and --genesis-file option can't be used at the same time."
-                + "Please refer to CLI reference for more details about this constraint.");
+            "--network option and --genesis-file option can't be used at the same time.  Please "
+                + "refer to CLI reference for more details about this constraint.");
       }
 
       builder.setGenesisConfig(genesisConfig());
