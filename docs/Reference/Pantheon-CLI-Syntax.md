@@ -597,7 +597,7 @@ rpc-http-cors-origins=["http://medomain.com","https://meotherdomain.com"]
 ```
 
 ```bash tab="Remix IDE domain example"
-# The following allows Remix to interact with your Pantheon node without using MetaMask.
+# The following allows Remix to interact with your Pantheon node.
 
 --rpc-http-cors-origins="http://remix.ethereum.org"
 ```
@@ -605,17 +605,17 @@ rpc-http-cors-origins=["http://medomain.com","https://meotherdomain.com"]
 Specifies domain URLs for CORS validation.
 Domain URLs must be enclosed in double quotes and comma-separated.
 
-Listed domains will be allowed access to node data (whitelisted).
-If your client interacts with Pantheon using a browser app (such as Remix using a direct connection or a block explorer), 
+Listed domains can access the node using JSON-RPC.
+If your client interacts with Pantheon using a browser app (such as Remix or a block explorer), 
 you must whitelist the client domains. 
 
 The default value is `"none"`.
-If you don't whitelist any domains, you won't be able to use webapps to interact with your Pantheon node.
+If you don't whitelist any domains, browser apps cannot interact with your Pantheon node.
 
 !!!note
-    MetaMask runs as native code so does not require CORS validation.
-    If Remix is connecting to the node through MetaMask, it also does not require CORS validation.
-    
+    To run a local Pantheon node as a backend for MetaMask and use MetaMask anywhere, set `--rpc-http-cors-origins` to `"all"` or `"*"`. 
+    To allow a specific domain to use MetaMask with the Pantheon node, set `--rpc-http-cors-origins` to the client domain. 
+        
 !!!tip
     For development purposes, you can use `"all"` or `"*"` to accept requests from any domain, 
     but we don't recommend this for production code.
