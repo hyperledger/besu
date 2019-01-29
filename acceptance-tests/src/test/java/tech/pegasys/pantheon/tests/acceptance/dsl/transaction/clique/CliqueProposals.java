@@ -15,8 +15,8 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j.ProposalsResponse;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.ProposalsResponse;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
@@ -25,9 +25,9 @@ import java.util.Map;
 public class CliqueProposals implements Transaction<Map<Address, Boolean>> {
 
   @Override
-  public Map<Address, Boolean> execute(final PantheonWeb3j node) {
+  public Map<Address, Boolean> execute(final JsonRequestFactories node) {
     try {
-      final ProposalsResponse result = node.cliqueProposals().send();
+      final ProposalsResponse result = node.clique().cliqueProposals().send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
       return result.getResult();

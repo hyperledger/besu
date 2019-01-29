@@ -14,8 +14,8 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j.RemoveAccountsFromWhitelistResponse;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.RemoveAccountsFromWhitelistResponse;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
@@ -30,10 +30,10 @@ public class PermRemoveAccountsFromWhitelistTransaction implements Transaction<B
   }
 
   @Override
-  public Boolean execute(final PantheonWeb3j node) {
+  public Boolean execute(final JsonRequestFactories node) {
     try {
       RemoveAccountsFromWhitelistResponse response =
-          node.removeAccountsFromWhitelist(accounts).send();
+          node.perm().removeAccountsFromWhitelist(accounts).send();
       assertThat(response.getResult()).isTrue();
       return response.getResult();
     } catch (IOException e) {

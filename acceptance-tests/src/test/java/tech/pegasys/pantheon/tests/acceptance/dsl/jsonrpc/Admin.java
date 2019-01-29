@@ -25,7 +25,7 @@ public class Admin {
   private Transaction<Boolean> addPeerTransaction(final String enode) {
     return (n) -> {
       try {
-        final Response<Boolean> resp = n.adminAddPeer(enode).send();
+        final Response<Boolean> resp = n.admin().adminAddPeer(enode).send();
         assertThat(resp).isNotNull();
         assertThat(resp.hasError()).isFalse();
         return resp.getResult();

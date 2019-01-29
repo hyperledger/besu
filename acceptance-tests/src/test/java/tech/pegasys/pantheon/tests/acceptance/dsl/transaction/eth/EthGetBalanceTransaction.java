@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.web3j.protocol.core.DefaultBlockParameterName.LATEST;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
@@ -33,9 +33,9 @@ public class EthGetBalanceTransaction implements Transaction<BigInteger> {
   }
 
   @Override
-  public BigInteger execute(final PantheonWeb3j node) {
+  public BigInteger execute(final JsonRequestFactories node) {
     try {
-      final EthGetBalance result = node.ethGetBalance(account.getAddress(), LATEST).send();
+      final EthGetBalance result = node.eth().ethGetBalance(account.getAddress(), LATEST).send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
 

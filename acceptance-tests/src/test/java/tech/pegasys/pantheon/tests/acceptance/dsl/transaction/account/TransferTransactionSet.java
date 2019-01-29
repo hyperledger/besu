@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ public class TransferTransactionSet implements Transaction<List<Hash>> {
   }
 
   @Override
-  public List<Hash> execute(final PantheonWeb3j node) {
+  public List<Hash> execute(final JsonRequestFactories node) {
     final List<Hash> hashes = new ArrayList<>();
 
     for (final TransferTransaction transaction : transactions) {

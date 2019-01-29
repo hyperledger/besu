@@ -27,6 +27,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.factory.PantheonNodeFacto
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique.CliqueTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft.IbftTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.web3.Web3Transactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.waitcondition.WaitConditions;
@@ -39,6 +40,7 @@ public class AcceptanceTestBase {
   protected final Blockchain blockchain;
   protected final Cluster cluster;
   protected final CliqueTransactions cliqueTransactions;
+  protected final IbftTransactions ibftTransactions;
   protected final Transactions transactions;
   protected final Clique clique;
   protected final Ibft ibft;
@@ -57,8 +59,10 @@ public class AcceptanceTestBase {
     blockchain = new Blockchain(ethTransactions);
     eth = new Eth(ethTransactions);
     cliqueTransactions = new CliqueTransactions();
+    ibftTransactions = new IbftTransactions();
+
     clique = new Clique(ethTransactions, cliqueTransactions);
-    ibft = new Ibft();
+    ibft = new Ibft(ibftTransactions);
     net = new Net(new NetTransactions());
     cluster = new Cluster(net);
     transactions = new Transactions(accounts);
@@ -67,7 +71,7 @@ public class AcceptanceTestBase {
     web3 = new Web3(new Web3Transactions());
     pantheon = new PantheonNodeFactory();
     contractVerifier = new ContractVerifier(accounts.getPrimaryBenefactor());
-    wait = new WaitConditions(ethTransactions, cliqueTransactions);
+    wait = new WaitConditions(ethTransactions, cliqueTransactions, ibftTransactions);
   }
 
   @After

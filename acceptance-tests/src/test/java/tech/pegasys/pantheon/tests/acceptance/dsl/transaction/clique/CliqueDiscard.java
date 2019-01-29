@@ -14,11 +14,12 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j.DiscardResponse;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
+
+import org.web3j.protocol.core.Response;
 
 public class CliqueDiscard implements Transaction<Boolean> {
   private final String address;
@@ -28,9 +29,9 @@ public class CliqueDiscard implements Transaction<Boolean> {
   }
 
   @Override
-  public Boolean execute(final PantheonWeb3j node) {
+  public Boolean execute(final JsonRequestFactories node) {
     try {
-      final DiscardResponse result = node.cliqueDiscard(address).send();
+      final Response<Boolean> result = node.clique().cliqueDiscard(address).send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
       return result.getResult();

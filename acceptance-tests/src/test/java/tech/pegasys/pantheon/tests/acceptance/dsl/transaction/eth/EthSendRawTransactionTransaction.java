@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
@@ -30,9 +30,9 @@ public class EthSendRawTransactionTransaction implements Transaction<String> {
   }
 
   @Override
-  public String execute(final PantheonWeb3j node) {
+  public String execute(final JsonRequestFactories node) {
     try {
-      EthSendTransaction response = node.ethSendRawTransaction(transactionData).send();
+      EthSendTransaction response = node.eth().ethSendRawTransaction(transactionData).send();
       assertThat(response.getTransactionHash()).isNotNull();
       return response.getTransactionHash();
     } catch (final IOException e) {

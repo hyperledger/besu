@@ -10,26 +10,28 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm;
+package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.GetAccountsWhitelistResponse;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.ProposalsResponse;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Map;
 
-public class PermGetAccountsWhitelistTransaction implements Transaction<List<String>> {
+public class IbftProposals implements Transaction<Map<Address, Boolean>> {
 
   @Override
-  public List<String> execute(final JsonRequestFactories node) {
+  public Map<Address, Boolean> execute(final JsonRequestFactories node) {
     try {
-      GetAccountsWhitelistResponse response = node.perm().getAccountsWhitelist().send();
-      assertThat(response.getResult()).isNotNull();
-      return response.getResult();
-    } catch (IOException e) {
+      final ProposalsResponse result = node.ibft().ibftProposals().send();
+      assertThat(result).isNotNull();
+      assertThat(result.hasError()).isFalse();
+      return result.getResult();
+    } catch (final IOException e) {
       throw new RuntimeException(e);
     }
   }

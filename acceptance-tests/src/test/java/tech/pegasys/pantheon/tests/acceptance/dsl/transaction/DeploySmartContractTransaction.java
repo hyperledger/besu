@@ -37,7 +37,7 @@ public class DeploySmartContractTransaction<T extends Contract> implements Trans
   }
 
   @Override
-  public T execute(final PantheonWeb3j node) {
+  public T execute(final JsonRequestFactories node) {
     try {
       final Method method =
           clazz.getMethod(
@@ -45,7 +45,7 @@ public class DeploySmartContractTransaction<T extends Contract> implements Trans
 
       final Object invoked =
           method.invoke(
-              METHOD_IS_STATIC, node, BENEFACTOR_ONE, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT);
+              METHOD_IS_STATIC, node.eth(), BENEFACTOR_ONE, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT);
 
       return cast(invoked).send();
     } catch (final Exception e) {

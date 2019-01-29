@@ -14,8 +14,8 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j.GetNodesWhitelistResponse;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.GetNodesWhitelistResponse;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
@@ -23,9 +23,9 @@ import java.util.List;
 
 public class PermGetNodesWhitelistTransaction implements Transaction<List<String>> {
   @Override
-  public List<String> execute(final PantheonWeb3j node) {
+  public List<String> execute(final JsonRequestFactories node) {
     try {
-      GetNodesWhitelistResponse result = node.getNodesWhitelist().send();
+      GetNodesWhitelistResponse result = node.perm().getNodesWhitelist().send();
       assertThat(result).isNotNull();
       return result.getResult();
     } catch (final IOException e) {
