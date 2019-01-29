@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Gas;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
 
 import java.util.OptionalInt;
@@ -86,32 +87,36 @@ public class MainnetTransactionValidator implements TransactionValidator {
   @Override
   public ValidationResult<TransactionInvalidReason> validateForSender(
       final Transaction transaction, final Account sender, final OptionalLong maximumNonce) {
-    if (sender == null) {
-      return ValidationResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE, "Unknown sender account");
+
+    Wei balance = Account.DEFAULT_BALANCE;
+    long nonce = Account.DEFAULT_NONCE;
+
+    if (sender != null) {
+      balance = sender.getBalance();
+      nonce = sender.getNonce();
     }
-    if (transaction.getUpfrontCost().compareTo(sender.getBalance()) > 0) {
+
+    if (transaction.getUpfrontCost().compareTo(balance) > 0) {
       return ValidationResult.invalid(
           UPFRONT_COST_EXCEEDS_BALANCE,
           String.format(
               "transaction up-front cost %s exceeds transaction sender account balance %s",
-              transaction.getUpfrontCost(), sender.getBalance()));
+              transaction.getUpfrontCost(), balance));
     }
 
-    if (transaction.getNonce() < sender.getNonce()) {
+    if (transaction.getNonce() < nonce) {
       return ValidationResult.invalid(
           NONCE_TOO_LOW,
           String.format(
-              "transaction nonce %s below sender account nonce %s",
-              transaction.getNonce(), sender.getNonce()));
+              "transaction nonce %s below sender account nonce %s", transaction.getNonce(), nonce));
     }
 
-    if (violatesMaximumNonce(transaction, maximumNonce)
-        && sender.getNonce() != transaction.getNonce()) {
+    if (violatesMaximumNonce(transaction, maximumNonce) && nonce != transaction.getNonce()) {
       return ValidationResult.invalid(
           INCORRECT_NONCE,
           String.format(
               "transaction nonce %s does not match sender account nonce %s.",
-              transaction.getNonce(), sender.getNonce()));
+              transaction.getNonce(), nonce));
     }
 
     return ValidationResult.valid();

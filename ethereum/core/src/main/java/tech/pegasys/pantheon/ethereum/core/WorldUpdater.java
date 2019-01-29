@@ -51,7 +51,7 @@ public interface WorldUpdater extends MutableWorldView {
    *     and storage.
    */
   default MutableAccount createAccount(final Address address) {
-    return createAccount(address, 0L, Wei.ZERO);
+    return createAccount(address, Account.DEFAULT_NONCE, Account.DEFAULT_BALANCE);
   }
 
   /**
