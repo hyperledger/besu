@@ -1928,6 +1928,9 @@ None
 
 ## IBFT 2.0 Methods 
 
+!!! note 
+    IBFT 2.0 is under development and will be available in v1.0. 
+
 ### ibft_discardValidatorVote
 
 Discards a proposal to [add or remove a validator](../Consensus-Protocols/IBFT.md#adding-and-removing-validators) with the specified address. 
