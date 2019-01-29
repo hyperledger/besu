@@ -26,9 +26,9 @@ public interface MetricsService {
       final MetricsConfiguration configuration,
       final MetricsSystem metricsSystem) {
     if (configuration.isEnabled()) {
-      return new MetricsPushGatewayService(configuration, metricsSystem);
-    } else if (configuration.isPushEnabled()) {
       return new MetricsHttpService(vertx, configuration, metricsSystem);
+    } else if (configuration.isPushEnabled()) {
+      return new MetricsPushGatewayService(configuration, metricsSystem);
     } else {
       throw new RuntimeException("No metrics service enabled.");
     }
