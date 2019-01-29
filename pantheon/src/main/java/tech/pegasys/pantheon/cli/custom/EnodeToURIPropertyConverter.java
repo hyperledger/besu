@@ -38,6 +38,10 @@ public class EnodeToURIPropertyConverter implements ITypeConverter<URI> {
 
   @Override
   public URI convert(final String value) throws IllegalArgumentException {
+    return convertToURI(value);
+  }
+
+  public static URI convertToURI(final String value) throws IllegalArgumentException {
     checkArgument(
         value != null && !value.isEmpty(), "Can't convert null/empty string to EnodeURLProperty.");
 
@@ -85,7 +89,7 @@ public class EnodeToURIPropertyConverter implements ITypeConverter<URI> {
     }
   }
 
-  private String getAndValidateNodeId(final Matcher matcher) {
+  private static String getAndValidateNodeId(final Matcher matcher) {
     final String invalidNodeIdErrorMsg =
         "Enode URL contains an invalid node ID. Node ID must have 128 characters and shouldn't include the '0x' hex prefix.";
     final String nodeId = matcher.group("nodeId");
@@ -96,7 +100,7 @@ public class EnodeToURIPropertyConverter implements ITypeConverter<URI> {
     return nodeId;
   }
 
-  private Integer getAndValidatePort(final Matcher matcher, final String portName) {
+  private static Integer getAndValidatePort(final Matcher matcher, final String portName) {
     int port = Integer.valueOf(matcher.group(portName));
     checkArgument(
         NetworkUtility.isValidPort(port),
@@ -104,7 +108,7 @@ public class EnodeToURIPropertyConverter implements ITypeConverter<URI> {
     return port;
   }
 
-  private boolean containsDiscoveryPort(final String value) {
+  private static boolean containsDiscoveryPort(final String value) {
     return value.contains("discport");
   }
 }

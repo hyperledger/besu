@@ -2,7 +2,7 @@
 # The odds are you are reading this because you added a CLI and didn't add it
 # here and a test broke.  To fix the test add your CLI to this file.
 #
-# Please use a plausable value, Pantheon has to at least be able to parse it.
+# Please use a plausible value, Pantheon has to at least be able to parse it.
 # If it is a multi-valued CLI make it a TOML array.
 # If it is a number or boolean make it a number or boolean
 # All other config options are strings, and must be quoted.
@@ -67,6 +67,8 @@ min-gas-price="1"
 # Permissioning
 accounts-whitelist=["0x0000000000000000000000000000000000000009"]
 nodes-whitelist=["all"]
+permissions-nodes-enabled=false
+permissions-accounts-enabled=false
 
 # Privacy
 privacy-url="http://127.0.0.1:8888"

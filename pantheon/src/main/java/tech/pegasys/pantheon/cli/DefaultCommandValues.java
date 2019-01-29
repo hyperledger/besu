@@ -42,6 +42,7 @@ interface DefaultCommandValues {
   long DEFAULT_MAX_REFRESH_DELAY = 3600000;
   long DEFAULT_MIN_REFRESH_DELAY = 1;
   String DOCKER_GENESIS_LOCATION = "/etc/pantheon/genesis.json";
+  String PERMISSIONING_CONFIG_LOCATION = "/etc/pantheon/permissioned_config.toml";
   String DOCKER_DATADIR_LOCATION = "/var/lib/pantheon";
   String MANDATORY_HOST_FORMAT_HELP = "<HOST>";
   String MANDATORY_PORT_FORMAT_HELP = "<PORT>";
