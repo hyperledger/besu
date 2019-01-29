@@ -11,7 +11,8 @@ The following lists the Pantheon JSON-RPC API commands:
 ## Admin Methods
 
 !!! note
-    The `ADMIN` API is not enabled by default. Use the [`--rpc-api` option](Pantheon-CLI-Syntax.md#rpc-api) to enable the `ADMIN` API.
+    The `ADMIN` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
+    or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `ADMIN` API methods.
 
 ### admin_peers
 
@@ -1525,6 +1526,10 @@ None
 
 ## Clique Methods
 
+!!! note
+    The `CLIQUE` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
+    or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `CLIQUE` API methods.
+
 ### clique_discard
 
 Discards a proposal to add or remove a signer with the specified address. 
@@ -1680,7 +1685,8 @@ If the boolean value is `true`, the proposal is to add a signer. If `false`, the
 ## Debug Methods
 
 !!! note
-    The `DEBUG` API is not enabled by default. Use the [`--rpc-api` option](Pantheon-CLI-Syntax.md#rpc-api) to enable the `DEBUG` API.
+    The `DEBUG` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
+    or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `DEBUG` API methods.
 
 ### debug_metrics
 
@@ -1866,7 +1872,8 @@ Reruns the transaction with the same state as when the transaction was executed.
 ## Miner Methods
 
 !!! note
-    The `MINER` API is not enabled by default. Use the [`--rpc-api option`](Pantheon-CLI-Syntax.md#rpc-api) to enable the `MINER` API.
+    The `MINER` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
+    or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `MINER` API methods.
 
 ### miner_start
 
@@ -1930,6 +1937,10 @@ None
 
 !!! note 
     IBFT 2.0 is under development and will be available in v1.0. 
+
+!!! note
+    The `IBFT` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
+    or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `IBFT` API methods.
 
 ### ibft_discardValidatorVote
 
