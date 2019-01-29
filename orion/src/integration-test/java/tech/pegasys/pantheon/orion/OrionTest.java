@@ -46,7 +46,7 @@ public class OrionTest {
 
     testHarness = OrionTestHarness.create(folder.newFolder().toPath());
 
-    orion = new Orion(testHarness.getConfig().clientUrl().toString());
+    orion = new Orion(testHarness.clientUrl());
   }
 
   @AfterClass
