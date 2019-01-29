@@ -16,7 +16,7 @@ import static org.web3j.utils.Numeric.toHexString;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
@@ -62,11 +62,11 @@ public class TransferTransaction implements Transaction<Hash> {
   }
 
   @Override
-  public Hash execute(final PantheonWeb3j node) {
+  public Hash execute(final JsonRequestFactories node) {
     final String signedTransactionData = signedTransactionData();
     try {
       return Hash.fromHexString(
-          node.ethSendRawTransaction(signedTransactionData).send().getTransactionHash());
+          node.eth().ethSendRawTransaction(signedTransactionData).send().getTransactionHash());
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }

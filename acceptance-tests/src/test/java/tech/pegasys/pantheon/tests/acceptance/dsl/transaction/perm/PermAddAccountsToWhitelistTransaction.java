@@ -14,8 +14,8 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j.AddAccountsToWhitelistResponse;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.AddAccountsToWhitelistResponse;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
@@ -30,9 +30,9 @@ public class PermAddAccountsToWhitelistTransaction implements Transaction<Boolea
   }
 
   @Override
-  public Boolean execute(final PantheonWeb3j node) {
+  public Boolean execute(final JsonRequestFactories node) {
     try {
-      AddAccountsToWhitelistResponse response = node.addAccountsToWhitelist(accounts).send();
+      AddAccountsToWhitelistResponse response = node.perm().addAccountsToWhitelist(accounts).send();
       assertThat(response.getResult()).isTrue();
       return response.getResult();
     } catch (IOException e) {

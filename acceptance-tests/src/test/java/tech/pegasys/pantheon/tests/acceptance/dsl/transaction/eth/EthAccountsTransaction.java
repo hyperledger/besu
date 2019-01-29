@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
@@ -27,9 +27,9 @@ public class EthAccountsTransaction implements Transaction<List<String>> {
   EthAccountsTransaction() {}
 
   @Override
-  public List<String> execute(final PantheonWeb3j node) {
+  public List<String> execute(final JsonRequestFactories node) {
     try {
-      final EthAccounts result = node.ethAccounts().send();
+      final EthAccounts result = node.eth().ethAccounts().send();
       assertThat(result).isNotNull();
       return result.getAccounts();
     } catch (final IOException e) {

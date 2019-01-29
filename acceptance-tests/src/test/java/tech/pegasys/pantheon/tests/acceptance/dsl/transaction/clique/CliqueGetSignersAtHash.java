@@ -16,8 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PantheonWeb3j.SignersBlockResponse;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.SignersBlockResponse;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
@@ -31,9 +31,9 @@ public class CliqueGetSignersAtHash implements Transaction<List<Address>> {
   }
 
   @Override
-  public List<Address> execute(final PantheonWeb3j node) {
+  public List<Address> execute(final JsonRequestFactories node) {
     try {
-      final SignersBlockResponse result = node.cliqueGetSignersAtHash(hash).send();
+      final SignersBlockResponse result = node.clique().cliqueGetSignersAtHash(hash).send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
       return result.getResult();

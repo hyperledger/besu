@@ -19,16 +19,20 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique.CliqueTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft.IbftTransactions;
 
 import java.math.BigInteger;
 
 public class WaitConditions {
   private final EthTransactions eth;
   private final CliqueTransactions clique;
+  private final IbftTransactions ibft;
 
-  public WaitConditions(final EthTransactions eth, final CliqueTransactions clique) {
+  public WaitConditions(
+      final EthTransactions eth, final CliqueTransactions clique, final IbftTransactions ibft) {
     this.eth = eth;
     this.clique = clique;
+    this.ibft = ibft;
   }
 
   public WaitCondition chainHeadHasProgressed(
@@ -40,6 +44,10 @@ public class WaitConditions {
 
   public WaitCondition cliqueValidatorsChanged(final Node node) {
     return new WaitUntilSignersChanged(node.execute(clique.createGetSigners(LATEST)), clique);
+  }
+
+  public WaitCondition ibftValidatorsChanged(final Node node) {
+    return new WaitUntilValidatorsChanged(node.execute(ibft.createGetValidators(LATEST)), ibft);
   }
 
   public WaitCondition chainHeadIsAt(final long blockNumber) {
