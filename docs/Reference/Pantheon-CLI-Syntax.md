@@ -528,6 +528,8 @@ rpc-http-host="0.0.0.0"
 Specifies the host on which HTTP JSON-RPC listens.
 The default is 127.0.0.1.
 
+To allow remote connections, set to `0.0.0.0`
+
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
 
@@ -674,6 +676,8 @@ ws-host="0.0.0.0"
 
 Host for Websocket WS-RPC to listen on.
 The default is 127.0.0.1.
+
+To allow remote connections, set to `0.0.0.0`
 
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
