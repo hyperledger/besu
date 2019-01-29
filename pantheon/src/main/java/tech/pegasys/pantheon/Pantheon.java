@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
 import static picocli.CommandLine.defaultExceptionHandler;
 
 import tech.pegasys.pantheon.cli.PantheonCommand;
@@ -29,6 +30,7 @@ public final class Pantheon {
 
     final PantheonCommand pantheonCommand =
         new PantheonCommand(
+            getLogger(),
             new BlockImporter(),
             new RunnerBuilder(),
             new PantheonControllerBuilder(),

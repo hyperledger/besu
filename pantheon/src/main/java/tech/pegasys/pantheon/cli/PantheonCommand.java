@@ -62,6 +62,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -74,6 +75,7 @@ import com.google.common.net.HostSpecifier;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.DecodeException;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import picocli.CommandLine;
 import picocli.CommandLine.AbstractParseResultHandler;
@@ -99,6 +101,10 @@ import picocli.CommandLine.ParameterException;
   footer = "Pantheon is licensed under the Apache License 2.0"
 )
 public class PantheonCommand implements DefaultCommandValues, Runnable {
+
+  private final Logger logger;
+
+  private CommandLine commandLine;
 
   public static class RpcApisConverter implements ITypeConverter<RpcApi> {
 
@@ -251,7 +257,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     names = {"--rpc-http-enabled"},
     description = "Set if the JSON-RPC service should be started (default: ${DEFAULT-VALUE})"
   )
-  private final Boolean isHttpRpcEnabled = false;
+  private final Boolean isRpcHttpEnabled = false;
 
   @Option(
     names = {"--rpc-http-host"},
@@ -472,6 +478,12 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Boolean permissionsAccountsEnabled = false;
 
   @Option(
+    names = {"--privacy-enabled"},
+    description = "Set if private transaction should be enabled (default: ${DEFAULT-VALUE})"
+  )
+  private final Boolean privacyEnabled = false;
+
+  @Option(
     names = {"--privacy-url"},
     description = "The URL on which enclave is running "
   )
@@ -484,12 +496,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final File privacyPublicKeyFile = null;
 
   @Option(
-    names = {"--privacy-enabled"},
-    description = "Set if private transaction should be enabled (default: ${DEFAULT-VALUE})"
-  )
-  private final Boolean privacyEnabled = false;
-
-  @Option(
     names = {"--privacy-precompiled-address"},
     description =
         "The address to which the privacy pre-compiled contract will be mapped to (default: ${DEFAULT-VALUE})"
@@ -497,10 +503,12 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Integer privacyPrecompiledAddress = Address.PRIVACY;
 
   public PantheonCommand(
+      final Logger logger,
       final BlockImporter blockImporter,
       final RunnerBuilder runnerBuilder,
       final PantheonControllerBuilder controllerBuilder,
       final SynchronizerConfiguration.Builder synchronizerConfigurationBuilder) {
+    this.logger = logger;
     this.blockImporter = blockImporter;
     this.runnerBuilder = runnerBuilder;
     this.controllerBuilder = controllerBuilder;
@@ -514,7 +522,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       final DefaultExceptionHandler<List<Object>> exceptionHandler,
       final String... args) {
 
-    final CommandLine commandLine = new CommandLine(this);
+    commandLine = new CommandLine(this);
 
     commandLine.setCaseInsensitiveEnumValuesAllowed(true);
 
@@ -553,10 +561,26 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       Configurator.setAllLevels("", logLevel);
     }
 
-    if (!p2pEnabled && (bootNodes != null && !bootNodes.isEmpty())) {
-      throw new ParameterException(
-          new CommandLine(this), "Unable to specify bootnodes if p2p is disabled.");
-    }
+    // Check that p2p options are able top work or send an error
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--p2p-enabled",
+        !p2pEnabled,
+        Arrays.asList(
+            "--bootnodes",
+            "--discovery-enabled",
+            "--max-peers",
+            "--banned-node-id",
+            "--banned-node-ids"));
+
+    // Check that mining options are able top work or send an error
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--miner-enabled",
+        !isMiningEnabled,
+        Arrays.asList("--miner-coinbase", "--min-gas-price", "--miner-extra-data"));
 
     //noinspection ConstantConditions
     if (isMiningEnabled && coinbase == null) {
@@ -627,8 +651,21 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   }
 
   private JsonRpcConfiguration jsonRpcConfiguration() {
+
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--rpc-http-enabled",
+        !isRpcHttpEnabled,
+        Arrays.asList(
+            "--rpc-http-api",
+            "--rpc-http-apis",
+            "--rpc-http-cors-origins",
+            "--rpc-http-host",
+            "--rpc-http-port"));
+
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
-    jsonRpcConfiguration.setEnabled(isHttpRpcEnabled);
+    jsonRpcConfiguration.setEnabled(isRpcHttpEnabled);
     jsonRpcConfiguration.setHost(rpcHttpHost.toString());
     jsonRpcConfiguration.setPort(rpcHttpPort);
     jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
@@ -638,6 +675,19 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   }
 
   private WebSocketConfiguration webSocketConfiguration() {
+
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--rpc-ws-enabled",
+        !isRpcWsEnabled,
+        Arrays.asList(
+            "--rpc-ws-api",
+            "--rpc-ws-apis",
+            "--rpc-ws-refresh-delay",
+            "--rpc-ws-host",
+            "--rpc-ws-port"));
+
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
     webSocketConfiguration.setEnabled(isRpcWsEnabled);
     webSocketConfiguration.setHost(rpcWsHost.toString());
@@ -654,6 +704,24 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           "--metrics-enabled option and --metrics-push-enabled option can't be used at the same "
               + "time.  Please refer to CLI reference for more details about this constraint.");
     }
+
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--metrics-enabled",
+        !isMetricsEnabled,
+        Arrays.asList("--metrics-host", "--metrics-port"));
+
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--metrics-push-enabled",
+        !isMetricsPushEnabled,
+        Arrays.asList(
+            "--metrics-push-host",
+            "--metrics-push-port",
+            "--metrics-push-interval",
+            "--metrics-push-prometheus-job"));
 
     final MetricsConfiguration metricsConfiguration = createDefault();
     metricsConfiguration.setEnabled(isMetricsEnabled);
@@ -683,6 +751,16 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   }
 
   private PrivacyParameters orionConfiguration() {
+
+    // Check that mining options are able top work or send an error
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--privacy-enabled",
+        !privacyEnabled,
+        Arrays.asList(
+            "--privacy-url", "--privacy-public-key-file", "--privacy-precompiled-address"));
+
     final PrivacyParameters privacyParameters = PrivacyParameters.noPrivacy();
     privacyParameters.setEnabled(privacyEnabled);
     privacyParameters.setUrl(privacyUrl.toString());
