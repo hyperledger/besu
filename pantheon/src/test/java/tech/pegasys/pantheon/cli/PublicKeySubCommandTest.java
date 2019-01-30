@@ -40,15 +40,15 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
           + System.lineSeparator();
 
   private static final String EXPECTED_PUBLIC_KEY_EXPORT_USAGE =
-      "Usage: pantheon public-key export [-hV] --from=<FILE>"
+      "Usage: pantheon public-key export [-hV] --to=<FILE>"
           + System.lineSeparator()
           + "This command exports the node public key to a file."
           + System.lineSeparator()
-          + "      --from=<FILE>   File to write public key to"
+          + "      --to=<FILE>   File to write public key to"
           + System.lineSeparator()
-          + "  -h, --help          Show this help message and exit."
+          + "  -h, --help        Show this help message and exit."
           + System.lineSeparator()
-          + "  -V, --version       Print version information and exit."
+          + "  -V, --version     Print version information and exit."
           + System.lineSeparator();
 
   private static final String PUBLIC_KEY_SUBCOMMAND_NAME = "public-key";
@@ -83,7 +83,7 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   @Test
   public void callingPublicKeyExportSubCommandWithoutPathMustDisplayErrorAndUsage() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME);
-    final String expectedErrorOutputStart = "Missing required option '--from=<FILE>'";
+    final String expectedErrorOutputStart = "Missing required option '--to=<FILE>'";
     assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
   }
 
@@ -105,7 +105,7 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
     final File file = File.createTempFile("public", "key");
 
     parseCommand(
-        PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME, "--from", file.getPath());
+        PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME, "--to", file.getPath());
 
     assertThat(contentOf(file))
         .startsWith(keyPair.getPublicKey().toString())
