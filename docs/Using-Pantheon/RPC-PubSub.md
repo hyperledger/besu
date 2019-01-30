@@ -14,7 +14,8 @@ The RPC Pub/Sub methods are:
 
 !!!important
     Unlike other [JSON RPC-API methods](../Reference/JSON-RPC-API-Methods.md), 
-    the RPC Pub/Sub methods cannot be called over HTTP.
+    the RPC Pub/Sub methods cannot be called over HTTP. Use the [`--rpc-ws-enabled`] option to enable
+    the WebSockets JSON-RPC service. 
     
 ### Using RPC Pub/Sub
 

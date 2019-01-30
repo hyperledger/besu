@@ -433,7 +433,7 @@ Possible values are :
     Values are case insensitive, so either `mainnet` or `MAINNET` works.
     
 !!!important
-    The [`--network`](#network) and [`--genesis-file`](#genesis-file) option can't be used at the same time.
+    The [`--network`](#network) and [`--genesis-file`](#genesis-file) option cannot be used at the same time.
 
 ### network-id
 
@@ -449,10 +449,10 @@ Possible values are :
 network-id="8675309"
 ```
 
-P2P network identifier.
+[P2P network identifier](../Configuring-Pantheon/NetworkID-And-ChainID.md).
 
-This option can be used to override your current network ID.
-The default value is the current network chain ID which is defined in the genesis file.
+This option can be used to override the default network ID.
+The default value is the network chain ID defined in the genesis file.
 
 ### node-private-key-file
 
@@ -665,6 +665,10 @@ The default is 127.0.0.1.
 
 To allow remote connections, set to `0.0.0.0`
 
+!!! caution 
+    Setting the host to 0.0.0.0 exposes the RPC connection on your node to any remote connection. In a 
+    production environment, ensure you are using a firewall to avoid exposing your node to the internet. 
+
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
 
@@ -709,7 +713,7 @@ The available API options are: `ADMIN`, `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`, 
 The default is: `ETH`, `NET`, `WEB3`.
 
 !!!note
-    :construction: IBFT is not currently supported. Support for IBFT is in active development. 
+    IBFT 2.0 is under development and will be available in v1.0.  
 
 !!!tip
     The singular `--rpc-http-api` and plural `--rpc-http-apis` are available and are just two
@@ -788,7 +792,7 @@ The available API options are: `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`, `DEBUG`, 
 The default is: `ETH`, `NET`, `WEB3`.
 
 !!!note
-    :construction: IBFT is not currently supported. Support for IBFT is in active development. 
+    IBFT 2.0 is under development and will be available in v1.0.  
 
 !!!tip
     The singular `--rpc-ws-api` and plural `--rpc-ws-apis` are available and are just two

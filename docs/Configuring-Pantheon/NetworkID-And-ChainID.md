@@ -8,7 +8,7 @@ Ethereum networks have a **network ID** and a **chain ID**. The network ID can b
 in the genesis file.
 
 For most networks including MainNet and the public testnets, the network ID and the chain ID are the
-same and Pantheon network id default values are defined according to the genesis chain id value.
+same and Pantheon network ID values are defined from the genesis chain ID.
 
 The network ID is automatically set by Pantheon to the chain ID when connecting to the Ethereum networks:
 

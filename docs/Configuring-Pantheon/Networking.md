@@ -37,9 +37,9 @@ the maximum number of peers. The default is 25.
 
 ## No Discovery
 
-The [`--rpc-ws-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-enabled) command line option 
-enables P2P peer discovery.
-Only set this option to `false` if you are running a test node or a test network with fixed nodes.
+The [`--discovery-enabled`](../Reference/Pantheon-CLI-Syntax.md#discovery-enabled) option 
+can be used to disable P2P peer discovery.
+Set this option to `false` if you are running a test node or a test network with fixed nodes.
 
 ## Monitoring Peer Connections
 
