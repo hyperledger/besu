@@ -12,8 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.mainnet;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import tech.pegasys.pantheon.ethereum.BlockValidator;
 import tech.pegasys.pantheon.ethereum.BlockValidator.BlockProcessingOutputs;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -25,11 +23,7 @@ import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.logging.log4j.Logger;
-
 public class MainnetBlockImporter<C> implements BlockImporter<C> {
-
-  private static final Logger LOG = getLogger();
 
   final BlockValidator<C> blockValidator;
 

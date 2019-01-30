@@ -31,7 +31,9 @@ import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.AbstractMessageTaskTest;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV63;
+import tech.pegasys.pantheon.ethereum.eth.sync.fullsync.FullSyncBlockHandler;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
+import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 
@@ -68,6 +70,16 @@ public class PipelinedImportChainSegmentTaskTest
     return new Block(header, body);
   }
 
+  private CompletableFuture<List<Block>> validateAndImportBlocks(final List<Block> blocks) {
+    return PersistBlockTask.forSequentialBlocks(
+            protocolSchedule,
+            protocolContext,
+            blocks,
+            HeaderValidationMode.SKIP_DETACHED,
+            ethTasksTimer)
+        .get();
+  }
+
   @Override
   protected EthTask<List<Block>> createTask(final List<Block> requestedData) {
     final Block firstBlock = requestedData.get(0);
@@ -85,6 +97,8 @@ public class PipelinedImportChainSegmentTaskTest
         ethContext,
         1,
         ethTasksTimer,
+        createBlockHandler(),
+        HeaderValidationMode.DETACHED_ONLY,
         previousBlock.getHeader(),
         lastBlock.getHeader());
   }
@@ -119,6 +133,8 @@ public class PipelinedImportChainSegmentTaskTest
             ethContext,
             1,
             ethTasksTimer,
+            createBlockHandler(),
+            HeaderValidationMode.DETACHED_ONLY,
             firstBlock.getHeader(),
             secondBlock.getHeader());
 
@@ -169,6 +185,8 @@ public class PipelinedImportChainSegmentTaskTest
             ethContext,
             1,
             ethTasksTimer,
+            createBlockHandler(),
+            HeaderValidationMode.DETACHED_ONLY,
             fakeFirstBlock.getHeader(),
             thirdBlock.getHeader());
 
@@ -218,7 +236,14 @@ public class PipelinedImportChainSegmentTaskTest
             protocolContext.getConsensusState());
     final EthTask<List<Block>> task =
         PipelinedImportChainSegmentTask.forCheckpoints(
-            protocolSchedule, modifiedContext, ethContext, 1, ethTasksTimer, checkpointHeaders);
+            protocolSchedule,
+            modifiedContext,
+            ethContext,
+            1,
+            ethTasksTimer,
+            createBlockHandler(),
+            HeaderValidationMode.DETACHED_ONLY,
+            checkpointHeaders);
 
     // Execute task and wait for response
     final AtomicReference<List<Block>> actualResult = new AtomicReference<>();
@@ -274,7 +299,14 @@ public class PipelinedImportChainSegmentTaskTest
             protocolContext.getConsensusState());
     final EthTask<List<Block>> task =
         PipelinedImportChainSegmentTask.forCheckpoints(
-            protocolSchedule, modifiedContext, ethContext, 2, ethTasksTimer, checkpointHeaders);
+            protocolSchedule,
+            modifiedContext,
+            ethContext,
+            2,
+            ethTasksTimer,
+            createBlockHandler(),
+            HeaderValidationMode.DETACHED_ONLY,
+            checkpointHeaders);
 
     // Execute task and wait for response
     final AtomicReference<List<Block>> actualResult = new AtomicReference<>();
@@ -334,7 +366,14 @@ public class PipelinedImportChainSegmentTaskTest
             protocolContext.getConsensusState());
     final EthTask<List<Block>> task =
         PipelinedImportChainSegmentTask.forCheckpoints(
-            protocolSchedule, modifiedContext, ethContext, 3, ethTasksTimer, checkpointHeaders);
+            protocolSchedule,
+            modifiedContext,
+            ethContext,
+            3,
+            ethTasksTimer,
+            createBlockHandler(),
+            HeaderValidationMode.DETACHED_ONLY,
+            checkpointHeaders);
 
     // Execute task and wait for response
     final AtomicReference<List<Block>> actualResult = new AtomicReference<>();
@@ -386,6 +425,10 @@ public class PipelinedImportChainSegmentTaskTest
       nextBlock++;
     }
     return shortChain;
+  }
+
+  private FullSyncBlockHandler<Void> createBlockHandler() {
+    return new FullSyncBlockHandler<>(protocolSchedule, protocolContext, ethContext, ethTasksTimer);
   }
 
   private static class CountingResponder implements Responder {

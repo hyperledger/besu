@@ -29,6 +29,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.Discon
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -39,6 +40,7 @@ class FastSyncTargetManager<C> extends SyncTargetManager<C> {
   private static final Logger LOG = LogManager.getLogger();
 
   private final ProtocolSchedule<C> protocolSchedule;
+  private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
   private final LabelledMetric<OperationTimer> ethTasksTimer;
   private final BlockHeader pivotBlockHeader;
@@ -53,6 +55,7 @@ class FastSyncTargetManager<C> extends SyncTargetManager<C> {
       final BlockHeader pivotBlockHeader) {
     super(config, protocolSchedule, protocolContext, ethContext, syncState, ethTasksTimer);
     this.protocolSchedule = protocolSchedule;
+    this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.ethTasksTimer = ethTasksTimer;
     this.pivotBlockHeader = pivotBlockHeader;
@@ -89,7 +92,7 @@ class FastSyncTargetManager<C> extends SyncTargetManager<C> {
         .timeout(task)
         .thenApply(
             result -> {
-              if (result.size() != 1 || !result.get(0).equals(pivotBlockHeader)) {
+              if (peerHasDifferentPivotBlock(result)) {
                 bestPeer.disconnect(DisconnectReason.USELESS_PEER);
                 return Optional.<EthPeer>empty();
               } else {
@@ -103,8 +106,17 @@ class FastSyncTargetManager<C> extends SyncTargetManager<C> {
             });
   }
 
+  private boolean peerHasDifferentPivotBlock(final List<BlockHeader> result) {
+    return result.size() != 1 || !result.get(0).equals(pivotBlockHeader);
+  }
+
   @Override
   public boolean shouldSwitchSyncTarget(final SyncTarget currentTarget) {
     return false;
+  }
+
+  @Override
+  public boolean shouldContinueDownloading() {
+    return !protocolContext.getBlockchain().getChainHeadHash().equals(pivotBlockHeader.getHash());
   }
 }

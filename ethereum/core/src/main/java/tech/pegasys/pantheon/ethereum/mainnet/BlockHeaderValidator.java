@@ -41,6 +41,18 @@ public class BlockHeaderValidator<C> {
     switch (mode) {
       case NONE:
         return true;
+      case LIGHT_DETACHED_ONLY:
+        return applyRules(
+            header,
+            parent,
+            protocolContext,
+            rule -> rule.includeInLightValidation() && rule.isDetachedSupported());
+      case LIGHT_SKIP_DETACHED:
+        return applyRules(
+            header,
+            parent,
+            protocolContext,
+            rule -> rule.includeInLightValidation() && !rule.isDetachedSupported());
       case LIGHT:
         return applyRules(header, parent, protocolContext, Rule::includeInLightValidation);
       case DETACHED_ONLY:
