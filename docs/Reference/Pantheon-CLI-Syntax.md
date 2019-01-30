@@ -473,9 +473,11 @@ The default is the key file in the data directory.
 If no key file exists, a key file containing the generated private key is created;
 otherwise, the existing key file specifies the node private key.
 
-
 !!!attention
     The private key is not encrypted.
+
+!!!note
+    This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md). 
 
 ### p2p-enabled
 
