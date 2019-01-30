@@ -925,3 +925,14 @@ $ pantheon public-key export --to=/home/me/me_project/not_precious_pub_key
 ```
 
 Exports node public key to the specified file. 
+
+### password-hash
+
+This command generates the hash of a given password.
+
+```bash tab="Syntax"
+$ pantheon password-hash <my-password>
+```
+
+```bash tab="Example"
+$ pantheon password-hash "password123"
