@@ -136,6 +136,21 @@ public class PermRemoveNodesFromWhitelistTest {
     assertThat(method.response(request)).isEqualToComparingFieldByField(expectedResponse);
   }
 
+  @Test
+  public void whenRequestContainsDuplicatedNodesShouldReturnDuplicatedEntryError() {
+    final JsonRpcRequest request = buildRequest(Lists.newArrayList(enode1, enode1));
+    final JsonRpcResponse expected =
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.NODE_WHITELIST_DUPLICATED_ENTRY);
+
+    when(p2pNetwork.getNodeWhitelistController()).thenReturn(nodeWhitelistController);
+    when(nodeWhitelistController.removeNodes(any()))
+        .thenReturn(new NodesWhitelistResult(NodesWhitelistResultType.ERROR_DUPLICATED_ENTRY));
+
+    final JsonRpcResponse actual = method.response(request);
+
+    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+  }
+
   private JsonRpcRequest buildRequest(final List<String> enodeList) {
     return new JsonRpcRequest("2.0", METHOD_NAME, new Object[] {enodeList});
   }

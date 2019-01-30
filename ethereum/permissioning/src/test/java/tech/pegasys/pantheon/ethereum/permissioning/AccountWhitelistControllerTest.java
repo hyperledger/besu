@@ -92,12 +92,12 @@ public class AccountWhitelistControllerTest {
   }
 
   @Test
-  public void addDuplicatedAccountShouldReturnDuplicatedEntryResult() {
+  public void addExistingAccountShouldReturnExistingEntryResult() {
     controller.addAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
     AddResult addResult =
         controller.addAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
-    assertThat(addResult).isEqualTo(AddResult.ERROR_DUPLICATED_ENTRY);
+    assertThat(addResult).isEqualTo(AddResult.ERROR_EXISTING_ENTRY);
     assertThat(controller.getAccountWhitelist())
         .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
   }
@@ -138,5 +138,27 @@ public class AccountWhitelistControllerTest {
 
     assertThat(removeResult).isEqualTo(RemoveResult.ERROR_INVALID_ENTRY);
     assertThat(controller.getAccountWhitelist()).isEmpty();
+  }
+
+  @Test
+  public void addDuplicatedAccountShouldReturnDuplicatedEntryResult() {
+    AddResult addResult =
+        controller.addAccounts(
+            Arrays.asList(
+                "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+                "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
+
+    assertThat(addResult).isEqualTo(AddResult.ERROR_DUPLICATED_ENTRY);
+  }
+
+  @Test
+  public void removeDuplicatedAccountShouldReturnDuplicatedEntryResult() {
+    RemoveResult removeResult =
+        controller.removeAccounts(
+            Arrays.asList(
+                "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+                "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
+
+    assertThat(removeResult).isEqualTo(RemoveResult.ERROR_DUPLICATED_ENTRY);
   }
 }

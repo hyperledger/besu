@@ -101,6 +101,21 @@ public class PermAddNodesToWhitelistTest {
   }
 
   @Test
+  public void whenRequestContainsDuplicatedNodesShouldReturnDuplicatedEntryError() {
+    final JsonRpcRequest request = buildRequest(Lists.newArrayList(enode1, enode1));
+    final JsonRpcResponse expected =
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.NODE_WHITELIST_DUPLICATED_ENTRY);
+
+    when(p2pNetwork.getNodeWhitelistController()).thenReturn(nodeWhitelistController);
+    when(nodeWhitelistController.addNodes(any()))
+        .thenReturn(new NodesWhitelistResult(NodesWhitelistResultType.ERROR_DUPLICATED_ENTRY));
+
+    final JsonRpcResponse actual = method.response(request);
+
+    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+  }
+
+  @Test
   public void shouldAddSingleValidNode() {
     final JsonRpcRequest request = buildRequest(Lists.newArrayList(enode1));
     final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getId(), JSON_SUCCESS);

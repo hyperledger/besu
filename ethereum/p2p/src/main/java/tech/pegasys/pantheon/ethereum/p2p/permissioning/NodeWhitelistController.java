@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,10 +48,16 @@ public class NodeWhitelistController {
   }
 
   public NodesWhitelistResult addNodes(final List<DefaultPeer> peers) {
+    if (peerListHasDuplicates(peers)) {
+      return new NodesWhitelistResult(
+          NodesWhitelistResultType.ERROR_DUPLICATED_ENTRY,
+          String.format("Specified peer list contains duplicates"));
+    }
+
     for (DefaultPeer peer : peers) {
       if (nodesWhitelist.contains(peer)) {
         return new NodesWhitelistResult(
-            NodesWhitelistResultType.ADD_ERROR_DUPLICATED_ENTRY,
+            NodesWhitelistResultType.ERROR_EXISTING_ENTRY,
             String.format("Specified peer: %s already exists in whitelist.", peer.getId()));
       }
     }
@@ -58,11 +65,21 @@ public class NodeWhitelistController {
     return new NodesWhitelistResult(NodesWhitelistResultType.SUCCESS);
   }
 
+  private boolean peerListHasDuplicates(final List<DefaultPeer> peers) {
+    return !peers.stream().allMatch(new HashSet<>()::add);
+  }
+
   public NodesWhitelistResult removeNodes(final List<DefaultPeer> peers) {
+    if (peerListHasDuplicates(peers)) {
+      return new NodesWhitelistResult(
+          NodesWhitelistResultType.ERROR_DUPLICATED_ENTRY,
+          String.format("Specified peer list contains duplicates"));
+    }
+
     for (DefaultPeer peer : peers) {
       if (!(nodesWhitelist.contains(peer))) {
         return new NodesWhitelistResult(
-            NodesWhitelistResultType.REMOVE_ERROR_ABSENT_ENTRY,
+            NodesWhitelistResultType.ERROR_ABSENT_ENTRY,
             String.format("Specified peer: %s does not exist in whitelist.", peer.getId()));
       }
     }
@@ -112,7 +129,8 @@ public class NodeWhitelistController {
 
   public enum NodesWhitelistResultType {
     SUCCESS,
-    ADD_ERROR_DUPLICATED_ENTRY,
-    REMOVE_ERROR_ABSENT_ENTRY
+    ERROR_DUPLICATED_ENTRY,
+    ERROR_EXISTING_ENTRY,
+    ERROR_ABSENT_ENTRY
   }
 }

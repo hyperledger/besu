@@ -19,6 +19,8 @@ import static tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistCont
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 
+import java.util.Arrays;
+
 import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,7 +35,7 @@ public class NodeWhitelistControllerTest {
   private final String enode1 =
       "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
   private final String enode2 =
-      "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
+      "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
 
   @Before
   public void setUp() {
@@ -41,11 +43,11 @@ public class NodeWhitelistControllerTest {
   }
 
   @Test
-  public void shouldNotAddDuplicateNodes() {
+  public void whenAddNodesInputHasExistingNodeShouldReturnAddErrorExistingEntry() {
     controller.addNode(DefaultPeer.fromURI(enode1));
 
     NodesWhitelistResult expected =
-        new NodesWhitelistResult(NodesWhitelistResultType.ADD_ERROR_DUPLICATED_ENTRY);
+        new NodesWhitelistResult(NodesWhitelistResultType.ERROR_EXISTING_ENTRY);
     NodesWhitelistResult actualResult =
         controller.addNodes(
             Lists.newArrayList(DefaultPeer.fromURI(enode1), DefaultPeer.fromURI(enode2)));
@@ -54,12 +56,35 @@ public class NodeWhitelistControllerTest {
   }
 
   @Test
-  public void shouldNotRemoveNodesThatDoNotExist() {
+  public void whenAddNodesInputHasDuplicatedNodesShouldReturnDuplicatedEntryError() {
     NodesWhitelistResult expected =
-        new NodesWhitelistResult(NodesWhitelistResultType.REMOVE_ERROR_ABSENT_ENTRY);
+        new NodesWhitelistResult(NodesWhitelistResultType.ERROR_DUPLICATED_ENTRY);
+
+    NodesWhitelistResult actualResult =
+        controller.addNodes(
+            Arrays.asList(DefaultPeer.fromURI(enode1), DefaultPeer.fromURI(enode1)));
+
+    assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
+  }
+
+  @Test
+  public void whenRemoveNodesInputHasAbsentNodeShouldReturnRemoveErrorAbsentEntry() {
+    NodesWhitelistResult expected =
+        new NodesWhitelistResult(NodesWhitelistResultType.ERROR_ABSENT_ENTRY);
     NodesWhitelistResult actualResult =
         controller.removeNodes(
             Lists.newArrayList(DefaultPeer.fromURI(enode1), DefaultPeer.fromURI(enode2)));
+
+    assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
+  }
+
+  @Test
+  public void whenRemoveNodesInputHasDuplicateNodesShouldReturnErrorDuplicatedEntry() {
+    NodesWhitelistResult expected =
+        new NodesWhitelistResult(NodesWhitelistResultType.ERROR_DUPLICATED_ENTRY);
+    NodesWhitelistResult actualResult =
+        controller.removeNodes(
+            Lists.newArrayList(DefaultPeer.fromURI(enode1), DefaultPeer.fromURI(enode1)));
 
     assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
   }

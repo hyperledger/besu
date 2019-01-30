@@ -88,6 +88,17 @@ public class PermRemoveAccountsFromWhitelistTest {
   }
 
   @Test
+  public void whenInputHasDuplicatedAccountsShouldReturnDuplicatedEntryErrorResponse() {
+    JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_DUPLICATED_ENTRY);
+    when(accountWhitelist.removeAccounts(any())).thenReturn(RemoveResult.ERROR_DUPLICATED_ENTRY);
+
+    JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
   public void whenEmptyParamOnRequestShouldThrowInvalidJsonRpcException() {
     JsonRpcRequest request =
         new JsonRpcRequest("2.0", "perm_removeAccountsFromWhitelist", new Object[] {});
