@@ -10,48 +10,58 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance;
+package tech.pegasys.pantheon.tests.acceptance.jsonrpc.admin;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.Cluster;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.web3j.protocol.exceptions.ClientConnectionException;
 
-public class P2pDisabledAcceptanceTest extends AcceptanceTestBase {
-  private Node node;
+public class AdminAddPeerWithP2PDisabledAcceptanceTest extends AcceptanceTestBase {
+  private PantheonNode nodeA;
+  private PantheonNode nodeB;
   private Cluster p2pDisabledCluster;
 
   @Before
   public void setUp() throws Exception {
     final ClusterConfiguration clusterConfiguration =
         new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
-
     p2pDisabledCluster = new Cluster(clusterConfiguration, net);
-    node = pantheon.createNodeWithP2pDisabled("node1");
-    p2pDisabledCluster.start(node);
+    nodeA = pantheon.createNodeWithP2pDisabledAndAdmin("nodeA");
+    nodeB = pantheon.createArchiveNodeWithDiscoveryDisabledAndAdmin("nodeB");
+    p2pDisabledCluster.start(nodeA, nodeB);
   }
 
-  @Override
-  public void tearDownAcceptanceTestBase() {
+  @After
+  public void tearDown() {
     p2pDisabledCluster.stop();
-    super.tearDownAcceptanceTestBase();
   }
 
   @Test
-  public void shouldSucceedExecutingUnaffectedJsonRpcCall() {
-    final String input = "0x68656c6c6f20776f726c64";
-    final String expectedHash =
-        "0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad";
-
-    node.verify(web3.sha3(input, expectedHash));
+  public void adminAddPeerFailsWhenP2PDisabled() {
+    final String nodeBEnode = nodeB.enodeUrl();
+    try {
+      nodeA.verify(admin.addPeer(nodeBEnode));
+      fail("expected exception because P2P is disabled");
+    } catch (ClientConnectionException e) {
+      assertThat(e.getMessage().contains("P2P has been disabled")).isTrue();
+    }
+    nodeB.verify(net.awaitPeerCount(0));
   }
 
   @Test
-  public void shouldFailExecutingAffectedJsonRpcCall() {
-    node.verify(net.awaitPeerCountExceptional());
+  public void adminAddPeerFailsWhenP2PDisabled2() {
+    final String nodeAEnode = nodeA.enodeUrl();
+    nodeB.verify(admin.addPeer(nodeAEnode));
+    nodeB.verify(net.awaitPeerCount(0));
   }
 }
