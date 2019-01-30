@@ -22,12 +22,14 @@ import tech.pegasys.pantheon.ethereum.eth.sync.ChainDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.PipelinedImportChainSegmentTask;
+import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class FastSyncChainDownloader<C> {
   private final ChainDownloader<C> chainDownloader;
@@ -77,8 +79,8 @@ public class FastSyncChainDownloader<C> {
             this::importBlocksForCheckpoints);
   }
 
-  public void start() {
-    chainDownloader.start();
+  public CompletableFuture<Void> start() {
+    return chainDownloader.start();
   }
 
   private CompletableFuture<List<Block>> importBlocksForCheckpoints(
@@ -91,14 +93,21 @@ public class FastSyncChainDownloader<C> {
         return CompletableFuture.completedFuture(emptyList());
       }
     }
-    final PipelinedImportChainSegmentTask<C> importTask =
+    final PipelinedImportChainSegmentTask<C, BlockWithReceipts> importTask =
         PipelinedImportChainSegmentTask.forCheckpoints(
             protocolSchedule,
             protocolContext,
             ethContext,
             config.downloaderParallelism(),
             ethTasksTimer,
+            new FastSyncBlockHandler<>(
+                protocolSchedule, protocolContext, ethContext, ethTasksTimer),
+            HeaderValidationMode.LIGHT_DETACHED_ONLY,
             checkpointHeaders);
-    return importTask.run();
+    return importTask
+        .run()
+        .thenApply(
+            results ->
+                results.stream().map(BlockWithReceipts::getBlock).collect(Collectors.toList()));
   }
 }

@@ -107,4 +107,9 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
             })
         .orElse(false);
   }
+
+  @Override
+  public boolean shouldContinueDownloading() {
+    return true;
+  }
 }

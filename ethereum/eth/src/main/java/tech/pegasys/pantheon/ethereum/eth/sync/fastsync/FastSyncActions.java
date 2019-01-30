@@ -158,7 +158,6 @@ public class FastSyncActions<C> {
             syncState,
             ethTasksTimer,
             currentState.getPivotBlockHeader().get());
-    downloader.start();
-    return new CompletableFuture<>();
+    return downloader.start();
   }
 }

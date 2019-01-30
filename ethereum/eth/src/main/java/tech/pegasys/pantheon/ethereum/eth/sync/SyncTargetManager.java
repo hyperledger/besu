@@ -126,4 +126,6 @@ public abstract class SyncTargetManager<C> {
   }
 
   public abstract boolean shouldSwitchSyncTarget(final SyncTarget currentTarget);
+
+  public abstract boolean shouldContinueDownloading();
 }

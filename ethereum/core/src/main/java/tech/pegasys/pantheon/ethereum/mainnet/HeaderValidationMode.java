@@ -17,6 +17,12 @@ public enum HeaderValidationMode {
   NONE,
 
   /** Skip proof of work validation */
+  LIGHT_DETACHED_ONLY,
+
+  /** Skip proof of work validation */
+  LIGHT_SKIP_DETACHED,
+
+  /** Skip proof of work validation */
   LIGHT,
 
   /** Skip rules that can be applied when the parent is already on the blockchain */

@@ -13,9 +13,7 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.eth.manager.AbstractEthTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
@@ -40,29 +38,29 @@ import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Block>> {
+public class PipelinedImportChainSegmentTask<C, B> extends AbstractEthTask<List<B>> {
   private static final Logger LOG = LogManager.getLogger();
 
   private final EthContext ethContext;
   private final ProtocolContext<C> protocolContext;
   private final ProtocolSchedule<C> protocolSchedule;
-  private final List<Block> importedBlocks = new ArrayList<>();
+  private final List<B> importedBlocks = new ArrayList<>();
   private final LabelledMetric<OperationTimer> ethTasksTimer;
 
   // First header is assumed  to already be imported
   private final List<BlockHeader> checkpointHeaders;
   private final int chunksInTotal;
+  private final BlockHandler<B> blockHandler;
+  private final HeaderValidationMode headerValidationMode;
   private int chunksIssued;
   private int chunksCompleted;
   private final int maxActiveChunks;
 
   private final Deque<CompletableFuture<List<BlockHeader>>> downloadAndValidateHeadersTasks =
       new ConcurrentLinkedDeque<>();
-  private final Deque<CompletableFuture<List<Block>>> downloadBodiesTasks =
+  private final Deque<CompletableFuture<List<B>>> downloadBodiesTasks =
       new ConcurrentLinkedDeque<>();
-  private final Deque<CompletableFuture<List<Block>>> extractTransactionSendersTasks =
-      new ConcurrentLinkedDeque<>();
-  private final Deque<CompletableFuture<List<Block>>> validateAndImportBlocksTasks =
+  private final Deque<CompletableFuture<List<B>>> validateAndImportBlocksTasks =
       new ConcurrentLinkedDeque<>();
 
   protected PipelinedImportChainSegmentTask(
@@ -71,7 +69,9 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
       final EthContext ethContext,
       final int maxActiveChunks,
       final List<BlockHeader> checkpointHeaders,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final LabelledMetric<OperationTimer> ethTasksTimer,
+      final BlockHandler<B> blockHandler,
+      final HeaderValidationMode headerValidationMode) {
     super(ethTasksTimer);
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -79,17 +79,21 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
     this.ethTasksTimer = ethTasksTimer;
     this.checkpointHeaders = checkpointHeaders;
     this.chunksInTotal = checkpointHeaders.size() - 1;
+    this.blockHandler = blockHandler;
     this.chunksIssued = 0;
     this.chunksCompleted = 0;
     this.maxActiveChunks = maxActiveChunks;
+    this.headerValidationMode = headerValidationMode;
   }
 
-  public static <C> PipelinedImportChainSegmentTask<C> forCheckpoints(
+  public static <C, B> PipelinedImportChainSegmentTask<C, B> forCheckpoints(
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final int maxActiveChunks,
       final LabelledMetric<OperationTimer> ethTasksTimer,
+      final BlockHandler<B> blockHandler,
+      final HeaderValidationMode headerValidationMode,
       final BlockHeader... checkpointHeaders) {
     return forCheckpoints(
         protocolSchedule,
@@ -97,15 +101,19 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
         ethContext,
         maxActiveChunks,
         ethTasksTimer,
+        blockHandler,
+        headerValidationMode,
         Arrays.asList(checkpointHeaders));
   }
 
-  public static <C> PipelinedImportChainSegmentTask<C> forCheckpoints(
+  public static <C, B> PipelinedImportChainSegmentTask<C, B> forCheckpoints(
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final int maxActiveChunks,
       final LabelledMetric<OperationTimer> ethTasksTimer,
+      final BlockHandler<B> blockHandler,
+      final HeaderValidationMode headerValidationMode,
       final List<BlockHeader> checkpointHeaders) {
     return new PipelinedImportChainSegmentTask<>(
         protocolSchedule,
@@ -113,7 +121,9 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
         ethContext,
         maxActiveChunks,
         checkpointHeaders,
-        ethTasksTimer);
+        ethTasksTimer,
+        blockHandler,
+        headerValidationMode);
   }
 
   @Override
@@ -135,29 +145,30 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
         lastDownloadAndValidateHeadersTask()
             .thenCompose((ignore) -> downloadNextHeaders(firstChunkHeader, lastChunkHeader))
             .thenCompose(this::validateHeaders);
-    final CompletableFuture<List<Block>> downloadBodiesTask =
+    final CompletableFuture<List<B>> downloadBodiesTask =
         downloadAndValidateHeadersTask
             .thenCombine(lastDownloadBodiesTask(), (headers, ignored) -> headers)
             .thenCompose(this::downloadBlocks);
-    final CompletableFuture<List<Block>> extractTransactionSendersTask =
+    final CompletableFuture<List<B>> validateAndImportBlocksTask =
         downloadBodiesTask
-            .thenCombine(lastExtractTransactionSendersTasks(), (blocks, ignored) -> blocks)
-            .thenCompose(this::extractTransactionSenders);
-    final CompletableFuture<List<Block>> validateAndImportBlocksTask =
-        extractTransactionSendersTask
             .thenCombine(lastValidateAndImportBlocksTasks(), (blocks, ignored) -> blocks)
             .thenCompose(this::validateAndImportBlocks);
     validateAndImportBlocksTask.whenComplete(this::completeChunkPipelineAndMaybeLaunchNextOne);
 
     downloadAndValidateHeadersTasks.addLast(downloadAndValidateHeadersTask);
     downloadBodiesTasks.addLast(downloadBodiesTask);
-    extractTransactionSendersTasks.addLast(extractTransactionSendersTask);
     validateAndImportBlocksTasks.addLast(validateAndImportBlocksTask);
     chunksIssued++;
   }
 
+  private CompletableFuture<List<B>> validateAndImportBlocks(final List<B> blocks) {
+    final Supplier<CompletableFuture<List<B>>> task =
+        () -> blockHandler.validateAndImportBlocks(blocks);
+    return executeWorkerSubTask(ethContext.getScheduler(), task);
+  }
+
   public void completeChunkPipelineAndMaybeLaunchNextOne(
-      final List<Block> blocks, final Throwable throwable) {
+      final List<B> blocks, final Throwable throwable) {
     if (throwable != null) {
       LOG.warn(
           "Import of chain segment ({} to {}) failed: {}.",
@@ -167,15 +178,8 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
       result.get().completeExceptionally(throwable);
     } else {
       importedBlocks.addAll(blocks);
-      final BlockHeader firstHeader = blocks.get(0).getHeader();
-      final BlockHeader lastHeader = blocks.get(blocks.size() - 1).getHeader();
       chunksCompleted++;
-      LOG.debug(
-          "Import chain segment from {} to {} succeeded (chunk {}/{}).",
-          firstHeader.getNumber(),
-          lastHeader.getNumber(),
-          chunksCompleted,
-          chunksInTotal);
+      LOG.debug("Import chain segment succeeded (chunk {}/{}).", chunksCompleted, chunksInTotal);
       if (chunksCompleted == chunksInTotal) {
         LOG.info(
             "Completed importing chain segment {} to {}",
@@ -185,7 +189,6 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
       } else {
         downloadAndValidateHeadersTasks.removeFirst();
         downloadBodiesTasks.removeFirst();
-        extractTransactionSendersTasks.removeFirst();
         validateAndImportBlocksTasks.removeFirst();
         if (chunksIssued < chunksInTotal) {
           createNextChunkPipeline();
@@ -238,7 +241,7 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
           final BlockHeaderValidator<C> blockHeaderValidator =
               protocolSpec.getBlockHeaderValidator();
           if (blockHeaderValidator.validateHeader(
-              childHeader, parentHeader, protocolContext, HeaderValidationMode.DETACHED_ONLY)) {
+              childHeader, parentHeader, protocolContext, headerValidationMode)) {
             // The first header will be imported by the previous request range.
             result.complete(headers.subList(1, headers.size()));
           } else {
@@ -252,49 +255,12 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
         });
   }
 
-  private CompletableFuture<List<Block>> downloadBlocks(final List<BlockHeader> headers) {
+  private CompletableFuture<List<B>> downloadBlocks(final List<BlockHeader> headers) {
     LOG.debug(
         "Downloading bodies {} to {}",
         headers.get(0).getNumber(),
         headers.get(headers.size() - 1).getNumber());
-    final CompleteBlocksTask<C> task =
-        CompleteBlocksTask.forHeaders(protocolSchedule, ethContext, headers, ethTasksTimer);
-    return executeSubTask(task::run);
-  }
-
-  private CompletableFuture<List<Block>> validateAndImportBlocks(final List<Block> blocks) {
-    LOG.debug(
-        "Validating and importing {} to {}",
-        blocks.get(0).getHeader().getNumber(),
-        blocks.get(blocks.size() - 1).getHeader().getNumber());
-    final Supplier<CompletableFuture<List<Block>>> task =
-        PersistBlockTask.forSequentialBlocks(
-            protocolSchedule,
-            protocolContext,
-            blocks,
-            HeaderValidationMode.SKIP_DETACHED,
-            ethTasksTimer);
-    return executeWorkerSubTask(ethContext.getScheduler(), task);
-  }
-
-  private CompletableFuture<List<Block>> extractTransactionSenders(final List<Block> blocks) {
-    LOG.debug(
-        "Extracting sender {} to {}",
-        blocks.get(0).getHeader().getNumber(),
-        blocks.get(blocks.size() - 1).getHeader().getNumber());
-    return executeWorkerSubTask(
-        ethContext.getScheduler(),
-        () -> {
-          final CompletableFuture<List<Block>> result = new CompletableFuture<>();
-          for (final Block block : blocks) {
-            for (final Transaction transaction : block.getBody().getTransactions()) {
-              // This method internally performs the transaction sender extraction.
-              transaction.getSender();
-            }
-          }
-          result.complete(blocks);
-          return result;
-        });
+    return executeSubTask(() -> blockHandler.downloadBlocks(headers));
   }
 
   private BlockHeader firstHeader() {
@@ -313,7 +279,7 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
     }
   }
 
-  private CompletableFuture<List<Block>> lastDownloadBodiesTask() {
+  private CompletableFuture<List<B>> lastDownloadBodiesTask() {
     if (downloadBodiesTasks.isEmpty()) {
       return CompletableFuture.completedFuture(Lists.newArrayList());
     } else {
@@ -321,7 +287,7 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
     }
   }
 
-  private CompletableFuture<List<Block>> lastValidateAndImportBlocksTasks() {
+  private CompletableFuture<List<B>> lastValidateAndImportBlocksTasks() {
     if (validateAndImportBlocksTasks.isEmpty()) {
       return CompletableFuture.completedFuture(Lists.newArrayList());
     } else {
@@ -329,11 +295,9 @@ public class PipelinedImportChainSegmentTask<C> extends AbstractEthTask<List<Blo
     }
   }
 
-  private CompletableFuture<List<Block>> lastExtractTransactionSendersTasks() {
-    if (extractTransactionSendersTasks.isEmpty()) {
-      return CompletableFuture.completedFuture(Lists.newArrayList());
-    } else {
-      return extractTransactionSendersTasks.getLast();
-    }
+  public interface BlockHandler<B> {
+    CompletableFuture<List<B>> downloadBlocks(final List<BlockHeader> headers);
+
+    CompletableFuture<List<B>> validateAndImportBlocks(final List<B> blocks);
   }
 }

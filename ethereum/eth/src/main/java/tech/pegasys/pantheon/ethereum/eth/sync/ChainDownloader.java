@@ -49,6 +49,7 @@ public class ChainDownloader<C> {
   private final CheckpointHeaderManager<C> checkpointHeaderManager;
   private final BlockImportTaskFactory blockImportTaskFactory;
   private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private final CompletableFuture<Void> downloadFuture = new CompletableFuture<>();
 
   private int chainSegmentTimeouts = 0;
 
@@ -73,9 +74,10 @@ public class ChainDownloader<C> {
     this.blockImportTaskFactory = blockImportTaskFactory;
   }
 
-  public void start() {
+  public CompletableFuture<Void> start() {
     if (started.compareAndSet(false, true)) {
       executeDownload();
+      return downloadFuture;
     } else {
       throw new IllegalStateException(
           "Attempt to start an already started " + this.getClass().getSimpleName() + ".");
@@ -110,8 +112,11 @@ public class ChainDownloader<C> {
                     ethContext
                         .getScheduler()
                         .scheduleFutureTask(this::executeDownload, Duration.ofSeconds(2));
-                  } else {
+                  } else if (syncTargetManager.shouldContinueDownloading()) {
                     executeDownload();
+                  } else {
+                    LOG.info("Chain download complete");
+                    downloadFuture.complete(null);
                   }
                 });
     return currentTask;
