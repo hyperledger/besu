@@ -42,8 +42,8 @@ option is `enode://<id>@<host:port>` where:
 
 * `<id>` is the node public key written to the specified file (`bootnode` in the above example) excluding the initial 0x. 
 * `<host:port>` is the host and port the bootnode is listening on for P2P peer discovery. 
-Specified by the [`--p2p-host` option](../Reference/Pantheon-CLI-Syntax.md#p2p-host) and 
-[`--p2p-port` option](../Reference/Pantheon-CLI-Syntax.md#p2p-port) option for the bootnode
+Specified by the [`--p2p-host`](../Reference/Pantheon-CLI-Syntax.md#p2p-host) and 
+[`--p2p-port`](../Reference/Pantheon-CLI-Syntax.md#p2p-port) options for the bootnode
 (default host is `127.0.0.1` and port is `30303`).
 
 !!! example
