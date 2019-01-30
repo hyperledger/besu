@@ -26,7 +26,7 @@ For example, the following Log4J2 configuration is the same as the
 [default configuration](https://github.com/PegaSysEng/pantheon/blob/master/pantheon/src/main/resources/log4j2.xml) 
 except logging of stack traces for exceptions is excluded.
 
-```xml tab="log4j2.xml"
+```xml tab="debug.xml"
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="INFO">
   <Properties>
@@ -59,5 +59,5 @@ setting it before starting Pantheon.
     To set the debug logging and start Pantheon connected to the Rinkeby testnet:
 
     ```bash
-    $ LOG4J_CONFIGURATION_FILE=./debug.xml bin/pantheon --network=rinkeby
+    $ LOG4J_CONFIGURATION_FILE=./debug.xml pantheon --network=rinkeby
     ```

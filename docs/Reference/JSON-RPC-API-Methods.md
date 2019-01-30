@@ -361,7 +361,7 @@ You can get the Ethereum account address from a client such as MetaMask or Ether
 
 !!!example
     ```bash
-    $ bin/pantheon --miner-coinbase="0xfe3b557e8fb62b89f4916b721be55ceb828dbd73" --rpc-http-enabled
+    pantheon --miner-coinbase="0xfe3b557e8fb62b89f4916b721be55ceb828dbd73" --rpc-http-enabled
     ```
 
 **Parameters**
