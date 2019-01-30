@@ -21,7 +21,7 @@ To start a bootnode for a private network:
 
     !!! example
         ```bash
-        pantheon --genesis-file=privateNetworkGenesis.json --data-path=nodeDataPath export-pub-key bootnode
+        pantheon --genesis-file=privateNetworkGenesis.json --data-path=nodeDataPath public-key export --to=bootnode
         ```
         Where `privateNetworkGenesis.json` and `nodeDataPath` are changed to the relevant values for 
         your private network. 

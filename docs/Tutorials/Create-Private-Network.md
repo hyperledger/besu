@@ -89,11 +89,11 @@ In the `Node-1` directory, use the [`export-pub-key` subcommand](../Reference/Pa
 the [node public key](../Configuring-Pantheon/Node-Keys.md) to the specified file (`publicKeyNode1` in this example):
 
 ```bash tab="MacOS"
-pantheon --data-path=Node-1-data-path --genesis-file=../privateNetworkGenesis.json export-pub-key Node-1-data-path/publicKeyNode1
+pantheon --data-path=Node-1-data-path --genesis-file=../privateNetworkGenesis.json public-key export --to=Node-1-data-path/publicKeyNode1
 ```
 
 ```bash tab="Windows"
-pantheon --data-path=Node-1-data-path --genesis-file=..\privateNetworkGenesis.json export-pub-key Node-1-data-path\publicKeyNode1
+pantheon --data-path=Node-1-data-path --genesis-file=..\privateNetworkGenesis.json public-key export --to=Node-1-data-path\publicKeyNode1
 ```
 
 Your node 1 directory now contains: 
