@@ -70,8 +70,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import com.google.common.io.Resources;
-import com.google.common.net.HostAndPort;
-import com.google.common.net.HostSpecifier;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.DecodeException;
 import org.apache.logging.log4j.Level;
@@ -225,8 +223,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     description = "Host for p2p peers discovery to listen on (default: ${DEFAULT-VALUE})",
     arity = "1"
   )
-  private final HostSpecifier p2pHost =
-      HostSpecifier.fromValid(autoDiscoverDefaultIP().getHostAddress());
+  private String p2pHost = autoDiscoverDefaultIP().getHostAddress();
 
   @Option(
     names = {"--p2p-port"},
@@ -257,8 +254,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     description = "Host for HTTP JSON-RPC to listen on (default: ${DEFAULT-VALUE})",
     arity = "1"
   )
-  private final HostSpecifier rpcHttpHost =
-      HostSpecifier.fromValid(autoDiscoverDefaultIP().getHostAddress());
+  private String rpcHttpHost = autoDiscoverDefaultIP().getHostAddress();
 
   @Option(
     names = {"--rpc-http-port"},
@@ -299,8 +295,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     description = "Host for WebSocket JSON-RPC to listen on (default: ${DEFAULT-VALUE})",
     arity = "1"
   )
-  private final HostSpecifier rpcWsHost =
-      HostSpecifier.fromValid(autoDiscoverDefaultIP().getHostAddress());
+  private String rpcWsHost = autoDiscoverDefaultIP().getHostAddress();
 
   @Option(
     names = {"--rpc-ws-port"},
@@ -356,8 +351,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     description = "Host for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
     arity = "1"
   )
-  private final HostSpecifier metricsHost =
-      HostSpecifier.fromValid(autoDiscoverDefaultIP().getHostAddress());
+  private String metricsHost = autoDiscoverDefaultIP().getHostAddress();
 
   @Option(
     names = {"--metrics-port"},
@@ -380,8 +374,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     description = "Host of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
     arity = "1"
   )
-  private final HostSpecifier metricsPushHost =
-      HostSpecifier.fromValid(autoDiscoverDefaultIP().getHostAddress());
+  private String metricsPushHost = autoDiscoverDefaultIP().getHostAddress();
 
   @Option(
     names = {"--metrics-push-port"},
@@ -533,8 +526,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
     commandLine.registerConverter(Address.class, Address::fromHexString);
     commandLine.registerConverter(BytesValue.class, BytesValue::fromHexString);
-    commandLine.registerConverter(HostAndPort.class, HostAndPort::fromString);
-    commandLine.registerConverter(HostSpecifier.class, HostSpecifier::from);
     commandLine.registerConverter(Level.class, Level::valueOf);
     commandLine.registerConverter(SyncMode.class, SyncMode::fromString);
     commandLine.registerConverter(Wei.class, (arg) -> Wei.of(Long.parseUnsignedLong(arg)));
@@ -594,7 +585,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         peerDiscoveryEnabled,
         ethNetworkConfig.getBootNodes(),
         maxPeers,
-        HostAndPort.fromParts(p2pHost.toString(), p2pPort),
+        p2pHost,
+        p2pPort,
         jsonRpcConfiguration(),
         webSocketConfiguration(),
         metricsConfiguration(),
@@ -612,7 +604,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     try {
       PermissioningConfigurationValidator.areAllBootnodesAreInWhitelist(
           ethNetworkConfig, permissioningConfiguration);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new ParameterException(new CommandLine(this), e.getMessage());
     }
   }
@@ -654,7 +646,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
     jsonRpcConfiguration.setEnabled(isRpcHttpEnabled);
-    jsonRpcConfiguration.setHost(rpcHttpHost.toString());
+    jsonRpcConfiguration.setHost(rpcHttpHost);
     jsonRpcConfiguration.setPort(rpcHttpPort);
     jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
     jsonRpcConfiguration.setRpcApis(rpcHttpApis);
@@ -678,7 +670,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
     webSocketConfiguration.setEnabled(isRpcWsEnabled);
-    webSocketConfiguration.setHost(rpcWsHost.toString());
+    webSocketConfiguration.setHost(rpcWsHost);
     webSocketConfiguration.setPort(rpcWsPort);
     webSocketConfiguration.setRpcApis(rpcWsApis);
     webSocketConfiguration.setRefreshDelay(rpcWsRefreshDelay);
@@ -713,10 +705,10 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
     final MetricsConfiguration metricsConfiguration = createDefault();
     metricsConfiguration.setEnabled(isMetricsEnabled);
-    metricsConfiguration.setHost(metricsHost.toString());
+    metricsConfiguration.setHost(metricsHost);
     metricsConfiguration.setPort(metricsPort);
     metricsConfiguration.setPushEnabled(isMetricsPushEnabled);
-    metricsConfiguration.setPushHost(metricsPushHost.toString());
+    metricsConfiguration.setPushHost(metricsPushHost);
     metricsConfiguration.setPushPort(metricsPushPort);
     metricsConfiguration.setPushInterval(metricsPushInterval);
     metricsConfiguration.setPrometheusJob(metricsPrometheusJob);
@@ -730,12 +722,10 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       return PermissioningConfiguration.createDefault();
     }
 
-    final PermissioningConfiguration permissioningConfiguration =
-        PermissioningConfigurationBuilder.permissioningConfigurationFromToml(
-            DefaultCommandValues.PERMISSIONING_CONFIG_LOCATION,
-            permissionsNodesEnabled,
-            permissionsAccountsEnabled);
-    return permissioningConfiguration;
+    return PermissioningConfigurationBuilder.permissioningConfigurationFromToml(
+        DefaultCommandValues.PERMISSIONING_CONFIG_LOCATION,
+        permissionsNodesEnabled,
+        permissionsAccountsEnabled);
   }
 
   private PrivacyParameters orionConfiguration() {
@@ -770,7 +760,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       final boolean peerDiscoveryEnabled,
       final Collection<?> bootstrapNodes,
       final int maxPeers,
-      final HostAndPort discoveryHostAndPort,
+      final String discoveryHost,
+      final int discoveryPort,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
@@ -785,8 +776,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             .p2pEnabled(p2pEnabled)
             .discovery(peerDiscoveryEnabled)
             .bootstrapPeers(bootstrapNodes)
-            .discoveryHost(discoveryHostAndPort.getHost())
-            .discoveryPort(discoveryHostAndPort.getPort())
+            .discoveryHost(discoveryHost)
+            .discoveryPort(discoveryPort)
             .maxPeers(maxPeers)
             .jsonRpcConfiguration(jsonRpcConfiguration)
             .webSocketConfiguration(webSocketConfiguration)
@@ -834,7 +825,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
     // custom genesis file use comes with specific default values for the genesis file itself
     // but also for the network id and the bootnodes list.
-    File genesisFile = genesisFile();
+    final File genesisFile = genesisFile();
     if (genesisFile != null) {
 
       //noinspection ConstantConditions network is not always null but injected by PicoCLI if used
@@ -860,13 +851,13 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         // stage.
         // If no chain id is found in the genesis as it's an optional, we use mainnet network id.
         try {
-          GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
+          final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
           builder.setNetworkId(
               genesisConfigFile
                   .getConfigOptions()
                   .getChainId()
                   .orElse(EthNetworkConfig.getNetworkConfig(MAINNET).getNetworkId()));
-        } catch (DecodeException e) {
+        } catch (final DecodeException e) {
           throw new ParameterException(
               new CommandLine(this),
               String.format("Unable to parse genesis file %s.", genesisFile),
