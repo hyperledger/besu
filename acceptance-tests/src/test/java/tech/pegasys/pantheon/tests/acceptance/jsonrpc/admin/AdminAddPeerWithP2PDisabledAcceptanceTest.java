@@ -47,7 +47,7 @@ public class AdminAddPeerWithP2PDisabledAcceptanceTest extends AcceptanceTestBas
   }
 
   @Test
-  public void adminAddPeerFailsWhenP2PDisabled() {
+  public void adminAddPeerFailsWhenP2PDisabledOnTargetNode() {
     final String nodeBEnode = nodeB.enodeUrl();
     try {
       nodeA.verify(admin.addPeer(nodeBEnode));
@@ -59,7 +59,7 @@ public class AdminAddPeerWithP2PDisabledAcceptanceTest extends AcceptanceTestBas
   }
 
   @Test
-  public void adminAddPeerFailsWhenP2PDisabled2() {
+  public void adminAddPeerHasNoEffectWhenP2PDisabledOnInputNode() {
     final String nodeAEnode = nodeA.enodeUrl();
     nodeB.verify(admin.addPeer(nodeAEnode));
     nodeB.verify(net.awaitPeerCount(0));
