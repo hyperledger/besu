@@ -38,22 +38,31 @@ To run Pantheon from the Docker image, you must have [Docker](https://docs.docke
 
 To run a Pantheon node in a container connected to the Ethereum mainnet: 
 
-```bash
+```bash tab="latest"
 docker run pegasyseng/pantheon:latest
 ```
 
+```bash tab="0.8.5"
+docker run pegasyseng/pantheon:0.8.5
+```
+
+!!! note
+    `latest` runs the latest cached version. To pull the latest version, use `docker pull pegasyseng/pantheon:latest`. 
+ 
 ## Command Line Options 
  
-!!!attention
+!!!note
     You cannot use the following Pantheon command line options when running Pantheon from the Docker image:
     
     * [`--data-path`](../Reference/Pantheon-CLI-Syntax.md#data-path), see [Persisting Data](#persisting-data)
     * [`--config-file`](../Reference/Pantheon-CLI-Syntax.md#config), see [Custom Configuration File](#custom-configuration-file)
     * [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file), see [Custom Genesis File](#custom-genesis-file).
-    * [`--rpc-http-host`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-host) and [`--rpc-http-port`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-port),
-    [`--p2p-host`](../Reference/Pantheon-CLI-Syntax.md#p2p-host) and [`--p2p-port`](../Reference/Pantheon-CLI-Syntax.md#p2p-port),
-    [`--rpc-ws-host`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-host) and [`--rpc-ws-port`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-port),
-    see [Exposing Ports](#exposing-ports)
+    * Host and port options, see [Exposing Ports](#exposing-ports). Host and port options are: 
+        - [`--rpc-http-host`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-host) and [`--rpc-http-port`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-port)
+        - [`--metrics-host`](../Reference/Pantheon-CLI-Syntax.md#metrics-host) and [`--metrics-port`](../Reference/Pantheon-CLI-Syntax.md#metrics-port)
+        - [`--metrics-push-host`](../Reference/Pantheon-CLI-Syntax.md#metrics-push-host) and [`--metrics-push-port`](../Reference/Pantheon-CLI-Syntax.md#metrics-push-port)
+        - [`--p2p-host`](../Reference/Pantheon-CLI-Syntax.md#p2p-host) and [`--p2p-port`](../Reference/Pantheon-CLI-Syntax.md#p2p-port)
+        - [`--rpc-ws-host`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-host) and [`--rpc-ws-port`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-port)
     
     All other [Pantheon command line options](/Reference/Pantheon-CLI-Syntax) work in the same way as when Pantheon is installed locally.
 
@@ -72,7 +81,7 @@ Where `<pantheondata-path>` is the volume to which the data is saved.
 
 ### Custom Configuration File 
 
-Specify a custom configuration file to provide a file containing key/value pairs for command line options. This is the equivalent of specifying the [`--config-file`](../Reference/Pantheon-CLI-Syntax.md#config-file) option. 
+Specify a [custom configuration file](../Configuring-Pantheon/Using-Configuration-File.md) to provide a file containing key/value pairs for command line options. This is the equivalent of specifying the [`--config-file`](../Reference/Pantheon-CLI-Syntax.md#config-file) option. 
 
 To run Pantheon specifying a custom configuration file: 
 ```bash
@@ -104,9 +113,11 @@ Where `mygenesis.json` is your custom configuration file and `path` is the absol
 
 ### Exposing Ports
 
-Expose ports for P2P peer discovery, JSON-RPC service, and WebSockets. This is required to use the 
+Expose ports for P2P peer discovery, metrics, and HTTP and WebSockets JSON-RPC. This is required to use the 
 defaults ports or specify different ports (the equivalent of specifying the [`--rpc-http-port`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-port), 
-[`--p2p-port`](../Reference/Pantheon-CLI-Syntax.md#p2p-port), [`--rpc-ws-port`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-port) options).
+[`--p2p-port`](../Reference/Pantheon-CLI-Syntax.md#p2p-port), [`--rpc-ws-port`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-port), 
+[`--metrics-port`](../Reference/Pantheon-CLI-Syntax.md#metrics-port), and [`--metrics-push-port`](../Reference/Pantheon-CLI-Syntax.md#metrics-push-port) 
+options).
 
 To run Pantheon exposing local ports for access: 
 ```bash
@@ -136,8 +147,6 @@ docker run -p 8545:8545 -p 30303:30303 --mount type=bind,source=/<myvolume/panth
 
 ## Run a Node on Ropsten Testnet 
 
-Save a local copy of the [Ropsten genesis file](https://github.com/PegaSysEng/pantheon/blob/master/config/src/main/resources/ropsten.json). 
-
 To run a node on Ropsten: 
 ```bash
 docker run -p 30303:30303 --mount type=bind,source=/<myvolume/pantheon/ropsten>,target=/var/lib/pantheon --network=ropsten
@@ -154,7 +163,7 @@ docker run -p 30303:30303 --mount type=bind,source=/<myvolume/pantheon/rinkeby>,
 
 To run a node that mines blocks at a rate suitable for testing purposes with WebSockets enabled: 
 ```bash
-docker run -p 8546:8546 --mount type=bind,source=/<myvolume/pantheon/testnode>,target=/var/lib/pantheon pegasyseng/pantheon:latest --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-cors-origins "all" --rpc-ws-enabled --network=dev
+docker run -p 8546:8546 --mount type=bind,source=/<myvolume/pantheon/testnode>,target=/var/lib/pantheon pegasyseng/pantheon:latest --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-cors-origins="all" --rpc-ws-enabled --network=dev
 ```
 
 ## Stopping Pantheon and Cleaning up Resources
