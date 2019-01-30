@@ -141,7 +141,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
-      final Address miningBenficiary,
+      final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup) {
     LOG.trace("Starting execution of {}", transaction);
@@ -212,7 +212,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .blockHeader(blockHeader)
               .depth(0)
               .completer(c -> {})
-              .miningBeneficiary(miningBenficiary)
+              .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
               .build();
 
@@ -239,7 +239,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .blockHeader(blockHeader)
               .depth(0)
               .completer(c -> {})
-              .miningBeneficiary(miningBenficiary)
+              .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
               .build();
     }
@@ -270,7 +270,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     final Wei refundedWei = refunded.priceFor(transaction.getGasPrice());
     sender.incrementBalance(refundedWei);
 
-    final MutableAccount coinbase = worldState.getOrCreate(miningBenficiary);
+    final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary);
     final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
     final Wei coinbaseWei = coinbaseFee.priceFor(transaction.getGasPrice());
     coinbase.incrementBalance(coinbaseWei);
