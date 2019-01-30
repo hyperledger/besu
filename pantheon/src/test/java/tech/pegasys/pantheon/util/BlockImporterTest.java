@@ -60,7 +60,8 @@ public final class BlockImporterTest {
             PrivacyParameters.noPrivacy());
     final BlockImporter.ImportResult result =
         blockImporter.importBlockchain(source, targetController);
-    assertThat(result.count).isEqualTo(1000);
+    // Don't count the Genesis block
+    assertThat(result.count).isEqualTo(999);
     assertThat(result.td).isEqualTo(UInt256.of(21991996248790L));
   }
 
@@ -93,6 +94,7 @@ public final class BlockImporterTest {
             PrivacyParameters.noPrivacy());
     final BlockImporter.ImportResult result = blockImporter.importBlockchain(source, controller);
 
-    assertThat(result.count).isEqualTo(959);
+    // Don't count the Genesis block
+    assertThat(result.count).isEqualTo(958);
   }
 }
