@@ -12,5 +12,5 @@ For Bash-based executions, you can set the variable for only the scope of the pr
 !!! example
     ```bash
     $ PANTHEON_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 \
-    $ bin/pantheon --network=rinkeby
+    $ pantheon --network=rinkeby
     ```

@@ -114,14 +114,15 @@ Start Node-1 specifying:
 * No arguments for the [`--bootnodes` option](../Reference/Pantheon-CLI-Syntax.md#bootnodes) because this is your bootnode.
 * Mining is enabled and the account to which mining rewards are paid using the [`--miner-enabled`](../Reference/Pantheon-CLI-Syntax.md#miner-enabled) 
 and [`--miner-coinbase` options](../Reference/Pantheon-CLI-Syntax.md#miner-coinbase).
-* JSON-RPC API is enabled using the [`--rpc-http-enabled` option](../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled). 
+* JSON-RPC API is enabled using the [`--rpc-http-enabled` option](../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled)
+* All hosts can access the HTTP JSON-RPC API using the [`--host-whitelist` option](../Reference/Pantheon-CLI-Syntax.md#host-whitelist). 
 
 ```bash tab="MacOS"
-pantheon --data-path=Node-1-data-path --genesis-file=../privateNetworkGenesis.json --bootnodes --network-id 123 --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-enabled      
+pantheon --data-path=Node-1-data-path --genesis-file=../privateNetworkGenesis.json --bootnodes --network-id 123 --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-enabled --host-whitelist=*      
 ```
 
 ```bash tab="Windows"
-pantheon --data-path=Node-1-data-path --genesis-file=..\privateNetworkGenesis.json --bootnodes --network-id 123 --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-enabled      
+pantheon --data-path=Node-1-data-path --genesis-file=..\privateNetworkGenesis.json --bootnodes --network-id 123 --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-enabled --host-whitelist=*     
 ```
 
 !!! info
@@ -133,7 +134,7 @@ You need the enode URL for Node-1 to specify Node-1 as the bootnode for Node-2 a
 
 The enode URL is `enode://<id>@<host:port>` where:
 
-* `<id>` is the node public key excluding the initial 0x. The node public node for Node-1 was written to `publicKeyNode1` in [step 3](#3-start-first-node-and-get-node-public-key). 
+* `<id>` is the node public key excluding the initial 0x. The node public key for Node-1 was written to `publicKeyNode1` in [step 3](#3-start-first-node-and-get-node-public-key). 
 * `<host:port>` is the host and port the bootnode is listening on for P2P peer discovery. Node-1 is using the default host and port of `127.0.0.1:30303`. 
 
 !!! example
