@@ -783,6 +783,36 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void p2pHostMayBeLocalhost() {
+
+    final String host = "localhost";
+    parseCommand("--p2p-host", host);
+
+    verify(mockRunnerBuilder).discoveryHost(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void p2pHostMayBeIPv6() {
+
+    final String host = "2600:DB8::8545";
+    parseCommand("--p2p-host", host);
+
+    verify(mockRunnerBuilder).discoveryHost(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void maxpeersOptionMustBeUsed() {
 
     final int maxPeers = 123;
@@ -896,6 +926,36 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpHostMayBeLocalhost() {
+
+    final String host = "localhost";
+    parseCommand("--rpc-http-enabled", "--rpc-http-host", host);
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpHostMayBeIPv6() {
+
+    final String host = "2600:DB8::8545";
+    parseCommand("--rpc-http-enabled", "--rpc-http-host", host);
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1290,6 +1350,34 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void rpcWsHostAndMayBeLocalhost() {
+    final String host = "localhost";
+    parseCommand("--rpc-ws-enabled", "--rpc-ws-host", host);
+
+    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(wsRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void rpcWsHostAndMayBeIPv6() {
+    final String host = "2600:DB8::8545";
+    parseCommand("--rpc-ws-enabled", "--rpc-ws-host", host);
+
+    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(wsRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void metricsEnabledPropertyDefaultIsFalse() {
     parseCommand();
 
@@ -1363,6 +1451,34 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void metricsHostMayBeLocalhost() {
+    final String host = "localhost";
+    parseCommand("--metrics-enabled", "--metrics-host", host);
+
+    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(metricsConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void metricsHostMayBeIPv6() {
+    final String host = "2600:DB8::8545";
+    parseCommand("--metrics-enabled", "--metrics-host", host);
+
+    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(metricsConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void metricsPushEnabledPropertyMustBeUsed() {
     parseCommand("--metrics-push-enabled");
 
@@ -1391,6 +1507,20 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     assertThat(metricsConfigArgumentCaptor.getValue().getPushHost()).isEqualTo(host);
     assertThat(metricsConfigArgumentCaptor.getValue().getPushPort()).isEqualTo(port);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void metricsPushHostMayBeLocalhost() {
+    final String host = "localhost";
+    parseCommand("--metrics-push-enabled", "--metrics-push-host", host);
+
+    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(metricsConfigArgumentCaptor.getValue().getPushHost()).isEqualTo(host);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
