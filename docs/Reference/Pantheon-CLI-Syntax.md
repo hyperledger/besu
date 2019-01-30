@@ -476,6 +476,60 @@ The default is 30303.
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
 
+### privacy-enabled
+
+```bash tab="Syntax"
+--privacy-enabled[=<true|false>]
+```
+
+```bash tab="Example Command Line"
+--privacy-enabled=false
+```
+
+```bash tab="Example Configuration File"
+privacy-enabled=false
+```
+
+Set to enable private transactions. 
+The default is false.
+
+!!!note
+    Privacy is under development and will be available in v1.1.  
+
+### privacy-precompiled-address
+
+```bash tab="Syntax"
+--privacy-precompiled-address=<privacyPrecompiledAddress>
+```
+
+Address to which the privacy pre-compiled contract is mapped.
+The default is 126. 
+
+!!!note
+    Privacy is under development and will be available in v1.1.    
+    
+### privacy-public-key-file
+
+```bash tab="Syntax"
+--privacy-public-key-file=<privacyPublicKeyFile>
+```
+
+Path to the public key for the enclave.     
+
+!!!note
+    Privacy is under development and will be available in v1.1.
+
+### privacy-url
+
+```bash tab="Syntax"
+--privacy-url=<privacyUrl>
+```
+
+URL on which enclave is running.    
+
+!!!note
+    Privacy is under development and will be available in v1.1.
+
 ### rpc-http-enabled
 
 ```bash tab="Syntax"
