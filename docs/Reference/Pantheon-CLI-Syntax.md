@@ -22,21 +22,6 @@ Runs the Pantheon Ethereum full node client.
 
 ## Options
 
-### accounts-whitelist
-
-```bash tab="Syntax"
---accounts-whitelist[=<hex string of account public key>[,<hex string of account public key>...]...
-```
-
-```bash tab="Example"
- --accounts-whitelist=[0xfe3b557e8fb62b89f4916b721be55ceb828dbd73, 0x627306090abaB3A6e1400e9345bC60c78a8BEf57]
-```
-
-Comma separated account public keys for permissioned transactions. You can specify an empty list.
-
-!!!note
-    Permissioning is under development and will be available in v1.0.
-
 ### banned-node-ids
 
 ```bash tab="Syntax"
@@ -492,26 +477,6 @@ otherwise, the existing key file specifies the node private key.
 !!!attention
     The private key is not encrypted.
 
-### nodes-whitelist
-
-```bash tab="Syntax"
---nodes-whitelist[=<enode://id@host:port>[,<enode://id@host:port>...]...]
-```
-
-```bash tab="Example Command Line"
---nodes-whitelist=enode://c35c3...d615f@3.14.15.92:30303,enode://f42c13...fc456@65.35.89.79:30303
-```
-
-```bash tab="Example Configuration File"
-nodes-whitelist=["enode://c35c3...d615f@3.14.15.92:30303","enode://f42c13...fc456@65.35.89.79:30303"]
-```
-
-Comma-separated enode URLs for permissioned networks.
-Not intended for use with mainnet or public testnets. 
-
-!!!note
-    Permissioning is under development and will be available in v1.0.
-
 ### p2p-enabled
 
 ```bash tab="Syntax"
@@ -624,6 +589,46 @@ URL on which enclave is running.
 
 !!!note
     Privacy is under development and will be available in v1.1.
+
+### permissions-accounts-enabled
+
+```bash tab="Syntax"
+--permissions-accounts-enabled[=<true|false>]
+```
+
+```bash tab="Example Command Line"
+--permissions-accounts-enabled
+```
+
+```bash tab="Example Configuration File"
+permissions-accounts-enabled=true
+```
+
+Set to enable account level permissions.
+The default is `false`.
+
+!!!note
+    Permissions is under development and will be available in v1.0. 
+
+### permissions-nodes-enabled
+
+```bash tab="Syntax"
+--permissions-nodes-enabled[=<true|false>]
+```
+
+```bash tab="Example Command Line"
+--permissions-nodes-enabled
+```
+
+```bash tab="Example Configuration File"
+permissions-nodes-enabled=true
+```
+
+Set to enable node level permissions.
+The default is `false`.
+
+!!!note
+    Permissions is under development and will be available in v1.0.
 
 ### rpc-http-enabled
 
