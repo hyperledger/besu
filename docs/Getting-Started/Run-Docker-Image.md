@@ -7,29 +7,6 @@ A Docker image is provided to run a Pantheon node in a Docker container.
 
 Use this Docker image to run a single Pantheon node without installing Pantheon. 
 
-!!!caution
-    If you have been running a node using the v0.8.3 Docker image, the node was not saving data to the 
-    specified [data directory](#data-directory), or referring to the custom [configuration file](#custom-configuration-file)
-    or [genesis file](#custom-genesis-file). 
-   
-    To recover the node key and data directory from the Docker container:
-    
-    `docker cp <container>:/opt/pantheon/key <destination_file>`
-    
-    `docker cp <container>:/opt/pantheon/database <destination_directory>` 
-   
-    Where `container` is the name or ID of the Docker container containing the Pantheon node. 
-   
-    The container can be running or stopped when you copy the key and data directory. If your node was 
-    fully synchronized to MainNet, the data directory will be ~2TB.  
-   
-    When restarting your node with the v0.8.4 Docker image:
-
-    * Save the node key in the [`key` file](../Configuring-Pantheon/Node-Keys.md#node-private-key) in the data 
-    directory or specify the location using the [`--node-private-key` option](../Configuring-Pantheon/Node-Keys.md#specifying-a-custom-node-private-key-file).  
-    
-    * Specify the `<destination_directory` as a [volume for the data directory](#data-directory). 
-
 ## Prerequisites
 
 To run Pantheon from the Docker image, you must have [Docker](https://docs.docker.com/install/) installed.  
@@ -54,9 +31,11 @@ docker run pegasyseng/pantheon:0.8.5
 !!!note
     You cannot use the following Pantheon command line options when running Pantheon from the Docker image:
     
-    * [`--data-path`](../Reference/Pantheon-CLI-Syntax.md#data-path), see [Persisting Data](#persisting-data)
+    * [`--data-path`](../Reference/Pantheon-CLI-Syntax.md#data-path), see [Data Directory](#data-directory)
     * [`--config-file`](../Reference/Pantheon-CLI-Syntax.md#config), see [Custom Configuration File](#custom-configuration-file)
     * [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file), see [Custom Genesis File](#custom-genesis-file).
+    * [`--node-private-key-file`](../Reference/Pantheon-CLI-Syntax.md#node-private-key-file). When running from the Docker image, 
+    Pantheon always uses the key file in the [data directory](#data-directory). 
     * Host and port options, see [Exposing Ports](#exposing-ports). Host and port options are: 
         - [`--rpc-http-host`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-host) and [`--rpc-http-port`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-port)
         - [`--metrics-host`](../Reference/Pantheon-CLI-Syntax.md#metrics-host) and [`--metrics-port`](../Reference/Pantheon-CLI-Syntax.md#metrics-port)
