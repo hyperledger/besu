@@ -82,7 +82,7 @@ class PublicKeySubCommand implements Runnable {
   static class ExportSubCommand implements Runnable {
 
     @Option(
-      names = "--from",
+      names = "--to",
       required = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description = "File to write public key to",
