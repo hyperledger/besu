@@ -50,6 +50,9 @@ public class PermAddAccountsToWhitelist implements JsonRpcMethod {
       case ERROR_INVALID_ENTRY:
         return new JsonRpcErrorResponse(
             request.getId(), JsonRpcError.ACCOUNT_WHITELIST_INVALID_ENTRY);
+      case ERROR_EXISTING_ENTRY:
+        return new JsonRpcErrorResponse(
+            request.getId(), JsonRpcError.ACCOUNT_WHITELIST_EXISTING_ENTRY);
       case ERROR_DUPLICATED_ENTRY:
         return new JsonRpcErrorResponse(
             request.getId(), JsonRpcError.ACCOUNT_WHITELIST_DUPLICATED_ENTRY);

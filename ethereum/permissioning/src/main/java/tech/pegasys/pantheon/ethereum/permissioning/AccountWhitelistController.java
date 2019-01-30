@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.permissioning;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class AccountWhitelistController {
@@ -34,9 +35,13 @@ public class AccountWhitelistController {
       return AddResult.ERROR_INVALID_ENTRY;
     }
 
-    boolean hasDuplicatedAccount = accounts.stream().anyMatch(accountWhitelist::contains);
-    if (hasDuplicatedAccount) {
+    if (inputHasDuplicates(accounts)) {
       return AddResult.ERROR_DUPLICATED_ENTRY;
+    }
+
+    boolean inputHasExistingAccount = accounts.stream().anyMatch(accountWhitelist::contains);
+    if (inputHasExistingAccount) {
+      return AddResult.ERROR_EXISTING_ENTRY;
     }
 
     this.isAccountWhitelistSet = true;
@@ -49,12 +54,20 @@ public class AccountWhitelistController {
       return RemoveResult.ERROR_INVALID_ENTRY;
     }
 
+    if (inputHasDuplicates(accounts)) {
+      return RemoveResult.ERROR_DUPLICATED_ENTRY;
+    }
+
     if (!accountWhitelist.containsAll(accounts)) {
       return RemoveResult.ERROR_ABSENT_ENTRY;
     }
 
     this.accountWhitelist.removeAll(accounts);
     return RemoveResult.SUCCESS;
+  }
+
+  private boolean inputHasDuplicates(final List<String> accounts) {
+    return !accounts.stream().allMatch(new HashSet<>()::add);
   }
 
   public boolean contains(final String account) {
@@ -85,12 +98,14 @@ public class AccountWhitelistController {
   public enum AddResult {
     SUCCESS,
     ERROR_DUPLICATED_ENTRY,
+    ERROR_EXISTING_ENTRY,
     ERROR_INVALID_ENTRY
   }
 
   public enum RemoveResult {
     SUCCESS,
     ERROR_ABSENT_ENTRY,
-    ERROR_INVALID_ENTRY
+    ERROR_INVALID_ENTRY,
+    ERROR_DUPLICATED_ENTRY
   }
 }

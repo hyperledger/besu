@@ -77,7 +77,18 @@ public class PermAddAccountsToWhitelistTest {
   }
 
   @Test
-  public void whenAccountIsDuplicatedShouldReturnDuplicatedAccountErrorResponse() {
+  public void whenAccountExistsShouldReturnExistingEntryErrorResponse() {
+    JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_EXISTING_ENTRY);
+    when(accountWhitelist.addAccounts(any())).thenReturn(AddResult.ERROR_EXISTING_ENTRY);
+
+    JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void whenInputHasDuplicatedAccountsShouldReturnDuplicatedEntryErrorResponse() {
     JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_DUPLICATED_ENTRY);
     when(accountWhitelist.addAccounts(any())).thenReturn(AddResult.ERROR_DUPLICATED_ENTRY);

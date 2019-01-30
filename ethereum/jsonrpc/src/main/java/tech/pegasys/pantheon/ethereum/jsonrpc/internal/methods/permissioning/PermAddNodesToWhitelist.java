@@ -62,7 +62,9 @@ public class PermAddNodesToWhitelist implements JsonRpcMethod {
       switch (nodesWhitelistResult.result()) {
         case SUCCESS:
           return new JsonRpcSuccessResponse(req.getId(), true);
-        case ADD_ERROR_DUPLICATED_ENTRY:
+        case ERROR_EXISTING_ENTRY:
+          return new JsonRpcErrorResponse(req.getId(), JsonRpcError.NODE_WHITELIST_EXISTING_ENTRY);
+        case ERROR_DUPLICATED_ENTRY:
           return new JsonRpcErrorResponse(
               req.getId(), JsonRpcError.NODE_WHITELIST_DUPLICATED_ENTRY);
         default:

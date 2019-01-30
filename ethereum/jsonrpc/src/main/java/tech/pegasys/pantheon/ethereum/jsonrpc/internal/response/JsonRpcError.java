@@ -51,13 +51,15 @@ public enum JsonRpcError {
 
   // Permissioning errors
   ACCOUNT_WHITELIST_NOT_SET(-32000, "Account whitelist hasn't been set"),
-  ACCOUNT_WHITELIST_DUPLICATED_ENTRY(-32000, "Account whitelist can't contain duplicated entries"),
+  ACCOUNT_WHITELIST_DUPLICATED_ENTRY(-32000, "Request can't contain duplicated entries"),
+  ACCOUNT_WHITELIST_EXISTING_ENTRY(-32000, "Can't add existing account to whitelist"),
   ACCOUNT_WHITELIST_ABSENT_ENTRY(-32000, "Can't remove absent account from whitelist"),
   ACCOUNT_WHITELIST_INVALID_ENTRY(-32000, "Can't add invalid account address to the whitelist"),
 
   // Node whitelist errors
   NODE_WHITELIST_NOT_SET(-32000, "Node whitelist has not been set"),
-  NODE_WHITELIST_DUPLICATED_ENTRY(-32000, "Node whitelist cannot contain duplicated node entries"),
+  NODE_WHITELIST_DUPLICATED_ENTRY(-32000, "Request can't contain duplicated node entries"),
+  NODE_WHITELIST_EXISTING_ENTRY(-32000, "Node whitelist can't contain duplicated node entries"),
   NODE_WHITELIST_MISSING_ENTRY(-32000, "Node whitelist does not contain a specified node"),
   NODE_WHITELIST_INVALID_ENTRY(-32000, "Unable to add invalid node to the node whitelist");
 
