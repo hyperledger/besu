@@ -79,5 +79,7 @@ dependencyManagement {
     dependency 'org.web3j:crypto:4.1.0'
 
     dependency 'org.xerial.snappy:snappy-java:1.1.7.2'
+
+    dependency 'net.consensys:orion:0.1.1'
   }
 }
