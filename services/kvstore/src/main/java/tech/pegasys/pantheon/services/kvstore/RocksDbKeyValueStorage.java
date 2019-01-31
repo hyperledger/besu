@@ -16,7 +16,7 @@ import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.OperationTimer;
-import tech.pegasys.pantheon.util.InvalidConfigurationException;
+import tech.pegasys.pantheon.services.util.RocksDbUtil;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.Closeable;
@@ -33,7 +33,6 @@ import java.util.stream.StreamSupport;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.rocksdb.Options;
-import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.TransactionDB;
@@ -57,25 +56,11 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
 
   public static KeyValueStorage create(
       final Path storageDirectory, final MetricsSystem metricsSystem) throws StorageException {
-    loadNativeLibrary();
     return new RocksDbKeyValueStorage(storageDirectory, metricsSystem);
   }
 
-  private static void loadNativeLibrary() {
-    try {
-      RocksDB.loadLibrary();
-    } catch (final ExceptionInInitializerError e) {
-      if (e.getCause() instanceof UnsupportedOperationException) {
-        LOG.info("Unable to load RocksDB library", e);
-        throw new InvalidConfigurationException(
-            "Unsupported platform detected. On Windows, ensure you have 64bit Java installed.");
-      } else {
-        throw e;
-      }
-    }
-  }
-
   private RocksDbKeyValueStorage(final Path storageDirectory, final MetricsSystem metricsSystem) {
+    RocksDbUtil.loadNativeLibrary();
     try {
       options = new Options().setCreateIfMissing(true);
       txOptions = new TransactionDBOptions();
