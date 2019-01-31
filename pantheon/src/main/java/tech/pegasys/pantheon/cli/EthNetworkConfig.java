@@ -33,7 +33,7 @@ public class EthNetworkConfig {
   private static final int MAINNET_NETWORK_ID = 1;
   private static final int RINKEBY_NETWORK_ID = 4;
   private static final int ROPSTEN_NETWORK_ID = 3;
-  private static final int GOERLI_NETWORK_ID = 6284;
+  private static final int GOERLI_NETWORK_ID = 5;
   private static final int DEV_NETWORK_ID = 2018;
   private static final String MAINNET_GENESIS = "mainnet.json";
   private static final String RINKEBY_GENESIS = "rinkeby.json";
