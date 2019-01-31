@@ -27,8 +27,8 @@ A PoA genesis file defines properties specific to Clique:
       "config": {
         ....
         "clique": {
-          "period": 15,
-          "epoch": 30000
+          "blockperiodseconds": 15,
+          "epochlength": 30000
         }
       },
       ...
@@ -39,8 +39,8 @@ A PoA genesis file defines properties specific to Clique:
     
 The properties specific to Clique are:
 
-* `period` - Block time in seconds. 
-* `epoch` - Number of blocks after which to reset all votes.
+* `blockperiodseconds` - Block time in seconds. 
+* `epochlength` - Number of blocks after which to reset all votes.
 * `extraData` - Initial signers are specified after the 32 bytes reserved for vanity data. 
 
 To connect to the Rinkeby testnet, start Pantheon with the [`--network=rinkeby`](../Reference/Pantheon-CLI-Syntax.md#network)
