@@ -24,7 +24,7 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
 
   private static final TrieNodeDecoder nodeDecoder = TrieNodeDecoder.create();
 
-  TrieNodeDataRequest(final Kind kind, final Hash hash) {
+  TrieNodeDataRequest(final RequestType kind, final Hash hash) {
     super(kind, hash);
   }
 

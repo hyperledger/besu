@@ -24,7 +24,7 @@ import java.util.List;
 class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   StorageTrieNodeDataRequest(final Hash hash) {
-    super(Kind.STORAGE_TRIE_NODE, hash);
+    super(RequestType.STORAGE_TRIE_NODE, hash);
   }
 
   @Override

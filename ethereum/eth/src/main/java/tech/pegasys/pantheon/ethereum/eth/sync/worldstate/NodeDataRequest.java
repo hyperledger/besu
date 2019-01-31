@@ -13,24 +13,22 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.worldstate;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
+import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
+import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.stream.Stream;
 
-abstract class NodeDataRequest {
-  public enum Kind {
-    ACCOUNT_TRIE_NODE,
-    STORAGE_TRIE_NODE,
-    CODE
-  }
+public abstract class NodeDataRequest {
 
-  private final Kind kind;
+  private final RequestType requestType;
   private final Hash hash;
   private BytesValue data;
 
-  protected NodeDataRequest(final Kind kind, final Hash hash) {
-    this.kind = kind;
+  protected NodeDataRequest(final RequestType requestType, final Hash hash) {
+    this.requestType = requestType;
     this.hash = hash;
   }
 
@@ -46,8 +44,40 @@ abstract class NodeDataRequest {
     return new CodeNodeDataRequest(hash);
   }
 
-  public Kind getKind() {
-    return kind;
+  public static BytesValue serialize(final NodeDataRequest request) {
+    return RLP.encode(request::writeTo);
+  }
+
+  public static NodeDataRequest deserialize(final BytesValue encoded) {
+    RLPInput in = RLP.input(encoded);
+    in.enterList();
+    RequestType requestType = RequestType.fromValue(in.readByte());
+    Hash hash = Hash.wrap(in.readBytes32());
+    in.leaveList();
+
+    switch (requestType) {
+      case ACCOUNT_TRIE_NODE:
+        return createAccountDataRequest(hash);
+      case STORAGE_TRIE_NODE:
+        return createStorageDataRequest(hash);
+      case CODE:
+        return createCodeRequest(hash);
+      default:
+        throw new IllegalArgumentException(
+            "Unable to deserialize provided data into a valid "
+                + NodeDataRequest.class.getSimpleName());
+    }
+  }
+
+  private void writeTo(final RLPOutput out) {
+    out.startList();
+    out.writeByte(requestType.getValue());
+    out.writeBytesValue(hash);
+    out.endList();
+  }
+
+  public RequestType getRequestType() {
+    return requestType;
   }
 
   public Hash getHash() {
