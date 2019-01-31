@@ -14,12 +14,14 @@ package tech.pegasys.pantheon.orion.types;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import java.util.List;
+
 public class SendRequest {
   private byte[] payload;
   private String from;
-  private String[] to;
+  private List<String> to;
 
-  public SendRequest(final String payload, final String from, final String[] to) {
+  public SendRequest(final String payload, final String from, final List<String> to) {
     this.payload = payload.getBytes(UTF_8);
     this.from = from;
     this.to = to;
@@ -41,11 +43,11 @@ public class SendRequest {
     this.from = from;
   }
 
-  public String[] getTo() {
+  public List<String> getTo() {
     return to;
   }
 
-  public void setTo(final String[] to) {
+  public void setTo(final List<String> to) {
     this.to = to;
   }
 }

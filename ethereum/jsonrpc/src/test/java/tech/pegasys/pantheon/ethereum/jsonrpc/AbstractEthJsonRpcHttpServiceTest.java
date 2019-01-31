@@ -47,6 +47,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionHandler;
 import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
@@ -149,6 +150,8 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
         .thenReturn(ValidationResult.valid());
     final PendingTransactions pendingTransactionsMock = mock(PendingTransactions.class);
     when(transactionPoolMock.getPendingTransactions()).thenReturn(pendingTransactionsMock);
+    final PrivateTransactionHandler privateTransactionHandlerMock =
+        mock(PrivateTransactionHandler.class);
     stateArchive = createInMemoryWorldStateArchive();
     GENESIS_CONFIG.writeStateTo(stateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
 
@@ -184,7 +187,8 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
                 new NoOpMetricsSystem(),
                 supportedCapabilities,
                 accountWhitelistController,
-                JSON_RPC_APIS);
+                JSON_RPC_APIS,
+                privateTransactionHandlerMock);
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setPort(0);
     service =

@@ -40,6 +40,7 @@ dependencies {
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:rlp')
   implementation project(':metrics')
+  implementation project(':orion')
   implementation project(':services:kvstore')
 
   implementation 'com.google.guava:guava'

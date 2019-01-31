@@ -35,6 +35,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionHandler;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
@@ -81,6 +82,8 @@ public class JsonRpcTestMethodsFactory {
     final MetricsSystem metricsSystem = new NoOpMetricsSystem();
     final AccountWhitelistController accountWhitelistController =
         mock(AccountWhitelistController.class);
+    final PrivateTransactionHandler privateTransactionHandler =
+        mock(PrivateTransactionHandler.class);
 
     return new JsonRpcMethodsFactory()
         .methods(
@@ -95,6 +98,7 @@ public class JsonRpcTestMethodsFactory {
             metricsSystem,
             new HashSet<>(),
             accountWhitelistController,
-            RpcApis.DEFAULT_JSON_RPC_APIS);
+            RpcApis.DEFAULT_JSON_RPC_APIS,
+            privateTransactionHandler);
   }
 }
