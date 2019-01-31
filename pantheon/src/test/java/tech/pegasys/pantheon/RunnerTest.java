@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockImporter;
 import tech.pegasys.pantheon.ethereum.core.BlockSyncTestUtils;
 import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
@@ -109,7 +110,8 @@ public final class RunnerTest {
             fastSyncConfig,
             new MiningParametersTestBuilder().enabled(false).build(),
             aheadDbNodeKeys,
-            noOpMetricsSystem)) {
+            noOpMetricsSystem,
+            PrivacyParameters.noPrivacy())) {
       setupState(blockCount, controller.getProtocolSchedule(), controller.getProtocolContext());
     }
 
@@ -122,7 +124,8 @@ public final class RunnerTest {
             fastSyncConfig,
             new MiningParametersTestBuilder().enabled(false).build(),
             aheadDbNodeKeys,
-            noOpMetricsSystem);
+            noOpMetricsSystem,
+            PrivacyParameters.noPrivacy());
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
     final ExecutorService executorService = Executors.newFixedThreadPool(2);
     final JsonRpcConfiguration aheadJsonRpcConfiguration = jsonRpcConfiguration();
@@ -165,7 +168,8 @@ public final class RunnerTest {
               fastSyncConfig,
               new MiningParametersTestBuilder().enabled(false).build(),
               KeyPair.generate(),
-              noOpMetricsSystem);
+              noOpMetricsSystem,
+              PrivacyParameters.noPrivacy());
       final Runner runnerBehind =
           runnerBuilder
               .pantheonController(controllerBehind)

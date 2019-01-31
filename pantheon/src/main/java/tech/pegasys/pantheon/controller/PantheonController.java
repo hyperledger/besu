@@ -61,7 +61,8 @@ public interface PantheonController<C> extends Closeable {
           syncConfig,
           miningParameters,
           nodeKeys,
-          metricsSystem);
+          metricsSystem,
+          privacyParameters);
     } else if (configOptions.isRevisedIbft()) {
       return IbftPantheonController.init(
           storageProvider,
@@ -107,6 +108,8 @@ public interface PantheonController<C> extends Closeable {
   TransactionPool getTransactionPool();
 
   MiningCoordinator getMiningCoordinator();
+
+  PrivacyParameters getPrivacyParameters();
 
   default Map<String, JsonRpcMethod> getAdditionalJsonRpcMethods(
       final Collection<RpcApi> enabledRpcApis) {

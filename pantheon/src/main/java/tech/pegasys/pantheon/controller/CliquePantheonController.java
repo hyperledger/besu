@@ -38,6 +38,7 @@ import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.core.Util;
@@ -252,6 +253,12 @@ public class CliquePantheonController implements PantheonController<CliqueContex
   @Override
   public MiningCoordinator getMiningCoordinator() {
     return miningCoordinator;
+  }
+
+  @Override
+  public PrivacyParameters getPrivacyParameters() {
+    LOG.warn("CliquePantheonController does not currently support private transactions.");
+    return PrivacyParameters.noPrivacy();
   }
 
   @Override

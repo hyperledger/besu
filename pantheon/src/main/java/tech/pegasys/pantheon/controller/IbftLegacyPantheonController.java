@@ -35,6 +35,7 @@ import tech.pegasys.pantheon.ethereum.chain.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
@@ -233,6 +234,12 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
   @Override
   public MiningCoordinator getMiningCoordinator() {
     return null;
+  }
+
+  @Override
+  public PrivacyParameters getPrivacyParameters() {
+    LOG.warn("IbftLegacyPantheonController does not currently support private transactions.");
+    return PrivacyParameters.noPrivacy();
   }
 
   @Override

@@ -125,7 +125,7 @@ public class Transaction {
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
    *     it will default to any chain.
    */
-  protected Transaction(
+  public Transaction(
       final long nonce,
       final Wei gasPrice,
       final long gasLimit,

@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
@@ -66,6 +67,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
 
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
+  private final PrivacyParameters privacyParameters;
   private final Runnable close;
 
   public MainnetPantheonController(
@@ -76,6 +78,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
       final KeyPair keyPair,
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
+      final PrivacyParameters privacyParameters,
       final Runnable close) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -84,6 +87,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
     this.keyPair = keyPair;
     this.transactionPool = transactionPool;
     this.miningCoordinator = miningCoordinator;
+    this.privacyParameters = privacyParameters;
     this.close = close;
   }
 
@@ -94,7 +98,8 @@ public class MainnetPantheonController implements PantheonController<Void> {
       final SynchronizerConfiguration taintedSyncConfig,
       final MiningParameters miningParams,
       final KeyPair nodeKeys,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final PrivacyParameters privacyParameters) {
 
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
     final BlockchainStorage blockchainStorage =
@@ -168,6 +173,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
         nodeKeys,
         transactionPool,
         miningCoordinator,
+        privacyParameters,
         () -> {
           miningCoordinator.disable();
           minerThreadPool.shutdownNow();
@@ -222,5 +228,10 @@ public class MainnetPantheonController implements PantheonController<Void> {
   @Override
   public void close() {
     close.run();
+  }
+
+  @Override
+  public PrivacyParameters getPrivacyParameters() {
+    return privacyParameters;
   }
 }
