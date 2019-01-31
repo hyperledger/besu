@@ -64,7 +64,7 @@ public class NewRoundMessageValidator {
     final Address expectedProposer = proposerSelector.selectProposerForRound(rootRoundIdentifier);
     final RoundChangeCertificate roundChangeCert = payload.getRoundChangeCertificate();
 
-    if (!expectedProposer.equals(msg.getSender())) {
+    if (!expectedProposer.equals(msg.getAuthor())) {
       LOG.info("Invalid NewRound message, did not originate from expected proposer.");
       return false;
     }

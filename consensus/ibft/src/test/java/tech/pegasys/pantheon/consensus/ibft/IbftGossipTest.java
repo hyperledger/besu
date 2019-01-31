@@ -61,7 +61,7 @@ public class IbftGossipTest {
 
     ibftGossip.send(message);
     verify(validatorMulticaster)
-        .send(messageData, newArrayList(senderAddress, payload.getSender()));
+        .send(messageData, newArrayList(senderAddress, payload.getAuthor()));
   }
 
   @Test

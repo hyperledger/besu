@@ -47,7 +47,7 @@ public class RoundChangeMessageValidator {
 
   public boolean validateMessage(final SignedData<RoundChangePayload> msg) {
 
-    if (!validators.contains(msg.getSender())) {
+    if (!validators.contains(msg.getAuthor())) {
       LOG.info(
           "Invalid RoundChange message, was not transmitted by a validator for the associated"
               + " round.");

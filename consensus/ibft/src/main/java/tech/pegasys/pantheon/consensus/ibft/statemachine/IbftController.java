@@ -220,7 +220,7 @@ public class IbftController {
   }
 
   private boolean isMsgFromKnownValidator(final SignedData<? extends Payload> msg) {
-    return ibftFinalState.getValidators().contains(msg.getSender());
+    return ibftFinalState.getValidators().contains(msg.getAuthor());
   }
 
   private boolean isMsgForCurrentHeight(final ConsensusRoundIdentifier roundIdentifier) {
