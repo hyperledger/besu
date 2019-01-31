@@ -9,7 +9,7 @@ void tryAddKnownHost(String hostUrl){
 
 pipeline {
     agent {
-        docker { image 'pegasyseng/pantheon-build:0.0.4' }
+        docker { image 'pegasyseng/pantheon-build-jdk8:0.0.4' }
     }
     parameters {
         string(name: 'BRANCH_NAME', defaultValue: 'master', description: '[MANDATORY] The name of the branch to create the release from')
