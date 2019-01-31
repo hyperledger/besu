@@ -11,8 +11,8 @@
     "constantinopleBlock":0,
     "constantinopleFixBlock":0,
     "clique":{
-      "period":15,
-      "epoch":30000
+      "blockperiodseconds":15,
+      "epochlength":30000
     }
   },
   "coinbase":"0x0000000000000000000000000000000000000000",
