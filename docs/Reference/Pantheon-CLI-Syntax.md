@@ -936,3 +936,4 @@ $ pantheon password-hash <my-password>
 
 ```bash tab="Example"
 $ pantheon password-hash "password123"
+```
