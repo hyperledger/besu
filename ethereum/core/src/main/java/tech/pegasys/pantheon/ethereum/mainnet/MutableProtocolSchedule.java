@@ -17,6 +17,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.util.Comparator;
 import java.util.NavigableSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 public class MutableProtocolSchedule<C> implements ProtocolSchedule<C> {
 
@@ -58,5 +59,13 @@ public class MutableProtocolSchedule<C> implements ProtocolSchedule<C> {
       }
     }
     return null;
+  }
+
+  public String listMilestones() {
+    return protocolSpecs
+        .stream()
+        .sorted(Comparator.comparing(ScheduledProtocolSpec::getBlock))
+        .map(spec -> spec.getSpec().getName() + ": " + spec.getBlock())
+        .collect(Collectors.joining(", ", "[", "]"));
   }
 }

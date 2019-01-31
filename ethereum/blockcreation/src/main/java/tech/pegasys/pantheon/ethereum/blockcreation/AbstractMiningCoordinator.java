@@ -113,7 +113,9 @@ public abstract class AbstractMiningCoordinator<
         LOG.info("Resuming mining operations");
         startAsyncMiningOperation();
       } else if (!inSync) {
-        LOG.info("Pausing mining while behind chain head");
+        if (isEnabled) {
+          LOG.info("Pausing mining while behind chain head");
+        }
         haltCurrentMiningOperation();
       }
     }

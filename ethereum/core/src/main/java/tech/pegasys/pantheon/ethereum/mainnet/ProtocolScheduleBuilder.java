@@ -18,8 +18,11 @@ import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import java.util.OptionalLong;
 import java.util.function.Function;
 
-public class ProtocolScheduleBuilder<C> {
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+public class ProtocolScheduleBuilder<C> {
+  private static final Logger LOG = LogManager.getLogger();
   private final GenesisConfigOptions config;
   private final Function<ProtocolSpecBuilder<Void>, ProtocolSpecBuilder<C>> protocolSpecAdapter;
   private final int defaultChainId;
@@ -91,6 +94,7 @@ public class ProtocolScheduleBuilder<C> {
         config.getConstantinopleFixBlockNumber(),
         MainnetProtocolSpecs.constantinopleFixDefinition(chainId));
 
+    LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;
   }
 
