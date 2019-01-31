@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 class CodeNodeDataRequest extends NodeDataRequest {
 
   CodeNodeDataRequest(final Hash hash) {
-    super(Kind.CODE, hash);
+    super(RequestType.CODE, hash);
   }
 
   @Override

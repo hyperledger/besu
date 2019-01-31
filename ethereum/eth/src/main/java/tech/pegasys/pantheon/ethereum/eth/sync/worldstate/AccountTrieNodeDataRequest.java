@@ -27,7 +27,7 @@ import java.util.List;
 class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
   AccountTrieNodeDataRequest(final Hash hash) {
-    super(Kind.ACCOUNT_TRIE_NODE, hash);
+    super(RequestType.ACCOUNT_TRIE_NODE, hash);
   }
 
   @Override
