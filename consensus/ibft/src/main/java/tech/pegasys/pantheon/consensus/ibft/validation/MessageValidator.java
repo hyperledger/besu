@@ -89,7 +89,7 @@ public class MessageValidator {
       return false;
     }
 
-    if (!msg.getSender().equals(expectedProposer)) {
+    if (!msg.getAuthor().equals(expectedProposer)) {
       LOG.info(
           "Invalid Proposal message, was not created by the proposer expected for the "
               + "associated round.");
@@ -112,7 +112,7 @@ public class MessageValidator {
 
   private boolean handleSubsequentProposal(
       final SignedData<ProposalPayload> existingMsg, final SignedData<ProposalPayload> newMsg) {
-    if (!existingMsg.getSender().equals(newMsg.getSender())) {
+    if (!existingMsg.getAuthor().equals(newMsg.getAuthor())) {
       LOG.debug("Received subsequent invalid Proposal message; sender differs from original.");
       return false;
     }
@@ -135,7 +135,7 @@ public class MessageValidator {
       return false;
     }
 
-    if (msg.getSender().equals(expectedProposer)) {
+    if (msg.getAuthor().equals(expectedProposer)) {
       LOG.info("Illegal Prepare message; was sent by the round's proposer.");
       return false;
     }
@@ -154,7 +154,7 @@ public class MessageValidator {
     final Address commitSealCreator =
         Util.signatureToAddress(msg.getPayload().getCommitSeal(), proposedBlock.getHash());
 
-    if (!commitSealCreator.equals(msg.getSender())) {
+    if (!commitSealCreator.equals(msg.getAuthor())) {
       LOG.info("Invalid Commit message. Seal was not created by the message transmitter.");
       return false;
     }
@@ -170,7 +170,7 @@ public class MessageValidator {
       return false;
     }
 
-    if (!validators.contains(msg.getSender())) {
+    if (!validators.contains(msg.getAuthor())) {
       LOG.info(
           "Invalid {} message, was not transmitted by a validator for the " + "associated round.",
           msgType);

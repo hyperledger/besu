@@ -34,7 +34,7 @@ public class SignedData<M extends Payload> {
     this.signature = signature;
   }
 
-  public Address getSender() {
+  public Address getAuthor() {
     return sender;
   }
 

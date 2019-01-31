@@ -54,7 +54,7 @@ public class RoundChangeManager {
 
     public void addMessage(final SignedData<RoundChangePayload> msg) {
       if (!actioned) {
-        receivedMessages.putIfAbsent(msg.getSender(), msg);
+        receivedMessages.putIfAbsent(msg.getAuthor(), msg);
       }
     }
 

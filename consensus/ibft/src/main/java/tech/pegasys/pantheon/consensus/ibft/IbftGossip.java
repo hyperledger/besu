@@ -72,7 +72,7 @@ public class IbftGossip implements Gossiper {
             "Received message does not conform to any recognised IBFT message structure.");
     }
     final List<Address> excludeAddressesList =
-        Lists.newArrayList(message.getConnection().getPeer().getAddress(), signedData.getSender());
+        Lists.newArrayList(message.getConnection().getPeer().getAddress(), signedData.getAuthor());
 
     multicaster.send(messageData, excludeAddressesList);
   }
