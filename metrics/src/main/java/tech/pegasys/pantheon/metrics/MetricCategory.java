@@ -13,14 +13,15 @@
 package tech.pegasys.pantheon.metrics;
 
 public enum MetricCategory {
-  PEERS("peers"),
-  RPC("rpc"),
-  JVM("jvm", false),
-  PROCESS("process", false),
+  BIG_QUEUE("big_queue"),
   BLOCKCHAIN("blockchain"),
-  SYNCHRONIZER("synchronizer"),
+  JVM("jvm", false),
   NETWORK("network"),
-  ROCKSDB("rocksdb");
+  PEERS("peers"),
+  PROCESS("process", false),
+  ROCKSDB("rocksdb"),
+  RPC("rpc"),
+  SYNCHRONIZER("synchronizer");
 
   private final String name;
   private final boolean pantheonSpecific;

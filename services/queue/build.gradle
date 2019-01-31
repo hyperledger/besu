@@ -28,11 +28,14 @@ jar {
 dependencies {
   api project(':util')
   implementation project(':metrics')
+  implementation project(':services:util')
 
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'com.google.guava:guava'
+  implementation 'org.rocksdb:rocksdbjni'
 
   runtime 'org.apache.logging.log4j:log4j-core'
 
   testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
 }
