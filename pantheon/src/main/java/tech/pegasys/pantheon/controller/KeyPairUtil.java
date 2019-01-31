@@ -33,7 +33,7 @@ public class KeyPairUtil {
       key = SECP256K1.KeyPair.generate();
       key.getPrivateKey().store(keyFile);
       LOG.info(
-          "Generated new key key {} and stored it to {}",
+          "Generated new key {} and stored it to {}",
           key.getPublicKey().toString(),
           keyFile.getAbsolutePath());
     }
