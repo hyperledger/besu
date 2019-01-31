@@ -24,8 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.google.common.io.Resources;
-import net.consensys.cava.toml.Toml;
-import net.consensys.cava.toml.TomlParseResult;
 import org.junit.Test;
 
 public class PermissioningConfigurationBuilderTest {
@@ -54,10 +52,10 @@ public class PermissioningConfigurationBuilderTest {
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_TOML);
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, Resources.toByteArray(configFile));
-    final TomlParseResult tomlResult = Toml.parse(toml);
 
     PermissioningConfiguration permissioningConfiguration =
-        PermissioningConfigurationBuilder.permissioningConfiguration(tomlResult, true, true);
+        PermissioningConfigurationBuilder.permissioningConfiguration(
+            toml.toAbsolutePath().toString(), true, true);
 
     assertThat(permissioningConfiguration.isAccountWhitelistSet()).isTrue();
     assertThat(permissioningConfiguration.getAccountWhitelist())
@@ -75,10 +73,10 @@ public class PermissioningConfigurationBuilderTest {
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY);
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, Resources.toByteArray(configFile));
-    final TomlParseResult tomlResult = Toml.parse(toml);
 
     PermissioningConfiguration permissioningConfiguration =
-        PermissioningConfigurationBuilder.permissioningConfiguration(tomlResult, true, false);
+        PermissioningConfigurationBuilder.permissioningConfiguration(
+            toml.toAbsolutePath().toString(), true, false);
 
     assertThat(permissioningConfiguration.isAccountWhitelistSet()).isFalse();
     assertThat(permissioningConfiguration.isNodeWhitelistSet()).isTrue();
@@ -91,10 +89,10 @@ public class PermissioningConfigurationBuilderTest {
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_ACCOUNT_WHITELIST_ONLY);
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, Resources.toByteArray(configFile));
-    final TomlParseResult tomlResult = Toml.parse(toml);
 
     PermissioningConfiguration permissioningConfiguration =
-        PermissioningConfigurationBuilder.permissioningConfiguration(tomlResult, false, true);
+        PermissioningConfigurationBuilder.permissioningConfiguration(
+            toml.toAbsolutePath().toString(), false, true);
 
     assertThat(permissioningConfiguration.isNodeWhitelistSet()).isFalse();
     assertThat(permissioningConfiguration.isAccountWhitelistSet()).isTrue();
@@ -108,10 +106,10 @@ public class PermissioningConfigurationBuilderTest {
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_INVALID_ENODE);
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, Resources.toByteArray(configFile));
-    final TomlParseResult tomlResult = Toml.parse(toml);
 
     try {
-      PermissioningConfigurationBuilder.permissioningConfiguration(tomlResult, true, true);
+      PermissioningConfigurationBuilder.permissioningConfiguration(
+          toml.toAbsolutePath().toString(), true, true);
       fail("Expecting IllegalArgumentException: Enode URL contains an invalid node ID");
     } catch (IllegalArgumentException e) {
       assertThat(e.getMessage()).startsWith("Enode URL contains an invalid node ID");
@@ -124,10 +122,10 @@ public class PermissioningConfigurationBuilderTest {
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_EMPTY_WHITELISTS);
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, Resources.toByteArray(configFile));
-    final TomlParseResult tomlResult = Toml.parse(toml);
 
     PermissioningConfiguration permissioningConfiguration =
-        PermissioningConfigurationBuilder.permissioningConfiguration(tomlResult, true, true);
+        PermissioningConfigurationBuilder.permissioningConfiguration(
+            toml.toAbsolutePath().toString(), true, true);
 
     assertThat(permissioningConfiguration.isNodeWhitelistSet()).isTrue();
     assertThat(permissioningConfiguration.getNodeWhitelist()).isEmpty();
@@ -141,10 +139,29 @@ public class PermissioningConfigurationBuilderTest {
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_ABSENT_WHITELISTS);
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, Resources.toByteArray(configFile));
-    final TomlParseResult tomlResult = Toml.parse(toml);
 
     PermissioningConfiguration permissioningConfiguration =
-        PermissioningConfigurationBuilder.permissioningConfiguration(tomlResult, true, true);
+        PermissioningConfigurationBuilder.permissioningConfiguration(
+            toml.toAbsolutePath().toString(), true, true);
+
+    assertThat(permissioningConfiguration.isNodeWhitelistSet()).isTrue();
+    assertThat(permissioningConfiguration.getNodeWhitelist()).isEmpty();
+    assertThat(permissioningConfiguration.isAccountWhitelistSet()).isTrue();
+    assertThat(permissioningConfiguration.getAccountWhitelist()).isEmpty();
+  }
+
+  @Test
+  public void permissioningConfigFromFileMustSetFilePath() throws IOException {
+
+    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_ABSENT_WHITELISTS);
+    final Path toml = Files.createTempFile("toml", "");
+    Files.write(toml, Resources.toByteArray(configFile));
+
+    PermissioningConfiguration permissioningConfiguration =
+        PermissioningConfigurationBuilder.permissioningConfigurationFromToml(
+            toml.toString(), true, true);
+
+    assertThat(permissioningConfiguration.getConfigurationFilePath()).isEqualTo(toml.toString());
 
     assertThat(permissioningConfiguration.isNodeWhitelistSet()).isTrue();
     assertThat(permissioningConfiguration.getNodeWhitelist()).isEmpty();

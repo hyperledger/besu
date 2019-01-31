@@ -39,23 +39,25 @@ public class PermissioningConfigurationBuilder {
       final boolean permissionedNodeEnabled,
       final boolean permissionedAccountEnabled) {
 
-    String permToml = permissioningConfigTomlAsString(permissioningConfigFile(configFilePath));
     return permissioningConfiguration(
-        TomlConfigFileParser.loadConfiguration(permToml),
-        permissionedNodeEnabled,
-        permissionedAccountEnabled);
+        configFilePath, permissionedNodeEnabled, permissionedAccountEnabled);
   }
 
   public static PermissioningConfiguration permissioningConfiguration(
-      final TomlParseResult permToml,
+      final String configFilePath,
       final boolean permissionedNodeEnabled,
       final boolean permissionedAccountEnabled) {
+
+    TomlParseResult permToml =
+        TomlConfigFileParser.loadConfiguration(
+            permissioningConfigTomlAsString(permissioningConfigFile(configFilePath)));
 
     TomlArray accountWhitelistTomlArray = permToml.getArray("accounts-whitelist");
     TomlArray nodeWhitelistTomlArray = permToml.getArray("nodes-whitelist");
 
     final PermissioningConfiguration permissioningConfiguration =
         PermissioningConfiguration.createDefault();
+    permissioningConfiguration.setConfigurationFilePath(configFilePath);
     if (permissionedAccountEnabled) {
       if (accountWhitelistTomlArray != null) {
         List<String> accountsWhitelistToml =

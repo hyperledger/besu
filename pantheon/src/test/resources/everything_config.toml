@@ -68,6 +68,7 @@ min-gas-price="1"
 # Permissioning
 permissions-nodes-enabled=false
 permissions-accounts-enabled=false
+permissions-config-path="./permissions_config.toml"
 
 # Privacy
 privacy-url="http://127.0.0.1:8888"

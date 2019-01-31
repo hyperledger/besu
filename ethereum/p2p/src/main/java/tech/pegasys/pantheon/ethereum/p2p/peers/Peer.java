@@ -16,6 +16,10 @@ import tech.pegasys.pantheon.crypto.SecureRandomProvider;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.OptionalInt;
+
+import org.bouncycastle.util.encoders.Hex;
+
 public interface Peer extends PeerId {
 
   /**
@@ -48,5 +52,25 @@ public interface Peer extends PeerId {
     getEndpoint().encodeInline(out);
     out.writeBytesValue(getId());
     out.endList();
+  }
+
+  /**
+   * Returns this peer's enode URI.
+   *
+   * @return The enode URI as a String.
+   */
+  default String getEnodeURI() {
+    String url = Hex.toHexString(this.getId().extractArray());
+    Endpoint endpoint = this.getEndpoint();
+    String nodeIp = endpoint.getHost();
+    OptionalInt tcpPort = endpoint.getTcpPort();
+    int udpPort = endpoint.getUdpPort();
+
+    if (tcpPort.isPresent() && (tcpPort.getAsInt() != udpPort)) {
+      return String.format(
+          "enode://%s@%s:%d?discport=%d", url, nodeIp, tcpPort.getAsInt(), udpPort);
+    } else {
+      return String.format("enode://%s@%s:%d", url, nodeIp, udpPort);
+    }
   }
 }

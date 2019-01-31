@@ -22,6 +22,7 @@ public class PermissioningConfiguration {
   private List<String> accountWhitelist;
   private boolean nodeWhitelistSet;
   private boolean accountWhitelistSet;
+  private String configurationFilePath;
 
   public List<URI> getNodeWhitelist() {
     return nodeWhitelist;
@@ -58,5 +59,13 @@ public class PermissioningConfiguration {
 
   public boolean isAccountWhitelistSet() {
     return accountWhitelistSet;
+  }
+
+  public String getConfigurationFilePath() {
+    return configurationFilePath;
+  }
+
+  public void setConfigurationFilePath(final String configurationFilePath) {
+    this.configurationFilePath = configurationFilePath;
   }
 }
