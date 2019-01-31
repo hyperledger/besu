@@ -463,6 +463,13 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Boolean permissionsAccountsEnabled = false;
 
   @Option(
+    names = {"--permissions-config-path"},
+    description =
+        "Path to permissions config TOML file (default:  a file named \"permissions_config.toml\" in the Pantheon data folder)"
+  )
+  private String permissionsConfigPath = null;
+
+  @Option(
     names = {"--privacy-enabled"},
     description = "Set if private transaction should be enabled (default: ${DEFAULT-VALUE})"
   )
@@ -630,6 +637,15 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  private String getPermissionsConfigPath() {
+
+    return permissionsConfigPath != null
+        ? permissionsConfigPath
+        : dataDir().toAbsolutePath()
+            + System.getProperty("file.separator")
+            + DefaultCommandValues.PERMISSIONING_CONFIG_LOCATION;
+  }
+
   private JsonRpcConfiguration jsonRpcConfiguration() {
 
     CommandLineUtils.checkOptionDependencies(
@@ -722,10 +738,10 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       return PermissioningConfiguration.createDefault();
     }
 
-    return PermissioningConfigurationBuilder.permissioningConfigurationFromToml(
-        DefaultCommandValues.PERMISSIONING_CONFIG_LOCATION,
-        permissionsNodesEnabled,
-        permissionsAccountsEnabled);
+    final PermissioningConfiguration permissioningConfiguration =
+        PermissioningConfigurationBuilder.permissioningConfigurationFromToml(
+            getPermissionsConfigPath(), permissionsNodesEnabled, permissionsAccountsEnabled);
+    return permissioningConfiguration;
   }
 
   private PrivacyParameters orionConfiguration() {

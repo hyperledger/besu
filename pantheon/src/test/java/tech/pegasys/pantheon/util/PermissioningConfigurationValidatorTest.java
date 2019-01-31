@@ -25,8 +25,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.google.common.io.Resources;
-import net.consensys.cava.toml.Toml;
-import net.consensys.cava.toml.TomlParseResult;
 import org.junit.Test;
 
 public class PermissioningConfigurationValidatorTest {
@@ -44,10 +42,10 @@ public class PermissioningConfigurationValidatorTest {
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_ROPSTEN_BOOTNODES);
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, Resources.toByteArray(configFile));
-    final TomlParseResult tomlResult = Toml.parse(toml);
 
     PermissioningConfiguration permissioningConfiguration =
-        PermissioningConfigurationBuilder.permissioningConfiguration(tomlResult, true, true);
+        PermissioningConfigurationBuilder.permissioningConfiguration(
+            toml.toAbsolutePath().toString(), true, true);
 
     PermissioningConfigurationValidator.areAllBootnodesAreInWhitelist(
         ethNetworkConfig, permissioningConfiguration);
@@ -61,10 +59,10 @@ public class PermissioningConfigurationValidatorTest {
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG);
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, Resources.toByteArray(configFile));
-    final TomlParseResult tomlResult = Toml.parse(toml);
 
     PermissioningConfiguration permissioningConfiguration =
-        PermissioningConfigurationBuilder.permissioningConfiguration(tomlResult, true, true);
+        PermissioningConfigurationBuilder.permissioningConfiguration(
+            toml.toAbsolutePath().toString(), true, true);
 
     try {
       PermissioningConfigurationValidator.areAllBootnodesAreInWhitelist(

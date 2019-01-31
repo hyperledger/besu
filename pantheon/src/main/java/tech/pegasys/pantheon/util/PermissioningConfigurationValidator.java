@@ -14,17 +14,14 @@ package tech.pegasys.pantheon.util;
 
 import tech.pegasys.pantheon.cli.EthNetworkConfig;
 import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.OptionalInt;
 import java.util.stream.Collectors;
-
-import org.bouncycastle.util.encoders.Hex;
 
 public class PermissioningConfigurationValidator {
 
@@ -44,26 +41,19 @@ public class PermissioningConfigurationValidator {
                   node ->
                       !permissioningConfiguration
                           .getNodeWhitelist()
-                          .contains(URI.create(buildEnodeURI(node))))
+                          .contains(URI.create(node.getEnodeURI())))
               .collect(Collectors.toList());
     }
     if (!bootnodesNotInWhitelist.isEmpty()) {
-      throw new Exception("Bootnode(s) not in nodes-whitelist " + bootnodesNotInWhitelist);
+      throw new Exception(
+          "Bootnode(s) not in nodes-whitelist " + nodeToURI(bootnodesNotInWhitelist));
     }
   }
 
-  private static String buildEnodeURI(final Peer s) {
-    String url = Hex.toHexString(s.getId().extractArray());
-    Endpoint endpoint = s.getEndpoint();
-    String nodeIp = endpoint.getHost();
-    OptionalInt tcpPort = endpoint.getTcpPort();
-    int udpPort = endpoint.getUdpPort();
-
-    if (tcpPort.isPresent() && (tcpPort.getAsInt() != udpPort)) {
-      return String.format(
-          "enode://%s@%s:%d?discport=%d", url, nodeIp, tcpPort.getAsInt(), udpPort);
-    } else {
-      return String.format("enode://%s@%s:%d", url, nodeIp, udpPort);
-    }
+  private static Collection<String> nodeToURI(final List<Peer> bootnodesNotInWhitelist) {
+    return bootnodesNotInWhitelist
+        .parallelStream()
+        .map(Peer::getEnodeURI)
+        .collect(Collectors.toList());
   }
 }
