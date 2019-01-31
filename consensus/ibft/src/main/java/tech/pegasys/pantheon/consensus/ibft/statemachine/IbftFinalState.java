@@ -91,10 +91,6 @@ public class IbftFinalState {
     return getValidators().contains(localAddress);
   }
 
-  public ValidatorMulticaster getValidatorMulticaster() {
-    return validatorMulticaster;
-  }
-
   public RoundTimer getRoundTimer() {
     return roundTimer;
   }
