@@ -18,14 +18,15 @@ import tech.pegasys.pantheon.consensus.ibft.messagedata.NewRoundMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.PrepareMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.RoundChangeMessageData;
-import tech.pegasys.pantheon.consensus.ibft.payload.CommitPayload;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.NewRound;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
-import tech.pegasys.pantheon.consensus.ibft.payload.NewRoundPayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
-import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Block;
@@ -45,19 +46,19 @@ public class IbftMessageTransmitter {
   }
 
   public void multicastProposal(final ConsensusRoundIdentifier roundIdentifier, final Block block) {
-    final SignedData<ProposalPayload> signedPayload =
-        messageFactory.createSignedProposalPayload(roundIdentifier, block);
+    final Proposal data =
+        new Proposal(messageFactory.createSignedProposalPayload(roundIdentifier, block));
 
-    final ProposalMessageData message = ProposalMessageData.create(signedPayload);
+    final ProposalMessageData message = ProposalMessageData.create(data);
 
     multicaster.send(message);
   }
 
   public void multicastPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
-    final SignedData<PreparePayload> signedPayload =
-        messageFactory.createSignedPreparePayload(roundIdentifier, digest);
+    final Prepare data =
+        new Prepare(messageFactory.createSignedPreparePayload(roundIdentifier, digest));
 
-    final PrepareMessageData message = PrepareMessageData.create(signedPayload);
+    final PrepareMessageData message = PrepareMessageData.create(data);
 
     multicaster.send(message);
   }
@@ -66,10 +67,10 @@ public class IbftMessageTransmitter {
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
       final Signature commitSeal) {
-    final SignedData<CommitPayload> signedPayload =
-        messageFactory.createSignedCommitPayload(roundIdentifier, digest, commitSeal);
+    final Commit data =
+        new Commit(messageFactory.createSignedCommitPayload(roundIdentifier, digest, commitSeal));
 
-    final CommitMessageData message = CommitMessageData.create(signedPayload);
+    final CommitMessageData message = CommitMessageData.create(data);
 
     multicaster.send(message);
   }
@@ -78,10 +79,11 @@ public class IbftMessageTransmitter {
       final ConsensusRoundIdentifier roundIdentifier,
       final Optional<PreparedCertificate> preparedCertificate) {
 
-    final SignedData<RoundChangePayload> signedPayload =
-        messageFactory.createSignedRoundChangePayload(roundIdentifier, preparedCertificate);
+    final RoundChange data =
+        new RoundChange(
+            messageFactory.createSignedRoundChangePayload(roundIdentifier, preparedCertificate));
 
-    final RoundChangeMessageData message = RoundChangeMessageData.create(signedPayload);
+    final RoundChangeMessageData message = RoundChangeMessageData.create(data);
 
     multicaster.send(message);
   }
@@ -91,9 +93,10 @@ public class IbftMessageTransmitter {
       final RoundChangeCertificate roundChangeCertificate,
       final SignedData<ProposalPayload> proposalPayload) {
 
-    final SignedData<NewRoundPayload> signedPayload =
-        messageFactory.createSignedNewRoundPayload(
-            roundIdentifier, roundChangeCertificate, proposalPayload);
+    final NewRound signedPayload =
+        new NewRound(
+            messageFactory.createSignedNewRoundPayload(
+                roundIdentifier, roundChangeCertificate, proposalPayload));
 
     final NewRoundMessageData message = NewRoundMessageData.create(signedPayload);
 

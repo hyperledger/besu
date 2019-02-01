@@ -23,7 +23,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class SignedData<M extends Payload> {
+public class SignedData<M extends Payload> implements Authored {
   private final Address sender;
   private final Signature signature;
   private final M unsignedPayload;
@@ -34,12 +34,9 @@ public class SignedData<M extends Payload> {
     this.signature = signature;
   }
 
+  @Override
   public Address getAuthor() {
     return sender;
-  }
-
-  public Signature getSignature() {
-    return signature;
   }
 
   public M getPayload() {
@@ -50,7 +47,7 @@ public class SignedData<M extends Payload> {
 
     output.startList();
     unsignedPayload.writeTo(output);
-    output.writeBytesValue(getSignature().encodedBytes());
+    output.writeBytesValue(signature.encodedBytes());
     output.endList();
   }
 

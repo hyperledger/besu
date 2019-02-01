@@ -195,19 +195,23 @@ public class RoundSpecificPeers {
 
     switch (expectedPayload.getMessageType()) {
       case IbftV2.PROPOSAL:
-        actualSignedPayload = ProposalMessageData.fromMessageData(actual).decode();
+        actualSignedPayload =
+            ProposalMessageData.fromMessageData(actual).decode().getSignedPayload();
         break;
       case IbftV2.PREPARE:
-        actualSignedPayload = PrepareMessageData.fromMessageData(actual).decode();
+        actualSignedPayload =
+            PrepareMessageData.fromMessageData(actual).decode().getSignedPayload();
         break;
       case IbftV2.COMMIT:
-        actualSignedPayload = CommitMessageData.fromMessageData(actual).decode();
+        actualSignedPayload = CommitMessageData.fromMessageData(actual).decode().getSignedPayload();
         break;
       case IbftV2.NEW_ROUND:
-        actualSignedPayload = NewRoundMessageData.fromMessageData(actual).decode();
+        actualSignedPayload =
+            NewRoundMessageData.fromMessageData(actual).decode().getSignedPayload();
         break;
       case IbftV2.ROUND_CHANGE:
-        actualSignedPayload = RoundChangeMessageData.fromMessageData(actual).decode();
+        actualSignedPayload =
+            RoundChangeMessageData.fromMessageData(actual).decode().getSignedPayload();
         break;
       default:
         fail("Illegal IBFTV2 message type.");

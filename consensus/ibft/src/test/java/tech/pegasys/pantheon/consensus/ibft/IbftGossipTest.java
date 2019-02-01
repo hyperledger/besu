@@ -18,10 +18,9 @@ import static org.mockito.Mockito.verify;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.NewRoundMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.RoundChangeMessageData;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.IbftMessage;
 import tech.pegasys.pantheon.consensus.ibft.network.MockPeerFactory;
 import tech.pegasys.pantheon.consensus.ibft.network.ValidatorMulticaster;
-import tech.pegasys.pantheon.consensus.ibft.payload.Payload;
-import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
@@ -51,11 +50,10 @@ public class IbftGossipTest {
     peerConnection = MockPeerFactory.create(senderAddress);
   }
 
-  private <P extends Payload> void assertRebroadcastToAllExceptSignerAndSender(
-      final Function<KeyPair, SignedData<P>> createPayload,
-      final Function<SignedData<P>, MessageData> createMessageData) {
+  private <P extends IbftMessage<?>> void assertRebroadcastToAllExceptSignerAndSender(
+      final Function<KeyPair, P> createPayload, final Function<P, MessageData> createMessageData) {
     final KeyPair keypair = KeyPair.generate();
-    final SignedData<P> payload = createPayload.apply(keypair);
+    final P payload = createPayload.apply(keypair);
     final MessageData messageData = createMessageData.apply(payload);
     final Message message = new DefaultMessage(peerConnection, messageData);
 

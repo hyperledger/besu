@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.NewChainHead;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.payload.CommitPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.payload.NewRoundPayload;
@@ -124,7 +125,7 @@ public class GossipTest {
     final SignedData<ProposalPayload> unknownProposal =
         unknownMsgFactory.createSignedProposalPayload(roundId, block);
 
-    sender.injectMessage(ProposalMessageData.create(unknownProposal));
+    sender.injectMessage(ProposalMessageData.create(new Proposal(unknownProposal)));
     peers.verifyNoMessagesReceived();
   }
 
@@ -135,7 +136,7 @@ public class GossipTest {
     final SignedData<ProposalPayload> proposalFromPeer =
         peerMsgFactory.createSignedProposalPayload(roundId, block);
 
-    sender.injectMessage(ProposalMessageData.create(proposalFromPeer));
+    sender.injectMessage(ProposalMessageData.create(new Proposal(proposalFromPeer)));
 
     peers.verifyMessagesReceivedNonPropsingExcluding(msgCreator, proposalFromPeer);
     peers.verifyNoMessagesReceivedProposer();
