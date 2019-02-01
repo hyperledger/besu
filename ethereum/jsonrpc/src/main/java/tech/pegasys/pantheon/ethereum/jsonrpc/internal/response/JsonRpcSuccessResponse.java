@@ -28,6 +28,11 @@ public class JsonRpcSuccessResponse implements JsonRpcResponse {
     this.result = result;
   }
 
+  public JsonRpcSuccessResponse(final Object id) {
+    this.id = id;
+    this.result = "Success";
+  }
+
   @JsonGetter("id")
   public Object getId() {
     return id;

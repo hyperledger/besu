@@ -26,7 +26,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResp
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
-import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController.RemoveResult;
+import tech.pegasys.pantheon.ethereum.permissioning.WhitelistOperationResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,10 +55,11 @@ public class PermRemoveAccountsFromWhitelistTest {
   }
 
   @Test
-  public void whenAccountsAreRemovedFromWhitelistShouldReturnTrue() {
+  public void whenAccountsAreRemovedFromWhitelistShouldReturnSuccess() {
     List<String> accounts = Arrays.asList("0x0", "0x1");
-    JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, true);
-    when(accountWhitelist.removeAccounts(eq(accounts))).thenReturn(RemoveResult.SUCCESS);
+    JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null);
+    when(accountWhitelist.removeAccounts(eq(accounts)))
+        .thenReturn(WhitelistOperationResult.SUCCESS);
 
     JsonRpcResponse actualResponse = method.response(request(accounts));
 
@@ -69,7 +70,8 @@ public class PermRemoveAccountsFromWhitelistTest {
   public void whenAccountIsInvalidShouldReturnInvalidAccountErrorResponse() {
     JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_INVALID_ENTRY);
-    when(accountWhitelist.removeAccounts(any())).thenReturn(RemoveResult.ERROR_INVALID_ENTRY);
+    when(accountWhitelist.removeAccounts(any()))
+        .thenReturn(WhitelistOperationResult.ERROR_INVALID_ENTRY);
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
 
@@ -80,7 +82,8 @@ public class PermRemoveAccountsFromWhitelistTest {
   public void whenAccountIsAbsentShouldReturnAbsentAccountErrorResponse() {
     JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_ABSENT_ENTRY);
-    when(accountWhitelist.removeAccounts(any())).thenReturn(RemoveResult.ERROR_ABSENT_ENTRY);
+    when(accountWhitelist.removeAccounts(any()))
+        .thenReturn(WhitelistOperationResult.ERROR_ABSENT_ENTRY);
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
 
@@ -91,7 +94,21 @@ public class PermRemoveAccountsFromWhitelistTest {
   public void whenInputHasDuplicatedAccountsShouldReturnDuplicatedEntryErrorResponse() {
     JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_DUPLICATED_ENTRY);
-    when(accountWhitelist.removeAccounts(any())).thenReturn(RemoveResult.ERROR_DUPLICATED_ENTRY);
+    when(accountWhitelist.removeAccounts(any()))
+        .thenReturn(WhitelistOperationResult.ERROR_DUPLICATED_ENTRY);
+
+    JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void whenEmptyListOnRequestShouldReturnEmptyEntryErrorResponse() {
+    JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_EMPTY_ENTRY);
+
+    when(accountWhitelist.removeAccounts(eq(new ArrayList<>())))
+        .thenReturn(WhitelistOperationResult.ERROR_EMPTY_ENTRY);
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
 

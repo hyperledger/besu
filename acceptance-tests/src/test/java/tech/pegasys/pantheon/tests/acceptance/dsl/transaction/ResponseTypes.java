@@ -28,15 +28,15 @@ public class ResponseTypes {
 
   public static class ProposalsResponse extends Response<Map<Address, Boolean>> {}
 
-  public static class AddAccountsToWhitelistResponse extends Response<Boolean> {}
+  public static class AddAccountsToWhitelistResponse extends Response<String> {}
 
-  public static class RemoveAccountsFromWhitelistResponse extends Response<Boolean> {}
+  public static class RemoveAccountsFromWhitelistResponse extends Response<String> {}
 
   public static class GetAccountsWhitelistResponse extends Response<List<String>> {}
 
-  public static class AddNodeResponse extends Response<Boolean> {}
+  public static class AddNodeResponse extends Response<String> {}
 
-  public static class RemoveNodeResponse extends Response<Boolean> {}
+  public static class RemoveNodeResponse extends Response<String> {}
 
   public static class GetNodesWhitelistResponse extends Response<List<String>> {}
 }

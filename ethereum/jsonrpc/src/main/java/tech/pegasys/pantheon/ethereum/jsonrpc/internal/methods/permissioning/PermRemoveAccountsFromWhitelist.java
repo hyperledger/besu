@@ -20,7 +20,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResp
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
-import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController.RemoveResult;
+import tech.pegasys.pantheon.ethereum.permissioning.WhitelistOperationResult;
 
 import java.util.List;
 
@@ -44,9 +44,12 @@ public class PermRemoveAccountsFromWhitelist implements JsonRpcMethod {
   @SuppressWarnings("unchecked")
   public JsonRpcResponse response(final JsonRpcRequest request) {
     final List<String> accountsList = parameters.required(request.getParams(), 0, List.class);
-    final RemoveResult removeResult = whitelistController.removeAccounts(accountsList);
+    final WhitelistOperationResult removeResult = whitelistController.removeAccounts(accountsList);
 
     switch (removeResult) {
+      case ERROR_EMPTY_ENTRY:
+        return new JsonRpcErrorResponse(
+            request.getId(), JsonRpcError.ACCOUNT_WHITELIST_EMPTY_ENTRY);
       case ERROR_INVALID_ENTRY:
         return new JsonRpcErrorResponse(
             request.getId(), JsonRpcError.ACCOUNT_WHITELIST_INVALID_ENTRY);
@@ -57,7 +60,7 @@ public class PermRemoveAccountsFromWhitelist implements JsonRpcMethod {
         return new JsonRpcErrorResponse(
             request.getId(), JsonRpcError.ACCOUNT_WHITELIST_DUPLICATED_ENTRY);
       case SUCCESS:
-        return new JsonRpcSuccessResponse(request.getId(), true);
+        return new JsonRpcSuccessResponse(request.getId());
       default:
         throw new IllegalStateException("Unmapped result from AccountWhitelistController");
     }

@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.p2p.permissioning;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.permissioning.WhitelistOperationResult;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -48,21 +49,20 @@ public class NodeWhitelistController {
   }
 
   public NodesWhitelistResult addNodes(final List<DefaultPeer> peers) {
-    if (peerListHasDuplicates(peers)) {
-      return new NodesWhitelistResult(
-          NodesWhitelistResultType.ERROR_DUPLICATED_ENTRY,
-          String.format("Specified peer list contains duplicates"));
+    final NodesWhitelistResult inputValidationResult = validInput(peers);
+    if (inputValidationResult.result() != WhitelistOperationResult.SUCCESS) {
+      return inputValidationResult;
     }
 
     for (DefaultPeer peer : peers) {
       if (nodesWhitelist.contains(peer)) {
         return new NodesWhitelistResult(
-            NodesWhitelistResultType.ERROR_EXISTING_ENTRY,
+            WhitelistOperationResult.ERROR_EXISTING_ENTRY,
             String.format("Specified peer: %s already exists in whitelist.", peer.getId()));
       }
     }
     peers.forEach(this::addNode);
-    return new NodesWhitelistResult(NodesWhitelistResultType.SUCCESS);
+    return new NodesWhitelistResult(WhitelistOperationResult.SUCCESS);
   }
 
   private boolean peerListHasDuplicates(final List<DefaultPeer> peers) {
@@ -70,21 +70,35 @@ public class NodeWhitelistController {
   }
 
   public NodesWhitelistResult removeNodes(final List<DefaultPeer> peers) {
-    if (peerListHasDuplicates(peers)) {
-      return new NodesWhitelistResult(
-          NodesWhitelistResultType.ERROR_DUPLICATED_ENTRY,
-          String.format("Specified peer list contains duplicates"));
+    final NodesWhitelistResult inputValidationResult = validInput(peers);
+    if (inputValidationResult.result() != WhitelistOperationResult.SUCCESS) {
+      return inputValidationResult;
     }
 
     for (DefaultPeer peer : peers) {
       if (!(nodesWhitelist.contains(peer))) {
         return new NodesWhitelistResult(
-            NodesWhitelistResultType.ERROR_ABSENT_ENTRY,
+            WhitelistOperationResult.ERROR_ABSENT_ENTRY,
             String.format("Specified peer: %s does not exist in whitelist.", peer.getId()));
       }
     }
     peers.forEach(this::removeNode);
-    return new NodesWhitelistResult(NodesWhitelistResultType.SUCCESS);
+    return new NodesWhitelistResult(WhitelistOperationResult.SUCCESS);
+  }
+
+  private NodesWhitelistResult validInput(final List<DefaultPeer> peers) {
+    if (peers == null || peers.isEmpty()) {
+      return new NodesWhitelistResult(
+          WhitelistOperationResult.ERROR_EMPTY_ENTRY, String.format("Null/empty peers list"));
+    }
+
+    if (peerListHasDuplicates(peers)) {
+      return new NodesWhitelistResult(
+          WhitelistOperationResult.ERROR_DUPLICATED_ENTRY,
+          String.format("Specified peer list contains duplicates"));
+    }
+
+    return new NodesWhitelistResult(WhitelistOperationResult.SUCCESS);
   }
 
   public boolean isPermitted(final Peer node) {
@@ -100,21 +114,21 @@ public class NodeWhitelistController {
   }
 
   public static class NodesWhitelistResult {
-    private final NodesWhitelistResultType result;
+    private final WhitelistOperationResult result;
     private final Optional<String> message;
 
-    NodesWhitelistResult(final NodesWhitelistResultType fail, final String message) {
+    NodesWhitelistResult(final WhitelistOperationResult fail, final String message) {
       this.result = fail;
       this.message = Optional.of(message);
     }
 
     @VisibleForTesting
-    public NodesWhitelistResult(final NodesWhitelistResultType success) {
+    public NodesWhitelistResult(final WhitelistOperationResult success) {
       this.result = success;
       this.message = Optional.empty();
     }
 
-    public NodesWhitelistResultType result() {
+    public WhitelistOperationResult result() {
       return result;
     }
 
@@ -125,12 +139,5 @@ public class NodeWhitelistController {
 
   public boolean contains(final Peer node) {
     return (!nodeWhitelistSet || (nodesWhitelist.contains(node)));
-  }
-
-  public enum NodesWhitelistResultType {
-    SUCCESS,
-    ERROR_DUPLICATED_ENTRY,
-    ERROR_EXISTING_ENTRY,
-    ERROR_ABSENT_ENTRY
   }
 }

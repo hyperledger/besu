@@ -15,9 +15,6 @@ package tech.pegasys.pantheon.ethereum.permissioning;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController.AddResult;
-import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController.RemoveResult;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -85,29 +82,29 @@ public class AccountWhitelistControllerTest {
 
   @Test
   public void addAccountsWithInvalidAccountShouldReturnInvalidEntryResult() {
-    AddResult addResult = controller.addAccounts(Arrays.asList("0x0"));
+    WhitelistOperationResult addResult = controller.addAccounts(Arrays.asList("0x0"));
 
-    assertThat(addResult).isEqualTo(AddResult.ERROR_INVALID_ENTRY);
+    assertThat(addResult).isEqualTo(WhitelistOperationResult.ERROR_INVALID_ENTRY);
     assertThat(controller.getAccountWhitelist()).isEmpty();
   }
 
   @Test
   public void addExistingAccountShouldReturnExistingEntryResult() {
     controller.addAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
-    AddResult addResult =
+    WhitelistOperationResult addResult =
         controller.addAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
-    assertThat(addResult).isEqualTo(AddResult.ERROR_EXISTING_ENTRY);
+    assertThat(addResult).isEqualTo(WhitelistOperationResult.ERROR_EXISTING_ENTRY);
     assertThat(controller.getAccountWhitelist())
         .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
   }
 
   @Test
   public void addValidAccountsShouldReturnSuccessResult() {
-    AddResult addResult =
+    WhitelistOperationResult addResult =
         controller.addAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
-    assertThat(addResult).isEqualTo(AddResult.SUCCESS);
+    assertThat(addResult).isEqualTo(WhitelistOperationResult.SUCCESS);
     assertThat(controller.getAccountWhitelist())
         .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
   }
@@ -116,49 +113,63 @@ public class AccountWhitelistControllerTest {
   public void removeExistingAccountShouldReturnSuccessResult() {
     controller.addAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
-    RemoveResult removeResult =
+    WhitelistOperationResult removeResult =
         controller.removeAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
-    assertThat(removeResult).isEqualTo(RemoveResult.SUCCESS);
+    assertThat(removeResult).isEqualTo(WhitelistOperationResult.SUCCESS);
     assertThat(controller.getAccountWhitelist()).isEmpty();
   }
 
   @Test
   public void removeAbsentAccountShouldReturnAbsentEntryResult() {
-    RemoveResult removeResult =
+    WhitelistOperationResult removeResult =
         controller.removeAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
-    assertThat(removeResult).isEqualTo(RemoveResult.ERROR_ABSENT_ENTRY);
+    assertThat(removeResult).isEqualTo(WhitelistOperationResult.ERROR_ABSENT_ENTRY);
     assertThat(controller.getAccountWhitelist()).isEmpty();
   }
 
   @Test
   public void removeInvalidAccountShouldReturnInvalidEntryResult() {
-    RemoveResult removeResult = controller.removeAccounts(Arrays.asList("0x0"));
+    WhitelistOperationResult removeResult = controller.removeAccounts(Arrays.asList("0x0"));
 
-    assertThat(removeResult).isEqualTo(RemoveResult.ERROR_INVALID_ENTRY);
+    assertThat(removeResult).isEqualTo(WhitelistOperationResult.ERROR_INVALID_ENTRY);
     assertThat(controller.getAccountWhitelist()).isEmpty();
   }
 
   @Test
   public void addDuplicatedAccountShouldReturnDuplicatedEntryResult() {
-    AddResult addResult =
+    WhitelistOperationResult addResult =
         controller.addAccounts(
             Arrays.asList(
                 "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
                 "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
-    assertThat(addResult).isEqualTo(AddResult.ERROR_DUPLICATED_ENTRY);
+    assertThat(addResult).isEqualTo(WhitelistOperationResult.ERROR_DUPLICATED_ENTRY);
   }
 
   @Test
   public void removeDuplicatedAccountShouldReturnDuplicatedEntryResult() {
-    RemoveResult removeResult =
+    WhitelistOperationResult removeResult =
         controller.removeAccounts(
             Arrays.asList(
                 "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
                 "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
-    assertThat(removeResult).isEqualTo(RemoveResult.ERROR_DUPLICATED_ENTRY);
+    assertThat(removeResult).isEqualTo(WhitelistOperationResult.ERROR_DUPLICATED_ENTRY);
+  }
+
+  @Test
+  public void removeNullListShouldReturnEmptyEntryResult() {
+    WhitelistOperationResult removeResult = controller.removeAccounts(null);
+
+    assertThat(removeResult).isEqualTo(WhitelistOperationResult.ERROR_EMPTY_ENTRY);
+  }
+
+  @Test
+  public void removeEmptyListShouldReturnEmptyEntryResult() {
+    WhitelistOperationResult removeResult = controller.removeAccounts(new ArrayList<>());
+
+    assertThat(removeResult).isEqualTo(WhitelistOperationResult.ERROR_EMPTY_ENTRY);
   }
 }

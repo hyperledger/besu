@@ -28,7 +28,7 @@ public class RemoveNodeSuccess implements Condition {
 
   @Override
   public void verify(final Node node) {
-    final Boolean response = node.execute(transaction);
-    assertThat(response).isTrue();
+    final String response = node.execute(transaction);
+    assertThat(response).isEqualTo("Success");
   }
 }

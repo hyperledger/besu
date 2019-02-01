@@ -29,7 +29,7 @@ public class AddAccountsToWhitelistSuccessfully implements Condition {
 
   @Override
   public void verify(final Node node) {
-    Boolean result = node.execute(transaction);
-    assertThat(result).isTrue();
+    String result = node.execute(transaction);
+    assertThat(result).isEqualTo("Success");
   }
 }
