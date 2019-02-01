@@ -17,10 +17,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.consensus.ibft.IbftHelpers.calculateRequiredValidatorQuorum;
 
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
-import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
@@ -90,42 +89,48 @@ public class IbftHelpersTest {
     final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 4);
 
     final ConsensusRoundIdentifier preparedRound = TestHelpers.createFrom(roundIdentifier, 0, -1);
-    final SignedData<ProposalPayload> differentProposal =
+    final Proposal differentProposal =
         proposerMessageFactory.createSignedProposalPayload(preparedRound, proposedBlock);
 
     final Optional<PreparedCertificate> latterPreparedCert =
         Optional.of(
             new PreparedCertificate(
-                differentProposal,
+                differentProposal.getSignedPayload(),
                 Lists.newArrayList(
-                    proposerMessageFactory.createSignedPreparePayload(
-                        roundIdentifier, proposedBlock.getHash()),
-                    proposerMessageFactory.createSignedPreparePayload(
-                        roundIdentifier, proposedBlock.getHash()))));
+                    proposerMessageFactory
+                        .createSignedPreparePayload(roundIdentifier, proposedBlock.getHash())
+                        .getSignedPayload(),
+                    proposerMessageFactory
+                        .createSignedPreparePayload(roundIdentifier, proposedBlock.getHash())
+                        .getSignedPayload())));
 
     // An earlier PrepareCert is added to ensure the path to find the latest PrepareCert
     // is correctly followed.
     final ConsensusRoundIdentifier earlierPreparedRound =
         TestHelpers.createFrom(roundIdentifier, 0, -2);
-    final SignedData<ProposalPayload> earlierProposal =
+    final Proposal earlierProposal =
         proposerMessageFactory.createSignedProposalPayload(earlierPreparedRound, proposedBlock);
     final Optional<PreparedCertificate> earlierPreparedCert =
         Optional.of(
             new PreparedCertificate(
-                earlierProposal,
+                earlierProposal.getSignedPayload(),
                 Lists.newArrayList(
-                    proposerMessageFactory.createSignedPreparePayload(
-                        earlierPreparedRound, proposedBlock.getHash()),
-                    proposerMessageFactory.createSignedPreparePayload(
-                        earlierPreparedRound, proposedBlock.getHash()))));
+                    proposerMessageFactory
+                        .createSignedPreparePayload(earlierPreparedRound, proposedBlock.getHash())
+                        .getSignedPayload(),
+                    proposerMessageFactory
+                        .createSignedPreparePayload(earlierPreparedRound, proposedBlock.getHash())
+                        .getSignedPayload())));
 
     final Optional<PreparedCertificate> newestCert =
         IbftHelpers.findLatestPreparedCertificate(
             Lists.newArrayList(
-                proposerMessageFactory.createSignedRoundChangePayload(
-                    roundIdentifier, earlierPreparedCert),
-                proposerMessageFactory.createSignedRoundChangePayload(
-                    roundIdentifier, latterPreparedCert)));
+                proposerMessageFactory
+                    .createSignedRoundChangePayload(roundIdentifier, earlierPreparedCert)
+                    .getSignedPayload(),
+                proposerMessageFactory
+                    .createSignedRoundChangePayload(roundIdentifier, latterPreparedCert)
+                    .getSignedPayload()));
 
     assertThat(newestCert).isEqualTo(latterPreparedCert);
   }
@@ -139,10 +144,12 @@ public class IbftHelpersTest {
     final Optional<PreparedCertificate> newestCert =
         IbftHelpers.findLatestPreparedCertificate(
             Lists.newArrayList(
-                proposerMessageFactory.createSignedRoundChangePayload(
-                    roundIdentifier, Optional.empty()),
-                proposerMessageFactory.createSignedRoundChangePayload(
-                    roundIdentifier, Optional.empty())));
+                proposerMessageFactory
+                    .createSignedRoundChangePayload(roundIdentifier, Optional.empty())
+                    .getSignedPayload(),
+                proposerMessageFactory
+                    .createSignedRoundChangePayload(roundIdentifier, Optional.empty())
+                    .getSignedPayload()));
 
     assertThat(newestCert).isEmpty();
   }

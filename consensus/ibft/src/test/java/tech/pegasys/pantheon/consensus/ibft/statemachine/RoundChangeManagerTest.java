@@ -21,11 +21,11 @@ import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
 import tech.pegasys.pantheon.consensus.ibft.TestHelpers;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
-import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.consensus.ibft.validation.MessageValidator;
 import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator;
@@ -129,7 +129,7 @@ public class RoundChangeManagerTest {
   private RoundChange makeRoundChangeMessage(
       final KeyPair key, final ConsensusRoundIdentifier round) {
     MessageFactory messageFactory = new MessageFactory(key);
-    return new RoundChange(messageFactory.createSignedRoundChangePayload(round, Optional.empty()));
+    return messageFactory.createSignedRoundChangePayload(round, Optional.empty());
   }
 
   private RoundChange makeRoundChangeMessageWithPreparedCert(
@@ -143,8 +143,7 @@ public class RoundChangeManagerTest {
     final ConsensusRoundIdentifier proposalRound = TestHelpers.createFrom(round, 0, -1);
     final Block block = TestHelpers.createProposalBlock(validators, proposalRound.getRoundNumber());
     // Proposal must come from an earlier round.
-    final SignedData<ProposalPayload> proposal =
-        messageFactory.createSignedProposalPayload(proposalRound, block);
+    final Proposal proposal = messageFactory.createSignedProposalPayload(proposalRound, block);
 
     final List<SignedData<PreparePayload>> preparePayloads =
         prepareProviders
@@ -152,13 +151,16 @@ public class RoundChangeManagerTest {
             .map(
                 k -> {
                   final MessageFactory prepareFactory = new MessageFactory(k);
-                  return prepareFactory.createSignedPreparePayload(proposalRound, block.getHash());
+                  return prepareFactory
+                      .createSignedPreparePayload(proposalRound, block.getHash())
+                      .getSignedPayload();
                 })
             .collect(Collectors.toList());
 
-    final PreparedCertificate cert = new PreparedCertificate(proposal, preparePayloads);
+    final PreparedCertificate cert =
+        new PreparedCertificate(proposal.getSignedPayload(), preparePayloads);
 
-    return new RoundChange(messageFactory.createSignedRoundChangePayload(round, Optional.of(cert)));
+    return messageFactory.createSignedRoundChangePayload(round, Optional.of(cert));
   }
 
   @Test

@@ -15,11 +15,11 @@ package tech.pegasys.pantheon.consensus.ibft.support;
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
 import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.NewRound;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.payload.CommitPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
-import tech.pegasys.pantheon.consensus.ibft.payload.NewRoundPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
-import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
@@ -44,7 +44,9 @@ public class TestHelpers {
 
     final MessageFactory messageFactory = new MessageFactory(signingKeyPair);
 
-    return messageFactory.createSignedCommitPayload(roundId, block.getHash(), commitSeal);
+    return messageFactory
+        .createSignedCommitPayload(roundId, block.getHash(), commitSeal)
+        .getSignedPayload();
   }
 
   public static PreparedCertificate createValidPreparedCertificate(
@@ -52,20 +54,26 @@ public class TestHelpers {
     final RoundSpecificPeers peers = context.roundSpecificPeers(preparedRound);
 
     return new PreparedCertificate(
-        peers.getProposer().getMessageFactory().createSignedProposalPayload(preparedRound, block),
+        peers
+            .getProposer()
+            .getMessageFactory()
+            .createSignedProposalPayload(preparedRound, block)
+            .getSignedPayload(),
         peers.createSignedPreparePayloadOfNonProposing(preparedRound, block.getHash()));
   }
 
-  public static SignedData<NewRoundPayload> injectEmptyNewRound(
+  public static NewRound injectEmptyNewRound(
       final ConsensusRoundIdentifier targetRoundId,
       final ValidatorPeer proposer,
       final List<SignedData<RoundChangePayload>> roundChangePayloads,
       final Block blockToPropose) {
 
-    final SignedData<ProposalPayload> proposal =
+    final Proposal proposal =
         proposer.getMessageFactory().createSignedProposalPayload(targetRoundId, blockToPropose);
 
     return proposer.injectNewRound(
-        targetRoundId, new RoundChangeCertificate(roundChangePayloads), proposal);
+        targetRoundId,
+        new RoundChangeCertificate(roundChangePayloads),
+        proposal.getSignedPayload());
   }
 }

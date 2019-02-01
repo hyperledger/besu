@@ -217,8 +217,7 @@ public class IbftBlockHeightManagerTest {
   public void onRoundChangeReceptionRoundChangeManagerIsInvokedAndNewRoundStarted() {
     final ConsensusRoundIdentifier futureRoundIdentifier = createFrom(roundIdentifier, 0, +2);
     final RoundChange roundChange =
-        new RoundChange(
-            messageFactory.createSignedRoundChangePayload(futureRoundIdentifier, Optional.empty()));
+        messageFactory.createSignedRoundChangePayload(futureRoundIdentifier, Optional.empty());
     when(roundChangeManager.appendRoundChangeMessage(any()))
         .thenReturn(
             Optional.of(new RoundChangeCertificate(singletonList(roundChange.getSignedPayload()))));
@@ -263,8 +262,7 @@ public class IbftBlockHeightManagerTest {
   public void whenSufficientRoundChangesAreReceivedANewRoundMessageIsTransmitted() {
     final ConsensusRoundIdentifier futureRoundIdentifier = createFrom(roundIdentifier, 0, +2);
     final RoundChange roundChange =
-        new RoundChange(
-            messageFactory.createSignedRoundChangePayload(futureRoundIdentifier, Optional.empty()));
+        messageFactory.createSignedRoundChangePayload(futureRoundIdentifier, Optional.empty());
     final RoundChangeCertificate roundChangCert =
         new RoundChangeCertificate(singletonList(roundChange.getSignedPayload()));
 
@@ -303,29 +301,28 @@ public class IbftBlockHeightManagerTest {
     manager.start();
 
     final Prepare prepare =
-        new Prepare(
-            validatorMessageFactory
-                .get(0)
-                .createSignedPreparePayload(futureRoundIdentifier, Hash.fromHexStringLenient("0")));
+        validatorMessageFactory
+            .get(0)
+            .createSignedPreparePayload(futureRoundIdentifier, Hash.fromHexStringLenient("0"));
     final Commit commit =
-        new Commit(
-            validatorMessageFactory
-                .get(1)
-                .createSignedCommitPayload(
-                    futureRoundIdentifier,
-                    Hash.fromHexStringLenient("0"),
-                    Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 1)));
+        validatorMessageFactory
+            .get(1)
+            .createSignedCommitPayload(
+                futureRoundIdentifier,
+                Hash.fromHexStringLenient("0"),
+                Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 1));
 
     manager.handlePreparePayload(prepare);
     manager.handleCommitPayload(commit);
 
     // Force a new round to be started at new round number.
     final NewRound newRound =
-        new NewRound(
-            messageFactory.createSignedNewRoundPayload(
-                futureRoundIdentifier,
-                new RoundChangeCertificate(Collections.emptyList()),
-                messageFactory.createSignedProposalPayload(futureRoundIdentifier, createdBlock)));
+        messageFactory.createSignedNewRoundPayload(
+            futureRoundIdentifier,
+            new RoundChangeCertificate(Collections.emptyList()),
+            messageFactory
+                .createSignedProposalPayload(futureRoundIdentifier, createdBlock)
+                .getSignedPayload());
 
     manager.handleNewRoundPayload(newRound);
 
@@ -348,15 +345,13 @@ public class IbftBlockHeightManagerTest {
     manager.handleBlockTimerExpiry(roundIdentifier); // Trigger a Proposal creation.
 
     final Prepare firstPrepare =
-        new Prepare(
-            validatorMessageFactory
-                .get(0)
-                .createSignedPreparePayload(roundIdentifier, Hash.fromHexStringLenient("0")));
+        validatorMessageFactory
+            .get(0)
+            .createSignedPreparePayload(roundIdentifier, Hash.fromHexStringLenient("0"));
     final Prepare secondPrepare =
-        new Prepare(
-            validatorMessageFactory
-                .get(1)
-                .createSignedPreparePayload(roundIdentifier, Hash.fromHexStringLenient("0")));
+        validatorMessageFactory
+            .get(1)
+            .createSignedPreparePayload(roundIdentifier, Hash.fromHexStringLenient("0"));
     manager.handlePreparePayload(firstPrepare);
     manager.handlePreparePayload(secondPrepare);
 

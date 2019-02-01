@@ -93,8 +93,7 @@ public class IbftRound {
     transmitter.multicastProposal(roundState.getRoundIdentifier(), block);
 
     updateStateWithProposedBlock(
-        new Proposal(
-            messageFactory.createSignedProposalPayload(roundState.getRoundIdentifier(), block)));
+        messageFactory.createSignedProposalPayload(roundState.getRoundIdentifier(), block));
   }
 
   public void startRoundWith(
@@ -106,8 +105,7 @@ public class IbftRound {
     if (!latestCertificate.isPresent()) {
       LOG.trace("Multicasting NewRound with new block. round={}", roundState.getRoundIdentifier());
       final Block block = blockCreator.createBlock(headerTimestamp);
-      proposal =
-          new Proposal(messageFactory.createSignedProposalPayload(getRoundIdentifier(), block));
+      proposal = messageFactory.createSignedProposalPayload(getRoundIdentifier(), block);
     } else {
       LOG.trace(
           "Multicasting NewRound from PreparedCertificate. round={}",
@@ -145,7 +143,7 @@ public class IbftRound {
         "Created proposal from prepared certificate blockHeader={} extraData={}",
         block.getHeader(),
         extraDataToPublish);
-    return new Proposal(messageFactory.createSignedProposalPayload(getRoundIdentifier(), newBlock));
+    return messageFactory.createSignedProposalPayload(getRoundIdentifier(), newBlock);
   }
 
   public void handleProposalMessage(final Proposal msg) {
@@ -175,9 +173,8 @@ public class IbftRound {
       LOG.info("Sending prepare message.");
       transmitter.multicastPrepare(getRoundIdentifier(), block.getHash());
       final Prepare localPrepareMessage =
-          new Prepare(
-              messageFactory.createSignedPreparePayload(
-                  roundState.getRoundIdentifier(), block.getHash()));
+          messageFactory.createSignedPreparePayload(
+              roundState.getRoundIdentifier(), block.getHash());
       peerIsPrepared(localPrepareMessage);
     }
   }
@@ -212,11 +209,10 @@ public class IbftRound {
       }
 
       final Commit localCommitMessage =
-          new Commit(
-              messageFactory.createSignedCommitPayload(
-                  roundState.getRoundIdentifier(),
-                  msg.getSignedPayload().getPayload().getBlock().getHash(),
-                  createCommitSeal(roundState.getProposedBlock().get())));
+          messageFactory.createSignedCommitPayload(
+              roundState.getRoundIdentifier(),
+              msg.getSignedPayload().getPayload().getBlock().getHash(),
+              createCommitSeal(roundState.getProposedBlock().get()));
       peerIsCommitted(localCommitMessage);
     }
 

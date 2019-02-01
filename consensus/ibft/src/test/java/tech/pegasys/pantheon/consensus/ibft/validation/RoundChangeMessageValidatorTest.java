@@ -21,11 +21,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
-import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
-import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangePayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator.MessageValidatorForHeightFactory;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -81,33 +80,35 @@ public class RoundChangeMessageValidatorTest {
 
   @Test
   public void roundChangeSentByNonValidatorFails() {
-    final SignedData<RoundChangePayload> msg =
+    final RoundChange msg =
         nonValidatorMessageFactory.createSignedRoundChangePayload(targetRound, Optional.empty());
-    assertThat(validator.validateMessage(msg)).isFalse();
+    assertThat(validator.validateMessage(msg.getSignedPayload())).isFalse();
   }
 
   @Test
   public void roundChangeContainingNoCertificateIsSuccessful() {
-    final SignedData<RoundChangePayload> msg =
+    final RoundChange msg =
         proposerMessageFactory.createSignedRoundChangePayload(targetRound, Optional.empty());
 
-    assertThat(validator.validateMessage(msg)).isTrue();
+    assertThat(validator.validateMessage(msg.getSignedPayload())).isTrue();
   }
 
   @Test
   public void roundChangeContainingInvalidProposalFails() {
     final PreparedCertificate prepareCertificate =
         new PreparedCertificate(
-            proposerMessageFactory.createSignedProposalPayload(currentRound, block),
+            proposerMessageFactory
+                .createSignedProposalPayload(currentRound, block)
+                .getSignedPayload(),
             Collections.emptyList());
 
-    final SignedData<RoundChangePayload> msg =
+    final RoundChange msg =
         proposerMessageFactory.createSignedRoundChangePayload(
             targetRound, Optional.of(prepareCertificate));
 
     when(basicValidator.addSignedProposalPayload(any())).thenReturn(false);
 
-    assertThat(validator.validateMessage(msg)).isFalse();
+    assertThat(validator.validateMessage(msg.getSignedPayload())).isFalse();
     verify(validatorFactory, times(1))
         .createAt(prepareCertificate.getProposalPayload().getPayload().getRoundIdentifier());
     verify(basicValidator, times(1))
@@ -120,36 +121,40 @@ public class RoundChangeMessageValidatorTest {
   public void roundChangeContainingValidProposalButNoPrepareMessagesFails() {
     final PreparedCertificate prepareCertificate =
         new PreparedCertificate(
-            proposerMessageFactory.createSignedProposalPayload(currentRound, block),
+            proposerMessageFactory
+                .createSignedProposalPayload(currentRound, block)
+                .getSignedPayload(),
             Collections.emptyList());
 
-    final SignedData<RoundChangePayload> msg =
+    final RoundChange msg =
         proposerMessageFactory.createSignedRoundChangePayload(
             targetRound, Optional.of(prepareCertificate));
 
     when(basicValidator.addSignedProposalPayload(any())).thenReturn(true);
-    assertThat(validator.validateMessage(msg)).isFalse();
+    assertThat(validator.validateMessage(msg.getSignedPayload())).isFalse();
   }
 
   @Test
   public void roundChangeInvalidPrepareMessageFromProposerFails() {
-    final SignedData<PreparePayload> prepareMsg =
+    final Prepare prepareMsg =
         validatorMessageFactory.createSignedPreparePayload(currentRound, block.getHash());
     final PreparedCertificate prepareCertificate =
         new PreparedCertificate(
-            proposerMessageFactory.createSignedProposalPayload(currentRound, block),
-            Lists.newArrayList(prepareMsg));
+            proposerMessageFactory
+                .createSignedProposalPayload(currentRound, block)
+                .getSignedPayload(),
+            Lists.newArrayList(prepareMsg.getSignedPayload()));
 
     when(basicValidator.addSignedProposalPayload(any())).thenReturn(true);
     when(basicValidator.validatePrepareMessage(any())).thenReturn(false);
 
-    final SignedData<RoundChangePayload> msg =
+    final RoundChange msg =
         proposerMessageFactory.createSignedRoundChangePayload(
             targetRound, Optional.of(prepareCertificate));
 
-    assertThat(validator.validateMessage(msg)).isFalse();
+    assertThat(validator.validateMessage(msg.getSignedPayload())).isFalse();
 
-    verify(basicValidator, times(1)).validatePrepareMessage(prepareMsg);
+    verify(basicValidator, times(1)).validatePrepareMessage(prepareMsg.getSignedPayload());
     verify(basicValidator, never()).validateCommmitMessage(any());
   }
 
@@ -158,11 +163,11 @@ public class RoundChangeMessageValidatorTest {
     final ConsensusRoundIdentifier latterRoundIdentifier =
         new ConsensusRoundIdentifier(currentRound.getSequenceNumber() + 1, 1);
 
-    final SignedData<RoundChangePayload> msg =
+    final RoundChange msg =
         proposerMessageFactory.createSignedRoundChangePayload(
             latterRoundIdentifier, Optional.empty());
 
-    assertThat(validator.validateMessage(msg)).isFalse();
+    assertThat(validator.validateMessage(msg.getSignedPayload())).isFalse();
     verify(basicValidator, never()).validatePrepareMessage(any());
   }
 
@@ -172,45 +177,49 @@ public class RoundChangeMessageValidatorTest {
         new ConsensusRoundIdentifier(
             currentRound.getSequenceNumber(), currentRound.getRoundNumber() + 2);
 
-    final SignedData<PreparePayload> prepareMsg =
+    final Prepare prepareMsg =
         validatorMessageFactory.createSignedPreparePayload(futureRound, block.getHash());
     final PreparedCertificate prepareCertificate =
         new PreparedCertificate(
-            proposerMessageFactory.createSignedProposalPayload(futureRound, block),
-            Lists.newArrayList(prepareMsg));
+            proposerMessageFactory
+                .createSignedProposalPayload(futureRound, block)
+                .getSignedPayload(),
+            Lists.newArrayList(prepareMsg.getSignedPayload()));
 
-    final SignedData<RoundChangePayload> msg =
+    final RoundChange msg =
         proposerMessageFactory.createSignedRoundChangePayload(
             targetRound, Optional.of(prepareCertificate));
 
-    assertThat(validator.validateMessage(msg)).isFalse();
+    assertThat(validator.validateMessage(msg.getSignedPayload())).isFalse();
     verify(validatorFactory, never()).createAt(any());
-    verify(basicValidator, never()).validatePrepareMessage(prepareMsg);
+    verify(basicValidator, never()).validatePrepareMessage(prepareMsg.getSignedPayload());
     verify(basicValidator, never()).validateCommmitMessage(any());
   }
 
   @Test
   public void roundChangeWithPastProposalForCurrentHeightIsSuccessful() {
-    final SignedData<PreparePayload> prepareMsg =
+    final Prepare prepareMsg =
         validatorMessageFactory.createSignedPreparePayload(currentRound, block.getHash());
     final PreparedCertificate prepareCertificate =
         new PreparedCertificate(
-            proposerMessageFactory.createSignedProposalPayload(currentRound, block),
-            Lists.newArrayList(prepareMsg));
+            proposerMessageFactory
+                .createSignedProposalPayload(currentRound, block)
+                .getSignedPayload(),
+            Lists.newArrayList(prepareMsg.getSignedPayload()));
 
-    final SignedData<RoundChangePayload> msg =
+    final RoundChange msg =
         proposerMessageFactory.createSignedRoundChangePayload(
             targetRound, Optional.of(prepareCertificate));
 
     when(basicValidator.addSignedProposalPayload(prepareCertificate.getProposalPayload()))
         .thenReturn(true);
-    when(basicValidator.validatePrepareMessage(prepareMsg)).thenReturn(true);
+    when(basicValidator.validatePrepareMessage(prepareMsg.getSignedPayload())).thenReturn(true);
 
-    assertThat(validator.validateMessage(msg)).isTrue();
+    assertThat(validator.validateMessage(msg.getSignedPayload())).isTrue();
     verify(validatorFactory, times(1))
         .createAt(prepareCertificate.getProposalPayload().getPayload().getRoundIdentifier());
     verify(basicValidator, times(1))
         .addSignedProposalPayload(prepareCertificate.getProposalPayload());
-    verify(basicValidator, times(1)).validatePrepareMessage(prepareMsg);
+    verify(basicValidator, times(1)).validatePrepareMessage(prepareMsg.getSignedPayload());
   }
 }
