@@ -34,6 +34,11 @@ import tech.pegasys.pantheon.consensus.ibft.messagedata.NewRoundMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.PrepareMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.RoundChangeMessageData;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.NewRound;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.consensus.ibft.payload.CommitPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.NewRoundPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
@@ -456,7 +461,7 @@ public class IbftControllerTest {
     when(signedProposal.getAuthor()).thenReturn(validator);
     when(proposalPayload.getRoundIdentifier()).thenReturn(roundIdentifier);
     when(proposalMessageData.getCode()).thenReturn(IbftV2.PROPOSAL);
-    when(proposalMessageData.decode()).thenReturn(signedProposal);
+    when(proposalMessageData.decode()).thenReturn(new Proposal(signedProposal));
     proposalMessage = new DefaultMessage(null, proposalMessageData);
   }
 
@@ -466,7 +471,7 @@ public class IbftControllerTest {
     when(signedPrepare.getAuthor()).thenReturn(validator);
     when(preparePayload.getRoundIdentifier()).thenReturn(roundIdentifier);
     when(prepareMessageData.getCode()).thenReturn(IbftV2.PREPARE);
-    when(prepareMessageData.decode()).thenReturn(signedPrepare);
+    when(prepareMessageData.decode()).thenReturn(new Prepare(signedPrepare));
     prepareMessage = new DefaultMessage(null, prepareMessageData);
   }
 
@@ -476,7 +481,7 @@ public class IbftControllerTest {
     when(signedCommit.getAuthor()).thenReturn(validator);
     when(commitPayload.getRoundIdentifier()).thenReturn(roundIdentifier);
     when(commitMessageData.getCode()).thenReturn(IbftV2.COMMIT);
-    when(commitMessageData.decode()).thenReturn(signedCommit);
+    when(commitMessageData.decode()).thenReturn(new Commit(signedCommit));
     commitMessage = new DefaultMessage(null, commitMessageData);
   }
 
@@ -486,7 +491,7 @@ public class IbftControllerTest {
     when(signedNewRound.getAuthor()).thenReturn(validator);
     when(newRoundPayload.getRoundIdentifier()).thenReturn(roundIdentifier);
     when(newRoundMessageData.getCode()).thenReturn(IbftV2.NEW_ROUND);
-    when(newRoundMessageData.decode()).thenReturn(signedNewRound);
+    when(newRoundMessageData.decode()).thenReturn(new NewRound(signedNewRound));
     newRoundMessage = new DefaultMessage(null, newRoundMessageData);
   }
 
@@ -496,7 +501,7 @@ public class IbftControllerTest {
     when(signedRoundChange.getAuthor()).thenReturn(validator);
     when(roundChangePayload.getRoundIdentifier()).thenReturn(roundIdentifier);
     when(roundChangeMessageData.getCode()).thenReturn(IbftV2.ROUND_CHANGE);
-    when(roundChangeMessageData.decode()).thenReturn(signedRoundChange);
+    when(roundChangeMessageData.decode()).thenReturn(new RoundChange(signedRoundChange));
     roundChangeMessage = new DefaultMessage(null, roundChangeMessageData);
   }
 }

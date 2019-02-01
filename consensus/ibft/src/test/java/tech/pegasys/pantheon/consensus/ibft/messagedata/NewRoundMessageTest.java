@@ -17,8 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import tech.pegasys.pantheon.consensus.ibft.payload.NewRoundPayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.NewRound;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -29,7 +28,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class NewRoundMessageTest {
-  @Mock private SignedData<NewRoundPayload> newRoundPayload;
+  @Mock private NewRound newRoundPayload;
   @Mock private BytesValue messageBytes;
   @Mock private MessageData messageData;
   @Mock private NewRoundMessageData newRoundMessage;
