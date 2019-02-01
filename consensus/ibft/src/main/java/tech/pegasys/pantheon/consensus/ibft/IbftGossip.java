@@ -65,8 +65,7 @@ public class IbftGossip implements Gossiper {
         decodedMessage = RoundChangeMessageData.fromMessageData(messageData).decode();
         break;
       case IbftV2.NEW_ROUND:
-        decodedMessage =
-            NewRoundMessageData.fromMessageData(messageData).decode().getSignedPayload();
+        decodedMessage = NewRoundMessageData.fromMessageData(messageData).decode();
         break;
       default:
         throw new IllegalArgumentException(

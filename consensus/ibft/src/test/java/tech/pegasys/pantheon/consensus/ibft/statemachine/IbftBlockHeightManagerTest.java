@@ -237,7 +237,7 @@ public class IbftBlockHeightManagerTest {
 
     manager.handleRoundChangePayload(roundChange);
 
-    verify(roundChangeManager, times(1)).appendRoundChangeMessage(roundChange.getSignedPayload());
+    verify(roundChangeManager, times(1)).appendRoundChangeMessage(roundChange);
     verify(roundFactory, times(1))
         .createNewRound(any(), eq(futureRoundIdentifier.getRoundNumber()));
   }
