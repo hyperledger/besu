@@ -7,7 +7,7 @@
     "eip155Block": 3,
     "eip158Block": 3,
     "byzantiumBlock": 1035301,
-    "revisedibft": {
+    "ibft2": {
       "blockperiodseconds": 1,
       "epochlength": 30000,
       "requesttimeoutseconds": 5

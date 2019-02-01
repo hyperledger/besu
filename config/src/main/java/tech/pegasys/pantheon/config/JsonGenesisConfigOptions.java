@@ -20,8 +20,8 @@ import io.vertx.core.json.JsonObject;
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   private static final String ETHASH_CONFIG_KEY = "ethash";
-  private static final String IBFT_CONFIG_KEY = "ibft";
-  private static final String REVISED_IBFT_CONFIG_KEY = "revisedibft";
+  private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
+  private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String CLIQUE_CONFIG_KEY = "clique";
   private final JsonObject configRoot;
 
@@ -35,8 +35,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public boolean isIbft() {
-    return configRoot.containsKey(IBFT_CONFIG_KEY);
+  public boolean isIbftLegacy() {
+    return configRoot.containsKey(IBFT_LEGACY_CONFIG_KEY);
   }
 
   @Override
@@ -45,21 +45,21 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public boolean isRevisedIbft() {
-    return configRoot.containsKey(REVISED_IBFT_CONFIG_KEY);
+  public boolean isIbft2() {
+    return configRoot.containsKey(IBFT2_CONFIG_KEY);
   }
 
   @Override
-  public IbftConfigOptions getIbftConfigOptions() {
-    return isIbft()
-        ? new IbftConfigOptions(configRoot.getJsonObject(IBFT_CONFIG_KEY))
+  public IbftConfigOptions getIbftLegacyConfigOptions() {
+    return isIbftLegacy()
+        ? new IbftConfigOptions(configRoot.getJsonObject(IBFT_LEGACY_CONFIG_KEY))
         : IbftConfigOptions.DEFAULT;
   }
 
   @Override
-  public IbftConfigOptions getRevisedIbftConfigOptions() {
-    return isRevisedIbft()
-        ? new IbftConfigOptions(configRoot.getJsonObject(REVISED_IBFT_CONFIG_KEY))
+  public IbftConfigOptions getIbft2ConfigOptions() {
+    return isIbft2()
+        ? new IbftConfigOptions(configRoot.getJsonObject(IBFT2_CONFIG_KEY))
         : IbftConfigOptions.DEFAULT;
   }
 
