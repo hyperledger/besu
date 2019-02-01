@@ -22,7 +22,7 @@ try {
     node {
         checkout scm
         docker.image('docker:18.06.0-ce-dind').withRun('--privileged') { d ->
-            docker.image('pegasyseng/pantheon-build:0.0.4').inside("--link ${d.id}:docker") {
+            docker.image('pegasyseng/pantheon-build:0.0.5-jdk11').inside("--link ${d.id}:docker") {
                 try {
                     stage('Compile') {
                         sh './gradlew --no-daemon --parallel clean compileJava'
