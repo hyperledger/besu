@@ -14,12 +14,11 @@ package tech.pegasys.pantheon.consensus.ibft.statemachine;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.RoundExpiry;
-import tech.pegasys.pantheon.consensus.ibft.payload.CommitPayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.NewRoundPayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangePayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.NewRound;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 
 public class NoOpBlockHeightManager implements BlockHeightManager {
@@ -40,19 +39,19 @@ public class NoOpBlockHeightManager implements BlockHeightManager {
   public void roundExpired(final RoundExpiry expire) {}
 
   @Override
-  public void handleProposalPayload(final SignedData<ProposalPayload> signedPayload) {}
+  public void handleProposalPayload(final Proposal proposal) {}
 
   @Override
-  public void handlePreparePayload(final SignedData<PreparePayload> signedPayload) {}
+  public void handlePreparePayload(final Prepare prepare) {}
 
   @Override
-  public void handleCommitPayload(final SignedData<CommitPayload> payload) {}
+  public void handleCommitPayload(final Commit commit) {}
 
   @Override
-  public void handleRoundChangePayload(final SignedData<RoundChangePayload> signedPayload) {}
+  public void handleRoundChangePayload(final RoundChange roundChange) {}
 
   @Override
-  public void handleNewRoundPayload(final SignedData<NewRoundPayload> signedPayload) {}
+  public void handleNewRoundPayload(final NewRound newRound) {}
 
   @Override
   public long getChainHeight() {

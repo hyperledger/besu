@@ -14,12 +14,11 @@ package tech.pegasys.pantheon.consensus.ibft.statemachine;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.RoundExpiry;
-import tech.pegasys.pantheon.consensus.ibft.payload.CommitPayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.NewRoundPayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangePayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.NewRound;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 
 public interface BlockHeightManager {
@@ -30,15 +29,15 @@ public interface BlockHeightManager {
 
   void roundExpired(RoundExpiry expire);
 
-  void handleProposalPayload(SignedData<ProposalPayload> signedPayload);
+  void handleProposalPayload(Proposal proposal);
 
-  void handlePreparePayload(SignedData<PreparePayload> signedPayload);
+  void handlePreparePayload(Prepare prepare);
 
-  void handleCommitPayload(SignedData<CommitPayload> payload);
+  void handleCommitPayload(Commit commit);
 
-  void handleRoundChangePayload(SignedData<RoundChangePayload> signedPayload);
+  void handleRoundChangePayload(RoundChange roundChange);
 
-  void handleNewRoundPayload(SignedData<NewRoundPayload> signedPayload);
+  void handleNewRoundPayload(NewRound newRound);
 
   long getChainHeight();
 
