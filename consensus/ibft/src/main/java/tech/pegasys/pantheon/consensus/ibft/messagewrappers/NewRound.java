@@ -13,11 +13,21 @@
 package tech.pegasys.pantheon.consensus.ibft.messagewrappers;
 
 import tech.pegasys.pantheon.consensus.ibft.payload.NewRoundPayload;
+import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
+import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 
 public class NewRound extends IbftMessage<NewRoundPayload> {
 
   public NewRound(final SignedData<NewRoundPayload> payload) {
     super(payload);
+  }
+
+  public RoundChangeCertificate getRoundChangeCertificate() {
+    return getSignedPayload().getPayload().getRoundChangeCertificate();
+  }
+
+  public SignedData<ProposalPayload> getProposalPayload() {
+    return getSignedPayload().getPayload().getProposalPayload();
   }
 }

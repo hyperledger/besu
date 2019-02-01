@@ -17,10 +17,9 @@ import static tech.pegasys.pantheon.consensus.ibft.support.TestHelpers.injectEmp
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
-import tech.pegasys.pantheon.consensus.ibft.payload.CommitPayload;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
-import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.consensus.ibft.support.RoundSpecificPeers;
 import tech.pegasys.pantheon.consensus.ibft.support.TestContext;
 import tech.pegasys.pantheon.consensus.ibft.support.TestContextBuilder;
@@ -99,7 +98,7 @@ public class FutureRoundTest {
         futurePeers.createSignedRoundChangePayload(futureRoundId),
         futureBlock);
 
-    final SignedData<PreparePayload> expectedPrepare =
+    final Prepare expectedPrepare =
         localNodeMessageFactory.createSignedPreparePayload(futureRoundId, futureBlock.getHash());
 
     peers.verifyMessagesReceived(expectedPrepare);
@@ -107,7 +106,7 @@ public class FutureRoundTest {
     // following 1 more prepare, a commit msg will be sent
     futurePeers.getNonProposing(quorum - 3).injectPrepare(futureRoundId, futureBlock.getHash());
 
-    final SignedData<CommitPayload> expectedCommit =
+    final Commit expectedCommit =
         localNodeMessageFactory.createSignedCommitPayload(
             futureRoundId,
             futureBlock.getHash(),
@@ -143,7 +142,7 @@ public class FutureRoundTest {
         futurePeers.createSignedRoundChangePayload(futureRoundId),
         futureBlock);
 
-    final SignedData<PreparePayload> expectedFuturePrepare =
+    final Prepare expectedFuturePrepare =
         localNodeMessageFactory.createSignedPreparePayload(futureRoundId, futureBlock.getHash());
     peers.verifyMessagesReceived(expectedFuturePrepare);
 

@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.payload;
 
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
@@ -20,10 +21,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 
 public class RoundChangeCertificate {
+
   private final Collection<SignedData<RoundChangePayload>> roundChangePayloads;
 
   public RoundChangeCertificate(
@@ -52,16 +55,21 @@ public class RoundChangeCertificate {
   }
 
   public static class Builder {
-    private final List<SignedData<RoundChangePayload>> roundChangePayloads = Lists.newArrayList();
+
+    private final List<RoundChange> roundChangePayloads = Lists.newArrayList();
 
     public Builder() {}
 
-    public void appendRoundChangeMessage(final SignedData<RoundChangePayload> msg) {
+    public void appendRoundChangeMessage(final RoundChange msg) {
       roundChangePayloads.add(msg);
     }
 
     public RoundChangeCertificate buildCertificate() {
-      return new RoundChangeCertificate(roundChangePayloads);
+      return new RoundChangeCertificate(
+          roundChangePayloads
+              .stream()
+              .map(RoundChange::getSignedPayload)
+              .collect(Collectors.toList()));
     }
   }
 

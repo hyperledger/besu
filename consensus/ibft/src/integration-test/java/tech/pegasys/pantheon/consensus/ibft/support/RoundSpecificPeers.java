@@ -23,6 +23,8 @@ import tech.pegasys.pantheon.consensus.ibft.messagedata.NewRoundMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.PrepareMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.RoundChangeMessageData;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.IbftMessage;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.consensus.ibft.payload.Payload;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
@@ -80,7 +82,7 @@ public class RoundSpecificPeers {
       final ConsensusRoundIdentifier targetRound) {
     return nonProposingPeers
         .stream()
-        .map(peer -> peer.injectRoundChange(targetRound, empty()))
+        .map(peer -> peer.injectRoundChange(targetRound, empty()).getSignedPayload())
         .collect(Collectors.toList());
   }
 
@@ -89,20 +91,24 @@ public class RoundSpecificPeers {
   }
 
   public List<SignedData<RoundChangePayload>> roundChange(final ConsensusRoundIdentifier roundId) {
-    final List<SignedData<RoundChangePayload>> changes = Lists.newArrayList();
+    final List<RoundChange> changes = Lists.newArrayList();
 
     for (final ValidatorPeer peer : peers) {
       changes.add(peer.injectRoundChange(roundId, empty()));
     }
 
-    return changes;
+    return changes.stream().map(RoundChange::getSignedPayload).collect(Collectors.toList());
   }
 
   public List<SignedData<RoundChangePayload>> createSignedRoundChangePayload(
       final ConsensusRoundIdentifier roundId) {
     return peers
         .stream()
-        .map(p -> p.getMessageFactory().createSignedRoundChangePayload(roundId, empty()))
+        .map(
+            p ->
+                p.getMessageFactory()
+                    .createSignedRoundChangePayload(roundId, empty())
+                    .getSignedPayload())
         .collect(Collectors.toList());
   }
 
@@ -113,7 +119,8 @@ public class RoundSpecificPeers {
         .map(
             p ->
                 p.getMessageFactory()
-                    .createSignedRoundChangePayload(roundId, Optional.of(preparedCertificate)))
+                    .createSignedRoundChangePayload(roundId, Optional.of(preparedCertificate))
+                    .getSignedPayload())
         .collect(Collectors.toList());
   }
 
@@ -125,11 +132,15 @@ public class RoundSpecificPeers {
     nonProposingPeers.forEach(peer -> peer.injectCommit(roundId, hash));
   }
 
-  Collection<SignedData<PreparePayload>> createSignedPreparePayloadOfNonProposing(
+  public Collection<SignedData<PreparePayload>> createSignedPreparePayloadOfNonProposing(
       final ConsensusRoundIdentifier preparedRound, final Hash hash) {
     return nonProposingPeers
         .stream()
-        .map(role -> role.getMessageFactory().createSignedPreparePayload(preparedRound, hash))
+        .map(
+            role ->
+                role.getMessageFactory()
+                    .createSignedPreparePayload(preparedRound, hash)
+                    .getSignedPayload())
         .collect(Collectors.toList());
   }
 
@@ -146,38 +157,35 @@ public class RoundSpecificPeers {
   }
 
   @SafeVarargs
-  public final void verifyMessagesReceivedPropser(final SignedData<? extends Payload>... msgs) {
+  public final void verifyMessagesReceivedProposer(final IbftMessage<? extends Payload>... msgs) {
     verifyMessagesReceived(ImmutableList.of(proposer), msgs);
   }
 
   @SafeVarargs
   public final void verifyMessagesReceivedNonPropsingExcluding(
-      final ValidatorPeer exclude, final SignedData<? extends Payload>... msgs) {
+      final ValidatorPeer exclude, final IbftMessage<? extends Payload>... msgs) {
     final Collection<ValidatorPeer> candidates = Lists.newArrayList(nonProposingPeers);
     candidates.remove(exclude);
     verifyMessagesReceived(candidates, msgs);
   }
 
-  @SafeVarargs
-  public final void verifyMessagesReceivedNonPropsing(final SignedData<? extends Payload>... msgs) {
+  public final void verifyMessagesReceivedNonPropsing(final IbftMessage<?>... msgs) {
     verifyMessagesReceived(nonProposingPeers, msgs);
   }
 
-  @SafeVarargs
-  public final void verifyMessagesReceived(final SignedData<? extends Payload>... msgs) {
+  public final void verifyMessagesReceived(final IbftMessage<?>... msgs) {
     verifyMessagesReceived(peers, msgs);
   }
 
-  @SafeVarargs
-  private final void verifyMessagesReceived(
-      final Collection<ValidatorPeer> candidates, final SignedData<? extends Payload>... msgs) {
+  private void verifyMessagesReceived(
+      final Collection<ValidatorPeer> candidates, final IbftMessage<?>... msgs) {
     candidates.forEach(n -> assertThat(n.getReceivedMessages().size()).isEqualTo(msgs.length));
 
-    List<SignedData<? extends Payload>> msgList = Arrays.asList(msgs);
+    List<IbftMessage<? extends Payload>> msgList = Arrays.asList(msgs);
 
     for (int i = 0; i < msgList.size(); i++) {
       final int index = i;
-      final SignedData<? extends Payload> msg = msgList.get(index);
+      final IbftMessage<? extends Payload> msg = msgList.get(index);
       candidates.forEach(
           n -> {
             final List<MessageData> rxMsgs = n.getReceivedMessages();
@@ -188,36 +196,29 @@ public class RoundSpecificPeers {
     candidates.forEach(ValidatorPeer::clearReceivedMessages);
   }
 
-  private void verifyMessage(
-      final MessageData actual, final SignedData<? extends Payload> signedExpectedPayload) {
-    final Payload expectedPayload = signedExpectedPayload.getPayload();
-    SignedData<?> actualSignedPayload = null;
+  private void verifyMessage(final MessageData actual, final IbftMessage<?> expectedMessage) {
+    IbftMessage<?> actualSignedPayload = null;
 
-    switch (expectedPayload.getMessageType()) {
+    switch (expectedMessage.getMessageType()) {
       case IbftV2.PROPOSAL:
-        actualSignedPayload =
-            ProposalMessageData.fromMessageData(actual).decode().getSignedPayload();
+        actualSignedPayload = ProposalMessageData.fromMessageData(actual).decode();
         break;
       case IbftV2.PREPARE:
-        actualSignedPayload =
-            PrepareMessageData.fromMessageData(actual).decode().getSignedPayload();
+        actualSignedPayload = PrepareMessageData.fromMessageData(actual).decode();
         break;
       case IbftV2.COMMIT:
-        actualSignedPayload = CommitMessageData.fromMessageData(actual).decode().getSignedPayload();
+        actualSignedPayload = CommitMessageData.fromMessageData(actual).decode();
         break;
       case IbftV2.NEW_ROUND:
-        actualSignedPayload =
-            NewRoundMessageData.fromMessageData(actual).decode().getSignedPayload();
+        actualSignedPayload = NewRoundMessageData.fromMessageData(actual).decode();
         break;
       case IbftV2.ROUND_CHANGE:
-        actualSignedPayload =
-            RoundChangeMessageData.fromMessageData(actual).decode().getSignedPayload();
+        actualSignedPayload = RoundChangeMessageData.fromMessageData(actual).decode();
         break;
       default:
         fail("Illegal IBFTV2 message type.");
         break;
     }
-    assertThat(signedExpectedPayload)
-        .isEqualToComparingFieldByFieldRecursively(actualSignedPayload);
+    assertThat(expectedMessage).isEqualToComparingFieldByFieldRecursively(actualSignedPayload);
   }
 }
