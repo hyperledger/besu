@@ -26,44 +26,57 @@ public class AccountWhitelistController {
 
   public AccountWhitelistController(final PermissioningConfiguration configuration) {
     if (configuration != null && configuration.isAccountWhitelistSet()) {
-      addAccounts(configuration.getAccountWhitelist());
+      this.isAccountWhitelistSet = configuration.isAccountWhitelistSet();
+      if (!configuration.getAccountWhitelist().isEmpty()) {
+        addAccounts(configuration.getAccountWhitelist());
+      }
     }
   }
 
-  public AddResult addAccounts(final List<String> accounts) {
-    if (containsInvalidAccount(accounts)) {
-      return AddResult.ERROR_INVALID_ENTRY;
-    }
-
-    if (inputHasDuplicates(accounts)) {
-      return AddResult.ERROR_DUPLICATED_ENTRY;
+  public WhitelistOperationResult addAccounts(final List<String> accounts) {
+    final WhitelistOperationResult inputValidationResult = inputValidation(accounts);
+    if (inputValidationResult != WhitelistOperationResult.SUCCESS) {
+      return inputValidationResult;
     }
 
     boolean inputHasExistingAccount = accounts.stream().anyMatch(accountWhitelist::contains);
     if (inputHasExistingAccount) {
-      return AddResult.ERROR_EXISTING_ENTRY;
+      return WhitelistOperationResult.ERROR_EXISTING_ENTRY;
     }
 
     this.isAccountWhitelistSet = true;
     this.accountWhitelist.addAll(accounts);
-    return AddResult.SUCCESS;
+    return WhitelistOperationResult.SUCCESS;
   }
 
-  public RemoveResult removeAccounts(final List<String> accounts) {
-    if (containsInvalidAccount(accounts)) {
-      return RemoveResult.ERROR_INVALID_ENTRY;
-    }
-
-    if (inputHasDuplicates(accounts)) {
-      return RemoveResult.ERROR_DUPLICATED_ENTRY;
+  public WhitelistOperationResult removeAccounts(final List<String> accounts) {
+    final WhitelistOperationResult inputValidationResult = inputValidation(accounts);
+    if (inputValidationResult != WhitelistOperationResult.SUCCESS) {
+      return inputValidationResult;
     }
 
     if (!accountWhitelist.containsAll(accounts)) {
-      return RemoveResult.ERROR_ABSENT_ENTRY;
+      return WhitelistOperationResult.ERROR_ABSENT_ENTRY;
     }
 
     this.accountWhitelist.removeAll(accounts);
-    return RemoveResult.SUCCESS;
+    return WhitelistOperationResult.SUCCESS;
+  }
+
+  private WhitelistOperationResult inputValidation(final List<String> accounts) {
+    if (accounts == null || accounts.isEmpty()) {
+      return WhitelistOperationResult.ERROR_EMPTY_ENTRY;
+    }
+
+    if (containsInvalidAccount(accounts)) {
+      return WhitelistOperationResult.ERROR_INVALID_ENTRY;
+    }
+
+    if (inputHasDuplicates(accounts)) {
+      return WhitelistOperationResult.ERROR_DUPLICATED_ENTRY;
+    }
+
+    return WhitelistOperationResult.SUCCESS;
   }
 
   private boolean inputHasDuplicates(final List<String> accounts) {
@@ -93,19 +106,5 @@ public class AccountWhitelistController {
     } catch (NullPointerException | IndexOutOfBoundsException | IllegalArgumentException e) {
       return false;
     }
-  }
-
-  public enum AddResult {
-    SUCCESS,
-    ERROR_DUPLICATED_ENTRY,
-    ERROR_EXISTING_ENTRY,
-    ERROR_INVALID_ENTRY
-  }
-
-  public enum RemoveResult {
-    SUCCESS,
-    ERROR_ABSENT_ENTRY,
-    ERROR_INVALID_ENTRY,
-    ERROR_DUPLICATED_ENTRY
   }
 }

@@ -14,12 +14,12 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController.NodesWhitelistResult;
-import static tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController.NodesWhitelistResultType;
 
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -30,7 +30,9 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessRe
 import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.WhitelistOperationResult;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.assertj.core.util.Lists;
@@ -43,7 +45,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PermAddNodesToWhitelistTest {
 
-  private static final boolean JSON_SUCCESS = true;
   private PermAddNodesToWhitelist method;
   private static final String METHOD_NAME = "perm_addNodesToWhitelist";
 
@@ -108,7 +109,22 @@ public class PermAddNodesToWhitelistTest {
 
     when(p2pNetwork.getNodeWhitelistController()).thenReturn(nodeWhitelistController);
     when(nodeWhitelistController.addNodes(any()))
-        .thenReturn(new NodesWhitelistResult(NodesWhitelistResultType.ERROR_DUPLICATED_ENTRY));
+        .thenReturn(new NodesWhitelistResult(WhitelistOperationResult.ERROR_DUPLICATED_ENTRY));
+
+    final JsonRpcResponse actual = method.response(request);
+
+    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+  }
+
+  @Test
+  public void whenRequestContainsEmptyListOfNodesShouldReturnEmptyEntryError() {
+    final JsonRpcRequest request = buildRequest(new ArrayList<>());
+    final JsonRpcResponse expected =
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.NODE_WHITELIST_EMPTY_ENTRY);
+
+    when(p2pNetwork.getNodeWhitelistController()).thenReturn(nodeWhitelistController);
+    when(nodeWhitelistController.addNodes(eq(new ArrayList<>())))
+        .thenReturn(new NodesWhitelistResult(WhitelistOperationResult.ERROR_EMPTY_ENTRY));
 
     final JsonRpcResponse actual = method.response(request);
 
@@ -118,11 +134,11 @@ public class PermAddNodesToWhitelistTest {
   @Test
   public void shouldAddSingleValidNode() {
     final JsonRpcRequest request = buildRequest(Lists.newArrayList(enode1));
-    final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getId(), JSON_SUCCESS);
+    final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getId());
 
     when(p2pNetwork.getNodeWhitelistController()).thenReturn(nodeWhitelistController);
     when(nodeWhitelistController.addNodes(any()))
-        .thenReturn(new NodesWhitelistResult(NodesWhitelistResultType.SUCCESS));
+        .thenReturn(new NodesWhitelistResult(WhitelistOperationResult.SUCCESS));
 
     final JsonRpcResponse actual = method.response(request);
 
@@ -135,11 +151,11 @@ public class PermAddNodesToWhitelistTest {
   @Test
   public void shouldAddMultipleValidNodes() {
     final JsonRpcRequest request = buildRequest(Lists.newArrayList(enode1, enode2, enode3));
-    final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getId(), JSON_SUCCESS);
+    final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getId());
 
     when(p2pNetwork.getNodeWhitelistController()).thenReturn(nodeWhitelistController);
     when(nodeWhitelistController.addNodes(any()))
-        .thenReturn(new NodesWhitelistResult(NodesWhitelistResultType.SUCCESS));
+        .thenReturn(new NodesWhitelistResult(WhitelistOperationResult.SUCCESS));
 
     final JsonRpcResponse actual = method.response(request);
 

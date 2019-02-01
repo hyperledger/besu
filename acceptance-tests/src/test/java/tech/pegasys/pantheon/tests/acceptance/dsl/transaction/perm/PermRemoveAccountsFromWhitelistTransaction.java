@@ -21,7 +21,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 import java.io.IOException;
 import java.util.List;
 
-public class PermRemoveAccountsFromWhitelistTransaction implements Transaction<Boolean> {
+public class PermRemoveAccountsFromWhitelistTransaction implements Transaction<String> {
 
   private final List<String> accounts;
 
@@ -30,11 +30,11 @@ public class PermRemoveAccountsFromWhitelistTransaction implements Transaction<B
   }
 
   @Override
-  public Boolean execute(final JsonRequestFactories node) {
+  public String execute(final JsonRequestFactories node) {
     try {
       RemoveAccountsFromWhitelistResponse response =
           node.perm().removeAccountsFromWhitelist(accounts).send();
-      assertThat(response.getResult()).isTrue();
+      assertThat(response.getResult()).isEqualTo("Success");
       return response.getResult();
     } catch (IOException e) {
       throw new RuntimeException(e);

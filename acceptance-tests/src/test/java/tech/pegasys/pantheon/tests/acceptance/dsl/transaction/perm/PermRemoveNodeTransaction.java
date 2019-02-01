@@ -21,7 +21,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 import java.io.IOException;
 import java.util.List;
 
-public class PermRemoveNodeTransaction implements Transaction<Boolean> {
+public class PermRemoveNodeTransaction implements Transaction<String> {
   private final List<String> enodeList;
 
   public PermRemoveNodeTransaction(final List<String> enodeList) {
@@ -29,7 +29,7 @@ public class PermRemoveNodeTransaction implements Transaction<Boolean> {
   }
 
   @Override
-  public Boolean execute(final JsonRequestFactories node) {
+  public String execute(final JsonRequestFactories node) {
     try {
       final RemoveNodeResponse result = node.perm().removeNodesFromWhitelist(enodeList).send();
       assertThat(result).isNotNull();
