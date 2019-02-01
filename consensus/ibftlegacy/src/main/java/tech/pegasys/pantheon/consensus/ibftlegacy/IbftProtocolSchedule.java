@@ -37,7 +37,7 @@ public class IbftProtocolSchedule {
   private static final int DEFAULT_CHAIN_ID = 1;
 
   public static ProtocolSchedule<IbftContext> create(final GenesisConfigOptions config) {
-    final IbftConfigOptions ibftConfig = config.getIbftConfigOptions();
+    final IbftConfigOptions ibftConfig = config.getIbftLegacyConfigOptions();
     final long epochLength = ibftConfig.getEpochLength();
     final long blockPeriod = ibftConfig.getBlockPeriodSeconds();
     final EpochManager epochManager = new EpochManager(epochLength);

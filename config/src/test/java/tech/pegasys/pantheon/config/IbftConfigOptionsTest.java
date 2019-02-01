@@ -84,6 +84,6 @@ public class IbftConfigOptionsTest {
     return GenesisConfigFile.fromConfig(
             new JsonObject(singletonMap("config", singletonMap("ibft", ibftConfigOptions))))
         .getConfigOptions()
-        .getIbftConfigOptions();
+        .getIbftLegacyConfigOptions();
   }
 }

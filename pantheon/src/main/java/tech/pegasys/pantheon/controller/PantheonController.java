@@ -63,7 +63,7 @@ public interface PantheonController<C> extends Closeable {
           nodeKeys,
           metricsSystem,
           privacyParameters);
-    } else if (configOptions.isRevisedIbft()) {
+    } else if (configOptions.isIbft2()) {
       return IbftPantheonController.init(
           storageProvider,
           genesisConfigFile,
@@ -72,7 +72,7 @@ public interface PantheonController<C> extends Closeable {
           networkId,
           nodeKeys,
           metricsSystem);
-    } else if (configOptions.isIbft()) {
+    } else if (configOptions.isIbftLegacy()) {
       return IbftLegacyPantheonController.init(
           storageProvider,
           genesisConfigFile,
