@@ -13,7 +13,7 @@
 
 // See https://github.com/tbroyer/gradle-errorprone-plugin
 // See https://github.com/tbroyer/gradle-apt-plugin
-plugins { id 'net.ltgt.apt' version '0.19' apply false }
+plugins { id 'net.ltgt.apt' version '0.20' apply false }
 
 // we use this config to get the path of the JDK 9 javac jar, to
 // stick it in the bootclasspath when running tests
