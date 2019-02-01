@@ -85,9 +85,46 @@ public class UniqueMessageMulticasterTest {
 
   @Test
   public void passedInBlackListIsPassedToUnderlyingValidator() {
-    List<Address> blackList =
+    final List<Address> blackList =
         Lists.newArrayList(AddressHelpers.ofValue(0), AddressHelpers.ofValue(1));
     messageTracker.send(messageSent, blackList);
     verify(multicaster, times(1)).send(messageSent, blackList);
+  }
+
+  @Test
+  public void anonymousMessageDataClassesContainingTheSameDataAreConsideredIdentical() {
+
+    final MessageData arbitraryMessage_1 =
+        createAnonymousMessageData(BytesValue.wrap(new byte[4]), 1);
+
+    final MessageData arbitraryMessage_2 =
+        createAnonymousMessageData(BytesValue.wrap(new byte[4]), 1);
+
+    messageTracker.send(arbitraryMessage_1);
+    verify(multicaster, times(1)).send(arbitraryMessage_1, emptyList());
+    reset(multicaster);
+
+    messageTracker.send(arbitraryMessage_2);
+    verifyZeroInteractions(multicaster);
+  }
+
+  private MessageData createAnonymousMessageData(final BytesValue content, final int code) {
+    return new MessageData() {
+
+      @Override
+      public int getSize() {
+        return content.size();
+      }
+
+      @Override
+      public int getCode() {
+        return code;
+      }
+
+      @Override
+      public BytesValue getData() {
+        return content;
+      }
+    };
   }
 }

@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.consensus.ibft;
 
 import tech.pegasys.pantheon.consensus.ibft.network.ValidatorMulticaster;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 
 import java.util.Collection;
@@ -42,11 +43,11 @@ public class UniqueMessageMulticaster implements ValidatorMulticaster {
   }
 
   // Set that starts evicting members when it hits capacity
-  private final Set<Integer> seenMessages =
+  private final Set<Hash> seenMessages =
       Collections.newSetFromMap(
-          new LinkedHashMap<Integer, Boolean>() {
+          new LinkedHashMap<Hash, Boolean>() {
             @Override
-            protected boolean removeEldestEntry(final Map.Entry<Integer, Boolean> eldest) {
+            protected boolean removeEldestEntry(final Map.Entry<Hash, Boolean> eldest) {
               return size() > maxSeenMessages;
             }
           });
@@ -58,7 +59,7 @@ public class UniqueMessageMulticaster implements ValidatorMulticaster {
 
   @Override
   public void send(final MessageData message, final Collection<Address> blackList) {
-    final int uniqueID = message.hashCode();
+    final Hash uniqueID = Hash.hash(message.getData());
     if (seenMessages.contains(uniqueID)) {
       return;
     }
