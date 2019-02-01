@@ -29,8 +29,6 @@ import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.RoundChangeMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.IbftMessage;
 import tech.pegasys.pantheon.consensus.ibft.payload.Authored;
-import tech.pegasys.pantheon.consensus.ibft.payload.Payload;
-import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;
@@ -132,17 +130,15 @@ public class IbftController {
     }
   }
 
-  private <P extends Payload> void consumeMessage(
-      final Message message,
-      final IbftMessage<P> ibftMessage,
-      final Consumer<SignedData<P>> handleMessage) {
+  private <P extends IbftMessage<?>> void consumeMessage(
+      final Message message, final P ibftMessage, final Consumer<P> handleMessage) {
     LOG.debug(
         "Received IBFT message messageType={} payload={}",
         ibftMessage.getMessageType(),
         ibftMessage);
     if (processMessage(ibftMessage, message)) {
       gossiper.send(message);
-      handleMessage.accept(ibftMessage.getSignedPayload());
+      handleMessage.accept(ibftMessage);
     }
   }
 
@@ -205,7 +201,7 @@ public class IbftController {
     futureMessages.remove(newChainHeight);
   }
 
-  private boolean processMessage(final IbftMessage<? extends Payload> msg, final Message rawMsg) {
+  private boolean processMessage(final IbftMessage<?> msg, final Message rawMsg) {
     final ConsensusRoundIdentifier msgRoundIdentifier = msg.getRoundIdentifier();
     if (isMsgForCurrentHeight(msgRoundIdentifier)) {
       return isMsgFromKnownValidator(msg) && ibftFinalState.isLocalNodeValidator();
