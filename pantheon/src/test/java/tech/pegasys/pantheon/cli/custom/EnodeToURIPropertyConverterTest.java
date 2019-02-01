@@ -23,53 +23,90 @@ public class EnodeToURIPropertyConverterTest {
 
   private final String VALID_NODE_ID =
       "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
+  private final String IPV4_ADDRESS = "192.168.0.1";
+  private final String IPV6_FULL_ADDRESS = "[2001:db8:85a3:0:0:8a2e:0370:7334]";
+  private final String IPV6_COMPACT_ADDRESS = "[2001:db8:85a3::8a2e:0370:7334]";
+  private final int P2P_PORT = 30303;
+  private final String DISCOVERY_QUERY = "discport=30301";
+
   private final EnodeToURIPropertyConverter converter = new EnodeToURIPropertyConverter();
 
   @Test
   public void convertEnodeURLWithDiscoveryPortShouldBuildExpectedURI() {
-    String value = "enode://" + VALID_NODE_ID + "@192.168.0.1:30303?discport=30301";
-    URI expectedURI = URI.create(value);
+    final String value =
+        "enode://" + VALID_NODE_ID + "@" + IPV4_ADDRESS + ":" + P2P_PORT + "?" + DISCOVERY_QUERY;
+    final URI expectedURI = URI.create(value);
 
-    URI convertedURI = converter.convert(value);
+    final URI convertedURI = converter.convert(value);
 
     assertThat(convertedURI).isEqualTo(expectedURI);
+    assertThat(convertedURI.getUserInfo()).isEqualTo(VALID_NODE_ID);
+    assertThat(convertedURI.getHost()).isEqualTo(IPV4_ADDRESS);
+    assertThat(convertedURI.getPort()).isEqualTo(P2P_PORT);
+    assertThat(convertedURI.getQuery()).isEqualTo(DISCOVERY_QUERY);
   }
 
   @Test
   public void convertEnodeURLWithoutDiscoveryPortShouldBuildExpectedURI() {
-    String value = "enode://" + VALID_NODE_ID + "@192.168.0.1:30303";
-    URI expectedURI = URI.create(value);
+    final String value = "enode://" + VALID_NODE_ID + "@" + IPV4_ADDRESS + ":" + P2P_PORT;
+    final URI expectedURI = URI.create(value);
 
-    URI convertedURI = converter.convert(value);
+    final URI convertedURI = converter.convert(value);
 
     assertThat(convertedURI).isEqualTo(expectedURI);
+    assertThat(convertedURI.getUserInfo()).isEqualTo(VALID_NODE_ID);
+    assertThat(convertedURI.getHost()).isEqualTo(IPV4_ADDRESS);
+    assertThat(convertedURI.getPort()).isEqualTo(P2P_PORT);
   }
 
   @Test
   public void convertEnodeURLWithIPV6ShouldBuildExpectedURI() {
-    String value =
-        "enode://" + VALID_NODE_ID + "@2001:0db8:85a3:0:0:8a2e:0370:7334:30303?discport=30301";
-    URI expectedURI = URI.create(value);
+    final String value =
+        "enode://"
+            + VALID_NODE_ID
+            + "@"
+            + IPV6_FULL_ADDRESS
+            + ":"
+            + P2P_PORT
+            + "?"
+            + DISCOVERY_QUERY;
+    final URI expectedURI = URI.create(value);
 
-    URI convertedURI = converter.convert(value);
+    final URI convertedURI = converter.convert(value);
 
     assertThat(convertedURI).isEqualTo(expectedURI);
+    assertThat(convertedURI.getUserInfo()).isEqualTo(VALID_NODE_ID);
+    assertThat(convertedURI.getHost()).isEqualTo(IPV6_FULL_ADDRESS);
+    assertThat(convertedURI.getPort()).isEqualTo(P2P_PORT);
+    assertThat(convertedURI.getQuery()).isEqualTo(DISCOVERY_QUERY);
   }
 
   @Test
   public void convertEnodeURLWithIPV6InCompactFormShouldBuildExpectedURI() {
-    String value = "enode://" + VALID_NODE_ID + "@fe80::200:f8ff:fe21:67cf:30303?discport=30301";
-    URI expectedURI = URI.create(value);
+    final String value =
+        "enode://"
+            + VALID_NODE_ID
+            + "@"
+            + IPV6_COMPACT_ADDRESS
+            + ":"
+            + P2P_PORT
+            + "?"
+            + DISCOVERY_QUERY;
+    final URI expectedURI = URI.create(value);
 
-    URI convertedURI = converter.convert(value);
+    final URI convertedURI = converter.convert(value);
 
     assertThat(convertedURI).isEqualTo(expectedURI);
+    assertThat(convertedURI.getUserInfo()).isEqualTo(VALID_NODE_ID);
+    assertThat(convertedURI.getHost()).isEqualTo(IPV6_COMPACT_ADDRESS);
+    assertThat(convertedURI.getPort()).isEqualTo(P2P_PORT);
+    assertThat(convertedURI.getQuery()).isEqualTo(DISCOVERY_QUERY);
   }
 
   @Test
   public void convertEnodeURLWithoutNodeIdShouldFail() {
-    String value = "enode://@192.168.0.1:30303";
-    Throwable thrown = catchThrowable(() -> converter.convert(value));
+    final String value = "enode://@" + IPV4_ADDRESS + ":" + P2P_PORT;
+    final Throwable thrown = catchThrowable(() -> converter.convert(value));
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
@@ -79,8 +116,8 @@ public class EnodeToURIPropertyConverterTest {
 
   @Test
   public void convertEnodeURLWithInvalidSizeNodeIdShouldFail() {
-    String value = "enode://wrong_size_string@192.168.0.1:30303";
-    Throwable thrown = catchThrowable(() -> converter.convert(value));
+    final String value = "enode://wrong_size_string@" + IPV4_ADDRESS + ":" + P2P_PORT;
+    final Throwable thrown = catchThrowable(() -> converter.convert(value));
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
@@ -90,9 +127,12 @@ public class EnodeToURIPropertyConverterTest {
 
   @Test
   public void convertEnodeURLWithInvalidHexCharacterNodeIdShouldFail() {
-    String value =
-        "enode://0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000@192.168.0.1:30303";
-    Throwable thrown = catchThrowable(() -> converter.convert(value));
+    final String value =
+        "enode://0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000@"
+            + IPV4_ADDRESS
+            + ":"
+            + P2P_PORT;
+    final Throwable thrown = catchThrowable(() -> converter.convert(value));
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
@@ -102,8 +142,8 @@ public class EnodeToURIPropertyConverterTest {
 
   @Test
   public void convertEnodeURLWithoutIpShouldFail() {
-    String value = "enode://" + VALID_NODE_ID + "@:30303";
-    Throwable thrown = catchThrowable(() -> converter.convert(value));
+    final String value = "enode://" + VALID_NODE_ID + "@:" + P2P_PORT;
+    final Throwable thrown = catchThrowable(() -> converter.convert(value));
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
@@ -112,8 +152,8 @@ public class EnodeToURIPropertyConverterTest {
 
   @Test
   public void convertEnodeURLWithInvalidIpFormatShouldFail() {
-    String value = "enode://" + VALID_NODE_ID + "@192.0.1:30303";
-    Throwable thrown = catchThrowable(() -> converter.convert(value));
+    final String value = "enode://" + VALID_NODE_ID + "@192.0.1:" + P2P_PORT;
+    final Throwable thrown = catchThrowable(() -> converter.convert(value));
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
@@ -122,8 +162,8 @@ public class EnodeToURIPropertyConverterTest {
 
   @Test
   public void convertEnodeURLWithoutListeningPortShouldFail() {
-    String value = "enode://" + VALID_NODE_ID + "@192.168.0.1:";
-    Throwable thrown = catchThrowable(() -> converter.convert(value));
+    final String value = "enode://" + VALID_NODE_ID + "@" + IPV4_ADDRESS + ":";
+    final Throwable thrown = catchThrowable(() -> converter.convert(value));
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
@@ -133,8 +173,8 @@ public class EnodeToURIPropertyConverterTest {
 
   @Test
   public void convertEnodeURLWithoutListeningPortAndWithDiscoveryPortShouldFail() {
-    String value = "enode://" + VALID_NODE_ID + "@192.168.0.1:?30301";
-    Throwable thrown = catchThrowable(() -> converter.convert(value));
+    final String value = "enode://" + VALID_NODE_ID + "@" + IPV4_ADDRESS + ":?30301";
+    final Throwable thrown = catchThrowable(() -> converter.convert(value));
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
@@ -144,8 +184,8 @@ public class EnodeToURIPropertyConverterTest {
 
   @Test
   public void convertEnodeURLWithAboveRangeListeningPortShouldFail() {
-    String value = "enode://" + VALID_NODE_ID + "@192.168.0.1:98765";
-    Throwable thrown = catchThrowable(() -> converter.convert(value));
+    final String value = "enode://" + VALID_NODE_ID + "@" + IPV4_ADDRESS + ":98765";
+    final Throwable thrown = catchThrowable(() -> converter.convert(value));
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
@@ -154,8 +194,9 @@ public class EnodeToURIPropertyConverterTest {
 
   @Test
   public void convertEnodeURLWithAboveRangeDiscoveryPortShouldFail() {
-    String value = "enode://" + VALID_NODE_ID + "@192.168.0.1:30303?discport=98765";
-    Throwable thrown = catchThrowable(() -> converter.convert(value));
+    final String value =
+        "enode://" + VALID_NODE_ID + "@" + IPV4_ADDRESS + ":" + P2P_PORT + "?discport=98765";
+    final Throwable thrown = catchThrowable(() -> converter.convert(value));
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
@@ -164,7 +205,7 @@ public class EnodeToURIPropertyConverterTest {
 
   @Test
   public void convertNullEnodeURLShouldFail() {
-    Throwable thrown = catchThrowable(() -> converter.convert(null));
+    final Throwable thrown = catchThrowable(() -> converter.convert(null));
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
@@ -173,7 +214,7 @@ public class EnodeToURIPropertyConverterTest {
 
   @Test
   public void convertEmptyEnodeURLShouldFail() {
-    Throwable thrown = catchThrowable(() -> converter.convert(""));
+    final Throwable thrown = catchThrowable(() -> converter.convert(""));
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)

@@ -27,9 +27,9 @@ public class EnodeToURIPropertyConverter implements ITypeConverter<URI> {
   private static final String IP_REPLACE_MARKER = "$$IP_PATTERN$$";
   private static final String IPV4_PATTERN =
       "(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}";
-  private static final String IPV6_PATTERN = "(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}";
+  private static final String IPV6_PATTERN = "\\[(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\\]";
   private static final String IPV6_COMPACT_PATTERN =
-      "((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)";
+      "\\[((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)\\]";
   private static final String DISCOVERY_PORT_PATTERN = "\\?discport=(?<discovery>\\d+)";
   private static final String HEX_STRING_PATTERN = "[0-9a-fA-F]+";
 
