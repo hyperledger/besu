@@ -9,7 +9,7 @@ void tryAddKnownHost(String hostUrl){
 
 pipeline {
     agent {
-        docker { image 'pegasyseng/pantheon-build:0.0.2' }
+        docker { image 'pegasyseng/pantheon-build:0.0.5-jdk8' }
     }
     parameters {
             string(name: 'TAG_NAME', defaultValue: '', description: '[MANDATORY] Name of the Tag to create the branch from')
