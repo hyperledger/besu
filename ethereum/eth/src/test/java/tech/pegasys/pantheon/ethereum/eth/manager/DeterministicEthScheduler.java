@@ -23,11 +23,11 @@ public class DeterministicEthScheduler extends EthScheduler {
 
   private final TimeoutPolicy timeoutPolicy;
 
-  DeterministicEthScheduler() {
+  public DeterministicEthScheduler() {
     this(TimeoutPolicy.NEVER);
   }
 
-  DeterministicEthScheduler(final TimeoutPolicy timeoutPolicy) {
+  public DeterministicEthScheduler(final TimeoutPolicy timeoutPolicy) {
     super(new MockExecutorService(), new MockScheduledExecutor(), new MockExecutorService());
     this.timeoutPolicy = timeoutPolicy;
   }
