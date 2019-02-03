@@ -118,9 +118,8 @@ public class EthPeers {
   @Override
   public String toString() {
     final String connectionsList =
-        String.join(
-            ",", connections.values().stream().map(EthPeer::toString).collect(Collectors.toList()));
-    return "EthPeers{" + "connections=" + connectionsList + '}';
+        connections.values().stream().map(EthPeer::toString).collect(Collectors.joining(","));
+    return "EthPeers{connections=" + connectionsList + '}';
   }
 
   private void invokeConnectionCallbacks(final EthPeer peer) {
