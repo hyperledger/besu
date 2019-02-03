@@ -24,8 +24,10 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.CompleteBlocksTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.GetReceiptsFromPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.PipelinedImportChainSegmentTask.BlockHandler;
+import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 
@@ -95,17 +97,33 @@ public class FastSyncBlockHandler<C> implements BlockHandler<BlockWithReceipts> 
         "Storing blocks {} to {}",
         blocksWithReceipts.get(0).getHeader().getNumber(),
         blocksWithReceipts.get(blocksWithReceipts.size() - 1).getHeader().getNumber());
-    blocksWithReceipts.forEach(
-        block -> {
-          final BlockImporter<C> blockImporter =
-              protocolSchedule.getByBlockNumber(block.getHeader().getNumber()).getBlockImporter();
-          // TODO: This is still doing full ommer validation. Is that required?
-          blockImporter.fastImportBlock(
-              protocolContext,
-              block.getBlock(),
-              block.getReceipts(),
-              HeaderValidationMode.LIGHT_SKIP_DETACHED);
-        });
+
+    for (final BlockWithReceipts blockWithReceipt : blocksWithReceipts) {
+      final BlockImporter<C> blockImporter = getBlockImporter(blockWithReceipt);
+      final Block block = blockWithReceipt.getBlock();
+      if (!blockImporter.fastImportBlock(
+          protocolContext,
+          block,
+          blockWithReceipt.getReceipts(),
+          HeaderValidationMode.LIGHT_SKIP_DETACHED)) {
+        return invalidBlockFailure(block);
+      }
+    }
     return CompletableFuture.completedFuture(blocksWithReceipts);
+  }
+
+  private CompletableFuture<List<BlockWithReceipts>> invalidBlockFailure(final Block block) {
+    final CompletableFuture<List<BlockWithReceipts>> result = new CompletableFuture<>();
+    result.completeExceptionally(
+        new InvalidBlockException(
+            "Failed to import block", block.getHeader().getNumber(), block.getHash()));
+    return result;
+  }
+
+  private BlockImporter<C> getBlockImporter(final BlockWithReceipts blockWithReceipt) {
+    final ProtocolSpec<C> protocolSpec =
+        protocolSchedule.getByBlockNumber(blockWithReceipt.getHeader().getNumber());
+
+    return protocolSpec.getBlockImporter();
   }
 }
