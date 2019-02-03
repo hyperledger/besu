@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.config;
 
+import java.util.Map;
+
 import io.vertx.core.json.JsonObject;
 
 public class GenesisAllocation {
@@ -29,5 +31,13 @@ public class GenesisAllocation {
 
   public String getBalance() {
     return data.getString("balance", "0");
+  }
+
+  public String getCode() {
+    return data.getString("code");
+  }
+
+  public Map<String, Object> getStorage() {
+    return data.getJsonObject("storage", new JsonObject()).getMap();
   }
 }
