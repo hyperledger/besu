@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.chain;
 
+import tech.pegasys.pantheon.config.GenesisAllocation;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
@@ -20,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.LogsBloomFilter;
+import tech.pegasys.pantheon.ethereum.core.MutableAccount;
 import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
@@ -34,8 +36,10 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -75,7 +79,6 @@ public final class GenesisState {
    * @param <C> The consensus context type
    * @return A new {@link GenesisState}.
    */
-  @SuppressWarnings("unchecked")
   public static <C> GenesisState fromConfig(
       final GenesisConfigFile config, final ProtocolSchedule<C> protocolSchedule) {
     final List<GenesisAccount> genesisAccounts =
@@ -104,7 +107,12 @@ public final class GenesisState {
       final MutableWorldState target, final List<GenesisAccount> genesisAccounts) {
     final WorldUpdater updater = target.updater();
     genesisAccounts.forEach(
-        account -> updater.getOrCreate(account.address).setBalance(account.balance));
+        genesisAccount -> {
+          final MutableAccount account = updater.getOrCreate(genesisAccount.address);
+          account.setBalance(genesisAccount.balance);
+          account.setCode(genesisAccount.code);
+          genesisAccount.storage.forEach(account::setStorageValue);
+        });
     updater.commit();
     target.persist();
   }
@@ -173,14 +181,8 @@ public final class GenesisState {
     return Long.parseUnsignedLong(nonce, 16);
   }
 
-  @SuppressWarnings("unchecked")
   private static Stream<GenesisAccount> parseAllocations(final GenesisConfigFile genesis) {
-    return genesis
-        .getAllocations()
-        .map(
-            allocation ->
-                new GenesisAccount(
-                    Address.fromHexString(allocation.getAddress()), allocation.getBalance()));
+    return genesis.getAllocations().map(GenesisAccount::fromAllocation);
   }
 
   @Override
@@ -195,10 +197,26 @@ public final class GenesisState {
 
     final Address address;
     final Wei balance;
+    final BytesValue code;
+    final Map<UInt256, UInt256> storage;
 
-    GenesisAccount(final Address address, final String balance) {
-      this.address = address;
+    public static GenesisAccount fromAllocation(final GenesisAllocation allocation) {
+      return new GenesisAccount(
+          allocation.getAddress(),
+          allocation.getBalance(),
+          allocation.getCode(),
+          allocation.getStorage());
+    }
+
+    private GenesisAccount(
+        final String hexAddress,
+        final String balance,
+        final String hexCode,
+        final Map<String, Object> storage) {
+      this.address = Address.fromHexString(hexAddress);
       this.balance = parseBalance(balance);
+      this.code = hexCode != null ? BytesValue.fromHexString(hexCode) : null;
+      this.storage = parseStorage(storage);
     }
 
     private Wei parseBalance(final String balance) {
@@ -212,11 +230,21 @@ public final class GenesisState {
       return Wei.of(val);
     }
 
+    private Map<UInt256, UInt256> parseStorage(final Map<String, Object> storage) {
+      final Map<UInt256, UInt256> parsedStorage = new HashMap<>();
+      storage.forEach(
+          (key, value) ->
+              parsedStorage.put(UInt256.fromHexString(key), UInt256.fromHexString((String) value)));
+      return parsedStorage;
+    }
+
     @Override
     public String toString() {
       return MoreObjects.toStringHelper(this)
           .add("address", address)
           .add("balance", balance)
+          .add("code", code)
+          .add("storage", storage)
           .toString();
     }
   }
