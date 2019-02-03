@@ -78,9 +78,7 @@ public class CheckpointHeaderManager<C> {
     return getAdditionalCheckpointHeaders(syncTarget, lastHeader)
         .thenApply(
             additionalCheckpoints -> {
-              if (additionalCheckpoints.isEmpty()) {
-                checkpointTimeouts++;
-              } else {
+              if (!additionalCheckpoints.isEmpty()) {
                 checkpointTimeouts = 0;
                 checkpointHeaders.addAll(additionalCheckpoints);
                 LOG.debug("Tracking {} checkpoint headers", checkpointHeaders.size());
@@ -97,7 +95,7 @@ public class CheckpointHeaderManager<C> {
               t = ExceptionUtils.rootCause(t);
               if (t instanceof TimeoutException) {
                 checkpointTimeouts++;
-                return null;
+                return emptyList();
               } else if (t != null) {
                 // An error occurred, so no new checkpoints to add.
                 return emptyList();
@@ -107,6 +105,9 @@ public class CheckpointHeaderManager<C> {
                   && checkpointHeaders.getLast().equals(headers.get(0))) {
                 // Don't push header that is already tracked
                 headers.remove(0);
+              }
+              if (headers.isEmpty()) {
+                checkpointTimeouts++;
               }
               return headers;
             });
