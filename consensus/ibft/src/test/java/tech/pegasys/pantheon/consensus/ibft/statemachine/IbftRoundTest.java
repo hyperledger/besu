@@ -30,7 +30,6 @@ import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockCreator;
 import tech.pegasys.pantheon.consensus.ibft.network.IbftMessageTransmitter;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
-import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
@@ -305,10 +304,9 @@ public class IbftRoundTest {
                     .createSignedRoundChangePayload(
                         roundIdentifier,
                         Optional.of(
-                            new PreparedCertificate(
-                                messageFactory
-                                    .createSignedProposalPayload(priorRoundChange, proposedBlock)
-                                    .getSignedPayload(),
+                            new TerminatedRoundArtefacts(
+                                messageFactory.createSignedProposalPayload(
+                                    priorRoundChange, proposedBlock),
                                 Collections.emptyList())))
                     .getSignedPayload()));
     // NOTE: IbftRound assumes the prepare's are valid

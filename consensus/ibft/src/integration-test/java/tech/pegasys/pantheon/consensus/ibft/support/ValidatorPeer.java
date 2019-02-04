@@ -26,10 +26,10 @@ import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
-import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
+import tech.pegasys.pantheon.consensus.ibft.statemachine.TerminatedRoundArtefacts;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
@@ -120,9 +120,10 @@ public class ValidatorPeer {
   }
 
   public RoundChange injectRoundChange(
-      final ConsensusRoundIdentifier rId, final Optional<PreparedCertificate> preparedCertificate) {
+      final ConsensusRoundIdentifier rId,
+      final Optional<TerminatedRoundArtefacts> terminatedRoundArtefacts) {
     final RoundChange payload =
-        messageFactory.createSignedRoundChangePayload(rId, preparedCertificate);
+        messageFactory.createSignedRoundChangePayload(rId, terminatedRoundArtefacts);
     injectMessage(RoundChangeMessageData.create(payload));
     return payload;
   }

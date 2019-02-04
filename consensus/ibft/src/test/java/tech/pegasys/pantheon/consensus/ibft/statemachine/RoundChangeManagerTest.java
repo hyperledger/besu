@@ -21,12 +21,10 @@ import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
 import tech.pegasys.pantheon.consensus.ibft.TestHelpers;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
-import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
-import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator;
 import tech.pegasys.pantheon.consensus.ibft.validation.SignedDataValidator;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
@@ -142,22 +140,21 @@ public class RoundChangeManagerTest {
     // Proposal must come from an earlier round.
     final Proposal proposal = messageFactory.createSignedProposalPayload(proposalRound, block);
 
-    final List<SignedData<PreparePayload>> preparePayloads =
+    final List<Prepare> preparePayloads =
         prepareProviders
             .stream()
             .map(
                 k -> {
                   final MessageFactory prepareFactory = new MessageFactory(k);
-                  return prepareFactory
-                      .createSignedPreparePayload(proposalRound, block.getHash())
-                      .getSignedPayload();
+                  return prepareFactory.createSignedPreparePayload(proposalRound, block.getHash());
                 })
             .collect(Collectors.toList());
 
-    final PreparedCertificate cert =
-        new PreparedCertificate(proposal.getSignedPayload(), preparePayloads);
+    final TerminatedRoundArtefacts terminatedRoundArtects =
+        new TerminatedRoundArtefacts(proposal, preparePayloads);
 
-    return messageFactory.createSignedRoundChangePayload(round, Optional.of(cert));
+    return messageFactory.createSignedRoundChangePayload(
+        round, Optional.of(terminatedRoundArtects));
   }
 
   @Test
