@@ -38,7 +38,6 @@ public class FastSyncChainDownloader<C> {
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
   private final LabelledMetric<OperationTimer> ethTasksTimer;
-  private final BlockHeader pivotBlockHeader;
 
   FastSyncChainDownloader(
       final SynchronizerConfiguration config,
@@ -53,7 +52,6 @@ public class FastSyncChainDownloader<C> {
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.ethTasksTimer = ethTasksTimer;
-    this.pivotBlockHeader = pivotBlockHeader;
     chainDownloader =
         new ChainDownloader<>(
             config,
@@ -86,12 +84,7 @@ public class FastSyncChainDownloader<C> {
   private CompletableFuture<List<Block>> importBlocksForCheckpoints(
       final List<BlockHeader> checkpointHeaders) {
     if (checkpointHeaders.size() < 2) {
-      final BlockHeader chainHeadHeader = protocolContext.getBlockchain().getChainHeadHeader();
-      if (chainHeadHeader.getNumber() < pivotBlockHeader.getNumber()) {
-        checkpointHeaders.add(0, chainHeadHeader);
-      } else {
-        return CompletableFuture.completedFuture(emptyList());
-      }
+      return CompletableFuture.completedFuture(emptyList());
     }
     final PipelinedImportChainSegmentTask<C, BlockWithReceipts> importTask =
         PipelinedImportChainSegmentTask.forCheckpoints(

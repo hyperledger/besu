@@ -28,6 +28,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.collect.Lists;
+
 class FastSyncCheckpointHeaderManager<C> extends CheckpointHeaderManager<C> {
   private final SynchronizerConfiguration config;
   private final BlockHeader pivotBlockHeader;
@@ -58,6 +60,9 @@ class FastSyncCheckpointHeaderManager<C> extends CheckpointHeaderManager<C> {
               if (shouldDownloadMoreCheckpoints()
                   && nextChainSegmentIncludesPivotBlock(lastSegmentEnd)
                   && pivotBlockNotAlreadyIncluded(lastSegmentEnd)) {
+                if (checkpointHeaders.isEmpty()) {
+                  return Lists.newArrayList(lastHeader, pivotBlockHeader);
+                }
                 return concat(checkpointHeaders, pivotBlockHeader);
               }
               return checkpointHeaders;
