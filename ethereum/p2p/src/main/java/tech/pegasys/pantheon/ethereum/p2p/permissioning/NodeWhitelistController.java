@@ -28,19 +28,16 @@ import com.google.common.annotations.VisibleForTesting;
 public class NodeWhitelistController {
 
   private final List<Peer> nodesWhitelist = new ArrayList<>();
-  private boolean nodeWhitelistSet = false;
 
   public NodeWhitelistController(final PermissioningConfiguration configuration) {
-    if (configuration.isNodeWhitelistSet() && configuration.getNodeWhitelist() != null) {
+    if (configuration.isNodeWhitelistEnabled() && configuration.getNodeWhitelist() != null) {
       for (URI uri : configuration.getNodeWhitelist()) {
         nodesWhitelist.add(DefaultPeer.fromURI(uri));
       }
-      nodeWhitelistSet = true;
     }
   }
 
   public boolean addNode(final Peer node) {
-    nodeWhitelistSet = true;
     return nodesWhitelist.add(node);
   }
 
@@ -102,15 +99,11 @@ public class NodeWhitelistController {
   }
 
   public boolean isPermitted(final Peer node) {
-    return (!nodeWhitelistSet || (nodeWhitelistSet && nodesWhitelist.contains(node)));
+    return (nodesWhitelist.contains(node));
   }
 
   public List<Peer> getNodesWhitelist() {
     return nodesWhitelist;
-  }
-
-  public boolean nodeWhitelistSet() {
-    return nodeWhitelistSet;
   }
 
   public static class NodesWhitelistResult {
@@ -135,9 +128,5 @@ public class NodeWhitelistController {
     public Optional<String> message() {
       return message;
     }
-  }
-
-  public boolean contains(final Peer node) {
-    return (!nodeWhitelistSet || (nodesWhitelist.contains(node)));
   }
 }

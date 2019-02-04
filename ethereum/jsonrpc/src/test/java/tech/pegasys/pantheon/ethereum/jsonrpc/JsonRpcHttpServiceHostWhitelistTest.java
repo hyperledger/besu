@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import io.vertx.core.Vertx;
@@ -97,7 +98,7 @@ public class JsonRpcHttpServiceHostWhitelistTest {
                     mock(EthHashMiningCoordinator.class),
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
-                    mock(AccountWhitelistController.class),
+                    Optional.of(mock(AccountWhitelistController.class)),
                     JSON_RPC_APIS,
                     mock(PrivateTransactionHandler.class)));
     service = createJsonRpcHttpService();

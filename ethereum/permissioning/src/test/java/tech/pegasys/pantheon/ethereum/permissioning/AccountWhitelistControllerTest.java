@@ -36,33 +36,8 @@ public class AccountWhitelistControllerTest {
   }
 
   @Test
-  public void newInstanceWithNullPermConfigShouldHaveAccountWhitelistNotSet() {
-    controller = new AccountWhitelistController(null);
-
-    assertThat(controller.isAccountWhiteListSet()).isFalse();
-  }
-
-  @Test
-  public void whenAccountWhitelistIsNotSetContainsShouldReturnTrue() {
-    when(permissioningConfig.isAccountWhitelistSet()).thenReturn(false);
-    controller = new AccountWhitelistController(permissioningConfig);
-
-    assertThat(controller.contains("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73")).isTrue();
-  }
-
-  @Test
-  public void whenPermConfigHasAccountsShouldSetAccountsWhitelist() {
-    when(permissioningConfig.isAccountWhitelistSet()).thenReturn(true);
-    when(permissioningConfig.getAccountWhitelist())
-        .thenReturn(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
-    controller = new AccountWhitelistController(permissioningConfig);
-
-    assertThat(controller.isAccountWhiteListSet()).isTrue();
-  }
-
-  @Test
   public void whenPermConfigHasAccountsShouldAddAllAccountsToWhitelist() {
-    when(permissioningConfig.isAccountWhitelistSet()).thenReturn(true);
+    when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getAccountWhitelist())
         .thenReturn(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
     controller = new AccountWhitelistController(permissioningConfig);
@@ -73,7 +48,7 @@ public class AccountWhitelistControllerTest {
 
   @Test
   public void whenPermConfigContainsEmptyListOfAccountsContainsShouldReturnFalse() {
-    when(permissioningConfig.isAccountWhitelistSet()).thenReturn(true);
+    when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getAccountWhitelist()).thenReturn(new ArrayList<>());
     controller = new AccountWhitelistController(permissioningConfig);
 

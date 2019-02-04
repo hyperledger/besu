@@ -92,6 +92,7 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class JsonRpcMethodsFactory {
@@ -112,7 +113,7 @@ public class JsonRpcMethodsFactory {
       final Set<Capability> supportedCapabilities,
       final Collection<RpcApi> rpcApis,
       final FilterManager filterManager,
-      final AccountWhitelistController accountsWhitelistController,
+      final Optional<AccountWhitelistController> accountsWhitelistController,
       final PrivateTransactionHandler privateTransactionHandler) {
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, worldStateArchive);
@@ -143,7 +144,7 @@ public class JsonRpcMethodsFactory {
       final MiningCoordinator miningCoordinator,
       final MetricsSystem metricsSystem,
       final Set<Capability> supportedCapabilities,
-      final AccountWhitelistController accountsWhitelistController,
+      final Optional<AccountWhitelistController> accountsWhitelistController,
       final Collection<RpcApi> rpcApis,
       final PrivateTransactionHandler privateTransactionHandler) {
     final Map<String, JsonRpcMethod> enabledMethods = new HashMap<>();

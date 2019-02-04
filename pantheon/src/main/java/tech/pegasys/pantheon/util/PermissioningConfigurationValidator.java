@@ -33,7 +33,7 @@ public class PermissioningConfigurationValidator {
     final List<Peer> bootnodes =
         DiscoveryConfiguration.getBootstrapPeersFromGenericCollection(
             ethNetworkConfig.getBootNodes());
-    if (permissioningConfiguration.isNodeWhitelistSet() && bootnodes != null) {
+    if (permissioningConfiguration.isNodeWhitelistEnabled() && bootnodes != null) {
       bootnodesNotInWhitelist =
           bootnodes
               .stream()

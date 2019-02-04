@@ -12,9 +12,10 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.jsonrpc.perm;
 
-import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
+
+import java.util.ArrayList;
 
 import org.assertj.core.util.Lists;
 import org.junit.Before;
@@ -33,7 +34,7 @@ public class PermAddNodesToWhitelistAcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
-    node = pantheon.createArchiveNodeWithRpcApis("node1", RpcApis.WEB3, RpcApis.NET, RpcApis.PERM);
+    node = pantheon.createNodeWithNodesWhitelist("node1", new ArrayList<>());
     cluster.start(node);
   }
 

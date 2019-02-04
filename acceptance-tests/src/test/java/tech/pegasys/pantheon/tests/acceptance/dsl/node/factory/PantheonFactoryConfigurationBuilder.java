@@ -32,8 +32,7 @@ public class PantheonFactoryConfigurationBuilder {
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
-  private PermissioningConfiguration permissioningConfiguration =
-      PermissioningConfiguration.createDefault();
+  private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private boolean devMode = true;
   private GenesisConfigProvider genesisConfigProvider = ignore -> Optional.empty();
   private Boolean p2pEnabled = true;
@@ -94,7 +93,7 @@ public class PantheonFactoryConfigurationBuilder {
 
   public PantheonFactoryConfigurationBuilder setPermissioningConfiguration(
       final PermissioningConfiguration permissioningConfiguration) {
-    this.permissioningConfiguration = permissioningConfiguration;
+    this.permissioningConfiguration = Optional.of(permissioningConfiguration);
     return this;
   }
 

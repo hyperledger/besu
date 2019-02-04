@@ -19,6 +19,8 @@ import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.GenesisConfigProvider;
 
+import java.util.Optional;
+
 class PantheonFactoryConfiguration {
 
   private final String name;
@@ -26,7 +28,7 @@ class PantheonFactoryConfiguration {
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
-  private final PermissioningConfiguration permissioningConfiguration;
+  private final Optional<PermissioningConfiguration> permissioningConfiguration;
   private final boolean devMode;
   private final GenesisConfigProvider genesisConfigProvider;
   private final Boolean p2pEnabled;
@@ -38,7 +40,7 @@ class PantheonFactoryConfiguration {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
-      final PermissioningConfiguration permissioningConfiguration,
+      final Optional<PermissioningConfiguration> permissioningConfiguration,
       final boolean devMode,
       final GenesisConfigProvider genesisConfigProvider,
       final Boolean p2pEnabled,
@@ -75,7 +77,7 @@ class PantheonFactoryConfiguration {
     return metricsConfiguration;
   }
 
-  public PermissioningConfiguration getPermissioningConfiguration() {
+  public Optional<PermissioningConfiguration> getPermissioningConfiguration() {
     return permissioningConfiguration;
   }
 

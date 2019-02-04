@@ -46,7 +46,9 @@ public class PermAddAccountsToWhitelistTest {
 
   @Before
   public void before() {
-    method = new PermAddAccountsToWhitelist(accountWhitelist, new JsonRpcParameter());
+    method =
+        new PermAddAccountsToWhitelist(
+            java.util.Optional.of(accountWhitelist), new JsonRpcParameter());
   }
 
   @Test

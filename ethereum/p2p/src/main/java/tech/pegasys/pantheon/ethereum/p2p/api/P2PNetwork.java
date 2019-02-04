@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import java.io.Closeable;
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -109,5 +110,10 @@ public interface P2PNetwork extends Closeable, Runnable {
    */
   boolean isP2pEnabled();
 
-  NodeWhitelistController getNodeWhitelistController();
+  /**
+   * Returns the node whitelist controller
+   *
+   * @return an instance of NodeWhitelistController, if set.
+   */
+  Optional<NodeWhitelistController> getNodeWhitelistController();
 }

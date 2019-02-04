@@ -108,7 +108,7 @@ public class PeerDiscoveryController {
   private final DiscoveryPeer localPeer;
   private final OutboundMessageHandler outboundMessageHandler;
   private final PeerBlacklist peerBlacklist;
-  private final NodeWhitelistController nodeWhitelist;
+  private final Optional<NodeWhitelistController> nodeWhitelistController;
 
   private RetryDelayFunction retryDelayFunction = RetryDelayFunction.linear(1.5, 2000, 60000);
 
@@ -133,7 +133,7 @@ public class PeerDiscoveryController {
       final long tableRefreshIntervalMs,
       final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
-      final NodeWhitelistController nodeWhitelist,
+      final Optional<NodeWhitelistController> nodeWhitelistController,
       final Subscribers<Consumer<PeerBondedEvent>> peerBondedObservers) {
     this.timerUtil = timerUtil;
     this.keypair = keypair;
@@ -143,7 +143,7 @@ public class PeerDiscoveryController {
     this.tableRefreshIntervalMs = tableRefreshIntervalMs;
     this.peerRequirement = peerRequirement;
     this.peerBlacklist = peerBlacklist;
-    this.nodeWhitelist = nodeWhitelist;
+    this.nodeWhitelistController = nodeWhitelistController;
     this.outboundMessageHandler = outboundMessageHandler;
     this.peerBondedObservers = peerBondedObservers;
   }
@@ -156,7 +156,7 @@ public class PeerDiscoveryController {
     bootstrapNodes
         .stream()
         .filter(node -> peerTable.tryAdd(node).getOutcome() == Outcome.ADDED)
-        .filter(node -> nodeWhitelist.isPermitted(node))
+        .filter(node -> whitelistIfPresentIsNodePermitted(node))
         .forEach(node -> bond(node, true));
 
     final long timerId =
@@ -178,6 +178,12 @@ public class PeerDiscoveryController {
     inflightInteractions.values().forEach(PeerInteractionState::cancelTimers);
     inflightInteractions.clear();
     return CompletableFuture.completedFuture(null);
+  }
+
+  private boolean whitelistIfPresentIsNodePermitted(final DiscoveryPeer sender) {
+    return nodeWhitelistController
+        .map(nodeWhitelistController1 -> nodeWhitelistController1.isPermitted(sender))
+        .orElse(true);
   }
 
   /**
@@ -204,7 +210,7 @@ public class PeerDiscoveryController {
       return;
     }
 
-    if (!nodeWhitelist.isPermitted(sender)) {
+    if (!whitelistIfPresentIsNodePermitted(sender)) {
       return;
     }
 
@@ -253,7 +259,7 @@ public class PeerDiscoveryController {
                   for (final DiscoveryPeer neighbor : neighbors) {
                     // If the peer is not whitelisted, is blacklisted, is already known, or
                     // represents this node, skip bonding
-                    if (!nodeWhitelist.isPermitted(neighbor)
+                    if (!whitelistIfPresentIsNodePermitted(neighbor)
                         || peerBlacklist.contains(neighbor)
                         || peerTable.get(neighbor).isPresent()
                         || neighbor.getId().equals(localPeer.getId())) {

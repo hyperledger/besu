@@ -78,8 +78,11 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
       throw new RuntimeException("Error building PantheonController", e);
     }
 
+    RunnerBuilder runnerBuilder = new RunnerBuilder();
+    node.getPermissioningConfiguration().ifPresent(runnerBuilder::permissioningConfiguration);
+
     final Runner runner =
-        new RunnerBuilder()
+        runnerBuilder
             .vertx(Vertx.vertx())
             .pantheonController(pantheonController)
             .discovery(node.isDiscoveryEnabled())
@@ -93,7 +96,6 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
             .bannedNodeIds(Collections.emptySet())
             .metricsSystem(noOpMetricsSystem)
             .metricsConfiguration(node.metricsConfiguration())
-            .permissioningConfiguration(node.getPermissioningConfiguration())
             .p2pEnabled(node.p2pEnabled())
             .build();
 

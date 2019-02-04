@@ -21,7 +21,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Arrays;
@@ -29,6 +28,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -168,8 +168,7 @@ public class PeerDiscoveryTestHelper {
     private final AtomicInteger nextAvailablePort;
 
     private PeerBlacklist blacklist = new PeerBlacklist();
-    private NodeWhitelistController whitelist =
-        new NodeWhitelistController(PermissioningConfiguration.createDefault());
+    private Optional<NodeWhitelistController> whitelist = Optional.empty();
     private List<DiscoveryPeer> bootstrapPeers = Collections.emptyList();
     private boolean active = true;
 
@@ -190,7 +189,7 @@ public class PeerDiscoveryTestHelper {
       return this;
     }
 
-    public AgentBuilder whiteList(final NodeWhitelistController whitelist) {
+    public AgentBuilder whiteList(final Optional<NodeWhitelistController> whitelist) {
       this.whitelist = whitelist;
       return this;
     }

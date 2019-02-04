@@ -88,7 +88,7 @@ public class RunnerBuilder {
   private Collection<String> bannedNodeIds;
   private MetricsConfiguration metricsConfiguration;
   private MetricsSystem metricsSystem;
-  private PermissioningConfiguration permissioningConfiguration;
+  private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -142,7 +142,7 @@ public class RunnerBuilder {
 
   public RunnerBuilder permissioningConfiguration(
       final PermissioningConfiguration permissioningConfiguration) {
-    this.permissioningConfiguration = permissioningConfiguration;
+    this.permissioningConfiguration = Optional.of(permissioningConfiguration);
     return this;
   }
 
@@ -214,8 +214,10 @@ public class RunnerBuilder {
         new PeerBlacklist(
             bannedNodeIds.stream().map(BytesValue::fromHexString).collect(Collectors.toSet()));
 
-    final NodeWhitelistController nodeWhitelistController =
-        new NodeWhitelistController(permissioningConfiguration);
+    final Optional<NodeWhitelistController> nodeWhitelistController =
+        permissioningConfiguration
+            .filter(PermissioningConfiguration::isNodeWhitelistEnabled)
+            .map(NodeWhitelistController::new);
 
     final Synchronizer synchronizer = pantheonController.getSynchronizer();
 
@@ -241,11 +243,16 @@ public class RunnerBuilder {
 
     final TransactionPool transactionPool = pantheonController.getTransactionPool();
     final MiningCoordinator miningCoordinator = pantheonController.getMiningCoordinator();
-    final AccountWhitelistController accountWhitelistController =
-        new AccountWhitelistController(permissioningConfiguration);
-    if (permissioningConfiguration.isAccountWhitelistSet()) {
-      transactionPool.setAccountWhitelist(accountWhitelistController);
-    }
+    final Optional<AccountWhitelistController> accountWhitelistController =
+        permissioningConfiguration
+            .filter(PermissioningConfiguration::isAccountWhitelistEnabled)
+            .map(
+                configuration -> {
+                  AccountWhitelistController whitelistController =
+                      new AccountWhitelistController(configuration);
+                  transactionPool.setAccountWhitelist(whitelistController);
+                  return whitelistController;
+                });
 
     final PrivacyParameters privacyParameters = pantheonController.getPrivacyParameters();
     final PrivateTransactionHandler privateTransactionHandler =
@@ -351,7 +358,7 @@ public class RunnerBuilder {
       final Set<Capability> supportedCapabilities,
       final Collection<RpcApi> jsonRpcApis,
       final FilterManager filterManager,
-      final AccountWhitelistController accountWhitelistController,
+      final Optional<AccountWhitelistController> accountWhitelistController,
       final PrivateTransactionHandler privateTransactionHandler) {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()

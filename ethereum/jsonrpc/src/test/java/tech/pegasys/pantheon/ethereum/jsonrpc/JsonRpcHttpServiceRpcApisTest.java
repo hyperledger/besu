@@ -34,6 +34,7 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.collect.Lists;
@@ -177,7 +178,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(EthHashMiningCoordinator.class),
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
-                    mock(AccountWhitelistController.class),
+                    Optional.of(mock(AccountWhitelistController.class)),
                     config.getRpcApis(),
                     mock(PrivateTransactionHandler.class)));
     final JsonRpcHttpService jsonRpcHttpService =

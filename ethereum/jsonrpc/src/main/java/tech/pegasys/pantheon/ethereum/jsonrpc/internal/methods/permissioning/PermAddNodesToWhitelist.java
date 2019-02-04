@@ -49,35 +49,42 @@ public class PermAddNodesToWhitelist implements JsonRpcMethod {
         parameters.required(req.getParams(), 0, StringListParameter.class);
 
     try {
-      List<DefaultPeer> peers =
-          enodeListParam
-              .getStringList()
-              .parallelStream()
-              .map(this::parsePeer)
-              .collect(Collectors.toList());
+      if (p2pNetwork.getNodeWhitelistController().isPresent()) {
+        try {
+          List<DefaultPeer> peers =
+              enodeListParam
+                  .getStringList()
+                  .parallelStream()
+                  .map(this::parsePeer)
+                  .collect(Collectors.toList());
 
-      NodeWhitelistController.NodesWhitelistResult nodesWhitelistResult =
-          p2pNetwork.getNodeWhitelistController().addNodes(peers);
+          NodeWhitelistController.NodesWhitelistResult nodesWhitelistResult =
+              p2pNetwork.getNodeWhitelistController().get().addNodes(peers);
 
-      switch (nodesWhitelistResult.result()) {
-        case SUCCESS:
-          return new JsonRpcSuccessResponse(req.getId());
-        case ERROR_EMPTY_ENTRY:
-          return new JsonRpcErrorResponse(req.getId(), JsonRpcError.NODE_WHITELIST_EMPTY_ENTRY);
-        case ERROR_EXISTING_ENTRY:
-          return new JsonRpcErrorResponse(req.getId(), JsonRpcError.NODE_WHITELIST_EXISTING_ENTRY);
-        case ERROR_DUPLICATED_ENTRY:
-          return new JsonRpcErrorResponse(
-              req.getId(), JsonRpcError.NODE_WHITELIST_DUPLICATED_ENTRY);
-        default:
-          throw new Exception();
+          switch (nodesWhitelistResult.result()) {
+            case SUCCESS:
+              return new JsonRpcSuccessResponse(req.getId());
+            case ERROR_EMPTY_ENTRY:
+              return new JsonRpcErrorResponse(req.getId(), JsonRpcError.NODE_WHITELIST_EMPTY_ENTRY);
+            case ERROR_EXISTING_ENTRY:
+              return new JsonRpcErrorResponse(
+                  req.getId(), JsonRpcError.NODE_WHITELIST_EXISTING_ENTRY);
+            case ERROR_DUPLICATED_ENTRY:
+              return new JsonRpcErrorResponse(
+                  req.getId(), JsonRpcError.NODE_WHITELIST_DUPLICATED_ENTRY);
+            default:
+              throw new Exception();
+          }
+        } catch (IllegalArgumentException e) {
+          return new JsonRpcErrorResponse(req.getId(), JsonRpcError.NODE_WHITELIST_INVALID_ENTRY);
+        } catch (Exception e) {
+          return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INTERNAL_ERROR);
+        }
+      } else {
+        return new JsonRpcErrorResponse(req.getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
       }
-    } catch (IllegalArgumentException e) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.NODE_WHITELIST_INVALID_ENTRY);
     } catch (P2pDisabledException e) {
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
-    } catch (Exception e) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INTERNAL_ERROR);
     }
   }
 

@@ -16,8 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
@@ -43,7 +41,7 @@ public class PermGetAccountsWhitelistTest {
 
   @Before
   public void before() {
-    method = new PermGetAccountsWhitelist(accountWhitelist);
+    method = new PermGetAccountsWhitelist(java.util.Optional.of(accountWhitelist));
   }
 
   @Test
@@ -54,7 +52,6 @@ public class PermGetAccountsWhitelistTest {
   @Test
   public void shouldReturnExpectedListOfAccountsWhenWhitelistHasBeenSet() {
     List<String> accountsList = Arrays.asList("0x0", "0x1");
-    when(accountWhitelist.isAccountWhiteListSet()).thenReturn(true);
     when(accountWhitelist.getAccountWhitelist()).thenReturn(accountsList);
     JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, accountsList);
 
@@ -66,20 +63,8 @@ public class PermGetAccountsWhitelistTest {
   @Test
   public void shouldReturnEmptyListOfAccountsWhenWhitelistHasBeenSetAndIsEmpty() {
     List<String> emptyAccountsList = new ArrayList<>();
-    when(accountWhitelist.isAccountWhiteListSet()).thenReturn(true);
     when(accountWhitelist.getAccountWhitelist()).thenReturn(emptyAccountsList);
     JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, emptyAccountsList);
-
-    JsonRpcResponse actualResponse = method.response(request);
-
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-  }
-
-  @Test
-  public void shouldReturnErrorWhenWhitelistHasNotBeenSet() {
-    when(accountWhitelist.isAccountWhiteListSet()).thenReturn(false);
-    JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.ACCOUNT_WHITELIST_NOT_SET);
 
     JsonRpcResponse actualResponse = method.response(request);
 

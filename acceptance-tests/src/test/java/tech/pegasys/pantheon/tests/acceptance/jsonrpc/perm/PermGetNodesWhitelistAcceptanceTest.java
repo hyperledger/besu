@@ -36,7 +36,6 @@ public class PermGetNodesWhitelistAcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
-
     node = pantheon.createNodeWithNodesWhitelist("node1", nodesWhitelist);
     cluster.start(node);
   }

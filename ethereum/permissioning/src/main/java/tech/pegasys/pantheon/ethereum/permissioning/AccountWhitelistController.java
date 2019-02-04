@@ -22,11 +22,9 @@ public class AccountWhitelistController {
 
   private static final int ACCOUNT_BYTES_SIZE = 20;
   private final List<String> accountWhitelist = new ArrayList<>();
-  private boolean isAccountWhitelistSet = false;
 
   public AccountWhitelistController(final PermissioningConfiguration configuration) {
-    if (configuration != null && configuration.isAccountWhitelistSet()) {
-      this.isAccountWhitelistSet = configuration.isAccountWhitelistSet();
+    if (configuration != null && configuration.isAccountWhitelistEnabled()) {
       if (!configuration.getAccountWhitelist().isEmpty()) {
         addAccounts(configuration.getAccountWhitelist());
       }
@@ -44,7 +42,6 @@ public class AccountWhitelistController {
       return WhitelistOperationResult.ERROR_EXISTING_ENTRY;
     }
 
-    this.isAccountWhitelistSet = true;
     this.accountWhitelist.addAll(accounts);
     return WhitelistOperationResult.SUCCESS;
   }
@@ -84,11 +81,7 @@ public class AccountWhitelistController {
   }
 
   public boolean contains(final String account) {
-    return (!isAccountWhitelistSet || accountWhitelist.contains(account));
-  }
-
-  public boolean isAccountWhiteListSet() {
-    return isAccountWhitelistSet;
+    return (accountWhitelist.contains(account));
   }
 
   public List<String> getAccountWhitelist() {

@@ -44,6 +44,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -149,7 +150,7 @@ public class NettyP2PNetwork implements P2PNetwork {
 
   private final LabelledMetric<Counter> outboundMessagesCounter;
 
-  private final NodeWhitelistController nodeWhitelistController;
+  private final Optional<NodeWhitelistController> nodeWhitelistController;
 
   /**
    * Creates a peer networking service for production purposes.
@@ -175,7 +176,7 @@ public class NettyP2PNetwork implements P2PNetwork {
       final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
       final MetricsSystem metricsSystem,
-      final NodeWhitelistController nodeWhitelistController) {
+      final Optional<NodeWhitelistController> nodeWhitelistController) {
 
     connections = new PeerConnectionRegistry(metricsSystem);
     this.peerBlacklist = peerBlacklist;
@@ -298,12 +299,16 @@ public class NettyP2PNetwork implements P2PNetwork {
   }
 
   private boolean isPeerWhitelisted(final PeerConnection connection, final SocketChannel ch) {
-    return nodeWhitelistController.contains(
-        new DefaultPeer(
-            connection.getPeer().getNodeId(),
-            ch.remoteAddress().getAddress().getHostAddress(),
-            connection.getPeer().getPort(),
-            connection.getPeer().getPort()));
+    return nodeWhitelistController
+        .map(
+            nwc ->
+                nwc.isPermitted(
+                    new DefaultPeer(
+                        connection.getPeer().getNodeId(),
+                        ch.remoteAddress().getAddress().getHostAddress(),
+                        connection.getPeer().getPort(),
+                        connection.getPeer().getPort())))
+        .orElse(true);
   }
 
   @Override
@@ -506,7 +511,7 @@ public class NettyP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public NodeWhitelistController getNodeWhitelistController() {
+  public Optional<NodeWhitelistController> getNodeWhitelistController() {
     return nodeWhitelistController;
   }
 
