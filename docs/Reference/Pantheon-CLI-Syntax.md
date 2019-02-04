@@ -66,10 +66,10 @@ When connecting to MainNet or public testnets, the default is a predefined list 
 
 On custom networks defined by [`--genesis-file`](#genesis-file) option,
 an empty list of bootnodes is defined by default unless you define custom bootnodes as described in 
-[private network documentation](../Configuring-Pantheon/Testing-Developing-Nodes.md#bootnodes).
+[private network documentation](../Configuring-Pantheon/Bootnodes.md#bootnodes).
 
 !!! note
-    Specifying that a node is a [bootnode](../Configuring-Pantheon/Testing-Developing-Nodes.md#bootnodes) 
+    Specifying that a node is a [bootnode](../Configuring-Pantheon/Bootnodes.md#bootnodes) 
     must be done on the command line using [`--bootnodes`](#bootnodes) option without value,
     not in a [configuration file](../Configuring-Pantheon/Using-Configuration-File.md).  
 

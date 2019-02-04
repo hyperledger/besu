@@ -1,7 +1,7 @@
 description: Pantheon private network quickstart tutorial
 <!--- END of page meta data -->
 
-# Private Network Quickstart tutorial
+# Private Network Quickstart Tutorial
 
 !!! important
     In v0.9, the Private Network Quickstart moved to the `pantheon-quickstart` repository. The previous version was removed from

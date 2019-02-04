@@ -3,17 +3,15 @@ path: blob/master/ethereum/core/src/main/resources/
 source: rinkeby.json
 <!--- END of page meta data -->
 
-# Testing and Developing Nodes
-
-## Bootnodes
+# Bootnodes
 
 Bootnodes are used to initially discover peers. 
 
-### Mainnet and Public Testnets
+## Mainnet and Public Testnets
 
 For mainnet, Rinkeby, Ropsten, and Görli, Pantheon predefines a list of enode URLs.  
 
-### Private Networks
+## Private Networks
 
 To start a bootnode for a private network:
 
