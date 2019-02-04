@@ -98,6 +98,14 @@ public class EthProtocol implements SubProtocol {
         return "BlockBodies";
       case EthPV62.NEW_BLOCK:
         return "NewBlock";
+      case EthPV63.GET_NODE_DATA:
+        return "GetNodeData";
+      case EthPV63.NODE_DATA:
+        return "NodeData";
+      case EthPV63.GET_RECEIPTS:
+        return "GetReceipts";
+      case EthPV63.RECEIPTS:
+        return "Receipts";
       default:
         return INVALID_MESSAGE_NAME;
     }
