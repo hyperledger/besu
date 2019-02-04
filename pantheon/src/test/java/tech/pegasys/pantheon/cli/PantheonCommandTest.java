@@ -72,6 +72,7 @@ import picocli.CommandLine;
 public class PantheonCommandTest extends CommandTestAbstract {
 
   private final String ORION_URI = "http://1.2.3.4:5555";
+  private final String ORION_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private final String VALID_NODE_ID =
       "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
   static final String PERMISSIONING_CONFIG_TOML = "permissioning_config.toml";
@@ -1811,14 +1812,14 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   @Test
   public void mustUseOrionUriAndOptions() throws IOException {
-    final File file = new File("./specific/public_key");
+    final URL configFile = Resources.getResource("orion_publickey.pub");
 
     parseCommand(
         "--privacy-enabled",
         "--privacy-url",
         ORION_URI,
         "--privacy-public-key-file",
-        file.getPath());
+        configFile.getPath());
 
     final ArgumentCaptor<PrivacyParameters> orionArg =
         ArgumentCaptor.forClass(PrivacyParameters.class);
@@ -1827,7 +1828,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     assertThat(orionArg.getValue().getUrl()).isEqualTo(ORION_URI);
-    assertThat(orionArg.getValue().getPublicKey()).isEqualTo(file);
+    assertThat(orionArg.getValue().getPublicKey()).isEqualTo(ORION_PUBLIC_KEY);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();

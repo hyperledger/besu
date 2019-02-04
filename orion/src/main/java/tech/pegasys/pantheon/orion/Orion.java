@@ -34,7 +34,11 @@ public class Orion {
   private static final Logger LOG = LogManager.getLogger();
 
   private String url;
-  private OkHttpClient client;
+  private final OkHttpClient client;
+
+  public Orion() {
+    this.client = new OkHttpClient();
+  }
 
   public Orion(final String orionUrl) {
     this.url = orionUrl;
