@@ -13,9 +13,7 @@
 package tech.pegasys.pantheon.consensus.ibft.messagedata;
 
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
-import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
-import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 public class ProposalMessageData extends AbstractIbftMessageData {
@@ -32,11 +30,10 @@ public class ProposalMessageData extends AbstractIbftMessageData {
   }
 
   public Proposal decode() {
-    return new Proposal(SignedData.readSignedProposalPayloadFrom(RLP.input(data)));
+    return Proposal.decode(data);
   }
 
   public static ProposalMessageData create(final Proposal proposal) {
-
     return new ProposalMessageData(proposal.encode());
   }
 

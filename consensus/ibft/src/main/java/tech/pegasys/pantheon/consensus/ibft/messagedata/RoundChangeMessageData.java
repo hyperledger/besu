@@ -13,9 +13,7 @@
 package tech.pegasys.pantheon.consensus.ibft.messagedata;
 
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
-import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
-import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 public class RoundChangeMessageData extends AbstractIbftMessageData {
@@ -32,7 +30,7 @@ public class RoundChangeMessageData extends AbstractIbftMessageData {
   }
 
   public RoundChange decode() {
-    return new RoundChange(SignedData.readSignedRoundChangePayloadFrom(RLP.input(data)));
+    return RoundChange.decode(data);
   }
 
   public static RoundChangeMessageData create(final RoundChange signedPayload) {

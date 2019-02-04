@@ -14,10 +14,26 @@ package tech.pegasys.pantheon.consensus.ibft.messagewrappers;
 
 import tech.pegasys.pantheon.consensus.ibft.payload.CommitPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
+import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 public class Commit extends IbftMessage<CommitPayload> {
 
   public Commit(final SignedData<CommitPayload> payload) {
     super(payload);
+  }
+
+  public Signature getCommitSeal() {
+    return getPayload().getCommitSeal();
+  }
+
+  public Hash getDigest() {
+    return getPayload().getDigest();
+  }
+
+  public static Commit decode(final BytesValue data) {
+    return new Commit(SignedData.readSignedCommitPayloadFrom(RLP.input(data)));
   }
 }

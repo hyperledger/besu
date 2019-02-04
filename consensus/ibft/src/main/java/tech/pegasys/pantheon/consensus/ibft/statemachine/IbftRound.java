@@ -140,11 +140,11 @@ public class IbftRound {
       LOG.error("Illegally received a NewRound message when in Round 0.");
       return;
     }
-    actionReceivedProposal(new Proposal(msg.getSignedPayload().getPayload().getProposalPayload()));
+    actionReceivedProposal(new Proposal(msg.getProposalPayload()));
   }
 
   private void actionReceivedProposal(final Proposal msg) {
-    final Block block = msg.getSignedPayload().getPayload().getBlock();
+    final Block block = msg.getBlock();
 
     if (updateStateWithProposedBlock(msg)) {
       LOG.info("Sending prepare message.");
@@ -188,7 +188,7 @@ public class IbftRound {
       final Commit localCommitMessage =
           messageFactory.createSignedCommitPayload(
               roundState.getRoundIdentifier(),
-              msg.getSignedPayload().getPayload().getBlock().getHash(),
+              msg.getBlock().getHash(),
               createCommitSeal(roundState.getProposedBlock().get()));
       peerIsCommitted(localCommitMessage);
     }
