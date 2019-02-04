@@ -14,13 +14,12 @@ package tech.pegasys.pantheon.consensus.ibft.statemachine;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
-import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
 import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator;
 import tech.pegasys.pantheon.ethereum.core.Address;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
@@ -61,15 +60,10 @@ public class RoundChangeManager {
       return receivedMessages.size() >= quorum && !actioned;
     }
 
-    public RoundChangeCertificate createRoundChangeCertificate() {
+    public Collection<RoundChange> createRoundChangeCertificate() {
       if (roundChangeReady()) {
         actioned = true;
-        return new RoundChangeCertificate(
-            receivedMessages
-                .values()
-                .stream()
-                .map(RoundChange::getSignedPayload)
-                .collect(Collectors.toList()));
+        return receivedMessages.values();
       } else {
         throw new IllegalStateException("Unable to create RoundChangeCertificate at this time.");
       }
@@ -97,7 +91,7 @@ public class RoundChangeManager {
    * @return Empty if the round change threshold hasn't been hit, otherwise a round change
    *     certificate
    */
-  public Optional<RoundChangeCertificate> appendRoundChangeMessage(final RoundChange msg) {
+  public Optional<Collection<RoundChange>> appendRoundChangeMessage(final RoundChange msg) {
 
     if (!isMessageValid(msg)) {
       LOG.info("RoundChange message was invalid.");
