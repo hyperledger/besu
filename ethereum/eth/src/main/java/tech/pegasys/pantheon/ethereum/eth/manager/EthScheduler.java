@@ -50,18 +50,18 @@ public class EthScheduler {
         Executors.newFixedThreadPool(
             syncWorkerCount,
             new ThreadFactoryBuilder()
-                .setNameFormat(EthScheduler.class.getSimpleName() + "-Workers")
+                .setNameFormat(EthScheduler.class.getSimpleName() + "-Workers-%d")
                 .build()),
         Executors.newScheduledThreadPool(
             1,
             new ThreadFactoryBuilder()
                 .setDaemon(true)
-                .setNameFormat(EthScheduler.class.getSimpleName() + "Timer")
+                .setNameFormat(EthScheduler.class.getSimpleName() + "Timer-%d")
                 .build()),
         Executors.newFixedThreadPool(
             txWorkerCount,
             new ThreadFactoryBuilder()
-                .setNameFormat(EthScheduler.class.getSimpleName() + "-Transactions")
+                .setNameFormat(EthScheduler.class.getSimpleName() + "-Transactions-%d")
                 .build()));
   }
 
