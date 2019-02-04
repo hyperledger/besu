@@ -17,7 +17,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.fail;
 
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
@@ -28,7 +27,7 @@ import org.junit.Test;
 
 public class PermissioningConfigurationBuilderTest {
 
-  static final String PERMISSIONING_CONFIG_TOML = "permissioning_config.toml";
+  static final String PERMISSIONING_CONFIG_VALID = "permissioning_config.toml";
   static final String PERMISSIONING_CONFIG_ACCOUNT_WHITELIST_ONLY =
       "permissioning_config_account_whitelist_only.toml";
   static final String PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY =
@@ -39,17 +38,19 @@ public class PermissioningConfigurationBuilderTest {
       "permissioning_config_empty_whitelists.toml";
   static final String PERMISSIONING_CONFIG_ABSENT_WHITELISTS =
       "permissioning_config_absent_whitelists.toml";
+  static final String PERMISSIONING_CONFIG_UNRECOGNIZED_KEY =
+      "permissioning_config_unrecognized_key.toml";
 
   private final String VALID_NODE_ID =
       "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
 
   @Test
-  public void permissioningConfig() throws IOException {
+  public void permissioningConfig() throws Exception {
 
     final String uri = "enode://" + VALID_NODE_ID + "@192.168.0.9:4567";
     final String uri2 = "enode://" + VALID_NODE_ID + "@192.169.0.9:4568";
 
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_TOML);
+    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_VALID);
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, Resources.toByteArray(configFile));
 
@@ -66,7 +67,7 @@ public class PermissioningConfigurationBuilderTest {
   }
 
   @Test
-  public void permissioningConfigWithOnlyNodeWhitelistSet() throws IOException {
+  public void permissioningConfigWithOnlyNodeWhitelistSet() throws Exception {
 
     final String uri = "enode://" + VALID_NODE_ID + "@192.168.0.9:4567";
 
@@ -84,7 +85,7 @@ public class PermissioningConfigurationBuilderTest {
   }
 
   @Test
-  public void permissioningConfigWithOnlyAccountWhitelistSet() throws IOException {
+  public void permissioningConfigWithOnlyAccountWhitelistSet() throws Exception {
 
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_ACCOUNT_WHITELIST_ONLY);
     final Path toml = Files.createTempFile("toml", "");
@@ -101,7 +102,7 @@ public class PermissioningConfigurationBuilderTest {
   }
 
   @Test
-  public void permissioningConfigWithInvalidEnode() throws IOException {
+  public void permissioningConfigWithInvalidEnode() throws Exception {
 
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_INVALID_ENODE);
     final Path toml = Files.createTempFile("toml", "");
@@ -117,7 +118,7 @@ public class PermissioningConfigurationBuilderTest {
   }
 
   @Test
-  public void permissioningConfigWithEmptyWhitelistMustNotError() throws IOException {
+  public void permissioningConfigWithEmptyWhitelistMustNotError() throws Exception {
 
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_EMPTY_WHITELISTS);
     final Path toml = Files.createTempFile("toml", "");
@@ -134,26 +135,59 @@ public class PermissioningConfigurationBuilderTest {
   }
 
   @Test
-  public void permissioningConfigWithAbsentWhitelistMustSetValues() throws IOException {
+  public void permissioningConfigWithAbsentWhitelistMustThrowException() throws Exception {
 
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_ABSENT_WHITELISTS);
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, Resources.toByteArray(configFile));
 
-    PermissioningConfiguration permissioningConfiguration =
-        PermissioningConfigurationBuilder.permissioningConfiguration(
-            toml.toAbsolutePath().toString(), true, true);
-
-    assertThat(permissioningConfiguration.isNodeWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getNodeWhitelist()).isEmpty();
-    assertThat(permissioningConfiguration.isAccountWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getAccountWhitelist()).isEmpty();
+    try {
+      PermissioningConfigurationBuilder.permissioningConfiguration(
+          toml.toAbsolutePath().toString(), true, true);
+      fail("expected exception: no valid whitelists in the TOML file");
+    } catch (Exception e) {
+      assertThat(e.getMessage().contains("Unexpected end of line")).isTrue();
+    }
   }
 
   @Test
-  public void permissioningConfigFromFileMustSetFilePath() throws IOException {
+  public void permissioningConfigWithUnrecognizedKeyMustThrowException() throws Exception {
 
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_ABSENT_WHITELISTS);
+    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_UNRECOGNIZED_KEY);
+    final Path toml = Files.createTempFile("toml", "");
+    Files.write(toml, Resources.toByteArray(configFile));
+
+    try {
+      PermissioningConfigurationBuilder.permissioningConfiguration(
+          toml.toAbsolutePath().toString(), true, true);
+      fail("expected exception: didn't find a recognized key in the TOML file");
+    } catch (Exception e) {
+      assertThat(e.getMessage().contains("config option missing")).isTrue();
+      assertThat(e.getMessage().contains(PermissioningConfigurationBuilder.ACCOUNTS_WHITELIST))
+          .isTrue();
+    }
+  }
+
+  @Test
+  public void permissioningConfigWithEmptyFileMustThrowException() throws Exception {
+
+    // write an empty file
+    final Path toml = Files.createTempFile("toml", "");
+
+    try {
+      PermissioningConfigurationBuilder.permissioningConfiguration(
+          toml.toAbsolutePath().toString(), true, true);
+      fail("expected exception: empty TOML file");
+
+    } catch (Exception e) {
+      assertThat(e.getMessage().contains("Empty TOML result")).isTrue();
+    }
+  }
+
+  @Test
+  public void permissioningConfigFromFileMustSetFilePath() throws Exception {
+
+    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_VALID);
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, Resources.toByteArray(configFile));
 
@@ -162,10 +196,17 @@ public class PermissioningConfigurationBuilderTest {
             toml.toString(), true, true);
 
     assertThat(permissioningConfiguration.getConfigurationFilePath()).isEqualTo(toml.toString());
+  }
 
-    assertThat(permissioningConfiguration.isNodeWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getNodeWhitelist()).isEmpty();
-    assertThat(permissioningConfiguration.isAccountWhitelistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getAccountWhitelist()).isEmpty();
+  @Test
+  public void permissioningConfigFromNonexistentFileMustThrowException() {
+
+    try {
+      PermissioningConfigurationBuilder.permissioningConfigurationFromToml(
+          "file-does-not-exist", true, true);
+      fail("expected exception: file does not exist");
+    } catch (Exception e) {
+      assertThat(e.getMessage().contains("File does not exist")).isTrue();
+    }
   }
 }

@@ -17,29 +17,25 @@ import java.util.stream.Collectors;
 import net.consensys.cava.toml.Toml;
 import net.consensys.cava.toml.TomlParseError;
 import net.consensys.cava.toml.TomlParseResult;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class TomlConfigFileParser {
 
-  private static final Logger LOG = LogManager.getLogger();
-
   private static TomlParseResult checkConfigurationValidity(
-      final TomlParseResult result, final String toml) {
+      final TomlParseResult result, final String toml) throws Exception {
     if (result == null || result.isEmpty()) {
-      LOG.error("Unable to read TOML configuration file %s", toml);
+      throw new Exception("Empty TOML result: " + toml);
     }
     return result;
   }
 
-  public static TomlParseResult loadConfiguration(final String toml) {
+  public static TomlParseResult loadConfiguration(final String toml) throws Exception {
     TomlParseResult result = Toml.parse(toml);
 
     if (result.hasErrors()) {
       final String errors =
           result.errors().stream().map(TomlParseError::toString).collect(Collectors.joining("%n"));
       ;
-      LOG.error("Invalid TOML configuration : %s", errors);
+      throw new Exception("Invalid TOML configuration : " + errors);
     }
 
     return checkConfigurationValidity(result, toml);
