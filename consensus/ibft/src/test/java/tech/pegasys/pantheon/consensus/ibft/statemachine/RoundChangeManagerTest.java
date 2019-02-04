@@ -27,8 +27,8 @@ import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
-import tech.pegasys.pantheon.consensus.ibft.validation.MessageValidator;
 import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator;
+import tech.pegasys.pantheon.consensus.ibft.validation.SignedDataValidator;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.BlockValidator;
 import tech.pegasys.pantheon.ethereum.BlockValidator.BlockProcessingOutputs;
@@ -88,33 +88,30 @@ public class RoundChangeManagerTest {
     when(messageValidatorFactory.createAt(ri1))
         .thenAnswer(
             invocation ->
-                new MessageValidator(
+                new SignedDataValidator(
                     validators,
                     Util.publicKeyToAddress(proposerKey.getPublicKey()),
                     ri1,
                     blockValidator,
-                    protocolContext,
-                    parentHeader));
+                    protocolContext));
     when(messageValidatorFactory.createAt(ri2))
         .thenAnswer(
             invocation ->
-                new MessageValidator(
+                new SignedDataValidator(
                     validators,
                     Util.publicKeyToAddress(validator1Key.getPublicKey()),
                     ri2,
                     blockValidator,
-                    protocolContext,
-                    parentHeader));
+                    protocolContext));
     when(messageValidatorFactory.createAt(ri3))
         .thenAnswer(
             invocation ->
-                new MessageValidator(
+                new SignedDataValidator(
                     validators,
                     Util.publicKeyToAddress(validator2Key.getPublicKey()),
                     ri3,
                     blockValidator,
-                    protocolContext,
-                    parentHeader));
+                    protocolContext));
 
     final RoundChangeMessageValidator roundChangeMessageValidator =
         new RoundChangeMessageValidator(

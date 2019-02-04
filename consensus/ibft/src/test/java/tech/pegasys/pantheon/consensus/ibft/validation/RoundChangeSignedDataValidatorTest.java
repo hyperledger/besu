@@ -40,7 +40,7 @@ import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
-public class RoundChangeMessageValidatorTest {
+public class RoundChangeSignedDataValidatorTest {
 
   private final KeyPair proposerKey = KeyPair.generate();
   private final KeyPair validatorKey = KeyPair.generate();
@@ -56,7 +56,7 @@ public class RoundChangeMessageValidatorTest {
 
   private final Block block = mock(Block.class);
 
-  private final MessageValidator basicValidator = mock(MessageValidator.class);
+  private final SignedDataValidator basicValidator = mock(SignedDataValidator.class);
   private final List<Address> validators = Lists.newArrayList();
 
   private final MessageValidatorForHeightFactory validatorFactory =

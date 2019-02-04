@@ -127,7 +127,7 @@ public class IbftBlockHeightManagerTest {
 
     final MessageValidator messageValidator = mock(MessageValidator.class);
     when(messageValidator.addSignedProposalPayload(any())).thenReturn(true);
-    when(messageValidator.validateCommmitMessage(any())).thenReturn(true);
+    when(messageValidator.validateCommitMessage(any())).thenReturn(true);
     when(messageValidator.validatePrepareMessage(any())).thenReturn(true);
     when(finalState.getTransmitter()).thenReturn(messageTransmitter);
     when(finalState.getBlockTimer()).thenReturn(blockTimer);
@@ -138,7 +138,7 @@ public class IbftBlockHeightManagerTest {
     when(newRoundMessageValidator.validateNewRoundMessage(any())).thenReturn(true);
     when(messageValidatorFactory.createNewRoundValidator(any()))
         .thenReturn(newRoundMessageValidator);
-    when(messageValidatorFactory.createMessageValidator(any(), any())).thenReturn(messageValidator);
+    when(messageValidatorFactory.createMessageValidator(any())).thenReturn(messageValidator);
 
     protocolContext =
         new ProtocolContext<>(null, null, new IbftContext(new VoteTally(validators), null));
