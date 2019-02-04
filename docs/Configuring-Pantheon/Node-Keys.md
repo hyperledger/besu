@@ -20,7 +20,7 @@ If a `key` file exists in the data directory when Pantheon is started, the node 
 
 The node public key is displayed in the log after starting Pantheon. Use the [`public-key`](../Reference/Pantheon-CLI-Syntax.md#public-key)  subcommand to export the public key to a file. 
 
-The node public key is also referred to as the node ID. The node ID forms part of the [enode URL](Testing-Developing-Nodes.md#private-networks)  for a node. 
+The node public key is also referred to as the node ID. The node ID forms part of the [enode URL](Bootnodes.md#private-networks)  for a node. 
 
 ## Specifying a Custom Node Private Key File
 

@@ -59,13 +59,14 @@ nav:
         - Clique: Consensus-Protocols/Clique.md
         - IBFT 2.0: Consensus-Protocols/IBFT.md
     - Configuring Pantheon:
-        - Using a Configuration File: Configuring-Pantheon/Using-Configuration-File.md
+        - Configuration File: Configuring-Pantheon/Using-Configuration-File.md
         - Network ID and Chain ID: Configuring-Pantheon/NetworkID-And-ChainID.md
+        - Contracts in Genesis: Configuring-Pantheon/Contracts-in-Genesis.md
         - Node Keys: Configuring-Pantheon/Node-Keys.md
         - Networking: Configuring-Pantheon/Networking.md
         - Accounts for Testing: Configuring-Pantheon/Accounts-for-Testing.md
         - Logging: Configuring-Pantheon/Logging.md
-        - Testing and Developing Nodes: Configuring-Pantheon/Testing-Developing-Nodes.md
+        - Bootnodes: Configuring-Pantheon/Bootnodes.md
         - Passing JVM Options: Configuring-Pantheon/Passing-JVM-Options.md
     - Using Pantheon:
         - Events and Logs:
