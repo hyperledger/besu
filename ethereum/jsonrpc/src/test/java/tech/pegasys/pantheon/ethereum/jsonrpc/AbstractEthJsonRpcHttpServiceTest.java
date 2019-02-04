@@ -45,8 +45,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
-import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionHandler;
 import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
@@ -60,6 +58,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.base.Charsets;
@@ -170,9 +169,6 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
     supportedCapabilities.add(EthProtocol.ETH62);
     supportedCapabilities.add(EthProtocol.ETH63);
 
-    final AccountWhitelistController accountWhitelistController =
-        new AccountWhitelistController(PermissioningConfiguration.createDefault());
-
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -186,7 +182,7 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
                 miningCoordinatorMock,
                 new NoOpMetricsSystem(),
                 supportedCapabilities,
-                accountWhitelistController,
+                Optional.empty(),
                 JSON_RPC_APIS,
                 privateTransactionHandlerMock);
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();

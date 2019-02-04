@@ -25,8 +25,6 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -64,7 +62,7 @@ public class PeerDiscoveryTableRefreshTest {
                 0,
                 () -> true,
                 new PeerBlacklist(),
-                new NodeWhitelistController(PermissioningConfiguration.createDefault()),
+                Optional.empty(),
                 new Subscribers<>()));
     controller.start();
 

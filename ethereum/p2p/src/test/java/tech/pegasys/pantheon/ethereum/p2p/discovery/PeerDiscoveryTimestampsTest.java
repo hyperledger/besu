@@ -26,12 +26,11 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryContro
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -62,7 +61,7 @@ public class PeerDiscoveryTimestampsTest {
             TimeUnit.HOURS.toMillis(1),
             () -> true,
             new PeerBlacklist(),
-            new NodeWhitelistController(PermissioningConfiguration.createDefault()),
+            Optional.empty(),
             new Subscribers<>());
     controller.start();
 

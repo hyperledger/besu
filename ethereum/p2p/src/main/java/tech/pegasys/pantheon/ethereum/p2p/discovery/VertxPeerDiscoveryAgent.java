@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 
@@ -55,7 +56,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final DiscoveryConfiguration config,
       final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
-      final NodeWhitelistController nodeWhitelistController) {
+      final Optional<NodeWhitelistController> nodeWhitelistController) {
     super(keyPair, config, peerRequirement, peerBlacklist, nodeWhitelistController);
     checkArgument(vertx != null, "vertx instance cannot be null");
     this.vertx = vertx;

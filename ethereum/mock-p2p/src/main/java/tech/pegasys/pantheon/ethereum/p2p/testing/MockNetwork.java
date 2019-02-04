@@ -23,7 +23,6 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.DefaultMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.net.InetSocketAddress;
@@ -34,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -204,8 +204,8 @@ public final class MockNetwork {
     }
 
     @Override
-    public NodeWhitelistController getNodeWhitelistController() {
-      return new NodeWhitelistController(PermissioningConfiguration.createDefault());
+    public Optional<NodeWhitelistController> getNodeWhitelistController() {
+      return Optional.empty();
     }
   }
 

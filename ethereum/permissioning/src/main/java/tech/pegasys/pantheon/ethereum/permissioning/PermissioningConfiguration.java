@@ -20,8 +20,8 @@ import java.util.List;
 public class PermissioningConfiguration {
   private List<URI> nodeWhitelist;
   private List<String> accountWhitelist;
-  private boolean nodeWhitelistSet;
-  private boolean accountWhitelistSet;
+  private boolean nodeWhitelistEnabled;
+  private boolean accountWhitelistEnabled;
   private String configurationFilePath;
 
   public List<URI> getNodeWhitelist() {
@@ -38,12 +38,12 @@ public class PermissioningConfiguration {
   public void setNodeWhitelist(final Collection<URI> nodeWhitelist) {
     if (nodeWhitelist != null) {
       this.nodeWhitelist.addAll(nodeWhitelist);
-      this.nodeWhitelistSet = true;
+      this.nodeWhitelistEnabled = true;
     }
   }
 
-  public boolean isNodeWhitelistSet() {
-    return nodeWhitelistSet;
+  public boolean isNodeWhitelistEnabled() {
+    return nodeWhitelistEnabled;
   }
 
   public List<String> getAccountWhitelist() {
@@ -53,12 +53,12 @@ public class PermissioningConfiguration {
   public void setAccountWhitelist(final Collection<String> accountWhitelist) {
     if (accountWhitelist != null) {
       this.accountWhitelist.addAll(accountWhitelist);
-      this.accountWhitelistSet = true;
+      this.accountWhitelistEnabled = true;
     }
   }
 
-  public boolean isAccountWhitelistSet() {
-    return accountWhitelistSet;
+  public boolean isAccountWhitelistEnabled() {
+    return accountWhitelistEnabled;
   }
 
   public String getConfigurationFilePath() {

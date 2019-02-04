@@ -23,14 +23,16 @@ import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
 import tech.pegasys.pantheon.ethereum.permissioning.WhitelistOperationResult;
 
 import java.util.List;
+import java.util.Optional;
 
 public class PermAddAccountsToWhitelist implements JsonRpcMethod {
 
   private final JsonRpcParameter parameters;
-  private final AccountWhitelistController whitelistController;
+  private final Optional<AccountWhitelistController> whitelistController;
 
   public PermAddAccountsToWhitelist(
-      final AccountWhitelistController whitelistController, final JsonRpcParameter parameters) {
+      final Optional<AccountWhitelistController> whitelistController,
+      final JsonRpcParameter parameters) {
     this.whitelistController = whitelistController;
     this.parameters = parameters;
   }
@@ -44,25 +46,31 @@ public class PermAddAccountsToWhitelist implements JsonRpcMethod {
   @SuppressWarnings("unchecked")
   public JsonRpcResponse response(final JsonRpcRequest request) {
     final List<String> accountsList = parameters.required(request.getParams(), 0, List.class);
-    final WhitelistOperationResult addResult = whitelistController.addAccounts(accountsList);
 
-    switch (addResult) {
-      case ERROR_EMPTY_ENTRY:
-        return new JsonRpcErrorResponse(
-            request.getId(), JsonRpcError.ACCOUNT_WHITELIST_EMPTY_ENTRY);
-      case ERROR_INVALID_ENTRY:
-        return new JsonRpcErrorResponse(
-            request.getId(), JsonRpcError.ACCOUNT_WHITELIST_INVALID_ENTRY);
-      case ERROR_EXISTING_ENTRY:
-        return new JsonRpcErrorResponse(
-            request.getId(), JsonRpcError.ACCOUNT_WHITELIST_EXISTING_ENTRY);
-      case ERROR_DUPLICATED_ENTRY:
-        return new JsonRpcErrorResponse(
-            request.getId(), JsonRpcError.ACCOUNT_WHITELIST_DUPLICATED_ENTRY);
-      case SUCCESS:
-        return new JsonRpcSuccessResponse(request.getId());
-      default:
-        throw new IllegalStateException("Unmapped result from AccountWhitelistController");
+    if (whitelistController.isPresent()) {
+      final WhitelistOperationResult addResult =
+          whitelistController.get().addAccounts(accountsList);
+
+      switch (addResult) {
+        case ERROR_EMPTY_ENTRY:
+          return new JsonRpcErrorResponse(
+              request.getId(), JsonRpcError.ACCOUNT_WHITELIST_EMPTY_ENTRY);
+        case ERROR_INVALID_ENTRY:
+          return new JsonRpcErrorResponse(
+              request.getId(), JsonRpcError.ACCOUNT_WHITELIST_INVALID_ENTRY);
+        case ERROR_EXISTING_ENTRY:
+          return new JsonRpcErrorResponse(
+              request.getId(), JsonRpcError.ACCOUNT_WHITELIST_EXISTING_ENTRY);
+        case ERROR_DUPLICATED_ENTRY:
+          return new JsonRpcErrorResponse(
+              request.getId(), JsonRpcError.ACCOUNT_WHITELIST_DUPLICATED_ENTRY);
+        case SUCCESS:
+          return new JsonRpcSuccessResponse(request.getId());
+        default:
+          throw new IllegalStateException("Unmapped result from AccountWhitelistController");
+      }
+    } else {
+      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.ACCOUNT_WHITELIST_NOT_ENABLED);
     }
   }
 }

@@ -69,7 +69,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
   protected final List<DiscoveryPeer> bootstrapPeers;
   private final PeerRequirement peerRequirement;
   private final PeerBlacklist peerBlacklist;
-  private final NodeWhitelistController nodeWhitelistController;
+  private final Optional<NodeWhitelistController> nodeWhitelistController;
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
 
@@ -92,7 +92,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
       final DiscoveryConfiguration config,
       final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
-      final NodeWhitelistController nodeWhitelistController) {
+      final Optional<NodeWhitelistController> nodeWhitelistController) {
     checkArgument(keyPair != null, "keypair cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
 

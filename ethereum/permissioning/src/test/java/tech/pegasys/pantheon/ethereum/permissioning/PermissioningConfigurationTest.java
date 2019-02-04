@@ -31,9 +31,9 @@ public class PermissioningConfigurationTest {
   public void defaultConfiguration() {
     final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
     assertThat(configuration.getNodeWhitelist()).isEmpty();
-    assertThat(configuration.isNodeWhitelistSet()).isFalse();
+    assertThat(configuration.isNodeWhitelistEnabled()).isFalse();
     assertThat(configuration.getAccountWhitelist()).isEmpty();
-    assertThat(configuration.isAccountWhitelistSet()).isFalse();
+    assertThat(configuration.isAccountWhitelistEnabled()).isFalse();
   }
 
   @Test
@@ -41,7 +41,7 @@ public class PermissioningConfigurationTest {
     final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
     configuration.setNodeWhitelist(Arrays.asList(nodes));
     assertThat(configuration.getNodeWhitelist()).containsExactlyInAnyOrder(nodes);
-    assertThat(configuration.isNodeWhitelistSet()).isTrue();
+    assertThat(configuration.isNodeWhitelistEnabled()).isTrue();
   }
 
   @Test
@@ -49,7 +49,7 @@ public class PermissioningConfigurationTest {
     final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
     configuration.setNodeWhitelist(null);
     assertThat(configuration.getNodeWhitelist()).isEmpty();
-    assertThat(configuration.isNodeWhitelistSet()).isFalse();
+    assertThat(configuration.isNodeWhitelistEnabled()).isFalse();
   }
 
   @Test
@@ -58,7 +58,7 @@ public class PermissioningConfigurationTest {
     final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
     configuration.setAccountWhitelist(Arrays.asList(accounts));
     assertThat(configuration.getAccountWhitelist()).containsExactlyInAnyOrder(accounts);
-    assertThat(configuration.isAccountWhitelistSet()).isTrue();
+    assertThat(configuration.isAccountWhitelistEnabled()).isTrue();
   }
 
   @Test
@@ -66,6 +66,6 @@ public class PermissioningConfigurationTest {
     final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
     configuration.setAccountWhitelist(null);
     assertThat(configuration.getAccountWhitelist()).isEmpty();
-    assertThat(configuration.isAccountWhitelistSet()).isFalse();
+    assertThat(configuration.isAccountWhitelistEnabled()).isFalse();
   }
 }

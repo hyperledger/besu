@@ -42,6 +42,7 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 
 /** Provides a facade to construct the JSON-RPC component. */
 public class JsonRpcTestMethodsFactory {
@@ -80,8 +81,8 @@ public class JsonRpcTestMethodsFactory {
             blockchainQueries, transactionPool, new FilterIdGenerator(), new FilterRepository());
     final EthHashMiningCoordinator miningCoordinator = mock(EthHashMiningCoordinator.class);
     final MetricsSystem metricsSystem = new NoOpMetricsSystem();
-    final AccountWhitelistController accountWhitelistController =
-        mock(AccountWhitelistController.class);
+    final Optional<AccountWhitelistController> accountWhitelistController =
+        Optional.of(mock(AccountWhitelistController.class));
     final PrivateTransactionHandler privateTransactionHandler =
         mock(PrivateTransactionHandler.class);
 

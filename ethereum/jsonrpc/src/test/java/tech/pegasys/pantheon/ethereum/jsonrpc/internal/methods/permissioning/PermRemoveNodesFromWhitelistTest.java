@@ -34,6 +34,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.WhitelistOperationResult;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.assertj.core.util.Lists;
 import org.junit.Before;
@@ -76,6 +77,9 @@ public class PermRemoveNodesFromWhitelistTest {
     final JsonRpcRequest request = buildRequest(Lists.newArrayList(badEnode));
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(request.getId(), JsonRpcError.NODE_WHITELIST_INVALID_ENTRY);
+
+    when(p2pNetwork.getNodeWhitelistController()).thenReturn(Optional.of(nodeWhitelistController));
+
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
@@ -86,6 +90,9 @@ public class PermRemoveNodesFromWhitelistTest {
     final JsonRpcRequest request = buildRequest(Lists.newArrayList(""));
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(request.getId(), JsonRpcError.NODE_WHITELIST_INVALID_ENTRY);
+
+    when(p2pNetwork.getNodeWhitelistController()).thenReturn(Optional.of(nodeWhitelistController));
+
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
@@ -96,7 +103,7 @@ public class PermRemoveNodesFromWhitelistTest {
     final JsonRpcRequest request = buildRequest(Lists.newArrayList(enode1));
     final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getId());
 
-    when(p2pNetwork.getNodeWhitelistController()).thenReturn(nodeWhitelistController);
+    when(p2pNetwork.getNodeWhitelistController()).thenReturn(Optional.of(nodeWhitelistController));
     when(nodeWhitelistController.removeNodes(any()))
         .thenReturn(new NodesWhitelistResult(WhitelistOperationResult.SUCCESS));
 
@@ -113,7 +120,7 @@ public class PermRemoveNodesFromWhitelistTest {
     final JsonRpcRequest request = buildRequest(Lists.newArrayList(enode1, enode2, enode3));
     final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getId());
 
-    when(p2pNetwork.getNodeWhitelistController()).thenReturn(nodeWhitelistController);
+    when(p2pNetwork.getNodeWhitelistController()).thenReturn(Optional.of(nodeWhitelistController));
     when(nodeWhitelistController.removeNodes(any()))
         .thenReturn(new NodesWhitelistResult(WhitelistOperationResult.SUCCESS));
 
@@ -143,7 +150,7 @@ public class PermRemoveNodesFromWhitelistTest {
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(request.getId(), JsonRpcError.NODE_WHITELIST_DUPLICATED_ENTRY);
 
-    when(p2pNetwork.getNodeWhitelistController()).thenReturn(nodeWhitelistController);
+    when(p2pNetwork.getNodeWhitelistController()).thenReturn(Optional.of(nodeWhitelistController));
     when(nodeWhitelistController.removeNodes(any()))
         .thenReturn(new NodesWhitelistResult(WhitelistOperationResult.ERROR_DUPLICATED_ENTRY));
 
@@ -158,7 +165,7 @@ public class PermRemoveNodesFromWhitelistTest {
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(request.getId(), JsonRpcError.NODE_WHITELIST_EMPTY_ENTRY);
 
-    when(p2pNetwork.getNodeWhitelistController()).thenReturn(nodeWhitelistController);
+    when(p2pNetwork.getNodeWhitelistController()).thenReturn(Optional.of(nodeWhitelistController));
     when(nodeWhitelistController.removeNodes(eq(new ArrayList<>())))
         .thenReturn(new NodesWhitelistResult(WhitelistOperationResult.ERROR_EMPTY_ENTRY));
 

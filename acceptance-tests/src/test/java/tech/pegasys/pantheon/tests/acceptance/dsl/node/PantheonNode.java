@@ -78,7 +78,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
-  private final PermissioningConfiguration permissioningConfiguration;
+  private final Optional<PermissioningConfiguration> permissioningConfiguration;
   private final GenesisConfigProvider genesisConfigProvider;
   private final boolean devMode;
   private final boolean discoveryEnabled;
@@ -93,7 +93,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
-      final PermissioningConfiguration permissioningConfiguration,
+      final Optional<PermissioningConfiguration> permissioningConfiguration,
       final boolean devMode,
       final GenesisConfigProvider genesisConfigProvider,
       final int p2pPort,
@@ -348,7 +348,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     return discoveryEnabled;
   }
 
-  PermissioningConfiguration getPermissioningConfiguration() {
+  Optional<PermissioningConfiguration> getPermissioningConfiguration() {
     return permissioningConfiguration;
   }
 
