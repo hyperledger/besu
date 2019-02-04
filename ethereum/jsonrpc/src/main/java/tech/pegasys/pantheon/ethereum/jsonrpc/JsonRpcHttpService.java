@@ -58,6 +58,11 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.AuthProvider;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import io.vertx.ext.jwt.JWTOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -80,14 +85,66 @@ public class JsonRpcHttpService {
   private final Path dataDir;
   private final LabelledMetric<OperationTimer> requestTimer;
 
+  private final Optional<JWTAuth> jwtAuthProvider;
+  private final Optional<AuthProvider> credentialAuthProvider;
+
   private HttpServer httpServer;
 
+  /**
+   * Construct a JsonRpcHttpService handler that has authentication enabled
+   *
+   * @param vertx The vertx process that will be running this service
+   * @param dataDir The data directory where requests can be buffered
+   * @param config Configuration for the rpc methods being loaded
+   * @param metricsSystem The metrics service that activities should be reported to
+   * @param methods The json rpc methods that should be enabled
+   * @param jwtOptions The configuration for the jwt auth provider
+   * @param credentialAuthProvider An auth provider that is backed by a credentials store
+   */
+  public JsonRpcHttpService(
+      final Vertx vertx,
+      final Path dataDir,
+      final JsonRpcConfiguration config,
+      final MetricsSystem metricsSystem,
+      final Map<String, JsonRpcMethod> methods,
+      final JWTAuthOptions jwtOptions,
+      final AuthProvider credentialAuthProvider) {
+    this(
+        vertx,
+        dataDir,
+        config,
+        metricsSystem,
+        methods,
+        Optional.of(jwtOptions),
+        Optional.of(credentialAuthProvider));
+  }
+
+  /**
+   * Construct a JsonRpcHttpService handler that doesn't have authentication enabled
+   *
+   * @param vertx The vertx process that will be running this service
+   * @param dataDir The data directory where requests can be buffered
+   * @param config Configuration for the rpc methods being loaded
+   * @param metricsSystem The metrics service that activities should be reported to
+   * @param methods The json rpc methods that should be enabled
+   */
   public JsonRpcHttpService(
       final Vertx vertx,
       final Path dataDir,
       final JsonRpcConfiguration config,
       final MetricsSystem metricsSystem,
       final Map<String, JsonRpcMethod> methods) {
+    this(vertx, dataDir, config, metricsSystem, methods, Optional.empty(), Optional.empty());
+  }
+
+  private JsonRpcHttpService(
+      final Vertx vertx,
+      final Path dataDir,
+      final JsonRpcConfiguration config,
+      final MetricsSystem metricsSystem,
+      final Map<String, JsonRpcMethod> methods,
+      final Optional<JWTAuthOptions> jwtOptions,
+      final Optional<AuthProvider> credentialAuthProvider) {
     this.dataDir = dataDir;
     requestTimer =
         metricsSystem.createLabelledTimer(
@@ -99,6 +156,8 @@ public class JsonRpcHttpService {
     this.config = config;
     this.vertx = vertx;
     this.jsonRpcMethods = methods;
+    this.credentialAuthProvider = credentialAuthProvider;
+    jwtAuthProvider = jwtOptions.map(options -> JWTAuth.create(vertx, options));
   }
 
   private void validateConfig(final JsonRpcConfiguration config) {
@@ -139,6 +198,11 @@ public class JsonRpcHttpService {
         .method(HttpMethod.POST)
         .produces(APPLICATION_JSON)
         .handler(this::handleJsonRPCRequest);
+    router
+        .route("/login")
+        .method(HttpMethod.POST)
+        .produces(APPLICATION_JSON)
+        .handler(this::handleLogin);
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     httpServer
@@ -173,7 +237,7 @@ public class JsonRpcHttpService {
     return event -> {
       final Optional<String> hostHeader = getAndValidateHostHeader(event);
       if (config.getHostsWhitelist().contains("*")
-          || (hostHeader.isPresent() && hostIsInWhitelist(hostHeader))) {
+          || (hostHeader.isPresent() && hostIsInWhitelist(hostHeader.get()))) {
         event.next();
       } else {
         event
@@ -197,12 +261,11 @@ public class JsonRpcHttpService {
     return Optional.ofNullable(Iterables.get(splitHostHeader, 0));
   }
 
-  private boolean hostIsInWhitelist(final Optional<String> hostHeader) {
+  private boolean hostIsInWhitelist(final String hostHeader) {
     return config
         .getHostsWhitelist()
         .stream()
-        .anyMatch(
-            whitelistEntry -> whitelistEntry.toLowerCase().equals(hostHeader.get().toLowerCase()));
+        .anyMatch(whitelistEntry -> whitelistEntry.toLowerCase().equals(hostHeader.toLowerCase()));
   }
 
   public CompletableFuture<?> stop() {
@@ -282,6 +345,57 @@ public class JsonRpcHttpService {
           response.putHeader("Content-Type", APPLICATION_JSON);
           response.end(serialise(jsonRpcResponse));
         });
+  }
+
+  private void handleLogin(final RoutingContext routingContext) {
+    if (!jwtAuthProvider.isPresent() || !credentialAuthProvider.isPresent()) {
+      routingContext
+          .response()
+          .setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
+          .setStatusMessage("Authentication not enabled")
+          .end();
+      return;
+    }
+
+    final JsonObject requestBody = routingContext.getBodyAsJson();
+
+    if (requestBody == null) {
+      routingContext
+          .response()
+          .setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
+          .setStatusMessage(HttpResponseStatus.BAD_REQUEST.reasonPhrase())
+          .end();
+      return;
+    }
+
+    // Check user
+    final JsonObject authParams = new JsonObject();
+    authParams.put("username", requestBody.getValue("username"));
+    authParams.put("password", requestBody.getValue("password"));
+    credentialAuthProvider
+        .get()
+        .authenticate(
+            authParams,
+            (r) -> {
+              if (r.failed()) {
+                routingContext
+                    .response()
+                    .setStatusCode(HttpResponseStatus.UNAUTHORIZED.code())
+                    .setStatusMessage(HttpResponseStatus.UNAUTHORIZED.reasonPhrase())
+                    .end();
+              } else {
+                final User user = r.result();
+
+                final JWTOptions options = new JWTOptions().setExpiresInMinutes(5);
+                final String token = jwtAuthProvider.get().generateToken(user.principal(), options);
+
+                final JsonObject responseBody = new JsonObject().put("token", token);
+                final HttpServerResponse response = routingContext.response();
+                response.setStatusCode(200);
+                response.putHeader("Content-Type", APPLICATION_JSON);
+                response.end(responseBody.encode());
+              }
+            });
   }
 
   private HttpResponseStatus status(final JsonRpcResponse response) {

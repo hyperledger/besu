@@ -166,6 +166,17 @@ public class JsonRpcHttpServiceTest {
   }
 
   @Test
+  public void handleLoginRequestWithAuthDisabled() throws Exception {
+    final RequestBody body =
+        RequestBody.create(JSON, "{\"username\":\"user\",\"password\":\"pass\"}");
+    final Request request = new Request.Builder().post(body).url(baseUrl + "/login").build();
+    try (final Response resp = client.newCall(request).execute()) {
+      assertThat(resp.code()).isEqualTo(400);
+      assertThat(resp.message()).isEqualTo("Authentication not enabled");
+    }
+  }
+
+  @Test
   public void invalidCallToStart() {
     service
         .start()
