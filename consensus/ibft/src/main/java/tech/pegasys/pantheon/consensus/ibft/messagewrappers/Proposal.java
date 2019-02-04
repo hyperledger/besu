@@ -14,10 +14,15 @@ package tech.pegasys.pantheon.consensus.ibft.messagewrappers;
 
 import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
+import tech.pegasys.pantheon.ethereum.core.Block;
 
 public class Proposal extends IbftMessage<ProposalPayload> {
 
   public Proposal(final SignedData<ProposalPayload> payload) {
     super(payload);
+  }
+
+  public Block getBlock() {
+    return getSignedPayload().getPayload().getBlock();
   }
 }

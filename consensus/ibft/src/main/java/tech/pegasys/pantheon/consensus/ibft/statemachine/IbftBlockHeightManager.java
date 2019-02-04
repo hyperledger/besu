@@ -29,7 +29,6 @@ import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.consensus.ibft.network.IbftMessageTransmitter;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.payload.Payload;
-import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
 import tech.pegasys.pantheon.consensus.ibft.validation.MessageValidatorFactory;
 import tech.pegasys.pantheon.consensus.ibft.validation.NewRoundMessageValidator;
@@ -70,7 +69,7 @@ public class IbftBlockHeightManager implements BlockHeightManager {
   private final Function<ConsensusRoundIdentifier, RoundState> roundStateCreator;
   private final IbftFinalState finalState;
 
-  private Optional<PreparedCertificate> latestPreparedCertificate = Optional.empty();
+  private Optional<TerminatedRoundArtefacts> latesteTerminatedRoundArtefacts = Optional.empty();
 
   private IbftRound currentRound;
 
@@ -134,19 +133,20 @@ public class IbftBlockHeightManager implements BlockHeightManager {
     LOG.info(
         "Round has expired, creating PreparedCertificate and notifying peers. round={}",
         currentRound.getRoundIdentifier());
-    final Optional<PreparedCertificate> preparedCertificate =
-        currentRound.createPrepareCertificate();
+    final Optional<TerminatedRoundArtefacts> terminatedRoundArtefats =
+        currentRound.constructTerminatedRoundArtefacts();
 
-    if (preparedCertificate.isPresent()) {
-      latestPreparedCertificate = preparedCertificate;
+    if (terminatedRoundArtefats.isPresent()) {
+      latesteTerminatedRoundArtefacts = terminatedRoundArtefats;
     }
 
     startNewRound(currentRound.getRoundIdentifier().getRoundNumber() + 1);
 
     final RoundChange localRoundChange =
         messageFactory.createSignedRoundChangePayload(
-            currentRound.getRoundIdentifier(), latestPreparedCertificate);
-    transmitter.multicastRoundChange(currentRound.getRoundIdentifier(), latestPreparedCertificate);
+            currentRound.getRoundIdentifier(), latesteTerminatedRoundArtefacts);
+    transmitter.multicastRoundChange(
+        currentRound.getRoundIdentifier(), latesteTerminatedRoundArtefacts);
 
     // Its possible the locally created RoundChange triggers the transmission of a NewRound
     // message - so it must be handled accordingly.

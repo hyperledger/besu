@@ -24,10 +24,10 @@ import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
-import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
+import tech.pegasys.pantheon.consensus.ibft.statemachine.TerminatedRoundArtefacts;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
@@ -75,10 +75,10 @@ public class IbftMessageTransmitter {
 
   public void multicastRoundChange(
       final ConsensusRoundIdentifier roundIdentifier,
-      final Optional<PreparedCertificate> preparedCertificate) {
+      final Optional<TerminatedRoundArtefacts> terminatedRoundArtefacts) {
 
     final RoundChange data =
-        messageFactory.createSignedRoundChangePayload(roundIdentifier, preparedCertificate);
+        messageFactory.createSignedRoundChangePayload(roundIdentifier, terminatedRoundArtefacts);
 
     final RoundChangeMessageData message = RoundChangeMessageData.create(data);
 

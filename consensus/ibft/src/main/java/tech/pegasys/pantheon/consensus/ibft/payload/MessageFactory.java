@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.consensus.ibft.messagewrappers.NewRound;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
+import tech.pegasys.pantheon.consensus.ibft.statemachine.TerminatedRoundArtefacts;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
@@ -64,9 +65,12 @@ public class MessageFactory {
 
   public RoundChange createSignedRoundChangePayload(
       final ConsensusRoundIdentifier roundIdentifier,
-      final Optional<PreparedCertificate> preparedCertificate) {
+      final Optional<TerminatedRoundArtefacts> terminatedRoundArtefacts) {
 
-    final RoundChangePayload payload = new RoundChangePayload(roundIdentifier, preparedCertificate);
+    final RoundChangePayload payload =
+        new RoundChangePayload(
+            roundIdentifier,
+            terminatedRoundArtefacts.map(TerminatedRoundArtefacts::getPreparedCertificate));
 
     return new RoundChange(createSignedMessage(payload));
   }
