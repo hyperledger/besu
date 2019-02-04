@@ -55,6 +55,8 @@ dependencies {
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-core'
+  integrationTestImplementation project(':testutil')
+  integrationTestImplementation 'net.consensys:orion'
 
   testSupportImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testSupportImplementation project(':testutil')

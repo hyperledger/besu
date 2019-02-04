@@ -744,9 +744,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     return permissioningConfiguration;
   }
 
-  private PrivacyParameters orionConfiguration() {
+  private PrivacyParameters orionConfiguration() throws IOException {
 
-    // Check that mining options are able top work or send an error
     CommandLineUtils.checkOptionDependencies(
         logger,
         commandLine,
@@ -756,10 +755,16 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             "--privacy-url", "--privacy-public-key-file", "--privacy-precompiled-address"));
 
     final PrivacyParameters privacyParameters = PrivacyParameters.noPrivacy();
-    privacyParameters.setEnabled(privacyEnabled);
-    privacyParameters.setUrl(privacyUrl.toString());
-    privacyParameters.setPublicKey(privacyPublicKeyFile);
-    privacyParameters.setPrivacyAddress(privacyPrecompiledAddress);
+    if (privacyEnabled) {
+      privacyParameters.setEnabled(privacyEnabled);
+      privacyParameters.setUrl(privacyUrl.toString());
+      if (privacyPublicKeyFile != null) {
+        privacyParameters.setPublicKeyUsingFile(privacyPublicKeyFile);
+      } else {
+        throw new IOException("Please specify Enclave public Key file path to Enable Privacy");
+      }
+      privacyParameters.setPrivacyAddress(privacyPrecompiledAddress);
+    }
     return privacyParameters;
   }
 

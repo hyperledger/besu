@@ -9,6 +9,6 @@ dependencies {
   // integration test dependacies.
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation project(':testutil')
-  integrationTestImplementation 'net.consensys:orion'
+  integrationTestImplementation 'net.consensys:orion:0.1.1-SNAPSHOT'
 
 }
