@@ -218,8 +218,7 @@ public class IbftBlockHeightManagerTest {
     final RoundChange roundChange =
         messageFactory.createSignedRoundChangePayload(futureRoundIdentifier, Optional.empty());
     when(roundChangeManager.appendRoundChangeMessage(any()))
-        .thenReturn(
-            Optional.of(new RoundChangeCertificate(singletonList(roundChange.getSignedPayload()))));
+        .thenReturn(Optional.of(singletonList(roundChange)));
     when(finalState.isLocalNodeProposerForRound(any())).thenReturn(false);
 
     final IbftBlockHeightManager manager =
@@ -266,7 +265,7 @@ public class IbftBlockHeightManagerTest {
         new RoundChangeCertificate(singletonList(roundChange.getSignedPayload()));
 
     when(roundChangeManager.appendRoundChangeMessage(any()))
-        .thenReturn(Optional.of(roundChangCert));
+        .thenReturn(Optional.of(singletonList(roundChange)));
     when(finalState.isLocalNodeProposerForRound(any())).thenReturn(true);
 
     final IbftBlockHeightManager manager =
