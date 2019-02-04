@@ -12,12 +12,41 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.messagewrappers;
 
+import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
+import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
+import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+
+import java.util.Optional;
 
 public class RoundChange extends IbftMessage<RoundChangePayload> {
 
   public RoundChange(final SignedData<RoundChangePayload> payload) {
     super(payload);
+  }
+
+  public Optional<PreparedCertificate> getPreparedCertificate() {
+    return getPayload().getPreparedCertificate();
+  }
+
+  @Override
+  public BytesValue encode() {
+    final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
+    rlpOut.startList();
+    getSignedPayload().writeTo(rlpOut);
+    rlpOut.endList();
+    return rlpOut.encoded();
+  }
+
+  public static RoundChange decode(final BytesValue data) {
+    RLPInput rlpIn = RLP.input(data);
+    rlpIn.enterList();
+    final SignedData<RoundChangePayload> payload =
+        SignedData.readSignedRoundChangePayloadFrom(rlpIn);
+    rlpIn.leaveList();
+    return new RoundChange(payload);
   }
 }
