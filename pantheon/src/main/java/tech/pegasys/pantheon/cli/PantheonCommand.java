@@ -583,23 +583,27 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     }
 
     final EthNetworkConfig ethNetworkConfig = updateNetworkConfig(getNetwork());
-    final Optional<PermissioningConfiguration> permissioningConfiguration =
-        permissioningConfiguration();
-    permissioningConfiguration.ifPresent(
-        p -> ensureAllBootnodesAreInWhitelist(ethNetworkConfig, p));
+    try {
+      final Optional<PermissioningConfiguration> permissioningConfiguration =
+          permissioningConfiguration();
+      permissioningConfiguration.ifPresent(
+          p -> ensureAllBootnodesAreInWhitelist(ethNetworkConfig, p));
 
-    synchronize(
-        buildController(),
-        p2pEnabled,
-        peerDiscoveryEnabled,
-        ethNetworkConfig.getBootNodes(),
-        maxPeers,
-        p2pHost,
-        p2pPort,
-        jsonRpcConfiguration(),
-        webSocketConfiguration(),
-        metricsConfiguration(),
-        permissioningConfiguration);
+      synchronize(
+          buildController(),
+          p2pEnabled,
+          peerDiscoveryEnabled,
+          ethNetworkConfig.getBootNodes(),
+          maxPeers,
+          p2pHost,
+          p2pPort,
+          jsonRpcConfiguration(),
+          webSocketConfiguration(),
+          metricsConfiguration(),
+          permissioningConfiguration);
+    } catch (Exception e) {
+      throw new ParameterException(new CommandLine(this), e.getMessage());
+    }
   }
 
   private NetworkName getNetwork() {
@@ -734,7 +738,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     return metricsConfiguration;
   }
 
-  private Optional<PermissioningConfiguration> permissioningConfiguration() {
+  private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
 
     if (!permissionsAccountsEnabled && !permissionsNodesEnabled) {
       return Optional.empty();
