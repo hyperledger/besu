@@ -45,7 +45,6 @@ public class PipelinedImportChainSegmentTask<C, B> extends AbstractEthTask<List<
   private final ProtocolContext<C> protocolContext;
   private final ProtocolSchedule<C> protocolSchedule;
   private final List<B> importedBlocks = new ArrayList<>();
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
 
   // First header is assumed  to already be imported
   private final List<BlockHeader> checkpointHeaders;
@@ -76,7 +75,6 @@ public class PipelinedImportChainSegmentTask<C, B> extends AbstractEthTask<List<
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.ethTasksTimer = ethTasksTimer;
     this.checkpointHeaders = checkpointHeaders;
     this.chunksInTotal = checkpointHeaders.size() - 1;
     this.blockHandler = blockHandler;

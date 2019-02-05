@@ -28,7 +28,6 @@ public class RetryingGetHeaderFromPeerByNumberTask
     extends AbstractRetryingPeerTask<List<BlockHeader>> {
   private final ProtocolSchedule<?> protocolSchedule;
   private final EthContext ethContext;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
   private final long pivotBlockNumber;
 
   private RetryingGetHeaderFromPeerByNumberTask(
@@ -40,7 +39,6 @@ public class RetryingGetHeaderFromPeerByNumberTask
     super(ethContext, maxRetries, ethTasksTimer);
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
-    this.ethTasksTimer = ethTasksTimer;
     this.pivotBlockNumber = pivotBlockNumber;
   }
 

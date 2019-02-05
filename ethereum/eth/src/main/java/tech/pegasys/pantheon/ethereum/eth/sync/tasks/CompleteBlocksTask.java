@@ -46,7 +46,6 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
 
   private final EthContext ethContext;
   private final ProtocolSchedule<C> protocolSchedule;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
 
   private final List<BlockHeader> headers;
   private final Map<Long, Block> blocks;
@@ -61,7 +60,6 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
     checkArgument(headers.size() > 0, "Must supply a non-empty headers list");
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
-    this.ethTasksTimer = ethTasksTimer;
 
     this.headers = headers;
     this.blocks = new HashMap<>();

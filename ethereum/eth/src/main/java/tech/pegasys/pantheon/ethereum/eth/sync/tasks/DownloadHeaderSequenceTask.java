@@ -52,7 +52,6 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
   private final EthContext ethContext;
   private final ProtocolContext<C> protocolContext;
   private final ProtocolSchedule<C> protocolSchedule;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
 
   private final BlockHeader[] headers;
   private final BlockHeader referenceHeader;
@@ -75,7 +74,6 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
     this.ethContext = ethContext;
     this.referenceHeader = referenceHeader;
     this.segmentLength = segmentLength;
-    this.ethTasksTimer = ethTasksTimer;
 
     startingBlockNumber = referenceHeader.getNumber() - segmentLength;
     headers = new BlockHeader[segmentLength];

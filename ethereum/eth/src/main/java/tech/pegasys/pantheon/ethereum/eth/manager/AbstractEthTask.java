@@ -26,13 +26,15 @@ import java.util.function.Supplier;
 public abstract class AbstractEthTask<T> implements EthTask<T> {
 
   protected double taskTimeInSec = -1.0D;
-  protected OperationTimer taskTimer;
+  protected final LabelledMetric<OperationTimer> ethTasksTimer;
+  protected final OperationTimer taskTimer;
   protected final AtomicReference<CompletableFuture<T>> result = new AtomicReference<>();
   protected volatile Collection<CompletableFuture<?>> subTaskFutures =
       new ConcurrentLinkedDeque<>();
 
   /** @param ethTasksTimer The metrics timer to use to time the duration of the task. */
   protected AbstractEthTask(final LabelledMetric<OperationTimer> ethTasksTimer) {
+    this.ethTasksTimer = ethTasksTimer;
     taskTimer = ethTasksTimer.labels(getClass().getSimpleName());
   }
 

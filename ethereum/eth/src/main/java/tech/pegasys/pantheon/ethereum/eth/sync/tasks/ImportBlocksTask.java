@@ -42,7 +42,6 @@ public class ImportBlocksTask<C> extends AbstractPeerTask<List<Block>> {
 
   private final ProtocolContext<C> protocolContext;
   private final ProtocolSchedule<C> protocolSchedule;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
   private final long startNumber;
 
   private final BlockHeader referenceHeader;
@@ -61,7 +60,6 @@ public class ImportBlocksTask<C> extends AbstractPeerTask<List<Block>> {
     this.protocolContext = protocolContext;
     this.referenceHeader = referenceHeader;
     this.maxBlocks = maxBlocks;
-    this.ethTasksTimer = ethTasksTimer;
 
     this.startNumber = referenceHeader.getNumber();
   }

@@ -36,7 +36,6 @@ public class DetermineCommonAncestorTask<C> extends AbstractEthTask<BlockHeader>
   private final EthContext ethContext;
   private final ProtocolSchedule<C> protocolSchedule;
   private final ProtocolContext<C> protocolContext;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
   private final EthPeer peer;
   private final int headerRequestSize;
 
@@ -56,7 +55,6 @@ public class DetermineCommonAncestorTask<C> extends AbstractEthTask<BlockHeader>
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.protocolContext = protocolContext;
-    this.ethTasksTimer = ethTasksTimer;
     this.peer = peer;
     this.headerRequestSize = headerRequestSize;
 
