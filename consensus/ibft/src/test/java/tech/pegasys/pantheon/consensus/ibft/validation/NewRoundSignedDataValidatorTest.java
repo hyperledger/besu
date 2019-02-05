@@ -27,7 +27,7 @@ import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.payload.NewRoundPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
 import tech.pegasys.pantheon.consensus.ibft.statemachine.TerminatedRoundArtefacts;
-import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator.MessageValidatorForHeightFactory;
+import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangePayloadValidator.MessageValidatorForHeightFactory;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
@@ -53,7 +53,7 @@ public class NewRoundSignedDataValidatorTest {
   private final long chainHeight = 2;
   private final ConsensusRoundIdentifier roundIdentifier =
       new ConsensusRoundIdentifier(chainHeight, 4);
-  private NewRoundMessageValidator validator;
+  private NewRoundPayloadValidator validator;
 
   private final ProposerSelector proposerSelector = mock(ProposerSelector.class);
   private final MessageValidatorForHeightFactory validatorFactory =
@@ -83,7 +83,7 @@ public class NewRoundSignedDataValidatorTest {
     when(signedDataValidator.validatePrepareMessage(any())).thenReturn(true);
 
     validator =
-        new NewRoundMessageValidator(
+        new NewRoundPayloadValidator(
             validators, proposerSelector, validatorFactory, 1, chainHeight);
   }
 

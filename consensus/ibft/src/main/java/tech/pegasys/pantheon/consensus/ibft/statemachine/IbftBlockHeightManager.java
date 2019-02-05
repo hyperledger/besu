@@ -245,7 +245,7 @@ public class IbftBlockHeightManager implements BlockHeightManager {
     }
     LOG.info("Received NewRound Payload for {}", newRound.getRoundIdentifier());
 
-    if (newRoundMessageValidator.validateNewRoundMessage(newRound.getSignedPayload())) {
+    if (newRoundMessageValidator.validateNewRoundMessage(newRound)) {
       if (messageAge == FUTURE_ROUND) {
         startNewRound(newRound.getRoundIdentifier().getRoundNumber());
       }
