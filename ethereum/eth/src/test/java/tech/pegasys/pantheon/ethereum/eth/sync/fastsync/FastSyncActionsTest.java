@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.CHAIN_TOO_SHORT;
-import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.NO_PEERS_AVAILABLE;
 import static tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem.NO_OP_LABELLED_TIMER;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -49,9 +48,6 @@ public class FastSyncActionsTest {
           .fastSyncPivotDistance(1000)
           .build();
 
-  private ProtocolSchedule<Void> protocolSchedule;
-  private ProtocolContext<Void> protocolContext;
-
   private final LabelledMetric<OperationTimer> ethTasksTimer = NO_OP_LABELLED_TIMER;
   private final AtomicInteger timeoutCount = new AtomicInteger(0);
   private FastSyncActions<Void> fastSyncActions;
@@ -63,8 +59,8 @@ public class FastSyncActionsTest {
     final BlockchainSetupUtil<Void> blockchainSetupUtil = BlockchainSetupUtil.forTesting();
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
-    protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
-    protocolContext = blockchainSetupUtil.getProtocolContext();
+    final ProtocolSchedule<Void> protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
+    final ProtocolContext<Void> protocolContext = blockchainSetupUtil.getProtocolContext();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             blockchain,
@@ -111,14 +107,19 @@ public class FastSyncActionsTest {
   public void selectPivotBlockShouldSelectBlockPivotDistanceFromBestPeer() {
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 5000);
 
-    final FastSyncState result = fastSyncActions.selectPivotBlock();
+    final CompletableFuture<FastSyncState> result = fastSyncActions.selectPivotBlock();
     final FastSyncState expected = new FastSyncState(OptionalLong.of(4000));
-    assertThat(result).isEqualTo(expected);
+    assertThat(result).isCompletedWithValue(expected);
   }
 
   @Test
-  public void selectPivotBlockShouldFailIfNoPeersAreAvailable() {
-    assertThrowsFastSyncException(NO_PEERS_AVAILABLE, fastSyncActions::selectPivotBlock);
+  public void selectPivotBlockShouldWaitAndRetryIfNoPeersAreAvailable() {
+    final CompletableFuture<FastSyncState> result = fastSyncActions.selectPivotBlock();
+    assertThat(result).isNotDone();
+
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 5000);
+    final FastSyncState expected = new FastSyncState(OptionalLong.of(4000));
+    assertThat(result).isCompletedWithValue(expected);
   }
 
   @Test

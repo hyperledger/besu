@@ -51,7 +51,7 @@ public class FastSyncDownloaderTest {
     final FastSyncState downloadPivotBlockHeaderState =
         new FastSyncState(OptionalLong.of(50), Optional.of(pivotBlockHeader));
     when(fastSyncActions.waitForSuitablePeers()).thenReturn(COMPLETE);
-    when(fastSyncActions.selectPivotBlock()).thenReturn(selectPivotBlockState);
+    when(fastSyncActions.selectPivotBlock()).thenReturn(completedFuture(selectPivotBlockState));
     when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
         .thenReturn(completedFuture(downloadPivotBlockHeaderState));
     when(fastSyncActions.downloadChain(downloadPivotBlockHeaderState)).thenReturn(COMPLETE);
@@ -105,7 +105,7 @@ public class FastSyncDownloaderTest {
     final FastSyncState downloadPivotBlockHeaderState =
         new FastSyncState(OptionalLong.of(50), Optional.of(pivotBlockHeader));
     when(fastSyncActions.waitForSuitablePeers()).thenReturn(COMPLETE);
-    when(fastSyncActions.selectPivotBlock()).thenReturn(selectPivotBlockState);
+    when(fastSyncActions.selectPivotBlock()).thenReturn(completedFuture(selectPivotBlockState));
     when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
         .thenReturn(completedFuture(downloadPivotBlockHeaderState));
     when(fastSyncActions.downloadChain(downloadPivotBlockHeaderState)).thenReturn(chainFuture);
@@ -137,7 +137,7 @@ public class FastSyncDownloaderTest {
     final FastSyncState downloadPivotBlockHeaderState =
         new FastSyncState(OptionalLong.of(50), Optional.of(pivotBlockHeader));
     when(fastSyncActions.waitForSuitablePeers()).thenReturn(COMPLETE);
-    when(fastSyncActions.selectPivotBlock()).thenReturn(selectPivotBlockState);
+    when(fastSyncActions.selectPivotBlock()).thenReturn(completedFuture(selectPivotBlockState));
     when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
         .thenReturn(completedFuture(downloadPivotBlockHeaderState));
     when(fastSyncActions.downloadChain(downloadPivotBlockHeaderState)).thenReturn(chainFuture);
@@ -169,7 +169,7 @@ public class FastSyncDownloaderTest {
     final FastSyncState downloadPivotBlockHeaderState =
         new FastSyncState(OptionalLong.of(50), Optional.of(pivotBlockHeader));
     when(fastSyncActions.waitForSuitablePeers()).thenReturn(COMPLETE);
-    when(fastSyncActions.selectPivotBlock()).thenReturn(selectPivotBlockState);
+    when(fastSyncActions.selectPivotBlock()).thenReturn(completedFuture(selectPivotBlockState));
     when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
         .thenReturn(completedFuture(downloadPivotBlockHeaderState));
     when(fastSyncActions.downloadChain(downloadPivotBlockHeaderState)).thenReturn(chainFuture);
@@ -200,7 +200,7 @@ public class FastSyncDownloaderTest {
     final FastSyncState downloadPivotBlockHeaderState =
         new FastSyncState(OptionalLong.of(50), Optional.of(pivotBlockHeader));
     when(fastSyncActions.waitForSuitablePeers()).thenReturn(COMPLETE);
-    when(fastSyncActions.selectPivotBlock()).thenReturn(selectPivotBlockState);
+    when(fastSyncActions.selectPivotBlock()).thenReturn(completedFuture(selectPivotBlockState));
     when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
         .thenReturn(completedFuture(downloadPivotBlockHeaderState));
     when(fastSyncActions.downloadChain(downloadPivotBlockHeaderState)).thenReturn(chainFuture);
