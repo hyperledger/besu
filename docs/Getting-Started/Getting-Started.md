@@ -1,14 +1,14 @@
 description: Getting started with Pantheon
 <!--- END of page meta data -->
 
-# Getting started overview
+# Getting Started Overview
 
-You can get started with Pantheon by:
+Get started with Pantheon by:
 
-* Starting a node as described in [Starting Pantheon](Starting-Pantheon.md)
+* [Installing Pantheon](../Installation/Install-Binaries.md) and [starting a node](Starting-Pantheon.md)
 * Running from the [Pantheon Docker image](Run-Docker-Image.md)
 * Using the [Private Network Quickstart](../Tutorials/Private-Network-Quickstart.md) 
 
-To run a single node to connect the Ethereum mainnet or a public testnet, running from the Pantheon [Docker image](Run-Docker-Image.md) or [installing the packaged binaries](../Installation/Install-Binaries.md) is the fastest way to get started. 
+The fastest way to run a single node and connect to the Ethereum mainnet (or a public testnet) is by using the [Docker image](Run-Docker-Image.md). 
 
-To run a private network on which you can make JSON-RPC requests and send transactions, or explore Pantheon and a private Ethereum network, the [Private Network Quickstart](../Tutorials/Private-Network-Quickstart.md) runs a private network of Pantheon nodes in Docker containers.
+To run a private network on which you can make JSON-RPC requests and send transactions, the [Private Network Quickstart](../Tutorials/Private-Network-Quickstart.md) sets up a network of Pantheon nodes in Docker containers.
