@@ -14,28 +14,46 @@ package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
+import java.util.concurrent.CountDownLatch;
+
 public class MockEthTask extends AbstractEthTask<Object> {
 
   private boolean executed = false;
+  private CountDownLatch countdown;
 
-  protected MockEthTask() {
+  MockEthTask(final int count) {
     super(NoOpMetricsSystem.NO_OP_LABELLED_TIMER);
+    countdown = new CountDownLatch(count);
+  }
+
+  MockEthTask() {
+    this(0);
   }
 
   @Override
   protected void executeTask() {
+    try {
+      countdown.await();
+    } catch (final InterruptedException ignore) {
+    }
     executed = true;
   }
 
-  public boolean hasBeenStarted() {
+  void countDown() {
+    countdown.countDown();
+  }
+
+  boolean hasBeenStarted() {
     return executed;
   }
 
-  public void complete() {
-    result.get().complete(null);
+  void complete() {
+    if (executed) {
+      result.get().complete(null);
+    }
   }
 
-  public void fail() {
+  void fail() {
     result.get().completeExceptionally(new RuntimeException("Failure forced for testing"));
   }
 }

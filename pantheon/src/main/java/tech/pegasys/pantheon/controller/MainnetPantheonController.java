@@ -126,7 +126,8 @@ public class MainnetPantheonController implements PantheonController<Void> {
                 .orElse(MainnetProtocolSchedule.DEFAULT_CHAIN_ID),
             fastSyncEnabled,
             syncConfig.downloaderParallelism(),
-            syncConfig.transactionsParallelism());
+            syncConfig.transactionsParallelism(),
+            syncConfig.computationParallelism());
     final SyncState syncState =
         new SyncState(
             protocolContext.getBlockchain(), ethProtocolManager.ethContext().getEthPeers());
