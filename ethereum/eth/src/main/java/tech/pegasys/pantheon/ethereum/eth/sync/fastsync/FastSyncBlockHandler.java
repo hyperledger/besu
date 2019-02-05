@@ -21,11 +21,11 @@ import tech.pegasys.pantheon.ethereum.core.BlockImporter;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPeerTask.PeerTaskResult;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.sync.ValidationPolicy;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.CompleteBlocksTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.GetReceiptsFromPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.PipelinedImportChainSegmentTask.BlockHandler;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
-import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
@@ -46,16 +46,19 @@ public class FastSyncBlockHandler<C> implements BlockHandler<BlockWithReceipts> 
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
   private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private final ValidationPolicy validationPolicy;
 
   public FastSyncBlockHandler(
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final LabelledMetric<OperationTimer> ethTasksTimer,
+      final ValidationPolicy validationPolicy) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.ethTasksTimer = ethTasksTimer;
+    this.validationPolicy = validationPolicy;
   }
 
   @Override
@@ -105,7 +108,7 @@ public class FastSyncBlockHandler<C> implements BlockHandler<BlockWithReceipts> 
           protocolContext,
           block,
           blockWithReceipt.getReceipts(),
-          HeaderValidationMode.LIGHT_SKIP_DETACHED)) {
+          validationPolicy.getValidationModeForNextBlock())) {
         return invalidBlockFailure(block);
       }
     }

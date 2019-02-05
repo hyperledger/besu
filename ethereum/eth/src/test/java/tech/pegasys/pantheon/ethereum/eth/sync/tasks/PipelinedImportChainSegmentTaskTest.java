@@ -31,6 +31,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.AbstractMessageTaskTest;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV63;
+import tech.pegasys.pantheon.ethereum.eth.sync.ValidationPolicy;
 import tech.pegasys.pantheon.ethereum.eth.sync.fullsync.FullSyncBlockHandler;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
@@ -51,6 +52,9 @@ import org.junit.Test;
 
 public class PipelinedImportChainSegmentTaskTest
     extends AbstractMessageTaskTest<List<Block>, List<Block>> {
+
+  private static final ValidationPolicy DETACHED_ONLY_VALIDATION_POLICY =
+      () -> HeaderValidationMode.DETACHED_ONLY;
 
   @Override
   protected List<Block> generateDataToBeRequested() {
@@ -98,7 +102,7 @@ public class PipelinedImportChainSegmentTaskTest
         1,
         ethTasksTimer,
         createBlockHandler(),
-        HeaderValidationMode.DETACHED_ONLY,
+        DETACHED_ONLY_VALIDATION_POLICY,
         previousBlock.getHeader(),
         lastBlock.getHeader());
   }
@@ -134,7 +138,7 @@ public class PipelinedImportChainSegmentTaskTest
             1,
             ethTasksTimer,
             createBlockHandler(),
-            HeaderValidationMode.DETACHED_ONLY,
+            DETACHED_ONLY_VALIDATION_POLICY,
             firstBlock.getHeader(),
             secondBlock.getHeader());
 
@@ -186,7 +190,7 @@ public class PipelinedImportChainSegmentTaskTest
             1,
             ethTasksTimer,
             createBlockHandler(),
-            HeaderValidationMode.DETACHED_ONLY,
+            DETACHED_ONLY_VALIDATION_POLICY,
             fakeFirstBlock.getHeader(),
             thirdBlock.getHeader());
 
@@ -242,7 +246,7 @@ public class PipelinedImportChainSegmentTaskTest
             1,
             ethTasksTimer,
             createBlockHandler(),
-            HeaderValidationMode.DETACHED_ONLY,
+            DETACHED_ONLY_VALIDATION_POLICY,
             checkpointHeaders);
 
     // Execute task and wait for response
@@ -305,7 +309,7 @@ public class PipelinedImportChainSegmentTaskTest
             2,
             ethTasksTimer,
             createBlockHandler(),
-            HeaderValidationMode.DETACHED_ONLY,
+            DETACHED_ONLY_VALIDATION_POLICY,
             checkpointHeaders);
 
     // Execute task and wait for response
@@ -372,7 +376,7 @@ public class PipelinedImportChainSegmentTaskTest
             3,
             ethTasksTimer,
             createBlockHandler(),
-            HeaderValidationMode.DETACHED_ONLY,
+            DETACHED_ONLY_VALIDATION_POLICY,
             checkpointHeaders);
 
     // Execute task and wait for response

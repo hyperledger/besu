@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.CHAIN_TOO_SHORT;
+import static tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem.NO_OP_LABELLED_COUNTER;
 import static tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem.NO_OP_LABELLED_TIMER;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -74,7 +75,8 @@ public class FastSyncActionsTest {
             protocolContext,
             ethContext,
             new SyncState(blockchain, ethContext.getEthPeers()),
-            ethTasksTimer);
+            ethTasksTimer,
+            NO_OP_LABELLED_COUNTER);
   }
 
   @Test

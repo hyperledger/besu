@@ -74,7 +74,8 @@ public class DefaultSynchronizer<C> implements Synchronizer {
     this.syncConfig = syncConfig;
     this.ethContext = ethContext;
     this.syncState = syncState;
-    LabelledMetric<OperationTimer> ethTasksTimer =
+
+    final LabelledMetric<OperationTimer> ethTasksTimer =
         metricsSystem.createLabelledTimer(
             MetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName");
     this.blockPropagationManager =
@@ -114,7 +115,12 @@ public class DefaultSynchronizer<C> implements Synchronizer {
                       protocolContext,
                       ethContext,
                       syncState,
-                      ethTasksTimer),
+                      ethTasksTimer,
+                      metricsSystem.createLabelledCounter(
+                          MetricCategory.SYNCHRONIZER,
+                          "fast_sync_validation_mode",
+                          "Number of blocks validated using light vs full validation during fast sync",
+                          "validationMode")),
                   worldStateDownloader));
     } else {
       this.fastSyncDownloader = Optional.empty();
