@@ -33,6 +33,7 @@ import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.io.Closeable;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
 
@@ -49,7 +50,8 @@ public interface PantheonController<C> extends Closeable {
       final MiningParameters miningParameters,
       final KeyPair nodeKeys,
       final MetricsSystem metricsSystem,
-      final PrivacyParameters privacyParameters) {
+      final PrivacyParameters privacyParameters,
+      final Path dataDirectory) {
 
     final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
 
@@ -61,8 +63,9 @@ public interface PantheonController<C> extends Closeable {
           syncConfig,
           miningParameters,
           nodeKeys,
-          metricsSystem,
-          privacyParameters);
+          privacyParameters,
+          dataDirectory,
+          metricsSystem);
     } else if (configOptions.isIbft2()) {
       return IbftPantheonController.init(
           storageProvider,
@@ -71,6 +74,7 @@ public interface PantheonController<C> extends Closeable {
           miningParameters,
           networkId,
           nodeKeys,
+          dataDirectory,
           metricsSystem);
     } else if (configOptions.isIbftLegacy()) {
       return IbftLegacyPantheonController.init(
@@ -80,6 +84,7 @@ public interface PantheonController<C> extends Closeable {
           ottomanTestnetOperation,
           networkId,
           nodeKeys,
+          dataDirectory,
           metricsSystem);
     } else if (configOptions.isClique()) {
       return CliquePantheonController.init(
@@ -89,6 +94,7 @@ public interface PantheonController<C> extends Closeable {
           miningParameters,
           networkId,
           nodeKeys,
+          dataDirectory,
           metricsSystem);
     } else {
       throw new IllegalArgumentException("Unknown consensus mechanism defined");

@@ -45,7 +45,8 @@ public final class BlockImporterTest {
 
   @Test
   public void blockImport() throws IOException {
-    final Path source = folder.newFile().toPath();
+    final Path dataDir = folder.newFolder().toPath();
+    final Path source = dataDir.resolve("1000.blocks");
     BlockTestUtil.write1000Blocks(source);
     final PantheonController<?> targetController =
         PantheonController.fromConfig(
@@ -57,7 +58,8 @@ public final class BlockImporterTest {
             new MiningParametersTestBuilder().enabled(false).build(),
             KeyPair.generate(),
             new NoOpMetricsSystem(),
-            PrivacyParameters.noPrivacy());
+            PrivacyParameters.noPrivacy(),
+            dataDir);
     final BlockImporter.ImportResult result =
         blockImporter.importBlockchain(source, targetController);
     // Don't count the Genesis block
@@ -67,7 +69,8 @@ public final class BlockImporterTest {
 
   @Test
   public void ibftImport() throws IOException {
-    final Path source = folder.newFile().toPath();
+    final Path dataDir = folder.newFolder().toPath();
+    final Path source = dataDir.resolve("ibft.blocks");
     final String config =
         Resources.toString(Resources.getResource("ibftlegacy_genesis.json"), UTF_8);
 
@@ -91,7 +94,8 @@ public final class BlockImporterTest {
             new MiningParametersTestBuilder().enabled(false).build(),
             KeyPair.generate(),
             new NoOpMetricsSystem(),
-            PrivacyParameters.noPrivacy());
+            PrivacyParameters.noPrivacy(),
+            dataDir);
     final BlockImporter.ImportResult result = blockImporter.importBlockchain(source, controller);
 
     // Don't count the Genesis block

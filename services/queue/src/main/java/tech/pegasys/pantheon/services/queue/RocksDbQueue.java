@@ -29,7 +29,7 @@ import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
-public class RocksDbQueue implements BigQueue<BytesValue> {
+public class RocksDbQueue implements BytesQueue {
 
   private static final Logger LOG = LogManager.getLogger();
 
