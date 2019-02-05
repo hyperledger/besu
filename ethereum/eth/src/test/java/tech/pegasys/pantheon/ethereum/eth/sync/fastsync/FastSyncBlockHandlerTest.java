@@ -36,6 +36,8 @@ import tech.pegasys.pantheon.ethereum.eth.manager.DeterministicEthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthMessages;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
+import tech.pegasys.pantheon.ethereum.eth.sync.ValidationPolicy;
+import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
@@ -58,6 +60,7 @@ public class FastSyncBlockHandlerTest {
       new Block(new BlockHeaderTestFixture().number(2).buildHeader(), EMPTY_BODY);
   private static final Block BLOCK3 =
       new Block(new BlockHeaderTestFixture().number(3).buildHeader(), EMPTY_BODY);
+  private static final HeaderValidationMode VALIDATION_MODE = LIGHT_SKIP_DETACHED;
 
   @SuppressWarnings("unchecked")
   private final ProtocolSchedule<Void> protocolSchedule = mock(ProtocolSchedule.class);
@@ -79,14 +82,17 @@ public class FastSyncBlockHandlerTest {
           new EthMessages(),
           new DeterministicEthScheduler());
   private final LabelledMetric<OperationTimer> ethTasksTimer = NO_OP_LABELLED_TIMER;
+  private final ValidationPolicy validationPolicy = mock(ValidationPolicy.class);
 
   private final FastSyncBlockHandler<Void> blockHandler =
-      new FastSyncBlockHandler<>(protocolSchedule, protocolContext, ethContext, ethTasksTimer);
+      new FastSyncBlockHandler<>(
+          protocolSchedule, protocolContext, ethContext, ethTasksTimer, validationPolicy);
 
   @Before
   public void setUp() {
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
+    when(validationPolicy.getValidationModeForNextBlock()).thenReturn(VALIDATION_MODE);
   }
 
   @After
@@ -96,7 +102,7 @@ public class FastSyncBlockHandlerTest {
 
   @Test
   public void shouldFastImportBlocks() {
-    when(blockImporter.fastImportBlock(protocolContext, BLOCK, emptyList(), LIGHT_SKIP_DETACHED))
+    when(blockImporter.fastImportBlock(protocolContext, BLOCK, emptyList(), VALIDATION_MODE))
         .thenReturn(true);
     final List<BlockWithReceipts> blocksWithReceipts =
         singletonList(new BlockWithReceipts(BLOCK, emptyList()));
@@ -105,12 +111,12 @@ public class FastSyncBlockHandlerTest {
         blockHandler.validateAndImportBlocks(blocksWithReceipts);
 
     assertThat(result).isCompleted();
-    verify(blockImporter).fastImportBlock(protocolContext, BLOCK, emptyList(), LIGHT_SKIP_DETACHED);
+    verify(blockImporter).fastImportBlock(protocolContext, BLOCK, emptyList(), VALIDATION_MODE);
   }
 
   @Test
   public void shouldReturnExceptionallyCompletedFutureWhenBlockImportFails() {
-    when(blockImporter.fastImportBlock(protocolContext, BLOCK, emptyList(), LIGHT_SKIP_DETACHED))
+    when(blockImporter.fastImportBlock(protocolContext, BLOCK, emptyList(), VALIDATION_MODE))
         .thenReturn(false);
 
     final CompletableFuture<List<BlockWithReceipts>> result =
@@ -122,9 +128,9 @@ public class FastSyncBlockHandlerTest {
 
   @Test
   public void shouldNotContinueImportingBlocksAfterValidationFailure() {
-    when(blockImporter.fastImportBlock(protocolContext, BLOCK, emptyList(), LIGHT_SKIP_DETACHED))
+    when(blockImporter.fastImportBlock(protocolContext, BLOCK, emptyList(), VALIDATION_MODE))
         .thenReturn(true);
-    when(blockImporter.fastImportBlock(protocolContext, BLOCK2, emptyList(), LIGHT_SKIP_DETACHED))
+    when(blockImporter.fastImportBlock(protocolContext, BLOCK2, emptyList(), VALIDATION_MODE))
         .thenReturn(false);
 
     final CompletableFuture<List<BlockWithReceipts>> result =
@@ -136,10 +142,9 @@ public class FastSyncBlockHandlerTest {
 
     assertThat(result).isCompletedExceptionally();
 
-    verify(blockImporter).fastImportBlock(protocolContext, BLOCK, emptyList(), LIGHT_SKIP_DETACHED);
-    verify(blockImporter)
-        .fastImportBlock(protocolContext, BLOCK2, emptyList(), LIGHT_SKIP_DETACHED);
+    verify(blockImporter).fastImportBlock(protocolContext, BLOCK, emptyList(), VALIDATION_MODE);
+    verify(blockImporter).fastImportBlock(protocolContext, BLOCK2, emptyList(), VALIDATION_MODE);
     verify(blockImporter, never())
-        .fastImportBlock(protocolContext, BLOCK3, emptyList(), LIGHT_SKIP_DETACHED);
+        .fastImportBlock(protocolContext, BLOCK3, emptyList(), VALIDATION_MODE);
   }
 }

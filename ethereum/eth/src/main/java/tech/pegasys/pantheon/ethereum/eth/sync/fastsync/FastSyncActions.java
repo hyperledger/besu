@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.WaitForPeersTask;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.util.ExceptionUtils;
@@ -44,6 +45,7 @@ public class FastSyncActions<C> {
   private final EthContext ethContext;
   private final SyncState syncState;
   private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private final LabelledMetric<Counter> fastSyncValidationCounter;
 
   public FastSyncActions(
       final SynchronizerConfiguration syncConfig,
@@ -51,13 +53,15 @@ public class FastSyncActions<C> {
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final LabelledMetric<OperationTimer> ethTasksTimer,
+      final LabelledMetric<Counter> fastSyncValidationCounter) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.syncState = syncState;
     this.ethTasksTimer = ethTasksTimer;
+    this.fastSyncValidationCounter = fastSyncValidationCounter;
   }
 
   public CompletableFuture<Void> waitForSuitablePeers() {
@@ -168,6 +172,7 @@ public class FastSyncActions<C> {
             ethContext,
             syncState,
             ethTasksTimer,
+            fastSyncValidationCounter,
             currentState.getPivotBlockHeader().get());
     return downloader.start();
   }

@@ -13,6 +13,9 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.LIGHT_SKIP_DETACHED;
 import static tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason.TOO_MANY_PEERS;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -27,8 +30,6 @@ import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUt
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.concurrent.CompletableFuture;
@@ -37,6 +38,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class FastSyncChainDownloaderTest {
+
+  private final FastSyncValidationPolicy validationPolicy = mock(FastSyncValidationPolicy.class);
 
   protected ProtocolSchedule<Void> protocolSchedule;
   protected EthProtocolManager ethProtocolManager;
@@ -47,10 +50,10 @@ public class FastSyncChainDownloaderTest {
   protected MutableBlockchain localBlockchain;
   private BlockchainSetupUtil<Void> otherBlockchainSetup;
   protected Blockchain otherBlockchain;
-  private LabelledMetric<OperationTimer> ethTaskTimer;
 
   @Before
-  public void setupTest() {
+  public void setup() {
+    when(validationPolicy.getValidationModeForNextBlock()).thenReturn(LIGHT_SKIP_DETACHED);
     final BlockchainSetupUtil<Void> localBlockchainSetup = BlockchainSetupUtil.forTesting();
     localBlockchain = localBlockchainSetup.getBlockchain();
     otherBlockchainSetup = BlockchainSetupUtil.forTesting();
@@ -62,8 +65,6 @@ public class FastSyncChainDownloaderTest {
         EthProtocolManagerTestUtil.create(localBlockchain, localBlockchainSetup.getWorldArchive());
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
-
-    ethTaskTimer = NoOpMetricsSystem.NO_OP_LABELLED_TIMER;
   }
 
   private FastSyncChainDownloader<?> downloader(
@@ -74,7 +75,8 @@ public class FastSyncChainDownloaderTest {
         protocolContext,
         ethContext,
         syncState,
-        ethTaskTimer,
+        NoOpMetricsSystem.NO_OP_LABELLED_TIMER,
+        NoOpMetricsSystem.NO_OP_LABELLED_COUNTER,
         otherBlockchain.getBlockHeader(pivotBlockNumber).get());
   }
 

@@ -102,7 +102,7 @@ public class FullSyncDownloader<C> {
               ethTasksTimer,
               new FullSyncBlockHandler<>(
                   protocolSchedule, protocolContext, ethContext, ethTasksTimer),
-              HeaderValidationMode.DETACHED_ONLY,
+              () -> HeaderValidationMode.DETACHED_ONLY,
               checkpointHeaders);
       importedBlocks = importTask.run();
     }
