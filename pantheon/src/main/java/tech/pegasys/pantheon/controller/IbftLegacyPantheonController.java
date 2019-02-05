@@ -149,7 +149,8 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
               networkId,
               fastSyncEnabled,
               syncConfig.downloaderParallelism(),
-              syncConfig.transactionsParallelism());
+              syncConfig.transactionsParallelism(),
+              syncConfig.computationParallelism());
     } else {
       ethSubProtocol = EthProtocol.get();
       ethProtocolManager =
@@ -159,7 +160,8 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
               networkId,
               fastSyncEnabled,
               syncConfig.downloaderParallelism(),
-              syncConfig.transactionsParallelism());
+              syncConfig.transactionsParallelism(),
+              syncConfig.computationParallelism());
     }
 
     final SyncState syncState =

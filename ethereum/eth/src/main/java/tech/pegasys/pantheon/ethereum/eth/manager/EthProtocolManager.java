@@ -95,6 +95,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final boolean fastSyncEnabled,
       final int syncWorkers,
       final int txWorkers,
+      final int computationWorkers,
       final int requestLimit) {
     this(
         blockchain,
@@ -102,7 +103,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         networkId,
         fastSyncEnabled,
         requestLimit,
-        new EthScheduler(syncWorkers, txWorkers));
+        new EthScheduler(syncWorkers, txWorkers, computationWorkers));
   }
 
   public EthProtocolManager(
@@ -111,7 +112,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final int networkId,
       final boolean fastSyncEnabled,
       final int syncWorkers,
-      final int txWorkers) {
+      final int txWorkers,
+      final int computationWorkers) {
     this(
         blockchain,
         worldStateArchive,
@@ -119,6 +121,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         fastSyncEnabled,
         syncWorkers,
         txWorkers,
+        computationWorkers,
         DEFAULT_REQUEST_LIMIT);
   }
 
