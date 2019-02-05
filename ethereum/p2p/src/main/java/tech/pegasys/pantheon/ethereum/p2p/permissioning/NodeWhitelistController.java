@@ -99,7 +99,24 @@ public class NodeWhitelistController {
   }
 
   public boolean isPermitted(final Peer node) {
-    return (nodesWhitelist.contains(node));
+    return nodesWhitelist
+        .stream()
+        .anyMatch(
+            p -> {
+              boolean idsMatch = node.getId().equals(p.getId());
+              boolean hostsMatch = node.getEndpoint().getHost().equals(p.getEndpoint().getHost());
+              boolean udpPortsMatch =
+                  node.getEndpoint().getUdpPort() == p.getEndpoint().getUdpPort();
+              boolean tcpPortsMatchIfPresent = true;
+              if (node.getEndpoint().getTcpPort().isPresent()
+                  && p.getEndpoint().getTcpPort().isPresent()) {
+                tcpPortsMatchIfPresent =
+                    node.getEndpoint().getTcpPort().getAsInt()
+                        == p.getEndpoint().getTcpPort().getAsInt();
+              }
+
+              return idsMatch && hostsMatch && udpPortsMatch && tcpPortsMatchIfPresent;
+            });
   }
 
   public List<Peer> getNodesWhitelist() {
