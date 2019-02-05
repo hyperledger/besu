@@ -211,6 +211,7 @@ public class PeerDiscoveryController {
     }
 
     if (!whitelistIfPresentIsNodePermitted(sender)) {
+      LOG.trace("Dropping packet from peer not in the whitelist ({})", sender.getEnodeURI());
       return;
     }
 
@@ -222,6 +223,7 @@ public class PeerDiscoveryController {
 
     switch (packet.getType()) {
       case PING:
+        LOG.trace("Received PING packet from {}", sender.getEnodeURI());
         if (!peerBlacklisted && addToPeerTable(peer)) {
           final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
           respondToPing(ping, packet.getHash(), peer);
@@ -230,6 +232,7 @@ public class PeerDiscoveryController {
         break;
       case PONG:
         {
+          LOG.trace("Received PONG packet from {}", sender.getEnodeURI());
           matchInteraction(packet)
               .ifPresent(
                   interaction -> {
@@ -246,6 +249,7 @@ public class PeerDiscoveryController {
           break;
         }
       case NEIGHBORS:
+        LOG.trace("Received NEIGHBORS packet from {}", sender.getEnodeURI());
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
@@ -271,6 +275,7 @@ public class PeerDiscoveryController {
         break;
 
       case FIND_NEIGHBORS:
+        LOG.trace("Received FIND_NEIGHBORS packet from {}", sender.getEnodeURI());
         if (!peerKnown || peerBlacklisted) {
           break;
         }
