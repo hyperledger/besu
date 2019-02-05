@@ -46,6 +46,7 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -66,7 +67,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -82,23 +82,17 @@ public final class RunnerTest {
   }
 
   @Test
-  @Ignore("Fast sync implementation in progress.")
   public void fastSyncFromGenesis() throws Exception {
     syncFromGenesis(SyncMode.FAST);
   }
 
   private void syncFromGenesis(final SyncMode mode) throws Exception {
-    final Path dbAhead = temp.newFolder().toPath();
+    final Path dataDirAhead = temp.newFolder().toPath();
+    final Path dbAhead = dataDirAhead.resolve("database");
     final int blockCount = 500;
     final KeyPair aheadDbNodeKeys = loadKeyPair(dbAhead);
-    final SynchronizerConfiguration fastSyncConfig =
-        SynchronizerConfiguration.builder()
-            .syncMode(mode)
-            // TODO: Disable switch from fast to full sync via configuration for now, set pivot to
-            // realistic value when world state persistence is added.
-            //        .fastSyncPivotDistance(blockCount / 2).build();
-            .fastSyncPivotDistance(0)
-            .build();
+    final SynchronizerConfiguration syncConfigAhead =
+        SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
     final MetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
 
     // Setup state with block data
@@ -107,11 +101,12 @@ public final class RunnerTest {
             createKeyValueStorageProvider(dbAhead),
             GenesisConfigFile.mainnet(),
             MainnetProtocolSchedule.create(),
-            fastSyncConfig,
+            syncConfigAhead,
             new MiningParametersTestBuilder().enabled(false).build(),
             aheadDbNodeKeys,
-            noOpMetricsSystem,
-            PrivacyParameters.noPrivacy())) {
+            PrivacyParameters.noPrivacy(),
+            dataDirAhead,
+            noOpMetricsSystem)) {
       setupState(blockCount, controller.getProtocolSchedule(), controller.getProtocolContext());
     }
 
@@ -121,11 +116,12 @@ public final class RunnerTest {
             createKeyValueStorageProvider(dbAhead),
             GenesisConfigFile.mainnet(),
             MainnetProtocolSchedule.create(),
-            fastSyncConfig,
+            syncConfigAhead,
             new MiningParametersTestBuilder().enabled(false).build(),
             aheadDbNodeKeys,
-            noOpMetricsSystem,
-            PrivacyParameters.noPrivacy());
+            PrivacyParameters.noPrivacy(),
+            dataDirAhead,
+            noOpMetricsSystem);
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
     final ExecutorService executorService = Executors.newFixedThreadPool(2);
     final JsonRpcConfiguration aheadJsonRpcConfiguration = jsonRpcConfiguration();
@@ -155,6 +151,14 @@ public final class RunnerTest {
     try {
 
       executorService.submit(runnerAhead::execute);
+
+      final SynchronizerConfiguration syncConfigBehind =
+          SynchronizerConfiguration.builder()
+              .syncMode(mode)
+              .fastSyncPivotDistance(5)
+              .fastSyncMaximumPeerWaitTime(Duration.ofSeconds(5))
+              .build();
+      final Path dataDirBehind = temp.newFolder().toPath();
       final JsonRpcConfiguration behindJsonRpcConfiguration = jsonRpcConfiguration();
       final WebSocketConfiguration behindWebSocketConfiguration = wsRpcConfiguration();
       final MetricsConfiguration behindMetricsConfiguration = metricsConfiguration();
@@ -165,11 +169,12 @@ public final class RunnerTest {
               new InMemoryStorageProvider(),
               GenesisConfigFile.mainnet(),
               MainnetProtocolSchedule.create(),
-              fastSyncConfig,
+              syncConfigBehind,
               new MiningParametersTestBuilder().enabled(false).build(),
               KeyPair.generate(),
-              noOpMetricsSystem,
-              PrivacyParameters.noPrivacy());
+              PrivacyParameters.noPrivacy(),
+              dataDirBehind,
+              noOpMetricsSystem);
       final Runner runnerBehind =
           runnerBuilder
               .pantheonController(controllerBehind)

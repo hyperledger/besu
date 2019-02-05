@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -10,22 +10,8 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.services.queue;
 
-import java.util.Optional;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-/** Provides an interface to block synchronization processes. */
-public interface Synchronizer {
-
-  void start();
-
-  void stop();
-
-  /**
-   * @return the status, based on SyncingResult When actively synchronizing blocks, alternatively
-   *     empty
-   */
-  Optional<SyncStatus> getSyncStatus();
-
-  boolean hasSufficientPeers();
-}
+public interface BytesQueue extends BigQueue<BytesValue> {}

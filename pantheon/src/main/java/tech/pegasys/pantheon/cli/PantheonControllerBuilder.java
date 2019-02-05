@@ -112,6 +112,7 @@ public class PantheonControllerBuilder {
         miningParameters,
         nodeKeys,
         metricsSystem,
-        privacyParameters);
+        privacyParameters,
+        homePath);
   }
 }

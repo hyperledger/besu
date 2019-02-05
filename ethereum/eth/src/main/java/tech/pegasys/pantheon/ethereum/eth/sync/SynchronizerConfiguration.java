@@ -268,8 +268,6 @@ public class SynchronizerConfiguration {
   }
 
   public static class Builder {
-    private int fastSyncPivotDistance = DEFAULT_PIVOT_DISTANCE_FROM_HEAD;
-    private float fastSyncFullValidationRate = DEFAULT_FULL_VALIDATION_RATE;
     private SyncMode syncMode = SyncMode.FULL;
     private Range<Long> blockPropagationRange = Range.closed(-10L, 30L);
     private long downloaderChangeTargetThresholdByHeight = 20L;
@@ -283,6 +281,10 @@ public class SynchronizerConfiguration {
     private int downloaderParallelism = 2;
     private int transactionsParallelism = 2;
     private int computationParallelism = Runtime.getRuntime().availableProcessors();
+    private int fastSyncPivotDistance = DEFAULT_PIVOT_DISTANCE_FROM_HEAD;
+    private float fastSyncFullValidationRate = DEFAULT_FULL_VALIDATION_RATE;
+    private int fastSyncMinimumPeerCount = DEFAULT_FAST_SYNC_MINIMUM_PEERS;
+    private Duration fastSyncMaximumPeerWaitTime = DEFAULT_FAST_SYNC_MAXIMUM_PEER_WAIT_TIME;
 
     public Builder fastSyncPivotDistance(final int distance) {
       fastSyncPivotDistance = distance;
@@ -364,13 +366,23 @@ public class SynchronizerConfiguration {
       return this;
     }
 
+    public Builder fastSyncMinimumPeerCount(final int fastSyncMinimumPeerCount) {
+      this.fastSyncMinimumPeerCount = fastSyncMinimumPeerCount;
+      return this;
+    }
+
+    public Builder fastSyncMaximumPeerWaitTime(final Duration fastSyncMaximumPeerWaitTime) {
+      this.fastSyncMaximumPeerWaitTime = fastSyncMaximumPeerWaitTime;
+      return this;
+    }
+
     public SynchronizerConfiguration build() {
       return new SynchronizerConfiguration(
           syncMode,
           fastSyncPivotDistance,
           fastSyncFullValidationRate,
-          DEFAULT_FAST_SYNC_MINIMUM_PEERS,
-          DEFAULT_FAST_SYNC_MAXIMUM_PEER_WAIT_TIME,
+          fastSyncMinimumPeerCount,
+          fastSyncMaximumPeerWaitTime,
           DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST,
           DEFAULT_WORLD_STATE_REQUEST_PARALLELISM,
           blockPropagationRange,

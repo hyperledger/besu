@@ -37,7 +37,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class WorldStateDownloader {
+  private static final Logger LOG = LogManager.getLogger();
 
   private enum Status {
     IDLE,
@@ -74,6 +78,10 @@ public class WorldStateDownloader {
   }
 
   public CompletableFuture<Void> run(final BlockHeader header) {
+    LOG.info(
+        "Begin downloading world state from peers for block {} ({})",
+        header.getNumber(),
+        header.getHash());
     synchronized (this) {
       if (status == Status.DONE || status == Status.RUNNING) {
         return future;
@@ -92,6 +100,10 @@ public class WorldStateDownloader {
     }
 
     return future;
+  }
+
+  public void cancel() {
+    // TODO
   }
 
   private void requestNodeData(final BlockHeader header) {
@@ -137,6 +149,7 @@ public class WorldStateDownloader {
   }
 
   private synchronized void markDone() {
+    LOG.info("Finished downloading world state from peers");
     if (future == null) {
       future = CompletableFuture.completedFuture(null);
     } else {

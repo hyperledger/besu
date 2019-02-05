@@ -23,17 +23,27 @@ import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.fullsync.FullSyncDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.PendingBlocks;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
+import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.NodeDataRequest;
 import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.OperationTimer;
-import tech.pegasys.pantheon.services.queue.InMemoryBigQueue;
+import tech.pegasys.pantheon.services.queue.BigQueue;
+import tech.pegasys.pantheon.services.queue.BytesQueue;
+import tech.pegasys.pantheon.services.queue.BytesQueueAdapter;
+import tech.pegasys.pantheon.services.queue.RocksDbQueue;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.io.MoreFiles;
+import com.google.common.io.RecursiveDeleteOption;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -48,6 +58,9 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   private final BlockPropagationManager<C> blockPropagationManager;
   private final FullSyncDownloader<C> fullSyncDownloader;
   private final Optional<FastSyncDownloader<C>> fastSyncDownloader;
+  private final Path stateQueueDirectory;
+  private final BigQueue<NodeDataRequest> stateQueue;
+  private final WorldStateDownloader worldStateDownloader;
 
   public DefaultSynchronizer(
       final SynchronizerConfiguration syncConfig,
@@ -56,10 +69,14 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       final WorldStateStorage worldStateStorage,
       final EthContext ethContext,
       final SyncState syncState,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final Path dataDirectory,
+      final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
     this.ethContext = ethContext;
     this.syncState = syncState;
+    LabelledMetric<OperationTimer> ethTasksTimer =
+        metricsSystem.createLabelledTimer(
+            MetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName");
     this.blockPropagationManager =
         new BlockPropagationManager<>(
             syncConfig,
@@ -69,19 +86,22 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             syncState,
             new PendingBlocks(),
             ethTasksTimer);
+
+    ChainHeadTracker.trackChainHeadForPeers(
+        ethContext, protocolSchedule, protocolContext.getBlockchain(), syncConfig, ethTasksTimer);
+
     this.fullSyncDownloader =
         new FullSyncDownloader<>(
             syncConfig, protocolSchedule, protocolContext, ethContext, syncState, ethTasksTimer);
 
-    ChainHeadTracker.trackChainHeadForPeers(
-        ethContext, protocolSchedule, protocolContext.getBlockchain(), syncConfig, ethTasksTimer);
     if (syncConfig.syncMode() == SyncMode.FAST) {
-      LOG.info("Fast sync enabled.");
-      final WorldStateDownloader worldStateDownloader =
+      this.stateQueueDirectory = getStateQueueDirectory(dataDirectory);
+      this.stateQueue = createWorldStateDownloaderQueue(stateQueueDirectory, metricsSystem);
+      this.worldStateDownloader =
           new WorldStateDownloader(
               ethContext,
               worldStateStorage,
-              new InMemoryBigQueue<>(),
+              stateQueue,
               syncConfig.getWorldStateHashCountPerRequest(),
               syncConfig.getWorldStateRequestParallelism(),
               ethTasksTimer);
@@ -98,6 +118,9 @@ public class DefaultSynchronizer<C> implements Synchronizer {
                   worldStateDownloader));
     } else {
       this.fastSyncDownloader = Optional.empty();
+      this.worldStateDownloader = null;
+      this.stateQueueDirectory = null;
+      this.stateQueue = null;
     }
   }
 
@@ -114,6 +137,43 @@ public class DefaultSynchronizer<C> implements Synchronizer {
     }
   }
 
+  @Override
+  public void stop() {
+    cleanupFastSync();
+  }
+
+  private void cleanupFastSync() {
+    if (!fastSyncDownloader.isPresent()) {
+      // We're not fast syncing - nothing to do
+      return;
+    }
+
+    // Make sure downloader is stopped before we start cleaning up its dependencies
+    worldStateDownloader.cancel();
+    try {
+      stateQueue.close();
+      if (stateQueueDirectory.toFile().exists()) {
+        // Clean up this data for now (until fast sync resume functionality is in place)
+        MoreFiles.deleteRecursively(stateQueueDirectory, RecursiveDeleteOption.ALLOW_INSECURE);
+      }
+    } catch (IOException e) {
+      LOG.error("Unable to clean up fast sync state", e);
+    }
+  }
+
+  private Path getStateQueueDirectory(final Path dataDirectory) {
+    Path queueDataDir = dataDirectory.resolve("fastsync/statequeue");
+    queueDataDir.toFile().mkdirs();
+    return queueDataDir;
+  }
+
+  private BigQueue<NodeDataRequest> createWorldStateDownloaderQueue(
+      final Path dataDirectory, final MetricsSystem metricsSystem) {
+    BytesQueue bytesQueue = RocksDbQueue.create(dataDirectory, metricsSystem);
+    return new BytesQueueAdapter<>(
+        bytesQueue, NodeDataRequest::serialize, NodeDataRequest::deserialize);
+  }
+
   private void handleFastSyncResult(final FastSyncState result, final Throwable error) {
 
     final Throwable rootCause = ExceptionUtils.rootCause(error);
@@ -128,6 +188,8 @@ public class DefaultSynchronizer<C> implements Synchronizer {
           "Fast sync completed successfully with pivot block {}",
           result.getPivotBlockNumber().getAsLong());
     }
+    cleanupFastSync();
+
     startFullSync();
   }
 
