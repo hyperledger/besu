@@ -43,7 +43,6 @@ public abstract class AbstractRetryingPeerTask<T extends Collection<?>> extends 
   private final EthContext ethContext;
   private final int maxRetries;
   private int retryCount = 0;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
   private Optional<EthPeer> assignedPeer = Optional.empty();
 
   /**
@@ -57,7 +56,6 @@ public abstract class AbstractRetryingPeerTask<T extends Collection<?>> extends 
       final LabelledMetric<OperationTimer> ethTasksTimer) {
     super(ethTasksTimer);
     this.ethContext = ethContext;
-    this.ethTasksTimer = ethTasksTimer;
     this.maxRetries = maxRetries;
   }
 

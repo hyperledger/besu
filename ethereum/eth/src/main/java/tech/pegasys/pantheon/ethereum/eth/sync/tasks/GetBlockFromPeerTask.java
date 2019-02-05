@@ -35,7 +35,6 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private static final Logger LOG = LogManager.getLogger();
 
   private final ProtocolSchedule<?> protocolSchedule;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
   private final Hash hash;
 
   protected GetBlockFromPeerTask(
@@ -45,7 +44,6 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
       final LabelledMetric<OperationTimer> ethTasksTimer) {
     super(ethContext, ethTasksTimer);
     this.protocolSchedule = protocolSchedule;
-    this.ethTasksTimer = ethTasksTimer;
     this.hash = hash;
   }
 
