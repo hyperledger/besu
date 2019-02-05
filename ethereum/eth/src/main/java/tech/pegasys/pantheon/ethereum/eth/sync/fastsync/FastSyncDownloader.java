@@ -34,7 +34,7 @@ public class FastSyncDownloader<C> {
     LOG.info("Fast sync enabled");
     return fastSyncActions
         .waitForSuitablePeers()
-        .thenApply(state -> fastSyncActions.selectPivotBlock())
+        .thenCompose(state -> fastSyncActions.selectPivotBlock())
         .thenCompose(fastSyncActions::downloadPivotBlockHeader)
         .thenCompose(this::downloadChainAndWorldState);
   }
