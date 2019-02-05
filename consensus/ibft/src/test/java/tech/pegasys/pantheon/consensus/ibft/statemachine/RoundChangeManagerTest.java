@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator;
+import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangePayloadValidator;
 import tech.pegasys.pantheon.consensus.ibft.validation.SignedDataValidator;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.BlockValidator;
@@ -80,8 +81,8 @@ public class RoundChangeManagerTest {
         .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
     BlockHeader parentHeader = mock(BlockHeader.class);
 
-    RoundChangeMessageValidator.MessageValidatorForHeightFactory messageValidatorFactory =
-        mock(RoundChangeMessageValidator.MessageValidatorForHeightFactory.class);
+    RoundChangePayloadValidator.MessageValidatorForHeightFactory messageValidatorFactory =
+        mock(RoundChangePayloadValidator.MessageValidatorForHeightFactory.class);
 
     when(messageValidatorFactory.createAt(ri1))
         .thenAnswer(
@@ -113,11 +114,12 @@ public class RoundChangeManagerTest {
 
     final RoundChangeMessageValidator roundChangeMessageValidator =
         new RoundChangeMessageValidator(
-            messageValidatorFactory,
-            validators,
-            IbftHelpers.calculateRequiredValidatorQuorum(
-                IbftHelpers.calculateRequiredValidatorQuorum(validators.size())),
-            2);
+            new RoundChangePayloadValidator(
+                messageValidatorFactory,
+                validators,
+                IbftHelpers.calculateRequiredValidatorQuorum(
+                    IbftHelpers.calculateRequiredValidatorQuorum(validators.size())),
+                2));
     manager = new RoundChangeManager(2, roundChangeMessageValidator);
   }
 

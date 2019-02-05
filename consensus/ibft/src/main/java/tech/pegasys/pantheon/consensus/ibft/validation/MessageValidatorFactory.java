@@ -63,21 +63,23 @@ public class MessageValidatorFactory {
     final Collection<Address> validators =
         protocolContext.getConsensusState().getVoteTally().getValidators();
     return new RoundChangeMessageValidator(
-        this::createSignedDataValidator,
-        validators,
-        prepareMessageCountForQuorum(
-            IbftHelpers.calculateRequiredValidatorQuorum(validators.size())),
-        parentHeader.getNumber() + 1);
+        new RoundChangePayloadValidator(
+            this::createSignedDataValidator,
+            validators,
+            prepareMessageCountForQuorum(
+                IbftHelpers.calculateRequiredValidatorQuorum(validators.size())),
+            parentHeader.getNumber() + 1));
   }
 
   public NewRoundMessageValidator createNewRoundValidator(final BlockHeader parentHeader) {
     final Collection<Address> validators =
         protocolContext.getConsensusState().getVoteTally().getValidators();
     return new NewRoundMessageValidator(
-        validators,
-        proposerSelector,
-        this::createSignedDataValidator,
-        IbftHelpers.calculateRequiredValidatorQuorum(validators.size()),
-        parentHeader.getNumber() + 1);
+        new NewRoundPayloadValidator(
+            validators,
+            proposerSelector,
+            this::createSignedDataValidator,
+            IbftHelpers.calculateRequiredValidatorQuorum(validators.size()),
+            parentHeader.getNumber() + 1));
   }
 }

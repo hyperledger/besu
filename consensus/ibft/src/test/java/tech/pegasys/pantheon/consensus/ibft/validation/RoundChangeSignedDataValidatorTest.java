@@ -26,7 +26,7 @@ import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
 import tech.pegasys.pantheon.consensus.ibft.statemachine.TerminatedRoundArtefacts;
-import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangeMessageValidator.MessageValidatorForHeightFactory;
+import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangePayloadValidator.MessageValidatorForHeightFactory;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
@@ -62,8 +62,8 @@ public class RoundChangeSignedDataValidatorTest {
 
   private final MessageValidatorForHeightFactory validatorFactory =
       mock(MessageValidatorForHeightFactory.class);
-  private final RoundChangeMessageValidator validator =
-      new RoundChangeMessageValidator(validatorFactory, validators, 1, chainHeight);
+  private final RoundChangePayloadValidator validator =
+      new RoundChangePayloadValidator(validatorFactory, validators, 1, chainHeight);
 
   @Before
   public void setup() {
@@ -74,7 +74,7 @@ public class RoundChangeSignedDataValidatorTest {
     when(validatorFactory.createAt(any())).thenReturn(basicValidator);
 
     // By default, have all basic messages being valid thus any failures are attributed to logic
-    // in the RoundChangeMessageValidator
+    // in the RoundChangePayloadValidator
     when(basicValidator.addSignedProposalPayload(any())).thenReturn(true);
     when(basicValidator.validatePrepareMessage(any())).thenReturn(true);
   }
@@ -83,7 +83,7 @@ public class RoundChangeSignedDataValidatorTest {
   public void roundChangeSentByNonValidatorFails() {
     final RoundChange msg =
         nonValidatorMessageFactory.createSignedRoundChangePayload(targetRound, Optional.empty());
-    assertThat(validator.validateMessage(msg.getSignedPayload())).isFalse();
+    assertThat(validator.validateRoundChange(msg.getSignedPayload())).isFalse();
   }
 
   @Test
@@ -91,7 +91,7 @@ public class RoundChangeSignedDataValidatorTest {
     final RoundChange msg =
         proposerMessageFactory.createSignedRoundChangePayload(targetRound, Optional.empty());
 
-    assertThat(validator.validateMessage(msg.getSignedPayload())).isTrue();
+    assertThat(validator.validateRoundChange(msg.getSignedPayload())).isTrue();
   }
 
   @Test
@@ -110,7 +110,7 @@ public class RoundChangeSignedDataValidatorTest {
 
     when(basicValidator.addSignedProposalPayload(any())).thenReturn(false);
 
-    assertThat(validator.validateMessage(msg.getSignedPayload())).isFalse();
+    assertThat(validator.validateRoundChange(msg.getSignedPayload())).isFalse();
     verify(validatorFactory, times(1))
         .createAt(prepareCertificate.getProposalPayload().getPayload().getRoundIdentifier());
     verify(basicValidator, times(1))
@@ -131,7 +131,7 @@ public class RoundChangeSignedDataValidatorTest {
             targetRound, Optional.of(terminatedRoundArtefacts));
 
     when(basicValidator.addSignedProposalPayload(any())).thenReturn(true);
-    assertThat(validator.validateMessage(msg.getSignedPayload())).isFalse();
+    assertThat(validator.validateRoundChange(msg.getSignedPayload())).isFalse();
   }
 
   @Test
@@ -150,7 +150,7 @@ public class RoundChangeSignedDataValidatorTest {
         proposerMessageFactory.createSignedRoundChangePayload(
             targetRound, Optional.of(terminatedRoundArtefacts));
 
-    assertThat(validator.validateMessage(msg.getSignedPayload())).isFalse();
+    assertThat(validator.validateRoundChange(msg.getSignedPayload())).isFalse();
 
     verify(basicValidator, times(1)).validatePrepareMessage(prepareMsg.getSignedPayload());
     verify(basicValidator, never()).validateCommmitMessage(any());
@@ -165,7 +165,7 @@ public class RoundChangeSignedDataValidatorTest {
         proposerMessageFactory.createSignedRoundChangePayload(
             latterRoundIdentifier, Optional.empty());
 
-    assertThat(validator.validateMessage(msg.getSignedPayload())).isFalse();
+    assertThat(validator.validateRoundChange(msg.getSignedPayload())).isFalse();
     verify(basicValidator, never()).validatePrepareMessage(any());
   }
 
@@ -186,7 +186,7 @@ public class RoundChangeSignedDataValidatorTest {
         proposerMessageFactory.createSignedRoundChangePayload(
             targetRound, Optional.of(terminatedRoundArtefacts));
 
-    assertThat(validator.validateMessage(msg.getSignedPayload())).isFalse();
+    assertThat(validator.validateRoundChange(msg.getSignedPayload())).isFalse();
     verify(validatorFactory, never()).createAt(any());
     verify(basicValidator, never()).validatePrepareMessage(prepareMsg.getSignedPayload());
     verify(basicValidator, never()).validateCommmitMessage(any());
@@ -212,7 +212,7 @@ public class RoundChangeSignedDataValidatorTest {
         .thenReturn(true);
     when(basicValidator.validatePrepareMessage(prepareMsg.getSignedPayload())).thenReturn(true);
 
-    assertThat(validator.validateMessage(msg.getSignedPayload())).isTrue();
+    assertThat(validator.validateRoundChange(msg.getSignedPayload())).isTrue();
     verify(validatorFactory, times(1))
         .createAt(prepareCertificate.getProposalPayload().getPayload().getRoundIdentifier());
     verify(basicValidator, times(1))

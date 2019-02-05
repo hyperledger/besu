@@ -90,7 +90,7 @@ public class IbftBlockHeightManagerTest {
   @Mock private BlockImporter<IbftContext> blockImporter;
   @Mock private BlockTimer blockTimer;
   @Mock private RoundTimer roundTimer;
-  @Mock private NewRoundMessageValidator newRoundMessageValidator;
+  @Mock private NewRoundMessageValidator newRoundPayloadValidator;
 
   @Captor private ArgumentCaptor<Optional<TerminatedRoundArtefacts>> terminatedRoundArtefactsCaptor;
 
@@ -134,9 +134,9 @@ public class IbftBlockHeightManagerTest {
     when(finalState.getQuorum()).thenReturn(3);
     when(finalState.getMessageFactory()).thenReturn(messageFactory);
     when(blockCreator.createBlock(anyLong())).thenReturn(createdBlock);
-    when(newRoundMessageValidator.validateNewRoundMessage(any())).thenReturn(true);
+    when(newRoundPayloadValidator.validateNewRoundMessage(any())).thenReturn(true);
     when(messageValidatorFactory.createNewRoundValidator(any()))
-        .thenReturn(newRoundMessageValidator);
+        .thenReturn(newRoundPayloadValidator);
     when(messageValidatorFactory.createMessageValidator(any())).thenReturn(messageValidator);
 
     protocolContext =
