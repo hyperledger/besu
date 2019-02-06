@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 public class IbftEventQueueTest {
+  private static final int MAX_QUEUE_SIZE = 1000;
 
   private static class DummyIbftEvent implements IbftEvent {
     @Override
@@ -35,7 +36,7 @@ public class IbftEventQueueTest {
 
   @Test
   public void addPoll() throws InterruptedException {
-    final IbftEventQueue queue = new IbftEventQueue();
+    final IbftEventQueue queue = new IbftEventQueue(MAX_QUEUE_SIZE);
 
     assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNull();
     final DummyIbftEvent dummyEvent = new DummyIbftEvent();
@@ -45,7 +46,7 @@ public class IbftEventQueueTest {
 
   @Test
   public void queueOrdering() throws InterruptedException {
-    final IbftEventQueue queue = new IbftEventQueue();
+    final IbftEventQueue queue = new IbftEventQueue(MAX_QUEUE_SIZE);
 
     final DummyIbftEvent dummyEvent1 = new DummyIbftEvent();
     final DummyIbftEvent dummyEvent2 = new DummyIbftEvent();
@@ -65,7 +66,7 @@ public class IbftEventQueueTest {
 
   @Test
   public void addSizeLimit() throws InterruptedException {
-    final IbftEventQueue queue = new IbftEventQueue();
+    final IbftEventQueue queue = new IbftEventQueue(MAX_QUEUE_SIZE);
 
     for (int i = 0; i <= 1000; i++) {
       final DummyIbftEvent dummyEvent = new DummyIbftEvent();

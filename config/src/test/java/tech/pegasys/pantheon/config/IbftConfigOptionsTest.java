@@ -26,6 +26,8 @@ public class IbftConfigOptionsTest {
   private static final int EXPECTED_DEFAULT_EPOCH_LENGTH = 30_000;
   private static final int EXPECTED_DEFAULT_BLOCK_PERIOD = 1;
   private static final int EXPECTED_DEFAULT_REQUEST_TIMEOUT = 1;
+  private static final int EXPECTED_DEFAULT_GOSSIPED_HISTORY_LIMIT = 1000;
+  private static final int EXPECTED_DEFAULT_MESSAGE_QUEUE_LIMIT = 1000;
 
   @Test
   public void shouldGetEpochLengthFromConfig() {
@@ -78,6 +80,42 @@ public class IbftConfigOptionsTest {
   public void shouldGetDefaultRequestTimeoutFromDefaultConfig() {
     assertThat(IbftConfigOptions.DEFAULT.getRequestTimeoutSeconds())
         .isEqualTo(EXPECTED_DEFAULT_REQUEST_TIMEOUT);
+  }
+
+  @Test
+  public void shouldGetGossipedHistoryLimitFromConfig() {
+    final IbftConfigOptions config = fromConfigOptions(singletonMap("GossipedHistoryLimit", 100));
+    assertThat(config.getGossipedHistoryLimit()).isEqualTo(100);
+  }
+
+  @Test
+  public void shouldFallbackToDefaultGossipedHistoryLimit() {
+    final IbftConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.getGossipedHistoryLimit()).isEqualTo(EXPECTED_DEFAULT_GOSSIPED_HISTORY_LIMIT);
+  }
+
+  @Test
+  public void shouldGetDefaultGossipedHistoryLimitFromDefaultConfig() {
+    assertThat(IbftConfigOptions.DEFAULT.getGossipedHistoryLimit())
+        .isEqualTo(EXPECTED_DEFAULT_GOSSIPED_HISTORY_LIMIT);
+  }
+
+  @Test
+  public void shouldGetMessageQueueLimitFromConfig() {
+    final IbftConfigOptions config = fromConfigOptions(singletonMap("MessageQueueLimit", 100));
+    assertThat(config.getMessageQueueLimit()).isEqualTo(100);
+  }
+
+  @Test
+  public void shouldFallbackToDefaultMessageQueueLimit() {
+    final IbftConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.getMessageQueueLimit()).isEqualTo(EXPECTED_DEFAULT_MESSAGE_QUEUE_LIMIT);
+  }
+
+  @Test
+  public void shouldGetDefaultMessageQueueLimitFromDefaultConfig() {
+    assertThat(IbftConfigOptions.DEFAULT.getMessageQueueLimit())
+        .isEqualTo(EXPECTED_DEFAULT_MESSAGE_QUEUE_LIMIT);
   }
 
   private IbftConfigOptions fromConfigOptions(final Map<String, Object> ibftConfigOptions) {

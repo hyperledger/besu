@@ -44,7 +44,7 @@ public class IbftMiningCoordinatorTest {
   @Mock private Block block;
   @Mock private BlockBody blockBody;
   @Mock private BlockHeader blockHeader;
-  private final IbftEventQueue eventQueue = new IbftEventQueue();
+  private final IbftEventQueue eventQueue = new IbftEventQueue(1000);
   private IbftMiningCoordinator ibftMiningCoordinator;
 
   @Before

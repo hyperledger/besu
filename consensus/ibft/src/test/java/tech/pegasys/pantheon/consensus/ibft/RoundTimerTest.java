@@ -43,7 +43,7 @@ public class RoundTimerTest {
   @Before
   public void initialise() {
     mockExecutorService = mock(ScheduledExecutorService.class);
-    queue = new IbftEventQueue();
+    queue = new IbftEventQueue(1000);
     timer = new RoundTimer(queue, 1, mockExecutorService);
   }
 

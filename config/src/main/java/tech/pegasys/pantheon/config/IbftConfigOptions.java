@@ -21,6 +21,10 @@ public class IbftConfigOptions {
   private static final long DEFAULT_EPOCH_LENGTH = 30_000;
   private static final int DEFAULT_BLOCK_PERIOD_SECONDS = 1;
   private static final int DEFAULT_ROUND_EXPIRY_SECONDS = 1;
+  // In a healthy network this can be very small. This default limit will allow for suitable
+  // protection for on a typical 20 node validator network with multiple rounds
+  private static final int DEFAULT_GOSSIPED_HISTORY_LIMIT = 1000;
+  private static final int DEFAULT_MESSAGE_QUEUE_LIMIT = 1000;
 
   private final JsonObject ibftConfigRoot;
 
@@ -38,5 +42,13 @@ public class IbftConfigOptions {
 
   public int getRequestTimeoutSeconds() {
     return ibftConfigRoot.getInteger("requesttimeoutseconds", DEFAULT_ROUND_EXPIRY_SECONDS);
+  }
+
+  public int getGossipedHistoryLimit() {
+    return ibftConfigRoot.getInteger("gossipedhistorylimit", DEFAULT_GOSSIPED_HISTORY_LIMIT);
+  }
+
+  public int getMessageQueueLimit() {
+    return ibftConfigRoot.getInteger("messagequeuelimit", DEFAULT_MESSAGE_QUEUE_LIMIT);
   }
 }

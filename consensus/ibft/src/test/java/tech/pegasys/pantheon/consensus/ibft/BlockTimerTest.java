@@ -111,7 +111,7 @@ public class BlockTimerTest {
             mockExecutorService.schedule(any(Runnable.class), anyLong(), any()))
         .thenReturn(mockedFuture);
 
-    final IbftEventQueue eventQueue = new IbftEventQueue();
+    final IbftEventQueue eventQueue = new IbftEventQueue(1000);
     final BlockTimer timer =
         new BlockTimer(
             eventQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, mockExecutorService, mockClock);
