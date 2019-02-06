@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.consensus.ibft.tests;
 
 import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
-import static tech.pegasys.pantheon.consensus.ibft.support.TestHelpers.createValidPreparedRoundArtifacts;
+import static tech.pegasys.pantheon.consensus.ibft.support.IntegrationTestHelpers.createValidPreparedRoundArtifacts;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
