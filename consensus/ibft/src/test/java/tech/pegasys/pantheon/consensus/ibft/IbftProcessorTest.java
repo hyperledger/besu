@@ -81,7 +81,7 @@ public class IbftProcessorTest {
   @Test
   public void cleanupExecutorsAfterShutdownNow() throws InterruptedException {
     final IbftProcessor processor =
-        new IbftProcessor(new IbftEventQueue(), mockeEventMultiplexer, mockExecutorService);
+        new IbftProcessor(new IbftEventQueue(1000), mockeEventMultiplexer, mockExecutorService);
 
     // Start the IbftProcessor
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
@@ -142,7 +142,7 @@ public class IbftProcessorTest {
 
   @Test
   public void drainEventsIntoStateMachine() throws InterruptedException {
-    final IbftEventQueue queue = new IbftEventQueue();
+    final IbftEventQueue queue = new IbftEventQueue(1000);
     final IbftProcessor processor =
         new IbftProcessor(queue, mockeEventMultiplexer, mockExecutorService);
 
