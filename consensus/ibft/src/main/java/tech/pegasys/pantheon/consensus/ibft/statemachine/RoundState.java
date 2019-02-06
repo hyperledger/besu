@@ -127,9 +127,9 @@ public class RoundState {
         .collect(Collectors.toList());
   }
 
-  public Optional<TerminatedRoundArtefacts> constructTerminatedRoundArtefacts() {
+  public Optional<PreparedRoundArtefacts> constructPreparedRoundArtefacts() {
     if (isPrepared()) {
-      return Optional.of(new TerminatedRoundArtefacts(proposalMessage.get(), prepareMessages));
+      return Optional.of(new PreparedRoundArtefacts(proposalMessage.get(), prepareMessages));
     }
     return Optional.empty();
   }

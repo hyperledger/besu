@@ -69,7 +69,7 @@ public class IbftBlockHeightManager implements BlockHeightManager {
   private final Function<ConsensusRoundIdentifier, RoundState> roundStateCreator;
   private final IbftFinalState finalState;
 
-  private Optional<TerminatedRoundArtefacts> latesteTerminatedRoundArtefacts = Optional.empty();
+  private Optional<PreparedRoundArtefacts> latestPreparedRoundArtefacts = Optional.empty();
 
   private IbftRound currentRound;
 
@@ -133,20 +133,20 @@ public class IbftBlockHeightManager implements BlockHeightManager {
     LOG.info(
         "Round has expired, creating PreparedCertificate and notifying peers. round={}",
         currentRound.getRoundIdentifier());
-    final Optional<TerminatedRoundArtefacts> terminatedRoundArtefats =
-        currentRound.constructTerminatedRoundArtefacts();
+    final Optional<PreparedRoundArtefacts> preparedRoundArtefacts =
+        currentRound.constructPreparedRoundArtefacts();
 
-    if (terminatedRoundArtefats.isPresent()) {
-      latesteTerminatedRoundArtefacts = terminatedRoundArtefats;
+    if (preparedRoundArtefacts.isPresent()) {
+      latestPreparedRoundArtefacts = preparedRoundArtefacts;
     }
 
     startNewRound(currentRound.getRoundIdentifier().getRoundNumber() + 1);
 
     final RoundChange localRoundChange =
         messageFactory.createRoundChange(
-            currentRound.getRoundIdentifier(), latesteTerminatedRoundArtefacts);
+            currentRound.getRoundIdentifier(), latestPreparedRoundArtefacts);
     transmitter.multicastRoundChange(
-        currentRound.getRoundIdentifier(), latesteTerminatedRoundArtefacts);
+        currentRound.getRoundIdentifier(), latestPreparedRoundArtefacts);
 
     // Its possible the locally created RoundChange triggers the transmission of a NewRound
     // message - so it must be handled accordingly.

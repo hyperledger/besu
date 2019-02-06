@@ -165,8 +165,8 @@ public class IbftRound {
     peerIsCommitted(msg);
   }
 
-  public Optional<TerminatedRoundArtefacts> constructTerminatedRoundArtefacts() {
-    return roundState.constructTerminatedRoundArtefacts();
+  public Optional<PreparedRoundArtefacts> constructPreparedRoundArtefacts() {
+    return roundState.constructPreparedRoundArtefacts();
   }
 
   private boolean updateStateWithProposedBlock(final Proposal msg) {
