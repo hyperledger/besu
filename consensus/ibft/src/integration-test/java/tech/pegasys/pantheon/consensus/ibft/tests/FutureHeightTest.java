@@ -89,8 +89,7 @@ public class FutureHeightTest {
         .handleNewBlockEvent(new NewChainHead(signedCurrentHeightBlock.getHeader()));
 
     final Prepare expectedPrepareMessage =
-        localNodeMessageFactory.createSignedPreparePayload(
-            futureHeightRoundId, futureHeightBlock.getHash());
+        localNodeMessageFactory.createPrepare(futureHeightRoundId, futureHeightBlock.getHash());
 
     final Commit expectedCommitMessage =
         new Commit(
@@ -113,7 +112,7 @@ public class FutureHeightTest {
     peers.getNonProposing(0).injectPrepare(roundId, currentHeightBlock.getHash());
 
     final Prepare expectedPrepareMessage =
-        localNodeMessageFactory.createSignedPreparePayload(roundId, currentHeightBlock.getHash());
+        localNodeMessageFactory.createPrepare(roundId, currentHeightBlock.getHash());
 
     peers.verifyMessagesReceived(expectedPrepareMessage);
 
@@ -189,8 +188,7 @@ public class FutureHeightTest {
     peers.getProposer().injectProposal(nextHeightRoundId, nextHeightBlock);
 
     final Prepare expectedPrepareMessage =
-        localNodeMessageFactory.createSignedPreparePayload(
-            nextHeightRoundId, nextHeightBlock.getHash());
+        localNodeMessageFactory.createPrepare(nextHeightRoundId, nextHeightBlock.getHash());
 
     // Assert ONLY a prepare message was received, not any commits (i.e. futureHeightRoundId
     // messages have not been used.
@@ -206,8 +204,7 @@ public class FutureHeightTest {
         .handleNewBlockEvent(new NewChainHead(signedNextHeightBlock.getHeader()));
 
     final Prepare expectedFuturePrepareMessage =
-        localNodeMessageFactory.createSignedPreparePayload(
-            futureHeightRoundId, futureHeightBlock.getHash());
+        localNodeMessageFactory.createPrepare(futureHeightRoundId, futureHeightBlock.getHash());
 
     final Commit expectedCommitMessage =
         new Commit(

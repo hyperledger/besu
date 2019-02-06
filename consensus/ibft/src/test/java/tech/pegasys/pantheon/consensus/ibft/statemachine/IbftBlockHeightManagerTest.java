@@ -216,7 +216,7 @@ public class IbftBlockHeightManagerTest {
   public void onRoundChangeReceptionRoundChangeManagerIsInvokedAndNewRoundStarted() {
     final ConsensusRoundIdentifier futureRoundIdentifier = createFrom(roundIdentifier, 0, +2);
     final RoundChange roundChange =
-        messageFactory.createSignedRoundChangePayload(futureRoundIdentifier, Optional.empty());
+        messageFactory.createRoundChange(futureRoundIdentifier, Optional.empty());
     when(roundChangeManager.appendRoundChangeMessage(any()))
         .thenReturn(Optional.of(singletonList(roundChange)));
     when(finalState.isLocalNodeProposerForRound(any())).thenReturn(false);
@@ -260,7 +260,7 @@ public class IbftBlockHeightManagerTest {
   public void whenSufficientRoundChangesAreReceivedANewRoundMessageIsTransmitted() {
     final ConsensusRoundIdentifier futureRoundIdentifier = createFrom(roundIdentifier, 0, +2);
     final RoundChange roundChange =
-        messageFactory.createSignedRoundChangePayload(futureRoundIdentifier, Optional.empty());
+        messageFactory.createRoundChange(futureRoundIdentifier, Optional.empty());
     final RoundChangeCertificate roundChangCert =
         new RoundChangeCertificate(singletonList(roundChange.getSignedPayload()));
 
@@ -301,11 +301,11 @@ public class IbftBlockHeightManagerTest {
     final Prepare prepare =
         validatorMessageFactory
             .get(0)
-            .createSignedPreparePayload(futureRoundIdentifier, Hash.fromHexStringLenient("0"));
+            .createPrepare(futureRoundIdentifier, Hash.fromHexStringLenient("0"));
     final Commit commit =
         validatorMessageFactory
             .get(1)
-            .createSignedCommitPayload(
+            .createCommit(
                 futureRoundIdentifier,
                 Hash.fromHexStringLenient("0"),
                 Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 1));
@@ -315,12 +315,10 @@ public class IbftBlockHeightManagerTest {
 
     // Force a new round to be started at new round number.
     final NewRound newRound =
-        messageFactory.createSignedNewRoundPayload(
+        messageFactory.createNewRound(
             futureRoundIdentifier,
             new RoundChangeCertificate(Collections.emptyList()),
-            messageFactory
-                .createSignedProposalPayload(futureRoundIdentifier, createdBlock)
-                .getSignedPayload());
+            messageFactory.createProposal(futureRoundIdentifier, createdBlock).getSignedPayload());
 
     manager.handleNewRoundPayload(newRound);
 
@@ -345,11 +343,11 @@ public class IbftBlockHeightManagerTest {
     final Prepare firstPrepare =
         validatorMessageFactory
             .get(0)
-            .createSignedPreparePayload(roundIdentifier, Hash.fromHexStringLenient("0"));
+            .createPrepare(roundIdentifier, Hash.fromHexStringLenient("0"));
     final Prepare secondPrepare =
         validatorMessageFactory
             .get(1)
-            .createSignedPreparePayload(roundIdentifier, Hash.fromHexStringLenient("0"));
+            .createPrepare(roundIdentifier, Hash.fromHexStringLenient("0"));
     manager.handlePreparePayload(firstPrepare);
     manager.handlePreparePayload(secondPrepare);
 

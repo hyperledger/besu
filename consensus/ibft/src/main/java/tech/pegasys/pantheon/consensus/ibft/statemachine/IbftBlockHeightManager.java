@@ -143,7 +143,7 @@ public class IbftBlockHeightManager implements BlockHeightManager {
     startNewRound(currentRound.getRoundIdentifier().getRoundNumber() + 1);
 
     final RoundChange localRoundChange =
-        messageFactory.createSignedRoundChangePayload(
+        messageFactory.createRoundChange(
             currentRound.getRoundIdentifier(), latesteTerminatedRoundArtefacts);
     transmitter.multicastRoundChange(
         currentRound.getRoundIdentifier(), latesteTerminatedRoundArtefacts);

@@ -41,10 +41,10 @@ public class NewRoundMessageValidatorTest {
   @Test
   public void underlyingPayloadValidatorIsInvokedWithCorrectParameters() {
     final NewRound message =
-        messageFactory.createSignedNewRoundPayload(
+        messageFactory.createNewRound(
             roundIdentifier,
             new RoundChangeCertificate(emptyList()),
-            messageFactory.createSignedProposalPayload(roundIdentifier, block).getSignedPayload());
+            messageFactory.createProposal(roundIdentifier, block).getSignedPayload());
 
     validator.validateNewRoundMessage(message);
     verify(payloadValidator, times(1)).validateNewRoundMessage(message.getSignedPayload());

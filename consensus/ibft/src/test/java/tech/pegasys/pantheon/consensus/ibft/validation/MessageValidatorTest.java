@@ -65,13 +65,12 @@ public class MessageValidatorTest {
 
   @Test
   public void messageValidatorDefersToUnderlyingSignedDataValidator() {
-    final Proposal proposal = messageFactory.createSignedProposalPayload(roundIdentifier, block);
+    final Proposal proposal = messageFactory.createProposal(roundIdentifier, block);
 
-    final Prepare prepare =
-        messageFactory.createSignedPreparePayload(roundIdentifier, block.getHash());
+    final Prepare prepare = messageFactory.createPrepare(roundIdentifier, block.getHash());
 
     final Commit commit =
-        messageFactory.createSignedCommitPayload(
+        messageFactory.createCommit(
             roundIdentifier, block.getHash(), SECP256K1.sign(block.getHash(), keyPair));
 
     messageValidator.addSignedProposalPayload(proposal);

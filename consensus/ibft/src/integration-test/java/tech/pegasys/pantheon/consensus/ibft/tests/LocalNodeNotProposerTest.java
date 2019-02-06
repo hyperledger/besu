@@ -50,8 +50,7 @@ public class LocalNodeNotProposerTest {
 
   @Before
   public void setup() {
-    expectedTxPrepare =
-        localNodeMessageFactory.createSignedPreparePayload(roundId, blockToPropose.getHash());
+    expectedTxPrepare = localNodeMessageFactory.createPrepare(roundId, blockToPropose.getHash());
 
     expectedTxCommit =
         new Commit(

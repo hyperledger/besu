@@ -46,9 +46,7 @@ public class TestHelpers {
 
     final MessageFactory messageFactory = new MessageFactory(signingKeyPair);
 
-    return messageFactory
-        .createSignedCommitPayload(roundId, block.getHash(), commitSeal)
-        .getSignedPayload();
+    return messageFactory.createCommit(roundId, block.getHash(), commitSeal).getSignedPayload();
   }
 
   public static TerminatedRoundArtefacts createValidTerminatedRoundArtefacts(
@@ -56,7 +54,7 @@ public class TestHelpers {
     final RoundSpecificPeers peers = context.roundSpecificPeers(preparedRound);
 
     return new TerminatedRoundArtefacts(
-        peers.getProposer().getMessageFactory().createSignedProposalPayload(preparedRound, block),
+        peers.getProposer().getMessageFactory().createProposal(preparedRound, block),
         peers
             .createSignedPreparePayloadOfNonProposing(preparedRound, block.getHash())
             .stream()
@@ -71,7 +69,7 @@ public class TestHelpers {
       final Block blockToPropose) {
 
     final Proposal proposal =
-        proposer.getMessageFactory().createSignedProposalPayload(targetRoundId, blockToPropose);
+        proposer.getMessageFactory().createProposal(targetRoundId, blockToPropose);
 
     return proposer.injectNewRound(
         targetRoundId,

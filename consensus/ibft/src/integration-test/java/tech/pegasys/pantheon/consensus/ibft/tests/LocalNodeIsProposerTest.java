@@ -63,8 +63,7 @@ public class LocalNodeIsProposerTest {
   @Before
   public void setup() {
     expectedProposedBlock = context.createBlockForProposalFromChainHead(0, blockTimeStamp);
-    expectedTxProposal =
-        localNodeMessageFactory.createSignedProposalPayload(roundId, expectedProposedBlock);
+    expectedTxProposal = localNodeMessageFactory.createProposal(roundId, expectedProposedBlock);
 
     expectedTxCommit =
         new Commit(

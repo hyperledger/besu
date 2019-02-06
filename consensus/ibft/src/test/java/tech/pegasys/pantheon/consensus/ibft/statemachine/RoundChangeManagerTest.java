@@ -126,7 +126,7 @@ public class RoundChangeManagerTest {
   private RoundChange makeRoundChangeMessage(
       final KeyPair key, final ConsensusRoundIdentifier round) {
     MessageFactory messageFactory = new MessageFactory(key);
-    return messageFactory.createSignedRoundChangePayload(round, Optional.empty());
+    return messageFactory.createRoundChange(round, Optional.empty());
   }
 
   private RoundChange makeRoundChangeMessageWithPreparedCert(
@@ -140,7 +140,7 @@ public class RoundChangeManagerTest {
     final ConsensusRoundIdentifier proposalRound = TestHelpers.createFrom(round, 0, -1);
     final Block block = TestHelpers.createProposalBlock(validators, proposalRound.getRoundNumber());
     // Proposal must come from an earlier round.
-    final Proposal proposal = messageFactory.createSignedProposalPayload(proposalRound, block);
+    final Proposal proposal = messageFactory.createProposal(proposalRound, block);
 
     final List<Prepare> preparePayloads =
         prepareProviders
@@ -148,15 +148,14 @@ public class RoundChangeManagerTest {
             .map(
                 k -> {
                   final MessageFactory prepareFactory = new MessageFactory(k);
-                  return prepareFactory.createSignedPreparePayload(proposalRound, block.getHash());
+                  return prepareFactory.createPrepare(proposalRound, block.getHash());
                 })
             .collect(Collectors.toList());
 
     final TerminatedRoundArtefacts terminatedRoundArtects =
         new TerminatedRoundArtefacts(proposal, preparePayloads);
 
-    return messageFactory.createSignedRoundChangePayload(
-        round, Optional.of(terminatedRoundArtects));
+    return messageFactory.createRoundChange(round, Optional.of(terminatedRoundArtects));
   }
 
   @Test

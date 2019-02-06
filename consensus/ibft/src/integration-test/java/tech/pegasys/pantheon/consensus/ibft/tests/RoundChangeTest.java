@@ -77,7 +77,7 @@ public class RoundChangeTest {
     // NOTE: The prepare certificate will be empty as insufficient Prepare msgs have been received.
     final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 1);
     final RoundChange expectedTxRoundChange =
-        localNodeMessageFactory.createSignedRoundChangePayload(targetRound, empty());
+        localNodeMessageFactory.createRoundChange(targetRound, empty());
     context.getController().handleRoundExpiry(new RoundExpiry(roundId));
     peers.verifyMessagesReceived(expectedTxRoundChange);
   }
@@ -86,7 +86,7 @@ public class RoundChangeTest {
   public void roundChangeHasEmptyCertificateIfNoPrepareMessagesReceived() {
     final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 1);
     final RoundChange expectedTxRoundChange =
-        localNodeMessageFactory.createSignedRoundChangePayload(targetRound, empty());
+        localNodeMessageFactory.createRoundChange(targetRound, empty());
 
     peers.getProposer().injectProposal(roundId, blockToPropose);
     peers.clearReceivedMessages();
@@ -101,7 +101,7 @@ public class RoundChangeTest {
     // receiving only a single Prepare msg will result in no PreparedCert.
     final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 1);
     final RoundChange expectedTxRoundChange =
-        localNodeMessageFactory.createSignedRoundChangePayload(targetRound, empty());
+        localNodeMessageFactory.createRoundChange(targetRound, empty());
 
     peers.getProposer().injectProposal(roundId, blockToPropose);
     peers.getNonProposing(1).injectPrepare(roundId, blockToPropose.getHash());
@@ -115,7 +115,7 @@ public class RoundChangeTest {
   public void roundChangeHasPopulatedCertificateIfQuorumPrepareMessagesAndProposalAreReceived() {
     final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 1);
     final Prepare localPrepareMessage =
-        localNodeMessageFactory.createSignedPreparePayload(roundId, blockToPropose.getHash());
+        localNodeMessageFactory.createPrepare(roundId, blockToPropose.getHash());
 
     final Proposal proposal = peers.getProposer().injectProposal(roundId, blockToPropose);
     peers.clearReceivedMessages();
@@ -127,7 +127,7 @@ public class RoundChangeTest {
     peers.clearReceivedMessages();
 
     final RoundChange expectedTxRoundChange =
-        localNodeMessageFactory.createSignedRoundChangePayload(
+        localNodeMessageFactory.createRoundChange(
             targetRound,
             Optional.of(
                 new TerminatedRoundArtefacts(
@@ -150,7 +150,7 @@ public class RoundChangeTest {
     final RoundChange rc4 = peers.getProposer().injectRoundChange(targetRound, empty());
 
     final NewRound expectedNewRound =
-        localNodeMessageFactory.createSignedNewRoundPayload(
+        localNodeMessageFactory.createNewRound(
             targetRound,
             new RoundChangeCertificate(
                 Lists.newArrayList(
@@ -159,7 +159,7 @@ public class RoundChangeTest {
                     rc3.getSignedPayload(),
                     rc4.getSignedPayload())),
             localNodeMessageFactory
-                .createSignedProposalPayload(targetRound, locallyProposedBlock)
+                .createProposal(targetRound, locallyProposedBlock)
                 .getSignedPayload());
 
     peers.verifyMessagesReceived(expectedNewRound);
@@ -204,7 +204,7 @@ public class RoundChangeTest {
             targetRound.getRoundNumber(), ARBITRARY_BLOCKTIME);
 
     final NewRound expectedNewRound =
-        localNodeMessageFactory.createSignedNewRoundPayload(
+        localNodeMessageFactory.createNewRound(
             targetRound,
             new RoundChangeCertificate(
                 Lists.newArrayList(
@@ -213,7 +213,7 @@ public class RoundChangeTest {
                     rc3.getSignedPayload(),
                     rc4.getSignedPayload())),
             localNodeMessageFactory
-                .createSignedProposalPayload(targetRound, expectedBlockToPropose)
+                .createProposal(targetRound, expectedBlockToPropose)
                 .getSignedPayload());
 
     peers.verifyMessagesReceived(expectedNewRound);
@@ -233,11 +233,11 @@ public class RoundChangeTest {
         context.createBlockForProposalFromChainHead(futureRound.getRoundNumber(), blockTimeStamp);
 
     final NewRound expectedNewRound =
-        localNodeMessageFactory.createSignedNewRoundPayload(
+        localNodeMessageFactory.createNewRound(
             futureRound,
             new RoundChangeCertificate(roundChangeMessages),
             localNodeMessageFactory
-                .createSignedProposalPayload(futureRound, locallyProposedBlock)
+                .createProposal(futureRound, locallyProposedBlock)
                 .getSignedPayload());
 
     peers.verifyMessagesReceived(expectedNewRound);
@@ -287,11 +287,11 @@ public class RoundChangeTest {
             targetRound.getRoundNumber(), ARBITRARY_BLOCKTIME);
 
     final NewRound expectedNewRound =
-        localNodeMessageFactory.createSignedNewRoundPayload(
+        localNodeMessageFactory.createNewRound(
             targetRound,
             new RoundChangeCertificate(Lists.newArrayList(roundChangeMessages)),
             localNodeMessageFactory
-                .createSignedProposalPayload(targetRound, expectedBlockToPropose)
+                .createProposal(targetRound, expectedBlockToPropose)
                 .getSignedPayload());
 
     peers.verifyMessagesReceived(expectedNewRound);
@@ -331,10 +331,7 @@ public class RoundChangeTest {
     // create illegal RoundChangeMessage
     final TerminatedRoundArtefacts illegalTerminatedRoundArtefacts =
         new TerminatedRoundArtefacts(
-            peers
-                .getNonProposing(0)
-                .getMessageFactory()
-                .createSignedProposalPayload(roundId, blockToPropose),
+            peers.getNonProposing(0).getMessageFactory().createProposal(roundId, blockToPropose),
             emptyList());
 
     peers

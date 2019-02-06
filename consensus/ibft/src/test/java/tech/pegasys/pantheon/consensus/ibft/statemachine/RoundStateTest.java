@@ -80,7 +80,7 @@ public class RoundStateTest {
     final RoundState roundState = new RoundState(roundIdentifier, 1, messageValidator);
 
     final Proposal proposal =
-        validatorMessageFactories.get(0).createSignedProposalPayload(roundIdentifier, block);
+        validatorMessageFactories.get(0).createProposal(roundIdentifier, block);
 
     assertThat(roundState.setProposedBlock(proposal)).isFalse();
     assertThat(roundState.isPrepared()).isFalse();
@@ -94,7 +94,7 @@ public class RoundStateTest {
     final RoundState roundState = new RoundState(roundIdentifier, 1, messageValidator);
 
     final Proposal proposal =
-        validatorMessageFactories.get(0).createSignedProposalPayload(roundIdentifier, block);
+        validatorMessageFactories.get(0).createProposal(roundIdentifier, block);
 
     assertThat(roundState.setProposedBlock(proposal)).isTrue();
     assertThat(roundState.isPrepared()).isTrue();
@@ -117,7 +117,7 @@ public class RoundStateTest {
     final RoundState roundState = new RoundState(roundIdentifier, 1, messageValidator);
 
     final Proposal proposal =
-        validatorMessageFactories.get(0).createSignedProposalPayload(roundIdentifier, block);
+        validatorMessageFactories.get(0).createProposal(roundIdentifier, block);
 
     assertThat(roundState.setProposedBlock(proposal)).isTrue();
     assertThat(roundState.isPrepared()).isTrue();
@@ -126,7 +126,7 @@ public class RoundStateTest {
     final Commit commit =
         validatorMessageFactories
             .get(0)
-            .createSignedCommitPayload(
+            .createCommit(
                 roundIdentifier,
                 block.getHash(),
                 Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 1));
@@ -145,14 +145,10 @@ public class RoundStateTest {
     final RoundState roundState = new RoundState(roundIdentifier, 3, messageValidator);
 
     final Prepare firstPrepare =
-        validatorMessageFactories
-            .get(1)
-            .createSignedPreparePayload(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(1).createPrepare(roundIdentifier, block.getHash());
 
     final Prepare secondPrepare =
-        validatorMessageFactories
-            .get(2)
-            .createSignedPreparePayload(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
 
     roundState.addPrepareMessage(firstPrepare);
     assertThat(roundState.isPrepared()).isFalse();
@@ -165,7 +161,7 @@ public class RoundStateTest {
     assertThat(roundState.constructTerminatedRoundArtefacts()).isEmpty();
 
     final Proposal proposal =
-        validatorMessageFactories.get(0).createSignedProposalPayload(roundIdentifier, block);
+        validatorMessageFactories.get(0).createProposal(roundIdentifier, block);
     assertThat(roundState.setProposedBlock(proposal)).isTrue();
     assertThat(roundState.isPrepared()).isTrue();
     assertThat(roundState.isCommitted()).isFalse();
@@ -175,14 +171,10 @@ public class RoundStateTest {
   @Test
   public void invalidPriorPrepareMessagesAreDiscardedUponSubsequentProposal() {
     final Prepare firstPrepare =
-        validatorMessageFactories
-            .get(1)
-            .createSignedPreparePayload(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(1).createPrepare(roundIdentifier, block.getHash());
 
     final Prepare secondPrepare =
-        validatorMessageFactories
-            .get(2)
-            .createSignedPreparePayload(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
 
     // RoundState has a quorum size of 3, meaning 1 proposal and 2 prepare are required to be
     // 'prepared'.
@@ -197,7 +189,7 @@ public class RoundStateTest {
     verify(messageValidator, never()).validatePrepareMessage(any());
 
     final Proposal proposal =
-        validatorMessageFactories.get(0).createSignedProposalPayload(roundIdentifier, block);
+        validatorMessageFactories.get(0).createProposal(roundIdentifier, block);
 
     assertThat(roundState.setProposedBlock(proposal)).isTrue();
     assertThat(roundState.isPrepared()).isFalse();
@@ -210,17 +202,13 @@ public class RoundStateTest {
     final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
 
     final Prepare firstPrepare =
-        validatorMessageFactories
-            .get(1)
-            .createSignedPreparePayload(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(1).createPrepare(roundIdentifier, block.getHash());
 
     final Prepare secondPrepare =
-        validatorMessageFactories
-            .get(2)
-            .createSignedPreparePayload(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
 
     final Proposal proposal =
-        validatorMessageFactories.get(0).createSignedProposalPayload(roundIdentifier, block);
+        validatorMessageFactories.get(0).createProposal(roundIdentifier, block);
 
     when(messageValidator.addSignedProposalPayload(any())).thenReturn(true);
     when(messageValidator.validatePrepareMessage(firstPrepare)).thenReturn(false);
@@ -246,7 +234,7 @@ public class RoundStateTest {
     final Commit firstCommit =
         validatorMessageFactories
             .get(1)
-            .createSignedCommitPayload(
+            .createCommit(
                 roundIdentifier,
                 block.getHash(),
                 Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 1));
@@ -254,13 +242,13 @@ public class RoundStateTest {
     final Commit secondCommit =
         validatorMessageFactories
             .get(2)
-            .createSignedCommitPayload(
+            .createCommit(
                 roundIdentifier,
                 block.getHash(),
                 Signature.create(BigInteger.TEN, BigInteger.TEN, (byte) 1));
 
     final Proposal proposal =
-        validatorMessageFactories.get(0).createSignedProposalPayload(roundIdentifier, block);
+        validatorMessageFactories.get(0).createProposal(roundIdentifier, block);
 
     roundState.setProposedBlock(proposal);
     roundState.addCommitMessage(firstCommit);

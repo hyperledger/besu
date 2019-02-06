@@ -99,7 +99,7 @@ public class FutureRoundTest {
         futureBlock);
 
     final Prepare expectedPrepare =
-        localNodeMessageFactory.createSignedPreparePayload(futureRoundId, futureBlock.getHash());
+        localNodeMessageFactory.createPrepare(futureRoundId, futureBlock.getHash());
 
     peers.verifyMessagesReceived(expectedPrepare);
 
@@ -107,7 +107,7 @@ public class FutureRoundTest {
     futurePeers.getNonProposing(quorum - 3).injectPrepare(futureRoundId, futureBlock.getHash());
 
     final Commit expectedCommit =
-        localNodeMessageFactory.createSignedCommitPayload(
+        localNodeMessageFactory.createCommit(
             futureRoundId,
             futureBlock.getHash(),
             SECP256K1.sign(futureBlock.getHash(), context.getLocalNodeParams().getNodeKeyPair()));
@@ -143,7 +143,7 @@ public class FutureRoundTest {
         futureBlock);
 
     final Prepare expectedFuturePrepare =
-        localNodeMessageFactory.createSignedPreparePayload(futureRoundId, futureBlock.getHash());
+        localNodeMessageFactory.createPrepare(futureRoundId, futureBlock.getHash());
     peers.verifyMessagesReceived(expectedFuturePrepare);
 
     // attempt to complete the previous round

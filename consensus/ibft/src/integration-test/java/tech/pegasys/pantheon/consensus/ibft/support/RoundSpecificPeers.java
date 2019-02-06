@@ -104,11 +104,7 @@ public class RoundSpecificPeers {
       final ConsensusRoundIdentifier roundId) {
     return peers
         .stream()
-        .map(
-            p ->
-                p.getMessageFactory()
-                    .createSignedRoundChangePayload(roundId, empty())
-                    .getSignedPayload())
+        .map(p -> p.getMessageFactory().createRoundChange(roundId, empty()).getSignedPayload())
         .collect(Collectors.toList());
   }
 
@@ -120,7 +116,7 @@ public class RoundSpecificPeers {
         .map(
             p ->
                 p.getMessageFactory()
-                    .createSignedRoundChangePayload(roundId, Optional.of(terminatedRoundArtefacts))
+                    .createRoundChange(roundId, Optional.of(terminatedRoundArtefacts))
                     .getSignedPayload())
         .collect(Collectors.toList());
   }
@@ -137,11 +133,7 @@ public class RoundSpecificPeers {
       final ConsensusRoundIdentifier preparedRound, final Hash hash) {
     return nonProposingPeers
         .stream()
-        .map(
-            role ->
-                role.getMessageFactory()
-                    .createSignedPreparePayload(preparedRound, hash)
-                    .getSignedPayload())
+        .map(role -> role.getMessageFactory().createPrepare(preparedRound, hash).getSignedPayload())
         .collect(Collectors.toList());
   }
 
