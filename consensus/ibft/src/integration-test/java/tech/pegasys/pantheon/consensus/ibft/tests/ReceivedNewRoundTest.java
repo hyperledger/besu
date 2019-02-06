@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.tests;
 
-import static tech.pegasys.pantheon.consensus.ibft.support.TestHelpers.createValidPreparedRoundArtefacts;
+import static tech.pegasys.pantheon.consensus.ibft.support.TestHelpers.createValidPreparedRoundArtifacts;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;
@@ -22,7 +22,7 @@ import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
-import tech.pegasys.pantheon.consensus.ibft.statemachine.PreparedRoundArtefacts;
+import tech.pegasys.pantheon.consensus.ibft.statemachine.PreparedRoundArtifacts;
 import tech.pegasys.pantheon.consensus.ibft.support.RoundSpecificPeers;
 import tech.pegasys.pantheon.consensus.ibft.support.TestContext;
 import tech.pegasys.pantheon.consensus.ibft.support.TestContextBuilder;
@@ -111,11 +111,11 @@ public class ReceivedNewRoundTest {
     final Block reproposedBlock = context.createBlockForProposalFromChainHead(1, 15);
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
-    final PreparedRoundArtefacts preparedRoundArtefacts =
-        createValidPreparedRoundArtefacts(context, roundId, initialBlock);
+    final PreparedRoundArtifacts preparedRoundArtifacts =
+        createValidPreparedRoundArtifacts(context, roundId, initialBlock);
 
     final List<SignedData<RoundChangePayload>> roundChanges =
-        peers.createSignedRoundChangePayload(nextRoundId, preparedRoundArtefacts);
+        peers.createSignedRoundChangePayload(nextRoundId, preparedRoundArtifacts);
 
     final ValidatorPeer nextProposer = context.roundSpecificPeers(nextRoundId).getProposer();
 
@@ -163,11 +163,11 @@ public class ReceivedNewRoundTest {
     final Block reproposedBlock = context.createBlockForProposalFromChainHead(1, 15);
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
-    final PreparedRoundArtefacts preparedRoundArtefacts =
-        createValidPreparedRoundArtefacts(context, roundId, initialBlock);
+    final PreparedRoundArtifacts preparedRoundArtifacts =
+        createValidPreparedRoundArtifacts(context, roundId, initialBlock);
 
     final List<SignedData<RoundChangePayload>> roundChanges =
-        peers.createSignedRoundChangePayload(nextRoundId, preparedRoundArtefacts);
+        peers.createSignedRoundChangePayload(nextRoundId, preparedRoundArtifacts);
 
     final RoundSpecificPeers nextRoles = context.roundSpecificPeers(nextRoundId);
     final ValidatorPeer nextProposer = nextRoles.getProposer();

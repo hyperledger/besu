@@ -268,7 +268,7 @@ public class IbftRoundTest {
 
     final RoundChangeCertificate roundChangeCertificate = new RoundChangeCertificate(emptyList());
 
-    round.startRoundWith(new RoundChangeArtefacts(empty(), emptyList()), 15);
+    round.startRoundWith(new RoundChangeArtifacts(empty(), emptyList()), 15);
     verify(transmitter, times(1))
         .multicastNewRound(eq(roundIdentifier), eq(roundChangeCertificate), any());
   }
@@ -288,23 +288,23 @@ public class IbftRoundTest {
             messageFactory,
             transmitter);
 
-    final RoundChangeArtefacts roundChangeArtefacts =
-        RoundChangeArtefacts.create(
+    final RoundChangeArtifacts roundChangeArtifacts =
+        RoundChangeArtifacts.create(
             Collections.singletonList(
                 messageFactory.createRoundChange(
                     roundIdentifier,
                     Optional.of(
-                        new PreparedRoundArtefacts(
+                        new PreparedRoundArtifacts(
                             messageFactory.createProposal(priorRoundChange, proposedBlock),
                             emptyList())))));
 
     // NOTE: IbftRound assumes the prepare's are valid
 
-    round.startRoundWith(roundChangeArtefacts, 15);
+    round.startRoundWith(roundChangeArtifacts, 15);
     verify(transmitter, times(1))
         .multicastNewRound(
             eq(roundIdentifier),
-            eq(roundChangeArtefacts.getRoundChangeCertificate()),
+            eq(roundChangeArtifacts.getRoundChangeCertificate()),
             payloadArgCaptor.capture());
 
     final IbftExtraData proposedExtraData =
@@ -333,15 +333,15 @@ public class IbftRoundTest {
             messageFactory,
             transmitter);
 
-    final RoundChangeArtefacts roundChangeArtefacts =
-        RoundChangeArtefacts.create(
+    final RoundChangeArtifacts roundChangeArtifacts =
+        RoundChangeArtifacts.create(
             Collections.singletonList(messageFactory.createRoundChange(roundIdentifier, empty())));
 
-    round.startRoundWith(roundChangeArtefacts, 15);
+    round.startRoundWith(roundChangeArtifacts, 15);
     verify(transmitter, times(1))
         .multicastNewRound(
             eq(roundIdentifier),
-            eq(roundChangeArtefacts.getRoundChangeCertificate()),
+            eq(roundChangeArtifacts.getRoundChangeCertificate()),
             payloadArgCaptor.capture());
 
     // Inject a single Prepare message, and confirm the roundState has gone to Prepared (which
