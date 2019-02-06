@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.util.Collection;
 
@@ -44,20 +43,37 @@ public class TomlConfigFileDefaultProviderTest {
   @Test
   public void defaultValueIsNullIfNoMatchingKeyFoundOtherwiseTheValue() throws IOException {
     final File tempConfigFile = temp.newFile("config.toml");
-    try (final Writer fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
+    try (final BufferedWriter fileWriter =
+        Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
 
-      fileWriter.write("an-option='123'");
+      fileWriter.write("a-short-option='123'");
+      fileWriter.newLine();
+      fileWriter.write("a-longer-option='1234'");
       fileWriter.flush();
 
       final TomlConfigFileDefaultProvider providerUnderTest =
           new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
 
-      // this option won't be found in config
+      // this option must not be found in config
       assertThat(providerUnderTest.defaultValue(OptionSpec.builder("myoption").build())).isNull();
 
       // this option must be found in config
-      assertThat(providerUnderTest.defaultValue(OptionSpec.builder("an-option").build()))
+      assertThat(providerUnderTest.defaultValue(OptionSpec.builder("a-short-option").build()))
           .isEqualTo("123");
+
+      // this option must be found in config as one of its names is present in the file.
+      // also this is the shortest one.
+      assertThat(
+              providerUnderTest.defaultValue(
+                  OptionSpec.builder("a-short-option", "another-name-for-the-option").build()))
+          .isEqualTo("123");
+
+      // this option must be found in config as one of its names is present in the file.
+      // also this is the longest one.
+      assertThat(
+              providerUnderTest.defaultValue(
+                  OptionSpec.builder("l", "longer", "a-longer-option").build()))
+          .isEqualTo("1234");
     }
   }
 
@@ -69,11 +85,13 @@ public class TomlConfigFileDefaultProviderTest {
 
       fileWriter.write("a-boolean-option=true");
       fileWriter.newLine();
-      fileWriter.write("a-multy-value-option=[\"value1\", \"value2\"]");
+      fileWriter.write("another-boolean-option=false");
+      fileWriter.newLine();
+      fileWriter.write("a-multi-value-option=[\"value1\", \"value2\"]");
       fileWriter.newLine();
       fileWriter.write("an-int-value-option=123");
       fileWriter.newLine();
-      fileWriter.write("an-string-value-option='my value'");
+      fileWriter.write("a-string-value-option='my value'");
       fileWriter.flush();
 
       final TomlConfigFileDefaultProvider providerUnderTest =
@@ -86,7 +104,12 @@ public class TomlConfigFileDefaultProviderTest {
 
       assertThat(
               providerUnderTest.defaultValue(
-                  OptionSpec.builder("a-multy-value-option").type(Collection.class).build()))
+                  OptionSpec.builder("another-boolean-option").type(Boolean.class).build()))
+          .isEqualTo("false");
+
+      assertThat(
+              providerUnderTest.defaultValue(
+                  OptionSpec.builder("a-multi-value-option").type(Collection.class).build()))
           .isEqualTo("value1,value2");
 
       assertThat(
@@ -96,7 +119,7 @@ public class TomlConfigFileDefaultProviderTest {
 
       assertThat(
               providerUnderTest.defaultValue(
-                  OptionSpec.builder("an-string-value-option").type(String.class).build()))
+                  OptionSpec.builder("a-string-value-option").type(String.class).build()))
           .isEqualTo("my value");
     }
   }

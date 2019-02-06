@@ -45,6 +45,7 @@ rpc-http-cors-origins=["none"]
 # WebSockets API
 rpc-ws-enabled=false
 rpc-ws-api=["DEBUG","ETH"]
+rpc-ws-apis=["DEBUG","ETH"]
 rpc-ws-host="9.10.11.12"
 rpc-ws-port=9101
 rpc-ws-refresh-delay=500

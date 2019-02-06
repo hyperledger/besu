@@ -26,6 +26,9 @@ import static tech.pegasys.pantheon.cli.NetworkName.GOERLI;
 import static tech.pegasys.pantheon.cli.NetworkName.MAINNET;
 import static tech.pegasys.pantheon.cli.NetworkName.RINKEBY;
 import static tech.pegasys.pantheon.cli.NetworkName.ROPSTEN;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis.ETH;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis.NET;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis.WEB3;
 import static tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 
 import tech.pegasys.pantheon.PantheonInfo;
@@ -36,7 +39,7 @@ import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
-import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
@@ -255,18 +258,20 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, updatedConfig.getBytes(UTF_8));
 
+    Collection<RpcApi> expectedApis = asList(ETH, WEB3);
+
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
     jsonRpcConfiguration.setEnabled(false);
     jsonRpcConfiguration.setHost("5.6.7.8");
     jsonRpcConfiguration.setPort(5678);
     jsonRpcConfiguration.setCorsAllowedDomains(Collections.emptyList());
-    jsonRpcConfiguration.setRpcApis(RpcApis.DEFAULT_JSON_RPC_APIS);
+    jsonRpcConfiguration.setRpcApis(expectedApis);
 
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
     webSocketConfiguration.setEnabled(false);
     webSocketConfiguration.setHost("9.10.11.12");
     webSocketConfiguration.setPort(9101);
-    webSocketConfiguration.setRpcApis(WebSocketConfiguration.DEFAULT_WEBSOCKET_APIS);
+    webSocketConfiguration.setRpcApis(expectedApis);
 
     final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
     metricsConfiguration.setEnabled(false);
@@ -922,7 +927,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).build();
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
-        .containsExactlyInAnyOrder(RpcApis.ETH, RpcApis.NET);
+        .containsExactlyInAnyOrder(ETH, NET);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1374,7 +1379,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).build();
 
     assertThat(wsRpcConfigArgumentCaptor.getValue().getRpcApis())
-        .containsExactlyInAnyOrder(RpcApis.ETH, RpcApis.NET);
+        .containsExactlyInAnyOrder(ETH, NET);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
