@@ -92,7 +92,7 @@ public class IbftBlockHeightManagerTest {
   @Mock private RoundTimer roundTimer;
   @Mock private NewRoundMessageValidator newRoundPayloadValidator;
 
-  @Captor private ArgumentCaptor<Optional<PreparedRoundArtefacts>> preparedRoundArtefactsCaptor;
+  @Captor private ArgumentCaptor<Optional<PreparedRoundArtifacts>> preparedRoundArtifactsCaptor;
 
   private final List<KeyPair> validatorKeys = Lists.newArrayList();
   private final List<Address> validators = Lists.newArrayList();
@@ -356,8 +356,8 @@ public class IbftBlockHeightManagerTest {
     final ConsensusRoundIdentifier nextRound = createFrom(roundIdentifier, 0, +1);
 
     verify(messageTransmitter, times(1))
-        .multicastRoundChange(eq(nextRound), preparedRoundArtefactsCaptor.capture());
-    final Optional<PreparedRoundArtefacts> preparedCert = preparedRoundArtefactsCaptor.getValue();
+        .multicastRoundChange(eq(nextRound), preparedRoundArtifactsCaptor.capture());
+    final Optional<PreparedRoundArtifacts> preparedCert = preparedRoundArtifactsCaptor.getValue();
 
     assertThat(preparedCert).isNotEmpty();
 

@@ -69,7 +69,7 @@ public class IbftBlockHeightManager implements BlockHeightManager {
   private final Function<ConsensusRoundIdentifier, RoundState> roundStateCreator;
   private final IbftFinalState finalState;
 
-  private Optional<PreparedRoundArtefacts> latestPreparedRoundArtefacts = Optional.empty();
+  private Optional<PreparedRoundArtifacts> latestPreparedRoundArtifacts = Optional.empty();
 
   private IbftRound currentRound;
 
@@ -133,20 +133,20 @@ public class IbftBlockHeightManager implements BlockHeightManager {
     LOG.info(
         "Round has expired, creating PreparedCertificate and notifying peers. round={}",
         currentRound.getRoundIdentifier());
-    final Optional<PreparedRoundArtefacts> preparedRoundArtefacts =
-        currentRound.constructPreparedRoundArtefacts();
+    final Optional<PreparedRoundArtifacts> preparedRoundArtifacts =
+        currentRound.constructPreparedRoundArtifacts();
 
-    if (preparedRoundArtefacts.isPresent()) {
-      latestPreparedRoundArtefacts = preparedRoundArtefacts;
+    if (preparedRoundArtifacts.isPresent()) {
+      latestPreparedRoundArtifacts = preparedRoundArtifacts;
     }
 
     startNewRound(currentRound.getRoundIdentifier().getRoundNumber() + 1);
 
     final RoundChange localRoundChange =
         messageFactory.createRoundChange(
-            currentRound.getRoundIdentifier(), latestPreparedRoundArtefacts);
+            currentRound.getRoundIdentifier(), latestPreparedRoundArtifacts);
     transmitter.multicastRoundChange(
-        currentRound.getRoundIdentifier(), latestPreparedRoundArtefacts);
+        currentRound.getRoundIdentifier(), latestPreparedRoundArtifacts);
 
     // Its possible the locally created RoundChange triggers the transmission of a NewRound
     // message - so it must be handled accordingly.
@@ -209,11 +209,11 @@ public class IbftBlockHeightManager implements BlockHeightManager {
         startNewRound(targetRound.getRoundNumber());
       }
 
-      final RoundChangeArtefacts roundChangeArtefacts = RoundChangeArtefacts.create(result.get());
+      final RoundChangeArtifacts roundChangeArtifacts = RoundChangeArtifacts.create(result.get());
 
       if (finalState.isLocalNodeProposerForRound(targetRound)) {
         currentRound.startRoundWith(
-            roundChangeArtefacts, TimeUnit.MILLISECONDS.toSeconds(clock.millis()));
+            roundChangeArtifacts, TimeUnit.MILLISECONDS.toSeconds(clock.millis()));
       }
     }
   }

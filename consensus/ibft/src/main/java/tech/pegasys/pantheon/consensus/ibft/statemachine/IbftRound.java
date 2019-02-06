@@ -93,8 +93,8 @@ public class IbftRound {
   }
 
   public void startRoundWith(
-      final RoundChangeArtefacts roundChangeArtefacts, final long headerTimestamp) {
-    final Optional<Block> bestBlockFromRoundChange = roundChangeArtefacts.getBlock();
+      final RoundChangeArtifacts roundChangeArtifacts, final long headerTimestamp) {
+    final Optional<Block> bestBlockFromRoundChange = roundChangeArtifacts.getBlock();
 
     Proposal proposal;
     if (!bestBlockFromRoundChange.isPresent()) {
@@ -109,7 +109,7 @@ public class IbftRound {
     }
     transmitter.multicastNewRound(
         getRoundIdentifier(),
-        roundChangeArtefacts.getRoundChangeCertificate(),
+        roundChangeArtifacts.getRoundChangeCertificate(),
         proposal.getSignedPayload());
     updateStateWithProposedBlock(proposal);
   }
@@ -165,8 +165,8 @@ public class IbftRound {
     peerIsCommitted(msg);
   }
 
-  public Optional<PreparedRoundArtefacts> constructPreparedRoundArtefacts() {
-    return roundState.constructPreparedRoundArtefacts();
+  public Optional<PreparedRoundArtifacts> constructPreparedRoundArtifacts() {
+    return roundState.constructPreparedRoundArtifacts();
   }
 
   private boolean updateStateWithProposedBlock(final Proposal msg) {

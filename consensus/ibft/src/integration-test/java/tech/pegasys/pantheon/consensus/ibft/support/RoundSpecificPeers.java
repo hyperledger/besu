@@ -29,7 +29,7 @@ import tech.pegasys.pantheon.consensus.ibft.payload.Payload;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
-import tech.pegasys.pantheon.consensus.ibft.statemachine.PreparedRoundArtefacts;
+import tech.pegasys.pantheon.consensus.ibft.statemachine.PreparedRoundArtifacts;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
@@ -109,13 +109,13 @@ public class RoundSpecificPeers {
   }
 
   public List<SignedData<RoundChangePayload>> createSignedRoundChangePayload(
-      final ConsensusRoundIdentifier roundId, final PreparedRoundArtefacts preparedRoundArtefacts) {
+      final ConsensusRoundIdentifier roundId, final PreparedRoundArtifacts preparedRoundArtifacts) {
     return peers
         .stream()
         .map(
             p ->
                 p.getMessageFactory()
-                    .createRoundChange(roundId, Optional.of(preparedRoundArtefacts))
+                    .createRoundChange(roundId, Optional.of(preparedRoundArtifacts))
                     .getSignedPayload())
         .collect(Collectors.toList());
   }

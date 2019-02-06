@@ -20,7 +20,7 @@ import static tech.pegasys.pantheon.consensus.ibft.IbftHelpers.calculateRequired
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
-import tech.pegasys.pantheon.consensus.ibft.statemachine.PreparedRoundArtefacts;
+import tech.pegasys.pantheon.consensus.ibft.statemachine.PreparedRoundArtifacts;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
@@ -93,9 +93,9 @@ public class IbftHelpersTest {
     final Proposal differentProposal =
         proposerMessageFactory.createProposal(preparedRound, proposedBlock);
 
-    final Optional<PreparedRoundArtefacts> latterPreparedRoundArtefacts =
+    final Optional<PreparedRoundArtifacts> latterPreparedRoundArtifacts =
         Optional.of(
-            new PreparedRoundArtefacts(
+            new PreparedRoundArtifacts(
                 differentProposal,
                 Lists.newArrayList(
                     proposerMessageFactory.createPrepare(roundIdentifier, proposedBlock.getHash()),
@@ -108,9 +108,9 @@ public class IbftHelpersTest {
         TestHelpers.createFrom(roundIdentifier, 0, -2);
     final Proposal earlierProposal =
         proposerMessageFactory.createProposal(earlierPreparedRound, proposedBlock);
-    final Optional<PreparedRoundArtefacts> earlierPreparedRoundArtefacts =
+    final Optional<PreparedRoundArtifacts> earlierPreparedRoundArtifacts =
         Optional.of(
-            new PreparedRoundArtefacts(
+            new PreparedRoundArtifacts(
                 earlierProposal,
                 Lists.newArrayList(
                     proposerMessageFactory.createPrepare(
@@ -122,14 +122,14 @@ public class IbftHelpersTest {
         IbftHelpers.findLatestPreparedCertificate(
             Lists.newArrayList(
                 proposerMessageFactory
-                    .createRoundChange(roundIdentifier, earlierPreparedRoundArtefacts)
+                    .createRoundChange(roundIdentifier, earlierPreparedRoundArtifacts)
                     .getSignedPayload(),
                 proposerMessageFactory
-                    .createRoundChange(roundIdentifier, latterPreparedRoundArtefacts)
+                    .createRoundChange(roundIdentifier, latterPreparedRoundArtifacts)
                     .getSignedPayload()));
 
     assertThat(newestCert.get())
-        .isEqualTo(latterPreparedRoundArtefacts.get().getPreparedCertificate());
+        .isEqualTo(latterPreparedRoundArtifacts.get().getPreparedCertificate());
   }
 
   @Test
