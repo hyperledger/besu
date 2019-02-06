@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.consensus.ibft.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.pantheon.consensus.ibft.support.TestHelpers.createSignedCommitPayload;
+import static tech.pegasys.pantheon.consensus.ibft.support.IntegrationTestHelpers.createSignedCommitPayload;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;

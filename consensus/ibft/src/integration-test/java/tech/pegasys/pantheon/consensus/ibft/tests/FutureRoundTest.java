@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.consensus.ibft.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.pantheon.consensus.ibft.support.TestHelpers.injectEmptyNewRound;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
@@ -92,11 +91,10 @@ public class FutureRoundTest {
 
     // inject a newRound to move to 'futureRoundId', and ensure localnode sends prepare, commit
     // and updates blockchain
-    injectEmptyNewRound(
-        futureRoundId,
-        futurePeers.getProposer(),
-        futurePeers.createSignedRoundChangePayload(futureRoundId),
-        futureBlock);
+    futurePeers
+        .getProposer()
+        .injectEmptyNewRound(
+            futureRoundId, futurePeers.createSignedRoundChangePayload(futureRoundId), futureBlock);
 
     final Prepare expectedPrepare =
         localNodeMessageFactory.createPrepare(futureRoundId, futureBlock.getHash());
@@ -136,11 +134,10 @@ public class FutureRoundTest {
 
     peers.clearReceivedMessages();
 
-    injectEmptyNewRound(
-        futureRoundId,
-        futurePeers.getProposer(),
-        futurePeers.createSignedRoundChangePayload(futureRoundId),
-        futureBlock);
+    futurePeers
+        .getProposer()
+        .injectEmptyNewRound(
+            futureRoundId, futurePeers.createSignedRoundChangePayload(futureRoundId), futureBlock);
 
     final Prepare expectedFuturePrepare =
         localNodeMessageFactory.createPrepare(futureRoundId, futureBlock.getHash());

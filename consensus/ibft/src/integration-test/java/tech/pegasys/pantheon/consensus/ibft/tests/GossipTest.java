@@ -93,8 +93,7 @@ public class GossipTest {
     final RoundChange roundChange = msgFactory.createRoundChange(roundId, Optional.empty());
     final RoundChangeCertificate roundChangeCert =
         new RoundChangeCertificate(singleton(roundChange.getSignedPayload()));
-    final NewRound newRound =
-        sender.injectNewRound(roundId, roundChangeCert, proposal.getSignedPayload());
+    final NewRound newRound = sender.injectNewRound(roundId, roundChangeCert, proposal);
     peers.verifyMessagesReceivedNonPropsing(newRound);
     peers.verifyNoMessagesReceivedProposer();
 
