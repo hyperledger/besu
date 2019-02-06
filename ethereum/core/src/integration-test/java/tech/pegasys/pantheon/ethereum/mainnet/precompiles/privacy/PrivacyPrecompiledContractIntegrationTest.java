@@ -17,10 +17,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import tech.pegasys.orion.testutil.OrionTestHarness;
+import tech.pegasys.pantheon.enclave.Enclave;
+import tech.pegasys.pantheon.enclave.types.SendRequest;
+import tech.pegasys.pantheon.enclave.types.SendResponse;
 import tech.pegasys.pantheon.ethereum.mainnet.SpuriousDragonGasCalculator;
-import tech.pegasys.pantheon.orion.Orion;
-import tech.pegasys.pantheon.orion.types.SendRequest;
-import tech.pegasys.pantheon.orion.types.SendResponse;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -38,7 +38,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
   private static final String PAYLOAD = "a wonderful transaction";
-  private static Orion orion;
+  private static Enclave enclave;
 
   private static OrionTestHarness testHarness;
 
@@ -48,7 +48,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     testHarness = OrionTestHarness.create(folder.newFolder().toPath());
 
-    orion = new Orion(testHarness.clientUrl());
+    enclave = new Enclave(testHarness.clientUrl());
   }
 
   @AfterClass
@@ -58,7 +58,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
   @Test
   public void testUpCheck() throws IOException {
-    assertTrue(orion.upCheck());
+    assertTrue(enclave.upCheck());
   }
 
   @Test
@@ -67,10 +67,11 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     SendRequest sc =
         new SendRequest(PAYLOAD, publicKeys.get(0), Lists.newArrayList(publicKeys.get(1)));
-    SendResponse sr = orion.send(sc);
+    SendResponse sr = enclave.send(sc);
 
     PrivacyPrecompiledContract privacyPrecompiledContract =
-        new PrivacyPrecompiledContract(new SpuriousDragonGasCalculator(), publicKeys.get(0), orion);
+        new PrivacyPrecompiledContract(
+            new SpuriousDragonGasCalculator(), publicKeys.get(0), enclave);
 
     BytesValue result =
         privacyPrecompiledContract.compute(BytesValue.wrap(sr.getKey().getBytes(UTF_8)));

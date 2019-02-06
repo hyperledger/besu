@@ -19,12 +19,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.enclave.Enclave;
+import tech.pegasys.pantheon.enclave.types.SendRequest;
+import tech.pegasys.pantheon.enclave.types.SendResponse;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
-import tech.pegasys.pantheon.orion.Orion;
-import tech.pegasys.pantheon.orion.types.SendRequest;
-import tech.pegasys.pantheon.orion.types.SendResponse;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -90,25 +90,26 @@ public class PrivateTransactionHandlerTest {
           Address.wrap(BytesValue.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
           1);
 
-  Orion mockOrion() throws IOException {
-    Orion mockOrion = mock(Orion.class);
+  Enclave mockEnclave() throws IOException {
+    Enclave mockEnclave = mock(Enclave.class);
     SendResponse response = new SendResponse();
     response.setKey(TRANSACTION_KEY);
-    when(mockOrion.send(any(SendRequest.class))).thenReturn(response);
-    return mockOrion;
+    when(mockEnclave.send(any(SendRequest.class))).thenReturn(response);
+    return mockEnclave;
   }
 
-  Orion brokenMockOrion() throws IOException {
-    Orion mockOrion = mock(Orion.class);
-    when(mockOrion.send(any(SendRequest.class))).thenThrow(IOException.class);
-    return mockOrion;
+  Enclave brokenMockEnclave() throws IOException {
+    Enclave mockEnclave = mock(Enclave.class);
+    when(mockEnclave.send(any(SendRequest.class))).thenThrow(IOException.class);
+    return mockEnclave;
   }
 
   @Before
   public void setUp() throws IOException {
-    privateTransactionHandler = new PrivateTransactionHandler(mockOrion(), Address.DEFAULT_PRIVACY);
+    privateTransactionHandler =
+        new PrivateTransactionHandler(mockEnclave(), Address.DEFAULT_PRIVACY);
     brokenPrivateTransactionHandler =
-        new PrivateTransactionHandler(brokenMockOrion(), Address.DEFAULT_PRIVACY);
+        new PrivateTransactionHandler(brokenMockEnclave(), Address.DEFAULT_PRIVACY);
   }
 
   @Test

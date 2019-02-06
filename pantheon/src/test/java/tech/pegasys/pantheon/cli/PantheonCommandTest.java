@@ -71,8 +71,8 @@ import picocli.CommandLine;
 
 public class PantheonCommandTest extends CommandTestAbstract {
 
-  private final String ORION_URI = "http://1.2.3.4:5555";
-  private final String ORION_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
+  private final String ENCLAVE_URI = "http://1.2.3.4:5555";
+  private final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private final String VALID_NODE_ID =
       "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
   static final String PERMISSIONING_CONFIG_TOML = "permissioning_config.toml";
@@ -1822,24 +1822,24 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void mustUseOrionUriAndOptions() throws IOException {
+  public void mustUseEnclaveUriAndOptions() throws IOException {
     final URL configFile = Resources.getResource("orion_publickey.pub");
 
     parseCommand(
         "--privacy-enabled",
         "--privacy-url",
-        ORION_URI,
+        ENCLAVE_URI,
         "--privacy-public-key-file",
         configFile.getPath());
 
-    final ArgumentCaptor<PrivacyParameters> orionArg =
+    final ArgumentCaptor<PrivacyParameters> enclaveArg =
         ArgumentCaptor.forClass(PrivacyParameters.class);
 
-    verify(mockControllerBuilder).privacyParameters(orionArg.capture());
+    verify(mockControllerBuilder).privacyParameters(enclaveArg.capture());
     verify(mockControllerBuilder).build();
 
-    assertThat(orionArg.getValue().getUrl()).isEqualTo(ORION_URI);
-    assertThat(orionArg.getValue().getPublicKey()).isEqualTo(ORION_PUBLIC_KEY);
+    assertThat(enclaveArg.getValue().getUrl()).isEqualTo(ENCLAVE_URI);
+    assertThat(enclaveArg.getValue().getPublicKey()).isEqualTo(ENCLAVE_PUBLIC_KEY);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1852,7 +1852,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     parseCommand(
         "--privacy-url",
-        ORION_URI,
+        ENCLAVE_URI,
         "--privacy-public-key-file",
         file.getPath(),
         "--privacy-precompiled-address",
@@ -1870,15 +1870,15 @@ public class PantheonCommandTest extends CommandTestAbstract {
   public void mustVerifyPrivacyIsDisabled() throws IOException {
     parseCommand();
 
-    final ArgumentCaptor<PrivacyParameters> orionArg =
+    final ArgumentCaptor<PrivacyParameters> enclaveArg =
         ArgumentCaptor.forClass(PrivacyParameters.class);
 
-    verify(mockControllerBuilder).privacyParameters(orionArg.capture());
+    verify(mockControllerBuilder).privacyParameters(enclaveArg.capture());
     verify(mockControllerBuilder).build();
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(orionArg.getValue().isEnabled()).isEqualTo(false);
+    assertThat(enclaveArg.getValue().isEnabled()).isEqualTo(false);
   }
 
   private Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {

@@ -18,10 +18,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import tech.pegasys.pantheon.enclave.Enclave;
+import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
+import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
 import tech.pegasys.pantheon.ethereum.mainnet.SpuriousDragonGasCalculator;
-import tech.pegasys.pantheon.orion.Orion;
-import tech.pegasys.pantheon.orion.types.ReceiveRequest;
-import tech.pegasys.pantheon.orion.types.ReceiveResponse;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -36,26 +36,26 @@ public class PrivacyPrecompiledContractTest {
   private PrivacyPrecompiledContract privacyPrecompiledContract;
   private PrivacyPrecompiledContract brokenPrivateTransactionHandler;
 
-  Orion mockOrion() throws IOException {
-    Orion mockOrion = mock(Orion.class);
+  Enclave mockEnclave() throws IOException {
+    Enclave mockEnclave = mock(Enclave.class);
     ReceiveResponse response = new ReceiveResponse(actual.getBytes(UTF_8));
-    when(mockOrion.receive(any(ReceiveRequest.class))).thenReturn(response);
-    return mockOrion;
+    when(mockEnclave.receive(any(ReceiveRequest.class))).thenReturn(response);
+    return mockEnclave;
   }
 
-  Orion brokenMockOrion() throws IOException {
-    Orion mockOrion = mock(Orion.class);
-    when(mockOrion.receive(any(ReceiveRequest.class))).thenThrow(IOException.class);
-    return mockOrion;
+  Enclave brokenMockEnclave() throws IOException {
+    Enclave mockEnclave = mock(Enclave.class);
+    when(mockEnclave.receive(any(ReceiveRequest.class))).thenThrow(IOException.class);
+    return mockEnclave;
   }
 
   @Before
   public void setUp() throws IOException {
     privacyPrecompiledContract =
-        new PrivacyPrecompiledContract(new SpuriousDragonGasCalculator(), publicKey, mockOrion());
+        new PrivacyPrecompiledContract(new SpuriousDragonGasCalculator(), publicKey, mockEnclave());
     brokenPrivateTransactionHandler =
         new PrivacyPrecompiledContract(
-            new SpuriousDragonGasCalculator(), publicKey, brokenMockOrion());
+            new SpuriousDragonGasCalculator(), publicKey, brokenMockEnclave());
   }
 
   @Test
