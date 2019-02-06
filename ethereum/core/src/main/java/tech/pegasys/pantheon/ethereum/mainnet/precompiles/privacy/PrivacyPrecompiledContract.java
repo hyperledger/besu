@@ -14,13 +14,13 @@ package tech.pegasys.pantheon.ethereum.mainnet.precompiles.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import tech.pegasys.pantheon.enclave.Enclave;
+import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
+import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
 import tech.pegasys.pantheon.ethereum.core.Gas;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.mainnet.AbstractPrecompiledContract;
 import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
-import tech.pegasys.pantheon.orion.Orion;
-import tech.pegasys.pantheon.orion.types.ReceiveRequest;
-import tech.pegasys.pantheon.orion.types.ReceiveResponse;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -29,21 +29,21 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
-  private final Orion orion;
-  private final String orionPublicKey;
+  private final Enclave enclave;
+  private final String enclavePublicKey;
 
   private static final Logger LOG = LogManager.getLogger();
 
   public PrivacyPrecompiledContract(
       final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
-    this(gasCalculator, privacyParameters.getPublicKey(), new Orion(privacyParameters.getUrl()));
+    this(gasCalculator, privacyParameters.getPublicKey(), new Enclave(privacyParameters.getUrl()));
   }
 
   PrivacyPrecompiledContract(
-      final GasCalculator gasCalculator, final String publicKey, final Orion orion) {
+      final GasCalculator gasCalculator, final String publicKey, final Enclave enclave) {
     super("Privacy", gasCalculator);
-    this.orion = orion;
-    this.orionPublicKey = publicKey;
+    this.enclave = enclave;
+    this.enclavePublicKey = publicKey;
   }
 
   @Override
@@ -55,13 +55,13 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   public BytesValue compute(final BytesValue input) {
     try {
       String key = new String(input.extractArray(), UTF_8);
-      ReceiveRequest receiveRequest = new ReceiveRequest(key, orionPublicKey);
-      ReceiveResponse receiveResponse = orion.receive(receiveRequest);
+      ReceiveRequest receiveRequest = new ReceiveRequest(key, enclavePublicKey);
+      ReceiveResponse receiveResponse = enclave.receive(receiveRequest);
       LOG.info("Got the response as ", receiveResponse.getPayload());
       return BytesValue.wrap(receiveResponse.getPayload());
       // pass it to private tx processor
     } catch (IOException e) {
-      LOG.fatal("Orion threw an unhandled exception.", e);
+      LOG.fatal("Enclave threw an unhandled exception.", e);
       return BytesValue.EMPTY;
     }
   }

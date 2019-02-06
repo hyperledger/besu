@@ -12,13 +12,13 @@
  */
 package tech.pegasys.pantheon.ethereum.privacy;
 
+import tech.pegasys.pantheon.enclave.Enclave;
+import tech.pegasys.pantheon.enclave.types.SendRequest;
+import tech.pegasys.pantheon.enclave.types.SendResponse;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
-import tech.pegasys.pantheon.orion.Orion;
-import tech.pegasys.pantheon.orion.types.SendRequest;
-import tech.pegasys.pantheon.orion.types.SendResponse;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 
@@ -31,17 +31,17 @@ import java.util.stream.Collectors;
 
 public class PrivateTransactionHandler {
 
-  private final Orion orion;
+  private final Enclave enclave;
   private final Address privacyPrecompileAddress;
 
   public PrivateTransactionHandler(final PrivacyParameters privacyParameters) {
     this(
-        new Orion(privacyParameters.getUrl()),
+        new Enclave(privacyParameters.getUrl()),
         Address.privacyPrecompiled(privacyParameters.getPrivacyAddress()));
   }
 
-  public PrivateTransactionHandler(final Orion orion, final Address privacyPrecompileAddress) {
-    this.orion = orion;
+  public PrivateTransactionHandler(final Enclave enclave, final Address privacyPrecompileAddress) {
+    this.enclave = enclave;
     this.privacyPrecompileAddress = privacyPrecompileAddress;
   }
 
@@ -49,7 +49,7 @@ public class PrivateTransactionHandler {
     final SendRequest sendRequest = createSendRequest(privateTransaction);
     final SendResponse sendResponse;
     try {
-      sendResponse = orion.send(sendRequest);
+      sendResponse = enclave.send(sendRequest);
     } catch (IOException e) {
       throw e;
     }

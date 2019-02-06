@@ -32,7 +32,7 @@ dependencies {
   implementation project(':ethereum:trie')
   implementation project(':ethereum:permissioning')
   implementation project(':metrics')
-  implementation project(':orion')
+  implementation project(':enclave')
   implementation project(':services:kvstore')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'

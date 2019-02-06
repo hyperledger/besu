@@ -10,12 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.orion;
+package tech.pegasys.pantheon.enclave;
 
-import tech.pegasys.pantheon.orion.types.ReceiveRequest;
-import tech.pegasys.pantheon.orion.types.ReceiveResponse;
-import tech.pegasys.pantheon.orion.types.SendRequest;
-import tech.pegasys.pantheon.orion.types.SendResponse;
+import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
+import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
+import tech.pegasys.pantheon.enclave.types.SendRequest;
+import tech.pegasys.pantheon.enclave.types.SendResponse;
 
 import java.io.IOException;
 
@@ -28,7 +28,7 @@ import okhttp3.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class Orion {
+public class Enclave {
   private static final MediaType JSON = MediaType.parse("application/json");
   private static final ObjectMapper objectMapper = new ObjectMapper();
   private static final Logger LOG = LogManager.getLogger();
@@ -36,12 +36,8 @@ public class Orion {
   private String url;
   private final OkHttpClient client;
 
-  public Orion() {
-    this.client = new OkHttpClient();
-  }
-
-  public Orion(final String orionUrl) {
-    this.url = orionUrl;
+  public Enclave(final String enclaveUrl) {
+    this.url = enclaveUrl;
     this.client = new OkHttpClient();
   }
 
@@ -51,7 +47,7 @@ public class Orion {
     try (Response response = client.newCall(request).execute()) {
       return response.isSuccessful();
     } catch (IOException e) {
-      LOG.error("Orion failed to execute upcheck");
+      LOG.error("Enclave failed to execute upcheck");
       throw new IOException("Failed to perform upcheck", e);
     }
   }
@@ -74,7 +70,7 @@ public class Orion {
     try (Response response = client.newCall(request).execute()) {
       return objectMapper.readValue(response.body().string(), responseType);
     } catch (IOException e) {
-      LOG.error("Orion failed to execute ", path);
+      LOG.error("Enclave failed to execute ", path);
       throw new IOException("Failed to execute post", e);
     }
   }

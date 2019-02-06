@@ -479,7 +479,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     names = {"--privacy-url"},
     description = "The URL on which enclave is running "
   )
-  private final URI privacyUrl = PrivacyParameters.DEFAULT_ORION_URL;
+  private final URI privacyUrl = PrivacyParameters.DEFAULT_ENCLAVE_URL;
 
   @Option(
     names = {"--privacy-public-key-file"},
@@ -634,7 +634,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           .devMode(NetworkName.DEV.equals(getNetwork()))
           .nodePrivateKeyFile(nodePrivateKeyFile())
           .metricsSystem(metricsSystem)
-          .privacyParameters(orionConfiguration())
+          .privacyParameters(privacyParameters())
           .build();
     } catch (final InvalidConfigurationException e) {
       throw new ExecutionException(new CommandLine(this), e.getMessage());
@@ -750,7 +750,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     return Optional.of(permissioningConfiguration);
   }
 
-  private PrivacyParameters orionConfiguration() throws IOException {
+  private PrivacyParameters privacyParameters() throws IOException {
 
     CommandLineUtils.checkOptionDependencies(
         logger,

@@ -10,23 +10,22 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.orion.types;
+package tech.pegasys.pantheon.enclave.types;
 
-public class ReceiveResponse {
+public class SendResponse {
+  String key;
 
-  byte[] payload;
-
-  public byte[] getPayload() {
-    return payload;
+  public String getKey() {
+    return key;
   }
 
-  public void setPayload(final byte[] payload) {
-    this.payload = payload;
+  public void setKey(final String key) {
+    this.key = key;
   }
 
-  public ReceiveResponse(final byte[] payload) {
-    this.payload = payload;
+  public SendResponse(final String key) {
+    this.key = key;
   }
 
-  public ReceiveResponse() {}
+  public SendResponse() {}
 }
