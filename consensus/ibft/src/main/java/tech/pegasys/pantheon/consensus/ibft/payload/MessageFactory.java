@@ -37,7 +37,7 @@ public class MessageFactory {
     this.validatorKeyPair = validatorKeyPair;
   }
 
-  public Proposal createSignedProposalPayload(
+  public Proposal createProposal(
       final ConsensusRoundIdentifier roundIdentifier, final Block block) {
 
     final ProposalPayload payload = new ProposalPayload(roundIdentifier, block);
@@ -45,15 +45,14 @@ public class MessageFactory {
     return new Proposal(createSignedMessage(payload));
   }
 
-  public Prepare createSignedPreparePayload(
-      final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
+  public Prepare createPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
 
     final PreparePayload payload = new PreparePayload(roundIdentifier, digest);
 
     return new Prepare(createSignedMessage(payload));
   }
 
-  public Commit createSignedCommitPayload(
+  public Commit createCommit(
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
       final Signature commitSeal) {
@@ -63,7 +62,7 @@ public class MessageFactory {
     return new Commit(createSignedMessage(payload));
   }
 
-  public RoundChange createSignedRoundChangePayload(
+  public RoundChange createRoundChange(
       final ConsensusRoundIdentifier roundIdentifier,
       final Optional<TerminatedRoundArtefacts> terminatedRoundArtefacts) {
 
@@ -75,7 +74,7 @@ public class MessageFactory {
     return new RoundChange(createSignedMessage(payload));
   }
 
-  public NewRound createSignedNewRoundPayload(
+  public NewRound createNewRound(
       final ConsensusRoundIdentifier roundIdentifier,
       final RoundChangeCertificate roundChangeCertificate,
       final SignedData<ProposalPayload> proposalPayload) {

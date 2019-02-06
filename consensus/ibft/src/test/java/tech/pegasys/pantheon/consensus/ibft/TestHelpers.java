@@ -72,22 +72,21 @@ public class TestHelpers {
         new ConsensusRoundIdentifier(0x1234567890ABCDEFL, round);
     final Block block =
         TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), 0);
-    return messageFactory.createSignedProposalPayload(roundIdentifier, block);
+    return messageFactory.createProposal(roundIdentifier, block);
   }
 
   public static Prepare createSignedPreparePayload(final KeyPair signerKeys) {
     final MessageFactory messageFactory = new MessageFactory(signerKeys);
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(0x1234567890ABCDEFL, 0xFEDCBA98);
-    return messageFactory.createSignedPreparePayload(
-        roundIdentifier, Hash.fromHexStringLenient("0"));
+    return messageFactory.createPrepare(roundIdentifier, Hash.fromHexStringLenient("0"));
   }
 
   public static Commit createSignedCommitPayload(final KeyPair signerKeys) {
     final MessageFactory messageFactory = new MessageFactory(signerKeys);
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(0x1234567890ABCDEFL, 0xFEDCBA98);
-    return messageFactory.createSignedCommitPayload(
+    return messageFactory.createCommit(
         roundIdentifier,
         Hash.fromHexStringLenient("0"),
         Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0));
@@ -97,7 +96,7 @@ public class TestHelpers {
     final MessageFactory messageFactory = new MessageFactory(signerKeys);
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(0x1234567890ABCDEFL, 0xFEDCBA98);
-    return messageFactory.createSignedRoundChangePayload(roundIdentifier, Optional.empty());
+    return messageFactory.createRoundChange(roundIdentifier, Optional.empty());
   }
 
   public static NewRound createSignedNewRoundPayload(final KeyPair signerKeys) {
@@ -105,7 +104,7 @@ public class TestHelpers {
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(0x1234567890ABCDEFL, 0xFEDCBA98);
     final Proposal proposalPayload = createSignedProposalPayload(signerKeys);
-    return messageFactory.createSignedNewRoundPayload(
+    return messageFactory.createNewRound(
         roundIdentifier,
         new RoundChangeCertificate(newArrayList()),
         proposalPayload.getSignedPayload());

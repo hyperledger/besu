@@ -70,9 +70,7 @@ public class SpuriousBehaviourTest {
     context.getController().start();
 
     expectedPrepare =
-        context
-            .getLocalNodeMessageFactory()
-            .createSignedPreparePayload(roundId, proposedBlock.getHash());
+        context.getLocalNodeMessageFactory().createPrepare(roundId, proposedBlock.getHash());
     expectedCommit =
         new Commit(
             createSignedCommitPayload(

@@ -42,8 +42,7 @@ public class RoundChangeMessageValidatorTest {
 
   @Test
   public void underlyingPayloadValidatorIsInvokedWithCorrectParameters() {
-    final RoundChange message =
-        messageFactory.createSignedRoundChangePayload(roundIdentifier, empty());
+    final RoundChange message = messageFactory.createRoundChange(roundIdentifier, empty());
 
     validator.validateRoundChange(message);
     verify(payloadValidator, times(1)).validateRoundChange(message.getSignedPayload());
