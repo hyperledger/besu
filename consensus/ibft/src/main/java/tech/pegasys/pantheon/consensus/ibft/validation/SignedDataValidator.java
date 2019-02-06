@@ -60,13 +60,13 @@ public class SignedDataValidator {
     this.protocolContext = protocolContext;
   }
 
-  public boolean addSignedProposalPayload(final SignedData<ProposalPayload> msg) {
+  public boolean validateProposal(final SignedData<ProposalPayload> msg) {
 
     if (proposal.isPresent()) {
       return handleSubsequentProposal(proposal.get(), msg);
     }
 
-    if (!validateSignedProposalPayload(msg)) {
+    if (!validateProposalSignedDataPayload(msg)) {
       return false;
     }
 
@@ -78,7 +78,7 @@ public class SignedDataValidator {
     return true;
   }
 
-  private boolean validateSignedProposalPayload(final SignedData<ProposalPayload> msg) {
+  private boolean validateProposalSignedDataPayload(final SignedData<ProposalPayload> msg) {
 
     if (!msg.getPayload().getRoundIdentifier().equals(roundIdentifier)) {
       LOG.info("Invalid Proposal message, does not match current round.");
@@ -124,7 +124,7 @@ public class SignedDataValidator {
     return true;
   }
 
-  public boolean validatePrepareMessage(final SignedData<PreparePayload> msg) {
+  public boolean validatePrepare(final SignedData<PreparePayload> msg) {
     final String msgType = "Prepare";
 
     if (!isMessageForCurrentRoundFromValidatorAndProposalAvailable(msg, msgType)) {
@@ -139,7 +139,7 @@ public class SignedDataValidator {
     return validateDigestMatchesProposal(msg.getPayload().getDigest(), msgType);
   }
 
-  public boolean validateCommmitMessage(final SignedData<CommitPayload> msg) {
+  public boolean validateCommit(final SignedData<CommitPayload> msg) {
     final String msgType = "Commit";
 
     if (!isMessageForCurrentRoundFromValidatorAndProposalAvailable(msg, msgType)) {

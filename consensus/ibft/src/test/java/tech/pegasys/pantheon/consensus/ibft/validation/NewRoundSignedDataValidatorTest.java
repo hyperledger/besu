@@ -79,8 +79,8 @@ public class NewRoundSignedDataValidatorTest {
     when(proposerSelector.selectProposerForRound(any())).thenReturn(proposerAddress);
 
     when(validatorFactory.createAt(any())).thenReturn(signedDataValidator);
-    when(signedDataValidator.addSignedProposalPayload(any())).thenReturn(true);
-    when(signedDataValidator.validatePrepareMessage(any())).thenReturn(true);
+    when(signedDataValidator.validateProposal(any())).thenReturn(true);
+    when(signedDataValidator.validatePrepare(any())).thenReturn(true);
 
     validator =
         new NewRoundPayloadValidator(
@@ -216,7 +216,7 @@ public class NewRoundSignedDataValidatorTest {
     msgBuilder.setRoundChangeCertificate(roundChangeBuilder.buildCertificate());
 
     // The prepare Message in the RoundChange Cert will be deemed illegal.
-    when(signedDataValidator.validatePrepareMessage(any())).thenReturn(false);
+    when(signedDataValidator.validatePrepare(any())).thenReturn(false);
 
     final NewRound msg = signPayload(msgBuilder.build(), proposerKey);
 
@@ -281,7 +281,7 @@ public class NewRoundSignedDataValidatorTest {
 
   @Test
   public void embeddedProposalFailsValidation() {
-    when(signedDataValidator.addSignedProposalPayload(any())).thenReturn(false, true);
+    when(signedDataValidator.validateProposal(any())).thenReturn(false, true);
 
     final Proposal proposal = proposerMessageFactory.createProposal(roundIdentifier, proposedBlock);
 

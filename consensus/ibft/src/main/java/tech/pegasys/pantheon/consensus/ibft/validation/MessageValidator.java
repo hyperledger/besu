@@ -24,15 +24,15 @@ public class MessageValidator {
     this.signedDataValidator = signedDataValidator;
   }
 
-  public boolean addSignedProposalPayload(final Proposal msg) {
-    return signedDataValidator.addSignedProposalPayload(msg.getSignedPayload());
+  public boolean validateProposal(final Proposal msg) {
+    return signedDataValidator.validateProposal(msg.getSignedPayload());
   }
 
-  public boolean validatePrepareMessage(final Prepare msg) {
-    return signedDataValidator.validatePrepareMessage(msg.getSignedPayload());
+  public boolean validatePrepare(final Prepare msg) {
+    return signedDataValidator.validatePrepare(msg.getSignedPayload());
   }
 
-  public boolean validateCommitMessage(final Commit msg) {
-    return signedDataValidator.validateCommmitMessage(msg.getSignedPayload());
+  public boolean validateCommit(final Commit msg) {
+    return signedDataValidator.validateCommit(msg.getSignedPayload());
   }
 }
