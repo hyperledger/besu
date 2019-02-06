@@ -65,16 +65,14 @@ Returned by [eth_getFilterChanges](JSON-RPC-API-Methods.md#eth_getfilterchanges)
 | **data**             | Data                              | Non-indexed arguments of log.                                                                                                                                                                                       |
 | **topics**           | Array of Data, 32&nbsp;bytes each | [Event signature hash](../Using-Pantheon/Events-and-Logs.md#event-signature-hash) and 0 to 3 [indexed log arguments](../Using-Pantheon/Events-and-Logs.md#event-parameters).  |
 
-## Trace Object
+## Range Object
 
-Returned by [debug_traceTransaction](JSON-RPC-API-Methods.md#debug_tracetransaction).
+Returned by [debug_storageRangeAt](JSON-RPC-API-Methods.md#debug_storagerangeat).
 
 | Key             | Type    | Value                                                             |
 |-----------------|:-------:|-------------------------------------------------------------------|
-| **gas**         | Integer | Gas used by the transaction                                       |
-| **failed**      | Boolean | True if transaction failed; otherwise, false                      |
-| **returnValue** | String  | Bytes returned from transaction execution (without a `0x` prefix) |
-| **structLogs**  | Array   | Array of structured log objects                                   |
+| **storage**     | Object  | Key hash and value. Preimage key is always null         |
+| **nextKey**      | Hash | Hash of next key if further storage in range. Otherwise, not included                   |
 
 
 ### Structured Log Object
@@ -93,6 +91,16 @@ Log information returned as part of the [Trace object](#trace-object).
 | **memory**                 | Array of 32&nbsp;byte arrays | Memory space of the contract before executing current operation                                                                                                                                                                                                                                                                                     |
 | **storage**                | Object                       | Storage entries changed by the current transaction                                                                                                                                                                                                                                                                                                  |
 
+## Trace Object
+
+Returned by [debug_traceTransaction](JSON-RPC-API-Methods.md#debug_tracetransaction).
+
+| Key             | Type    | Value                                                             |
+|-----------------|:-------:|-------------------------------------------------------------------|
+| **gas**         | Integer | Gas used by the transaction                                       |
+| **failed**      | Boolean | True if transaction failed; otherwise, false                      |
+| **returnValue** | String  | Bytes returned from transaction execution (without a `0x` prefix) |
+| **structLogs**  | Array   | Array of structured log objects                                   |
 
 ## Transaction Object
 
