@@ -65,10 +65,10 @@ public class RoundState {
   public boolean setProposedBlock(final Proposal msg) {
 
     if (!proposalMessage.isPresent()) {
-      if (validator.addSignedProposalPayload(msg)) {
+      if (validator.validateProposal(msg)) {
         proposalMessage = Optional.of(msg);
-        prepareMessages.removeIf(p -> !validator.validatePrepareMessage(p));
-        commitMessages.removeIf(p -> !validator.validateCommitMessage(p));
+        prepareMessages.removeIf(p -> !validator.validatePrepare(p));
+        commitMessages.removeIf(p -> !validator.validateCommit(p));
         updateState();
         return true;
       }
@@ -78,7 +78,7 @@ public class RoundState {
   }
 
   public void addPrepareMessage(final Prepare msg) {
-    if (!proposalMessage.isPresent() || validator.validatePrepareMessage(msg)) {
+    if (!proposalMessage.isPresent() || validator.validatePrepare(msg)) {
       prepareMessages.add(msg);
       LOG.debug("Round state added prepare message prepare={}", msg);
     }
@@ -86,7 +86,7 @@ public class RoundState {
   }
 
   public void addCommitMessage(final Commit msg) {
-    if (!proposalMessage.isPresent() || validator.validateCommitMessage(msg)) {
+    if (!proposalMessage.isPresent() || validator.validateCommit(msg)) {
       commitMessages.add(msg);
       LOG.debug("Round state added commit message commit={}", msg);
     }

@@ -89,7 +89,7 @@ public class RoundChangePayloadValidator {
   private boolean validateConsistencyOfPrepareCertificateMessages(
       final PreparedCertificate certificate, final SignedDataValidator signedDataValidator) {
 
-    if (!signedDataValidator.addSignedProposalPayload(certificate.getProposalPayload())) {
+    if (!signedDataValidator.validateProposal(certificate.getProposalPayload())) {
       LOG.info("Invalid RoundChange message, embedded Proposal message failed validation.");
       return false;
     }
@@ -102,7 +102,7 @@ public class RoundChangePayloadValidator {
     }
 
     for (final SignedData<PreparePayload> prepareMsg : certificate.getPreparePayloads()) {
-      if (!signedDataValidator.validatePrepareMessage(prepareMsg)) {
+      if (!signedDataValidator.validatePrepare(prepareMsg)) {
         LOG.info("Invalid RoundChange message, embedded Prepare message failed validation.");
         return false;
       }

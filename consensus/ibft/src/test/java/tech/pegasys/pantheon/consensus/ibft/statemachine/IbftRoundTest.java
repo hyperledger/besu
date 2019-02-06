@@ -97,9 +97,9 @@ public class IbftRoundTest {
             worldStateArchive,
             new IbftContext(new VoteTally(emptyList()), new VoteProposer()));
 
-    when(messageValidator.addSignedProposalPayload(any())).thenReturn(true);
-    when(messageValidator.validatePrepareMessage(any())).thenReturn(true);
-    when(messageValidator.validateCommitMessage(any())).thenReturn(true);
+    when(messageValidator.validateProposal(any())).thenReturn(true);
+    when(messageValidator.validatePrepare(any())).thenReturn(true);
+    when(messageValidator.validateCommit(any())).thenReturn(true);
 
     proposedExtraData =
         new IbftExtraData(BytesValue.wrap(new byte[32]), emptyList(), empty(), 0, emptyList());
