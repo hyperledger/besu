@@ -135,7 +135,7 @@ public class IbftBlockHeightManagerTest {
     when(finalState.getMessageFactory()).thenReturn(messageFactory);
     when(blockCreator.createBlock(anyLong())).thenReturn(createdBlock);
     when(newRoundPayloadValidator.validateNewRoundMessage(any())).thenReturn(true);
-    when(messageValidatorFactory.createNewRoundValidator(any()))
+    when(messageValidatorFactory.createNewRoundValidator(anyLong()))
         .thenReturn(newRoundPayloadValidator);
     when(messageValidatorFactory.createMessageValidator(any())).thenReturn(messageValidator);
 
