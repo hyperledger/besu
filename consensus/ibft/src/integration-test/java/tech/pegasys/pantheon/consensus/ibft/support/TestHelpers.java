@@ -23,7 +23,7 @@ import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
-import tech.pegasys.pantheon.consensus.ibft.statemachine.TerminatedRoundArtefacts;
+import tech.pegasys.pantheon.consensus.ibft.statemachine.PreparedRoundArtefacts;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
@@ -49,11 +49,11 @@ public class TestHelpers {
     return messageFactory.createCommit(roundId, block.getHash(), commitSeal).getSignedPayload();
   }
 
-  public static TerminatedRoundArtefacts createValidTerminatedRoundArtefacts(
+  public static PreparedRoundArtefacts createValidPreparedRoundArtefacts(
       final TestContext context, final ConsensusRoundIdentifier preparedRound, final Block block) {
     final RoundSpecificPeers peers = context.roundSpecificPeers(preparedRound);
 
-    return new TerminatedRoundArtefacts(
+    return new PreparedRoundArtefacts(
         peers.getProposer().getMessageFactory().createProposal(preparedRound, block),
         peers
             .createSignedPreparePayloadOfNonProposing(preparedRound, block.getHash())

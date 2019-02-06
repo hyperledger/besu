@@ -294,7 +294,7 @@ public class IbftRoundTest {
                 messageFactory.createRoundChange(
                     roundIdentifier,
                     Optional.of(
-                        new TerminatedRoundArtefacts(
+                        new PreparedRoundArtefacts(
                             messageFactory.createProposal(priorRoundChange, proposedBlock),
                             emptyList())))));
 

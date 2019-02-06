@@ -20,12 +20,12 @@ import tech.pegasys.pantheon.ethereum.core.Block;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-public class TerminatedRoundArtefacts {
+public class PreparedRoundArtefacts {
 
   private Proposal proposal;
   private Collection<Prepare> prepares;
 
-  public TerminatedRoundArtefacts(final Proposal proposal, final Collection<Prepare> prepares) {
+  public PreparedRoundArtefacts(final Proposal proposal, final Collection<Prepare> prepares) {
     this.proposal = proposal;
     this.prepares = prepares;
   }

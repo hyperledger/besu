@@ -26,7 +26,7 @@ import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.payload.NewRoundPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
-import tech.pegasys.pantheon.consensus.ibft.statemachine.TerminatedRoundArtefacts;
+import tech.pegasys.pantheon.consensus.ibft.statemachine.PreparedRoundArtefacts;
 import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangePayloadValidator.MessageValidatorForHeightFactory;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -163,8 +163,8 @@ public class NewRoundSignedDataValidatorTest {
     final Block prevProposedBlock =
         TestHelpers.createProposalBlock(validators.subList(0, 1), roundIdentifier.getRoundNumber());
 
-    final TerminatedRoundArtefacts mismatchedRoundArtefacts =
-        new TerminatedRoundArtefacts(
+    final PreparedRoundArtefacts mismatchedRoundArtefacts =
+        new PreparedRoundArtefacts(
             proposerMessageFactory.createProposal(preparedRound, prevProposedBlock),
             singletonList(
                 validatorMessageFactory.createPrepare(preparedRound, prevProposedBlock.getHash())));
@@ -207,7 +207,7 @@ public class NewRoundSignedDataValidatorTest {
         proposerMessageFactory.createRoundChange(
             roundIdentifier,
             Optional.of(
-                new TerminatedRoundArtefacts(
+                new PreparedRoundArtefacts(
                     proposerMessageFactory.createProposal(prevRound, proposedBlock),
                     Lists.newArrayList(
                         validatorMessageFactory.createPrepare(
@@ -230,9 +230,9 @@ public class NewRoundSignedDataValidatorTest {
             roundIdentifier.getSequenceNumber(), roundIdentifier.getRoundNumber() - 1);
     final Proposal latterProposal =
         proposerMessageFactory.createProposal(latterPrepareRound, proposedBlock);
-    final Optional<TerminatedRoundArtefacts> preparedCert =
+    final Optional<PreparedRoundArtefacts> preparedCert =
         Optional.of(
-            new TerminatedRoundArtefacts(
+            new PreparedRoundArtefacts(
                 latterProposal,
                 Lists.newArrayList(
                     validatorMessageFactory.createPrepare(
@@ -247,9 +247,9 @@ public class NewRoundSignedDataValidatorTest {
             roundIdentifier.getSequenceNumber(), roundIdentifier.getRoundNumber() - 2);
     final Proposal earlierProposal =
         proposerMessageFactory.createProposal(earlierPreparedRound, earlierBlock);
-    final Optional<TerminatedRoundArtefacts> earlierPreparedCert =
+    final Optional<PreparedRoundArtefacts> earlierPreparedCert =
         Optional.of(
-            new TerminatedRoundArtefacts(
+            new PreparedRoundArtefacts(
                 earlierProposal,
                 Lists.newArrayList(
                     validatorMessageFactory.createPrepare(
