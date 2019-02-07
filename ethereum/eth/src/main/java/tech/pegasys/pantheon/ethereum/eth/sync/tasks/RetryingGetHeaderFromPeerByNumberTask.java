@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -36,7 +37,7 @@ public class RetryingGetHeaderFromPeerByNumberTask
       final LabelledMetric<OperationTimer> ethTasksTimer,
       final long pivotBlockNumber,
       final int maxRetries) {
-    super(ethContext, maxRetries, ethTasksTimer);
+    super(ethContext, maxRetries, ethTasksTimer, Collection::isEmpty);
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.pivotBlockNumber = pivotBlockNumber;

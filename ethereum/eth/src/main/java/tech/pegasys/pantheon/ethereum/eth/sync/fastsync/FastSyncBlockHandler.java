@@ -19,11 +19,10 @@ import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
-import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPeerTask.PeerTaskResult;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.sync.ValidationPolicy;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.CompleteBlocksTask;
-import tech.pegasys.pantheon.ethereum.eth.sync.tasks.GetReceiptsFromPeerTask;
+import tech.pegasys.pantheon.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.PipelinedImportChainSegmentTask.BlockHandler;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -75,9 +74,7 @@ public class FastSyncBlockHandler<C> implements BlockHandler<BlockWithReceipts> 
 
   private CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> downloadReceipts(
       final List<BlockHeader> headers) {
-    return GetReceiptsFromPeerTask.forHeaders(ethContext, headers, ethTasksTimer)
-        .run()
-        .thenApply(PeerTaskResult::getResult);
+    return GetReceiptsForHeadersTask.forHeaders(ethContext, headers, ethTasksTimer).run();
   }
 
   private List<BlockWithReceipts> combineBlocksAndReceipts(

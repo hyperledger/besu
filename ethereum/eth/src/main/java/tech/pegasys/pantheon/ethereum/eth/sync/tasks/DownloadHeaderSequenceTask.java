@@ -31,6 +31,7 @@ import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -68,7 +69,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
       final int segmentLength,
       final int maxRetries,
       final LabelledMetric<OperationTimer> ethTasksTimer) {
-    super(ethContext, maxRetries, ethTasksTimer);
+    super(ethContext, maxRetries, ethTasksTimer, Collection::isEmpty);
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
