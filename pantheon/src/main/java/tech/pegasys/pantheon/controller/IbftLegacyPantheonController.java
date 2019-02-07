@@ -242,7 +242,6 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
 
   @Override
   public PrivacyParameters getPrivacyParameters() {
-    LOG.warn("IbftLegacyPantheonController does not currently support private transactions.");
     return PrivacyParameters.noPrivacy();
   }
 

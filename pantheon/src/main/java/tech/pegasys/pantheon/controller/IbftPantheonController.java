@@ -331,7 +331,6 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
 
   @Override
   public PrivacyParameters getPrivacyParameters() {
-    LOG.warn("IbftPantheonController does not currently support private transactions.");
     return PrivacyParameters.noPrivacy();
   }
 
