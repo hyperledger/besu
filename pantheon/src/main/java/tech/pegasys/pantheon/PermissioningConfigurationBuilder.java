@@ -70,9 +70,7 @@ public class PermissioningConfigurationBuilder {
     if (permissionedAccountEnabled) {
       if (accountWhitelistTomlArray != null) {
         List<String> accountsWhitelistToml =
-            accountWhitelistTomlArray
-                .toList()
-                .stream()
+            accountWhitelistTomlArray.toList().stream()
                 .map(Object::toString)
                 .collect(Collectors.toList());
         permissioningConfiguration.setAccountWhitelist(accountsWhitelistToml);
@@ -84,9 +82,7 @@ public class PermissioningConfigurationBuilder {
     if (permissionedNodeEnabled) {
       if (nodeWhitelistTomlArray != null) {
         List<URI> nodesWhitelistToml =
-            nodeWhitelistTomlArray
-                .toList()
-                .stream()
+            nodeWhitelistTomlArray.toList().stream()
                 .map(Object::toString)
                 .map(EnodeToURIPropertyConverter::convertToURI)
                 .collect(Collectors.toList());

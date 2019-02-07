@@ -42,9 +42,7 @@ public class PeerDiscoveryBootstrappingTest {
     final PeerDiscoveryAgent agent = helper.startDiscoveryAgent(testAgent.getAdvertisedPeer());
 
     final List<IncomingPacket> incomingPackets =
-        testAgent
-            .getIncomingPackets()
-            .stream()
+        testAgent.getIncomingPackets().stream()
             .filter(p -> p.packet.getType().equals(PacketType.PING))
             .collect(toList());
     assertThat(incomingPackets.size()).isEqualTo(1);
@@ -78,8 +76,7 @@ public class PeerDiscoveryBootstrappingTest {
       final List<BytesValue> senderIds =
           packets.stream().map(Packet::getNodeId).distinct().collect(toList());
       final List<BytesValue> agentIds =
-          agents
-              .stream()
+          agents.stream()
               .map(PeerDiscoveryAgent::getAdvertisedPeer)
               .map(Peer::getId)
               .distinct()

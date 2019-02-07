@@ -85,16 +85,14 @@ public class PeerDiscoveryObserversTest {
     final List<MockPeerDiscoveryAgent> others1 =
         helper.startDiscoveryAgents(3, Collections.emptyList());
     final List<DiscoveryPeer> peers1 =
-        others1
-            .stream()
+        others1.stream()
             .map(MockPeerDiscoveryAgent::getAdvertisedPeer)
             .collect(Collectors.toList());
 
     // Create two discovery agents pointing to the above as bootstrap peers.
     final List<MockPeerDiscoveryAgent> others2 = helper.startDiscoveryAgents(2, peers1);
     final List<DiscoveryPeer> peers2 =
-        others2
-            .stream()
+        others2.stream()
             .map(MockPeerDiscoveryAgent::getAdvertisedPeer)
             .collect(Collectors.toList());
 
@@ -112,8 +110,7 @@ public class PeerDiscoveryObserversTest {
 
     final HashSet<BytesValue> seenPeers = new HashSet<>();
     List<DiscoveryPeer> discoveredPeers =
-        events
-            .stream()
+        events.stream()
             .map(PeerDiscoveryEvent::getPeer)
             // We emit some duplicate events when the tcp port differs (in terms of presence) for a
             // peer,

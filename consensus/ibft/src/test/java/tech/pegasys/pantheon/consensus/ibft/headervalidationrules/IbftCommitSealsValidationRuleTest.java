@@ -46,8 +46,7 @@ public class IbftCommitSealsValidationRuleTest {
         IntStream.range(0, 2).mapToObj(i -> KeyPair.generate()).collect(Collectors.toList());
 
     final List<Address> committerAddresses =
-        committerKeyPairs
-            .stream()
+        committerKeyPairs.stream()
             .map(keyPair -> Util.publicKeyToAddress(keyPair.getPublicKey()))
             .sorted()
             .collect(Collectors.toList());

@@ -101,8 +101,7 @@ public class CliqueExtraDataTest {
     }
 
     final List<Address> addresses =
-        nodeKeys
-            .stream()
+        nodeKeys.stream()
             .map(KeyPair::getPublicKey)
             .map(Util::publicKeyToAddress)
             .collect(Collectors.toList());

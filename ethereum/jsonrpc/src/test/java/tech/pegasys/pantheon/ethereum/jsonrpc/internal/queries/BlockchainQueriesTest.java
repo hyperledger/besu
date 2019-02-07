@@ -485,10 +485,7 @@ public class BlockchainQueriesTest {
       final Block targetBlock, final BlockWithMetadata<TransactionWithMetadata, Hash> result) {
     assertEquals(targetBlock.getHeader(), result.getHeader());
     final List<Hash> expectedOmmers =
-        targetBlock
-            .getBody()
-            .getOmmers()
-            .stream()
+        targetBlock.getBody().getOmmers().stream()
             .map(BlockHeader::getHash)
             .collect(Collectors.toList());
     assertEquals(expectedOmmers, result.getOmmers());
@@ -507,10 +504,7 @@ public class BlockchainQueriesTest {
       final Block targetBlock, final BlockWithMetadata<Hash, Hash> result) {
     assertEquals(targetBlock.getHeader(), result.getHeader());
     final List<Hash> expectedOmmers =
-        targetBlock
-            .getBody()
-            .getOmmers()
-            .stream()
+        targetBlock.getBody().getOmmers().stream()
             .map(BlockHeader::getHash)
             .collect(Collectors.toList());
     assertEquals(expectedOmmers, result.getOmmers());

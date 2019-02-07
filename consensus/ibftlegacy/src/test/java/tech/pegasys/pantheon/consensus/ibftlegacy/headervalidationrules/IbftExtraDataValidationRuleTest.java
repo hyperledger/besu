@@ -83,8 +83,7 @@ public class IbftExtraDataValidationRuleTest {
         IbftBlockHashing.calculateDataHashForCommittedSeal(header, extraDataInHeader);
 
     final List<Signature> commitSeals =
-        committerKeyPairs
-            .stream()
+        committerKeyPairs.stream()
             .map(keys -> SECP256K1.sign(headerHashForCommitters, keys))
             .collect(Collectors.toList());
 

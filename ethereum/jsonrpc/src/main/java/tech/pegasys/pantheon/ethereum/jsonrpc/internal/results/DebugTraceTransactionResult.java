@@ -33,9 +33,7 @@ public class DebugTraceTransactionResult {
     gas = transactionTrace.getGas();
     returnValue = transactionTrace.getResult().getOutput().toString().substring(2);
     structLogs =
-        transactionTrace
-            .getTraceFrames()
-            .stream()
+        transactionTrace.getTraceFrames().stream()
             .map(DebugTraceTransactionResult::createStructLog)
             .collect(Collectors.toList());
     failed = !transactionTrace.getResult().isSuccessful();

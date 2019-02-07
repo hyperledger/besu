@@ -86,9 +86,7 @@ public class PeerDiscoveryTableRefreshTest {
     }
     verify(outboundMessageHandler, atLeast(5)).send(eq(peers.get(1)), captor.capture());
     List<Packet> capturedFindNeighborsPackets =
-        captor
-            .getAllValues()
-            .stream()
+        captor.getAllValues().stream()
             .filter(p -> p.getType().equals(PacketType.FIND_NEIGHBORS))
             .collect(Collectors.toList());
     assertThat(capturedFindNeighborsPackets.size()).isEqualTo(5);

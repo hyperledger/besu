@@ -64,8 +64,7 @@ public class PeerDiscoveryAgentTest {
     final List<MockPeerDiscoveryAgent> otherAgents =
         helper.startDiscoveryAgents(20, Collections.emptyList());
     final List<DiscoveryPeer> otherPeers =
-        otherAgents
-            .stream()
+        otherAgents.stream()
             .map(MockPeerDiscoveryAgent::getAdvertisedPeer)
             .collect(Collectors.toList());
 
@@ -91,9 +90,7 @@ public class PeerDiscoveryAgentTest {
 
     // Check response packet
     List<IncomingPacket> incomingPackets =
-        testAgent
-            .getIncomingPackets()
-            .stream()
+        testAgent.getIncomingPackets().stream()
             .filter(p -> p.packet.getType().equals(PacketType.NEIGHBORS))
             .collect(Collectors.toList());
     assertThat(incomingPackets.size()).isEqualTo(1);

@@ -143,8 +143,7 @@ public class RoundChangeManagerTest {
     final Proposal proposal = messageFactory.createProposal(proposalRound, block);
 
     final List<Prepare> preparePayloads =
-        prepareProviders
-            .stream()
+        prepareProviders.stream()
             .map(
                 k -> {
                   final MessageFactory prepareFactory = new MessageFactory(k);

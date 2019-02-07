@@ -48,9 +48,8 @@ public class CommandLineUtilsTest {
 
     // Completely disables p2p within Pantheon.
     @Option(
-      names = {"--option-enabled"},
-      arity = "1"
-    )
+        names = {"--option-enabled"},
+        arity = "1")
     final Boolean optionEnabled = true;
 
     @Option(names = {"--option2"})

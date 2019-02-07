@@ -59,9 +59,7 @@ public class PrivateTransactionHandler {
 
   private SendRequest createSendRequest(final PrivateTransaction privateTransaction) {
     final List<String> privateFor =
-        privateTransaction
-            .getPrivateFor()
-            .stream()
+        privateTransaction.getPrivateFor().stream()
             .map(BytesValues::asString)
             .collect(Collectors.toList());
 

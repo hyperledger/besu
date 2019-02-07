@@ -76,9 +76,7 @@ public class PendingBlocks {
   }
 
   public void purgeBlocksOlderThan(final long blockNumber) {
-    pendingBlocks
-        .values()
-        .stream()
+    pendingBlocks.values().stream()
         .filter(b -> b.getHeader().getNumber() < blockNumber)
         .forEach(this::deregisterPendingBlock);
   }
@@ -92,8 +90,7 @@ public class PendingBlocks {
     if (blocksByParent == null || blocksByParent.size() == 0) {
       return Collections.emptyList();
     }
-    return blocksByParent
-        .stream()
+    return blocksByParent.stream()
         .map(pendingBlocks::get)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());

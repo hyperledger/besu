@@ -62,8 +62,7 @@ public class IbftBlockHashingTest {
             HEADER_TO_BE_HASHED, IbftExtraData.decode(HEADER_TO_BE_HASHED.getExtraData()));
 
     List<Address> expectedCommitterAddresses =
-        COMMITTERS_KEY_PAIRS
-            .stream()
+        COMMITTERS_KEY_PAIRS.stream()
             .map(keyPair -> Util.publicKeyToAddress(keyPair.getPublicKey()))
             .collect(Collectors.toList());
 
@@ -79,8 +78,7 @@ public class IbftBlockHashingTest {
     BlockHeaderBuilder builder = setHeaderFieldsExceptForExtraData();
 
     List<Signature> commitSeals =
-        COMMITTERS_KEY_PAIRS
-            .stream()
+        COMMITTERS_KEY_PAIRS.stream()
             .map(keyPair -> SECP256K1.sign(dataHahsForCommittedSeal, keyPair))
             .collect(Collectors.toList());
 
@@ -151,8 +149,7 @@ public class IbftBlockHashingTest {
     builder.buildBlockHeader().writeTo(rlpForHeaderFroCommittersSigning);
 
     List<Signature> commitSeals =
-        COMMITTERS_KEY_PAIRS
-            .stream()
+        COMMITTERS_KEY_PAIRS.stream()
             .map(
                 keyPair ->
                     SECP256K1.sign(Hash.hash(rlpForHeaderFroCommittersSigning.encoded()), keyPair))

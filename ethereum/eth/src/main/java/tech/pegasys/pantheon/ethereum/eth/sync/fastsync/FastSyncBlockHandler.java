@@ -82,8 +82,7 @@ public class FastSyncBlockHandler<C> implements BlockHandler<BlockWithReceipts> 
 
   private List<BlockWithReceipts> combineBlocksAndReceipts(
       final List<Block> blocks, final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader) {
-    return blocks
-        .stream()
+    return blocks.stream()
         .map(
             block -> {
               final List<TransactionReceipt> receipts =

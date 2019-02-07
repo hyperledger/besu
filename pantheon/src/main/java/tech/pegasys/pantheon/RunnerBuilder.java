@@ -198,8 +198,7 @@ public class RunnerBuilder {
     final List<SubProtocol> subProtocols = subProtocolConfiguration.getSubProtocols();
     final List<ProtocolManager> protocolManagers = subProtocolConfiguration.getProtocolManagers();
     final Set<Capability> supportedCapabilities =
-        protocolManagers
-            .stream()
+        protocolManagers.stream()
             .flatMap(protocolManager -> protocolManager.getSupportedCapabilities().stream())
             .collect(Collectors.toSet());
 

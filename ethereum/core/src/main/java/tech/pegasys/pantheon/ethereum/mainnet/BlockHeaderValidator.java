@@ -82,8 +82,7 @@ public class BlockHeaderValidator<C> {
       final BlockHeader parent,
       final ProtocolContext<C> protocolContext,
       final Predicate<Rule<C>> filter) {
-    return rules
-        .stream()
+    return rules.stream()
         .filter(filter)
         .allMatch(rule -> rule.validate(header, parent, protocolContext));
   }

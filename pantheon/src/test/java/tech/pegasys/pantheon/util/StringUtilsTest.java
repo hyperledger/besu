@@ -35,9 +35,7 @@ public class StringUtilsTest {
 
     for (Entry<List<String>, String> entry : testCases.entrySet()) {
       String joinedResult =
-          entry
-              .getKey()
-              .stream()
+          entry.getKey().stream()
               .collect(
                   Collectors.collectingAndThen(
                       Collectors.toList(), StringUtils.joiningWithLastDelimiter(", ", " and ")));

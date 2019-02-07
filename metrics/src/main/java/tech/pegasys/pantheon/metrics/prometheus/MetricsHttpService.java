@@ -157,9 +157,7 @@ class MetricsHttpService implements MetricsService {
   }
 
   private boolean hostIsInWhitelist(final String hostHeader) {
-    return config
-        .getHostsWhitelist()
-        .stream()
+    return config.getHostsWhitelist().stream()
         .anyMatch(whitelistEntry -> whitelistEntry.toLowerCase().equals(hostHeader.toLowerCase()));
   }
 

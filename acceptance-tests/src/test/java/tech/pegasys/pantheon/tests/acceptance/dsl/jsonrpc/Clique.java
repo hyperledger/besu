@@ -118,9 +118,7 @@ public class Clique {
 
     public Condition build() {
       final Map<Address, Boolean> proposalsAsAddress =
-          this.proposals
-              .entrySet()
-              .stream()
+          this.proposals.entrySet().stream()
               .collect(Collectors.toMap(p -> p.getKey().getAddress(), Entry::getValue));
       return new ExpectProposals(clique, proposalsAsAddress);
     }

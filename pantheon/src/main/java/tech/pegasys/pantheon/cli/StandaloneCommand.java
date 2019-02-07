@@ -22,17 +22,15 @@ import picocli.CommandLine;
 class StandaloneCommand implements DefaultCommandValues {
 
   @CommandLine.Option(
-    names = {CONFIG_FILE_OPTION_NAME},
-    paramLabel = MANDATORY_FILE_FORMAT_HELP,
-    description = "TOML config file (default: none)"
-  )
+      names = {CONFIG_FILE_OPTION_NAME},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "TOML config file (default: none)")
   private final File configFile = null;
 
   @CommandLine.Option(
-    names = {"--data-path"},
-    paramLabel = MANDATORY_PATH_FORMAT_HELP,
-    description = "The path to Pantheon data directory (default: ${DEFAULT-VALUE})"
-  )
+      names = {"--data-path"},
+      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      description = "The path to Pantheon data directory (default: ${DEFAULT-VALUE})")
   final Path dataPath = getDefaultPantheonDataPath(this);
 
   // Genesis file path with null default option if the option
@@ -41,18 +39,16 @@ class StandaloneCommand implements DefaultCommandValues {
   // default network option
   // Then we have no control over genesis default value here.
   @CommandLine.Option(
-    names = {"--genesis-file"},
-    paramLabel = MANDATORY_FILE_FORMAT_HELP,
-    description =
-        "The path to genesis file. Setting this option makes --network option ignored and requires --network-id to be set."
-  )
+      names = {"--genesis-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "The path to genesis file. Setting this option makes --network option ignored and requires --network-id to be set.")
   final File genesisFile = null;
 
   @CommandLine.Option(
-    names = {"--node-private-key-file"},
-    paramLabel = MANDATORY_PATH_FORMAT_HELP,
-    description =
-        "the path to the node's private key file (default: a file named \"key\" in the Pantheon data folder)"
-  )
+      names = {"--node-private-key-file"},
+      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      description =
+          "the path to the node's private key file (default: a file named \"key\" in the Pantheon data folder)")
   final File nodePrivateKeyFile = null;
 }

@@ -320,8 +320,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
   }
 
   List<URI> bootnodes() {
-    return bootnodes
-        .stream()
+    return bootnodes.stream()
         .filter(node -> !node.equals(this.enodeUrl()))
         .map(URI::create)
         .collect(Collectors.toList());

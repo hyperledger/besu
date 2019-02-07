@@ -37,9 +37,7 @@ public class PeerResult {
     this.version = Quantity.create(peer.getPeer().getVersion());
     this.name = peer.getPeer().getClientId();
     this.caps =
-        peer.getPeer()
-            .getCapabilities()
-            .stream()
+        peer.getPeer().getCapabilities().stream()
             .map(Capability::toString)
             .map(TextNode::new)
             .collect(Collectors.toList());

@@ -74,9 +74,7 @@ public class GetReceiptsFromPeerTask
     // Since we have to match up the data by receipt root, we only need to request receipts
     // for one of the headers with each unique receipt root.
     final List<Hash> blockHashes =
-        headersByReceiptsRoot
-            .values()
-            .stream()
+        headersByReceiptsRoot.values().stream()
             .map(headers -> headers.get(0).getHash())
             .collect(toList());
     return peer.getReceipts(blockHashes);
@@ -116,8 +114,7 @@ public class GetReceiptsFromPeerTask
   @Override
   protected Optional<EthPeer> findSuitablePeer() {
     final long maximumRequiredBlockNumber =
-        blockHeaders
-            .stream()
+        blockHeaders.stream()
             .mapToLong(BlockHeader::getNumber)
             .max()
             .orElse(BlockHeader.GENESIS_BLOCK_NUMBER);

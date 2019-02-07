@@ -153,8 +153,7 @@ public class PeerDiscoveryController {
       throw new IllegalStateException("The peer table had already been started");
     }
 
-    bootstrapNodes
-        .stream()
+    bootstrapNodes.stream()
         .filter(node -> peerTable.tryAdd(node).getOutcome() == Outcome.ADDED)
         .filter(node -> whitelistIfPresentIsNodePermitted(node))
         .forEach(node -> bond(node, true));

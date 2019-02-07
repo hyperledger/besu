@@ -64,9 +64,7 @@ public class GenesisConfigFile {
 
   public Stream<GenesisAllocation> getAllocations() {
     final JsonObject allocations = configRoot.getJsonObject("alloc");
-    return allocations
-        .fieldNames()
-        .stream()
+    return allocations.fieldNames().stream()
         .map(key -> new GenesisAllocation(key, allocations.getJsonObject(key)));
   }
 

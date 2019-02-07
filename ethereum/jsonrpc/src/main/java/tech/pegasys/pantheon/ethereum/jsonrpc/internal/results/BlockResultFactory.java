@@ -27,15 +27,11 @@ public class BlockResultFactory {
   public BlockResult transactionComplete(
       final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata) {
     final List<TransactionResult> txs =
-        blockWithMetadata
-            .getTransactions()
-            .stream()
+        blockWithMetadata.getTransactions().stream()
             .map(TransactionCompleteResult::new)
             .collect(Collectors.toList());
     final List<JsonNode> ommers =
-        blockWithMetadata
-            .getOmmers()
-            .stream()
+        blockWithMetadata.getOmmers().stream()
             .map(Hash::toString)
             .map(TextNode::new)
             .collect(Collectors.toList());
@@ -49,16 +45,12 @@ public class BlockResultFactory {
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
     final List<TransactionResult> txs =
-        blockWithMetadata
-            .getTransactions()
-            .stream()
+        blockWithMetadata.getTransactions().stream()
             .map(Hash::toString)
             .map(TransactionHashResult::new)
             .collect(Collectors.toList());
     final List<JsonNode> ommers =
-        blockWithMetadata
-            .getOmmers()
-            .stream()
+        blockWithMetadata.getOmmers().stream()
             .map(Hash::toString)
             .map(TextNode::new)
             .collect(Collectors.toList());

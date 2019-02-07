@@ -38,8 +38,7 @@ public class StubValidatorMulticaster implements ValidatorMulticaster {
 
   @Override
   public void send(final MessageData message, final Collection<Address> blackList) {
-    validatorNodes
-        .stream()
+    validatorNodes.stream()
         .filter(peer -> !blackList.contains(peer.getNodeAddress()))
         .forEach(peer -> peer.handleReceivedMessage(message));
   }

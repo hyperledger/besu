@@ -27,8 +27,7 @@ public class EthProtocolVersion implements JsonRpcMethod {
 
   public EthProtocolVersion(final Set<Capability> supportedCapabilities) {
     final OptionalInt version =
-        supportedCapabilities
-            .stream()
+        supportedCapabilities.stream()
             .filter(cap -> EthProtocol.NAME.equals(cap.getName()))
             .mapToInt(Capability::getVersion)
             .max();

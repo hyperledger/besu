@@ -35,11 +35,10 @@ import com.sun.source.tree.Tree;
 
 @AutoService(BugChecker.class) // the service descriptor
 @BugPattern(
-  name = "DoNotReturnNullOptionals",
-  summary = "Do not return null optionals.",
-  category = JDK,
-  severity = SUGGESTION
-)
+    name = "DoNotReturnNullOptionals",
+    summary = "Do not return null optionals.",
+    category = JDK,
+    severity = SUGGESTION)
 public class DoNotReturnNullOptionals extends BugChecker implements MethodTreeMatcher {
 
   private static class ReturnNullMatcher implements Matcher<Tree> {

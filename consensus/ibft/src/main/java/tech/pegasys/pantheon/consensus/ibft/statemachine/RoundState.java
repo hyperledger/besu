@@ -121,8 +121,7 @@ public class RoundState {
   }
 
   public Collection<Signature> getCommitSeals() {
-    return commitMessages
-        .stream()
+    return commitMessages.stream()
         .map(cp -> cp.getSignedPayload().getPayload().getCommitSeal())
         .collect(Collectors.toList());
   }

@@ -86,18 +86,17 @@ import picocli.CommandLine.ParameterException;
 
 @SuppressWarnings("FieldCanBeLocal") // because Picocli injected fields report false positives
 @Command(
-  description = "This command runs the Pantheon Ethereum client full node.",
-  abbreviateSynopsis = true,
-  name = "pantheon",
-  mixinStandardHelpOptions = true,
-  versionProvider = VersionProvider.class,
-  header = "Usage:",
-  synopsisHeading = "%n",
-  descriptionHeading = "%nDescription:%n%n",
-  optionListHeading = "%nOptions:%n",
-  footerHeading = "%n",
-  footer = "Pantheon is licensed under the Apache License 2.0"
-)
+    description = "This command runs the Pantheon Ethereum client full node.",
+    abbreviateSynopsis = true,
+    name = "pantheon",
+    mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class,
+    header = "Usage:",
+    synopsisHeading = "%n",
+    descriptionHeading = "%nDescription:%n%n",
+    optionListHeading = "%nOptions:%n",
+    footerHeading = "%n",
+    footer = "Pantheon is licensed under the Apache License 2.0")
 public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   private final Logger logger;
@@ -146,10 +145,9 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   // Completely disables p2p within Pantheon.
   @Option(
-    names = {"--p2p-enabled"},
-    description = "Enable/disable all p2p functionality (default: ${DEFAULT-VALUE})",
-    arity = "1"
-  )
+      names = {"--p2p-enabled"},
+      description = "Enable/disable all p2p functionality (default: ${DEFAULT-VALUE})",
+      arity = "1")
   private final Boolean p2pEnabled = true;
 
   // Boolean option to indicate if peers should NOT be discovered, default to false indicates that
@@ -162,170 +160,153 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   // Also many other software use the same negative option scheme for false defaults
   // meaning that it's probably the right way to handle disabling options.
   @Option(
-    names = {"--discovery-enabled"},
-    description = "Enable p2p peer discovery (default: ${DEFAULT-VALUE})",
-    arity = "1"
-  )
+      names = {"--discovery-enabled"},
+      description = "Enable p2p peer discovery (default: ${DEFAULT-VALUE})",
+      arity = "1")
   private final Boolean peerDiscoveryEnabled = true;
 
   // A list of bootstrap nodes can be passed
   // and a hardcoded list will be used otherwise by the Runner.
   // NOTE: we have no control over default value here.
   @Option(
-    names = {"--bootnodes"},
-    paramLabel = "<enode://id@host:port>",
-    description =
-        "Comma separated enode URLs for P2P discovery bootstrap. "
-            + "Default is a predefined list.",
-    split = ",",
-    arity = "0..*",
-    converter = EnodeToURIPropertyConverter.class
-  )
+      names = {"--bootnodes"},
+      paramLabel = "<enode://id@host:port>",
+      description =
+          "Comma separated enode URLs for P2P discovery bootstrap. "
+              + "Default is a predefined list.",
+      split = ",",
+      arity = "0..*",
+      converter = EnodeToURIPropertyConverter.class)
   private final Collection<URI> bootNodes = null;
 
   @Option(
-    names = {"--max-peers"},
-    paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-    description = "Maximum p2p peer connections that can be established (default: ${DEFAULT-VALUE})"
-  )
+      names = {"--max-peers"},
+      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+      description =
+          "Maximum p2p peer connections that can be established (default: ${DEFAULT-VALUE})")
   private final Integer maxPeers = DEFAULT_MAX_PEERS;
 
   @Option(
-    names = {"--banned-node-ids", "--banned-node-id"},
-    paramLabel = MANDATORY_NODE_ID_FORMAT_HELP,
-    description = "A list of node IDs to ban from the p2p network.",
-    split = ",",
-    arity = "1..*"
-  )
+      names = {"--banned-node-ids", "--banned-node-id"},
+      paramLabel = MANDATORY_NODE_ID_FORMAT_HELP,
+      description = "A list of node IDs to ban from the p2p network.",
+      split = ",",
+      arity = "1..*")
   private final Collection<String> bannedNodeIds = new ArrayList<>();
 
   @Option(
-    hidden = true,
-    names = {"--sync-mode"},
-    paramLabel = MANDATORY_MODE_FORMAT_HELP,
-    description =
-        "Synchronization mode (Value can be one of ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE})"
-  )
+      hidden = true,
+      names = {"--sync-mode"},
+      paramLabel = MANDATORY_MODE_FORMAT_HELP,
+      description =
+          "Synchronization mode (Value can be one of ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE})")
   private final SyncMode syncMode = DEFAULT_SYNC_MODE;
 
   @Option(
-    names = {"--network"},
-    paramLabel = MANDATORY_NETWORK_FORMAT_HELP,
-    description =
-        "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
-            + " (default: MAINNET)"
-  )
+      names = {"--network"},
+      paramLabel = MANDATORY_NETWORK_FORMAT_HELP,
+      description =
+          "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
+              + " (default: MAINNET)")
   private final NetworkName network = null;
 
   @Option(
-    names = {"--p2p-host"},
-    paramLabel = MANDATORY_HOST_FORMAT_HELP,
-    description = "Host for p2p peers discovery to listen on (default: ${DEFAULT-VALUE})",
-    arity = "1"
-  )
+      names = {"--p2p-host"},
+      paramLabel = MANDATORY_HOST_FORMAT_HELP,
+      description = "Host for p2p peers discovery to listen on (default: ${DEFAULT-VALUE})",
+      arity = "1")
   private String p2pHost = autoDiscoverDefaultIP().getHostAddress();
 
   @Option(
-    names = {"--p2p-port"},
-    paramLabel = MANDATORY_PORT_FORMAT_HELP,
-    description = "Port for p2p peers discovery to listen on (default: ${DEFAULT-VALUE})",
-    arity = "1"
-  )
+      names = {"--p2p-port"},
+      paramLabel = MANDATORY_PORT_FORMAT_HELP,
+      description = "Port for p2p peers discovery to listen on (default: ${DEFAULT-VALUE})",
+      arity = "1")
   private final Integer p2pPort = DEFAULT_PORT;
 
   @Option(
-    names = {"--network-id"},
-    paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-    description =
-        "P2P network identifier. (default: the selected network chain ID or custom genesis chain ID)",
-    arity = "1"
-  )
+      names = {"--network-id"},
+      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+      description =
+          "P2P network identifier. (default: the selected network chain ID or custom genesis chain ID)",
+      arity = "1")
   private final Integer networkId = null;
 
   @Option(
-    names = {"--rpc-http-enabled"},
-    description = "Set if the JSON-RPC service should be started (default: ${DEFAULT-VALUE})"
-  )
+      names = {"--rpc-http-enabled"},
+      description = "Set if the JSON-RPC service should be started (default: ${DEFAULT-VALUE})")
   private final Boolean isRpcHttpEnabled = false;
 
   @Option(
-    names = {"--rpc-http-host"},
-    paramLabel = MANDATORY_HOST_FORMAT_HELP,
-    description = "Host for HTTP JSON-RPC to listen on (default: ${DEFAULT-VALUE})",
-    arity = "1"
-  )
+      names = {"--rpc-http-host"},
+      paramLabel = MANDATORY_HOST_FORMAT_HELP,
+      description = "Host for HTTP JSON-RPC to listen on (default: ${DEFAULT-VALUE})",
+      arity = "1")
   private String rpcHttpHost = autoDiscoverDefaultIP().getHostAddress();
 
   @Option(
-    names = {"--rpc-http-port"},
-    paramLabel = MANDATORY_PORT_FORMAT_HELP,
-    description = "Port for HTTP JSON-RPC to listen on (default: ${DEFAULT-VALUE})",
-    arity = "1"
-  )
+      names = {"--rpc-http-port"},
+      paramLabel = MANDATORY_PORT_FORMAT_HELP,
+      description = "Port for HTTP JSON-RPC to listen on (default: ${DEFAULT-VALUE})",
+      arity = "1")
   private final Integer rpcHttpPort = DEFAULT_JSON_RPC_PORT;
 
   // A list of origins URLs that are accepted by the JsonRpcHttpServer (CORS)
   @Option(
-    names = {"--rpc-http-cors-origins"},
-    description = "Comma separated origin domain URLs for CORS validation (default: none)"
-  )
+      names = {"--rpc-http-cors-origins"},
+      description = "Comma separated origin domain URLs for CORS validation (default: none)")
   private final CorsAllowedOriginsProperty rpcHttpCorsAllowedOrigins =
       new CorsAllowedOriginsProperty();
 
   @Option(
-    names = {"--rpc-http-api", "--rpc-http-apis"},
-    paramLabel = "<api name>",
-    split = ",",
-    arity = "1..*",
-    converter = RpcApisConverter.class,
-    description = "Comma separated APIs to enable on JSON-RPC channel. default: ${DEFAULT-VALUE}"
-  )
+      names = {"--rpc-http-api", "--rpc-http-apis"},
+      paramLabel = "<api name>",
+      split = ",",
+      arity = "1..*",
+      converter = RpcApisConverter.class,
+      description = "Comma separated APIs to enable on JSON-RPC channel. default: ${DEFAULT-VALUE}")
   private final Collection<RpcApi> rpcHttpApis = DEFAULT_JSON_RPC_APIS;
 
   @Option(
-    names = {"--rpc-ws-enabled"},
-    description =
-        "Set if the WS-RPC (WebSocket) service should be started (default: ${DEFAULT-VALUE})"
-  )
+      names = {"--rpc-ws-enabled"},
+      description =
+          "Set if the WS-RPC (WebSocket) service should be started (default: ${DEFAULT-VALUE})")
   private final Boolean isRpcWsEnabled = false;
 
   @Option(
-    names = {"--rpc-ws-host"},
-    paramLabel = MANDATORY_HOST_FORMAT_HELP,
-    description = "Host for WebSocket JSON-RPC to listen on (default: ${DEFAULT-VALUE})",
-    arity = "1"
-  )
+      names = {"--rpc-ws-host"},
+      paramLabel = MANDATORY_HOST_FORMAT_HELP,
+      description = "Host for WebSocket JSON-RPC to listen on (default: ${DEFAULT-VALUE})",
+      arity = "1")
   private String rpcWsHost = autoDiscoverDefaultIP().getHostAddress();
 
   @Option(
-    names = {"--rpc-ws-port"},
-    paramLabel = MANDATORY_PORT_FORMAT_HELP,
-    description = "Port for WebSocket JSON-RPC to listen on (default: ${DEFAULT-VALUE})",
-    arity = "1"
-  )
+      names = {"--rpc-ws-port"},
+      paramLabel = MANDATORY_PORT_FORMAT_HELP,
+      description = "Port for WebSocket JSON-RPC to listen on (default: ${DEFAULT-VALUE})",
+      arity = "1")
   private final Integer rpcWsPort = DEFAULT_WEBSOCKET_PORT;
 
   @Option(
-    names = {"--rpc-ws-api", "--rpc-ws-apis"},
-    paramLabel = "<api name>",
-    split = ",",
-    arity = "1..*",
-    converter = RpcApisConverter.class,
-    description = "Comma separated APIs to enable on WebSocket channel. default: ${DEFAULT-VALUE}"
-  )
+      names = {"--rpc-ws-api", "--rpc-ws-apis"},
+      paramLabel = "<api name>",
+      split = ",",
+      arity = "1..*",
+      converter = RpcApisConverter.class,
+      description =
+          "Comma separated APIs to enable on WebSocket channel. default: ${DEFAULT-VALUE}")
   private final Collection<RpcApi> rpcWsApis = DEFAULT_JSON_RPC_APIS;
 
   private Long rpcWsRefreshDelay;
 
   @Option(
-    names = {"--rpc-ws-refresh-delay"},
-    paramLabel = "<refresh delay>",
-    arity = "1",
-    description =
-        "Refresh delay of websocket subscription sync in milliseconds. "
-            + "default: ${DEFAULT-VALUE}",
-    defaultValue = "" + DEFAULT_WEBSOCKET_REFRESH_DELAY
-  )
+      names = {"--rpc-ws-refresh-delay"},
+      paramLabel = "<refresh delay>",
+      arity = "1",
+      description =
+          "Refresh delay of websocket subscription sync in milliseconds. "
+              + "default: ${DEFAULT-VALUE}",
+      defaultValue = "" + DEFAULT_WEBSOCKET_REFRESH_DELAY)
   private Long configureRefreshDelay(final Long refreshDelay) {
     if (refreshDelay < DEFAULT_MIN_REFRESH_DELAY || refreshDelay > DEFAULT_MAX_REFRESH_DELAY) {
       throw new ParameterException(
@@ -340,158 +321,138 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   }
 
   @Option(
-    names = {"--metrics-enabled"},
-    description = "Set if the metrics exporter should be started (default: ${DEFAULT-VALUE})"
-  )
+      names = {"--metrics-enabled"},
+      description = "Set if the metrics exporter should be started (default: ${DEFAULT-VALUE})")
   private final Boolean isMetricsEnabled = false;
 
   @Option(
-    names = {"--metrics-host"},
-    paramLabel = MANDATORY_HOST_FORMAT_HELP,
-    description = "Host for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
-    arity = "1"
-  )
+      names = {"--metrics-host"},
+      paramLabel = MANDATORY_HOST_FORMAT_HELP,
+      description = "Host for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
+      arity = "1")
   private String metricsHost = autoDiscoverDefaultIP().getHostAddress();
 
   @Option(
-    names = {"--metrics-port"},
-    paramLabel = MANDATORY_PORT_FORMAT_HELP,
-    description = "Port for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
-    arity = "1"
-  )
+      names = {"--metrics-port"},
+      paramLabel = MANDATORY_PORT_FORMAT_HELP,
+      description = "Port for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
+      arity = "1")
   private final Integer metricsPort = DEFAULT_METRICS_PORT;
 
   @Option(
-    names = {"--metrics-push-enabled"},
-    description =
-        "Set if the metrics push gateway integration should be started (default: ${DEFAULT-VALUE})"
-  )
+      names = {"--metrics-push-enabled"},
+      description =
+          "Set if the metrics push gateway integration should be started (default: ${DEFAULT-VALUE})")
   private final Boolean isMetricsPushEnabled = false;
 
   @Option(
-    names = {"--metrics-push-host"},
-    paramLabel = MANDATORY_HOST_FORMAT_HELP,
-    description = "Host of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
-    arity = "1"
-  )
+      names = {"--metrics-push-host"},
+      paramLabel = MANDATORY_HOST_FORMAT_HELP,
+      description = "Host of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
+      arity = "1")
   private String metricsPushHost = autoDiscoverDefaultIP().getHostAddress();
 
   @Option(
-    names = {"--metrics-push-port"},
-    paramLabel = MANDATORY_PORT_FORMAT_HELP,
-    description = "Port of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
-    arity = "1"
-  )
+      names = {"--metrics-push-port"},
+      paramLabel = MANDATORY_PORT_FORMAT_HELP,
+      description = "Port of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
+      arity = "1")
   private final Integer metricsPushPort = DEFAULT_METRICS_PUSH_PORT;
 
   @Option(
-    names = {"--metrics-push-interval"},
-    paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-    description =
-        "Interval in seconds to push metrics when in push mode (default: ${DEFAULT-VALUE})",
-    arity = "1"
-  )
+      names = {"--metrics-push-interval"},
+      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+      description =
+          "Interval in seconds to push metrics when in push mode (default: ${DEFAULT-VALUE})",
+      arity = "1")
   private final Integer metricsPushInterval = 15;
 
   @Option(
-    names = {"--metrics-push-prometheus-job"},
-    description = "Job name to use when in push mode (default: ${DEFAULT-VALUE})",
-    arity = "1"
-  )
+      names = {"--metrics-push-prometheus-job"},
+      description = "Job name to use when in push mode (default: ${DEFAULT-VALUE})",
+      arity = "1")
   private String metricsPrometheusJob = "pantheon-client";
 
   @Option(
-    names = {"--host-whitelist"},
-    paramLabel = "<hostname>[,<hostname>...]... or * or all",
-    description =
-        "Comma separated list of hostnames to whitelist for RPC access or * or all to accept any host.  default: ${DEFAULT-VALUE}",
-    defaultValue = "localhost"
-  )
+      names = {"--host-whitelist"},
+      paramLabel = "<hostname>[,<hostname>...]... or * or all",
+      description =
+          "Comma separated list of hostnames to whitelist for RPC access or * or all to accept any host.  default: ${DEFAULT-VALUE}",
+      defaultValue = "localhost")
   private final JsonRPCWhitelistHostsProperty hostsWhitelist = new JsonRPCWhitelistHostsProperty();
 
   @Option(
-    names = {"--logging", "-l"},
-    paramLabel = "<LOG VERBOSITY LEVEL>",
-    description =
-        "Logging verbosity levels: OFF, FATAL, WARN, INFO, DEBUG, TRACE, ALL (default: INFO)."
-  )
+      names = {"--logging", "-l"},
+      paramLabel = "<LOG VERBOSITY LEVEL>",
+      description =
+          "Logging verbosity levels: OFF, FATAL, WARN, INFO, DEBUG, TRACE, ALL (default: INFO).")
   private final Level logLevel = null;
 
   @Option(
-    names = {"--miner-enabled"},
-    description = "set if node should perform mining (default: ${DEFAULT-VALUE})"
-  )
+      names = {"--miner-enabled"},
+      description = "set if node should perform mining (default: ${DEFAULT-VALUE})")
   private final Boolean isMiningEnabled = false;
 
   @Option(
-    names = {"--miner-coinbase"},
-    description =
-        "account to which mining rewards are paid. You must specify a valid coinbase if "
-            + "mining is enabled using --miner-enabled option.",
-    arity = "1"
-  )
+      names = {"--miner-coinbase"},
+      description =
+          "account to which mining rewards are paid. You must specify a valid coinbase if "
+              + "mining is enabled using --miner-enabled option.",
+      arity = "1")
   private final Address coinbase = null;
 
   @Option(
-    names = {"--min-gas-price"},
-    description =
-        "the minimum price (in Wei) offered by a transaction for it to be included in a mined "
-            + "block (default: ${DEFAULT-VALUE}).",
-    arity = "1"
-  )
+      names = {"--min-gas-price"},
+      description =
+          "the minimum price (in Wei) offered by a transaction for it to be included in a mined "
+              + "block (default: ${DEFAULT-VALUE}).",
+      arity = "1")
   private final Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 
   @Option(
-    names = {"--miner-extra-data"},
-    description =
-        "a hex string representing the (32) bytes to be included in the extra data "
-            + "field of a mined block. (default: ${DEFAULT-VALUE}).",
-    arity = "1"
-  )
+      names = {"--miner-extra-data"},
+      description =
+          "a hex string representing the (32) bytes to be included in the extra data "
+              + "field of a mined block. (default: ${DEFAULT-VALUE}).",
+      arity = "1")
   private final BytesValue extraData = DEFAULT_EXTRA_DATA;
 
   @Option(
-    names = {"--permissions-nodes-enabled"},
-    description = "Set if node level permissions should be enabled (default: ${DEFAULT-VALUE})"
-  )
+      names = {"--permissions-nodes-enabled"},
+      description = "Set if node level permissions should be enabled (default: ${DEFAULT-VALUE})")
   private final Boolean permissionsNodesEnabled = false;
 
   @Option(
-    names = {"--permissions-accounts-enabled"},
-    description = "Set if account level permissions should be enabled (default: ${DEFAULT-VALUE})"
-  )
+      names = {"--permissions-accounts-enabled"},
+      description =
+          "Set if account level permissions should be enabled (default: ${DEFAULT-VALUE})")
   private final Boolean permissionsAccountsEnabled = false;
 
   @Option(
-    names = {"--permissions-config-path"},
-    description =
-        "Path to permissions config TOML file (default:  a file named \"permissions_config.toml\" in the Pantheon data folder)"
-  )
+      names = {"--permissions-config-path"},
+      description =
+          "Path to permissions config TOML file (default:  a file named \"permissions_config.toml\" in the Pantheon data folder)")
   private String permissionsConfigPath = null;
 
   @Option(
-    names = {"--privacy-enabled"},
-    description = "Set if private transaction should be enabled (default: ${DEFAULT-VALUE})"
-  )
+      names = {"--privacy-enabled"},
+      description = "Set if private transaction should be enabled (default: ${DEFAULT-VALUE})")
   private final Boolean privacyEnabled = false;
 
   @Option(
-    names = {"--privacy-url"},
-    description = "The URL on which enclave is running "
-  )
+      names = {"--privacy-url"},
+      description = "The URL on which enclave is running ")
   private final URI privacyUrl = PrivacyParameters.DEFAULT_ENCLAVE_URL;
 
   @Option(
-    names = {"--privacy-public-key-file"},
-    description = "the path to the enclave's public key "
-  )
+      names = {"--privacy-public-key-file"},
+      description = "the path to the enclave's public key ")
   private final File privacyPublicKeyFile = null;
 
   @Option(
-    names = {"--privacy-precompiled-address"},
-    description =
-        "The address to which the privacy pre-compiled contract will be mapped to (default: ${DEFAULT-VALUE})"
-  )
+      names = {"--privacy-precompiled-address"},
+      description =
+          "The address to which the privacy pre-compiled contract will be mapped to (default: ${DEFAULT-VALUE})")
   private final Integer privacyPrecompiledAddress = Address.PRIVACY;
 
   public PantheonCommand(

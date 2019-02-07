@@ -196,8 +196,7 @@ public class NetworkRunner implements AutoCloseable {
         subProtocolMap.put(subProtocol.getName(), subProtocol);
       }
       final List<Capability> caps =
-          protocolManagers
-              .stream()
+          protocolManagers.stream()
               .flatMap(p -> p.getSupportedCapabilities().stream())
               .collect(Collectors.toList());
       for (final Capability cap : caps) {
