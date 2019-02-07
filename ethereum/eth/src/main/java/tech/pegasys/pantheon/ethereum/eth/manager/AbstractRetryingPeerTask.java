@@ -22,10 +22,10 @@ import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.time.Duration;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,11 +37,12 @@ import org.apache.logging.log4j.Logger;
  *
  * @param <T> The type as a typed list that the peer task can get partial or full results in.
  */
-public abstract class AbstractRetryingPeerTask<T extends Collection<?>> extends AbstractEthTask<T> {
+public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
   private static final Logger LOG = LogManager.getLogger();
   private final EthContext ethContext;
   private final int maxRetries;
+  private final Predicate<T> isEmptyResponse;
   private int retryCount = 0;
   private Optional<EthPeer> assignedPeer = Optional.empty();
 
@@ -49,14 +50,17 @@ public abstract class AbstractRetryingPeerTask<T extends Collection<?>> extends 
    * @param ethContext The context of the current Eth network we are attached to.
    * @param maxRetries Maximum number of retries to accept before completing exceptionally.
    * @param ethTasksTimer The metrics timer to use to time the duration of the task.
+   * @param isEmptyResponse Test if the response received was empty.
    */
   public AbstractRetryingPeerTask(
       final EthContext ethContext,
       final int maxRetries,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final LabelledMetric<OperationTimer> ethTasksTimer,
+      final Predicate<T> isEmptyResponse) {
     super(ethTasksTimer);
     this.ethContext = ethContext;
     this.maxRetries = maxRetries;
+    this.isEmptyResponse = isEmptyResponse;
   }
 
   public void assignPeer(final EthPeer peer) {
@@ -82,7 +86,7 @@ public abstract class AbstractRetryingPeerTask<T extends Collection<?>> extends 
                 handleTaskError(error);
               } else {
                 // If we get a partial success reset the retry counter.
-                if (peerResult.size() > 0) {
+                if (!isEmptyResponse.test(peerResult)) {
                   retryCount = 0;
                 }
                 executeTaskTimed();
