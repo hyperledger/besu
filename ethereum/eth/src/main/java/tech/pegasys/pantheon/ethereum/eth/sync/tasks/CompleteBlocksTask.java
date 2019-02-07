@@ -13,9 +13,14 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.Collections.emptyList;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.Collectors.toMap;
 
 import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPeerTask.PeerTaskResult;
 import tech.pegasys.pantheon.ethereum.eth.manager.AbstractRetryingPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
@@ -24,7 +29,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -62,7 +66,15 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
     this.ethContext = ethContext;
 
     this.headers = headers;
-    this.blocks = new HashMap<>();
+    this.blocks =
+        headers.stream()
+            .filter(this::hasEmptyBody)
+            .collect(toMap(BlockHeader::getNumber, header -> new Block(header, BlockBody.empty())));
+  }
+
+  private boolean hasEmptyBody(final BlockHeader header) {
+    return header.getOmmersHash().equals(Hash.EMPTY_LIST_HASH)
+        && header.getTransactionsRoot().equals(Hash.EMPTY_TRIE_HASH);
   }
 
   public static <C> CompleteBlocksTask<C> forHeaders(
@@ -89,9 +101,11 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
     return requestBodies(assignedPeer).thenCompose(this::processBodiesResult);
   }
 
-  private CompletableFuture<PeerTaskResult<List<Block>>> requestBodies(
-      final Optional<EthPeer> assignedPeer) {
+  private CompletableFuture<List<Block>> requestBodies(final Optional<EthPeer> assignedPeer) {
     final List<BlockHeader> incompleteHeaders = incompleteHeaders();
+    if (incompleteHeaders.isEmpty()) {
+      return completedFuture(emptyList());
+    }
     LOG.debug(
         "Requesting bodies to complete {} blocks, starting with {}.",
         incompleteHeaders.size(),
@@ -102,22 +116,21 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
               GetBodiesFromPeerTask.forHeaders(
                   protocolSchedule, ethContext, incompleteHeaders, ethTasksTimer);
           assignedPeer.ifPresent(task::assignPeer);
-          return task.run();
+          return task.run().thenApply(PeerTaskResult::getResult);
         });
   }
 
-  private CompletableFuture<List<Block>> processBodiesResult(
-      final PeerTaskResult<List<Block>> blocksResult) {
-    blocksResult.getResult().forEach((block) -> blocks.put(block.getHeader().getNumber(), block));
+  private CompletableFuture<List<Block>> processBodiesResult(final List<Block> blocksResult) {
+    blocksResult.forEach((block) -> blocks.put(block.getHeader().getNumber(), block));
 
-    if (incompleteHeaders().size() == 0) {
+    if (incompleteHeaders().isEmpty()) {
       result
           .get()
           .complete(
               headers.stream().map(h -> blocks.get(h.getNumber())).collect(Collectors.toList()));
     }
 
-    return CompletableFuture.completedFuture(blocksResult.getResult());
+    return completedFuture(blocksResult);
   }
 
   private List<BlockHeader> incompleteHeaders() {
