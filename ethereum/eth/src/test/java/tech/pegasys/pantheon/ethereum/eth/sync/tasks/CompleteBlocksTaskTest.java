@@ -12,9 +12,13 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskTest;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
@@ -22,6 +26,8 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.junit.Test;
 
 public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>> {
 
@@ -47,5 +53,20 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
         headersToComplete,
         maxRetries,
         NoOpMetricsSystem.NO_OP_LABELLED_TIMER);
+  }
+
+  @Test
+  public void shouldCompleteWithoutPeersWhenAllBlocksAreEmpty() {
+    final BlockHeader header1 = new BlockHeaderTestFixture().number(1).buildHeader();
+    final BlockHeader header2 = new BlockHeaderTestFixture().number(2).buildHeader();
+    final BlockHeader header3 = new BlockHeaderTestFixture().number(3).buildHeader();
+
+    final Block block1 = new Block(header1, BlockBody.empty());
+    final Block block2 = new Block(header2, BlockBody.empty());
+    final Block block3 = new Block(header3, BlockBody.empty());
+
+    final List<Block> blocks = asList(block1, block2, block3);
+    final EthTask<List<Block>> task = createTask(blocks);
+    assertThat(task.run()).isCompletedWithValue(blocks);
   }
 }

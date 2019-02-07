@@ -23,8 +23,8 @@ public class BlockHeaderTestFixture {
   private Address coinbase = Address.ECREC;
 
   private Hash stateRoot = Hash.EMPTY_TRIE_HASH;
-  private Hash transactionsRoot = Hash.EMPTY;
-  private Hash receiptsRoot = Hash.EMPTY;
+  private Hash transactionsRoot = Hash.EMPTY_TRIE_HASH;
+  private Hash receiptsRoot = Hash.EMPTY_TRIE_HASH;
 
   private LogsBloomFilter logsBloom = LogsBloomFilter.empty();
   private UInt256 difficulty = UInt256.ZERO;
