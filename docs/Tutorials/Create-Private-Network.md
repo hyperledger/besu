@@ -130,18 +130,7 @@ pantheon --data-path=Node-1-data-path --genesis-file=..\privateNetworkGenesis.js
 
 ### 5. Start Additional Nodes 
 
-You need the enode URL for Node-1 to specify Node-1 as the bootnode for Node-2 and Node-3. 
-
-The enode URL is `enode://<id>@<host:port>` where:
-
-* `<id>` is the node public key excluding the initial 0x. The node public key for Node-1 was written to `publicKeyNode1` in [step 3](#3-start-first-node-and-get-node-public-key). 
-* `<host:port>` is the host and port the bootnode is listening on for P2P peer discovery. Node-1 is using the default host and port of `127.0.0.1:30303`. 
-
-!!! example
-    If the default host and port are used for P2P peer discovery and the node public key exported is: `0xc35c3ec90a8a51fd5703594c6303382f3ae6b2ecb9589bab2c04b3794f2bc3fc2631dabb0c08af795787a6c004d8f532230ae6e9925cbbefb0b28b79295d615f`
-    
-    The enode URL is:
-    `enode://c35c3ec90a8a51fd5703594c6303382f3ae6b2ecb9589bab2c04b3794f2bc3fc2631dabb0c08af795787a6c004d8f532230ae6e9925cbbefb0b28b79295d615f@127.0.0.1:30303` 
+You need the [enode URL](../Configuring-Pantheon/Node-Keys.md#enode-url) for Node-1 to specify Node-1 as the bootnode for Node-2 and Node-3. 
 
 Start another terminal, change to the `Node-2` directory and start Node-2 specifying:
  
