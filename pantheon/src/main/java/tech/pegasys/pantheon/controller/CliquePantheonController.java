@@ -259,7 +259,6 @@ public class CliquePantheonController implements PantheonController<CliqueContex
 
   @Override
   public PrivacyParameters getPrivacyParameters() {
-    LOG.warn("CliquePantheonController does not currently support private transactions.");
     return PrivacyParameters.noPrivacy();
   }
 
