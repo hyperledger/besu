@@ -130,8 +130,15 @@ public class RespondingEthPeer {
   }
 
   public void respondWhile(final Responder responder, final RespondWhileCondition condition) {
+    int counter = 0;
     while (condition.shouldRespond()) {
       respond(responder);
+      counter++;
+      if (counter > 10_000) {
+        // Limit applied to avoid tests hanging forever which is hard to track down.
+        throw new IllegalStateException(
+            "Responded 10,000 times and stop condition still not reached.");
+      }
     }
   }
 
