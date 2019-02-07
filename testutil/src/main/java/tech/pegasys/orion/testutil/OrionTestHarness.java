@@ -51,9 +51,11 @@ public class OrionTestHarness {
         "tls=\"off\"\n"
             + "tlsservertrust=\"tofu\"\n"
             + "tlsclienttrust=\"tofu\"\n"
+            + "nodeport=0\n"
             + "nodenetworkinterface = \""
             + HOST
             + "\"\n"
+            + "clientport=0\n"
             + "clientnetworkinterface = \""
             + HOST
             + "\"\n"
