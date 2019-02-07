@@ -52,9 +52,7 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
     lock.lock();
     try {
       // Ensure we have collected all entries before releasing the lock and returning
-      return hashValueStore
-          .entrySet()
-          .stream()
+      return hashValueStore.entrySet().stream()
           .map(e -> Entry.create(e.getKey(), e.getValue()))
           .collect(Collectors.toSet())
           .stream();

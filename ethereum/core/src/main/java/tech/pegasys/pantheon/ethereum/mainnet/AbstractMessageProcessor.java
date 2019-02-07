@@ -82,10 +82,7 @@ public abstract class AbstractMessageProcessor {
 
   private void clearAccumulatedStateBesidesGasAndOutput(final MessageFrame frame) {
     final Collection<Address> addressesToForceCommit =
-        frame
-            .getWorldState()
-            .getTouchedAccounts()
-            .stream()
+        frame.getWorldState().getTouchedAccounts().stream()
             .filter(a -> forceDeleteAccountsWhenEmpty.contains(a.getAddress()) && a.isEmpty())
             .map(Account::getAddress)
             .collect(Collectors.toCollection(ArrayList::new));

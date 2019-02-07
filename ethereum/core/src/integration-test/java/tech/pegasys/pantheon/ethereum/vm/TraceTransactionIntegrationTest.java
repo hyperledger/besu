@@ -94,9 +94,7 @@ public class TraceTransactionIntegrationTest {
             blockHashLookup);
     assertThat(result.isSuccessful()).isTrue();
     final Account createdContract =
-        createTransactionUpdater
-            .getTouchedAccounts()
-            .stream()
+        createTransactionUpdater.getTouchedAccounts().stream()
             .filter(account -> !account.getCode().isEmpty())
             .findAny()
             .get();

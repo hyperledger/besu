@@ -80,8 +80,7 @@ public class RoundSpecificPeers {
 
   public List<SignedData<RoundChangePayload>> roundChangeForNonProposing(
       final ConsensusRoundIdentifier targetRound) {
-    return nonProposingPeers
-        .stream()
+    return nonProposingPeers.stream()
         .map(peer -> peer.injectRoundChange(targetRound, empty()).getSignedPayload())
         .collect(Collectors.toList());
   }
@@ -102,16 +101,14 @@ public class RoundSpecificPeers {
 
   public List<SignedData<RoundChangePayload>> createSignedRoundChangePayload(
       final ConsensusRoundIdentifier roundId) {
-    return peers
-        .stream()
+    return peers.stream()
         .map(p -> p.getMessageFactory().createRoundChange(roundId, empty()).getSignedPayload())
         .collect(Collectors.toList());
   }
 
   public List<SignedData<RoundChangePayload>> createSignedRoundChangePayload(
       final ConsensusRoundIdentifier roundId, final PreparedRoundArtifacts preparedRoundArtifacts) {
-    return peers
-        .stream()
+    return peers.stream()
         .map(
             p ->
                 p.getMessageFactory()
@@ -130,8 +127,7 @@ public class RoundSpecificPeers {
 
   public Collection<SignedData<PreparePayload>> createSignedPreparePayloadOfNonProposing(
       final ConsensusRoundIdentifier preparedRound, final Hash hash) {
-    return nonProposingPeers
-        .stream()
+    return nonProposingPeers.stream()
         .map(role -> role.getMessageFactory().createPrepare(preparedRound, hash).getSignedPayload())
         .collect(Collectors.toList());
   }

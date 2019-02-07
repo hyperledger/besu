@@ -83,8 +83,7 @@ public class PivotBlockRetriever<C> {
             .collect(Collectors.toList());
 
     final int confirmationsRequired = peersToQuery.size() / 2 + 1;
-    return peersToQuery
-        .stream()
+    return peersToQuery.stream()
         .map(
             peer -> {
               final RetryingGetHeaderFromPeerByNumberTask getHeaderTask = createGetHeaderTask(peer);

@@ -116,24 +116,15 @@ public class TomlAuth implements AuthProvider {
   private TomlUser readTomlUserFromTable(final String username, final TomlTable userData) {
     final String saltedAndHashedPassword = userData.getString("password", () -> "");
     final List<String> groups =
-        userData
-            .getArrayOrEmpty("groups")
-            .toList()
-            .stream()
+        userData.getArrayOrEmpty("groups").toList().stream()
             .map(Object::toString)
             .collect(Collectors.toList());
     final List<String> permissions =
-        userData
-            .getArrayOrEmpty("permissions")
-            .toList()
-            .stream()
+        userData.getArrayOrEmpty("permissions").toList().stream()
             .map(Object::toString)
             .collect(Collectors.toList());
     final List<String> roles =
-        userData
-            .getArrayOrEmpty("roles")
-            .toList()
-            .stream()
+        userData.getArrayOrEmpty("roles").toList().stream()
             .map(Object::toString)
             .collect(Collectors.toList());
 

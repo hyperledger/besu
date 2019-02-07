@@ -24,10 +24,9 @@ import picocli.CommandLine.ParentCommand;
 import picocli.CommandLine.Spec;
 
 @Command(
-  name = COMMAND_NAME,
-  description = "This command generates the hash of a given password.",
-  mixinStandardHelpOptions = true
-)
+    name = COMMAND_NAME,
+    description = "This command generates the hash of a given password.",
+    mixinStandardHelpOptions = true)
 class PasswordSubCommand implements Runnable {
 
   static final String COMMAND_NAME = "password-hash";

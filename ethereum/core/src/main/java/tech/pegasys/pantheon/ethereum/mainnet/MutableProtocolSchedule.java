@@ -62,8 +62,7 @@ public class MutableProtocolSchedule<C> implements ProtocolSchedule<C> {
   }
 
   public String listMilestones() {
-    return protocolSpecs
-        .stream()
+    return protocolSpecs.stream()
         .sorted(Comparator.comparing(ScheduledProtocolSpec::getBlock))
         .map(spec -> spec.getSpec().getName() + ": " + spec.getBlock())
         .collect(Collectors.joining(", ", "[", "]"));

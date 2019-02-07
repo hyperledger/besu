@@ -47,8 +47,7 @@ public class RoundChangeArtifacts {
   public static RoundChangeArtifacts create(final Collection<RoundChange> roundChanges) {
 
     final Collection<SignedData<RoundChangePayload>> payloads =
-        roundChanges
-            .stream()
+        roundChanges.stream()
             .map(roundChange -> roundChange.getSignedPayload())
             .collect(Collectors.toList());
 

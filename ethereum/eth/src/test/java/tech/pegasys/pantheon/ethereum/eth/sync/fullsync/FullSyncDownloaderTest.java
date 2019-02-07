@@ -603,8 +603,7 @@ public class FullSyncDownloaderTest {
     while (localBlockchain.getChainHeadBlockNumber() < bestPeerChainHead) {
       // Check that any requests for checkpoint headers are only sent to the best peer
       final long checkpointRequestsToOtherPeers =
-          otherPeers
-              .stream()
+          otherPeers.stream()
               .map(RespondingEthPeer::pendingOutgoingRequests)
               .flatMap(Function.identity())
               .filter(m -> m.getCode() == EthPV62.GET_BLOCK_HEADERS)

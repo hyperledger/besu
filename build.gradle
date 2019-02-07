@@ -108,7 +108,7 @@ allprojects {
         exclude '**/.gradle/**'
       }
       removeUnusedImports()
-      googleJavaFormat()
+      googleJavaFormat('1.7')
       importOrder 'tech.pegasys', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()

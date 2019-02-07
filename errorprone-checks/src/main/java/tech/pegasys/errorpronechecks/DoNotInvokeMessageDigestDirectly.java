@@ -25,11 +25,10 @@ import com.sun.source.tree.MethodInvocationTree;
 
 @AutoService(BugChecker.class)
 @BugPattern(
-  name = "DoNotInvokeMessageDigestDirectly",
-  summary = "Do not invoke MessageDigest.getInstance directly.",
-  category = JDK,
-  severity = WARNING
-)
+    name = "DoNotInvokeMessageDigestDirectly",
+    summary = "Do not invoke MessageDigest.getInstance directly.",
+    category = JDK,
+    severity = WARNING)
 public class DoNotInvokeMessageDigestDirectly extends BugChecker
     implements MethodInvocationTreeMatcher {
 

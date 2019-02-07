@@ -29,11 +29,10 @@ import com.sun.tools.javac.code.Symbol;
 
 @AutoService(BugChecker.class)
 @BugPattern(
-  name = "DoNotCreateSecureRandomDirectly",
-  summary = "Do not create SecureRandom directly.",
-  category = JDK,
-  severity = WARNING
-)
+    name = "DoNotCreateSecureRandomDirectly",
+    summary = "Do not create SecureRandom directly.",
+    category = JDK,
+    severity = WARNING)
 public class DoNotCreateSecureRandomDirectly extends BugChecker
     implements MethodInvocationTreeMatcher, NewClassTreeMatcher {
 

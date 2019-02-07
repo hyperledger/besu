@@ -26,9 +26,7 @@ public class StructLogWithError extends StructLog {
     error =
         traceFrame.getExceptionalHaltReasons().isEmpty()
             ? null
-            : traceFrame
-                .getExceptionalHaltReasons()
-                .stream()
+            : traceFrame.getExceptionalHaltReasons().stream()
                 .map(ExceptionalHaltReason::name)
                 .toArray(String[]::new);
   }

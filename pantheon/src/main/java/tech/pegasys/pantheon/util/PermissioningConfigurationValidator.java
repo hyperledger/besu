@@ -35,8 +35,7 @@ public class PermissioningConfigurationValidator {
             ethNetworkConfig.getBootNodes());
     if (permissioningConfiguration.isNodeWhitelistEnabled() && bootnodes != null) {
       bootnodesNotInWhitelist =
-          bootnodes
-              .stream()
+          bootnodes.stream()
               .filter(
                   node ->
                       !permissioningConfiguration

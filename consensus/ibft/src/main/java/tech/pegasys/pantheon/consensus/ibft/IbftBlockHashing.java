@@ -71,9 +71,7 @@ public class IbftBlockHashing {
     final Hash committerHash =
         IbftBlockHashing.calculateDataHashForCommittedSeal(header, ibftExtraData);
 
-    return ibftExtraData
-        .getSeals()
-        .stream()
+    return ibftExtraData.getSeals().stream()
         .map(p -> Util.signatureToAddress(p, committerHash))
         .collect(Collectors.toList());
   }

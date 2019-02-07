@@ -244,8 +244,7 @@ public class EthGetFilterChangesIntegrationTest {
                 .buildHeader(),
             new BlockBody(transactionList, emptyList()));
     final List<TransactionReceipt> transactionReceipts =
-        transactionList
-            .stream()
+        transactionList.stream()
             .map(transaction -> new TransactionReceipt(1, 1, emptyList()))
             .collect(toList());
     blockchain.appendBlock(block, transactionReceipts);

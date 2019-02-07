@@ -54,9 +54,7 @@ public class IbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
     return blockHeader
         .map(
             header ->
-                blockInterface
-                    .validatorsInBlock(header)
-                    .stream()
+                blockInterface.validatorsInBlock(header).stream()
                     .map(validator -> validator.toString())
                     .collect(Collectors.toList()))
         .orElse(null);

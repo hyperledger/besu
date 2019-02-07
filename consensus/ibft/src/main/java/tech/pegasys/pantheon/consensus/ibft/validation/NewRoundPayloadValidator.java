@@ -108,9 +108,7 @@ public class NewRoundPayloadValidator {
       return false;
     }
 
-    if (!roundChangeCert
-        .getRoundChangePayloads()
-        .stream()
+    if (!roundChangeCert.getRoundChangePayloads().stream()
         .allMatch(p -> p.getPayload().getRoundIdentifier().equals(expectedRound))) {
       LOG.info(
           "Invalid NewRound message, not all embedded RoundChange messages have a "

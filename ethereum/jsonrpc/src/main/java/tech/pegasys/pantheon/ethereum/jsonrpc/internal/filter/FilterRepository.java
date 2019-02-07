@@ -31,9 +31,7 @@ public class FilterRepository {
   }
 
   <T extends Filter> Collection<T> getFiltersOfType(final Class<T> filterClass) {
-    return filters
-        .values()
-        .stream()
+    return filters.values().stream()
         .flatMap(f -> getIfTypeMatches(f, filterClass).map(Stream::of).orElseGet(Stream::empty))
         .collect(Collectors.toList());
   }

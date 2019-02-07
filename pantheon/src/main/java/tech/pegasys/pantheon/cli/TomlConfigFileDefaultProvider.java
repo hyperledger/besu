@@ -118,9 +118,7 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
 
         if (result.hasErrors()) {
           final String errors =
-              result
-                  .errors()
-                  .stream()
+              result.errors().stream()
                   .map(TomlParseError::toString)
                   .collect(Collectors.joining("%n"));
           ;

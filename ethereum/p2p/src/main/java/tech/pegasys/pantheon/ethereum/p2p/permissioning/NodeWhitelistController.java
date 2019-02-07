@@ -99,8 +99,7 @@ public class NodeWhitelistController {
   }
 
   public boolean isPermitted(final Peer node) {
-    return nodesWhitelist
-        .stream()
+    return nodesWhitelist.stream()
         .anyMatch(
             p -> {
               boolean idsMatch = node.getId().equals(p.getId());

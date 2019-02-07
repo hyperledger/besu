@@ -41,11 +41,10 @@ import picocli.CommandLine.Spec;
 
 /** Blocks related sub-command */
 @Command(
-  name = COMMAND_NAME,
-  description = "This command provides blocks related actions.",
-  mixinStandardHelpOptions = true,
-  subcommands = {ImportSubCommand.class}
-)
+    name = COMMAND_NAME,
+    description = "This command provides blocks related actions.",
+    mixinStandardHelpOptions = true,
+    subcommands = {ImportSubCommand.class})
 class BlocksSubCommand implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
 
@@ -78,22 +77,20 @@ class BlocksSubCommand implements Runnable {
    * <p>Imports blocks from a file into the database
    */
   @Command(
-    name = "import",
-    description = "This command imports blocks from a file into the database.",
-    mixinStandardHelpOptions = true
-  )
+      name = "import",
+      description = "This command imports blocks from a file into the database.",
+      mixinStandardHelpOptions = true)
   static class ImportSubCommand implements Runnable {
     @SuppressWarnings("unused")
     @ParentCommand
     private BlocksSubCommand parentCommand; // Picocli injects reference to parent command
 
     @Option(
-      names = "--from",
-      required = true,
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "File containing blocks to import",
-      arity = "1..1"
-    )
+        names = "--from",
+        required = true,
+        paramLabel = MANDATORY_FILE_FORMAT_HELP,
+        description = "File containing blocks to import",
+        arity = "1..1")
     private final File blocksImportFile = null;
 
     @Override

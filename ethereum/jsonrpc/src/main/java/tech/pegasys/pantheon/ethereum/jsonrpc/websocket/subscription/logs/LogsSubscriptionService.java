@@ -46,9 +46,7 @@ public class LogsSubscriptionService implements BlockAddedObserver {
       return;
     }
 
-    event
-        .getAddedTransactions()
-        .stream()
+    event.getAddedTransactions().stream()
         .map(tx -> blockchainQueries.transactionReceiptByTransactionHash(tx.hash()))
         .filter(Optional::isPresent)
         .map(Optional::get)
@@ -58,9 +56,7 @@ public class LogsSubscriptionService implements BlockAddedObserver {
               sendLogsToMatchingSubscriptions(logs, logsSubscriptions, receiptWithMetadata, false);
             });
 
-    event
-        .getRemovedTransactions()
-        .stream()
+    event.getRemovedTransactions().stream()
         .map(tx -> blockchainQueries.transactionReceiptByTransactionHash(tx.hash()))
         .filter(Optional::isPresent)
         .map(Optional::get)

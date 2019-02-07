@@ -47,10 +47,7 @@ class CommandLineUtils {
       final List<String> dependentOptionsNames) {
     if (isMainOptionCondition) {
       String affectedOptions =
-          commandLine
-              .getCommandSpec()
-              .options()
-              .stream()
+          commandLine.getCommandSpec().options().stream()
               .filter(
                   option ->
                       Arrays.stream(option.names()).anyMatch(dependentOptionsNames::contains)

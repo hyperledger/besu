@@ -1824,10 +1824,7 @@ public class JsonRpcHttpServiceTest {
     final int size = block.calculateSize();
 
     final List<Hash> txs =
-        block
-            .getBody()
-            .getTransactions()
-            .stream()
+        block.getBody().getTransactions().stream()
             .map(Transaction::hash)
             .collect(Collectors.toList());
     final List<Hash> ommers =

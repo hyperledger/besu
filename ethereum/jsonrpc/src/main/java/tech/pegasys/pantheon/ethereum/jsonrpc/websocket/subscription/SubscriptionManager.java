@@ -152,9 +152,7 @@ public class SubscriptionManager extends AbstractVerticle {
   }
 
   public <T> List<T> subscriptionsOfType(final SubscriptionType type, final Class<T> clazz) {
-    return subscriptions
-        .entrySet()
-        .stream()
+    return subscriptions.entrySet().stream()
         .map(Entry::getValue)
         .filter(subscription -> subscription.isType(type))
         .map(subscriptionBuilder.mapToSubscriptionClass(clazz))
@@ -164,9 +162,7 @@ public class SubscriptionManager extends AbstractVerticle {
   public void sendMessage(final Long subscriptionId, final JsonRpcResult msg) {
     final SubscriptionResponse response = new SubscriptionResponse(subscriptionId, msg);
 
-    connectionSubscriptionsMap
-        .entrySet()
-        .stream()
+    connectionSubscriptionsMap.entrySet().stream()
         .filter(e -> e.getValue().contains(subscriptionId))
         .map(Entry::getKey)
         .findFirst()

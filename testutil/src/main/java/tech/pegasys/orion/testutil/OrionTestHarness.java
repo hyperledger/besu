@@ -86,17 +86,13 @@ public class OrionTestHarness {
   }
 
   public List<String> getPublicKeys() {
-    return config
-        .publicKeys()
-        .stream()
+    return config.publicKeys().stream()
         .map(OrionTestHarness::readFile)
         .collect(Collectors.toList());
   }
 
   public List<String> getPrivateKeys() {
-    return config
-        .privateKeys()
-        .stream()
+    return config.privateKeys().stream()
         .map(OrionTestHarness::readFile)
         .collect(Collectors.toList());
   }

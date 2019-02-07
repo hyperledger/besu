@@ -66,8 +66,7 @@ public class RoundChangeCertificate {
 
     public RoundChangeCertificate buildCertificate() {
       return new RoundChangeCertificate(
-          roundChangePayloads
-              .stream()
+          roundChangePayloads.stream()
               .map(RoundChange::getSignedPayload)
               .collect(Collectors.toList()));
     }

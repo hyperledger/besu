@@ -38,11 +38,10 @@ import picocli.CommandLine.Spec;
 
 /** Node's public key related sub-command */
 @Command(
-  name = COMMAND_NAME,
-  description = "This command provides node public key related actions.",
-  mixinStandardHelpOptions = true,
-  subcommands = {ExportSubCommand.class}
-)
+    name = COMMAND_NAME,
+    description = "This command provides node public key related actions.",
+    mixinStandardHelpOptions = true,
+    subcommands = {ExportSubCommand.class})
 class PublicKeySubCommand implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
 
@@ -75,19 +74,17 @@ class PublicKeySubCommand implements Runnable {
    * value to be polluted by other information like logs that are in KeyPairUtil that is inevitable.
    */
   @Command(
-    name = "export",
-    description = "This command exports the node public key to a file.",
-    mixinStandardHelpOptions = true
-  )
+      name = "export",
+      description = "This command exports the node public key to a file.",
+      mixinStandardHelpOptions = true)
   static class ExportSubCommand implements Runnable {
 
     @Option(
-      names = "--to",
-      required = true,
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "File to write public key to",
-      arity = "1..1"
-    )
+        names = "--to",
+        required = true,
+        paramLabel = MANDATORY_FILE_FORMAT_HELP,
+        description = "File to write public key to",
+        arity = "1..1")
     private final File publicKeyExportFile = null;
 
     @SuppressWarnings("unused")

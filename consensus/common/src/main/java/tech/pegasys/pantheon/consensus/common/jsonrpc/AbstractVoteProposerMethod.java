@@ -31,10 +31,7 @@ public class AbstractVoteProposerMethod {
 
   public JsonRpcResponse response(final JsonRpcRequest request) {
     final Map<String, Boolean> proposals =
-        voteProposer
-            .getProposals()
-            .entrySet()
-            .stream()
+        voteProposer.getProposals().entrySet().stream()
             .collect(
                 Collectors.toMap(
                     proposal -> proposal.getKey().toString(),

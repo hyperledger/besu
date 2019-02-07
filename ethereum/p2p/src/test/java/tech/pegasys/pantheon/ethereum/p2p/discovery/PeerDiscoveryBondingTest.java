@@ -43,9 +43,7 @@ public class PeerDiscoveryBondingTest {
     helper.sendMessageBetweenAgents(otherAgent, agent, ping);
 
     final List<IncomingPacket> otherAgentIncomingPongs =
-        otherAgent
-            .getIncomingPackets()
-            .stream()
+        otherAgent.getIncomingPackets().stream()
             .filter(p -> p.packet.getType().equals(PacketType.PONG))
             .collect(Collectors.toList());
     assertThat(otherAgentIncomingPongs.size()).isEqualTo(1);
@@ -82,9 +80,7 @@ public class PeerDiscoveryBondingTest {
 
     // Now we received a PONG.
     final List<IncomingPacket> incomingPongs =
-        otherNode
-            .getIncomingPackets()
-            .stream()
+        otherNode.getIncomingPackets().stream()
             .filter(p -> p.packet.getType().equals(PacketType.PONG))
             .collect(Collectors.toList());
     assertThat(incomingPongs.size()).isEqualTo(1);

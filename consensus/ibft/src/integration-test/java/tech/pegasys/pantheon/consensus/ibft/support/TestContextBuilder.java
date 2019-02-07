@@ -173,9 +173,7 @@ public class TestContextBuilder {
     // NOTE: the remotePeers needs to be ordered based on Address (as this is used to determine
     // the proposer order which must be managed in test).
     final Map<Address, ValidatorPeer> remotePeers =
-        networkNodes
-            .getRemotePeers()
-            .stream()
+        networkNodes.getRemotePeers().stream()
             .collect(
                 Collectors.toMap(
                     NodeParams::getAddress,

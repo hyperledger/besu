@@ -113,9 +113,7 @@ public class Cluster implements AutoCloseable {
   }
 
   public void verifyOnActiveNodes(final Condition condition) {
-    nodes
-        .values()
-        .stream()
+    nodes.values().stream()
         .filter(node -> pantheonNodeRunner.isActive(node.getName()))
         .forEach(condition::verify);
   }

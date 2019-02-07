@@ -120,18 +120,14 @@ public class PrometheusMetricsSystem implements MetricsSystem {
 
   @Override
   public Stream<Observation> getMetrics(final MetricCategory category) {
-    return collectors
-        .getOrDefault(category, Collections.emptySet())
-        .stream()
+    return collectors.getOrDefault(category, Collections.emptySet()).stream()
         .flatMap(collector -> collector.collect().stream())
         .flatMap(familySamples -> convertSamplesToObservations(category, familySamples));
   }
 
   private Stream<Observation> convertSamplesToObservations(
       final MetricCategory category, final MetricFamilySamples familySamples) {
-    return familySamples
-        .samples
-        .stream()
+    return familySamples.samples.stream()
         .map(sample -> createObservationFromSample(category, sample, familySamples));
   }
 

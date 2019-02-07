@@ -126,11 +126,7 @@ public abstract class PeerMessageTaskTest<T> extends AbstractMessageTaskTest<T, 
 
     assertThat(future.isCompletedExceptionally()).isTrue();
     assertThat(
-            respondingEthPeer
-                .getEthPeer()
-                .timeoutCounts()
-                .values()
-                .stream()
+            respondingEthPeer.getEthPeer().timeoutCounts().values().stream()
                 .mapToInt(AtomicInteger::get)
                 .sum())
         .isEqualTo(1);

@@ -190,8 +190,7 @@ public class BlockPropagationManager<C> {
       final long localChainHeight = protocolContext.getBlockchain().getChainHeadBlockNumber();
       final long bestChainHeight = syncState.bestChainHeight(localChainHeight);
       final List<NewBlockHash> relevantAnnouncements =
-          announcedBlocks
-              .stream()
+          announcedBlocks.stream()
               .filter(a -> shouldImportBlockAtHeight(a.number(), localChainHeight, bestChainHeight))
               .collect(Collectors.toList());
 

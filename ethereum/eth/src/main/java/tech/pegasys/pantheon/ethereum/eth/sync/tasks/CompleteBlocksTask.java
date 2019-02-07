@@ -121,8 +121,7 @@ public class CompleteBlocksTask<C> extends AbstractRetryingPeerTask<List<Block>>
   }
 
   private List<BlockHeader> incompleteHeaders() {
-    return headers
-        .stream()
+    return headers.stream()
         .filter(h -> blocks.get(h.getNumber()) == null)
         .collect(Collectors.toList());
   }
