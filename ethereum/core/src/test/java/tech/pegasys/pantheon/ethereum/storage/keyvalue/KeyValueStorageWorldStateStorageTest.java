@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.storage.keyvalue;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage.Updater;
 import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -149,6 +150,29 @@ public class KeyValueStorageWorldStateStorageTest {
     storage.updater().putAccountStorageTrieNode(Hash.hash(bytes), bytes).commit();
 
     assertThat(storage.getNodeData(Hash.hash(bytes))).contains(bytes);
+  }
+
+  @Test
+  public void reconcilesNonConflictingUpdaters() {
+    BytesValue bytesA = BytesValue.fromHexString("0x12");
+    BytesValue bytesB = BytesValue.fromHexString("0x1234");
+    BytesValue bytesC = BytesValue.fromHexString("0x123456");
+
+    KeyValueStorageWorldStateStorage storage = emptyStorage();
+    Updater updaterA = storage.updater();
+    Updater updaterB = storage.updater();
+
+    updaterA.putCode(bytesA);
+    updaterB.putCode(bytesA);
+    updaterB.putCode(bytesB);
+    updaterA.putCode(bytesC);
+
+    updaterA.commit();
+    updaterB.commit();
+
+    assertThat(storage.getCode(Hash.hash(bytesA))).contains(bytesA);
+    assertThat(storage.getCode(Hash.hash(bytesB))).contains(bytesB);
+    assertThat(storage.getCode(Hash.hash(bytesC))).contains(bytesC);
   }
 
   private KeyValueStorageWorldStateStorage emptyStorage() {

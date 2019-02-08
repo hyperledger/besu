@@ -30,6 +30,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV63;
 import tech.pegasys.pantheon.ethereum.eth.messages.GetNodeDataMessage;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
@@ -187,6 +188,11 @@ public class WorldStateDownloaderTest {
     final WorldState localWorldState = localWorldStateArchive.get(stateRoot);
     assertThat(result).isDone();
     assertAccountsMatch(localWorldState, accounts);
+  }
+
+  @Test
+  public void handlesPartialResponsesFromNetwork() {
+    downloadAvailableWorldStateFromPeers(5, 100, 10, 10, this::respondPartially);
   }
 
   @Test
@@ -479,6 +485,16 @@ public class WorldStateDownloaderTest {
       final int accountCount,
       final int hashesPerRequest,
       final int maxOutstandingRequests) {
+    downloadAvailableWorldStateFromPeers(
+        peerCount, accountCount, hashesPerRequest, maxOutstandingRequests, this::respondFully);
+  }
+
+  private void downloadAvailableWorldStateFromPeers(
+      final int peerCount,
+      final int accountCount,
+      final int hashesPerRequest,
+      final int maxOutstandingRequests,
+      final NetworkResponder networkResponder) {
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     final int trailingPeerCount = 5;
     BlockDataGenerator dataGen = new BlockDataGenerator(1);
@@ -537,12 +553,15 @@ public class WorldStateDownloaderTest {
     CompletableFuture<?> result = downloader.run(header);
 
     // Respond to node data requests
-    Responder responder =
+    // Send one round of full responses, so that we can get multiple requests queued up
+    Responder fullResponder =
         RespondingEthPeer.blockchainResponder(mock(Blockchain.class), remoteWorldStateArchive);
-    while (!result.isDone()) {
-      for (RespondingEthPeer peer : usefulPeers) {
-        peer.respond(responder);
-      }
+    for (RespondingEthPeer peer : usefulPeers) {
+      peer.respond(fullResponder);
+    }
+    // Respond to remaining queued requests in custom way
+    if (!result.isDone()) {
+      networkResponder.respond(usefulPeers, remoteWorldStateArchive, result);
     }
 
     // Check that trailing peers were not queried for data
@@ -562,6 +581,57 @@ public class WorldStateDownloaderTest {
     }
   }
 
+  private void respondFully(
+      final List<RespondingEthPeer> peers,
+      final WorldStateArchive remoteWorldStateArchive,
+      final CompletableFuture<?> downloaderFuture) {
+    Responder responder =
+        RespondingEthPeer.blockchainResponder(mock(Blockchain.class), remoteWorldStateArchive);
+    while (!downloaderFuture.isDone()) {
+      for (RespondingEthPeer peer : peers) {
+        peer.respond(responder);
+      }
+    }
+  }
+
+  private void respondPartially(
+      final List<RespondingEthPeer> peers,
+      final WorldStateArchive remoteWorldStateArchive,
+      final CompletableFuture<?> downloaderFuture) {
+    Responder fullResponder =
+        RespondingEthPeer.blockchainResponder(mock(Blockchain.class), remoteWorldStateArchive);
+    Responder partialResponder =
+        RespondingEthPeer.partialResponder(
+            mock(Blockchain.class), remoteWorldStateArchive, MainnetProtocolSchedule.create(), .5f);
+    Responder emptyResponder = RespondingEthPeer.emptyResponder();
+
+    // Send a few partial responses
+    for (int i = 0; i < 5; i++) {
+      for (RespondingEthPeer peer : peers) {
+        peer.respond(partialResponder);
+      }
+    }
+
+    // Downloader should not complete with partial responses
+    assertThat(downloaderFuture).isNotDone();
+
+    // Send a few empty responses
+    for (int i = 0; i < 3; i++) {
+      for (RespondingEthPeer peer : peers) {
+        peer.respond(emptyResponder);
+      }
+    }
+
+    // Downloader should not complete with empty responses
+    assertThat(downloaderFuture).isNotDone();
+
+    while (!downloaderFuture.isDone()) {
+      for (RespondingEthPeer peer : peers) {
+        peer.respond(fullResponder);
+      }
+    }
+  }
+
   private void assertAccountsMatch(
       final WorldState worldState, final List<Account> expectedAccounts) {
     for (Account expectedAccount : expectedAccounts) {
@@ -576,5 +646,13 @@ public class WorldStateDownloaderTest {
       Map<Bytes32, UInt256> expectedStorage = expectedAccount.storageEntriesFrom(Bytes32.ZERO, 500);
       assertThat(actualStorage).isEqualTo(expectedStorage);
     }
+  }
+
+  @FunctionalInterface
+  private interface NetworkResponder {
+    void respond(
+        final List<RespondingEthPeer> peers,
+        final WorldStateArchive remoteWorldStateArchive,
+        final CompletableFuture<?> downloaderFuture);
   }
 }
