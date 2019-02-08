@@ -23,8 +23,9 @@ To create a private network:
 1. [Create Genesis File](#2-create-genesis-file)
 1. [Get Public Key of First Node](#3-get-public-key-of-first-node)
 1. [Start First Node as Bootnode](#4-restart-first-node-as-bootnode)
-1. [Start Additional Nodes](#5-start-additional-nodes)
-1. [Confirm Private Network Working](#6-confirm-private-network-working)
+1. [Start Node-2](#5-start-node-2)
+1. [Start Node-3](#6-start-node-3)
+1. [Confirm Private Network is Working](#7-confirm-private-network-is-working)
 
 ### 1. Create Folders 
 
@@ -48,16 +49,19 @@ The genesis file defines the genesis block of the blockchain (that is, the start
 The genesis file includes entries for configuring the blockchain such as the mining difficulty and initial 
 accounts and balances.    
 
-All nodes in a network must use the same genesis file. 
+All nodes in a network must use the same genesis file. The [network ID](../Configuring-Pantheon/NetworkID-And-ChainID.md) 
+defaults to the `chainID` in the genesis file. The `fixeddifficulty` enables blocks to be mined quickly.   
 
 Copy the following genesis definition to a file called `privateNetworkGenesis.json` and save it in the `Private-Network` directory: 
 
 ```json
 {
   "config": {
-    "ethash": {
-    }
-  },
+      "ethash": {
+        "fixeddifficulty": 1000
+      },
+       "chainID": 1981
+   },
   "nonce": "0x42",
   "gasLimit": "0x1000000",
   "difficulty": "0x10000",
@@ -83,10 +87,10 @@ Copy the following genesis definition to a file called `privateNetworkGenesis.js
 ### 3. Get Public Key of First Node
 
 To enable nodes to discover each other, a network requires one or more nodes to be bootnodes. 
-For this private network, we will use Node-1 as the bootnode. This requires obtaining the public key for the enode URL. 
+For this private network, we will use Node-1 as the bootnode. This requires obtaining the public key for the [enode URL](../Configuring-Pantheon/Node-Keys.md#enode-url). 
 
-In the `Node-1` directory, use the [`export-pub-key` subcommand](../Reference/Pantheon-CLI-Syntax.md#export-pub-key) to write 
-the [node public key](../Configuring-Pantheon/Node-Keys.md) to the specified file (`publicKeyNode1` in this example):
+In the `Node-1` directory, use the [`public-key` subcommand](../Reference/Pantheon-CLI-Syntax.md#public-key) to write 
+the [node public key](../Configuring-Pantheon/Node-Keys.md#node-public-key) to the specified file (`publicKeyNode1` in this example):
 
 ```bash tab="MacOS"
 pantheon --data-path=Node-1-data-path --genesis-file=../privateNetworkGenesis.json public-key export --to=Node-1-data-path/publicKeyNode1
@@ -109,59 +113,68 @@ The `database` directory contains the blockchain data.
 
 ### 4. Start First Node as Bootnode 
 
-Start Node-1 specifying:
-
-* No arguments for the [`--bootnodes` option](../Reference/Pantheon-CLI-Syntax.md#bootnodes) because this is your bootnode.
-* Mining is enabled and the account to which mining rewards are paid using the [`--miner-enabled`](../Reference/Pantheon-CLI-Syntax.md#miner-enabled) 
-and [`--miner-coinbase` options](../Reference/Pantheon-CLI-Syntax.md#miner-coinbase).
-* JSON-RPC API is enabled using the [`--rpc-http-enabled` option](../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled)
-* All hosts can access the HTTP JSON-RPC API using the [`--host-whitelist` option](../Reference/Pantheon-CLI-Syntax.md#host-whitelist). 
+Start Node-1:
 
 ```bash tab="MacOS"
-pantheon --data-path=Node-1-data-path --genesis-file=../privateNetworkGenesis.json --bootnodes --network-id 123 --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-enabled --host-whitelist=*      
+pantheon --data-path=Node-1-data-path --genesis-file=../privateNetworkGenesis.json --bootnodes --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-enabled --host-whitelist=* --rpc-http-cors-origins="all"     
 ```
 
 ```bash tab="Windows"
-pantheon --data-path=Node-1-data-path --genesis-file=..\privateNetworkGenesis.json --bootnodes --network-id 123 --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-enabled --host-whitelist=*     
+pantheon --data-path=Node-1-data-path --genesis-file=..\privateNetworkGenesis.json --bootnodes --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-enabled --host-whitelist=* --rpc-http-cors-origins="all"    
 ```
+
+The command line specifies: 
+
+* No arguments for the [`--bootnodes`](../Reference/Pantheon-CLI-Syntax.md#bootnodes) option because this is your bootnode.
+* Mining is enabled and the account to which mining rewards are paid using the [`--miner-enabled`](../Reference/Pantheon-CLI-Syntax.md#miner-enabled) 
+and [`--miner-coinbase`](../Reference/Pantheon-CLI-Syntax.md#miner-coinbase) options.
+* JSON-RPC API is enabled using the [`--rpc-http-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled) option.
+* All hosts can access the HTTP JSON-RPC API using the [`--host-whitelist`](../Reference/Pantheon-CLI-Syntax.md#host-whitelist) option.
+* All domains can access the node using the HTTP JSON-RPC API using the [`--rpc-http-cors-origins`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-cors-origins) option.  
 
 !!! info
     The miner coinbase account is one of the accounts defined in the genesis file. 
 
-### 5. Start Additional Nodes 
+### 5. Start Node-2 
 
 You need the [enode URL](../Configuring-Pantheon/Node-Keys.md#enode-url) for Node-1 to specify Node-1 as the bootnode for Node-2 and Node-3. 
 
-Start another terminal, change to the `Node-2` directory and start Node-2 specifying:
- 
-* Different port to Node-1 for P2P peer discovery using the [`--p2p-port` option](../Reference/Pantheon-CLI-Syntax.md#p2p-port).
-* Enode URL for Node-1 using the [`--bootnodes` option](../Reference/Pantheon-CLI-Syntax.md#bootnodes).
-* Data directory for Node-2 using the [`--data-path` option](../Reference/Pantheon-CLI-Syntax.md#data-path).
-* Genesis file and network ID as for Node-1.  
+Start another terminal, change to the `Node-2` directory and start Node-2 replacing the enode URL with your bootnode:
 
 ```bash tab="MacOS"
-pantheon --data-path=Node-2-data-path --genesis-file=../privateNetworkGenesis.json --bootnodes="enode://<node public key ex 0x>@127.0.0.1:30303" --network-id 123 --p2p-port=30304      
+pantheon --data-path=Node-2-data-path --genesis-file=../privateNetworkGenesis.json --bootnodes="enode://<node public key ex 0x>@127.0.0.1:30303" --p2p-port=30304      
 ```
 
 ```bash tab="Windows"
-pantheon --data-path=Node-2-data-path --genesis-file=..\privateNetworkGenesis.json --bootnodes="enode://<node public key ex 0x>@127.0.0.1:30303" --network-id 123 --p2p-port=30304      
+pantheon --data-path=Node-2-data-path --genesis-file=..\privateNetworkGenesis.json --bootnodes="enode://<node public key ex 0x>@127.0.0.1:30303" --p2p-port=30304      
 ```
 
-Start another terminal, change to the `Node-3` directory and start Node-3 specifying: 
- 
+The command line specifies: 
+
+* Different port to Node-1 for P2P peer discovery using the [`--p2p-port`](../Reference/Pantheon-CLI-Syntax.md#p2p-port) option.
+* Enode URL for Node-1 using the [`--bootnodes`](../Reference/Pantheon-CLI-Syntax.md#bootnodes) option.
+* Data directory for Node-2 using the [`--data-path`](../Reference/Pantheon-CLI-Syntax.md#data-path) option.
+* Genesis file as for Node-1.  
+
+### 6. Start Node-3
+
+Start another terminal, change to the `Node-3` directory and start Node-3 replacing the enode URL with your bootnode: 
+
+```bash tab="MacOS"
+pantheon --data-path=Node-3-data-path --genesis-file=../privateNetworkGenesis.json --bootnodes="enode://<node public key ex 0x>@127.0.0.1:30303" --p2p-port30305      
+```
+
+```bash tab="Windows"
+pantheon --data-path=Node-3-data-path --genesis-file=..\privateNetworkGenesis.json --bootnodes="enode://<node public key ex 0x>@127.0.0.1:30303" --p2p-port=30305      
+```
+
+The command line specifies: 
+
  * Different port to Node-1 and Node-2 for P2P peer discovery.
- * Data directory for Node-3 using the [`--data-path` option](../Reference/Pantheon-CLI-Syntax.md#data-path).
- * Bootnode, genesis file, and network ID as for Node-2. 
+ * Data directory for Node-3 using the [`--data-path`](../Reference/Pantheon-CLI-Syntax.md#data-path) option.
+ * Bootnode and genesis file as for Node-2. 
 
-```bash tab="MacOS"
-pantheon --data-path=Node-3-data-path --genesis-file=../privateNetworkGenesis.json --bootnodes="enode://<node public key ex 0x>@127.0.0.1:30303" --network-id 123 --p2p-port30305      
-```
-
-```bash tab="Windows"
-pantheon --data-path=Node-3-data-path --genesis-file=..\privateNetworkGenesis.json --bootnodes="enode://<node public key ex 0x>@127.0.0.1:30303" --network-id 123 --p2p-port=30305      
-```
-
-### 6. Confirm Private Network is Working 
+### 7. Confirm Private Network is Working 
 
 Start another terminal, use curl to call the JSON-RPC API [`net_peerCount`](../Reference/JSON-RPC-API-Methods.md#net_peercount) method and confirm the nodes are functioning as peers: 
 
@@ -189,7 +202,7 @@ Send transactions using `eth_sendRawTransaction` to [send ether or, deploy or in
 
 Use the [JSON-RPC API](../Reference/Using-JSON-RPC-API.md). 
 
-Start a node with the `--rpc-ws-enabled` option and use the [RPC Pub/Sub API](../Using-Pantheon/RPC-PubSub.md).       
+Start a node with the [`--rpc-ws-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-enabled) option and use the [RPC Pub/Sub API](../Using-Pantheon/RPC-PubSub.md).       
 
 ## Stop Nodes
 
