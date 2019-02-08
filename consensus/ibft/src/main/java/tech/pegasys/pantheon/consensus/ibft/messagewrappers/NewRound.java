@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.messagewrappers;
 
+import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
 import tech.pegasys.pantheon.consensus.ibft.payload.NewRoundPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
@@ -24,8 +25,11 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 public class NewRound extends IbftMessage<NewRoundPayload> {
 
-  public NewRound(final SignedData<NewRoundPayload> payload) {
+  private final Block proposedBlock;
+
+  public NewRound(final SignedData<NewRoundPayload> payload, final Block proposedBlock) {
     super(payload);
+    this.proposedBlock = proposedBlock;
   }
 
   public RoundChangeCertificate getRoundChangeCertificate() {
@@ -37,7 +41,7 @@ public class NewRound extends IbftMessage<NewRoundPayload> {
   }
 
   public Block getBlock() {
-    return getProposalPayload().getPayload().getBlock();
+    return proposedBlock;
   }
 
   @Override
@@ -45,6 +49,7 @@ public class NewRound extends IbftMessage<NewRoundPayload> {
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     rlpOut.startList();
     getSignedPayload().writeTo(rlpOut);
+    proposedBlock.writeTo(rlpOut);
     rlpOut.endList();
     return rlpOut.encoded();
   }
@@ -53,7 +58,9 @@ public class NewRound extends IbftMessage<NewRoundPayload> {
     RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
     final SignedData<NewRoundPayload> payload = SignedData.readSignedNewRoundPayloadFrom(rlpIn);
+    final Block proposedBlock =
+        Block.readFrom(rlpIn, IbftBlockHashing::calculateDataHashForCommittedSeal);
     rlpIn.leaveList();
-    return new NewRound(payload);
+    return new NewRound(payload, proposedBlock);
   }
 }

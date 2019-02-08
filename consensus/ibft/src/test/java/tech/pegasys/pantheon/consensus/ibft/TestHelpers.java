@@ -45,18 +45,20 @@ public class TestHelpers {
         initial.getSequenceNumber() + offSetSequence, initial.getRoundNumber() + offSetRound);
   }
 
-  public static Block createProposalBlock(final List<Address> validators, final int round) {
+  public static Block createProposalBlock(
+      final List<Address> validators, final ConsensusRoundIdentifier roundId) {
     final BytesValue extraData =
         new IbftExtraData(
                 BytesValue.wrap(new byte[32]),
                 Collections.emptyList(),
                 Optional.empty(),
-                round,
+                roundId.getRoundNumber(),
                 validators)
             .encode();
     final BlockOptions blockOptions =
         BlockOptions.create()
             .setExtraData(extraData)
+            .setBlockNumber(roundId.getSequenceNumber())
             .setBlockHashFunction(IbftBlockHashing::calculateDataHashForCommittedSeal);
     return new BlockDataGenerator().block(blockOptions);
   }
@@ -71,7 +73,7 @@ public class TestHelpers {
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(0x1234567890ABCDEFL, round);
     final Block block =
-        TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), 0);
+        TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), roundIdentifier);
     return messageFactory.createProposal(roundIdentifier, block);
   }
 
@@ -103,10 +105,11 @@ public class TestHelpers {
     final MessageFactory messageFactory = new MessageFactory(signerKeys);
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(0x1234567890ABCDEFL, 0xFEDCBA98);
-    final Proposal proposalPayload = createSignedProposalPayload(signerKeys);
+    final Proposal proposal = createSignedProposalPayload(signerKeys);
     return messageFactory.createNewRound(
         roundIdentifier,
         new RoundChangeCertificate(newArrayList()),
-        proposalPayload.getSignedPayload());
+        proposal.getSignedPayload(),
+        proposal.getBlock());
   }
 }

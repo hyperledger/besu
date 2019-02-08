@@ -120,8 +120,7 @@ public class GossipTest {
     final MessageFactory unknownMsgFactory = new MessageFactory(unknownKeyPair);
     final Proposal unknownProposal = unknownMsgFactory.createProposal(roundId, block);
 
-    sender.injectMessage(
-        ProposalMessageData.create(new Proposal(unknownProposal.getSignedPayload())));
+    sender.injectMessage(ProposalMessageData.create(unknownProposal));
     peers.verifyNoMessagesReceived();
   }
 

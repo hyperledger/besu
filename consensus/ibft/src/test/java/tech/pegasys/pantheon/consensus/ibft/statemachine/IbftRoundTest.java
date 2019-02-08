@@ -82,6 +82,7 @@ public class IbftRoundTest {
   @Mock private MessageValidator messageValidator;
 
   @Captor private ArgumentCaptor<SignedData<ProposalPayload>> payloadArgCaptor;
+  @Captor private ArgumentCaptor<Block> blockCaptor;
 
   private Block proposedBlock;
   private IbftExtraData proposedExtraData;
@@ -270,7 +271,7 @@ public class IbftRoundTest {
 
     round.startRoundWith(new RoundChangeArtifacts(empty(), emptyList()), 15);
     verify(transmitter, times(1))
-        .multicastNewRound(eq(roundIdentifier), eq(roundChangeCertificate), any());
+        .multicastNewRound(eq(roundIdentifier), eq(roundChangeCertificate), any(), any());
   }
 
   @Test
@@ -305,11 +306,11 @@ public class IbftRoundTest {
         .multicastNewRound(
             eq(roundIdentifier),
             eq(roundChangeArtifacts.getRoundChangeCertificate()),
-            payloadArgCaptor.capture());
+            any(),
+            blockCaptor.capture());
 
     final IbftExtraData proposedExtraData =
-        IbftExtraData.decode(
-            payloadArgCaptor.getValue().getPayload().getBlock().getHeader().getExtraData());
+        IbftExtraData.decode(blockCaptor.getValue().getHeader().getExtraData());
     assertThat(proposedExtraData.getRound()).isEqualTo(roundIdentifier.getRoundNumber());
 
     // Inject a single Prepare message, and confirm the roundState has gone to Prepared (which
@@ -342,7 +343,8 @@ public class IbftRoundTest {
         .multicastNewRound(
             eq(roundIdentifier),
             eq(roundChangeArtifacts.getRoundChangeCertificate()),
-            payloadArgCaptor.capture());
+            payloadArgCaptor.capture(),
+            blockCaptor.capture());
 
     // Inject a single Prepare message, and confirm the roundState has gone to Prepared (which
     // indicates the block has entered the roundState (note: all msgs are deemed valid due to mocks)

@@ -281,7 +281,7 @@ public class IbftBlockHeightManagerTest {
     manager.handleRoundChangePayload(roundChange);
 
     verify(messageTransmitter, times(1))
-        .multicastNewRound(eq(futureRoundIdentifier), eq(roundChangCert), any());
+        .multicastNewRound(eq(futureRoundIdentifier), eq(roundChangCert), any(), any());
   }
 
   @Test
@@ -318,7 +318,8 @@ public class IbftBlockHeightManagerTest {
         messageFactory.createNewRound(
             futureRoundIdentifier,
             new RoundChangeCertificate(Collections.emptyList()),
-            messageFactory.createProposal(futureRoundIdentifier, createdBlock).getSignedPayload());
+            messageFactory.createProposal(futureRoundIdentifier, createdBlock).getSignedPayload(),
+            createdBlock);
 
     manager.handleNewRoundPayload(newRound);
 

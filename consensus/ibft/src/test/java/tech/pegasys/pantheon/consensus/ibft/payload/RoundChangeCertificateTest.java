@@ -54,8 +54,8 @@ public class RoundChangeCertificateTest {
   @Test
   public void rlpRoundTripWithPreparedCertificate() {
     final Block block =
-        TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), 0);
-    final ProposalPayload proposalPayload = new ProposalPayload(ROUND_IDENTIFIER, block);
+        TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), ROUND_IDENTIFIER);
+    final ProposalPayload proposalPayload = new ProposalPayload(ROUND_IDENTIFIER, block.getHash());
     final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
     SignedData<ProposalPayload> signedProposal = SignedData.from(proposalPayload, signature);
 

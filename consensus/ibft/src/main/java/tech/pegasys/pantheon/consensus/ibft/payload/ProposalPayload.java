@@ -13,9 +13,8 @@
 package tech.pegasys.pantheon.consensus.ibft.payload;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
-import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.IbftV2;
-import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
@@ -25,33 +24,32 @@ import java.util.StringJoiner;
 public class ProposalPayload implements Payload {
   private static final int TYPE = IbftV2.PROPOSAL;
   private final ConsensusRoundIdentifier roundIdentifier;
-  private final Block block;
+  private final Hash digest;
 
-  public ProposalPayload(final ConsensusRoundIdentifier roundIdentifier, final Block block) {
+  public ProposalPayload(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
     this.roundIdentifier = roundIdentifier;
-    this.block = block;
+    this.digest = digest;
   }
 
   public static ProposalPayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
-    final Block block =
-        Block.readFrom(rlpInput, IbftBlockHashing::calculateDataHashForCommittedSeal);
+    final Hash digest = Hash.wrap(rlpInput.readBytes32());
     rlpInput.leaveList();
 
-    return new ProposalPayload(roundIdentifier, block);
+    return new ProposalPayload(roundIdentifier, digest);
   }
 
   @Override
   public void writeTo(final RLPOutput rlpOutput) {
     rlpOutput.startList();
     roundIdentifier.writeTo(rlpOutput);
-    block.writeTo(rlpOutput);
+    rlpOutput.writeBytesValue(digest);
     rlpOutput.endList();
   }
 
-  public Block getBlock() {
-    return block;
+  public Hash getDigest() {
+    return digest;
   }
 
   @Override
@@ -74,19 +72,19 @@ public class ProposalPayload implements Payload {
     }
     final ProposalPayload that = (ProposalPayload) o;
     return Objects.equals(roundIdentifier, that.roundIdentifier)
-        && Objects.equals(block, that.block);
+        && Objects.equals(digest, that.digest);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(roundIdentifier, block);
+    return Objects.hash(roundIdentifier, digest);
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", ProposalPayload.class.getSimpleName() + "[", "]")
         .add("roundIdentifier=" + roundIdentifier)
-        .add("block=" + block)
+        .add("digest=" + digest)
         .toString();
   }
 }

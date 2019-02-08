@@ -12,9 +12,12 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.messagewrappers;
 
+import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
+import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
 import tech.pegasys.pantheon.consensus.ibft.payload.PreparedCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
+import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
@@ -24,12 +27,25 @@ import java.util.Optional;
 
 public class RoundChange extends IbftMessage<RoundChangePayload> {
 
-  public RoundChange(final SignedData<RoundChangePayload> payload) {
+  private final Optional<Block> proposedBlock;
+
+  public RoundChange(
+      final SignedData<RoundChangePayload> payload, final Optional<Block> proposedBlock) {
     super(payload);
+    this.proposedBlock = proposedBlock;
+  }
+
+  public Optional<Block> getProposedBlock() {
+    return proposedBlock;
   }
 
   public Optional<PreparedCertificate> getPreparedCertificate() {
     return getPayload().getPreparedCertificate();
+  }
+
+  public Optional<ConsensusRoundIdentifier> getPreparedCertificateRound() {
+    return getPreparedCertificate()
+        .map(prepCert -> prepCert.getProposalPayload().getPayload().getRoundIdentifier());
   }
 
   @Override
@@ -37,16 +53,30 @@ public class RoundChange extends IbftMessage<RoundChangePayload> {
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     rlpOut.startList();
     getSignedPayload().writeTo(rlpOut);
+    if (proposedBlock.isPresent()) {
+      proposedBlock.get().writeTo(rlpOut);
+    } else {
+      rlpOut.writeNull();
+    }
     rlpOut.endList();
     return rlpOut.encoded();
   }
 
   public static RoundChange decode(final BytesValue data) {
-    RLPInput rlpIn = RLP.input(data);
+
+    final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
     final SignedData<RoundChangePayload> payload =
         SignedData.readSignedRoundChangePayloadFrom(rlpIn);
+    Optional<Block> block = Optional.empty();
+    if (!rlpIn.nextIsNull()) {
+      block =
+          Optional.of(Block.readFrom(rlpIn, IbftBlockHashing::calculateDataHashForCommittedSeal));
+    } else {
+      rlpIn.skipNext();
+    }
     rlpIn.leaveList();
-    return new RoundChange(payload);
+
+    return new RoundChange(payload, block);
   }
 }

@@ -34,11 +34,13 @@ public class RoundChangeMessageValidatorTest {
   private final KeyPair keyPair = KeyPair.generate();
   private final MessageFactory messageFactory = new MessageFactory(keyPair);
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 1);
-  private final Block block =
-      TestHelpers.createProposalBlock(emptyList(), roundIdentifier.getRoundNumber());
+  private final Block block = TestHelpers.createProposalBlock(emptyList(), roundIdentifier);
+
+  private ProposalBlockConsistencyValidator proposalBlockConsistencyValidator =
+      mock(ProposalBlockConsistencyValidator.class);
 
   private final RoundChangeMessageValidator validator =
-      new RoundChangeMessageValidator(payloadValidator);
+      new RoundChangeMessageValidator(payloadValidator, proposalBlockConsistencyValidator);
 
   @Test
   public void underlyingPayloadValidatorIsInvokedWithCorrectParameters() {

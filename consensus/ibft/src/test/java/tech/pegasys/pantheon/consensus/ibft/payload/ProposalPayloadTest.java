@@ -34,15 +34,16 @@ public class ProposalPayloadTest {
   @Test
   public void roundTripRlp() {
     final Block block =
-        TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), 0);
-    final ProposalPayload expectedProposalPayload = new ProposalPayload(ROUND_IDENTIFIER, block);
+        TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), ROUND_IDENTIFIER);
+    final ProposalPayload expectedProposalPayload =
+        new ProposalPayload(ROUND_IDENTIFIER, block.getHash());
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     expectedProposalPayload.writeTo(rlpOut);
 
     final RLPInput rlpInput = RLP.input(rlpOut.encoded());
     final ProposalPayload proposalPayload = ProposalPayload.readFrom(rlpInput);
     assertThat(proposalPayload.getRoundIdentifier()).isEqualTo(ROUND_IDENTIFIER);
-    assertThat(proposalPayload.getBlock()).isEqualTo(block);
+    assertThat(proposalPayload.getDigest()).isEqualTo(block.getHash());
     assertThat(proposalPayload.getMessageType()).isEqualTo(IbftV2.PROPOSAL);
   }
 }

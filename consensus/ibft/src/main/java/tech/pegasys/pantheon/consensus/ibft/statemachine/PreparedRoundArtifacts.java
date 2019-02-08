@@ -22,8 +22,8 @@ import java.util.stream.Collectors;
 
 public class PreparedRoundArtifacts {
 
-  private Proposal proposal;
-  private Collection<Prepare> prepares;
+  private final Proposal proposal;
+  private final Collection<Prepare> prepares;
 
   public PreparedRoundArtifacts(final Proposal proposal, final Collection<Prepare> prepares) {
     this.proposal = proposal;
