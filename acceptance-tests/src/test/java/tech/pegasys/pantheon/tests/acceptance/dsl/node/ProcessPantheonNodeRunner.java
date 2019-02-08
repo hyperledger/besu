@@ -80,6 +80,13 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
       params.add(node.jsonRpcListenAddress().get());
       params.add("--rpc-api");
       params.add(apiList(node.jsonRpcConfiguration().getRpcApis()));
+      if (node.jsonRpcConfiguration().isAuthenticationEnabled()) {
+        params.add("--rpc-http-authentication-enabled");
+      }
+      if (node.jsonRpcConfiguration().getAuthenticationCredentialsFile() != null) {
+        params.add("--rpc-http-authentication-credentials-file");
+        params.add(node.jsonRpcConfiguration().getAuthenticationCredentialsFile());
+      }
     }
 
     if (node.wsRpcEnabled()) {

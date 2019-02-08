@@ -30,6 +30,8 @@ public class JsonRpcConfiguration {
   private Collection<String> corsAllowedDomains = Collections.emptyList();
   private Collection<RpcApi> rpcApis;
   private Collection<String> hostsWhitelist = Collections.singletonList("localhost");
+  private boolean authenticationEnabled = false;
+  private String authenticationCredentialsFile;
 
   public static JsonRpcConfiguration createDefault() {
     final JsonRpcConfiguration config = new JsonRpcConfiguration();
@@ -106,6 +108,8 @@ public class JsonRpcConfiguration {
         .add("corsAllowedDomains", corsAllowedDomains)
         .add("hostsWhitelist", hostsWhitelist)
         .add("rpcApis", rpcApis)
+        .add("authenticationEnabled", authenticationEnabled)
+        .add("authenticationCredentialsFile", authenticationCredentialsFile)
         .toString();
   }
 
@@ -131,5 +135,21 @@ public class JsonRpcConfiguration {
   @Override
   public int hashCode() {
     return Objects.hashCode(enabled, port, host, corsAllowedDomains, hostsWhitelist, rpcApis);
+  }
+
+  public boolean isAuthenticationEnabled() {
+    return authenticationEnabled;
+  }
+
+  public void setAuthenticationEnabled(final boolean authenticationEnabled) {
+    this.authenticationEnabled = authenticationEnabled;
+  }
+
+  public void setAuthenticationCredentialsFile(final String authenticationCredentialsFile) {
+    this.authenticationCredentialsFile = authenticationCredentialsFile;
+  }
+
+  public String getAuthenticationCredentialsFile() {
+    return authenticationCredentialsFile;
   }
 }

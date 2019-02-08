@@ -22,6 +22,8 @@ import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.GenesisConfigProvider;
 
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 public class PantheonFactoryConfigurationBuilder {
@@ -61,12 +63,23 @@ public class PantheonFactoryConfigurationBuilder {
   }
 
   public PantheonFactoryConfigurationBuilder jsonRpcEnabled() {
-    final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
-    config.setEnabled(true);
-    config.setPort(0);
-    config.setHostsWhitelist(singletonList("*"));
+    this.jsonRpcConfiguration.setEnabled(true);
+    this.jsonRpcConfiguration.setPort(0);
+    this.jsonRpcConfiguration.setHostsWhitelist(singletonList("*"));
 
-    this.jsonRpcConfiguration = config;
+    return this;
+  }
+
+  public PantheonFactoryConfigurationBuilder jsonRpcAuthenticationEnabled()
+      throws URISyntaxException {
+    final String authTomlPath =
+        Paths.get(ClassLoader.getSystemResource("authentication/auth.toml").toURI())
+            .toAbsolutePath()
+            .toString();
+
+    this.jsonRpcConfiguration.setAuthenticationEnabled(true);
+    this.jsonRpcConfiguration.setAuthenticationCredentialsFile(authTomlPath);
+
     return this;
   }
 
