@@ -102,7 +102,7 @@ public class EthSchedulerShutdownTest {
   public void shutdown_servicesShutsDown() throws InterruptedException {
     final MockEthTask task = new MockEthTask(1);
 
-    ethScheduler.scheduleServiceTask(task::executeTask);
+    ethScheduler.scheduleServiceTask(task);
     ethScheduler.stop();
 
     assertThat(servicesExecutor.isShutdown()).isTrue();

@@ -36,15 +36,16 @@ import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
@@ -53,7 +54,7 @@ public class RespondingEthPeer {
   private static final BlockDataGenerator gen = new BlockDataGenerator();
   private static final int DEFAULT_ESTIMATED_HEIGHT = 1000;
   private final EthPeer ethPeer;
-  private final Queue<OutgoingMessage> outgoingMessages;
+  private final BlockingQueue<OutgoingMessage> outgoingMessages;
   private final EthProtocolManager ethProtocolManager;
   private final MockPeerConnection peerConnection;
 
@@ -61,7 +62,7 @@ public class RespondingEthPeer {
       final EthProtocolManager ethProtocolManager,
       final MockPeerConnection peerConnection,
       final EthPeer ethPeer,
-      final Queue<OutgoingMessage> outgoingMessages) {
+      final BlockingQueue<OutgoingMessage> outgoingMessages) {
     this.ethProtocolManager = ethProtocolManager;
     this.peerConnection = peerConnection;
     this.ethPeer = ethPeer;
@@ -112,7 +113,7 @@ public class RespondingEthPeer {
     final EthPeers ethPeers = ethProtocolManager.ethContext().getEthPeers();
 
     final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.ETH63));
-    final Queue<OutgoingMessage> outgoingMessages = new ArrayDeque<>();
+    final BlockingQueue<OutgoingMessage> outgoingMessages = new ArrayBlockingQueue<>(1000);
     final MockPeerConnection peerConnection =
         new MockPeerConnection(
             caps, (cap, msg, conn) -> outgoingMessages.add(new OutgoingMessage(cap, msg)));
@@ -142,6 +143,27 @@ public class RespondingEthPeer {
     }
   }
 
+  public void respondWhileOtherThreadsWork(
+      final Responder responder, final RespondWhileCondition condition) {
+    int counter = 0;
+    while (condition.shouldRespond()) {
+      try {
+        final OutgoingMessage message = outgoingMessages.poll(1, TimeUnit.SECONDS);
+        if (message != null) {
+          respondToMessage(responder, message);
+          counter++;
+          if (counter > 10_000) {
+            // Limit applied to avoid tests hanging forever which is hard to track down.
+            throw new IllegalStateException(
+                "Responded 10,000 times and stop condition still not reached.");
+          }
+        }
+      } catch (final InterruptedException e) {
+        // Ignore and recheck condition.
+      }
+    }
+  }
+
   public void respondTimes(final Responder responder, final int maxCycles) {
     // Respond repeatedly, as each round may produce new outgoing messages
     int count = 0;
@@ -157,17 +179,20 @@ public class RespondingEthPeer {
   /** @return True if any requests were processed */
   public boolean respond(final Responder responder) {
     // Respond to queued messages
-    final List<OutgoingMessage> currentMessages = new ArrayList<>(outgoingMessages);
-    outgoingMessages.clear();
+    final List<OutgoingMessage> currentMessages = new ArrayList<>();
+    outgoingMessages.drainTo(currentMessages);
     for (final OutgoingMessage msg : currentMessages) {
-      final Optional<MessageData> maybeResponse =
-          responder.respond(msg.capability, msg.messageData);
-      maybeResponse.ifPresent(
-          (response) ->
-              ethProtocolManager.processMessage(
-                  msg.capability, new DefaultMessage(peerConnection, response)));
+      respondToMessage(responder, msg);
     }
     return currentMessages.size() > 0;
+  }
+
+  private void respondToMessage(final Responder responder, final OutgoingMessage msg) {
+    final Optional<MessageData> maybeResponse = responder.respond(msg.capability, msg.messageData);
+    maybeResponse.ifPresent(
+        (response) ->
+            ethProtocolManager.processMessage(
+                msg.capability, new DefaultMessage(peerConnection, response)));
   }
 
   public Optional<MessageData> peekNextOutgoingRequest() {
