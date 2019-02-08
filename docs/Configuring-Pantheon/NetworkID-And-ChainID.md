@@ -3,14 +3,26 @@ description: Pantheon network ID and chain ID implementation
 
 # Network ID and Chain ID
 
-Ethereum networks have a **network ID** and a **chain ID**. The network ID can be specified using the 
-[`--network-id`](../Reference/Pantheon-CLI-Syntax.md#network-id) option and the chain ID is specified 
+Ethereum networks have a network ID and a chain ID. The network ID defaults to the chain ID specified 
 in the genesis file.
 
-For most networks including MainNet and the public testnets, the network ID and the chain ID are the
-same and Pantheon network ID values are defined from the genesis chain ID.
+!!! example "Chain ID in Gensis File"
+    ```json
+    {
+      "config": {
+        "ethash": {
+        },
+         "chainID": 1981
+      },
+      ...
+    }
+    ```
 
-The network ID is automatically set by Pantheon to the chain ID when connecting to the Ethereum networks:
+For most networks including MainNet and the public testnets, the network ID and the chain ID are the
+same and are specified in the genesis file.
+
+The network ID and chain ID are automatically defined by Pantheon when connecting to networks specified 
+using the [`--network`](../Reference/Pantheon-CLI-Syntax.md#network) option:
 
 - **MainNet:** chain-id ==1==, network-id ==1==
 - **Rinkeby:** chain-id  ==4==, network-id ==4==
