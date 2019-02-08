@@ -40,9 +40,9 @@ public class MessageFactory {
   public Proposal createProposal(
       final ConsensusRoundIdentifier roundIdentifier, final Block block) {
 
-    final ProposalPayload payload = new ProposalPayload(roundIdentifier, block);
+    final ProposalPayload payload = new ProposalPayload(roundIdentifier, block.getHash());
 
-    return new Proposal(createSignedMessage(payload));
+    return new Proposal(createSignedMessage(payload), block);
   }
 
   public Prepare createPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
@@ -70,19 +70,20 @@ public class MessageFactory {
         new RoundChangePayload(
             roundIdentifier,
             preparedRoundArtifacts.map(PreparedRoundArtifacts::getPreparedCertificate));
-
-    return new RoundChange(createSignedMessage(payload));
+    return new RoundChange(
+        createSignedMessage(payload), preparedRoundArtifacts.map(PreparedRoundArtifacts::getBlock));
   }
 
   public NewRound createNewRound(
       final ConsensusRoundIdentifier roundIdentifier,
       final RoundChangeCertificate roundChangeCertificate,
-      final SignedData<ProposalPayload> proposalPayload) {
+      final SignedData<ProposalPayload> proposalPayload,
+      final Block block) {
 
     final NewRoundPayload payload =
         new NewRoundPayload(roundIdentifier, roundChangeCertificate, proposalPayload);
 
-    return new NewRound(createSignedMessage(payload));
+    return new NewRound(createSignedMessage(payload), block);
   }
 
   private <M extends Payload> SignedData<M> createSignedMessage(final M payload) {

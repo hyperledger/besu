@@ -42,19 +42,22 @@ public class MessageValidatorFactory {
 
   private SignedDataValidator createSignedDataValidator(
       final ConsensusRoundIdentifier roundIdentifier) {
-    final BlockValidator<IbftContext> blockValidator =
-        protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockValidator();
 
     return new SignedDataValidator(
         protocolContext.getConsensusState().getVoteTally().getValidators(),
         proposerSelector.selectProposerForRound(roundIdentifier),
-        roundIdentifier,
-        blockValidator,
-        protocolContext);
+        roundIdentifier);
   }
 
   public MessageValidator createMessageValidator(final ConsensusRoundIdentifier roundIdentifier) {
-    return new MessageValidator(createSignedDataValidator(roundIdentifier));
+    final BlockValidator<IbftContext> blockValidator =
+        protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockValidator();
+
+    return new MessageValidator(
+        createSignedDataValidator(roundIdentifier),
+        new ProposalBlockConsistencyValidator(),
+        blockValidator,
+        protocolContext);
   }
 
   public RoundChangeMessageValidator createRoundChangeMessageValidator(final long chainHeight) {
@@ -67,18 +70,26 @@ public class MessageValidatorFactory {
             validators,
             prepareMessageCountForQuorum(
                 IbftHelpers.calculateRequiredValidatorQuorum(validators.size())),
-            chainHeight));
+            chainHeight),
+        new ProposalBlockConsistencyValidator());
   }
 
   public NewRoundMessageValidator createNewRoundValidator(final long chainHeight) {
     final Collection<Address> validators =
         protocolContext.getConsensusState().getVoteTally().getValidators();
+
+    final BlockValidator<IbftContext> blockValidator =
+        protocolSchedule.getByBlockNumber(chainHeight).getBlockValidator();
+
     return new NewRoundMessageValidator(
         new NewRoundPayloadValidator(
             validators,
             proposerSelector,
             this::createSignedDataValidator,
             IbftHelpers.calculateRequiredValidatorQuorum(validators.size()),
-            chainHeight));
+            chainHeight),
+        new ProposalBlockConsistencyValidator(),
+        blockValidator,
+        protocolContext);
   }
 }

@@ -110,7 +110,8 @@ public class IbftRound {
     transmitter.multicastNewRound(
         getRoundIdentifier(),
         roundChangeArtifacts.getRoundChangeCertificate(),
-        proposal.getSignedPayload());
+        proposal.getSignedPayload(),
+        proposal.getBlock());
     updateStateWithProposedBlock(proposal);
   }
 
@@ -140,7 +141,7 @@ public class IbftRound {
       LOG.error("Illegally received a NewRound message when in Round 0.");
       return;
     }
-    actionReceivedProposal(new Proposal(msg.getProposalPayload()));
+    actionReceivedProposal(new Proposal(msg.getProposalPayload(), msg.getBlock()));
   }
 
   private void actionReceivedProposal(final Proposal msg) {

@@ -87,10 +87,12 @@ public class IbftMessageTransmitter {
   public void multicastNewRound(
       final ConsensusRoundIdentifier roundIdentifier,
       final RoundChangeCertificate roundChangeCertificate,
-      final SignedData<ProposalPayload> proposalPayload) {
+      final SignedData<ProposalPayload> proposalPayload,
+      final Block block) {
 
     final NewRound signedPayload =
-        messageFactory.createNewRound(roundIdentifier, roundChangeCertificate, proposalPayload);
+        messageFactory.createNewRound(
+            roundIdentifier, roundChangeCertificate, proposalPayload, block);
 
     final NewRoundMessageData message = NewRoundMessageData.create(signedPayload);
 

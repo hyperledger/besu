@@ -12,42 +12,30 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.validation;
 
-import static java.util.Optional.empty;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
-import tech.pegasys.pantheon.consensus.ibft.IbftContext;
-import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
+import tech.pegasys.pantheon.consensus.ibft.TestHelpers;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
-import tech.pegasys.pantheon.ethereum.BlockValidator;
-import tech.pegasys.pantheon.ethereum.BlockValidator.BlockProcessingOutputs;
-import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
-import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Util;
-import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -62,8 +50,6 @@ public class SignedDataValidatorTest {
 
   private final List<Address> validators = Lists.newArrayList();
 
-  @Mock private BlockValidator<IbftContext> blockValidator;
-  private final BlockHeader parentHeader = mock(BlockHeader.class);
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(2, 0);
   private SignedDataValidator validator;
 
@@ -74,31 +60,11 @@ public class SignedDataValidatorTest {
     validators.add(Util.publicKeyToAddress(proposerKey.getPublicKey()));
     validators.add(Util.publicKeyToAddress(validatorKey.getPublicKey()));
 
-    final ProtocolContext<IbftContext> protocolContext =
-        new ProtocolContext<>(
-            mock(MutableBlockchain.class), mock(WorldStateArchive.class), mock(IbftContext.class));
-
     validator =
         new SignedDataValidator(
-            validators,
-            Util.publicKeyToAddress(proposerKey.getPublicKey()),
-            roundIdentifier,
-            blockValidator,
-            protocolContext);
+            validators, Util.publicKeyToAddress(proposerKey.getPublicKey()), roundIdentifier);
 
     when(block.getHash()).thenReturn(Hash.fromHexStringLenient("1"));
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
-    insertRoundToBlockHeader(0);
-  }
-
-  private void insertRoundToBlockHeader(final int round) {
-    final IbftExtraData extraData =
-        new IbftExtraData(
-            BytesValue.wrap(new byte[32]), Collections.emptyList(), empty(), round, validators);
-    final BlockHeader header = mock(BlockHeader.class);
-    when(header.getExtraData()).thenReturn(extraData.encode());
-    when(block.getHeader()).thenReturn(header);
   }
 
   @Test
@@ -119,17 +85,8 @@ public class SignedDataValidatorTest {
 
   @Test
   public void receivingProposalMessageFromNonProposerFails() {
-    final Proposal proposalMsg =
-        validatorMessageFactory.createProposal(roundIdentifier, mock(Block.class));
-
-    assertThat(validator.validateProposal(proposalMsg.getSignedPayload())).isFalse();
-  }
-
-  @Test
-  public void receivingProposalMessageWithIllegalBlockFails() {
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any())).thenReturn(empty());
-    final Proposal proposalMsg =
-        proposerMessageFactory.createProposal(roundIdentifier, mock(Block.class));
+    final Block block = TestHelpers.createProposalBlock(emptyList(), roundIdentifier);
+    final Proposal proposalMsg = validatorMessageFactory.createProposal(roundIdentifier, block);
 
     assertThat(validator.validateProposal(proposalMsg.getSignedPayload())).isFalse();
   }
@@ -242,14 +199,5 @@ public class SignedDataValidatorTest {
     final Proposal secondProposalMsg =
         proposerMessageFactory.createProposal(roundIdentifier, block);
     assertThat(validator.validateProposal(secondProposalMsg.getSignedPayload())).isTrue();
-  }
-
-  @Test
-  public void blockRoundMisMatchWithMessageRoundFails() {
-    insertRoundToBlockHeader(roundIdentifier.getRoundNumber() + 1);
-
-    final Proposal proposalMsg = proposerMessageFactory.createProposal(roundIdentifier, block);
-
-    assertThat(validator.validateProposal(proposalMsg.getSignedPayload())).isFalse();
   }
 }

@@ -160,7 +160,8 @@ public class RoundChangeTest {
                     rc4.getSignedPayload())),
             localNodeMessageFactory
                 .createProposal(targetRound, locallyProposedBlock)
-                .getSignedPayload());
+                .getSignedPayload(),
+            locallyProposedBlock);
 
     peers.verifyMessagesReceived(expectedNewRound);
   }
@@ -214,7 +215,8 @@ public class RoundChangeTest {
                     rc4.getSignedPayload())),
             localNodeMessageFactory
                 .createProposal(targetRound, expectedBlockToPropose)
-                .getSignedPayload());
+                .getSignedPayload(),
+            expectedBlockToPropose);
 
     peers.verifyMessagesReceived(expectedNewRound);
   }
@@ -238,7 +240,8 @@ public class RoundChangeTest {
             new RoundChangeCertificate(roundChangeMessages),
             localNodeMessageFactory
                 .createProposal(futureRound, locallyProposedBlock)
-                .getSignedPayload());
+                .getSignedPayload(),
+            locallyProposedBlock);
 
     peers.verifyMessagesReceived(expectedNewRound);
   }
@@ -292,7 +295,8 @@ public class RoundChangeTest {
             new RoundChangeCertificate(Lists.newArrayList(roundChangeMessages)),
             localNodeMessageFactory
                 .createProposal(targetRound, expectedBlockToPropose)
-                .getSignedPayload());
+                .getSignedPayload(),
+            expectedBlockToPropose);
 
     peers.verifyMessagesReceived(expectedNewRound);
   }

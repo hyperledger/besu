@@ -72,7 +72,7 @@ public class FutureRoundTest {
     // required remotely received Prepares = quorum-2
     // required remote received commits = quorum-1
 
-    // Inject 1 too few Commit messages (but sufficient Prepare
+    // Inject 1 too few Commit messages (but sufficient Prepare)
     for (int i = 0; i < quorum - 3; i++) {
       futurePeers.getNonProposing(i).injectPrepare(futureRoundId, futureBlock.getHash());
     }
