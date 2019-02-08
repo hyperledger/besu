@@ -1,4 +1,4 @@
-# Creating a Private Network
+# Creating a Private Network using Ethash (Proof of Work) Consensus Protocol
 
 A private network provides a configurable network for testing. By configuring a low difficulty and enabling 
 mining, blocks are created quickly. 
