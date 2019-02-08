@@ -18,49 +18,109 @@ if (env.BRANCH_NAME == "master") {
     ])
 }
 
-try {
-    node {
-        checkout scm
-        docker.image('docker:18.06.0-ce-dind').withRun('--privileged') { d ->
-            docker.image('pegasyseng/pantheon-build:0.0.5-jdk11').inside("--link ${d.id}:docker") {
-                try {
-                    stage('Compile') {
-                        sh './gradlew --no-daemon --parallel clean compileJava'
-                    }
-                    stage('compile tests') {
-                        sh './gradlew --no-daemon --parallel compileTestJava'
-                    }
-                    stage('assemble') {
-                        sh './gradlew --no-daemon --parallel assemble'
-                    }
-                    stage('Build') {
-                        sh './gradlew --no-daemon --parallel build'
-                    }
-                    stage('Reference tests') {
-                        sh './gradlew --no-daemon --parallel referenceTest'
-                    }
-                    stage('Integration Tests') {
-                        sh './gradlew --no-daemon --parallel integrationTest'
-                    }
-                    stage('Acceptance Tests') {
-                        sh './gradlew --no-daemon --parallel acceptanceTest'
-                    }
-                    stage('Check Licenses') {
-                        sh './gradlew --no-daemon --parallel checkLicenses'
-                    }
-                    stage('Check javadoc') {
-                        sh './gradlew --no-daemon --parallel javadoc'
-                    }
-                    stage('Jacoco root report') {
-                        sh './gradlew --no-daemon jacocoRootReport'
-                    }
-                } finally {
-                    archiveArtifacts '**/build/reports/**'
-                    archiveArtifacts '**/build/test-results/**'
-                    archiveArtifacts 'build/reports/**'
-                    archiveArtifacts 'build/distributions/**'
+def docker_image = 'docker:18.06.0-ce-dind'
+def build_image = 'pegasyseng/pantheon-build:0.0.5-jdk11'
 
-                    junit '**/build/test-results/**/*.xml'
+try {
+    parallel UnitTests: {
+        def stage_name = "Unit tests node: "
+        node {
+            checkout scm
+            docker.image(docker_image).withRun('--privileged') { d ->
+                docker.image(build_image).inside("--link ${d.id}:docker") {
+                    try {
+                        stage(stage_name + 'Prepare') {
+                            sh './gradlew --no-daemon --parallel clean compileJava compileTestJava assemble'
+                        }
+                        stage(stage_name + 'Unit tests') {
+                            sh './gradlew --no-daemon --parallel build'
+                        }
+                    } finally {
+                        archiveArtifacts '**/build/reports/**'
+                        archiveArtifacts '**/build/test-results/**'
+                        archiveArtifacts 'build/reports/**'
+                        archiveArtifacts 'build/distributions/**'
+
+                        junit '**/build/test-results/**/*.xml'
+                    }
+                }
+            }
+        }
+    }, ReferenceTests: {
+        def stage_name = "Reference tests node: "
+        node {
+            checkout scm
+            docker.image(docker_image).withRun('--privileged') { d ->
+                docker.image(build_image).inside("--link ${d.id}:docker") {
+                    try {
+                        stage(stage_name + 'Prepare') {
+                            sh './gradlew --no-daemon --parallel clean compileJava compileTestJava assemble'
+                        }
+                        stage(stage_name + 'Reference tests') {
+                            sh './gradlew --no-daemon --parallel referenceTest'
+                        }
+                    } finally {
+                        archiveArtifacts '**/build/reports/**'
+                        archiveArtifacts '**/build/test-results/**'
+                        archiveArtifacts 'build/reports/**'
+                        archiveArtifacts 'build/distributions/**'
+
+                        junit '**/build/test-results/**/*.xml'
+                    }
+                }
+            }
+        }
+    }, IntegrationTests: {
+        def stage_name = "Integration tests node: "
+        node {
+            checkout scm
+            docker.image(docker_image).withRun('--privileged') { d ->
+                docker.image(build_image).inside("--link ${d.id}:docker") {
+                    try {
+                        stage(stage_name + 'Prepare') {
+                            sh './gradlew --no-daemon --parallel clean compileJava compileTestJava assemble'
+                        }
+                        stage(stage_name + 'Integration Tests') {
+                            sh './gradlew --no-daemon --parallel integrationTest'
+                        }
+                        stage(stage_name + 'Check Licenses') {
+                            sh './gradlew --no-daemon --parallel checkLicenses'
+                        }
+                        stage(stage_name + 'Check javadoc') {
+                            sh './gradlew --no-daemon --parallel javadoc'
+                        }
+                    } finally {
+                        archiveArtifacts '**/build/reports/**'
+                        archiveArtifacts '**/build/test-results/**'
+                        archiveArtifacts 'build/reports/**'
+                        archiveArtifacts 'build/distributions/**'
+
+                        junit '**/build/test-results/**/*.xml'
+                    }
+                }
+            }
+        }
+    }, AcceptanceTests: {
+        def stage_name = "Acceptance tests node: "
+        node {
+            checkout scm
+            docker.image(docker_image).withRun('--privileged') { d ->
+                docker.image(build_image).inside("--link ${d.id}:docker") {
+                    try {
+                        stage(stage_name + 'Prepare') {
+                            sh './gradlew --no-daemon --parallel clean compileJava compileTestJava assemble'
+                        }
+                        stage(stage_name + 'Acceptance Tests') {
+                            sh './gradlew --no-daemon --parallel acceptanceTest'
+                        }
+                    } finally {
+                        archiveArtifacts '**/build/reports/**'
+                        archiveArtifacts '**/build/test-results/**'
+                        archiveArtifacts 'build/reports/**'
+                        archiveArtifacts 'build/distributions/**'
+
+                        junit '**/build/test-results/**/*.xml'
+                    }
                 }
             }
         }
