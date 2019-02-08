@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.tasks.GetNodeDataFromPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.WaitForPeerTask;
 import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage.Updater;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.services.queue.BigQueue;
@@ -51,7 +52,6 @@ public class WorldStateDownloader {
 
   private final EthContext ethContext;
   private final BigQueue<NodeDataRequest> pendingRequests;
-  private final WorldStateStorage.Updater worldStateStorageUpdater;
   private final int hashCountPerRequest;
   private final int maxOutstandingRequests;
   private final AtomicInteger outstandingRequests = new AtomicInteger(0);
@@ -74,7 +74,6 @@ public class WorldStateDownloader {
     this.hashCountPerRequest = hashCountPerRequest;
     this.maxOutstandingRequests = maxOutstandingRequests;
     this.ethTasksTimer = ethTasksTimer;
-    this.worldStateStorageUpdater = worldStateStorage.updater();
   }
 
   public CompletableFuture<Void> run(final BlockHeader header) {
@@ -135,7 +134,6 @@ public class WorldStateDownloader {
                   (res, error) -> {
                     if (outstandingRequests.decrementAndGet() == 0 && pendingRequests.isEmpty()) {
                       // We're done
-                      worldStateStorageUpdater.commit();
                       markDone();
                     } else {
                       // Send out additional requests
@@ -182,6 +180,7 @@ public class WorldStateDownloader {
         .whenComplete(
             (data, err) -> {
               boolean requestFailed = err != null;
+              Updater storageUpdater = worldStateStorage.updater();
               for (NodeDataRequest request : requests) {
                 BytesValue matchingData = requestFailed ? null : data.get(request.getHash());
                 if (matchingData == null) {
@@ -189,7 +188,7 @@ public class WorldStateDownloader {
                 } else {
                   // Persist request data
                   request.setData(matchingData);
-                  request.persist(worldStateStorageUpdater);
+                  request.persist(storageUpdater);
 
                   // Queue child requests
                   request
@@ -198,6 +197,7 @@ public class WorldStateDownloader {
                       .forEach(pendingRequests::enqueue);
                 }
               }
+              storageUpdater.commit();
             });
   }
 
