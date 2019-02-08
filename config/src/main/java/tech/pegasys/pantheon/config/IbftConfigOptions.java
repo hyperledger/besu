@@ -25,6 +25,7 @@ public class IbftConfigOptions {
   // protection for on a typical 20 node validator network with multiple rounds
   private static final int DEFAULT_GOSSIPED_HISTORY_LIMIT = 1000;
   private static final int DEFAULT_MESSAGE_QUEUE_LIMIT = 1000;
+  private static final int DEFAULT_DUPLICATE_MESSAGE_LIMIT = 100;
 
   private final JsonObject ibftConfigRoot;
 
@@ -50,5 +51,9 @@ public class IbftConfigOptions {
 
   public int getMessageQueueLimit() {
     return ibftConfigRoot.getInteger("messagequeuelimit", DEFAULT_MESSAGE_QUEUE_LIMIT);
+  }
+
+  public int getDuplicateMessageLimit() {
+    return ibftConfigRoot.getInteger("duplicatemessagelimit", DEFAULT_DUPLICATE_MESSAGE_LIMIT);
   }
 }

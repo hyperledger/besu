@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftGossip;
+import tech.pegasys.pantheon.consensus.ibft.MessageTracker;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.BlockTimerExpiry;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftReceivedMessageEvent;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.NewChainHead;
@@ -39,11 +40,6 @@ import tech.pegasys.pantheon.consensus.ibft.messagewrappers.NewRound;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
-import tech.pegasys.pantheon.consensus.ibft.payload.CommitPayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.NewRoundPayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.PreparePayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
-import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangePayload;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -75,28 +71,24 @@ public class IbftControllerTest {
   @Mock private Proposal proposal;
   private Message proposalMessage;
   @Mock private ProposalMessageData proposalMessageData;
-  @Mock private ProposalPayload proposalPayload;
 
   @Mock private Prepare prepare;
   private Message prepareMessage;
   @Mock private PrepareMessageData prepareMessageData;
-  @Mock private PreparePayload preparePayload;
 
   @Mock private Commit commit;
   private Message commitMessage;
   @Mock private CommitMessageData commitMessageData;
-  @Mock private CommitPayload commitPayload;
 
   @Mock private NewRound newRound;
   private Message newRoundMessage;
   @Mock private NewRoundMessageData newRoundMessageData;
-  @Mock private NewRoundPayload newRoundPayload;
 
   @Mock private RoundChange roundChange;
   private Message roundChangeMessage;
   @Mock private RoundChangeMessageData roundChangeMessageData;
-  @Mock private RoundChangePayload roundChangePayload;
 
+  @Mock private MessageTracker messageTracker;
   private final Map<Long, List<Message>> futureMessages = new HashMap<>();
   private final Address validator = Address.fromHexString("0x0");
   private final Address unknownValidator = Address.fromHexString("0x2");
@@ -112,7 +104,12 @@ public class IbftControllerTest {
     when(ibftFinalState.getValidators()).thenReturn(ImmutableList.of(validator));
     ibftController =
         new IbftController(
-            blockChain, ibftFinalState, blockHeightManagerFactory, ibftGossip, futureMessages);
+            blockChain,
+            ibftFinalState,
+            blockHeightManagerFactory,
+            ibftGossip,
+            futureMessages,
+            messageTracker);
 
     when(chainHeadBlockHeader.getNumber()).thenReturn(1L);
     when(chainHeadBlockHeader.getHash()).thenReturn(Hash.ZERO);
@@ -122,6 +119,7 @@ public class IbftControllerTest {
     when(nextBlock.getNumber()).thenReturn(2L);
 
     when(ibftFinalState.isLocalNodeValidator()).thenReturn(true);
+    when(messageTracker.hasSeenMessage(any())).thenReturn(false);
   }
 
   @Test
@@ -430,6 +428,24 @@ public class IbftControllerTest {
     final Map<Long, List<Message>> expectedFutureMsgs =
         ImmutableMap.of(2L, ImmutableList.of(roundChangeMessage));
     verifyHasFutureMessages(new IbftReceivedMessageEvent(roundChangeMessage), expectedFutureMsgs);
+  }
+
+  @Test
+  public void duplicatedMessagesAreNotProcessed() {
+    when(messageTracker.hasSeenMessage(proposalMessageData)).thenReturn(true);
+    setupProposal(roundIdentifier, validator);
+    verifyNotHandledAndNoFutureMsgs(new IbftReceivedMessageEvent(proposalMessage));
+    verify(messageTracker, never()).addSeenMessage(proposalMessageData);
+  }
+
+  @Test
+  public void uniqueMessagesAreAddedAsSeen() {
+    when(messageTracker.hasSeenMessage(proposalMessageData)).thenReturn(false);
+    setupProposal(roundIdentifier, validator);
+    ibftController.start();
+    ibftController.handleMessageEvent(new IbftReceivedMessageEvent(proposalMessage));
+
+    verify(messageTracker).addSeenMessage(proposalMessageData);
   }
 
   private void verifyNotHandledAndNoFutureMsgs(final IbftReceivedMessageEvent msg) {

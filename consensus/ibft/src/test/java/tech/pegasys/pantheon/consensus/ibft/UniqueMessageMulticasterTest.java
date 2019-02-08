@@ -18,11 +18,11 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.consensus.ibft.network.ValidatorMulticaster;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
-import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -36,95 +36,43 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class UniqueMessageMulticasterTest {
 
+  private final MessageTracker messageTracker = mock(MessageTracker.class);
   private final ValidatorMulticaster multicaster = mock(ValidatorMulticaster.class);
-  private final UniqueMessageMulticaster messageTracker =
-      new UniqueMessageMulticaster(multicaster, 5);
+  private final UniqueMessageMulticaster uniqueMessageMulticaster =
+      new UniqueMessageMulticaster(multicaster, messageTracker);
   private final RawMessage messageSent = new RawMessage(5, BytesValue.wrap(new byte[5]));
 
   @Test
   public void previouslySentMessageIsNotSentAgain() {
-
-    messageTracker.send(messageSent);
+    when(messageTracker.hasSeenMessage(messageSent)).thenReturn(false);
+    uniqueMessageMulticaster.send(messageSent);
     verify(multicaster, times(1)).send(messageSent, emptyList());
     reset(multicaster);
 
-    messageTracker.send(messageSent);
-    messageTracker.send(messageSent, emptyList());
+    when(messageTracker.hasSeenMessage(messageSent)).thenReturn(true);
+    uniqueMessageMulticaster.send(messageSent);
+    uniqueMessageMulticaster.send(messageSent, emptyList());
     verifyZeroInteractions(multicaster);
   }
 
   @Test
   public void messagesSentWithABlackListAreNotRetransmitted() {
-    messageTracker.send(messageSent, emptyList());
+    when(messageTracker.hasSeenMessage(messageSent)).thenReturn(false);
+    uniqueMessageMulticaster.send(messageSent, emptyList());
     verify(multicaster, times(1)).send(messageSent, emptyList());
     reset(multicaster);
 
-    messageTracker.send(messageSent, emptyList());
-    messageTracker.send(messageSent);
+    when(messageTracker.hasSeenMessage(messageSent)).thenReturn(true);
+    uniqueMessageMulticaster.send(messageSent, emptyList());
+    uniqueMessageMulticaster.send(messageSent);
     verifyZeroInteractions(multicaster);
-  }
-
-  @Test
-  public void oldMessagesAreEvictedWhenFullAndCanThenBeRetransmitted() {
-    final List<MessageData> messagesSent = Lists.newArrayList();
-
-    for (int i = 0; i < 6; i++) {
-      final RawMessage msg = new RawMessage(i, BytesValue.wrap(new byte[i]));
-      messagesSent.add(msg);
-      messageTracker.send(msg);
-      verify(multicaster, times(1)).send(msg, emptyList());
-    }
-    reset(multicaster);
-
-    messageTracker.send(messagesSent.get(5));
-    verifyZeroInteractions(multicaster);
-
-    messageTracker.send(messagesSent.get(0));
-    verify(multicaster, times(1)).send(messagesSent.get(0), emptyList());
   }
 
   @Test
   public void passedInBlackListIsPassedToUnderlyingValidator() {
     final List<Address> blackList =
         Lists.newArrayList(AddressHelpers.ofValue(0), AddressHelpers.ofValue(1));
-    messageTracker.send(messageSent, blackList);
+    uniqueMessageMulticaster.send(messageSent, blackList);
     verify(multicaster, times(1)).send(messageSent, blackList);
-  }
-
-  @Test
-  public void anonymousMessageDataClassesContainingTheSameDataAreConsideredIdentical() {
-
-    final MessageData arbitraryMessage_1 =
-        createAnonymousMessageData(BytesValue.wrap(new byte[4]), 1);
-
-    final MessageData arbitraryMessage_2 =
-        createAnonymousMessageData(BytesValue.wrap(new byte[4]), 1);
-
-    messageTracker.send(arbitraryMessage_1);
-    verify(multicaster, times(1)).send(arbitraryMessage_1, emptyList());
-    reset(multicaster);
-
-    messageTracker.send(arbitraryMessage_2);
-    verifyZeroInteractions(multicaster);
-  }
-
-  private MessageData createAnonymousMessageData(final BytesValue content, final int code) {
-    return new MessageData() {
-
-      @Override
-      public int getSize() {
-        return content.size();
-      }
-
-      @Override
-      public int getCode() {
-        return code;
-      }
-
-      @Override
-      public BytesValue getData() {
-        return content;
-      }
-    };
   }
 }

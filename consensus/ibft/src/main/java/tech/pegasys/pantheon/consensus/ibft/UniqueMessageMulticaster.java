@@ -12,20 +12,18 @@
  */
 package tech.pegasys.pantheon.consensus.ibft;
 
-import static java.util.Collections.newSetFromMap;
-
 import tech.pegasys.pantheon.consensus.ibft.network.ValidatorMulticaster;
 import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public class UniqueMessageMulticaster implements ValidatorMulticaster {
   private final ValidatorMulticaster multicaster;
-  private final Set<Hash> seenMessages;
+  private final MessageTracker gossipedMessageTracker;
 
   /**
    * Constructor that attaches gossip logic to a set of multicaster
@@ -36,8 +34,14 @@ public class UniqueMessageMulticaster implements ValidatorMulticaster {
   public UniqueMessageMulticaster(
       final ValidatorMulticaster multicaster, final int gossipHistoryLimit) {
     this.multicaster = multicaster;
-    // Set that starts evicting members when it hits capacity
-    this.seenMessages = newSetFromMap(new SizeLimitedMap<>(gossipHistoryLimit));
+    this.gossipedMessageTracker = new MessageTracker(gossipHistoryLimit);
+  }
+
+  @VisibleForTesting
+  public UniqueMessageMulticaster(
+      final ValidatorMulticaster multicaster, final MessageTracker gossipedMessageTracker) {
+    this.multicaster = multicaster;
+    this.gossipedMessageTracker = gossipedMessageTracker;
   }
 
   @Override
@@ -47,11 +51,10 @@ public class UniqueMessageMulticaster implements ValidatorMulticaster {
 
   @Override
   public void send(final MessageData message, final Collection<Address> blackList) {
-    final Hash uniqueID = Hash.hash(message.getData());
-    if (seenMessages.contains(uniqueID)) {
+    if (gossipedMessageTracker.hasSeenMessage(message)) {
       return;
     }
     multicaster.send(message, blackList);
-    seenMessages.add(uniqueID);
+    gossipedMessageTracker.addSeenMessage(message);
   }
 }
