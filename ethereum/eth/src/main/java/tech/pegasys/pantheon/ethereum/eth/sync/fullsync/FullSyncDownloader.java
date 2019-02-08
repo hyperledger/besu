@@ -22,7 +22,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.CheckpointHeaderManager;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.ImportBlocksTask;
-import tech.pegasys.pantheon.ethereum.eth.sync.tasks.PipelinedImportChainSegmentTask;
+import tech.pegasys.pantheon.ethereum.eth.sync.tasks.ParallelImportChainSegmentTask;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
@@ -93,8 +93,8 @@ public class FullSyncDownloader<C> {
               ethTasksTimer);
       importedBlocks = importTask.run().thenApply(PeerTaskResult::getResult);
     } else {
-      final PipelinedImportChainSegmentTask<C, Block> importTask =
-          PipelinedImportChainSegmentTask.forCheckpoints(
+      final ParallelImportChainSegmentTask<C, Block> importTask =
+          ParallelImportChainSegmentTask.forCheckpoints(
               protocolSchedule,
               protocolContext,
               ethContext,

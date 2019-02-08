@@ -21,9 +21,11 @@ import static tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.eth.manager.DeterministicEthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUtil;
@@ -33,6 +35,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -62,7 +65,11 @@ public class FastSyncChainDownloaderTest {
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
     protocolContext = localBlockchainSetup.getProtocolContext();
     ethProtocolManager =
-        EthProtocolManagerTestUtil.create(localBlockchain, localBlockchainSetup.getWorldArchive());
+        EthProtocolManagerTestUtil.create(
+            localBlockchain,
+            localBlockchainSetup.getWorldArchive(),
+            DeterministicEthScheduler.TimeoutPolicy.NEVER,
+            new EthScheduler(1, 1, 1));
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
   }
@@ -81,7 +88,8 @@ public class FastSyncChainDownloaderTest {
   }
 
   @Test
-  public void shouldSyncToPivotBlockInMultipleSegments() {
+  public void shouldSyncToPivotBlockInMultipleSegments()
+      throws ExecutionException, InterruptedException {
     otherBlockchainSetup.importFirstBlocks(30);
 
     final RespondingEthPeer peer =
@@ -98,7 +106,7 @@ public class FastSyncChainDownloaderTest {
     final FastSyncChainDownloader<?> downloader = downloader(syncConfig, pivotBlockNumber);
     final CompletableFuture<Void> result = downloader.start();
 
-    peer.respondWhile(responder, () -> !result.isDone());
+    peer.respondWhileOtherThreadsWork(responder, () -> !result.isDone());
 
     assertThat(result).isCompleted();
     assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(pivotBlockNumber);
@@ -120,7 +128,7 @@ public class FastSyncChainDownloaderTest {
     final FastSyncChainDownloader<?> downloader = downloader(syncConfig, pivotBlockNumber);
     final CompletableFuture<Void> result = downloader.start();
 
-    peer.respondWhile(responder, () -> !result.isDone());
+    peer.respondWhileOtherThreadsWork(responder, () -> !result.isDone());
 
     assertThat(result).isCompleted();
     assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(pivotBlockNumber);
@@ -163,7 +171,7 @@ public class FastSyncChainDownloaderTest {
 
     ethProtocolManager.handleDisconnect(bestPeer.getPeerConnection(), TOO_MANY_PEERS, true);
 
-    secondBestPeer.respondWhile(shorterResponder, () -> !result.isDone());
+    secondBestPeer.respondWhileOtherThreadsWork(shorterResponder, () -> !result.isDone());
 
     assertThat(result).isCompleted();
     assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(pivotBlockNumber);

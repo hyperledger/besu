@@ -20,10 +20,10 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.sync.BlockHandler;
 import tech.pegasys.pantheon.ethereum.eth.sync.ValidationPolicy;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.CompleteBlocksTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
-import tech.pegasys.pantheon.ethereum.eth.sync.tasks.PipelinedImportChainSegmentTask.BlockHandler;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
@@ -124,5 +124,10 @@ public class FastSyncBlockHandler<C> implements BlockHandler<BlockWithReceipts> 
         protocolSchedule.getByBlockNumber(blockWithReceipt.getHeader().getNumber());
 
     return protocolSpec.getBlockImporter();
+  }
+
+  @Override
+  public long extractBlockNumber(final BlockWithReceipts blockWithReceipt) {
+    return blockWithReceipt.getHeader().getNumber();
   }
 }

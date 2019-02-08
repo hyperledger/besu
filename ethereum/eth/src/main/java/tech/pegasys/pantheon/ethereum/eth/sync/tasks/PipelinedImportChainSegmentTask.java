@@ -16,6 +16,7 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.AbstractEthTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.sync.BlockHandler;
 import tech.pegasys.pantheon.ethereum.eth.sync.ValidationPolicy;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
@@ -294,11 +295,5 @@ public class PipelinedImportChainSegmentTask<C, B> extends AbstractEthTask<List<
     } else {
       return validateAndImportBlocksTasks.getLast();
     }
-  }
-
-  public interface BlockHandler<B> {
-    CompletableFuture<List<B>> downloadBlocks(final List<BlockHeader> headers);
-
-    CompletableFuture<List<B>> validateAndImportBlocks(final List<B> blocks);
   }
 }

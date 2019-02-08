@@ -120,7 +120,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
   protected CompletableFuture<List<BlockHeader>> executePeerTask(
       final Optional<EthPeer> assignedPeer) {
     LOG.debug(
-        "Downloading headers from {} to {}.", startingBlockNumber, referenceHeader.getNumber() - 1);
+        "Downloading headers from {} to {}.", startingBlockNumber, referenceHeader.getNumber());
     final CompletableFuture<List<BlockHeader>> task =
         downloadHeaders(assignedPeer).thenCompose(this::processHeaders);
     return task.whenComplete(
@@ -129,8 +129,8 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
           if (lastFilledHeaderIndex == 0) {
             LOG.debug(
                 "Finished downloading headers from {} to {}.",
-                startingBlockNumber,
-                referenceHeader.getNumber() - 1);
+                headers[0].getNumber(),
+                headers[segmentLength - 1].getNumber());
             result.get().complete(Arrays.asList(headers));
           }
         });

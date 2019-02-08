@@ -275,7 +275,7 @@ public class SynchronizerConfiguration {
     private int downloaderHeaderRequestSize = 10;
     private int downloaderCheckpointTimeoutsPermitted = 5;
     private int downloaderChainSegmentTimeoutsPermitted = 5;
-    private int downloaderChainSegmentSize = 20;
+    private int downloaderChainSegmentSize = 200;
     private long trailingPeerBlocksBehindThreshold;
     private int maxTrailingPeers = Integer.MAX_VALUE;
     private int downloaderParallelism = 2;

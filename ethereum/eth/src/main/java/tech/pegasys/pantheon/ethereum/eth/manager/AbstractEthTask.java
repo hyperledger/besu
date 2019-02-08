@@ -20,6 +20,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -42,6 +43,20 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
   public final CompletableFuture<T> run() {
     if (result.compareAndSet(null, new CompletableFuture<>())) {
       executeTaskTimed();
+      result
+          .get()
+          .whenComplete(
+              (r, t) -> {
+                cleanup();
+              });
+    }
+    return result.get();
+  }
+
+  @Override
+  public final CompletableFuture<T> runAsync(final ExecutorService executor) {
+    if (result.compareAndSet(null, new CompletableFuture<>())) {
+      executor.submit(this::executeTaskTimed);
       result
           .get()
           .whenComplete(
