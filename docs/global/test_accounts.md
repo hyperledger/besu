@@ -1,7 +1,7 @@
 !!! warning
     Do not use the following accounts on mainnet or any public network except for testing.
     
-    The private keys are displayed here so the accounts are not secure.  
+    The private keys are displayed here which means the accounts are not secure.  
  
 !!! example "Account 1 (Miner Coinbase Account)"
     * Address: `0xfe3b557e8fb62b89f4916b721be55ceb828dbd73`

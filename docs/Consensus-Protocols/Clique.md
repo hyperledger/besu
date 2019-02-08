@@ -43,6 +43,28 @@ The properties specific to Clique are:
 * `epochlength` - Number of blocks after which to reset all votes.
 * `extraData` - Initial signers are specified after the 32 bytes reserved for vanity data. 
 
+### Extra Data 
+
+The `extraData` field consists of: 
+
+* 0x prefix
+* 32 bytes (64 hex characters) of vanity data 
+* Concatenated list of initial signer addresses. 20 bytes (40 hex characters) for each signer. At least one
+initial signer must be specified. 
+* 65 bytes (130 hex characters) for proposer signature. In the genesis block there is no initial proproser so the proproser signature is all zeros. 
+
+!!! example "One Initial Signer"
+    `extraData` field for a Clique network with one initial signer with an address of `dd37f65db31c107f773e82a4f85c693058fef7a9`
+    
+    `0x0000000000000000000000000000000000000000000000000000000000000000dd37f65db31c107f773e82a4f85c693058fef7a90000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000`
+
+!!! example "Two Initial Signers"
+    `extraData` field for a Clique network with two initial signers with addresses of `dd37f65db31c107f773e82a4f85c693058fef7a9` and `b9b81ee349c3807e46bc71aa2632203c5b462034`.
+    
+    `0x0000000000000000000000000000000000000000000000000000000000000000dd37f65db31c107f773e82a4f85c693058fef7a9b9b81ee349c3807e46bc71aa2632203c5b4620340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000`
+
+## Connecting to Clique Network 
+
 To connect to the Rinkeby testnet, start Pantheon with the [`--network=rinkeby`](../Reference/Pantheon-CLI-Syntax.md#network)
 command line option. To start a node on a Clique private network, use the 
 [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file) option to specify the custom genesis file. 
