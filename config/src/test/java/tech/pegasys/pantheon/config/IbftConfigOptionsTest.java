@@ -28,6 +28,7 @@ public class IbftConfigOptionsTest {
   private static final int EXPECTED_DEFAULT_REQUEST_TIMEOUT = 1;
   private static final int EXPECTED_DEFAULT_GOSSIPED_HISTORY_LIMIT = 1000;
   private static final int EXPECTED_DEFAULT_MESSAGE_QUEUE_LIMIT = 1000;
+  private static final int EXPECTED_DEFAULT_DUPLICATE_MESSAGE_LIMIT = 100;
 
   @Test
   public void shouldGetEpochLengthFromConfig() {
@@ -116,6 +117,25 @@ public class IbftConfigOptionsTest {
   public void shouldGetDefaultMessageQueueLimitFromDefaultConfig() {
     assertThat(IbftConfigOptions.DEFAULT.getMessageQueueLimit())
         .isEqualTo(EXPECTED_DEFAULT_MESSAGE_QUEUE_LIMIT);
+  }
+
+  @Test
+  public void shouldGetDuplicateMessageLimitFromConfig() {
+    final IbftConfigOptions config = fromConfigOptions(singletonMap("DuplicateMessageLimit", 50));
+    assertThat(config.getDuplicateMessageLimit()).isEqualTo(50);
+  }
+
+  @Test
+  public void shouldFallbackToDefaultDuplicateMessageLimit() {
+    final IbftConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.getDuplicateMessageLimit())
+        .isEqualTo(EXPECTED_DEFAULT_DUPLICATE_MESSAGE_LIMIT);
+  }
+
+  @Test
+  public void shouldGetDefaultDuplicateMessageLimitFromDefaultConfig() {
+    assertThat(IbftConfigOptions.DEFAULT.getDuplicateMessageLimit())
+        .isEqualTo(EXPECTED_DEFAULT_DUPLICATE_MESSAGE_LIMIT);
   }
 
   private IbftConfigOptions fromConfigOptions(final Map<String, Object> ibftConfigOptions) {
