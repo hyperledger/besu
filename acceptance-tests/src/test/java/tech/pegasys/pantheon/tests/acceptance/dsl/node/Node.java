@@ -13,11 +13,14 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
+import tech.pegasys.pantheon.tests.acceptance.dsl.httptransaction.HttpTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.waitcondition.WaitCondition;
 
 public interface Node {
   <T> T execute(Transaction<T> transaction);
+
+  <T> T executeHttpTransaction(HttpTransaction<T> transaction);
 
   void verify(final Condition expected);
 

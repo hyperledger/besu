@@ -1,0 +1,3 @@
+[Users.user]
+password = "$2a$10$l3GA7K8g6rJ/Yv.YFSygCuI9byngpEzxgWS9qEg5emYDZomQW7fGC"
+permissions = ["fakePermission"]

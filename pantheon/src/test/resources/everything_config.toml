@@ -41,6 +41,8 @@ rpc-http-port=5678
 rpc-http-api=["DEBUG","ETH"]
 rpc-http-apis=["DEBUG","ETH"]
 rpc-http-cors-origins=["none"]
+rpc-http-authentication-enabled=false
+rpc-http-authentication-credentials-file="none"
 
 # WebSockets API
 rpc-ws-enabled=false

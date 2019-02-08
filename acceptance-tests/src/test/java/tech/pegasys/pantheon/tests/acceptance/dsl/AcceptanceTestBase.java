@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Admin;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Clique;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eth;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Ibft;
+import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Login;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Net;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Perm;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Web3;
@@ -46,6 +47,7 @@ public class AcceptanceTestBase {
   protected final Ibft ibft;
   protected final Web3 web3;
   protected final Eth eth;
+  protected final Login login;
   protected final Net net;
   protected final Perm perm;
   protected final Admin admin;
@@ -63,6 +65,7 @@ public class AcceptanceTestBase {
 
     clique = new Clique(ethTransactions, cliqueTransactions);
     ibft = new Ibft(ibftTransactions);
+    login = new Login();
     net = new Net(new NetTransactions());
     cluster = new Cluster(net);
     transactions = new Transactions(accounts);

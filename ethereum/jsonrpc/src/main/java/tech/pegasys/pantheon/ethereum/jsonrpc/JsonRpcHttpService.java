@@ -17,6 +17,7 @@ import static com.google.common.collect.Streams.stream;
 import static java.util.stream.Collectors.toList;
 import static tech.pegasys.pantheon.util.NetworkUtility.urlForSocketAddress;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.authentication.TomlAuthOptions;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequestId;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -36,6 +37,10 @@ import tech.pegasys.pantheon.util.NetworkUtility;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.file.Path;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -59,6 +64,7 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
+import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
@@ -85,13 +91,14 @@ public class JsonRpcHttpService {
   private final Path dataDir;
   private final LabelledMetric<OperationTimer> requestTimer;
 
-  private final Optional<JWTAuth> jwtAuthProvider;
+  @VisibleForTesting public final Optional<JWTAuth> jwtAuthProvider;
   private final Optional<AuthProvider> credentialAuthProvider;
 
   private HttpServer httpServer;
 
   /**
-   * Construct a JsonRpcHttpService handler that has authentication enabled
+   * Construct a JsonRpcHttpService handler that has authentication provided from outside the
+   * constructor
    *
    * @param vertx The vertx process that will be running this service
    * @param dataDir The data directory where requests can be buffered
@@ -120,7 +127,7 @@ public class JsonRpcHttpService {
   }
 
   /**
-   * Construct a JsonRpcHttpService handler that doesn't have authentication enabled
+   * Construct a JsonRpcHttpService handler
    *
    * @param vertx The vertx process that will be running this service
    * @param dataDir The data directory where requests can be buffered
@@ -134,7 +141,55 @@ public class JsonRpcHttpService {
       final JsonRpcConfiguration config,
       final MetricsSystem metricsSystem,
       final Map<String, JsonRpcMethod> methods) {
-    this(vertx, dataDir, config, metricsSystem, methods, Optional.empty(), Optional.empty());
+    this(
+        vertx,
+        dataDir,
+        config,
+        metricsSystem,
+        methods,
+        makeJwtAuthOptions(config),
+        makeCredentialAuthProvider(vertx, config));
+  }
+
+  private static Optional<JWTAuthOptions> makeJwtAuthOptions(final JsonRpcConfiguration config) {
+    if (config.isAuthenticationEnabled() && config.getAuthenticationCredentialsFile() != null) {
+      final KeyPairGenerator keyGenerator;
+      try {
+        keyGenerator = KeyPairGenerator.getInstance("RSA");
+        keyGenerator.initialize(1024);
+      } catch (final NoSuchAlgorithmException e) {
+        throw new RuntimeException(e);
+      }
+
+      final KeyPair keypair = keyGenerator.generateKeyPair();
+
+      final JWTAuthOptions jwtAuthOptions =
+          new JWTAuthOptions()
+              .setPermissionsClaimKey("permissions")
+              .addPubSecKey(
+                  new PubSecKeyOptions()
+                      .setAlgorithm("RS256")
+                      .setPublicKey(
+                          Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded()))
+                      .setSecretKey(
+                          Base64.getEncoder().encodeToString(keypair.getPrivate().getEncoded())));
+
+      return Optional.of(jwtAuthOptions);
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  private static Optional<AuthProvider> makeCredentialAuthProvider(
+      final Vertx vertx, final JsonRpcConfiguration config) {
+    if (config.isAuthenticationEnabled() && config.getAuthenticationCredentialsFile() != null) {
+      return Optional.of(
+          new TomlAuthOptions()
+              .setTomlPath(config.getAuthenticationCredentialsFile())
+              .createProvider(vertx));
+    } else {
+      return Optional.empty();
+    }
   }
 
   private JsonRpcHttpService(
@@ -384,7 +439,8 @@ public class JsonRpcHttpService {
               } else {
                 final User user = r.result();
 
-                final JWTOptions options = new JWTOptions().setExpiresInMinutes(5);
+                final JWTOptions options =
+                    new JWTOptions().setExpiresInMinutes(5).setAlgorithm("RS256");
                 final String token = jwtAuthProvider.get().generateToken(user.principal(), options);
 
                 final JsonObject responseBody = new JsonObject().put("token", token);

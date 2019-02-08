@@ -64,6 +64,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -266,6 +267,22 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       converter = RpcApisConverter.class,
       description = "Comma separated APIs to enable on JSON-RPC channel. default: ${DEFAULT-VALUE}")
   private final Collection<RpcApi> rpcHttpApis = DEFAULT_JSON_RPC_APIS;
+
+  @Option(
+      names = {"--rpc-http-authentication-enabled"},
+      description =
+          "Set if the JSON-RPC service should require authentication (default: ${DEFAULT-VALUE})",
+      hidden = true)
+  private final Boolean isRpcHttpAuthenticationEnabled = false;
+
+  @Option(
+      names = {"--rpc-http-authentication-credentials-file"},
+      paramLabel = MANDATORY_HOST_FORMAT_HELP,
+      description =
+          "Storage file for rpc http authentication credentials (default: ${DEFAULT-VALUE})",
+      arity = "1",
+      hidden = true)
+  private String rpcHttpAuthenticationCredentialsFile = null;
 
   @Option(
       names = {"--rpc-ws-enabled"},
@@ -625,7 +642,16 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-apis",
             "--rpc-http-cors-origins",
             "--rpc-http-host",
-            "--rpc-http-port"));
+            "--rpc-http-port",
+            "--rpc-http-authentication-enabled",
+            "--rpc-http-authentication-credentials-file"));
+
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--rpc-http-authentication-enabled",
+        !isRpcHttpAuthenticationEnabled,
+        Collections.singletonList("--rpc-http-authentication-credentials-file"));
 
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
     jsonRpcConfiguration.setEnabled(isRpcHttpEnabled);
@@ -634,6 +660,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
     jsonRpcConfiguration.setRpcApis(rpcHttpApis);
     jsonRpcConfiguration.setHostsWhitelist(hostsWhitelist);
+    jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
+    jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile);
     return jsonRpcConfiguration;
   }
 
