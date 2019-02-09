@@ -49,7 +49,7 @@ public abstract class AbstractPeerTask<R> extends AbstractEthTask<PeerTaskResult
     try {
       executeTaskWithPeer(peer);
     } catch (final PeerNotConnected e) {
-      result.get().completeExceptionally(new PeerDisconnectedException());
+      result.get().completeExceptionally(new PeerDisconnectedException(peer));
     }
   }
 

@@ -550,7 +550,7 @@ public class FullSyncDownloaderTest {
     // Downloader should recover and sync to next best peer, but it may stall
     // for 10 seconds first (by design).
     await()
-        .atMost(20, TimeUnit.SECONDS)
+        .atMost(30, TimeUnit.SECONDS)
         .untilAsserted(
             () -> {
               secondBestPeer.respond(secondBestResponder);
