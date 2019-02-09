@@ -17,7 +17,11 @@ public class EthTaskException extends RuntimeException {
   private final FailureReason failureReason;
 
   EthTaskException(final FailureReason failureReason) {
-    super("Task failed: " + failureReason.name());
+    this("Task failed: " + failureReason.name(), failureReason);
+  }
+
+  EthTaskException(final String message, final FailureReason failureReason) {
+    super(message);
     this.failureReason = failureReason;
   }
 
