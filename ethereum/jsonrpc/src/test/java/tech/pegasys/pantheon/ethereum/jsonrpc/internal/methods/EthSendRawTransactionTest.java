@@ -65,6 +65,31 @@ public class EthSendRawTransactionTest {
   }
 
   @Test
+  public void requestHasNullObjectParameter() {
+    final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_sendRawTransaction", null);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void requestHasNullArrayParameter() {
+    final JsonRpcRequest request =
+        new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {null});
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
   public void invalidTransactionRlpDecoding() {
     final String rawTransaction = "0x00";
     when(parameter.required(any(Object[].class), anyInt(), any())).thenReturn(rawTransaction);

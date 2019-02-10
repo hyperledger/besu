@@ -56,6 +56,28 @@ public class AdminAddPeerTest {
   }
 
   @Test
+  public void requestHasNullObjectParameter() {
+    final JsonRpcRequest request = new JsonRpcRequest("2.0", "admin_addPeer", null);
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void requestHasNullArrayParameter() {
+    final JsonRpcRequest request = new JsonRpcRequest("2.0", "admin_addPeer", new String[] {null});
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
   public void requestHasInvalidEnode() {
     final JsonRpcRequest request =
         new JsonRpcRequest("2.0", "admin_addPeer", new String[] {"asdf"});

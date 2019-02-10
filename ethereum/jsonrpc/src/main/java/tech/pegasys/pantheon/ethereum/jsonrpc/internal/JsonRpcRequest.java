@@ -74,12 +74,28 @@ public class JsonRpcRequest {
 
   @JsonIgnore
   public int getParamLength() {
-    return params.length;
+    return hasParams() ? params.length : 0;
+  }
+
+  @JsonIgnore
+  public boolean hasParams() {
+
+    // Null Object: "params":null
+    if (params == null) {
+      return false;
+    }
+
+    // Null Array: "params":[null]
+    if (params.length == 0 || params[0] == null) {
+      return false;
+    }
+
+    return true;
   }
 
   @JsonSetter("id")
   protected void setId(final JsonRpcRequestId id) {
-    // If an id is explicitly set, its not a notification
+    // If an id is explicitly set, it is not a notification
     isNotification = false;
     this.id = id;
   }
