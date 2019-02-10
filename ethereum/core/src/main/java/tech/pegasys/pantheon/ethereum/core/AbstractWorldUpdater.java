@@ -49,7 +49,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   protected abstract A getForMutation(Address address);
 
-  private UpdateTrackingAccount<A> track(final UpdateTrackingAccount<A> account) {
+  protected UpdateTrackingAccount<A> track(final UpdateTrackingAccount<A> account) {
     final Address address = account.getAddress();
     updatedAccounts.put(address, account);
     deletedAccounts.remove(address);

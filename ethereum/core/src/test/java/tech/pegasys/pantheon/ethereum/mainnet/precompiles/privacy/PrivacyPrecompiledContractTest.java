@@ -15,16 +15,27 @@ package tech.pegasys.pantheon.ethereum.mainnet.precompiles.privacy;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.ProcessableBlockHeader;
+import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.mainnet.SpuriousDragonGasCalculator;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateTransaction;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionProcessor;
+import tech.pegasys.pantheon.ethereum.vm.BlockHashLookup;
+import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
+import java.util.Base64;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -35,15 +46,52 @@ public class PrivacyPrecompiledContractTest {
   private final BytesValue key = BytesValue.wrap(actual.getBytes(UTF_8));
   private PrivacyPrecompiledContract privacyPrecompiledContract;
   private PrivacyPrecompiledContract brokenPrivateTransactionHandler;
+  private MessageFrame messageFrame;
+  private final String DEFAULT_OUTPUT = "0x01";
 
-  Enclave mockEnclave() throws IOException {
+  private static final byte[] VALID_PRIVATE_TRANSACTION_RLP_BASE64 =
+      Base64.getEncoder()
+          .encode(
+              BytesValue.fromHexString(
+                      "0xf90113800182520894095e7baea6a6c7c4c2dfeb977efac326af552d87"
+                          + "a0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                          + "ffff801ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d"
+                          + "495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab94"
+                          + "9f53faa07bd2c804ac41316156744d784c4355486d425648586f5a7a7a4267"
+                          + "5062572f776a3561784470573958386c393153476f3df85aac41316156744d"
+                          + "784c4355486d425648586f5a7a7a42675062572f776a356178447057395838"
+                          + "6c393153476f3dac4b6f32625671442b6e4e6c4e594c35454537793349644f"
+                          + "6e766966746a69697a706a52742b4854754642733d8a726573747269637465"
+                          + "64")
+                  .extractArray());
+
+  private Enclave mockEnclave() throws IOException {
     Enclave mockEnclave = mock(Enclave.class);
-    ReceiveResponse response = new ReceiveResponse(actual.getBytes(UTF_8));
+    ReceiveResponse response = new ReceiveResponse(VALID_PRIVATE_TRANSACTION_RLP_BASE64);
     when(mockEnclave.receive(any(ReceiveRequest.class))).thenReturn(response);
     return mockEnclave;
   }
 
-  Enclave brokenMockEnclave() throws IOException {
+  private PrivateTransactionProcessor mockPrivateTxProcessor() {
+    PrivateTransactionProcessor mockPrivateTransactionProcessor =
+        mock(PrivateTransactionProcessor.class, withSettings().verboseLogging());
+    PrivateTransactionProcessor.Result result =
+        PrivateTransactionProcessor.Result.successful(
+            null, 0, BytesValue.fromHexString(DEFAULT_OUTPUT), null);
+    when(mockPrivateTransactionProcessor.processPrivateTransaction(
+            nullable(Blockchain.class),
+            nullable(WorldUpdater.class),
+            nullable(WorldUpdater.class),
+            nullable(ProcessableBlockHeader.class),
+            nullable(PrivateTransaction.class),
+            nullable(Address.class),
+            nullable(BlockHashLookup.class)))
+        .thenReturn(result);
+
+    return mockPrivateTransactionProcessor;
+  }
+
+  private Enclave brokenMockEnclave() throws IOException {
     Enclave mockEnclave = mock(Enclave.class);
     when(mockEnclave.receive(any(ReceiveRequest.class))).thenThrow(IOException.class);
     return mockEnclave;
@@ -53,23 +101,24 @@ public class PrivacyPrecompiledContractTest {
   public void setUp() throws IOException {
     privacyPrecompiledContract =
         new PrivacyPrecompiledContract(new SpuriousDragonGasCalculator(), publicKey, mockEnclave());
+    privacyPrecompiledContract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
     brokenPrivateTransactionHandler =
         new PrivacyPrecompiledContract(
             new SpuriousDragonGasCalculator(), publicKey, brokenMockEnclave());
+    messageFrame = mock(MessageFrame.class);
   }
 
   @Test
   public void testPrivacyPrecompiledContract() {
 
-    final BytesValue expected = privacyPrecompiledContract.compute(key);
+    final BytesValue actual = privacyPrecompiledContract.compute(key, messageFrame);
 
-    String exp = new String(expected.extractArray(), UTF_8);
-    assertThat(exp).isEqualTo(actual);
+    assertThat(actual).isEqualTo(BytesValue.fromHexString(DEFAULT_OUTPUT));
   }
 
   @Test
   public void enclaveIsDownWhileHandling() {
-    final BytesValue expected = brokenPrivateTransactionHandler.compute(key);
+    final BytesValue expected = brokenPrivateTransactionHandler.compute(key, messageFrame);
 
     assertThat(expected).isEqualTo(BytesValue.EMPTY);
   }

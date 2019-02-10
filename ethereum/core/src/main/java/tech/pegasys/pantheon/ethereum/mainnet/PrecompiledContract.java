@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.mainnet;
 
 import tech.pegasys.pantheon.ethereum.core.Gas;
+import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 /**
@@ -43,7 +44,8 @@ public interface PrecompiledContract {
    * Executes the pre-compiled contract.
    *
    * @param input the input for the pre-compiled contract.
+   * @param messageFrame context for this message
    * @return the output of the pre-compiled contract.
    */
-  BytesValue compute(BytesValue input);
+  BytesValue compute(BytesValue input, MessageFrame messageFrame);
 }
