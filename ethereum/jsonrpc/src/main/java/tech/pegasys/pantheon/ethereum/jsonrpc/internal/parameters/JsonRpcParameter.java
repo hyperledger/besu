@@ -57,7 +57,7 @@ public class JsonRpcParameter {
   @SuppressWarnings("unchecked")
   public <T> Optional<T> optional(
       final Object[] params, final int index, final Class<T> paramClass) {
-    if (params == null || params.length <= index) {
+    if (params == null || params.length <= index || params[index] == null) {
       return Optional.empty();
     }
 
