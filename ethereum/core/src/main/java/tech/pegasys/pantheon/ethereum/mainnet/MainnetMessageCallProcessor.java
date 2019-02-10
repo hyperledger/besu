@@ -117,7 +117,7 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
     } else {
       frame.decrementRemainingGas(gasRequirement);
-      final BytesValue output = contract.compute(frame.getInputData());
+      final BytesValue output = contract.compute(frame.getInputData(), frame);
       if (output != null) {
         frame.setOutputData(output);
         LOG.trace(

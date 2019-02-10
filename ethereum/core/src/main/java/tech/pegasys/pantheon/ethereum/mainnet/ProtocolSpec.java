@@ -51,6 +51,8 @@ public class ProtocolSpec<C> {
 
   private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
 
+  private final PrecompileContractRegistry precompileContractRegistry;
+
   /**
    * Creates a new protocol specification instance.
    *
@@ -70,6 +72,7 @@ public class ProtocolSpec<C> {
    * @param blockReward the blockReward to use.
    * @param transactionReceiptType the type of transaction receipt to use, one of
    * @param miningBeneficiaryCalculator determines to whom mining proceeds are paid
+   * @param precompileContractRegistry all the pre-compiled contracts added
    */
   public ProtocolSpec(
       final String name,
@@ -87,7 +90,8 @@ public class ProtocolSpec<C> {
       final DifficultyCalculator<C> difficultyCalculator,
       final Wei blockReward,
       final TransactionReceiptType transactionReceiptType,
-      final MiningBeneficiaryCalculator miningBeneficiaryCalculator) {
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
+      final PrecompileContractRegistry precompileContractRegistry) {
     this.name = name;
     this.evm = evm;
     this.transactionValidator = transactionValidator;
@@ -103,6 +107,7 @@ public class ProtocolSpec<C> {
     this.difficultyCalculator = difficultyCalculator;
     this.blockReward = blockReward;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
+    this.precompileContractRegistry = precompileContractRegistry;
   }
 
   /**
@@ -233,5 +238,9 @@ public class ProtocolSpec<C> {
 
   public MiningBeneficiaryCalculator getMiningBeneficiaryCalculator() {
     return miningBeneficiaryCalculator;
+  }
+
+  public PrecompileContractRegistry getPrecompileContractRegistry() {
+    return precompileContractRegistry;
   }
 }

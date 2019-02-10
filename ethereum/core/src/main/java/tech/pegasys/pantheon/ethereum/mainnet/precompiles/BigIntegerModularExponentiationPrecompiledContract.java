@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.mainnet.precompiles;
 import tech.pegasys.pantheon.ethereum.core.Gas;
 import tech.pegasys.pantheon.ethereum.mainnet.AbstractPrecompiledContract;
 import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
+import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 import tech.pegasys.pantheon.util.bytes.MutableBytesValue;
@@ -79,7 +80,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
   }
 
   @Override
-  public BytesValue compute(final BytesValue input) {
+  public BytesValue compute(final BytesValue input, final MessageFrame messageFrame) {
     final BigInteger baseLength = baseLength(input);
     final BigInteger exponentLength = exponentLength(input);
     final BigInteger modulusLength = modulusLength(input);
