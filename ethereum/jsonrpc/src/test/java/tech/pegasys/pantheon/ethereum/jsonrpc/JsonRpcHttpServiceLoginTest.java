@@ -123,7 +123,7 @@ public class JsonRpcHttpServiceLoginTest {
                     JSON_RPC_APIS,
                     mock(PrivateTransactionHandler.class)));
     service = createJsonRpcHttpService();
-    jwtAuth = service.jwtAuthProvider.get();
+    jwtAuth = service.authenticationService.get().getJwtAuthProvider();
     service.start().join();
 
     // Build an OkHttp client.
@@ -319,7 +319,7 @@ public class JsonRpcHttpServiceLoginTest {
       final JsonObject respBody = new JsonObject(bodyString);
       final String token = respBody.getString("token");
       assertThat(token).isNotNull();
-      final JWT jwt = makeJwt(service.jwtAuthOptions.get());
+      final JWT jwt = makeJwt(service.authenticationService.get().jwtAuthOptions);
 
       final JsonObject jwtPayload = jwt.decode(token);
       final String jwtPayloadString = jwtPayload.encode();
