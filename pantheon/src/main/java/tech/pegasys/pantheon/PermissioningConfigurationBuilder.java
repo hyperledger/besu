@@ -12,18 +12,13 @@
  */
 package tech.pegasys.pantheon;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import tech.pegasys.pantheon.cli.custom.EnodeToURIPropertyConverter;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.google.common.io.Resources;
 import net.consensys.cava.toml.TomlArray;
 import net.consensys.cava.toml.TomlParseResult;
 
@@ -50,12 +45,9 @@ public class PermissioningConfigurationBuilder {
       throws Exception {
 
     TomlParseResult permToml;
-    boolean foundValidOptions = false;
 
     try {
-      permToml =
-          TomlConfigFileParser.loadConfiguration(
-              permissioningConfigTomlAsString(permissioningConfigFile(configFilePath)));
+      permToml = TomlConfigFileParser.loadConfigurationFromFile(configFilePath);
     } catch (Exception e) {
       throw new Exception(
           "Unable to read permissions TOML config file : " + configFilePath + " " + e.getMessage());
@@ -70,7 +62,9 @@ public class PermissioningConfigurationBuilder {
     if (permissionedAccountEnabled) {
       if (accountWhitelistTomlArray != null) {
         List<String> accountsWhitelistToml =
-            accountWhitelistTomlArray.toList().stream()
+            accountWhitelistTomlArray
+                .toList()
+                .parallelStream()
                 .map(Object::toString)
                 .collect(Collectors.toList());
         permissioningConfiguration.setAccountWhitelist(accountsWhitelistToml);
@@ -79,10 +73,13 @@ public class PermissioningConfigurationBuilder {
             ACCOUNTS_WHITELIST + " config option missing in TOML config file " + configFilePath);
       }
     }
+
     if (permissionedNodeEnabled) {
       if (nodeWhitelistTomlArray != null) {
         List<URI> nodesWhitelistToml =
-            nodeWhitelistTomlArray.toList().stream()
+            nodeWhitelistTomlArray
+                .toList()
+                .parallelStream()
                 .map(Object::toString)
                 .map(EnodeToURIPropertyConverter::convertToURI)
                 .collect(Collectors.toList());
@@ -93,20 +90,5 @@ public class PermissioningConfigurationBuilder {
       }
     }
     return permissioningConfiguration;
-  }
-
-  private static String permissioningConfigTomlAsString(final File file) throws Exception {
-    return Resources.toString(file.toURI().toURL(), UTF_8);
-  }
-
-  private static File permissioningConfigFile(final String filename) throws FileNotFoundException {
-
-    final File permissioningConfigFile = new File(filename);
-    if (permissioningConfigFile.exists()) {
-      return permissioningConfigFile;
-    } else {
-      throw new FileNotFoundException(
-          "File does not exist: permissioning config path: " + filename);
-    }
   }
 }

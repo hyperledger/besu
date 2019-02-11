@@ -40,6 +40,8 @@ public class PermissioningConfigurationBuilderTest {
       "permissioning_config_absent_whitelists.toml";
   static final String PERMISSIONING_CONFIG_UNRECOGNIZED_KEY =
       "permissioning_config_unrecognized_key.toml";
+  static final String PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY_MULTILINE =
+      "permissioning_config_node_whitelist_only_multiline.toml";
 
   private final String VALID_NODE_ID =
       "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
@@ -206,7 +208,19 @@ public class PermissioningConfigurationBuilderTest {
           "file-does-not-exist", true, true);
       fail("expected exception: file does not exist");
     } catch (Exception e) {
-      assertThat(e.getMessage().contains("File does not exist")).isTrue();
+      assertThat(e.getMessage().contains("Configuration file does not exist")).isTrue();
     }
+  }
+
+  @Test
+  public void permissioningConfigFromMultilineFileMustParseCorrectly() throws Exception {
+    final URL configFile =
+        Resources.getResource(PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY_MULTILINE);
+    final PermissioningConfiguration permissioningConfiguration =
+        PermissioningConfigurationBuilder.permissioningConfigurationFromToml(
+            configFile.getPath(), true, false);
+
+    assertThat(permissioningConfiguration.isNodeWhitelistEnabled()).isTrue();
+    assertThat(permissioningConfiguration.getNodeWhitelist().size()).isEqualTo(5);
   }
 }

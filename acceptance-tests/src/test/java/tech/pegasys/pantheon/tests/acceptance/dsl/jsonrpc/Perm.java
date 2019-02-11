@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
 
+import tech.pegasys.pantheon.ethereum.permissioning.WhitelistPersistor;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.AddAccountsToWhitelistSuccessfully;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.AddNodeSuccess;
@@ -19,9 +20,12 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.GetExpectedAcco
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.GetNodesWhitelistPopulated;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.RemoveAccountsFromWhitelistSuccessfully;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.RemoveNodeSuccess;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.WhiteListContainsKeyAndValue;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transactions;
 
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class Perm {
@@ -56,5 +60,12 @@ public class Perm {
 
   public Condition getNodesWhitelist(final int expectedNodeNum) {
     return new GetNodesWhitelistPopulated(transactions.getNodesWhiteList(), expectedNodeNum);
+  }
+
+  public Condition expectPermissioningWhitelistFileKeyValue(
+      final WhitelistPersistor.WHITELIST_TYPE whitelistType,
+      final Collection<String> val,
+      final Path configFilePath) {
+    return new WhiteListContainsKeyAndValue(whitelistType, val, configFilePath);
   }
 }

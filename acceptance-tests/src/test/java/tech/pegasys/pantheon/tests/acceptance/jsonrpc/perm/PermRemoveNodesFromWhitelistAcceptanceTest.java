@@ -16,6 +16,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 
 import java.net.URI;
+import java.util.ArrayList;
 
 import com.google.common.collect.Lists;
 import org.junit.Before;
@@ -31,13 +32,12 @@ public class PermRemoveNodesFromWhitelistAcceptanceTest extends AcceptanceTestBa
       "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.2:4567";
   private final String enode3 =
       "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.3:4567";
+  private final ArrayList<URI> nodesWhitelist =
+      Lists.newArrayList(URI.create(enode1), URI.create(enode2), URI.create(enode3));
 
   @Before
   public void setUp() throws Exception {
-    node =
-        pantheon.createNodeWithNodesWhitelist(
-            "node1",
-            Lists.newArrayList(URI.create(enode1), URI.create(enode2), URI.create(enode3)));
+    node = pantheon.createNodeWithNodesWhitelist("node1", nodesWhitelist);
     cluster.start(node);
   }
 

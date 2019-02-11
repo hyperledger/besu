@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessRe
 import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 
 import java.util.List;
@@ -51,7 +52,7 @@ public class PermRemoveNodesFromWhitelist implements JsonRpcMethod {
     try {
       if (p2pNetwork.getNodeWhitelistController().isPresent()) {
         try {
-          List<DefaultPeer> peers =
+          List<Peer> peers =
               enodeListParam
                   .getStringList()
                   .parallelStream()
@@ -72,6 +73,10 @@ public class PermRemoveNodesFromWhitelist implements JsonRpcMethod {
             case ERROR_DUPLICATED_ENTRY:
               return new JsonRpcErrorResponse(
                   req.getId(), JsonRpcError.NODE_WHITELIST_DUPLICATED_ENTRY);
+            case ERROR_WHITELIST_PERSIST_FAIL:
+              return new JsonRpcErrorResponse(req.getId(), JsonRpcError.WHITELIST_PERSIST_FAILURE);
+            case ERROR_WHITELIST_FILE_SYNC:
+              return new JsonRpcErrorResponse(req.getId(), JsonRpcError.WHITELIST_FILE_SYNC);
             default:
               throw new Exception();
           }

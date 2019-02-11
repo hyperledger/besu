@@ -332,7 +332,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     verifyZeroInteractions(mockRunnerBuilder);
 
-    assertThat(commandErrorOutput.toString()).contains("File does not exist");
+    assertThat(commandErrorOutput.toString()).contains("Configuration file does not exist");
     assertThat(commandOutput.toString()).isEmpty();
   }
 

@@ -20,14 +20,10 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 
 import java.util.List;
-import java.util.OptionalInt;
 import java.util.stream.Collectors;
-
-import org.bouncycastle.util.encoders.Hex;
 
 public class PermGetNodesWhitelist implements JsonRpcMethod {
 
@@ -49,7 +45,7 @@ public class PermGetNodesWhitelist implements JsonRpcMethod {
         List<Peer> nodesWhitelist =
             p2pNetwork.getNodeWhitelistController().get().getNodesWhitelist();
         List<String> enodeList =
-            nodesWhitelist.parallelStream().map(this::buildEnodeURI).collect(Collectors.toList());
+            nodesWhitelist.parallelStream().map(Peer::getEnodeURI).collect(Collectors.toList());
 
         return new JsonRpcSuccessResponse(req.getId(), enodeList);
       } else {
@@ -57,21 +53,6 @@ public class PermGetNodesWhitelist implements JsonRpcMethod {
       }
     } catch (P2pDisabledException e) {
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
-    }
-  }
-
-  private String buildEnodeURI(final Peer s) {
-    String url = Hex.toHexString(s.getId().extractArray());
-    Endpoint endpoint = s.getEndpoint();
-    String nodeIp = endpoint.getHost();
-    OptionalInt tcpPort = endpoint.getTcpPort();
-    int udpPort = endpoint.getUdpPort();
-
-    if (tcpPort.isPresent() && (tcpPort.getAsInt() != udpPort)) {
-      return String.format(
-          "enode://%s@%s:%d?discport=%d", url, nodeIp, tcpPort.getAsInt(), udpPort);
-    } else {
-      return String.format("enode://%s@%s:%d", url, nodeIp, udpPort);
     }
   }
 }
