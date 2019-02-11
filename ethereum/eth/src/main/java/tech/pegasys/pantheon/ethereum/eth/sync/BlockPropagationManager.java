@@ -151,7 +151,7 @@ public class BlockPropagationManager<C> {
       final Block block = newBlockMessage.block(protocolSchedule);
       final UInt256 totalDifficulty = newBlockMessage.totalDifficulty(protocolSchedule);
 
-      message.getPeer().chainState().update(block.getHeader(), totalDifficulty);
+      message.getPeer().chainState().updateForAnnouncedBlock(block.getHeader(), totalDifficulty);
 
       // Return early if we don't care about this block
       final long localChainHeight = protocolContext.getBlockchain().getChainHeadBlockNumber();
