@@ -13,12 +13,14 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.authentication;
 
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -60,12 +62,16 @@ public class AuthenticationService {
    */
   public static Optional<AuthenticationService> create(
       final Vertx vertx, final JsonRpcConfiguration config) {
-    final Optional<JWTAuthOptions> jwtAuthOptions = makeJwtAuthOptions(config);
+    final Optional<JWTAuthOptions> jwtAuthOptions =
+        makeJwtAuthOptions(
+            config.isAuthenticationEnabled(), config.getAuthenticationCredentialsFile());
     if (!jwtAuthOptions.isPresent()) {
       return Optional.empty();
     }
 
-    final Optional<AuthProvider> credentialAuthProvider = makeCredentialAuthProvider(vertx, config);
+    final Optional<AuthProvider> credentialAuthProvider =
+        makeCredentialAuthProvider(
+            vertx, config.isAuthenticationEnabled(), config.getAuthenticationCredentialsFile());
     if (!credentialAuthProvider.isPresent()) {
       return Optional.empty();
     }
@@ -77,8 +83,42 @@ public class AuthenticationService {
             credentialAuthProvider.get()));
   }
 
-  private static Optional<JWTAuthOptions> makeJwtAuthOptions(final JsonRpcConfiguration config) {
-    if (config.isAuthenticationEnabled() && config.getAuthenticationCredentialsFile() != null) {
+  /**
+   * Creates a ready for use set of authentication providers if authentication is configured to be
+   * on
+   *
+   * @param vertx The vertx instance that will be providing requests that this set of authentication
+   *     providers will be handling
+   * @param config The {{@link JsonRpcConfiguration}} that describes this rpc setup
+   * @return Optionally an authentication service. If empty then authentication isn't to be enabled
+   *     on this service
+   */
+  public static Optional<AuthenticationService> create(
+      final Vertx vertx, final WebSocketConfiguration config) {
+    final Optional<JWTAuthOptions> jwtAuthOptions =
+        makeJwtAuthOptions(
+            config.isAuthenticationEnabled(), config.getAuthenticationCredentialsFile());
+    if (!jwtAuthOptions.isPresent()) {
+      return Optional.empty();
+    }
+
+    final Optional<AuthProvider> credentialAuthProvider =
+        makeCredentialAuthProvider(
+            vertx, config.isAuthenticationEnabled(), config.getAuthenticationCredentialsFile());
+    if (!credentialAuthProvider.isPresent()) {
+      return Optional.empty();
+    }
+
+    return Optional.of(
+        new AuthenticationService(
+            jwtAuthOptions.map(o -> JWTAuth.create(vertx, o)).get(),
+            jwtAuthOptions.get(),
+            credentialAuthProvider.get()));
+  }
+
+  private static Optional<JWTAuthOptions> makeJwtAuthOptions(
+      final boolean authenticationEnabled, @Nullable final String authenticationCredentialsFile) {
+    if (authenticationEnabled && authenticationCredentialsFile != null) {
       final KeyPairGenerator keyGenerator;
       try {
         keyGenerator = KeyPairGenerator.getInstance("RSA");
@@ -107,12 +147,12 @@ public class AuthenticationService {
   }
 
   private static Optional<AuthProvider> makeCredentialAuthProvider(
-      final Vertx vertx, final JsonRpcConfiguration config) {
-    if (config.isAuthenticationEnabled() && config.getAuthenticationCredentialsFile() != null) {
+      final Vertx vertx,
+      final boolean authenticationEnabled,
+      @Nullable final String authenticationCredentialsFile) {
+    if (authenticationEnabled && authenticationCredentialsFile != null) {
       return Optional.of(
-          new TomlAuthOptions()
-              .setTomlPath(config.getAuthenticationCredentialsFile())
-              .createProvider(vertx));
+          new TomlAuthOptions().setTomlPath(authenticationCredentialsFile).createProvider(vertx));
     } else {
       return Optional.empty();
     }

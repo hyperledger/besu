@@ -35,6 +35,8 @@ public class WebSocketConfiguration {
   private String host;
   private Collection<RpcApi> rpcApis;
   private long refreshDelay;
+  private boolean authenticationEnabled = false;
+  private String authenticationCredentialsFile;
 
   public static WebSocketConfiguration createDefault() {
     final WebSocketConfiguration config = new WebSocketConfiguration();
@@ -92,6 +94,8 @@ public class WebSocketConfiguration {
         .add("port", port)
         .add("host", host)
         .add("rpcApis", rpcApis)
+        .add("authenticationEnabled", authenticationEnabled)
+        .add("authenticationCredentialsFile", authenticationCredentialsFile)
         .toString();
   }
 
@@ -121,5 +125,21 @@ public class WebSocketConfiguration {
 
   public long getRefreshDelay() {
     return refreshDelay;
+  }
+
+  public boolean isAuthenticationEnabled() {
+    return authenticationEnabled;
+  }
+
+  public void setAuthenticationEnabled(final boolean authenticationEnabled) {
+    this.authenticationEnabled = authenticationEnabled;
+  }
+
+  public void setAuthenticationCredentialsFile(final String authenticationCredentialsFile) {
+    this.authenticationCredentialsFile = authenticationCredentialsFile;
+  }
+
+  public String getAuthenticationCredentialsFile() {
+    return authenticationCredentialsFile;
   }
 }

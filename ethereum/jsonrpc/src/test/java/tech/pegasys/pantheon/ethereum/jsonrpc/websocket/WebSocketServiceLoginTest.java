@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -20,19 +20,17 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.methods.WebSocketMethodsFactory;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
 
-import java.util.Arrays;
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpServerOptions;
-import io.vertx.core.http.WebSocketBase;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
 import org.junit.Before;
@@ -40,8 +38,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(VertxUnitRunner.class)
-public class WebSocketServiceTest {
-
+public class WebSocketServiceLoginTest {
   private static final int VERTX_AWAIT_TIMEOUT_MILLIS = 10000;
 
   private Vertx vertx;
@@ -51,11 +48,18 @@ public class WebSocketServiceTest {
   private HttpClient httpClient;
 
   @Before
-  public void before() {
+  public void before() throws URISyntaxException {
     vertx = Vertx.vertx();
+
+    final String authTomlPath =
+        Paths.get(ClassLoader.getSystemResource("JsonRpcHttpService/auth.toml").toURI())
+            .toAbsolutePath()
+            .toString();
 
     websocketConfiguration = WebSocketConfiguration.createDefault();
     websocketConfiguration.setPort(0);
+    websocketConfiguration.setAuthenticationEnabled(true);
+    websocketConfiguration.setAuthenticationCredentialsFile(authTomlPath);
 
     final Map<String, JsonRpcMethod> websocketMethods =
         new WebSocketMethodsFactory(new SubscriptionManager(), new HashMap<>()).methods();
@@ -82,97 +86,66 @@ public class WebSocketServiceTest {
   }
 
   @Test
-  public void websocketServiceExecutesHandlerOnMessage(final TestContext context) {
-    final Async async = context.async();
-
-    final String request = "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"]}";
-    final String expectedResponse = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1\"}";
-
-    httpClient.websocket(
-        "/",
-        webSocket -> {
-          webSocket.write(Buffer.buffer(request));
-
-          webSocket.handler(
-              buffer -> {
-                context.assertEquals(expectedResponse, buffer.toString());
-                async.complete();
-              });
-        });
-
-    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
-  }
-
-  @Test
-  public void websocketServiceRemoveSubscriptionOnConnectionClose(final TestContext context) {
-    final Async async = context.async();
-
-    vertx
-        .eventBus()
-        .consumer(SubscriptionManager.EVENTBUS_REMOVE_SUBSCRIPTIONS_ADDRESS)
-        .handler(
-            m -> {
-              context.assertNotNull(m.body());
-              async.complete();
-            })
-        .completionHandler(v -> httpClient.websocket("/", WebSocketBase::close));
-
-    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
-  }
-
-  @Test
-  public void websocketServiceCloseConnectionOnUnrecoverableError(final TestContext context) {
-    final Async async = context.async();
-
-    final byte[] bigMessage = new byte[HttpServerOptions.DEFAULT_MAX_WEBSOCKET_MESSAGE_SIZE + 1];
-    Arrays.fill(bigMessage, (byte) 1);
-
-    httpClient.websocket(
-        "/",
-        webSocket -> {
-          webSocket.write(Buffer.buffer(bigMessage));
-          webSocket.closeHandler(v -> async.complete());
-        });
-
-    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
-  }
-
-  @SuppressWarnings("deprecation") // No alternative available in vertx 3.
-  @Test
-  public void websocketServiceMustReturnErrorOnHttpRequest(final TestContext context) {
-    final Async async = context.async();
-
-    httpClient
-        .post(
-            websocketConfiguration.getPort(),
-            websocketConfiguration.getHost(),
-            "/",
-            response ->
-                response.bodyHandler(
-                    b -> {
-                      context
-                          .assertEquals(400, response.statusCode())
-                          .assertEquals(
-                              "Websocket endpoint can't handle HTTP requests", b.toString());
-                      async.complete();
-                    }))
-        .end();
-
-    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
-  }
-
-  @Test
-  public void handleLoginRequestWithAuthDisabled() {
+  public void loginWithBadCredentials() {
     final HttpClientRequest request =
         httpClient.post(
             websocketConfiguration.getPort(),
             websocketConfiguration.getHost(),
             "/login",
             response -> {
-              assertThat(response.statusCode()).isEqualTo(400);
-              assertThat(response.statusMessage()).isEqualTo("Authentication not enabled");
+              assertThat(response.statusCode()).isEqualTo(401);
+              assertThat(response.statusMessage()).isEqualTo("Unauthorized");
             });
     request.putHeader("Content-Type", "application/json; charset=utf-8");
     request.end("{\"username\":\"user\",\"password\":\"pass\"}");
+  }
+
+  @Test
+  public void loginWithGoodCredentials() {
+    final HttpClientRequest request =
+        httpClient.post(
+            websocketConfiguration.getPort(),
+            websocketConfiguration.getHost(),
+            "/login",
+            response -> {
+              assertThat(response.statusCode()).isEqualTo(200);
+              assertThat(response.statusMessage()).isEqualTo("OK");
+              assertThat(response.getHeader("Content-Type")).isNotNull();
+              assertThat(response.getHeader("Content-Type")).isEqualTo("application/json");
+              response.bodyHandler(
+                  buffer -> {
+                    final String body = buffer.toString();
+                    assertThat(body).isNotBlank();
+
+                    final JsonObject respBody = new JsonObject(body);
+                    final String token = respBody.getString("token");
+                    assertThat(token).isNotNull();
+
+                    websocketService
+                        .authenticationService
+                        .get()
+                        .getJwtAuthProvider()
+                        .authenticate(
+                            new JsonObject().put("jwt", token),
+                            (r) -> {
+                              assertThat(r.succeeded()).isTrue();
+                              final User user = r.result();
+                              user.isAuthorized(
+                                  "noauths",
+                                  (authed) -> {
+                                    assertThat(authed.succeeded()).isTrue();
+                                    assertThat(authed.result()).isFalse();
+                                  });
+                              user.isAuthorized(
+                                  "fakePermission",
+                                  (authed) -> {
+                                    assertThat(authed.succeeded()).isTrue();
+                                    assertThat(authed.result()).isTrue();
+                                  });
+                            });
+                  });
+            });
+    request.putHeader("Content-Type", "application/json; charset=utf-8");
+    request.end("{\"username\":\"user\",\"password\":\"pegasys\"}");
   }
 }

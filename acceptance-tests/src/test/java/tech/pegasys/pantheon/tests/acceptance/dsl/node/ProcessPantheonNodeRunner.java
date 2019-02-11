@@ -75,10 +75,10 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
     params.add(String.join(",", node.bootnodes().toString()));
 
     if (node.jsonRpcEnabled()) {
-      params.add("--rpc-enabled");
+      params.add("--rpc-http-enabled");
       params.add("--rpc-listen");
       params.add(node.jsonRpcListenAddress().get());
-      params.add("--rpc-api");
+      params.add("--rpc-http-api");
       params.add(apiList(node.jsonRpcConfiguration().getRpcApis()));
       if (node.jsonRpcConfiguration().isAuthenticationEnabled()) {
         params.add("--rpc-http-authentication-enabled");
@@ -90,11 +90,18 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
     }
 
     if (node.wsRpcEnabled()) {
-      params.add("--ws-enabled");
+      params.add("--rpc-ws-enabled");
       params.add("--ws-listen");
       params.add(node.wsRpcListenAddress().get());
-      params.add("--ws-api");
+      params.add("--rpc-ws-api");
       params.add(apiList(node.webSocketConfiguration().getRpcApis()));
+      if (node.webSocketConfiguration().isAuthenticationEnabled()) {
+        params.add("--rpc-ws-authentication-enabled");
+      }
+      if (node.webSocketConfiguration().getAuthenticationCredentialsFile() != null) {
+        params.add("--rpc-ws-authentication-credentials-file");
+        params.add(node.webSocketConfiguration().getAuthenticationCredentialsFile());
+      }
     }
 
     if (node.ethNetworkConfig().isPresent()) {

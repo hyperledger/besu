@@ -126,6 +126,16 @@ public class PantheonNodeFactory {
             .build());
   }
 
+  public PantheonNode createArchiveNodeWithAuthenticationOverWebSocket(final String name)
+      throws IOException, URISyntaxException {
+    return create(
+        new PantheonFactoryConfigurationBuilder()
+            .setName(name)
+            .webSocketEnabled()
+            .webSocketAuthenticationEnabled()
+            .build());
+  }
+
   public PantheonNode createNodeWithP2pDisabled(final String name) throws IOException {
     return create(
         new PantheonFactoryConfigurationBuilder()
