@@ -51,6 +51,8 @@ rpc-ws-apis=["DEBUG","ETH"]
 rpc-ws-host="9.10.11.12"
 rpc-ws-port=9101
 rpc-ws-refresh-delay=500
+rpc-ws-authentication-enabled=false
+rpc-ws-authentication-credentials-file="none"
 
 # Prometheus Metrics Endpoint
 metrics-enabled=false

@@ -89,6 +89,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
   private JsonRequestFactories jsonRequestFactories;
   private HttpRequestFactory httpRequestFactory;
   private Optional<EthNetworkConfig> ethNetworkConfig = Optional.empty();
+  private boolean useWsForJsonRpc = false;
 
   public PantheonNode(
       final String name,
@@ -158,6 +159,18 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     }
   }
 
+  private Optional<String> wsRpcBaseHttpUrl() {
+    if (isWebSocketsRpcEnabled()) {
+      return Optional.of(
+          "http://"
+              + webSocketConfiguration.getHost()
+              + ":"
+              + portsProperties.getProperty("ws-rpc"));
+    } else {
+      return Optional.empty();
+    }
+  }
+
   @Override
   public Optional<Integer> jsonRpcWebSocketPort() {
     if (isWebSocketsRpcEnabled()) {
@@ -174,10 +187,19 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
 
   private JsonRequestFactories jsonRequestFactories() {
     if (jsonRequestFactories == null) {
+      final Optional<String> baseUrl;
+      final String port;
+      if (useWsForJsonRpc) {
+        baseUrl = wsRpcBaseUrl();
+        port = "8546";
+      } else {
+        baseUrl = jsonRpcBaseUrl();
+        port = "8545";
+      }
       final Web3jService web3jService =
-          jsonRpcBaseUrl()
+          baseUrl
               .map(url -> new HttpService(url))
-              .orElse(new HttpService("http://" + LOCALHOST + ":8545"));
+              .orElse(new HttpService("http://" + LOCALHOST + ":" + port));
 
       jsonRequestFactories =
           new JsonRequestFactories(
@@ -193,8 +215,17 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
 
   private HttpRequestFactory httpRequestFactory() {
     if (httpRequestFactory == null) {
+      final Optional<String> baseUrl;
+      final String port;
+      if (useWsForJsonRpc) {
+        baseUrl = wsRpcBaseHttpUrl();
+        port = "8546";
+      } else {
+        baseUrl = jsonRpcBaseUrl();
+        port = "8545";
+      }
       httpRequestFactory =
-          new HttpRequestFactory(jsonRpcBaseUrl().orElse("http://" + LOCALHOST + ":8545"));
+          new HttpRequestFactory(baseUrl.orElse("http://" + LOCALHOST + ":" + port));
     }
     return httpRequestFactory;
   }
@@ -216,6 +247,12 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     if (jsonRequestFactories != null) {
       jsonRequestFactories.shutdown();
     }
+
+    if (httpRequestFactory != null) {
+      httpRequestFactory = null;
+    }
+
+    useWsForJsonRpc = true;
   }
 
   private void checkIfWebSocketEndpointIsAvailable(final String url) {
