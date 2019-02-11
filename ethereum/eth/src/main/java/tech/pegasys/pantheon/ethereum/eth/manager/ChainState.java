@@ -73,14 +73,18 @@ public class ChainState {
     }
   }
 
-  public void update(final BlockHeader blockHeader, final UInt256 totalDifficulty) {
+  public void updateForAnnouncedBlock(
+      final BlockHeader blockHeader, final UInt256 totalDifficulty) {
     synchronized (this) {
-      if (totalDifficulty.compareTo(bestBlock.totalDifficulty) >= 0) {
-        bestBlock.totalDifficulty = totalDifficulty;
-        bestBlock.hash = blockHeader.getHash();
-        bestBlock.number = blockHeader.getNumber();
+      // Blocks are announced before they're imported so their chain head must be the parent
+      final UInt256 parentTotalDifficulty = totalDifficulty.minus(blockHeader.getDifficulty());
+      final long parentBlockNumber = blockHeader.getNumber() - 1;
+      if (parentTotalDifficulty.compareTo(bestBlock.totalDifficulty) >= 0) {
+        bestBlock.totalDifficulty = parentTotalDifficulty;
+        bestBlock.hash = blockHeader.getParentHash();
+        bestBlock.number = parentBlockNumber;
       }
-      updateHeightEstimate(blockHeader.getNumber());
+      updateHeightEstimate(parentBlockNumber);
     }
   }
 

@@ -151,10 +151,10 @@ public class ChainStateTest {
     assertThat(chainState.getEstimatedHeight()).isEqualTo(0L);
     assertThat(chainState.getBestBlock().getNumber()).isEqualTo(0L);
 
-    chainState.update(bestBlockHeader, INITIAL_TOTAL_DIFFICULTY);
-    assertThat(chainState.getEstimatedHeight()).isEqualTo(blockNumber);
-    assertThat(chainState.getBestBlock().getNumber()).isEqualTo(blockNumber);
-    assertThat(chainState.getBestBlock().getHash()).isEqualTo(bestBlockHeader.getHash());
+    chainState.updateForAnnouncedBlock(bestBlockHeader, INITIAL_TOTAL_DIFFICULTY);
+    assertThat(chainState.getEstimatedHeight()).isEqualTo(blockNumber - 1);
+    assertThat(chainState.getBestBlock().getNumber()).isEqualTo(blockNumber - 1);
+    assertThat(chainState.getBestBlock().getHash()).isEqualTo(bestBlockHeader.getParentHash());
     assertThat(chainState.getBestBlock().getTotalDifficulty()).isEqualTo(INITIAL_TOTAL_DIFFICULTY);
   }
 
@@ -171,11 +171,11 @@ public class ChainStateTest {
     final UInt256 betterTd = INITIAL_TOTAL_DIFFICULTY.plus(100L);
     final BlockHeader betterBlock =
         new BlockHeaderTestFixture().number(betterBlockNumber).buildHeader();
-    chainState.update(betterBlock, betterTd);
+    chainState.updateForAnnouncedBlock(betterBlock, betterTd);
 
-    assertThat(chainState.getEstimatedHeight()).isEqualTo(betterBlockNumber);
-    assertThat(chainState.getBestBlock().getNumber()).isEqualTo(betterBlockNumber);
-    assertThat(chainState.getBestBlock().getHash()).isEqualTo(betterBlock.getHash());
+    assertThat(chainState.getEstimatedHeight()).isEqualTo(betterBlockNumber - 1);
+    assertThat(chainState.getBestBlock().getNumber()).isEqualTo(betterBlockNumber - 1);
+    assertThat(chainState.getBestBlock().getHash()).isEqualTo(betterBlock.getParentHash());
     assertThat(chainState.getBestBlock().getTotalDifficulty()).isEqualTo(betterTd);
   }
 
@@ -192,9 +192,9 @@ public class ChainStateTest {
     final UInt256 otherTd = INITIAL_TOTAL_DIFFICULTY.minus(100L);
     final BlockHeader otherBlock =
         new BlockHeaderTestFixture().number(otherBlockNumber).buildHeader();
-    chainState.update(otherBlock, otherTd);
+    chainState.updateForAnnouncedBlock(otherBlock, otherTd);
 
-    assertThat(chainState.getEstimatedHeight()).isEqualTo(otherBlockNumber);
+    assertThat(chainState.getEstimatedHeight()).isEqualTo(otherBlockNumber - 1);
     assertThat(chainState.getBestBlock().getNumber()).isEqualTo(0L);
     assertThat(chainState.getBestBlock().getHash()).isEqualTo(bestBlockHeader.getHash());
     assertThat(chainState.getBestBlock().getTotalDifficulty()).isEqualTo(INITIAL_TOTAL_DIFFICULTY);
@@ -209,17 +209,17 @@ public class ChainStateTest {
     assertThat(chainState.getEstimatedHeight()).isEqualTo(0L);
     assertThat(chainState.getBestBlock().getNumber()).isEqualTo(0L);
 
-    chainState.update(bestBlockHeader, INITIAL_TOTAL_DIFFICULTY);
+    chainState.updateForAnnouncedBlock(bestBlockHeader, INITIAL_TOTAL_DIFFICULTY);
 
     final long otherBlockNumber = blockNumber - 2;
     final UInt256 otherTd = INITIAL_TOTAL_DIFFICULTY.minus(100L);
     final BlockHeader otherBlock =
         new BlockHeaderTestFixture().number(otherBlockNumber).buildHeader();
-    chainState.update(otherBlock, otherTd);
+    chainState.updateForAnnouncedBlock(otherBlock, otherTd);
 
-    assertThat(chainState.getEstimatedHeight()).isEqualTo(blockNumber);
-    assertThat(chainState.getBestBlock().getNumber()).isEqualTo(blockNumber);
-    assertThat(chainState.getBestBlock().getHash()).isEqualTo(bestBlockHeader.getHash());
+    assertThat(chainState.getEstimatedHeight()).isEqualTo(blockNumber - 1);
+    assertThat(chainState.getBestBlock().getNumber()).isEqualTo(blockNumber - 1);
+    assertThat(chainState.getBestBlock().getHash()).isEqualTo(bestBlockHeader.getParentHash());
     assertThat(chainState.getBestBlock().getTotalDifficulty()).isEqualTo(INITIAL_TOTAL_DIFFICULTY);
   }
 
@@ -265,8 +265,8 @@ public class ChainStateTest {
     chainState.statusReceived(bestBlockHeader.getHash(), INITIAL_TOTAL_DIFFICULTY);
     final EstimatedHeightListener listener = mock(EstimatedHeightListener.class);
     chainState.addEstimatedHeightListener(listener);
-    chainState.update(bestBlockHeader, INITIAL_TOTAL_DIFFICULTY);
-    verify(listener).onEstimatedHeightChanged(blockNumber);
+    chainState.updateForAnnouncedBlock(bestBlockHeader, INITIAL_TOTAL_DIFFICULTY);
+    verify(listener).onEstimatedHeightChanged(blockNumber - 1);
   }
 
   @Test

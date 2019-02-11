@@ -523,6 +523,8 @@ public class BlockPropagationManagerTest {
 
     // Setup peer and messages
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final UInt256 parentTotalDifficulty =
+        fullBlockchain.getTotalDifficultyByHash(nextBlock.getHeader().getParentHash()).get();
     final UInt256 totalDifficulty =
         fullBlockchain.getTotalDifficultyByHash(nextBlock.getHash()).get();
     final NewBlockMessage nextAnnouncement = NewBlockMessage.create(nextBlock, totalDifficulty);
@@ -533,11 +535,11 @@ public class BlockPropagationManagerTest {
     peer.respondWhile(responder, peer::hasOutstandingRequests);
 
     assertThat(peer.getEthPeer().chainState().getBestBlock().getHash())
-        .isEqualTo(nextBlock.getHash());
+        .isEqualTo(nextBlock.getHeader().getParentHash());
     assertThat(peer.getEthPeer().chainState().getEstimatedHeight())
-        .isEqualTo(nextBlock.getHeader().getNumber());
+        .isEqualTo(nextBlock.getHeader().getNumber() - 1);
     assertThat(peer.getEthPeer().chainState().getBestBlock().getTotalDifficulty())
-        .isEqualTo(totalDifficulty);
+        .isEqualTo(parentTotalDifficulty);
   }
 
   @SuppressWarnings("unchecked")
