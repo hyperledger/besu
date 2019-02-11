@@ -139,6 +139,22 @@ public class IbftCommitSealsValidationRuleTest {
     assertThat(subExecution(4, 4, true)).isEqualTo(false);
   }
 
+  @Test
+  public void headerContainsDuplicateSealsFailsValidation() {
+    final KeyPair committerKeyPair = KeyPair.generate();
+    final List<Address> validators =
+        singletonList(Util.publicKeyToAddress(committerKeyPair.getPublicKey()));
+    final BlockHeader header =
+        createProposedBlockHeader(
+            validators, Lists.newArrayList(committerKeyPair, committerKeyPair), false);
+
+    final VoteTally voteTally = new VoteTally(validators);
+    final ProtocolContext<IbftContext> context =
+        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+
+    assertThat(commitSealsValidationRule.validate(header, null, context)).isFalse();
+  }
+
   private boolean subExecution(
       final int validatorCount,
       final int committerCount,
@@ -155,7 +171,7 @@ public class IbftCommitSealsValidationRuleTest {
 
     Collections.sort(validators);
     final VoteTally voteTally = new VoteTally(validators);
-    BlockHeader header =
+    final BlockHeader header =
         createProposedBlockHeader(
             validators,
             committerKeys.subList(0, committerCount),

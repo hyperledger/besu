@@ -23,7 +23,9 @@ import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -50,8 +52,14 @@ public class IbftCommitSealsValidationRule
 
     final List<Address> committers =
         IbftBlockHashing.recoverCommitterAddresses(header, ibftExtraData);
+    List<Address> committersWithoutDuplicates = new ArrayList<>(new HashSet<>(committers));
 
-    return validateCommitters(committers, validatorProvider.getValidators());
+    if (committers.size() != committersWithoutDuplicates.size()) {
+      LOGGER.trace("Duplicated seals found in header.");
+      return false;
+    }
+
+    return validateCommitters(committersWithoutDuplicates, validatorProvider.getValidators());
   }
 
   private boolean validateCommitters(
