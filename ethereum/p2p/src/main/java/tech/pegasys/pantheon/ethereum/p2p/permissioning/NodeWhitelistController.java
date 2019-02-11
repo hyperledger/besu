@@ -15,21 +15,35 @@ package tech.pegasys.pantheon.ethereum.p2p.permissioning;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.permissioning.WhitelistFileSyncException;
 import tech.pegasys.pantheon.ethereum.permissioning.WhitelistOperationResult;
+import tech.pegasys.pantheon.ethereum.permissioning.WhitelistPersistor;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
 public class NodeWhitelistController {
 
-  private final List<Peer> nodesWhitelist = new ArrayList<>();
+  private List<Peer> nodesWhitelist = new ArrayList<>();
+  private final WhitelistPersistor whitelistPersistor;
 
-  public NodeWhitelistController(final PermissioningConfiguration configuration) {
+  public NodeWhitelistController(final PermissioningConfiguration permissioningConfiguration) {
+    this(
+        permissioningConfiguration,
+        new WhitelistPersistor(permissioningConfiguration.getConfigurationFilePath()));
+  }
+
+  public NodeWhitelistController(
+      final PermissioningConfiguration configuration, final WhitelistPersistor whitelistPersistor) {
+    this.whitelistPersistor = whitelistPersistor;
     if (configuration.isNodeWhitelistEnabled() && configuration.getNodeWhitelist() != null) {
       for (URI uri : configuration.getNodeWhitelist()) {
         nodesWhitelist.add(DefaultPeer.fromURI(uri));
@@ -45,45 +59,71 @@ public class NodeWhitelistController {
     return nodesWhitelist.remove(node);
   }
 
-  public NodesWhitelistResult addNodes(final List<DefaultPeer> peers) {
+  public NodesWhitelistResult addNodes(final List<Peer> peers) {
     final NodesWhitelistResult inputValidationResult = validInput(peers);
     if (inputValidationResult.result() != WhitelistOperationResult.SUCCESS) {
       return inputValidationResult;
     }
 
-    for (DefaultPeer peer : peers) {
+    for (Peer peer : peers) {
       if (nodesWhitelist.contains(peer)) {
         return new NodesWhitelistResult(
             WhitelistOperationResult.ERROR_EXISTING_ENTRY,
             String.format("Specified peer: %s already exists in whitelist.", peer.getId()));
       }
     }
+
+    final List<Peer> oldWhitelist = new ArrayList<>(this.nodesWhitelist);
+
     peers.forEach(this::addNode);
+    try {
+      verifyConfigurationFileState(peerToEnodeURI(oldWhitelist));
+      updateConfigurationFile(peerToEnodeURI(nodesWhitelist));
+      verifyConfigurationFileState(peerToEnodeURI(nodesWhitelist));
+    } catch (IOException e) {
+      revertState(oldWhitelist);
+      return new NodesWhitelistResult(WhitelistOperationResult.ERROR_WHITELIST_PERSIST_FAIL);
+    } catch (WhitelistFileSyncException e) {
+      return new NodesWhitelistResult(WhitelistOperationResult.ERROR_WHITELIST_FILE_SYNC);
+    }
     return new NodesWhitelistResult(WhitelistOperationResult.SUCCESS);
   }
 
-  private boolean peerListHasDuplicates(final List<DefaultPeer> peers) {
+  private boolean peerListHasDuplicates(final List<Peer> peers) {
     return !peers.stream().allMatch(new HashSet<>()::add);
   }
 
-  public NodesWhitelistResult removeNodes(final List<DefaultPeer> peers) {
+  public NodesWhitelistResult removeNodes(final List<Peer> peers) {
     final NodesWhitelistResult inputValidationResult = validInput(peers);
     if (inputValidationResult.result() != WhitelistOperationResult.SUCCESS) {
       return inputValidationResult;
     }
 
-    for (DefaultPeer peer : peers) {
+    for (Peer peer : peers) {
       if (!(nodesWhitelist.contains(peer))) {
         return new NodesWhitelistResult(
             WhitelistOperationResult.ERROR_ABSENT_ENTRY,
             String.format("Specified peer: %s does not exist in whitelist.", peer.getId()));
       }
     }
+
+    final List<Peer> oldWhitelist = new ArrayList<>(this.nodesWhitelist);
+
     peers.forEach(this::removeNode);
+    try {
+      verifyConfigurationFileState(peerToEnodeURI(oldWhitelist));
+      updateConfigurationFile(peerToEnodeURI(nodesWhitelist));
+      verifyConfigurationFileState(peerToEnodeURI(nodesWhitelist));
+    } catch (IOException e) {
+      revertState(oldWhitelist);
+      return new NodesWhitelistResult(WhitelistOperationResult.ERROR_WHITELIST_PERSIST_FAIL);
+    } catch (WhitelistFileSyncException e) {
+      return new NodesWhitelistResult(WhitelistOperationResult.ERROR_WHITELIST_FILE_SYNC);
+    }
     return new NodesWhitelistResult(WhitelistOperationResult.SUCCESS);
   }
 
-  private NodesWhitelistResult validInput(final List<DefaultPeer> peers) {
+  private NodesWhitelistResult validInput(final List<Peer> peers) {
     if (peers == null || peers.isEmpty()) {
       return new NodesWhitelistResult(
           WhitelistOperationResult.ERROR_EMPTY_ENTRY, String.format("Null/empty peers list"));
@@ -96,6 +136,24 @@ public class NodeWhitelistController {
     }
 
     return new NodesWhitelistResult(WhitelistOperationResult.SUCCESS);
+  }
+
+  private void verifyConfigurationFileState(final Collection<String> oldNodes)
+      throws IOException, WhitelistFileSyncException {
+    whitelistPersistor.verifyConfigFileMatchesState(
+        WhitelistPersistor.WHITELIST_TYPE.NODES, oldNodes);
+  }
+
+  private void updateConfigurationFile(final Collection<String> nodes) throws IOException {
+    whitelistPersistor.updateConfig(WhitelistPersistor.WHITELIST_TYPE.NODES, nodes);
+  }
+
+  private void revertState(final List<Peer> nodesWhitelist) {
+    this.nodesWhitelist = nodesWhitelist;
+  }
+
+  private Collection<String> peerToEnodeURI(final Collection<Peer> peers) {
+    return peers.parallelStream().map(Peer::getEnodeURI).collect(Collectors.toList());
   }
 
   public boolean isPermitted(final Peer node) {

@@ -12,13 +12,22 @@
  */
 package tech.pegasys.pantheon;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.stream.Collectors;
 
+import com.google.common.io.Resources;
 import net.consensys.cava.toml.Toml;
 import net.consensys.cava.toml.TomlParseError;
 import net.consensys.cava.toml.TomlParseResult;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class TomlConfigFileParser {
+
+  protected static final Logger LOG = LogManager.getLogger();
 
   private static TomlParseResult checkConfigurationValidity(
       final TomlParseResult result, final String toml) throws Exception {
@@ -34,10 +43,36 @@ public class TomlConfigFileParser {
     if (result.hasErrors()) {
       final String errors =
           result.errors().stream().map(TomlParseError::toString).collect(Collectors.joining("%n"));
-      ;
       throw new Exception("Invalid TOML configuration : " + errors);
     }
 
     return checkConfigurationValidity(result, toml);
+  }
+
+  public static TomlParseResult loadConfigurationFromFile(final String configFilePath)
+      throws Exception {
+    return loadConfiguration(configTomlAsString(tomlConfigFile(configFilePath)));
+  }
+
+  private static String configTomlAsString(final File file) throws Exception {
+    return Resources.toString(file.toURI().toURL(), UTF_8);
+  }
+
+  private static File tomlConfigFile(final String filename) throws Exception {
+    final File tomlConfigFile = new File(filename);
+    if (tomlConfigFile.exists()) {
+      if (!tomlConfigFile.canRead()) {
+        throw new Exception(String.format("Read access denied for file at: %s", filename));
+      }
+      if (!tomlConfigFile.canWrite()) {
+        LOG.warn(
+            "Write access denied for file at: %s. Configuration modification operations will not be permitted.",
+            filename);
+      }
+      return tomlConfigFile;
+    } else {
+      throw new FileNotFoundException(
+          String.format("Configuration file does not exist: %s", filename));
+    }
   }
 }

@@ -45,6 +45,7 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.InetAddress;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -410,12 +411,12 @@ public final class NettyP2PNetworkTest {
     final BytesValue localId = localKp.getPublicKey().getEncodedBytes();
     final PeerBlacklist localBlacklist = new PeerBlacklist();
     final PeerBlacklist remoteBlacklist = new PeerBlacklist();
-    final Optional<PermissioningConfiguration> config =
-        Optional.ofNullable(PermissioningConfiguration.createDefault());
-    final Optional<NodeWhitelistController> localWhitelistController =
-        Optional.of(new NodeWhitelistController(config.get()));
+    final PermissioningConfiguration config = PermissioningConfiguration.createDefault();
+    config.setConfigurationFilePath(
+        Files.createTempFile("test", "test").toAbsolutePath().toString());
+    final NodeWhitelistController localWhitelistController = new NodeWhitelistController(config);
     // turn on whitelisting by adding a different node NOT remote node
-    localWhitelistController.ifPresent(nwc -> nwc.addNode(mockPeer()));
+    localWhitelistController.addNode(mockPeer());
 
     final SubProtocol subprotocol = subProtocol();
     final Capability cap = Capability.create(subprotocol.getName(), 63);
@@ -431,7 +432,7 @@ public final class NettyP2PNetworkTest {
                 () -> false,
                 localBlacklist,
                 new NoOpMetricsSystem(),
-                localWhitelistController);
+                Optional.of(localWhitelistController));
         final P2PNetwork remoteNetwork =
             new NettyP2PNetwork(
                 vertx,
