@@ -31,20 +31,35 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionHandler;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Paths;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.KeyStoreOptions;
+import io.vertx.ext.auth.PubSecKeyOptions;
+import io.vertx.ext.auth.SecretOptions;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import io.vertx.ext.auth.jwt.impl.JWTAuthProviderImpl;
+import io.vertx.ext.jwt.JWK;
+import io.vertx.ext.jwt.JWT;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -225,6 +240,91 @@ public class JsonRpcHttpServiceLoginTest {
                   assertThat(authed.result()).isTrue();
                 });
           });
+    }
+  }
+
+  private JWT makeJwt(final JWTAuthOptions config)
+      throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
+    final KeyStoreOptions keyStoreOptions = config.getKeyStore();
+    if (keyStoreOptions != null) {
+      final KeyStore ks = KeyStore.getInstance(keyStoreOptions.getType());
+
+      // synchronize on the class to avoid the case where multiple file accesses will overlap
+      synchronized (JWTAuthProviderImpl.class) {
+        final Buffer keystore = vertx.fileSystem().readFileBlocking(keyStoreOptions.getPath());
+
+        try (InputStream in = new ByteArrayInputStream(keystore.getBytes())) {
+          ks.load(in, keyStoreOptions.getPassword().toCharArray());
+        }
+      }
+
+      return new JWT(ks, keyStoreOptions.getPassword().toCharArray());
+    } else {
+      // no key file attempt to load pem keys
+      final JWT jwt = new JWT();
+
+      final List<PubSecKeyOptions> keys = config.getPubSecKeys();
+
+      if (keys != null) {
+        for (final PubSecKeyOptions pubSecKey : config.getPubSecKeys()) {
+          if (pubSecKey.isSymmetric()) {
+            jwt.addJWK(new JWK(pubSecKey.getAlgorithm(), pubSecKey.getPublicKey()));
+          } else {
+            jwt.addJWK(
+                new JWK(
+                    pubSecKey.getAlgorithm(),
+                    pubSecKey.isCertificate(),
+                    pubSecKey.getPublicKey(),
+                    pubSecKey.getSecretKey()));
+          }
+        }
+      }
+
+      // TODO: remove once the deprecation ends!
+      final List<SecretOptions> secrets = config.getSecrets();
+
+      if (secrets != null) {
+        for (final SecretOptions secret : secrets) {
+          jwt.addSecret(secret.getType(), secret.getSecret());
+        }
+      }
+
+      final List<JsonObject> jwks = config.getJwks();
+
+      if (jwks != null) {
+        for (final JsonObject jwk : jwks) {
+          jwt.addJWK(new JWK(jwk));
+        }
+      }
+      return jwt;
+    }
+  }
+
+  @Test
+  public void loginDoesntPopulateJWTPayloadWithPassword()
+      throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
+    final RequestBody body =
+        RequestBody.create(JSON, "{\"username\":\"user\",\"password\":\"pegasys\"}");
+    final Request request = new Request.Builder().post(body).url(baseUrl + "/login").build();
+    try (final Response resp = client.newCall(request).execute()) {
+      assertThat(resp.code()).isEqualTo(200);
+      assertThat(resp.message()).isEqualTo("OK");
+      assertThat(resp.body().contentType()).isNotNull();
+      assertThat(resp.body().contentType().type()).isEqualTo("application");
+      assertThat(resp.body().contentType().subtype()).isEqualTo("json");
+      final String bodyString = resp.body().string();
+      assertThat(bodyString).isNotNull();
+      assertThat(bodyString).isNotBlank();
+
+      final JsonObject respBody = new JsonObject(bodyString);
+      final String token = respBody.getString("token");
+      assertThat(token).isNotNull();
+      final JWT jwt = makeJwt(service.jwtAuthOptions.get());
+
+      final JsonObject jwtPayload = jwt.decode(token);
+      final String jwtPayloadString = jwtPayload.encode();
+      assertThat(jwtPayloadString.contains("password")).isFalse();
+      assertThat(jwtPayloadString.contains("pegasys")).isFalse();
     }
   }
 }
