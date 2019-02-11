@@ -78,7 +78,13 @@ public abstract class SyncTargetManager<C> {
                         config.downloaderHeaderRequestSize(),
                         ethTasksTimer)
                     .run()
-                    .handle((r, t) -> r)
+                    .handle(
+                        (result, error) -> {
+                          if (error != null) {
+                            LOG.debug("Failed to find common ancestor", error);
+                          }
+                          return result;
+                        })
                     .thenCompose(
                         (target) -> {
                           if (target == null) {
