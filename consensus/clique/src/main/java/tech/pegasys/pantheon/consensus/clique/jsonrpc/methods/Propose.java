@@ -12,11 +12,15 @@
  */
 package tech.pegasys.pantheon.consensus.clique.jsonrpc.methods;
 
+import static tech.pegasys.pantheon.consensus.clique.CliqueBlockInterface.NO_VOTE_SUBJECT;
+
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
@@ -38,6 +42,10 @@ public class Propose implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequest request) {
     final Address address = parameters.required(request.getParams(), 0, Address.class);
     final Boolean auth = parameters.required(request.getParams(), 1, Boolean.class);
+    if (address.equals(NO_VOTE_SUBJECT)) {
+      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_REQUEST);
+    }
+
     if (auth) {
       proposer.auth(address);
     } else {
