@@ -47,8 +47,6 @@ import tech.pegasys.pantheon.consensus.ibft.validation.MessageValidatorFactory;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
-import tech.pegasys.pantheon.ethereum.chain.BlockchainStorage;
-import tech.pegasys.pantheon.ethereum.chain.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
@@ -71,8 +69,6 @@ import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
-import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
-import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.Subscribers;
 
@@ -134,27 +130,27 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
     final ProtocolSchedule<IbftContext> protocolSchedule =
         IbftProtocolSchedule.create(genesisConfig.getConfigOptions());
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
-    final BlockchainStorage blockchainStorage =
-        storageProvider.createBlockchainStorage(protocolSchedule);
-    final MutableBlockchain blockchain =
-        new DefaultMutableBlockchain(genesisState.getBlock(), blockchainStorage, metricsSystem);
-
-    final WorldStateStorage worldStateStorage = storageProvider.createWorldStateStorage();
-    final WorldStateArchive worldStateArchive = new WorldStateArchive(worldStateStorage);
-    genesisState.writeStateTo(worldStateArchive.getMutable());
-
-    final IbftConfigOptions ibftConfig = genesisConfig.getConfigOptions().getIbft2ConfigOptions();
-    final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
 
     final BlockInterface blockInterface = new IbftBlockInterface();
-    final VoteTally voteTally =
-        new VoteTallyUpdater(epochManager, blockInterface).buildVoteTallyFromBlockchain(blockchain);
 
-    final VoteProposer voteProposer = new VoteProposer();
+    final IbftConfigOptions ibftConfig = genesisConfig.getConfigOptions().getIbft2ConfigOptions();
 
     final ProtocolContext<IbftContext> protocolContext =
-        new ProtocolContext<>(
-            blockchain, worldStateArchive, new IbftContext(voteTally, voteProposer));
+        ProtocolContext.init(
+            storageProvider,
+            genesisState,
+            protocolSchedule,
+            metricsSystem,
+            (blockchain, worldStateArchive) -> {
+              final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
+              final VoteTally voteTally =
+                  new VoteTallyUpdater(epochManager, blockInterface)
+                      .buildVoteTallyFromBlockchain(blockchain);
+              final VoteProposer voteProposer = new VoteProposer();
+              return new IbftContext(voteTally, voteProposer);
+            });
+    final MutableBlockchain blockchain = protocolContext.getBlockchain();
+    final VoteTally voteTally = protocolContext.getConsensusState().getVoteTally();
 
     final SynchronizerConfiguration syncConfig = taintedSyncConfig.validated(blockchain);
     final boolean fastSyncEnabled = syncConfig.syncMode().equals(SyncMode.FAST);
@@ -177,7 +173,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             syncConfig,
             protocolSchedule,
             protocolContext,
-            worldStateStorage,
+            protocolContext.getWorldStateArchive().getStorage(),
             ethProtocolManager.ethContext(),
             syncState,
             dataDirectory,
@@ -203,8 +199,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
-    final ValidatorPeers peers =
-        new ValidatorPeers(protocolContext.getConsensusState().getVoteTally());
+    final ValidatorPeers peers = new ValidatorPeers(voteTally);
 
     final UniqueMessageMulticaster uniqueMessageMulticaster =
         new UniqueMessageMulticaster(peers, ibftConfig.getGossipedHistoryLimit());

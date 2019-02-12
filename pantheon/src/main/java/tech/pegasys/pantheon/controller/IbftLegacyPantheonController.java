@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.controller;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
-import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.config.IbftConfigOptions;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
@@ -30,8 +29,6 @@ import tech.pegasys.pantheon.consensus.ibftlegacy.protocol.Istanbul64ProtocolMan
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
-import tech.pegasys.pantheon.ethereum.chain.BlockchainStorage;
-import tech.pegasys.pantheon.ethereum.chain.DefaultMutableBlockchain;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
@@ -51,8 +48,6 @@ import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
-import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
-import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.io.IOException;
@@ -65,7 +60,6 @@ import org.apache.logging.log4j.Logger;
 public class IbftLegacyPantheonController implements PantheonController<IbftContext> {
 
   private static final Logger LOG = getLogger();
-  private final GenesisConfigOptions genesisConfig;
   private final ProtocolSchedule<IbftContext> protocolSchedule;
   private final ProtocolContext<IbftContext> context;
   private final Synchronizer synchronizer;
@@ -74,10 +68,8 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
   private final KeyPair keyPair;
   private final TransactionPool transactionPool;
   private final Runnable closer;
-  private final MetricsSystem metricsStystem;
 
   IbftLegacyPantheonController(
-      final GenesisConfigOptions genesisConfig,
       final ProtocolSchedule<IbftContext> protocolSchedule,
       final ProtocolContext<IbftContext> context,
       final SubProtocol ethSubProtocol,
@@ -85,10 +77,8 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
       final Synchronizer synchronizer,
       final KeyPair keyPair,
       final TransactionPool transactionPool,
-      final Runnable closer,
-      final MetricsSystem metricsSystem) {
+      final Runnable closer) {
 
-    this.genesisConfig = genesisConfig;
     this.protocolSchedule = protocolSchedule;
     this.context = context;
     this.ethSubProtocol = ethSubProtocol;
@@ -97,7 +87,6 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
     this.keyPair = keyPair;
     this.transactionPool = transactionPool;
     this.closer = closer;
-    this.metricsStystem = metricsSystem;
   }
 
   public static PantheonController<IbftContext> init(
@@ -112,28 +101,25 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
     final ProtocolSchedule<IbftContext> protocolSchedule =
         IbftProtocolSchedule.create(genesisConfig.getConfigOptions());
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
-    final BlockchainStorage blockchainStorage =
-        storageProvider.createBlockchainStorage(protocolSchedule);
-    final MutableBlockchain blockchain =
-        new DefaultMutableBlockchain(genesisState.getBlock(), blockchainStorage, metricsSystem);
-
-    final WorldStateStorage worldStateStorage = storageProvider.createWorldStateStorage();
-    final WorldStateArchive worldStateArchive = new WorldStateArchive(worldStateStorage);
-    genesisState.writeStateTo(worldStateArchive.getMutable());
-
     final IbftConfigOptions ibftConfig =
         genesisConfig.getConfigOptions().getIbftLegacyConfigOptions();
-    final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
-
-    final VoteTally voteTally =
-        new VoteTallyUpdater(epochManager, new IbftLegacyBlockInterface())
-            .buildVoteTallyFromBlockchain(blockchain);
-
-    final VoteProposer voteProposer = new VoteProposer();
 
     final ProtocolContext<IbftContext> protocolContext =
-        new ProtocolContext<>(
-            blockchain, worldStateArchive, new IbftContext(voteTally, voteProposer));
+        ProtocolContext.init(
+            storageProvider,
+            genesisState,
+            protocolSchedule,
+            metricsSystem,
+            (blockchain, worldStateArchive) -> {
+              final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
+              final VoteTally voteTally =
+                  new VoteTallyUpdater(epochManager, new IbftLegacyBlockInterface())
+                      .buildVoteTallyFromBlockchain(blockchain);
+
+              final VoteProposer voteProposer = new VoteProposer();
+              return new IbftContext(voteTally, voteProposer);
+            });
+    final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
     final SynchronizerConfiguration syncConfig = taintedSyncConfig.validated(blockchain);
     final boolean fastSyncEnabled = syncConfig.syncMode().equals(SyncMode.FAST);
@@ -144,7 +130,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
       ethSubProtocol = Istanbul64Protocol.get();
       ethProtocolManager =
           new Istanbul64ProtocolManager(
-              protocolContext.getBlockchain(),
+              blockchain,
               protocolContext.getWorldStateArchive(),
               networkId,
               fastSyncEnabled,
@@ -155,7 +141,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
       ethSubProtocol = EthProtocol.get();
       ethProtocolManager =
           new EthProtocolManager(
-              protocolContext.getBlockchain(),
+              blockchain,
               protocolContext.getWorldStateArchive(),
               networkId,
               fastSyncEnabled,
@@ -165,14 +151,13 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
     }
 
     final SyncState syncState =
-        new SyncState(
-            protocolContext.getBlockchain(), ethProtocolManager.ethContext().getEthPeers());
+        new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
     final Synchronizer synchronizer =
         new DefaultSynchronizer<>(
             syncConfig,
             protocolSchedule,
             protocolContext,
-            worldStateStorage,
+            protocolContext.getWorldStateArchive().getStorage(),
             ethProtocolManager.ethContext(),
             syncState,
             dataDirectory,
@@ -192,7 +177,6 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
             protocolSchedule, protocolContext, ethProtocolManager.ethContext());
 
     return new IbftLegacyPantheonController(
-        genesisConfig.getConfigOptions(),
         protocolSchedule,
         protocolContext,
         ethSubProtocol,
@@ -200,8 +184,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
         synchronizer,
         nodeKeys,
         transactionPool,
-        closer,
-        metricsSystem);
+        closer);
   }
 
   @Override
