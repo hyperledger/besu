@@ -21,7 +21,6 @@ import tech.pegasys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
-import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterIdGenerator;
@@ -58,7 +57,7 @@ public class JsonRpcTestMethodsFactory {
   public Map<String, JsonRpcMethod> methods() {
     final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
 
-    importer.getGenesisState().writeStateTo(stateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
+    importer.getGenesisState().writeStateTo(stateArchive.getMutable());
 
     final MutableBlockchain blockchain = createInMemoryBlockchain(importer.getGenesisBlock());
     final ProtocolContext<Void> context = new ProtocolContext<>(blockchain, stateArchive, null);

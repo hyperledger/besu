@@ -26,7 +26,6 @@ import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
-import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
@@ -152,7 +151,7 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
     final PrivateTransactionHandler privateTransactionHandlerMock =
         mock(PrivateTransactionHandler.class);
     stateArchive = createInMemoryWorldStateArchive();
-    GENESIS_CONFIG.writeStateTo(stateArchive.getMutable(Hash.EMPTY_TRIE_HASH));
+    GENESIS_CONFIG.writeStateTo(stateArchive.getMutable());
 
     blockchain = createInMemoryBlockchain(GENESIS_BLOCK);
     context = new ProtocolContext<>(blockchain, stateArchive, null);

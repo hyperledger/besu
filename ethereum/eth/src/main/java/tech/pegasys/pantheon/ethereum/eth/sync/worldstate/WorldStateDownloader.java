@@ -19,7 +19,6 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.GetNodeDataFromPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.WaitForPeerTask;
-import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage.Updater;
 import tech.pegasys.pantheon.metrics.Counter;
@@ -65,6 +64,7 @@ public class WorldStateDownloader {
   private final AtomicBoolean sendingRequests = new AtomicBoolean(false);
   private volatile CompletableFuture<Void> future;
   private volatile Status status = Status.IDLE;
+  private volatile BytesValue rootNode;
 
   public WorldStateDownloader(
       final EthContext ethContext,
@@ -112,8 +112,8 @@ public class WorldStateDownloader {
     }
 
     Hash stateRoot = header.getStateRoot();
-    if (stateRoot.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-      // If we're requesting data for an empty world state, we're already done
+    if (worldStateStorage.isWorldStateAvailable(stateRoot)) {
+      // If we're requesting data for an existing world state, we're already done
       markDone();
     } else {
       pendingRequests.enqueue(NodeDataRequest.createAccountDataRequest(stateRoot));
@@ -151,11 +151,14 @@ public class WorldStateDownloader {
 
           // Request and process node data
           outstandingRequests.incrementAndGet();
-          sendAndProcessRequests(peer, toRequest)
+          sendAndProcessRequests(peer, toRequest, header)
               .whenComplete(
                   (res, error) -> {
                     if (outstandingRequests.decrementAndGet() == 0 && pendingRequests.isEmpty()) {
                       // We're done
+                      final Updater updater = worldStateStorage.updater();
+                      updater.putAccountStateTrieNode(header.getStateRoot(), rootNode);
+                      updater.commit();
                       markDone();
                     } else {
                       // Send out additional requests
@@ -191,7 +194,7 @@ public class WorldStateDownloader {
   }
 
   private CompletableFuture<?> sendAndProcessRequests(
-      final EthPeer peer, final List<NodeDataRequest> requests) {
+      final EthPeer peer, final List<NodeDataRequest> requests, final BlockHeader blockHeader) {
     List<Hash> hashes =
         requests.stream().map(NodeDataRequest::getHash).distinct().collect(Collectors.toList());
     return GetNodeDataFromPeerTask.forHashes(ethContext, hashes, ethTasksTimer)
@@ -212,7 +215,11 @@ public class WorldStateDownloader {
                   completedRequestsCounter.inc();
                   // Persist request data
                   request.setData(matchingData);
-                  request.persist(storageUpdater);
+                  if (isRootState(blockHeader, request)) {
+                    rootNode = request.getData();
+                  } else {
+                    request.persist(storageUpdater);
+                  }
 
                   // Queue child requests
                   request
@@ -223,6 +230,10 @@ public class WorldStateDownloader {
               }
               storageUpdater.commit();
             });
+  }
+
+  private boolean isRootState(final BlockHeader blockHeader, final NodeDataRequest request) {
+    return request.getHash().equals(blockHeader.getStateRoot());
   }
 
   private boolean filterChildRequests(final NodeDataRequest request) {

@@ -73,8 +73,16 @@ public class MainnetBlockValidator<C> implements BlockValidator<C> {
     }
 
     final MutableBlockchain blockchain = context.getBlockchain();
-    final MutableWorldState worldState =
+    final Optional<MutableWorldState> maybeWorldState =
         context.getWorldStateArchive().getMutable(parentHeader.getStateRoot());
+    if (!maybeWorldState.isPresent()) {
+      LOG.debug(
+          "Unable to process block {} because parent world state {} is not available",
+          header.getNumber(),
+          parentHeader.getStateRoot());
+      return Optional.empty();
+    }
+    final MutableWorldState worldState = maybeWorldState.get();
     final BlockProcessor.Result result = blockProcessor.processBlock(blockchain, worldState, block);
     if (!result.isSuccessful()) {
       return Optional.empty();

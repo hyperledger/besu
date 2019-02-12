@@ -66,7 +66,11 @@ public class TransientTransactionProcessor {
     if (header == null) {
       return Optional.empty();
     }
-    final MutableWorldState worldState = worldStateArchive.getMutable(header.getStateRoot());
+    final MutableWorldState worldState =
+        worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
+    if (worldState == null) {
+      return Optional.empty();
+    }
 
     final Address senderAddress =
         callParams.getFrom() != null ? callParams.getFrom() : DEFAULT_FROM;

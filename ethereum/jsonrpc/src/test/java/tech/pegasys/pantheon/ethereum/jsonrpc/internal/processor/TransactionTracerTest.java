@@ -96,7 +96,7 @@ public class TransactionTracerTest {
     when(blockHeader.getHash()).thenReturn(blockHash);
     when(blockHeader.getParentHash()).thenReturn(previousBlockHash);
     when(previousBlockHeader.getStateRoot()).thenReturn(Hash.ZERO);
-    when(worldStateArchive.getMutable(Hash.ZERO)).thenReturn(mutableWorldState);
+    when(worldStateArchive.getMutable(Hash.ZERO)).thenReturn(Optional.of(mutableWorldState));
     when(protocolSchedule.getByBlockNumber(12)).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);

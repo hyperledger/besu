@@ -192,7 +192,18 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
   private MutableWorldState duplicateWorldStateAtParent() {
     final Hash parentStateRoot = parentHeader.getStateRoot();
     final MutableWorldState worldState =
-        protocolContext.getWorldStateArchive().getMutable(parentStateRoot);
+        protocolContext
+            .getWorldStateArchive()
+            .getMutable(parentStateRoot)
+            .orElseThrow(
+                () -> {
+                  LOG.info("Unable to create block because world state is not available");
+                  return new IllegalStateException(
+                      "World state not available for block "
+                          + parentHeader.getNumber()
+                          + " with state root "
+                          + parentStateRoot);
+                });
 
     return worldState.copy();
   }

@@ -28,6 +28,8 @@ public interface WorldStateStorage {
 
   Optional<BytesValue> getNodeData(Bytes32 hash);
 
+  boolean isWorldStateAvailable(Bytes32 rootHash);
+
   default boolean contains(final Bytes32 hash) {
     return getNodeData(hash).isPresent();
   }
@@ -40,7 +42,7 @@ public interface WorldStateStorage {
 
     default Updater putCode(final BytesValue code) {
       // Skip the hash calculation for empty code
-      Hash codeHash = code.size() == 0 ? Hash.EMPTY : Hash.hash(code);
+      final Hash codeHash = code.size() == 0 ? Hash.EMPTY : Hash.hash(code);
       return putCode(codeHash, code);
     }
 

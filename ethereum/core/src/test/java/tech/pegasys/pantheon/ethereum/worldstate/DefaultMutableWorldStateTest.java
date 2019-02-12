@@ -47,12 +47,13 @@ public class DefaultMutableWorldStateTest {
   private static final Address ADDRESS =
       Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b");
 
-  private static MutableWorldState createEmpty(final KeyValueStorage storage) {
-    return new DefaultMutableWorldState(new KeyValueStorageWorldStateStorage(storage));
+  private static MutableWorldState createEmpty(final KeyValueStorageWorldStateStorage storage) {
+    return new DefaultMutableWorldState(storage);
   }
 
   private static MutableWorldState createEmpty() {
-    return createEmpty(new InMemoryKeyValueStorage());
+    final InMemoryKeyValueStorage inMemoryKeyValueStorage = new InMemoryKeyValueStorage();
+    return createEmpty(new KeyValueStorageWorldStateStorage(inMemoryKeyValueStorage));
   }
 
   @Test
@@ -157,7 +158,9 @@ public class DefaultMutableWorldStateTest {
   @Test
   public void commitAndPersist() {
     final KeyValueStorage storage = new InMemoryKeyValueStorage();
-    final MutableWorldState worldState = createEmpty(storage);
+    final KeyValueStorageWorldStateStorage kvWorldStateStorage =
+        new KeyValueStorageWorldStateStorage(storage);
+    final MutableWorldState worldState = createEmpty(kvWorldStateStorage);
     final WorldUpdater updater = worldState.updater();
     final Wei newBalance = Wei.of(100000);
     final Hash expectedRootHash =
@@ -176,6 +179,7 @@ public class DefaultMutableWorldStateTest {
 
     // Check that storage is empty before persisting
     assertEquals(0, storage.entries().count());
+    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isFalse();
 
     // Persist and re-run assertions
     worldState.persist();
@@ -183,6 +187,7 @@ public class DefaultMutableWorldStateTest {
     assertEquals(expectedRootHash, worldState.rootHash());
     assertNotNull(worldState.get(ADDRESS));
     assertEquals(newBalance, worldState.get(ADDRESS).getBalance());
+    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isTrue();
 
     // Create new world state and check that it can access modified address
     final MutableWorldState newWorldState =

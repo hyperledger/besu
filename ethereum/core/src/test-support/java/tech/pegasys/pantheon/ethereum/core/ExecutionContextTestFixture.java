@@ -23,7 +23,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
-import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
@@ -57,9 +56,7 @@ public class ExecutionContextTestFixture {
         new WorldStateArchive(new KeyValueStorageWorldStateStorage(keyValueStorage));
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = new ProtocolContext<>(blockchain, stateArchive, null);
-
-    genesisState.writeStateTo(
-        new DefaultMutableWorldState(new KeyValueStorageWorldStateStorage(keyValueStorage)));
+    genesisState.writeStateTo(stateArchive.getMutable());
   }
 
   public static ExecutionContextTestFixture create() {
