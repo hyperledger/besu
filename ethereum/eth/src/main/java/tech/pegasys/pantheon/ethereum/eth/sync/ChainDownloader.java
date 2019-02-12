@@ -108,6 +108,8 @@ public class ChainDownloader<C> {
                       LOG.debug("Invalid block downloaded", t);
                     } else if (rootCause instanceof EthTaskException) {
                       LOG.debug(rootCause.toString());
+                    } else if (rootCause instanceof InterruptedException) {
+                      LOG.trace("Interrupted while downloading chain", rootCause);
                     } else {
                       LOG.error("Error encountered while downloading", t);
                     }
@@ -214,6 +216,8 @@ public class ChainDownloader<C> {
               final Throwable rootCause = ExceptionUtils.rootCause(t);
               if (rootCause instanceof EthTaskException) {
                 LOG.debug(rootCause.toString());
+              } else if (rootCause instanceof InterruptedException) {
+                LOG.trace("Interrupted while importing blocks", rootCause);
               } else {
                 LOG.error("Encountered error importing blocks", t);
               }

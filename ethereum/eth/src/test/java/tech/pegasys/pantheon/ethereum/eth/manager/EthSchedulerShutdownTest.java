@@ -49,32 +49,31 @@ public class EthSchedulerShutdownTest {
 
   @Test
   public void shutdown_syncWorkerShutsDown() throws InterruptedException {
-    final MockEthTask task = new MockEthTask(1);
+    final MockEthTask task1 = new MockEthTask(1);
+    final MockEthTask task2 = new MockEthTask();
 
-    ethScheduler.scheduleSyncWorkerTask(task::executeTask);
+    ethScheduler.scheduleSyncWorkerTask(task1::executeTask);
+    ethScheduler.scheduleSyncWorkerTask(task2::executeTask);
     ethScheduler.stop();
 
     assertThat(syncWorkerExecutor.isShutdown()).isTrue();
-    assertThat(syncWorkerExecutor.isTerminated()).isFalse();
 
-    task.countDown();
     ethScheduler.awaitStop();
 
     assertThat(syncWorkerExecutor.isShutdown()).isTrue();
     assertThat(syncWorkerExecutor.isTerminated()).isTrue();
+    assertThat(task2.hasBeenStarted()).isFalse();
   }
 
   @Test
   public void shutdown_scheduledWorkerShutsDown() throws InterruptedException {
     final MockEthTask task = new MockEthTask(1);
 
-    ethScheduler.scheduleFutureTask(task::executeTask, Duration.ofMillis(1));
+    ethScheduler.scheduleFutureTask(task::executeTask, Duration.ofMillis(0));
     ethScheduler.stop();
 
     assertThat(scheduledExecutor.isShutdown()).isTrue();
-    assertThat(scheduledExecutor.isTerminated()).isFalse();
 
-    task.countDown();
     ethScheduler.awaitStop();
 
     assertThat(scheduledExecutor.isShutdown()).isTrue();
@@ -83,56 +82,63 @@ public class EthSchedulerShutdownTest {
 
   @Test
   public void shutdown_txWorkerShutsDown() throws InterruptedException {
-    final MockEthTask task = new MockEthTask(1);
+    final MockEthTask task1 = new MockEthTask(1);
+    final MockEthTask task2 = new MockEthTask();
 
-    ethScheduler.scheduleTxWorkerTask(task::executeTask);
+    ethScheduler.scheduleTxWorkerTask(task1::executeTask);
+    ethScheduler.scheduleTxWorkerTask(task2::executeTask);
     ethScheduler.stop();
 
     assertThat(txWorkerExecutor.isShutdown()).isTrue();
-    assertThat(txWorkerExecutor.isTerminated()).isFalse();
 
-    task.countDown();
     ethScheduler.awaitStop();
 
     assertThat(txWorkerExecutor.isShutdown()).isTrue();
     assertThat(txWorkerExecutor.isTerminated()).isTrue();
+    assertThat(task2.hasBeenStarted()).isFalse();
   }
 
   @Test
   public void shutdown_servicesShutsDown() throws InterruptedException {
-    final MockEthTask task = new MockEthTask(1);
+    final MockEthTask task1 = new MockEthTask(1);
+    final MockEthTask task2 = new MockEthTask();
 
-    ethScheduler.scheduleServiceTask(task);
+    ethScheduler.scheduleServiceTask(task1);
+    ethScheduler.scheduleServiceTask(task2);
     ethScheduler.stop();
 
     assertThat(servicesExecutor.isShutdown()).isTrue();
-    assertThat(servicesExecutor.isTerminated()).isFalse();
 
-    task.countDown();
     ethScheduler.awaitStop();
 
     assertThat(servicesExecutor.isShutdown()).isTrue();
     assertThat(servicesExecutor.isTerminated()).isTrue();
+    assertThat(task2.hasBeenStarted()).isFalse();
   }
 
   @Test
   public void shutdown_computationShutsDown() throws InterruptedException {
-    final MockEthTask task = new MockEthTask(1);
+    final MockEthTask task1 = new MockEthTask(1);
+    final MockEthTask task2 = new MockEthTask();
 
     ethScheduler.scheduleComputationTask(
         () -> {
-          task.executeTask();
+          task1.executeTask();
+          return Integer.MAX_VALUE;
+        });
+    ethScheduler.scheduleComputationTask(
+        () -> {
+          task2.executeTask();
           return Integer.MAX_VALUE;
         });
     ethScheduler.stop();
 
     assertThat(computationExecutor.isShutdown()).isTrue();
-    assertThat(computationExecutor.isTerminated()).isFalse();
 
-    task.countDown();
     ethScheduler.awaitStop();
 
     assertThat(computationExecutor.isShutdown()).isTrue();
     assertThat(computationExecutor.isTerminated()).isTrue();
+    assertThat(task2.hasBeenStarted()).isFalse();
   }
 }

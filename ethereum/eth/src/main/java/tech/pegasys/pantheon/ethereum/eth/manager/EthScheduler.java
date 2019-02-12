@@ -224,11 +224,11 @@ public class EthScheduler {
   public void stop() {
     if (stopped.compareAndSet(false, true)) {
       LOG.trace("Stopping " + getClass().getSimpleName());
-      syncWorkerExecutor.shutdown();
-      txWorkerExecutor.shutdown();
-      scheduler.shutdown();
-      servicesExecutor.shutdown();
-      computationExecutor.shutdown();
+      syncWorkerExecutor.shutdownNow();
+      txWorkerExecutor.shutdownNow();
+      scheduler.shutdownNow();
+      servicesExecutor.shutdownNow();
+      computationExecutor.shutdownNow();
       shutdown.countDown();
     } else {
       LOG.trace("Attempted to stop already stopped " + getClass().getSimpleName());
@@ -238,33 +238,24 @@ public class EthScheduler {
   void awaitStop() throws InterruptedException {
     shutdown.await();
     serviceFutures.forEach(future -> future.cancel(true));
-    if (!syncWorkerExecutor.awaitTermination(2L, TimeUnit.MINUTES)) {
+    if (!syncWorkerExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
       LOG.error("{} worker executor did not shutdown cleanly.", this.getClass().getSimpleName());
-      syncWorkerExecutor.shutdownNow();
-      syncWorkerExecutor.awaitTermination(2L, TimeUnit.MINUTES);
     }
-    if (!txWorkerExecutor.awaitTermination(2L, TimeUnit.MINUTES)) {
+    if (!txWorkerExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
       LOG.error(
           "{} transaction worker executor did not shutdown cleanly.",
           this.getClass().getSimpleName());
-      txWorkerExecutor.shutdownNow();
-      txWorkerExecutor.awaitTermination(2L, TimeUnit.MINUTES);
     }
-    if (!scheduler.awaitTermination(2L, TimeUnit.MINUTES)) {
+    if (!scheduler.awaitTermination(30, TimeUnit.SECONDS)) {
       LOG.error("{} scheduler did not shutdown cleanly.", this.getClass().getSimpleName());
       scheduler.shutdownNow();
-      scheduler.awaitTermination(2L, TimeUnit.MINUTES);
     }
-    if (!servicesExecutor.awaitTermination(2L, TimeUnit.MINUTES)) {
+    if (!servicesExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
       LOG.error("{} services executor did not shutdown cleanly.", this.getClass().getSimpleName());
-      servicesExecutor.shutdownNow();
-      servicesExecutor.awaitTermination(2L, TimeUnit.MINUTES);
     }
-    if (!computationExecutor.awaitTermination(2L, TimeUnit.MINUTES)) {
+    if (!computationExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
       LOG.error(
           "{} computation executor did not shutdown cleanly.", this.getClass().getSimpleName());
-      computationExecutor.shutdownNow();
-      computationExecutor.awaitTermination(2L, TimeUnit.MINUTES);
     }
     LOG.trace("{} stopped.", this.getClass().getSimpleName());
   }
