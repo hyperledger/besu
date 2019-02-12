@@ -82,6 +82,28 @@ public class BlockHeaderBuilder {
         .nonce(header.getNonce());
   }
 
+  public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
+    BlockHeaderBuilder toBuilder =
+        create()
+            .parentHash(fromBuilder.parentHash)
+            .ommersHash(fromBuilder.ommersHash)
+            .coinbase(fromBuilder.coinbase)
+            .stateRoot(fromBuilder.stateRoot)
+            .transactionsRoot(fromBuilder.transactionsRoot)
+            .receiptsRoot(fromBuilder.receiptsRoot)
+            .logsBloom(fromBuilder.logsBloom)
+            .difficulty(fromBuilder.difficulty)
+            .number(fromBuilder.number)
+            .gasLimit(fromBuilder.gasLimit)
+            .gasUsed(fromBuilder.gasUsed)
+            .timestamp(fromBuilder.timestamp)
+            .extraData(fromBuilder.extraData)
+            .mixHash(fromBuilder.mixHash)
+            .blockHashFunction(fromBuilder.blockHashFunction);
+    toBuilder.nonce = fromBuilder.nonce;
+    return toBuilder;
+  }
+
   public BlockHeader buildBlockHeader() {
     validateBlockHeader();
 

@@ -87,7 +87,7 @@ public class CliqueBlockInterfaceTest {
     final ValidatorVote vote =
         new ValidatorVote(ADD, AddressHelpers.ofValue(1), AddressHelpers.ofValue(2));
     final BlockHeaderBuilder builderWithVote =
-        CliqueBlockInterface.insertVoteToHeaderBuilder(builder, Optional.of(vote));
+        CliqueBlockInterface.createHeaderBuilderWithVoteHeaders(builder, Optional.of(vote));
 
     final BlockHeader header = builderWithVote.buildBlockHeader();
 
@@ -101,7 +101,7 @@ public class CliqueBlockInterfaceTest {
     final ValidatorVote vote =
         new ValidatorVote(DROP, AddressHelpers.ofValue(1), AddressHelpers.ofValue(2));
     final BlockHeaderBuilder builderWithVote =
-        CliqueBlockInterface.insertVoteToHeaderBuilder(builder, Optional.of(vote));
+        CliqueBlockInterface.createHeaderBuilderWithVoteHeaders(builder, Optional.of(vote));
 
     final BlockHeader header = builderWithVote.buildBlockHeader();
 
@@ -112,7 +112,7 @@ public class CliqueBlockInterfaceTest {
   @Test
   public void nonVoteBlendedIntoHeaderResultsInACoinbaseOfZero() {
     final BlockHeaderBuilder builderWithVote =
-        CliqueBlockInterface.insertVoteToHeaderBuilder(builder, Optional.empty());
+        CliqueBlockInterface.createHeaderBuilderWithVoteHeaders(builder, Optional.empty());
 
     final BlockHeader header = builderWithVote.buildBlockHeader();
 

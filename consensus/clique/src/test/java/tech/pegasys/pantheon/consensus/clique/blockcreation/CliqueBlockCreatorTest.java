@@ -27,6 +27,7 @@ import tech.pegasys.pantheon.consensus.clique.CliqueHelpers;
 import tech.pegasys.pantheon.consensus.clique.CliqueProtocolSchedule;
 import tech.pegasys.pantheon.consensus.clique.TestHelpers;
 import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
+import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
@@ -64,6 +65,7 @@ public class CliqueBlockCreatorTest {
   private MutableBlockchain blockchain;
   private ProtocolContext<CliqueContext> protocolContext;
   private VoteProposer voteProposer;
+  private EpochManager epochManager;
 
   @Before
   public void setup() {
@@ -83,6 +85,7 @@ public class CliqueBlockCreatorTest {
         GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule).getBlock();
     blockchain = createInMemoryBlockchain(genesis);
     protocolContext = new ProtocolContext<>(blockchain, stateArchive, cliqueContext);
+    epochManager = new EpochManager(10);
 
     // Add a block above the genesis
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
@@ -112,7 +115,8 @@ public class CliqueBlockCreatorTest {
             gasLimit -> gasLimit,
             proposerKeyPair,
             Wei.ZERO,
-            blockchain.getChainHeadHeader());
+            blockchain.getChainHeadHeader(),
+            epochManager);
 
     final Block createdBlock = blockCreator.createBlock(5L);
 
@@ -138,7 +142,8 @@ public class CliqueBlockCreatorTest {
             gasLimit -> gasLimit,
             proposerKeyPair,
             Wei.ZERO,
-            blockchain.getChainHeadHeader());
+            blockchain.getChainHeadHeader(),
+            epochManager);
 
     final Block createdBlock = blockCreator.createBlock(0L);
     assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.ADD_NONCE);
@@ -163,7 +168,37 @@ public class CliqueBlockCreatorTest {
             gasLimit -> gasLimit,
             proposerKeyPair,
             Wei.ZERO,
-            blockchain.getChainHeadHeader());
+            blockchain.getChainHeadHeader(),
+            epochManager);
+
+    final Block createdBlock = blockCreator.createBlock(0L);
+    assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.DROP_NONCE);
+    assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(Address.fromHexString("0"));
+  }
+
+  @Test
+  public void insertsNoVoteWhenAtEpoch() {
+    // ensure that the next block is epoch
+    epochManager = new EpochManager(1);
+
+    final CliqueExtraData extraData =
+        new CliqueExtraData(BytesValue.wrap(new byte[32]), null, validatorList);
+    final Address a1 = Address.fromHexString("5");
+    voteProposer.auth(a1);
+    final Address coinbase = AddressHelpers.ofValue(1);
+
+    final CliqueBlockCreator blockCreator =
+        new CliqueBlockCreator(
+            coinbase,
+            parent -> extraData.encode(),
+            new PendingTransactions(5),
+            protocolContext,
+            protocolSchedule,
+            gasLimit -> gasLimit,
+            proposerKeyPair,
+            Wei.ZERO,
+            blockchain.getChainHeadHeader(),
+            epochManager);
 
     final Block createdBlock = blockCreator.createBlock(0L);
     assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.DROP_NONCE);
