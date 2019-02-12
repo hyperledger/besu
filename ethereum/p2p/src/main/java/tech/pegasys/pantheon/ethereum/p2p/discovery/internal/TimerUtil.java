@@ -13,9 +13,9 @@
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 public interface TimerUtil {
-  long setPeriodic(long delay, TimerHandler handler);
+  long setPeriodic(long delayInMs, TimerHandler handler);
 
-  long setTimer(long delay, TimerHandler handler);
+  long setTimer(long delayInMs, TimerHandler handler);
 
   void cancelTimer(long timerId);
 
