@@ -191,12 +191,12 @@ public class TransientTransactionProcessorTest {
       final Hash stateRoot, final Address address, final long nonce) {
     final Account account = mock(Account.class);
     when(account.getNonce()).thenReturn(nonce);
-    when(worldStateArchive.getMutable(eq(stateRoot))).thenReturn(worldState);
+    when(worldStateArchive.getMutable(eq(stateRoot))).thenReturn(Optional.of(worldState));
     when(worldState.get(eq(address))).thenReturn(account);
   }
 
   private void mockWorldStateForAbsentAccount(final Hash stateRoot) {
-    when(worldStateArchive.getMutable(eq(stateRoot))).thenReturn(worldState);
+    when(worldStateArchive.getMutable(eq(stateRoot))).thenReturn(Optional.of(worldState));
     when(worldState.get(any())).thenReturn(null);
   }
 

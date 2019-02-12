@@ -28,20 +28,23 @@ public class WorldStateArchive {
     this.storage = storage;
   }
 
-  public WorldState get(final Hash rootHash) {
-    return getMutable(rootHash);
+  public Optional<WorldState> get(final Hash rootHash) {
+    return getMutable(rootHash).map(state -> state);
   }
 
-  public MutableWorldState getMutable(final Hash rootHash) {
-    return new DefaultMutableWorldState(rootHash, storage);
+  public Optional<MutableWorldState> getMutable(final Hash rootHash) {
+    if (!storage.isWorldStateAvailable(rootHash)) {
+      return Optional.empty();
+    }
+    return Optional.of(new DefaultMutableWorldState(rootHash, storage));
   }
 
   public WorldState get() {
-    return get(EMPTY_ROOT_HASH);
+    return get(EMPTY_ROOT_HASH).get();
   }
 
   public MutableWorldState getMutable() {
-    return getMutable(EMPTY_ROOT_HASH);
+    return getMutable(EMPTY_ROOT_HASH).get();
   }
 
   public Optional<BytesValue> getNodeData(final Hash hash) {

@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.core;
 
 import static java.util.Collections.singletonList;
 import static org.apache.logging.log4j.LogManager.getLogger;
+import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
@@ -150,22 +151,23 @@ public class TransactionPool implements BlockAddedObserver {
               transaction.getGasLimit(), chainHeadBlockHeader.getGasLimit()));
     }
 
-    return getTransactionValidator()
-        .validateForSender(
-            transaction,
-            getSenderAccount(transaction, chainHeadBlockHeader),
-            pendingTransactions.getNextNonceForSender(transaction.getSender()));
+    return protocolContext
+        .getWorldStateArchive()
+        .get(chainHeadBlockHeader.getStateRoot())
+        .map(
+            worldState -> {
+              final Account senderAccount = worldState.get(transaction.getSender());
+              return getTransactionValidator()
+                  .validateForSender(
+                      transaction,
+                      senderAccount,
+                      pendingTransactions.getNextNonceForSender(transaction.getSender()));
+            })
+        .orElseGet(() -> ValidationResult.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
   }
 
   private boolean accountIsNotWhitelisted(final String account) {
     return accountWhitelistController.map(c -> !c.contains(account)).orElse(false);
-  }
-
-  private Account getSenderAccount(
-      final Transaction transaction, final BlockHeader chainHeadHeader) {
-    final WorldState worldState =
-        protocolContext.getWorldStateArchive().get(chainHeadHeader.getStateRoot());
-    return worldState.get(transaction.getSender());
   }
 
   private BlockHeader getChainHeadBlockHeader() {

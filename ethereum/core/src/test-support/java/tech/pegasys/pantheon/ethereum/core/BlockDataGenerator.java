@@ -17,7 +17,6 @@ import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.create
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
-import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -57,8 +56,7 @@ public class BlockDataGenerator {
       final List<UInt256> storageKeys) {
     final List<Block> seq = new ArrayList<>(count);
 
-    final MutableWorldState worldState =
-        worldStateArchive.getMutable(Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH));
+    final MutableWorldState worldState = worldStateArchive.getMutable();
 
     long nextBlockNumber = nextBlock;
     Hash parentHash = parent;

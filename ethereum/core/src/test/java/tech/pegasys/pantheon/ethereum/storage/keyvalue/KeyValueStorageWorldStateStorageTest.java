@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage.Updater;
 import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import org.junit.Test;
@@ -26,40 +27,40 @@ public class KeyValueStorageWorldStateStorageTest {
 
   @Test
   public void getCode_returnsEmpty() {
-    KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final KeyValueStorageWorldStateStorage storage = emptyStorage();
     assertThat(storage.getCode(Hash.EMPTY)).contains(BytesValue.EMPTY);
   }
 
   @Test
   public void getAccountStateTrieNode_returnsEmptyNode() {
-    KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final KeyValueStorageWorldStateStorage storage = emptyStorage();
     assertThat(storage.getAccountStateTrieNode(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
   }
 
   @Test
   public void getAccountStorageTrieNode_returnsEmptyNode() {
-    KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final KeyValueStorageWorldStateStorage storage = emptyStorage();
     assertThat(storage.getAccountStorageTrieNode(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
   }
 
   @Test
   public void getNodeData_returnsEmptyValue() {
-    KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final KeyValueStorageWorldStateStorage storage = emptyStorage();
     assertThat(storage.getNodeData(Hash.EMPTY)).contains(BytesValue.EMPTY);
   }
 
   @Test
   public void getNodeData_returnsEmptyNode() {
-    KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final KeyValueStorageWorldStateStorage storage = emptyStorage();
     assertThat(storage.getNodeData(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
   }
 
   @Test
   public void getCode_saveAndGetSpecialValues() {
-    KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final KeyValueStorageWorldStateStorage storage = emptyStorage();
     storage
         .updater()
         .putCode(MerklePatriciaTrie.EMPTY_TRIE_NODE)
@@ -73,8 +74,8 @@ public class KeyValueStorageWorldStateStorageTest {
 
   @Test
   public void getCode_saveAndGetRegularValue() {
-    BytesValue bytes = BytesValue.fromHexString("0x123456");
-    KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final BytesValue bytes = BytesValue.fromHexString("0x123456");
+    final KeyValueStorageWorldStateStorage storage = emptyStorage();
     storage.updater().putCode(bytes).commit();
 
     assertThat(storage.getCode(Hash.hash(bytes))).contains(bytes);
@@ -82,7 +83,7 @@ public class KeyValueStorageWorldStateStorageTest {
 
   @Test
   public void getAccountStateTrieNode_saveAndGetSpecialValues() {
-    KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final KeyValueStorageWorldStateStorage storage = emptyStorage();
     storage
         .updater()
         .putAccountStateTrieNode(
@@ -97,8 +98,8 @@ public class KeyValueStorageWorldStateStorageTest {
 
   @Test
   public void getAccountStateTrieNode_saveAndGetRegularValue() {
-    BytesValue bytes = BytesValue.fromHexString("0x123456");
-    KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final BytesValue bytes = BytesValue.fromHexString("0x123456");
+    final KeyValueStorageWorldStateStorage storage = emptyStorage();
     storage.updater().putAccountStateTrieNode(Hash.hash(bytes), bytes).commit();
 
     assertThat(storage.getAccountStateTrieNode(Hash.hash(bytes))).contains(bytes);
@@ -106,7 +107,7 @@ public class KeyValueStorageWorldStateStorageTest {
 
   @Test
   public void getAccountStorageTrieNode_saveAndGetSpecialValues() {
-    KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final KeyValueStorageWorldStateStorage storage = emptyStorage();
     storage
         .updater()
         .putAccountStorageTrieNode(
@@ -121,8 +122,8 @@ public class KeyValueStorageWorldStateStorageTest {
 
   @Test
   public void getAccountStorageTrieNode_saveAndGetRegularValue() {
-    BytesValue bytes = BytesValue.fromHexString("0x123456");
-    KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final BytesValue bytes = BytesValue.fromHexString("0x123456");
+    final KeyValueStorageWorldStateStorage storage = emptyStorage();
     storage.updater().putAccountStorageTrieNode(Hash.hash(bytes), bytes).commit();
 
     assertThat(storage.getAccountStateTrieNode(Hash.hash(bytes))).contains(bytes);
@@ -130,7 +131,7 @@ public class KeyValueStorageWorldStateStorageTest {
 
   @Test
   public void getNodeData_saveAndGetSpecialValues() {
-    KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final KeyValueStorageWorldStateStorage storage = emptyStorage();
     storage
         .updater()
         .putAccountStorageTrieNode(
@@ -145,8 +146,8 @@ public class KeyValueStorageWorldStateStorageTest {
 
   @Test
   public void getNodeData_saveAndGetRegularValue() {
-    BytesValue bytes = BytesValue.fromHexString("0x123456");
-    KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final BytesValue bytes = BytesValue.fromHexString("0x123456");
+    final KeyValueStorageWorldStateStorage storage = emptyStorage();
     storage.updater().putAccountStorageTrieNode(Hash.hash(bytes), bytes).commit();
 
     assertThat(storage.getNodeData(Hash.hash(bytes))).contains(bytes);
@@ -154,13 +155,13 @@ public class KeyValueStorageWorldStateStorageTest {
 
   @Test
   public void reconcilesNonConflictingUpdaters() {
-    BytesValue bytesA = BytesValue.fromHexString("0x12");
-    BytesValue bytesB = BytesValue.fromHexString("0x1234");
-    BytesValue bytesC = BytesValue.fromHexString("0x123456");
+    final BytesValue bytesA = BytesValue.fromHexString("0x12");
+    final BytesValue bytesB = BytesValue.fromHexString("0x1234");
+    final BytesValue bytesC = BytesValue.fromHexString("0x123456");
 
-    KeyValueStorageWorldStateStorage storage = emptyStorage();
-    Updater updaterA = storage.updater();
-    Updater updaterB = storage.updater();
+    final KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final Updater updaterA = storage.updater();
+    final Updater updaterB = storage.updater();
 
     updaterA.putCode(bytesA);
     updaterB.putCode(bytesA);
@@ -173,6 +174,16 @@ public class KeyValueStorageWorldStateStorageTest {
     assertThat(storage.getCode(Hash.hash(bytesA))).contains(bytesA);
     assertThat(storage.getCode(Hash.hash(bytesB))).contains(bytesB);
     assertThat(storage.getCode(Hash.hash(bytesC))).contains(bytesC);
+  }
+
+  @Test
+  public void isWorldStateAvailable_defaultIsFalse() {
+    assertThat(emptyStorage().isWorldStateAvailable(Bytes32.TRUE)).isFalse();
+  }
+
+  @Test
+  public void isWorldStateAvailable_emptyTrieStateAlwaysAvailable() {
+    assertThat(emptyStorage().isWorldStateAvailable(Hash.EMPTY_TRIE_HASH)).isTrue();
   }
 
   private KeyValueStorageWorldStateStorage emptyStorage() {

@@ -58,7 +58,10 @@ public class BlockReplay {
       return Optional.empty();
     }
     final MutableWorldState mutableWorldState =
-        worldStateArchive.getMutable(previous.getStateRoot());
+        worldStateArchive.getMutable(previous.getStateRoot()).orElse(null);
+    if (mutableWorldState == null) {
+      return Optional.empty();
+    }
     final BlockHashLookup blockHashLookup = new BlockHashLookup(header, blockchain);
     for (final Transaction transaction : body.getTransactions()) {
       if (transaction.hash().equals(transactionHash)) {

@@ -68,6 +68,11 @@ public class KeyValueStorageWorldStateStorage implements WorldStateStorage {
   }
 
   @Override
+  public boolean isWorldStateAvailable(final Bytes32 rootHash) {
+    return getAccountStateTrieNode(rootHash).isPresent();
+  }
+
+  @Override
   public Updater updater() {
     return new Updater(keyValueStorage.startTransaction());
   }

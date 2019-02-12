@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.core.WorldState;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.LogsQuery;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -34,6 +35,7 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
@@ -85,16 +87,8 @@ public class BlockchainQueries {
    */
   public Optional<UInt256> storageAt(
       final Address address, final UInt256 storageIndex, final long blockNumber) {
-    if (!withinValidRange(blockNumber)) {
-      return Optional.empty();
-    }
-    return Optional.of(
-        blockchain
-            .getBlockHeader(blockNumber)
-            .map(header -> worldStateArchive.get(header.getStateRoot()))
-            .map(worldState -> worldState.get(address))
-            .map(account -> account.getStorageValue(storageIndex))
-            .orElse(UInt256.ZERO));
+    return fromAccount(
+        address, blockNumber, account -> account.getStorageValue(storageIndex), UInt256.ZERO);
   }
 
   /**
@@ -105,16 +99,7 @@ public class BlockchainQueries {
    * @return The balance of the account in Wei.
    */
   public Optional<Wei> accountBalance(final Address address, final long blockNumber) {
-    if (!withinValidRange(blockNumber)) {
-      return Optional.empty();
-    }
-    return Optional.of(
-        blockchain
-            .getBlockHeader(blockNumber)
-            .map(header -> worldStateArchive.get(header.getStateRoot()))
-            .map(worldState -> worldState.get(address))
-            .map(Account::getBalance)
-            .orElse(Wei.ZERO));
+    return fromAccount(address, blockNumber, Account::getBalance, Wei.ZERO);
   }
 
   /**
@@ -125,16 +110,7 @@ public class BlockchainQueries {
    * @return The code associated with this address.
    */
   public Optional<BytesValue> getCode(final Address address, final long blockNumber) {
-    if (!withinValidRange(blockNumber)) {
-      return Optional.empty();
-    }
-    return Optional.of(
-        blockchain
-            .getBlockHeader(blockNumber)
-            .map(bh -> worldStateArchive.get(bh.getStateRoot()))
-            .map(ws -> ws.get(address))
-            .map(Account::getCode)
-            .orElse(BytesValue.EMPTY));
+    return fromAccount(address, blockNumber, Account::getCode, BytesValue.EMPTY);
   }
 
   /**
@@ -178,9 +154,7 @@ public class BlockchainQueries {
    * @return The number of transactions sent from the given address.
    */
   public long getTransactionCount(final Address address, final long blockNumber) {
-    return blockchain
-        .getBlockHeader(blockNumber)
-        .map(header -> worldStateArchive.get(header.getStateRoot()))
+    return getWorldState(blockNumber)
         .map(worldState -> worldState.get(address))
         .map(Account::getNonce)
         .orElse(0L);
@@ -582,9 +556,28 @@ public class BlockchainQueries {
    * @param blockNumber the block number
    * @return the world state at the block number
    */
-  public Optional<MutableWorldState> worldState(final long blockNumber) {
+  public Optional<MutableWorldState> getWorldState(final long blockNumber) {
     final Optional<BlockHeader> header = blockchain.getBlockHeader(blockNumber);
-    return header.map(BlockHeader::getStateRoot).map(worldStateArchive::getMutable);
+    return header.map(BlockHeader::getStateRoot).flatMap(worldStateArchive::getMutable);
+  }
+
+  private <T> Optional<T> fromWorldState(
+      final long blockNumber, final Function<WorldState, T> getter) {
+    if (!withinValidRange(blockNumber)) {
+      return Optional.empty();
+    }
+    return getWorldState(blockNumber).map(getter);
+  }
+
+  private <T> Optional<T> fromAccount(
+      final Address address,
+      final long blockNumber,
+      final Function<Account, T> getter,
+      final T noAccountValue) {
+    return fromWorldState(
+        blockNumber,
+        worldState ->
+            Optional.ofNullable(worldState.get(address)).map(getter).orElse(noAccountValue));
   }
 
   private List<TransactionWithMetadata> formatTransactions(

@@ -74,7 +74,7 @@ public class BlockchainReferenceTestTools {
 
   public static void executeTest(final BlockchainReferenceTestCaseSpec spec) {
     final MutableWorldState worldState =
-        spec.getWorldStateArchive().getMutable(spec.getGenesisBlockHeader().getStateRoot());
+        spec.getWorldStateArchive().getMutable(spec.getGenesisBlockHeader().getStateRoot()).get();
     final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
     assertThat(worldState.rootHash()).isEqualTo(genesisBlockHeader.getStateRoot());
 
