@@ -141,12 +141,16 @@ public class ParallelImportChainSegmentTask<C, B> extends AbstractEthTask<List<B
       final EthScheduler scheduler = ethContext.getScheduler();
       final CompletableFuture<?> downloadHeaderFuture =
           scheduler.scheduleServiceTask(downloadHeadersTask);
+      registerSubTask(downloadHeaderFuture);
       final CompletableFuture<?> validateHeaderFuture =
           scheduler.scheduleServiceTask(validateHeadersTask);
+      registerSubTask(validateHeaderFuture);
       final CompletableFuture<?> downloadBodiesFuture =
           scheduler.scheduleServiceTask(downloadBodiesTask);
+      registerSubTask(downloadBodiesFuture);
       final CompletableFuture<AbstractPeerTask.PeerTaskResult<List<List<B>>>> validateBodiesFuture =
           scheduler.scheduleServiceTask(validateAndImportBodiesTask);
+      registerSubTask(validateBodiesFuture);
 
       // Hook in pipeline completion signaling.
       downloadHeadersTask.shutdown();
