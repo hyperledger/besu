@@ -78,7 +78,8 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
             (gasLimit) -> gasLimit,
             nodeKeys,
             minTransactionGasPrice,
-            parentHeader);
+            parentHeader,
+            epochManager);
 
     final CliqueBlockMiner currentRunningMiner =
         new CliqueBlockMiner(

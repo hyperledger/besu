@@ -16,6 +16,7 @@ import tech.pegasys.pantheon.consensus.clique.CliqueBlockHashing;
 import tech.pegasys.pantheon.consensus.clique.CliqueBlockInterface;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
+import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.ValidatorVote;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.crypto.SECP256K1;
@@ -40,6 +41,7 @@ import java.util.function.Function;
 public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
 
   private final KeyPair nodeKeys;
+  private final EpochManager epochManager;
 
   public CliqueBlockCreator(
       final Address coinbase,
@@ -50,7 +52,8 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
       final Function<Long, Long> gasLimitCalculator,
       final KeyPair nodeKeys,
       final Wei minTransactionGasPrice,
-      final BlockHeader parentHeader) {
+      final BlockHeader parentHeader,
+      final EpochManager epochManager) {
     super(
         coinbase,
         extraDataCalculator,
@@ -62,6 +65,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
         Util.publicKeyToAddress(nodeKeys.getPublicKey()),
         parentHeader);
     this.nodeKeys = nodeKeys;
+    this.epochManager = epochManager;
   }
 
   /**
@@ -74,7 +78,6 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
    */
   @Override
   protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
-
     final BlockHashFunction blockHashFunction =
         ScheduleBasedBlockHashFunction.create(protocolSchedule);
 
@@ -84,22 +87,28 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
             .mixHash(Hash.ZERO)
             .blockHashFunction(blockHashFunction);
 
-    final CliqueContext cliqueContext = protocolContext.getConsensusState();
-    final VoteTally voteTally =
-        cliqueContext.getVoteTallyCache().getVoteTallyAfterBlock(parentHeader);
-
-    final Optional<ValidatorVote> vote =
-        cliqueContext
-            .getVoteProposer()
-            .getVote(Util.publicKeyToAddress(nodeKeys.getPublicKey()), voteTally);
+    final Optional<ValidatorVote> vote = determineCliqueVote(sealableBlockHeader);
     final BlockHeaderBuilder builderIncludingProposedVotes =
-        CliqueBlockInterface.insertVoteToHeaderBuilder(builder, vote);
-
+        CliqueBlockInterface.createHeaderBuilderWithVoteHeaders(builder, vote);
     final CliqueExtraData sealedExtraData =
         constructSignedExtraData(builderIncludingProposedVotes.buildBlockHeader());
 
     // Replace the extraData in the BlockHeaderBuilder, and return header.
-    return builder.extraData(sealedExtraData.encode()).buildBlockHeader();
+    return builderIncludingProposedVotes.extraData(sealedExtraData.encode()).buildBlockHeader();
+  }
+
+  private Optional<ValidatorVote> determineCliqueVote(
+      final SealableBlockHeader sealableBlockHeader) {
+    if (epochManager.isEpochBlock(sealableBlockHeader.getNumber())) {
+      return Optional.empty();
+    } else {
+      final CliqueContext cliqueContext = protocolContext.getConsensusState();
+      final VoteTally voteTally =
+          cliqueContext.getVoteTallyCache().getVoteTallyAfterBlock(parentHeader);
+      return cliqueContext
+          .getVoteProposer()
+          .getVote(Util.publicKeyToAddress(nodeKeys.getPublicKey()), voteTally);
+    }
   }
 
   /**
