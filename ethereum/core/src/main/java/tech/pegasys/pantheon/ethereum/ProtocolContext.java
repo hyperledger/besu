@@ -12,8 +12,18 @@
  */
 package tech.pegasys.pantheon.ethereum;
 
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.chain.BlockchainStorage;
+import tech.pegasys.pantheon.ethereum.chain.DefaultMutableBlockchain;
+import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
+
+import java.util.function.BiFunction;
 
 /**
  * Holds the mutable state used to track the current context of the protocol. This is primarily the
@@ -34,6 +44,28 @@ public class ProtocolContext<C> {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.consensusState = consensusState;
+  }
+
+  public static <T> ProtocolContext<T> init(
+      final StorageProvider storageProvider,
+      final GenesisState genesisState,
+      final ProtocolSchedule<T> protocolSchedule,
+      final MetricsSystem metricsSystem,
+      final BiFunction<Blockchain, WorldStateArchive, T> consensusContextFactory) {
+    final BlockchainStorage blockchainStorage =
+        storageProvider.createBlockchainStorage(protocolSchedule);
+    final WorldStateStorage worldStateStorage = storageProvider.createWorldStateStorage();
+
+    final MutableBlockchain blockchain =
+        new DefaultMutableBlockchain(genesisState.getBlock(), blockchainStorage, metricsSystem);
+
+    final WorldStateArchive worldStateArchive = new WorldStateArchive(worldStateStorage);
+    genesisState.writeStateTo(worldStateArchive.getMutable());
+
+    return new ProtocolContext<>(
+        blockchain,
+        worldStateArchive,
+        consensusContextFactory.apply(blockchain, worldStateArchive));
   }
 
   public MutableBlockchain getBlockchain() {
