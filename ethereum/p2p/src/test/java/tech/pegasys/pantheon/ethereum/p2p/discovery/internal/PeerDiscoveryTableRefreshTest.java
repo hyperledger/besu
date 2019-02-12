@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verify;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.util.Subscribers;
@@ -69,23 +70,29 @@ public class PeerDiscoveryTableRefreshTest {
     // Send a PING, so as to add a Peer in the controller.
     final PingPacketData ping =
         PingPacketData.create(peers.get(1).getEndpoint(), peers.get(0).getEndpoint());
-    final Packet packet = Packet.create(PacketType.PING, ping, keypairs.get(1));
-    controller.onMessage(packet, peers.get(1));
+    final Packet pingPacket = Packet.create(PacketType.PING, ping, keypairs.get(1));
+    controller.onMessage(pingPacket, peers.get(1));
 
     // Wait until the controller has added the newly found peer.
     assertThat(controller.getPeers()).hasSize(1);
 
-    // As the controller performs refreshes, it'll send FIND_NEIGHBORS packets with random target
-    // IDs every time.
-    // We capture the packets so that we can later assert on them.
-    // Within 1000ms, there should be ~10 packets. But let's be less ambitious and expect at least
-    // 5.
+    // Simulate a PONG message from peer 0.
+    final PongPacketData pongPacketData =
+        PongPacketData.create(localPeer.getEndpoint(), pingPacket.getHash());
+    final Packet pongPacket = Packet.create(PacketType.PONG, pongPacketData, keypairs.get(0));
+
     final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
     for (int i = 0; i < 5; i++) {
+
+      controller.onMessage(pongPacket, peers.get(0));
+
+      controller.getRecursivePeerRefreshState().cancel();
       timer.runPeriodicHandlers();
+      controller.getPeers().forEach(p -> p.setStatus(PeerDiscoveryStatus.KNOWN));
+      controller.onMessage(pingPacket, peers.get(1));
     }
     verify(outboundMessageHandler, atLeast(5)).send(eq(peers.get(1)), captor.capture());
-    List<Packet> capturedFindNeighborsPackets =
+    final List<Packet> capturedFindNeighborsPackets =
         captor.getAllValues().stream()
             .filter(p -> p.getType().equals(PacketType.FIND_NEIGHBORS))
             .collect(Collectors.toList());

@@ -23,13 +23,13 @@ public class VertxTimerUtil implements TimerUtil {
   }
 
   @Override
-  public long setPeriodic(final long delay, final TimerHandler handler) {
-    return vertx.setPeriodic(delay, (l) -> handler.handle());
+  public long setPeriodic(final long delayInMs, final TimerHandler handler) {
+    return vertx.setPeriodic(delayInMs, (l) -> handler.handle());
   }
 
   @Override
-  public long setTimer(final long delay, final TimerHandler handler) {
-    return vertx.setTimer(delay, (l) -> handler.handle());
+  public long setTimer(final long delayInMs, final TimerHandler handler) {
+    return vertx.setTimer(delayInMs, (l) -> handler.handle());
   }
 
   @Override

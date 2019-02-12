@@ -24,14 +24,14 @@ public class MockTimerUtil implements TimerUtil {
   private final Map<Long, TimerHandler> periodicHandlers = new HashMap<>();
 
   @Override
-  public long setPeriodic(final long delay, final TimerHandler handler) {
+  public long setPeriodic(final long delayInMs, final TimerHandler handler) {
     long id = nextId.incrementAndGet();
     periodicHandlers.put(id, handler);
     return id;
   }
 
   @Override
-  public long setTimer(final long delay, final TimerHandler handler) {
+  public long setTimer(final long delayInMs, final TimerHandler handler) {
     long id = nextId.incrementAndGet();
     timerHandlers.put(id, handler);
     return id;
