@@ -118,6 +118,31 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
   }
 
   /**
+   * Utility for registring completable futures for cleanup if this EthTask is cancelled.
+   *
+   * @param subTaskFuture the future to be reigstered.
+   * @param <S> the type of data returned from the CompletableFuture
+   * @return The completableFuture that was executed
+   */
+  protected final <S> CompletableFuture<S> registerSubTask(
+      final CompletableFuture<S> subTaskFuture) {
+    synchronized (result) {
+      if (!isCancelled()) {
+        subTaskFutures.add(subTaskFuture);
+        subTaskFuture.whenComplete(
+            (r, t) -> {
+              subTaskFutures.remove(subTaskFuture);
+            });
+        return subTaskFuture;
+      } else {
+        final CompletableFuture<S> future = new CompletableFuture<>();
+        future.completeExceptionally(new CancellationException());
+        return future;
+      }
+    }
+  }
+
+  /**
    * Helper method for sending subTask to worker that will clean up if this EthTask is cancelled.
    *
    * @param scheduler the scheduler that will run worker task
