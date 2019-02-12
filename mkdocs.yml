@@ -69,6 +69,8 @@ nav:
         - Logging: Configuring-Pantheon/Logging.md
         - Bootnodes: Configuring-Pantheon/Bootnodes.md
         - Passing JVM Options: Configuring-Pantheon/Passing-JVM-Options.md
+    - Permissions:
+        - Nodes and Accounts Whitelists: Permissions/Permissioning.md
     - Using Pantheon:
         - Events and Logs:
           - Overview: Using-Pantheon/Events-and-Logs.md
