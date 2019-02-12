@@ -72,6 +72,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.Per
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.PermAddNodesToWhitelist;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.PermGetAccountsWhitelist;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.PermGetNodesWhitelist;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.PermReloadPermissionsFromFile;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.PermRemoveAccountsFromWhitelist;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.PermRemoveNodesFromWhitelist;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaSendRawTransaction;
@@ -240,18 +241,16 @@ public class JsonRpcMethodsFactory {
           enabledMethods,
           new PermAddNodesToWhitelist(p2pNetwork, parameter),
           new PermRemoveNodesFromWhitelist(p2pNetwork, parameter),
-          new PermGetNodesWhitelist(p2pNetwork));
+          new PermGetNodesWhitelist(p2pNetwork),
+          new PermGetAccountsWhitelist(accountsWhitelistController),
+          new PermAddAccountsToWhitelist(accountsWhitelistController, parameter),
+          new PermRemoveAccountsFromWhitelist(accountsWhitelistController, parameter),
+          new PermReloadPermissionsFromFile(
+              accountsWhitelistController, p2pNetwork.getNodeWhitelistController()));
     }
     if (rpcApis.contains(RpcApis.ADMIN)) {
       addMethods(enabledMethods, new AdminPeers(p2pNetwork));
       addMethods(enabledMethods, new AdminAddPeer(p2pNetwork, parameter));
-    }
-    if (rpcApis.contains(RpcApis.PERM)) {
-      addMethods(
-          enabledMethods,
-          new PermGetAccountsWhitelist(accountsWhitelistController),
-          new PermAddAccountsToWhitelist(accountsWhitelistController, parameter),
-          new PermRemoveAccountsFromWhitelist(accountsWhitelistController, parameter));
     }
     if (rpcApis.contains(RpcApis.EEA)) {
       addMethods(

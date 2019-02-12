@@ -10,10 +10,9 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon;
+package tech.pegasys.pantheon.ethereum.permissioning;
 
-import tech.pegasys.pantheon.cli.custom.EnodeToURIPropertyConverter;
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.net.URI;
 import java.util.List;
@@ -67,6 +66,15 @@ public class PermissioningConfigurationBuilder {
                 .parallelStream()
                 .map(Object::toString)
                 .collect(Collectors.toList());
+
+        accountsWhitelistToml.stream()
+            .filter(s -> !AccountWhitelistController.isValidAccountString(s))
+            .findFirst()
+            .ifPresent(
+                s -> {
+                  throw new IllegalArgumentException("Invalid account " + s);
+                });
+
         permissioningConfiguration.setAccountWhitelist(accountsWhitelistToml);
       } else {
         throw new Exception(
@@ -81,7 +89,7 @@ public class PermissioningConfigurationBuilder {
                 .toList()
                 .parallelStream()
                 .map(Object::toString)
-                .map(EnodeToURIPropertyConverter::convertToURI)
+                .map(EnodeURL::asURI)
                 .collect(Collectors.toList());
         permissioningConfiguration.setNodeWhitelist(nodesWhitelistToml);
       } else {

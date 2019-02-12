@@ -15,10 +15,10 @@ package tech.pegasys.pantheon.util;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import tech.pegasys.pantheon.PermissioningConfigurationBuilder;
 import tech.pegasys.pantheon.cli.EthNetworkConfig;
 import tech.pegasys.pantheon.cli.NetworkName;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfigurationBuilder;
 
 import java.net.URL;
 import java.nio.file.Files;
