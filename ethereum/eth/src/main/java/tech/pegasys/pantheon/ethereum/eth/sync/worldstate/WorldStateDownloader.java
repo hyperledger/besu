@@ -22,7 +22,10 @@ import tech.pegasys.pantheon.ethereum.eth.sync.tasks.WaitForPeerTask;
 import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage.Updater;
+import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.services.queue.BigQueue;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -43,6 +46,8 @@ import org.apache.logging.log4j.Logger;
 
 public class WorldStateDownloader {
   private static final Logger LOG = LogManager.getLogger();
+  private final Counter completedRequestsCounter;
+  private final Counter retriedRequestsTotal;
 
   private enum Status {
     IDLE,
@@ -67,13 +72,30 @@ public class WorldStateDownloader {
       final BigQueue<NodeDataRequest> pendingRequests,
       final int hashCountPerRequest,
       final int maxOutstandingRequests,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final LabelledMetric<OperationTimer> ethTasksTimer,
+      final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.worldStateStorage = worldStateStorage;
     this.pendingRequests = pendingRequests;
     this.hashCountPerRequest = hashCountPerRequest;
     this.maxOutstandingRequests = maxOutstandingRequests;
     this.ethTasksTimer = ethTasksTimer;
+    metricsSystem.createGauge(
+        MetricCategory.SYNCHRONIZER,
+        "world_state_pending_requests_current",
+        "Number of pending requests for fast sync world state download",
+        () -> (double) pendingRequests.size());
+
+    completedRequestsCounter =
+        metricsSystem.createCounter(
+            MetricCategory.SYNCHRONIZER,
+            "world_state_completed_requests_total",
+            "Total number of node data requests completed as part of fast sync world state download");
+    retriedRequestsTotal =
+        metricsSystem.createCounter(
+            MetricCategory.SYNCHRONIZER,
+            "world_state_retried_requests_total",
+            "Total number of node data requests repeated as part of fast sync world state download");
   }
 
   public CompletableFuture<Void> run(final BlockHeader header) {
@@ -184,8 +206,10 @@ public class WorldStateDownloader {
               for (NodeDataRequest request : requests) {
                 BytesValue matchingData = requestFailed ? null : data.get(request.getHash());
                 if (matchingData == null) {
+                  retriedRequestsTotal.inc();
                   pendingRequests.enqueue(request);
                 } else {
+                  completedRequestsCounter.inc();
                   // Persist request data
                   request.setData(matchingData);
                   request.persist(storageUpdater);

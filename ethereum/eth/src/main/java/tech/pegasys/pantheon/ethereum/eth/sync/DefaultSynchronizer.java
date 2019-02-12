@@ -105,7 +105,8 @@ public class DefaultSynchronizer<C> implements Synchronizer {
               stateQueue,
               syncConfig.getWorldStateHashCountPerRequest(),
               syncConfig.getWorldStateRequestParallelism(),
-              ethTasksTimer);
+              ethTasksTimer,
+              metricsSystem);
       this.fastSyncDownloader =
           Optional.of(
               new FastSyncDownloader<>(
