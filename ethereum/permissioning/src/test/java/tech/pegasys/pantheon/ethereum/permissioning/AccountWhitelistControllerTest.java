@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.permissioning;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
@@ -22,6 +23,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -177,5 +181,47 @@ public class AccountWhitelistControllerTest {
     verify(whitelistPersistor, times(3)).verifyConfigFileMatchesState(any(), any());
     verify(whitelistPersistor, times(2)).updateConfig(any(), any());
     verifyNoMoreInteractions(whitelistPersistor);
+  }
+
+  @Test
+  public void reloadAccountWhitelistWithValidConfigFileShouldUpdateWhitelist() throws Exception {
+    final String expectedAccount = "0x627306090abab3a6e1400e9345bc60c78a8bef57";
+    final Path permissionsFile = createPermissionsFileWithAccount(expectedAccount);
+
+    when(permissioningConfig.getConfigurationFilePath())
+        .thenReturn(permissionsFile.toAbsolutePath().toString());
+    when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
+    when(permissioningConfig.getAccountWhitelist())
+        .thenReturn(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
+    controller = new AccountWhitelistController(permissioningConfig, whitelistPersistor);
+
+    controller.reload();
+
+    assertThat(controller.getAccountWhitelist()).containsExactly(expectedAccount);
+  }
+
+  @Test
+  public void reloadAccountWhitelistWithErrorReadingConfigFileShouldKeepOldWhitelist() {
+    when(permissioningConfig.getConfigurationFilePath()).thenReturn("foo");
+    when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
+    when(permissioningConfig.getAccountWhitelist())
+        .thenReturn(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
+    controller = new AccountWhitelistController(permissioningConfig, whitelistPersistor);
+
+    final Throwable thrown = catchThrowable(() -> controller.reload());
+
+    assertThat(thrown)
+        .isInstanceOf(RuntimeException.class)
+        .hasMessageContaining("Unable to read permissions TOML config file");
+
+    assertThat(controller.getAccountWhitelist())
+        .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
+  }
+
+  private Path createPermissionsFileWithAccount(final String account) throws IOException {
+    final String nodePermissionsFileContent = "accounts-whitelist=[\"" + account + "\"]";
+    final Path permissionsFile = Files.createTempFile("account_permissions", "");
+    Files.write(permissionsFile, nodePermissionsFileContent.getBytes(StandardCharsets.UTF_8));
+    return permissionsFile;
   }
 }

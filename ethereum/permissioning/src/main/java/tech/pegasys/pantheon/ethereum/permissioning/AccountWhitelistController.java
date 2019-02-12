@@ -20,9 +20,15 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class AccountWhitelistController {
 
+  private static final Logger LOG = LogManager.getLogger();
+
   private static final int ACCOUNT_BYTES_SIZE = 20;
+  private PermissioningConfiguration configuration;
   private List<String> accountWhitelist = new ArrayList<>();
   private final WhitelistPersistor whitelistPersistor;
 
@@ -32,7 +38,12 @@ public class AccountWhitelistController {
 
   public AccountWhitelistController(
       final PermissioningConfiguration configuration, final WhitelistPersistor whitelistPersistor) {
+    this.configuration = configuration;
     this.whitelistPersistor = whitelistPersistor;
+    readAccountsFromConfig(configuration);
+  }
+
+  private void readAccountsFromConfig(final PermissioningConfiguration configuration) {
     if (configuration != null && configuration.isAccountWhitelistEnabled()) {
       if (!configuration.getAccountWhitelist().isEmpty()) {
         addAccounts(configuration.getAccountWhitelist());
@@ -135,15 +146,38 @@ public class AccountWhitelistController {
   }
 
   private boolean containsInvalidAccount(final List<String> accounts) {
-    return !accounts.stream().allMatch(this::isValidAccountString);
+    return !accounts.stream().allMatch(AccountWhitelistController::isValidAccountString);
   }
 
-  private boolean isValidAccountString(final String account) {
+  static boolean isValidAccountString(final String account) {
     try {
       BytesValue bytesValue = BytesValue.fromHexString(account);
       return bytesValue.size() == ACCOUNT_BYTES_SIZE;
     } catch (NullPointerException | IndexOutOfBoundsException | IllegalArgumentException e) {
       return false;
+    }
+  }
+
+  public synchronized void reload() throws RuntimeException {
+    final ArrayList<String> currentAccountsList = new ArrayList<>(accountWhitelist);
+    accountWhitelist.clear();
+
+    try {
+      final PermissioningConfiguration updatedConfig =
+          PermissioningConfigurationBuilder.permissioningConfigurationFromToml(
+              configuration.getConfigurationFilePath(),
+              configuration.isNodeWhitelistEnabled(),
+              configuration.isAccountWhitelistEnabled());
+      readAccountsFromConfig(updatedConfig);
+      configuration = updatedConfig;
+    } catch (Exception e) {
+      LOG.warn(
+          "Error reloading permissions file. In-memory whitelisted accounts will be reverted to previous valid configuration. "
+              + "Details: {}",
+          e.getMessage());
+      accountWhitelist.clear();
+      accountWhitelist.addAll(currentAccountsList);
+      throw new RuntimeException(e);
     }
   }
 }

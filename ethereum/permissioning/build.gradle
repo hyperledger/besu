@@ -27,8 +27,10 @@ jar {
 
 dependencies {
   implementation project(':util')
+
   implementation 'com.google.guava:guava'
   implementation 'net.consensys.cava:cava-toml'
+  implementation 'org.apache.logging.log4j:log4j-api'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'

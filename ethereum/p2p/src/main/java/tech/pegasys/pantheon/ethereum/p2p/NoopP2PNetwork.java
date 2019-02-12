@@ -85,7 +85,7 @@ public class NoopP2PNetwork implements P2PNetwork {
 
   @Override
   public Optional<NodeWhitelistController> getNodeWhitelistController() {
-    throw new P2pDisabledException("P2P networking disabled.  Node whitelist unavailable.");
+    return Optional.empty();
   }
 
   @Override
