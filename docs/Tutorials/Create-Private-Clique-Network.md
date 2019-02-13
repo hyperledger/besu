@@ -101,6 +101,7 @@ Copy the following genesis definition to a file called `cliqueGenesis.json` and 
 {
   "config":{
     "chainId":1981,
+    "constantinoplefixblock": 0,
     "clique":{
       "blockperiodseconds":15,
       "epochlength":30000
