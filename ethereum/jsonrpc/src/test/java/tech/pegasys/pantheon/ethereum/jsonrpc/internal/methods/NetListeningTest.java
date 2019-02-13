@@ -63,7 +63,7 @@ public class NetListeningTest {
   @Test
   public void getPermissions() {
     List<String> permissions = method.getPermissions();
-    assertThat(permissions).containsExactlyInAnyOrder("net/*", "net/listening", "*/*");
+    assertThat(permissions).containsExactlyInAnyOrder("net:*", "net:listening", "*:*");
   }
 
   private JsonRpcRequest netListeningRequest() {
