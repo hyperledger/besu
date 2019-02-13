@@ -121,7 +121,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
   public static PantheonController<IbftContext> init(
       final StorageProvider storageProvider,
       final GenesisConfigFile genesisConfig,
-      final SynchronizerConfiguration taintedSyncConfig,
+      final SynchronizerConfiguration syncConfig,
       final MiningParameters miningParams,
       final int networkId,
       final KeyPair nodeKeys,
@@ -152,7 +152,6 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
     final VoteTally voteTally = protocolContext.getConsensusState().getVoteTally();
 
-    final SynchronizerConfiguration syncConfig = taintedSyncConfig.validated(blockchain);
     final boolean fastSyncEnabled = syncConfig.syncMode().equals(SyncMode.FAST);
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(

@@ -88,11 +88,7 @@ public class BlockPropagationManagerTest {
             tempProtocolContext.getConsensusState());
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(blockchain, blockchainUtil.getWorldArchive());
-    syncConfig =
-        SynchronizerConfiguration.builder()
-            .blockPropagationRange(-3, 5)
-            .build()
-            .validated(blockchain);
+    syncConfig = SynchronizerConfiguration.builder().blockPropagationRange(-3, 5).build();
     syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
     blockPropagationManager =
         new BlockPropagationManager<>(
@@ -466,10 +462,7 @@ public class BlockPropagationManagerTest {
   public void purgesOldBlocks() {
     final int oldBlocksToImport = 3;
     syncConfig =
-        SynchronizerConfiguration.builder()
-            .blockPropagationRange(-oldBlocksToImport, 5)
-            .build()
-            .validated(blockchain);
+        SynchronizerConfiguration.builder().blockPropagationRange(-oldBlocksToImport, 5).build();
     final BlockPropagationManager<Void> blockPropagationManager =
         new BlockPropagationManager<>(
             syncConfig,

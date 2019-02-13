@@ -92,7 +92,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
   public static PantheonController<IbftContext> init(
       final StorageProvider storageProvider,
       final GenesisConfigFile genesisConfig,
-      final SynchronizerConfiguration taintedSyncConfig,
+      final SynchronizerConfiguration syncConfig,
       final boolean ottomanTestnetOperation,
       final int networkId,
       final KeyPair nodeKeys,
@@ -121,7 +121,6 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
             });
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
-    final SynchronizerConfiguration syncConfig = taintedSyncConfig.validated(blockchain);
     final boolean fastSyncEnabled = syncConfig.syncMode().equals(SyncMode.FAST);
     final EthProtocolManager ethProtocolManager;
     final SubProtocol ethSubProtocol;
