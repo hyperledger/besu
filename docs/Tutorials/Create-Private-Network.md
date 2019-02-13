@@ -57,6 +57,7 @@ Copy the following genesis definition to a file called `privateNetworkGenesis.js
 ```json
 {
   "config": {
+      "constantinoplefixblock": 0,
       "ethash": {
         "fixeddifficulty": 1000
       },
