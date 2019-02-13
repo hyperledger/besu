@@ -15,8 +15,11 @@ package tech.pegasys.pantheon.ethereum.eth.sync.worldstate;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage.Updater;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 class CodeNodeDataRequest extends NodeDataRequest {
@@ -35,5 +38,10 @@ class CodeNodeDataRequest extends NodeDataRequest {
   public Stream<NodeDataRequest> getChildRequests() {
     // Code nodes have nothing further to download
     return Stream.empty();
+  }
+
+  @Override
+  public Optional<BytesValue> getExistingData(final WorldStateStorage worldStateStorage) {
+    return worldStateStorage.getCode(getHash());
   }
 }

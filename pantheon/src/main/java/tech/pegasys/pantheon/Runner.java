@@ -88,9 +88,6 @@ public class Runner implements AutoCloseable {
 
   @Override
   public void close() throws Exception {
-    if (networkRunner.getNetwork().isP2pEnabled()) {
-      pantheonController.getSynchronizer().stop();
-    }
     networkRunner.stop();
     networkRunner.awaitStop();
 
