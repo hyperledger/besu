@@ -30,6 +30,7 @@ import tech.pegasys.pantheon.RunnerBuilder;
 import tech.pegasys.pantheon.cli.custom.CorsAllowedOriginsProperty;
 import tech.pegasys.pantheon.cli.custom.EnodeToURIPropertyConverter;
 import tech.pegasys.pantheon.cli.custom.JsonRPCWhitelistHostsProperty;
+import tech.pegasys.pantheon.cli.custom.RpcAuthConverter;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.CliqueRpcApis;
 import tech.pegasys.pantheon.consensus.ibft.jsonrpc.IbftRpcApis;
@@ -272,8 +273,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--rpc-http-authentication-enabled"},
       description =
-          "Set if the JSON-RPC service should require authentication (default: ${DEFAULT-VALUE})",
-      hidden = true)
+          "Set if the JSON-RPC service should require authentication (default: ${DEFAULT-VALUE})")
   private final Boolean isRpcHttpAuthenticationEnabled = false;
 
   @Option(
@@ -282,7 +282,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       description =
           "Storage file for rpc http authentication credentials (default: ${DEFAULT-VALUE})",
       arity = "1",
-      hidden = true)
+      converter = RpcAuthConverter.class)
   private String rpcHttpAuthenticationCredentialsFile = null;
 
   @Option(
