@@ -25,6 +25,8 @@ public interface NodeConfiguration {
 
   void useWebSocketsForJsonRpc();
 
+  void useAuthenticationTokenInHeaderForJsonRpc(String token);
+
   Optional<Integer> jsonRpcWebSocketPort();
 
   String hostName();

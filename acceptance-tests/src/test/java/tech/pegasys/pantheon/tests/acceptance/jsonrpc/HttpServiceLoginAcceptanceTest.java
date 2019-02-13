@@ -14,6 +14,9 @@ package tech.pegasys.pantheon.tests.acceptance.jsonrpc;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.Cluster;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -22,12 +25,18 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
+  private Cluster authenticatedCluster;
   private Node node;
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
+    final ClusterConfiguration clusterConfiguration =
+        new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
+
+    authenticatedCluster = new Cluster(clusterConfiguration, net);
     node = pantheon.createArchiveNodeWithAuthentication("node1");
-    cluster.start(node);
+    authenticatedCluster.start(node);
+    node.verify(login.awaitLoginResponse("user", "badpassword"));
   }
 
   @Test
@@ -38,5 +47,18 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void shouldSucceedLoginWithCorrectCredentials() {
     node.verify(login.loginSucceeds("user", "pegasys"));
+  }
+
+  @Test
+  public void jsonRpcMethodShouldSucceedWithAuthenticatedUserAndPermission() {
+    node.verify(login.loginSucceedsAndSetsAuthenticationToken("user", "pegasys"));
+    node.verify(net.awaitPeerCount(0));
+    node.verify(net.netVersionUnauthorizedExceptional("Unauthorized"));
+  }
+
+  @Override
+  public void tearDownAcceptanceTestBase() {
+    authenticatedCluster.stop();
+    super.tearDownAcceptanceTestBase();
   }
 }

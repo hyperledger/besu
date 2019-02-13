@@ -90,6 +90,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
   private HttpRequestFactory httpRequestFactory;
   private Optional<EthNetworkConfig> ethNetworkConfig = Optional.empty();
   private boolean useWsForJsonRpc = false;
+  private String token = null;
 
   public PantheonNode(
       final String name,
@@ -201,6 +202,10 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
               .map(url -> new HttpService(url))
               .orElse(new HttpService("http://" + LOCALHOST + ":" + port));
 
+      if (token != null) {
+        ((HttpService) web3jService).addHeader("Bearer", token);
+      }
+
       jsonRequestFactories =
           new JsonRequestFactories(
               new JsonRpc2_0Web3j(web3jService, 2000, Async.defaultExecutorService()),
@@ -253,6 +258,21 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     }
 
     useWsForJsonRpc = true;
+  }
+
+  /** All future JSON-RPC calls will include the authentication token. */
+  @Override
+  public void useAuthenticationTokenInHeaderForJsonRpc(final String token) {
+
+    if (jsonRequestFactories != null) {
+      jsonRequestFactories.shutdown();
+    }
+
+    if (httpRequestFactory != null) {
+      httpRequestFactory = null;
+    }
+
+    this.token = token;
   }
 
   private void checkIfWebSocketEndpointIsAvailable(final String url) {
