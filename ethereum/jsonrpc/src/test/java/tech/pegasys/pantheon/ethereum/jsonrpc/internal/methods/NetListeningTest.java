@@ -20,6 +20,8 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 
+import java.util.List;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,6 +58,12 @@ public class NetListeningTest {
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, false);
 
     assertThat(method.response(request)).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void getPermissions() {
+    List<String> permissions = method.getPermissions();
+    assertThat(permissions).containsExactlyInAnyOrder("net/*", "net/listening", "*/*");
   }
 
   private JsonRpcRequest netListeningRequest() {

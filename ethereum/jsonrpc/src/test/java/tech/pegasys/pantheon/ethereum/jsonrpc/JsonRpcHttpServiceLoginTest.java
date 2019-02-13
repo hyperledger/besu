@@ -23,7 +23,12 @@ import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthAccounts;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthBlockNumber;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.NetVersion;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.Web3ClientVersion;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.Web3Sha3;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
@@ -91,7 +96,8 @@ public class JsonRpcHttpServiceLoginTest {
   protected static Synchronizer synchronizer;
   protected static final Collection<RpcApi> JSON_RPC_APIS =
       Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3, RpcApis.ADMIN);
-  private static JWTAuth jwtAuth;
+  protected static JWTAuth jwtAuth;
+  protected static String authPermissionsConfigFilePath = "JsonRpcHttpService/auth.toml";
 
   @BeforeClass
   public static void initServerAndClient() throws Exception {
@@ -133,7 +139,7 @@ public class JsonRpcHttpServiceLoginTest {
 
   private static JsonRpcHttpService createJsonRpcHttpService() throws Exception {
     final String authTomlPath =
-        Paths.get(ClassLoader.getSystemResource("JsonRpcHttpService/auth.toml").toURI())
+        Paths.get(ClassLoader.getSystemResource(authPermissionsConfigFilePath).toURI())
             .toAbsolutePath()
             .toString();
 
@@ -326,5 +332,55 @@ public class JsonRpcHttpServiceLoginTest {
       assertThat(jwtPayloadString.contains("password")).isFalse();
       assertThat(jwtPayloadString.contains("pegasys")).isFalse();
     }
+  }
+
+  @Test
+  public void checkJsonRpcMethodsAvailableWithGoodCredentialsAndPermissions() throws IOException {
+    final RequestBody body =
+        RequestBody.create(JSON, "{\"username\":\"user\",\"password\":\"pegasys\"}");
+    final Request request = new Request.Builder().post(body).url(baseUrl + "/login").build();
+    try (final Response resp = client.newCall(request).execute()) {
+      assertThat(resp.code()).isEqualTo(200);
+      assertThat(resp.message()).isEqualTo("OK");
+      assertThat(resp.body().contentType()).isNotNull();
+      assertThat(resp.body().contentType().type()).isEqualTo("application");
+      assertThat(resp.body().contentType().subtype()).isEqualTo("json");
+      final String bodyString = resp.body().string();
+      assertThat(bodyString).isNotNull();
+      assertThat(bodyString).isNotBlank();
+
+      final JsonObject respBody = new JsonObject(bodyString);
+      final String token = respBody.getString("token");
+      assertThat(token).isNotNull();
+
+      JsonRpcMethod ethAccounts = new EthAccounts();
+      JsonRpcMethod netVersion = new NetVersion(123);
+      JsonRpcMethod ethBlockNumber = new EthBlockNumber(blockchainQueries);
+      JsonRpcMethod web3Sha3 = new Web3Sha3();
+      JsonRpcMethod web3ClientVersion = new Web3ClientVersion("777");
+
+      jwtAuth.authenticate(
+          new JsonObject().put("jwt", token),
+          (r) -> {
+            assertThat(r.succeeded()).isTrue();
+            final User user = r.result();
+            // single eth/blockNumber method permitted
+            assertThat(service.isPermitted(Optional.of(user), ethBlockNumber)).isTrue();
+            // eth/accounts not permitted
+            assertThat(service.isPermitted(Optional.of(user), ethAccounts)).isFalse();
+            // allowed by web3/*
+            assertThat(service.isPermitted(Optional.of(user), web3ClientVersion)).isTrue();
+            assertThat(service.isPermitted(Optional.of(user), web3Sha3)).isTrue();
+            // no net permissions
+            assertThat(service.isPermitted(Optional.of(user), netVersion)).isFalse();
+          });
+    }
+  }
+
+  @Test
+  public void checkPermissionsWithEmptyUser() {
+    JsonRpcMethod ethAccounts = new EthAccounts();
+
+    assertThat(service.isPermitted(Optional.empty(), ethAccounts)).isTrue();
   }
 }

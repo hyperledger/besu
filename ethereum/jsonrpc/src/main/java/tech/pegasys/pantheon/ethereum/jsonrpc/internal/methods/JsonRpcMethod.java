@@ -15,6 +15,9 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public interface JsonRpcMethod {
 
   /**
@@ -31,4 +34,17 @@ public interface JsonRpcMethod {
    * @return output from applying the JSON-RPC method to the input.
    */
   JsonRpcResponse response(JsonRpcRequest request);
+
+  /**
+   * The list of Permissions that correspond to this JSON-RPC method. e.g. [net/*, net/listening]
+   *
+   * @return list of permissions that match this method.
+   */
+  default List<String> getPermissions() {
+    List<String> permissions = new ArrayList<>();
+    permissions.add("*/*");
+    permissions.add(this.getName().replace('_', '/'));
+    permissions.add(this.getName().substring(0, this.getName().indexOf('_')) + "/*");
+    return permissions;
+  };
 }

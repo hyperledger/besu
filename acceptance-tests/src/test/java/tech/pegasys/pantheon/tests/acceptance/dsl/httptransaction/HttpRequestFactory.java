@@ -66,4 +66,16 @@ public class HttpRequestFactory {
       assertThat(response.message()).isEqualTo("Unauthorized");
     }
   }
+
+  public String loginResponds(final String username, final String password) throws IOException {
+    final RequestBody requestBody =
+        RequestBody.create(
+            JSON, "{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}");
+    final Request request = new Request.Builder().post(requestBody).url(uri + "/login").build();
+    try (final Response response = client.newCall(request).execute()) {
+      assertThat(response).isNotNull();
+      assertThat(response.message()).isNotNull();
+      return response.message();
+    }
+  }
 }

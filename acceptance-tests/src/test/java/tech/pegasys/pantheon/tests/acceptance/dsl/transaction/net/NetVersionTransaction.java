@@ -17,8 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
-import java.io.IOException;
-
 import org.web3j.protocol.core.methods.response.NetVersion;
 
 public class NetVersionTransaction implements Transaction<String> {
@@ -32,7 +30,7 @@ public class NetVersionTransaction implements Transaction<String> {
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
       return result.getNetVersion();
-    } catch (final IOException e) {
+    } catch (final Exception e) {
       throw new RuntimeException(e);
     }
   }

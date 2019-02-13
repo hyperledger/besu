@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.AwaitNetPeerCoun
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionConnectionException;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionConnectionExceptionWithCause;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionIsNotBlank;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionPermissionException;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetTransactions;
 
 import java.math.BigInteger;
@@ -44,6 +45,10 @@ public class Net {
 
   public Condition netVersionExceptional(final Class<? extends Throwable> cause) {
     return new ExpectNetVersionConnectionExceptionWithCause(transactions.netVersion(), cause);
+  }
+
+  public Condition netVersionUnauthorizedExceptional(final String expectedMessage) {
+    return new ExpectNetVersionPermissionException(transactions.netVersion(), expectedMessage);
   }
 
   public Condition awaitPeerCountExceptional() {
