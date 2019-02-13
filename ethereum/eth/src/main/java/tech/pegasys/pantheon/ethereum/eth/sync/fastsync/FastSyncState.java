@@ -22,18 +22,21 @@ import com.google.common.base.MoreObjects;
 
 public class FastSyncState {
 
+  public static FastSyncState EMPTY_SYNC_STATE =
+      new FastSyncState(OptionalLong.empty(), Optional.empty());
+
   private final OptionalLong pivotBlockNumber;
   private final Optional<BlockHeader> pivotBlockHeader;
 
-  public FastSyncState() {
-    this(OptionalLong.empty(), Optional.empty());
+  public FastSyncState(final long pivotBlockNumber) {
+    this(OptionalLong.of(pivotBlockNumber), Optional.empty());
   }
 
-  public FastSyncState(final OptionalLong pivotBlockNumber) {
-    this(pivotBlockNumber, Optional.empty());
+  public FastSyncState(final BlockHeader pivotBlockHeader) {
+    this(OptionalLong.of(pivotBlockHeader.getNumber()), Optional.of(pivotBlockHeader));
   }
 
-  public FastSyncState(
+  private FastSyncState(
       final OptionalLong pivotBlockNumber, final Optional<BlockHeader> pivotBlockHeader) {
     this.pivotBlockNumber = pivotBlockNumber;
     this.pivotBlockHeader = pivotBlockHeader;
@@ -45,6 +48,10 @@ public class FastSyncState {
 
   public Optional<BlockHeader> getPivotBlockHeader() {
     return pivotBlockHeader;
+  }
+
+  public boolean hasPivotBlockHeader() {
+    return pivotBlockHeader.isPresent();
   }
 
   @Override

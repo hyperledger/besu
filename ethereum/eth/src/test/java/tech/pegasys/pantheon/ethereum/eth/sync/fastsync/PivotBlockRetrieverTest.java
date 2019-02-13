@@ -32,7 +32,6 @@ import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -87,9 +86,7 @@ public class PivotBlockRetrieverTest {
 
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(
-                OptionalLong.of(PIVOT_BLOCK_NUMBER),
-                blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER)));
+            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @Test
@@ -108,9 +105,7 @@ public class PivotBlockRetrieverTest {
 
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(
-                OptionalLong.of(PIVOT_BLOCK_NUMBER),
-                blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER)));
+            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @Test
@@ -135,9 +130,7 @@ public class PivotBlockRetrieverTest {
 
     assertThat(future)
         .isCompletedWithValue(
-            new FastSyncState(
-                OptionalLong.of(PIVOT_BLOCK_NUMBER),
-                blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER)));
+            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @Test

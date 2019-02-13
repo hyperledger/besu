@@ -23,27 +23,38 @@ public class FastSyncDownloader<C> {
   private static final Logger LOG = LogManager.getLogger();
   private final FastSyncActions<C> fastSyncActions;
   private final WorldStateDownloader worldStateDownloader;
+  private final FastSyncStateStorage fastSyncStateStorage;
 
   public FastSyncDownloader(
-      final FastSyncActions<C> fastSyncActions, final WorldStateDownloader worldStateDownloader) {
+      final FastSyncActions<C> fastSyncActions,
+      final WorldStateDownloader worldStateDownloader,
+      final FastSyncStateStorage fastSyncStateStorage) {
     this.fastSyncActions = fastSyncActions;
     this.worldStateDownloader = worldStateDownloader;
+    this.fastSyncStateStorage = fastSyncStateStorage;
   }
 
-  public CompletableFuture<FastSyncState> start() {
+  public CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
     LOG.info("Fast sync enabled");
     return fastSyncActions
-        .waitForSuitablePeers()
-        .thenCompose(state -> fastSyncActions.selectPivotBlock())
+        .waitForSuitablePeers(fastSyncState)
+        .thenCompose(fastSyncActions::selectPivotBlock)
         .thenCompose(fastSyncActions::downloadPivotBlockHeader)
+        .thenApply(this::storeState)
         .thenCompose(this::downloadChainAndWorldState);
+  }
+
+  private FastSyncState storeState(final FastSyncState state) {
+    fastSyncStateStorage.storeState(state);
+    return state;
   }
 
   private CompletableFuture<FastSyncState> downloadChainAndWorldState(
       final FastSyncState currentState) {
     final CompletableFuture<Void> worldStateFuture =
         worldStateDownloader.run(currentState.getPivotBlockHeader().get());
-    final CompletableFuture<Void> chainFuture = fastSyncActions.downloadChain(currentState);
+    final CompletableFuture<FastSyncState> chainFuture =
+        fastSyncActions.downloadChain(currentState);
 
     // If either download fails, cancel the other one.
     chainFuture.exceptionally(

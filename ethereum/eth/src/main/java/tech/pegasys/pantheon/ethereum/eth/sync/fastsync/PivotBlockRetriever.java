@@ -23,8 +23,6 @@ import tech.pegasys.pantheon.metrics.OperationTimer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -117,7 +115,7 @@ public class PivotBlockRetriever<C> {
     if (confirmations >= confirmationsRequired) {
       LOG.info(
           "Confirmed pivot block hash {} with {} confirmations", header.getHash(), confirmations);
-      result.complete(new FastSyncState(OptionalLong.of(header.getNumber()), Optional.of(header)));
+      result.complete(new FastSyncState(header));
       getHeaderTasks.forEach(RetryingGetHeaderFromPeerByNumberTask::cancel);
     }
   }

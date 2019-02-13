@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncState.EMPTY_SYNC_STATE;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
@@ -25,17 +26,18 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-public class PivotHeaderStorageTest {
+public class FastSyncStateStorageTest {
   @Rule public final TemporaryFolder tempDirRule = new TemporaryFolder();
 
-  private PivotHeaderStorage storage;
+  private FastSyncStateStorage storage;
   private final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().buildHeader();
+  private final FastSyncState syncStateWithHeader = new FastSyncState(pivotBlockHeader);
   private File tempDir;
 
   @Before
   public void setUp() throws Exception {
     tempDir = tempDirRule.newFolder();
-    storage = new PivotHeaderStorage(tempDir.toPath());
+    storage = new FastSyncStateStorage(tempDir.toPath());
   }
 
   @Test
@@ -45,26 +47,36 @@ public class PivotHeaderStorageTest {
 
   @Test
   public void shouldConsiderFastSyncInProgressWhenFileExists() {
-    storage.storePivotBlockHeader(pivotBlockHeader);
+    storage.storeState(syncStateWithHeader);
     assertThat(storage.isFastSyncInProgress()).isTrue();
 
-    final PivotHeaderStorage newStorage = new PivotHeaderStorage(tempDir.toPath());
+    final FastSyncStateStorage newStorage = new FastSyncStateStorage(tempDir.toPath());
     assertThat(newStorage.isFastSyncInProgress()).isTrue();
   }
 
   @Test
   public void shouldRoundTripHeader() {
-    storage.storePivotBlockHeader(pivotBlockHeader);
-    assertThat(storage.loadPivotBlockHeader(MainnetBlockHashFunction::createHash))
-        .contains(pivotBlockHeader);
+    storage.storeState(syncStateWithHeader);
+    assertThat(storage.loadState(MainnetBlockHashFunction::createHash))
+        .isEqualTo(syncStateWithHeader);
 
-    final PivotHeaderStorage newStorage = new PivotHeaderStorage(tempDir.toPath());
-    assertThat(newStorage.loadPivotBlockHeader(MainnetBlockHashFunction::createHash))
-        .contains(pivotBlockHeader);
+    final FastSyncStateStorage newStorage = new FastSyncStateStorage(tempDir.toPath());
+    assertThat(newStorage.loadState(MainnetBlockHashFunction::createHash))
+        .isEqualTo(syncStateWithHeader);
   }
 
   @Test
   public void shouldReturnEmptyWhenLoadingHeaderAndFileDoesNotExist() {
-    assertThat(storage.loadPivotBlockHeader(MainnetBlockHashFunction::createHash)).isEmpty();
+    assertThat(storage.loadState(MainnetBlockHashFunction::createHash)).isEqualTo(EMPTY_SYNC_STATE);
+  }
+
+  @Test
+  public void shouldRemoveStateFileWhenStoringFastSyncWithoutBlockHeader() {
+    storage.storeState(syncStateWithHeader);
+    assertThat(storage.loadState(MainnetBlockHashFunction::createHash))
+        .isEqualTo(syncStateWithHeader);
+
+    storage.storeState(EMPTY_SYNC_STATE);
+    assertThat(storage.loadState(MainnetBlockHashFunction::createHash)).isEqualTo(EMPTY_SYNC_STATE);
   }
 }
