@@ -23,15 +23,12 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.WaitForPeersTask;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.time.Duration;
-import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
@@ -46,7 +43,6 @@ public class FastSyncActions<C> {
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
-  private final PivotHeaderStorage pivotHeaderStorage;
   private final LabelledMetric<OperationTimer> ethTasksTimer;
   private final LabelledMetric<Counter> fastSyncValidationCounter;
 
@@ -56,7 +52,6 @@ public class FastSyncActions<C> {
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final PivotHeaderStorage pivotHeaderStorage,
       final LabelledMetric<OperationTimer> ethTasksTimer,
       final LabelledMetric<Counter> fastSyncValidationCounter) {
     this.syncConfig = syncConfig;
@@ -64,18 +59,21 @@ public class FastSyncActions<C> {
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.syncState = syncState;
-    this.pivotHeaderStorage = pivotHeaderStorage;
     this.ethTasksTimer = ethTasksTimer;
     this.fastSyncValidationCounter = fastSyncValidationCounter;
   }
 
-  public CompletableFuture<Void> waitForSuitablePeers() {
+  public CompletableFuture<FastSyncState> waitForSuitablePeers(final FastSyncState fastSyncState) {
+    if (fastSyncState.hasPivotBlockHeader()) {
+      return waitForAnyPeer().thenApply(ignore -> fastSyncState);
+    }
+
     final WaitForPeersTask waitForPeersTask =
         WaitForPeersTask.create(
             ethContext, syncConfig.getFastSyncMinimumPeerCount(), ethTasksTimer);
 
     final EthScheduler scheduler = ethContext.getScheduler();
-    final CompletableFuture<Void> result = new CompletableFuture<>();
+    final CompletableFuture<FastSyncState> result = new CompletableFuture<>();
     scheduler
         .timeout(waitForPeersTask, syncConfig.getFastSyncMaximumPeerWaitTime())
         .handle(
@@ -89,7 +87,7 @@ public class FastSyncActions<C> {
                   LOG.warn(
                       "Maximum wait time for fast sync reached but no peers available. Continuing to wait for any available peer.");
                   waitForAnyPeer()
-                      .thenAccept(result::complete)
+                      .thenAccept(value -> result.complete(fastSyncState))
                       .exceptionally(
                           taskError -> {
                             result.completeExceptionally(error);
@@ -130,17 +128,10 @@ public class FastSyncActions<C> {
             });
   }
 
-  public CompletableFuture<FastSyncState> selectPivotBlock() {
-    return loadPivotBlockFromStorage().orElseGet(this::selectPivotBlockFromPeers);
-  }
-
-  private Optional<CompletableFuture<FastSyncState>> loadPivotBlockFromStorage() {
-    return pivotHeaderStorage
-        .loadPivotBlockHeader(ScheduleBasedBlockHashFunction.create(protocolSchedule))
-        .map(
-            header ->
-                completedFuture(
-                    new FastSyncState(OptionalLong.of(header.getNumber()), Optional.of(header))));
+  public CompletableFuture<FastSyncState> selectPivotBlock(final FastSyncState fastSyncState) {
+    return fastSyncState.hasPivotBlockHeader()
+        ? completedFuture(fastSyncState)
+        : selectPivotBlockFromPeers();
   }
 
   private CompletableFuture<FastSyncState> selectPivotBlockFromPeers() {
@@ -156,7 +147,7 @@ public class FastSyncActions<C> {
                 throw new FastSyncException(CHAIN_TOO_SHORT);
               } else {
                 LOG.info("Selecting block number {} as fast sync pivot block.", pivotBlockNumber);
-                return completedFuture(new FastSyncState(OptionalLong.of(pivotBlockNumber)));
+                return completedFuture(new FastSyncState(pivotBlockNumber));
               }
             })
         .orElseGet(this::retrySelectPivotBlockAfterDelay);
@@ -167,7 +158,7 @@ public class FastSyncActions<C> {
     return ethContext
         .getScheduler()
         .scheduleFutureTask(
-            () -> waitForAnyPeer().thenCompose(ignore -> selectPivotBlock()),
+            () -> waitForAnyPeer().thenCompose(ignore -> selectPivotBlockFromPeers()),
             Duration.ofSeconds(1));
   }
 
@@ -181,16 +172,10 @@ public class FastSyncActions<C> {
             ethContext,
             ethTasksTimer,
             currentState.getPivotBlockNumber().getAsLong())
-        .downloadPivotBlockHeader()
-        .thenApply(this::storePivotBlockHeader);
+        .downloadPivotBlockHeader();
   }
 
-  private FastSyncState storePivotBlockHeader(final FastSyncState fastSyncState) {
-    pivotHeaderStorage.storePivotBlockHeader(fastSyncState.getPivotBlockHeader().get());
-    return fastSyncState;
-  }
-
-  public CompletableFuture<Void> downloadChain(final FastSyncState currentState) {
+  public CompletableFuture<FastSyncState> downloadChain(final FastSyncState currentState) {
     final FastSyncChainDownloader<C> downloader =
         new FastSyncChainDownloader<>(
             syncConfig,
@@ -201,6 +186,6 @@ public class FastSyncActions<C> {
             ethTasksTimer,
             fastSyncValidationCounter,
             currentState.getPivotBlockHeader().get());
-    return downloader.start();
+    return downloader.start().thenApply(ignore -> currentState);
   }
 }
