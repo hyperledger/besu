@@ -12,7 +12,10 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction;
 
+import java.util.Optional;
+
 import org.web3j.protocol.core.JsonRpc2_0Web3j;
+import org.web3j.protocol.websocket.WebSocketService;
 
 public class JsonRequestFactories {
 
@@ -21,18 +24,21 @@ public class JsonRequestFactories {
   private final IbftJsonRpcRequestFactory ibft;
   private final PermissioningJsonRpcRequestFactory perm;
   private final AdminJsonRpcRequestFactory admin;
+  private final Optional<WebSocketService> websocketService;
 
   public JsonRequestFactories(
       final JsonRpc2_0Web3j netEth,
       final CliqueJsonRpcRequestFactory clique,
       final IbftJsonRpcRequestFactory ibft,
       final PermissioningJsonRpcRequestFactory perm,
-      final AdminJsonRpcRequestFactory admin) {
+      final AdminJsonRpcRequestFactory admin,
+      final Optional<WebSocketService> websocketService) {
     this.netEth = netEth;
     this.clique = clique;
     this.ibft = ibft;
     this.perm = perm;
     this.admin = admin;
+    this.websocketService = websocketService;
   }
 
   public JsonRpc2_0Web3j eth() {
@@ -61,5 +67,6 @@ public class JsonRequestFactories {
 
   public void shutdown() {
     netEth.shutdown();
+    websocketService.ifPresent(WebSocketService::close);
   }
 }
