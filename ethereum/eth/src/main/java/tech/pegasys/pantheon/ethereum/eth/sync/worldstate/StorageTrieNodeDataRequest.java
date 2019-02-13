@@ -15,11 +15,13 @@ package tech.pegasys.pantheon.ethereum.eth.sync.worldstate;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage.Updater;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
@@ -31,6 +33,11 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
   public void persist(final Updater updater) {
     checkNotNull(getData(), "Must set data before node can be persisted.");
     updater.putAccountStorageTrieNode(getHash(), getData());
+  }
+
+  @Override
+  public Optional<BytesValue> getExistingData(final WorldStateStorage worldStateStorage) {
+    return worldStateStorage.getAccountStorageTrieNode(getHash());
   }
 
   @Override

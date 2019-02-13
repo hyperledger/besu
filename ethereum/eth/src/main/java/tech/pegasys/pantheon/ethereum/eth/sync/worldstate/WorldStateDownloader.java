@@ -141,10 +141,17 @@ public class WorldStateDownloader {
 
           // Collect data to be requested
           List<NodeDataRequest> toRequest = new ArrayList<>();
-          for (int i = 0; i < hashCountPerRequest; i++) {
+          while (toRequest.size() < hashCountPerRequest) {
             NodeDataRequest pendingRequest = pendingRequests.dequeue();
             if (pendingRequest == null) {
               break;
+            }
+            final Optional<BytesValue> existingData =
+                pendingRequest.getExistingData(worldStateStorage);
+            if (existingData.isPresent()) {
+              pendingRequest.setData(existingData.get());
+              queueChildRequests(pendingRequest);
+              continue;
             }
             toRequest.add(pendingRequest);
           }
@@ -221,25 +228,19 @@ public class WorldStateDownloader {
                     request.persist(storageUpdater);
                   }
 
-                  // Queue child requests
-                  request
-                      .getChildRequests()
-                      .filter(this::filterChildRequests)
-                      .forEach(pendingRequests::enqueue);
+                  queueChildRequests(request);
                 }
               }
               storageUpdater.commit();
             });
   }
 
-  private boolean isRootState(final BlockHeader blockHeader, final NodeDataRequest request) {
-    return request.getHash().equals(blockHeader.getStateRoot());
+  private void queueChildRequests(final NodeDataRequest request) {
+    request.getChildRequests().forEach(pendingRequests::enqueue);
   }
 
-  private boolean filterChildRequests(final NodeDataRequest request) {
-    // For now, just filter out requests for code that we already know about
-    return !(request.getRequestType() == RequestType.CODE
-        && worldStateStorage.contains(request.getHash()));
+  private boolean isRootState(final BlockHeader blockHeader, final NodeDataRequest request) {
+    return request.getHash().equals(blockHeader.getStateRoot());
   }
 
   private Map<Hash, BytesValue> mapNodeDataByHash(final List<BytesValue> data) {

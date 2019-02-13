@@ -18,11 +18,13 @@ import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
 import tech.pegasys.pantheon.ethereum.worldstate.StateTrieAccountValue;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage.Updater;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
@@ -34,6 +36,11 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
   public void persist(final Updater updater) {
     checkNotNull(getData(), "Must set data before node can be persisted.");
     updater.putAccountStateTrieNode(getHash(), getData());
+  }
+
+  @Override
+  public Optional<BytesValue> getExistingData(final WorldStateStorage worldStateStorage) {
+    return worldStateStorage.getAccountStateTrieNode(getHash());
   }
 
   @Override

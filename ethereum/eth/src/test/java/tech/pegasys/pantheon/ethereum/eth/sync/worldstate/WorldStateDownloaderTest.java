@@ -53,9 +53,13 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -350,11 +354,23 @@ public class WorldStateDownloaderTest {
         new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
 
     // Seed local storage with some trie node values
-    Map<Bytes32, BytesValue> knownTrieNodes =
+    Map<Bytes32, BytesValue> allNodes =
         collectTrieNodesToBeRequested(remoteStorage, remoteWorldState.rootHash(), 5);
-    assertThat(knownTrieNodes.size()).isGreaterThan(0); // Sanity check
+    final Set<Bytes32> knownNodes = new HashSet<>();
+    final Set<Bytes32> unknownNodes = new HashSet<>();
+    assertThat(allNodes.size()).isGreaterThan(0); // Sanity check
     Updater localStorageUpdater = localStorage.updater();
-    knownTrieNodes.forEach(localStorageUpdater::putAccountStateTrieNode);
+    final AtomicBoolean storeNode = new AtomicBoolean(true);
+    allNodes.forEach(
+        (nodeHash, node) -> {
+          if (storeNode.get()) {
+            localStorageUpdater.putAccountStateTrieNode(nodeHash, node);
+            knownNodes.add(nodeHash);
+          } else {
+            unknownNodes.add(nodeHash);
+          }
+          storeNode.set(!storeNode.get());
+        });
     localStorageUpdater.commit();
 
     WorldStateDownloader downloader =
@@ -390,7 +406,8 @@ public class WorldStateDownloaderTest {
             .flatMap(m -> StreamSupport.stream(m.hashes().spliterator(), true))
             .collect(Collectors.toList());
     assertThat(requestedHashes.size()).isGreaterThan(0);
-    assertThat(requestedHashes).containsAll(knownTrieNodes.keySet());
+    assertThat(requestedHashes).containsAll(unknownNodes);
+    assertThat(requestedHashes).doesNotContainAnyElementsOf(knownNodes);
 
     // Check that all expected account data was downloaded
     WorldStateArchive localWorldStateArchive = new WorldStateArchive(localStorage);
@@ -440,13 +457,26 @@ public class WorldStateDownloaderTest {
                 .map(StateTrieAccountValue::readFrom)
                 .map(StateTrieAccountValue::getStorageRoot)
                 .collect(Collectors.toList());
-    Map<Bytes32, BytesValue> knownTrieNodes = new HashMap<>();
+    Map<Bytes32, BytesValue> allTrieNodes = new HashMap<>();
+    final Set<Bytes32> knownNodes = new HashSet<>();
+    final Set<Bytes32> unknownNodes = new HashSet<>();
     for (Bytes32 storageRootHash : storageRootHashes) {
-      knownTrieNodes.putAll(collectTrieNodesToBeRequested(remoteStorage, storageRootHash, 5));
+      allTrieNodes.putAll(collectTrieNodesToBeRequested(remoteStorage, storageRootHash, 5));
     }
-    assertThat(knownTrieNodes.size()).isGreaterThan(0); // Sanity check
+    assertThat(allTrieNodes.size()).isGreaterThan(0); // Sanity check
     Updater localStorageUpdater = localStorage.updater();
-    knownTrieNodes.forEach(localStorageUpdater::putAccountStorageTrieNode);
+    boolean storeNode = true;
+    for (Entry<Bytes32, BytesValue> entry : allTrieNodes.entrySet()) {
+      Bytes32 hash = entry.getKey();
+      BytesValue data = entry.getValue();
+      if (storeNode) {
+        localStorageUpdater.putAccountStorageTrieNode(hash, data);
+        knownNodes.add(hash);
+      } else {
+        unknownNodes.add(hash);
+      }
+      storeNode = !storeNode;
+    }
     localStorageUpdater.commit();
 
     WorldStateDownloader downloader =
@@ -486,7 +516,8 @@ public class WorldStateDownloaderTest {
             .flatMap(m -> StreamSupport.stream(m.hashes().spliterator(), true))
             .collect(Collectors.toList());
     assertThat(requestedHashes.size()).isGreaterThan(0);
-    assertThat(requestedHashes).containsAll(knownTrieNodes.keySet());
+    assertThat(requestedHashes).containsAll(unknownNodes);
+    assertThat(requestedHashes).doesNotContainAnyElementsOf(knownNodes);
 
     // Check that all expected account data was downloaded
     WorldStateArchive localWorldStateArchive = new WorldStateArchive(localStorage);

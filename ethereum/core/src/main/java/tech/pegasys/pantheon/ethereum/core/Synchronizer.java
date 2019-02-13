@@ -19,8 +19,6 @@ public interface Synchronizer {
 
   void start();
 
-  void stop();
-
   /**
    * @return the status, based on SyncingResult When actively synchronizing blocks, alternatively
    *     empty
