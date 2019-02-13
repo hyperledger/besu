@@ -14,12 +14,18 @@ package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.CHAIN_TOO_SHORT;
 import static tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem.NO_OP_LABELLED_COUNTER;
 import static tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem.NO_OP_LABELLED_TIMER;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
@@ -33,6 +39,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,6 +56,7 @@ public class FastSyncActionsTest {
           .fastSyncPivotDistance(1000)
           .build();
 
+  private final PivotHeaderStorage pivotHeaderStorage = mock(PivotHeaderStorage.class);
   private final LabelledMetric<OperationTimer> ethTasksTimer = NO_OP_LABELLED_TIMER;
   private final AtomicInteger timeoutCount = new AtomicInteger(0);
   private FastSyncActions<Void> fastSyncActions;
@@ -75,6 +83,7 @@ public class FastSyncActionsTest {
             protocolContext,
             ethContext,
             new SyncState(blockchain, ethContext.getEthPeers()),
+            pivotHeaderStorage,
             ethTasksTimer,
             NO_OP_LABELLED_COUNTER);
   }
@@ -103,6 +112,19 @@ public class FastSyncActionsTest {
 
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
     assertThat(result).isCompleted();
+  }
+
+  @Test
+  public void selectPivotBlockShouldUsePivotBlockFromStorageIfAvailable() {
+    final BlockHeader pivotHeader = new BlockHeaderTestFixture().number(1024).buildHeader();
+    when(pivotHeaderStorage.loadPivotBlockHeader(any(BlockHashFunction.class)))
+        .thenReturn(Optional.of(pivotHeader));
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 5000);
+
+    final CompletableFuture<FastSyncState> result = fastSyncActions.selectPivotBlock();
+    final FastSyncState expected =
+        new FastSyncState(OptionalLong.of(pivotHeader.getNumber()), Optional.of(pivotHeader));
+    assertThat(result).isCompletedWithValue(expected);
   }
 
   @Test
@@ -137,6 +159,14 @@ public class FastSyncActionsTest {
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, syncConfig.fastSyncPivotDistance());
 
     assertThrowsFastSyncException(CHAIN_TOO_SHORT, fastSyncActions::selectPivotBlock);
+  }
+
+  @Test
+  public void downloadPivotBlockHeaderShouldUseExistingPivotBlockHeaderIfPresent() {
+    final BlockHeader pivotHeader = new BlockHeaderTestFixture().number(1024).buildHeader();
+    final FastSyncState expected =
+        new FastSyncState(OptionalLong.of(pivotHeader.getNumber()), Optional.of(pivotHeader));
+    assertThat(fastSyncActions.downloadPivotBlockHeader(expected)).isCompletedWithValue(expected);
   }
 
   @Test

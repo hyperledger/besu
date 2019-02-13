@@ -16,34 +16,23 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.SyncStatus;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
-import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncActions;
-import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncException;
 import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.fullsync.FullSyncDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.PendingBlocks;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
-import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.NodeDataRequest;
-import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.OperationTimer;
-import tech.pegasys.pantheon.services.queue.BigQueue;
-import tech.pegasys.pantheon.services.queue.BytesQueue;
-import tech.pegasys.pantheon.services.queue.BytesQueueAdapter;
-import tech.pegasys.pantheon.services.queue.RocksDbQueue;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.google.common.io.MoreFiles;
-import com.google.common.io.RecursiveDeleteOption;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -57,10 +46,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final BlockPropagationManager<C> blockPropagationManager;
   private final FullSyncDownloader<C> fullSyncDownloader;
-  private final Optional<FastSyncDownloader<C>> fastSyncDownloader;
-  private final Path stateQueueDirectory;
-  private final BigQueue<NodeDataRequest> stateQueue;
-  private final WorldStateDownloader worldStateDownloader;
+  private final Optional<FastSynchronizer<C>> fastSynchronizer;
 
   public DefaultSynchronizer(
       final SynchronizerConfiguration syncConfig,
@@ -95,47 +81,24 @@ public class DefaultSynchronizer<C> implements Synchronizer {
         new FullSyncDownloader<>(
             syncConfig, protocolSchedule, protocolContext, ethContext, syncState, ethTasksTimer);
 
-    if (syncConfig.syncMode() == SyncMode.FAST) {
-      this.stateQueueDirectory = getStateQueueDirectory(dataDirectory);
-      this.stateQueue = createWorldStateDownloaderQueue(stateQueueDirectory, metricsSystem);
-      this.worldStateDownloader =
-          new WorldStateDownloader(
-              ethContext,
-              worldStateStorage,
-              stateQueue,
-              syncConfig.getWorldStateHashCountPerRequest(),
-              syncConfig.getWorldStateRequestParallelism(),
-              ethTasksTimer,
-              metricsSystem);
-      this.fastSyncDownloader =
-          Optional.of(
-              new FastSyncDownloader<>(
-                  new FastSyncActions<>(
-                      syncConfig,
-                      protocolSchedule,
-                      protocolContext,
-                      ethContext,
-                      syncState,
-                      ethTasksTimer,
-                      metricsSystem.createLabelledCounter(
-                          MetricCategory.SYNCHRONIZER,
-                          "fast_sync_validation_mode",
-                          "Number of blocks validated using light vs full validation during fast sync",
-                          "validationMode")),
-                  worldStateDownloader));
-    } else {
-      this.fastSyncDownloader = Optional.empty();
-      this.worldStateDownloader = null;
-      this.stateQueueDirectory = null;
-      this.stateQueue = null;
-    }
+    fastSynchronizer =
+        FastSynchronizer.create(
+            syncConfig,
+            dataDirectory,
+            protocolSchedule,
+            protocolContext,
+            metricsSystem,
+            ethContext,
+            worldStateStorage,
+            ethTasksTimer,
+            syncState);
   }
 
   @Override
   public void start() {
     if (started.compareAndSet(false, true)) {
-      if (fastSyncDownloader.isPresent()) {
-        fastSyncDownloader.get().start().whenComplete(this::handleFastSyncResult);
+      if (fastSynchronizer.isPresent()) {
+        fastSynchronizer.get().start().whenComplete(this::handleFastSyncResult);
       } else {
         startFullSync();
       }
@@ -146,39 +109,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
 
   @Override
   public void stop() {
-    cleanupFastSync();
-  }
-
-  private void cleanupFastSync() {
-    if (!fastSyncDownloader.isPresent()) {
-      // We're not fast syncing - nothing to do
-      return;
-    }
-
-    // Make sure downloader is stopped before we start cleaning up its dependencies
-    worldStateDownloader.cancel();
-    try {
-      stateQueue.close();
-      if (stateQueueDirectory.toFile().exists()) {
-        // Clean up this data for now (until fast sync resume functionality is in place)
-        MoreFiles.deleteRecursively(stateQueueDirectory, RecursiveDeleteOption.ALLOW_INSECURE);
-      }
-    } catch (IOException e) {
-      LOG.error("Unable to clean up fast sync state", e);
-    }
-  }
-
-  private Path getStateQueueDirectory(final Path dataDirectory) {
-    Path queueDataDir = dataDirectory.resolve("fastsync/statequeue");
-    queueDataDir.toFile().mkdirs();
-    return queueDataDir;
-  }
-
-  private BigQueue<NodeDataRequest> createWorldStateDownloaderQueue(
-      final Path dataDirectory, final MetricsSystem metricsSystem) {
-    BytesQueue bytesQueue = RocksDbQueue.create(dataDirectory, metricsSystem);
-    return new BytesQueueAdapter<>(
-        bytesQueue, NodeDataRequest::serialize, NodeDataRequest::deserialize);
+    fastSynchronizer.ifPresent(FastSynchronizer::deleteFastSyncState);
   }
 
   private void handleFastSyncResult(final FastSyncState result, final Throwable error) {
@@ -195,7 +126,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
           "Fast sync completed successfully with pivot block {}",
           result.getPivotBlockNumber().getAsLong());
     }
-    cleanupFastSync();
+    fastSynchronizer.ifPresent(FastSynchronizer::deleteFastSyncState);
 
     startFullSync();
   }
@@ -217,7 +148,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   @Override
   public boolean hasSufficientPeers() {
     final int requiredPeerCount =
-        fastSyncDownloader.isPresent() ? syncConfig.getFastSyncMinimumPeerCount() : 1;
+        fastSynchronizer.isPresent() ? syncConfig.getFastSyncMinimumPeerCount() : 1;
     return ethContext.getEthPeers().availablePeerCount() >= requiredPeerCount;
   }
 }

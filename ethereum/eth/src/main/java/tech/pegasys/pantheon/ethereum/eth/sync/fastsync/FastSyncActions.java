@@ -23,12 +23,14 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.WaitForPeersTask;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.time.Duration;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
@@ -44,6 +46,7 @@ public class FastSyncActions<C> {
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
+  private final PivotHeaderStorage pivotHeaderStorage;
   private final LabelledMetric<OperationTimer> ethTasksTimer;
   private final LabelledMetric<Counter> fastSyncValidationCounter;
 
@@ -53,6 +56,7 @@ public class FastSyncActions<C> {
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
+      final PivotHeaderStorage pivotHeaderStorage,
       final LabelledMetric<OperationTimer> ethTasksTimer,
       final LabelledMetric<Counter> fastSyncValidationCounter) {
     this.syncConfig = syncConfig;
@@ -60,6 +64,7 @@ public class FastSyncActions<C> {
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.syncState = syncState;
+    this.pivotHeaderStorage = pivotHeaderStorage;
     this.ethTasksTimer = ethTasksTimer;
     this.fastSyncValidationCounter = fastSyncValidationCounter;
   }
@@ -126,6 +131,19 @@ public class FastSyncActions<C> {
   }
 
   public CompletableFuture<FastSyncState> selectPivotBlock() {
+    return loadPivotBlockFromStorage().orElseGet(this::selectPivotBlockFromPeers);
+  }
+
+  private Optional<CompletableFuture<FastSyncState>> loadPivotBlockFromStorage() {
+    return pivotHeaderStorage
+        .loadPivotBlockHeader(ScheduleBasedBlockHashFunction.create(protocolSchedule))
+        .map(
+            header ->
+                completedFuture(
+                    new FastSyncState(OptionalLong.of(header.getNumber()), Optional.of(header))));
+  }
+
+  private CompletableFuture<FastSyncState> selectPivotBlockFromPeers() {
     return ethContext
         .getEthPeers()
         .bestPeer()
@@ -155,12 +173,21 @@ public class FastSyncActions<C> {
 
   public CompletableFuture<FastSyncState> downloadPivotBlockHeader(
       final FastSyncState currentState) {
+    if (currentState.getPivotBlockHeader().isPresent()) {
+      return completedFuture(currentState);
+    }
     return new PivotBlockRetriever<>(
             protocolSchedule,
             ethContext,
             ethTasksTimer,
             currentState.getPivotBlockNumber().getAsLong())
-        .downloadPivotBlockHeader();
+        .downloadPivotBlockHeader()
+        .thenApply(this::storePivotBlockHeader);
+  }
+
+  private FastSyncState storePivotBlockHeader(final FastSyncState fastSyncState) {
+    pivotHeaderStorage.storePivotBlockHeader(fastSyncState.getPivotBlockHeader().get());
+    return fastSyncState;
   }
 
   public CompletableFuture<Void> downloadChain(final FastSyncState currentState) {

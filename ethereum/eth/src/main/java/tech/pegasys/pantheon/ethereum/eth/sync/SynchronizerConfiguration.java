@@ -14,19 +14,13 @@ package tech.pegasys.pantheon.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import tech.pegasys.pantheon.ethereum.chain.Blockchain;
-import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.time.Duration;
-import java.util.Optional;
 
 import com.google.common.collect.Range;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class SynchronizerConfiguration {
-  private static final Logger LOG = LogManager.getLogger();
 
   // TODO: Determine reasonable defaults here
   public static final int DEFAULT_PIVOT_DISTANCE_FROM_HEAD = 500;
@@ -48,8 +42,7 @@ public class SynchronizerConfiguration {
   private final Range<Long> blockPropagationRange;
 
   // General config
-  private final SyncMode requestedSyncMode;
-  private final Optional<SyncMode> syncMode;
+  private final SyncMode syncMode;
 
   // Downloader config
   private final long downloaderChangeTargetThresholdByHeight;
@@ -65,7 +58,6 @@ public class SynchronizerConfiguration {
   private final int computationParallelism;
 
   private SynchronizerConfiguration(
-      final SyncMode requestedSyncMode,
       final int fastSyncPivotDistance,
       final float fastSyncFullValidationRate,
       final int fastSyncMinimumPeerCount,
@@ -73,7 +65,7 @@ public class SynchronizerConfiguration {
       final int worldStateHashCountPerRequest,
       final int worldStateRequestParallelism,
       final Range<Long> blockPropagationRange,
-      final Optional<SyncMode> syncMode,
+      final SyncMode syncMode,
       final long downloaderChangeTargetThresholdByHeight,
       final UInt256 downloaderChangeTargetThresholdByTd,
       final int downloaderHeaderRequestSize,
@@ -85,7 +77,6 @@ public class SynchronizerConfiguration {
       final int downloaderParallelism,
       final int transactionsParallelism,
       final int computationParallelism) {
-    this.requestedSyncMode = requestedSyncMode;
     this.fastSyncPivotDistance = fastSyncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
     this.fastSyncMinimumPeerCount = fastSyncMinimumPeerCount;
@@ -107,53 +98,6 @@ public class SynchronizerConfiguration {
     this.computationParallelism = computationParallelism;
   }
 
-  /**
-   * Validates the sync configuration against the blockchain, to define the actual sync mode.
-   *
-   * @param blockchain the local blockchain
-   * @return a new, validated config instance
-   */
-  public SynchronizerConfiguration validated(final Blockchain blockchain) {
-    if (syncMode.isPresent()) {
-      return this;
-    }
-
-    final SyncMode actualSyncMode;
-    if (requestedSyncMode.equals(SyncMode.FAST)) {
-      final boolean blockchainIsEmpty =
-          blockchain.getChainHeadBlockNumber() != BlockHeader.GENESIS_BLOCK_NUMBER;
-      actualSyncMode = blockchainIsEmpty ? SyncMode.FULL : SyncMode.FAST;
-      if (!actualSyncMode.equals(requestedSyncMode)) {
-        LOG.info(
-            "Fast sync was requested, but cannot be enabled because the local blockchain is not empty.");
-      }
-    } else {
-      actualSyncMode = requestedSyncMode;
-    }
-
-    return new SynchronizerConfiguration(
-        requestedSyncMode,
-        fastSyncPivotDistance,
-        fastSyncFullValidationRate,
-        fastSyncMinimumPeerCount,
-        fastSyncMaximumPeerWaitTime,
-        worldStateHashCountPerRequest,
-        worldStateRequestParallelism,
-        blockPropagationRange,
-        Optional.of(actualSyncMode),
-        downloaderChangeTargetThresholdByHeight,
-        downloaderChangeTargetThresholdByTd,
-        downloaderHeaderRequestSize,
-        downloaderCheckpointTimeoutsPermitted,
-        downloaderChainSegmentTimeoutsPermitted,
-        downloaderChainSegmentSize,
-        trailingPeerBlocksBehindThreshold,
-        maxTrailingPeers,
-        downloaderParallelism,
-        transactionsParallelism,
-        computationParallelism);
-  }
-
   public static Builder builder() {
     return new Builder();
   }
@@ -164,11 +108,7 @@ public class SynchronizerConfiguration {
    * @return the sync mode
    */
   public SyncMode syncMode() {
-    if (!syncMode.isPresent()) {
-      throw new IllegalStateException(
-          "Attempt to access sync mode without first validating configuration.");
-    }
-    return syncMode.get();
+    return syncMode;
   }
 
   /**
@@ -378,7 +318,6 @@ public class SynchronizerConfiguration {
 
     public SynchronizerConfiguration build() {
       return new SynchronizerConfiguration(
-          syncMode,
           fastSyncPivotDistance,
           fastSyncFullValidationRate,
           fastSyncMinimumPeerCount,
@@ -386,7 +325,7 @@ public class SynchronizerConfiguration {
           DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST,
           DEFAULT_WORLD_STATE_REQUEST_PARALLELISM,
           blockPropagationRange,
-          Optional.empty(),
+          syncMode,
           downloaderChangeTargetThresholdByHeight,
           downloaderChangeTargetThresholdByTd,
           downloaderHeaderRequestSize,
