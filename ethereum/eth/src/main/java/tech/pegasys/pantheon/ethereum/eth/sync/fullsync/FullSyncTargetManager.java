@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.eth.sync.fullsync;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.ChainState;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
@@ -24,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.util.uint.UInt256;
@@ -38,6 +40,7 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
 
   private static final Logger LOG = LogManager.getLogger();
   private final SynchronizerConfiguration config;
+  private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
 
@@ -50,8 +53,26 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
       final LabelledMetric<OperationTimer> ethTasksTimer) {
     super(config, protocolSchedule, protocolContext, ethContext, syncState, ethTasksTimer);
     this.config = config;
+    this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.syncState = syncState;
+  }
+
+  @Override
+  protected Optional<SyncTarget> finalizeSelectedSyncTarget(final SyncTarget syncTarget) {
+    final BlockHeader commonAncestor = syncTarget.commonAncestor();
+    if (protocolContext
+        .getWorldStateArchive()
+        .isWorldStateAvailable(commonAncestor.getStateRoot())) {
+      return Optional.of(syncTarget);
+    } else {
+      LOG.warn(
+          "Disconnecting {} because world state is not available at common ancestor at block {}",
+          syncTarget.peer(),
+          commonAncestor.getNumber());
+      syncTarget.peer().disconnect(DisconnectReason.USELESS_PEER);
+      return Optional.empty();
+    }
   }
 
   @Override
