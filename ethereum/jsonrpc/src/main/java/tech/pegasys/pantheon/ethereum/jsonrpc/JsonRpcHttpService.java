@@ -27,6 +27,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResp
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcNoResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponseType;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
@@ -230,7 +231,7 @@ public class JsonRpcHttpService {
     };
   }
 
-  private boolean requiresAuthentication(final RoutingContext routingContext) {
+  private boolean requiresAuthentication() {
     return authenticationService.isPresent();
   }
 
@@ -239,24 +240,26 @@ public class JsonRpcHttpService {
 
     AtomicBoolean foundMatchingPermission = new AtomicBoolean();
 
-    if (optionalUser.isPresent()) {
-      User user = optionalUser.get();
-      for (String perm : jsonRpcMethod.getPermissions()) {
-        user.isAuthorized(
-            perm,
-            (authed) -> {
-              if (authed.result()) {
-                LOG.trace(
-                    "user {} authorized : {} via permission {}",
-                    user,
-                    jsonRpcMethod.getName(),
-                    perm);
-                foundMatchingPermission.set(true);
-              }
-            });
+    if (requiresAuthentication()) {
+      if (optionalUser.isPresent()) {
+        User user = optionalUser.get();
+        for (String perm : jsonRpcMethod.getPermissions()) {
+          user.isAuthorized(
+              perm,
+              (authed) -> {
+                if (authed.result()) {
+                  LOG.trace(
+                      "user {} authorized : {} via permission {}",
+                      user,
+                      jsonRpcMethod.getName(),
+                      perm);
+                  foundMatchingPermission.set(true);
+                }
+              });
+        }
       }
     } else {
-      // no user means no auth provider configured thus anything is permitted
+      // no auth provider configured thus anything is permitted
       foundMatchingPermission.set(true);
     }
 
@@ -272,7 +275,7 @@ public class JsonRpcHttpService {
 
   private void getUser(final String token, final Handler<Optional<User>> handler) {
     try {
-      if (!authenticationService.isPresent()) {
+      if (!requiresAuthentication()) {
         handler.handle(Optional.empty());
       } else {
         authenticationService
@@ -343,7 +346,7 @@ public class JsonRpcHttpService {
   private void handleJsonRPCRequest(final RoutingContext routingContext) {
     // first check token if authentication is required
     String token = getToken(routingContext);
-    if (requiresAuthentication(routingContext) && token == null) {
+    if (requiresAuthentication() && token == null) {
       // no auth token when auth required
       handleJsonRpcUnauthorizedError(routingContext, null, JsonRpcError.UNAUTHORIZED);
     } else {
@@ -404,6 +407,8 @@ public class JsonRpcHttpService {
   private HttpResponseStatus status(final JsonRpcResponse response) {
 
     switch (response.getType()) {
+      case UNAUTHORIZED:
+        return HttpResponseStatus.UNAUTHORIZED;
       case ERROR:
         return HttpResponseStatus.BAD_REQUEST;
       case SUCCESS:
@@ -506,7 +511,7 @@ public class JsonRpcHttpService {
         return errorResponse(id, JsonRpcError.INVALID_PARAMS);
       }
     } else {
-      return errorResponse(id, JsonRpcError.UNAUTHORIZED);
+      return unauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
     }
   }
 
@@ -528,6 +533,10 @@ public class JsonRpcHttpService {
 
   private JsonRpcResponse errorResponse(final Object id, final JsonRpcError error) {
     return new JsonRpcErrorResponse(id, error);
+  }
+
+  private JsonRpcResponse unauthorizedResponse(final Object id, final JsonRpcError error) {
+    return new JsonRpcUnauthorizedResponse(id, error);
   }
 
   private String buildCorsRegexFromConfig() {
