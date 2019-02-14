@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.services.queue;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.services.queue.TaskQueue.Task;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ import java.util.function.Function;
 
 import org.junit.Test;
 
-abstract class AbstractBigQueueTest<T extends BigQueue<BytesValue>> {
+abstract class AbstractTaskQueueTest<T extends TaskQueue<BytesValue>> {
 
   protected abstract T createQueue() throws Exception;
 
@@ -39,16 +40,76 @@ abstract class AbstractBigQueueTest<T extends BigQueue<BytesValue>> {
 
       queue.enqueue(one);
       queue.enqueue(two);
-      assertThat(queue.dequeue()).isEqualTo(one);
+      assertThat(queue.dequeue().getData()).isEqualTo(one);
 
       queue.enqueue(three);
-      assertThat(queue.dequeue()).isEqualTo(two);
-      assertThat(queue.dequeue()).isEqualTo(three);
+      assertThat(queue.dequeue().getData()).isEqualTo(two);
+      assertThat(queue.dequeue().getData()).isEqualTo(three);
       assertThat(queue.dequeue()).isNull();
       assertThat(queue.dequeue()).isNull();
 
       queue.enqueue(three);
-      assertThat(queue.dequeue()).isEqualTo(three);
+      assertThat(queue.dequeue().getData()).isEqualTo(three);
+    }
+  }
+
+  @Test
+  public void markTaskFailed() throws Exception {
+    try (T queue = createQueue()) {
+      BytesValue value = BytesValue.of(1);
+
+      assertThat(queue.isEmpty()).isTrue();
+      assertThat(queue.allTasksCompleted()).isTrue();
+
+      queue.enqueue(value);
+
+      assertThat(queue.isEmpty()).isFalse();
+      assertThat(queue.allTasksCompleted()).isFalse();
+
+      Task<BytesValue> task = queue.dequeue();
+      assertThat(task).isNotNull();
+      assertThat(task.getData()).isEqualTo(value);
+      assertThat(queue.isEmpty()).isTrue();
+      assertThat(queue.allTasksCompleted()).isFalse();
+
+      task.markFailed();
+      assertThat(queue.isEmpty()).isFalse();
+      assertThat(queue.allTasksCompleted()).isFalse();
+
+      // Subsequent mark completed should do nothing
+      task.markCompleted();
+      assertThat(queue.isEmpty()).isFalse();
+      assertThat(queue.allTasksCompleted()).isFalse();
+    }
+  }
+
+  @Test
+  public void markTaskCompleted() throws Exception {
+    try (T queue = createQueue()) {
+      BytesValue value = BytesValue.of(1);
+
+      assertThat(queue.isEmpty()).isTrue();
+      assertThat(queue.allTasksCompleted()).isTrue();
+
+      queue.enqueue(value);
+
+      assertThat(queue.isEmpty()).isFalse();
+      assertThat(queue.allTasksCompleted()).isFalse();
+
+      Task<BytesValue> task = queue.dequeue();
+      assertThat(task).isNotNull();
+      assertThat(task.getData()).isEqualTo(value);
+      assertThat(queue.isEmpty()).isTrue();
+      assertThat(queue.allTasksCompleted()).isFalse();
+
+      task.markCompleted();
+      assertThat(queue.isEmpty()).isTrue();
+      assertThat(queue.allTasksCompleted()).isTrue();
+
+      // Subsequent mark failed should do nothing
+      task.markFailed();
+      assertThat(queue.isEmpty()).isTrue();
+      assertThat(queue.allTasksCompleted()).isTrue();
     }
   }
 
@@ -62,13 +123,14 @@ abstract class AbstractBigQueueTest<T extends BigQueue<BytesValue>> {
     final CountDownLatch queuingFinished = new CountDownLatch(threadCount);
 
     // Start thread for reading values
-    List<BytesValue> dequeued = new ArrayList<>();
+    List<Task<BytesValue>> dequeued = new ArrayList<>();
     Thread reader =
         new Thread(
             () -> {
               while (queuingFinished.getCount() > 0 || !queue.isEmpty()) {
                 if (!queue.isEmpty()) {
-                  BytesValue value = queue.dequeue();
+                  Task<BytesValue> value = queue.dequeue();
+                  value.markCompleted();
                   dequeued.add(value);
                 }
               }
