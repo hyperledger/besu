@@ -82,7 +82,7 @@ public class FastSyncActions<C> {
                 if (ethContext.getEthPeers().availablePeerCount() > 0) {
                   LOG.warn(
                       "Fast sync timed out before minimum peer count was reached. Continuing with reduced peers.");
-                  result.complete(null);
+                  result.complete(fastSyncState);
                 } else {
                   LOG.warn(
                       "Maximum wait time for fast sync reached but no peers available. Continuing to wait for any available peer.");
@@ -98,7 +98,7 @@ public class FastSyncActions<C> {
                 LOG.error("Failed to find peers for fast sync", error);
                 result.completeExceptionally(error);
               } else {
-                result.complete(null);
+                result.complete(fastSyncState);
               }
               return null;
             });
