@@ -20,10 +20,8 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class PermGetNodesWhitelist implements JsonRpcMethod {
 
@@ -42,10 +40,8 @@ public class PermGetNodesWhitelist implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequest req) {
     try {
       if (p2pNetwork.getNodeWhitelistController().isPresent()) {
-        List<Peer> nodesWhitelist =
+        final List<String> enodeList =
             p2pNetwork.getNodeWhitelistController().get().getNodesWhitelist();
-        List<String> enodeList =
-            nodesWhitelist.parallelStream().map(Peer::getEnodeURI).collect(Collectors.toList());
 
         return new JsonRpcSuccessResponse(req.getId(), enodeList);
       } else {

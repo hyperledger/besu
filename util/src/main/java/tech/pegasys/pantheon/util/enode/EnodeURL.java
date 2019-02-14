@@ -143,6 +143,22 @@ public class EnodeURL {
     return value.contains("discport");
   }
 
+  public String getNodeId() {
+    return nodeId;
+  }
+
+  public String getIp() {
+    return ip;
+  }
+
+  public Integer getListeningPort() {
+    return listeningPort;
+  }
+
+  public OptionalInt getDiscoveryPort() {
+    return discoveryPort;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
@@ -161,5 +177,10 @@ public class EnodeURL {
   @Override
   public int hashCode() {
     return Objects.hashCode(nodeId, ip, listeningPort, discoveryPort);
+  }
+
+  @Override
+  public String toString() {
+    return this.toURI().toString();
   }
 }

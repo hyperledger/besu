@@ -27,11 +27,12 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.RecursivePeerRefreshState.BondingAgent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.RecursivePeerRefreshState.FindNeighbourDispatcher;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -486,7 +487,7 @@ public class RecursivePeerRefreshStateTest {
 
     final NodeWhitelistController peerWhitelist =
         new NodeWhitelistController(permissioningConfiguration);
-    peerWhitelist.addNode(peerA);
+    peerWhitelist.addNodes(Arrays.asList(peerA.getEnodeURI()));
 
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(

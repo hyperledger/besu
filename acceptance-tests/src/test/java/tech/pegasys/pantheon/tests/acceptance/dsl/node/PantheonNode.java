@@ -138,7 +138,12 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
 
   @Override
   public String enodeUrl() {
-    return "enode://" + keyPair.getPublicKey().toString() + "@" + LOCALHOST + ":" + p2pPort;
+    return "enode://"
+        + keyPair.getPublicKey().toString().substring(2)
+        + "@"
+        + LOCALHOST
+        + ":"
+        + p2pPort;
   }
 
   private Optional<String> jsonRpcBaseUrl() {

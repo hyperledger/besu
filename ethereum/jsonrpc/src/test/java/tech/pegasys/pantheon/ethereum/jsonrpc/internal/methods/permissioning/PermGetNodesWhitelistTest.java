@@ -25,14 +25,10 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
-import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.assertj.core.util.Lists;
 import org.junit.Before;
@@ -118,7 +114,7 @@ public class PermGetNodesWhitelistTest {
     return new JsonRpcRequest("2.0", METHOD_NAME, new Object[] {});
   }
 
-  private List<Peer> buildNodesList(final String... enodes) {
-    return Arrays.stream(enodes).parallel().map(DefaultPeer::fromURI).collect(Collectors.toList());
+  private List<String> buildNodesList(final String... enodes) {
+    return Lists.newArrayList(enodes);
   }
 }

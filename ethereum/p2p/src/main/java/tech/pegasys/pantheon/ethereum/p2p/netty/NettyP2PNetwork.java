@@ -28,11 +28,11 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.MetricCategory;
@@ -304,10 +304,11 @@ public class NettyP2PNetwork implements P2PNetwork {
             nwc ->
                 nwc.isPermitted(
                     new DefaultPeer(
-                        connection.getPeer().getNodeId(),
-                        ch.remoteAddress().getAddress().getHostAddress(),
-                        connection.getPeer().getPort(),
-                        connection.getPeer().getPort())))
+                            connection.getPeer().getNodeId(),
+                            ch.remoteAddress().getAddress().getHostAddress(),
+                            connection.getPeer().getPort(),
+                            connection.getPeer().getPort())
+                        .getEnodeURI()))
         .orElse(true);
   }
 

@@ -17,7 +17,7 @@ import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistance
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
@@ -183,7 +183,9 @@ public class RecursivePeerRefreshState {
   private boolean satisfiesMapAdditionCriteria(final DiscoveryPeer discoPeer) {
     return !oneTrueMap.containsKey(discoPeer.getId())
         && !peerBlacklist.contains(discoPeer)
-        && peerWhitelist.map(whitelist -> whitelist.isPermitted(discoPeer)).orElse(true)
+        && peerWhitelist
+            .map(whitelist -> whitelist.isPermitted(discoPeer.getEnodeURI()))
+            .orElse(true)
         && (initialPeers.contains(discoPeer) || !peerTable.get(discoPeer).isPresent())
         && !discoPeer.getId().equals(localPeerId);
   }

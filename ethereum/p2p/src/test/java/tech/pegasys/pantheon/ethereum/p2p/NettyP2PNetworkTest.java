@@ -35,17 +35,18 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.InetAddress;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -416,7 +417,7 @@ public final class NettyP2PNetworkTest {
         Files.createTempFile("test", "test").toAbsolutePath().toString());
     final NodeWhitelistController localWhitelistController = new NodeWhitelistController(config);
     // turn on whitelisting by adding a different node NOT remote node
-    localWhitelistController.addNode(mockPeer());
+    localWhitelistController.addNodes(Arrays.asList(mockPeer().getEnodeURI()));
 
     final SubProtocol subprotocol = subProtocol();
     final Capability cap = Capability.create(subprotocol.getName(), 63);
@@ -646,8 +647,19 @@ public final class NettyP2PNetworkTest {
   private Peer mockPeer() {
     final Peer peer = mock(Peer.class);
     final BytesValue id = SECP256K1.KeyPair.generate().getPublicKey().getEncodedBytes();
+    final Endpoint endpoint = new Endpoint("127.0.0.1", 30303, OptionalInt.of(30303));
+    final String enodeURL =
+        String.format(
+            "enode://%s@%s:%d?discport=%d",
+            id.toString().substring(2),
+            endpoint.getHost(),
+            endpoint.getUdpPort(),
+            endpoint.getTcpPort().getAsInt());
+
     when(peer.getId()).thenReturn(id);
-    when(peer.getEndpoint()).thenReturn(new Endpoint("127.0.0.1", 30303, OptionalInt.of(30303)));
+    when(peer.getEndpoint()).thenReturn(endpoint);
+    when(peer.getEnodeURI()).thenReturn(enodeURL);
+
     return peer;
   }
 }
