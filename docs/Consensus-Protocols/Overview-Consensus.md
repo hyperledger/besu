@@ -44,7 +44,7 @@ The genesis file specifies the consensus protocol for a chain `config`:
 {
   "config": {
     ....
-    "revisedibft": {
+    "ibft2": {
       ...     
    }
   },
