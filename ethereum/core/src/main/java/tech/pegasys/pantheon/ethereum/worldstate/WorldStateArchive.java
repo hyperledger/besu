@@ -32,6 +32,10 @@ public class WorldStateArchive {
     return getMutable(rootHash).map(state -> state);
   }
 
+  public boolean isWorldStateAvailable(final Hash rootHash) {
+    return storage.isWorldStateAvailable(rootHash);
+  }
+
   public Optional<MutableWorldState> getMutable(final Hash rootHash) {
     if (!storage.isWorldStateAvailable(rootHash)) {
       return Optional.empty();

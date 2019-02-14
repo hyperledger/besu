@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
@@ -97,12 +99,21 @@ public abstract class SyncTargetManager<C> {
                               target.getNumber());
                           syncTargetDisconnectListenerId =
                               bestPeer.subscribeDisconnect(this::onSyncTargetPeerDisconnect);
-                          return CompletableFuture.completedFuture(syncTarget);
-                        });
+                          return completedFuture(syncTarget);
+                        })
+                    .thenCompose(
+                        syncTarget ->
+                            finalizeSelectedSyncTarget(syncTarget)
+                                .map(CompletableFuture::completedFuture)
+                                .orElseGet(this::waitForPeerAndThenSetSyncTarget));
               } else {
                 return waitForPeerAndThenSetSyncTarget();
               }
             });
+  }
+
+  protected Optional<SyncTarget> finalizeSelectedSyncTarget(final SyncTarget syncTarget) {
+    return Optional.of(syncTarget);
   }
 
   protected abstract CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget();
