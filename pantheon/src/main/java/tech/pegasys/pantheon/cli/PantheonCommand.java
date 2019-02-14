@@ -463,10 +463,10 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Boolean permissionsAccountsEnabled = false;
 
   @Option(
-      names = {"--permissions-config-path"},
+      names = {"--permissions-config-file"},
       description =
           "Path to permissions config TOML file (default:  a file named \"permissions_config.toml\" in the Pantheon data folder)")
-  private String permissionsConfigPath = null;
+  private String permissionsConfigFile = null;
 
   @Option(
       names = {"--privacy-enabled"},
@@ -638,10 +638,10 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private String getPermissionsConfigPath() {
+  private String getPermissionsConfigFile() {
 
-    return permissionsConfigPath != null
-        ? permissionsConfigPath
+    return permissionsConfigFile != null
+        ? permissionsConfigFile
         : dataDir().toAbsolutePath()
             + System.getProperty("file.separator")
             + DefaultCommandValues.PERMISSIONING_CONFIG_LOCATION;
@@ -763,7 +763,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
     final PermissioningConfiguration permissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfigurationFromToml(
-            getPermissionsConfigPath(), permissionsNodesEnabled, permissionsAccountsEnabled);
+            getPermissionsConfigFile(), permissionsNodesEnabled, permissionsAccountsEnabled);
     return Optional.of(permissioningConfiguration);
   }
 

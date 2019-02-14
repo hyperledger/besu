@@ -316,19 +316,19 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   @Test
   public void permissionsTomlPathWithoutOptionMustDisplayUsage() {
-    parseCommand("--permissions-config-path");
+    parseCommand("--permissions-config-file");
 
     verifyZeroInteractions(mockRunnerBuilder);
 
     assertThat(commandErrorOutput.toString())
-        .startsWith("Missing required parameter for option '--permissions-config-path'");
+        .startsWith("Missing required parameter for option '--permissions-config-file'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
   @Test
   public void permissionsEnabledWithNonexistentConfigFileMustError() {
     parseCommand(
-        "--permissions-accounts-enabled", "--permissions-config-path", "file-does-not-exist");
+        "--permissions-accounts-enabled", "--permissions-config-file", "file-does-not-exist");
 
     verifyZeroInteractions(mockRunnerBuilder);
 
@@ -344,7 +344,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     Files.write(permToml, Resources.toByteArray(configFile));
 
     parseCommand(
-        "--permissions-accounts-enabled", "--permissions-config-path", permToml.toString());
+        "--permissions-accounts-enabled", "--permissions-config-file", permToml.toString());
     PermissioningConfiguration permissioningConfiguration =
         PermissioningConfiguration.createDefault();
     permissioningConfiguration.setConfigurationFilePath(permToml.toString());
