@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,22 +12,12 @@
  */
 package tech.pegasys.pantheon.services.queue;
 
-import java.io.Closeable;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-/**
- * Represents a very large thread-safe queue that may exceed memory limits.
- *
- * @param <T> the type of data held in the queue
- */
-public interface BigQueue<T> extends Closeable {
+public class InMemoryTaskQueueTest extends AbstractTaskQueueTest<InMemoryTaskQueue<BytesValue>> {
 
-  void enqueue(T value);
-
-  T dequeue();
-
-  long size();
-
-  default boolean isEmpty() {
-    return size() == 0;
+  @Override
+  protected InMemoryTaskQueue<BytesValue> createQueue() throws Exception {
+    return new InMemoryTaskQueue<>();
   }
 }

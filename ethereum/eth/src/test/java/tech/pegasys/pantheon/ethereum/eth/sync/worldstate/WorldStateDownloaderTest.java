@@ -44,8 +44,8 @@ import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage.Updater;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
-import tech.pegasys.pantheon.services.queue.BigQueue;
-import tech.pegasys.pantheon.services.queue.InMemoryBigQueue;
+import tech.pegasys.pantheon.services.queue.InMemoryTaskQueue;
+import tech.pegasys.pantheon.services.queue.TaskQueue;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
@@ -117,7 +117,7 @@ public class WorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    BigQueue<NodeDataRequest> queue = new InMemoryBigQueue<>();
+    TaskQueue<NodeDataRequest> queue = new InMemoryTaskQueue<>();
     WorldStateStorage localStorage =
         new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
     WorldStateDownloader downloader =
@@ -164,7 +164,7 @@ public class WorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    BigQueue<NodeDataRequest> queue = new InMemoryBigQueue<>();
+    TaskQueue<NodeDataRequest> queue = new InMemoryTaskQueue<>();
     WorldStateDownloader downloader =
         new WorldStateDownloader(
             ethProtocolManager.ethContext(),
@@ -210,7 +210,7 @@ public class WorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    BigQueue<NodeDataRequest> queue = new InMemoryBigQueue<>();
+    TaskQueue<NodeDataRequest> queue = new InMemoryTaskQueue<>();
     WorldStateStorage localStorage =
         new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
     WorldStateDownloader downloader =
@@ -271,7 +271,7 @@ public class WorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    BigQueue<NodeDataRequest> queue = new InMemoryBigQueue<>();
+    TaskQueue<NodeDataRequest> queue = new InMemoryTaskQueue<>();
     WorldStateStorage localStorage =
         new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
 
@@ -349,7 +349,7 @@ public class WorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    BigQueue<NodeDataRequest> queue = new InMemoryBigQueue<>();
+    TaskQueue<NodeDataRequest> queue = new InMemoryTaskQueue<>();
     WorldStateStorage localStorage =
         new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
 
@@ -441,7 +441,7 @@ public class WorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    BigQueue<NodeDataRequest> queue = new InMemoryBigQueue<>();
+    TaskQueue<NodeDataRequest> queue = new InMemoryTaskQueue<>();
     WorldStateStorage localStorage =
         new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
 
@@ -606,7 +606,7 @@ public class WorldStateDownloaderTest {
             .getHeader();
     assertThat(otherStateRoot).isNotEqualTo(stateRoot); // Sanity check
 
-    BigQueue<NodeDataRequest> queue = new InMemoryBigQueue<>();
+    TaskQueue<NodeDataRequest> queue = new InMemoryTaskQueue<>();
     WorldStateStorage localStorage =
         new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
     WorldStateArchive localWorldStateArchive = new WorldStateArchive(localStorage);

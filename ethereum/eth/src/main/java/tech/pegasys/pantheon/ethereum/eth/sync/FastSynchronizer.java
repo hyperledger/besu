@@ -29,10 +29,10 @@ import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.OperationTimer;
-import tech.pegasys.pantheon.services.queue.BigQueue;
-import tech.pegasys.pantheon.services.queue.BytesQueue;
-import tech.pegasys.pantheon.services.queue.BytesQueueAdapter;
-import tech.pegasys.pantheon.services.queue.RocksDbQueue;
+import tech.pegasys.pantheon.services.queue.BytesTaskQueue;
+import tech.pegasys.pantheon.services.queue.BytesTaskQueueAdapter;
+import tech.pegasys.pantheon.services.queue.RocksDbTaskQueue;
+import tech.pegasys.pantheon.services.queue.TaskQueue;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,14 +50,14 @@ class FastSynchronizer<C> {
 
   private final FastSyncDownloader<C> fastSyncDownloader;
   private final Path fastSyncDataDirectory;
-  private final BigQueue<NodeDataRequest> stateQueue;
+  private final TaskQueue<NodeDataRequest> stateQueue;
   private final WorldStateDownloader worldStateDownloader;
   private final FastSyncState initialSyncState;
 
   private FastSynchronizer(
       final FastSyncDownloader<C> fastSyncDownloader,
       final Path fastSyncDataDirectory,
-      final BigQueue<NodeDataRequest> stateQueue,
+      final TaskQueue<NodeDataRequest> stateQueue,
       final WorldStateDownloader worldStateDownloader,
       final FastSyncState initialSyncState) {
     this.fastSyncDownloader = fastSyncDownloader;
@@ -94,7 +94,7 @@ class FastSynchronizer<C> {
       return Optional.empty();
     }
 
-    final BigQueue<NodeDataRequest> stateQueue =
+    final TaskQueue<NodeDataRequest> stateQueue =
         createWorldStateDownloaderQueue(getStateQueueDirectory(dataDirectory), metricsSystem);
     final WorldStateDownloader worldStateDownloader =
         new WorldStateDownloader(
@@ -166,10 +166,10 @@ class FastSynchronizer<C> {
     }
   }
 
-  private static BigQueue<NodeDataRequest> createWorldStateDownloaderQueue(
+  private static TaskQueue<NodeDataRequest> createWorldStateDownloaderQueue(
       final Path dataDirectory, final MetricsSystem metricsSystem) {
-    final BytesQueue bytesQueue = RocksDbQueue.create(dataDirectory, metricsSystem);
-    return new BytesQueueAdapter<>(
+    final BytesTaskQueue bytesQueue = RocksDbTaskQueue.create(dataDirectory, metricsSystem);
+    return new BytesTaskQueueAdapter<>(
         bytesQueue, NodeDataRequest::serialize, NodeDataRequest::deserialize);
   }
 }

@@ -17,14 +17,14 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.io.IOException;
 import java.util.function.Function;
 
-public class BytesQueueAdapter<T> implements BigQueue<T> {
+public class BytesTaskQueueAdapter<T> implements TaskQueue<T> {
 
-  private final BytesQueue queue;
+  private final BytesTaskQueue queue;
   private final Function<T, BytesValue> serializer;
   private final Function<BytesValue, T> deserializer;
 
-  public BytesQueueAdapter(
-      final BytesQueue queue,
+  public BytesTaskQueueAdapter(
+      final BytesTaskQueue queue,
       final Function<T, BytesValue> serializer,
       final Function<BytesValue, T> deserializer) {
     this.queue = queue;
@@ -33,14 +33,19 @@ public class BytesQueueAdapter<T> implements BigQueue<T> {
   }
 
   @Override
-  public void enqueue(final T value) {
-    queue.enqueue(serializer.apply(value));
+  public void enqueue(final T taskData) {
+    queue.enqueue(serializer.apply(taskData));
   }
 
   @Override
-  public T dequeue() {
-    BytesValue value = queue.dequeue();
-    return value == null ? null : deserializer.apply(value);
+  public Task<T> dequeue() {
+    Task<BytesValue> task = queue.dequeue();
+    if (task == null) {
+      return null;
+    }
+
+    T data = deserializer.apply(task.getData());
+    return new AdapterTask<>(task, data);
   }
 
   @Override
@@ -49,7 +54,42 @@ public class BytesQueueAdapter<T> implements BigQueue<T> {
   }
 
   @Override
+  public boolean isEmpty() {
+    return queue.isEmpty();
+  }
+
+  @Override
+  public boolean allTasksCompleted() {
+    return queue.allTasksCompleted();
+  }
+
+  @Override
   public void close() throws IOException {
     queue.close();
+  }
+
+  private static class AdapterTask<T> implements Task<T> {
+    private final Task<BytesValue> wrappedTask;
+    private final T data;
+
+    public AdapterTask(final Task<BytesValue> wrappedTask, final T data) {
+      this.wrappedTask = wrappedTask;
+      this.data = data;
+    }
+
+    @Override
+    public T getData() {
+      return data;
+    }
+
+    @Override
+    public void markCompleted() {
+      wrappedTask.markCompleted();
+    }
+
+    @Override
+    public void markFailed() {
+      wrappedTask.markFailed();
+    }
   }
 }
