@@ -16,5 +16,6 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.response;
 public enum JsonRpcResponseType {
   NONE,
   SUCCESS,
-  ERROR
+  ERROR,
+  UNAUTHORIZED
 }
