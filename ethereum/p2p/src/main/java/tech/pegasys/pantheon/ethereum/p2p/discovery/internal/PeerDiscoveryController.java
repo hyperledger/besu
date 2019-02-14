@@ -24,7 +24,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBonde
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -201,7 +201,7 @@ public class PeerDiscoveryController {
 
   private boolean whitelistIfPresentIsNodePermitted(final DiscoveryPeer sender) {
     return nodeWhitelistController
-        .map(nodeWhitelistController -> nodeWhitelistController.isPermitted(sender))
+        .map(nodeWhitelistController -> nodeWhitelistController.isPermitted(sender.getEnodeURI()))
         .orElse(true);
   }
 

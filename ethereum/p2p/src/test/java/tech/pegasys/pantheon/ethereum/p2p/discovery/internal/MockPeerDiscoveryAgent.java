@@ -17,7 +17,7 @@ import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;

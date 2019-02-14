@@ -35,7 +35,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
@@ -947,8 +947,8 @@ public class PeerDiscoveryControllerTest {
     final NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
 
     // Whitelist peers
-    nodeWhitelistController.addNode(discoPeer);
-    nodeWhitelistController.addNode(otherPeer2);
+    nodeWhitelistController.addNodes(Arrays.asList(discoPeer.getEnodeURI()));
+    nodeWhitelistController.addNodes(Arrays.asList(otherPeer2.getEnodeURI()));
 
     final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =

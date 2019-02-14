@@ -23,7 +23,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.util.NetworkUtility;
 import tech.pegasys.pantheon.util.Preconditions;
 

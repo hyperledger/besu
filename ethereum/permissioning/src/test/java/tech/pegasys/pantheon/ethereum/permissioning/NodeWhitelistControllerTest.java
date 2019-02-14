@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.p2p.permissioning;
+package tech.pegasys.pantheon.ethereum.permissioning;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,15 +22,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController.NodesWhitelistResult;
+import static tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController.NodesWhitelistResult;
 
-import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
-import tech.pegasys.pantheon.ethereum.permissioning.WhitelistFileSyncException;
-import tech.pegasys.pantheon.ethereum.permissioning.WhitelistOperationResult;
-import tech.pegasys.pantheon.ethereum.permissioning.WhitelistPersistor;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.IOException;
 import java.net.URI;
@@ -67,13 +61,11 @@ public class NodeWhitelistControllerTest {
 
   @Test
   public void whenAddNodesInputHasExistingNodeShouldReturnAddErrorExistingEntry() {
-    controller.addNode(DefaultPeer.fromURI(enode1));
+    controller.addNodes(Arrays.asList(enode1));
 
     NodesWhitelistResult expected =
         new NodesWhitelistResult(WhitelistOperationResult.ERROR_EXISTING_ENTRY);
-    NodesWhitelistResult actualResult =
-        controller.addNodes(
-            Lists.newArrayList(DefaultPeer.fromURI(enode1), DefaultPeer.fromURI(enode2)));
+    NodesWhitelistResult actualResult = controller.addNodes(Lists.newArrayList(enode1, enode2));
 
     assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
   }
@@ -83,9 +75,7 @@ public class NodeWhitelistControllerTest {
     NodesWhitelistResult expected =
         new NodesWhitelistResult(WhitelistOperationResult.ERROR_DUPLICATED_ENTRY);
 
-    NodesWhitelistResult actualResult =
-        controller.addNodes(
-            Arrays.asList(DefaultPeer.fromURI(enode1), DefaultPeer.fromURI(enode1)));
+    NodesWhitelistResult actualResult = controller.addNodes(Arrays.asList(enode1, enode1));
 
     assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
   }
@@ -112,9 +102,7 @@ public class NodeWhitelistControllerTest {
   public void whenRemoveNodesInputHasAbsentNodeShouldReturnRemoveErrorAbsentEntry() {
     NodesWhitelistResult expected =
         new NodesWhitelistResult(WhitelistOperationResult.ERROR_ABSENT_ENTRY);
-    NodesWhitelistResult actualResult =
-        controller.removeNodes(
-            Lists.newArrayList(DefaultPeer.fromURI(enode1), DefaultPeer.fromURI(enode2)));
+    NodesWhitelistResult actualResult = controller.removeNodes(Lists.newArrayList(enode1, enode2));
 
     assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
   }
@@ -123,9 +111,7 @@ public class NodeWhitelistControllerTest {
   public void whenRemoveNodesInputHasDuplicateNodesShouldReturnErrorDuplicatedEntry() {
     NodesWhitelistResult expected =
         new NodesWhitelistResult(WhitelistOperationResult.ERROR_DUPLICATED_ENTRY);
-    NodesWhitelistResult actualResult =
-        controller.removeNodes(
-            Lists.newArrayList(DefaultPeer.fromURI(enode1), DefaultPeer.fromURI(enode1)));
+    NodesWhitelistResult actualResult = controller.removeNodes(Lists.newArrayList(enode1, enode1));
 
     assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
   }
@@ -150,103 +136,60 @@ public class NodeWhitelistControllerTest {
 
   @Test
   public void whenNodeIdsAreDifferentItShouldNotBePermitted() {
-    Peer peer1 =
-        new DefaultPeer(
-            BytesValue.fromHexString(
-                "0xaaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
-            "127.0.0.1",
-            30303);
-    Peer peer2 =
-        new DefaultPeer(
-            BytesValue.fromHexString(
-                "0xbbba80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
-            "127.0.0.1",
-            30303);
+    String peer1 =
+        "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303";
+    String peer2 =
+        "enode://bbbb80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303";
 
-    controller.addNode(peer1);
+    controller.addNodes(Arrays.asList(peer1));
 
     assertThat(controller.isPermitted(peer2)).isFalse();
   }
 
   @Test
   public void whenNodesHostsAreDifferentItShouldNotBePermitted() {
-    Peer peer1 =
-        new DefaultPeer(
-            BytesValue.fromHexString(
-                "0xaaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
-            "127.0.0.1",
-            30303);
-    Peer peer2 =
-        new DefaultPeer(
-            BytesValue.fromHexString(
-                "0xaaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
-            "127.0.0.2",
-            30303);
+    String peer1 =
+        "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303";
+    String peer2 =
+        "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.2:30303";
 
-    controller.addNode(peer1);
+    controller.addNodes(Arrays.asList(peer1));
 
     assertThat(controller.isPermitted(peer2)).isFalse();
   }
 
   @Test
   public void whenNodesUdpPortsAreDifferentItShouldNotBePermitted() {
-    Peer peer1 =
-        new DefaultPeer(
-            BytesValue.fromHexString(
-                "0xaaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
-            "127.0.0.1",
-            30301);
-    Peer peer2 =
-        new DefaultPeer(
-            BytesValue.fromHexString(
-                "0xaaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
-            "127.0.0.1",
-            30302);
+    String peer1 =
+        "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30301";
+    String peer2 =
+        "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30302";
 
-    controller.addNode(peer1);
+    controller.addNodes(Arrays.asList(peer1));
 
     assertThat(controller.isPermitted(peer2)).isFalse();
   }
 
   @Test
   public void whenCheckingIfNodeIsPermittedTcpPortShouldNotBeConsideredIfAbsent() {
-    Peer peerWithTcpPortSet =
-        new DefaultPeer(
-            BytesValue.fromHexString(
-                "0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
-            "127.0.0.1",
-            30303,
-            10001);
-    Peer peerWithoutTcpPortSet =
-        new DefaultPeer(
-            BytesValue.fromHexString(
-                "0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
-            "127.0.0.1",
-            30303);
+    String peerWithTcpPortSet =
+        "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=10001";
+    String peerWithoutTcpPortSet =
+        "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303";
 
-    controller.addNode(peerWithoutTcpPortSet);
+    controller.addNodes(Arrays.asList(peerWithTcpPortSet));
 
-    assertThat(controller.isPermitted(peerWithTcpPortSet)).isTrue();
+    assertThat(controller.isPermitted(peerWithoutTcpPortSet)).isTrue();
   }
 
   @Test
   public void whenCheckingIfNodeIsPermittedTcpPortShouldBeConsideredIfPresent() {
-    Peer peerWithTcpPortSet =
-        new DefaultPeer(
-            BytesValue.fromHexString(
-                "0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
-            "127.0.0.1",
-            30303,
-            10001);
-    Peer peerWithDifferentTcpPortSet =
-        new DefaultPeer(
-            BytesValue.fromHexString(
-                "0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
-            "127.0.0.1",
-            30303,
-            10002);
+    String peerWithTcpPortSet =
+        "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=10001";
+    String peerWithDifferentTcpPortSet =
+        "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=10002";
 
-    controller.addNode(peerWithDifferentTcpPortSet);
+    controller.addNodes(Arrays.asList(peerWithDifferentTcpPortSet));
 
     assertThat(controller.isPermitted(peerWithTcpPortSet)).isFalse();
   }
@@ -254,8 +197,8 @@ public class NodeWhitelistControllerTest {
   @Test
   public void stateShouldRevertIfWhitelistPersistFails()
       throws IOException, WhitelistFileSyncException {
-    List<Peer> newNode1 = singletonList(DefaultPeer.fromURI(enode1));
-    List<Peer> newNode2 = singletonList(DefaultPeer.fromURI(enode2));
+    List<String> newNode1 = singletonList(new EnodeURL(enode1).toString());
+    List<String> newNode2 = singletonList(new EnodeURL(enode2).toString());
 
     assertThat(controller.getNodesWhitelist().size()).isEqualTo(0);
 
@@ -289,8 +232,7 @@ public class NodeWhitelistControllerTest {
 
     controller.reload();
 
-    assertThat(controller.getNodesWhitelist())
-        .containsExactly(DefaultPeer.fromURI(expectedEnodeURL));
+    assertThat(controller.getNodesWhitelist()).containsExactly(expectedEnodeURL);
   }
 
   @Test
@@ -311,8 +253,7 @@ public class NodeWhitelistControllerTest {
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("Unable to read permissions TOML config file");
 
-    assertThat(controller.getNodesWhitelist())
-        .containsExactly(DefaultPeer.fromURI(expectedEnodeURI));
+    assertThat(controller.getNodesWhitelist()).containsExactly(expectedEnodeURI);
   }
 
   private Path createPermissionsFileWithNode(final String node) throws IOException {

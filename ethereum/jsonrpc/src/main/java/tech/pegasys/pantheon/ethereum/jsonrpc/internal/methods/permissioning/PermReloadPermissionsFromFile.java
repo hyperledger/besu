@@ -18,8 +18,8 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import tech.pegasys.pantheon.ethereum.p2p.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
 
 import java.util.Optional;
 
