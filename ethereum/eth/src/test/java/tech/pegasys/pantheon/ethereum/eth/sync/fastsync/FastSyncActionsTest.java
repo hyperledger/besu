@@ -93,14 +93,15 @@ public class FastSyncActionsTest {
     }
     final CompletableFuture<FastSyncState> result =
         fastSyncActions.waitForSuitablePeers(EMPTY_SYNC_STATE);
-    assertThat(result).isCompleted();
+    assertThat(result).isCompletedWithValue(EMPTY_SYNC_STATE);
   }
 
   @Test
   public void waitForPeersShouldReportSuccessWhenTimeLimitReachedAndAPeerIsAvailable() {
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
     timeoutCount.set(Integer.MAX_VALUE);
-    assertThat(fastSyncActions.waitForSuitablePeers(EMPTY_SYNC_STATE)).isCompleted();
+    assertThat(fastSyncActions.waitForSuitablePeers(EMPTY_SYNC_STATE))
+        .isCompletedWithValue(EMPTY_SYNC_STATE);
   }
 
   @Test
@@ -111,7 +112,7 @@ public class FastSyncActionsTest {
     assertThat(result).isNotCompleted();
 
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
-    assertThat(result).isCompleted();
+    assertThat(result).isCompletedWithValue(EMPTY_SYNC_STATE);
   }
 
   @Test
