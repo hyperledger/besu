@@ -14,6 +14,8 @@ package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.CHAIN_TOO_SHORT;
+import static tech.pegasys.pantheon.util.FutureUtils.completedExceptionally;
+import static tech.pegasys.pantheon.util.FutureUtils.exceptionallyCompose;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -73,59 +75,39 @@ public class FastSyncActions<C> {
             ethContext, syncConfig.getFastSyncMinimumPeerCount(), ethTasksTimer);
 
     final EthScheduler scheduler = ethContext.getScheduler();
-    final CompletableFuture<FastSyncState> result = new CompletableFuture<>();
-    scheduler
-        .timeout(waitForPeersTask, syncConfig.getFastSyncMaximumPeerWaitTime())
-        .handle(
-            (waitResult, error) -> {
+    return exceptionallyCompose(
+            scheduler.timeout(waitForPeersTask, syncConfig.getFastSyncMaximumPeerWaitTime()),
+            error -> {
               if (ExceptionUtils.rootCause(error) instanceof TimeoutException) {
                 if (ethContext.getEthPeers().availablePeerCount() > 0) {
                   LOG.warn(
                       "Fast sync timed out before minimum peer count was reached. Continuing with reduced peers.");
-                  result.complete(fastSyncState);
+                  return completedFuture(null);
                 } else {
                   LOG.warn(
                       "Maximum wait time for fast sync reached but no peers available. Continuing to wait for any available peer.");
-                  waitForAnyPeer()
-                      .thenAccept(value -> result.complete(fastSyncState))
-                      .exceptionally(
-                          taskError -> {
-                            result.completeExceptionally(error);
-                            return null;
-                          });
+                  return waitForAnyPeer();
                 }
               } else if (error != null) {
                 LOG.error("Failed to find peers for fast sync", error);
-                result.completeExceptionally(error);
-              } else {
-                result.complete(fastSyncState);
+                return completedExceptionally(error);
               }
               return null;
-            });
-
-    return result;
+            })
+        .thenApply(successfulWaitResult -> fastSyncState);
   }
 
   private CompletableFuture<Void> waitForAnyPeer() {
-    final CompletableFuture<Void> result = new CompletableFuture<>();
-    waitForAnyPeer(result);
-    return result;
-  }
-
-  private void waitForAnyPeer(final CompletableFuture<Void> result) {
-    ethContext
-        .getScheduler()
-        .timeout(WaitForPeersTask.create(ethContext, 1, ethTasksTimer))
-        .whenComplete(
-            (waitResult, throwable) -> {
-              if (ExceptionUtils.rootCause(throwable) instanceof TimeoutException) {
-                waitForAnyPeer(result);
-              } else if (throwable != null) {
-                result.completeExceptionally(throwable);
-              } else {
-                result.complete(waitResult);
-              }
-            });
+    final CompletableFuture<Void> waitForPeerResult =
+        ethContext.getScheduler().timeout(WaitForPeersTask.create(ethContext, 1, ethTasksTimer));
+    return exceptionallyCompose(
+        waitForPeerResult,
+        throwable -> {
+          if (ExceptionUtils.rootCause(throwable) instanceof TimeoutException) {
+            return waitForAnyPeer();
+          }
+          return completedExceptionally(throwable);
+        });
   }
 
   public CompletableFuture<FastSyncState> selectPivotBlock(final FastSyncState fastSyncState) {
