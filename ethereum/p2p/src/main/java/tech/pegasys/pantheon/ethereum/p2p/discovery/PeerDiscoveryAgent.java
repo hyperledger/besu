@@ -121,13 +121,12 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
   public abstract CompletableFuture<?> stop();
 
   public CompletableFuture<?> start() {
-    final CompletableFuture<?> future = new CompletableFuture<>();
     if (config.isActive()) {
       final String host = config.getBindHost();
       final int port = config.getBindPort();
       LOG.info("Starting peer discovery agent on host={}, port={}", host, port);
 
-      listenForConnections()
+      return listenForConnections()
           .thenAccept(
               (InetSocketAddress localAddress) -> {
                 // Once listener is set up, finish initializing
@@ -140,21 +139,11 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
                         localAddress.getPort());
                 isActive = true;
                 startController();
-              })
-          .whenComplete(
-              (res, err) -> {
-                // Finalize future
-                if (err != null) {
-                  future.completeExceptionally(err);
-                } else {
-                  future.complete(null);
-                }
               });
     } else {
       this.isActive = false;
-      future.complete(null);
+      return CompletableFuture.completedFuture(null);
     }
-    return future;
   }
 
   private void startController() {

@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 
 import static java.util.Collections.emptyList;
+import static tech.pegasys.pantheon.util.FutureUtils.completedExceptionally;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Block;
@@ -112,11 +113,9 @@ public class FastSyncBlockHandler<C> implements BlockHandler<BlockWithReceipts> 
   }
 
   private CompletableFuture<List<BlockWithReceipts>> invalidBlockFailure(final Block block) {
-    final CompletableFuture<List<BlockWithReceipts>> result = new CompletableFuture<>();
-    result.completeExceptionally(
+    return completedExceptionally(
         new InvalidBlockException(
             "Failed to import block", block.getHeader().getNumber(), block.getHash()));
-    return result;
   }
 
   private BlockImporter<C> getBlockImporter(final BlockWithReceipts blockWithReceipt) {

@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
+import static tech.pegasys.pantheon.util.FutureUtils.completedExceptionally;
+
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
@@ -87,9 +89,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private CompletableFuture<PeerTaskResult<List<Block>>> completeBlock(
       final PeerTaskResult<List<BlockHeader>> headerResult) {
     if (headerResult.getResult().isEmpty()) {
-      final CompletableFuture<PeerTaskResult<List<Block>>> future = new CompletableFuture<>();
-      future.completeExceptionally(new IncompleteResultsException());
-      return future;
+      return completedExceptionally(new IncompleteResultsException());
     }
 
     return executeSubTask(

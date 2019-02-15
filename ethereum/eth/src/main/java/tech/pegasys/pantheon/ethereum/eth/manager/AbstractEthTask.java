@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
+import static tech.pegasys.pantheon.util.FutureUtils.completedExceptionally;
+
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 
@@ -110,9 +112,7 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
             });
         return subTaskFuture;
       } else {
-        final CompletableFuture<S> future = new CompletableFuture<>();
-        future.completeExceptionally(new CancellationException());
-        return future;
+        return completedExceptionally(new CancellationException());
       }
     }
   }
@@ -135,9 +135,7 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
             });
         return subTaskFuture;
       } else {
-        final CompletableFuture<S> future = new CompletableFuture<>();
-        future.completeExceptionally(new CancellationException());
-        return future;
+        return completedExceptionally(new CancellationException());
       }
     }
   }

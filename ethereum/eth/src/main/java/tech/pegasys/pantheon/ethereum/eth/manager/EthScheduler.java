@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
+import static tech.pegasys.pantheon.util.FutureUtils.propagateResult;
+
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.time.Duration;
@@ -98,19 +100,7 @@ public class EthScheduler {
       final Supplier<CompletableFuture<T>> future) {
     final CompletableFuture<T> promise = new CompletableFuture<>();
     final Future<?> workerFuture =
-        syncWorkerExecutor.submit(
-            () -> {
-              future
-                  .get()
-                  .whenComplete(
-                      (r, t) -> {
-                        if (t != null) {
-                          promise.completeExceptionally(t);
-                        } else {
-                          promise.complete(r);
-                        }
-                      });
-            });
+        syncWorkerExecutor.submit(() -> propagateResult(future.get(), promise));
     // If returned promise is cancelled, cancel the worker future
     promise.whenComplete(
         (r, t) -> {
@@ -170,18 +160,7 @@ public class EthScheduler {
     final CompletableFuture<T> promise = new CompletableFuture<>();
     final ScheduledFuture<?> scheduledFuture =
         scheduler.schedule(
-            () -> {
-              future
-                  .get()
-                  .whenComplete(
-                      (r, t) -> {
-                        if (t != null) {
-                          promise.completeExceptionally(t);
-                        } else {
-                          promise.complete(r);
-                        }
-                      });
-            },
+            () -> propagateResult(future.get(), promise),
             duration.toMillis(),
             TimeUnit.MILLISECONDS);
     // If returned promise is cancelled, cancel scheduled task
