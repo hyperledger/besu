@@ -112,7 +112,24 @@ public class RocksDbTaskQueue implements BytesTaskQueue {
 
   @Override
   public synchronized boolean isEmpty() {
+    assertNotClosed();
     return size() == 0;
+  }
+
+  @Override
+  public synchronized void clear() {
+    assertNotClosed();
+    outstandingTasks.clear();
+    byte[] from = Longs.toByteArray(oldestKey.get());
+    byte[] to = Longs.toByteArray(lastEnqueuedKey.get() + 1);
+    try {
+      db.deleteRange(from, to);
+      lastDequeuedKey.set(0);
+      lastEnqueuedKey.set(0);
+      oldestKey.set(0);
+    } catch (RocksDBException e) {
+      throw new StorageException(e);
+    }
   }
 
   @Override
@@ -128,7 +145,7 @@ public class RocksDbTaskQueue implements BytesTaskQueue {
             .orElse(lastDequeuedKey.get() + 1);
 
     if (oldestKey.get() < oldestOutstandingKey) {
-      // Delete all contiguous completed task keys
+      // Delete all contiguous completed tasks
       byte[] fromKey = Longs.toByteArray(oldestKey.get());
       byte[] toKey = Longs.toByteArray(oldestOutstandingKey);
       try {
@@ -154,14 +171,18 @@ public class RocksDbTaskQueue implements BytesTaskQueue {
     }
   }
 
-  private synchronized void markTaskCompleted(final RocksDbTask task) {
-    outstandingTasks.remove(task);
-    deleteCompletedTasks();
+  private synchronized boolean markTaskCompleted(final RocksDbTask task) {
+    if (outstandingTasks.remove(task)) {
+      deleteCompletedTasks();
+      return true;
+    }
+    return false;
   }
 
   private synchronized void handleFailedTask(final RocksDbTask task) {
-    enqueue(task.getData());
-    markTaskCompleted(task);
+    if (markTaskCompleted(task)) {
+      enqueue(task.getData());
+    }
   }
 
   public static class StorageException extends RuntimeException {
