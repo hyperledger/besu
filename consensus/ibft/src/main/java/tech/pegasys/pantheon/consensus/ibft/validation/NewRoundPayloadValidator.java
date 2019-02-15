@@ -12,19 +12,14 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.validation;
 
-import static tech.pegasys.pantheon.consensus.ibft.IbftHelpers.prepareMessageCountForQuorum;
-
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.ProposerSelector;
 import tech.pegasys.pantheon.consensus.ibft.payload.NewRoundPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
-import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangePayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangePayloadValidator.MessageValidatorForHeightFactory;
 import tech.pegasys.pantheon.ethereum.core.Address;
-
-import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,23 +28,20 @@ public class NewRoundPayloadValidator {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final Collection<Address> validators;
   private final ProposerSelector proposerSelector;
   private final MessageValidatorForHeightFactory messageValidatorFactory;
-  private final long quorum;
   private final long chainHeight;
+  private final RoundChangeCertificateValidator roundChangeCertificateValidator;
 
   public NewRoundPayloadValidator(
-      final Collection<Address> validators,
       final ProposerSelector proposerSelector,
       final MessageValidatorForHeightFactory messageValidatorFactory,
-      final long quorum,
-      final long chainHeight) {
-    this.validators = validators;
+      final long chainHeight,
+      final RoundChangeCertificateValidator roundChangeCertificateValidator) {
     this.proposerSelector = proposerSelector;
     this.messageValidatorFactory = messageValidatorFactory;
-    this.quorum = quorum;
     this.chainHeight = chainHeight;
+    this.roundChangeCertificateValidator = roundChangeCertificateValidator;
   }
 
   public boolean validateNewRoundMessage(final SignedData<NewRoundPayload> msg) {
@@ -82,49 +74,11 @@ public class NewRoundPayloadValidator {
       return false;
     }
 
-    if (!validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
+    if (!roundChangeCertificateValidator.validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
         rootRoundIdentifier, roundChangeCert)) {
       return false;
     }
 
-    return true;
-  }
-
-  private boolean validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
-      final ConsensusRoundIdentifier expectedRound, final RoundChangeCertificate roundChangeCert) {
-
-    final Collection<SignedData<RoundChangePayload>> roundChangeMsgs =
-        roundChangeCert.getRoundChangePayloads();
-
-    if (roundChangeMsgs.size() < quorum) {
-      LOG.info(
-          "Invalid NewRound message, RoundChange certificate has insufficient "
-              + "RoundChange messages.");
-      return false;
-    }
-
-    if (!roundChangeCert.getRoundChangePayloads().stream()
-        .allMatch(p -> p.getPayload().getRoundIdentifier().equals(expectedRound))) {
-      LOG.info(
-          "Invalid NewRound message, not all embedded RoundChange messages have a "
-              + "matching target round.");
-      return false;
-    }
-
-    for (final SignedData<RoundChangePayload> roundChangeMsg :
-        roundChangeCert.getRoundChangePayloads()) {
-      final RoundChangePayloadValidator roundChangeValidator =
-          new RoundChangePayloadValidator(
-              messageValidatorFactory,
-              validators,
-              prepareMessageCountForQuorum(quorum),
-              chainHeight);
-
-      if (!roundChangeValidator.validateRoundChange(roundChangeMsg)) {
-        LOG.info("Invalid NewRound message, embedded RoundChange message failed validation.");
-        return false;
-      }
-    }
     return true;
   }
 }

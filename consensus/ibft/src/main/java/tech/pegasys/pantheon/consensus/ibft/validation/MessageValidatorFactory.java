@@ -81,15 +81,19 @@ public class MessageValidatorFactory {
     final BlockValidator<IbftContext> blockValidator =
         protocolSchedule.getByBlockNumber(chainHeight).getBlockValidator();
 
+    final RoundChangeCertificateValidator roundChangeCertificateValidator =
+        new RoundChangeCertificateValidator(
+            validators, this::createSignedDataValidator, chainHeight);
+
     return new NewRoundMessageValidator(
         new NewRoundPayloadValidator(
-            validators,
             proposerSelector,
             this::createSignedDataValidator,
-            IbftHelpers.calculateRequiredValidatorQuorum(validators.size()),
-            chainHeight),
+            chainHeight,
+            roundChangeCertificateValidator),
         new ProposalBlockConsistencyValidator(),
         blockValidator,
-        protocolContext);
+        protocolContext,
+        roundChangeCertificateValidator);
   }
 }
