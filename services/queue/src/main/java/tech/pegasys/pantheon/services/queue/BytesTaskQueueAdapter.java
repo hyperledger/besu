@@ -59,6 +59,11 @@ public class BytesTaskQueueAdapter<T> implements TaskQueue<T> {
   }
 
   @Override
+  public void clear() {
+    queue.clear();
+  }
+
+  @Override
   public boolean allTasksCompleted() {
     return queue.allTasksCompleted();
   }

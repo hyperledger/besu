@@ -13,13 +13,14 @@
 package tech.pegasys.pantheon.services.queue;
 
 import java.util.ArrayDeque;
+import java.util.HashSet;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class InMemoryTaskQueue<T> implements TaskQueue<T> {
   private final Queue<T> internalQueue = new ArrayDeque<>();
-  private final AtomicInteger unfinishedOutstandingTasks = new AtomicInteger(0);
+  private final Set<InMemoryTask<T>> unfinishedOutstandingTasks = new HashSet<>();
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
   @Override
@@ -35,8 +36,9 @@ public class InMemoryTaskQueue<T> implements TaskQueue<T> {
     if (data == null) {
       return null;
     }
-    unfinishedOutstandingTasks.incrementAndGet();
-    return new InMemoryTask<>(this, data);
+    InMemoryTask<T> task = new InMemoryTask<>(this, data);
+    unfinishedOutstandingTasks.add(task);
+    return task;
   }
 
   @Override
@@ -52,9 +54,17 @@ public class InMemoryTaskQueue<T> implements TaskQueue<T> {
   }
 
   @Override
-  public boolean allTasksCompleted() {
+  public synchronized void clear() {
     assertNotClosed();
-    return isEmpty() && unfinishedOutstandingTasks.get() == 0;
+
+    unfinishedOutstandingTasks.clear();
+    internalQueue.clear();
+  }
+
+  @Override
+  public synchronized boolean allTasksCompleted() {
+    assertNotClosed();
+    return isEmpty() && unfinishedOutstandingTasks.size() == 0;
   }
 
   @Override
@@ -70,12 +80,13 @@ public class InMemoryTaskQueue<T> implements TaskQueue<T> {
   }
 
   private synchronized void handleFailedTask(final InMemoryTask<T> task) {
-    enqueue(task.getData());
-    markTaskCompleted();
+    if (markTaskCompleted(task)) {
+      enqueue(task.getData());
+    }
   }
 
-  private synchronized void markTaskCompleted() {
-    unfinishedOutstandingTasks.decrementAndGet();
+  private synchronized boolean markTaskCompleted(final InMemoryTask<T> task) {
+    return unfinishedOutstandingTasks.remove(task);
   }
 
   private static class InMemoryTask<T> implements Task<T> {
@@ -96,7 +107,7 @@ public class InMemoryTaskQueue<T> implements TaskQueue<T> {
     @Override
     public void markCompleted() {
       if (completed.compareAndSet(false, true)) {
-        queue.markTaskCompleted();
+        queue.markTaskCompleted(this);
       }
     }
 

@@ -42,6 +42,9 @@ public interface TaskQueue<T> extends Closeable {
   /** @return True if all tasks have been dequeued. */
   boolean isEmpty();
 
+  /** Clear all data from the queue. */
+  void clear();
+
   /** @return True if all tasks have been dequeued and processed. */
   boolean allTasksCompleted();
 

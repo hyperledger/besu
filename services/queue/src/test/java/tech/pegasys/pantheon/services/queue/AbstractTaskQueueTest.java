@@ -114,6 +114,65 @@ abstract class AbstractTaskQueueTest<T extends TaskQueue<BytesValue>> {
   }
 
   @Test
+  public void clear() throws Exception {
+    try (T queue = createQueue()) {
+      BytesValue one = BytesValue.of(1);
+      BytesValue two = BytesValue.of(2);
+      BytesValue three = BytesValue.of(3);
+      BytesValue four = BytesValue.of(4);
+
+      // Fill queue
+      queue.enqueue(one);
+      queue.enqueue(two);
+      assertThat(queue.size()).isEqualTo(2);
+      assertThat(queue.isEmpty()).isFalse();
+      assertThat(queue.allTasksCompleted()).isFalse();
+
+      // Clear queue and check state
+      queue.clear();
+      assertThat(queue.size()).isEqualTo(0);
+      assertThat(queue.isEmpty()).isTrue();
+      assertThat(queue.allTasksCompleted()).isTrue();
+      assertThat(queue.dequeue()).isNull();
+
+      // Subsequent operations should work as expected
+      queue.enqueue(three);
+      assertThat(queue.size()).isEqualTo(1);
+      queue.enqueue(four);
+      assertThat(queue.size()).isEqualTo(2);
+      assertThat(queue.dequeue().getData()).isEqualTo(three);
+    }
+  }
+
+  @Test
+  public void clear_emptyQueueWithOutstandingTasks() throws Exception {
+    try (T queue = createQueue()) {
+      BytesValue one = BytesValue.of(1);
+
+      // Add and then dequeue task
+      queue.enqueue(one);
+      Task<BytesValue> task = queue.dequeue();
+      assertThat(task.getData()).isEqualTo(one);
+      assertThat(queue.isEmpty()).isTrue();
+      assertThat(queue.allTasksCompleted()).isFalse();
+
+      // Clear queue and check state
+      queue.clear();
+      assertThat(queue.size()).isEqualTo(0);
+      assertThat(queue.isEmpty()).isTrue();
+      assertThat(queue.allTasksCompleted()).isTrue();
+      assertThat(queue.dequeue()).isNull();
+
+      // Marking old task as failed should not requeue task
+      task.markFailed();
+      assertThat(queue.size()).isEqualTo(0);
+      assertThat(queue.isEmpty()).isTrue();
+      assertThat(queue.allTasksCompleted()).isTrue();
+      assertThat(queue.dequeue()).isNull();
+    }
+  }
+
+  @Test
   public void handlesConcurrentQueuing() throws Exception {
     final int threadCount = 5;
     final int itemsPerThread = 1000;
