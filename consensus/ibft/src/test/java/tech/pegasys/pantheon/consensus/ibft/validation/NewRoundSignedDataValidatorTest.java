@@ -25,14 +25,12 @@ import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.payload.NewRoundPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
-import tech.pegasys.pantheon.consensus.ibft.statemachine.PreparedRoundArtifacts;
 import tech.pegasys.pantheon.consensus.ibft.validation.RoundChangePayloadValidator.MessageValidatorForHeightFactory;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Util;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,6 +56,8 @@ public class NewRoundSignedDataValidatorTest {
   private final MessageValidatorForHeightFactory validatorFactory =
       mock(MessageValidatorForHeightFactory.class);
   private final SignedDataValidator signedDataValidator = mock(SignedDataValidator.class);
+  private final RoundChangeCertificateValidator roundChangeCertificateValidator =
+      mock(RoundChangeCertificateValidator.class);
 
   private Block proposedBlock;
   private NewRound validMsg;
@@ -81,9 +81,13 @@ public class NewRoundSignedDataValidatorTest {
     when(signedDataValidator.validateProposal(any())).thenReturn(true);
     when(signedDataValidator.validatePrepare(any())).thenReturn(true);
 
+    when(roundChangeCertificateValidator.validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
+            any(), any()))
+        .thenReturn(true);
+
     validator =
         new NewRoundPayloadValidator(
-            validators, proposerSelector, validatorFactory, 1, chainHeight);
+            proposerSelector, validatorFactory, chainHeight, roundChangeCertificateValidator);
   }
 
   /* NOTE: All test herein assume that the Proposer is the expected transmitter of the NewRound
@@ -149,54 +153,11 @@ public class NewRoundSignedDataValidatorTest {
   }
 
   @Test
-  public void newRoundWithEmptyRoundChangeCertificateFails() {
-    msgBuilder.setRoundChangeCertificate(new RoundChangeCertificate(Collections.emptyList()));
-
-    final NewRound inValidMsg = signPayload(msgBuilder.build(), proposerKey, proposedBlock);
-
-    assertThat(validator.validateNewRoundMessage(inValidMsg.getSignedPayload())).isFalse();
-  }
-
-  @Test
-  public void roundChangeMessagesDoNotAllTargetRoundOfNewRoundMsgFails() {
-    final ConsensusRoundIdentifier prevRound = TestHelpers.createFrom(roundIdentifier, 0, -1);
-
-    final RoundChangeCertificate.Builder roundChangeBuilder = new RoundChangeCertificate.Builder();
-    roundChangeBuilder.appendRoundChangeMessage(
-        proposerMessageFactory.createRoundChange(roundIdentifier, Optional.empty()));
-    roundChangeBuilder.appendRoundChangeMessage(
-        proposerMessageFactory.createRoundChange(prevRound, Optional.empty()));
-
-    msgBuilder.setRoundChangeCertificate(roundChangeBuilder.buildCertificate());
-
-    final NewRound msg = signPayload(msgBuilder.build(), proposerKey, proposedBlock);
-
-    assertThat(validator.validateNewRoundMessage(msg.getSignedPayload())).isFalse();
-  }
-
-  @Test
-  public void invalidEmbeddedRoundChangeMessageFails() {
-    final ConsensusRoundIdentifier prevRound = TestHelpers.createFrom(roundIdentifier, 0, -1);
-
-    final RoundChangeCertificate.Builder roundChangeBuilder = new RoundChangeCertificate.Builder();
-    roundChangeBuilder.appendRoundChangeMessage(
-        proposerMessageFactory.createRoundChange(
-            roundIdentifier,
-            Optional.of(
-                new PreparedRoundArtifacts(
-                    proposerMessageFactory.createProposal(prevRound, proposedBlock),
-                    Lists.newArrayList(
-                        validatorMessageFactory.createPrepare(
-                            prevRound, proposedBlock.getHash()))))));
-
-    msgBuilder.setRoundChangeCertificate(roundChangeBuilder.buildCertificate());
-
-    // The prepare Message in the RoundChange Cert will be deemed illegal.
-    when(signedDataValidator.validatePrepare(any())).thenReturn(false);
-
-    final NewRound msg = signPayload(msgBuilder.build(), proposerKey, proposedBlock);
-
-    assertThat(validator.validateNewRoundMessage(msg.getSignedPayload())).isFalse();
+  public void roundChangeCertificateFailsValidation() {
+    when(roundChangeCertificateValidator.validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
+            any(), any()))
+        .thenReturn(false);
+    assertThat(validator.validateNewRoundMessage(validMsg.getSignedPayload())).isFalse();
   }
 
   @Test
