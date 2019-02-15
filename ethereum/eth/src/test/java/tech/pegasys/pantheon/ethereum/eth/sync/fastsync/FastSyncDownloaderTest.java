@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -26,6 +27,7 @@ import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncState.EMP
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.WorldStateDownloader;
+import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.WorldStateUnavailableException;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -245,6 +247,66 @@ public class FastSyncDownloaderTest {
 
     chainFuture.complete(null);
     assertThat(result).isNotDone();
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void shouldResetFastSyncStateAndRestartProcessIfWorldStateIsUnavailable() {
+    final CompletableFuture<Void> firstWorldStateFuture = new CompletableFuture<>();
+    final CompletableFuture<Void> secondWorldStateFuture = new CompletableFuture<>();
+    final CompletableFuture<FastSyncState> chainFuture = new CompletableFuture<>();
+    final FastSyncState selectPivotBlockState = new FastSyncState(50);
+    final FastSyncState secondSelectPivotBlockState = new FastSyncState(90);
+    final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().number(50).buildHeader();
+    final BlockHeader secondPivotBlockHeader =
+        new BlockHeaderTestFixture().number(90).buildHeader();
+    final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader);
+    final FastSyncState secondDownloadPivotBlockHeaderState =
+        new FastSyncState(secondPivotBlockHeader);
+    // First attempt
+    when(fastSyncActions.waitForSuitablePeers(EMPTY_SYNC_STATE)).thenReturn(COMPLETE);
+    when(fastSyncActions.selectPivotBlock(EMPTY_SYNC_STATE))
+        .thenReturn(
+            completedFuture(selectPivotBlockState), completedFuture(secondSelectPivotBlockState));
+    when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
+        .thenReturn(completedFuture(downloadPivotBlockHeaderState));
+    when(fastSyncActions.downloadChain(downloadPivotBlockHeaderState)).thenReturn(chainFuture);
+    when(worldStateDownloader.run(pivotBlockHeader)).thenReturn(firstWorldStateFuture);
+
+    // Second attempt with new pivot block
+    when(fastSyncActions.downloadPivotBlockHeader(secondSelectPivotBlockState))
+        .thenReturn(completedFuture(secondDownloadPivotBlockHeaderState));
+    when(fastSyncActions.downloadChain(secondDownloadPivotBlockHeaderState))
+        .thenReturn(completedFuture(secondDownloadPivotBlockHeaderState));
+    when(worldStateDownloader.run(secondPivotBlockHeader)).thenReturn(secondWorldStateFuture);
+
+    final CompletableFuture<FastSyncState> result = downloader.start(EMPTY_SYNC_STATE);
+
+    verify(fastSyncActions).waitForSuitablePeers(EMPTY_SYNC_STATE);
+    verify(fastSyncActions).selectPivotBlock(EMPTY_SYNC_STATE);
+    verify(fastSyncActions).downloadPivotBlockHeader(selectPivotBlockState);
+    verify(storage).storeState(downloadPivotBlockHeaderState);
+    verify(fastSyncActions).downloadChain(downloadPivotBlockHeaderState);
+    verify(worldStateDownloader).run(pivotBlockHeader);
+    verifyNoMoreInteractions(fastSyncActions, worldStateDownloader, storage);
+
+    assertThat(result).isNotDone();
+
+    firstWorldStateFuture.completeExceptionally(new WorldStateUnavailableException());
+    assertThat(result).isNotDone();
+    assertThat(chainFuture).isCancelled();
+
+    verify(fastSyncActions, times(2)).waitForSuitablePeers(EMPTY_SYNC_STATE);
+    verify(fastSyncActions, times(2)).selectPivotBlock(EMPTY_SYNC_STATE);
+    verify(fastSyncActions).downloadPivotBlockHeader(secondSelectPivotBlockState);
+    verify(storage).storeState(secondDownloadPivotBlockHeaderState);
+    verify(fastSyncActions).downloadChain(secondDownloadPivotBlockHeaderState);
+    verify(worldStateDownloader).run(secondPivotBlockHeader);
+    verifyNoMoreInteractions(fastSyncActions, worldStateDownloader, storage);
+
+    secondWorldStateFuture.complete(null);
+
+    assertThat(result).isCompletedWithValue(secondDownloadPivotBlockHeaderState);
   }
 
   private <T> CompletableFuture<T> completedExceptionally(final Throwable error) {

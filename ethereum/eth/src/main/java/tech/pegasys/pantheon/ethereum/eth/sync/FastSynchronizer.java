@@ -131,6 +131,7 @@ class FastSynchronizer<C> {
   }
 
   public CompletableFuture<FastSyncState> start() {
+    LOG.info("Fast sync enabled");
     return fastSyncDownloader.start(initialSyncState);
   }
 

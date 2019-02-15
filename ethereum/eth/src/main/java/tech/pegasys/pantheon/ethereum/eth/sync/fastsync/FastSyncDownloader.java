@@ -12,7 +12,12 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 
+import static tech.pegasys.pantheon.util.FutureUtils.completedExceptionally;
+import static tech.pegasys.pantheon.util.FutureUtils.exceptionallyCompose;
+
 import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.WorldStateDownloader;
+import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.WorldStateUnavailableException;
+import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -35,13 +40,24 @@ public class FastSyncDownloader<C> {
   }
 
   public CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
-    LOG.info("Fast sync enabled");
-    return fastSyncActions
-        .waitForSuitablePeers(fastSyncState)
-        .thenCompose(fastSyncActions::selectPivotBlock)
-        .thenCompose(fastSyncActions::downloadPivotBlockHeader)
-        .thenApply(this::storeState)
-        .thenCompose(this::downloadChainAndWorldState);
+    return exceptionallyCompose(
+        fastSyncActions
+            .waitForSuitablePeers(fastSyncState)
+            .thenCompose(fastSyncActions::selectPivotBlock)
+            .thenCompose(fastSyncActions::downloadPivotBlockHeader)
+            .thenApply(this::storeState)
+            .thenCompose(this::downloadChainAndWorldState),
+        this::handleWorldStateUnavailable);
+  }
+
+  private CompletableFuture<FastSyncState> handleWorldStateUnavailable(final Throwable error) {
+    if (ExceptionUtils.rootCause(error) instanceof WorldStateUnavailableException) {
+      LOG.warn(
+          "Fast sync was unable to download the world state. Retrying with a new pivot block.");
+      return start(FastSyncState.EMPTY_SYNC_STATE);
+    } else {
+      return completedExceptionally(error);
+    }
   }
 
   private FastSyncState storeState(final FastSyncState state) {
