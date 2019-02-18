@@ -118,7 +118,8 @@ public class Bucket {
     }
     // If found, shift all subsequent elements to the left, and decrement tailIndex.
     for (int i = 0; i <= tailIndex; i++) {
-      if (peer.equals(kBucket[i])) {
+      // Peer comparison here must be done by peer id
+      if (peer.getId().equals(kBucket[i].getId())) {
         arraycopy(kBucket, i + 1, kBucket, i, tailIndex - i);
         kBucket[tailIndex--] = null;
         return true;

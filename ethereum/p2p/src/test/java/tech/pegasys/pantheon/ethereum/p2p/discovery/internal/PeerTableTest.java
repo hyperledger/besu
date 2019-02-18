@@ -16,7 +16,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.AddResult.Outcome;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.AddResult.AddOutcome;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.EvictResult;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.EvictResult.EvictOutcome;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 
 import java.util.List;
@@ -33,7 +35,7 @@ public class PeerTableTest {
 
     for (final DiscoveryPeer peer : peers) {
       final PeerTable.AddResult result = table.tryAdd(peer);
-      assertThat(result.getOutcome()).isEqualTo(Outcome.ADDED);
+      assertThat(result.getOutcome()).isEqualTo(AddOutcome.ADDED);
     }
 
     assertThat(table.getAllPeers()).hasSize(5);
@@ -45,7 +47,7 @@ public class PeerTableTest {
     final PeerTable table = new PeerTable(localPeer.getId(), 16);
     final PeerTable.AddResult result = table.tryAdd(localPeer);
 
-    assertThat(result.getOutcome()).isEqualTo(Outcome.SELF);
+    assertThat(result.getOutcome()).isEqualTo(AddOutcome.SELF);
     assertThat(table.getAllPeers()).hasSize(0);
   }
 
@@ -54,13 +56,53 @@ public class PeerTableTest {
     final PeerTable table = new PeerTable(Peer.randomId(), 16);
     final DiscoveryPeer peer = helper.createDiscoveryPeer();
 
-    assertThat(table.tryAdd(peer).getOutcome()).isEqualTo(Outcome.ADDED);
+    assertThat(table.tryAdd(peer).getOutcome()).isEqualTo(AddOutcome.ADDED);
 
     assertThat(table.tryAdd(peer))
         .satisfies(
             result -> {
-              assertThat(result.getOutcome()).isEqualTo(Outcome.ALREADY_EXISTED);
+              assertThat(result.getOutcome()).isEqualTo(AddOutcome.ALREADY_EXISTED);
               assertThat(result.getEvictionCandidate()).isNull();
             });
+  }
+
+  @Test
+  public void evictExistingPeerShouldEvict() {
+    final PeerTable table = new PeerTable(Peer.randomId(), 16);
+    final DiscoveryPeer peer = helper.createDiscoveryPeer();
+
+    table.tryAdd(peer);
+
+    EvictResult evictResult = table.tryEvict(peer);
+    assertThat(evictResult.getOutcome()).isEqualTo(EvictOutcome.EVICTED);
+  }
+
+  @Test
+  public void evictPeerFromEmptyTableShouldNotEvict() {
+    final PeerTable table = new PeerTable(Peer.randomId(), 16);
+    final DiscoveryPeer peer = helper.createDiscoveryPeer();
+
+    EvictResult evictResult = table.tryEvict(peer);
+    assertThat(evictResult.getOutcome()).isEqualTo(EvictOutcome.ABSENT);
+  }
+
+  @Test
+  public void evictAbsentPeerShouldNotEvict() {
+    final PeerTable table = new PeerTable(Peer.randomId(), 16);
+    final DiscoveryPeer peer = helper.createDiscoveryPeer();
+    final List<DiscoveryPeer> otherPeers = helper.createDiscoveryPeers(5);
+    otherPeers.forEach(table::tryAdd);
+
+    EvictResult evictResult = table.tryEvict(peer);
+    assertThat(evictResult.getOutcome()).isEqualTo(EvictOutcome.ABSENT);
+  }
+
+  @Test
+  public void evictSelfPeerShouldReturnSelfOutcome() {
+    final DiscoveryPeer peer = helper.createDiscoveryPeer();
+    final PeerTable table = new PeerTable(peer.getId(), 16);
+
+    EvictResult evictResult = table.tryEvict(peer);
+    assertThat(evictResult.getOutcome()).isEqualTo(EvictOutcome.SELF);
   }
 }

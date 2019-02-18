@@ -64,6 +64,7 @@ public class PeerDiscoveryTableRefreshTest {
                 () -> true,
                 new PeerBlacklist(),
                 Optional.empty(),
+                new Subscribers<>(),
                 new Subscribers<>()));
     controller.start();
 
