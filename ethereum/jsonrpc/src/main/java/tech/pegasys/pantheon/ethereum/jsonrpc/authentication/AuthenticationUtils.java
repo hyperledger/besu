@@ -86,4 +86,14 @@ public class AuthenticationUtils {
       handler.handle(Optional.empty());
     }
   }
+
+  public static String getJwtTokenFromAuthorizationHeaderValue(final String value) {
+    if (value != null) {
+      final String bearerSchemaName = "Bearer ";
+      if (value.startsWith(bearerSchemaName)) {
+        return value.substring(bearerSchemaName.length());
+      }
+    }
+    return null;
+  }
 }

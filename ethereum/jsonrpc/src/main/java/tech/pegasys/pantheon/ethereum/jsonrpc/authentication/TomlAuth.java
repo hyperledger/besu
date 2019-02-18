@@ -56,8 +56,6 @@ public class TomlAuth implements AuthProvider {
       return;
     }
 
-    LOG.debug("Authenticating user {} with password {}", username, password);
-
     readUser(
         username,
         rs -> {
