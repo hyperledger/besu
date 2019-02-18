@@ -189,7 +189,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final Endpoint endpoint = new Endpoint(host, port, OptionalInt.empty());
       handleIncomingPacket(endpoint, packet);
     } catch (final PeerDiscoveryPacketDecodingException e) {
-      LOG.debug("Discarding invalid peer discovery packet", e);
+      LOG.debug("Discarding invalid peer discovery packet: {}", e.getMessage());
     } catch (final Throwable t) {
       LOG.error("Encountered error while handling packet", t);
     }
