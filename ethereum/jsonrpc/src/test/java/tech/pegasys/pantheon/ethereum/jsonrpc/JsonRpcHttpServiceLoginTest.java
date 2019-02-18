@@ -511,7 +511,7 @@ public class JsonRpcHttpServiceLoginTest {
 
   private Request buildPostRequest(final RequestBody body, final Optional<String> token) {
     final Request.Builder request = new Request.Builder().post(body).url(baseUrl);
-    token.ifPresent(t -> request.addHeader("Bearer", t));
+    token.ifPresent(t -> request.addHeader("Authorization", "Bearer " + t));
     return request.build();
   }
 }

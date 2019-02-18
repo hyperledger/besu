@@ -202,7 +202,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
         final String url = wsRpcBaseUrl().orElse("ws://" + LOCALHOST + ":" + 8546);
         final Map<String, String> headers = new HashMap<>();
         if (token != null) {
-          headers.put("Bearer", token);
+          headers.put("Authorization", "Bearer " + token);
         }
         final WebSocketClient wsClient = new WebSocketClient(URI.create(url), headers);
 
@@ -220,7 +220,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
                 .map(HttpService::new)
                 .orElse(new HttpService("http://" + LOCALHOST + ":" + 8545));
         if (token != null) {
-          ((HttpService) web3jService).addHeader("Bearer", token);
+          ((HttpService) web3jService).addHeader("Authorization", "Bearer " + token);
         }
       }
 

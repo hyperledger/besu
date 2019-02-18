@@ -188,7 +188,7 @@ public class WebSocketServiceLoginTest {
     final MultiMap headers = new VertxHttpHeaders();
     String badtoken = "badtoken";
     if (badtoken != null) {
-      headers.add("Bearer", badtoken);
+      headers.add("Authorization", "Bearer " + badtoken);
     }
     httpClient.websocket(
         options,
@@ -225,7 +225,7 @@ public class WebSocketServiceLoginTest {
     options.setPort(websocketConfiguration.getPort());
     final MultiMap headers = new VertxHttpHeaders();
     if (goodToken != null) {
-      headers.add("Bearer", goodToken);
+      headers.add("Authorization", "Bearer " + goodToken);
     }
     httpClient.websocket(
         options,

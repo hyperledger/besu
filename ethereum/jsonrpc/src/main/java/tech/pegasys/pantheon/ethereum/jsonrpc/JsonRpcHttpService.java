@@ -232,7 +232,8 @@ public class JsonRpcHttpService {
   }
 
   private String getAuthToken(final RoutingContext routingContext) {
-    return routingContext.request().getHeader("Bearer");
+    return AuthenticationUtils.getJwtTokenFromAuthorizationHeaderValue(
+        routingContext.request().getHeader("Authorization"));
   }
 
   private Optional<String> getAndValidateHostHeader(final RoutingContext event) {

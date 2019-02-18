@@ -209,6 +209,7 @@ public class WebSocketService {
   }
 
   private String getAuthToken(final ServerWebSocket websocket) {
-    return websocket.headers().get("Bearer");
+    return AuthenticationUtils.getJwtTokenFromAuthorizationHeaderValue(
+        websocket.headers().get("Authorization"));
   }
 }
