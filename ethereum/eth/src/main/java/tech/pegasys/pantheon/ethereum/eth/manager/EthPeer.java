@@ -133,6 +133,7 @@ public class EthPeer {
   }
 
   public void propagateBlock(final Block block, final UInt256 totalDifficulty) {
+    registerKnownBlock(block.getHash());
     final NewBlockMessage newBlockMessage = NewBlockMessage.create(block, totalDifficulty);
     try {
       connection.sendForProtocol(protocolName, newBlockMessage);
