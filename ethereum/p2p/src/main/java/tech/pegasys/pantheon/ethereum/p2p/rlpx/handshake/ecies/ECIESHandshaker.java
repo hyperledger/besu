@@ -94,7 +94,7 @@ public class ECIESHandshaker implements Handshaker {
     this.ephKeyPair = SECP256K1.KeyPair.generate();
     this.partyPubKey = theirPubKey;
     this.initiatorNonce = Bytes32.wrap(random(32), 0);
-    LOG.debug(
+    LOG.trace(
         "Prepared ECIES handshake with node {}... under INITIATOR role",
         theirPubKey.getEncodedBytes().slice(0, 16));
   }
@@ -110,7 +110,7 @@ public class ECIESHandshaker implements Handshaker {
     this.identityKeyPair = ourKeypair;
     this.ephKeyPair = SECP256K1.KeyPair.generate();
     this.responderNonce = Bytes32.wrap(random(32), 0);
-    LOG.debug("Prepared ECIES handshake under RESPONDER role");
+    LOG.trace("Prepared ECIES handshake under RESPONDER role");
   }
 
   @Override
@@ -147,7 +147,7 @@ public class ECIESHandshaker implements Handshaker {
       throw new HandshakeException("Encrypting the first handshake message failed", e);
     }
 
-    LOG.debug("First ECIES handshake message under INITIATOR role: {}", initiatorMsg);
+    LOG.trace("First ECIES handshake message under INITIATOR role: {}", initiatorMsg);
 
     return Unpooled.wrappedBuffer(initiatorMsgEnc.extractArray());
   }
@@ -230,7 +230,7 @@ public class ECIESHandshaker implements Handshaker {
       responderNonce = responderMsg.getNonce();
       partyEphPubKey = responderMsg.getEphPublicKey();
 
-      LOG.debug(
+      LOG.trace(
           "Received responder's ECIES handshake message from node {}...: {}",
           partyPubKey.getEncodedBytes().slice(0, 16),
           responderMsg);
@@ -251,7 +251,7 @@ public class ECIESHandshaker implements Handshaker {
         initiatorMsg = InitiatorHandshakeMessageV1.decode(bytes, identityKeyPair);
       }
 
-      LOG.debug(
+      LOG.trace(
           "[{}] Received initiator's ECIES handshake message: {}",
           identityKeyPair.getPublicKey().getEncodedBytes(),
           initiatorMsg);
@@ -274,7 +274,7 @@ public class ECIESHandshaker implements Handshaker {
             ResponderHandshakeMessageV1.create(ephKeyPair.getPublicKey(), responderNonce, false);
       }
 
-      LOG.debug(
+      LOG.trace(
           "Generated responder's ECIES handshake message against peer {}...: {}",
           partyPubKey.getEncodedBytes().slice(0, 16),
           responderMsg);
@@ -296,7 +296,7 @@ public class ECIESHandshaker implements Handshaker {
     computeSecrets();
 
     status.set(Handshaker.HandshakeStatus.SUCCESS);
-    LOG.debug("Handshake status set to {}", status.get());
+    LOG.trace("Handshake status set to {}", status.get());
     return nextMsg.map(bv -> Unpooled.wrappedBuffer(bv.extractArray()));
   }
 
