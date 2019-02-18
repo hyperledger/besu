@@ -64,6 +64,7 @@ public class WorldStateDownloader {
   private final TaskQueue<NodeDataRequest> pendingRequests;
   private final int hashCountPerRequest;
   private final int maxOutstandingRequests;
+  private final int maxNodeRequestRetries;
   private final Set<EthTask<?>> outstandingRequests =
       Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final LabelledMetric<OperationTimer> ethTasksTimer;
@@ -79,6 +80,7 @@ public class WorldStateDownloader {
       final TaskQueue<NodeDataRequest> pendingRequests,
       final int hashCountPerRequest,
       final int maxOutstandingRequests,
+      final int maxNodeRequestRetries,
       final LabelledMetric<OperationTimer> ethTasksTimer,
       final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
@@ -86,6 +88,7 @@ public class WorldStateDownloader {
     this.pendingRequests = pendingRequests;
     this.hashCountPerRequest = hashCountPerRequest;
     this.maxOutstandingRequests = maxOutstandingRequests;
+    this.maxNodeRequestRetries = maxNodeRequestRetries;
     this.ethTasksTimer = ethTasksTimer;
     metricsSystem.createGauge(
         MetricCategory.SYNCHRONIZER,
@@ -236,6 +239,10 @@ public class WorldStateDownloader {
                 BytesValue matchingData = requestFailed ? null : data.get(request.getHash());
                 if (matchingData == null) {
                   retriedRequestsTotal.inc();
+                  int requestFailures = request.trackFailure();
+                  if (requestFailures > maxNodeRequestRetries) {
+                    handleStalledDownload();
+                  }
                   task.markFailed();
                 } else {
                   completedRequestsCounter.inc();
@@ -275,14 +282,26 @@ public class WorldStateDownloader {
         (res, err) -> {
           // Handle cancellations
           if (future.isCancelled()) {
-            handleCancellation();
+            LOG.info("World state download cancelled");
+            doCancelDownload();
+          } else if (err != null) {
+            LOG.info("World state download failed. ", err);
+            doCancelDownload();
           }
         });
     return future;
   }
 
-  private synchronized void handleCancellation() {
-    LOG.info("World state download cancelled");
+  private synchronized void handleStalledDownload() {
+    final String message =
+        "Download stalled due to too many failures to retrieve node data (>"
+            + maxNodeRequestRetries
+            + " failures)";
+    WorldStateDownloaderException e = new StalledDownloadException(message);
+    future.completeExceptionally(e);
+  }
+
+  private synchronized void doCancelDownload() {
     status = Status.CANCELLED;
     pendingRequests.clear();
     for (EthTask<?> outstandingRequest : outstandingRequests) {

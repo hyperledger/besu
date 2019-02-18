@@ -26,8 +26,8 @@ import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncState.EMP
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
+import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.StalledDownloadException;
 import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.WorldStateDownloader;
-import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.WorldStateUnavailableException;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -292,7 +292,7 @@ public class FastSyncDownloaderTest {
 
     assertThat(result).isNotDone();
 
-    firstWorldStateFuture.completeExceptionally(new WorldStateUnavailableException());
+    firstWorldStateFuture.completeExceptionally(new StalledDownloadException("test"));
     assertThat(result).isNotDone();
     assertThat(chainFuture).isCancelled();
 

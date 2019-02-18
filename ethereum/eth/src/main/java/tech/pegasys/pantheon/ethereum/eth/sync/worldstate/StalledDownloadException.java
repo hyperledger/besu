@@ -12,4 +12,9 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync.worldstate;
 
-public class WorldStateUnavailableException extends RuntimeException {}
+public class StalledDownloadException extends WorldStateDownloaderException {
+
+  public StalledDownloadException(final String message) {
+    super(message);
+  }
+}
