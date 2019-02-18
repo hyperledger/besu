@@ -10,14 +10,13 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
+package tech.pegasys.pantheon.ethereum.eth.manager.task;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import tech.pegasys.pantheon.ethereum.eth.manager.EthTask;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
@@ -29,7 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Before;
 import org.junit.Test;
 
-public class WaitForPeersTaskTest {
+public class WaitForPeerTaskTest {
   private EthProtocolManager ethProtocolManager;
   private EthContext ethContext;
   private LabelledMetric<OperationTimer> ethTasksTimer;
@@ -42,10 +41,10 @@ public class WaitForPeersTaskTest {
   }
 
   @Test
-  public void completesWhenPeersConnects() throws ExecutionException, InterruptedException {
+  public void completesWhenPeerConnects() throws ExecutionException, InterruptedException {
     // Execute task and wait for response
     final AtomicBoolean successful = new AtomicBoolean(false);
-    final EthTask<Void> task = WaitForPeersTask.create(ethContext, 2, ethTasksTimer);
+    final EthTask<Void> task = WaitForPeerTask.create(ethContext, ethTasksTimer);
     final CompletableFuture<Void> future = task.run();
     future.whenComplete(
         (result, error) -> {
@@ -53,7 +52,6 @@ public class WaitForPeersTaskTest {
             successful.compareAndSet(false, true);
           }
         });
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
     assertThat(successful).isTrue();
   }
@@ -61,7 +59,7 @@ public class WaitForPeersTaskTest {
   @Test
   public void doesNotCompleteWhenNoPeerConnects() throws ExecutionException, InterruptedException {
     final AtomicBoolean successful = new AtomicBoolean(false);
-    final EthTask<Void> task = WaitForPeersTask.create(ethContext, 2, ethTasksTimer);
+    final EthTask<Void> task = WaitForPeerTask.create(ethContext, ethTasksTimer);
     final CompletableFuture<Void> future = task.run();
     future.whenComplete(
         (result, error) -> {
@@ -69,23 +67,6 @@ public class WaitForPeersTaskTest {
             successful.compareAndSet(false, true);
           }
         });
-
-    assertThat(successful).isFalse();
-  }
-
-  @Test
-  public void doesNotCompleteWhenSomePeersConnects()
-      throws ExecutionException, InterruptedException {
-    final AtomicBoolean successful = new AtomicBoolean(false);
-    final EthTask<Void> task = WaitForPeersTask.create(ethContext, 2, ethTasksTimer);
-    final CompletableFuture<Void> future = task.run();
-    future.whenComplete(
-        (result, error) -> {
-          if (error == null) {
-            successful.compareAndSet(false, true);
-          }
-        });
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
 
     assertThat(successful).isFalse();
   }
@@ -93,7 +74,7 @@ public class WaitForPeersTaskTest {
   @Test
   public void cancel() throws ExecutionException, InterruptedException {
     // Execute task
-    final EthTask<Void> task = WaitForPeersTask.create(ethContext, 2, ethTasksTimer);
+    final EthTask<Void> task = WaitForPeerTask.create(ethContext, ethTasksTimer);
     final CompletableFuture<Void> future = task.run();
 
     assertThat(future.isDone()).isFalse();

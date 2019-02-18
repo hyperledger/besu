@@ -14,13 +14,13 @@ package tech.pegasys.pantheon.ethereum.eth.sync.worldstate;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPeerTask;
-import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPeerTask.PeerTaskResult;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
-import tech.pegasys.pantheon.ethereum.eth.manager.EthTask;
-import tech.pegasys.pantheon.ethereum.eth.sync.tasks.GetNodeDataFromPeerTask;
-import tech.pegasys.pantheon.ethereum.eth.sync.tasks.WaitForPeerTask;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPeerTask;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.EthTask;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.GetNodeDataFromPeerTask;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.WaitForPeerTask;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage.Updater;
 import tech.pegasys.pantheon.metrics.Counter;

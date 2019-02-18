@@ -15,8 +15,8 @@ package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 import static java.util.Collections.singletonList;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.eth.manager.EthTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskTest;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.EthTask;
 
 import java.util.List;
 
