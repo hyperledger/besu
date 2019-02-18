@@ -23,12 +23,13 @@ import com.google.common.collect.Range;
 public class SynchronizerConfiguration {
 
   // TODO: Determine reasonable defaults here
-  public static final int DEFAULT_PIVOT_DISTANCE_FROM_HEAD = 50;
-  public static final float DEFAULT_FULL_VALIDATION_RATE = .1f;
-  public static final int DEFAULT_FAST_SYNC_MINIMUM_PEERS = 5;
+  private static final int DEFAULT_PIVOT_DISTANCE_FROM_HEAD = 50;
+  private static final float DEFAULT_FULL_VALIDATION_RATE = .1f;
+  private static final int DEFAULT_FAST_SYNC_MINIMUM_PEERS = 5;
   private static final Duration DEFAULT_FAST_SYNC_MAXIMUM_PEER_WAIT_TIME = Duration.ofMinutes(5);
   private static final int DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST = 384;
   private static final int DEFAULT_WORLD_STATE_REQUEST_PARALLELISM = 10;
+  private static final int DEFAULT_WORLD_STATE_REQUEST_MAX_RETRIES = 25;
 
   // Fast sync config
   private final int fastSyncPivotDistance;
@@ -37,6 +38,7 @@ public class SynchronizerConfiguration {
   private final Duration fastSyncMaximumPeerWaitTime;
   private final int worldStateHashCountPerRequest;
   private final int worldStateRequestParallelism;
+  private final int worldStateRequestMaxRetries;
 
   // Block propagation config
   private final Range<Long> blockPropagationRange;
@@ -64,6 +66,7 @@ public class SynchronizerConfiguration {
       final Duration fastSyncMaximumPeerWaitTime,
       final int worldStateHashCountPerRequest,
       final int worldStateRequestParallelism,
+      final int worldStateRequestMaxRetries,
       final Range<Long> blockPropagationRange,
       final SyncMode syncMode,
       final long downloaderChangeTargetThresholdByHeight,
@@ -83,6 +86,7 @@ public class SynchronizerConfiguration {
     this.fastSyncMaximumPeerWaitTime = fastSyncMaximumPeerWaitTime;
     this.worldStateHashCountPerRequest = worldStateHashCountPerRequest;
     this.worldStateRequestParallelism = worldStateRequestParallelism;
+    this.worldStateRequestMaxRetries = worldStateRequestMaxRetries;
     this.blockPropagationRange = blockPropagationRange;
     this.syncMode = syncMode;
     this.downloaderChangeTargetThresholdByHeight = downloaderChangeTargetThresholdByHeight;
@@ -207,6 +211,10 @@ public class SynchronizerConfiguration {
     return worldStateRequestParallelism;
   }
 
+  public int getWorldStateRequestMaxRetries() {
+    return worldStateRequestMaxRetries;
+  }
+
   public static class Builder {
     private SyncMode syncMode = SyncMode.FULL;
     private Range<Long> blockPropagationRange = Range.closed(-10L, 30L);
@@ -224,6 +232,9 @@ public class SynchronizerConfiguration {
     private int fastSyncPivotDistance = DEFAULT_PIVOT_DISTANCE_FROM_HEAD;
     private float fastSyncFullValidationRate = DEFAULT_FULL_VALIDATION_RATE;
     private int fastSyncMinimumPeerCount = DEFAULT_FAST_SYNC_MINIMUM_PEERS;
+    private int worldStateHashCountPerRequest = DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST;
+    private int worldStateRequestParallelism = DEFAULT_WORLD_STATE_REQUEST_PARALLELISM;
+    private int worldStateRequestMaxRetries = DEFAULT_WORLD_STATE_REQUEST_MAX_RETRIES;
     private Duration fastSyncMaximumPeerWaitTime = DEFAULT_FAST_SYNC_MAXIMUM_PEER_WAIT_TIME;
 
     public Builder fastSyncPivotDistance(final int distance) {
@@ -311,6 +322,21 @@ public class SynchronizerConfiguration {
       return this;
     }
 
+    public Builder worldStateHashCountPerRequest(final int worldStateHashCountPerRequest) {
+      this.worldStateHashCountPerRequest = worldStateHashCountPerRequest;
+      return this;
+    }
+
+    public Builder worldStateRequestParallelism(final int worldStateRequestParallelism) {
+      this.worldStateRequestParallelism = worldStateRequestParallelism;
+      return this;
+    }
+
+    public Builder worldStateRequestMaxRetries(final int worldStateRequestMaxRetries) {
+      this.worldStateRequestMaxRetries = worldStateRequestMaxRetries;
+      return this;
+    }
+
     public Builder fastSyncMaximumPeerWaitTime(final Duration fastSyncMaximumPeerWaitTime) {
       this.fastSyncMaximumPeerWaitTime = fastSyncMaximumPeerWaitTime;
       return this;
@@ -322,8 +348,9 @@ public class SynchronizerConfiguration {
           fastSyncFullValidationRate,
           fastSyncMinimumPeerCount,
           fastSyncMaximumPeerWaitTime,
-          DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST,
-          DEFAULT_WORLD_STATE_REQUEST_PARALLELISM,
+          worldStateHashCountPerRequest,
+          worldStateRequestParallelism,
+          worldStateRequestMaxRetries,
           blockPropagationRange,
           syncMode,
           downloaderChangeTargetThresholdByHeight,
