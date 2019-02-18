@@ -1864,7 +1864,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
         String.valueOf(Byte.MAX_VALUE - 1));
 
     verifyOptionsConstraintLoggerCall(
-        "--privacy-url, --privacy-public-key-file and --privacy-precompiled-address",
+        "--privacy-url, --privacy-precompiled-address and --privacy-public-key-file",
         "--privacy-enabled");
 
     assertThat(commandOutput.toString()).isEmpty();
@@ -1924,5 +1924,44 @@ public class PantheonCommandTest extends CommandTestAbstract {
         .isEqualTo("{} will have no effect unless {} is defined on the command line.");
     assertThat(stringArgumentCaptor.getAllValues().get(1)).isEqualTo(dependentOptions);
     assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(mainOption);
+  }
+
+  @Test
+  public void privacyPublicKeyFileOptionDisabledUnderDocker() {
+    System.setProperty("pantheon.docker", "true");
+
+    assumeFalse(isFullInstantiation());
+
+    final Path path = Paths.get(".");
+    parseCommand("--privacy-public-key-file", path.toString());
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Unknown options: --privacy-public-key-file, .");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpAuthCredentialsFileOptionDisabledUnderDocker() {
+    System.setProperty("pantheon.docker", "true");
+
+    assumeFalse(isFullInstantiation());
+
+    final Path path = Paths.get(".");
+    parseCommand("--rpc-http-authentication-credentials-file", path.toString());
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Unknown options: --rpc-http-authentication-credentials-file, .");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void rpcWsAuthCredentialsFileOptionDisabledUnderDocker() {
+    System.setProperty("pantheon.docker", "true");
+
+    assumeFalse(isFullInstantiation());
+
+    final Path path = Paths.get(".");
+    parseCommand("--rpc-ws-authentication-credentials-file", path.toString());
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Unknown options: --rpc-ws-authentication-credentials-file, .");
+    assertThat(commandOutput.toString()).isEmpty();
   }
 }
