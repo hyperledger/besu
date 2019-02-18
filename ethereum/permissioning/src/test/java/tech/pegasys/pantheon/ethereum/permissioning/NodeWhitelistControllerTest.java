@@ -16,14 +16,17 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController.NodesWhitelistResult;
 
+import tech.pegasys.pantheon.ethereum.permissioning.node.NodeWhitelistUpdatedEvent;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.IOException;
@@ -33,7 +36,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
 import org.junit.Before;
@@ -57,6 +62,15 @@ public class NodeWhitelistControllerTest {
   public void setUp() {
     controller =
         new NodeWhitelistController(PermissioningConfiguration.createDefault(), whitelistPersistor);
+  }
+
+  @Test
+  public void whenAddNodesWithValidInputShouldReturnSuccess() {
+    NodesWhitelistResult expected = new NodesWhitelistResult(WhitelistOperationResult.SUCCESS);
+    NodesWhitelistResult actualResult = controller.addNodes(Lists.newArrayList(enode1));
+
+    assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
+    assertThat(controller.getNodesWhitelist()).containsExactly(enode1);
   }
 
   @Test
@@ -254,6 +268,105 @@ public class NodeWhitelistControllerTest {
         .hasMessageContaining("Unable to read permissions TOML config file");
 
     assertThat(controller.getNodesWhitelist()).containsExactly(expectedEnodeURI);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void whenAddingNodeShouldNotifyWhitelistModifiedSubscribers() {
+    final Consumer<NodeWhitelistUpdatedEvent> consumer = mock(Consumer.class);
+    final NodeWhitelistUpdatedEvent expectedEvent =
+        new NodeWhitelistUpdatedEvent(
+            Lists.newArrayList(new EnodeURL(enode1)), Collections.emptyList());
+
+    controller.subscribeToListUpdatedEvent(consumer);
+    controller.addNodes(Lists.newArrayList(enode1));
+
+    verify(consumer).accept(eq(expectedEvent));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void whenAddingNodeDoesNotAddShouldNotNotifyWhitelistModifiedSubscribers() {
+    // adding node before subscribing to whitelist modified events
+    controller.addNodes(Lists.newArrayList(enode1));
+    final Consumer<NodeWhitelistUpdatedEvent> consumer = mock(Consumer.class);
+
+    controller.subscribeToListUpdatedEvent(consumer);
+    // won't add duplicate node
+    controller.addNodes(Lists.newArrayList(enode1));
+
+    verifyZeroInteractions(consumer);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void whenRemovingNodeShouldNotifyWhitelistModifiedSubscribers() {
+    // adding node before subscribing to whitelist modified events
+    controller.addNodes(Lists.newArrayList(enode1));
+
+    final Consumer<NodeWhitelistUpdatedEvent> consumer = mock(Consumer.class);
+    final NodeWhitelistUpdatedEvent expectedEvent =
+        new NodeWhitelistUpdatedEvent(
+            Collections.emptyList(), Lists.newArrayList(new EnodeURL(enode1)));
+
+    controller.subscribeToListUpdatedEvent(consumer);
+    controller.removeNodes(Lists.newArrayList(enode1));
+
+    verify(consumer).accept(eq(expectedEvent));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void whenRemovingNodeDoesNotRemoveShouldNotifyWhitelistModifiedSubscribers() {
+    final Consumer<NodeWhitelistUpdatedEvent> consumer = mock(Consumer.class);
+
+    controller.subscribeToListUpdatedEvent(consumer);
+    // won't remove absent node
+    controller.removeNodes(Lists.newArrayList(enode1));
+
+    verifyZeroInteractions(consumer);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void whenReloadingWhitelistShouldNotifyWhitelistModifiedSubscribers() throws Exception {
+    final Path permissionsFile = createPermissionsFileWithNode(enode2);
+    final PermissioningConfiguration permissioningConfig = mock(PermissioningConfiguration.class);
+    final Consumer<NodeWhitelistUpdatedEvent> consumer = mock(Consumer.class);
+    final NodeWhitelistUpdatedEvent expectedEvent =
+        new NodeWhitelistUpdatedEvent(
+            Lists.newArrayList(new EnodeURL(enode2)), Lists.newArrayList(new EnodeURL(enode1)));
+
+    when(permissioningConfig.getConfigurationFilePath())
+        .thenReturn(permissionsFile.toAbsolutePath().toString());
+    when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
+    when(permissioningConfig.getNodeWhitelist()).thenReturn(Arrays.asList(URI.create(enode1)));
+    controller = new NodeWhitelistController(permissioningConfig);
+    controller.subscribeToListUpdatedEvent(consumer);
+
+    controller.reload();
+
+    verify(consumer).accept(eq(expectedEvent));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void whenReloadingWhitelistAndNothingChangesShouldNotNotifyWhitelistModifiedSubscribers()
+      throws Exception {
+    final Path permissionsFile = createPermissionsFileWithNode(enode1);
+    final PermissioningConfiguration permissioningConfig = mock(PermissioningConfiguration.class);
+    final Consumer<NodeWhitelistUpdatedEvent> consumer = mock(Consumer.class);
+
+    when(permissioningConfig.getConfigurationFilePath())
+        .thenReturn(permissionsFile.toAbsolutePath().toString());
+    when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
+    when(permissioningConfig.getNodeWhitelist()).thenReturn(Arrays.asList(URI.create(enode1)));
+    controller = new NodeWhitelistController(permissioningConfig);
+    controller.subscribeToListUpdatedEvent(consumer);
+
+    controller.reload();
+
+    verifyZeroInteractions(consumer);
   }
 
   private Path createPermissionsFileWithNode(final String node) throws IOException {

@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfigurat
 import java.net.URI;
 import java.util.Collections;
 
+import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -51,6 +52,18 @@ public class NodesWhitelistAcceptanceTest extends AcceptanceTestBase {
     allowedNode.verify(net.awaitPeerCount(2));
     forbiddenNode.verify(net.awaitPeerCount(1));
     permissionedNode.verify(net.awaitPeerCount(1));
+  }
+
+  @Test
+  public void permissionedNodeShouldDisconnectFromNodeRemovedFromWhitelist() {
+    permissionedNode.verify(net.awaitPeerCount(1));
+
+    // remove allowed node from the whitelist
+    permissionedNode.verify(
+        perm.removeNodesFromWhitelist(Lists.newArrayList(((PantheonNode) allowedNode).enodeUrl())));
+
+    // node should not be connected to any peers
+    permissionedNode.verify(net.awaitPeerCount(0));
   }
 
   private URI getEnodeURI(final Node node) {
