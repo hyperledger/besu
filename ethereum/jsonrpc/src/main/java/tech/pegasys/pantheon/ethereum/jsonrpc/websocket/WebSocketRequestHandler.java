@@ -12,17 +12,22 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.websocket;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.authentication.AuthenticationService;
+import tech.pegasys.pantheon.ethereum.jsonrpc.authentication.AuthenticationUtils;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.methods.WebSocketRpcRequest;
 
 import java.util.Map;
+import java.util.Optional;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
+import io.vertx.ext.auth.User;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -39,6 +44,14 @@ public class WebSocketRequestHandler {
   }
 
   public void handle(final String id, final Buffer buffer) {
+    handle(Optional.empty(), id, buffer, Optional.empty());
+  }
+
+  public void handle(
+      final Optional<AuthenticationService> authenticationService,
+      final String id,
+      final Buffer buffer,
+      final Optional<User> user) {
     vertx.executeBlocking(
         future -> {
           final WebSocketRpcRequest request;
@@ -60,7 +73,12 @@ public class WebSocketRequestHandler {
           try {
             LOG.debug("WS-RPC request -> {}", request.getMethod());
             request.setConnectionId(id);
-            future.complete(method.response(request));
+            if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {
+              future.complete(method.response(request));
+            } else {
+              future.complete(
+                  new JsonRpcUnauthorizedResponse(request.getId(), JsonRpcError.UNAUTHORIZED));
+            }
           } catch (final Exception e) {
             LOG.error(JsonRpcError.INTERNAL_ERROR.getMessage(), e);
             future.complete(new JsonRpcErrorResponse(request.getId(), JsonRpcError.INTERNAL_ERROR));
