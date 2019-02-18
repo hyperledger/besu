@@ -19,10 +19,11 @@ import static java.util.Collections.emptyMap;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
-import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPeerTask.PeerTaskResult;
-import tech.pegasys.pantheon.ethereum.eth.manager.AbstractRetryingPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractRetryingPeerTask;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.GetReceiptsFromPeerTask;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 

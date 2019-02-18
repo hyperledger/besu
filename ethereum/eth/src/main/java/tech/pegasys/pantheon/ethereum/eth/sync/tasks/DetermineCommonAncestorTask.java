@@ -14,10 +14,11 @@ package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.eth.manager.AbstractEthTask;
-import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractEthTask;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPeerTask;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.GetHeadersFromPeerByNumberTask;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.util.BlockchainUtil;
 import tech.pegasys.pantheon.metrics.LabelledMetric;

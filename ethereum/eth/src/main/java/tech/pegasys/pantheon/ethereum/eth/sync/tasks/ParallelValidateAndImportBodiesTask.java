@@ -12,9 +12,9 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
-import tech.pegasys.pantheon.ethereum.eth.manager.AbstractPipelinedPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPipelinedPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.BlockHandler;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;

@@ -17,7 +17,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
-import tech.pegasys.pantheon.ethereum.eth.manager.AbstractEthTask;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractEthTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
