@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.metrics;
 public enum MetricCategory {
   BIG_QUEUE("big_queue"),
   BLOCKCHAIN("blockchain"),
+  EXECUTORS("executors"),
   JVM("jvm", false),
   NETWORK("network"),
   PEERS("peers"),

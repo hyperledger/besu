@@ -66,7 +66,7 @@ public class FullSyncTargetManagerTest {
             localBlockchain,
             localWorldState,
             DeterministicEthScheduler.TimeoutPolicy.NEVER,
-            new EthScheduler(1, 1, 1));
+            new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
     final EthContext ethContext = ethProtocolManager.ethContext();
     final SyncState syncState =
         new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());

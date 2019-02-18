@@ -36,6 +36,22 @@ public interface MetricsSystem {
   void createGauge(
       MetricCategory category, String name, String help, Supplier<Double> valueSupplier);
 
+  default void createIntegerGauge(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final Supplier<Integer> valueSupplier) {
+    createGauge(category, name, help, () -> (double) valueSupplier.get());
+  }
+
+  default void createLongGauge(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final Supplier<Long> valueSupplier) {
+    createGauge(category, name, help, () -> (double) valueSupplier.get());
+  }
+
   Stream<Observation> getMetrics(MetricCategory category);
 
   default Stream<Observation> getMetrics() {

@@ -12,8 +12,12 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
+import static tech.pegasys.pantheon.ethereum.eth.manager.MonitoredExecutors.newCachedThreadPool;
+import static tech.pegasys.pantheon.ethereum.eth.manager.MonitoredExecutors.newFixedThreadPool;
+import static tech.pegasys.pantheon.ethereum.eth.manager.MonitoredExecutors.newScheduledThreadPool;
 import static tech.pegasys.pantheon.util.FutureUtils.propagateResult;
 
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.time.Duration;
@@ -23,7 +27,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -33,7 +36,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -51,36 +53,24 @@ public class EthScheduler {
   private final ExecutorService servicesExecutor;
   private final ExecutorService computationExecutor;
 
-  private Collection<CompletableFuture<?>> serviceFutures = new ConcurrentLinkedDeque<>();
+  private final Collection<CompletableFuture<?>> serviceFutures = new ConcurrentLinkedDeque<>();
 
   public EthScheduler(
-      final int syncWorkerCount, final int txWorkerCount, final int computationWorkerCount) {
+      final int syncWorkerCount,
+      final int txWorkerCount,
+      final int computationWorkerCount,
+      final MetricsSystem metricsSystem) {
     this(
-        Executors.newFixedThreadPool(
-            syncWorkerCount,
-            new ThreadFactoryBuilder()
-                .setNameFormat(EthScheduler.class.getSimpleName() + "-Workers-%d")
-                .build()),
-        Executors.newScheduledThreadPool(
-            1,
-            new ThreadFactoryBuilder()
-                .setDaemon(true)
-                .setNameFormat(EthScheduler.class.getSimpleName() + "Timer-%d")
-                .build()),
-        Executors.newFixedThreadPool(
-            txWorkerCount,
-            new ThreadFactoryBuilder()
-                .setNameFormat(EthScheduler.class.getSimpleName() + "-Transactions-%d")
-                .build()),
-        Executors.newCachedThreadPool(
-            new ThreadFactoryBuilder()
-                .setNameFormat(EthScheduler.class.getSimpleName() + "-Services-%d")
-                .build()),
-        Executors.newFixedThreadPool(
+        newFixedThreadPool(
+            EthScheduler.class.getSimpleName() + "-Workers", syncWorkerCount, metricsSystem),
+        newScheduledThreadPool(EthScheduler.class.getSimpleName() + "-Timer", 1, metricsSystem),
+        newFixedThreadPool(
+            EthScheduler.class.getSimpleName() + "-Transactions", txWorkerCount, metricsSystem),
+        newCachedThreadPool(EthScheduler.class.getSimpleName() + "-Services", metricsSystem),
+        newFixedThreadPool(
+            EthScheduler.class.getSimpleName() + "-Computation",
             computationWorkerCount,
-            new ThreadFactoryBuilder()
-                .setNameFormat(EthScheduler.class.getSimpleName() + "-Computation-%d")
-                .build()));
+            metricsSystem));
   }
 
   protected EthScheduler(

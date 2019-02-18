@@ -156,7 +156,7 @@ public final class RunnerTest {
           SynchronizerConfiguration.builder()
               .syncMode(mode)
               .fastSyncPivotDistance(5)
-              .fastSyncMaximumPeerWaitTime(Duration.ofSeconds(5))
+              .fastSyncMaximumPeerWaitTime(Duration.ofSeconds(1))
               .build();
       final Path dataDirBehind = temp.newFolder().toPath();
       final JsonRpcConfiguration behindJsonRpcConfiguration = jsonRpcConfiguration();
