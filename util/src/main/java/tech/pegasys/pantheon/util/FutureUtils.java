@@ -17,6 +17,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class FutureUtils {
 
@@ -83,5 +84,29 @@ public class FutureUtils {
             to.complete(value);
           }
         });
+  }
+
+  /**
+   * Propagates the result of the {@link CompletableFuture} returned from a {@link Supplier} to a
+   * different {@link CompletableFuture}.
+   *
+   * <p>When <code>from</code> completes successfully, <code>to</code> will be completed
+   * successfully with the same value. When <code>from</code> completes exceptionally, <code>to
+   * </code> will be completed exceptionally with the same exception.
+   *
+   * <p>If the Supplier throws an exception, the target CompletableFuture will be completed
+   * exceptionally with the thrown exception.
+   *
+   * @param from the Supplier to get the CompletableFuture to take results and exceptions from
+   * @param to the CompletableFuture to propagate results and exceptions to
+   * @param <T> the type of the success value
+   */
+  public static <T> void propagateResult(
+      final Supplier<CompletableFuture<T>> from, final CompletableFuture<T> to) {
+    try {
+      propagateResult(from.get(), to);
+    } catch (final Throwable t) {
+      to.completeExceptionally(t);
+    }
   }
 }
