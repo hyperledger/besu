@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.toList;
 import static tech.pegasys.pantheon.util.NetworkUtility.urlForSocketAddress;
 
 import tech.pegasys.pantheon.ethereum.jsonrpc.authentication.AuthenticationService;
+import tech.pegasys.pantheon.ethereum.jsonrpc.authentication.AuthenticationUtils;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequestId;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -43,7 +44,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -231,66 +231,8 @@ public class JsonRpcHttpService {
     };
   }
 
-  private boolean requiresAuthentication() {
-    return authenticationService.isPresent();
-  }
-
-  @VisibleForTesting
-  public boolean isPermitted(final Optional<User> optionalUser, final JsonRpcMethod jsonRpcMethod) {
-
-    AtomicBoolean foundMatchingPermission = new AtomicBoolean();
-
-    if (requiresAuthentication()) {
-      if (optionalUser.isPresent()) {
-        User user = optionalUser.get();
-        for (String perm : jsonRpcMethod.getPermissions()) {
-          user.isAuthorized(
-              perm,
-              (authed) -> {
-                if (authed.result()) {
-                  LOG.trace(
-                      "user {} authorized : {} via permission {}",
-                      user,
-                      jsonRpcMethod.getName(),
-                      perm);
-                  foundMatchingPermission.set(true);
-                }
-              });
-        }
-      }
-    } else {
-      // no auth provider configured thus anything is permitted
-      foundMatchingPermission.set(true);
-    }
-
-    if (!foundMatchingPermission.get()) {
-      LOG.trace("user NOT authorized : {}", jsonRpcMethod.getName());
-    }
-    return foundMatchingPermission.get();
-  }
-
-  private String getToken(final RoutingContext routingContext) {
+  private String getAuthToken(final RoutingContext routingContext) {
     return routingContext.request().getHeader("Bearer");
-  }
-
-  private void getUser(final String token, final Handler<Optional<User>> handler) {
-    try {
-      if (!requiresAuthentication()) {
-        handler.handle(Optional.empty());
-      } else {
-        authenticationService
-            .get()
-            .getJwtAuthProvider()
-            .authenticate(
-                new JsonObject().put("jwt", token),
-                (r) -> {
-                  final User user = r.result();
-                  handler.handle(Optional.of(user));
-                });
-      }
-    } catch (Exception e) {
-      handler.handle(Optional.empty());
-    }
   }
 
   private Optional<String> getAndValidateHostHeader(final RoutingContext event) {
@@ -345,8 +287,8 @@ public class JsonRpcHttpService {
 
   private void handleJsonRPCRequest(final RoutingContext routingContext) {
     // first check token if authentication is required
-    String token = getToken(routingContext);
-    if (requiresAuthentication() && token == null) {
+    String token = getAuthToken(routingContext);
+    if (authenticationService.isPresent() && token == null) {
       // no auth token when auth required
       handleJsonRpcUnauthorizedError(routingContext, null, JsonRpcError.UNAUTHORIZED);
     } else {
@@ -354,7 +296,8 @@ public class JsonRpcHttpService {
       try {
         final String json = routingContext.getBodyAsString().trim();
         if (!json.isEmpty() && json.charAt(0) == '{') {
-          getUser(
+          AuthenticationUtils.getUser(
+              authenticationService,
               token,
               user -> {
                 handleJsonSingleRequest(routingContext, new JsonObject(json), user);
@@ -365,7 +308,8 @@ public class JsonRpcHttpService {
             handleJsonRpcError(routingContext, null, JsonRpcError.INVALID_REQUEST);
             return;
           }
-          getUser(
+          AuthenticationUtils.getUser(
+              authenticationService,
               token,
               user -> {
                 handleJsonBatchRequest(routingContext, array, user);
@@ -502,7 +446,7 @@ public class JsonRpcHttpService {
       return errorResponse(id, JsonRpcError.METHOD_NOT_FOUND);
     }
 
-    if (isPermitted(user, method)) {
+    if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {
       // Generate response
       try (final TimingContext ignored = requestTimer.labels(request.getMethod()).startTimer()) {
         return method.response(request);
