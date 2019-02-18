@@ -20,37 +20,39 @@ import picocli.CommandLine.Model.CommandSpec;
 public class PasswordSubCommandTest extends CommandTestAbstract {
 
   @Test
-  public void passwordHashSubCommandExists() {
+  public void passwordSubCommandExistAnbHaveSubCommands() {
     CommandSpec spec = parseCommand();
-    assertThat(spec.subcommands()).containsKeys("password-hash");
+    assertThat(spec.subcommands()).containsKeys("password");
+    assertThat(spec.subcommands().get("password").getSubcommands()).containsKeys("hash");
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
   @Test
-  public void callingPasswordHashWithoutPasswordParameterMustDisplayUsage() {
-    final String expectedUsage =
-        "Missing required parameter: <password>"
-            + System.lineSeparator()
-            + "Usage: pantheon password-hash [-hV] <password>"
-            + System.lineSeparator()
-            + "This command generates the hash of a given password."
-            + System.lineSeparator()
-            + "      <password>   The password input"
-            + System.lineSeparator()
-            + "  -h, --help       Show this help message and exit."
-            + System.lineSeparator()
-            + "  -V, --version    Print version information and exit."
-            + System.lineSeparator();
+  public void passwordSubCommandExists() {
+    CommandSpec spec = parseCommand();
+    parseCommand("password");
 
-    parseCommand("password-hash");
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith(expectedUsage);
+    assertThat(commandOutput.toString()).contains("This command provides password related actions");
+    assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
   @Test
-  public void publicKeySubCommandExistAnbHaveSubCommands() {
-    parseCommand("password-hash", "foo");
+  public void passwordHashSubCommandExist() {
+    parseCommand("password", "hash");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains("Missing required option '--password=<password>'");
+    assertThat(commandErrorOutput.toString())
+        .contains("Usage: pantheon password hash [-hV] --password=<password>");
+    assertThat(commandErrorOutput.toString())
+        .contains("This command generates the hash of a given password");
+  }
+
+  @Test
+  public void passwordHashSubCommandHashesPassword() {
+    parseCommand("password", "hash", "--password", "foo");
 
     // we can't predict the final value so we are only checking if it starts with the hash marker
     assertThat(commandOutput.toString()).startsWith("$2");

@@ -12,38 +12,38 @@
  */
 package tech.pegasys.pantheon.cli;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static tech.pegasys.pantheon.cli.PasswordSubCommand.COMMAND_NAME;
+
+import tech.pegasys.pantheon.cli.PasswordSubCommand.HashSubCommand;
 
 import java.io.PrintStream;
 
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
-import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 import picocli.CommandLine.Spec;
 
 @Command(
     name = COMMAND_NAME,
-    description = "This command generates the hash of a given password.",
-    mixinStandardHelpOptions = true)
+    description = "This command provides password related actions.",
+    mixinStandardHelpOptions = true,
+    subcommands = {HashSubCommand.class})
 class PasswordSubCommand implements Runnable {
 
-  static final String COMMAND_NAME = "password-hash";
+  static final String COMMAND_NAME = "password";
 
   @SuppressWarnings("unused")
   @ParentCommand
-  private PantheonCommand parentCommand; // Picocli injects reference to parent command
+  private PantheonCommand parentCommand;
 
   @SuppressWarnings("unused")
   @Spec
-  private CommandSpec spec; // Picocli injects reference to command spec
+  private CommandSpec spec;
 
   final PrintStream out;
-
-  @SuppressWarnings("FieldMustBeFinal")
-  @Parameters(arity = "1..1", description = "The password input")
-  private String password = null;
 
   PasswordSubCommand(final PrintStream out) {
     this.out = out;
@@ -51,6 +51,32 @@ class PasswordSubCommand implements Runnable {
 
   @Override
   public void run() {
-    out.print(BCrypt.hashpw(password, BCrypt.gensalt()));
+    spec.commandLine().usage(out);
+  }
+
+  @Command(
+      name = "hash",
+      description = "This command generates the hash of a given password.",
+      mixinStandardHelpOptions = true)
+  static class HashSubCommand implements Runnable {
+
+    @SuppressWarnings("FieldMustBeFinal")
+    @Option(
+        names = "--password",
+        arity = "1..1",
+        required = true,
+        description = "The password input")
+    private String password = null;
+
+    @SuppressWarnings("unused")
+    @ParentCommand
+    private PasswordSubCommand parentCommand;
+
+    @Override
+    public void run() {
+      checkNotNull(parentCommand);
+
+      parentCommand.out.print(BCrypt.hashpw(password, BCrypt.gensalt()));
+    }
   }
 }
