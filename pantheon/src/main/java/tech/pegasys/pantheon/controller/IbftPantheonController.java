@@ -161,7 +161,8 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             fastSyncEnabled,
             syncConfig.downloaderParallelism(),
             syncConfig.transactionsParallelism(),
-            syncConfig.computationParallelism());
+            syncConfig.computationParallelism(),
+            metricsSystem);
     final SubProtocol ethSubProtocol = EthProtocol.get();
 
     final SyncState syncState =
