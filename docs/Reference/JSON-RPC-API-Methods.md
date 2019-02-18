@@ -2393,3 +2393,32 @@ including invalid enode URLs.
         "result": "Success"
     }
     ```
+    
+### perm_reloadPermissionsFromFile
+
+Reloads the accounts and nodes whitelists from the [permissions configuration file](../Permissions/Permissioning.md#permissions-configuration-file). 
+
+**Parameters** 
+
+None
+
+**Returns** 
+
+`result` - `Success` or `error` if the permissions configuration file is not valid.
+
+!!! example
+    ```bash tab="curl HTTP request"
+    $ curl -X POST --data '{"jsonrpc":"2.0","method":"perm_reloadPermissionsFromFile","params":[], "id":1}' <JSON-RPC-http-endpoint:port>
+    ```
+    
+    ```bash tab="wscat WS request"
+    {"jsonrpc":"2.0","method":"perm_reloadPermissionsFromFile","params":[], "id":1}
+    ```
+    
+    ```json tab="JSON result"
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "Success"
+    }
+    ```

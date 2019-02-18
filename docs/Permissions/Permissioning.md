@@ -18,11 +18,16 @@ A node with node whitelisting enabled communicates only with nodes in the nodes 
 Node whitelisting is at the node level. That is, each node in the network has a [`permissions_config.toml`](#permissions-configuration-file)
 file in the [data directory](../Reference/Pantheon-CLI-Syntax.md#data-path) for the node.  
 
-To view or update the nodes whitelist when the node is running, use the JSON-RPC API methods:
+To update the nodes whitelist when the node is running, use the JSON-RPC API methods:
  
 * [perm_addNodesToWhitelist](../Reference/JSON-RPC-API-Methods.md#perm__addnodestowhitelist)
 * [perm_removeNodesFromWhitelist](../Reference/JSON-RPC-API-Methods.md#perm_removeNodesFromWhiteList)
-* [perm_getNodesWhitelist](../Reference/JSON-RPC-API-Methods.md#perm_getNodesWhiteList)
+
+Alternatively, update the [`permissions_config.toml`](#permissions-configuration-file) file directly and use the 
+[`perm_reloadPermissionsFromFile`](../Reference/JSON-RPC-API-Methods.md#perm_reloadpermissionsfromfile) method 
+to update the whitelists. 
+
+To view the nodes whitelist, use the [perm_getNodesWhitelist](../Reference/JSON-RPC-API-Methods.md#perm_getNodesWhiteList) method. 
 
 !!! note
     Each node has a `permissions_config.toml` file which means nodes can have different nodes whitelists. 
@@ -103,11 +108,16 @@ can synchronise and add blocks containing transactions from accounts that are no
     On-chain permissioning is under development. On-chain permissioning will use one on-chain 
     nodes whitelist. 
 
-To view or update the accounts whitelist when the node is running, use the JSON-RPC API methods: 
+To update the accounts whitelist when the node is running, use the JSON-RPC API methods: 
 
-* [perm_addAccountsToWhitelist](../Reference/JSON-RPC-API-Methods.md#perm_addAccountsToWhitelist)
-* [perm_removeAccountsFromWhitelist](../Reference/JSON-RPC-API-Methods.md#perm_removeAccountsFromWhitelist)
-* [perm_getAccountsWhitelist](../Reference/JSON-RPC-API-Methods.md#perm_getAccountsWhitelist)
+* [`perm_addAccountsToWhitelist`](../Reference/JSON-RPC-API-Methods.md#perm_addAccountsToWhitelist)
+* [`perm_removeAccountsFromWhitelist`](../Reference/JSON-RPC-API-Methods.md#perm_removeAccountsFromWhitelist)
+
+Alternatively, update the [`permissions_config.toml`](#permissions-configuration-file) file directly and use the 
+[`perm_reloadPermissionsFromFile`](../Reference/JSON-RPC-API-Methods.md#perm_reloadpermissionsfromfile) method 
+to update the whitelists.
+
+To view the accounts whitelist, use the [`perm_getAccountsWhitelist`](../Reference/JSON-RPC-API-Methods.md#perm_getAccountsWhitelist) method.
 
 ### Enabling Account Whitelisting 
 
