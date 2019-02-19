@@ -30,6 +30,7 @@ import com.google.common.primitives.Longs;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
+import org.rocksdb.RocksIterator;
 
 public class RocksDbTaskQueue<T> implements TaskQueue<T> {
 
@@ -38,6 +39,7 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
 
   private final AtomicLong lastEnqueuedKey = new AtomicLong(0);
   private final AtomicLong lastDequeuedKey = new AtomicLong(0);
+  private RocksIterator dequeueIterator;
   private final AtomicLong oldestKey = new AtomicLong(0);
   private final Set<RocksDbTask<T>> outstandingTasks = new HashSet<>();
 
@@ -102,18 +104,25 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
       return null;
     }
     try (final OperationTimer.TimingContext ignored = dequeueLatency.startTimer()) {
-      final long key = lastDequeuedKey.incrementAndGet();
-      final byte[] value = db.get(Longs.toByteArray(key));
-      if (value == null) {
-        throw new IllegalStateException("Next expected value is missing");
+      if (dequeueIterator == null) {
+        dequeueIterator = db.newIterator();
       }
-
+      final long key = lastDequeuedKey.incrementAndGet();
+      dequeueIterator.seek(Longs.toByteArray(key));
+      if (!dequeueIterator.isValid()) {
+        // Reached the end of the snapshot this iterator was loaded with
+        dequeueIterator.close();
+        dequeueIterator = db.newIterator();
+        dequeueIterator.seek(Longs.toByteArray(key));
+        if (!dequeueIterator.isValid()) {
+          throw new IllegalStateException("Next expected value is missing");
+        }
+      }
+      final byte[] value = dequeueIterator.value();
       final BytesValue data = BytesValue.of(value);
       final RocksDbTask<T> task = new RocksDbTask<>(this, deserializer.apply(data), key);
       outstandingTasks.add(task);
       return task;
-    } catch (final RocksDBException e) {
-      throw new StorageException(e);
     }
   }
 
@@ -137,6 +146,10 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
     final byte[] to = Longs.toByteArray(lastEnqueuedKey.get() + 1);
     try {
       db.deleteRange(from, to);
+      if (dequeueIterator != null) {
+        dequeueIterator.close();
+        dequeueIterator = null;
+      }
       lastDequeuedKey.set(0);
       lastEnqueuedKey.set(0);
       oldestKey.set(0);
@@ -173,6 +186,9 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
   @Override
   public void close() {
     if (closed.compareAndSet(false, true)) {
+      if (dequeueIterator != null) {
+        dequeueIterator.close();
+      }
       options.close();
       db.close();
     }
