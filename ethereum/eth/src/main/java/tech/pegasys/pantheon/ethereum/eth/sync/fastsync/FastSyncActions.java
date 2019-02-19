@@ -119,7 +119,7 @@ public class FastSyncActions<C> {
   private CompletableFuture<FastSyncState> selectPivotBlockFromPeers() {
     return ethContext
         .getEthPeers()
-        .bestPeer()
+        .highestTotalDifficultyPeer()
         .filter(peer -> peer.chainState().hasEstimatedHeight())
         .map(
             peer -> {

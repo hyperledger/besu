@@ -39,6 +39,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -147,6 +148,17 @@ public class FastSyncActionsTest {
     final CompletableFuture<FastSyncState> result =
         fastSyncActions.selectPivotBlock(EMPTY_SYNC_STATE);
     final FastSyncState expected = new FastSyncState(4000);
+    assertThat(result).isCompletedWithValue(expected);
+  }
+
+  @Test
+  public void selectPivotBlockShouldConsiderTotalDifficultyWhenSelectingBestPeer() {
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.of(1000), 5500);
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.of(2000), 4000);
+
+    final CompletableFuture<FastSyncState> result =
+        fastSyncActions.selectPivotBlock(EMPTY_SYNC_STATE);
+    final FastSyncState expected = new FastSyncState(3000);
     assertThat(result).isCompletedWithValue(expected);
   }
 
