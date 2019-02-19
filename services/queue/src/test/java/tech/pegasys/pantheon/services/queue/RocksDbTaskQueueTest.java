@@ -13,18 +13,24 @@
 package tech.pegasys.pantheon.services.queue;
 
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
+import java.util.function.Function;
 
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
-public class RocksDbTaskQueueTest extends AbstractTaskQueueTest<RocksDbTaskQueue> {
+public class RocksDbTaskQueueTest extends AbstractTaskQueueTest<RocksDbTaskQueue<BytesValue>> {
 
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
   @Override
-  protected RocksDbTaskQueue createQueue() throws IOException {
-    return RocksDbTaskQueue.create(folder.newFolder().toPath(), new NoOpMetricsSystem());
+  protected RocksDbTaskQueue<BytesValue> createQueue() throws IOException {
+    return RocksDbTaskQueue.create(
+        folder.newFolder().toPath(),
+        Function.identity(),
+        Function.identity(),
+        new NoOpMetricsSystem());
   }
 }
