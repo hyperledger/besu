@@ -50,8 +50,7 @@ public class MockTimerUtil implements TimerUtil {
 
   public void runTimerHandlers() {
     // Create a copy of the handlers to avoid concurrent modification as handlers run
-    List<TimerHandler> handlers = new ArrayList<>();
-    timerHandlers.forEach((id, handler) -> handlers.add(handler));
+    final List<TimerHandler> handlers = new ArrayList<>(timerHandlers.values());
     timerHandlers.clear();
 
     handlers.forEach(TimerHandler::handle);
