@@ -42,8 +42,8 @@ public class TomlConfigFileParser {
 
     if (result.hasErrors()) {
       final String errors =
-          result.errors().stream().map(TomlParseError::toString).collect(Collectors.joining("%n"));
-      throw new Exception("Invalid TOML configuration : " + errors);
+          result.errors().stream().map(TomlParseError::toString).collect(Collectors.joining("\n"));
+      throw new Exception("Invalid TOML configuration: \n" + errors);
     }
 
     return checkConfigurationValidity(result, toml);

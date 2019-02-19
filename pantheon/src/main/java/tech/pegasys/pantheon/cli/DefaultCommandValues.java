@@ -88,12 +88,12 @@ interface DefaultCommandValues {
     }
 
     // Try to create it, then verify if the provided path is not already existing and is not a
-    // directory .Otherwise, if it doesn't exist or exists but is already a directory,
+    // directory. Otherwise, if it doesn't exist or exists but is already a directory,
     // Runner will use it to store data.
     try {
       Files.createDirectories(pantheonHome);
     } catch (final FileAlreadyExistsException e) {
-      // Only thrown if it exist but is not a directory
+      // Only thrown if it exists but is not a directory
       throw new CommandLine.ParameterException(
           new CommandLine(command),
           String.format(
