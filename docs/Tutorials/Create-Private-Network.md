@@ -201,7 +201,7 @@ Import accounts to MetaMask and send transactions as described in the [Private N
     
 Send transactions using `eth_sendRawTransaction` to [send ether or, deploy or invoke contracts](../Using-Pantheon/Transactions.md).
 
-Use the [JSON-RPC API](../Reference/Using-JSON-RPC-API.md). 
+Use the [JSON-RPC API](../JSON-RPC-API/Using-JSON-RPC-API.md). 
 
 Start a node with the [`--rpc-ws-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-enabled) option and use the [RPC Pub/Sub API](../Using-Pantheon/RPC-PubSub.md).       
 

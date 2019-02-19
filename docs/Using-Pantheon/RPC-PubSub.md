@@ -19,7 +19,7 @@ The RPC Pub/Sub methods are:
     
 ### Using RPC Pub/Sub
 
-The RPC Pub/Sub API requires a persistent connection. Connect to the RPC Pub/Sub API using a tool such as [WebSockets](../Reference/Using-JSON-RPC-API.md#endpoint-address-and-port). 
+The RPC Pub/Sub API is supported on [WebSockets](../JSON-RPC-API/Using-JSON-RPC-API.md#http-and-websocket-requests). 
 
 Use `eth_subscribe` to create subscriptions. Once subscribed, notifications are published by the API using `eth_subscription`. 
 

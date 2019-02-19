@@ -60,6 +60,10 @@ nav:
         - Comparing PoA Consensus Protocols: Consensus-Protocols/Comparing-PoA.md
         - Clique: Consensus-Protocols/Clique.md
         - IBFT 2.0: Consensus-Protocols/IBFT.md
+    - JSON-RPC API:
+        - Overview: JSON-RPC-API/JSON-RPC-API.md
+        - Using the JSON-RPC API: JSON-RPC-API/Using-JSON-RPC-API.md
+        - Authentication: JSON-RPC-API/Authentication.md
     - Configuring Pantheon:
         - Configuration File: Configuring-Pantheon/Using-Configuration-File.md
         - Network ID and Chain ID: Configuring-Pantheon/NetworkID-And-ChainID.md
@@ -83,11 +87,8 @@ nav:
         - Debugging Pantheon: Using-Pantheon/Debugging.md
     - Reference:
         - Pantheon Command Line: Reference/Pantheon-CLI-Syntax.md
-        - Pantheon JSON-RPC API:
-          - JSON-RPC API Overview: Reference/JSON-RPC-API.md
-          - Using the JSON-RPC API: Reference/Using-JSON-RPC-API.md
-          - JSON-RPC API Methods: Reference/JSON-RPC-API-Methods.md
-          - JSON-RPC API Objects: Reference/JSON-RPC-API-Objects.md
+        - JSON-RPC API Methods: Reference/JSON-RPC-API-Methods.md
+        - JSON-RPC API Objects: Reference/JSON-RPC-API-Objects.md
 
 markdown_extensions:
     - toc:

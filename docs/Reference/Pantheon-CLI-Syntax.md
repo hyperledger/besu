@@ -553,10 +553,7 @@ permissions-accounts-enabled=true
 ```
 
 Set to enable account level permissions.
-The default is `false`.
-
-!!!note
-    Permissions is under development and will be available in v1.0. 
+The default is `false`. 
     
 ### permissions-config-file    
 
@@ -594,9 +591,6 @@ permissions-nodes-enabled=true
 
 Set to enable node level permissions.
 The default is `false`.
-
-!!!note
-    Permissions is under development and will be available in v1.0.
 
 ### privacy-enabled
 
@@ -651,6 +645,104 @@ URL on which enclave is running.
 
 !!!note
     Privacy is under development and will be available in v1.1.
+
+### rpc-http-api
+
+```bash tab="Syntax"
+--rpc-http-api=<api name>[,<api name>...]...
+```
+
+```bash tab="Example Command Line"
+--rpc-http-api=ETH,NET,WEB3
+```
+
+```bash tab="Example Configuration File"
+rpc-http-api=["ETH","NET","WEB3"]
+```
+
+Comma-separated APIs to enable on the HTTP JSON-RPC channel.
+When you use this option, the `--rpc-http-enabled` option must also be specified.
+The available API options are: `ADMIN`, `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`, `PERM`, `DEBUG`, `MINER`, and `EEA`.
+The default is: `ETH`, `NET`, `WEB3`.
+
+!!!note
+    EEA methods are for privacy features. Privacy features are under development and will be available in v1.1.  
+
+!!!tip
+    The singular `--rpc-http-api` and plural `--rpc-http-apis` are available and are just two
+    names for the same option.
+    
+### rpc-http-authentication-credentials-file
+
+```bash tab="Syntax"
+--rpc-http-authentication-credentials-file=<FILE>
+```
+
+```bash tab="Example Command Line"
+--rpc-http-authentication-credentials-file=/home/me/me_node/auth.toml
+```
+
+```bash tab="Example Configuration File"
+rpc-http-authentication-credentials-file="/home/me/me_node/auth.toml"
+```
+
+[Credentials file](../JSON-RPC-API/Authentication.md#credentials-file) for JSON-RPC API [authentication](../JSON-RPC-API/Authentication.md). 
+
+### rpc-http-authentication-enabled
+
+```bash tab="Syntax"
+--rpc-http-authentication-enabled
+```
+
+```bash tab="Example Command Line"
+--rpc-http-authentication-enabled
+```
+
+```bash tab="Example Configuration File"
+rpc-http-authentication-enabled=true
+```
+
+Set to `true` to require [authentication](../JSON-RPC-API/Authentication.md) for the HTTP JSON-RPC service.  
+
+### rpc-http-cors-origins
+
+```bash tab="Syntax"
+--rpc-http-cors-origins=<url>[,<url>...]... or all or *
+```
+
+```bash tab="Example Command Line"
+# You can whitelist one or more domains with a comma-separated list.
+
+--rpc-http-cors-origins="http://medomain.com","https://meotherdomain.com"
+```
+
+```bash tab="Example Configuration File"
+rpc-http-cors-origins=["http://medomain.com","https://meotherdomain.com"]
+```
+
+```bash tab="Remix IDE domain example"
+# The following allows Remix to interact with your Pantheon node.
+
+--rpc-http-cors-origins="http://remix.ethereum.org"
+```
+
+Specifies domain URLs for CORS validation.
+Domain URLs must be enclosed in double quotes and comma-separated.
+
+Listed domains can access the node using JSON-RPC.
+If your client interacts with Pantheon using a browser app (such as Remix or a block explorer), 
+you must whitelist the client domains. 
+
+The default value is `"none"`.
+If you don't whitelist any domains, browser apps cannot interact with your Pantheon node.
+
+!!!note
+    To run a local Pantheon node as a backend for MetaMask and use MetaMask anywhere, set `--rpc-http-cors-origins` to `"all"` or `"*"`. 
+    To allow a specific domain to use MetaMask with the Pantheon node, set `--rpc-http-cors-origins` to the client domain. 
+        
+!!!tip
+    For development purposes, you can use `"all"` or `"*"` to accept requests from any domain, 
+    but we don't recommend this for production code.
 
 ### rpc-http-enabled
 
@@ -713,85 +805,6 @@ The default is 8545.
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
 
-### rpc-http-api
-
-```bash tab="Syntax"
---rpc-http-api=<api name>[,<api name>...]...
-```
-
-```bash tab="Example Command Line"
---rpc-http-api=ETH,NET,WEB3
-```
-
-```bash tab="Example Configuration File"
-rpc-http-api=["ETH","NET","WEB3"]
-```
-
-Comma-separated APIs to enable on the HTTP JSON-RPC channel.
-When you use this option, the `--rpc-http-enabled` option must also be specified.
-The available API options are: `ADMIN`, `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`, `DEBUG`, and `MINER`.
-The default is: `ETH`, `NET`, `WEB3`.
-
-!!!note
-    IBFT 2.0 is under development and will be available in v1.0.  
-
-!!!tip
-    The singular `--rpc-http-api` and plural `--rpc-http-apis` are available and are just two
-    names for the same option.
-    
-### rpc-http-cors-origins
-
-```bash tab="Syntax"
---rpc-http-cors-origins=<url>[,<url>...]... or all or *
-```
-
-```bash tab="Example Command Line"
-# You can whitelist one or more domains with a comma-separated list.
-
---rpc-http-cors-origins="http://medomain.com","https://meotherdomain.com"
-```
-
-```bash tab="Example Configuration File"
-rpc-http-cors-origins=["http://medomain.com","https://meotherdomain.com"]
-```
-
-```bash tab="Remix IDE domain example"
-# The following allows Remix to interact with your Pantheon node.
-
---rpc-http-cors-origins="http://remix.ethereum.org"
-```
-
-Specifies domain URLs for CORS validation.
-Domain URLs must be enclosed in double quotes and comma-separated.
-
-Listed domains can access the node using JSON-RPC.
-If your client interacts with Pantheon using a browser app (such as Remix or a block explorer), 
-you must whitelist the client domains. 
-
-The default value is `"none"`.
-If you don't whitelist any domains, browser apps cannot interact with your Pantheon node.
-
-!!!note
-    To run a local Pantheon node as a backend for MetaMask and use MetaMask anywhere, set `--rpc-http-cors-origins` to `"all"` or `"*"`. 
-    To allow a specific domain to use MetaMask with the Pantheon node, set `--rpc-http-cors-origins` to the client domain. 
-        
-!!!tip
-    For development purposes, you can use `"all"` or `"*"` to accept requests from any domain, 
-    but we don't recommend this for production code.
-
-### rpc-ws-enabled
-
-```bash tab="Syntax"
---rpc-ws-enabled
-```
-
-```bash tab="Example Configuration File"
-rpc-ws-enabled=true
-```
-
-Set to `true` to enable the WebSockets JSON-RPC service.
-The default is `false`.
-
 ### rpc-ws-api
 
 ```bash tab="Syntax"
@@ -806,17 +819,66 @@ The default is `false`.
 rpc-ws-api=["ETH","NET","WEB3"]
 ```
 
-Comma-separated APIs to enable on Websockets channel.
+Comma-separated APIs to enable on WebSockets channel.
 When you use this option, the `--rpc-ws-enabled` option must also be specified.
-The available API options are: `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`, `DEBUG`, and `MINER`.
+The available API options are: `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`, `PERM', DEBUG`, `MINER` and `EEA`.
 The default is: `ETH`, `NET`, `WEB3`.
 
 !!!note
-    IBFT 2.0 is under development and will be available in v1.0.  
+    EEA methods are for privacy features. Privacy features are under development and will be available in v1.1.  
 
 !!!tip
     The singular `--rpc-ws-api` and plural `--rpc-ws-apis` are available and are just two
     names for the same option.
+
+### rpc-ws-authentication-credentials-file
+
+```bash tab="Syntax"
+--rpc-ws-authentication-credentials-file=<FILE>
+```
+
+```bash tab="Example Command Line"
+--rpc-ws-authentication-credentials-file=/home/me/me_node/auth.toml
+```
+
+```bash tab="Example Configuration File"
+rpc-ws-authentication-credentials-file="/home/me/me_node/auth.toml"
+```
+
+[Credentials file](../JSON-RPC-API/Authentication.md#credentials-file) for JSON-RPC API [authentication](../JSON-RPC-API/Authentication.md). 
+
+### rpc-ws-authentication-enabled
+
+```bash tab="Syntax"
+--rpc-ws-authentication-enabled
+```
+
+```bash tab="Example Command Line"
+--rpc-ws-authentication-enabled
+```
+
+```bash tab="Example Configuration File"
+rpc-ws-authentication-enabled=true
+```
+
+Set to `true` to require [authentication](../JSON-RPC-API/Authentication.md) for the WebSockets JSON-RPC service.
+
+!!! note 
+    `wscat` does not support headers. [Authentication](../JSON-RPC-API/Authentication.md) requires an authentication token to be passed in the 
+    request header. To use authentication with WebSockets, an app that supports headers is required. 
+
+### rpc-ws-enabled
+
+```bash tab="Syntax"
+--rpc-ws-enabled
+```
+
+```bash tab="Example Configuration File"
+rpc-ws-enabled=true
+```
+
+Set to `true` to enable the WebSockets JSON-RPC service.
+The default is `false`.
     
 ### rpc-ws-host
 
