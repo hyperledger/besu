@@ -151,6 +151,9 @@ public class AccountWhitelistController {
 
   static boolean isValidAccountString(final String account) {
     try {
+      if (account == null || !account.startsWith("0x")) {
+        return false;
+      }
       BytesValue bytesValue = BytesValue.fromHexString(account);
       return bytesValue.size() == ACCOUNT_BYTES_SIZE;
     } catch (NullPointerException | IndexOutOfBoundsException | IllegalArgumentException e) {
