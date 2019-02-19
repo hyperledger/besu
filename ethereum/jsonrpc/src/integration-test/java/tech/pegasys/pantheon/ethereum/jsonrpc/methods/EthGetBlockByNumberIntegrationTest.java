@@ -81,9 +81,9 @@ public class EthGetBlockByNumberIntegrationTest {
     assertThat(blocksUrl).isNotNull();
     assertThat(genesisJsonUrl).isNotNull();
 
-    final String gensisjson = Resources.toString(genesisJsonUrl, Charsets.UTF_8);
+    final String genesisJson = Resources.toString(genesisJsonUrl, Charsets.UTF_8);
 
-    BLOCKCHAIN = new JsonRpcTestMethodsFactory(new BlockchainImporter(blocksUrl, gensisjson));
+    BLOCKCHAIN = new JsonRpcTestMethodsFactory(new BlockchainImporter(blocksUrl, genesisJson));
   }
 
   @Before

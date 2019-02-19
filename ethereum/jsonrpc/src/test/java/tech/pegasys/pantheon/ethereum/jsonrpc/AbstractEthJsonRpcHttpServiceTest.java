@@ -132,10 +132,10 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
       }
     }
 
-    final String gensisjson = Resources.toString(genesisJsonUrl, Charsets.UTF_8);
+    final String genesisJson = Resources.toString(genesisJsonUrl, Charsets.UTF_8);
 
     GENESIS_BLOCK = BLOCKS.get(0);
-    GENESIS_CONFIG = GenesisState.fromJson(gensisjson, PROTOCOL_SCHEDULE);
+    GENESIS_CONFIG = GenesisState.fromJson(genesisJson, PROTOCOL_SCHEDULE);
   }
 
   @Before
