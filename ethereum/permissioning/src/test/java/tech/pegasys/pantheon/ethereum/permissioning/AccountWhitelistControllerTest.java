@@ -218,6 +218,19 @@ public class AccountWhitelistControllerTest {
         .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
   }
 
+  @Test
+  public void accountThatDoesNotStartWith0xIsNotValid() {
+    assertThat(AccountWhitelistController.isValidAccountString("bob")).isFalse();
+    assertThat(
+            AccountWhitelistController.isValidAccountString(
+                "b9b81ee349c3807e46bc71aa2632203c5b462032"))
+        .isFalse();
+    assertThat(
+            AccountWhitelistController.isValidAccountString(
+                "0xb9b81ee349c3807e46bc71aa2632203c5b462032"))
+        .isTrue();
+  }
+
   private Path createPermissionsFileWithAccount(final String account) throws IOException {
     final String nodePermissionsFileContent = "accounts-whitelist=[\"" + account + "\"]";
     final Path permissionsFile = Files.createTempFile("account_permissions", "");
