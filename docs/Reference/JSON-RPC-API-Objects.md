@@ -38,8 +38,8 @@ Parameter for [eth_newFilter](JSON-RPC-API-Methods.md#eth_newfilter) and [eth_ge
 
 | Key           | Type                              | Required/Optional | Value                                                                                                                                       |
 |---------------|:---------------------------------:|:-----------------:|---------------------------------------------------------------------------------------------------------------------------------------------|
-| **fromBlock** | Quantity &#124; Tag               | Optional          | Integer block number or `latest`, `pending`, `earliest`. See [Block Parameter](Using-JSON-RPC-API.md#block-parameter). Default is `latest`. |
-| **toBlock**   | Quantity &#124; Tag               | Optional          | Integer block number or `latest`, `pending`, `earliest`. See [Block Parameter](Using-JSON-RPC-API.md#block-parameter). Default is `latest`. |
+| **fromBlock** | Quantity &#124; Tag               | Optional          | Integer block number or `latest`, `pending`, `earliest`. See [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter). Default is `latest`. |
+| **toBlock**   | Quantity &#124; Tag               | Optional          | Integer block number or `latest`, `pending`, `earliest`. See [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter). Default is `latest`. |
 | **address**   | Data &#124; Array                 | Optional          | Contract address or array of addresses from which [logs](../Using-Pantheon/Events-and-Logs.md) originate.                                                                           |
 | **topics**    | Array of Data, 32&nbsp;bytes each | Optional          | Array of topics by which to [filter logs](../Using-Pantheon/Events-and-Logs.md#topic-filters).                             |
 
