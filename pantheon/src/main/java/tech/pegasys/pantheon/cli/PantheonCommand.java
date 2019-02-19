@@ -523,7 +523,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       Configurator.setAllLevels("", logLevel);
     }
 
-    // Check that p2p options are able top work or send an error
+    // Check that p2p options are able to work or send an error
     CommandLineUtils.checkOptionDependencies(
         logger,
         commandLine,
@@ -536,7 +536,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             "--banned-node-id",
             "--banned-node-ids"));
 
-    // Check that mining options are able top work or send an error
+    // Check that mining options are able to work or send an error
     CommandLineUtils.checkOptionDependencies(
         logger,
         commandLine,
@@ -550,6 +550,13 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           this.commandLine,
           "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled)"
               + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
+    }
+
+    if (permissionsConfigFile != null) {
+      if (!permissionsAccountsEnabled && !permissionsNodesEnabled) {
+        logger.warn(
+            "Permissions config file set {} but no permissions enabled", permissionsConfigFile);
+      }
     }
 
     final EthNetworkConfig ethNetworkConfig = updateNetworkConfig(getNetwork());
