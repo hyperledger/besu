@@ -9,13 +9,13 @@ account permissions enabled, or both.
 
 ## Node Whitelisting 
 
-Node whitelisting is specified by the nodes whitelist in the [`permissions_config.toml`](#permissions-configuration-file) file. 
-A node with node whitelisting enabled communicates only with nodes in the nodes whitelist. 
+Node whitelisting is specified by the nodes whitelist in the [permissions configuration file](#permissions-configuration-file) file. 
+When node whitelisting is enabled, communication is restricted to only nodes in the whitelist. 
 
-!!! example "Nodes Whitelist in `permissons_config.toml`"
+!!! example "Nodes Whitelist in Permissions Configuration File"
     `nodes-whitelist=["enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.9:4567","enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.169.0.9:4568"]`
 
-Node whitelisting is at the node level. That is, each node in the network has a [`permissions_config.toml`](#permissions-configuration-file)
+Node whitelisting is at the node level. That is, each node in the network has a [permissions configuration file](#permissions-configuration-file)
 file in the [data directory](../Reference/Pantheon-CLI-Syntax.md#data-path) for the node.  
 
 To update the nodes whitelist when the node is running, use the JSON-RPC API methods:
@@ -30,7 +30,7 @@ to update the whitelists.
 To view the nodes whitelist, use the [perm_getNodesWhitelist](../Reference/JSON-RPC-API-Methods.md#perm_getNodesWhiteList) method. 
 
 !!! note
-    Each node has a `permissions_config.toml` file which means nodes can have different nodes whitelists. 
+    Each node has a [permissions configuration file](#permissions-configuration-file) which means nodes can have different nodes whitelists. 
     This means nodes may be participating in the network that are not on the whitelist of other nodes in the network. 
     We recommend each node in the network has the same nodes whitelist. 
     
@@ -50,13 +50,13 @@ To view the nodes whitelist, use the [perm_getNodesWhitelist](../Reference/JSON-
 The bootnodes must be included in the nodes whitelist or Pantheon does not start when node permissions are enabled. 
 
 !!! example 
-    If you start Pantheon with:
+    If you start Pantheon with specified bootnodes and have node permissions enabled:
     
      ```bash
      --bootnodes="enode://7e4ef30e9ec683f26ad76ffca5b5148fa7a6575f4cfad4eb0f52f9c3d8335f4a9b6f9e66fcc73ef95ed7a2a52784d4f372e7750ac8ae0b544309a5b391a23dd7@127.0.0.1:30303","enode://2feb33b3c6c4a8f77d84a5ce44954e83e5f163e7a65f7f7a7fec499ceb0ddd76a46ef635408c513d64c076470eac86b7f2c8ae4fcd112cb28ce82c0d64ec2c94@127.0.0.1:30304","enode://7b61d5ee4b44335873e6912cb5dd3e3877c860ba21417c9b9ef1f7e500a82213737d4b269046d0669fb2299a234ca03443f25fe5f706b693b3669e5c92478ade@127.0.0.1:30305" 
      ```
     
-    The `nodes-whitelist` in [`permissions_config.toml`](#permissions-configuration-file) must contain the specified bootnodes. 
+    The `nodes-whitelist` in the [permissions configuration file](#permissions-configuration-file) must contain the specified bootnodes. 
 
 ### Enabling Node Whitelisting     
 
@@ -68,14 +68,14 @@ or [`--rpc-ws-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-api) options to e
 
 ## Account Whitelisting 
 
-Account whitelisting is specified by the accounts whitelist in the [`permissions_config.toml`](#permissions-configuration-file) file.
+Account whitelisting is specified by the accounts whitelist in the [permissions configuration file](#permissions-configuration-file).
 A node with account permissions accepts transactions only from accounts in the accounts whitelist. 
 
-!!! example "Accounts Whitelist in `permissons_config.toml`"
+!!! example "Accounts Whitelist in Permissions Configuration File"
     `accounts-whitelist=["0x0000000000000000000000000000000000000009"]`
     
-Account whitelisting is at the node level. That is, each node in the network has a [`permissions_config.toml`](#permissions-configuration-file)
-file in the [data directory](../Reference/Pantheon-CLI-Syntax.md#data-path) for the node.    
+Account whitelisting is at the node level. That is, each node in the network has a [permisssions configuration file](#permissions-configuration-file)
+in the [data directory](../Reference/Pantheon-CLI-Syntax.md#data-path) for the node.    
     
 Transactions are validated against the accounts whitelist at the following points: 
 
@@ -100,7 +100,7 @@ can synchronise and add blocks containing transactions from accounts that are no
     Node 2 now has a transaction in the blockchain from Account A which is not on the accounts whitelist for Node 2.   
 
 !!! note
-    Each node has a [`permissions_config.toml`](#permissions-configuration-file) file which means nodes in the network can have different accounts whitelists. 
+    Each node has a [permissions configuration file](#permissions-configuration-file) which means nodes in the network can have different accounts whitelists. 
     This means a transaction can be successfully submitted by Node A from an account in the Node A whitelist but rejected by 
     Node B to which it is propagated if the account is not in the Node B whitelist. 
     We recommend each node in the network has the same accounts whitelist. 
@@ -129,10 +129,14 @@ or [`--rpc-ws-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-api) options to e
 
 ## Permissions Configuration File 
 
-The `permissions_config.toml` file contains the nodes and accounts whitelists. The `permissions_config.toml` 
+The permissions configuration file contains the nodes and accounts whitelists. If the [`--permissions-config-file`](../Reference/Pantheon-CLI-Syntax.md#permissions-config-file)
+option is not specified, the permissions configuration file must be called `permissions_config.toml` and
 must be in the [data directory](../Reference/Pantheon-CLI-Syntax.md#data-path) for the node.
 
-!!! example "Example permissions_config.toml"  
+Use the [`--permissions-config-file`](../Reference/Pantheon-CLI-Syntax.md#permissions-config-file) option to specify a permissions configuration file
+ in any location.
+
+!!! example "Example Permissions Configuration File"  
     ```toml 
     accounts-whitelist=["0xb9b81ee349c3807e46bc71aa2632203c5b462032", "0xb9b81ee349c3807e46bc71aa2632203c5b462034"]
     
