@@ -333,9 +333,21 @@ run {
 }
 
 startScripts {
+
+  def shortenWindowsClasspath = { line ->
+    line = line.replaceAll(/^set CLASSPATH=.*$/, "set CLASSPATH=%APP_HOME%/lib/*")
+  }
+
   doLast {
     unixScript.text = unixScript.text.replace('PANTHEON_HOME', '\$APP_HOME')
     windowsScript.text = windowsScript.text.replace('PANTHEON_HOME', '%~dp0..')
+
+    // Prevent the error originating from the 8191 chars limit on Windows
+    windowsScript.text =
+      windowsScript
+      .readLines()
+      .collect(shortenWindowsClasspath)
+      .join('\r\n')
   }
 }
 
