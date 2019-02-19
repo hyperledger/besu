@@ -78,8 +78,6 @@ Send individual requests as a JSON data package at each prompt:
 > {"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":53}
 ```
 
-The [RPC Pub/Sub methods](../Using-Pantheon/RPC-PubSub.md) can also be used over WebSockets.
-
 ### API Methods Enabled by Default
 
 The `ETH`, `NET`, and `WEB3` API methods are enabled by default. 
