@@ -30,7 +30,7 @@ import tech.pegasys.pantheon.RunnerBuilder;
 import tech.pegasys.pantheon.cli.custom.CorsAllowedOriginsProperty;
 import tech.pegasys.pantheon.cli.custom.EnodeToURIPropertyConverter;
 import tech.pegasys.pantheon.cli.custom.JsonRPCWhitelistHostsProperty;
-import tech.pegasys.pantheon.cli.custom.RpcAuthConverter;
+import tech.pegasys.pantheon.cli.custom.RpcAuthFileValidator;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.CliqueRpcApis;
 import tech.pegasys.pantheon.consensus.ibft.jsonrpc.IbftRpcApis;
@@ -65,7 +65,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -641,12 +640,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-authentication-enabled",
             "--rpc-http-authentication-credentials-file"));
 
-    CommandLineUtils.checkOptionDependencies(
-        logger,
-        commandLine,
-        "--rpc-http-authentication-enabled",
-        !isRpcHttpAuthenticationEnabled,
-        Collections.singletonList("--rpc-http-authentication-credentials-file"));
+    if (isRpcHttpAuthenticationEnabled && rpcHttpAuthenticationCredentialsFile() == null) {
+      throw new ParameterException(
+          commandLine,
+          "Unable to authenticate RPC HTTP endpoint without a supplied credentials file");
+    }
 
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
     jsonRpcConfiguration.setEnabled(isRpcHttpEnabled);
@@ -676,12 +674,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             "--rpc-ws-authentication-enabled",
             "--rpc-ws-authentication-credentials-file"));
 
-    CommandLineUtils.checkOptionDependencies(
-        logger,
-        commandLine,
-        "--rpc-ws-authentication-enabled",
-        !isRpcWsAuthenticationEnabled,
-        Collections.singletonList("--rpc-ws-authentication-credentials-file"));
+    if (isRpcWsAuthenticationEnabled && rpcWsAuthenticationCredentialsFile() == null) {
+      throw new ParameterException(
+          commandLine,
+          "Unable to authenticate RPC WS endpoint without a supplied credentials file");
+    }
 
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
     webSocketConfiguration.setEnabled(isRpcWsEnabled);
@@ -972,47 +969,37 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   }
 
   private String rpcHttpAuthenticationCredentialsFile() throws Exception {
+    String filename = null;
     if (isFullInstantiation()) {
-      return standaloneCommands.rpcHttpAuthenticationCredentialsFile;
+      filename = standaloneCommands.rpcHttpAuthenticationCredentialsFile;
     } else if (isDocker) {
       final File authFile = new File(DOCKER_RPC_HTTP_AUTHENTICATION_CREDENTIALS_FILE_LOCATION);
       if (authFile.exists()) {
-        final String path = authFile.getAbsolutePath();
-        try {
-          new RpcAuthConverter().convert(path);
-        } catch (Exception e) {
-          throw new ParameterException(
-              commandLine, "Invalid RPC HTTP authentication credentials file: " + e.getMessage());
-        }
-        return path;
-      } else {
-        return null;
+        filename = authFile.getAbsolutePath();
       }
-    } else {
-      return null;
     }
+
+    if (filename != null) {
+      RpcAuthFileValidator.validate(commandLine, filename, "HTTP");
+    }
+    return filename;
   }
 
   private String rpcWsAuthenticationCredentialsFile() {
+    String filename = null;
     if (isFullInstantiation()) {
-      return standaloneCommands.rpcWsAuthenticationCredentialsFile;
+      filename = standaloneCommands.rpcWsAuthenticationCredentialsFile;
     } else if (isDocker) {
       final File authFile = new File(DOCKER_RPC_WS_AUTHENTICATION_CREDENTIALS_FILE_LOCATION);
       if (authFile.exists()) {
-        final String path = authFile.getAbsolutePath();
-        try {
-          new RpcAuthConverter().convert(path);
-        } catch (Exception e) {
-          throw new ParameterException(
-              commandLine, "Invalid RPC WS authentication credentials file: " + e.getMessage());
-        }
-        return path;
-      } else {
-        return null;
+        filename = authFile.getAbsolutePath();
       }
-    } else {
-      return null;
     }
+
+    if (filename != null) {
+      RpcAuthFileValidator.validate(commandLine, filename, "WS");
+    }
+    return filename;
   }
 
   private boolean isFullInstantiation() {
