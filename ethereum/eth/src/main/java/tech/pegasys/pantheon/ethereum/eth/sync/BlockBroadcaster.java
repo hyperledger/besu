@@ -14,21 +14,36 @@ package tech.pegasys.pantheon.ethereum.eth.sync;
 
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockMessage;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
-class BlockBroadcaster {
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class BlockBroadcaster {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final EthContext ethContext;
 
-  BlockBroadcaster(final EthContext ethContext) {
+  public BlockBroadcaster(final EthContext ethContext) {
     this.ethContext = ethContext;
   }
 
-  void propagate(final Block block, final UInt256 difficulty) {
+  public void propagate(final Block block, final UInt256 totalDifficulty) {
+    final NewBlockMessage newBlockMessage = NewBlockMessage.create(block, totalDifficulty);
     ethContext
         .getEthPeers()
         .availablePeers()
         .filter(ethPeer -> !ethPeer.hasSeenBlock(block.getHash()))
-        .forEach(ethPeer -> ethPeer.propagateBlock(block, difficulty));
+        .forEach(
+            ethPeer -> {
+              ethPeer.registerKnownBlock(block.getHash());
+              try {
+                ethPeer.send(newBlockMessage);
+              } catch (PeerConnection.PeerNotConnected e) {
+                LOG.trace("Failed to broadcast new block to peer", e);
+              }
+            });
   }
 }

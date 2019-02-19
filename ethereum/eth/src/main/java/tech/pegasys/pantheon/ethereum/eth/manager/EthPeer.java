@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.eth.manager.ChainState.EstimatedHeightListener;
 import tech.pegasys.pantheon.ethereum.eth.manager.RequestManager.ResponseStream;
@@ -24,7 +23,6 @@ import tech.pegasys.pantheon.ethereum.eth.messages.GetBlockBodiesMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.GetBlockHeadersMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.GetNodeDataMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.GetReceiptsMessage;
-import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockMessage;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
@@ -129,16 +127,6 @@ public class EthPeer {
       default:
         connection.sendForProtocol(protocolName, messageData);
         return null;
-    }
-  }
-
-  public void propagateBlock(final Block block, final UInt256 totalDifficulty) {
-    registerKnownBlock(block.getHash());
-    final NewBlockMessage newBlockMessage = NewBlockMessage.create(block, totalDifficulty);
-    try {
-      connection.sendForProtocol(protocolName, newBlockMessage);
-    } catch (PeerNotConnected e) {
-      LOG.trace("Failed to broadcast new block to peer", e);
     }
   }
 
