@@ -226,7 +226,7 @@ public class SynchronizerConfiguration {
     private int downloaderChainSegmentSize = 200;
     private long trailingPeerBlocksBehindThreshold;
     private int maxTrailingPeers = Integer.MAX_VALUE;
-    private int downloaderParallelism = 2;
+    private int downloaderParallelism = 4;
     private int transactionsParallelism = 2;
     private int computationParallelism = Runtime.getRuntime().availableProcessors();
     private int fastSyncPivotDistance = DEFAULT_PIVOT_DISTANCE_FROM_HEAD;
