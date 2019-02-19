@@ -25,6 +25,8 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
+import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockMessage;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Collections;
@@ -35,7 +37,7 @@ import org.junit.Test;
 public class BlockBroadcasterTest {
 
   @Test
-  public void blockPropagationUnitTest() {
+  public void blockPropagationUnitTest() throws PeerConnection.PeerNotConnected {
     final EthPeer ethPeer = mock(EthPeer.class);
     final EthPeers ethPeers = mock(EthPeers.class);
     when(ethPeers.availablePeers()).thenReturn(Stream.of(ethPeer));
@@ -45,14 +47,16 @@ public class BlockBroadcasterTest {
 
     final BlockBroadcaster blockBroadcaster = new BlockBroadcaster(ethContext);
     final Block block = generateBlock();
+    final NewBlockMessage newBlockMessage =
+        NewBlockMessage.create(block, block.getHeader().getDifficulty());
 
     blockBroadcaster.propagate(block, UInt256.ZERO);
 
-    verify(ethPeer, times(1)).propagateBlock(any(), any());
+    verify(ethPeer, times(1)).send(newBlockMessage);
   }
 
   @Test
-  public void blockPropagationUnitTestSeenUnseen() {
+  public void blockPropagationUnitTestSeenUnseen() throws PeerConnection.PeerNotConnected {
     final EthPeer ethPeer0 = mock(EthPeer.class);
     when(ethPeer0.hasSeenBlock(any())).thenReturn(true);
 
@@ -66,10 +70,13 @@ public class BlockBroadcasterTest {
 
     final BlockBroadcaster blockBroadcaster = new BlockBroadcaster(ethContext);
     final Block block = generateBlock();
+    final NewBlockMessage newBlockMessage =
+        NewBlockMessage.create(block, block.getHeader().getDifficulty());
+
     blockBroadcaster.propagate(block, UInt256.ZERO);
 
-    verify(ethPeer0, never()).propagateBlock(any(), any());
-    verify(ethPeer1, times(1)).propagateBlock(any(), any());
+    verify(ethPeer0, never()).send(newBlockMessage);
+    verify(ethPeer1, times(1)).send(newBlockMessage);
   }
 
   private Block generateBlock() {
