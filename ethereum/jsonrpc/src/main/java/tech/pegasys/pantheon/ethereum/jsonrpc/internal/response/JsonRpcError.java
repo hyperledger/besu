@@ -65,6 +65,7 @@ public enum JsonRpcError {
   NODE_WHITELIST_DUPLICATED_ENTRY(-32000, "Request contains duplicate nodes"),
   NODE_WHITELIST_EXISTING_ENTRY(-32000, "Cannot add an existing node to whitelist"),
   NODE_WHITELIST_MISSING_ENTRY(-32000, "Cannot remove an absent node from whitelist"),
+  NODE_WHITELIST_BOOTNODE_CANNOT_BE_REMOVED(-32000, "Cannot remove a bootnode from whitelist"),
 
   // Permissioning/persistence errors
   WHITELIST_PERSIST_FAILURE(

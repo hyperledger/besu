@@ -51,6 +51,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class NodeWhitelistControllerTest {
 
   @Mock private WhitelistPersistor whitelistPersistor;
+  private final List<EnodeURL> bootnodesList = new ArrayList<>();
   private NodeWhitelistController controller;
 
   private final String enode1 =
@@ -60,8 +61,10 @@ public class NodeWhitelistControllerTest {
 
   @Before
   public void setUp() {
+    bootnodesList.clear();
     controller =
-        new NodeWhitelistController(PermissioningConfiguration.createDefault(), whitelistPersistor);
+        new NodeWhitelistController(
+            PermissioningConfiguration.createDefault(), bootnodesList, whitelistPersistor);
   }
 
   @Test
@@ -242,7 +245,7 @@ public class NodeWhitelistControllerTest {
     when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeWhitelist())
         .thenReturn(Arrays.asList(URI.create(expectedEnodeURL)));
-    controller = new NodeWhitelistController(permissioningConfig);
+    controller = new NodeWhitelistController(permissioningConfig, bootnodesList);
 
     controller.reload();
 
@@ -259,7 +262,7 @@ public class NodeWhitelistControllerTest {
     when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeWhitelist())
         .thenReturn(Arrays.asList(URI.create(expectedEnodeURI)));
-    controller = new NodeWhitelistController(permissioningConfig);
+    controller = new NodeWhitelistController(permissioningConfig, bootnodesList);
 
     final Throwable thrown = catchThrowable(() -> controller.reload());
 
@@ -328,6 +331,19 @@ public class NodeWhitelistControllerTest {
   }
 
   @Test
+  public void whenRemovingBootnodeShouldReturnRemoveBootnodeError() {
+    NodesWhitelistResult expected =
+        new NodesWhitelistResult(WhitelistOperationResult.ERROR_BOOTNODE_CANNOT_BE_REMOVED);
+    bootnodesList.add(new EnodeURL(enode1));
+    controller.addNodes(Lists.newArrayList(enode1, enode2));
+
+    NodesWhitelistResult actualResult = controller.removeNodes(Lists.newArrayList(enode1));
+
+    assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
+    assertThat(controller.getNodesWhitelist()).containsExactly(enode1, enode2);
+  }
+
+  @Test
   @SuppressWarnings("unchecked")
   public void whenReloadingWhitelistShouldNotifyWhitelistModifiedSubscribers() throws Exception {
     final Path permissionsFile = createPermissionsFileWithNode(enode2);
@@ -341,7 +357,7 @@ public class NodeWhitelistControllerTest {
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeWhitelist()).thenReturn(Arrays.asList(URI.create(enode1)));
-    controller = new NodeWhitelistController(permissioningConfig);
+    controller = new NodeWhitelistController(permissioningConfig, bootnodesList);
     controller.subscribeToListUpdatedEvent(consumer);
 
     controller.reload();
@@ -361,7 +377,7 @@ public class NodeWhitelistControllerTest {
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeWhitelist()).thenReturn(Arrays.asList(URI.create(enode1)));
-    controller = new NodeWhitelistController(permissioningConfig);
+    controller = new NodeWhitelistController(permissioningConfig, bootnodesList);
     controller.subscribeToListUpdatedEvent(consumer);
 
     controller.reload();

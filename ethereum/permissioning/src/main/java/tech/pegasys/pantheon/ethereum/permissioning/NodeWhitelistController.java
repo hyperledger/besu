@@ -36,20 +36,26 @@ public class NodeWhitelistController {
   private static final Logger LOG = LogManager.getLogger();
 
   private PermissioningConfiguration configuration;
-  private List<EnodeURL> nodesWhitelist = new ArrayList<>();
+  private final List<EnodeURL> bootnodes;
+  private final List<EnodeURL> nodesWhitelist = new ArrayList<>();
   private final WhitelistPersistor whitelistPersistor;
   private final Subscribers<Consumer<NodeWhitelistUpdatedEvent>> nodeWhitelistUpdatedObservers =
       new Subscribers<>();
 
-  public NodeWhitelistController(final PermissioningConfiguration permissioningConfiguration) {
+  public NodeWhitelistController(
+      final PermissioningConfiguration permissioningConfiguration, final List<EnodeURL> bootnodes) {
     this(
         permissioningConfiguration,
+        bootnodes,
         new WhitelistPersistor(permissioningConfiguration.getConfigurationFilePath()));
   }
 
   public NodeWhitelistController(
-      final PermissioningConfiguration configuration, final WhitelistPersistor whitelistPersistor) {
+      final PermissioningConfiguration configuration,
+      final List<EnodeURL> bootnodes,
+      final WhitelistPersistor whitelistPersistor) {
     this.configuration = configuration;
+    this.bootnodes = bootnodes;
     this.whitelistPersistor = whitelistPersistor;
     readNodesFromConfig(configuration);
   }
@@ -99,6 +105,11 @@ public class NodeWhitelistController {
       return inputValidationResult;
     }
     final List<EnodeURL> peers = enodeURLs.stream().map(EnodeURL::new).collect(Collectors.toList());
+
+    boolean anyBootnode = peers.stream().anyMatch(bootnodes::contains);
+    if (anyBootnode) {
+      return new NodesWhitelistResult(WhitelistOperationResult.ERROR_BOOTNODE_CANNOT_BE_REMOVED);
+    }
 
     for (EnodeURL peer : peers) {
       if (!(nodesWhitelist.contains(peer))) {
@@ -169,7 +180,8 @@ public class NodeWhitelistController {
   }
 
   private void revertState(final List<EnodeURL> nodesWhitelist) {
-    this.nodesWhitelist = nodesWhitelist;
+    this.nodesWhitelist.clear();
+    this.nodesWhitelist.addAll(nodesWhitelist);
   }
 
   private Collection<String> peerToEnodeURI(final Collection<EnodeURL> peers) {
@@ -261,14 +273,14 @@ public class NodeWhitelistController {
     private final WhitelistOperationResult result;
     private final Optional<String> message;
 
-    NodesWhitelistResult(final WhitelistOperationResult fail, final String message) {
-      this.result = fail;
+    NodesWhitelistResult(final WhitelistOperationResult result, final String message) {
+      this.result = result;
       this.message = Optional.of(message);
     }
 
     @VisibleForTesting
-    public NodesWhitelistResult(final WhitelistOperationResult success) {
-      this.result = success;
+    public NodesWhitelistResult(final WhitelistOperationResult result) {
+      this.result = result;
       this.message = Optional.empty();
     }
 
