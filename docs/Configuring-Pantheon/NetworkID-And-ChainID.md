@@ -6,7 +6,7 @@ description: Pantheon network ID and chain ID implementation
 Ethereum networks have a network ID and a chain ID. The network ID defaults to the chain ID specified 
 in the genesis file.
 
-!!! example "Chain ID in Gensis File"
+!!! example "Chain ID in Genesis File"
     ```json
     {
       "config": {
