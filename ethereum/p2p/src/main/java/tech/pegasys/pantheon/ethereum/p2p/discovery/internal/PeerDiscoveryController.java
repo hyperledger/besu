@@ -408,7 +408,7 @@ public class PeerDiscoveryController {
 
     // The filter condition will be updated as soon as the action is performed.
     final PeerInteractionState ping =
-        new PeerInteractionState(action, PacketType.PONG, (packet) -> false, true);
+        new PeerInteractionState(action, peer.getId(), PacketType.PONG, (packet) -> false, true);
     dispatchInteraction(peer, ping);
   }
 
@@ -441,7 +441,7 @@ public class PeerDiscoveryController {
           sendPacket(peer, PacketType.FIND_NEIGHBORS, data);
         };
     final PeerInteractionState interaction =
-        new PeerInteractionState(action, PacketType.NEIGHBORS, packet -> true, true);
+        new PeerInteractionState(action, peer.getId(), PacketType.NEIGHBORS, packet -> true, true);
     dispatchInteraction(peer, interaction);
   }
 
@@ -459,7 +459,7 @@ public class PeerDiscoveryController {
     if (previous != null) {
       previous.cancelTimers();
     }
-    state.execute(0);
+    state.execute(0, 0);
   }
 
   private void respondToPing(
@@ -499,11 +499,15 @@ public class PeerDiscoveryController {
 
   /** Holds the state machine data for a peer interaction. */
   private class PeerInteractionState implements Predicate<Packet> {
+
+    private static final int MAX_RETRIES = 5;
     /**
      * The action that led to the peer being in this state (e.g. sending a PING or NEIGHBORS
      * message), in case it needs to be retried.
      */
     private final Consumer<PeerInteractionState> action;
+
+    private final BytesValue peerId;
     /** The expected type of the message that will transition the peer out of this state. */
     private final PacketType expectedType;
     /** A custom filter to accept transitions out of this state. */
@@ -515,10 +519,12 @@ public class PeerDiscoveryController {
 
     PeerInteractionState(
         final Consumer<PeerInteractionState> action,
+        final BytesValue peerId,
         final PacketType expectedType,
         final Predicate<Packet> filter,
         final boolean retryable) {
       this.action = action;
+      this.peerId = peerId;
       this.expectedType = expectedType;
       this.filter = filter;
       this.retryable = retryable;
@@ -540,11 +546,15 @@ public class PeerDiscoveryController {
      * @param lastTimeout the previous timeout, or 0 if this is the first time the action is being
      *     executed.
      */
-    void execute(final long lastTimeout) {
+    void execute(final long lastTimeout, final int retryCount) {
       action.accept(this);
-      if (retryable) {
+      if (retryable && retryCount < MAX_RETRIES) {
         final long newTimeout = retryDelayFunction.apply(lastTimeout);
-        timerId = OptionalLong.of(timerUtil.setTimer(newTimeout, () -> execute(newTimeout)));
+        timerId =
+            OptionalLong.of(
+                timerUtil.setTimer(newTimeout, () -> execute(newTimeout, retryCount + 1)));
+      } else {
+        inflightInteractions.remove(peerId);
       }
     }
 

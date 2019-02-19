@@ -192,16 +192,51 @@ public class PeerDiscoveryControllerTest {
     controller.onMessage(packet, peers.get(0));
 
     // Invoke timers again
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 2; i++) {
       timer.runTimerHandlers();
     }
 
     // Ensure we receive no more PING packets for peer[0].
     // Assert PING packet was sent for peer[0] 4 times.
     for (final DiscoveryPeer peer : peers) {
-      final int expectedCount = peer.equals(peers.get(0)) ? 4 : 8;
+      final int expectedCount = peer.equals(peers.get(0)) ? 4 : 6;
       verify(outboundMessageHandler, times(expectedCount))
           .send(eq(peer), matchPacketOfType(PacketType.PING));
+    }
+  }
+
+  @Test
+  public void shouldStopRetryingInteractionWhenLimitIsReached() {
+    // Create peers.
+    final List<SECP256K1.KeyPair> keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(3);
+    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(keyPairs);
+
+    final MockTimerUtil timer = new MockTimerUtil();
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    controller =
+        getControllerBuilder()
+            .peers(peers)
+            .timerUtil(timer)
+            .outboundMessageHandler(outboundMessageHandler)
+            .build();
+
+    // Mock the creation of the PING packet, so that we can control the hash,
+    // which gets validated when receiving the PONG.
+    final PingPacketData mockPing =
+        PingPacketData.create(localPeer.getEndpoint(), peers.get(0).getEndpoint());
+    final Packet mockPacket = Packet.create(PacketType.PING, mockPing, keyPairs.get(0));
+    doReturn(mockPacket).when(controller).createPacket(eq(PacketType.PING), any());
+
+    controller.start();
+
+    // Invoke timers several times so that ping to peers should be resent
+    for (int i = 0; i < 10; i++) {
+      timer.runTimerHandlers();
+    }
+
+    // Assert PING packet was sent only 6 times (initial attempt plus 5 retries)
+    for (final DiscoveryPeer peer : peers) {
+      verify(outboundMessageHandler, times(6)).send(eq(peer), matchPacketOfType(PacketType.PING));
     }
   }
 
