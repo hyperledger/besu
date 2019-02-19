@@ -93,11 +93,17 @@ public class WorldStateDownloader {
     this.maxOutstandingRequests = maxOutstandingRequests;
     this.maxNodeRequestRetries = maxNodeRequestRetries;
     this.ethTasksTimer = ethTasksTimer;
-    metricsSystem.createGauge(
+    metricsSystem.createLongGauge(
         MetricCategory.SYNCHRONIZER,
         "world_state_pending_requests_current",
         "Number of pending requests for fast sync world state download",
-        () -> (double) pendingRequests.size());
+        pendingRequests::size);
+
+    metricsSystem.createIntegerGauge(
+        MetricCategory.SYNCHRONIZER,
+        "world_state_inflight_requests_current",
+        "Number of requests currently in flight for fast sync world state download",
+        outstandingRequests::size);
 
     completedRequestsCounter =
         metricsSystem.createCounter(
