@@ -14,8 +14,6 @@ package tech.pegasys.pantheon.cli;
 
 import static tech.pegasys.pantheon.cli.DefaultCommandValues.getDefaultPantheonDataPath;
 
-import tech.pegasys.pantheon.cli.custom.RpcAuthConverter;
-
 import java.io.File;
 import java.nio.file.Path;
 
@@ -59,8 +57,7 @@ class StandaloneCommand implements DefaultCommandValues {
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
           "Storage file for rpc http authentication credentials (default: ${DEFAULT-VALUE})",
-      arity = "1",
-      converter = RpcAuthConverter.class)
+      arity = "1")
   String rpcHttpAuthenticationCredentialsFile = null;
 
   @CommandLine.Option(
@@ -68,8 +65,7 @@ class StandaloneCommand implements DefaultCommandValues {
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
           "Storage file for rpc websocket authentication credentials (default: ${DEFAULT-VALUE})",
-      arity = "1",
-      converter = RpcAuthConverter.class)
+      arity = "1")
   String rpcWsAuthenticationCredentialsFile = null;
 
   @CommandLine.Option(

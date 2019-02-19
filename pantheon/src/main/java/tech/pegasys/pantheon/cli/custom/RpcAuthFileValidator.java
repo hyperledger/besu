@@ -14,43 +14,65 @@ package tech.pegasys.pantheon.cli.custom;
 
 import tech.pegasys.pantheon.ethereum.permissioning.TomlConfigFileParser;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Strings;
 import net.consensys.cava.toml.TomlParseResult;
 import picocli.CommandLine;
+import picocli.CommandLine.ParameterException;
 
-public class RpcAuthConverter implements CommandLine.ITypeConverter<String> {
+public class RpcAuthFileValidator {
 
-  @Override
-  public String convert(final String value) throws Exception {
-    TomlParseResult tomlParseResult;
+  public static String validate(
+      final CommandLine commandLine, final String filename, final String type) {
+
+    final File authfile = new File(filename);
+    if (!authfile.exists()) {
+      throw new ParameterException(
+          commandLine,
+          "The specified RPC "
+              + type
+              + " authentication credential file '"
+              + filename
+              + "' does not exist");
+    }
+
+    final TomlParseResult tomlParseResult;
     try {
-      tomlParseResult = TomlConfigFileParser.loadConfigurationFromFile(value);
+      tomlParseResult = TomlConfigFileParser.loadConfigurationFromFile(filename);
     } catch (IOException e) {
-      throw new IllegalArgumentException(
-          "An error occurred while opening the specified RPC authentication configuration file.");
+      throw new ParameterException(
+          commandLine,
+          "An error occurred while opening the specified RPC "
+              + type
+              + " authentication configuration file.");
+    } catch (Exception e) {
+      throw new ParameterException(
+          commandLine,
+          "Invalid RPC " + type + " authentication credentials file: " + e.getMessage());
     }
 
     if (tomlParseResult.hasErrors()) {
-      throw new IllegalArgumentException(
+      throw new ParameterException(
+          commandLine,
           "An error occurred while parsing the specified RPC authentication configuration file.");
     }
 
     if (!verifyAllUsersHavePassword(tomlParseResult)) {
-      throw new IllegalArgumentException("RPC user specified without password.");
+      throw new ParameterException(commandLine, "RPC user specified without password.");
     }
 
     if (!verifyAllEntriesHaveValues(tomlParseResult)) {
-      throw new IllegalArgumentException(
-          "RPC authentication configuration file contains invalid values.");
+      throw new ParameterException(
+          commandLine, "RPC authentication configuration file contains invalid values.");
     }
 
-    return value;
+    return filename;
   }
 
-  private boolean verifyAllUsersHavePassword(final TomlParseResult tomlParseResult) {
+  private static boolean verifyAllUsersHavePassword(final TomlParseResult tomlParseResult) {
     int configuredUsers = tomlParseResult.getTable("Users").keySet().size();
 
     int usersWithPasswords =
@@ -68,7 +90,7 @@ public class RpcAuthConverter implements CommandLine.ITypeConverter<String> {
     return configuredUsers == usersWithPasswords;
   }
 
-  private boolean verifyAllEntriesHaveValues(final TomlParseResult tomlParseResult) {
+  private static boolean verifyAllEntriesHaveValues(final TomlParseResult tomlParseResult) {
     return tomlParseResult
         .dottedKeySet()
         .parallelStream()
@@ -76,7 +98,7 @@ public class RpcAuthConverter implements CommandLine.ITypeConverter<String> {
         .allMatch(dottedKey -> verifyArray(dottedKey, tomlParseResult));
   }
 
-  private boolean verifyArray(final String key, final TomlParseResult tomlParseResult) {
+  private static boolean verifyArray(final String key, final TomlParseResult tomlParseResult) {
     return tomlParseResult.isArray(key) && !tomlParseResult.getArrayOrEmpty(key).isEmpty();
   }
 }
