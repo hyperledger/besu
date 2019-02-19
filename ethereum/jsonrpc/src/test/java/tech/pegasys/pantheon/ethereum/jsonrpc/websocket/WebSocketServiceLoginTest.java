@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.Subscriptio
 
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -70,6 +71,7 @@ public class WebSocketServiceLoginTest {
     websocketConfiguration.setPort(0);
     websocketConfiguration.setAuthenticationEnabled(true);
     websocketConfiguration.setAuthenticationCredentialsFile(authTomlPath);
+    websocketConfiguration.setHostsWhitelist(Collections.singleton("*"));
 
     final Map<String, JsonRpcMethod> websocketMethods =
         new WebSocketMethodsFactory(new SubscriptionManager(), new HashMap<>()).methods();

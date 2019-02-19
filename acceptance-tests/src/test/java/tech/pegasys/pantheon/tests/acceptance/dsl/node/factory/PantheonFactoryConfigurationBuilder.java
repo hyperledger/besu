@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.GenesisConfigProvider;
 
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Optional;
 
 public class PantheonFactoryConfigurationBuilder {
@@ -99,6 +100,7 @@ public class PantheonFactoryConfigurationBuilder {
     final WebSocketConfiguration config = WebSocketConfiguration.createDefault();
     config.setEnabled(true);
     config.setPort(0);
+    config.setHostsWhitelist(Collections.singleton("*"));
 
     this.webSocketConfiguration = config;
     return this;

@@ -688,6 +688,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setRefreshDelay(rpcWsRefreshDelay);
     webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
+    webSocketConfiguration.setHostsWhitelist(hostsWhitelist);
     return webSocketConfiguration;
   }
 

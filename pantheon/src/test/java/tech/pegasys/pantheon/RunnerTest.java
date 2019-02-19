@@ -276,6 +276,7 @@ public final class RunnerTest {
     final WebSocketConfiguration configuration = WebSocketConfiguration.createDefault();
     configuration.setPort(0);
     configuration.setEnabled(true);
+    configuration.setHostsWhitelist(Collections.singletonList("*"));
     return configuration;
   }
 
