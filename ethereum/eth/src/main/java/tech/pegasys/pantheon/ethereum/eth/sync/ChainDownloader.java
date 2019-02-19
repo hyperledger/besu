@@ -90,7 +90,10 @@ public class ChainDownloader<C> {
     return currentTask;
   }
 
-  private CompletableFuture<?> executeDownload() {
+  private void executeDownload() {
+    if (downloadFuture.isDone()) {
+      return;
+    }
     // Find target, pull checkpoint headers, import, repeat
     currentTask =
         waitForPeers()
@@ -124,7 +127,6 @@ public class ChainDownloader<C> {
                     downloadFuture.complete(null);
                   }
                 });
-    return currentTask;
   }
 
   private CompletableFuture<List<BlockHeader>> pullCheckpointHeaders(final SyncTarget syncTarget) {
