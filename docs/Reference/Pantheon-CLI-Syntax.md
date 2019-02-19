@@ -538,6 +538,66 @@ The default is 30303.
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
 
+### permissions-accounts-enabled
+
+```bash tab="Syntax"
+--permissions-accounts-enabled[=<true|false>]
+```
+
+```bash tab="Example Command Line"
+--permissions-accounts-enabled
+```
+
+```bash tab="Example Configuration File"
+permissions-accounts-enabled=true
+```
+
+Set to enable account level permissions.
+The default is `false`.
+
+!!!note
+    Permissions is under development and will be available in v1.0. 
+    
+### permissions-config-file    
+
+```bash tab="Syntax"
+--permissions-config-file=<FILE>
+```
+
+```bash tab="Example Command Line"
+--permissions-config-file=/home/me/me_configFiles/myPermissionsFile
+```
+
+```bash tab="Example Configuration File"
+permissions-config-file="/home/me/me_configFiles/myPermissionsFile"
+```
+
+Path to the [permissions configuration file](../Permissions/Permissioning.md#permissions-configuration-file).
+The default is the `permissions_config.toml` file in the [data directory](#data-path).
+
+!!!note
+    This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md).
+
+### permissions-nodes-enabled
+
+```bash tab="Syntax"
+--permissions-nodes-enabled[=<true|false>]
+```
+
+```bash tab="Example Command Line"
+--permissions-nodes-enabled
+```
+
+```bash tab="Example Configuration File"
+permissions-nodes-enabled=true
+```
+
+Set to enable node level permissions.
+The default is `false`.
+
+!!!note
+    Permissions is under development and will be available in v1.0.
+
 ### privacy-enabled
 
 ```bash tab="Syntax"
@@ -591,46 +651,6 @@ URL on which enclave is running.
 
 !!!note
     Privacy is under development and will be available in v1.1.
-
-### permissions-accounts-enabled
-
-```bash tab="Syntax"
---permissions-accounts-enabled[=<true|false>]
-```
-
-```bash tab="Example Command Line"
---permissions-accounts-enabled
-```
-
-```bash tab="Example Configuration File"
-permissions-accounts-enabled=true
-```
-
-Set to enable account level permissions.
-The default is `false`.
-
-!!!note
-    Permissions is under development and will be available in v1.0. 
-
-### permissions-nodes-enabled
-
-```bash tab="Syntax"
---permissions-nodes-enabled[=<true|false>]
-```
-
-```bash tab="Example Command Line"
---permissions-nodes-enabled
-```
-
-```bash tab="Example Configuration File"
-permissions-nodes-enabled=true
-```
-
-Set to enable node level permissions.
-The default is `false`.
-
-!!!note
-    Permissions is under development and will be available in v1.0.
 
 ### rpc-http-enabled
 

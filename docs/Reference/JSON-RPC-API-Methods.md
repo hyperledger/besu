@@ -2201,7 +2201,7 @@ Proposes [adding or removing a validator](../Consensus-Protocols/IBFT.md#adding-
 
 ### perm_addAccountsToWhitelist
 
-Adds accounts (participants) to the accounts whitelist. 
+Adds accounts (participants) to the [accounts whitelist](../Permissions/Permissioning.md#account-whitelisting). 
 
 **Parameters** 
 
@@ -2234,7 +2234,7 @@ including invalid account addresses.
     
 ### perm_getAccountsWhitelist
 
-Lists accounts (participants) in the accounts whitelist. 
+Lists accounts (participants) in the [accounts whitelist](../Permissions/Permissioning.md#account-whitelisting). 
 
 **Parameters** 
 
@@ -2266,7 +2266,7 @@ None
     
 ### perm_removeAccountsFromWhitelist
 
-Removes accounts (participants) from the accounts whitelist. 
+Removes accounts (participants) from the [accounts whitelist](../Permissions/Permissioning.md#account-whitelisting). 
 
 **Parameters** 
 
@@ -2298,7 +2298,7 @@ including invalid account addresses.
     ```
 ### perm_addNodesToWhitelist
 
-Adds nodes to the nodes whitelist. 
+Adds nodes to the [nodes whitelist](../Permissions/Permissioning.md#node-whitelisting). 
 
 **Parameters** 
 
@@ -2331,7 +2331,7 @@ including invalid enode URLs.
     
 ### perm_getNodesWhitelist
 
-Lists nodes in the nodes whitelist. 
+Lists nodes in the [nodes whitelist](../Permissions/Permissioning.md#node-whitelisting). 
 
 **Parameters** 
 
@@ -2363,7 +2363,7 @@ None
     
 ### perm_removeNodesFromWhitelist
 
-Removes nodes from the nodes whitelist. 
+Removes nodes from the [nodes whitelist](../Permissions/Permissioning.md#node-whitelisting). 
 
 **Parameters** 
 
