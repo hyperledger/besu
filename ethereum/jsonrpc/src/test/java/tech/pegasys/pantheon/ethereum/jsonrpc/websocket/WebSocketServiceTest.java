@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.methods.WebSocketMethods
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,6 +57,7 @@ public class WebSocketServiceTest {
 
     websocketConfiguration = WebSocketConfiguration.createDefault();
     websocketConfiguration.setPort(0);
+    websocketConfiguration.setHostsWhitelist(Collections.singleton("*"));
 
     final Map<String, JsonRpcMethod> websocketMethods =
         new WebSocketMethodsFactory(new SubscriptionManager(), new HashMap<>()).methods();

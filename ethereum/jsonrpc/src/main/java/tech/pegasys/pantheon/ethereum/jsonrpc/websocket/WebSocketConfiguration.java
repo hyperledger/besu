@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
@@ -37,6 +38,7 @@ public class WebSocketConfiguration {
   private long refreshDelay;
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
+  private Collection<String> hostsWhitelist = Collections.singletonList("localhost");
 
   public static WebSocketConfiguration createDefault() {
     final WebSocketConfiguration config = new WebSocketConfiguration();
@@ -141,5 +143,13 @@ public class WebSocketConfiguration {
 
   public String getAuthenticationCredentialsFile() {
     return authenticationCredentialsFile;
+  }
+
+  public void setHostsWhitelist(final Collection<String> hostsWhitelist) {
+    this.hostsWhitelist = hostsWhitelist;
+  }
+
+  public Collection<String> getHostsWhitelist() {
+    return Collections.unmodifiableCollection(this.hostsWhitelist);
   }
 }
