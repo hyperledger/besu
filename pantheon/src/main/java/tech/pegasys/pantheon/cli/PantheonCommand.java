@@ -318,7 +318,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private Long configureRefreshDelay(final Long refreshDelay) {
     if (refreshDelay < DEFAULT_MIN_REFRESH_DELAY || refreshDelay > DEFAULT_MAX_REFRESH_DELAY) {
       throw new ParameterException(
-          new CommandLine(this),
+          this.commandLine,
           String.format(
               "Refresh delay must be a positive integer between %s and %s",
               String.valueOf(DEFAULT_MIN_REFRESH_DELAY),
@@ -547,7 +547,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     //noinspection ConstantConditions
     if (isMiningEnabled && coinbase == null) {
       throw new ParameterException(
-          new CommandLine(this),
+          this.commandLine,
           "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled)"
               + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
     }
@@ -574,7 +574,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           metricsConfiguration(),
           permissioningConfiguration);
     } catch (Exception e) {
-      throw new ParameterException(new CommandLine(this), e.getMessage());
+      throw new ParameterException(this.commandLine, e.getMessage());
     }
   }
 
@@ -590,7 +590,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       PermissioningConfigurationValidator.areAllBootnodesAreInWhitelist(
           ethNetworkConfig, permissioningConfiguration);
     } catch (final Exception e) {
-      throw new ParameterException(new CommandLine(this), e.getMessage());
+      throw new ParameterException(this.commandLine, e.getMessage());
     }
   }
 
@@ -609,9 +609,9 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           .privacyParameters(privacyParameters())
           .build();
     } catch (final InvalidConfigurationException e) {
-      throw new ExecutionException(new CommandLine(this), e.getMessage());
+      throw new ExecutionException(this.commandLine, e.getMessage());
     } catch (final IOException e) {
-      throw new ExecutionException(new CommandLine(this), "Invalid path", e);
+      throw new ExecutionException(this.commandLine, "Invalid path", e);
     }
   }
 
@@ -694,7 +694,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   MetricsConfiguration metricsConfiguration() {
     if (isMetricsEnabled && isMetricsPushEnabled) {
       throw new ParameterException(
-          new CommandLine(this),
+          this.commandLine,
           "--metrics-enabled option and --metrics-push-enabled option can't be used at the same "
               + "time.  Please refer to CLI reference for more details about this constraint.");
     }
@@ -858,7 +858,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         // if user provided it and provided the genesis file option at the same time, it raises a
         // conflict error
         throw new ParameterException(
-            new CommandLine(this),
+            this.commandLine,
             "--network option and --genesis-file option can't be used at the same time.  Please "
                 + "refer to CLI reference for more details about this constraint.");
       }
@@ -882,9 +882,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
                   .orElse(EthNetworkConfig.getNetworkConfig(MAINNET).getNetworkId()));
         } catch (final DecodeException e) {
           throw new ParameterException(
-              new CommandLine(this),
-              String.format("Unable to parse genesis file %s.", genesisFile),
-              e);
+              this.commandLine, String.format("Unable to parse genesis file %s.", genesisFile), e);
         }
       }
 
@@ -913,9 +911,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       return Resources.toString(genesisFile().toURI().toURL(), UTF_8);
     } catch (final IOException e) {
       throw new ParameterException(
-          new CommandLine(this),
-          String.format("Unable to load genesis file %s.", genesisFile()),
-          e);
+          this.commandLine, String.format("Unable to load genesis file %s.", genesisFile()), e);
     }
   }
 
