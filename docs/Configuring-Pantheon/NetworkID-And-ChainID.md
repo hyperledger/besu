@@ -24,10 +24,10 @@ same and are specified in the genesis file.
 The network ID and chain ID are automatically defined by Pantheon when connecting to networks specified 
 using the [`--network`](../Reference/Pantheon-CLI-Syntax.md#network) option:
 
-- **MainNet:** chain-id ==1==, network-id ==1==
-- **Rinkeby:** chain-id  ==4==, network-id ==4==
-- **Ropsten:** chain-id ==3==, network-id ==3==
-- **Dev:** chain-id ==2018==, network-id ==2018==
+- **MainNet:** chain-id 1, network-id 1
+- **Rinkeby:** chain-id 4, network-id 4
+- **Ropsten:** chain-id 3, network-id 3
+- **Dev:** chain-id 2018, network-id 2018
 
 When using the [`--network=dev`](../Reference/Pantheon-CLI-Syntax.md#network) or 
 [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file) options, you can override the 
