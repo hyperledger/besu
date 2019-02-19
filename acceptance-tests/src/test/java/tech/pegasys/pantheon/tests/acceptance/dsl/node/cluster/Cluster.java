@@ -66,7 +66,9 @@ public class Cluster implements AutoCloseable {
 
     for (final RunnableNode node : nodes) {
       this.nodes.put(node.getName(), node);
-      bootNodes.add(node.getConfiguration().enodeUrl());
+      if (node.getConfiguration().isBootnode()) {
+        bootNodes.add(node.getConfiguration().enodeUrl());
+      }
     }
 
     for (final RunnableNode node : nodes) {

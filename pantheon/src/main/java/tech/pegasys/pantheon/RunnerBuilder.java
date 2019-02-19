@@ -60,6 +60,7 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsService;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -213,10 +214,14 @@ public class RunnerBuilder {
         new PeerBlacklist(
             bannedNodeIds.stream().map(BytesValue::fromHexString).collect(Collectors.toSet()));
 
+    final List<EnodeURL> bootnodesAsEnodeURLs =
+        discoveryConfiguration.getBootstrapPeers().stream()
+            .map(p -> new EnodeURL(p.getEnodeURI()))
+            .collect(Collectors.toList());
     final Optional<NodeWhitelistController> nodeWhitelistController =
         permissioningConfiguration
             .filter(PermissioningConfiguration::isNodeWhitelistEnabled)
-            .map(NodeWhitelistController::new);
+            .map(config -> new NodeWhitelistController(config, bootnodesAsEnodeURLs));
 
     final Synchronizer synchronizer = pantheonController.getSynchronizer();
 

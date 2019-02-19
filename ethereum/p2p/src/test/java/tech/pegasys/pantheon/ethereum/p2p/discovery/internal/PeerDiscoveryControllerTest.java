@@ -986,7 +986,8 @@ public class PeerDiscoveryControllerTest {
 
     final PeerBlacklist blacklist = new PeerBlacklist();
     final PermissioningConfiguration config = permissioningConfigurationWithTempFile();
-    final NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
+    final NodeWhitelistController nodeWhitelistController =
+        new NodeWhitelistController(config, Collections.emptyList());
 
     // Whitelist peers
     nodeWhitelistController.addNodes(Arrays.asList(discoPeer.getEnodeURI()));
@@ -1055,7 +1056,8 @@ public class PeerDiscoveryControllerTest {
     // don't add disco peer to whitelist
     PermissioningConfiguration config = permissioningConfigurationWithTempFile();
     config.setNodeWhitelist(new ArrayList<>());
-    NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
+    NodeWhitelistController nodeWhitelistController =
+        new NodeWhitelistController(config, Collections.emptyList());
 
     controller =
         getControllerBuilder()
@@ -1080,7 +1082,8 @@ public class PeerDiscoveryControllerTest {
     final PermissioningConfiguration config = permissioningConfigurationWithTempFile();
     final URI peerURI = URI.create(peer.getEnodeURI());
     config.setNodeWhitelist(Lists.newArrayList(peerURI));
-    final NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
+    final NodeWhitelistController nodeWhitelistController =
+        new NodeWhitelistController(config, Collections.emptyList());
 
     controller =
         getControllerBuilder().whitelist(nodeWhitelistController).peerTable(peerTableSpy).build();
@@ -1103,7 +1106,8 @@ public class PeerDiscoveryControllerTest {
     final PermissioningConfiguration config = permissioningConfigurationWithTempFile();
     final URI peerURI = URI.create(peer.getEnodeURI());
     config.setNodeWhitelist(Lists.newArrayList(peerURI));
-    final NodeWhitelistController nodeWhitelistController = new NodeWhitelistController(config);
+    final NodeWhitelistController nodeWhitelistController =
+        new NodeWhitelistController(config, Collections.emptyList());
 
     final Consumer<PeerDroppedEvent> peerDroppedEventConsumer = mock(Consumer.class);
     final Subscribers<Consumer<PeerDroppedEvent>> peerDroppedSubscribers = new Subscribers();

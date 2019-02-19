@@ -486,7 +486,7 @@ public class RecursivePeerRefreshStateTest {
         Files.createTempFile("test", "test").toAbsolutePath().toString());
 
     final NodeWhitelistController peerWhitelist =
-        new NodeWhitelistController(permissioningConfiguration);
+        new NodeWhitelistController(permissioningConfiguration, Collections.emptyList());
     peerWhitelist.addNodes(Arrays.asList(peerA.getEnodeURI()));
 
     recursivePeerRefreshState =

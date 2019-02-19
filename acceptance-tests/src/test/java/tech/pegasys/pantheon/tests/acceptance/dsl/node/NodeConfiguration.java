@@ -38,4 +38,6 @@ public interface NodeConfiguration {
   Optional<EthNetworkConfig> ethNetworkConfig();
 
   void ethNetworkConfig(Optional<EthNetworkConfig> ethNetworkConfig);
+
+  boolean isBootnode();
 }
