@@ -184,6 +184,7 @@ public class WorldStateDownloader {
             if (existingData.isPresent()) {
               pendingRequest.setData(existingData.get());
               queueChildRequests(pendingRequest);
+              completedRequestsCounter.inc();
               pendingRequestTask.markCompleted();
               continue;
             }
