@@ -2018,9 +2018,6 @@ None
 
 ## IBFT 2.0 Methods 
 
-!!! note 
-    IBFT 2.0 is under development and will be available in v1.0. 
-
 !!! note
     The `IBFT` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
     or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `IBFT` API methods.
@@ -2156,7 +2153,7 @@ Lists the validators defined in the specified block.
     
 ### ibft_proposeValidatorVote
 
-Proposes [adding or removing a validator](../Consensus-Protocols/IBFT.md#adding-and-removing-validators)) with the specified address. 
+Proposes [adding or removing a validator](../Consensus-Protocols/IBFT.md#adding-and-removing-validators) with the specified address. 
 
 **Parameters**
 
@@ -2186,9 +2183,6 @@ Proposes [adding or removing a validator](../Consensus-Protocols/IBFT.md#adding-
     ```
 
 ## Permissioning Methods
-
-!!! note 
-    Permissioning is under development and will be available in v1.0. 
 
 !!! note
     The `PERM` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 

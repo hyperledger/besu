@@ -553,6 +553,7 @@ permissions-accounts-enabled=true
 ```
 
 Set to enable account level permissions.
+
 The default is `false`. 
     
 ### permissions-config-file    
