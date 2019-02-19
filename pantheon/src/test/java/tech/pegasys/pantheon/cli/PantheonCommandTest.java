@@ -303,7 +303,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             .setGenesisConfig(encodeJsonGenesis(GENESIS_VALID_JSON))
             .setBootNodes(nodes)
             .build();
-    verify(mockControllerBuilder).homePath(eq(Paths.get("~/pantheondata")));
+    verify(mockControllerBuilder).homePath(eq(Paths.get("~/pantheondata").toAbsolutePath()));
     verify(mockControllerBuilder).ethNetworkConfig(eq(networkConfig));
     verify(mockControllerBuilder).syncWithOttoman(eq(false));
 
@@ -505,10 +505,11 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     verify(mockControllerBuilder).homePath(pathArgumentCaptor.capture());
     verify(mockControllerBuilder).syncWithOttoman(eq(false));
-    verify(mockControllerBuilder).nodePrivateKeyFile(eq(path.resolve("key").toFile()));
+    verify(mockControllerBuilder)
+        .nodePrivateKeyFile(eq(path.resolve("key").toAbsolutePath().toFile()));
     verify(mockControllerBuilder).build();
 
-    assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(path);
+    assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(path.toAbsolutePath());
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
