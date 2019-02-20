@@ -26,6 +26,8 @@ public class IbftConfigOptions {
   private static final int DEFAULT_GOSSIPED_HISTORY_LIMIT = 1000;
   private static final int DEFAULT_MESSAGE_QUEUE_LIMIT = 1000;
   private static final int DEFAULT_DUPLICATE_MESSAGE_LIMIT = 100;
+  private static final int DEFAULT_FUTURE_MESSAGES_LIMIT = 1000;
+  private static final int DEFAULT_FUTURE_MESSAGES_MAX_DISTANCE = 10;
 
   private final JsonObject ibftConfigRoot;
 
@@ -55,5 +57,14 @@ public class IbftConfigOptions {
 
   public int getDuplicateMessageLimit() {
     return ibftConfigRoot.getInteger("duplicatemessagelimit", DEFAULT_DUPLICATE_MESSAGE_LIMIT);
+  }
+
+  public int getFutureMessagesLimit() {
+    return ibftConfigRoot.getInteger("futuremessageslimit", DEFAULT_FUTURE_MESSAGES_LIMIT);
+  }
+
+  public int getFutureMessagesMaxDistance() {
+    return ibftConfigRoot.getInteger(
+        "futuremessagesmaxdistance", DEFAULT_FUTURE_MESSAGES_MAX_DISTANCE);
   }
 }

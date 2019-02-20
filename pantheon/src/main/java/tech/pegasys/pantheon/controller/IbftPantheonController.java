@@ -30,6 +30,7 @@ import tech.pegasys.pantheon.consensus.ibft.IbftEventQueue;
 import tech.pegasys.pantheon.consensus.ibft.IbftGossip;
 import tech.pegasys.pantheon.consensus.ibft.IbftProcessor;
 import tech.pegasys.pantheon.consensus.ibft.IbftProtocolSchedule;
+import tech.pegasys.pantheon.consensus.ibft.MessageTracker;
 import tech.pegasys.pantheon.consensus.ibft.RoundTimer;
 import tech.pegasys.pantheon.consensus.ibft.UniqueMessageMulticaster;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockCreatorFactory;
@@ -40,6 +41,7 @@ import tech.pegasys.pantheon.consensus.ibft.network.ValidatorPeers;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.protocol.IbftProtocolManager;
 import tech.pegasys.pantheon.consensus.ibft.protocol.IbftSubProtocol;
+import tech.pegasys.pantheon.consensus.ibft.statemachine.FutureMessageBuffer;
 import tech.pegasys.pantheon.consensus.ibft.statemachine.IbftBlockHeightManagerFactory;
 import tech.pegasys.pantheon.consensus.ibft.statemachine.IbftController;
 import tech.pegasys.pantheon.consensus.ibft.statemachine.IbftFinalState;
@@ -238,6 +240,14 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
     final Subscribers<MinedBlockObserver> minedBlockObservers = new Subscribers<>();
     minedBlockObservers.subscribe(ethProtocolManager);
 
+    final FutureMessageBuffer futureMessageBuffer =
+        new FutureMessageBuffer(
+            ibftConfig.getFutureMessagesMaxDistance(),
+            ibftConfig.getFutureMessagesLimit(),
+            blockchain.getChainHeadBlockNumber());
+    final MessageTracker duplicateMessageTracker =
+        new MessageTracker(ibftConfig.getDuplicateMessageLimit());
+
     final IbftController ibftController =
         new IbftController(
             blockchain,
@@ -252,7 +262,8 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
                     messageValidatorFactory),
                 messageValidatorFactory),
             gossiper,
-            ibftConfig.getDuplicateMessageLimit(),
+            duplicateMessageTracker,
+            futureMessageBuffer,
             new EthSynchronizerUpdater(ethContext.getEthPeers()));
     ibftController.start();
 

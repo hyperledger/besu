@@ -29,6 +29,8 @@ public class IbftConfigOptionsTest {
   private static final int EXPECTED_DEFAULT_GOSSIPED_HISTORY_LIMIT = 1000;
   private static final int EXPECTED_DEFAULT_MESSAGE_QUEUE_LIMIT = 1000;
   private static final int EXPECTED_DEFAULT_DUPLICATE_MESSAGE_LIMIT = 100;
+  private static final int EXPECTED_DEFAULT_FUTURE_MESSAGES_LIMIT = 1000;
+  private static final int EXPECTED_DEFAULT_FUTURE_MESSAGES_MAX_DISTANCE = 10;
 
   @Test
   public void shouldGetEpochLengthFromConfig() {
@@ -136,6 +138,44 @@ public class IbftConfigOptionsTest {
   public void shouldGetDefaultDuplicateMessageLimitFromDefaultConfig() {
     assertThat(IbftConfigOptions.DEFAULT.getDuplicateMessageLimit())
         .isEqualTo(EXPECTED_DEFAULT_DUPLICATE_MESSAGE_LIMIT);
+  }
+
+  @Test
+  public void shouldGetFutureMessagesLimitFromConfig() {
+    final IbftConfigOptions config = fromConfigOptions(singletonMap("FutureMessagesLimit", 50));
+    assertThat(config.getFutureMessagesLimit()).isEqualTo(50);
+  }
+
+  @Test
+  public void shouldFallbackToDefaultFutureMessagesLimit() {
+    final IbftConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.getFutureMessagesLimit()).isEqualTo(EXPECTED_DEFAULT_FUTURE_MESSAGES_LIMIT);
+  }
+
+  @Test
+  public void shouldGetDefaultFutureMessagesLimitsFromDefaultConfig() {
+    assertThat(IbftConfigOptions.DEFAULT.getFutureMessagesLimit())
+        .isEqualTo(EXPECTED_DEFAULT_FUTURE_MESSAGES_LIMIT);
+  }
+
+  @Test
+  public void shouldGetFutureMessagesMaxDistanceFromConfig() {
+    final IbftConfigOptions config =
+        fromConfigOptions(singletonMap("FutureMessagesMaxDistance", 50));
+    assertThat(config.getFutureMessagesMaxDistance()).isEqualTo(50);
+  }
+
+  @Test
+  public void shouldFallbackToDefaultFutureMessagesMaxDistance() {
+    final IbftConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.getFutureMessagesMaxDistance())
+        .isEqualTo(EXPECTED_DEFAULT_FUTURE_MESSAGES_MAX_DISTANCE);
+  }
+
+  @Test
+  public void shouldGetDefaultFutureMessagesMaxDistanceFromDefaultConfig() {
+    assertThat(IbftConfigOptions.DEFAULT.getFutureMessagesMaxDistance())
+        .isEqualTo(EXPECTED_DEFAULT_FUTURE_MESSAGES_MAX_DISTANCE);
   }
 
   private IbftConfigOptions fromConfigOptions(final Map<String, Object> ibftConfigOptions) {
