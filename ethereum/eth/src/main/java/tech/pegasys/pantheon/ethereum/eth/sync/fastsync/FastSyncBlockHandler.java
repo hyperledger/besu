@@ -129,4 +129,9 @@ public class FastSyncBlockHandler<C> implements BlockHandler<BlockWithReceipts> 
   public long extractBlockNumber(final BlockWithReceipts blockWithReceipt) {
     return blockWithReceipt.getHeader().getNumber();
   }
+
+  @Override
+  public CompletableFuture<Void> executeParallelCalculations(final List<BlockWithReceipts> blocks) {
+    return CompletableFuture.completedFuture(null);
+  }
 }
