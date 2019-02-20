@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.p2p.netty;
 
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.PingMessage;
 
@@ -54,8 +55,12 @@ final class WireKeepAlive extends ChannelDuplexHandler {
       return;
     }
 
-    LOG.debug("Idle connection detected, sending Wire PING to peer.");
-    connection.send(null, PingMessage.get());
-    waitingForPong.set(true);
+    try {
+      LOG.debug("Idle connection detected, sending Wire PING to peer.");
+      connection.send(null, PingMessage.get());
+      waitingForPong.set(true);
+    } catch (final PeerNotConnected ignored) {
+      LOG.trace("PING not sent because peer is already disconnected");
+    }
   }
 }
