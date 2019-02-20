@@ -20,7 +20,6 @@ import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.NewChainHead;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;
-import tech.pegasys.pantheon.consensus.ibft.messagewrappers.NewRound;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
@@ -93,8 +92,10 @@ public class GossipTest {
     final RoundChange roundChange = msgFactory.createRoundChange(roundId, Optional.empty());
     final RoundChangeCertificate roundChangeCert =
         new RoundChangeCertificate(singleton(roundChange.getSignedPayload()));
-    final NewRound newRound = sender.injectNewRound(roundId, roundChangeCert, proposal);
-    peers.verifyMessagesReceivedNonPropsing(newRound);
+
+    final Proposal nextRoundProposal =
+        sender.injectProposalForFutureRound(roundId, roundChangeCert, proposal.getBlock());
+    peers.verifyMessagesReceivedNonPropsing(nextRoundProposal);
     peers.verifyNoMessagesReceivedProposer();
 
     sender.injectRoundChange(roundId, Optional.empty());
@@ -118,7 +119,8 @@ public class GossipTest {
   public void messageWithUnknownValidatorIsNotGossiped() {
     final KeyPair unknownKeyPair = KeyPair.generate();
     final MessageFactory unknownMsgFactory = new MessageFactory(unknownKeyPair);
-    final Proposal unknownProposal = unknownMsgFactory.createProposal(roundId, block);
+    final Proposal unknownProposal =
+        unknownMsgFactory.createProposal(roundId, block, Optional.empty());
 
     sender.injectMessage(ProposalMessageData.create(unknownProposal));
     peers.verifyNoMessagesReceived();
@@ -128,7 +130,8 @@ public class GossipTest {
   public void messageIsNotGossipedToSenderOrCreator() {
     final ValidatorPeer msgCreator = peers.getFirstNonProposer();
     final MessageFactory peerMsgFactory = msgCreator.getMessageFactory();
-    final Proposal proposalFromPeer = peerMsgFactory.createProposal(roundId, block);
+    final Proposal proposalFromPeer =
+        peerMsgFactory.createProposal(roundId, block, Optional.empty());
 
     sender.injectMessage(ProposalMessageData.create(proposalFromPeer));
 
@@ -139,7 +142,7 @@ public class GossipTest {
   @Test
   public void futureMessageIsNotGossipedImmediately() {
     ConsensusRoundIdentifier futureRoundId = new ConsensusRoundIdentifier(2, 0);
-    msgFactory.createProposal(futureRoundId, block);
+    msgFactory.createProposal(futureRoundId, block, Optional.empty());
 
     sender.injectProposal(futureRoundId, block);
     peers.verifyNoMessagesReceived();

@@ -28,6 +28,7 @@ import tech.pegasys.pantheon.ethereum.core.Block;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -63,7 +64,8 @@ public class LocalNodeIsProposerTest {
   @Before
   public void setup() {
     expectedProposedBlock = context.createBlockForProposalFromChainHead(0, blockTimeStamp);
-    expectedTxProposal = localNodeMessageFactory.createProposal(roundId, expectedProposedBlock);
+    expectedTxProposal =
+        localNodeMessageFactory.createProposal(roundId, expectedProposedBlock, Optional.empty());
 
     expectedTxCommit =
         new Commit(

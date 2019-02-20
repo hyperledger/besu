@@ -96,7 +96,7 @@ public class SpuriousBehaviourTest {
   }
 
   @Test
-  public void nonValidatorsCannotTriggerReponses() {
+  public void nonValidatorsCannotTriggerResponses() {
     final KeyPair nonValidatorKeys = KeyPair.generate();
     final NodeParams nonValidatorParams =
         new NodeParams(Util.publicKeyToAddress(nonValidatorKeys.getPublicKey()), nonValidatorKeys);

@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.consensus.ibft;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.Mockito.verify;
 
-import tech.pegasys.pantheon.consensus.ibft.messagedata.NewRoundMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.RoundChangeMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.IbftMessage;
@@ -72,11 +71,5 @@ public class IbftGossipTest {
   public void assertRebroadcastsRoundChangeToAllExceptSignerAndSender() {
     assertRebroadcastToAllExceptSignerAndSender(
         TestHelpers::createSignedRoundChangePayload, RoundChangeMessageData::create);
-  }
-
-  @Test
-  public void assertRebroadcastsNewRoundToAllExceptSignerAndSender() {
-    assertRebroadcastToAllExceptSignerAndSender(
-        TestHelpers::createSignedNewRoundPayload, NewRoundMessageData::create);
   }
 }

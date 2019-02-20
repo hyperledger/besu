@@ -91,7 +91,7 @@ public class IbftHelpersTest {
 
     final ConsensusRoundIdentifier preparedRound = TestHelpers.createFrom(roundIdentifier, 0, -1);
     final Proposal differentProposal =
-        proposerMessageFactory.createProposal(preparedRound, proposedBlock);
+        proposerMessageFactory.createProposal(preparedRound, proposedBlock, Optional.empty());
 
     final Optional<PreparedRoundArtifacts> latterPreparedRoundArtifacts =
         Optional.of(
@@ -107,7 +107,8 @@ public class IbftHelpersTest {
     final ConsensusRoundIdentifier earlierPreparedRound =
         TestHelpers.createFrom(roundIdentifier, 0, -2);
     final Proposal earlierProposal =
-        proposerMessageFactory.createProposal(earlierPreparedRound, proposedBlock);
+        proposerMessageFactory.createProposal(
+            earlierPreparedRound, proposedBlock, Optional.empty());
     final Optional<PreparedRoundArtifacts> earlierPreparedRoundArtifacts =
         Optional.of(
             new PreparedRoundArtifacts(

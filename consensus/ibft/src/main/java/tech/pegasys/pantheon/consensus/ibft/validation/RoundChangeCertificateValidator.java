@@ -77,7 +77,7 @@ public class RoundChangeCertificateValidator {
 
     if (!roundChangeCert.getRoundChangePayloads().stream()
         .allMatch(roundChangeValidator::validateRoundChange)) {
-      LOG.info("Invalid NewRound message, embedded RoundChange message failed validation.");
+      LOG.info("Invalid RoundChangeCertificate, embedded RoundChange message failed validation.");
       return false;
     }
 
@@ -116,7 +116,7 @@ public class RoundChangeCertificateValidator {
         .getHash()
         .equals(latestPreparedCertificate.get().getProposalPayload().getPayload().getDigest())) {
       LOG.info(
-          "Invalid NewRound message, block in latest RoundChange does not match proposed block.");
+          "Invalid RoundChangeCertificate, block in latest RoundChange does not match proposed block.");
       return false;
     }
 

@@ -31,6 +31,7 @@ import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Util;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.junit.Before;
@@ -86,14 +87,16 @@ public class SignedDataValidatorTest {
   @Test
   public void receivingProposalMessageFromNonProposerFails() {
     final Block block = TestHelpers.createProposalBlock(emptyList(), roundIdentifier);
-    final Proposal proposalMsg = validatorMessageFactory.createProposal(roundIdentifier, block);
+    final Proposal proposalMsg =
+        validatorMessageFactory.createProposal(roundIdentifier, block, Optional.empty());
 
     assertThat(validator.validateProposal(proposalMsg.getSignedPayload())).isFalse();
   }
 
   @Test
   public void receivingPrepareFromProposerFails() {
-    final Proposal proposalMsg = proposerMessageFactory.createProposal(roundIdentifier, block);
+    final Proposal proposalMsg =
+        proposerMessageFactory.createProposal(roundIdentifier, block, Optional.empty());
 
     final Prepare prepareMsg =
         proposerMessageFactory.createPrepare(roundIdentifier, block.getHash());
@@ -104,7 +107,8 @@ public class SignedDataValidatorTest {
 
   @Test
   public void receivingPrepareFromNonValidatorFails() {
-    final Proposal proposalMsg = proposerMessageFactory.createProposal(roundIdentifier, block);
+    final Proposal proposalMsg =
+        proposerMessageFactory.createProposal(roundIdentifier, block, Optional.empty());
 
     final Prepare prepareMsg =
         nonValidatorMessageFactory.createPrepare(roundIdentifier, block.getHash());
@@ -115,7 +119,8 @@ public class SignedDataValidatorTest {
 
   @Test
   public void receivingMessagesWithDifferentRoundIdFromProposalFails() {
-    final Proposal proposalMsg = proposerMessageFactory.createProposal(roundIdentifier, block);
+    final Proposal proposalMsg =
+        proposerMessageFactory.createProposal(roundIdentifier, block, Optional.empty());
 
     final ConsensusRoundIdentifier invalidRoundIdentifier =
         new ConsensusRoundIdentifier(
@@ -133,7 +138,8 @@ public class SignedDataValidatorTest {
 
   @Test
   public void receivingPrepareNonProposerValidatorWithCorrectRoundIsSuccessful() {
-    final Proposal proposalMsg = proposerMessageFactory.createProposal(roundIdentifier, block);
+    final Proposal proposalMsg =
+        proposerMessageFactory.createProposal(roundIdentifier, block, Optional.empty());
     final Prepare prepareMsg =
         validatorMessageFactory.createPrepare(roundIdentifier, block.getHash());
 
@@ -143,7 +149,8 @@ public class SignedDataValidatorTest {
 
   @Test
   public void receivingACommitMessageWithAnInvalidCommitSealFails() {
-    final Proposal proposalMsg = proposerMessageFactory.createProposal(roundIdentifier, block);
+    final Proposal proposalMsg =
+        proposerMessageFactory.createProposal(roundIdentifier, block, Optional.empty());
 
     final Commit commitMsg =
         proposerMessageFactory.createCommit(
@@ -155,7 +162,8 @@ public class SignedDataValidatorTest {
 
   @Test
   public void commitMessageContainingValidSealFromValidatorIsSuccessful() {
-    final Proposal proposalMsg = proposerMessageFactory.createProposal(roundIdentifier, block);
+    final Proposal proposalMsg =
+        proposerMessageFactory.createProposal(roundIdentifier, block, Optional.empty());
 
     final Commit proposerCommitMsg =
         proposerMessageFactory.createCommit(
@@ -172,32 +180,35 @@ public class SignedDataValidatorTest {
 
   @Test
   public void subsequentProposalHasDifferentSenderFails() {
-    final Proposal proposalMsg = proposerMessageFactory.createProposal(roundIdentifier, block);
+    final Proposal proposalMsg =
+        proposerMessageFactory.createProposal(roundIdentifier, block, Optional.empty());
     assertThat(validator.validateProposal(proposalMsg.getSignedPayload())).isTrue();
 
     final Proposal secondProposalMsg =
-        validatorMessageFactory.createProposal(roundIdentifier, block);
+        validatorMessageFactory.createProposal(roundIdentifier, block, Optional.empty());
     assertThat(validator.validateProposal(secondProposalMsg.getSignedPayload())).isFalse();
   }
 
   @Test
   public void subsequentProposalHasDifferentContentFails() {
-    final Proposal proposalMsg = proposerMessageFactory.createProposal(roundIdentifier, block);
+    final Proposal proposalMsg =
+        proposerMessageFactory.createProposal(roundIdentifier, block, Optional.empty());
     assertThat(validator.validateProposal(proposalMsg.getSignedPayload())).isTrue();
 
     final ConsensusRoundIdentifier newRoundIdentifier = new ConsensusRoundIdentifier(3, 0);
     final Proposal secondProposalMsg =
-        proposerMessageFactory.createProposal(newRoundIdentifier, block);
+        proposerMessageFactory.createProposal(newRoundIdentifier, block, Optional.empty());
     assertThat(validator.validateProposal(secondProposalMsg.getSignedPayload())).isFalse();
   }
 
   @Test
   public void subsequentProposalHasIdenticalSenderAndContentIsSuccessful() {
-    final Proposal proposalMsg = proposerMessageFactory.createProposal(roundIdentifier, block);
+    final Proposal proposalMsg =
+        proposerMessageFactory.createProposal(roundIdentifier, block, Optional.empty());
     assertThat(validator.validateProposal(proposalMsg.getSignedPayload())).isTrue();
 
     final Proposal secondProposalMsg =
-        proposerMessageFactory.createProposal(roundIdentifier, block);
+        proposerMessageFactory.createProposal(roundIdentifier, block, Optional.empty());
     assertThat(validator.validateProposal(secondProposalMsg.getSignedPayload())).isTrue();
   }
 }

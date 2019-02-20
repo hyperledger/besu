@@ -54,7 +54,7 @@ public class RoundChangeArtifactsTest {
     final Block block = TestHelpers.createProposalBlock(emptyList(), preparedRound);
 
     return new PreparedRoundArtifacts(
-        messageFactories.get(0).createProposal(preparedRound, block),
+        messageFactories.get(0).createProposal(preparedRound, block, Optional.empty()),
         messageFactories.stream()
             .map(factory -> factory.createPrepare(preparedRound, block.getHash()))
             .collect(Collectors.toList()));

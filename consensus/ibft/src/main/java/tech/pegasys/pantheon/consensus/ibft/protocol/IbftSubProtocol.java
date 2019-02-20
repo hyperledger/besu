@@ -44,7 +44,6 @@ public class IbftSubProtocol implements SubProtocol {
       case IbftV2.PREPARE:
       case IbftV2.COMMIT:
       case IbftV2.ROUND_CHANGE:
-      case IbftV2.NEW_ROUND:
         return true;
 
       default:
@@ -63,8 +62,6 @@ public class IbftSubProtocol implements SubProtocol {
         return "Commit";
       case IbftV2.ROUND_CHANGE:
         return "RoundChange";
-      case IbftV2.NEW_ROUND:
-        return "NewRound";
       default:
         return INVALID_MESSAGE_NAME;
     }

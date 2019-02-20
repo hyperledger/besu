@@ -12,16 +12,13 @@
  */
 package tech.pegasys.pantheon.consensus.ibft;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.singletonList;
 
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;
-import tech.pegasys.pantheon.consensus.ibft.messagewrappers.NewRound;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
-import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -74,7 +71,7 @@ public class TestHelpers {
         new ConsensusRoundIdentifier(0x1234567890ABCDEFL, round);
     final Block block =
         TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), roundIdentifier);
-    return messageFactory.createProposal(roundIdentifier, block);
+    return messageFactory.createProposal(roundIdentifier, block, Optional.empty());
   }
 
   public static Prepare createSignedPreparePayload(final KeyPair signerKeys) {
@@ -99,17 +96,5 @@ public class TestHelpers {
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(0x1234567890ABCDEFL, 0xFEDCBA98);
     return messageFactory.createRoundChange(roundIdentifier, Optional.empty());
-  }
-
-  public static NewRound createSignedNewRoundPayload(final KeyPair signerKeys) {
-    final MessageFactory messageFactory = new MessageFactory(signerKeys);
-    final ConsensusRoundIdentifier roundIdentifier =
-        new ConsensusRoundIdentifier(0x1234567890ABCDEFL, 0xFEDCBA98);
-    final Proposal proposal = createSignedProposalPayload(signerKeys);
-    return messageFactory.createNewRound(
-        roundIdentifier,
-        new RoundChangeCertificate(newArrayList()),
-        proposal.getSignedPayload(),
-        proposal.getBlock());
   }
 }

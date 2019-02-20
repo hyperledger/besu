@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.consensus.ibft.messagewrappers;
 
 import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
 import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
+import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
@@ -22,13 +23,21 @@ import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.Optional;
+
 public class Proposal extends IbftMessage<ProposalPayload> {
 
   private final Block proposedBlock;
 
-  public Proposal(final SignedData<ProposalPayload> payload, final Block proposedBlock) {
+  private final Optional<RoundChangeCertificate> roundChangeCertificate;
+
+  public Proposal(
+      final SignedData<ProposalPayload> payload,
+      final Block proposedBlock,
+      final Optional<RoundChangeCertificate> certificate) {
     super(payload);
     this.proposedBlock = proposedBlock;
+    this.roundChangeCertificate = certificate;
   }
 
   public Block getBlock() {
@@ -39,12 +48,21 @@ public class Proposal extends IbftMessage<ProposalPayload> {
     return getPayload().getDigest();
   }
 
+  public Optional<RoundChangeCertificate> getRoundChangeCertificate() {
+    return roundChangeCertificate;
+  }
+
   @Override
   public BytesValue encode() {
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     rlpOut.startList();
     getSignedPayload().writeTo(rlpOut);
     proposedBlock.writeTo(rlpOut);
+    if (roundChangeCertificate.isPresent()) {
+      roundChangeCertificate.get().writeTo(rlpOut);
+    } else {
+      rlpOut.writeNull();
+    }
     rlpOut.endList();
     return rlpOut.encoded();
   }
@@ -55,7 +73,22 @@ public class Proposal extends IbftMessage<ProposalPayload> {
     final SignedData<ProposalPayload> payload = SignedData.readSignedProposalPayloadFrom(rlpIn);
     final Block proposedBlock =
         Block.readFrom(rlpIn, IbftBlockHashing::calculateDataHashForCommittedSeal);
+
+    final Optional<RoundChangeCertificate> roundChangeCertificate =
+        readRoundChangeCertificate(rlpIn);
+
     rlpIn.leaveList();
-    return new Proposal(payload, proposedBlock);
+    return new Proposal(payload, proposedBlock, roundChangeCertificate);
+  }
+
+  private static Optional<RoundChangeCertificate> readRoundChangeCertificate(final RLPInput rlpIn) {
+    RoundChangeCertificate roundChangeCertificate = null;
+    if (!rlpIn.nextIsNull()) {
+      roundChangeCertificate = RoundChangeCertificate.readFrom(rlpIn);
+    } else {
+      rlpIn.skipNext();
+    }
+
+    return Optional.ofNullable(roundChangeCertificate);
   }
 }

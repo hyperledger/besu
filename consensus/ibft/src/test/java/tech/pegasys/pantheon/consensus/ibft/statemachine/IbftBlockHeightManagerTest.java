@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,15 +36,15 @@ import tech.pegasys.pantheon.consensus.ibft.RoundTimer;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockCreator;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.RoundExpiry;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;
-import tech.pegasys.pantheon.consensus.ibft.messagewrappers.NewRound;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
+import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.consensus.ibft.network.IbftMessageTransmitter;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
+import tech.pegasys.pantheon.consensus.ibft.validation.FutureRoundProposalMessageValidator;
 import tech.pegasys.pantheon.consensus.ibft.validation.MessageValidator;
 import tech.pegasys.pantheon.consensus.ibft.validation.MessageValidatorFactory;
-import tech.pegasys.pantheon.consensus.ibft.validation.NewRoundMessageValidator;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -90,7 +91,7 @@ public class IbftBlockHeightManagerTest {
   @Mock private BlockImporter<IbftContext> blockImporter;
   @Mock private BlockTimer blockTimer;
   @Mock private RoundTimer roundTimer;
-  @Mock private NewRoundMessageValidator newRoundPayloadValidator;
+  @Mock private FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
 
   @Captor private ArgumentCaptor<Optional<PreparedRoundArtifacts>> preparedRoundArtifactsCaptor;
 
@@ -134,9 +135,10 @@ public class IbftBlockHeightManagerTest {
     when(finalState.getQuorum()).thenReturn(3);
     when(finalState.getMessageFactory()).thenReturn(messageFactory);
     when(blockCreator.createBlock(anyLong())).thenReturn(createdBlock);
-    when(newRoundPayloadValidator.validateNewRoundMessage(any())).thenReturn(true);
-    when(messageValidatorFactory.createNewRoundValidator(anyLong(), any()))
-        .thenReturn(newRoundPayloadValidator);
+
+    when(futureRoundProposalMessageValidator.validateProposalMessage(any())).thenReturn(true);
+    when(messageValidatorFactory.createFutureRoundProposalMessageValidator(anyLong(), any()))
+        .thenReturn(futureRoundProposalMessageValidator);
     when(messageValidatorFactory.createMessageValidator(any(), any())).thenReturn(messageValidator);
 
     protocolContext = new ProtocolContext<>(null, null, setupContextWithValidators(validators));
@@ -206,7 +208,7 @@ public class IbftBlockHeightManagerTest {
     manager.start();
 
     manager.handleBlockTimerExpiry(roundIdentifier);
-    verify(messageTransmitter, times(1)).multicastProposal(eq(roundIdentifier), any());
+    verify(messageTransmitter, times(1)).multicastProposal(eq(roundIdentifier), any(), any());
     verify(messageTransmitter, never()).multicastPrepare(any(), any());
     verify(messageTransmitter, never()).multicastPrepare(any(), any());
   }
@@ -256,7 +258,7 @@ public class IbftBlockHeightManagerTest {
   }
 
   @Test
-  public void whenSufficientRoundChangesAreReceivedANewRoundMessageIsTransmitted() {
+  public void whenSufficientRoundChangesAreReceivedAProposalMessageIsTransmitted() {
     final ConsensusRoundIdentifier futureRoundIdentifier = createFrom(roundIdentifier, 0, +2);
     final RoundChange roundChange =
         messageFactory.createRoundChange(futureRoundIdentifier, Optional.empty());
@@ -276,11 +278,12 @@ public class IbftBlockHeightManagerTest {
             clock,
             messageValidatorFactory);
     manager.start();
+    reset(messageTransmitter);
 
     manager.handleRoundChangePayload(roundChange);
 
     verify(messageTransmitter, times(1))
-        .multicastNewRound(eq(futureRoundIdentifier), eq(roundChangCert), any(), any());
+        .multicastProposal(eq(futureRoundIdentifier), any(), eq(Optional.of(roundChangCert)));
   }
 
   @Test
@@ -313,14 +316,13 @@ public class IbftBlockHeightManagerTest {
     manager.handleCommitPayload(commit);
 
     // Force a new round to be started at new round number.
-    final NewRound newRound =
-        messageFactory.createNewRound(
+    final Proposal futureRoundProposal =
+        messageFactory.createProposal(
             futureRoundIdentifier,
-            new RoundChangeCertificate(Collections.emptyList()),
-            messageFactory.createProposal(futureRoundIdentifier, createdBlock).getSignedPayload(),
-            createdBlock);
+            createdBlock,
+            Optional.of(new RoundChangeCertificate(Collections.emptyList())));
 
-    manager.handleNewRoundPayload(newRound);
+    manager.handleProposalPayload(futureRoundProposal);
 
     // Final state sets the Quorum Size to 3, so should send a Prepare and also a commit
     verify(messageTransmitter, times(1)).multicastPrepare(eq(futureRoundIdentifier), any());
@@ -363,5 +365,33 @@ public class IbftBlockHeightManagerTest {
 
     assertThat(preparedCert.get().getPreparedCertificate().getPreparePayloads())
         .containsOnly(firstPrepare.getSignedPayload(), secondPrepare.getSignedPayload());
+  }
+
+  @Test
+  public void illegalFutureRoundProposalDoesNotTriggerNewRound() {
+    when(futureRoundProposalMessageValidator.validateProposalMessage(any())).thenReturn(false);
+
+    final ConsensusRoundIdentifier futureRoundIdentifier = createFrom(roundIdentifier, 0, +2);
+
+    final IbftBlockHeightManager manager =
+        new IbftBlockHeightManager(
+            headerTestFixture.buildHeader(),
+            finalState,
+            roundChangeManager,
+            roundFactory,
+            clock,
+            messageValidatorFactory);
+
+    // Force a new round to be started at new round number.
+    final Proposal futureRoundProposal =
+        messageFactory.createProposal(
+            futureRoundIdentifier,
+            createdBlock,
+            Optional.of(new RoundChangeCertificate(Collections.emptyList())));
+    manager.start();
+    reset(roundFactory); // Discard the existing createNewRound invocation.
+
+    manager.handleProposalPayload(futureRoundProposal);
+    verify(roundFactory, never()).createNewRound(any(), anyInt());
   }
 }

@@ -12,9 +12,11 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.validation;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,6 +28,7 @@ import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
+import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.BlockValidator;
@@ -52,7 +55,7 @@ public class MessageValidatorTest {
 
   private KeyPair keyPair = KeyPair.generate();
   private MessageFactory messageFactory = new MessageFactory(keyPair);
-  private ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 1);
+  private ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
 
   private SignedDataValidator signedDataValidator = mock(SignedDataValidator.class);
   private ProposalBlockConsistencyValidator proposalBlockConsistencyValidator =
@@ -60,6 +63,8 @@ public class MessageValidatorTest {
 
   @Mock private BlockValidator<IbftContext> blockValidator;
   private ProtocolContext<IbftContext> protocolContext;
+  private final RoundChangeCertificateValidator roundChangeCertificateValidator =
+      mock(RoundChangeCertificateValidator.class);
 
   private MessageValidator messageValidator;
 
@@ -88,17 +93,26 @@ public class MessageValidatorTest {
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
 
+    when(roundChangeCertificateValidator.validateProposalMessageMatchesLatestPrepareCertificate(
+            any(), any()))
+        .thenReturn(true);
+    when(roundChangeCertificateValidator.validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
+            any(), any()))
+        .thenReturn(true);
+
     messageValidator =
         new MessageValidator(
             signedDataValidator,
             proposalBlockConsistencyValidator,
             blockValidator,
-            protocolContext);
+            protocolContext,
+            roundChangeCertificateValidator);
   }
 
   @Test
   public void messageValidatorDefersToUnderlyingSignedDataValidator() {
-    final Proposal proposal = messageFactory.createProposal(roundIdentifier, block);
+    final Proposal proposal =
+        messageFactory.createProposal(roundIdentifier, block, Optional.empty());
 
     final Prepare prepare = messageFactory.createPrepare(roundIdentifier, block.getHash());
 
@@ -118,7 +132,8 @@ public class MessageValidatorTest {
 
   @Test
   public void ifProposalConsistencyChecksFailProposalIsIllegal() {
-    final Proposal proposal = messageFactory.createProposal(roundIdentifier, block);
+    final Proposal proposal =
+        messageFactory.createProposal(roundIdentifier, block, Optional.empty());
     when(proposalBlockConsistencyValidator.validateProposalMatchesBlock(any(), any()))
         .thenReturn(false);
 
@@ -132,8 +147,62 @@ public class MessageValidatorTest {
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(Optional.empty());
 
-    final Proposal proposalMsg = messageFactory.createProposal(roundIdentifier, block);
+    final Proposal proposalMsg =
+        messageFactory.createProposal(roundIdentifier, block, Optional.empty());
 
     assertThat(messageValidator.validateProposal(proposalMsg)).isFalse();
+  }
+
+  @Test
+  public void proposalFailsValidationIfRoundChangeCertificateDoeNotMatchBlock() {
+    final ConsensusRoundIdentifier nonZeroRound = new ConsensusRoundIdentifier(1, 1);
+    when(roundChangeCertificateValidator.validateProposalMessageMatchesLatestPrepareCertificate(
+            any(), any()))
+        .thenReturn(false);
+
+    final Proposal proposal =
+        messageFactory.createProposal(
+            nonZeroRound, block, Optional.of(new RoundChangeCertificate(emptyList())));
+
+    assertThat(messageValidator.validateProposal(proposal)).isFalse();
+  }
+
+  @Test
+  public void proposalFailsValidationIfRoundChangeIsNotSelfConsistent() {
+    final ConsensusRoundIdentifier nonZeroRound = new ConsensusRoundIdentifier(1, 1);
+    when(roundChangeCertificateValidator.validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
+            any(), any()))
+        .thenReturn(false);
+
+    final Proposal proposal =
+        messageFactory.createProposal(
+            nonZeroRound, block, Optional.of(new RoundChangeCertificate(emptyList())));
+
+    assertThat(messageValidator.validateProposal(proposal)).isFalse();
+  }
+
+  @Test
+  public void proposalForRoundZeroFailsIfItContainsARoundChangeCertificate() {
+    final Proposal proposal =
+        messageFactory.createProposal(
+            roundIdentifier, block, Optional.of(new RoundChangeCertificate(emptyList())));
+
+    assertThat(messageValidator.validateProposal(proposal)).isFalse();
+    verify(roundChangeCertificateValidator, never())
+        .validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(any(), any());
+    verify(roundChangeCertificateValidator, never())
+        .validateProposalMessageMatchesLatestPrepareCertificate(any(), any());
+  }
+
+  @Test
+  public void proposalForRoundsGreaterThanZeroFailIfNoRoundChangeCertificateAvailable() {
+    final ConsensusRoundIdentifier nonZeroRound = new ConsensusRoundIdentifier(1, 1);
+    final Proposal proposal = messageFactory.createProposal(nonZeroRound, block, Optional.empty());
+
+    assertThat(messageValidator.validateProposal(proposal)).isFalse();
+    verify(roundChangeCertificateValidator, never())
+        .validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(any(), any());
+    verify(roundChangeCertificateValidator, never())
+        .validateProposalMessageMatchesLatestPrepareCertificate(any(), any());
   }
 }

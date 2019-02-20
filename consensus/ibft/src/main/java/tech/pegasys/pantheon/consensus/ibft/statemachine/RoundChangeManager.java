@@ -32,7 +32,7 @@ import org.apache.logging.log4j.Logger;
  * and messages for a future round should have been buffered).
  *
  * <p>If enough RoundChange messages all targeting a given round are received (and this node is the
- * proposer for said round) - a newRound message is sent, and a new round should be started by the
+ * proposer for said round) - a proposal message is sent, and a new round should be started by the
  * controlling class.
  */
 public class RoundChangeManager {

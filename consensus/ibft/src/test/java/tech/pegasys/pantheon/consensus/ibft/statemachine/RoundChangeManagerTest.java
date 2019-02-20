@@ -134,7 +134,7 @@ public class RoundChangeManagerTest {
     final ConsensusRoundIdentifier proposalRound = TestHelpers.createFrom(round, 0, -1);
     final Block block = TestHelpers.createProposalBlock(validators, proposalRound);
     // Proposal must come from an earlier round.
-    final Proposal proposal = messageFactory.createProposal(proposalRound, block);
+    final Proposal proposal = messageFactory.createProposal(proposalRound, block, Optional.empty());
 
     final List<Prepare> preparePayloads =
         prepareProviders.stream()
