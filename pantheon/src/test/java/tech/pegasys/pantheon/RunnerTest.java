@@ -94,6 +94,7 @@ public final class RunnerTest {
     final SynchronizerConfiguration syncConfigAhead =
         SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
     final MetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
+    final int networkId = 2929;
 
     // Setup state with block data
     try (final PantheonController<Void> controller =
@@ -103,6 +104,7 @@ public final class RunnerTest {
             MainnetProtocolSchedule.create(),
             syncConfigAhead,
             new MiningParametersTestBuilder().enabled(false).build(),
+            networkId,
             aheadDbNodeKeys,
             PrivacyParameters.noPrivacy(),
             dataDirAhead,
@@ -118,6 +120,7 @@ public final class RunnerTest {
             MainnetProtocolSchedule.create(),
             syncConfigAhead,
             new MiningParametersTestBuilder().enabled(false).build(),
+            networkId,
             aheadDbNodeKeys,
             PrivacyParameters.noPrivacy(),
             dataDirAhead,
@@ -171,6 +174,7 @@ public final class RunnerTest {
               MainnetProtocolSchedule.create(),
               syncConfigBehind,
               new MiningParametersTestBuilder().enabled(false).build(),
+              networkId,
               KeyPair.generate(),
               PrivacyParameters.noPrivacy(),
               dataDirBehind,

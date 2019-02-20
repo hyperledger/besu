@@ -33,7 +33,6 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolFactory;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderValidator;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
@@ -92,6 +91,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
       final ProtocolSchedule<Void> protocolSchedule,
       final SynchronizerConfiguration syncConfig,
       final MiningParameters miningParams,
+      final int networkId,
       final KeyPair nodeKeys,
       final PrivacyParameters privacyParameters,
       final Path dataDirectory,
@@ -108,10 +108,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            genesisConfig
-                .getConfigOptions()
-                .getChainId()
-                .orElse(MainnetProtocolSchedule.DEFAULT_CHAIN_ID),
+            networkId,
             fastSyncEnabled,
             syncConfig.downloaderParallelism(),
             syncConfig.transactionsParallelism(),
