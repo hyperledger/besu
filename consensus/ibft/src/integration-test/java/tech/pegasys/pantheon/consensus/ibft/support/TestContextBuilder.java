@@ -34,12 +34,14 @@ import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
 import tech.pegasys.pantheon.consensus.ibft.IbftGossip;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
 import tech.pegasys.pantheon.consensus.ibft.IbftProtocolSchedule;
+import tech.pegasys.pantheon.consensus.ibft.MessageTracker;
 import tech.pegasys.pantheon.consensus.ibft.RoundTimer;
 import tech.pegasys.pantheon.consensus.ibft.SynchronizerUpdater;
 import tech.pegasys.pantheon.consensus.ibft.UniqueMessageMulticaster;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockCreatorFactory;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.ProposerSelector;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
+import tech.pegasys.pantheon.consensus.ibft.statemachine.FutureMessageBuffer;
 import tech.pegasys.pantheon.consensus.ibft.statemachine.IbftBlockHeightManagerFactory;
 import tech.pegasys.pantheon.consensus.ibft.statemachine.IbftController;
 import tech.pegasys.pantheon.consensus.ibft.statemachine.IbftFinalState;
@@ -115,6 +117,8 @@ public class TestContextBuilder {
   public static final int MESSAGE_QUEUE_LIMIT = 1000;
   public static final int GOSSIPED_HISTORY_LIMIT = 100;
   public static final int DUPLICATE_MESSAGE_LIMIT = 100;
+  public static final int FUTURE_MESSAGES_MAX_DISTANCE = 10;
+  public static final int FUTURE_MESSAGES_LIMIT = 1000;
 
   private Clock clock = Clock.fixed(Instant.MIN, ZoneId.of("UTC"));
   private IbftEventQueue ibftEventQueue = new IbftEventQueue(MESSAGE_QUEUE_LIMIT);
@@ -309,6 +313,13 @@ public class TestContextBuilder {
 
     final Subscribers<MinedBlockObserver> minedBlockObservers = new Subscribers<>();
 
+    final MessageTracker duplicateMessageTracker = new MessageTracker(DUPLICATE_MESSAGE_LIMIT);
+    final FutureMessageBuffer futureMessageBuffer =
+        new FutureMessageBuffer(
+            FUTURE_MESSAGES_MAX_DISTANCE,
+            FUTURE_MESSAGES_LIMIT,
+            blockChain.getChainHeadBlockNumber());
+
     final IbftController ibftController =
         new IbftController(
             blockChain,
@@ -323,7 +334,8 @@ public class TestContextBuilder {
                     messageValidatorFactory),
                 messageValidatorFactory),
             gossiper,
-            DUPLICATE_MESSAGE_LIMIT,
+            duplicateMessageTracker,
+            futureMessageBuffer,
             synchronizerUpdater);
 
     final EventMultiplexer eventMultiplexer = new EventMultiplexer(ibftController);

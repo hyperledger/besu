@@ -12,8 +12,6 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.statemachine;
 
-import static java.util.Collections.emptyList;
-
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.Gossiper;
 import tech.pegasys.pantheon.consensus.ibft.MessageTracker;
@@ -34,13 +32,8 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 
-import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -50,7 +43,7 @@ public class IbftController {
   private final Blockchain blockchain;
   private final IbftFinalState ibftFinalState;
   private final IbftBlockHeightManagerFactory ibftBlockHeightManagerFactory;
-  private final Map<Long, List<Message>> futureMessages;
+  private final FutureMessageBuffer futureMessageBuffer;
   private BlockHeightManager currentHeightManager;
   private final Gossiper gossiper;
   private final MessageTracker duplicateMessageTracker;
@@ -61,31 +54,13 @@ public class IbftController {
       final IbftFinalState ibftFinalState,
       final IbftBlockHeightManagerFactory ibftBlockHeightManagerFactory,
       final Gossiper gossiper,
-      final int duplicateMessageLimit,
-      final SynchronizerUpdater sychronizerUpdater) {
-    this(
-        blockchain,
-        ibftFinalState,
-        ibftBlockHeightManagerFactory,
-        gossiper,
-        Maps.newHashMap(),
-        new MessageTracker(duplicateMessageLimit),
-        sychronizerUpdater);
-  }
-
-  @VisibleForTesting
-  public IbftController(
-      final Blockchain blockchain,
-      final IbftFinalState ibftFinalState,
-      final IbftBlockHeightManagerFactory ibftBlockHeightManagerFactory,
-      final Gossiper gossiper,
-      final Map<Long, List<Message>> futureMessages,
       final MessageTracker duplicateMessageTracker,
+      final FutureMessageBuffer futureMessageBuffer,
       final SynchronizerUpdater sychronizerUpdater) {
     this.blockchain = blockchain;
     this.ibftFinalState = ibftFinalState;
     this.ibftBlockHeightManagerFactory = ibftBlockHeightManagerFactory;
-    this.futureMessages = futureMessages;
+    this.futureMessageBuffer = futureMessageBuffer;
     this.gossiper = gossiper;
     this.duplicateMessageTracker = duplicateMessageTracker;
     this.sychronizerUpdater = sychronizerUpdater;
@@ -210,8 +185,7 @@ public class IbftController {
     currentHeightManager = ibftBlockHeightManagerFactory.create(parentHeader);
     currentHeightManager.start();
     final long newChainHeight = currentHeightManager.getChainHeight();
-    futureMessages.getOrDefault(newChainHeight, emptyList()).forEach(this::handleMessage);
-    futureMessages.remove(newChainHeight);
+    futureMessageBuffer.retrieveMessagesForHeight(newChainHeight).forEach(this::handleMessage);
   }
 
   private boolean processMessage(final IbftMessage<?> msg, final Message rawMsg) {
@@ -219,7 +193,7 @@ public class IbftController {
     if (isMsgForCurrentHeight(msgRoundIdentifier)) {
       return isMsgFromKnownValidator(msg) && ibftFinalState.isLocalNodeValidator();
     } else if (isMsgForFutureChainHeight(msgRoundIdentifier)) {
-      addMessageToFutureMessageBuffer(msgRoundIdentifier.getSequenceNumber(), rawMsg);
+      futureMessageBuffer.addMessage(msgRoundIdentifier.getSequenceNumber(), rawMsg);
       // Notify the synchronizer the transmitting peer must have the parent block to the received
       // message's target height.
       sychronizerUpdater.updatePeerChainState(
@@ -244,12 +218,5 @@ public class IbftController {
 
   private boolean isMsgForFutureChainHeight(final ConsensusRoundIdentifier roundIdentifier) {
     return roundIdentifier.getSequenceNumber() > currentHeightManager.getChainHeight();
-  }
-
-  private void addMessageToFutureMessageBuffer(final long chainHeight, final Message rawMsg) {
-    if (!futureMessages.containsKey(chainHeight)) {
-      futureMessages.put(chainHeight, Lists.newArrayList());
-    }
-    futureMessages.get(chainHeight).add(rawMsg);
   }
 }
