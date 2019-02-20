@@ -39,7 +39,6 @@ public class RocksDbTaskQueueBenchmark {
 
   @Setup(Level.Trial)
   public void prepare() {
-    System.out.println("YAY!");
     tempDir = Files.createTempDir();
     queue =
         RocksDbTaskQueue.create(
