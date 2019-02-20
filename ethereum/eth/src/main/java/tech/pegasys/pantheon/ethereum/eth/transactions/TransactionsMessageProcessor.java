@@ -42,7 +42,7 @@ class TransactionsMessageProcessor {
   void processTransactionsMessage(
       final EthPeer peer, final TransactionsMessage transactionsMessage) {
     try {
-      LOG.debug("Received transactions message from {}", peer);
+      LOG.trace("Received transactions message from {}", peer);
 
       final Iterator<Transaction> readTransactions =
           transactionsMessage.transactions(Transaction::readFrom);
