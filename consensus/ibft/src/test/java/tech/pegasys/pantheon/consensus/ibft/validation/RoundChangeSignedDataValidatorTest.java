@@ -97,7 +97,8 @@ public class RoundChangeSignedDataValidatorTest {
   public void roundChangeContainingInvalidProposalFails() {
     final PreparedRoundArtifacts preparedRoundArtifacts =
         new PreparedRoundArtifacts(
-            proposerMessageFactory.createProposal(currentRound, block), Collections.emptyList());
+            proposerMessageFactory.createProposal(currentRound, block, Optional.empty()),
+            Collections.emptyList());
 
     final PreparedCertificate prepareCertificate = preparedRoundArtifacts.getPreparedCertificate();
 
@@ -118,7 +119,8 @@ public class RoundChangeSignedDataValidatorTest {
   public void roundChangeContainingValidProposalButNoPrepareMessagesFails() {
     final PreparedRoundArtifacts preparedRoundArtifacts =
         new PreparedRoundArtifacts(
-            proposerMessageFactory.createProposal(currentRound, block), Collections.emptyList());
+            proposerMessageFactory.createProposal(currentRound, block, Optional.empty()),
+            Collections.emptyList());
 
     final RoundChange msg =
         proposerMessageFactory.createRoundChange(targetRound, Optional.of(preparedRoundArtifacts));
@@ -132,7 +134,7 @@ public class RoundChangeSignedDataValidatorTest {
     final Prepare prepareMsg = validatorMessageFactory.createPrepare(currentRound, block.getHash());
     final PreparedRoundArtifacts preparedRoundArtifacts =
         new PreparedRoundArtifacts(
-            proposerMessageFactory.createProposal(currentRound, block),
+            proposerMessageFactory.createProposal(currentRound, block, Optional.empty()),
             Lists.newArrayList(prepareMsg));
 
     when(basicValidator.validateProposal(any())).thenReturn(true);
@@ -168,7 +170,7 @@ public class RoundChangeSignedDataValidatorTest {
     final Prepare prepareMsg = validatorMessageFactory.createPrepare(futureRound, block.getHash());
     final PreparedRoundArtifacts preparedRoundArtifacts =
         new PreparedRoundArtifacts(
-            proposerMessageFactory.createProposal(futureRound, block),
+            proposerMessageFactory.createProposal(futureRound, block, Optional.empty()),
             Lists.newArrayList(prepareMsg));
 
     final RoundChange msg =
@@ -185,7 +187,7 @@ public class RoundChangeSignedDataValidatorTest {
     final Prepare prepareMsg = validatorMessageFactory.createPrepare(currentRound, block.getHash());
     final PreparedRoundArtifacts preparedRoundArtifacts =
         new PreparedRoundArtifacts(
-            proposerMessageFactory.createProposal(currentRound, block),
+            proposerMessageFactory.createProposal(currentRound, block, Optional.empty()),
             Lists.newArrayList(prepareMsg));
 
     final PreparedCertificate prepareCertificate = preparedRoundArtifacts.getPreparedCertificate();

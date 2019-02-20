@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.consensus.ibft;
 
 import tech.pegasys.pantheon.consensus.ibft.messagedata.CommitMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.IbftV2;
-import tech.pegasys.pantheon.consensus.ibft.messagedata.NewRoundMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.PrepareMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.RoundChangeMessageData;
@@ -63,9 +62,6 @@ public class IbftGossip implements Gossiper {
         break;
       case IbftV2.ROUND_CHANGE:
         decodedMessage = RoundChangeMessageData.fromMessageData(messageData).decode();
-        break;
-      case IbftV2.NEW_ROUND:
-        decodedMessage = NewRoundMessageData.fromMessageData(messageData).decode();
         break;
       default:
         throw new IllegalArgumentException(

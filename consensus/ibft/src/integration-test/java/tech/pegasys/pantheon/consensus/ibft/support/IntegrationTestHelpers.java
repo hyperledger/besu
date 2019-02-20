@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Block;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class IntegrationTestHelpers {
@@ -49,7 +50,10 @@ public class IntegrationTestHelpers {
     final RoundSpecificPeers peers = context.roundSpecificPeers(preparedRound);
 
     return new PreparedRoundArtifacts(
-        peers.getProposer().getMessageFactory().createProposal(preparedRound, block),
+        peers
+            .getProposer()
+            .getMessageFactory()
+            .createProposal(preparedRound, block, Optional.empty()),
         peers.createSignedPreparePayloadOfNonProposing(preparedRound, block.getHash()).stream()
             .map(Prepare::new)
             .collect(Collectors.toList()));

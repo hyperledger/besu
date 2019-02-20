@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.consensus.ibft.payload;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;
-import tech.pegasys.pantheon.consensus.ibft.messagewrappers.NewRound;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
@@ -38,11 +37,13 @@ public class MessageFactory {
   }
 
   public Proposal createProposal(
-      final ConsensusRoundIdentifier roundIdentifier, final Block block) {
+      final ConsensusRoundIdentifier roundIdentifier,
+      final Block block,
+      final Optional<RoundChangeCertificate> roundChangeCertificate) {
 
     final ProposalPayload payload = new ProposalPayload(roundIdentifier, block.getHash());
 
-    return new Proposal(createSignedMessage(payload), block);
+    return new Proposal(createSignedMessage(payload), block, roundChangeCertificate);
   }
 
   public Prepare createPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
@@ -72,18 +73,6 @@ public class MessageFactory {
             preparedRoundArtifacts.map(PreparedRoundArtifacts::getPreparedCertificate));
     return new RoundChange(
         createSignedMessage(payload), preparedRoundArtifacts.map(PreparedRoundArtifacts::getBlock));
-  }
-
-  public NewRound createNewRound(
-      final ConsensusRoundIdentifier roundIdentifier,
-      final RoundChangeCertificate roundChangeCertificate,
-      final SignedData<ProposalPayload> proposalPayload,
-      final Block block) {
-
-    final NewRoundPayload payload =
-        new NewRoundPayload(roundIdentifier, roundChangeCertificate, proposalPayload);
-
-    return new NewRound(createSignedMessage(payload), block);
   }
 
   private <M extends Payload> SignedData<M> createSignedMessage(final M payload) {

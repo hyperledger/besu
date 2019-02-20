@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Block;
 
 import java.util.Collections;
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +52,8 @@ public class ProposalBlockConsistencyValidatorTest {
 
   @Test
   public void blockDigestMisMatchWithMessageRoundFails() {
-    final Proposal proposalMsg = proposerMessageFactory.createProposal(roundIdentifier, block);
+    final Proposal proposalMsg =
+        proposerMessageFactory.createProposal(roundIdentifier, block, Optional.empty());
 
     final Block misMatchedBlock =
         IbftBlockInterface.replaceRoundInBlock(
@@ -68,7 +70,8 @@ public class ProposalBlockConsistencyValidatorTest {
   @Test
   public void blockDigestMatchesButRoundDiffersFails() {
     final ConsensusRoundIdentifier futureRound = TestHelpers.createFrom(roundIdentifier, 0, +1);
-    final Proposal proposalMsg = proposerMessageFactory.createProposal(futureRound, block);
+    final Proposal proposalMsg =
+        proposerMessageFactory.createProposal(futureRound, block, Optional.empty());
 
     assertThat(
             consistencyChecker.validateProposalMatchesBlock(proposalMsg.getSignedPayload(), block))
@@ -78,7 +81,8 @@ public class ProposalBlockConsistencyValidatorTest {
   @Test
   public void blockWithMismatchedNumberFails() {
     final ConsensusRoundIdentifier futureHeight = TestHelpers.createFrom(roundIdentifier, +1, 0);
-    final Proposal proposalMsg = proposerMessageFactory.createProposal(futureHeight, block);
+    final Proposal proposalMsg =
+        proposerMessageFactory.createProposal(futureHeight, block, Optional.empty());
 
     assertThat(
             consistencyChecker.validateProposalMatchesBlock(proposalMsg.getSignedPayload(), block))

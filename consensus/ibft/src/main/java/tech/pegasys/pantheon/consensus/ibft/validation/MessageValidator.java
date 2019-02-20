@@ -12,10 +12,12 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.validation;
 
+import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
+import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
 import tech.pegasys.pantheon.ethereum.BlockValidator;
 import tech.pegasys.pantheon.ethereum.BlockValidator.BlockProcessingOutputs;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -35,25 +37,34 @@ public class MessageValidator {
   private final ProposalBlockConsistencyValidator proposalConsistencyValidator;
   private final BlockValidator<IbftContext> blockValidator;
   private final ProtocolContext<IbftContext> protocolContext;
+  private RoundChangeCertificateValidator roundChangeCertificateValidator;
 
   public MessageValidator(
       final SignedDataValidator signedDataValidator,
       final ProposalBlockConsistencyValidator proposalConsistencyValidator,
       final BlockValidator<IbftContext> blockValidator,
-      final ProtocolContext<IbftContext> protocolContext) {
+      final ProtocolContext<IbftContext> protocolContext,
+      final RoundChangeCertificateValidator roundChangeCertificateValidator) {
     this.signedDataValidator = signedDataValidator;
     this.proposalConsistencyValidator = proposalConsistencyValidator;
     this.blockValidator = blockValidator;
     this.protocolContext = protocolContext;
+    this.roundChangeCertificateValidator = roundChangeCertificateValidator;
   }
 
   public boolean validateProposal(final Proposal msg) {
+
     if (!signedDataValidator.validateProposal(msg.getSignedPayload())) {
       LOG.debug("Illegal Proposal message, embedded signed data failed validation");
       return false;
     }
 
     if (!validateBlock(msg.getBlock())) {
+      return false;
+    }
+
+    if (!validateProposalAndRoundChangeAreConsistent(msg)) {
+      LOG.debug("Illegal Proposal message, embedded roundChange does not match proposal.");
       return false;
     }
 
@@ -68,6 +79,55 @@ public class MessageValidator {
 
     if (!validationResult.isPresent()) {
       LOG.info("Invalid Proposal message, block did not pass validation.");
+      return false;
+    }
+
+    return true;
+  }
+
+  private boolean validateProposalAndRoundChangeAreConsistent(final Proposal proposal) {
+    final ConsensusRoundIdentifier proposalRoundIdentifier = proposal.getRoundIdentifier();
+
+    if (proposalRoundIdentifier.getRoundNumber() == 0) {
+      return validateRoundZeroProposalHasNoRoundChangeCertificate(proposal);
+    } else {
+      return validateRoundChangeCertificateIsValidAndMatchesProposedBlock(proposal);
+    }
+  }
+
+  private boolean validateRoundZeroProposalHasNoRoundChangeCertificate(final Proposal proposal) {
+    if (proposal.getRoundChangeCertificate().isPresent()) {
+      LOG.debug(
+          "Illegal Proposal message, round-0 proposal must not contain a round change certificate.");
+      return false;
+    }
+    return true;
+  }
+
+  private boolean validateRoundChangeCertificateIsValidAndMatchesProposedBlock(
+      final Proposal proposal) {
+
+    final Optional<RoundChangeCertificate> roundChangeCertificate =
+        proposal.getRoundChangeCertificate();
+
+    if (!roundChangeCertificate.isPresent()) {
+      LOG.debug(
+          "Illegal Proposal message, rounds other than 0 must contain a round change certificate.");
+      return false;
+    }
+
+    final RoundChangeCertificate roundChangeCert = roundChangeCertificate.get();
+
+    if (!roundChangeCertificateValidator.validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
+        proposal.getRoundIdentifier(), roundChangeCert)) {
+      LOG.debug("Illegal Proposal message, embedded RoundChangeCertificate is not self-consistent");
+      return false;
+    }
+
+    if (!roundChangeCertificateValidator.validateProposalMessageMatchesLatestPrepareCertificate(
+        roundChangeCert, proposal.getBlock())) {
+      LOG.debug(
+          "Illegal Proposal message, piggybacked block does not match latest PrepareCertificate");
       return false;
     }
 

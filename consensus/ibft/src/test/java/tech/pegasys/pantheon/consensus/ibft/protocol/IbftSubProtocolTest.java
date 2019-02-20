@@ -22,7 +22,7 @@ public class IbftSubProtocolTest {
   public void messageSpaceReportsCorrectly() {
     final IbftSubProtocol subProt = new IbftSubProtocol();
 
-    assertThat(subProt.messageSpace(1)).isEqualTo(5);
+    assertThat(subProt.messageSpace(1)).isEqualTo(4);
   }
 
   @Test
@@ -33,13 +33,12 @@ public class IbftSubProtocolTest {
     assertThat(subProt.isValidMessageCode(1, 1)).isTrue();
     assertThat(subProt.isValidMessageCode(1, 2)).isTrue();
     assertThat(subProt.isValidMessageCode(1, 3)).isTrue();
-    assertThat(subProt.isValidMessageCode(1, 4)).isTrue();
   }
 
   @Test
   public void invalidMessageTypesAreNotAcceptedByTheSubprotocol() {
     final IbftSubProtocol subProt = new IbftSubProtocol();
 
-    assertThat(subProt.isValidMessageCode(1, 5)).isFalse();
+    assertThat(subProt.isValidMessageCode(1, 4)).isFalse();
   }
 }

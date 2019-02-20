@@ -23,7 +23,6 @@ import tech.pegasys.pantheon.consensus.ibft.ibftevent.NewChainHead;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.RoundExpiry;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.CommitMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.IbftV2;
-import tech.pegasys.pantheon.consensus.ibft.messagedata.NewRoundMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.PrepareMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.RoundChangeMessageData;
@@ -126,13 +125,6 @@ public class IbftController {
             message,
             RoundChangeMessageData.fromMessageData(messageData).decode(),
             currentHeightManager::handleRoundChangePayload);
-        break;
-
-      case IbftV2.NEW_ROUND:
-        consumeMessage(
-            message,
-            NewRoundMessageData.fromMessageData(messageData).decode(),
-            currentHeightManager::handleNewRoundPayload);
         break;
 
       default:

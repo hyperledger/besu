@@ -33,6 +33,7 @@ import tech.pegasys.pantheon.ethereum.core.Util;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.junit.Before;
@@ -80,7 +81,7 @@ public class RoundStateTest {
     final RoundState roundState = new RoundState(roundIdentifier, 1, messageValidator);
 
     final Proposal proposal =
-        validatorMessageFactories.get(0).createProposal(roundIdentifier, block);
+        validatorMessageFactories.get(0).createProposal(roundIdentifier, block, Optional.empty());
 
     assertThat(roundState.setProposedBlock(proposal)).isFalse();
     assertThat(roundState.isPrepared()).isFalse();
@@ -94,8 +95,7 @@ public class RoundStateTest {
     final RoundState roundState = new RoundState(roundIdentifier, 1, messageValidator);
 
     final Proposal proposal =
-        validatorMessageFactories.get(0).createProposal(roundIdentifier, block);
-
+        validatorMessageFactories.get(0).createProposal(roundIdentifier, block, Optional.empty());
     assertThat(roundState.setProposedBlock(proposal)).isTrue();
     assertThat(roundState.isPrepared()).isTrue();
     assertThat(roundState.isCommitted()).isFalse();
@@ -117,7 +117,7 @@ public class RoundStateTest {
     final RoundState roundState = new RoundState(roundIdentifier, 1, messageValidator);
 
     final Proposal proposal =
-        validatorMessageFactories.get(0).createProposal(roundIdentifier, block);
+        validatorMessageFactories.get(0).createProposal(roundIdentifier, block, Optional.empty());
 
     assertThat(roundState.setProposedBlock(proposal)).isTrue();
     assertThat(roundState.isPrepared()).isTrue();
@@ -161,7 +161,7 @@ public class RoundStateTest {
     assertThat(roundState.constructPreparedRoundArtifacts()).isEmpty();
 
     final Proposal proposal =
-        validatorMessageFactories.get(0).createProposal(roundIdentifier, block);
+        validatorMessageFactories.get(0).createProposal(roundIdentifier, block, Optional.empty());
     assertThat(roundState.setProposedBlock(proposal)).isTrue();
     assertThat(roundState.isPrepared()).isTrue();
     assertThat(roundState.isCommitted()).isFalse();
@@ -189,7 +189,7 @@ public class RoundStateTest {
     verify(messageValidator, never()).validatePrepare(any());
 
     final Proposal proposal =
-        validatorMessageFactories.get(0).createProposal(roundIdentifier, block);
+        validatorMessageFactories.get(0).createProposal(roundIdentifier, block, Optional.empty());
 
     assertThat(roundState.setProposedBlock(proposal)).isTrue();
     assertThat(roundState.isPrepared()).isFalse();
@@ -208,7 +208,7 @@ public class RoundStateTest {
         validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
 
     final Proposal proposal =
-        validatorMessageFactories.get(0).createProposal(roundIdentifier, block);
+        validatorMessageFactories.get(0).createProposal(roundIdentifier, block, Optional.empty());
 
     when(messageValidator.validateProposal(any())).thenReturn(true);
     when(messageValidator.validatePrepare(firstPrepare)).thenReturn(false);
@@ -248,7 +248,7 @@ public class RoundStateTest {
                 Signature.create(BigInteger.TEN, BigInteger.TEN, (byte) 1));
 
     final Proposal proposal =
-        validatorMessageFactories.get(0).createProposal(roundIdentifier, block);
+        validatorMessageFactories.get(0).createProposal(roundIdentifier, block, Optional.empty());
 
     roundState.setProposedBlock(proposal);
     roundState.addCommitMessage(firstCommit);

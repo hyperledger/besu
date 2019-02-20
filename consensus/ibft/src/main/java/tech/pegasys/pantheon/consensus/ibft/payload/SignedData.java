@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 public class SignedData<M extends Payload> implements Authored {
+
   private final Address sender;
   private final Signature signature;
   private final M unsignedPayload;
@@ -92,16 +93,6 @@ public class SignedData<M extends Payload> implements Authored {
 
     rlpInput.enterList();
     final RoundChangePayload unsignedMessageData = RoundChangePayload.readFrom(rlpInput);
-    final Signature signature = readSignature(rlpInput);
-    rlpInput.leaveList();
-
-    return from(unsignedMessageData, signature);
-  }
-
-  public static SignedData<NewRoundPayload> readSignedNewRoundPayloadFrom(final RLPInput rlpInput) {
-
-    rlpInput.enterList();
-    final NewRoundPayload unsignedMessageData = NewRoundPayload.readFrom(rlpInput);
     final Signature signature = readSignature(rlpInput);
     rlpInput.leaveList();
 

@@ -19,7 +19,6 @@ import static org.assertj.core.api.Fail.fail;
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.CommitMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.IbftV2;
-import tech.pegasys.pantheon.consensus.ibft.messagedata.NewRoundMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.PrepareMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.RoundChangeMessageData;
@@ -196,9 +195,6 @@ public class RoundSpecificPeers {
         break;
       case IbftV2.COMMIT:
         actualSignedPayload = CommitMessageData.fromMessageData(actual).decode();
-        break;
-      case IbftV2.NEW_ROUND:
-        actualSignedPayload = NewRoundMessageData.fromMessageData(actual).decode();
         break;
       case IbftV2.ROUND_CHANGE:
         actualSignedPayload = RoundChangeMessageData.fromMessageData(actual).decode();

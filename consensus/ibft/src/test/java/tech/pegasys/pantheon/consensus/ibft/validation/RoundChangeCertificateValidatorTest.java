@@ -69,7 +69,7 @@ public class RoundChangeCertificateValidatorTest {
   }
 
   @Test
-  public void newRoundWithEmptyRoundChangeCertificateFails() {
+  public void proposalWithEmptyRoundChangeCertificateFails() {
     final RoundChangeCertificate cert = new RoundChangeCertificate(Collections.emptyList());
 
     assertThat(
@@ -104,7 +104,8 @@ public class RoundChangeCertificateValidatorTest {
             roundIdentifier,
             Optional.of(
                 new PreparedRoundArtifacts(
-                    proposerMessageFactory.createProposal(prevRound, proposedBlock),
+                    proposerMessageFactory.createProposal(
+                        prevRound, proposedBlock, Optional.empty()),
                     Lists.newArrayList(
                         validatorMessageFactory.createPrepare(
                             prevRound, proposedBlock.getHash()))))));
@@ -129,7 +130,8 @@ public class RoundChangeCertificateValidatorTest {
 
     final PreparedRoundArtifacts mismatchedRoundArtefacts =
         new PreparedRoundArtifacts(
-            proposerMessageFactory.createProposal(preparedRound, prevProposedBlock),
+            proposerMessageFactory.createProposal(
+                preparedRound, prevProposedBlock, Optional.empty()),
             singletonList(
                 validatorMessageFactory.createPrepare(preparedRound, prevProposedBlock.getHash())));
 
@@ -152,7 +154,7 @@ public class RoundChangeCertificateValidatorTest {
         TestHelpers.createFrom(roundIdentifier, 0, -1);
     final Block latterBlock = TestHelpers.createProposalBlock(validators, latterPrepareRound);
     final Proposal latterProposal =
-        proposerMessageFactory.createProposal(latterPrepareRound, latterBlock);
+        proposerMessageFactory.createProposal(latterPrepareRound, latterBlock, Optional.empty());
     final Optional<PreparedRoundArtifacts> latterTerminatedRoundArtefacts =
         Optional.of(
             new PreparedRoundArtifacts(
@@ -169,7 +171,7 @@ public class RoundChangeCertificateValidatorTest {
     final Block earlierBlock =
         TestHelpers.createProposalBlock(validators.subList(0, 1), earlierPreparedRound);
     final Proposal earlierProposal =
-        proposerMessageFactory.createProposal(earlierPreparedRound, earlierBlock);
+        proposerMessageFactory.createProposal(earlierPreparedRound, earlierBlock, Optional.empty());
     final Optional<PreparedRoundArtifacts> earlierTerminatedRoundArtefacts =
         Optional.of(
             new PreparedRoundArtifacts(

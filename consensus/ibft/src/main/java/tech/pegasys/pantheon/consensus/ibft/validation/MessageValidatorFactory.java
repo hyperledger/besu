@@ -62,12 +62,17 @@ public class MessageValidatorFactory {
       final ConsensusRoundIdentifier roundIdentifier, final BlockHeader parentHeader) {
     final BlockValidator<IbftContext> blockValidator =
         protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockValidator();
+    final Collection<Address> validators = getValidatorsAfterBlock(parentHeader);
 
     return new MessageValidator(
         createSignedDataValidator(roundIdentifier, parentHeader),
         new ProposalBlockConsistencyValidator(),
         blockValidator,
-        protocolContext);
+        protocolContext,
+        new RoundChangeCertificateValidator(
+            validators,
+            (ri) -> createSignedDataValidator(ri, parentHeader),
+            roundIdentifier.getSequenceNumber()));
   }
 
   public RoundChangeMessageValidator createRoundChangeMessageValidator(
@@ -84,28 +89,9 @@ public class MessageValidatorFactory {
         new ProposalBlockConsistencyValidator());
   }
 
-  public NewRoundMessageValidator createNewRoundValidator(
+  public FutureRoundProposalMessageValidator createFutureRoundProposalMessageValidator(
       final long chainHeight, final BlockHeader parentHeader) {
-    final Collection<Address> validators = getValidatorsAfterBlock(parentHeader);
 
-    final BlockValidator<IbftContext> blockValidator =
-        protocolSchedule.getByBlockNumber(chainHeight).getBlockValidator();
-
-    final RoundChangeCertificateValidator roundChangeCertificateValidator =
-        new RoundChangeCertificateValidator(
-            validators,
-            (roundIdentifier) -> createSignedDataValidator(roundIdentifier, parentHeader),
-            chainHeight);
-
-    return new NewRoundMessageValidator(
-        new NewRoundPayloadValidator(
-            proposerSelector,
-            (roundIdentifier) -> createSignedDataValidator(roundIdentifier, parentHeader),
-            chainHeight,
-            roundChangeCertificateValidator),
-        new ProposalBlockConsistencyValidator(),
-        blockValidator,
-        protocolContext,
-        roundChangeCertificateValidator);
+    return new FutureRoundProposalMessageValidator(this, chainHeight, parentHeader);
   }
 }

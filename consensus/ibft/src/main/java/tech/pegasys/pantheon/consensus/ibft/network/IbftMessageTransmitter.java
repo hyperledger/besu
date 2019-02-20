@@ -14,19 +14,15 @@ package tech.pegasys.pantheon.consensus.ibft.network;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.CommitMessageData;
-import tech.pegasys.pantheon.consensus.ibft.messagedata.NewRoundMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.PrepareMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.ProposalMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagedata.RoundChangeMessageData;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;
-import tech.pegasys.pantheon.consensus.ibft.messagewrappers.NewRound;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Proposal;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
-import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
-import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.consensus.ibft.statemachine.PreparedRoundArtifacts;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Block;
@@ -45,8 +41,12 @@ public class IbftMessageTransmitter {
     this.multicaster = multicaster;
   }
 
-  public void multicastProposal(final ConsensusRoundIdentifier roundIdentifier, final Block block) {
-    final Proposal data = messageFactory.createProposal(roundIdentifier, block);
+  public void multicastProposal(
+      final ConsensusRoundIdentifier roundIdentifier,
+      final Block block,
+      final Optional<RoundChangeCertificate> roundChangeCertificate) {
+    final Proposal data =
+        messageFactory.createProposal(roundIdentifier, block, roundChangeCertificate);
 
     final ProposalMessageData message = ProposalMessageData.create(data);
 
@@ -80,21 +80,6 @@ public class IbftMessageTransmitter {
         messageFactory.createRoundChange(roundIdentifier, preparedRoundArtifacts);
 
     final RoundChangeMessageData message = RoundChangeMessageData.create(data);
-
-    multicaster.send(message);
-  }
-
-  public void multicastNewRound(
-      final ConsensusRoundIdentifier roundIdentifier,
-      final RoundChangeCertificate roundChangeCertificate,
-      final SignedData<ProposalPayload> proposalPayload,
-      final Block block) {
-
-    final NewRound signedPayload =
-        messageFactory.createNewRound(
-            roundIdentifier, roundChangeCertificate, proposalPayload, block);
-
-    final NewRoundMessageData message = NewRoundMessageData.create(signedPayload);
 
     multicaster.send(message);
   }
