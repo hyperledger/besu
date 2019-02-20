@@ -293,7 +293,7 @@ public class BlockPropagationManager<C> {
       return CompletableFuture.completedFuture(block);
     }
 
-    validateAndBroadcastBlock(block);
+    ethContext.getScheduler().scheduleSyncWorkerTask(() -> validateAndBroadcastBlock(block));
 
     // Import block
     final PersistBlockTask<C> importTask =
