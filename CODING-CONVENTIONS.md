@@ -66,7 +66,7 @@ To create understandable, self-documenting code:
   - Keep methods and classes short and focused on a single responsibility. Preferable maximum lengths:
     * Lambdas: 1 - 3 lines
     * Methods: less than 50 lines
-    * Anonymous classes: less than a 50 lines
+    * Anonymous classes: less than 50 lines
     * Inner classes: not much more than 50 lines
     * Classes: a few hundred lines
   - Be thoughtfully organised in terms of method order, package structure, and module usage
@@ -78,6 +78,8 @@ To create understandable, self-documenting code:
     * tx -> Transaction
     * IBFT -> Istanbul Byzantine Fault Tolerant (a consensus protocol)
     * EVM -> Ethereum Virtual Machine 
+    * P2P -> Peer to Peer
+    * RPC -> Remote Procedure Call
     
 # 3.2 Creating Code for Constant Refactoring and Evolving Design
 
