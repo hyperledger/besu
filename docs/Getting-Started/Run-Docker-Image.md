@@ -34,6 +34,9 @@ docker run pegasyseng/pantheon:1.0
     * [`--data-path`](../Reference/Pantheon-CLI-Syntax.md#data-path), see [Data Directory](#data-directory)
     * [`--config-file`](../Reference/Pantheon-CLI-Syntax.md#config), see [Custom Configuration File](#custom-configuration-file)
     * [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file), see [Custom Genesis File](#custom-genesis-file).
+    * [`--privacy-public-key-file`](../Reference/Pantheon-CLI-Syntax.md#privacy-public-key-file), see [Privacy Public Key File](#privacy-public-key-file).
+    * [`--rpc-http-authentication-credentials-file`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-authentication-credentials-file) and
+      [`--rpc-ws-authentication-credentials-file`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-authentication-credentials-file), see [Credentials Files](#credentials-files).
     * [`--node-private-key-file`](../Reference/Pantheon-CLI-Syntax.md#node-private-key-file). When running from the Docker image, 
     Pantheon always uses the key file in the [data directory](#data-directory). 
     * Host and port options, see [Exposing Ports](#exposing-ports). Host and port options are: 
@@ -137,6 +140,51 @@ Where `mygenesis.json` is your custom configuration file and `path` is the absol
     ```bash
     docker run --mount type=bind,source=/Users/username/pantheon/mygenesis.json,target=/etc/pantheon/genesis.json pegasyseng/pantheon:latest
     ```
+
+## Privacy Public Key File
+
+Specify a file containing the public key for the enclave. This is equivalent to specifying the `--privacy-public-key-file` option.     
+
+To run Pantheon specifying a privacy public key file: 
+```bash
+docker run --mount type=bind,source=</path/myprivacypublickeyfile>,target=/etc/pantheon/privacy_public_key pegasyseng/pantheon:latest
+```
+
+Where `myprivacypublickeyfile` is the file containing the public key and `path` is the absolute path to the file. 
+
+!!!example
+    ```bash
+    docker run --mount type=bind,source=/Users/username/pantheon/keyfile,target=/etc/pantheon/privacy_public_key pegasyseng/pantheon:latest
+    ```
+    
+!!!note
+    Privacy is under development and will be available in v1.1.
+
+## Credentials Files 
+
+Specify a [credentials file](../JSON-RPC-API/Authentication.md#credentials-file) for JSON-RPC API [authentication](../JSON-RPC-API/Authentication.md).
+
+To run Pantheon specifying a credentials file for HTTP JSON-RPC: 
+```bash
+docker run --mount type=bind,source=</path/myauthconfig.toml>,target=/etc/pantheon/rpc_http_auth_config.toml pegasyseng/pantheon:latest
+```
+
+To run Pantheon specifying a credentials file for WebSockets JSON-RPC: 
+```bash
+docker run --mount type=bind,source=</path/myauthconfig.toml>,target=/etc/pantheon/rpc_ws_auth_config.toml pegasyseng/pantheon:latest
+```
+
+Where `myauthconfig.toml` is the credentials file and `path` is the absolute path to the file. 
+
+!!! example
+    ```bash tab="HTTP"
+    docker run --mount type=bind,source=/Users/username/pantheon/myauthconfig.toml,target=/etc/pantheon/rpc_http_auth_config.toml pegasyseng/pantheon:latest
+    ```
+    
+    ```bash tab="WS"
+        docker run --mount type=bind,source=/Users/username/pantheon/myauthconfig.toml,target=/etc/pantheon/rpc_ws_auth_config.toml pegasyseng/pantheon:latest
+    ```
+    
 
 ## Exposing Ports
 
