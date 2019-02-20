@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.support;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.EventMultiplexer;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvents;
@@ -53,6 +55,7 @@ public class ValidatorPeer {
   private final List<MessageData> receivedMessages = Lists.newArrayList();
 
   private final EventMultiplexer localEventMultiplexer;
+  private long estimatedChainHeight = 0;
 
   public ValidatorPeer(
       final NodeParams nodeParams,
@@ -72,6 +75,10 @@ public class ValidatorPeer {
 
   public KeyPair getNodeKeys() {
     return nodeKeys;
+  }
+
+  public PeerConnection getPeerConnection() {
+    return peerConnection;
   }
 
   public Proposal injectProposal(final ConsensusRoundIdentifier rId, final Block block) {
@@ -146,5 +153,13 @@ public class ValidatorPeer {
 
   public KeyPair getNodeKeyPair() {
     return nodeKeys;
+  }
+
+  public void updateEstimatedChainHeight(final long estimatedChainHeight) {
+    this.estimatedChainHeight = estimatedChainHeight;
+  }
+
+  public void verifyEstimatedChainHeightEquals(final long expectedChainHeight) {
+    assertThat(estimatedChainHeight).isEqualTo(expectedChainHeight);
   }
 }

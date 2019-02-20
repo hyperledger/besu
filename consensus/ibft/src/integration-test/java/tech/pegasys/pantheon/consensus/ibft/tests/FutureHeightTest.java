@@ -74,8 +74,17 @@ public class FutureHeightTest {
     peers.getProposer().injectProposal(futureHeightRoundId, futureHeightBlock);
     peers.verifyNoMessagesReceived();
 
+    // verify that we have incremented the estimated height of the proposer.
+    peers
+        .getProposer()
+        .verifyEstimatedChainHeightEquals(futureHeightBlock.getHeader().getNumber() - 1);
+
     // Inject prepares and commits from all peers
     peers.prepareForNonProposing(futureHeightRoundId, futureHeightBlock.getHash());
+    peers.forNonProposing(
+        peer ->
+            peer.verifyEstimatedChainHeightEquals(futureHeightBlock.getHeader().getNumber() - 1));
+
     peers.commitForNonProposing(futureHeightRoundId, futureHeightBlock.getHash());
 
     peers.verifyNoMessagesReceived();
