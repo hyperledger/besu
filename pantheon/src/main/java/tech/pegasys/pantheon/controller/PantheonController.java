@@ -62,6 +62,7 @@ public interface PantheonController<C> extends Closeable {
           MainnetProtocolSchedule.fromConfig(configOptions, privacyParameters),
           syncConfig,
           miningParameters,
+          networkId,
           nodeKeys,
           privacyParameters,
           dataDirectory,
