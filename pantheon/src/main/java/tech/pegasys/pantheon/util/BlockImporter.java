@@ -162,7 +162,7 @@ public class BlockImporter {
     final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
     final boolean validHeader =
         blockHeaderValidator.validateHeader(
-            header, previousHeader, context, HeaderValidationMode.FULL);
+            header, previousHeader, context, HeaderValidationMode.DETACHED_ONLY);
     if (!validHeader) {
       throw new IllegalStateException("Invalid header at block number " + header.getNumber() + ".");
     }
@@ -177,7 +177,7 @@ public class BlockImporter {
       final tech.pegasys.pantheon.ethereum.core.BlockImporter<C> blockImporter =
           protocolSpec.getBlockImporter();
       final boolean blockImported =
-          blockImporter.importBlock(context, block, HeaderValidationMode.NONE);
+          blockImporter.importBlock(context, block, HeaderValidationMode.SKIP_DETACHED);
       if (!blockImported) {
         throw new IllegalStateException(
             "Invalid block at block number " + header.getNumber() + ".");

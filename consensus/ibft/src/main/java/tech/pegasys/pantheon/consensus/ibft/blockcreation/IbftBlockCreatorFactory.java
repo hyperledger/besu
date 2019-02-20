@@ -63,7 +63,7 @@ public class IbftBlockCreatorFactory {
   public IbftBlockCreator create(final BlockHeader parentHeader, final int round) {
     return new IbftBlockCreator(
         localAddress,
-        ph -> createExtraData(round),
+        ph -> createExtraData(round, ph),
         pendingTransactions,
         protocolContext,
         protocolSchedule,
@@ -84,8 +84,13 @@ public class IbftBlockCreatorFactory {
     return minTransactionGasPrice;
   }
 
-  public BytesValue createExtraData(final int round) {
-    final VoteTally voteTally = protocolContext.getConsensusState().getVoteTally();
+  public BytesValue createExtraData(final int round, final BlockHeader parentHeader) {
+    final VoteTally voteTally =
+        protocolContext
+            .getConsensusState()
+            .getVoteTallyCache()
+            .getVoteTallyAfterBlock(parentHeader);
+
     final Optional<ValidatorVote> proposal =
         protocolContext.getConsensusState().getVoteProposer().getVote(localAddress, voteTally);
 

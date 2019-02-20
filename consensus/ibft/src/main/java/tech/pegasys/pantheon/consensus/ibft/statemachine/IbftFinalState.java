@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.consensus.ibft.statemachine;
 
 import static tech.pegasys.pantheon.consensus.ibft.IbftHelpers.calculateRequiredValidatorQuorum;
 
-import tech.pegasys.pantheon.consensus.common.ValidatorProvider;
+import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.ibft.BlockTimer;
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.RoundTimer;
@@ -31,11 +31,10 @@ import java.util.Collection;
 
 /** This is the full data set, or context, required for many of the aspects of the IBFT workflow. */
 public class IbftFinalState {
-  private final ValidatorProvider validatorProvider;
+  private final VoteTallyCache voteTallyCache;
   private final KeyPair nodeKeys;
   private final Address localAddress;
   private final ProposerSelector proposerSelector;
-  private final ValidatorMulticaster validatorMulticaster;
   private final RoundTimer roundTimer;
   private final BlockTimer blockTimer;
   private final IbftBlockCreatorFactory blockCreatorFactory;
@@ -44,7 +43,7 @@ public class IbftFinalState {
   private final Clock clock;
 
   public IbftFinalState(
-      final ValidatorProvider validatorProvider,
+      final VoteTallyCache voteTallyCache,
       final KeyPair nodeKeys,
       final Address localAddress,
       final ProposerSelector proposerSelector,
@@ -54,11 +53,10 @@ public class IbftFinalState {
       final IbftBlockCreatorFactory blockCreatorFactory,
       final MessageFactory messageFactory,
       final Clock clock) {
-    this.validatorProvider = validatorProvider;
+    this.voteTallyCache = voteTallyCache;
     this.nodeKeys = nodeKeys;
     this.localAddress = localAddress;
     this.proposerSelector = proposerSelector;
-    this.validatorMulticaster = validatorMulticaster;
     this.roundTimer = roundTimer;
     this.blockTimer = blockTimer;
     this.blockCreatorFactory = blockCreatorFactory;
@@ -68,11 +66,11 @@ public class IbftFinalState {
   }
 
   public int getQuorum() {
-    return calculateRequiredValidatorQuorum(validatorProvider.getValidators().size());
+    return calculateRequiredValidatorQuorum(getValidators().size());
   }
 
   public Collection<Address> getValidators() {
-    return validatorProvider.getValidators();
+    return voteTallyCache.getVoteTallyAtHead().getValidators();
   }
 
   public KeyPair getNodeKeys() {

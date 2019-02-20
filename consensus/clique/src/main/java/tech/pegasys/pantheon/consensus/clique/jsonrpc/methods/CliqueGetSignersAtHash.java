@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.clique.jsonrpc.methods;
 
-import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
+import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;

@@ -14,9 +14,9 @@ package tech.pegasys.pantheon.consensus.ibft.headervalidationrules;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.consensus.ibft.IbftContextBuilder.setupContextWithValidators;
 import static tech.pegasys.pantheon.consensus.ibft.headervalidationrules.HeaderValidationTestHelpers.createProposedBlockHeader;
 
-import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -39,9 +39,8 @@ public class IbftValidatorsValidationRuleTest {
         Lists.newArrayList(
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
-    final VoteTally voteTally = new VoteTally(validators);
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
     final BlockHeader header = createProposedBlockHeader(validators, emptyList(), false);
 
@@ -53,13 +52,13 @@ public class IbftValidatorsValidationRuleTest {
 
     final List<Address> validators =
         Lists.newArrayList(
-            AddressHelpers.ofValue(3), AddressHelpers.ofValue(2), AddressHelpers.ofValue(1));
+            AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
-    final VoteTally voteTally = new VoteTally(validators);
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
-    final BlockHeader header = createProposedBlockHeader(validators, emptyList(), false);
+    final BlockHeader header =
+        createProposedBlockHeader(Lists.reverse(validators), emptyList(), false);
 
     assertThat(validatorsValidationRule.validate(header, null, context)).isFalse();
   }
@@ -74,9 +73,8 @@ public class IbftValidatorsValidationRuleTest {
         Lists.newArrayList(
             AddressHelpers.ofValue(2), AddressHelpers.ofValue(3), AddressHelpers.ofValue(4));
 
-    final VoteTally voteTally = new VoteTally(storedValidators);
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(storedValidators));
 
     final BlockHeader header = createProposedBlockHeader(reportedValidators, emptyList(), false);
 

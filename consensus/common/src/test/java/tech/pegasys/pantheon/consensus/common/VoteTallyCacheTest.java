@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.consensus.clique;
+package tech.pegasys.pantheon.consensus.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -24,11 +24,6 @@ import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.consensus.common.VoteType.DROP;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 
-import tech.pegasys.pantheon.consensus.common.EpochManager;
-import tech.pegasys.pantheon.consensus.common.ValidatorVote;
-import tech.pegasys.pantheon.consensus.common.VoteTally;
-import tech.pegasys.pantheon.consensus.common.VoteTallyUpdater;
-import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
@@ -39,7 +34,6 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -52,7 +46,7 @@ import org.mockito.ArgumentCaptor;
 
 public class VoteTallyCacheTest {
 
-  BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
+  private final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
   private Block createEmptyBlock(final long blockNumber, final Hash parentHash) {
     headerBuilder.number(blockNumber).parentHash(parentHash).coinbase(AddressHelpers.ofValue(0));
@@ -60,24 +54,21 @@ public class VoteTallyCacheTest {
         headerBuilder.buildHeader(), new BlockBody(Lists.emptyList(), Lists.emptyList()));
   }
 
-  MutableBlockchain blockChain;
+  private MutableBlockchain blockChain;
   private Block genesisBlock;
   private Block block_1;
   private Block block_2;
 
   private final List<Address> validators = Lists.newArrayList();
 
+  private final BlockInterface blockInterface = mock(BlockInterface.class);
+
   @Before
   public void constructThreeBlockChain() {
     for (int i = 0; i < 3; i++) {
       validators.add(AddressHelpers.ofValue(i));
     }
-    headerBuilder.extraData(
-        new CliqueExtraData(
-                BytesValue.wrap(new byte[32]),
-                Signature.create(BigInteger.TEN, BigInteger.TEN, (byte) 1),
-                validators)
-            .encode());
+    headerBuilder.extraData(BytesValue.wrap(new byte[32]));
 
     genesisBlock = createEmptyBlock(0, Hash.ZERO);
 
@@ -88,13 +79,15 @@ public class VoteTallyCacheTest {
 
     blockChain.appendBlock(block_1, Lists.emptyList());
     blockChain.appendBlock(block_2, Lists.emptyList());
+
+    when(blockInterface.validatorsInBlock(any())).thenReturn(validators);
   }
 
   @Test
   public void parentBlockVoteTallysAreCachedWhenChildVoteTallyRequested() {
     final VoteTallyUpdater tallyUpdater = mock(VoteTallyUpdater.class);
     final VoteTallyCache cache =
-        new VoteTallyCache(blockChain, tallyUpdater, new EpochManager(30_000));
+        new VoteTallyCache(blockChain, tallyUpdater, new EpochManager(30_000), blockInterface);
 
     // The votetallyUpdater should be invoked for the requested block, and all parents including
     // the epoch (genesis) block.
@@ -120,7 +113,7 @@ public class VoteTallyCacheTest {
   public void exceptionThrownIfNoParentBlockExists() {
     final VoteTallyUpdater tallyUpdater = mock(VoteTallyUpdater.class);
     final VoteTallyCache cache =
-        new VoteTallyCache(blockChain, tallyUpdater, new EpochManager(30_000));
+        new VoteTallyCache(blockChain, tallyUpdater, new EpochManager(30_000), blockInterface);
 
     final Block orphanBlock = createEmptyBlock(4, Hash.ZERO);
 
@@ -134,7 +127,7 @@ public class VoteTallyCacheTest {
   public void walkBackStopsWhenACachedVoteTallyIsFound() {
     final VoteTallyUpdater tallyUpdater = mock(VoteTallyUpdater.class);
     final VoteTallyCache cache =
-        new VoteTallyCache(blockChain, tallyUpdater, new EpochManager(30_000));
+        new VoteTallyCache(blockChain, tallyUpdater, new EpochManager(30_000), blockInterface);
 
     // Load the Cache up to block_2
     cache.getVoteTallyAfterBlock(block_2.getHeader());
@@ -159,7 +152,6 @@ public class VoteTallyCacheTest {
   @Test
   public void integrationTestingVotesBeingApplied() {
     final EpochManager epochManager = new EpochManager(30_000);
-    final CliqueBlockInterface blockInterface = mock(CliqueBlockInterface.class);
     final VoteTallyUpdater tallyUpdater = new VoteTallyUpdater(epochManager, blockInterface);
 
     when(blockInterface.extractVoteFromHeader(block_1.getHeader()))
@@ -168,7 +160,8 @@ public class VoteTallyCacheTest {
     when(blockInterface.extractVoteFromHeader(block_2.getHeader()))
         .thenReturn(Optional.of(new ValidatorVote(DROP, validators.get(1), validators.get(2))));
 
-    final VoteTallyCache cache = new VoteTallyCache(blockChain, tallyUpdater, epochManager);
+    final VoteTallyCache cache =
+        new VoteTallyCache(blockChain, tallyUpdater, epochManager, blockInterface);
 
     VoteTally voteTally = cache.getVoteTallyAfterBlock(block_1.getHeader());
     assertThat(voteTally.getValidators()).containsAll(validators);

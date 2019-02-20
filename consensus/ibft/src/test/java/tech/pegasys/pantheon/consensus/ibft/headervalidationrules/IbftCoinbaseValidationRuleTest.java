@@ -13,8 +13,8 @@
 package tech.pegasys.pantheon.consensus.ibft.headervalidationrules;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.consensus.ibft.IbftContextBuilder.setupContextWithValidators;
 
-import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
 import tech.pegasys.pantheon.consensus.ibft.IbftExtraDataFixture;
@@ -68,9 +68,8 @@ public class IbftCoinbaseValidationRuleTest {
 
     final List<KeyPair> committers = Lists.newArrayList(proposerKeyPair);
 
-    final VoteTally voteTally = new VoteTally(validators);
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
     final IbftCoinbaseValidationRule coinbaseValidationRule = new IbftCoinbaseValidationRule();
 
@@ -91,9 +90,8 @@ public class IbftCoinbaseValidationRuleTest {
 
     final List<KeyPair> committers = Lists.newArrayList(otherValidatorKeyPair);
 
-    final VoteTally voteTally = new VoteTally(validators);
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
     final IbftCoinbaseValidationRule coinbaseValidationRule = new IbftCoinbaseValidationRule();
 

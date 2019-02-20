@@ -22,6 +22,7 @@ import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.create
 import tech.pegasys.pantheon.consensus.clique.headervalidationrules.SignerRateLimitValidationRule;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;

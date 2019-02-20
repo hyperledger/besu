@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.Optional;
@@ -46,9 +47,6 @@ public class ProposerSelector {
 
   private final Blockchain blockchain;
 
-  /** Provides the current list of validators */
-  private final ValidatorProvider validators;
-
   /**
    * If set, will cause the proposer to change on successful addition of a block. Otherwise, the
    * previously successful proposer will propose the next block as well.
@@ -59,11 +57,9 @@ public class ProposerSelector {
 
   public ProposerSelector(
       final Blockchain blockchain,
-      final ValidatorProvider validators,
       final BlockInterface blockInterface,
       final boolean changeEachBlock) {
     this.blockchain = blockchain;
-    this.validators = validators;
     this.blockInterface = blockInterface;
     this.changeEachBlock = changeEachBlock;
   }
@@ -75,17 +71,24 @@ public class ProposerSelector {
    * @return The address of the node which is to propose a block for the provided Round.
    */
   public Address selectProposerForRound(final ConsensusRoundIdentifier roundIdentifier) {
-
     checkArgument(roundIdentifier.getRoundNumber() >= 0);
     checkArgument(roundIdentifier.getSequenceNumber() > 0);
 
     final long prevBlockNumber = roundIdentifier.getSequenceNumber() - 1;
-    final Address prevBlockProposer = getProposerOfBlock(prevBlockNumber);
+    final Optional<BlockHeader> maybeParentHeader = blockchain.getBlockHeader(prevBlockNumber);
+    if (!maybeParentHeader.isPresent()) {
+      LOG.trace("Unable to determine proposer for requested block");
+      throw new RuntimeException("Unable to determine past proposer");
+    }
 
-    if (!validators.getValidators().contains(prevBlockProposer)) {
-      return handleMissingProposer(prevBlockProposer, roundIdentifier);
+    final BlockHeader blockHeader = maybeParentHeader.get();
+    final Address prevBlockProposer = blockInterface.getProposerOfBlock(blockHeader);
+    final Collection<Address> validatorsForRound = blockInterface.validatorsInBlock(blockHeader);
+
+    if (!validatorsForRound.contains(prevBlockProposer)) {
+      return handleMissingProposer(prevBlockProposer, validatorsForRound, roundIdentifier);
     } else {
-      return handleWithExistingProposer(prevBlockProposer, roundIdentifier);
+      return handleWithExistingProposer(prevBlockProposer, validatorsForRound, roundIdentifier);
     }
   }
 
@@ -96,8 +99,10 @@ public class ProposerSelector {
    * <p>And validators will change from there.
    */
   private Address handleMissingProposer(
-      final Address prevBlockProposer, final ConsensusRoundIdentifier roundIdentifier) {
-    final NavigableSet<Address> validatorSet = new TreeSet<>(validators.getValidators());
+      final Address prevBlockProposer,
+      final Collection<Address> validatorsForRound,
+      final ConsensusRoundIdentifier roundIdentifier) {
+    final NavigableSet<Address> validatorSet = new TreeSet<>(validatorsForRound);
     final SortedSet<Address> latterValidators = validatorSet.tailSet(prevBlockProposer, false);
     final Address nextProposer;
     if (latterValidators.isEmpty()) {
@@ -108,57 +113,37 @@ public class ProposerSelector {
       // Else, use the first validator after the dropped entry.
       nextProposer = latterValidators.first();
     }
-    return calculateRoundSpecificValidator(nextProposer, roundIdentifier.getRoundNumber());
+    return calculateRoundSpecificValidator(
+        nextProposer, validatorsForRound, roundIdentifier.getRoundNumber());
   }
 
   /**
    * If the previous Proposer is still a validator - determine what offset should be applied for the
    * given round - factoring in a proposer change on the new block.
-   *
-   * @param prevBlockProposer
-   * @param roundIdentifier
-   * @return
    */
   private Address handleWithExistingProposer(
-      final Address prevBlockProposer, final ConsensusRoundIdentifier roundIdentifier) {
+      final Address prevBlockProposer,
+      final Collection<Address> validatorsForRound,
+      final ConsensusRoundIdentifier roundIdentifier) {
     int indexOffsetFromPrevBlock = roundIdentifier.getRoundNumber();
     if (changeEachBlock) {
       indexOffsetFromPrevBlock += 1;
     }
-    return calculateRoundSpecificValidator(prevBlockProposer, indexOffsetFromPrevBlock);
+    return calculateRoundSpecificValidator(
+        prevBlockProposer, validatorsForRound, indexOffsetFromPrevBlock);
   }
 
   /**
    * Given Round 0 of the given height should start from given proposer (baseProposer) - determine
    * which validator should be used given the indexOffset.
-   *
-   * @param baseProposer
-   * @param indexOffset
-   * @return
    */
   private Address calculateRoundSpecificValidator(
-      final Address baseProposer, final int indexOffset) {
-    final List<Address> currentValidatorList = new ArrayList<>(validators.getValidators());
+      final Address baseProposer,
+      final Collection<Address> validatorsForRound,
+      final int indexOffset) {
+    final List<Address> currentValidatorList = new ArrayList<>(validatorsForRound);
     final int prevProposerIndex = currentValidatorList.indexOf(baseProposer);
     final int roundValidatorIndex = (prevProposerIndex + indexOffset) % currentValidatorList.size();
     return currentValidatorList.get(roundValidatorIndex);
-  }
-
-  /**
-   * Determines the proposer of an existing block, based on the proposer signature in the extra
-   * data.
-   *
-   * @param blockNumber The index of the block in the chain being queried.
-   * @return The unique identifier fo the node which proposed the block number in question.
-   */
-  private Address getProposerOfBlock(final long blockNumber) {
-    final Optional<BlockHeader> maybeBlockHeader = blockchain.getBlockHeader(blockNumber);
-    if (maybeBlockHeader.isPresent()) {
-      final BlockHeader blockHeader = maybeBlockHeader.get();
-      return blockInterface.getProposerOfBlock(blockHeader);
-    } else {
-      LOG.trace("Unable to determine proposer for requested block");
-      throw new RuntimeException("Unable to determine past proposer");
-    }
   }
 }

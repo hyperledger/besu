@@ -18,7 +18,7 @@ import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.config.IbftConfigOptions;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
-import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.common.VoteTallyUpdater;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.jsonrpc.IbftJsonRpcMethodsFactory;
@@ -112,12 +112,15 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
             metricsSystem,
             (blockchain, worldStateArchive) -> {
               final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
-              final VoteTally voteTally =
-                  new VoteTallyUpdater(epochManager, new IbftLegacyBlockInterface())
-                      .buildVoteTallyFromBlockchain(blockchain);
+              final VoteTallyCache voteTallyCache =
+                  new VoteTallyCache(
+                      blockchain,
+                      new VoteTallyUpdater(epochManager, new IbftLegacyBlockInterface()),
+                      epochManager,
+                      new IbftLegacyBlockInterface());
 
               final VoteProposer voteProposer = new VoteProposer();
-              return new IbftContext(voteTally, voteProposer);
+              return new IbftContext(voteTallyCache, voteProposer);
             });
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 

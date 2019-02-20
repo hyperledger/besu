@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.consensus.clique;
 import tech.pegasys.pantheon.consensus.clique.blockcreation.CliqueProposerSelector;
 import tech.pegasys.pantheon.consensus.common.ValidatorProvider;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;

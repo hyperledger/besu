@@ -10,13 +10,10 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.consensus.clique;
+package tech.pegasys.pantheon.consensus.common;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import tech.pegasys.pantheon.consensus.common.EpochManager;
-import tech.pegasys.pantheon.consensus.common.VoteTally;
-import tech.pegasys.pantheon.consensus.common.VoteTallyUpdater;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
@@ -37,17 +34,26 @@ public class VoteTallyCache {
 
   private final Cache<Hash, VoteTally> voteTallyCache =
       CacheBuilder.newBuilder().maximumSize(100).build();
+  private BlockInterface blockInterface;
 
   public VoteTallyCache(
       final Blockchain blockchain,
       final VoteTallyUpdater voteTallyUpdater,
-      final EpochManager epochManager) {
+      final EpochManager epochManager,
+      final BlockInterface blockInterface) {
+
     checkNotNull(blockchain);
     checkNotNull(voteTallyUpdater);
     checkNotNull(epochManager);
+    checkNotNull(blockInterface);
     this.blockchain = blockchain;
     this.voteTallyUpdater = voteTallyUpdater;
     this.epochManager = epochManager;
+    this.blockInterface = blockInterface;
+  }
+
+  public VoteTally getVoteTallyAtHead() {
+    return getVoteTallyAfterBlock(blockchain.getChainHeadHeader());
   }
 
   /**
@@ -94,7 +100,6 @@ public class VoteTallyCache {
 
   private VoteTally getValidatorsAfter(final BlockHeader header) {
     if (epochManager.isEpochBlock(header.getNumber())) {
-      final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
       return new VoteTally(blockInterface.validatorsInBlock(header));
     }
 

@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.consensus.clique.jsonrpc;
 
 import tech.pegasys.pantheon.consensus.clique.CliqueBlockInterface;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
-import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.CliqueGetSigners;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.CliqueGetSignersAtHash;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.CliqueProposals;
@@ -22,6 +21,7 @@ import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.Discard;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.Propose;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
+import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.common.VoteTallyUpdater;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
@@ -73,6 +73,7 @@ public class CliqueJsonRpcMethodsFactory {
     final EpochManager epochManager = context.getConsensusState().getEpochManager();
     final VoteTallyUpdater voteTallyUpdater =
         new VoteTallyUpdater(epochManager, new CliqueBlockInterface());
-    return new VoteTallyCache(blockchain, voteTallyUpdater, epochManager);
+    return new VoteTallyCache(
+        blockchain, voteTallyUpdater, epochManager, new CliqueBlockInterface());
   }
 }
