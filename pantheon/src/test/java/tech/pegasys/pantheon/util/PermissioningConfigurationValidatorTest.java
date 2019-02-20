@@ -58,6 +58,7 @@ public class PermissioningConfigurationValidatorTest {
 
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG);
     final Path toml = Files.createTempFile("toml", "");
+    toml.toFile().deleteOnExit();
     Files.write(toml, Resources.toByteArray(configFile));
 
     PermissioningConfiguration permissioningConfiguration =

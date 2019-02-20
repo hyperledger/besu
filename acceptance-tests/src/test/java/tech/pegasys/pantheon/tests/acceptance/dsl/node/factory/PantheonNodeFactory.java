@@ -223,6 +223,7 @@ public class PantheonNodeFactory {
         PermissioningConfiguration.createDefault();
     permissioningConfiguration.setNodeWhitelist(nodesWhitelist);
     File tempFile = createTempPermissioningConfigurationFile();
+    tempFile.deleteOnExit();
     permissioningConfiguration.setConfigurationFilePath(tempFile.getPath());
     initPermissioningConfigurationFile(
         WhitelistPersistor.WHITELIST_TYPE.NODES,

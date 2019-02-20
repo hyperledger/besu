@@ -43,6 +43,7 @@ public class WhitelistPersistorTest {
   public void setUp() throws IOException {
     List<String> lines = Lists.newArrayList(nodesWhitelist, accountsWhitelist);
     tempFile = File.createTempFile("test", "test");
+    tempFile.deleteOnExit();
     Files.write(tempFile.toPath(), lines, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
     whitelistPersistor = new WhitelistPersistor(tempFile.getAbsolutePath());
   }
