@@ -64,7 +64,7 @@ public class EthPeers {
     }
   }
 
-  EthPeer peer(final PeerConnection peerConnection) {
+  public EthPeer peer(final PeerConnection peerConnection) {
     return connections.get(peerConnection);
   }
 

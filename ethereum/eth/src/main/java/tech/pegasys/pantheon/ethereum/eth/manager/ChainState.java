@@ -88,11 +88,13 @@ public class ChainState {
     }
   }
 
-  private void updateHeightEstimate(final long blockNumber) {
-    estimatedHeightKnown = true;
-    if (blockNumber > estimatedHeight) {
-      estimatedHeight = blockNumber;
-      estimatedHeightListeners.forEach(e -> e.onEstimatedHeightChanged(estimatedHeight));
+  public void updateHeightEstimate(final long blockNumber) {
+    synchronized (this) {
+      estimatedHeightKnown = true;
+      if (blockNumber > estimatedHeight) {
+        estimatedHeight = blockNumber;
+        estimatedHeightListeners.forEach(e -> e.onEstimatedHeightChanged(estimatedHeight));
+      }
     }
   }
 

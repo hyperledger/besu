@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.common.VoteTallyUpdater;
 import tech.pegasys.pantheon.consensus.ibft.BlockTimer;
+import tech.pegasys.pantheon.consensus.ibft.EthSynchronizerUpdater;
 import tech.pegasys.pantheon.consensus.ibft.EventMultiplexer;
 import tech.pegasys.pantheon.consensus.ibft.IbftBlockInterface;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
@@ -56,6 +57,7 @@ import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.sync.DefaultSynchronizer;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
@@ -168,9 +170,10 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             metricsSystem);
     final SubProtocol ethSubProtocol = EthProtocol.get();
 
+    final EthContext ethContext = ethProtocolManager.ethContext();
+
     final SyncState syncState =
-        new SyncState(
-            protocolContext.getBlockchain(), ethProtocolManager.ethContext().getEthPeers());
+        new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
     final Synchronizer synchronizer =
         new DefaultSynchronizer<>(
             syncConfig,
@@ -183,8 +186,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             metricsSystem);
 
     final TransactionPool transactionPool =
-        TransactionPoolFactory.createTransactionPool(
-            protocolSchedule, protocolContext, ethProtocolManager.ethContext());
+        TransactionPoolFactory.createTransactionPool(protocolSchedule, protocolContext, ethContext);
 
     final IbftEventQueue ibftEventQueue = new IbftEventQueue(ibftConfig.getMessageQueueLimit());
 
@@ -250,7 +252,8 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
                     messageValidatorFactory),
                 messageValidatorFactory),
             gossiper,
-            ibftConfig.getDuplicateMessageLimit());
+            ibftConfig.getDuplicateMessageLimit(),
+            new EthSynchronizerUpdater(ethContext.getEthPeers()));
     ibftController.start();
 
     final EventMultiplexer eventMultiplexer = new EventMultiplexer(ibftController);

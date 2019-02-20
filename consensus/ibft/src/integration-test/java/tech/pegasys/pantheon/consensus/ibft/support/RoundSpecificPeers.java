@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
@@ -122,6 +123,10 @@ public class RoundSpecificPeers {
 
   public void commitForNonProposing(final ConsensusRoundIdentifier roundId, final Hash hash) {
     nonProposingPeers.forEach(peer -> peer.injectCommit(roundId, hash));
+  }
+
+  public void forNonProposing(final Consumer<ValidatorPeer> assertion) {
+    nonProposingPeers.forEach(assertion);
   }
 
   public Collection<SignedData<PreparePayload>> createSignedPreparePayloadOfNonProposing(
