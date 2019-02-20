@@ -38,8 +38,9 @@ public class IbftCoinbaseValidationRule implements AttachedBlockHeaderValidation
       final BlockHeader parent,
       final ProtocolContext<IbftContext> context) {
 
-    final ValidatorProvider validatorProvider = context.getConsensusState().getVoteTally();
-    Address proposer = header.getCoinbase();
+    final ValidatorProvider validatorProvider =
+        context.getConsensusState().getVoteTallyCache().getVoteTallyAfterBlock(parent);
+    final Address proposer = header.getCoinbase();
 
     final Collection<Address> storedValidators = validatorProvider.getValidators();
 

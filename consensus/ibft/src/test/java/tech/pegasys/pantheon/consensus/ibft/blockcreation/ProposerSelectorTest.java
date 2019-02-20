@@ -19,7 +19,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.consensus.common.BlockInterface;
-import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
@@ -28,6 +27,7 @@ import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Optional;
 
@@ -39,9 +39,10 @@ public class ProposerSelectorTest {
   private final BlockInterface blockInterface = mock(BlockInterface.class);
 
   private Blockchain createMockedBlockChainWithHeadOf(
-      final long blockNumber, final Address proposer) {
+      final long blockNumber, final Address proposer, final Collection<Address> validators) {
 
     when(blockInterface.getProposerOfBlock(any())).thenReturn(proposer);
+    when(blockInterface.validatorsInBlock(any())).thenReturn(validators);
 
     final BlockHeaderTestFixture headerBuilderFixture = new BlockHeaderTestFixture();
     headerBuilderFixture.number(blockNumber);
@@ -87,12 +88,11 @@ public class ProposerSelectorTest {
     final long PREV_BLOCK_NUMBER = 2;
     final Address localAddr = AddressHelpers.ofValue(10); // arbitrarily selected
 
-    final Blockchain blockchain = createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr);
-
     final LinkedList<Address> validatorList = createValidatorList(localAddr, 0, 4);
-    final VoteTally voteTally = new VoteTally(validatorList);
+    final Blockchain blockchain =
+        createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
-    final ProposerSelector uut = new ProposerSelector(blockchain, voteTally, blockInterface, true);
+    final ProposerSelector uut = new ProposerSelector(blockchain, blockInterface, true);
 
     final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(PREV_BLOCK_NUMBER + 1, 0);
 
@@ -105,12 +105,12 @@ public class ProposerSelectorTest {
   public void lastValidatorInListValidatedPreviousBlockSoFirstIsNextProposer() {
     final long PREV_BLOCK_NUMBER = 2;
     final Address localAddr = AddressHelpers.ofValue(10); // arbitrarily selected
-    final Blockchain blockchain = createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr);
 
     final LinkedList<Address> validatorList = createValidatorList(localAddr, 4, 0);
-    final VoteTally voteTally = new VoteTally(validatorList);
+    final Blockchain blockchain =
+        createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
-    final ProposerSelector uut = new ProposerSelector(blockchain, voteTally, blockInterface, true);
+    final ProposerSelector uut = new ProposerSelector(blockchain, blockInterface, true);
 
     final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(PREV_BLOCK_NUMBER + 1, 0);
 
@@ -125,11 +125,11 @@ public class ProposerSelectorTest {
     final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(PREV_BLOCK_NUMBER + 1, 0);
 
     final Address localAddr = AddressHelpers.ofValue(10); // arbitrarily selected
-    final Blockchain blockchain = createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr);
     final LinkedList<Address> validatorList = createValidatorList(localAddr, 4, 0);
-    final VoteTally voteTally = new VoteTally(validatorList);
+    final Blockchain blockchain =
+        createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
-    final ProposerSelector uut = new ProposerSelector(blockchain, voteTally, blockInterface, false);
+    final ProposerSelector uut = new ProposerSelector(blockchain, blockInterface, false);
     final Address nextProposer = uut.selectProposerForRound(roundId);
 
     assertThat(nextProposer).isEqualTo(localAddr);
@@ -141,12 +141,12 @@ public class ProposerSelectorTest {
     ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(PREV_BLOCK_NUMBER + 1, 0);
 
     final Address localAddr = AddressHelpers.ofValue(10); // arbitrarily selected
-    final Blockchain blockchain = createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr);
 
     final LinkedList<Address> validatorList = createValidatorList(localAddr, 4, 0);
-    final VoteTally voteTally = new VoteTally(validatorList);
+    final Blockchain blockchain =
+        createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
-    final ProposerSelector uut = new ProposerSelector(blockchain, voteTally, blockInterface, false);
+    final ProposerSelector uut = new ProposerSelector(blockchain, blockInterface, false);
     assertThat(uut.selectProposerForRound(roundId)).isEqualTo(localAddr);
 
     roundId = new ConsensusRoundIdentifier(PREV_BLOCK_NUMBER + 1, 1);
@@ -162,7 +162,6 @@ public class ProposerSelectorTest {
     final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(PREV_BLOCK_NUMBER + 1, 0);
 
     final Address localAddr = AddressHelpers.ofValue(10); // arbitrarily selected
-    final Blockchain blockchain = createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr);
 
     // LocalAddr will be in index 2 - the next proposer will also be in 2 (as prev proposer is
     // removed)
@@ -170,9 +169,10 @@ public class ProposerSelectorTest {
     validatorList.remove(localAddr);
 
     // Note the signer of the Previous block was not included.
-    final VoteTally voteTally = new VoteTally(validatorList);
+    final Blockchain blockchain =
+        createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
-    final ProposerSelector uut = new ProposerSelector(blockchain, voteTally, blockInterface, false);
+    final ProposerSelector uut = new ProposerSelector(blockchain, blockInterface, false);
 
     assertThat(uut.selectProposerForRound(roundId)).isEqualTo(validatorList.get(2));
   }
@@ -183,17 +183,16 @@ public class ProposerSelectorTest {
     final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(PREV_BLOCK_NUMBER + 1, 0);
 
     final Address localAddr = AddressHelpers.ofValue(10); // arbitrarily selected
-    final Blockchain blockchain = createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr);
 
     // LocalAddr will be in index 2 - the next proposer will also be in 2 (as prev proposer is
     // removed)
     final LinkedList<Address> validatorList = createValidatorList(localAddr, 2, 2);
     validatorList.remove(localAddr);
 
-    // Note the signer of the Previous block was not included.
-    final VoteTally voteTally = new VoteTally(validatorList);
+    final Blockchain blockchain =
+        createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
-    final ProposerSelector uut = new ProposerSelector(blockchain, voteTally, blockInterface, true);
+    final ProposerSelector uut = new ProposerSelector(blockchain, blockInterface, true);
 
     assertThat(uut.selectProposerForRound(roundId)).isEqualTo(validatorList.get(2));
   }
@@ -204,7 +203,6 @@ public class ProposerSelectorTest {
     final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(PREV_BLOCK_NUMBER + 1, 0);
 
     final Address localAddr = AddressHelpers.ofValue(10); // arbitrarily selected
-    final Blockchain blockchain = createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr);
 
     // LocalAddr will be in index 2 - the next proposer will also be in 2 (as prev proposer is
     // removed)
@@ -212,9 +210,10 @@ public class ProposerSelectorTest {
     validatorList.remove(localAddr);
 
     // Note the signer of the Previous block was not included.
-    final VoteTally voteTally = new VoteTally(validatorList);
+    final Blockchain blockchain =
+        createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
-    final ProposerSelector uut = new ProposerSelector(blockchain, voteTally, blockInterface, false);
+    final ProposerSelector uut = new ProposerSelector(blockchain, blockInterface, false);
 
     assertThat(uut.selectProposerForRound(roundId)).isEqualTo(validatorList.get(0));
   }

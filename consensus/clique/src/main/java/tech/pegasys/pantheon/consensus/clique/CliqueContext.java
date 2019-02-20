@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.consensus.clique;
 
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
+import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
 
 /**
  * Holds the data which lives "in parallel" with the importation of blocks etc. when using the

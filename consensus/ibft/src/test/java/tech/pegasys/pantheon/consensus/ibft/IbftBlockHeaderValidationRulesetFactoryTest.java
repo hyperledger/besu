@@ -15,9 +15,10 @@ package tech.pegasys.pantheon.consensus.ibft;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.pantheon.consensus.ibft.IbftProtocolContextFixture.protocolContext;
+import static tech.pegasys.pantheon.consensus.ibft.IbftContextBuilder.setupContextWithValidators;
 
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
@@ -28,12 +29,17 @@ import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 import org.junit.Test;
 
 public class IbftBlockHeaderValidationRulesetFactoryTest {
+
+  private final ProtocolContext<IbftContext> protocolContext(final Collection<Address> validators) {
+    return new ProtocolContext<>(null, null, setupContextWithValidators(validators));
+  }
 
   @Test
   public void ibftValidateHeaderPasses() {

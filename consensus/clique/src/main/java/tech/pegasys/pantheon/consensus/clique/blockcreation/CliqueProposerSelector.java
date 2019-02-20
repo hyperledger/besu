@@ -14,8 +14,8 @@ package tech.pegasys.pantheon.consensus.clique.blockcreation;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import tech.pegasys.pantheon.consensus.clique.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 

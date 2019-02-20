@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.network;
 
-import tech.pegasys.pantheon.consensus.common.ValidatorProvider;
+import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
@@ -38,10 +38,10 @@ public class ValidatorPeers implements ValidatorMulticaster, PeerConnectionTrack
   private static final String PROTOCOL_NAME = "IBF";
 
   private final Map<Address, PeerConnection> peerConnections = Maps.newConcurrentMap();
-  private final ValidatorProvider validatorProvider;
+  private final VoteTallyCache voteTallyCache;
 
-  public ValidatorPeers(final ValidatorProvider validatorProvider) {
-    this.validatorProvider = validatorProvider;
+  public ValidatorPeers(final VoteTallyCache voteTallyCache) {
+    this.voteTallyCache = voteTallyCache;
   }
 
   @Override
@@ -58,14 +58,13 @@ public class ValidatorPeers implements ValidatorMulticaster, PeerConnectionTrack
 
   @Override
   public void send(final MessageData message) {
-    final Collection<Address> validators = validatorProvider.getValidators();
-    sendMessageToSpecificAddresses(validators, message);
+    sendMessageToSpecificAddresses(getLatestValidators(), message);
   }
 
   @Override
   public void send(final MessageData message, final Collection<Address> blackList) {
     final Collection<Address> includedValidators =
-        validatorProvider.getValidators().stream()
+        getLatestValidators().stream()
             .filter(a -> !blackList.contains(a))
             .collect(Collectors.toSet());
     sendMessageToSpecificAddresses(includedValidators, message);
@@ -89,5 +88,9 @@ public class ValidatorPeers implements ValidatorMulticaster, PeerConnectionTrack
                     connection.getPeer());
               }
             });
+  }
+
+  private Collection<Address> getLatestValidators() {
+    return voteTallyCache.getVoteTallyAtHead().getValidators();
   }
 }

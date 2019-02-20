@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.consensus.ibftlegacy.headervalidationrules;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.consensus.ibft.IbftContextBuilder.setupContextWithValidators;
 
 import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
@@ -103,9 +104,8 @@ public class IbftExtraDataValidationRuleTest {
         Address.extract(Hash.hash(proposerKeyPair.getPublicKey().getEncodedBytes()));
 
     final List<Address> validators = singletonList(proposerAddress);
-    final VoteTally voteTally = new VoteTally(validators);
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
     final IbftExtraDataValidationRule extraDataValidationRule =
         new IbftExtraDataValidationRule(true);
@@ -130,9 +130,8 @@ public class IbftExtraDataValidationRuleTest {
         Address.extract(Hash.hash(proposerKeyPair.getPublicKey().getEncodedBytes()));
 
     final List<Address> validators = singletonList(proposerAddress);
-    final VoteTally voteTally = new VoteTally(validators);
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
     final IbftExtraDataValidationRule extraDataValidationRule =
         new IbftExtraDataValidationRule(true);
@@ -158,9 +157,8 @@ public class IbftExtraDataValidationRuleTest {
         Lists.newArrayList(
             AddressHelpers.calculateAddressWithRespectTo(proposerAddress, 1), proposerAddress);
 
-    final VoteTally voteTally = new VoteTally(validators);
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
     final IbftExtraDataValidationRule extraDataValidationRule =
         new IbftExtraDataValidationRule(true);
@@ -190,7 +188,7 @@ public class IbftExtraDataValidationRuleTest {
 
     final VoteTally voteTally = new VoteTally(validators);
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
     final IbftExtraDataValidationRule extraDataValidationRule =
         new IbftExtraDataValidationRule(true);
@@ -216,16 +214,17 @@ public class IbftExtraDataValidationRuleTest {
 
     final List<Address> validators = Lists.newArrayList(proposerAddress);
 
-    final VoteTally voteTally = new VoteTally(validators);
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
     final IbftExtraDataValidationRule extraDataValidationRule =
         new IbftExtraDataValidationRule(true);
 
     // Add another validator to the list reported in the IbftExtraData (note, as the
-    validators.add(AddressHelpers.calculateAddressWithRespectTo(proposerAddress, 1));
-    BlockHeader header = createProposedBlockHeader(proposerKeyPair, validators);
+    final List<Address> extraDataValidators =
+        Lists.newArrayList(
+            proposerAddress, AddressHelpers.calculateAddressWithRespectTo(proposerAddress, 1));
+    BlockHeader header = createProposedBlockHeader(proposerKeyPair, extraDataValidators);
 
     // Insert an extraData block with committer seals.
     final IbftExtraData commitedExtraData =
@@ -245,7 +244,6 @@ public class IbftExtraDataValidationRuleTest {
         Address.extract(Hash.hash(proposerKeyPair.getPublicKey().getEncodedBytes()));
 
     final List<Address> validators = singletonList(proposerAddress);
-    final VoteTally voteTally = new VoteTally(validators);
 
     BlockHeader header = createProposedBlockHeader(proposerKeyPair, validators);
 
@@ -257,7 +255,7 @@ public class IbftExtraDataValidationRuleTest {
     header = builder.buildHeader();
 
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
     final IbftExtraDataValidationRule extraDataValidationRule =
         new IbftExtraDataValidationRule(true);
 
@@ -323,7 +321,7 @@ public class IbftExtraDataValidationRuleTest {
     header = builder.buildHeader();
 
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
     final IbftExtraDataValidationRule extraDataValidationRule =
         new IbftExtraDataValidationRule(true);
 

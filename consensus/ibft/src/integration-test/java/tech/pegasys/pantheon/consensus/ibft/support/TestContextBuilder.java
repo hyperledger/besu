@@ -21,7 +21,7 @@ import tech.pegasys.pantheon.config.StubGenesisConfigOptions;
 import tech.pegasys.pantheon.consensus.common.BlockInterface;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
-import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.common.VoteTallyUpdater;
 import tech.pegasys.pantheon.consensus.ibft.BlockTimer;
 import tech.pegasys.pantheon.consensus.ibft.EventMultiplexer;
@@ -249,14 +249,19 @@ public class TestContextBuilder {
     final EpochManager epochManager = new EpochManager(EPOCH_LENGTH);
 
     final BlockInterface blockInterface = new IbftBlockInterface();
-    final VoteTally voteTally =
-        new VoteTallyUpdater(epochManager, blockInterface).buildVoteTallyFromBlockchain(blockChain);
+
+    final VoteTallyCache voteTallyCache =
+        new VoteTallyCache(
+            blockChain,
+            new VoteTallyUpdater(epochManager, blockInterface),
+            epochManager,
+            new IbftBlockInterface());
 
     final VoteProposer voteProposer = new VoteProposer();
 
     final ProtocolContext<IbftContext> protocolContext =
         new ProtocolContext<>(
-            blockChain, worldStateArchive, new IbftContext(voteTally, voteProposer));
+            blockChain, worldStateArchive, new IbftContext(voteTallyCache, voteProposer));
 
     final IbftBlockCreatorFactory blockCreatorFactory =
         new IbftBlockCreatorFactory(
@@ -268,11 +273,11 @@ public class TestContextBuilder {
             Util.publicKeyToAddress(nodeKeys.getPublicKey()));
 
     final ProposerSelector proposerSelector =
-        new ProposerSelector(blockChain, voteTally, blockInterface, true);
+        new ProposerSelector(blockChain, blockInterface, true);
 
     final IbftFinalState finalState =
         new IbftFinalState(
-            voteTally,
+            protocolContext.getConsensusState().getVoteTallyCache(),
             nodeKeys,
             Util.publicKeyToAddress(nodeKeys.getPublicKey()),
             proposerSelector,

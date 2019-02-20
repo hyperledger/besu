@@ -15,9 +15,9 @@ package tech.pegasys.pantheon.consensus.ibft.headervalidationrules;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.consensus.ibft.IbftContextBuilder.setupContextWithValidators;
 import static tech.pegasys.pantheon.consensus.ibft.headervalidationrules.HeaderValidationTestHelpers.createProposedBlockHeader;
 
-import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
@@ -51,9 +51,8 @@ public class IbftCommitSealsValidationRuleTest {
             .sorted()
             .collect(Collectors.toList());
 
-    final VoteTally voteTally = new VoteTally(committerAddresses);
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(committerAddresses));
 
     BlockHeader header = createProposedBlockHeader(committerAddresses, committerKeyPairs, false);
 
@@ -67,9 +66,8 @@ public class IbftCommitSealsValidationRuleTest {
         Address.extract(Hash.hash(committerKeyPair.getPublicKey().getEncodedBytes()));
 
     final List<Address> validators = singletonList(committerAddress);
-    final VoteTally voteTally = new VoteTally(validators);
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
     final BlockHeader header = createProposedBlockHeader(validators, emptyList(), false);
 
@@ -86,16 +84,15 @@ public class IbftCommitSealsValidationRuleTest {
     final Address committerAddress = Util.publicKeyToAddress(committerKeyPair.getPublicKey());
 
     final List<Address> validators = singletonList(committerAddress);
-    final VoteTally voteTally = new VoteTally(validators);
 
     // Insert an extraData block with committer seals.
     final KeyPair nonValidatorKeyPair = KeyPair.generate();
 
-    BlockHeader header =
+    final BlockHeader header =
         createProposedBlockHeader(validators, singletonList(nonValidatorKeyPair), false);
 
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
     assertThat(commitSealsValidationRule.validate(header, null, context)).isFalse();
   }
@@ -148,9 +145,8 @@ public class IbftCommitSealsValidationRuleTest {
         createProposedBlockHeader(
             validators, Lists.newArrayList(committerKeyPair, committerKeyPair), false);
 
-    final VoteTally voteTally = new VoteTally(validators);
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
     assertThat(commitSealsValidationRule.validate(header, null, context)).isFalse();
   }
@@ -170,7 +166,6 @@ public class IbftCommitSealsValidationRuleTest {
     }
 
     Collections.sort(validators);
-    final VoteTally voteTally = new VoteTally(validators);
     final BlockHeader header =
         createProposedBlockHeader(
             validators,
@@ -178,7 +173,7 @@ public class IbftCommitSealsValidationRuleTest {
             useDifferentRoundNumbersForCommittedSeals);
 
     final ProtocolContext<IbftContext> context =
-        new ProtocolContext<>(null, null, new IbftContext(voteTally, null));
+        new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
     return commitSealsValidationRule.validate(header, null, context);
   }

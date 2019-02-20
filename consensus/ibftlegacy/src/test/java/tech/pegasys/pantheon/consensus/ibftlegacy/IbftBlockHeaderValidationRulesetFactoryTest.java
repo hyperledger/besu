@@ -15,12 +15,17 @@ package tech.pegasys.pantheon.consensus.ibftlegacy;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
-import tech.pegasys.pantheon.consensus.ibft.IbftProtocolContextFixture;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
@@ -31,11 +36,24 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.List;
 
 import org.junit.Test;
 
 public class IbftBlockHeaderValidationRulesetFactoryTest {
+
+  private ProtocolContext<IbftContext> setupContextWithValidators(
+      final Collection<Address> validators) {
+    final IbftContext ibftContext = mock(IbftContext.class);
+    final VoteTallyCache mockCache = mock(VoteTallyCache.class);
+    final VoteTally mockVoteTally = mock(VoteTally.class);
+    when(ibftContext.getVoteTallyCache()).thenReturn(mockCache);
+    when(mockCache.getVoteTallyAfterBlock(any())).thenReturn(mockVoteTally);
+    when(mockVoteTally.getValidators()).thenReturn(validators);
+
+    return new ProtocolContext<>(null, null, ibftContext);
+  }
 
   @Test
   public void ibftValidateHeaderPasses() {
@@ -55,7 +73,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             validator.validateHeader(
                 blockHeader,
                 parentHeader,
-                IbftProtocolContextFixture.protocolContext(validators),
+                setupContextWithValidators(validators),
                 HeaderValidationMode.FULL))
         .isTrue();
   }
@@ -78,7 +96,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             validator.validateHeader(
                 blockHeader,
                 parentHeader,
-                IbftProtocolContextFixture.protocolContext(validators),
+                setupContextWithValidators(validators),
                 HeaderValidationMode.FULL))
         .isFalse();
   }

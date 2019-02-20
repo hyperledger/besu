@@ -13,21 +13,21 @@
 package tech.pegasys.pantheon.consensus.ibft;
 
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
-import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
 
 /** Holds the IBFT specific mutable state. */
 public class IbftContext {
 
-  private final VoteTally voteTally;
+  private final VoteTallyCache voteTallyCache;
   private final VoteProposer voteProposer;
 
-  public IbftContext(final VoteTally voteTally, final VoteProposer voteProposer) {
-    this.voteTally = voteTally;
+  public IbftContext(final VoteTallyCache voteTallyCache, final VoteProposer voteProposer) {
+    this.voteTallyCache = voteTallyCache;
     this.voteProposer = voteProposer;
   }
 
-  public VoteTally getVoteTally() {
-    return voteTally;
+  public VoteTallyCache getVoteTallyCache() {
+    return voteTallyCache;
   }
 
   public VoteProposer getVoteProposer() {

@@ -24,9 +24,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static tech.pegasys.pantheon.consensus.ibft.IbftContextBuilder.setupContextWithValidators;
 import static tech.pegasys.pantheon.consensus.ibft.TestHelpers.createFrom;
 
-import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.consensus.ibft.BlockTimer;
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
@@ -135,12 +135,11 @@ public class IbftBlockHeightManagerTest {
     when(finalState.getMessageFactory()).thenReturn(messageFactory);
     when(blockCreator.createBlock(anyLong())).thenReturn(createdBlock);
     when(newRoundPayloadValidator.validateNewRoundMessage(any())).thenReturn(true);
-    when(messageValidatorFactory.createNewRoundValidator(anyLong()))
+    when(messageValidatorFactory.createNewRoundValidator(anyLong(), any()))
         .thenReturn(newRoundPayloadValidator);
-    when(messageValidatorFactory.createMessageValidator(any())).thenReturn(messageValidator);
+    when(messageValidatorFactory.createMessageValidator(any(), any())).thenReturn(messageValidator);
 
-    protocolContext =
-        new ProtocolContext<>(null, null, new IbftContext(new VoteTally(validators), null));
+    protocolContext = new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
     // Ensure the created IbftRound has the valid ConsensusRoundIdentifier;
     when(roundFactory.createNewRound(any(), anyInt()))

@@ -47,12 +47,13 @@ public class IbftCommitSealsValidationRule
       final BlockHeader header,
       final BlockHeader parent,
       final ProtocolContext<IbftContext> protocolContext) {
-    final ValidatorProvider validatorProvider = protocolContext.getConsensusState().getVoteTally();
+    final ValidatorProvider validatorProvider =
+        protocolContext.getConsensusState().getVoteTallyCache().getVoteTallyAfterBlock(parent);
     final IbftExtraData ibftExtraData = IbftExtraData.decode(header.getExtraData());
 
     final List<Address> committers =
         IbftBlockHashing.recoverCommitterAddresses(header, ibftExtraData);
-    List<Address> committersWithoutDuplicates = new ArrayList<>(new HashSet<>(committers));
+    final List<Address> committersWithoutDuplicates = new ArrayList<>(new HashSet<>(committers));
 
     if (committers.size() != committersWithoutDuplicates.size()) {
       LOGGER.trace("Duplicated seals found in header.");

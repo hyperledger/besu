@@ -20,7 +20,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import tech.pegasys.pantheon.consensus.common.ValidatorProvider;
+import tech.pegasys.pantheon.consensus.common.VoteTally;
+import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
 import tech.pegasys.pantheon.crypto.SECP256K1.PublicKey;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Util;
@@ -67,10 +68,12 @@ public class ValidatorPeersTest {
   public void onlyValidatorsAreSentAMessage() throws PeerNotConnected {
     // Only add the first Peer's address to the validators.
     validators.add(Util.publicKeyToAddress(publicKeys.get(0)));
-    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
+    final VoteTally validatorProvider = mock(VoteTally.class);
+    when(voteTallyCache.getVoteTallyAtHead()).thenReturn(validatorProvider);
     when(validatorProvider.getValidators()).thenReturn(validators);
 
-    final ValidatorPeers peers = new ValidatorPeers(validatorProvider);
+    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache);
     for (final PeerConnection peer : peerConnections) {
       peers.add(peer);
     }
@@ -88,10 +91,12 @@ public class ValidatorPeersTest {
   public void doesntSendToValidatorsWhichAreNotDirectlyConnected() throws PeerNotConnected {
     validators.add(Util.publicKeyToAddress(publicKeys.get(0)));
 
-    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
+    final VoteTally validatorProvider = mock(VoteTally.class);
+    when(voteTallyCache.getVoteTallyAtHead()).thenReturn(validatorProvider);
     when(validatorProvider.getValidators()).thenReturn(validators);
 
-    final ValidatorPeers peers = new ValidatorPeers(validatorProvider);
+    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache);
 
     // only add peer connections 1, 2 & 3, none of which should be invoked.
     newArrayList(1, 2, 3).forEach(i -> peers.add(peerConnections.get(i)));
@@ -111,10 +116,12 @@ public class ValidatorPeersTest {
     final Address validatorAddress = Util.publicKeyToAddress(publicKeys.get(0));
     validators.add(validatorAddress);
     validators.add(Util.publicKeyToAddress(publicKeys.get(1)));
-    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
+    final VoteTally validatorProvider = mock(VoteTally.class);
+    when(voteTallyCache.getVoteTallyAtHead()).thenReturn(validatorProvider);
     when(validatorProvider.getValidators()).thenReturn(validators);
 
-    final ValidatorPeers peers = new ValidatorPeers(validatorProvider);
+    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache);
     for (final PeerConnection peer : peerConnections) {
       peers.add(peer);
     }

@@ -55,6 +55,8 @@ dependencies {
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
+
+  testSupportImplementation 'org.mockito:mockito-core'
 }
 
 

@@ -25,6 +25,8 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import com.google.common.collect.Iterables;
 import org.apache.logging.log4j.LogManager;
@@ -50,26 +52,9 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
       final BlockHeader header,
       final BlockHeader parent,
       final ProtocolContext<IbftContext> context) {
-    return validateExtraData(header, context);
-  }
-
-  /**
-   * Responsible for determining the validity of the extra data field. Ensures:
-   *
-   * <ul>
-   *   <li>Bytes in the extra data field can be decoded as per IBFT specification
-   *   <li>Proposer (derived from the proposerSeal) is a member of the validators
-   *   <li>Committers (derived from committerSeals) are all members of the validators
-   * </ul>
-   *
-   * @param header the block header containing the extraData to be validated.
-   * @return True if the extraData successfully produces an IstanbulExtraData object, false
-   *     otherwise
-   */
-  private boolean validateExtraData(
-      final BlockHeader header, final ProtocolContext<IbftContext> context) {
     try {
-      final ValidatorProvider validatorProvider = context.getConsensusState().getVoteTally();
+      final ValidatorProvider validatorProvider =
+          context.getConsensusState().getVoteTallyCache().getVoteTallyAfterBlock(parent);
       final IbftExtraData ibftExtraData = IbftExtraData.decode(header.getExtraData());
 
       final Address proposer = IbftBlockHashing.recoverProposerAddress(header, ibftExtraData);
@@ -89,6 +74,17 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
         }
       }
 
+      final SortedSet<Address> sortedReportedValidators =
+          new TreeSet<>(ibftExtraData.getValidators());
+
+      if (!Iterables.elementsEqual(ibftExtraData.getValidators(), sortedReportedValidators)) {
+        LOG.trace(
+            "Validators are not sorted in ascending order. Expected {} but got {}.",
+            sortedReportedValidators,
+            ibftExtraData.getValidators());
+        return false;
+      }
+
       if (!Iterables.elementsEqual(ibftExtraData.getValidators(), storedValidators)) {
         LOG.trace(
             "Incorrect validators. Expected {} but got {}.",
@@ -102,6 +98,9 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
       return false;
     } catch (final IllegalArgumentException ex) {
       LOG.trace("Failed to verify extra data", ex);
+      return false;
+    } catch (final RuntimeException ex) {
+      LOG.trace("Failed to find validators at parent");
       return false;
     }
 
