@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.p2p.netty;
 import static com.google.common.base.Preconditions.checkState;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.ethereum.p2p.PeerNotWhitelistedException;
 import tech.pegasys.pantheon.ethereum.p2p.api.DisconnectCallback;
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
@@ -315,8 +316,15 @@ public class NettyP2PNetwork implements P2PNetwork {
         .orElse(true);
   }
 
+  private boolean isPeerWhitelisted(final Peer peer) {
+    return nodeWhitelistController.map(nwc -> nwc.isPermitted(peer.getEnodeURI())).orElse(true);
+  }
+
   @Override
   public boolean addMaintainConnectionPeer(final Peer peer) {
+    if (!isPeerWhitelisted(peer)) {
+      throw new PeerNotWhitelistedException("Cannot add a peer that is not whitelisted");
+    }
     final boolean added = peerMaintainConnectionList.add(peer);
     if (added) {
       connect(peer);
