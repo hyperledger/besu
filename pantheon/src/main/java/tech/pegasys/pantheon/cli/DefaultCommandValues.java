@@ -48,6 +48,7 @@ interface DefaultCommandValues {
   String DOCKER_RPC_WS_AUTHENTICATION_CREDENTIALS_FILE_LOCATION =
       "/etc/pantheon/rpc_ws_auth_config.toml";
   String DOCKER_PRIVACY_PUBLIC_KEY_FILE = "/etc/pantheon/privacy_public_key";
+  String DOCKER_PERMISSIONS_CONFIG_FILE_LOCATION = "/etc/pantheon/permissions_config.toml";
   String PERMISSIONING_CONFIG_LOCATION = "permissions_config.toml";
   String MANDATORY_HOST_FORMAT_HELP = "<HOST>";
   String MANDATORY_PORT_FORMAT_HELP = "<PORT>";

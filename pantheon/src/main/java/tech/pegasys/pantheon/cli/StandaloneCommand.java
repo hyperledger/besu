@@ -72,4 +72,10 @@ class StandaloneCommand implements DefaultCommandValues {
       names = {"--privacy-public-key-file"},
       description = "The enclave's public key file")
   final File privacyPublicKeyFile = null;
+
+  @CommandLine.Option(
+      names = {"--permissions-config-file"},
+      description =
+          "Permissions config TOML file (default: a file named \"permissions_config.toml\" in the Pantheon data folder)")
+  String permissionsConfigFile = null;
 }
