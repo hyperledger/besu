@@ -741,6 +741,10 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
 
     if (!permissionsAccountsEnabled && !permissionsNodesEnabled) {
+      if (rpcHttpApis.contains(RpcApis.PERM) || rpcWsApis.contains(RpcApis.PERM)) {
+        logger.warn(
+            "Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
+      }
       return Optional.empty();
     }
 

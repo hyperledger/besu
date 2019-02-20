@@ -28,6 +28,7 @@ import static tech.pegasys.pantheon.cli.NetworkName.RINKEBY;
 import static tech.pegasys.pantheon.cli.NetworkName.ROPSTEN;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis.ETH;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis.NET;
+import static tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis.PERM;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis.WEB3;
 import static tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 
@@ -947,13 +948,15 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   @Test
   public void rpcApisPropertyMustBeUsed() {
-    parseCommand("--rpc-http-api", "ETH,NET", "--rpc-http-enabled");
+    parseCommand("--rpc-http-api", "ETH,NET,PERM", "--rpc-http-enabled");
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
+    verify(mockLogger)
+        .warn("Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
-        .containsExactlyInAnyOrder(ETH, NET);
+        .containsExactlyInAnyOrder(ETH, NET, PERM);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
