@@ -12,9 +12,11 @@
  */
 package tech.pegasys.pantheon.ethereum.permissioning;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
@@ -53,8 +55,7 @@ public class PermissioningConfigurationBuilderTest {
     final String uri2 = "enode://" + VALID_NODE_ID + "@192.169.0.9:4568";
 
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_VALID);
-    final Path toml = Files.createTempFile("toml", "");
-    Files.write(toml, Resources.toByteArray(configFile));
+    final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     PermissioningConfiguration permissioningConfiguration = permissioningConfig(toml);
 
@@ -71,8 +72,7 @@ public class PermissioningConfigurationBuilderTest {
     final String uri = "enode://" + VALID_NODE_ID + "@192.168.0.9:4567";
 
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY);
-    final Path toml = Files.createTempFile("toml", "");
-    Files.write(toml, Resources.toByteArray(configFile));
+    final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     PermissioningConfiguration permissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfiguration(
@@ -86,8 +86,7 @@ public class PermissioningConfigurationBuilderTest {
   @Test
   public void permissioningConfigWithOnlyAccountWhitelistSet() throws Exception {
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_ACCOUNT_WHITELIST_ONLY);
-    final Path toml = Files.createTempFile("toml", "");
-    Files.write(toml, Resources.toByteArray(configFile));
+    final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     PermissioningConfiguration permissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfiguration(
@@ -102,8 +101,7 @@ public class PermissioningConfigurationBuilderTest {
   @Test
   public void permissioningConfigWithInvalidAccount() throws Exception {
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_INVALID_ACCOUNT);
-    final Path toml = Files.createTempFile("toml", "");
-    Files.write(toml, Resources.toByteArray(configFile));
+    final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     final Throwable thrown = catchThrowable(() -> permissioningConfig(toml));
 
@@ -115,8 +113,7 @@ public class PermissioningConfigurationBuilderTest {
   @Test
   public void permissioningConfigWithInvalidEnode() throws Exception {
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_INVALID_ENODE);
-    final Path toml = Files.createTempFile("toml", "");
-    Files.write(toml, Resources.toByteArray(configFile));
+    final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     final Throwable thrown = catchThrowable(() -> permissioningConfig(toml));
 
@@ -128,8 +125,7 @@ public class PermissioningConfigurationBuilderTest {
   @Test
   public void permissioningConfigWithEmptyWhitelistMustNotError() throws Exception {
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_EMPTY_WHITELISTS);
-    final Path toml = Files.createTempFile("toml", "");
-    Files.write(toml, Resources.toByteArray(configFile));
+    final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     PermissioningConfiguration permissioningConfiguration = permissioningConfig(toml);
 
@@ -142,8 +138,7 @@ public class PermissioningConfigurationBuilderTest {
   @Test
   public void permissioningConfigWithAbsentWhitelistMustThrowException() throws Exception {
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_ABSENT_WHITELISTS);
-    final Path toml = Files.createTempFile("toml", "");
-    Files.write(toml, Resources.toByteArray(configFile));
+    final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     final Throwable thrown = catchThrowable(() -> permissioningConfig(toml));
 
@@ -153,8 +148,7 @@ public class PermissioningConfigurationBuilderTest {
   @Test
   public void permissioningConfigWithUnrecognizedKeyMustThrowException() throws Exception {
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_UNRECOGNIZED_KEY);
-    final Path toml = Files.createTempFile("toml", "");
-    Files.write(toml, Resources.toByteArray(configFile));
+    final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     final Throwable thrown = catchThrowable(() -> permissioningConfig(toml));
 
@@ -167,7 +161,7 @@ public class PermissioningConfigurationBuilderTest {
   @Test
   public void permissioningConfigWithEmptyFileMustThrowException() throws Exception {
     // write an empty file
-    final Path toml = Files.createTempFile("toml", "");
+    final Path toml = createTempFile("toml", "".getBytes(UTF_8));
 
     final Throwable thrown = catchThrowable(() -> permissioningConfig(toml));
 
@@ -177,8 +171,7 @@ public class PermissioningConfigurationBuilderTest {
   @Test
   public void permissioningConfigFromFileMustSetFilePath() throws Exception {
     final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_VALID);
-    final Path toml = Files.createTempFile("toml", "");
-    Files.write(toml, Resources.toByteArray(configFile));
+    final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     PermissioningConfiguration permissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfigurationFromToml(
@@ -212,5 +205,12 @@ public class PermissioningConfigurationBuilderTest {
   private PermissioningConfiguration permissioningConfig(final Path toml) throws Exception {
     return PermissioningConfigurationBuilder.permissioningConfiguration(
         toml.toAbsolutePath().toString(), true, true);
+  }
+
+  private Path createTempFile(final String filename, final byte[] contents) throws IOException {
+    final Path file = Files.createTempFile(filename, "");
+    Files.write(file, contents);
+    file.toFile().deleteOnExit();
+    return file;
   }
 }

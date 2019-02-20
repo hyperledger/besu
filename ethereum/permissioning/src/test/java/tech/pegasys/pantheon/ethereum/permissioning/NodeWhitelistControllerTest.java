@@ -388,6 +388,7 @@ public class NodeWhitelistControllerTest {
   private Path createPermissionsFileWithNode(final String node) throws IOException {
     final String nodePermissionsFileContent = "nodes-whitelist=[\"" + node + "\"]";
     final Path permissionsFile = Files.createTempFile("node_permissions", "");
+    permissionsFile.toFile().deleteOnExit();
     Files.write(permissionsFile, nodePermissionsFileContent.getBytes(StandardCharsets.UTF_8));
     return permissionsFile;
   }

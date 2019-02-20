@@ -234,6 +234,7 @@ public class AccountWhitelistControllerTest {
   private Path createPermissionsFileWithAccount(final String account) throws IOException {
     final String nodePermissionsFileContent = "accounts-whitelist=[\"" + account + "\"]";
     final Path permissionsFile = Files.createTempFile("account_permissions", "");
+    permissionsFile.toFile().deleteOnExit();
     Files.write(permissionsFile, nodePermissionsFileContent.getBytes(StandardCharsets.UTF_8));
     return permissionsFile;
   }

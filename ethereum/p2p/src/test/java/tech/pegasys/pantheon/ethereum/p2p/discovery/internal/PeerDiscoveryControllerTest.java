@@ -51,6 +51,7 @@ import tech.pegasys.pantheon.util.uint.UInt256Value;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1212,8 +1213,9 @@ public class PeerDiscoveryControllerTest {
 
   private PermissioningConfiguration permissioningConfigurationWithTempFile() throws IOException {
     final PermissioningConfiguration config = PermissioningConfiguration.createDefault();
-    config.setConfigurationFilePath(
-        Files.createTempFile("test", "test").toAbsolutePath().toString());
+    Path tempFile = Files.createTempFile("test", "test");
+    tempFile.toFile().deleteOnExit();
+    config.setConfigurationFilePath(tempFile.toAbsolutePath().toString());
     return config;
   }
 

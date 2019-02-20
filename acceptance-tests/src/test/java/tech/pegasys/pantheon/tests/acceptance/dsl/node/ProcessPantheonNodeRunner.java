@@ -136,6 +136,7 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
   private Path createGenesisFile(final PantheonNode node, final EthNetworkConfig ethNetworkConfig) {
     try {
       Path genesisFile = Files.createTempFile(node.homeDirectory(), "genesis", "");
+      genesisFile.toFile().deleteOnExit();
       Files.write(genesisFile, ethNetworkConfig.getGenesisConfig().getBytes(UTF_8));
       return genesisFile;
     } catch (IOException e) {
