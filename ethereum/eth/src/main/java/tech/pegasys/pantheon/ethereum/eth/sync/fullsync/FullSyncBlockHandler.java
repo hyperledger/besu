@@ -17,6 +17,7 @@ import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.sync.BlockHandler;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.CompleteBlocksTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.PersistBlockTask;
@@ -25,6 +26,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -68,8 +70,7 @@ public class FullSyncBlockHandler<C> implements BlockHandler<Block> {
   @Override
   public CompletableFuture<List<Block>> downloadBlocks(final List<BlockHeader> headers) {
     return CompleteBlocksTask.forHeaders(protocolSchedule, ethContext, headers, ethTasksTimer)
-        .run()
-        .thenCompose(this::extractTransactionSenders);
+        .run();
   }
 
   @Override
@@ -77,17 +78,15 @@ public class FullSyncBlockHandler<C> implements BlockHandler<Block> {
     return block.getHeader().getNumber();
   }
 
-  private CompletableFuture<List<Block>> extractTransactionSenders(final List<Block> blocks) {
-    LOG.debug(
-        "Extracting sender {} to {}",
-        blocks.get(0).getHeader().getNumber(),
-        blocks.get(blocks.size() - 1).getHeader().getNumber());
+  @Override
+  public CompletableFuture<Void> executeParallelCalculations(final List<Block> blocks) {
+    final EthScheduler ethScheduler = ethContext.getScheduler();
+    final List<CompletableFuture<?>> calculations = new ArrayList<>();
     for (final Block block : blocks) {
-      for (final Transaction transaction : block.getBody().getTransactions()) {
-        // This method internally performs the transaction sender extraction.
-        transaction.getSender();
+      for (final Transaction tx : block.getBody().getTransactions()) {
+        calculations.add(ethScheduler.scheduleComputationTask(tx::getSender));
       }
     }
-    return CompletableFuture.completedFuture(blocks);
+    return CompletableFuture.allOf(calculations.toArray(new CompletableFuture<?>[0]));
   }
 }

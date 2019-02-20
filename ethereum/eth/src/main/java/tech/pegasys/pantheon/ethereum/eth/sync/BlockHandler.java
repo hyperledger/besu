@@ -23,4 +23,6 @@ public interface BlockHandler<B> {
   CompletableFuture<List<B>> validateAndImportBlocks(final List<B> blocks);
 
   long extractBlockNumber(final B block);
+
+  CompletableFuture<Void> executeParallelCalculations(List<B> blocks);
 }
