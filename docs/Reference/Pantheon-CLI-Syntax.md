@@ -106,7 +106,7 @@ data-path="/home/me/me_node"
 The path to the Pantheon data directory. The default is the `/build/distributions/pantheon-<version>` directory in the Pantheon installation directory.
 
 !!!note
-    This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#persisting-data). 
+    This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#data-directory). 
 
 ### discovery-enabled
 
@@ -636,6 +636,9 @@ Path to the public key for the enclave.
 !!!note
     Privacy is under development and will be available in v1.1.
 
+!!!note
+    This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#privacy-public-key-file).
+
 ### privacy-url
 
 ```bash tab="Syntax"
@@ -688,6 +691,9 @@ rpc-http-authentication-credentials-file="/home/me/me_node/auth.toml"
 ```
 
 [Credentials file](../JSON-RPC-API/Authentication.md#credentials-file) for JSON-RPC API [authentication](../JSON-RPC-API/Authentication.md). 
+
+!!!note
+    This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#credentials-files).
 
 ### rpc-http-authentication-enabled
 
@@ -846,7 +852,10 @@ The default is: `ETH`, `NET`, `WEB3`.
 rpc-ws-authentication-credentials-file="/home/me/me_node/auth.toml"
 ```
 
-[Credentials file](../JSON-RPC-API/Authentication.md#credentials-file) for JSON-RPC API [authentication](../JSON-RPC-API/Authentication.md). 
+[Credentials file](../JSON-RPC-API/Authentication.md#credentials-file) for JSON-RPC API [authentication](../JSON-RPC-API/Authentication.md).
+
+!!!note
+    This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#credentials-files). 
 
 ### rpc-ws-authentication-enabled
 
