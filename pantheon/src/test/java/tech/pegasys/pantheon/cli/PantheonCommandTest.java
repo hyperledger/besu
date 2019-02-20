@@ -1989,4 +1989,17 @@ public class PantheonCommandTest extends CommandTestAbstract {
         .startsWith("Unknown options: --rpc-ws-authentication-credentials-file, .");
     assertThat(commandOutput.toString()).isEmpty();
   }
+
+  @Test
+  public void permissionsConfigFileOptionDisabledUnderDocker() {
+    System.setProperty("pantheon.docker", "true");
+
+    assumeFalse(isFullInstantiation());
+
+    final Path path = Paths.get(".");
+    parseCommand("--permissions-config-file", path.toString());
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Unknown options: --permissions-config-file, .");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
 }
