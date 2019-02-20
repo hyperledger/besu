@@ -13,9 +13,7 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
-import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
-import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPipelinedPeerTask;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPipelinedTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.BlockHandler;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
@@ -29,7 +27,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class ParallelDownloadBodiesTask<B>
-    extends AbstractPipelinedPeerTask<List<BlockHeader>, List<B>> {
+    extends AbstractPipelinedTask<List<BlockHeader>, List<B>> {
   private static final Logger LOG = LogManager.getLogger();
 
   private final BlockHandler<B> blockHandler;
@@ -38,18 +36,15 @@ public class ParallelDownloadBodiesTask<B>
       final BlockHandler<B> blockHandler,
       final BlockingQueue<List<BlockHeader>> inboundQueue,
       final int outboundBacklogSize,
-      final EthContext ethContext,
       final LabelledMetric<OperationTimer> ethTasksTimer) {
-    super(inboundQueue, outboundBacklogSize, ethContext, ethTasksTimer);
+    super(inboundQueue, outboundBacklogSize, ethTasksTimer);
 
     this.blockHandler = blockHandler;
   }
 
   @Override
   protected Optional<List<B>> processStep(
-      final List<BlockHeader> headers,
-      final Optional<List<BlockHeader>> previousHeaders,
-      final EthPeer peer) {
+      final List<BlockHeader> headers, final Optional<List<BlockHeader>> previousHeaders) {
     LOG.trace(
         "Downloading bodies {} to {}",
         headers.get(0).getNumber(),
