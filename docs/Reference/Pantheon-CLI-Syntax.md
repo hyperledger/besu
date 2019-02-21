@@ -234,8 +234,8 @@ The default is `127.0.0.1`.
 metrics-port="6174"
 ```
 
-Specifies the port on which [Prometheus](https://prometheus.io/) accesses [Pantheon metrics](../Using-Pantheon/Debugging.md#monitor-node-performance-using-prometheus).
-The default is `9545`. 
+Specifies the port (TCP) on which [Prometheus](https://prometheus.io/) accesses [Pantheon metrics](../Using-Pantheon/Debugging.md#monitor-node-performance-using-prometheus).
+The default is `9545`. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration).
 
 ### metrics-push-enabled 
 
@@ -308,8 +308,8 @@ Interval in seconds to push metrics when in `push` mode. The default is 15.
 metrics-push-port="6174"
 ```
 
-Port of the [Prometheus Push Gateway](https://github.com/prometheus/pushgateway).
-The default is `9001`. 
+Port (TCP) of the [Prometheus Push Gateway](https://github.com/prometheus/pushgateway).
+The default is `9001`. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration).
 
 ### metrics-push-prometheus-job
 
@@ -511,7 +511,7 @@ The default is true.
 p2p-host="0.0.0.0"
 ```
 
-Specifies the host on which P2P peer discovery listens.
+Specifies the host on which P2P listens.
 The default is 127.0.0.1.
 
 !!!note
@@ -532,8 +532,8 @@ The default is 127.0.0.1.
 p2p-port="1789"
 ```
 
-Specifies the port on which P2P peer discovery listens.
-The default is 30303.
+Specifies the P2P listening ports (UDP and TCP).
+The default is 30303. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration).
 
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
@@ -806,8 +806,8 @@ To allow remote connections, set to `0.0.0.0`
 rpc-http-port="3435"
 ```
 
-Specifies the port on which HTTP JSON-RPC listens.
-The default is 8545.
+Specifies HTTP JSON-RPC listening port (TCP).
+The default is 8545. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration). 
 
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
@@ -893,16 +893,16 @@ The default is `false`.
 ### rpc-ws-host
 
 ```bash tab="Syntax"
---ws-host=<HOST>
+--rpc-ws-host=<HOST>
 ```
 
 ```bash tab="Example Command Line"
 # to listen on all interfaces
---ws-host=0.0.0.0
+--rpc-ws-host=0.0.0.0
 ```
 
 ```bash tab="Example Configuration File"
-ws-host="0.0.0.0"
+rpc-ws-host="0.0.0.0"
 ```
 
 Host for Websocket WS-RPC to listen on.
@@ -916,20 +916,20 @@ To allow remote connections, set to `0.0.0.0`
 ### rpc-ws-port
 
 ```bash tab="Syntax"
---ws-port=<PORT>
+--rpc-ws-port=<PORT>
 ```
 
 ```bash tab="Example Command Line"
 # to listen on port 6174
---ws-port=6174
+--rpc-ws-port=6174
 ```
 
 ```bash tab="Example Configuration File"
-ws-port="6174"
+rpc-ws-port="6174"
 ```
 
-Port for Websocket WS-RPC to listen on.
-The default is 8546.
+Specifies Websockets JSON-RPC listening port (TCP).
+The default is 8546. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration).
 
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 

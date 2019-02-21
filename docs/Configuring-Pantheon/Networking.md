@@ -5,7 +5,40 @@ description: Pantheon networking is about P2P discovery and communication betwee
 
 Pantheon uses the network to find and connect to peers. 
 
-## Firewalls and Incoming Connections
+## Port Configuration 
+
+Ports must be exposed appropriately to enable communication. An example port configuration for a Pantheon node on AWS is: 
+                                     
+![Port Configuration](../images/PortConfiguration.png)
+
+### P2P Networking 
+
+To enable peer discovery, the P2P UDP port must be open for inbound connections.
+
+We also recommended opening the P2P TCP port for inbound connections. This is not strictly required because 
+Pantheon attempts to initiate outbound TCP connections. However, if no nodes on the network are accepting inbound TCP 
+connections, nodes cannot communicate.
+
+The P2P port is specified by the [`--p2p-port`](../Reference/Pantheon-CLI-Syntax.md#p2p-port) option. 
+The default is `30303`. 
+
+### JSON-RPC API 
+
+To enable access to the [JSON-RPC API](../JSON-RPC-API/JSON-RPC-API.md), open the HTTP JSON-RPC and WebSockets JSON-RPC ports to the intended users 
+of the JSON-RPC API on TCP. 
+
+The [`--rpc-http-port`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-port) and [`--rpc-ws-port`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-port) 
+options specify the HTTP and WebSockets JSON-RPC ports. The defaults are `8545` and `8546`.  
+
+### Metrics 
+
+To enable [Prometheus to access Pantheon](../Using-Pantheon/Debugging.md#monitor-node-performance-using-prometheus), 
+open the metrics port or metrics push port to Prometheus or the Prometheus push gateway on TCP.  
+
+The [`--metrics-port`](../Reference/Pantheon-CLI-Syntax.md#metrics-port) and [`--metrics-push-port`](../Reference/Pantheon-CLI-Syntax.md#metrics-push-port) 
+options specify the ports for Prometheus and Prometheus push gateway. The defaults are `9545` and `9001`.  
+
+## Node Connections
 
 The default logging configuration does not list node connection and disconnection messages.  
 
@@ -18,14 +51,6 @@ If `Successfully accepted connection from ...` is displayed, connections are get
 
 !!! example "Example log output"
     `2018-10-16 12:37:35.479-04:00 | nioEventLoopGroup-3-1 | INFO  | NettyP2PNetwork | Successfully accepted connection from 0xa979fb575495b8d6db44f750317d0f4622bf4c2aa3365d6af7c284339968eef29b69ad0dce72a4d8db5ebb4968de0e3bec910127f134779fbcb0cb6d3331163c`
-
-If connections are not getting through the firewalls, ensure the peer discovery port is open on your firewall. 
-
-## Peer Discovery Port
-
-The [`--p2p-host`](../Reference/Pantheon-CLI-Syntax.md#p2p-host) and [`--p2p-port`](../Reference/Pantheon-CLI-Syntax.md#p2p-port)
-options specifies the host and port on which P2P peer discovery listens. The default is `127.0.0.1`
-for host and `30303` for port.
  
 ## Limiting Peers
 
