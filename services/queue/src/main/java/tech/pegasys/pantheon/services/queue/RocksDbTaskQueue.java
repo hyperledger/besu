@@ -23,7 +23,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import com.google.common.primitives.Longs;
@@ -37,13 +36,13 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
   private final Options options;
   private final RocksDB db;
 
-  private final AtomicLong lastEnqueuedKey = new AtomicLong(0);
-  private final AtomicLong lastDequeuedKey = new AtomicLong(0);
+  private long lastEnqueuedKey = 0;
+  private long lastDequeuedKey = 0;
   private RocksIterator dequeueIterator;
-  private final AtomicLong oldestKey = new AtomicLong(0);
+  private long oldestKey = 0;
   private final Set<RocksDbTask<T>> outstandingTasks = new HashSet<>();
 
-  private final AtomicBoolean closed = new AtomicBoolean(false);
+  private boolean closed = false;
 
   private final Function<T, BytesValue> serializer;
   private final Function<BytesValue, T> deserializer;
@@ -90,8 +89,8 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
   public synchronized void enqueue(final T taskData) {
     assertNotClosed();
     try (final OperationTimer.TimingContext ignored = enqueueLatency.startTimer()) {
-      final byte[] key = Longs.toByteArray(lastEnqueuedKey.incrementAndGet());
-      db.put(key, serializer.apply(taskData).getArrayUnsafe());
+      final long key = ++lastEnqueuedKey;
+      db.put(Longs.toByteArray(key), serializer.apply(taskData).getArrayUnsafe());
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
@@ -107,7 +106,7 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
       if (dequeueIterator == null) {
         dequeueIterator = db.newIterator();
       }
-      final long key = lastDequeuedKey.incrementAndGet();
+      final long key = ++lastDequeuedKey;
       dequeueIterator.seek(Longs.toByteArray(key));
       if (!dequeueIterator.isValid()) {
         // Reached the end of the snapshot this iterator was loaded with
@@ -129,12 +128,11 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
   @Override
   public synchronized long size() {
     assertNotClosed();
-    return lastEnqueuedKey.get() - lastDequeuedKey.get();
+    return lastEnqueuedKey - lastDequeuedKey;
   }
 
   @Override
   public synchronized boolean isEmpty() {
-    assertNotClosed();
     return size() == 0;
   }
 
@@ -142,17 +140,17 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
   public synchronized void clear() {
     assertNotClosed();
     outstandingTasks.clear();
-    final byte[] from = Longs.toByteArray(oldestKey.get());
-    final byte[] to = Longs.toByteArray(lastEnqueuedKey.get() + 1);
+    final byte[] from = Longs.toByteArray(oldestKey);
+    final byte[] to = Longs.toByteArray(lastEnqueuedKey + 1);
     try {
       db.deleteRange(from, to);
       if (dequeueIterator != null) {
         dequeueIterator.close();
         dequeueIterator = null;
       }
-      lastDequeuedKey.set(0);
-      lastEnqueuedKey.set(0);
-      oldestKey.set(0);
+      lastDequeuedKey = 0;
+      lastEnqueuedKey = 0;
+      oldestKey = 0;
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
@@ -168,15 +166,15 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
         outstandingTasks.stream()
             .min(Comparator.comparingLong(RocksDbTask::getKey))
             .map(RocksDbTask::getKey)
-            .orElse(lastDequeuedKey.get() + 1);
+            .orElse(lastDequeuedKey + 1);
 
-    if (oldestKey.get() < oldestOutstandingKey) {
+    if (oldestKey < oldestOutstandingKey) {
       // Delete all contiguous completed tasks
-      final byte[] fromKey = Longs.toByteArray(oldestKey.get());
+      final byte[] fromKey = Longs.toByteArray(oldestKey);
       final byte[] toKey = Longs.toByteArray(oldestOutstandingKey);
       try {
         db.deleteRange(fromKey, toKey);
-        oldestKey.set(oldestOutstandingKey);
+        oldestKey = oldestOutstandingKey;
       } catch (final RocksDBException e) {
         throw new StorageException(e);
       }
@@ -184,18 +182,20 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
   }
 
   @Override
-  public void close() {
-    if (closed.compareAndSet(false, true)) {
-      if (dequeueIterator != null) {
-        dequeueIterator.close();
-      }
-      options.close();
-      db.close();
+  public synchronized void close() {
+    if (closed) {
+      return;
     }
+    closed = true;
+    if (dequeueIterator != null) {
+      dequeueIterator.close();
+    }
+    options.close();
+    db.close();
   }
 
   private void assertNotClosed() {
-    if (closed.get()) {
+    if (closed) {
       throw new IllegalStateException("Attempt to access closed " + getClass().getSimpleName());
     }
   }
