@@ -30,6 +30,7 @@ import tech.pegasys.pantheon.util.BlockImporter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.URI;
@@ -130,9 +131,15 @@ public abstract class CommandTestAbstract {
 
   // Display outputs for debug purpose
   @After
-  public void displayOutput() {
+  public void displayOutput() throws IOException {
     TEST_LOGGER.info("Standard output {}", commandOutput.toString());
     TEST_LOGGER.info("Standard error {}", commandErrorOutput.toString());
+
+    outPrintStream.close();
+    commandOutput.close();
+
+    errPrintStream.close();
+    commandErrorOutput.close();
   }
 
   protected CommandLine.Model.CommandSpec parseCommand(final String... args) {
