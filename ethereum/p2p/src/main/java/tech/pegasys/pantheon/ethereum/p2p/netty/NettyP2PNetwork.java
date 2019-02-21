@@ -55,6 +55,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.stream.StreamSupport;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.netty.bootstrap.Bootstrap;
@@ -67,6 +69,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.concurrent.SingleThreadEventExecutor;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -204,6 +207,18 @@ public class NettyP2PNetwork implements P2PNetwork {
             "name",
             "code");
 
+    metricsSystem.createIntegerGauge(
+        MetricCategory.NETWORK,
+        "netty_workers_pending_tasks",
+        "The number of pending tasks in the Netty workers event loop",
+        pendingTaskCounter(workers));
+
+    metricsSystem.createIntegerGauge(
+        MetricCategory.NETWORK,
+        "netty_boss_pending_tasks",
+        "The number of pending tasks in the Netty boss event loop",
+        pendingTaskCounter(boss));
+
     subscribeDisconnect(peerDiscoveryAgent);
     subscribeDisconnect(peerBlacklist);
     subscribeDisconnect(connections);
@@ -247,6 +262,14 @@ public class NettyP2PNetwork implements P2PNetwork {
     } catch (final InterruptedException e) {
       throw new RuntimeException("Interrupted before startup completed", e);
     }
+  }
+
+  private Supplier<Integer> pendingTaskCounter(final EventLoopGroup eventLoopGroup) {
+    return () ->
+        StreamSupport.stream(eventLoopGroup.spliterator(), false)
+            .filter(eventExecutor -> eventExecutor instanceof SingleThreadEventExecutor)
+            .mapToInt(eventExecutor -> ((SingleThreadEventExecutor) eventExecutor).pendingTasks())
+            .sum();
   }
 
   /** @return a channel initializer for inbound connections */
