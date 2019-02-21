@@ -1,10 +1,15 @@
-{% extends "base.html" %}
+{% extends "main.html" %}
 {% block content %}
 
 <p style="text-align: center;font-size: 3em"><i class="md-icon">account_balance</i></p>
 <h1 id="404-page-not-found" style="text-align: center">404</h1>
 <p style="text-align: center"><strong>Deity not found in the Pantheon</strong></p>
-<p style="text-align: center">Try the <a href="/">homepage</a>, or use the search field on the top right of this documentation.</p>
-<p style="text-align: center">If you think we made a mistake and deleted a page that should be here, then please tell us on <a href="https://gitter.im/PegaSysEng/pantheon">Gitter</a> or create an issue in <a href="{{ config.repo_url + '/issues' | url }}">Pantheon Github repository</a>.</p>
+<p style="text-align: center">
+  Try the <a href="/">homepage</a>, or use the search field on the top right of this documentation.
+</p>
+<p style="text-align: center">
+  If you think we made a mistake and deleted a page that should be here, then please let us know on
+  <a href="{{ config.extra.support.gitter | url }}">Gitter</a>.
+</p>
 
 {% endblock %}
