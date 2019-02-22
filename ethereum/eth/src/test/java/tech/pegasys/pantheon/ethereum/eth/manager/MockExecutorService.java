@@ -25,14 +25,25 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 class MockExecutorService implements ExecutorService {
 
-  private final List<Future<?>> scheduledFutures = new ArrayList<>();
+  private boolean autoRun = true;
+  private final List<ExecutorTask<?>> tasks = new ArrayList<>();
 
-  // Test utility for inspecting scheduled futures
-  public List<Future<?>> getScheduledFutures() {
-    return scheduledFutures;
+  // Test utility for inspecting executor's futures
+  public List<Future<?>> getFutures() {
+    return tasks.stream().map(ExecutorTask::getFuture).collect(Collectors.toList());
+  }
+
+  public void setAutoRun(final boolean shouldAutoRunTasks) {
+    this.autoRun = shouldAutoRunTasks;
+  }
+
+  public void runPendingFutures() {
+    ArrayList<ExecutorTask<?>> currentTasks = new ArrayList<>(tasks);
+    currentTasks.forEach(ExecutorTask::run);
   }
 
   @Override
@@ -61,44 +72,31 @@ class MockExecutorService implements ExecutorService {
 
   @Override
   public <T> Future<T> submit(final Callable<T> task) {
-    CompletableFuture<T> future = new CompletableFuture<>();
-    try {
-      final T result = task.call();
-      future.complete(result);
-    } catch (final Exception e) {
-      future.completeExceptionally(e);
+    ExecutorTask<T> execTask = new ExecutorTask<>(task::call);
+    tasks.add(execTask);
+    if (autoRun) {
+      execTask.run();
     }
-    future = spy(future);
-    scheduledFutures.add(future);
-    return future;
+
+    return execTask.getFuture();
   }
 
   @Override
   public <T> Future<T> submit(final Runnable task, final T result) {
-    CompletableFuture<T> future = new CompletableFuture<>();
-    try {
-      task.run();
-      future.complete(result);
-    } catch (final Exception e) {
-      future.completeExceptionally(e);
-    }
-    future = spy(future);
-    scheduledFutures.add(future);
-    return future;
+    return submit(
+        () -> {
+          task.run();
+          return result;
+        });
   }
 
   @Override
   public Future<?> submit(final Runnable task) {
-    CompletableFuture<?> future = new CompletableFuture<>();
-    try {
-      task.run();
-      future.complete(null);
-    } catch (final Exception e) {
-      future.completeExceptionally(e);
-    }
-    future = spy(future);
-    scheduledFutures.add(future);
-    return future;
+    return submit(
+        () -> {
+          task.run();
+          return null;
+        });
   }
 
   @Override
@@ -129,4 +127,37 @@ class MockExecutorService implements ExecutorService {
 
   @Override
   public void execute(final Runnable command) {}
+
+  private static class ExecutorTask<T> {
+    private final CompletableFuture<T> future;
+    private final Callable<T> taskRunner;
+    private boolean isPending = true;
+
+    private ExecutorTask(final Callable<T> taskRunner) {
+      this.future = spy(new CompletableFuture<>());
+      this.taskRunner = taskRunner;
+    }
+
+    public void run() {
+      if (!isPending) {
+        return;
+      }
+
+      isPending = false;
+      try {
+        T result = taskRunner.call();
+        future.complete(result);
+      } catch (final Exception e) {
+        future.completeExceptionally(e);
+      }
+    }
+
+    public CompletableFuture<T> getFuture() {
+      return future;
+    }
+
+    public boolean isPending() {
+      return isPending;
+    }
+  }
 }

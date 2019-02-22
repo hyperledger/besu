@@ -85,6 +85,9 @@ public interface PeerConnection {
    */
   void disconnect(DisconnectReason reason);
 
+  /** @return True if the peer is disconnected */
+  boolean isDisconnected();
+
   SocketAddress getLocalAddress();
 
   SocketAddress getRemoteAddress();

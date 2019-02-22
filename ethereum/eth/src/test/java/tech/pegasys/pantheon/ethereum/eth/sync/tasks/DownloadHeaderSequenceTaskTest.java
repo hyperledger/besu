@@ -33,7 +33,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Streams;
 import org.junit.Test;
 
 public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List<BlockHeader>> {
@@ -122,7 +121,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
               BlockHeadersMessage.readFrom(fullResponse.get());
           // Filter for a subset of headers
           final List<BlockHeader> headerSubset =
-              Streams.stream(headersMessage.getHeaders(protocolSchedule))
+              headersMessage.getHeaders(protocolSchedule).stream()
                   .filter(h -> h.getNumber() >= referenceHeader.getNumber() - 1L)
                   .collect(Collectors.toList());
           return Optional.of(BlockHeadersMessage.create(headerSubset));

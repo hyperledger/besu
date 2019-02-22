@@ -24,12 +24,15 @@ import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
 public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
+  private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
 
+  private Duration timeout = DEFAULT_TIMEOUT;
   private final int requestCode;
   private volatile ResponseStream responseStream;
 
@@ -39,6 +42,11 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
       final LabelledMetric<OperationTimer> ethTasksTimer) {
     super(ethContext, ethTasksTimer);
     this.requestCode = requestCode;
+  }
+
+  public AbstractPeerRequestTask<R> setTimeout(final Duration timeout) {
+    this.timeout = timeout;
+    return this;
   }
 
   @Override
@@ -63,7 +71,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
           }
         });
 
-    ethContext.getScheduler().failAfterTimeout(promise);
+    ethContext.getScheduler().failAfterTimeout(promise, timeout);
   }
 
   private void handleMessage(
