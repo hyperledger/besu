@@ -13,8 +13,9 @@
 package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper.AgentBuilder;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
@@ -24,15 +25,12 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.NeighborsPacketData
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.net.SocketAddress;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
@@ -287,36 +285,9 @@ public class PeerDiscoveryAgentTest {
   }
 
   private PeerConnection createAnonymousPeerConnection(final BytesValue id) {
-    return new PeerConnection() {
-      @Override
-      public void send(final Capability capability, final MessageData message)
-          throws PeerNotConnected {}
-
-      @Override
-      public Set<Capability> getAgreedCapabilities() {
-        return null;
-      }
-
-      @Override
-      public PeerInfo getPeer() {
-        return new PeerInfo(0, null, null, 0, id);
-      }
-
-      @Override
-      public void terminateConnection(final DisconnectReason reason, final boolean peerInitiated) {}
-
-      @Override
-      public void disconnect(final DisconnectReason reason) {}
-
-      @Override
-      public SocketAddress getLocalAddress() {
-        return null;
-      }
-
-      @Override
-      public SocketAddress getRemoteAddress() {
-        return null;
-      }
-    };
+    PeerConnection conn = mock(PeerConnection.class);
+    PeerInfo peerInfo = new PeerInfo(0, null, null, 0, id);
+    when(conn.getPeer()).thenReturn(peerInfo);
+    return conn;
   }
 }

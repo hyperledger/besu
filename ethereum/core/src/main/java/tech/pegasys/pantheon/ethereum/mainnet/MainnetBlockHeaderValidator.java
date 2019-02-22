@@ -26,7 +26,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 public final class MainnetBlockHeaderValidator {
 
-  private static final BytesValue DAO_EXTRA_DATA =
+  public static final BytesValue DAO_EXTRA_DATA =
       BytesValue.fromHexString("0x64616f2d686172642d666f726b");
   private static final int MIN_GAS_LIMIT = 5000;
   private static final long MAX_GAS_LIMIT = 0x7fffffffffffffffL;
@@ -45,6 +45,10 @@ public final class MainnetBlockHeaderValidator {
             new ConstantFieldValidationRule<>(
                 "extraData", BlockHeader::getExtraData, DAO_EXTRA_DATA))
         .build();
+  }
+
+  public static boolean validateHeaderForDaoFork(final BlockHeader header) {
+    return header.getExtraData().equals(DAO_EXTRA_DATA);
   }
 
   static BlockHeaderValidator<Void> createOmmerValidator(

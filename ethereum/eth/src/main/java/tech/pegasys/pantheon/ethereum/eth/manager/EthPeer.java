@@ -84,6 +84,10 @@ public class EthPeer {
     this.onStatusesExchanged.set(onStatusesExchanged);
   }
 
+  public boolean isDisconnected() {
+    return connection.isDisconnected();
+  }
+
   public long addChainEstimatedHeightListener(final EstimatedHeightListener listener) {
     return chainHeadState.addEstimatedHeightListener(listener);
   }

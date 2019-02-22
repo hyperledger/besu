@@ -51,8 +51,8 @@ public class EthScheduler {
   protected final ExecutorService syncWorkerExecutor;
   protected final ScheduledExecutorService scheduler;
   protected final ExecutorService txWorkerExecutor;
-  private final ExecutorService servicesExecutor;
-  private final ExecutorService computationExecutor;
+  protected final ExecutorService servicesExecutor;
+  protected final ExecutorService computationExecutor;
 
   private final Collection<CompletableFuture<?>> serviceFutures = new ConcurrentLinkedDeque<>();
 

@@ -84,8 +84,8 @@ public class EthSchedulerTest {
     final CompletableFuture<Object> result =
         ethScheduler.scheduleSyncWorkerTask(() -> new CompletableFuture<>());
 
-    assertThat(syncWorkerExecutor.getScheduledFutures().size()).isEqualTo(1);
-    final Future<?> future = syncWorkerExecutor.getScheduledFutures().get(0);
+    assertThat(syncWorkerExecutor.getFutures().size()).isEqualTo(1);
+    final Future<?> future = syncWorkerExecutor.getFutures().get(0);
 
     verify(future, times(0)).cancel(anyBoolean());
     result.cancel(true);
@@ -136,8 +136,8 @@ public class EthSchedulerTest {
     final CompletableFuture<Object> result =
         ethScheduler.scheduleFutureTask(() -> new CompletableFuture<>(), Duration.ofMillis(100));
 
-    assertThat(scheduledExecutor.getScheduledFutures().size()).isEqualTo(1);
-    final Future<?> future = scheduledExecutor.getScheduledFutures().get(0);
+    assertThat(scheduledExecutor.getFutures().size()).isEqualTo(1);
+    final Future<?> future = scheduledExecutor.getFutures().get(0);
 
     verify(future, times(0)).cancel(anyBoolean());
     result.cancel(true);

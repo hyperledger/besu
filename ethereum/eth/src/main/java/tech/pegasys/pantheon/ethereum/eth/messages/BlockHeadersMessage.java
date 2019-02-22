@@ -22,7 +22,8 @@ import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.util.Iterator;
+import java.util.Arrays;
+import java.util.List;
 
 public final class BlockHeadersMessage extends AbstractMessageData {
 
@@ -36,6 +37,10 @@ public final class BlockHeadersMessage extends AbstractMessageData {
           String.format("Message has code %d and thus is not a BlockHeadersMessage.", code));
     }
     return new BlockHeadersMessage(message.getData());
+  }
+
+  public static BlockHeadersMessage create(final BlockHeader... headers) {
+    return create(Arrays.asList(headers));
   }
 
   public static BlockHeadersMessage create(final Iterable<BlockHeader> headers) {
@@ -57,11 +62,10 @@ public final class BlockHeadersMessage extends AbstractMessageData {
     return EthPV62.BLOCK_HEADERS;
   }
 
-  public <C> Iterator<BlockHeader> getHeaders(final ProtocolSchedule<C> protocolSchedule) {
+  public <C> List<BlockHeader> getHeaders(final ProtocolSchedule<C> protocolSchedule) {
     final BlockHashFunction blockHashFunction =
         ScheduleBasedBlockHashFunction.create(protocolSchedule);
     return new BytesValueRLPInput(data, false)
-        .readList(rlp -> BlockHeader.readFrom(rlp, blockHashFunction))
-        .iterator();
+        .readList(rlp -> BlockHeader.readFrom(rlp, blockHashFunction));
   }
 }

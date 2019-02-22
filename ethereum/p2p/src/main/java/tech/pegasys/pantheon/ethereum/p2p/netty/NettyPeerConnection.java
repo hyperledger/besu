@@ -150,7 +150,8 @@ final class NettyPeerConnection implements PeerConnection {
     }
   }
 
-  private boolean isDisconnected() {
+  @Override
+  public boolean isDisconnected() {
     return disconnected.get();
   }
 

@@ -27,7 +27,6 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import com.google.common.io.Resources;
@@ -57,13 +56,13 @@ public final class BlockHeadersMessageTest {
     final MessageData initialMessage = BlockHeadersMessage.create(headers);
     final MessageData raw = new RawMessage(EthPV62.BLOCK_HEADERS, initialMessage.getData());
     final BlockHeadersMessage message = BlockHeadersMessage.readFrom(raw);
-    final Iterator<BlockHeader> readHeaders =
+    final List<BlockHeader> readHeaders =
         message.getHeaders(
             FixedDifficultyProtocolSchedule.create(
                 GenesisConfigFile.development().getConfigOptions(), PrivacyParameters.noPrivacy()));
 
     for (int i = 0; i < 50; ++i) {
-      Assertions.assertThat(readHeaders.next()).isEqualTo(headers.get(i));
+      Assertions.assertThat(readHeaders.get(i)).isEqualTo(headers.get(i));
     }
   }
 }

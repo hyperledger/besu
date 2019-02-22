@@ -89,6 +89,7 @@ public class MockPeerConnection implements PeerConnection {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public boolean isDisconnected() {
     return disconnected;
   }

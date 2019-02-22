@@ -101,7 +101,7 @@ public class AdminPeersTest {
     final PeerInfo peerInfo =
         new PeerInfo(5, "0x0", Collections.emptyList(), 30303, BytesValue.EMPTY);
     final PeerConnection p =
-        new MockPeerConnection(
+        MockPeerConnection.create(
             peerInfo,
             InetSocketAddress.createUnresolved("1.2.3.4", 9876),
             InetSocketAddress.createUnresolved("4.3.2.1", 6789));

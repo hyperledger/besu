@@ -13,6 +13,8 @@
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -22,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DeterministicEthScheduler extends EthScheduler {
 
   private final TimeoutPolicy timeoutPolicy;
+  private final List<MockExecutorService> executors;
 
   public DeterministicEthScheduler() {
     this(TimeoutPolicy.NEVER);
@@ -34,7 +37,24 @@ public class DeterministicEthScheduler extends EthScheduler {
         new MockExecutorService(),
         new MockExecutorService(),
         new MockExecutorService());
+
     this.timeoutPolicy = timeoutPolicy;
+    this.executors =
+        Arrays.asList(
+            (MockExecutorService) this.syncWorkerExecutor,
+            (MockExecutorService) this.scheduler,
+            (MockExecutorService) this.txWorkerExecutor,
+            (MockExecutorService) this.servicesExecutor,
+            (MockExecutorService) this.computationExecutor);
+  }
+
+  // Test utility for running pending futures
+  public void runPendingFutures() {
+    executors.forEach(MockExecutorService::runPendingFutures);
+  }
+
+  public void disableAutoRun() {
+    executors.forEach(e -> e.setAutoRun(false));
   }
 
   MockExecutorService mockSyncWorkerExecutor() {
@@ -62,6 +82,7 @@ public class DeterministicEthScheduler extends EthScheduler {
   @FunctionalInterface
   public interface TimeoutPolicy {
     TimeoutPolicy NEVER = () -> false;
+    TimeoutPolicy ALWAYS = () -> true;
 
     boolean shouldTimeout();
 

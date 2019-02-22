@@ -65,7 +65,7 @@ public class ValidatorPeer {
     this.nodeAddress = nodeParams.getAddress();
     this.messageFactory = messageFactory;
     final BytesValue nodeId = nodeKeys.getPublicKey().getEncodedBytes();
-    this.peerConnection = new StubbedPeerConnection(nodeId);
+    this.peerConnection = StubbedPeerConnection.create(nodeId);
     this.localEventMultiplexer = localEventMultiplexer;
   }
 

@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.consensus.ibft;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -22,14 +23,7 @@ import static org.mockito.Mockito.when;
 import tech.pegasys.pantheon.ethereum.eth.manager.ChainState;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
-import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
-import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
-import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
-import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-
-import java.net.SocketAddress;
-import java.util.Set;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,7 +44,7 @@ public class EthSynchronizerUpdaterTest {
 
     final EthSynchronizerUpdater updater = new EthSynchronizerUpdater(ethPeers);
 
-    updater.updatePeerChainState(1, createAnonymousPeerConnection());
+    updater.updatePeerChainState(1, mock(PeerConnection.class));
 
     verifyZeroInteractions(ethPeer);
   }
@@ -63,41 +57,7 @@ public class EthSynchronizerUpdaterTest {
     final EthSynchronizerUpdater updater = new EthSynchronizerUpdater(ethPeers);
 
     final long suppliedChainHeight = 6L;
-    updater.updatePeerChainState(suppliedChainHeight, createAnonymousPeerConnection());
+    updater.updatePeerChainState(suppliedChainHeight, mock(PeerConnection.class));
     verify(chainState, times(1)).updateHeightEstimate(eq(suppliedChainHeight));
-  }
-
-  private PeerConnection createAnonymousPeerConnection() {
-    return new PeerConnection() {
-      @Override
-      public void send(final Capability capability, final MessageData message)
-          throws PeerNotConnected {}
-
-      @Override
-      public Set<Capability> getAgreedCapabilities() {
-        return null;
-      }
-
-      @Override
-      public PeerInfo getPeer() {
-        return new PeerInfo(0, null, null, 0, null);
-      }
-
-      @Override
-      public void terminateConnection(final DisconnectReason reason, final boolean peerInitiated) {}
-
-      @Override
-      public void disconnect(final DisconnectReason reason) {}
-
-      @Override
-      public SocketAddress getLocalAddress() {
-        return null;
-      }
-
-      @Override
-      public SocketAddress getRemoteAddress() {
-        return null;
-      }
-    };
   }
 }
