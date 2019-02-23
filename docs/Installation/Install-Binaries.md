@@ -27,6 +27,9 @@ $ pantheon --help
 
 * [Chocolatey](Install-Chocolatey.md)
 
+!!! note
+    Close and reopen the terminal after installing Chocolatey. 
+
 ### Install Using Chocolatey
 
 To install from [Chocolatey package](https://chocolatey.org/packages/pantheon/): 
@@ -34,6 +37,13 @@ To install from [Chocolatey package](https://chocolatey.org/packages/pantheon/):
 ```bat
 choco install pantheon
 ``` 
+
+!!! note 
+    The Chocolatey installation installs JDK11 and updates the system `JAVA_HOME` and `PATH` environment variables. 
+    If your user `JAVA_HOME` or `PATH` environment variables are also set, update or remove these. 
+    
+    If you do not want your system settings updated by Chocolatey, [install the packaged binaries](#linux-unix-windows-without-chocolatey) 
+    instead and update the environment variables as required. 
 
 Display Pantheon command line help to confirm installation: 
 
