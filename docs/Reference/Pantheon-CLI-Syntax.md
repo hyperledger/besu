@@ -575,7 +575,7 @@ Path to the [permissions configuration file](../Permissions/Permissioning.md#per
 The default is the `permissions_config.toml` file in the [data directory](#data-path).
 
 !!!note
-    This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md).
+    This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#permissions-configuration-file).
 
 ### permissions-nodes-enabled
 

@@ -34,6 +34,7 @@ docker run pegasyseng/pantheon:1.0
     * [`--data-path`](../Reference/Pantheon-CLI-Syntax.md#data-path), see [Data Directory](#data-directory)
     * [`--config-file`](../Reference/Pantheon-CLI-Syntax.md#config), see [Custom Configuration File](#custom-configuration-file)
     * [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file), see [Custom Genesis File](#custom-genesis-file).
+    * [`--permissions-config-file`](../Reference/Pantheon-CLI-Syntax.md#permissions-config-file), see [Permissions Configuration File](#permissions-configuration-file). 
     * [`--privacy-public-key-file`](../Reference/Pantheon-CLI-Syntax.md#privacy-public-key-file), see [Privacy Public Key File](#privacy-public-key-file).
     * [`--rpc-http-authentication-credentials-file`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-authentication-credentials-file) and
       [`--rpc-ws-authentication-credentials-file`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-authentication-credentials-file), see [Credentials Files](#credentials-files).
@@ -139,6 +140,22 @@ Where `mygenesis.json` is your custom configuration file and `path` is the absol
 !!!example
     ```bash
     docker run --mount type=bind,source=/Users/username/pantheon/mygenesis.json,target=/etc/pantheon/genesis.json pegasyseng/pantheon:latest
+    ```
+
+## Permissions Configuration File 
+
+Specify a permissions configuration file. This is equivalent to specifying the `--permissions-config-file` option.
+
+To run Pantheon specifying a permissions configuration file: 
+```bash
+docker run --mount type=bind,source=</path/mypermissions.toml>,target=/etc/pantheon/permissions_config.toml pegasyseng/pantheon:latest
+```
+
+Where `mypermissions.toml` is your custom configuration file and `path` is the absolute path to the file.
+
+!!!example
+    ```bash
+    docker run --mount type=bind,source=/Users/username/pantheon/mypermissions.toml,target=/etc/pantheon/permissions_config.toml pegasyseng/pantheon:latest
     ```
 
 ## Privacy Public Key File
