@@ -26,8 +26,7 @@ import tech.pegasys.pantheon.ethereum.eth.messages.EthPV63;
 import tech.pegasys.pantheon.ethereum.eth.messages.ReceiptsMessage;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,8 +48,8 @@ public class GetReceiptsFromPeerTask
   private GetReceiptsFromPeerTask(
       final EthContext ethContext,
       final Collection<BlockHeader> blockHeaders,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
-    super(ethContext, EthPV63.GET_RECEIPTS, ethTasksTimer);
+      final MetricsSystem metricsSystem) {
+    super(ethContext, EthPV63.GET_RECEIPTS, metricsSystem);
     this.blockHeaders = blockHeaders;
     blockHeaders.forEach(
         header ->
@@ -62,9 +61,9 @@ public class GetReceiptsFromPeerTask
   public static GetReceiptsFromPeerTask forHeaders(
       final EthContext ethContext,
       final Collection<BlockHeader> blockHeaders,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final MetricsSystem metricsSystem) {
 
-    return new GetReceiptsFromPeerTask(ethContext, blockHeaders, ethTasksTimer);
+    return new GetReceiptsFromPeerTask(ethContext, blockHeaders, metricsSystem);
   }
 
   @Override

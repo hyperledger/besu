@@ -59,7 +59,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
         referenceHeader,
         requestedData.size(),
         maxRetries,
-        ethTasksTimer);
+        metricsSystem);
   }
 
   @Test
@@ -77,7 +77,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             referenceHeader,
             10,
             maxRetries,
-            ethTasksTimer);
+            metricsSystem);
     final CompletableFuture<List<BlockHeader>> future = task.run();
 
     // Respond with only the reference header
@@ -106,7 +106,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             referenceHeader,
             10,
             maxRetries,
-            ethTasksTimer);
+            metricsSystem);
     final CompletableFuture<List<BlockHeader>> future = task.run();
 
     // Filter response to include only reference header and previous header

@@ -14,8 +14,7 @@ package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPipelinedTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.BlockHandler;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,8 +33,8 @@ class ParallelExtractTxSignaturesTask<B> extends AbstractPipelinedTask<List<B>, 
       final BlockHandler<B> blockHandler,
       final BlockingQueue<List<B>> inboundQueue,
       final int outboundBacklogSize,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
-    super(inboundQueue, outboundBacklogSize, ethTasksTimer);
+      final MetricsSystem metricsSystem) {
+    super(inboundQueue, outboundBacklogSize, metricsSystem);
     this.blockHandler = blockHandler;
   }
 

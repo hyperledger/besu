@@ -25,10 +25,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
-import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.services.queue.RocksDbTaskQueue;
 import tech.pegasys.pantheon.services.queue.TaskQueue;
 
@@ -73,7 +70,6 @@ class FastSynchronizer<C> {
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
       final SyncState syncState) {
     if (syncConfig.syncMode() != SyncMode.FAST) {
       return Optional.empty();
@@ -102,7 +98,6 @@ class FastSynchronizer<C> {
             syncConfig.getWorldStateHashCountPerRequest(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateRequestMaxRetries(),
-            ethTasksTimer,
             metricsSystem);
     final FastSyncDownloader<C> fastSyncDownloader =
         new FastSyncDownloader<>(
@@ -112,12 +107,7 @@ class FastSynchronizer<C> {
                 protocolContext,
                 ethContext,
                 syncState,
-                ethTasksTimer,
-                metricsSystem.createLabelledCounter(
-                    MetricCategory.SYNCHRONIZER,
-                    "fast_sync_validation_mode",
-                    "Number of blocks validated using light vs full validation during fast sync",
-                    "validationMode")),
+                metricsSystem),
             worldStateDownloader,
             fastSyncStateStorage);
     return Optional.of(

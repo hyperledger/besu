@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem.NO_OP_LABELLED_TIMER;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
@@ -27,8 +26,8 @@ import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUtil;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Optional;
@@ -45,7 +44,7 @@ public class PivotBlockRetrieverTest {
 
   private ProtocolContext<Void> protocolContext;
 
-  private final LabelledMetric<OperationTimer> ethTasksTimer = NO_OP_LABELLED_TIMER;
+  private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final AtomicBoolean timeout = new AtomicBoolean(false);
   private EthProtocolManager ethProtocolManager;
   private MutableBlockchain blockchain;
@@ -63,7 +62,7 @@ public class PivotBlockRetrieverTest {
             blockchain, blockchainSetupUtil.getWorldArchive(), timeout::get);
     pivotBlockRetriever =
         new PivotBlockRetriever<>(
-            protocolSchedule, ethProtocolManager.ethContext(), ethTasksTimer, PIVOT_BLOCK_NUMBER);
+            protocolSchedule, ethProtocolManager.ethContext(), metricsSystem, PIVOT_BLOCK_NUMBER);
   }
 
   @Test

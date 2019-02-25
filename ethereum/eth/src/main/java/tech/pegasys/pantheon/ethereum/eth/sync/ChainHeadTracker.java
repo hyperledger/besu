@@ -23,8 +23,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers.ConnectCallback;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import org.apache.logging.log4j.Logger;
 
@@ -35,17 +34,17 @@ public class ChainHeadTracker implements ConnectCallback {
   private final EthContext ethContext;
   private final ProtocolSchedule<?> protocolSchedule;
   private final TrailingPeerLimiter trailingPeerLimiter;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private final MetricsSystem metricsSystem;
 
   public ChainHeadTracker(
       final EthContext ethContext,
       final ProtocolSchedule<?> protocolSchedule,
       final TrailingPeerLimiter trailingPeerLimiter,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.protocolSchedule = protocolSchedule;
     this.trailingPeerLimiter = trailingPeerLimiter;
-    this.ethTasksTimer = ethTasksTimer;
+    this.metricsSystem = metricsSystem;
   }
 
   public static void trackChainHeadForPeers(
@@ -53,7 +52,7 @@ public class ChainHeadTracker implements ConnectCallback {
       final ProtocolSchedule<?> protocolSchedule,
       final Blockchain blockchain,
       final SynchronizerConfiguration syncConfiguration,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final MetricsSystem metricsSystem) {
     final TrailingPeerLimiter trailingPeerLimiter =
         new TrailingPeerLimiter(
             ethContext.getEthPeers(),
@@ -61,7 +60,7 @@ public class ChainHeadTracker implements ConnectCallback {
             syncConfiguration.trailingPeerBlocksBehindThreshold(),
             syncConfiguration.maxTrailingPeers());
     final ChainHeadTracker tracker =
-        new ChainHeadTracker(ethContext, protocolSchedule, trailingPeerLimiter, ethTasksTimer);
+        new ChainHeadTracker(ethContext, protocolSchedule, trailingPeerLimiter, metricsSystem);
     ethContext.getEthPeers().subscribeConnect(tracker);
     blockchain.observeBlockAdded(trailingPeerLimiter);
   }
@@ -73,7 +72,7 @@ public class ChainHeadTracker implements ConnectCallback {
             protocolSchedule,
             ethContext,
             Hash.wrap(peer.chainState().getBestBlock().getHash()),
-            ethTasksTimer)
+            metricsSystem)
         .assignPeer(peer)
         .run()
         .whenComplete(

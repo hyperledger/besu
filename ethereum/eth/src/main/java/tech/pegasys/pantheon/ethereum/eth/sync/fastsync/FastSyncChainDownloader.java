@@ -26,7 +26,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -38,7 +39,7 @@ public class FastSyncChainDownloader<C> {
   private final ProtocolSchedule<C> protocolSchedule;
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private final MetricsSystem metricsSystem;
   private final LabelledMetric<Counter> fastSyncValidationCounter;
 
   FastSyncChainDownloader(
@@ -47,28 +48,26 @@ public class FastSyncChainDownloader<C> {
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
-      final LabelledMetric<Counter> fastSyncValidationCounter,
+      final MetricsSystem metricsSystem,
       final BlockHeader pivotBlockHeader) {
     this.config = config;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.ethTasksTimer = ethTasksTimer;
-    this.fastSyncValidationCounter = fastSyncValidationCounter;
+    this.metricsSystem = metricsSystem;
+
     chainDownloader =
         new ChainDownloader<>(
             config,
             ethContext,
             syncState,
-            ethTasksTimer,
             new FastSyncTargetManager<>(
                 config,
                 protocolSchedule,
                 protocolContext,
                 ethContext,
                 syncState,
-                ethTasksTimer,
+                metricsSystem,
                 pivotBlockHeader),
             new FastSyncCheckpointHeaderManager<>(
                 config,
@@ -76,9 +75,16 @@ public class FastSyncChainDownloader<C> {
                 ethContext,
                 syncState,
                 protocolSchedule,
-                ethTasksTimer,
+                metricsSystem,
                 pivotBlockHeader),
-            this::importBlocksForCheckpoints);
+            this::importBlocksForCheckpoints,
+            metricsSystem);
+    this.fastSyncValidationCounter =
+        metricsSystem.createLabelledCounter(
+            MetricCategory.SYNCHRONIZER,
+            "fast_sync_validation_mode",
+            "Number of blocks validated using light vs full validation during fast sync",
+            "validationMode");
   }
 
   public CompletableFuture<Void> start() {
@@ -109,15 +115,15 @@ public class FastSyncChainDownloader<C> {
             protocolContext,
             ethContext,
             config.downloaderParallelism(),
-            ethTasksTimer,
             new FastSyncBlockHandler<>(
                 protocolSchedule,
                 protocolContext,
                 ethContext,
-                ethTasksTimer,
+                metricsSystem,
                 attachedValidationPolicy),
             detatchedValidationPolicy,
-            checkpointHeaders);
+            checkpointHeaders,
+            metricsSystem);
     return importTask
         .run()
         .thenApply(

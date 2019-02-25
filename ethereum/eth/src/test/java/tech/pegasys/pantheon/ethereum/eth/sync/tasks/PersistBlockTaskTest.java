@@ -24,8 +24,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUt
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Arrays;
@@ -44,8 +43,7 @@ public class PersistBlockTaskTest {
   private ProtocolSchedule<Void> protocolSchedule;
   private ProtocolContext<Void> protocolContext;
   private MutableBlockchain blockchain;
-  private final LabelledMetric<OperationTimer> ethTasksTimer =
-      NoOpMetricsSystem.NO_OP_LABELLED_TIMER;
+  private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Before
   public void setup() {
@@ -66,7 +64,7 @@ public class PersistBlockTaskTest {
     // Create task
     final PersistBlockTask<Void> task =
         PersistBlockTask.create(
-            protocolSchedule, protocolContext, nextBlock, HeaderValidationMode.FULL, ethTasksTimer);
+            protocolSchedule, protocolContext, nextBlock, HeaderValidationMode.FULL, metricsSystem);
     final CompletableFuture<Block> result = task.run();
 
     Awaitility.await().atMost(30, SECONDS).until(result::isDone);
@@ -88,7 +86,7 @@ public class PersistBlockTaskTest {
     // Create task
     final PersistBlockTask<Void> task =
         PersistBlockTask.create(
-            protocolSchedule, protocolContext, nextBlock, HeaderValidationMode.FULL, ethTasksTimer);
+            protocolSchedule, protocolContext, nextBlock, HeaderValidationMode.FULL, metricsSystem);
     final CompletableFuture<Block> result = task.run();
 
     Awaitility.await().atMost(30, SECONDS).until(result::isDone);
@@ -116,7 +114,7 @@ public class PersistBlockTaskTest {
                 protocolContext,
                 nextBlocks,
                 HeaderValidationMode.FULL,
-                ethTasksTimer)
+                metricsSystem)
             .get();
 
     Awaitility.await().atMost(30, SECONDS).until(task::isDone);
@@ -146,7 +144,7 @@ public class PersistBlockTaskTest {
                 protocolContext,
                 nextBlocks,
                 HeaderValidationMode.FULL,
-                ethTasksTimer)
+                metricsSystem)
             .get();
 
     Awaitility.await().atMost(30, SECONDS).until(task::isDone);
@@ -175,7 +173,7 @@ public class PersistBlockTaskTest {
                 protocolContext,
                 nextBlocks,
                 HeaderValidationMode.FULL,
-                ethTasksTimer)
+                metricsSystem)
             .get();
 
     Awaitility.await().atMost(30, SECONDS).until(task::isDone);
@@ -204,7 +202,7 @@ public class PersistBlockTaskTest {
                 protocolContext,
                 nextBlocks,
                 HeaderValidationMode.FULL,
-                ethTasksTimer)
+                metricsSystem)
             .get();
 
     Awaitility.await().atMost(30, SECONDS).until(task::isDone);
@@ -236,7 +234,7 @@ public class PersistBlockTaskTest {
                 protocolContext,
                 nextBlocks,
                 HeaderValidationMode.FULL,
-                ethTasksTimer)
+                metricsSystem)
             .get();
 
     Awaitility.await().atMost(30, SECONDS).until(task::isDone);
@@ -265,7 +263,7 @@ public class PersistBlockTaskTest {
                 protocolContext,
                 nextBlocks,
                 HeaderValidationMode.FULL,
-                ethTasksTimer)
+                metricsSystem)
             .get();
 
     Awaitility.await().atMost(30, SECONDS).until(task::isDone);
@@ -296,7 +294,7 @@ public class PersistBlockTaskTest {
                 protocolContext,
                 nextBlocks,
                 HeaderValidationMode.FULL,
-                ethTasksTimer)
+                metricsSystem)
             .get();
 
     Awaitility.await().atMost(30, SECONDS).until(task::isDone);
@@ -319,7 +317,7 @@ public class PersistBlockTaskTest {
     // Create task
     final PersistBlockTask<Void> task =
         PersistBlockTask.create(
-            protocolSchedule, protocolContext, nextBlock, HeaderValidationMode.FULL, ethTasksTimer);
+            protocolSchedule, protocolContext, nextBlock, HeaderValidationMode.FULL, metricsSystem);
 
     task.cancel();
     final CompletableFuture<Block> result = task.run();
@@ -339,7 +337,7 @@ public class PersistBlockTaskTest {
     // Create task
     final PersistBlockTask<Void> task =
         PersistBlockTask.create(
-            protocolSchedule, protocolContext, nextBlock, HeaderValidationMode.FULL, ethTasksTimer);
+            protocolSchedule, protocolContext, nextBlock, HeaderValidationMode.FULL, metricsSystem);
     final PersistBlockTask<Void> taskSpy = Mockito.spy(task);
     Mockito.doNothing().when(taskSpy).executeTaskTimed();
 

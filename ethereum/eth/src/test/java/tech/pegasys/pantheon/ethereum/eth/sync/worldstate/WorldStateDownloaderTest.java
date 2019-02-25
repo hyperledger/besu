@@ -863,7 +863,6 @@ public class WorldStateDownloaderTest {
         config.getWorldStateHashCountPerRequest(),
         config.getWorldStateRequestParallelism(),
         config.getWorldStateRequestMaxRetries(),
-        NoOpMetricsSystem.NO_OP_LABELLED_TIMER,
         new NoOpMetricsSystem());
   }
 

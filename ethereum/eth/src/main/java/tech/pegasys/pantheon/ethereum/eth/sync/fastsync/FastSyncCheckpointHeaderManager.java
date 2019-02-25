@@ -20,8 +20,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -40,9 +39,9 @@ class FastSyncCheckpointHeaderManager<C> extends CheckpointHeaderManager<C> {
       final EthContext ethContext,
       final SyncState syncState,
       final ProtocolSchedule<C> protocolSchedule,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
+      final MetricsSystem metricsSystem,
       final BlockHeader pivotBlockHeader) {
-    super(config, protocolContext, ethContext, syncState, protocolSchedule, ethTasksTimer);
+    super(config, protocolContext, ethContext, syncState, protocolSchedule, metricsSystem);
     this.config = config;
     this.pivotBlockHeader = pivotBlockHeader;
   }

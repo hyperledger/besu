@@ -25,9 +25,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.task.WaitForPeersTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.time.Duration;
@@ -45,8 +43,7 @@ public class FastSyncActions<C> {
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
-  private final LabelledMetric<Counter> fastSyncValidationCounter;
+  private final MetricsSystem metricsSystem;
 
   public FastSyncActions(
       final SynchronizerConfiguration syncConfig,
@@ -54,15 +51,13 @@ public class FastSyncActions<C> {
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
-      final LabelledMetric<Counter> fastSyncValidationCounter) {
+      final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.syncState = syncState;
-    this.ethTasksTimer = ethTasksTimer;
-    this.fastSyncValidationCounter = fastSyncValidationCounter;
+    this.metricsSystem = metricsSystem;
   }
 
   public CompletableFuture<FastSyncState> waitForSuitablePeers(final FastSyncState fastSyncState) {
@@ -72,7 +67,7 @@ public class FastSyncActions<C> {
 
     final WaitForPeersTask waitForPeersTask =
         WaitForPeersTask.create(
-            ethContext, syncConfig.getFastSyncMinimumPeerCount(), ethTasksTimer);
+            ethContext, syncConfig.getFastSyncMinimumPeerCount(), metricsSystem);
 
     final EthScheduler scheduler = ethContext.getScheduler();
     return exceptionallyCompose(
@@ -99,7 +94,7 @@ public class FastSyncActions<C> {
 
   private CompletableFuture<Void> waitForAnyPeer() {
     final CompletableFuture<Void> waitForPeerResult =
-        ethContext.getScheduler().timeout(WaitForPeersTask.create(ethContext, 1, ethTasksTimer));
+        ethContext.getScheduler().timeout(WaitForPeersTask.create(ethContext, 1, metricsSystem));
     return exceptionallyCompose(
         waitForPeerResult,
         throwable -> {
@@ -152,7 +147,7 @@ public class FastSyncActions<C> {
     return new PivotBlockRetriever<>(
             protocolSchedule,
             ethContext,
-            ethTasksTimer,
+            metricsSystem,
             currentState.getPivotBlockNumber().getAsLong())
         .downloadPivotBlockHeader();
   }
@@ -165,8 +160,7 @@ public class FastSyncActions<C> {
             protocolContext,
             ethContext,
             syncState,
-            ethTasksTimer,
-            fastSyncValidationCounter,
+            metricsSystem,
             currentState.getPivotBlockHeader().get());
     return downloader.start().thenApply(ignore -> currentState);
   }

@@ -48,11 +48,7 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
     final List<BlockHeader> headersToComplete =
         requestedData.stream().map(Block::getHeader).collect(Collectors.toList());
     return CompleteBlocksTask.forHeaders(
-        protocolSchedule,
-        ethContext,
-        headersToComplete,
-        maxRetries,
-        NoOpMetricsSystem.NO_OP_LABELLED_TIMER);
+        protocolSchedule, ethContext, headersToComplete, maxRetries, new NoOpMetricsSystem());
   }
 
   @Test

@@ -54,7 +54,7 @@ public class ChainHeadTrackerTest {
           ethProtocolManager.ethContext(),
           protocolSchedule,
           trailingPeerLimiter,
-          NoOpMetricsSystem.NO_OP_LABELLED_TIMER);
+          new NoOpMetricsSystem());
 
   @Test
   public void shouldRequestHeaderChainHeadWhenNewPeerConnects() {

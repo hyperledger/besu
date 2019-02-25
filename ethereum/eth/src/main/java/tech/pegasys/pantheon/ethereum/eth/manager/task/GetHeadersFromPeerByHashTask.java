@@ -21,8 +21,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.RequestManager.ResponseStream;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
@@ -43,7 +42,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
       final int count,
       final int skip,
       final boolean reverse,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final MetricsSystem metricsSystem) {
     super(
         protocolSchedule,
         ethContext,
@@ -51,7 +50,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
         count,
         skip,
         reverse,
-        ethTasksTimer);
+        metricsSystem);
     checkNotNull(referenceHash);
     this.referenceHash = referenceHash;
   }
@@ -62,7 +61,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
       final Hash firstHash,
       final long firstBlockNumber,
       final int segmentLength,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final MetricsSystem metricsSystem) {
     return new GetHeadersFromPeerByHashTask(
         protocolSchedule,
         ethContext,
@@ -71,7 +70,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
         segmentLength,
         0,
         false,
-        ethTasksTimer);
+        metricsSystem);
   }
 
   public static AbstractGetHeadersFromPeerTask startingAtHash(
@@ -81,7 +80,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
       final long firstBlockNumber,
       final int segmentLength,
       final int skip,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final MetricsSystem metricsSystem) {
     return new GetHeadersFromPeerByHashTask(
         protocolSchedule,
         ethContext,
@@ -90,7 +89,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
         segmentLength,
         skip,
         false,
-        ethTasksTimer);
+        metricsSystem);
   }
 
   public static AbstractGetHeadersFromPeerTask endingAtHash(
@@ -99,7 +98,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
       final Hash lastHash,
       final long lastBlockNumber,
       final int segmentLength,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final MetricsSystem metricsSystem) {
     return new GetHeadersFromPeerByHashTask(
         protocolSchedule,
         ethContext,
@@ -108,7 +107,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
         segmentLength,
         0,
         true,
-        ethTasksTimer);
+        metricsSystem);
   }
 
   public static AbstractGetHeadersFromPeerTask endingAtHash(
@@ -118,7 +117,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
       final long lastBlockNumber,
       final int segmentLength,
       final int skip,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final MetricsSystem metricsSystem) {
     return new GetHeadersFromPeerByHashTask(
         protocolSchedule,
         ethContext,
@@ -127,16 +126,16 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
         segmentLength,
         skip,
         true,
-        ethTasksTimer);
+        metricsSystem);
   }
 
   public static AbstractGetHeadersFromPeerTask forSingleHash(
       final ProtocolSchedule<?> protocolSchedule,
       final EthContext ethContext,
       final Hash hash,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final MetricsSystem metricsSystem) {
     return new GetHeadersFromPeerByHashTask(
-        protocolSchedule, ethContext, hash, 0, 1, 0, false, ethTasksTimer);
+        protocolSchedule, ethContext, hash, 0, 1, 0, false, metricsSystem);
   }
 
   @Override

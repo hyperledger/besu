@@ -28,8 +28,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.BodyValidation;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 
 import java.util.ArrayList;
@@ -60,8 +59,8 @@ public class GetBodiesFromPeerTask<C> extends AbstractPeerRequestTask<List<Block
       final ProtocolSchedule<C> protocolSchedule,
       final EthContext ethContext,
       final List<BlockHeader> headers,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
-    super(ethContext, EthPV62.GET_BLOCK_BODIES, ethTasksTimer);
+      final MetricsSystem metricsSystem) {
+    super(ethContext, EthPV62.GET_BLOCK_BODIES, metricsSystem);
     checkArgument(headers.size() > 0);
     this.protocolSchedule = protocolSchedule;
 
@@ -78,8 +77,8 @@ public class GetBodiesFromPeerTask<C> extends AbstractPeerRequestTask<List<Block
       final ProtocolSchedule<C> protocolSchedule,
       final EthContext ethContext,
       final List<BlockHeader> headers,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
-    return new GetBodiesFromPeerTask<>(protocolSchedule, ethContext, headers, ethTasksTimer);
+      final MetricsSystem metricsSystem) {
+    return new GetBodiesFromPeerTask<>(protocolSchedule, ethContext, headers, metricsSystem);
   }
 
   @Override

@@ -21,8 +21,7 @@ import tech.pegasys.pantheon.ethereum.eth.messages.BlockHeadersMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,8 +50,8 @@ public abstract class AbstractGetHeadersFromPeerTask
       final int count,
       final int skip,
       final boolean reverse,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
-    super(ethContext, EthPV62.GET_BLOCK_HEADERS, ethTasksTimer);
+      final MetricsSystem metricsSystem) {
+    super(ethContext, EthPV62.GET_BLOCK_HEADERS, metricsSystem);
     checkArgument(count > 0);
     this.protocolSchedule = protocolSchedule;
     this.count = count;

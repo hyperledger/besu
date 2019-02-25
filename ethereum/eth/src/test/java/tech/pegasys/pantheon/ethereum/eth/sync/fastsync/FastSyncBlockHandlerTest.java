@@ -23,7 +23,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.LIGHT_SKIP_DETACHED;
-import static tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem.NO_OP_LABELLED_TIMER;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
@@ -41,8 +40,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -81,12 +80,12 @@ public class FastSyncBlockHandlerTest {
           new EthPeers(PROTOCOL_NAME),
           new EthMessages(),
           new DeterministicEthScheduler());
-  private final LabelledMetric<OperationTimer> ethTasksTimer = NO_OP_LABELLED_TIMER;
+  private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final ValidationPolicy validationPolicy = mock(ValidationPolicy.class);
 
   private final FastSyncBlockHandler<Void> blockHandler =
       new FastSyncBlockHandler<>(
-          protocolSchedule, protocolContext, ethContext, ethTasksTimer, validationPolicy);
+          protocolSchedule, protocolContext, ethContext, metricsSystem, validationPolicy);
 
   @Before
   public void setUp() {

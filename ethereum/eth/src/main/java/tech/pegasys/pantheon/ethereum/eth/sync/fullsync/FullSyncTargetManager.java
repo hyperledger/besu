@@ -26,8 +26,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Optional;
@@ -50,8 +49,8 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
-    super(config, protocolSchedule, protocolContext, ethContext, syncState, ethTasksTimer);
+      final MetricsSystem metricsSystem) {
+    super(config, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
     this.config = config;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;

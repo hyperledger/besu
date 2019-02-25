@@ -83,7 +83,7 @@ public class AbstractEthTaskTest {
     private final List<CompletableFuture<?>> subtasks;
 
     private EthTaskWithMultipleSubtasks(final List<CompletableFuture<?>> subtasks) {
-      super(NoOpMetricsSystem.NO_OP_LABELLED_TIMER);
+      super(new NoOpMetricsSystem());
       this.subtasks = subtasks;
     }
 

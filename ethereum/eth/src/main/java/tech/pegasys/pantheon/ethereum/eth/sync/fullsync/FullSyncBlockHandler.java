@@ -23,8 +23,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.tasks.CompleteBlocksTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.PersistBlockTask;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,17 +38,17 @@ public class FullSyncBlockHandler<C> implements BlockHandler<Block> {
   private final ProtocolSchedule<C> protocolSchedule;
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private final MetricsSystem metricsSystem;
 
   public FullSyncBlockHandler(
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final MetricsSystem metricsSystem) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.ethTasksTimer = ethTasksTimer;
+    this.metricsSystem = metricsSystem;
   }
 
   @Override
@@ -63,13 +62,13 @@ public class FullSyncBlockHandler<C> implements BlockHandler<Block> {
             protocolContext,
             blocks,
             HeaderValidationMode.SKIP_DETACHED,
-            ethTasksTimer)
+            metricsSystem)
         .get();
   }
 
   @Override
   public CompletableFuture<List<Block>> downloadBlocks(final List<BlockHeader> headers) {
-    return CompleteBlocksTask.forHeaders(protocolSchedule, ethContext, headers, ethTasksTimer)
+    return CompleteBlocksTask.forHeaders(protocolSchedule, ethContext, headers, metricsSystem)
         .run();
   }
 

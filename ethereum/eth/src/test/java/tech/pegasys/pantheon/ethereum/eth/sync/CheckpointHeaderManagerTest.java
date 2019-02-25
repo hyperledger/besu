@@ -21,7 +21,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
-import static tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem.NO_OP_LABELLED_TIMER;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
@@ -42,8 +41,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -66,7 +65,7 @@ public class CheckpointHeaderManagerTest {
   private final AtomicBoolean timeout = new AtomicBoolean(false);
   private final EthContext ethContext = EthContextTestUtil.createTestEthContext(timeout::get);
   private final SyncState syncState = new SyncState(blockchain, ethContext.getEthPeers());
-  private final LabelledMetric<OperationTimer> ethTasksTimer = NO_OP_LABELLED_TIMER;
+  private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final EthPeer syncTargetPeer = mock(EthPeer.class);
   private final RequestManager requestManager = new RequestManager(syncTargetPeer);
   private SyncTarget syncTarget;
@@ -82,7 +81,7 @@ public class CheckpointHeaderManagerTest {
           ethContext,
           syncState,
           PROTOCOL_SCHEDULE,
-          ethTasksTimer);
+          metricsSystem);
 
   @Before
   public void setUp() {

@@ -16,6 +16,8 @@ import static tech.pegasys.pantheon.util.FutureUtils.completedExceptionally;
 
 import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 
 import java.util.Collection;
@@ -29,16 +31,16 @@ import java.util.function.Supplier;
 
 public abstract class AbstractEthTask<T> implements EthTask<T> {
 
-  protected double taskTimeInSec = -1.0D;
-  protected final LabelledMetric<OperationTimer> ethTasksTimer;
-  protected final OperationTimer taskTimer;
+  private double taskTimeInSec = -1.0D;
+  private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private final OperationTimer taskTimer;
   protected final AtomicReference<CompletableFuture<T>> result = new AtomicReference<>();
-  protected volatile Collection<CompletableFuture<?>> subTaskFutures =
-      new ConcurrentLinkedDeque<>();
+  private volatile Collection<CompletableFuture<?>> subTaskFutures = new ConcurrentLinkedDeque<>();
 
-  /** @param ethTasksTimer The metrics timer to use to time the duration of the task. */
-  protected AbstractEthTask(final LabelledMetric<OperationTimer> ethTasksTimer) {
-    this.ethTasksTimer = ethTasksTimer;
+  protected AbstractEthTask(final MetricsSystem metricsSystem) {
+    ethTasksTimer =
+        metricsSystem.createLabelledTimer(
+            MetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName");
     taskTimer = ethTasksTimer.labels(getClass().getSimpleName());
   }
 

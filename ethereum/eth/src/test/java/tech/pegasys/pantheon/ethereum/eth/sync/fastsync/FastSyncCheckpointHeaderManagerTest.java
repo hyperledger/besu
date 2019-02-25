@@ -32,8 +32,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.List;
@@ -55,7 +54,7 @@ public class FastSyncCheckpointHeaderManagerTest {
   protected MutableBlockchain localBlockchain;
   private BlockchainSetupUtil<Void> otherBlockchainSetup;
   protected Blockchain otherBlockchain;
-  private LabelledMetric<OperationTimer> ethTasksTimer;
+  MetricsSystem metricsSystem = new NoOpMetricsSystem();;
   private BlockHeader pivotBlockHeader;
   private FastSyncCheckpointHeaderManager<Void> checkpointHeaderManager;
   private RespondingEthPeer peer;
@@ -75,8 +74,6 @@ public class FastSyncCheckpointHeaderManagerTest {
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
 
-    ethTasksTimer = NoOpMetricsSystem.NO_OP_LABELLED_TIMER;
-
     otherBlockchainSetup.importFirstBlocks(30);
 
     pivotBlockHeader = block(17);
@@ -93,7 +90,7 @@ public class FastSyncCheckpointHeaderManagerTest {
             ethContext,
             syncState,
             protocolSchedule,
-            ethTasksTimer,
+            metricsSystem,
             pivotBlockHeader);
   }
 
