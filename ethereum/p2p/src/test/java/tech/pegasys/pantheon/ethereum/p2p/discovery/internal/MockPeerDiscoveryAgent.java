@@ -16,6 +16,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryAgent;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController.AsyncExecutor;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -91,6 +92,11 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   @Override
   protected TimerUtil createTimer() {
     return new MockTimerUtil();
+  }
+
+  @Override
+  protected AsyncExecutor createWorkerExecutor() {
+    return new BlockingAsyncExecutor();
   }
 
   @Override
