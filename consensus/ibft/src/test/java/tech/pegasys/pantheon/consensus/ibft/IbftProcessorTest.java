@@ -27,7 +27,6 @@ import tech.pegasys.pantheon.consensus.ibft.ibftevent.RoundExpiry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
@@ -38,12 +37,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class IbftProcessorTest {
-  private ScheduledExecutorService mockExecutorService;
   private EventMultiplexer mockeEventMultiplexer;
 
   @Before
   public void initialise() {
-    mockExecutorService = mock(ScheduledExecutorService.class);
     mockeEventMultiplexer = mock(EventMultiplexer.class);
   }
 
@@ -51,8 +48,7 @@ public class IbftProcessorTest {
   public void handlesStopGracefully() throws InterruptedException {
     final IbftEventQueue mockQueue = mock(IbftEventQueue.class);
     Mockito.when(mockQueue.poll(anyLong(), any())).thenReturn(null);
-    final IbftProcessor processor =
-        new IbftProcessor(mockQueue, mockeEventMultiplexer, mockExecutorService);
+    final IbftProcessor processor = new IbftProcessor(mockQueue, mockeEventMultiplexer);
 
     // Start the IbftProcessor
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
@@ -73,15 +69,12 @@ public class IbftProcessorTest {
 
     // The processor task has exited
     assertThat(processorFuture.isDone()).isTrue();
-
-    // Make sure the round timers executor got cleaned up
-    verify(mockExecutorService).shutdownNow();
   }
 
   @Test
   public void cleanupExecutorsAfterShutdownNow() throws InterruptedException {
     final IbftProcessor processor =
-        new IbftProcessor(new IbftEventQueue(1000), mockeEventMultiplexer, mockExecutorService);
+        new IbftProcessor(new IbftEventQueue(1000), mockeEventMultiplexer);
 
     // Start the IbftProcessor
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
@@ -99,9 +92,6 @@ public class IbftProcessorTest {
 
     // The processor task has exited
     assertThat(processorFuture.isDone()).isTrue();
-
-    // Make sure the round timers executor got cleaned up
-    verify(mockExecutorService).shutdownNow();
   }
 
   @Test
@@ -110,8 +100,7 @@ public class IbftProcessorTest {
     final IbftEventQueue mockQueue = mock(IbftEventQueue.class);
     Mockito.when(mockQueue.poll(anyLong(), any())).thenThrow(new InterruptedException());
 
-    final IbftProcessor processor =
-        new IbftProcessor(mockQueue, mockeEventMultiplexer, mockExecutorService);
+    final IbftProcessor processor = new IbftProcessor(mockQueue, mockeEventMultiplexer);
 
     // Start the IbftProcessor
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
@@ -135,16 +124,12 @@ public class IbftProcessorTest {
 
     // The processor task has woken up and exited
     assertThat(processorFuture.isDone()).isTrue();
-
-    // Make sure the round timers executor got cleaned up
-    verify(mockExecutorService).shutdownNow();
   }
 
   @Test
   public void drainEventsIntoStateMachine() throws InterruptedException {
     final IbftEventQueue queue = new IbftEventQueue(1000);
-    final IbftProcessor processor =
-        new IbftProcessor(queue, mockeEventMultiplexer, mockExecutorService);
+    final IbftProcessor processor = new IbftProcessor(queue, mockeEventMultiplexer);
 
     // Start the IbftProcessor
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();

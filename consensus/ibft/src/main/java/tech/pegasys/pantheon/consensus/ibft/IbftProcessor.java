@@ -15,11 +15,8 @@ package tech.pegasys.pantheon.consensus.ibft;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.IbftEvent;
 
 import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,7 +26,6 @@ public class IbftProcessor implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
 
   private final IbftEventQueue incomingQueue;
-  private final ScheduledExecutorService roundTimerExecutor;
   private volatile boolean shutdown = false;
   private final EventMultiplexer eventMultiplexer;
 
@@ -41,19 +37,8 @@ public class IbftProcessor implements Runnable {
    */
   public IbftProcessor(
       final IbftEventQueue incomingQueue, final EventMultiplexer eventMultiplexer) {
-    // Spawning the round timer with a single thread as we should never have more than 1 timer in
-    // flight at a time
-    this(incomingQueue, eventMultiplexer, Executors.newSingleThreadScheduledExecutor());
-  }
-
-  @VisibleForTesting
-  IbftProcessor(
-      final IbftEventQueue incomingQueue,
-      final EventMultiplexer eventMultiplexer,
-      final ScheduledExecutorService roundTimerExecutor) {
     this.incomingQueue = incomingQueue;
     this.eventMultiplexer = eventMultiplexer;
-    this.roundTimerExecutor = roundTimerExecutor;
   }
 
   /** Indicate to the processor that it should gracefully stop at its next opportunity */
@@ -68,7 +53,6 @@ public class IbftProcessor implements Runnable {
     }
     // Clean up the executor service the round timer has been utilising
     LOG.info("Shutting down IBFT event processor");
-    roundTimerExecutor.shutdownNow();
   }
 
   private Optional<IbftEvent> nextIbftEvent() {
