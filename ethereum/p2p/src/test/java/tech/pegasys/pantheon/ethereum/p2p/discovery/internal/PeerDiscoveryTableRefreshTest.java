@@ -60,6 +60,7 @@ public class PeerDiscoveryTableRefreshTest {
                 emptyList(),
                 outboundMessageHandler,
                 timer,
+                new BlockingAsyncExecutor(),
                 0,
                 () -> true,
                 new PeerBlacklist(),
