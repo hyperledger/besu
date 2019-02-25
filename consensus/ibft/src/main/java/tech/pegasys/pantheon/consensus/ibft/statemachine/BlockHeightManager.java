@@ -22,8 +22,6 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 
 public interface BlockHeightManager {
 
-  void start();
-
   void handleBlockTimerExpiry(ConsensusRoundIdentifier roundIdentifier);
 
   void roundExpired(RoundExpiry expire);

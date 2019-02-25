@@ -31,7 +31,6 @@ import tech.pegasys.pantheon.ethereum.core.Block;
 
 import java.util.List;
 
-import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -52,11 +51,6 @@ public class ReceivedFutureProposalTest {
   private final RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
 
   private final MessageFactory localNodeMessageFactory = context.getLocalNodeMessageFactory();
-
-  @Before
-  public void setup() {
-    context.getController().start();
-  }
 
   @Test
   public void proposalWithEmptyPrepareCertificatesOfferNewBlock() {

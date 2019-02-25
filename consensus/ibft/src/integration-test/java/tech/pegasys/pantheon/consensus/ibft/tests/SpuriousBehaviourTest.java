@@ -67,7 +67,6 @@ public class SpuriousBehaviourTest {
 
   @Before
   public void setup() {
-    context.getController().start();
 
     expectedPrepare =
         context.getLocalNodeMessageFactory().createPrepare(roundId, proposedBlock.getHash());

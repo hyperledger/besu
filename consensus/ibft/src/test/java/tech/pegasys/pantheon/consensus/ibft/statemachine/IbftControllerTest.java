@@ -96,15 +96,6 @@ public class IbftControllerTest {
     when(blockChain.getChainHeadHeader()).thenReturn(chainHeadBlockHeader);
     when(blockHeightManagerFactory.create(any())).thenReturn(blockHeightManager);
     when(ibftFinalState.getValidators()).thenReturn(ImmutableList.of(validator));
-    ibftController =
-        new IbftController(
-            blockChain,
-            ibftFinalState,
-            blockHeightManagerFactory,
-            ibftGossip,
-            messageTracker,
-            futureMessageBuffer,
-            mock(EthSynchronizerUpdater.class));
 
     when(chainHeadBlockHeader.getNumber()).thenReturn(1L);
     when(chainHeadBlockHeader.getHash()).thenReturn(Hash.ZERO);
@@ -117,9 +108,21 @@ public class IbftControllerTest {
     when(messageTracker.hasSeenMessage(any())).thenReturn(false);
   }
 
+  private void constructIbftController() {
+    ibftController =
+        new IbftController(
+            blockChain,
+            ibftFinalState,
+            blockHeightManagerFactory,
+            ibftGossip,
+            messageTracker,
+            futureMessageBuffer,
+            mock(EthSynchronizerUpdater.class));
+  }
+
   @Test
   public void createsNewBlockHeightManagerWhenStarted() {
-    ibftController.start();
+    constructIbftController();
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManagerFactory).create(chainHeadBlockHeader);
   }
@@ -137,12 +140,12 @@ public class IbftControllerTest {
     when(blockHeightManager.getChainHeight()).thenReturn(2L);
     when(futureMessageBuffer.retrieveMessagesForHeight(2L)).thenReturn(height2Msgs);
 
-    ibftController.start();
+    constructIbftController();
+
     verify(futureMessageBuffer).retrieveMessagesForHeight(2L);
     verify(futureMessageBuffer, never()).retrieveMessagesForHeight(3L);
     verify(blockHeightManagerFactory).create(chainHeadBlockHeader);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
-    verify(blockHeightManager).start();
     verify(blockHeightManager, never()).handleProposalPayload(proposal);
     verify(blockHeightManager).handlePreparePayload(prepare);
     verify(ibftGossip).send(prepareMessage);
@@ -165,13 +168,12 @@ public class IbftControllerTest {
         .thenReturn(emptyList());
     when(blockHeightManager.getChainHeight()).thenReturn(2L);
 
-    ibftController.start();
+    constructIbftController();
     final NewChainHead newChainHead = new NewChainHead(nextBlock);
     ibftController.handleNewBlockEvent(newChainHead);
 
     verify(blockHeightManagerFactory).create(nextBlock);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
-    verify(blockHeightManager, times(2)).start(); // once at beginning, and again on newChainHead.
     verify(futureMessageBuffer, times(2)).retrieveMessagesForHeight(2L);
     verify(blockHeightManager).handleProposalPayload(proposal);
     verify(ibftGossip).send(proposalMessage);
@@ -185,28 +187,25 @@ public class IbftControllerTest {
 
   @Test
   public void newBlockForCurrentOrPreviousHeightTriggersNoChange() {
-    ibftController.start();
-
+    constructIbftController();
     long chainHeadHeight = chainHeadBlockHeader.getNumber();
     when(nextBlock.getNumber()).thenReturn(chainHeadHeight);
     when(nextBlock.getHash()).thenReturn(Hash.ZERO);
     final NewChainHead sameHeightBlock = new NewChainHead(nextBlock);
     ibftController.handleNewBlockEvent(sameHeightBlock);
     verify(blockHeightManagerFactory, times(1)).create(any()); // initial creation
-    verify(blockHeightManager, times(1)).start(); // the initial call at start of test.
 
     when(nextBlock.getNumber()).thenReturn(chainHeadHeight - 1);
     final NewChainHead priorBlock = new NewChainHead(nextBlock);
     ibftController.handleNewBlockEvent(priorBlock);
     verify(blockHeightManagerFactory, times(1)).create(any());
-    verify(blockHeightManager, times(1)).start();
   }
 
   @Test
   public void handlesRoundExpiry() {
     final RoundExpiry roundExpiry = new RoundExpiry(roundIdentifier);
 
-    ibftController.start();
+    constructIbftController();
     ibftController.handleRoundExpiry(roundExpiry);
 
     verify(blockHeightManager).roundExpired(roundExpiry);
@@ -216,7 +215,7 @@ public class IbftControllerTest {
   public void handlesBlockTimerExpiry() {
     final BlockTimerExpiry blockTimerExpiry = new BlockTimerExpiry(roundIdentifier);
 
-    ibftController.start();
+    constructIbftController();
     ibftController.handleBlockTimerExpiry(blockTimerExpiry);
 
     verify(blockHeightManager).handleBlockTimerExpiry(roundIdentifier);
@@ -225,42 +224,39 @@ public class IbftControllerTest {
   @Test
   public void proposalForCurrentHeightIsPassedToBlockHeightManager() {
     setupProposal(roundIdentifier, validator);
-    ibftController.start();
+    constructIbftController();
     ibftController.handleMessageEvent(new IbftReceivedMessageEvent(proposalMessage));
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handleProposalPayload(proposal);
     verify(ibftGossip).send(proposalMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
-    verify(blockHeightManager).start();
     verifyNoMoreInteractions(blockHeightManager);
   }
 
   @Test
   public void prepareForCurrentHeightIsPassedToBlockHeightManager() {
     setupPrepare(roundIdentifier, validator);
-    ibftController.start();
+    constructIbftController();
     ibftController.handleMessageEvent(new IbftReceivedMessageEvent(prepareMessage));
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handlePreparePayload(prepare);
     verify(ibftGossip).send(prepareMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
-    verify(blockHeightManager).start();
     verifyNoMoreInteractions(blockHeightManager);
   }
 
   @Test
   public void commitForCurrentHeightIsPassedToBlockHeightManager() {
     setupCommit(roundIdentifier, validator);
-    ibftController.start();
+    constructIbftController();
     ibftController.handleMessageEvent(new IbftReceivedMessageEvent(commitMessage));
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handleCommitPayload(commit);
     verify(ibftGossip).send(commitMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
-    verify(blockHeightManager).start();
     verifyNoMoreInteractions(blockHeightManager);
   }
 
@@ -268,14 +264,13 @@ public class IbftControllerTest {
   public void roundChangeForCurrentHeightIsPassedToBlockHeightManager() {
     roundIdentifier = new ConsensusRoundIdentifier(0, 1);
     setupRoundChange(roundIdentifier, validator);
-    ibftController.start();
+    constructIbftController();
     ibftController.handleMessageEvent(new IbftReceivedMessageEvent(roundChangeMessage));
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handleRoundChangePayload(roundChange);
     verify(ibftGossip).send(roundChangeMessage);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
-    verify(blockHeightManager).start();
     verifyNoMoreInteractions(blockHeightManager);
   }
 
@@ -311,7 +306,7 @@ public class IbftControllerTest {
   public void roundExpiryForPastHeightIsDiscarded() {
     final RoundExpiry roundExpiry = new RoundExpiry(roundIdentifier);
     when(blockHeightManager.getChainHeight()).thenReturn(1L);
-    ibftController.start();
+    constructIbftController();
     ibftController.handleRoundExpiry(roundExpiry);
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager, never()).roundExpired(any());
@@ -321,7 +316,7 @@ public class IbftControllerTest {
   public void blockTimerForPastHeightIsDiscarded() {
     final BlockTimerExpiry blockTimerExpiry = new BlockTimerExpiry(roundIdentifier);
     when(blockHeightManager.getChainHeight()).thenReturn(1L);
-    ibftController.start();
+    constructIbftController();
     ibftController.handleBlockTimerExpiry(blockTimerExpiry);
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager, never()).handleBlockTimerExpiry(any());
@@ -387,29 +382,27 @@ public class IbftControllerTest {
   public void uniqueMessagesAreAddedAsSeen() {
     when(messageTracker.hasSeenMessage(proposalMessageData)).thenReturn(false);
     setupProposal(roundIdentifier, validator);
-    ibftController.start();
+    constructIbftController();
     ibftController.handleMessageEvent(new IbftReceivedMessageEvent(proposalMessage));
 
     verify(messageTracker).addSeenMessage(proposalMessageData);
   }
 
   private void verifyNotHandledAndNoFutureMsgs(final IbftReceivedMessageEvent msg) {
-    ibftController.start();
+    constructIbftController();
     ibftController.handleMessageEvent(msg);
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
-    verify(blockHeightManager).start();
     verifyNoMoreInteractions(blockHeightManager);
   }
 
   private void verifyHasFutureMessages(final long msgHeight, final Message message) {
-    ibftController.start();
+    constructIbftController();
     ibftController.handleMessageEvent(new IbftReceivedMessageEvent(message));
 
     verify(futureMessageBuffer).addMessage(msgHeight, message);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
-    verify(blockHeightManager).start();
     verifyNoMoreInteractions(blockHeightManager);
   }
 

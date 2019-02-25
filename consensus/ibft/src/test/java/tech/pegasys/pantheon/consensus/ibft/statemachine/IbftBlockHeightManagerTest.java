@@ -131,7 +131,6 @@ public class IbftBlockHeightManagerTest {
     when(messageValidator.validatePrepare(any())).thenReturn(true);
     when(finalState.getTransmitter()).thenReturn(messageTransmitter);
     when(finalState.getBlockTimer()).thenReturn(blockTimer);
-    when(finalState.getRoundTimer()).thenReturn(roundTimer);
     when(finalState.getQuorum()).thenReturn(3);
     when(finalState.getMessageFactory()).thenReturn(messageFactory);
     when(blockCreator.createBlock(anyLong())).thenReturn(createdBlock);
@@ -159,7 +158,8 @@ public class IbftBlockHeightManagerTest {
                   new Subscribers<>(),
                   localNodeKeys,
                   messageFactory,
-                  messageTransmitter);
+                  messageTransmitter,
+                  roundTimer);
             });
 
     when(roundFactory.createNewRoundWithState(any(), any()))
@@ -174,7 +174,8 @@ public class IbftBlockHeightManagerTest {
                   new Subscribers<>(),
                   localNodeKeys,
                   messageFactory,
-                  messageTransmitter);
+                  messageTransmitter,
+                  roundTimer);
             });
   }
 
@@ -190,7 +191,6 @@ public class IbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory);
-    manager.start();
 
     verify(blockTimer, times(1)).startTimer(any(), any());
   }
@@ -205,7 +205,6 @@ public class IbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory);
-    manager.start();
 
     manager.handleBlockTimerExpiry(roundIdentifier);
     verify(messageTransmitter, times(1)).multicastProposal(eq(roundIdentifier), any(), any());
@@ -230,7 +229,6 @@ public class IbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory);
-    manager.start();
     verify(roundFactory).createNewRound(any(), eq(0));
 
     manager.handleRoundChangePayload(roundChange);
@@ -250,7 +248,6 @@ public class IbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory);
-    manager.start();
     verify(roundFactory).createNewRound(any(), eq(0));
 
     manager.roundExpired(new RoundExpiry(roundIdentifier));
@@ -277,7 +274,6 @@ public class IbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory);
-    manager.start();
     reset(messageTransmitter);
 
     manager.handleRoundChangePayload(roundChange);
@@ -298,7 +294,6 @@ public class IbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory);
-    manager.start();
 
     final Prepare prepare =
         validatorMessageFactory
@@ -339,7 +334,6 @@ public class IbftBlockHeightManagerTest {
             roundFactory,
             clock,
             messageValidatorFactory);
-    manager.start();
     manager.handleBlockTimerExpiry(roundIdentifier); // Trigger a Proposal creation.
 
     final Prepare firstPrepare =
@@ -388,7 +382,6 @@ public class IbftBlockHeightManagerTest {
             futureRoundIdentifier,
             createdBlock,
             Optional.of(new RoundChangeCertificate(Collections.emptyList())));
-    manager.start();
     reset(roundFactory); // Discard the existing createNewRound invocation.
 
     manager.handleProposalPayload(futureRoundProposal);
