@@ -82,6 +82,12 @@ Optional configuration options that can be specified in the genesis file are:
    
 * `duplicateMesageLimit` - Default is 100. If seeing messages being retransmitted by the same node, increasing the duplicate message limit 
    may reduce the number of retransmissions. A value of 2 to 3 times the number of validators is generally sufficient.  
+   
+*  `futureMessagesLimit` - Default is 1000. The future messages buffer holds IBFT 2.0 messages for a future chain height.
+    For large networks, increasing the future messages limit may be useful. 
+
+*  `futureMessagesMaxDistance` - Default is 10. Specifies the maximum height from the current chain height 
+    for which messages are buffered in the future messages buffer. 
 
 ## Adding and Removing Validators
 
