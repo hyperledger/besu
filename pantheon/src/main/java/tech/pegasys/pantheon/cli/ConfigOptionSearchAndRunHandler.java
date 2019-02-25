@@ -18,7 +18,6 @@ import java.util.List;
 
 import picocli.CommandLine;
 import picocli.CommandLine.AbstractParseResultHandler;
-import picocli.CommandLine.DefaultExceptionHandler;
 import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParseResult;
@@ -27,13 +26,13 @@ class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<List<Ob
   private static final String DOCKER_CONFIG_LOCATION = "/etc/pantheon/pantheon.conf";
 
   private final AbstractParseResultHandler<List<Object>> resultHandler;
-  private final DefaultExceptionHandler<List<Object>> exceptionHandler;
+  private final CommandLine.IExceptionHandler2<List<Object>> exceptionHandler;
   private final String configFileOptionName;
   private final boolean isDocker;
 
   ConfigOptionSearchAndRunHandler(
       final AbstractParseResultHandler<List<Object>> resultHandler,
-      final DefaultExceptionHandler<List<Object>> exceptionHandler,
+      final CommandLine.IExceptionHandler2<List<Object>> exceptionHandler,
       final String configFileOptionName,
       final boolean isDocker) {
     this.resultHandler = resultHandler;
