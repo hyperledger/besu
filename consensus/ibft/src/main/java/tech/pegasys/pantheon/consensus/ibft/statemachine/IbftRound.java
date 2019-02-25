@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.consensus.ibft.IbftBlockInterface;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
+import tech.pegasys.pantheon.consensus.ibft.RoundTimer;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockCreator;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
@@ -63,7 +64,8 @@ public class IbftRound {
       final Subscribers<MinedBlockObserver> observers,
       final KeyPair nodeKeys,
       final MessageFactory messageFactory,
-      final IbftMessageTransmitter transmitter) {
+      final IbftMessageTransmitter transmitter,
+      final RoundTimer roundTimer) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
@@ -72,6 +74,8 @@ public class IbftRound {
     this.nodeKeys = nodeKeys;
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
+
+    roundTimer.startTimer(getRoundIdentifier());
   }
 
   public ConsensusRoundIdentifier getRoundIdentifier() {

@@ -73,6 +73,7 @@ public class IbftRoundFactory {
         minedBlockObservers,
         finalState.getNodeKeys(),
         finalState.getMessageFactory(),
-        finalState.getTransmitter());
+        finalState.getTransmitter(),
+        finalState.getRoundTimer());
   }
 }

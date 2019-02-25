@@ -29,9 +29,6 @@ public class NoOpBlockHeightManager implements BlockHeightManager {
   }
 
   @Override
-  public void start() {}
-
-  @Override
   public void handleBlockTimerExpiry(final ConsensusRoundIdentifier roundIdentifier) {}
 
   @Override

@@ -56,8 +56,6 @@ public class LocalNodeNotProposerTest {
         new Commit(
             createSignedCommitPayload(
                 roundId, blockToPropose, context.getLocalNodeParams().getNodeKeyPair()));
-
-    context.getController().start();
   }
 
   @Test

@@ -31,7 +31,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 
-import org.junit.Before;
 import org.junit.Test;
 
 public class FutureHeightTest {
@@ -56,11 +55,6 @@ public class FutureHeightTest {
   private final ConsensusRoundIdentifier futureHeightRoundId = new ConsensusRoundIdentifier(2, 0);
 
   private final MessageFactory localNodeMessageFactory = context.getLocalNodeMessageFactory();
-
-  @Before
-  public void setup() {
-    context.getController().start();
-  }
 
   @Test
   public void messagesForFutureHeightAreBufferedUntilChainHeightCatchesUp() {

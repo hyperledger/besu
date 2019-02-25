@@ -72,8 +72,7 @@ public class LocalNodeIsProposerTest {
             createSignedCommitPayload(
                 roundId, expectedProposedBlock, context.getLocalNodeParams().getNodeKeyPair()));
 
-    // Start the Controller, and trigger "block timer" to send proposal.
-    context.getController().start();
+    // Trigger "block timer" to send proposal.
     context.getController().handleBlockTimerExpiry(new BlockTimerExpiry(roundId));
   }
 

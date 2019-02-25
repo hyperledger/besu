@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
-import org.junit.Before;
 import org.junit.Test;
 
 public class RoundChangeTest {
@@ -64,11 +63,6 @@ public class RoundChangeTest {
   private final MessageFactory localNodeMessageFactory = context.getLocalNodeMessageFactory();
 
   private final Block blockToPropose = context.createBlockForProposalFromChainHead(0, 15);
-
-  @Before
-  public void setup() {
-    context.getController().start();
-  }
 
   @Test
   public void onRoundChangeTimerExpiryEventRoundChangeMessageIsSent() {

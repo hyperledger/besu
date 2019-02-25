@@ -18,7 +18,6 @@ import static tech.pegasys.pantheon.consensus.ibft.statemachine.IbftBlockHeightM
 
 import tech.pegasys.pantheon.consensus.ibft.BlockTimer;
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
-import tech.pegasys.pantheon.consensus.ibft.RoundTimer;
 import tech.pegasys.pantheon.consensus.ibft.ibftevent.RoundExpiry;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Commit;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.IbftMessage;
@@ -58,7 +57,6 @@ public class IbftBlockHeightManager implements BlockHeightManager {
   private final IbftRoundFactory roundFactory;
   private final RoundChangeManager roundChangeManager;
   private final BlockHeader parentHeader;
-  private final RoundTimer roundTimer;
   private final BlockTimer blockTimer;
   private final IbftMessageTransmitter transmitter;
   private final MessageFactory messageFactory;
@@ -81,7 +79,6 @@ public class IbftBlockHeightManager implements BlockHeightManager {
       final MessageValidatorFactory messageValidatorFactory) {
     this.parentHeader = parentHeader;
     this.roundFactory = ibftRoundFactory;
-    this.roundTimer = finalState.getRoundTimer();
     this.blockTimer = finalState.getBlockTimer();
     this.transmitter = finalState.getTransmitter();
     this.messageFactory = finalState.getMessageFactory();
@@ -99,11 +96,8 @@ public class IbftBlockHeightManager implements BlockHeightManager {
                 roundIdentifier,
                 finalState.getQuorum(),
                 messageValidatorFactory.createMessageValidator(roundIdentifier, parentHeader));
-  }
 
-  @Override
-  public void start() {
-    startNewRound(0);
+    currentRound = roundFactory.createNewRound(parentHeader, 0);
     if (finalState.isLocalNodeProposerForRound(currentRound.getRoundIdentifier())) {
       blockTimer.startTimer(currentRound.getRoundIdentifier(), parentHeader);
     }
@@ -247,7 +241,6 @@ public class IbftBlockHeightManager implements BlockHeightManager {
     }
     // discard roundChange messages from the current and previous rounds
     roundChangeManager.discardRoundsPriorTo(currentRound.getRoundIdentifier());
-    roundTimer.startTimer(currentRound.getRoundIdentifier());
   }
 
   @Override

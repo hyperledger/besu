@@ -30,7 +30,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 
-import org.junit.Before;
 import org.junit.Test;
 
 public class FutureRoundTest {
@@ -56,11 +55,6 @@ public class FutureRoundTest {
   private final RoundSpecificPeers futurePeers = context.roundSpecificPeers(futureRoundId);
 
   private final MessageFactory localNodeMessageFactory = context.getLocalNodeMessageFactory();
-
-  @Before
-  public void setup() {
-    context.getController().start();
-  }
 
   @Test
   public void messagesForFutureRoundAreNotActionedUntilRoundIsActive() {
