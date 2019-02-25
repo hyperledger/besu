@@ -36,7 +36,6 @@ import java.io.PrintStream;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,7 +50,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import picocli.CommandLine;
-import picocli.CommandLine.DefaultExceptionHandler;
 import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.RunLast;
 
@@ -159,7 +157,7 @@ public abstract class CommandTestAbstract {
     // parse using Ansi.OFF to be able to assert on non formatted output results
     pantheonCommand.parse(
         new RunLast().useOut(outPrintStream).useAnsi(Ansi.OFF),
-        new DefaultExceptionHandler<List<Object>>().useErr(errPrintStream).useAnsi(Ansi.OFF),
+        pantheonCommand.exceptionHandler().useErr(errPrintStream).useAnsi(Ansi.OFF),
         in,
         args);
     return pantheonCommand.spec;

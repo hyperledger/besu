@@ -70,8 +70,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import com.google.common.base.Suppliers;
 import com.google.common.io.Resources;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.DecodeException;
@@ -82,7 +84,6 @@ import org.apache.logging.log4j.core.config.Configurator;
 import picocli.CommandLine;
 import picocli.CommandLine.AbstractParseResultHandler;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.DefaultExceptionHandler;
 import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.ITypeConverter;
 import picocli.CommandLine.Option;
@@ -458,6 +459,39 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           "The address to which the privacy pre-compiled contract will be mapped to (default: ${DEFAULT-VALUE})")
   private final Integer privacyPrecompiledAddress = Address.PRIVACY;
 
+  // Inner class so we can get to loggingLevel.
+  public class PantheonExceptionHandler
+      extends CommandLine.AbstractHandler<List<Object>, PantheonExceptionHandler>
+      implements CommandLine.IExceptionHandler2<List<Object>> {
+
+    @Override
+    public List<Object> handleParseException(final ParameterException ex, final String[] args) {
+      if (logLevel != null && Level.DEBUG.isMoreSpecificThan(logLevel)) {
+        ex.printStackTrace(err());
+      } else {
+        err().println(ex.getMessage());
+      }
+      if (!CommandLine.UnmatchedArgumentException.printSuggestions(ex, err())) {
+        ex.getCommandLine().usage(err(), ansi());
+      }
+      return returnResultOrExit(null);
+    }
+
+    @Override
+    public List<Object> handleExecutionException(
+        final ExecutionException ex, final CommandLine.ParseResult parseResult) {
+      return throwOrExit(ex);
+    }
+
+    @Override
+    protected PantheonExceptionHandler self() {
+      return this;
+    }
+  }
+
+  private Supplier<PantheonExceptionHandler> exceptionHandlerSupplier =
+      Suppliers.memoize(PantheonExceptionHandler::new);
+
   public PantheonCommand(
       final Logger logger,
       final BlockImporter blockImporter,
@@ -475,7 +509,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   public void parse(
       final AbstractParseResultHandler<List<Object>> resultHandler,
-      final DefaultExceptionHandler<List<Object>> exceptionHandler,
+      final PantheonExceptionHandler exceptionHandler,
       final InputStream in,
       final String... args) {
 
@@ -578,7 +612,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           metricsConfiguration(),
           permissioningConfiguration);
     } catch (Exception e) {
-      throw new ParameterException(this.commandLine, e.getMessage());
+      throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
   }
 
@@ -1027,5 +1061,9 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   public MetricsSystem getMetricsSystem() {
     return metricsSystem;
+  }
+
+  public PantheonExceptionHandler exceptionHandler() {
+    return exceptionHandlerSupplier.get();
   }
 }

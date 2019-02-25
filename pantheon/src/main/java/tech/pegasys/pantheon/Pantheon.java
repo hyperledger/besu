@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
-import static picocli.CommandLine.defaultExceptionHandler;
 
 import tech.pegasys.pantheon.cli.PantheonCommand;
 import tech.pegasys.pantheon.cli.PantheonControllerBuilder;
@@ -38,7 +37,7 @@ public final class Pantheon {
 
     pantheonCommand.parse(
         new RunLast().andExit(SUCCESS_EXIT_CODE),
-        defaultExceptionHandler().andExit(ERROR_EXIT_CODE),
+        pantheonCommand.exceptionHandler().andExit(ERROR_EXIT_CODE),
         System.in,
         args);
   }
