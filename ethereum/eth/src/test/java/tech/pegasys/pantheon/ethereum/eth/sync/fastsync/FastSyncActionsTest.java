@@ -19,8 +19,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.CHAIN_TOO_SHORT;
 import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncState.EMPTY_SYNC_STATE;
-import static tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem.NO_OP_LABELLED_COUNTER;
-import static tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem.NO_OP_LABELLED_TIMER;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
@@ -37,8 +35,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.concurrent.CompletableFuture;
@@ -57,7 +54,6 @@ public class FastSyncActionsTest {
           .build();
 
   private final FastSyncStateStorage fastSyncStateStorage = mock(FastSyncStateStorage.class);
-  private final LabelledMetric<OperationTimer> ethTasksTimer = NO_OP_LABELLED_TIMER;
   private final AtomicInteger timeoutCount = new AtomicInteger(0);
   private FastSyncActions<Void> fastSyncActions;
   private EthProtocolManager ethProtocolManager;
@@ -83,8 +79,7 @@ public class FastSyncActionsTest {
             protocolContext,
             ethContext,
             new SyncState(blockchain, ethContext.getEthPeers()),
-            ethTasksTimer,
-            NO_OP_LABELLED_COUNTER);
+            new NoOpMetricsSystem());
   }
 
   @Test

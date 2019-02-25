@@ -79,7 +79,7 @@ public class FullSyncTargetManagerTest {
             protocolContext,
             ethContext,
             syncState,
-            NoOpMetricsSystem.NO_OP_LABELLED_TIMER);
+            new NoOpMetricsSystem());
   }
 
   @Test

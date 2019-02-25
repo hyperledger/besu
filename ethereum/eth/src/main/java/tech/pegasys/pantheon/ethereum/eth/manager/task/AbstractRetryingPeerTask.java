@@ -18,8 +18,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.MaxRetriesReachedEx
 import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerBreachedProtocolException;
 import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerDisconnectedException;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.time.Duration;
@@ -44,24 +43,26 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
   private final EthContext ethContext;
   private final int maxRetries;
   private final Predicate<T> isEmptyResponse;
+  private final MetricsSystem metricsSystem;
   private int retryCount = 0;
   private Optional<EthPeer> assignedPeer = Optional.empty();
 
   /**
    * @param ethContext The context of the current Eth network we are attached to.
    * @param maxRetries Maximum number of retries to accept before completing exceptionally.
-   * @param ethTasksTimer The metrics timer to use to time the duration of the task.
    * @param isEmptyResponse Test if the response received was empty.
+   * @param metricsSystem The metrics system used to measure task.
    */
   public AbstractRetryingPeerTask(
       final EthContext ethContext,
       final int maxRetries,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
-      final Predicate<T> isEmptyResponse) {
-    super(ethTasksTimer);
+      final Predicate<T> isEmptyResponse,
+      final MetricsSystem metricsSystem) {
+    super(metricsSystem);
     this.ethContext = ethContext;
     this.maxRetries = maxRetries;
     this.isEmptyResponse = isEmptyResponse;
+    this.metricsSystem = metricsSystem;
   }
 
   public void assignPeer(final EthPeer peer) {
@@ -108,7 +109,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     if (cause instanceof NoAvailablePeersException) {
       LOG.info("No peers available, wait for peer.");
       // Wait for new peer to connect
-      final WaitForPeerTask waitTask = WaitForPeerTask.create(ethContext, ethTasksTimer);
+      final WaitForPeerTask waitTask = WaitForPeerTask.create(ethContext, metricsSystem);
       executeSubTask(
           () ->
               ethContext

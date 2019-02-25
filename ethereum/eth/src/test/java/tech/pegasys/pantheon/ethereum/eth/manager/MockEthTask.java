@@ -23,7 +23,7 @@ public class MockEthTask extends AbstractEthTask<Object> {
   private CountDownLatch countdown;
 
   MockEthTask(final int count) {
-    super(NoOpMetricsSystem.NO_OP_LABELLED_TIMER);
+    super(new NoOpMetricsSystem());
     countdown = new CountDownLatch(count);
   }
 

@@ -40,10 +40,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
-import tech.pegasys.pantheon.metrics.OperationTimer;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -123,9 +120,6 @@ public class MainnetPantheonController implements PantheonController<Void> {
             metricsSystem);
     final SyncState syncState =
         new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
-    final LabelledMetric<OperationTimer> ethTasksTimer =
-        metricsSystem.createLabelledTimer(
-            MetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName");
     final Synchronizer synchronizer =
         new DefaultSynchronizer<>(
             syncConfig,
@@ -135,8 +129,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
             ethProtocolManager.ethContext(),
             syncState,
             dataDirectory,
-            metricsSystem,
-            ethTasksTimer);
+            metricsSystem);
 
     OptionalLong daoBlock = genesisConfig.getConfigOptions().getDaoForkBlock();
     if (daoBlock.isPresent()) {
@@ -144,7 +137,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
       EthContext ethContext = ethProtocolManager.ethContext();
       DaoForkPeerValidator daoForkPeerValidator =
           new DaoForkPeerValidator(
-              ethContext, protocolSchedule, ethTasksTimer, daoBlock.getAsLong());
+              ethContext, protocolSchedule, metricsSystem, daoBlock.getAsLong());
       PeerValidatorRunner.runValidator(ethContext, daoForkPeerValidator);
     }
 

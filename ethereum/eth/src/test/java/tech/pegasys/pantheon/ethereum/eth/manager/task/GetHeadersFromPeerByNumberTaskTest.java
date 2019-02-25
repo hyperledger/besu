@@ -18,7 +18,6 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.PeerMessageTaskTest;
-import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,11 +54,7 @@ public class GetHeadersFromPeerByNumberTaskTest extends PeerMessageTaskTest<List
       final List<BlockHeader> requestedData) {
     final BlockHeader firstHeader = requestedData.get(0);
     return GetHeadersFromPeerByNumberTask.startingAtNumber(
-        protocolSchedule,
-        ethContext,
-        firstHeader.getNumber(),
-        requestedData.size(),
-        NoOpMetricsSystem.NO_OP_LABELLED_TIMER);
+        protocolSchedule, ethContext, firstHeader.getNumber(), requestedData.size(), metricsSystem);
   }
 
   @Test
@@ -100,13 +95,7 @@ public class GetHeadersFromPeerByNumberTaskTest extends PeerMessageTaskTest<List
     // Execute task and wait for response
     final AbstractGetHeadersFromPeerTask task =
         new GetHeadersFromPeerByNumberTask(
-            protocolSchedule,
-            ethContext,
-            startNumber,
-            count,
-            skip,
-            reverse,
-            NoOpMetricsSystem.NO_OP_LABELLED_TIMER);
+            protocolSchedule, ethContext, startNumber, count, skip, reverse, metricsSystem);
     final AtomicReference<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>> actualResult =
         new AtomicReference<>();
     final AtomicBoolean done = new AtomicBoolean(false);

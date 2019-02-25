@@ -22,8 +22,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockExce
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,8 +41,8 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
       final ProtocolContext<C> protocolContext,
       final Block block,
       final HeaderValidationMode headerValidationMode,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
-    super(ethTasksTimer);
+      final MetricsSystem metricsSystem) {
+    super(metricsSystem);
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.block = block;
@@ -55,9 +54,9 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
       final ProtocolContext<C> protocolContext,
       final Block block,
       final HeaderValidationMode headerValidationMode,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final MetricsSystem metricsSystem) {
     return new PersistBlockTask<>(
-        protocolSchedule, protocolContext, block, headerValidationMode, ethTasksTimer);
+        protocolSchedule, protocolContext, block, headerValidationMode, metricsSystem);
   }
 
   public static <C> Supplier<CompletableFuture<List<Block>>> forSequentialBlocks(
@@ -65,7 +64,7 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
       final ProtocolContext<C> protocolContext,
       final List<Block> blocks,
       final HeaderValidationMode headerValidationMode,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final MetricsSystem metricsSystem) {
     checkArgument(blocks.size() > 0);
     return () -> {
       final List<Block> successfulImports = new ArrayList<>();
@@ -79,7 +78,7 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
                   block,
                   successfulImports,
                   headerValidationMode,
-                  ethTasksTimer);
+                  metricsSystem);
           continue;
         }
         future =
@@ -91,7 +90,7 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
                         block,
                         successfulImports,
                         headerValidationMode,
-                        ethTasksTimer));
+                        metricsSystem));
       }
       return future.thenApply(r -> successfulImports);
     };
@@ -103,9 +102,9 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
       final Block block,
       final List<Block> list,
       final HeaderValidationMode headerValidationMode,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final MetricsSystem metricsSystem) {
     return PersistBlockTask.create(
-            protocolSchedule, protocolContext, block, headerValidationMode, ethTasksTimer)
+            protocolSchedule, protocolContext, block, headerValidationMode, metricsSystem)
         .run()
         .whenComplete(
             (r, t) -> {
@@ -120,7 +119,7 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
       final ProtocolContext<C> protocolContext,
       final List<Block> blocks,
       final HeaderValidationMode headerValidationMode,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final MetricsSystem metricsSystem) {
     checkArgument(blocks.size() > 0);
     return () -> {
       final CompletableFuture<List<Block>> finalResult = new CompletableFuture<>();
@@ -130,7 +129,7 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
         if (future == null) {
           future =
               PersistBlockTask.create(
-                      protocolSchedule, protocolContext, block, headerValidationMode, ethTasksTimer)
+                      protocolSchedule, protocolContext, block, headerValidationMode, metricsSystem)
                   .run();
           continue;
         }
@@ -147,7 +146,7 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
                               protocolContext,
                               block,
                               headerValidationMode,
-                              ethTasksTimer)
+                              metricsSystem)
                           .run();
                     });
       }

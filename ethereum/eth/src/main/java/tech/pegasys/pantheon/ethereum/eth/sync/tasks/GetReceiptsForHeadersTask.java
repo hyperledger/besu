@@ -24,8 +24,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractRetryingPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.GetReceiptsFromPeerTask;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.HashMap;
 import java.util.List;
@@ -47,15 +46,17 @@ public class GetReceiptsForHeadersTask
 
   private final List<BlockHeader> headers;
   private final Map<BlockHeader, List<TransactionReceipt>> receipts;
+  private final MetricsSystem metricsSystem;
 
   private GetReceiptsForHeadersTask(
       final EthContext ethContext,
       final List<BlockHeader> headers,
       final int maxRetries,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
-    super(ethContext, maxRetries, ethTasksTimer, Map::isEmpty);
+      final MetricsSystem metricsSystem) {
+    super(ethContext, maxRetries, Map::isEmpty, metricsSystem);
     checkArgument(headers.size() > 0, "Must supply a non-empty headers list");
     this.ethContext = ethContext;
+    this.metricsSystem = metricsSystem;
 
     this.headers = headers;
     this.receipts = new HashMap<>();
@@ -66,15 +67,15 @@ public class GetReceiptsForHeadersTask
       final EthContext ethContext,
       final List<BlockHeader> headers,
       final int maxRetries,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
-    return new GetReceiptsForHeadersTask(ethContext, headers, maxRetries, ethTasksTimer);
+      final MetricsSystem metricsSystem) {
+    return new GetReceiptsForHeadersTask(ethContext, headers, maxRetries, metricsSystem);
   }
 
   public static GetReceiptsForHeadersTask forHeaders(
       final EthContext ethContext,
       final List<BlockHeader> headers,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
-    return new GetReceiptsForHeadersTask(ethContext, headers, DEFAULT_RETRIES, ethTasksTimer);
+      final MetricsSystem metricsSystem) {
+    return new GetReceiptsForHeadersTask(ethContext, headers, DEFAULT_RETRIES, metricsSystem);
   }
 
   private void completeEmptyReceipts(final List<BlockHeader> headers) {
@@ -102,7 +103,7 @@ public class GetReceiptsForHeadersTask
     return executeSubTask(
         () -> {
           final GetReceiptsFromPeerTask task =
-              GetReceiptsFromPeerTask.forHeaders(ethContext, incompleteHeaders, ethTasksTimer);
+              GetReceiptsFromPeerTask.forHeaders(ethContext, incompleteHeaders, metricsSystem);
           assignedPeer.ifPresent(task::assignPeer);
           return task.run().thenApply(PeerTaskResult::getResult);
         });

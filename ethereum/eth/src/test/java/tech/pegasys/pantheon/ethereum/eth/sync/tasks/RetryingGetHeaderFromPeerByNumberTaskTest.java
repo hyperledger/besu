@@ -36,7 +36,7 @@ public class RetryingGetHeaderFromPeerByNumberTaskTest
   @Override
   protected EthTask<List<BlockHeader>> createTask(final List<BlockHeader> requestedData) {
     return RetryingGetHeaderFromPeerByNumberTask.forSingleNumber(
-        protocolSchedule, ethContext, ethTasksTimer, PIVOT_BLOCK_NUMBER, maxRetries);
+        protocolSchedule, ethContext, metricsSystem, PIVOT_BLOCK_NUMBER, maxRetries);
   }
 
   @Test

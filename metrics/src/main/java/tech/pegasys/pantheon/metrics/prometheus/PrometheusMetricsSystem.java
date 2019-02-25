@@ -49,6 +49,11 @@ public class PrometheusMetricsSystem implements MetricsSystem {
   private static final String PANTHEON_PREFIX = "pantheon_";
   private final Map<MetricCategory, Collection<Collector>> collectors = new ConcurrentHashMap<>();
   private final CollectorRegistry registry = new CollectorRegistry(true);
+  private final Map<String, LabelledMetric<tech.pegasys.pantheon.metrics.Counter>> cachedCounters =
+      new ConcurrentHashMap<>();
+  private final Map<String, LabelledMetric<tech.pegasys.pantheon.metrics.OperationTimer>>
+      cachedTimers = new ConcurrentHashMap<>();
+  private final Map<String, Collector> cachedGauges = new ConcurrentHashMap<>();
 
   PrometheusMetricsSystem() {}
 
@@ -73,12 +78,14 @@ public class PrometheusMetricsSystem implements MetricsSystem {
       final String name,
       final String help,
       final String... labelNames) {
-    final Counter counter =
-        Counter.build(convertToPrometheusName(category, name), help)
-            .labelNames(labelNames)
-            .create();
-    addCollector(category, counter);
-    return new PrometheusCounter(counter);
+    final String metricName = convertToPrometheusName(category, name);
+    return cachedCounters.computeIfAbsent(
+        metricName,
+        (k) -> {
+          final Counter counter = Counter.build(metricName, help).labelNames(labelNames).create();
+          addCollector(category, counter);
+          return new PrometheusCounter(counter);
+        });
   }
 
   @Override
@@ -87,18 +94,23 @@ public class PrometheusMetricsSystem implements MetricsSystem {
       final String name,
       final String help,
       final String... labelNames) {
-    final Summary summary =
-        Summary.build(convertToPrometheusName(category, name), help)
-            .quantile(0.2, 0.02)
-            .quantile(0.5, 0.05)
-            .quantile(0.8, 0.02)
-            .quantile(0.95, 0.005)
-            .quantile(0.99, 0.001)
-            .quantile(1.0, 0)
-            .labelNames(labelNames)
-            .create();
-    addCollector(category, summary);
-    return new PrometheusTimer(summary);
+    final String metricName = convertToPrometheusName(category, name);
+    return cachedTimers.computeIfAbsent(
+        metricName,
+        (k) -> {
+          final Summary summary =
+              Summary.build(metricName, help)
+                  .quantile(0.2, 0.02)
+                  .quantile(0.5, 0.05)
+                  .quantile(0.8, 0.02)
+                  .quantile(0.95, 0.005)
+                  .quantile(0.99, 0.001)
+                  .quantile(1.0, 0)
+                  .labelNames(labelNames)
+                  .create();
+          addCollector(category, summary);
+          return new PrometheusTimer(summary);
+        });
   }
 
   @Override
@@ -108,7 +120,13 @@ public class PrometheusMetricsSystem implements MetricsSystem {
       final String help,
       final Supplier<Double> valueSupplier) {
     final String metricName = convertToPrometheusName(category, name);
-    addCollector(category, new CurrentValueCollector(metricName, help, valueSupplier));
+    cachedGauges.computeIfAbsent(
+        metricName,
+        (k) -> {
+          Collector collector = new CurrentValueCollector(metricName, help, valueSupplier);
+          addCollector(category, collector);
+          return collector;
+        });
   }
 
   private void addCollector(final MetricCategory category, final Collector metric) {

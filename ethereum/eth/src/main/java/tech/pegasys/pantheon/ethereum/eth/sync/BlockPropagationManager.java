@@ -37,8 +37,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.ArrayList;
@@ -65,7 +64,7 @@ public class BlockPropagationManager<C> {
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private final MetricsSystem metricsSystem;
   private final BlockBroadcaster blockBroadcaster;
 
   private final AtomicBoolean started = new AtomicBoolean(false);
@@ -81,13 +80,13 @@ public class BlockPropagationManager<C> {
       final EthContext ethContext,
       final SyncState syncState,
       final PendingBlocks pendingBlocks,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
+      final MetricsSystem metricsSystem,
       final BlockBroadcaster blockBroadcaster) {
     this.config = config;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.ethTasksTimer = ethTasksTimer;
+    this.metricsSystem = metricsSystem;
     this.blockBroadcaster = blockBroadcaster;
     this.syncState = syncState;
     this.pendingBlocks = pendingBlocks;
@@ -156,7 +155,7 @@ public class BlockPropagationManager<C> {
               protocolContext,
               readyForImport,
               HeaderValidationMode.FULL,
-              ethTasksTimer);
+              metricsSystem);
       ethContext
           .getScheduler()
           .scheduleSyncWorkerTask(importBlocksTask)
@@ -258,7 +257,7 @@ public class BlockPropagationManager<C> {
   private CompletableFuture<Block> processAnnouncedBlock(
       final EthPeer peer, final NewBlockHash newBlock) {
     final AbstractPeerTask<Block> getBlockTask =
-        GetBlockFromPeerTask.create(protocolSchedule, ethContext, newBlock.hash(), ethTasksTimer)
+        GetBlockFromPeerTask.create(protocolSchedule, ethContext, newBlock.hash(), metricsSystem)
             .assignPeer(peer);
 
     return getBlockTask.run().thenCompose((r) -> importOrSavePendingBlock(r.getResult()));
@@ -298,7 +297,7 @@ public class BlockPropagationManager<C> {
     // Import block
     final PersistBlockTask<C> importTask =
         PersistBlockTask.create(
-            protocolSchedule, protocolContext, block, HeaderValidationMode.FULL, ethTasksTimer);
+            protocolSchedule, protocolContext, block, HeaderValidationMode.FULL, metricsSystem);
     return ethContext
         .getScheduler()
         .scheduleSyncWorkerTask(importTask::run)

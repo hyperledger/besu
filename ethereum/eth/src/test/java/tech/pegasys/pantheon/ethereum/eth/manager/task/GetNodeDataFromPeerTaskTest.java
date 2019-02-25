@@ -46,7 +46,7 @@ public class GetNodeDataFromPeerTaskTest extends PeerMessageTaskTest<Map<Hash, B
   protected EthTask<PeerTaskResult<Map<Hash, BytesValue>>> createTask(
       final Map<Hash, BytesValue> requestedData) {
     final List<Hash> hashes = Lists.newArrayList(requestedData.keySet());
-    return GetNodeDataFromPeerTask.forHashes(ethContext, hashes, ethTasksTimer);
+    return GetNodeDataFromPeerTask.forHashes(ethContext, hashes, metricsSystem);
   }
 
   @Override

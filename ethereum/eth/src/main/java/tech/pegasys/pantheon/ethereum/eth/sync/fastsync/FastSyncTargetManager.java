@@ -26,8 +26,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByNumberTask;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +41,7 @@ class FastSyncTargetManager<C> extends SyncTargetManager<C> {
   private final ProtocolSchedule<C> protocolSchedule;
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private final MetricsSystem metricsSystem;
   private final BlockHeader pivotBlockHeader;
 
   public FastSyncTargetManager(
@@ -51,13 +50,13 @@ class FastSyncTargetManager<C> extends SyncTargetManager<C> {
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
+      final MetricsSystem metricsSystem,
       final BlockHeader pivotBlockHeader) {
-    super(config, protocolSchedule, protocolContext, ethContext, syncState, ethTasksTimer);
+    super(config, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.ethTasksTimer = ethTasksTimer;
+    this.metricsSystem = metricsSystem;
     this.pivotBlockHeader = pivotBlockHeader;
   }
 
@@ -83,7 +82,7 @@ class FastSyncTargetManager<C> extends SyncTargetManager<C> {
         RetryingGetHeaderFromPeerByNumberTask.forSingleNumber(
             protocolSchedule,
             ethContext,
-            ethTasksTimer,
+            metricsSystem,
             pivotBlockHeader.getNumber(),
             MAX_PIVOT_BLOCK_RETRIES);
     task.assignPeer(bestPeer);

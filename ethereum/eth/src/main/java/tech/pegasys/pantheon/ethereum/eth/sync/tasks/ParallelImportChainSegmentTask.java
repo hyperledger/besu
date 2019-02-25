@@ -20,8 +20,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractEthTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.BlockHandler;
 import tech.pegasys.pantheon.ethereum.eth.sync.ValidationPolicy;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.Collection;
 import java.util.List;
@@ -49,6 +48,7 @@ public class ParallelImportChainSegmentTask<C, B> extends AbstractEthTask<List<B
 
   private final BlockHandler<B> blockHandler;
   private final ValidationPolicy validationPolicy;
+  private final MetricsSystem metricsSystem;
 
   private ParallelImportChainSegmentTask(
       final ProtocolSchedule<C> protocolSchedule,
@@ -56,14 +56,15 @@ public class ParallelImportChainSegmentTask<C, B> extends AbstractEthTask<List<B
       final EthContext ethContext,
       final int maxActiveChunks,
       final List<BlockHeader> checkpointHeaders,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
       final BlockHandler<B> blockHandler,
-      final ValidationPolicy validationPolicy) {
-    super(ethTasksTimer);
+      final ValidationPolicy validationPolicy,
+      final MetricsSystem metricsSystem) {
+    super(metricsSystem);
     this.ethContext = ethContext;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.maxActiveChunks = maxActiveChunks;
+    this.metricsSystem = metricsSystem;
 
     if (checkpointHeaders.size() > 1) {
       this.firstHeaderNumber = checkpointHeaders.get(0).getNumber();
@@ -83,19 +84,19 @@ public class ParallelImportChainSegmentTask<C, B> extends AbstractEthTask<List<B
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final int maxActiveChunks,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
       final BlockHandler<B> blockHandler,
       final ValidationPolicy validationPolicy,
-      final List<BlockHeader> checkpointHeaders) {
+      final List<BlockHeader> checkpointHeaders,
+      final MetricsSystem metricsSystem) {
     return new ParallelImportChainSegmentTask<>(
         protocolSchedule,
         protocolContext,
         ethContext,
         maxActiveChunks,
         checkpointHeaders,
-        ethTasksTimer,
         blockHandler,
-        validationPolicy);
+        validationPolicy,
+        metricsSystem);
   }
 
   @Override
@@ -111,7 +112,7 @@ public class ParallelImportChainSegmentTask<C, B> extends AbstractEthTask<List<B
               protocolSchedule,
               protocolContext,
               ethContext,
-              ethTasksTimer);
+              metricsSystem);
       final ParallelValidateHeadersTask<C> validateHeadersTask =
           new ParallelValidateHeadersTask<>(
               validationPolicy,
@@ -119,19 +120,19 @@ public class ParallelImportChainSegmentTask<C, B> extends AbstractEthTask<List<B
               maxActiveChunks,
               protocolSchedule,
               protocolContext,
-              ethTasksTimer);
+              metricsSystem);
       final ParallelDownloadBodiesTask<B> downloadBodiesTask =
           new ParallelDownloadBodiesTask<>(
-              blockHandler, validateHeadersTask.getOutboundQueue(), maxActiveChunks, ethTasksTimer);
+              blockHandler, validateHeadersTask.getOutboundQueue(), maxActiveChunks, metricsSystem);
       final ParallelExtractTxSignaturesTask<B> extractTxSignaturesTask =
           new ParallelExtractTxSignaturesTask<>(
-              blockHandler, downloadBodiesTask.getOutboundQueue(), maxActiveChunks, ethTasksTimer);
+              blockHandler, downloadBodiesTask.getOutboundQueue(), maxActiveChunks, metricsSystem);
       final ParallelValidateAndImportBodiesTask<B> validateAndImportBodiesTask =
           new ParallelValidateAndImportBodiesTask<>(
               blockHandler,
               extractTxSignaturesTask.getOutboundQueue(),
               Integer.MAX_VALUE,
-              ethTasksTimer);
+              metricsSystem);
 
       // Start the pipeline.
       final EthScheduler scheduler = ethContext.getScheduler();

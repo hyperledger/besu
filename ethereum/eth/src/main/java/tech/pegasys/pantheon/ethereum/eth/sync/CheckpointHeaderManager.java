@@ -23,8 +23,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.task.GetHeadersFromPeerByHashT
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.util.ArrayList;
@@ -48,7 +47,7 @@ public class CheckpointHeaderManager<C> {
   private final EthContext ethContext;
   private final SyncState syncState;
   private final ProtocolSchedule<C> protocolSchedule;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private final MetricsSystem metricsSystem;
 
   private int checkpointTimeouts = 0;
 
@@ -58,13 +57,13 @@ public class CheckpointHeaderManager<C> {
       final EthContext ethContext,
       final SyncState syncState,
       final ProtocolSchedule<C> protocolSchedule,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final MetricsSystem metricsSystem) {
     this.config = config;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.syncState = syncState;
     this.protocolSchedule = protocolSchedule;
-    this.ethTasksTimer = ethTasksTimer;
+    this.metricsSystem = metricsSystem;
   }
 
   public CompletableFuture<List<BlockHeader>> pullCheckpointHeaders(final SyncTarget syncTarget) {
@@ -130,7 +129,7 @@ public class CheckpointHeaderManager<C> {
             // + 1 because lastHeader will be returned as well.
             additionalHeaderCount + 1,
             skip,
-            ethTasksTimer)
+            metricsSystem)
         .assignPeer(syncTarget.peer())
         .run()
         .thenApply(PeerTaskResult::getResult);

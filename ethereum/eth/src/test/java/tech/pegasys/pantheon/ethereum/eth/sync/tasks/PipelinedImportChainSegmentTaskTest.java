@@ -80,7 +80,7 @@ public class PipelinedImportChainSegmentTaskTest
             protocolContext,
             blocks,
             HeaderValidationMode.SKIP_DETACHED,
-            ethTasksTimer)
+            metricsSystem)
         .get();
   }
 
@@ -100,7 +100,7 @@ public class PipelinedImportChainSegmentTaskTest
         modifiedContext,
         ethContext,
         1,
-        ethTasksTimer,
+        metricsSystem,
         createBlockHandler(),
         DETACHED_ONLY_VALIDATION_POLICY,
         previousBlock.getHeader(),
@@ -136,7 +136,7 @@ public class PipelinedImportChainSegmentTaskTest
             modifiedContext,
             ethContext,
             1,
-            ethTasksTimer,
+            metricsSystem,
             createBlockHandler(),
             DETACHED_ONLY_VALIDATION_POLICY,
             firstBlock.getHeader(),
@@ -188,7 +188,7 @@ public class PipelinedImportChainSegmentTaskTest
             modifiedContext,
             ethContext,
             1,
-            ethTasksTimer,
+            metricsSystem,
             createBlockHandler(),
             DETACHED_ONLY_VALIDATION_POLICY,
             fakeFirstBlock.getHeader(),
@@ -244,7 +244,7 @@ public class PipelinedImportChainSegmentTaskTest
             modifiedContext,
             ethContext,
             1,
-            ethTasksTimer,
+            metricsSystem,
             createBlockHandler(),
             DETACHED_ONLY_VALIDATION_POLICY,
             checkpointHeaders);
@@ -307,7 +307,7 @@ public class PipelinedImportChainSegmentTaskTest
             modifiedContext,
             ethContext,
             2,
-            ethTasksTimer,
+            metricsSystem,
             createBlockHandler(),
             DETACHED_ONLY_VALIDATION_POLICY,
             checkpointHeaders);
@@ -374,7 +374,7 @@ public class PipelinedImportChainSegmentTaskTest
             modifiedContext,
             ethContext,
             3,
-            ethTasksTimer,
+            metricsSystem,
             createBlockHandler(),
             DETACHED_ONLY_VALIDATION_POLICY,
             checkpointHeaders);
@@ -432,7 +432,7 @@ public class PipelinedImportChainSegmentTaskTest
   }
 
   private FullSyncBlockHandler<Void> createBlockHandler() {
-    return new FullSyncBlockHandler<>(protocolSchedule, protocolContext, ethContext, ethTasksTimer);
+    return new FullSyncBlockHandler<>(protocolSchedule, protocolContext, ethContext, metricsSystem);
   }
 
   private static class CountingResponder implements Responder {

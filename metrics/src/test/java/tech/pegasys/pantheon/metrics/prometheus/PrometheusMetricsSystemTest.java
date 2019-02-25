@@ -54,6 +54,23 @@ public class PrometheusMetricsSystemTest {
   }
 
   @Test
+  public void shouldHandleDuplicateCounterCreation() {
+    final LabelledMetric<Counter> counter1 =
+        metricsSystem.createLabelledCounter(PEERS, "connected", "Some help string");
+    final LabelledMetric<Counter> counter2 =
+        metricsSystem.createLabelledCounter(PEERS, "connected", "Some help string");
+    assertThat(counter1).isEqualTo(counter2);
+
+    counter1.labels().inc();
+    assertThat(metricsSystem.getMetrics())
+        .containsExactly(new Observation(PEERS, "connected", 1d, emptyList()));
+
+    counter2.labels().inc();
+    assertThat(metricsSystem.getMetrics())
+        .containsExactly(new Observation(PEERS, "connected", 2d, emptyList()));
+  }
+
+  @Test
   public void shouldCreateSeparateObservationsForEachCounterLabelValue() {
     final LabelledMetric<Counter> counter =
         metricsSystem.createLabelledCounter(PEERS, "connected", "Some help string", "labelName");
@@ -102,6 +119,15 @@ public class PrometheusMetricsSystemTest {
   }
 
   @Test
+  public void shouldHandleDuplicateTimerCreation() {
+    final LabelledMetric<OperationTimer> timer1 =
+        metricsSystem.createLabelledTimer(RPC, "request", "Some help");
+    final LabelledMetric<OperationTimer> timer2 =
+        metricsSystem.createLabelledTimer(RPC, "request", "Some help");
+    assertThat(timer1).isEqualTo(timer2);
+  }
+
+  @Test
   public void shouldCreateObservationsFromTimerWithLabels() {
     final LabelledMetric<OperationTimer> timer =
         metricsSystem.createLabelledTimer(RPC, "request", "Some help", "methodName");
@@ -123,6 +149,15 @@ public class PrometheusMetricsSystemTest {
 
   @Test
   public void shouldCreateObservationFromGauge() {
+    metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7d);
+
+    assertThat(metricsSystem.getMetrics())
+        .containsExactlyInAnyOrder(new Observation(JVM, "myValue", 7d, emptyList()));
+  }
+
+  @Test
+  public void shouldHandleDuplicateGaugeDeclaration() {
+    metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7d);
     metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7d);
 
     assertThat(metricsSystem.getMetrics())

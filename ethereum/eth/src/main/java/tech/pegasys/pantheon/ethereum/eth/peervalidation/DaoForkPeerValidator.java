@@ -21,8 +21,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.GetHeadersFromPeerByNumberTask;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.time.Duration;
 import java.util.List;
@@ -37,7 +36,7 @@ public class DaoForkPeerValidator implements PeerValidator {
 
   private final EthContext ethContext;
   private final ProtocolSchedule<?> protocolSchedule;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private final MetricsSystem metricsSystem;
 
   private final long daoBlockNumber;
   // Wait for peer's chainhead to advance some distance beyond daoBlockNumber before validating
@@ -46,13 +45,13 @@ public class DaoForkPeerValidator implements PeerValidator {
   public DaoForkPeerValidator(
       final EthContext ethContext,
       final ProtocolSchedule<?> protocolSchedule,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
+      final MetricsSystem metricsSystem,
       final long daoBlockNumber,
       final long chainHeightEstimationBuffer) {
     checkArgument(chainHeightEstimationBuffer >= 0);
     this.ethContext = ethContext;
     this.protocolSchedule = protocolSchedule;
-    this.ethTasksTimer = ethTasksTimer;
+    this.metricsSystem = metricsSystem;
     this.daoBlockNumber = daoBlockNumber;
     this.chainHeightEstimationBuffer = chainHeightEstimationBuffer;
   }
@@ -60,12 +59,12 @@ public class DaoForkPeerValidator implements PeerValidator {
   public DaoForkPeerValidator(
       final EthContext ethContext,
       final ProtocolSchedule<?> protocolSchedule,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
+      final MetricsSystem metricsSystem,
       final long daoBlockNumber) {
     this(
         ethContext,
         protocolSchedule,
-        ethTasksTimer,
+        metricsSystem,
         daoBlockNumber,
         DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);
   }
@@ -74,7 +73,7 @@ public class DaoForkPeerValidator implements PeerValidator {
   public CompletableFuture<Boolean> validatePeer(final EthPeer ethPeer) {
     AbstractPeerTask<List<BlockHeader>> getHeaderTask =
         GetHeadersFromPeerByNumberTask.forSingleNumber(
-                protocolSchedule, ethContext, daoBlockNumber, ethTasksTimer)
+                protocolSchedule, ethContext, daoBlockNumber, metricsSystem)
             .setTimeout(Duration.ofSeconds(20))
             .assignPeer(ethPeer);
     return getHeaderTask

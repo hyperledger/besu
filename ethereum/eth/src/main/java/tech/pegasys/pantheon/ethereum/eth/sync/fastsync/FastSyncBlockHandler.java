@@ -28,8 +28,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.List;
 import java.util.Map;
@@ -45,19 +44,19 @@ public class FastSyncBlockHandler<C> implements BlockHandler<BlockWithReceipts> 
   private final ProtocolSchedule<C> protocolSchedule;
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private final MetricsSystem metricsSystem;
   private final ValidationPolicy validationPolicy;
 
   public FastSyncBlockHandler(
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
+      final MetricsSystem metricsSystem,
       final ValidationPolicy validationPolicy) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.ethTasksTimer = ethTasksTimer;
+    this.metricsSystem = metricsSystem;
     this.validationPolicy = validationPolicy;
   }
 
@@ -69,13 +68,13 @@ public class FastSyncBlockHandler<C> implements BlockHandler<BlockWithReceipts> 
   }
 
   private CompletableFuture<List<Block>> downloadBodies(final List<BlockHeader> headers) {
-    return CompleteBlocksTask.forHeaders(protocolSchedule, ethContext, headers, ethTasksTimer)
+    return CompleteBlocksTask.forHeaders(protocolSchedule, ethContext, headers, metricsSystem)
         .run();
   }
 
   private CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> downloadReceipts(
       final List<BlockHeader> headers) {
-    return GetReceiptsForHeadersTask.forHeaders(ethContext, headers, ethTasksTimer).run();
+    return GetReceiptsForHeadersTask.forHeaders(ethContext, headers, metricsSystem).run();
   }
 
   private List<BlockWithReceipts> combineBlocksAndReceipts(

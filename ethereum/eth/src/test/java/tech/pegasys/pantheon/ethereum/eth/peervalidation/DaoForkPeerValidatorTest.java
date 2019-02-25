@@ -56,7 +56,7 @@ public class DaoForkPeerValidatorTest {
         new DaoForkPeerValidator(
             ethProtocolManager.ethContext(),
             MainnetProtocolSchedule.create(),
-            NoOpMetricsSystem.NO_OP_LABELLED_TIMER,
+            new NoOpMetricsSystem(),
             daoBlockNumber,
             0);
 
@@ -88,7 +88,7 @@ public class DaoForkPeerValidatorTest {
         new DaoForkPeerValidator(
             ethProtocolManager.ethContext(),
             MainnetProtocolSchedule.create(),
-            NoOpMetricsSystem.NO_OP_LABELLED_TIMER,
+            new NoOpMetricsSystem(),
             daoBlockNumber,
             0);
 
@@ -116,7 +116,7 @@ public class DaoForkPeerValidatorTest {
         new DaoForkPeerValidator(
             ethProtocolManager.ethContext(),
             MainnetProtocolSchedule.create(),
-            NoOpMetricsSystem.NO_OP_LABELLED_TIMER,
+            new NoOpMetricsSystem(),
             daoBlockNumber,
             0);
 
@@ -145,7 +145,7 @@ public class DaoForkPeerValidatorTest {
         new DaoForkPeerValidator(
             ethProtocolManager.ethContext(),
             MainnetProtocolSchedule.create(),
-            NoOpMetricsSystem.NO_OP_LABELLED_TIMER,
+            new NoOpMetricsSystem(),
             daoBlockNumber,
             0);
 
@@ -184,7 +184,7 @@ public class DaoForkPeerValidatorTest {
         new DaoForkPeerValidator(
             ethProtocolManager.ethContext(),
             MainnetProtocolSchedule.create(),
-            NoOpMetricsSystem.NO_OP_LABELLED_TIMER,
+            new NoOpMetricsSystem(),
             daoBlockNumber,
             buffer);
 

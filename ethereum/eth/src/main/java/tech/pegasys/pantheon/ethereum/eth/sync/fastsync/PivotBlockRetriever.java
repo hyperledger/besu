@@ -17,8 +17,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByNumberTask;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.Collection;
 import java.util.List;
@@ -38,7 +37,7 @@ public class PivotBlockRetriever<C> {
   static final int MAX_PIVOT_BLOCK_RETRIES = 3;
   private final long pivotBlockNumber;
   private final EthContext ethContext;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private final MetricsSystem metricsSystem;
   private final ProtocolSchedule<C> protocolSchedule;
   private final Map<BlockHeader, AtomicInteger> confirmationsByBlockNumber =
       new ConcurrentHashMap<>();
@@ -49,11 +48,11 @@ public class PivotBlockRetriever<C> {
   public PivotBlockRetriever(
       final ProtocolSchedule<C> protocolSchedule,
       final EthContext ethContext,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
+      final MetricsSystem metricsSystem,
       final long pivotBlockNumber) {
     this.pivotBlockNumber = pivotBlockNumber;
     this.ethContext = ethContext;
-    this.ethTasksTimer = ethTasksTimer;
+    this.metricsSystem = metricsSystem;
     this.protocolSchedule = protocolSchedule;
   }
 
@@ -97,7 +96,7 @@ public class PivotBlockRetriever<C> {
   private RetryingGetHeaderFromPeerByNumberTask createGetHeaderTask(final EthPeer peer) {
     final RetryingGetHeaderFromPeerByNumberTask task =
         RetryingGetHeaderFromPeerByNumberTask.forSingleNumber(
-            protocolSchedule, ethContext, ethTasksTimer, pivotBlockNumber, MAX_PIVOT_BLOCK_RETRIES);
+            protocolSchedule, ethContext, metricsSystem, pivotBlockNumber, MAX_PIVOT_BLOCK_RETRIES);
     task.assignPeer(peer);
     return task;
   }

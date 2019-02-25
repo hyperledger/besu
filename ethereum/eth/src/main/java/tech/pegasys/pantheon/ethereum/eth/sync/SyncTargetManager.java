@@ -22,8 +22,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.DetermineCommonAncestorTask;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -42,7 +41,7 @@ public abstract class SyncTargetManager<C> {
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private final MetricsSystem metricsSystem;
 
   public SyncTargetManager(
       final SynchronizerConfiguration config,
@@ -50,13 +49,13 @@ public abstract class SyncTargetManager<C> {
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
+      final MetricsSystem metricsSystem) {
     this.config = config;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.syncState = syncState;
-    this.ethTasksTimer = ethTasksTimer;
+    this.metricsSystem = metricsSystem;
   }
 
   public CompletableFuture<SyncTarget> findSyncTarget() {
@@ -78,7 +77,7 @@ public abstract class SyncTargetManager<C> {
                         ethContext,
                         bestPeer,
                         config.downloaderHeaderRequestSize(),
-                        ethTasksTimer)
+                        metricsSystem)
                     .run()
                     .handle(
                         (result, error) -> {
@@ -125,7 +124,7 @@ public abstract class SyncTargetManager<C> {
   private CompletableFuture<?> waitForNewPeer() {
     return ethContext
         .getScheduler()
-        .timeout(WaitForPeerTask.create(ethContext, ethTasksTimer), Duration.ofSeconds(5));
+        .timeout(WaitForPeerTask.create(ethContext, metricsSystem), Duration.ofSeconds(5));
   }
 
   private void onSyncTargetPeerDisconnect(final EthPeer ethPeer) {

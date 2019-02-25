@@ -12,8 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.manager.task;
 
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,8 +40,8 @@ public abstract class AbstractPipelinedTask<I, O> extends AbstractEthTask<List<O
   protected AbstractPipelinedTask(
       final BlockingQueue<I> inboundQueue,
       final int outboundBacklogSize,
-      final LabelledMetric<OperationTimer> ethTasksTimer) {
-    super(ethTasksTimer);
+      final MetricsSystem metricsSystem) {
+    super(metricsSystem);
     this.inboundQueue = inboundQueue;
     outboundQueue = new LinkedBlockingQueue<>(outboundBacklogSize);
     results = new ArrayList<>();

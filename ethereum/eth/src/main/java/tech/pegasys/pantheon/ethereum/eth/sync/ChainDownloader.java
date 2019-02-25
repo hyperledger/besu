@@ -24,8 +24,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.time.Duration;
@@ -49,7 +48,7 @@ public class ChainDownloader<C> {
   private final SyncTargetManager<C> syncTargetManager;
   private final CheckpointHeaderManager<C> checkpointHeaderManager;
   private final BlockImportTaskFactory blockImportTaskFactory;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
+  private final MetricsSystem metricsSystem;
   private final CompletableFuture<Void> downloadFuture = new CompletableFuture<>();
 
   private int chainSegmentTimeouts = 0;
@@ -61,11 +60,11 @@ public class ChainDownloader<C> {
       final SynchronizerConfiguration config,
       final EthContext ethContext,
       final SyncState syncState,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
       final SyncTargetManager<C> syncTargetManager,
       final CheckpointHeaderManager<C> checkpointHeaderManager,
-      final BlockImportTaskFactory blockImportTaskFactory) {
-    this.ethTasksTimer = ethTasksTimer;
+      final BlockImportTaskFactory blockImportTaskFactory,
+      final MetricsSystem metricsSystem) {
+    this.metricsSystem = metricsSystem;
     this.config = config;
     this.ethContext = ethContext;
 
@@ -136,7 +135,7 @@ public class ChainDownloader<C> {
   }
 
   private CompletableFuture<?> waitForPeers() {
-    return WaitForPeersTask.create(ethContext, 1, ethTasksTimer).run();
+    return WaitForPeersTask.create(ethContext, 1, metricsSystem).run();
   }
 
   private CompletableFuture<Void> checkSyncTarget() {

@@ -22,8 +22,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockExce
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.util.ArrayList;
@@ -52,6 +51,7 @@ public class PipelinedImportChainSegmentTask<C, B> extends AbstractEthTask<List<
   private final int chunksInTotal;
   private final BlockHandler<B> blockHandler;
   private final ValidationPolicy validationPolicy;
+  private final MetricsSystem metricsSystem;
   private int chunksIssued;
   private int chunksCompleted;
   private final int maxActiveChunks;
@@ -69,10 +69,10 @@ public class PipelinedImportChainSegmentTask<C, B> extends AbstractEthTask<List<
       final EthContext ethContext,
       final int maxActiveChunks,
       final List<BlockHeader> checkpointHeaders,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
+      final MetricsSystem metricsSystem,
       final BlockHandler<B> blockHandler,
       final ValidationPolicy validationPolicy) {
-    super(ethTasksTimer);
+    super(metricsSystem);
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
@@ -80,6 +80,7 @@ public class PipelinedImportChainSegmentTask<C, B> extends AbstractEthTask<List<
     this.chunksInTotal = checkpointHeaders.size() - 1;
     this.blockHandler = blockHandler;
     this.validationPolicy = validationPolicy;
+    this.metricsSystem = metricsSystem;
     this.chunksIssued = 0;
     this.chunksCompleted = 0;
     this.maxActiveChunks = maxActiveChunks;
@@ -90,7 +91,7 @@ public class PipelinedImportChainSegmentTask<C, B> extends AbstractEthTask<List<
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final int maxActiveChunks,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
+      final MetricsSystem metricsSystem,
       final BlockHandler<B> blockHandler,
       final ValidationPolicy validationPolicy,
       final BlockHeader... checkpointHeaders) {
@@ -99,7 +100,7 @@ public class PipelinedImportChainSegmentTask<C, B> extends AbstractEthTask<List<
         protocolContext,
         ethContext,
         maxActiveChunks,
-        ethTasksTimer,
+        metricsSystem,
         blockHandler,
         validationPolicy,
         Arrays.asList(checkpointHeaders));
@@ -110,7 +111,7 @@ public class PipelinedImportChainSegmentTask<C, B> extends AbstractEthTask<List<
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final int maxActiveChunks,
-      final LabelledMetric<OperationTimer> ethTasksTimer,
+      final MetricsSystem metricsSystem,
       final BlockHandler<B> blockHandler,
       final ValidationPolicy validationPolicy,
       final List<BlockHeader> checkpointHeaders) {
@@ -120,7 +121,7 @@ public class PipelinedImportChainSegmentTask<C, B> extends AbstractEthTask<List<
         ethContext,
         maxActiveChunks,
         checkpointHeaders,
-        ethTasksTimer,
+        metricsSystem,
         blockHandler,
         validationPolicy);
   }
@@ -216,7 +217,7 @@ public class PipelinedImportChainSegmentTask<C, B> extends AbstractEthTask<List<
             ethContext,
             lastChunkHeader,
             segmentLength,
-            ethTasksTimer);
+            metricsSystem);
     return executeSubTask(task::run)
         .thenApply(
             headers -> {
