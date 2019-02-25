@@ -1571,7 +1571,7 @@ None
 
 ### clique_discard
 
-Discards a proposal to add or remove a signer with the specified address. 
+Discards a proposal to [add or remove a signer with the specified address](../Consensus-Protocols/Clique.md#adding-and-removing-signers). 
 
 **Parameters** 
 
@@ -1600,7 +1600,7 @@ Discards a proposal to add or remove a signer with the specified address.
 
 ### clique_getSigners
 
-Lists signers for the specified block. 
+Lists [signers for the specified block](../Consensus-Protocols/Clique.md#adding-and-removing-signers). 
 
 **Parameters** 
 
@@ -1658,7 +1658,7 @@ Lists signers for the specified block.
     
 ### clique_propose
 
-Proposes adding or removing a signer with the specified address. 
+Proposes [adding or removing a signer with the specified address](../Consensus-Protocols/Clique.md#adding-and-removing-signers). 
 
 **Parameters**
 
@@ -1689,7 +1689,7 @@ Proposes adding or removing a signer with the specified address.
 
 ### clique_proposals
 
-Returns current proposals. 
+Returns [current proposals](../Consensus-Protocols/Clique.md#adding-and-removing-signers). 
 
 **Parameters**
 
