@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController.AsyncExecutor;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerRequirement;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
@@ -34,6 +35,7 @@ import java.net.SocketException;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Vertx;
@@ -65,6 +67,11 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
   @Override
   protected TimerUtil createTimer() {
     return new VertxTimerUtil(vertx);
+  }
+
+  @Override
+  protected AsyncExecutor createWorkerExecutor() {
+    return new VertxAsyncExecutor();
   }
 
   @Override
@@ -192,6 +199,31 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       LOG.debug("Discarding invalid peer discovery packet: {}", e.getMessage());
     } catch (final Throwable t) {
       LOG.error("Encountered error while handling packet", t);
+    }
+  }
+
+  private class VertxAsyncExecutor implements AsyncExecutor {
+
+    @Override
+    public <T> CompletableFuture<T> execute(final Supplier<T> action) {
+      final CompletableFuture<T> result = new CompletableFuture<>();
+      vertx.<T>executeBlocking(
+          future -> {
+            try {
+              future.complete(action.get());
+            } catch (final Throwable t) {
+              future.fail(t);
+            }
+          },
+          false,
+          event -> {
+            if (event.succeeded()) {
+              result.complete(event.result());
+            } else {
+              result.completeExceptionally(event.cause());
+            }
+          });
+      return result;
     }
   }
 }

@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBonde
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerDroppedEvent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController.AsyncExecutor;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerRequirement;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
@@ -115,6 +116,8 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
 
   protected abstract TimerUtil createTimer();
 
+  protected abstract AsyncExecutor createWorkerExecutor();
+
   protected abstract CompletableFuture<InetSocketAddress> listenForConnections();
 
   protected abstract CompletableFuture<Void> sendOutgoingPacket(
@@ -162,6 +165,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
         bootstrapPeers,
         this::handleOutgoingPacket,
         createTimer(),
+        createWorkerExecutor(),
         PEER_REFRESH_INTERVAL_MS,
         peerRequirement,
         peerBlacklist,
