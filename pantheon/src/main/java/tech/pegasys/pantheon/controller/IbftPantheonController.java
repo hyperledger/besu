@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.controller;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
+import static tech.pegasys.pantheon.ethereum.eth.manager.MonitoredExecutors.newScheduledThreadPool;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.config.IbftConfigOptions;
@@ -83,6 +84,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.Logger;
@@ -214,6 +216,9 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
 
     final IbftGossip gossiper = new IbftGossip(uniqueMessageMulticaster);
 
+    final ScheduledExecutorService timerExecutor =
+        newScheduledThreadPool("IbftTimerExecutor", 1, metricsSystem);
+
     final IbftFinalState finalState =
         new IbftFinalState(
             voteTallyCache,
@@ -221,14 +226,11 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             Util.publicKeyToAddress(nodeKeys.getPublicKey()),
             proposerSelector,
             uniqueMessageMulticaster,
-            new RoundTimer(
-                ibftEventQueue,
-                ibftConfig.getRequestTimeoutSeconds(),
-                Executors.newScheduledThreadPool(1)),
+            new RoundTimer(ibftEventQueue, ibftConfig.getRequestTimeoutSeconds(), timerExecutor),
             new BlockTimer(
                 ibftEventQueue,
                 ibftConfig.getBlockPeriodSeconds(),
-                Executors.newScheduledThreadPool(1),
+                timerExecutor,
                 Clock.systemUTC()),
             blockCreatorFactory,
             new MessageFactory(nodeKeys),
@@ -284,6 +286,12 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             processorExecutor.awaitTermination(5, TimeUnit.SECONDS);
           } catch (final InterruptedException e) {
             LOG.error("Failed to shutdown ibft processor executor");
+          }
+          timerExecutor.shutdownNow();
+          try {
+            timerExecutor.awaitTermination(5, TimeUnit.SECONDS);
+          } catch (final InterruptedException e) {
+            LOG.error("Failed to shutdown timer executor");
           }
           try {
             storageProvider.close();
