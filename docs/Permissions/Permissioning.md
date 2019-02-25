@@ -27,6 +27,8 @@ Alternatively, update the [`permissions_config.toml`](#permissions-configuration
 [`perm_reloadPermissionsFromFile`](../Reference/JSON-RPC-API-Methods.md#perm_reloadpermissionsfromfile) method 
 to update the whitelists. 
 
+Updates to the permissions configuration file persist across node restarts. 
+
 To view the nodes whitelist, use the [perm_getNodesWhitelist](../Reference/JSON-RPC-API-Methods.md#perm_getNodesWhiteList) method. 
 
 !!! note
@@ -116,6 +118,8 @@ To update the accounts whitelist when the node is running, use the JSON-RPC API 
 Alternatively, update the [`permissions_config.toml`](#permissions-configuration-file) file directly and use the 
 [`perm_reloadPermissionsFromFile`](../Reference/JSON-RPC-API-Methods.md#perm_reloadpermissionsfromfile) method 
 to update the whitelists.
+
+Updates to the permissions configuration file persist across node restarts.
 
 To view the accounts whitelist, use the [`perm_getAccountsWhitelist`](../Reference/JSON-RPC-API-Methods.md#perm_getAccountsWhitelist) method.
 
