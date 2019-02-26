@@ -37,6 +37,9 @@ public class MainnetBlockImporter<C> implements BlockImporter<C> {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
+    if (context.getBlockchain().contains(block.getHash())) {
+      return true;
+    }
 
     final Optional<BlockProcessingOutputs> outputs =
         blockValidator.validateAndProcessBlock(
