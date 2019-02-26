@@ -24,7 +24,6 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
-import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration.Builder;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
@@ -70,7 +69,7 @@ public class WorldStateDownloaderBenchmark {
   @Setup(Level.Invocation)
   public void setUpUnchangedState() throws Exception {
     final SynchronizerConfiguration syncConfig =
-        new Builder().worldStateHashCountPerRequest(200).build();
+        new SynchronizerConfiguration.Builder().worldStateHashCountPerRequest(200).build();
     final Hash stateRoot = createExistingWorldState();
     blockHeader = new BlockHeaderTestFixture().stateRoot(stateRoot).buildHeader();
 

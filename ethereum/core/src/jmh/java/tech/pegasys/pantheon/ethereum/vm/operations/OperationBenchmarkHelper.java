@@ -91,7 +91,6 @@ public class OperationBenchmarkHelper {
         .messageFrameStack(messageFrame.getMessageFrameStack())
         .blockchain(messageFrame.getBlockchain())
         .worldState(messageFrame.getWorldState())
-        .privateWorldStates(messageFrame.getPrivateWorldStates())
         .initialGas(messageFrame.getRemainingGas())
         .address(messageFrame.getContractAddress())
         .originator(messageFrame.getOriginatorAddress())
