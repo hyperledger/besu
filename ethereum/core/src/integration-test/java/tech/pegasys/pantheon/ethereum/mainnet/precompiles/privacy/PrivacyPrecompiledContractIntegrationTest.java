@@ -18,7 +18,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
 
 import tech.pegasys.orion.testutil.OrionTestHarness;
 import tech.pegasys.pantheon.enclave.Enclave;
@@ -26,6 +25,7 @@ import tech.pegasys.pantheon.enclave.types.SendRequest;
 import tech.pegasys.pantheon.enclave.types.SendResponse;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.ProcessableBlockHeader;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.mainnet.SpuriousDragonGasCalculator;
@@ -33,6 +33,8 @@ import tech.pegasys.pantheon.ethereum.privacy.PrivateTransaction;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionProcessor;
 import tech.pegasys.pantheon.ethereum.vm.BlockHashLookup;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
+import tech.pegasys.pantheon.ethereum.vm.OperationTracer;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -72,20 +74,22 @@ public class PrivacyPrecompiledContractIntegrationTest {
   private static MessageFrame messageFrame;
 
   private static OrionTestHarness testHarness;
+  private static WorldStateArchive worldStateArchive;
 
   private PrivateTransactionProcessor mockPrivateTxProcessor() {
     PrivateTransactionProcessor mockPrivateTransactionProcessor =
-        mock(PrivateTransactionProcessor.class, withSettings().verboseLogging());
+        mock(PrivateTransactionProcessor.class);
     PrivateTransactionProcessor.Result result =
         PrivateTransactionProcessor.Result.successful(
             null, 0, BytesValue.fromHexString(DEFAULT_OUTPUT), null);
-    when(mockPrivateTransactionProcessor.processPrivateTransaction(
+    when(mockPrivateTransactionProcessor.processTransaction(
             nullable(Blockchain.class),
             nullable(WorldUpdater.class),
             nullable(WorldUpdater.class),
             nullable(ProcessableBlockHeader.class),
             nullable(PrivateTransaction.class),
             nullable(Address.class),
+            nullable(OperationTracer.class),
             nullable(BlockHashLookup.class)))
         .thenReturn(result);
 
@@ -100,6 +104,11 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     enclave = new Enclave(testHarness.clientUrl());
     messageFrame = mock(MessageFrame.class);
+
+    worldStateArchive = mock(WorldStateArchive.class);
+    MutableWorldState mutableWorldState = mock(MutableWorldState.class);
+    when(mutableWorldState.updater()).thenReturn(mock(WorldUpdater.class));
+    when(worldStateArchive.getMutable()).thenReturn(mutableWorldState);
   }
 
   @AfterClass
@@ -122,7 +131,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     PrivacyPrecompiledContract privacyPrecompiledContract =
         new PrivacyPrecompiledContract(
-            new SpuriousDragonGasCalculator(), publicKeys.get(0), enclave);
+            new SpuriousDragonGasCalculator(), publicKeys.get(0), enclave, worldStateArchive);
 
     privacyPrecompiledContract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
 

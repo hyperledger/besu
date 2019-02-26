@@ -236,7 +236,7 @@ public class ProtocolSpecBuilder<T> {
     checkNotNull(precompileContractRegistryBuilder, "Missing precompile contract registry");
     checkNotNull(messageCallProcessorBuilder, "Missing message call processor");
     checkNotNull(transactionProcessorBuilder, "Missing transaction processor");
-    checkNotNull(privateTransactionProcessorBuilder, "Missing transaction processor");
+    checkNotNull(privateTransactionProcessorBuilder, "Missing private transaction processor");
     checkNotNull(blockHeaderValidatorBuilder, "Missing block header validator");
     checkNotNull(blockBodyValidatorBuilder, "Missing block body validator");
     checkNotNull(blockProcessorBuilder, "Missing block processor");

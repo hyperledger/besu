@@ -25,8 +25,10 @@ dependencies {
   testImplementation project(':ethereum:blockcreation')
   testImplementation project(':ethereum:jsonrpc')
   testImplementation project(':ethereum:permissioning')
+  testImplementation project(':ethereum:rlp')
   testImplementation project(':metrics')
   testImplementation project(':pantheon')
+  testImplementation project(':testutil')
   testImplementation project(':util')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
@@ -35,6 +37,7 @@ dependencies {
   testImplementation 'io.reactivex.rxjava2:rxjava'
   testImplementation 'io.vertx:vertx-core'
   testImplementation 'junit:junit'
+  testImplementation 'net.consensys:orion'
   testImplementation 'org.apache.logging.log4j:log4j-api'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'

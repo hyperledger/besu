@@ -16,7 +16,10 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Accounts;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account.TransferTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account.TransferTransactionSet;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaGetTransactionReceiptTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaSendRawTransactionTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthGetTransactionCountTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthGetTransactionReceiptTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermAddAccountsToWhitelistTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermAddNodeTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermGetAccountsWhitelistTransaction;
@@ -54,6 +57,11 @@ public class Transactions {
     return new TransferTransaction(sender, recipient, String.valueOf(amount), Unit.ETHER, nonce);
   }
 
+  public EeaSendRawTransactionTransaction createPrivateRawTransaction(
+      final String signedRawPrivateTransaction) {
+    return new EeaSendRawTransactionTransaction(signedRawPrivateTransaction);
+  }
+
   public TransferTransactionSet createIncrementalTransfers(
       final Account sender, final Account recipient, final int etherAmount) {
     final List<TransferTransaction> transfers = new ArrayList<>();
@@ -85,6 +93,15 @@ public class Transactions {
 
   public EthGetTransactionCountTransaction getTransactionCount(final String accountAddress) {
     return new EthGetTransactionCountTransaction(accountAddress);
+  }
+
+  public EthGetTransactionReceiptTransaction getTransactionReceipt(final String transactionHash) {
+    return new EthGetTransactionReceiptTransaction(transactionHash);
+  }
+
+  public EeaGetTransactionReceiptTransaction getPrivateTransactionReceipt(
+      final String transactionHash, final String publicKey) {
+    return new EeaGetTransactionReceiptTransaction(transactionHash, publicKey);
   }
 
   public PermAddNodeTransaction addNodesToWhitelist(final List<String> enodeList) {

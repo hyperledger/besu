@@ -84,7 +84,8 @@ public enum JsonRpcError {
   UNAUTHORIZED(-40100, "Unauthorized"),
 
   // Private transaction errors
-  ENCLAVE_IS_DOWN(-32000, "Enclave is down");
+  ENCLAVE_IS_DOWN(-50100, "Enclave is down"),
+  UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE(-50100, "Unimplemented private transaction type");
 
   private final int code;
   private final String message;

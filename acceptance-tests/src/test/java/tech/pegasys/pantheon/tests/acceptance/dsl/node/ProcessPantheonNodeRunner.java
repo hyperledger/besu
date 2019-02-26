@@ -71,6 +71,16 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
       params.add(node.getMiningParameters().getCoinbase().get().toString());
     }
 
+    if (node.getPrivacyParameters().isEnabled()) {
+      params.add("--privacy-enabled");
+      params.add("--privacy-url");
+      params.add(node.getPrivacyParameters().getUrl());
+      params.add("--privacy-public-key-file");
+      params.add(node.getPrivacyParameters().getPublicKeyFile().getAbsolutePath());
+      params.add("--privacy-precompiled-address");
+      params.add(String.valueOf(node.getPrivacyParameters().getPrivacyAddress()));
+    }
+
     params.add("--bootnodes");
     params.add(String.join(",", node.bootnodes().toString()));
 

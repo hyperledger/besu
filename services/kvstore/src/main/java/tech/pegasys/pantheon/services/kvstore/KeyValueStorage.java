@@ -19,7 +19,6 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.io.Closeable;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 /** Service provided by pantheon to facilitate persistent data storage. */
 public interface KeyValueStorage extends Closeable {
@@ -36,13 +35,6 @@ public interface KeyValueStorage extends Closeable {
    * @return An object representing the transaction.
    */
   Transaction startTransaction() throws StorageException;
-
-  /**
-   * Stream all stored key-value pairs.
-   *
-   * @return A stream of the contained key-value pairs.
-   */
-  Stream<Entry> entries();
 
   class Entry {
     private final BytesValue key;

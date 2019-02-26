@@ -110,14 +110,6 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
   }
 
   @Override
-  public Stream<Entry> entries() {
-    throwIfClosed();
-    final RocksIterator rocksIt = db.newIterator();
-    rocksIt.seekToFirst();
-    return new RocksDbEntryIterator(rocksIt).toStream();
-  }
-
-  @Override
   public void close() {
     if (closed.compareAndSet(false, true)) {
       txOptions.close();

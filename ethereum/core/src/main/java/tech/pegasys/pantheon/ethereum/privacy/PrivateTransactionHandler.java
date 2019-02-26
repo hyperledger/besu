@@ -66,7 +66,6 @@ public class PrivateTransactionHandler {
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
 
-    //    String s = new String(bvrlp.encoded().extractArray(), UTF_8);
     return new SendRequest(
         Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()),
         BytesValues.asString(privateTransaction.getPrivateFrom()),

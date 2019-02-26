@@ -34,7 +34,6 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
-import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionHandler;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.io.ByteArrayInputStream;
@@ -130,7 +129,7 @@ public class JsonRpcHttpServiceLoginTest {
                     supportedCapabilities,
                     Optional.empty(),
                     JSON_RPC_APIS,
-                    mock(PrivateTransactionHandler.class)));
+                    mock(PrivacyParameters.class)));
     service = createJsonRpcHttpService();
     jwtAuth = service.authenticationService.get().getJwtAuthProvider();
     service.start().join();

@@ -27,6 +27,8 @@ import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionProcessor;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
 import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
+import tech.pegasys.pantheon.ethereum.vm.OperationTracer;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -38,21 +40,29 @@ import org.apache.logging.log4j.Logger;
 public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   private final Enclave enclave;
   private final String enclavePublicKey;
+  private final WorldStateArchive privateWorldStateArchive;
   private PrivateTransactionProcessor privateTransactionProcessor;
-  private Integer DEFAULT_PRIVACY_GROUP_ID = 0;
 
   private static final Logger LOG = LogManager.getLogger();
 
   public PrivacyPrecompiledContract(
       final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
-    this(gasCalculator, privacyParameters.getPublicKey(), new Enclave(privacyParameters.getUrl()));
+    this(
+        gasCalculator,
+        privacyParameters.getPublicKey(),
+        new Enclave(privacyParameters.getUrl()),
+        privacyParameters.getPrivateWorldStateArchive());
   }
 
   PrivacyPrecompiledContract(
-      final GasCalculator gasCalculator, final String publicKey, final Enclave enclave) {
+      final GasCalculator gasCalculator,
+      final String publicKey,
+      final Enclave enclave,
+      final WorldStateArchive worldStateArchive) {
     super("Privacy", gasCalculator);
     this.enclave = enclave;
     this.enclavePublicKey = publicKey;
+    this.privateWorldStateArchive = worldStateArchive;
   }
 
   public void setPrivateTransactionProcessor(
@@ -76,18 +86,19 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           new BytesValueRLPInput(
               BytesValue.wrap(Base64.getDecoder().decode(receiveResponse.getPayload())), false);
 
-      PrivateTransaction transaction = PrivateTransaction.readFrom(bytesValueRLPInput);
+      PrivateTransaction privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
 
-      WorldUpdater privateWorldState = messageFrame.getPrivateWorldState(DEFAULT_PRIVACY_GROUP_ID);
       WorldUpdater publicWorldState = messageFrame.getWorldState();
+      WorldUpdater privateWorldState = privateWorldStateArchive.getMutable().updater();
       TransactionProcessor.Result result =
-          privateTransactionProcessor.processPrivateTransaction(
+          privateTransactionProcessor.processTransaction(
               messageFrame.getBlockchain(),
-              privateWorldState,
               publicWorldState,
+              privateWorldState,
               messageFrame.getBlockHeader(),
-              transaction,
+              privateTransaction,
               messageFrame.getMiningBeneficiary(),
+              OperationTracer.NO_TRACING,
               messageFrame.getBlockHashLookup());
 
       return result.getOutput();

@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.ProcessableBlockHeader;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.mainnet.SpuriousDragonGasCalculator;
@@ -32,15 +33,21 @@ import tech.pegasys.pantheon.ethereum.privacy.PrivateTransaction;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionProcessor;
 import tech.pegasys.pantheon.ethereum.vm.BlockHashLookup;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
+import tech.pegasys.pantheon.ethereum.vm.OperationTracer;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.util.Base64;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class PrivacyPrecompiledContractTest {
+  @Rule public final TemporaryFolder temp = new TemporaryFolder();
+
   private final String actual = "Test String";
   private final String publicKey = "public key";
   private final BytesValue key = BytesValue.wrap(actual.getBytes(UTF_8));
@@ -78,13 +85,14 @@ public class PrivacyPrecompiledContractTest {
     PrivateTransactionProcessor.Result result =
         PrivateTransactionProcessor.Result.successful(
             null, 0, BytesValue.fromHexString(DEFAULT_OUTPUT), null);
-    when(mockPrivateTransactionProcessor.processPrivateTransaction(
+    when(mockPrivateTransactionProcessor.processTransaction(
             nullable(Blockchain.class),
             nullable(WorldUpdater.class),
             nullable(WorldUpdater.class),
             nullable(ProcessableBlockHeader.class),
             nullable(PrivateTransaction.class),
             nullable(Address.class),
+            nullable(OperationTracer.class),
             nullable(BlockHashLookup.class)))
         .thenReturn(result);
 
@@ -99,12 +107,19 @@ public class PrivacyPrecompiledContractTest {
 
   @Before
   public void setUp() throws IOException {
+    WorldStateArchive worldStateArchive;
+    worldStateArchive = mock(WorldStateArchive.class);
+    MutableWorldState mutableWorldState = mock(MutableWorldState.class);
+    when(mutableWorldState.updater()).thenReturn(mock(WorldUpdater.class));
+    when(worldStateArchive.getMutable()).thenReturn(mutableWorldState);
+
     privacyPrecompiledContract =
-        new PrivacyPrecompiledContract(new SpuriousDragonGasCalculator(), publicKey, mockEnclave());
+        new PrivacyPrecompiledContract(
+            new SpuriousDragonGasCalculator(), publicKey, mockEnclave(), worldStateArchive);
     privacyPrecompiledContract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
     brokenPrivateTransactionHandler =
         new PrivacyPrecompiledContract(
-            new SpuriousDragonGasCalculator(), publicKey, brokenMockEnclave());
+            new SpuriousDragonGasCalculator(), publicKey, brokenMockEnclave(), worldStateArchive);
     messageFrame = mock(MessageFrame.class);
   }
 

@@ -54,7 +54,6 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
-import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionHandler;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
@@ -259,9 +258,6 @@ public class RunnerBuilder {
                 });
 
     final PrivacyParameters privacyParameters = pantheonController.getPrivacyParameters();
-    final PrivateTransactionHandler privateTransactionHandler =
-        new PrivateTransactionHandler(privacyParameters);
-
     final FilterManager filterManager = createFilterManager(vertx, context, transactionPool);
 
     Optional<JsonRpcHttpService> jsonRpcHttpService = Optional.empty();
@@ -280,7 +276,7 @@ public class RunnerBuilder {
               jsonRpcConfiguration.getRpcApis(),
               filterManager,
               accountWhitelistController,
-              privateTransactionHandler);
+              privacyParameters);
       jsonRpcHttpService =
           Optional.of(
               new JsonRpcHttpService(
@@ -303,7 +299,7 @@ public class RunnerBuilder {
               webSocketConfiguration.getRpcApis(),
               filterManager,
               accountWhitelistController,
-              privateTransactionHandler);
+              privacyParameters);
 
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(
@@ -363,7 +359,7 @@ public class RunnerBuilder {
       final Collection<RpcApi> jsonRpcApis,
       final FilterManager filterManager,
       final Optional<AccountWhitelistController> accountWhitelistController,
-      final PrivateTransactionHandler privateTransactionHandler) {
+      final PrivacyParameters privacyParameters) {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -380,7 +376,7 @@ public class RunnerBuilder {
                 jsonRpcApis,
                 filterManager,
                 accountWhitelistController,
-                privateTransactionHandler);
+                privacyParameters);
     methods.putAll(pantheonController.getAdditionalJsonRpcMethods(jsonRpcApis));
     return methods;
   }

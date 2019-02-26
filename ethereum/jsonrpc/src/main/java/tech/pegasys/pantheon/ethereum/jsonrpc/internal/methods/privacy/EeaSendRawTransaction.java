@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 
 import tech.pegasys.pantheon.ethereum.core.Transaction;
@@ -71,6 +72,17 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
       privateTransaction = decodeRawTransaction(rawPrivateTransaction);
     } catch (final InvalidJsonRpcRequestException e) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+    }
+
+    if (!privateTransaction.getValue().isZero()) {
+      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+    }
+
+    if (!privateTransaction
+        .getRestriction()
+        .equals(BytesValue.wrap("unrestricted".getBytes(UTF_8)))) {
+      return new JsonRpcErrorResponse(
+          request.getId(), JsonRpcError.UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE);
     }
 
     final Transaction transaction;

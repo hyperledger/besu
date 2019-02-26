@@ -36,7 +36,7 @@ public interface TransactionValidator {
    * <p>Note: {@code validate} should be called before getting the sender {@link Account} used in
    * this method to ensure that a sender can be extracted from the {@link Transaction}.
    *
-   * @param transaction the transaction to validate
+   * @param transaction the transaction to validateMessageFrame.State.COMPLETED_FAILED
    * @param sender the sender account state to validate against
    * @param maximumNonce the maximum transaction nonce. If not provided the transaction nonce must
    *     equal the sender's current account nonce
@@ -57,6 +57,7 @@ public interface TransactionValidator {
     INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
     EXCEEDS_BLOCK_GAS_LIMIT,
     TX_SENDER_NOT_AUTHORIZED,
-    CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE
+    CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE,
+    PRIVATE_TRANSACTION_FAILED
   }
 }

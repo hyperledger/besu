@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth;
+package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,26 +18,23 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactori
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
-import java.util.Optional;
 
-import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 
-public class EthGetTransactionReceiptTransaction
-    implements Transaction<Optional<TransactionReceipt>> {
+public class EeaSendRawTransactionTransaction implements Transaction<String> {
 
-  private final String input;
+  private final String transactionData;
 
-  public EthGetTransactionReceiptTransaction(final String input) {
-    this.input = input;
+  public EeaSendRawTransactionTransaction(final String transactionData) {
+    this.transactionData = transactionData;
   }
 
   @Override
-  public Optional<TransactionReceipt> execute(final JsonRequestFactories node) {
+  public String execute(final JsonRequestFactories node) {
     try {
-      final EthGetTransactionReceipt result = node.eth().ethGetTransactionReceipt(input).send();
-      assertThat(result.hasError()).isFalse();
-      return result.getTransactionReceipt();
+      EthSendTransaction response = node.eea().eeaSendRawTransaction(transactionData).send();
+      assertThat(response.getTransactionHash()).isNotNull();
+      return response.getTransactionHash();
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
