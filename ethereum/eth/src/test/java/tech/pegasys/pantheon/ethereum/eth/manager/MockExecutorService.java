@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-class MockExecutorService implements ExecutorService {
+public class MockExecutorService implements ExecutorService {
 
   private boolean autoRun = true;
   private final List<ExecutorTask<?>> tasks = new ArrayList<>();

@@ -12,8 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync.worldstate;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
@@ -33,8 +31,7 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
   }
 
   @Override
-  public void persist(final Updater updater) {
-    checkNotNull(getData(), "Must set data before node can be persisted.");
+  protected void doPersist(final Updater updater) {
     updater.putAccountStateTrieNode(getHash(), getData());
   }
 

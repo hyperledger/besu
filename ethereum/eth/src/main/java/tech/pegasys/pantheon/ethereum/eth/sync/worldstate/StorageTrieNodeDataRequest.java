@@ -12,8 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync.worldstate;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage.Updater;
@@ -30,8 +28,7 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
   }
 
   @Override
-  public void persist(final Updater updater) {
-    checkNotNull(getData(), "Must set data before node can be persisted.");
+  protected void doPersist(final Updater updater) {
     updater.putAccountStorageTrieNode(getHash(), getData());
   }
 

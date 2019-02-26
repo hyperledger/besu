@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.worldstate;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
 import tech.pegasys.pantheon.ethereum.trie.Node;
 import tech.pegasys.pantheon.ethereum.trie.TrieNodeDecoder;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -58,7 +59,11 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
   private Stream<NodeDataRequest> getRequestsFromChildTrieNode(final Node<BytesValue> trieNode) {
     if (trieNode.isReferencedByHash()) {
       // If child nodes are reference by hash, we need to download them
-      NodeDataRequest req = createChildNodeDataRequest(Hash.wrap(trieNode.getHash()));
+      final Hash hash = Hash.wrap(trieNode.getHash());
+      if (MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH.equals(hash) || BytesValue.EMPTY.equals(hash)) {
+        return Stream.empty();
+      }
+      final NodeDataRequest req = createChildNodeDataRequest(hash);
       return Stream.of(req);
     }
     // Otherwise if the child's value has been inlined we can go ahead and process it

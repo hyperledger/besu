@@ -69,6 +69,10 @@ public class DeterministicEthScheduler extends EthScheduler {
     return (MockScheduledExecutor) txWorkerExecutor;
   }
 
+  public MockExecutorService mockServiceExecutor() {
+    return (MockExecutorService) servicesExecutor;
+  }
+
   @Override
   public <T> void failAfterTimeout(final CompletableFuture<T> promise, final Duration timeout) {
     if (timeoutPolicy.shouldTimeout()) {

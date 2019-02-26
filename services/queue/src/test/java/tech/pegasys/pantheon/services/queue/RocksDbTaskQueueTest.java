@@ -12,13 +12,17 @@
  */
 package tech.pegasys.pantheon.services.queue;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.function.Function;
 
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 public class RocksDbTaskQueueTest extends AbstractTaskQueueTest<RocksDbTaskQueue<BytesValue>> {
@@ -27,10 +31,32 @@ public class RocksDbTaskQueueTest extends AbstractTaskQueueTest<RocksDbTaskQueue
 
   @Override
   protected RocksDbTaskQueue<BytesValue> createQueue() throws IOException {
+    final Path dataDir = folder.newFolder().toPath();
+    return createQueue(dataDir);
+  }
+
+  private RocksDbTaskQueue<BytesValue> createQueue(final Path dataDir) {
     return RocksDbTaskQueue.create(
-        folder.newFolder().toPath(),
-        Function.identity(),
-        Function.identity(),
-        new NoOpMetricsSystem());
+        dataDir, Function.identity(), Function.identity(), new NoOpMetricsSystem());
+  }
+
+  @Test
+  public void shouldIgnoreExistingData() throws Exception {
+    final Path dataDir = folder.newFolder().toPath();
+    try (final RocksDbTaskQueue<BytesValue> queue = createQueue(dataDir)) {
+      queue.enqueue(BytesValue.of(1));
+      queue.enqueue(BytesValue.of(2));
+      queue.enqueue(BytesValue.of(3));
+    }
+
+    try (final RocksDbTaskQueue<BytesValue> resumedQueue = createQueue(dataDir)) {
+      assertThat(resumedQueue.dequeue()).isEqualTo(null);
+
+      resumedQueue.enqueue(BytesValue.of(50));
+      assertThat(resumedQueue.dequeue().getData()).isEqualTo(BytesValue.of(50));
+
+      resumedQueue.enqueue(BytesValue.of(60));
+      assertThat(resumedQueue.dequeue().getData()).isEqualTo(BytesValue.of(60));
+    }
   }
 }
