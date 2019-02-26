@@ -143,7 +143,7 @@ public class DeployPrivateSmartContractAcceptanceTest extends AcceptanceTestBase
     final String transactionHash =
         minerNode.execute(transactions.createPrivateRawTransaction(signedRawDeployTransaction));
 
-    minerNode.waitUntil(wait.chainHeadHasProgressed(minerNode, 2));
+    minerNode.waitUntil(wait.chainHeadHasProgressedByAtLeast(minerNode, 2));
 
     waitFor(() -> minerNode.verify(eth.expectSuccessfulTransactionReceipt(transactionHash)));
 
@@ -164,7 +164,7 @@ public class DeployPrivateSmartContractAcceptanceTest extends AcceptanceTestBase
     final String transactionHash1 =
         minerNode.execute(transactions.createPrivateRawTransaction(signedRawFunctionTransaction));
 
-    minerNode.waitUntil(wait.chainHeadHasProgressed(minerNode, 2));
+    minerNode.waitUntil(wait.chainHeadHasProgressedByAtLeast(minerNode, 2));
 
     waitFor(() -> minerNode.verify(eth.expectSuccessfulTransactionReceipt(transactionHash1)));
 

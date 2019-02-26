@@ -39,7 +39,7 @@ public class CliqueDiscardRpcAcceptanceTest extends AcceptanceTestBase {
     minerNode1.execute(cliqueTransactions.createDiscardProposal(minerNode2));
     minerNode1.execute(cliqueTransactions.createDiscardProposal(minerNode3));
 
-    minerNode1.waitUntil(wait.chainHeadHasProgressed(minerNode1, 2));
+    minerNode1.waitUntil(wait.chainHeadHasProgressedByAtLeast(minerNode1, 2));
 
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2));
     minerNode1.verify(clique.noProposals());

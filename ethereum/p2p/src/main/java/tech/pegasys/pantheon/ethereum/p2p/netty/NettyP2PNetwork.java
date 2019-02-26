@@ -242,6 +242,10 @@ public class NettyP2PNetwork implements P2PNetwork {
               String.format(
                   "Unable start up P2P network on %s:%s.  Check for port conflicts.",
                   config.getRlpx().getBindHost(), config.getRlpx().getBindPort());
+
+          if (!future.isSuccess()) {
+            LOG.error(message, future.cause());
+          }
           checkState(socketAddress != null, message);
           ourPeerInfo =
               new PeerInfo(

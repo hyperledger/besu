@@ -21,17 +21,17 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransaction
 
 import java.math.BigInteger;
 
-public class ExpectBlockNumber implements Condition {
+public class ExpectBlockNumberAbove implements Condition {
   private final EthTransactions eth;
   private final BigInteger blockNumber;
 
-  public ExpectBlockNumber(final EthTransactions eth, final BigInteger blockNumber) {
+  public ExpectBlockNumberAbove(final EthTransactions eth, final BigInteger blockNumber) {
     this.eth = eth;
     this.blockNumber = blockNumber;
   }
 
   @Override
   public void verify(final Node node) {
-    waitFor(() -> assertThat(node.execute(eth.blockNumber())).isEqualTo(blockNumber));
+    waitFor(() -> assertThat(node.execute(eth.blockNumber())).isGreaterThanOrEqualTo(blockNumber));
   }
 }
