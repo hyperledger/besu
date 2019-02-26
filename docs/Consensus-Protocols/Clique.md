@@ -21,19 +21,28 @@ genesis file in the `/pantheon/config/src/main/resources` directory.
 
 A PoA genesis file defines properties specific to Clique:
 
-!!! example "Genesis JSON file (stripped)"
+!!! example "Example Clique Genesis File"
     ```json
     {
-      "config": {
-        ....
-        "clique": {
-          "blockperiodseconds": 15,
-          "epochlength": 30000
+      "config":{
+        "chainId":1981,
+        "constantinoplefixblock": 0,
+        "clique":{
+          "blockperiodseconds":15,
+          "epochlength":30000
         }
       },
-      ...
-      "extraData": "0x0000000000000000000000000000000000000000000000000000000000000000dd37f65db31c107f773e82a4f85c693058fef7a90000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-      ...
+      "coinbase":"0x0000000000000000000000000000000000000000",
+      "difficulty":"0x1",
+      "extraData":"0x000000000000000000000000000000000000000000000000000000000000000001a54556254bfa3db2daa7673435ec63649925c50000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "gasLimit":"0xa00000",
+      "mixHash":"0x0000000000000000000000000000000000000000000000000000000000000000",
+      "nonce":"0x0",
+      "timestamp":"0x5c51a607",
+      "alloc": {},
+      "number":"0x0",
+      "gasUsed":"0x0",
+      "parentHash":"0x0000000000000000000000000000000000000000000000000000000000000000"
     }
     ```
     
