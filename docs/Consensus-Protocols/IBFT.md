@@ -39,7 +39,7 @@ Properties specific to IBFT 2.0 are:
 * `blockperiodseconds` - Minimum block time in seconds. 
 * `epochlength` - Number of blocks after which to reset all votes.
 * `requesttimeoutseconds` - Timeout for each consensus round before a round change. 
-* `extraData` - RLP([32 Bytes Vanity, List<Validators>, No Votes, Round=Int(0), 0 Seals])
+* `extraData` - `RLP([32 Bytes Vanity, List<Validators>, No Vote, Round=Int(0), 0 Seals])`
 
 The `extraData` property is RLP encoded. RLP encoding is a space efficient object 
 serialization scheme used in Ethereum. You can use a library such as [EthereumJS RLP](https://github.com/ethereumjs/rlp)
