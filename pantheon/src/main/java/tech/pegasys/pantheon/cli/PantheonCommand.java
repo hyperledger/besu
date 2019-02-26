@@ -21,6 +21,7 @@ import static tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis.DEFAULT_JSON_RPC_AP
 import static tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_REFRESH_DELAY;
 import static tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer.DEFAULT_PORT;
+import static tech.pegasys.pantheon.metrics.MetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
 import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
 import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.createDefault;
@@ -49,6 +50,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfigurationBuilder;
+import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
@@ -69,6 +71,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -136,8 +139,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final PantheonControllerBuilder controllerBuilder;
   private final SynchronizerConfiguration.Builder synchronizerConfigurationBuilder;
   private final RunnerBuilder runnerBuilder;
-
-  private final MetricsSystem metricsSystem = PrometheusMetricsSystem.init();
 
   // Public IP stored to prevent having to research it each time we need it.
   private InetAddress autoDiscoveredDefaultIP = null;
@@ -357,6 +358,15 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Integer metricsPort = DEFAULT_METRICS_PORT;
 
   @Option(
+      names = {"--metrics-category", "--metrics-categories"},
+      paramLabel = "<category name>",
+      split = ",",
+      arity = "1..*",
+      description =
+          "Comma separated list of categories to track metrics for (default: ${DEFAULT-VALUE})")
+  private final Set<MetricCategory> metricCategories = DEFAULT_METRIC_CATEGORIES;
+
+  @Option(
       names = {"--metrics-push-enabled"},
       description = "Enable the metrics push gateway integration (default: ${DEFAULT-VALUE})")
   private final Boolean isMetricsPushEnabled = false;
@@ -489,8 +499,10 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private Supplier<PantheonExceptionHandler> exceptionHandlerSupplier =
+  private final Supplier<PantheonExceptionHandler> exceptionHandlerSupplier =
       Suppliers.memoize(PantheonExceptionHandler::new);
+  private final Supplier<MetricsSystem> metricsSystem =
+      Suppliers.memoize(() -> PrometheusMetricsSystem.init(metricsConfiguration()));
 
   public PantheonCommand(
       final Logger logger,
@@ -643,7 +655,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
               new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled))
           .devMode(NetworkName.DEV.equals(getNetwork()))
           .nodePrivateKeyFile(nodePrivateKeyFile())
-          .metricsSystem(metricsSystem)
+          .metricsSystem(metricsSystem.get())
           .privacyParameters(privacyParameters())
           .build();
     } catch (final InvalidConfigurationException e) {
@@ -760,6 +772,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     metricsConfiguration.setEnabled(isMetricsEnabled);
     metricsConfiguration.setHost(metricsHost);
     metricsConfiguration.setPort(metricsPort);
+    metricsConfiguration.setMetricCategories(metricCategories);
     metricsConfiguration.setPushEnabled(isMetricsPushEnabled);
     metricsConfiguration.setPushHost(metricsPushHost);
     metricsConfiguration.setPushPort(metricsPushPort);
@@ -848,7 +861,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             .webSocketConfiguration(webSocketConfiguration)
             .dataDir(dataDir())
             .bannedNodeIds(bannedNodeIds)
-            .metricsSystem(metricsSystem)
+            .metricsSystem(metricsSystem.get())
             .metricsConfiguration(metricsConfiguration)
             .build();
 
@@ -1060,7 +1073,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   }
 
   public MetricsSystem getMetricsSystem() {
-    return metricsSystem;
+    return metricsSystem.get();
   }
 
   public PantheonExceptionHandler exceptionHandler() {

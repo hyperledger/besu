@@ -19,6 +19,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static tech.pegasys.pantheon.cli.NetworkName.DEV;
@@ -43,6 +44,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -1544,6 +1546,20 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void metricsCategoryPropertyMustBeUsed() {
+    parseCommand("--metrics-enabled", "--metrics-category", MetricCategory.JVM.toString());
+
+    verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(metricsConfigArgumentCaptor.getValue().getMetricCategories())
+        .containsExactly(MetricCategory.JVM);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void metricsPushEnabledPropertyMustBeUsed() {
     parseCommand("--metrics-push-enabled");
 
@@ -1940,7 +1956,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
    */
   private void verifyOptionsConstraintLoggerCall(
       final String dependentOptions, final String mainOption) {
-    verify(mockLogger)
+    verify(mockLogger, atLeast(1))
         .warn(
             stringArgumentCaptor.capture(),
             stringArgumentCaptor.capture(),

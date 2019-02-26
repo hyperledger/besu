@@ -12,6 +12,9 @@
  */
 package tech.pegasys.pantheon.metrics;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 public enum MetricCategory {
   BIG_QUEUE("big_queue"),
   BLOCKCHAIN("blockchain"),
@@ -23,6 +26,9 @@ public enum MetricCategory {
   ROCKSDB("rocksdb"),
   RPC("rpc"),
   SYNCHRONIZER("synchronizer");
+
+  public static final Set<MetricCategory> DEFAULT_METRIC_CATEGORIES =
+      EnumSet.allOf(MetricCategory.class);
 
   private final String name;
   private final boolean pantheonSpecific;

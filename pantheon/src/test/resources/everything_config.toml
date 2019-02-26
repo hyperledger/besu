@@ -58,6 +58,7 @@ rpc-ws-authentication-credentials-file="none"
 metrics-enabled=false
 metrics-host="8.6.7.5"
 metrics-port=309
+metrics-category=["RPC"]
 metrics-push-enabled=false
 metrics-push-host="5.5.5.1"
 metrics-push-port=212
