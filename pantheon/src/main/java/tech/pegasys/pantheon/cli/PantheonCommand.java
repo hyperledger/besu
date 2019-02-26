@@ -31,6 +31,7 @@ import tech.pegasys.pantheon.cli.custom.CorsAllowedOriginsProperty;
 import tech.pegasys.pantheon.cli.custom.EnodeToURIPropertyConverter;
 import tech.pegasys.pantheon.cli.custom.JsonRPCWhitelistHostsProperty;
 import tech.pegasys.pantheon.cli.custom.RpcAuthFileValidator;
+import tech.pegasys.pantheon.cli.rlp.RLPSubCommand;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.CliqueRpcApis;
 import tech.pegasys.pantheon.consensus.ibft.jsonrpc.IbftRpcApis;
@@ -58,6 +59,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URI;
 import java.nio.file.Path;
@@ -474,6 +476,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   public void parse(
       final AbstractParseResultHandler<List<Object>> resultHandler,
       final DefaultExceptionHandler<List<Object>> exceptionHandler,
+      final InputStream in,
       final String... args) {
 
     commandLine = new CommandLine(this);
@@ -492,6 +495,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         PublicKeySubCommand.COMMAND_NAME, new PublicKeySubCommand(resultHandler.out()));
     commandLine.addSubcommand(
         PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(resultHandler.out()));
+    commandLine.addSubcommand(
+        RLPSubCommand.COMMAND_NAME, new RLPSubCommand(resultHandler.out(), in));
 
     commandLine.registerConverter(Address.class, Address::fromHexString);
     commandLine.registerConverter(BytesValue.class, BytesValue::fromHexString);

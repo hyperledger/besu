@@ -26,7 +26,7 @@ import java.nio.file.Paths;
 
 import picocli.CommandLine;
 
-interface DefaultCommandValues {
+public interface DefaultCommandValues {
   String CONFIG_FILE_OPTION_NAME = "--config-file";
 
   String MANDATORY_PATH_FORMAT_HELP = "<PATH>";

@@ -30,6 +30,7 @@ import tech.pegasys.pantheon.util.BlockImporter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.URI;
 import java.nio.file.Path;
@@ -58,10 +59,10 @@ public abstract class CommandTestAbstract {
 
   private final Logger TEST_LOGGER = LogManager.getLogger();
 
-  final ByteArrayOutputStream commandOutput = new ByteArrayOutputStream();
+  protected final ByteArrayOutputStream commandOutput = new ByteArrayOutputStream();
   private final PrintStream outPrintStream = new PrintStream(commandOutput);
 
-  final ByteArrayOutputStream commandErrorOutput = new ByteArrayOutputStream();
+  protected final ByteArrayOutputStream commandErrorOutput = new ByteArrayOutputStream();
   private final PrintStream errPrintStream = new PrintStream(commandErrorOutput);
 
   @Mock RunnerBuilder mockRunnerBuilder;
@@ -134,7 +135,11 @@ public abstract class CommandTestAbstract {
     TEST_LOGGER.info("Standard error {}", commandErrorOutput.toString());
   }
 
-  CommandLine.Model.CommandSpec parseCommand(final String... args) {
+  protected CommandLine.Model.CommandSpec parseCommand(final String... args) {
+    return parseCommand(System.in, args);
+  }
+
+  protected CommandLine.Model.CommandSpec parseCommand(final InputStream in, final String... args) {
     // turn off ansi usage globally in picocli
     System.setProperty("picocli.ansi", "false");
 
@@ -150,6 +155,7 @@ public abstract class CommandTestAbstract {
     pantheonCommand.parse(
         new RunLast().useOut(outPrintStream).useAnsi(Ansi.OFF),
         new DefaultExceptionHandler<List<Object>>().useErr(errPrintStream).useAnsi(Ansi.OFF),
+        in,
         args);
     return pantheonCommand.spec;
   }

@@ -1034,3 +1034,75 @@ $ pantheon password hash --password=<my-password>
 ```bash tab="Example"
 $ pantheon password hash --password=myPassword123
 ```
+
+### rlp
+
+This command provides RLP related actions.
+
+#### encode
+
+This command encodes a typed JSON value from a file or from the standard input into an RLP hexadecimal string.
+
+```bash tab="Syntax"
+$ pantheon rlp encode [--from=<FILE>] [--to=<FILE>] [--type=<type>]
+```
+
+```bash tab="Example using files"
+$ pantheon rlp encode --from=ibft_extra_data.json --to=extra_data_for_ibft_genesis.txt --type=IBFT_EXTRA_DATA
+```
+
+```bash tab="Example using standard input/output and default type"
+$ cat extra_data.json | pantheon rlp encode > rlp.txt
+```
+
+##### Available types for encoding
+
+For the moment, only IBFT extra data type of RLP data is supported.
+This data is used to build the IBFT 2.0 genesis file.
+
+???+ summary "IBFT_EXTRA_DATA"
+    To generate the IBFT_EXTRA_DATA typed RLP string you need a JSON input containing an array with 
+    all the validator addresses strings that you want to insert in your genesis.
+    
+    The JSON content is an object with a validator property that's an array of validator addresse strings.
+
+    ??? tip "JSON Schema for IBFT_EXTRA_DATA"
+        The following JSON Schema can be used to validate that your JSON data is well formed.
+        
+        Among many tools you can use some online validator tool like https://www.jsonschemavalidator.net/
+        to validate your JSON content.
+        
+        ```json
+        {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "$id": "http://tech.pegasys.pantheon/cli_rlp_ibft_extra_data.json",
+          "type": "array",
+          "definitions": {},
+          "title": "IBFT extra data",
+          "description":"JSON format used as input to generate an IBFT extra data RLP string",
+          "items": {
+            "$id": "#/address",
+            "type": "string",
+            "title": "Validator address",
+            "description":"The validator node address",
+            "default": "",
+            "examples": [
+              "be068f726a13c8d46c44be6ce9d275600e1735a4",
+              "5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193"
+            ],
+            "pattern":"^([0-9a-f]{40})$"
+          }
+        }
+        ``` 
+        
+    !!!example "Example IBFT_EXTRA_DATA encoding"
+        ```json tab="JSON input"
+        [
+          "be068f726a13c8d46c44be6ce9d275600e1735a4",
+          "5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193"
+        ]
+        ```
+        
+        ``` tab="RLP output"
+        0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0
+        ```

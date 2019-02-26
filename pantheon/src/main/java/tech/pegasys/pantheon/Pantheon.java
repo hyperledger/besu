@@ -39,6 +39,7 @@ public final class Pantheon {
     pantheonCommand.parse(
         new RunLast().andExit(SUCCESS_EXIT_CODE),
         defaultExceptionHandler().andExit(ERROR_EXIT_CODE),
+        System.in,
         args);
   }
 }
