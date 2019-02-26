@@ -27,6 +27,7 @@ import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator.BlockOptions;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.WorldState;
@@ -640,8 +641,12 @@ public class WorldStateDownloaderTest {
     final RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, header.getNumber());
 
-    // Start downloader
-    final CompletableFuture<?> result = downloader.run(header);
+    // Start downloader (with a state root that's not available anywhere
+    final CompletableFuture<?> result =
+        downloader.run(
+            new BlockHeaderTestFixture()
+                .stateRoot(Hash.hash(BytesValue.of(1, 2, 3, 4)))
+                .buildHeader());
     // A second run should return an error without impacting the first result
     final CompletableFuture<?> secondResult = downloader.run(header);
     assertThat(secondResult).isCompletedExceptionally();
@@ -652,6 +657,13 @@ public class WorldStateDownloaderTest {
 
     assertThat(result).isCompletedExceptionally();
     assertThatThrownBy(result::get).hasCauseInstanceOf(StalledDownloadException.class);
+
+    // Finally, check that when we restart the download with state that is available it works
+    final CompletableFuture<Void> retryResult = downloader.run(header);
+    final Responder responder =
+        RespondingEthPeer.blockchainResponder(mock(Blockchain.class), remoteWorldStateArchive);
+    peer.respondWhileOtherThreadsWork(responder, () -> !retryResult.isDone());
+    assertThat(retryResult).isCompleted();
   }
 
   /**

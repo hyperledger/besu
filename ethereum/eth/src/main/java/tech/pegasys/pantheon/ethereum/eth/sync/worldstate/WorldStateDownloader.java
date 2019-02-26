@@ -20,7 +20,6 @@ import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.EthTaskException;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractEthTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
-import tech.pegasys.pantheon.ethereum.eth.manager.task.EthTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.GetNodeDataFromPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.WaitForPeerTask;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
@@ -39,16 +38,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -56,64 +55,43 @@ import org.apache.logging.log4j.Logger;
 
 public class WorldStateDownloader {
   private static final Logger LOG = LogManager.getLogger();
+
   private final Counter completedRequestsCounter;
   private final Counter retriedRequestsCounter;
   private final Counter existingNodeCounter;
-  private final ArrayBlockingQueue<Task<NodeDataRequest>> requestsToPersist;
-
-  private enum Status {
-    IDLE,
-    RUNNING,
-    CANCELLED,
-    COMPLETED
-  }
+  private final MetricsSystem metricsSystem;
+  private final AtomicInteger highestRetryCount = new AtomicInteger(0);
 
   private final EthContext ethContext;
-  private final TaskQueue<NodeDataRequest> pendingRequests;
+  private final TaskQueue<NodeDataRequest> taskQueue;
   private final int hashCountPerRequest;
   private final int maxOutstandingRequests;
   private final int maxNodeRequestRetries;
-  private final Set<EthTask<?>> outstandingRequests =
-      Collections.newSetFromMap(new ConcurrentHashMap<>());
-  private final MetricsSystem metricsSystem;
   private final WorldStateStorage worldStateStorage;
-  private final AtomicBoolean sendingRequests = new AtomicBoolean(false);
-  private volatile CompletableFuture<Void> future;
-  private volatile Status status = Status.IDLE;
-  private volatile BytesValue rootNode;
-  private volatile PersistNodeDataTask persistenceTask;
-  private final AtomicInteger highestRetryCount = new AtomicInteger(0);
+
+  private final AtomicReference<WorldDownloadState> downloadState = new AtomicReference<>();
 
   public WorldStateDownloader(
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
-      final TaskQueue<NodeDataRequest> pendingRequests,
+      final TaskQueue<NodeDataRequest> taskQueue,
       final int hashCountPerRequest,
       final int maxOutstandingRequests,
       final int maxNodeRequestRetries,
       final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.worldStateStorage = worldStateStorage;
-    this.pendingRequests = pendingRequests;
+    this.taskQueue = taskQueue;
     this.hashCountPerRequest = hashCountPerRequest;
     this.maxOutstandingRequests = maxOutstandingRequests;
     this.maxNodeRequestRetries = maxNodeRequestRetries;
     this.metricsSystem = metricsSystem;
-    // Room for the requests we expect to do in parallel plus some buffer but not unlimited.
-    this.requestsToPersist =
-        new ArrayBlockingQueue<>(hashCountPerRequest * maxOutstandingRequests * 2);
 
     metricsSystem.createLongGauge(
         MetricCategory.SYNCHRONIZER,
         "world_state_pending_requests_current",
         "Number of pending requests for fast sync world state download",
-        pendingRequests::size);
-
-    metricsSystem.createIntegerGauge(
-        MetricCategory.SYNCHRONIZER,
-        "world_state_inflight_requests_current",
-        "Number of requests currently in flight for fast sync world state download",
-        outstandingRequests::size);
+        taskQueue::size);
 
     completedRequestsCounter =
         metricsSystem.createCounter(
@@ -142,7 +120,20 @@ public class WorldStateDownloader {
         MetricCategory.SYNCHRONIZER,
         "world_state_node_persistence_queue_length_current",
         "Current number of node data requests waiting to be persisted",
-        requestsToPersist::size);
+        downloadStateValue(WorldDownloadState::getPersistenceQueueSize));
+
+    metricsSystem.createIntegerGauge(
+        MetricCategory.SYNCHRONIZER,
+        "world_state_inflight_requests_current",
+        "Number of requests currently in flight for fast sync world state download",
+        downloadStateValue(WorldDownloadState::getOutstandingRequestCount));
+  }
+
+  private Supplier<Integer> downloadStateValue(final Function<WorldDownloadState, Integer> getter) {
+    return () -> {
+      final WorldDownloadState state = this.downloadState.get();
+      return state != null ? getter.apply(state) : 0;
+    };
   }
 
   public CompletableFuture<Void> run(final BlockHeader header) {
@@ -152,81 +143,98 @@ public class WorldStateDownloader {
         header.getHash(),
         header.getStateRoot());
     synchronized (this) {
-      if (status == Status.RUNNING) {
+      final WorldDownloadState oldDownloadState = this.downloadState.get();
+      if (oldDownloadState != null && oldDownloadState.isDownloading()) {
         final CompletableFuture<Void> failed = new CompletableFuture<>();
         failed.completeExceptionally(
             new IllegalStateException(
                 "Cannot run an already running " + this.getClass().getSimpleName()));
         return failed;
       }
-      status = Status.RUNNING;
-      future = createFuture();
-      highestRetryCount.set(0);
 
       final Hash stateRoot = header.getStateRoot();
       if (worldStateStorage.isWorldStateAvailable(stateRoot)) {
-        // If we're requesting data for an existing world state, we're already done
-        markDone();
-      } else {
-        pendingRequests.enqueue(NodeDataRequest.createAccountDataRequest(stateRoot));
-
-        ethContext.getScheduler().scheduleSyncWorkerTask(() -> requestNodeData(header));
-        persistenceTask = new PersistNodeDataTask(header);
-        ethContext.getScheduler().scheduleServiceTask(persistenceTask);
+        return CompletableFuture.completedFuture(null);
       }
+
+      // Room for the requests we expect to do in parallel plus some buffer but not unlimited.
+      final int persistenceQueueCapacity = hashCountPerRequest * maxNodeRequestRetries * 2;
+      final WorldDownloadState newDownloadState =
+          new WorldDownloadState(
+              taskQueue,
+              new ArrayBlockingQueue<>(persistenceQueueCapacity),
+              maxOutstandingRequests);
+      this.downloadState.set(newDownloadState);
+      highestRetryCount.set(0);
+
+      newDownloadState.enqueueRequest(NodeDataRequest.createAccountDataRequest(stateRoot));
+
+      ethContext
+          .getScheduler()
+          .scheduleSyncWorkerTask(() -> requestNodeData(header, newDownloadState));
+
+      final PersistNodeDataTask persistenceTask = new PersistNodeDataTask(header, newDownloadState);
+      newDownloadState.setPersistenceTask(persistenceTask);
+      ethContext.getScheduler().scheduleServiceTask(persistenceTask);
+      return newDownloadState.getDownloadFuture();
     }
-    return future;
   }
 
   public void cancel() {
-    getFuture().cancel(true);
-  }
-
-  private void requestNodeData(final BlockHeader header) {
-    while (shouldRequestNodeData()) {
-      if (sendingRequests.compareAndSet(false, true)) {
-        final Optional<EthPeer> maybePeer = ethContext.getEthPeers().idlePeer(header.getNumber());
-        if (!maybePeer.isPresent()) {
-          // If no peer is available, wait and try again
-          sendingRequests.set(false);
-          waitForNewPeer().whenComplete((r, t) -> requestNodeData(header));
-          break;
-        } else {
-          requestDataFromPeer(header, maybePeer.get());
-        }
-        sendingRequests.set(false);
-      } else {
-        break;
+    synchronized (this) {
+      final WorldDownloadState downloadState = this.downloadState.get();
+      if (downloadState != null) {
+        downloadState.getDownloadFuture().cancel(true);
       }
     }
   }
 
-  private void requestDataFromPeer(final BlockHeader header, final EthPeer peer) {
+  private void requestNodeData(final BlockHeader header, final WorldDownloadState downloadState) {
+    downloadState.whileAdditionalRequestsCanBeSent(
+        () -> {
+          final Optional<EthPeer> maybePeer = ethContext.getEthPeers().idlePeer(header.getNumber());
+          if (!maybePeer.isPresent()) {
+            // If no peer is available, wait and try again
+            downloadState.setWaitingForNewPeer(true);
+            waitForNewPeer()
+                .whenComplete(
+                    (r, t) -> {
+                      downloadState.setWaitingForNewPeer(false);
+                      requestNodeData(header, downloadState);
+                    });
+          } else {
+            requestDataFromPeer(header, maybePeer.get(), downloadState);
+          }
+        });
+  }
+
+  private void requestDataFromPeer(
+      final BlockHeader header, final EthPeer peer, final WorldDownloadState downloadState) {
     // Collect data to be requested
-    final List<Task<NodeDataRequest>> toRequest = getTasksForNextRequest();
+    final List<Task<NodeDataRequest>> toRequest = getTasksForNextRequest(downloadState);
 
     if (toRequest.isEmpty()) {
-      requestNodeData(header);
       return;
     }
 
     // Request and process node data
-    sendAndProcessRequests(peer, toRequest, header)
+    sendAndProcessRequests(peer, toRequest, header, downloadState)
         .whenComplete(
             (task, error) -> {
               if (error != null
                   && !(ExceptionUtils.rootCause(error) instanceof RejectedExecutionException)) {
                 LOG.error("World state data request failed", error);
               }
-              outstandingRequests.remove(task);
-              requestNodeData(header);
+              downloadState.removeOutstandingTask(task);
+              requestNodeData(header, downloadState);
             });
   }
 
-  private List<Task<NodeDataRequest>> getTasksForNextRequest() {
+  private List<Task<NodeDataRequest>> getTasksForNextRequest(
+      final WorldDownloadState downloadState) {
     final List<Task<NodeDataRequest>> toRequest = new ArrayList<>();
     while (toRequest.size() < hashCountPerRequest) {
-      final Task<NodeDataRequest> pendingRequestTask = pendingRequests.dequeue();
+      final Task<NodeDataRequest> pendingRequestTask = downloadState.dequeueRequest();
       if (pendingRequestTask == null) {
         break;
       }
@@ -235,18 +243,12 @@ public class WorldStateDownloader {
       if (existingData.isPresent()) {
         existingNodeCounter.inc();
         pendingRequest.setData(existingData.get()).setRequiresPersisting(false);
-        addToPersistenceQueue(pendingRequestTask);
+        downloadState.addToPersistenceQueue(pendingRequestTask);
         continue;
       }
       toRequest.add(pendingRequestTask);
     }
     return toRequest;
-  }
-
-  private synchronized boolean shouldRequestNodeData() {
-    return !future.isDone()
-        && outstandingRequests.size() < maxOutstandingRequests
-        && !pendingRequests.isEmpty();
   }
 
   private CompletableFuture<?> waitForNewPeer() {
@@ -258,7 +260,8 @@ public class WorldStateDownloader {
   private CompletableFuture<AbstractPeerTask<Map<Hash, BytesValue>>> sendAndProcessRequests(
       final EthPeer peer,
       final List<Task<NodeDataRequest>> requestTasks,
-      final BlockHeader blockHeader) {
+      final BlockHeader blockHeader,
+      final WorldDownloadState downloadState) {
     final List<Hash> hashes =
         requestTasks.stream()
             .map(Task::getData)
@@ -267,7 +270,7 @@ public class WorldStateDownloader {
             .collect(Collectors.toList());
     final AbstractPeerTask<Map<Hash, BytesValue>> ethTask =
         GetNodeDataFromPeerTask.forHashes(ethContext, hashes, metricsSystem).assignPeer(peer);
-    outstandingRequests.add(ethTask);
+    downloadState.addOutstandingTask(ethTask);
     return ethTask
         .run()
         .thenApply(PeerTaskResult::getResult)
@@ -287,14 +290,17 @@ public class WorldStateDownloader {
                 ethContext
                     .getScheduler()
                     .scheduleSyncWorkerTask(
-                        () -> storeData(requestTasks, blockHeader, ethTask, data)));
+                        () -> {
+                          storeData(requestTasks, blockHeader, data, downloadState);
+                          return CompletableFuture.completedFuture(ethTask);
+                        }));
   }
 
-  private CompletableFuture<AbstractPeerTask<Map<Hash, BytesValue>>> storeData(
+  private void storeData(
       final List<Task<NodeDataRequest>> requestTasks,
       final BlockHeader blockHeader,
-      final AbstractPeerTask<Map<Hash, BytesValue>> ethTask,
-      final Map<Hash, BytesValue> data) {
+      final Map<Hash, BytesValue> data,
+      final WorldDownloadState downloadState) {
     for (final Task<NodeDataRequest> task : requestTasks) {
       final NodeDataRequest request = task.getData();
       final BytesValue matchingData = data.get(request.getHash());
@@ -302,37 +308,23 @@ public class WorldStateDownloader {
         retriedRequestsCounter.inc();
         final int requestFailures = request.trackFailure();
         updateHighestRetryCount(requestFailures);
-        if (requestFailures > maxNodeRequestRetries) {
-          handleStalledDownload();
-        }
         task.markFailed();
+        if (requestFailures > maxNodeRequestRetries) {
+          LOG.info("Unavailable node {}", request.getHash());
+          downloadState.markAsStalled(maxNodeRequestRetries);
+        }
       } else {
         request.setData(matchingData);
         if (isRootState(blockHeader, request)) {
-          queueChildRequests(request);
-          rootNode = request.getData();
+          downloadState.enqueueRequests(request.getChildRequests());
+          downloadState.setRootNodeData(request.getData());
           task.markCompleted();
         } else {
-          addToPersistenceQueue(task);
+          downloadState.addToPersistenceQueue(task);
         }
       }
     }
-    requestNodeData(blockHeader);
-    return CompletableFuture.completedFuture(ethTask);
-  }
-
-  private void addToPersistenceQueue(final Task<NodeDataRequest> task) {
-    while (!future.isDone()) {
-      try {
-        if (requestsToPersist.offer(task, 1, TimeUnit.SECONDS)) {
-          break;
-        }
-      } catch (final InterruptedException e) {
-        task.markFailed();
-        Thread.currentThread().interrupt();
-        break;
-      }
-    }
+    requestNodeData(blockHeader, downloadState);
   }
 
   private void updateHighestRetryCount(final int requestFailures) {
@@ -340,63 +332,6 @@ public class WorldStateDownloader {
     while (requestFailures > previousHighestRetry) {
       highestRetryCount.compareAndSet(previousHighestRetry, requestFailures);
       previousHighestRetry = highestRetryCount.get();
-    }
-  }
-
-  private synchronized void queueChildRequests(final NodeDataRequest request) {
-    if (status == Status.RUNNING) {
-      request.getChildRequests().forEach(pendingRequests::enqueue);
-    }
-  }
-
-  private synchronized CompletableFuture<Void> getFuture() {
-    if (future == null) {
-      future = createFuture();
-    }
-    return future;
-  }
-
-  private CompletableFuture<Void> createFuture() {
-    final CompletableFuture<Void> future = new CompletableFuture<>();
-    future.whenComplete(
-        (res, err) -> {
-          // Handle cancellations
-          if (future.isCancelled()) {
-            LOG.info("World state download cancelled");
-            doCancelDownload();
-          } else if (err != null) {
-            if (!(ExceptionUtils.rootCause(err) instanceof StalledDownloadException)) {
-              LOG.info("World state download failed. ", err);
-            }
-            doCancelDownload();
-          }
-        });
-    return future;
-  }
-
-  private synchronized void handleStalledDownload() {
-    final String message =
-        "Download stalled due to too many failures to retrieve node data (>"
-            + maxNodeRequestRetries
-            + " failures)";
-    final WorldStateDownloaderException e = new StalledDownloadException(message);
-    future.completeExceptionally(e);
-  }
-
-  private synchronized void doCancelDownload() {
-    status = Status.CANCELLED;
-    persistenceTask.cancel();
-    pendingRequests.clear();
-    for (final EthTask<?> outstandingRequest : outstandingRequests) {
-      outstandingRequest.cancel();
-    }
-  }
-
-  private synchronized void markDone() {
-    final boolean completed = getFuture().complete(null);
-    if (completed) {
-      LOG.info("Finished downloading world state from peers");
-      status = Status.COMPLETED;
     }
   }
 
@@ -408,10 +343,12 @@ public class WorldStateDownloader {
 
     private final List<Task<NodeDataRequest>> batch;
     private final BlockHeader header;
+    private final WorldDownloadState downloadState;
 
-    public PersistNodeDataTask(final BlockHeader header) {
+    public PersistNodeDataTask(final BlockHeader header, final WorldDownloadState downloadState) {
       super(metricsSystem);
       this.header = header;
+      this.downloadState = downloadState;
       batch = new ArrayList<>();
     }
 
@@ -419,6 +356,8 @@ public class WorldStateDownloader {
     protected void executeTask() {
       while (!isDone()) {
         try {
+          final ArrayBlockingQueue<Task<NodeDataRequest>> requestsToPersist =
+              downloadState.getRequestsToPersist();
           final Task<NodeDataRequest> task = requestsToPersist.poll(1, TimeUnit.SECONDS);
           if (task != null) {
             batch.clear();
@@ -429,20 +368,18 @@ public class WorldStateDownloader {
                 taskToPersist -> {
                   final NodeDataRequest request = taskToPersist.getData();
                   request.persist(storageUpdater);
-                  queueChildRequests(request);
+                  downloadState.enqueueRequests(request.getChildRequests());
                   taskToPersist.markCompleted();
                   completedRequestsCounter.inc();
                 });
             storageUpdater.commit();
 
-            if (pendingRequests.allTasksCompleted()) {
-              final Updater updater = worldStateStorage.updater();
-              updater.putAccountStateTrieNode(header.getStateRoot(), rootNode);
-              updater.commit();
-              markDone();
+            if (downloadState.checkCompletion(worldStateStorage, header)) {
               result.get().complete(null);
             } else {
-              ethContext.getScheduler().scheduleSyncWorkerTask(() -> requestNodeData(header));
+              ethContext
+                  .getScheduler()
+                  .scheduleSyncWorkerTask(() -> requestNodeData(header, downloadState));
             }
           }
         } catch (final InterruptedException ignore) {
@@ -452,7 +389,9 @@ public class WorldStateDownloader {
           // Assume we failed to persist any of the requests and ensure we have something
           // scheduled to kick off another round of requests.
           batch.forEach(Task::markFailed);
-          ethContext.getScheduler().scheduleSyncWorkerTask(() -> requestNodeData(header));
+          ethContext
+              .getScheduler()
+              .scheduleSyncWorkerTask(() -> requestNodeData(header, downloadState));
         }
       }
     }
