@@ -145,6 +145,8 @@ public abstract class CommandTestAbstract {
   }
 
   protected CommandLine.Model.CommandSpec parseCommand(final InputStream in, final String... args) {
+    // turn off ansi usage globally in picocli
+    System.setProperty("picocli.ansi", "false");
 
     final TestPantheonCommand pantheonCommand =
         new TestPantheonCommand(
