@@ -15,11 +15,12 @@ Validators take turns to create the next block. Existing validators propose and 
 
 To use IBFT 2.0 requires an IBFT 2.0 genesis file. The genesis file defines properties specific to IBFT 2.0:
 
-!!! example "IBFT 2.0 Genesis File (stripped)"
+!!! example "Example IBFT 2.0 Genesis File"
     ```json
       {
         "config": {
-          ...
+          "chainId": 1981,
+          "constantinoplefixblock": 0,
           "ibft2": {
             "blockperiodseconds": 2,
             "epochlength": 30000,
@@ -27,10 +28,13 @@ To use IBFT 2.0 requires an IBFT 2.0 genesis file. The genesis file defines prop
           }
         },
         "nonce": "0x0",
-        "extraData": "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0",
+        "timestamp": "0x58ee40ba",
+        "extraData": "0xf83ea00000000000000000000000000000000000000000000000000000000000000000d594c2ab482b506de561668e07f04547232a72897daf808400000000c0",
+        "gasLimit": "0x47b760",
         "difficulty": "0x1",
         "mixHash": "0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365",
-        ...
+        "coinbase": "0x0000000000000000000000000000000000000000",
+        "alloc": {}
       }
     ```
     
