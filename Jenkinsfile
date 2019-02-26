@@ -113,6 +113,9 @@ try {
                         stage(stage_name + 'Check javadoc') {
                             sh './gradlew --no-daemon --parallel javadoc'
                         }
+                        stage(stage_name + 'Compile Benchmarks') {
+                            sh './gradlew --no-daemon --parallel compileJmh'
+                        }
                     } finally {
                         archiveArtifacts '**/build/reports/**'
                         archiveArtifacts '**/build/test-results/**'
