@@ -35,14 +35,12 @@ public class EthProtocolManagerTestUtil {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final TimeoutPolicy timeoutPolicy) {
-    return create(
-        blockchain, worldStateArchive, timeoutPolicy, new DeterministicEthScheduler(timeoutPolicy));
+    return create(blockchain, worldStateArchive, new DeterministicEthScheduler(timeoutPolicy));
   }
 
   public static EthProtocolManager create(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final TimeoutPolicy timeoutPolicy,
       final EthScheduler ethScheduler) {
     final int networkId = 1;
     return new EthProtocolManager(
@@ -59,17 +57,21 @@ public class EthProtocolManagerTestUtil {
     return create(blockchain, worldStateArchive, TimeoutPolicy.NEVER);
   }
 
-  public static EthProtocolManager create() {
-    return create(TimeoutPolicy.NEVER);
-  }
-
-  public static EthProtocolManager create(final TimeoutPolicy timeoutPolicy) {
+  public static EthProtocolManager create(final EthScheduler ethScheduler) {
     final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
     final GenesisConfigFile config = GenesisConfigFile.mainnet();
     final GenesisState genesisState = GenesisState.fromConfig(config, protocolSchedule);
     final Blockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
-    return create(blockchain, worldStateArchive, timeoutPolicy);
+    return create(blockchain, worldStateArchive, ethScheduler);
+  }
+
+  public static EthProtocolManager create() {
+    return create(TimeoutPolicy.NEVER);
+  }
+
+  public static EthProtocolManager create(final TimeoutPolicy timeoutPolicy) {
+    return create(new DeterministicEthScheduler(timeoutPolicy));
   }
 
   // Utility to prevent scheduler from automatically running submitted tasks

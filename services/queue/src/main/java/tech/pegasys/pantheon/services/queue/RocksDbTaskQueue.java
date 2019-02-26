@@ -39,6 +39,7 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
   private long lastEnqueuedKey = 0;
   private long lastDequeuedKey = 0;
   private RocksIterator dequeueIterator;
+  private long lastValidKeyFromIterator;
   private long oldestKey = 0;
   private final Set<RocksDbTask<T>> outstandingTasks = new HashSet<>();
 
@@ -104,14 +105,14 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
     }
     try (final OperationTimer.TimingContext ignored = dequeueLatency.startTimer()) {
       if (dequeueIterator == null) {
-        dequeueIterator = db.newIterator();
+        createNewIterator();
       }
       final long key = ++lastDequeuedKey;
       dequeueIterator.seek(Longs.toByteArray(key));
-      if (!dequeueIterator.isValid()) {
+      if (key > lastValidKeyFromIterator || !dequeueIterator.isValid()) {
         // Reached the end of the snapshot this iterator was loaded with
         dequeueIterator.close();
-        dequeueIterator = db.newIterator();
+        createNewIterator();
         dequeueIterator.seek(Longs.toByteArray(key));
         if (!dequeueIterator.isValid()) {
           throw new IllegalStateException("Next expected value is missing");
@@ -123,6 +124,11 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
       outstandingTasks.add(task);
       return task;
     }
+  }
+
+  private void createNewIterator() {
+    dequeueIterator = db.newIterator();
+    lastValidKeyFromIterator = lastEnqueuedKey;
   }
 
   @Override
