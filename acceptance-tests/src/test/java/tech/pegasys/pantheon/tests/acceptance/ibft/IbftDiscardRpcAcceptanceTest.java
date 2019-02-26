@@ -38,7 +38,7 @@ public class IbftDiscardRpcAcceptanceTest extends AcceptanceTestBase {
     validator1.execute(ibftTransactions.createDiscardProposal(validator2));
     validator1.execute(ibftTransactions.createDiscardProposal(validator3));
 
-    validator1.waitUntil(wait.chainHeadHasProgressed(validator1, 2));
+    validator1.waitUntil(wait.chainHeadHasProgressedByAtLeast(validator1, 2));
 
     cluster.verify(ibft.validatorsEqual(validator1, validator2));
     validator1.verify(ibft.noProposals());

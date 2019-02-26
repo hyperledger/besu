@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.waitcondition;
 
 import static tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique.CliqueTransactions.LATEST;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.blockchain.ExpectBlockNumber;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.blockchain.ExpectBlockNumberAbove;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique.CliqueTransactions;
@@ -35,11 +35,11 @@ public class WaitConditions {
     this.ibft = ibft;
   }
 
-  public WaitCondition chainHeadHasProgressed(
+  public WaitCondition chainHeadHasProgressedByAtLeast(
       final PantheonNode node, final int blocksAheadOfLatest) {
     final BigInteger futureBlock =
         node.execute(eth.blockNumber()).add(BigInteger.valueOf(blocksAheadOfLatest));
-    return new ExpectBlockNumber(eth, futureBlock)::verify;
+    return new ExpectBlockNumberAbove(eth, futureBlock)::verify;
   }
 
   public WaitCondition cliqueValidatorsChanged(final Node node) {
@@ -50,7 +50,7 @@ public class WaitConditions {
     return new WaitUntilValidatorsChanged(node.execute(ibft.createGetValidators(LATEST)), ibft);
   }
 
-  public WaitCondition chainHeadIsAt(final long blockNumber) {
-    return new ExpectBlockNumber(eth, BigInteger.valueOf(blockNumber))::verify;
+  public WaitCondition chainHeadIsAtLeast(final long blockNumber) {
+    return new ExpectBlockNumberAbove(eth, BigInteger.valueOf(blockNumber))::verify;
   }
 }
