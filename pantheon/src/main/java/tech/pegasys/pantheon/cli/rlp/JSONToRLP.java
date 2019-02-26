@@ -22,7 +22,9 @@ interface JSONToRLP {
   /**
    * Encodes the object into an RLP value.
    *
+   * @param json the JSON to convert to RLP
    * @return the RLP encoded object.
+   * @throws IOException if an error occurs while reading data
    */
   BytesValue encode(String json) throws IOException;
 }
