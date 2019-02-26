@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.metrics.prometheus;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
@@ -33,7 +34,7 @@ public class MetricsConfiguration {
   private String pushHost;
   private int pushInterval;
   private String prometheusJob;
-  private Collection<String> hostsWhitelist = Collections.singletonList("localhost");
+  private Collection<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
 
   public static MetricsConfiguration createDefault() {
     final MetricsConfiguration metricsConfiguration = new MetricsConfiguration();
