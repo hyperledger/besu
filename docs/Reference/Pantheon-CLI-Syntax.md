@@ -1070,30 +1070,24 @@ This command encodes a typed JSON value from a file or from the standard input i
 $ pantheon rlp encode [--from=<FILE>] [--to=<FILE>] [--type=<type>]
 ```
 
-```bash tab="Example using files"
+```bash tab="File Example"
 $ pantheon rlp encode --from=ibft_extra_data.json --to=extra_data_for_ibft_genesis.txt --type=IBFT_EXTRA_DATA
 ```
 
-```bash tab="Example using standard input/output and default type"
+```bash tab="Standart Input/Output Example"
 $ cat extra_data.json | pantheon rlp encode > rlp.txt
 ```
 
-##### Available types for encoding
+The `IBFT_EXTRA_DATA` type is the only type supported for RLP encoding.
+This data is included in the [IBFT 2.0 genesis file](../Consensus-Protocols/IBFT.md#genesis-file).
 
-For the moment, only IBFT extra data type of RLP data is supported.
-This data is used to build the IBFT 2.0 genesis file.
-
-???+ summary "IBFT_EXTRA_DATA"
-    To generate the IBFT_EXTRA_DATA typed RLP string you need a JSON input containing an array with 
-    all the validator addresses strings that you want to insert in your genesis.
-    
-    The JSON content is an object with a validator property that's an array of validator addresse strings.
+???+ summary "IBFT 2.0 Extra Data"
+    To generate the RLP encoded `extraData` string, specify a JSON input that is array of validator addresses 
+    in ascending order.
 
     ??? tip "JSON Schema for IBFT_EXTRA_DATA"
-        The following JSON Schema can be used to validate that your JSON data is well formed.
-        
-        Among many tools you can use some online validator tool like https://www.jsonschemavalidator.net/
-        to validate your JSON content.
+        The following JSON Schema can be used to validate that your JSON data is well formed. You can use an online validation tool
+        such as https://www.jsonschemavalidator.net/ to validate your JSON content.
         
         ```json
         {
@@ -1119,13 +1113,13 @@ This data is used to build the IBFT 2.0 genesis file.
         ``` 
         
     !!!example "Example IBFT_EXTRA_DATA encoding"
-        ```json tab="JSON input"
+        ```json tab="JSON Input"
         [
           "be068f726a13c8d46c44be6ce9d275600e1735a4",
           "5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193"
         ]
         ```
         
-        ``` tab="RLP output"
+        ``` tab="RLP Output"
         0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0
         ```
