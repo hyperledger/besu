@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 public abstract class NodeDataRequest {
-
   private final RequestType requestType;
   private final Hash hash;
   private BytesValue data;
