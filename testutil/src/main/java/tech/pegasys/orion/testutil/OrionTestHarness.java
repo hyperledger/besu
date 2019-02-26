@@ -24,8 +24,12 @@ import com.google.common.base.Charsets;
 import net.consensys.orion.cmd.Orion;
 import net.consensys.orion.config.Config;
 import okhttp3.HttpUrl;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class OrionTestHarness {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   private final Orion orion;
   private final Config config;
@@ -75,6 +79,9 @@ public class OrionTestHarness {
 
     final Orion orion = new Orion();
     orion.run(System.out, System.err, config);
+
+    LOG.info("Orion node port: {}", orion.nodePort());
+    LOG.info("Orion client port: {}", orion.clientPort());
 
     return new OrionTestHarness(orion, config);
   }

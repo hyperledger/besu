@@ -446,7 +446,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--privacy-enabled"},
       description = "Enable private transactions (default: ${DEFAULT-VALUE})")
-  private final Boolean privacyEnabled = false;
+  private final Boolean isPrivacyEnabled = false;
 
   @Option(
       names = {"--privacy-url"},
@@ -791,13 +791,12 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--privacy-enabled",
-        !privacyEnabled,
+        !isPrivacyEnabled,
         Arrays.asList(
             "--privacy-url", "--privacy-public-key-file", "--privacy-precompiled-address"));
 
     final PrivacyParameters privacyParameters = PrivacyParameters.noPrivacy();
-    if (privacyEnabled) {
-      privacyParameters.setEnabled(privacyEnabled);
+    if (isPrivacyEnabled) {
       privacyParameters.setUrl(privacyUrl.toString());
       if (privacyPublicKeyFile() != null) {
         privacyParameters.setPublicKeyUsingFile(privacyPublicKeyFile());
@@ -806,6 +805,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             commandLine, "Please specify Enclave public key file path to enable privacy");
       }
       privacyParameters.setPrivacyAddress(privacyPrecompiledAddress);
+      privacyParameters.enablePrivateDB(dataDir());
     }
     return privacyParameters;
   }

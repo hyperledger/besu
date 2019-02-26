@@ -349,9 +349,7 @@ public class StoredMerklePatriciaTrieTest {
     assertThat(trie.get(key3)).isEqualTo(Optional.of("value3"));
 
     // Commit changes to storage, and create new tries from roothash and new storage instance
-    assertThat(keyValueStore.entries().count()).isEqualTo(0);
     merkleStorage.commit();
-    assertThat(keyValueStore.entries().count()).isGreaterThan(0);
     final MerkleStorage newMerkleStorage = new KeyValueMerkleStorage(keyValueStore);
     trie =
         new StoredMerklePatriciaTrie<>(

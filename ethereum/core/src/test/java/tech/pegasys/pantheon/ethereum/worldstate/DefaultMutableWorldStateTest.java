@@ -178,16 +178,15 @@ public class DefaultMutableWorldStateTest {
     assertEquals(newBalance, worldState.get(ADDRESS).getBalance());
 
     // Check that storage is empty before persisting
-    assertEquals(0, storage.entries().count());
     assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isFalse();
 
     // Persist and re-run assertions
     worldState.persist();
-    assertNotEquals(0, storage.entries().count());
+
+    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isTrue();
     assertEquals(expectedRootHash, worldState.rootHash());
     assertNotNull(worldState.get(ADDRESS));
     assertEquals(newBalance, worldState.get(ADDRESS).getBalance());
-    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isTrue();
 
     // Create new world state and check that it can access modified address
     final MutableWorldState newWorldState =

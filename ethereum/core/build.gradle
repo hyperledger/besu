@@ -28,11 +28,11 @@ jar {
 dependencies {
   implementation project(':config')
   implementation project(':crypto')
+  implementation project(':enclave')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
   implementation project(':ethereum:permissioning')
   implementation project(':metrics')
-  implementation project(':enclave')
   implementation project(':services:kvstore')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'

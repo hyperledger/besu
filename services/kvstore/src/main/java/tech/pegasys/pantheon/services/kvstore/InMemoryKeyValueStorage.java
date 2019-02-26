@@ -22,8 +22,6 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class InMemoryKeyValueStorage implements KeyValueStorage {
 
@@ -44,21 +42,6 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
   @Override
   public Transaction startTransaction() {
     return new InMemoryTransaction();
-  }
-
-  @Override
-  public Stream<Entry> entries() {
-    final Lock lock = rwLock.readLock();
-    lock.lock();
-    try {
-      // Ensure we have collected all entries before releasing the lock and returning
-      return hashValueStore.entrySet().stream()
-          .map(e -> Entry.create(e.getKey(), e.getValue()))
-          .collect(Collectors.toSet())
-          .stream();
-    } finally {
-      lock.unlock();
-    }
   }
 
   @Override

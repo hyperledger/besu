@@ -24,9 +24,6 @@ import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.mainnet.AbstractMessageProcessor;
-import tech.pegasys.pantheon.ethereum.privacy.PrivateMutableWorldState;
-import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
-import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
@@ -34,7 +31,6 @@ import tech.pegasys.pantheon.util.uint.UInt256Value;
 
 import java.util.Deque;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -184,9 +180,6 @@ public class MessageFrame {
   // Global data fields.
   private final WorldUpdater worldState;
   private final Blockchain blockchain;
-
-  // Private Global data fields
-  private HashMap<Integer, WorldUpdater> privateWorldStates;
 
   // Metadata fields.
   private final Type type;
@@ -650,29 +643,6 @@ public class MessageFrame {
    */
   public WorldUpdater getWorldState() {
     return worldState;
-  }
-
-  /**
-   * Return the private world state for the corresponding privacyGroupId.
-   *
-   * @param privacyGroupId Identifier for the privacy group
-   * @return the private world state for that privacy group
-   */
-  public WorldUpdater getPrivateWorldState(final Integer privacyGroupId) {
-    PrivateMutableWorldState privateMutableWorldState =
-        new PrivateMutableWorldState(
-            new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage()));
-    return privateWorldStates.getOrDefault(privacyGroupId, privateMutableWorldState.updater());
-  }
-
-  /**
-   * Set the private world state for the privacyGroupId.
-   *
-   * @param privacyGroupId Identifier for the privacy group
-   * @param worldState Private world state for the given privacy group
-   */
-  public void setPrivateWorldStates(final Integer privacyGroupId, final WorldUpdater worldState) {
-    privateWorldStates.put(privacyGroupId, worldState);
   }
 
   /**

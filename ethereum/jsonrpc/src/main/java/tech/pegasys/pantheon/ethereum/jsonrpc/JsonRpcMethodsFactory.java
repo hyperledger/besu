@@ -12,8 +12,10 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc;
 
+import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
@@ -75,6 +77,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.Per
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.PermReloadPermissionsFromFile;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.PermRemoveAccountsFromWhitelist;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.PermRemoveNodesFromWhitelist;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaGetTransactionReceipt;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaSendRawTransaction;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.BlockReplay;
@@ -115,7 +118,7 @@ public class JsonRpcMethodsFactory {
       final Collection<RpcApi> rpcApis,
       final FilterManager filterManager,
       final Optional<AccountWhitelistController> accountsWhitelistController,
-      final PrivateTransactionHandler privateTransactionHandler) {
+      final PrivacyParameters privacyParameters) {
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, worldStateArchive);
     return methods(
@@ -131,7 +134,7 @@ public class JsonRpcMethodsFactory {
         supportedCapabilities,
         accountsWhitelistController,
         rpcApis,
-        privateTransactionHandler);
+        privacyParameters);
   }
 
   public Map<String, JsonRpcMethod> methods(
@@ -147,7 +150,7 @@ public class JsonRpcMethodsFactory {
       final Set<Capability> supportedCapabilities,
       final Optional<AccountWhitelistController> accountsWhitelistController,
       final Collection<RpcApi> rpcApis,
-      final PrivateTransactionHandler privateTransactionHandler) {
+      final PrivacyParameters privacyParameters) {
     final Map<String, JsonRpcMethod> enabledMethods = new HashMap<>();
     // @formatter:off
     if (rpcApis.contains(RpcApis.ETH)) {
@@ -255,7 +258,12 @@ public class JsonRpcMethodsFactory {
     if (rpcApis.contains(RpcApis.EEA)) {
       addMethods(
           enabledMethods,
-          new EeaSendRawTransaction(privateTransactionHandler, transactionPool, parameter));
+          new EeaSendRawTransaction(
+              new PrivateTransactionHandler(privacyParameters), transactionPool, parameter));
+      addMethods(
+          enabledMethods,
+          new EeaGetTransactionReceipt(
+              blockchainQueries, new Enclave(privacyParameters.getUrl()), parameter));
     }
     // @formatter:off
     return enabledMethods;

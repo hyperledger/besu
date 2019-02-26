@@ -16,18 +16,14 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import tech.pegasys.pantheon.services.kvstore.KeyValueStorage.Entry;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage.Transaction;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -95,27 +91,6 @@ public abstract class AbstractKeyValueStorageTest {
     tx.remove(BytesValue.fromHexString("0F"));
     tx.commit();
     assertEquals(Optional.empty(), store.get(BytesValue.fromHexString("0F")));
-  }
-
-  @Test
-  public void entries() throws Exception {
-    final KeyValueStorage store = createStore();
-
-    final List<Entry> testEntries =
-        Arrays.asList(
-            Entry.create(BytesValue.fromHexString("01"), BytesValue.fromHexString("0ABC")),
-            Entry.create(BytesValue.fromHexString("02"), BytesValue.fromHexString("0DEF")));
-    Transaction tx = store.startTransaction();
-    for (final Entry testEntry : testEntries) {
-      tx.put(testEntry.getKey(), testEntry.getValue());
-    }
-    tx.commit();
-
-    final List<Entry> actualEntries = store.entries().collect(Collectors.toList());
-    testEntries.sort(Comparator.comparing(Entry::getKey));
-    actualEntries.sort(Comparator.comparing(Entry::getKey));
-    assertEquals(2, actualEntries.size());
-    assertEquals(testEntries, actualEntries);
   }
 
   @Test

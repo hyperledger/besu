@@ -14,26 +14,41 @@ package tech.pegasys.pantheon.ethereum.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Path;
 
 import com.google.common.io.Files;
 
 public class PrivacyParameters {
   private static final String ENCLAVE_URL = "http://localhost:8888";
   public static final URI DEFAULT_ENCLAVE_URL = URI.create(ENCLAVE_URL);
+  private final String PRIVATE_DATABASE_PATH = "private";
 
   private Integer privacyAddress;
   private boolean enabled;
   private String url;
   private String publicKey;
+  private File publicKeyFile;
+  private WorldStateArchive privateWorldStateArchive;
 
   public String getPublicKey() {
     return publicKey;
   }
 
+  public File getPublicKeyFile() {
+    return publicKeyFile;
+  }
+
   public void setPublicKeyUsingFile(final File publicKeyFile) throws IOException {
+    this.publicKeyFile = publicKeyFile;
     this.publicKey = Files.asCharSource(publicKeyFile, UTF_8).read();
   }
 
@@ -72,5 +87,18 @@ public class PrivacyParameters {
 
   public void setPrivacyAddress(final Integer privacyAddress) {
     this.privacyAddress = privacyAddress;
+  }
+
+  public void enablePrivateDB(final Path path) throws IOException {
+    final Path privateDbPath = path.resolve(PRIVATE_DATABASE_PATH);
+    final StorageProvider privateStorageProvider =
+        RocksDbStorageProvider.create(privateDbPath, new NoOpMetricsSystem());
+    final WorldStateStorage privateWorldStateStorage =
+        privateStorageProvider.createWorldStateStorage();
+    this.privateWorldStateArchive = new WorldStateArchive(privateWorldStateStorage);
+  }
+
+  public WorldStateArchive getPrivateWorldStateArchive() {
+    return privateWorldStateArchive;
   }
 }

@@ -33,7 +33,7 @@ public class Enclave {
   private static final ObjectMapper objectMapper = new ObjectMapper();
   private static final Logger LOG = LogManager.getLogger();
 
-  private String url;
+  private final String url;
   private final OkHttpClient client;
 
   public Enclave(final String enclaveUrl) {

@@ -39,4 +39,39 @@ public class ResponseTypes {
   public static class RemoveNodeResponse extends Response<String> {}
 
   public static class GetNodesWhitelistResponse extends Response<List<String>> {}
+
+  public static class PrivateTransactionReceiptResponse
+      extends Response<PrivateTransactionReceipt> {}
+
+  public static class PrivateTransactionReceipt {
+    private String contractAddress;
+    private String from;
+    private String to;
+
+    public PrivateTransactionReceipt() {}
+
+    public String getContractAddress() {
+      return contractAddress;
+    }
+
+    public void setContractAddress(final String contractAddress) {
+      this.contractAddress = contractAddress;
+    }
+
+    public String getFrom() {
+      return from;
+    }
+
+    public void setFrom(final String from) {
+      this.from = from;
+    }
+
+    public String getTo() {
+      return to;
+    }
+
+    public void setTo(final String to) {
+      this.to = to;
+    }
+  }
 }
