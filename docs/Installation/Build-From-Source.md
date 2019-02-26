@@ -58,7 +58,11 @@ $ cd pantheon-<version>/
 $ bin/pantheon --help
 ````
 
-Continue with the [Private Network Quickstart](../Tutorials/Private-Network-Quickstart.md) or [Starting Pantheon](../Getting-Started/Starting-Pantheon.md).
+!!! note "Linux Open File Limit"
+    If synchronizing to MainNet on Linux  or other chains with large data requirements, increase the maximum number 
+    of open files allowed using `ulimit`. If the open files limit is not high enough, a `Too many open files` RocksDB exception occurs. 
+
+Continue with [Starting Pantheon](../Getting-Started/Starting-Pantheon.md).
 
 
 ## Installation on Windows
@@ -109,7 +113,7 @@ cd pantheon-<version>
 bin\pantheon --help
 ```
 
-Continue with the [Private Network Quickstart](../Tutorials/Private-Network-Quickstart.md) or [Starting Pantheon](../Getting-Started/Starting-Pantheon.md).
+Continue with [Starting Pantheon](../Getting-Started/Starting-Pantheon.md).
 
 
 ## Installation on VM

@@ -15,11 +15,12 @@ Validators take turns to create the next block. Existing validators propose and 
 
 To use IBFT 2.0 requires an IBFT 2.0 genesis file. The genesis file defines properties specific to IBFT 2.0:
 
-!!! example "IBFT 2.0 Genesis File (stripped)"
+!!! example "Example IBFT 2.0 Genesis File"
     ```json
       {
         "config": {
-          ...
+          "chainId": 1981,
+          "constantinoplefixblock": 0,
           "ibft2": {
             "blockperiodseconds": 2,
             "epochlength": 30000,
@@ -27,10 +28,13 @@ To use IBFT 2.0 requires an IBFT 2.0 genesis file. The genesis file defines prop
           }
         },
         "nonce": "0x0",
-        "extraData": "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0",
+        "timestamp": "0x58ee40ba",
+        "extraData": "0xf83ea00000000000000000000000000000000000000000000000000000000000000000d594c2ab482b506de561668e07f04547232a72897daf808400000000c0",
+        "gasLimit": "0x47b760",
         "difficulty": "0x1",
         "mixHash": "0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365",
-        ...
+        "coinbase": "0x0000000000000000000000000000000000000000",
+        "alloc": {}
       }
     ```
     
@@ -39,7 +43,7 @@ Properties specific to IBFT 2.0 are:
 * `blockperiodseconds` - Minimum block time in seconds. 
 * `epochlength` - Number of blocks after which to reset all votes.
 * `requesttimeoutseconds` - Timeout for each consensus round before a round change. 
-* `extraData` - RLP([32 Bytes Vanity, List<Validators>, No Votes, Round=Int(0), 0 Seals])
+* `extraData` - `RLP([32 Bytes Vanity, List<Validators>, No Vote, Round=Int(0), 0 Seals])`
 
 The `extraData` property is RLP encoded. RLP encoding is a space efficient object 
 serialization scheme used in Ethereum. You can use a library such as [EthereumJS RLP](https://github.com/ethereumjs/rlp)
@@ -82,6 +86,12 @@ Optional configuration options that can be specified in the genesis file are:
    
 * `duplicateMesageLimit` - Default is 100. If seeing messages being retransmitted by the same node, increasing the duplicate message limit 
    may reduce the number of retransmissions. A value of 2 to 3 times the number of validators is generally sufficient.  
+   
+*  `futureMessagesLimit` - Default is 1000. The future messages buffer holds IBFT 2.0 messages for a future chain height.
+    For large networks, increasing the future messages limit may be useful. 
+
+*  `futureMessagesMaxDistance` - Default is 10. Specifies the maximum height from the current chain height 
+    for which messages are buffered in the future messages buffer. 
 
 ## Adding and Removing Validators
 

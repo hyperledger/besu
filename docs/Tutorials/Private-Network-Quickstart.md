@@ -293,21 +293,23 @@ Unpack Pet Shop [Truffle box](https://truffleframework.com/boxes):
 
 `truffle unbox pet-shop`
 
-Install the [Truffle wallet](https://www.npmjs.com/package/truffle-privatekey-provider):
+Install the [Truffle wallet](https://github.com/trufflesuite/truffle-hdwallet-provider):
+Note with Truffle 5, you must use a Web3 1.0 enabled wallet or the Truffle tasks will hang.
 
 ```bash
-npm install truffle-privatekey-provider
+npm install --save truffle-hdwallet-provider@web3-one
 ```
+
 !!!note
     `npm` requires `sudo` on Linux.
 
 #### Modify the Pet Shop Example
 
-Modify the `truffle.js` file in the `pet-shop-tutorial` directory to add our wallet provider. The following shows the
+Modify the `truffle-config.js` file in the `pet-shop-tutorial` directory to add our wallet provider. The following shows the
 code with placeholders to change as directed below:
 
 ```javascript
-const PrivateKeyProvider = require("truffle-privatekey-provider");
+const PrivateKeyProvider = require("truffle-hdwallet-provider");
 const privateKey = "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63";
 const privateKeyProvider = new PrivateKeyProvider(privateKey, "<YOUR HTTP RPC NODE ENDPOINT>");
 

@@ -163,7 +163,8 @@ The path to the genesis file.
 host-whitelist=["medomain.com", "meotherdomain.com"]
 ```
 
-Comma-separated list of hostnames to allow access to the HTTP JSON-RPC API. Default is `localhost`. 
+Comma-separated list of hostnames to allow [access to the JSON-RPC API](../JSON-RPC-API/Using-JSON-RPC-API.md#host-whitelist). 
+Default is `localhost`. 
 
 !!!tip
     To allow all hostnames, use `*` or `all`. We don't recommend allowing all hostnames for production code.
@@ -234,8 +235,8 @@ The default is `127.0.0.1`.
 metrics-port="6174"
 ```
 
-Specifies the port on which [Prometheus](https://prometheus.io/) accesses [Pantheon metrics](../Using-Pantheon/Debugging.md#monitor-node-performance-using-prometheus).
-The default is `9545`. 
+Specifies the port (TCP) on which [Prometheus](https://prometheus.io/) accesses [Pantheon metrics](../Using-Pantheon/Debugging.md#monitor-node-performance-using-prometheus).
+The default is `9545`. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration).
 
 ### metrics-push-enabled 
 
@@ -308,8 +309,8 @@ Interval in seconds to push metrics when in `push` mode. The default is 15.
 metrics-push-port="6174"
 ```
 
-Port of the [Prometheus Push Gateway](https://github.com/prometheus/pushgateway).
-The default is `9001`. 
+Port (TCP) of the [Prometheus Push Gateway](https://github.com/prometheus/pushgateway).
+The default is `9001`. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration).
 
 ### metrics-push-prometheus-job
 
@@ -511,7 +512,7 @@ The default is true.
 p2p-host="0.0.0.0"
 ```
 
-Specifies the host on which P2P peer discovery listens.
+Specifies the host on which P2P listens.
 The default is 127.0.0.1.
 
 !!!note
@@ -532,8 +533,8 @@ The default is 127.0.0.1.
 p2p-port="1789"
 ```
 
-Specifies the port on which P2P peer discovery listens.
-The default is 30303.
+Specifies the P2P listening ports (UDP and TCP).
+The default is 30303. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration).
 
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
@@ -574,7 +575,7 @@ Path to the [permissions configuration file](../Permissions/Permissioning.md#per
 The default is the `permissions_config.toml` file in the [data directory](#data-path).
 
 !!!note
-    This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md).
+    This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#permissions-configuration-file).
 
 ### permissions-nodes-enabled
 
@@ -806,8 +807,8 @@ To allow remote connections, set to `0.0.0.0`
 rpc-http-port="3435"
 ```
 
-Specifies the port on which HTTP JSON-RPC listens.
-The default is 8545.
+Specifies HTTP JSON-RPC listening port (TCP).
+The default is 8545. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration). 
 
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
@@ -893,16 +894,16 @@ The default is `false`.
 ### rpc-ws-host
 
 ```bash tab="Syntax"
---ws-host=<HOST>
+--rpc-ws-host=<HOST>
 ```
 
 ```bash tab="Example Command Line"
 # to listen on all interfaces
---ws-host=0.0.0.0
+--rpc-ws-host=0.0.0.0
 ```
 
 ```bash tab="Example Configuration File"
-ws-host="0.0.0.0"
+rpc-ws-host="0.0.0.0"
 ```
 
 Host for Websocket WS-RPC to listen on.
@@ -916,20 +917,20 @@ To allow remote connections, set to `0.0.0.0`
 ### rpc-ws-port
 
 ```bash tab="Syntax"
---ws-port=<PORT>
+--rpc-ws-port=<PORT>
 ```
 
 ```bash tab="Example Command Line"
 # to listen on port 6174
---ws-port=6174
+--rpc-ws-port=6174
 ```
 
 ```bash tab="Example Configuration File"
-ws-port="6174"
+rpc-ws-port="6174"
 ```
 
-Port for Websocket WS-RPC to listen on.
-The default is 8546.
+Specifies Websockets JSON-RPC listening port (TCP).
+The default is 8546. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration).
 
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
@@ -1009,14 +1010,36 @@ This command provides node public key related actions.
 #### export
 
 ```bash tab="Syntax"
-$ pantheon public-key export --to=<key-file>
+$ pantheon public-key export [--to=<key-file>]
 ```
 
-```bash tab="Example"
-$ pantheon public-key export --to=/home/me/me_project/not_precious_pub_key
+```bash tab="Example (to standard output)"
+$ pantheon --data-path=<node data path> public-key export
 ```
 
-Exports node public key to the specified file. 
+```bash tab="Example (to file)"
+$ pantheon --data-path=<node data path> public-key export --to=/home/me/me_project/not_precious_pub_key
+```
+
+Outputs the node public key to standard output or writes it to the specified file if 
+`--to=<key-file>` is specified. 
+
+#### export-address
+
+```bash tab="Syntax"
+$ pantheon public-key export-address [--to=<address-file>]
+```
+
+```bash tab="Example (to standard output)"
+$ pantheon --data-path=<node data path> public-key export-address
+```
+
+```bash tab="Example (to file)"
+$ pantheon --data-path=<node data path> public-key export-address --to=/home/me/me_project/me_node_address
+```
+
+Outputs the node public key address to standard output or writes it to the specified file if  
+`--to=<key-file>` is specified. 
 
 ### password
 
@@ -1047,30 +1070,24 @@ This command encodes a typed JSON value from a file or from the standard input i
 $ pantheon rlp encode [--from=<FILE>] [--to=<FILE>] [--type=<type>]
 ```
 
-```bash tab="Example using files"
+```bash tab="File Example"
 $ pantheon rlp encode --from=ibft_extra_data.json --to=extra_data_for_ibft_genesis.txt --type=IBFT_EXTRA_DATA
 ```
 
-```bash tab="Example using standard input/output and default type"
+```bash tab="Standart Input/Output Example"
 $ cat extra_data.json | pantheon rlp encode > rlp.txt
 ```
 
-##### Available types for encoding
+The `IBFT_EXTRA_DATA` type is the only type supported for RLP encoding.
+This data is included in the [IBFT 2.0 genesis file](../Consensus-Protocols/IBFT.md#genesis-file).
 
-For the moment, only IBFT extra data type of RLP data is supported.
-This data is used to build the IBFT 2.0 genesis file.
-
-???+ summary "IBFT_EXTRA_DATA"
-    To generate the IBFT_EXTRA_DATA typed RLP string you need a JSON input containing an array with 
-    all the validator addresses strings that you want to insert in your genesis.
-    
-    The JSON content is an object with a validator property that's an array of validator addresse strings.
+???+ summary "IBFT 2.0 Extra Data"
+    To generate the RLP encoded `extraData` string, specify a JSON input that is array of validator addresses 
+    in ascending order.
 
     ??? tip "JSON Schema for IBFT_EXTRA_DATA"
-        The following JSON Schema can be used to validate that your JSON data is well formed.
-        
-        Among many tools you can use some online validator tool like https://www.jsonschemavalidator.net/
-        to validate your JSON content.
+        The following JSON Schema can be used to validate that your JSON data is well formed. You can use an online validation tool
+        such as https://www.jsonschemavalidator.net/ to validate your JSON content.
         
         ```json
         {
@@ -1096,13 +1113,13 @@ This data is used to build the IBFT 2.0 genesis file.
         ``` 
         
     !!!example "Example IBFT_EXTRA_DATA encoding"
-        ```json tab="JSON input"
+        ```json tab="JSON Input"
         [
           "be068f726a13c8d46c44be6ce9d275600e1735a4",
           "5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193"
         ]
         ```
         
-        ``` tab="RLP output"
+        ``` tab="RLP Output"
         0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0
         ```

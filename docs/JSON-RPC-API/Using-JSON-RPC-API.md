@@ -33,6 +33,27 @@ options to specify the port on which the JSON-RPC listens. The default ports are
 * 8545 for HTTP
 * 8546 for WebSockets
 
+## Host Whitelist 
+
+To prevent DNS rebinding, incoming HTTP requests and WebSockets connections are only accepted from hostnames 
+specified using the [`--host-whitelist`](../Reference/Pantheon-CLI-Syntax.md#host-whitelist) option. 
+The default value for `--host-whitelist` is localhost.
+
+If using the URL `http://127.0.0.1` to make JSON-RPC calls or connect to WebSockets, use `--host-whitelist` 
+to specify the hostname `127.0.0.1` or update the hostname in the JSON-RPC call or WebSockets connection to `localhost`.
+
+If your application publishes RPC ports, specify the hostnames when starting Pantheon.
+ 
+!!! example
+    ```bash
+    pantheon --host-whitelist=example.com
+    ```
+    
+Specify * or all for `--host-whitelist` to effectively disable host protection.
+
+!!! caution 
+    Specifying * or all for `--host-whitelist` is not recommended for production code.
+
 ## JSON-RPC Authentication 
 
 [Authentication](Authentication.md) is disabled by default. 
@@ -64,25 +85,19 @@ Send individual requests as a JSON data package at each prompt:
 > {"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":53}
 ```
 
-<<<<<<< HEAD:docs/JSON-RPC-API/Using-JSON-RPC-API.md
-The [RPC Pub/Sub methods](../Using-Pantheon/RPC-PubSub.md) can also be used over WebSockets.
-
 !!! note 
     `wscat` does not support headers. [Authentication](Authentication.md) requires an authentication token to be passed in the 
     request header. To use authentication with WebSockets, an app that supports headers is required. 
 
-## API Methods Enabled by Default
-=======
 ### API Methods Enabled by Default
->>>>>>> 149c0c24631231f8a96f5740534d309774e99ff5:docs/Reference/Using-JSON-RPC-API.md
 
 The `ETH`, `NET`, and `WEB3` API methods are enabled by default. 
 
 Use the [`--rpc-http-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-api) or [`--rpc-ws-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-api) 
-options to enable the `ADMIN` ,`CLIQUE`,`DEBUG`, `IBFT` and `MINER` API methods.
+options to enable the `ADMIN` ,`CLIQUE`,`DEBUG`, `EEA`, `IBFT`, `MINER`, and `PERM` API methods.
 
-!!! note
-    IBFT 2.0 is under development and will be available in v1.0. 
+!!!note
+    EEA methods are for privacy features. Privacy features are under development and will be available in v1.1.  
 
 ## Block Parameter
 

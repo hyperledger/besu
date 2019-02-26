@@ -54,6 +54,7 @@ nav:
         - Private Network Quickstart: Tutorials/Private-Network-Quickstart.md
         - Create a Private Network using Ethash (Pow): Tutorials/Create-Private-Network.md
         - Create a Private Network using Clique (PoA): Tutorials/Create-Private-Clique-Network.md
+        - Create a Private Network using IBFT 2.0 (PoA): Tutorials/Create-IBFT-Network.md
         - Create a Permissioned Network: Tutorials/Create-Permissioned-Network.md
     - Consensus Protocols:
         - Pantheon Consensus Protocols: Consensus-Protocols/Overview-Consensus.md
