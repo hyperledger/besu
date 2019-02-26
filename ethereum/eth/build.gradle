@@ -38,6 +38,8 @@ dependencies {
   implementation 'io.vertx:vertx-core'
   implementation 'com.google.guava:guava'
 
+  compileOnly 'org.openjdk.jmh:jmh-generator-annprocess'
+
   testImplementation project(':config')
   testImplementation project(':crypto')
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
@@ -49,4 +51,6 @@ dependencies {
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
+
+  jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 }
