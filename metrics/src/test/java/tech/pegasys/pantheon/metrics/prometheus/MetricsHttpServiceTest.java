@@ -49,15 +49,19 @@ public class MetricsHttpServiceTest {
   }
 
   private static MetricsHttpService createMetricsHttpService(final MetricsConfiguration config) {
-    return new MetricsHttpService(vertx, config, PrometheusMetricsSystem.init());
+    return new MetricsHttpService(vertx, config, PrometheusMetricsSystem.init(config));
   }
 
   private static MetricsHttpService createMetricsHttpService() {
-    return new MetricsHttpService(vertx, createMetricsConfig(), PrometheusMetricsSystem.init());
+    final MetricsConfiguration metricsConfiguration = createMetricsConfig();
+    metricsConfiguration.setEnabled(true);
+    return new MetricsHttpService(
+        vertx, metricsConfiguration, PrometheusMetricsSystem.init(metricsConfiguration));
   }
 
   private static MetricsConfiguration createMetricsConfig() {
     final MetricsConfiguration config = MetricsConfiguration.createDefault();
+    config.setEnabled(true);
     config.setPort(0);
     config.setHostsWhitelist(Collections.singletonList("*"));
     return config;

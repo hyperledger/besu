@@ -20,8 +20,12 @@ import tech.pegasys.pantheon.metrics.Observation;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.OperationTimer.TimingContext;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+
+import io.prometheus.client.Collector;
 
 public class NoOpMetricsSystem implements MetricsSystem {
 
@@ -30,6 +34,13 @@ public class NoOpMetricsSystem implements MetricsSystem {
   private static final OperationTimer NO_OP_TIMER = () -> NO_OP_TIMING_CONTEXT;
   public static final LabelledMetric<OperationTimer> NO_OP_LABELLED_TIMER = label -> NO_OP_TIMER;
   public static final LabelledMetric<Counter> NO_OP_LABELLED_COUNTER = label -> NO_OP_COUNTER;
+  public static final Collector NO_OP_COLLECTOR =
+      new Collector() {
+        @Override
+        public List<MetricFamilySamples> collect() {
+          return Collections.emptyList();
+        }
+      };
 
   @Override
   public LabelledMetric<Counter> createLabelledCounter(
@@ -37,7 +48,7 @@ public class NoOpMetricsSystem implements MetricsSystem {
       final String name,
       final String help,
       final String... labelNames) {
-    return labels -> NO_OP_COUNTER;
+    return NO_OP_LABELLED_COUNTER;
   }
 
   @Override
@@ -46,7 +57,7 @@ public class NoOpMetricsSystem implements MetricsSystem {
       final String name,
       final String help,
       final String... labelNames) {
-    return labels -> NO_OP_TIMER;
+    return NO_OP_LABELLED_TIMER;
   }
 
   @Override

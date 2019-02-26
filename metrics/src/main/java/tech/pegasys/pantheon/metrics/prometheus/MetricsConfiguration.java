@@ -12,9 +12,13 @@
  */
 package tech.pegasys.pantheon.metrics.prometheus;
 
+import tech.pegasys.pantheon.metrics.MetricCategory;
+
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Objects;
+import java.util.Set;
 
 import com.google.common.collect.Lists;
 
@@ -28,6 +32,7 @@ public class MetricsConfiguration {
   private boolean enabled;
   private int port;
   private String host;
+  private Set<MetricCategory> metricCategories;
   private boolean pushEnabled;
   private int pushPort;
   private String pushHost;
@@ -40,6 +45,7 @@ public class MetricsConfiguration {
     metricsConfiguration.setEnabled(false);
     metricsConfiguration.setPort(DEFAULT_METRICS_PORT);
     metricsConfiguration.setHost(DEFAULT_METRICS_HOST);
+    metricsConfiguration.setMetricCategories(EnumSet.allOf(MetricCategory.class));
     metricsConfiguration.setPushEnabled(false);
     metricsConfiguration.setPushPort(DEFAULT_METRICS_PUSH_PORT);
     metricsConfiguration.setPushHost(DEFAULT_METRICS_PUSH_HOST);
@@ -73,6 +79,14 @@ public class MetricsConfiguration {
 
   public void setHost(final String host) {
     this.host = host;
+  }
+
+  public Set<MetricCategory> getMetricCategories() {
+    return metricCategories;
+  }
+
+  public void setMetricCategories(final Set<MetricCategory> metricCategories) {
+    this.metricCategories = metricCategories;
   }
 
   public int getPushPort() {
@@ -133,6 +147,8 @@ public class MetricsConfiguration {
         + ", host='"
         + host
         + '\''
+        + ", categories="
+        + metricCategories.toString()
         + ", pushEnabled="
         + pushEnabled
         + ", pushPort="
@@ -157,6 +173,7 @@ public class MetricsConfiguration {
     final MetricsConfiguration that = (MetricsConfiguration) o;
     return enabled == that.enabled
         && port == that.port
+        && Objects.equals(metricCategories, that.metricCategories)
         && pushEnabled == that.pushEnabled
         && pushPort == that.pushPort
         && pushInterval == that.pushInterval
@@ -173,6 +190,7 @@ public class MetricsConfiguration {
         enabled,
         port,
         host,
+        metricCategories,
         pushEnabled,
         pushPort,
         pushHost,
