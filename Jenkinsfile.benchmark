@@ -3,7 +3,7 @@ properties([
                 string(name: 'BENCHMARK_GITHUB_ORG', defaultValue: 'PegaSysEng', description: 'The user or org from which to checkout the benchmark repo', trim: true),
                 string(name: 'BENCHMARK_REPO', defaultValue: 'pantheon-benchmark', description: 'The benchmark repo to be checked out', trim: true),
                 string(name: 'BENCHMARK_BRANCH', defaultValue: 'master', description: 'The benchmark branch to be checked out', trim: true),
-                choice(name: 'NETWORK', choices: ['ropsten', 'rinkeby', 'goerli', 'mainnet'], description: 'The name of the network being tested', trim: true),
+                choice(name: 'NETWORK', choices: ['rinkeby', 'ropsten', 'goerli', 'mainnet'], description: 'The name of the network being tested', trim: true),
 
                 // For File Import
                 //  choice(name: 'DATASET', choices: ['from-0-by-100k', 'from-0-to-1m', 'from-0', 'from-6784589'], description: 'Ropsten: choose from-0-by-100k or from-0-to-1m, Mainnet choose from-0 or from-from-6784589', trim: true),
