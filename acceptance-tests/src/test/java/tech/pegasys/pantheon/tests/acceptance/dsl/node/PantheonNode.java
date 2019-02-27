@@ -44,7 +44,6 @@ import java.net.ConnectException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,8 +89,8 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
   private final boolean devMode;
   private final boolean discoveryEnabled;
   private final boolean isBootnode;
+  private final List<String> bootnodes;
 
-  private List<String> bootnodes = new ArrayList<>();
   private JsonRequestFactories jsonRequestFactories;
   private HttpRequestFactory httpRequestFactory;
   private Optional<EthNetworkConfig> ethNetworkConfig = Optional.empty();
@@ -111,7 +110,8 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
       final int p2pPort,
       final Boolean p2pEnabled,
       final boolean discoveryEnabled,
-      final boolean isBootnode)
+      final boolean isBootnode,
+      final List<String> bootnodes)
       throws IOException {
     this.homeDirectory = Files.createTempDirectory("acctest");
     this.keyPair = KeyPairUtil.loadKeyPair(homeDirectory);
@@ -128,6 +128,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     this.p2pEnabled = p2pEnabled;
     this.discoveryEnabled = discoveryEnabled;
     this.isBootnode = isBootnode;
+    this.bootnodes = bootnodes;
     LOG.info("Created PantheonNode {}", this.toString());
   }
 
@@ -381,9 +382,17 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     return jsonRpcConfiguration;
   }
 
-  Optional<String> jsonRpcListenAddress() {
+  Optional<String> jsonRpcListenHost() {
     if (isJsonRpcEnabled()) {
-      return Optional.of(jsonRpcConfiguration().getHost() + ":" + jsonRpcConfiguration().getPort());
+      return Optional.of(jsonRpcConfiguration().getHost());
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  Optional<Integer> jsonRpcListenPort() {
+    if (isJsonRpcEnabled()) {
+      return Optional.of(jsonRpcConfiguration().getPort());
     } else {
       return Optional.empty();
     }
@@ -397,9 +406,12 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     return webSocketConfiguration;
   }
 
-  Optional<String> wsRpcListenAddress() {
-    return Optional.of(
-        webSocketConfiguration().getHost() + ":" + webSocketConfiguration().getPort());
+  Optional<String> wsRpcListenHost() {
+    return Optional.of(webSocketConfiguration().getHost());
+  }
+
+  Optional<Integer> wsRpcListenPort() {
+    return Optional.of(webSocketConfiguration().getPort());
   }
 
   MetricsConfiguration metricsConfiguration() {
@@ -410,11 +422,16 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     return p2pPort;
   }
 
-  String p2pListenAddress() {
-    return LOCALHOST + ":" + p2pPort;
+  String p2pListenHost() {
+    return LOCALHOST;
   }
 
-  List<URI> bootnodes() {
+  int p2pListenPort() {
+    return p2pPort;
+  }
+
+  @Override
+  public List<URI> bootnodes() {
     return bootnodes.stream()
         .filter(node -> !node.equals(this.enodeUrl()))
         .map(URI::create)
@@ -427,7 +444,8 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
 
   @Override
   public void bootnodes(final List<String> bootnodes) {
-    this.bootnodes = bootnodes;
+    this.bootnodes.clear();
+    this.bootnodes.addAll(bootnodes);
   }
 
   MiningParameters getMiningParameters() {

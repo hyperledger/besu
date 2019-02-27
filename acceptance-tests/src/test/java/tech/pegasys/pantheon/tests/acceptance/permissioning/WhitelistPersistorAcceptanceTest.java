@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -46,6 +47,10 @@ public class WhitelistPersistorAcceptanceTest extends AcceptanceTestBase {
     senderA = accounts.getPrimaryBenefactor();
     senderB = accounts.getSecondaryBenefactor();
     tempFile = Files.createTempFile("test", "test");
+    Files.write(
+        tempFile,
+        ("accounts-whitelist=[\"" + senderA.getAddress() + "\"]\nnodes-whitelist=[]")
+            .getBytes(StandardCharsets.UTF_8));
     node =
         pantheon.createNodeWithWhitelistsEnabled(
             "node",

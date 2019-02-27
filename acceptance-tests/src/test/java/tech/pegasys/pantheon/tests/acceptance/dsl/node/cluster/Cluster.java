@@ -72,7 +72,9 @@ public class Cluster implements AutoCloseable {
     }
 
     for (final RunnableNode node : nodes) {
-      node.getConfiguration().bootnodes(bootNodes);
+      if (node.getConfiguration().bootnodes().isEmpty()) {
+        node.getConfiguration().bootnodes(bootNodes);
+      }
       Optional<EthNetworkConfig> ethNetworkConfig =
           node.getConfiguration()
               .genesisConfigProvider()
