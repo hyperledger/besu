@@ -21,7 +21,9 @@
   - Added [tutorial to create IBFT 2.0 private network](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Create-IBFT-Network/)
         
 ### Technical Improvements 
+- RoundChangeCertificateValidator requires unique authors [\#997](https://github.com/PegaSysEng/pantheon/pull/997)
 - RPC tests can use 127.0.0.1 loopback rather than localhost [\#979](https://github.com/PegaSysEng/pantheon/pull/979)
+- Integration Test implementation dependency for non-IntelliJ IDE [\#978](https://github.com/PegaSysEng/pantheon/pull/978)
 - Only import block if it isn't already on the block chain [\#977](https://github.com/PegaSysEng/pantheon/pull/977)
 - Disable picocli ansi when testing [\#975](https://github.com/PegaSysEng/pantheon/pull/975)
 - Create peer discovery packets on a worker thread [\#961](https://github.com/PegaSysEng/pantheon/pull/961)
