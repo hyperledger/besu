@@ -20,7 +20,8 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfigurat
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
 import java.net.URI;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.List;
 
 import com.google.common.collect.Lists;
 import org.junit.Before;
@@ -29,6 +30,7 @@ import org.junit.Test;
 public class NodesWhitelistAcceptanceTest extends AcceptanceTestBase {
 
   private Cluster permissionedCluster;
+  private Node bootnode;
   private Node forbiddenNode;
   private Node allowedNode;
   private Node permissionedNode;
@@ -39,31 +41,36 @@ public class NodesWhitelistAcceptanceTest extends AcceptanceTestBase {
         new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
 
     permissionedCluster = new Cluster(clusterConfiguration, net);
-    forbiddenNode = pantheon.createArchiveNode("forbidden-node");
+    bootnode = pantheon.createArchiveNode("bootnode");
+    forbiddenNode = pantheon.createNonBootnodeArchiveNode("forbidden-node");
     allowedNode = pantheon.createNonBootnodeArchiveNode("allowed-node");
+
+    final List<URI> bootnodes = Arrays.asList(getEnodeURI(bootnode));
+    final List<URI> nodeWhitelist = Arrays.asList(getEnodeURI(bootnode), getEnodeURI(allowedNode));
+
     permissionedNode =
-        pantheon.createNodeWithNodesWhitelist(
-            "permissioned-node", Collections.singletonList(getEnodeURI(allowedNode)));
-    permissionedCluster.start(allowedNode, forbiddenNode, permissionedNode);
+        pantheon.createNodeWithBootnodeAndNodesWhitelist(
+            "permissioned-node", bootnodes, nodeWhitelist);
+    permissionedCluster.start(bootnode, allowedNode, forbiddenNode, permissionedNode);
   }
 
   @Test
-  public void permissionedNodeShouldDiscoverOnlyAllowedNode() {
-    allowedNode.verify(net.awaitPeerCount(2));
-    forbiddenNode.verify(net.awaitPeerCount(1));
-    permissionedNode.verify(net.awaitPeerCount(1));
+  public void permissionedNodeShouldDiscoverOnlyAllowedNodes() {
+    bootnode.verify(net.awaitPeerCount(3));
+    allowedNode.verify(net.awaitPeerCount(3));
+    forbiddenNode.verify(net.awaitPeerCount(2));
+    permissionedNode.verify(net.awaitPeerCount(2));
   }
 
   @Test
   public void permissionedNodeShouldDisconnectFromNodeRemovedFromWhitelist() {
-    permissionedNode.verify(net.awaitPeerCount(1));
+    permissionedNode.verify(net.awaitPeerCount(2));
 
     // remove allowed node from the whitelist
     permissionedNode.verify(
         perm.removeNodesFromWhitelist(Lists.newArrayList(((PantheonNode) allowedNode).enodeUrl())));
 
-    // node should not be connected to any peers
-    permissionedNode.verify(net.awaitPeerCount(0));
+    permissionedNode.verify(net.awaitPeerCount(1));
   }
 
   private URI getEnodeURI(final Node node) {

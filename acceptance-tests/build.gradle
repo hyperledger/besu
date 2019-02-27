@@ -50,7 +50,7 @@ dependencies {
 test.enabled = false
 
 task acceptanceTest(type: Test) {
-  System.setProperty('acctests.runPantheonAsProcess', 'true')
+  systemProperty 'acctests.runPantheonAsProcess', 'true'
   mustRunAfter rootProject.subprojects*.test
   description = 'Runs Pantheon acceptance tests.'
   group = 'verification'

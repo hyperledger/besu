@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -50,20 +51,22 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
 
     final List<String> params = new ArrayList<>();
     params.add("build/install/pantheon/bin/pantheon");
-    params.add("--datadir");
+    params.add("--data-path");
     params.add(dataDir.toAbsolutePath().toString());
 
     if (node.isDevMode()) {
-      params.add("--dev-mode");
+      params.add("--network");
+      params.add("DEV");
     }
 
-    if (!node.isDiscoveryEnabled()) {
-      params.add("--no-discovery");
-      params.add("true");
-    }
+    params.add("--discovery-enabled");
+    params.add(Boolean.toString(node.isDiscoveryEnabled()));
 
-    params.add("--p2p-listen");
-    params.add(node.p2pListenAddress());
+    params.add("--p2p-host");
+    params.add(node.p2pListenHost());
+
+    params.add("--p2p-port");
+    params.add(Integer.toString(node.p2pListenPort()));
 
     if (node.getMiningParameters().isMiningEnabled()) {
       params.add("--miner-enabled");
@@ -82,12 +85,17 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
     }
 
     params.add("--bootnodes");
-    params.add(String.join(",", node.bootnodes().toString()));
+
+    if (!node.bootnodes().isEmpty()) {
+      params.add(node.bootnodes().stream().map(URI::toString).collect(Collectors.joining(",")));
+    }
 
     if (node.jsonRpcEnabled()) {
       params.add("--rpc-http-enabled");
-      params.add("--rpc-listen");
-      params.add(node.jsonRpcListenAddress().get());
+      params.add("--rpc-http-host");
+      params.add(node.jsonRpcListenHost().get());
+      params.add("--rpc-http-port");
+      params.add(node.jsonRpcListenPort().map(Object::toString).get());
       params.add("--rpc-http-api");
       params.add(apiList(node.jsonRpcConfiguration().getRpcApis()));
       if (node.jsonRpcConfiguration().isAuthenticationEnabled()) {
@@ -101,8 +109,10 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
 
     if (node.wsRpcEnabled()) {
       params.add("--rpc-ws-enabled");
-      params.add("--ws-listen");
-      params.add(node.wsRpcListenAddress().get());
+      params.add("--rpc-ws-host");
+      params.add(node.wsRpcListenHost().get());
+      params.add("--rpc-ws-port");
+      params.add(node.wsRpcListenPort().map(Object::toString).get());
       params.add("--rpc-ws-api");
       params.add(apiList(node.webSocketConfiguration().getRpcApis()));
       if (node.webSocketConfiguration().isAuthenticationEnabled()) {
@@ -115,9 +125,9 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
     }
 
     if (node.ethNetworkConfig().isPresent()) {
-      EthNetworkConfig ethNetworkConfig = node.ethNetworkConfig().get();
-      Path genesisFile = createGenesisFile(node, ethNetworkConfig);
-      params.add("--genesis");
+      final EthNetworkConfig ethNetworkConfig = node.ethNetworkConfig().get();
+      final Path genesisFile = createGenesisFile(node, ethNetworkConfig);
+      params.add("--genesis-file");
       params.add(genesisFile.toString());
       params.add("--network-id");
       params.add(Integer.toString(ethNetworkConfig.getNetworkId()));
@@ -128,6 +138,22 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
       params.add("false");
     }
 
+    node.getPermissioningConfiguration()
+        .ifPresent(
+            permissioningConfiguration -> {
+              if (permissioningConfiguration.isNodeWhitelistEnabled()) {
+                params.add("--permissions-nodes-enabled");
+              }
+              if (permissioningConfiguration.isAccountWhitelistEnabled()) {
+                params.add("--permissions-accounts-enabled");
+              }
+              if (permissioningConfiguration.getConfigurationFilePath() != null) {
+                params.add("--permissions-config-file");
+                params.add(permissioningConfiguration.getConfigurationFilePath());
+              }
+            });
+
+    LOG.info("Creating pantheon process with params {}", params);
     final ProcessBuilder processBuilder =
         new ProcessBuilder(params)
             .directory(new File(System.getProperty("user.dir")).getParentFile())
@@ -145,17 +171,17 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
 
   private Path createGenesisFile(final PantheonNode node, final EthNetworkConfig ethNetworkConfig) {
     try {
-      Path genesisFile = Files.createTempFile(node.homeDirectory(), "genesis", "");
+      final Path genesisFile = Files.createTempFile(node.homeDirectory(), "genesis", "");
       genesisFile.toFile().deleteOnExit();
       Files.write(genesisFile, ethNetworkConfig.getGenesisConfig().getBytes(UTF_8));
       return genesisFile;
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new IllegalStateException(e);
     }
   }
 
   private String apiList(final Collection<RpcApi> rpcApis) {
-    return String.join(",", rpcApis.stream().map(RpcApis::getValue).collect(Collectors.toList()));
+    return rpcApis.stream().map(RpcApis::getValue).collect(Collectors.joining(","));
   }
 
   @Override
@@ -176,7 +202,7 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
   @Override
   public boolean isActive(final String nodeName) {
     final Process process = pantheonProcesses.get(nodeName);
-    return process.isAlive();
+    return process != null && process.isAlive();
   }
 
   private void killPantheonProcess(final String name, final Process process) {

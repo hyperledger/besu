@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.GenesisConfigProvider;
 
+import java.util.List;
 import java.util.Optional;
 
 class PantheonFactoryConfiguration {
@@ -36,6 +37,7 @@ class PantheonFactoryConfiguration {
   private final Boolean p2pEnabled;
   private final boolean discoveryEnabled;
   private final boolean isBootnode;
+  private List<String> bootnodes;
 
   PantheonFactoryConfiguration(
       final String name,
@@ -49,7 +51,8 @@ class PantheonFactoryConfiguration {
       final GenesisConfigProvider genesisConfigProvider,
       final Boolean p2pEnabled,
       final boolean discoveryEnabled,
-      final boolean isBootnode) {
+      final boolean isBootnode,
+      final List<String> bootnodes) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.privacyParameters = privacyParameters;
@@ -62,6 +65,7 @@ class PantheonFactoryConfiguration {
     this.p2pEnabled = p2pEnabled;
     this.discoveryEnabled = discoveryEnabled;
     this.isBootnode = isBootnode;
+    this.bootnodes = bootnodes;
   }
 
   public String getName() {
@@ -110,5 +114,9 @@ class PantheonFactoryConfiguration {
 
   public boolean isBootnode() {
     return isBootnode;
+  }
+
+  public List<String> getBootnodes() {
+    return bootnodes;
   }
 }

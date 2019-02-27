@@ -77,7 +77,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
       throw new RuntimeException("Error building PantheonController", e);
     }
 
-    RunnerBuilder runnerBuilder = new RunnerBuilder();
+    final RunnerBuilder runnerBuilder = new RunnerBuilder();
     node.getPermissioningConfiguration().ifPresent(runnerBuilder::permissioningConfiguration);
 
     final Runner runner =
