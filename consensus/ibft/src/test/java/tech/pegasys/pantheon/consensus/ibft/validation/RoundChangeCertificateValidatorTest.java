@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.consensus.ibft.validation;
 
 import static java.util.Collections.singletonList;
+import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -84,9 +85,9 @@ public class RoundChangeCertificateValidatorTest {
 
     final RoundChangeCertificate.Builder roundChangeBuilder = new RoundChangeCertificate.Builder();
     roundChangeBuilder.appendRoundChangeMessage(
-        proposerMessageFactory.createRoundChange(roundIdentifier, Optional.empty()));
+        proposerMessageFactory.createRoundChange(roundIdentifier, empty()));
     roundChangeBuilder.appendRoundChangeMessage(
-        proposerMessageFactory.createRoundChange(prevRound, Optional.empty()));
+        proposerMessageFactory.createRoundChange(prevRound, empty()));
 
     assertThat(
             validator.validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
@@ -104,8 +105,7 @@ public class RoundChangeCertificateValidatorTest {
             roundIdentifier,
             Optional.of(
                 new PreparedRoundArtifacts(
-                    proposerMessageFactory.createProposal(
-                        prevRound, proposedBlock, Optional.empty()),
+                    proposerMessageFactory.createProposal(prevRound, proposedBlock, empty()),
                     Lists.newArrayList(
                         validatorMessageFactory.createPrepare(
                             prevRound, proposedBlock.getHash()))))));
@@ -130,8 +130,7 @@ public class RoundChangeCertificateValidatorTest {
 
     final PreparedRoundArtifacts mismatchedRoundArtefacts =
         new PreparedRoundArtifacts(
-            proposerMessageFactory.createProposal(
-                preparedRound, prevProposedBlock, Optional.empty()),
+            proposerMessageFactory.createProposal(preparedRound, prevProposedBlock, empty()),
             singletonList(
                 validatorMessageFactory.createPrepare(preparedRound, prevProposedBlock.getHash())));
 
@@ -154,7 +153,7 @@ public class RoundChangeCertificateValidatorTest {
         TestHelpers.createFrom(roundIdentifier, 0, -1);
     final Block latterBlock = TestHelpers.createProposalBlock(validators, latterPrepareRound);
     final Proposal latterProposal =
-        proposerMessageFactory.createProposal(latterPrepareRound, latterBlock, Optional.empty());
+        proposerMessageFactory.createProposal(latterPrepareRound, latterBlock, empty());
     final Optional<PreparedRoundArtifacts> latterTerminatedRoundArtefacts =
         Optional.of(
             new PreparedRoundArtifacts(
@@ -171,7 +170,7 @@ public class RoundChangeCertificateValidatorTest {
     final Block earlierBlock =
         TestHelpers.createProposalBlock(validators.subList(0, 1), earlierPreparedRound);
     final Proposal earlierProposal =
-        proposerMessageFactory.createProposal(earlierPreparedRound, earlierBlock, Optional.empty());
+        proposerMessageFactory.createProposal(earlierPreparedRound, earlierBlock, empty());
     final Optional<PreparedRoundArtifacts> earlierTerminatedRoundArtefacts =
         Optional.of(
             new PreparedRoundArtifacts(
@@ -199,5 +198,24 @@ public class RoundChangeCertificateValidatorTest {
             validator.validateProposalMessageMatchesLatestPrepareCertificate(
                 roundChangeCert, latterBlock))
         .isTrue();
+  }
+
+  @Test
+  public void roundChangeCertificateWithTwoRoundChangesFromTheSameAuthorFailsValidation() {
+
+    final RoundChangeCertificate roundChangeCert =
+        new RoundChangeCertificate(
+            org.assertj.core.util.Lists.newArrayList(
+                proposerMessageFactory
+                    .createRoundChange(roundIdentifier, empty())
+                    .getSignedPayload(),
+                proposerMessageFactory
+                    .createRoundChange(roundIdentifier, empty())
+                    .getSignedPayload()));
+
+    assertThat(
+            validator.validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
+                roundIdentifier, roundChangeCert))
+        .isFalse();
   }
 }
