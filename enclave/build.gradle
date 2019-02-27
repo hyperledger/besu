@@ -5,10 +5,10 @@ dependencies {
 
   // test dependencies.
   testImplementation 'junit:junit'
+  testImplementation project(':testutil')
 
   // integration test dependacies.
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation project(':testutil')
   integrationTestImplementation 'net.consensys:orion'
-
 }
