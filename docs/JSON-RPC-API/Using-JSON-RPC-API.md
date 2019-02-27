@@ -37,10 +37,7 @@ options to specify the port on which the JSON-RPC listens. The default ports are
 
 To prevent DNS rebinding, incoming HTTP requests and WebSockets connections are only accepted from hostnames 
 specified using the [`--host-whitelist`](../Reference/Pantheon-CLI-Syntax.md#host-whitelist) option. 
-The default value for `--host-whitelist` is localhost.
-
-If using the URL `http://127.0.0.1` to make JSON-RPC calls or connect to WebSockets, use `--host-whitelist` 
-to specify the hostname `127.0.0.1` or update the hostname in the JSON-RPC call or WebSockets connection to `localhost`.
+By default, `localhost` and `127.0.0.1` are accepted.
 
 If your application publishes RPC ports, specify the hostnames when starting Pantheon.
  
