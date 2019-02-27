@@ -180,7 +180,7 @@ The command line specifies:
 Start another terminal, use curl to call the JSON-RPC API [`net_peerCount`](../Reference/JSON-RPC-API-Methods.md#net_peercount) method and confirm the nodes are functioning as peers: 
 
 ```bash
-curl -X POST --data '{"jsonrpc":"2.0","method":"net_peerCount","params":[],"id":1}' 127.0.0.1:8545
+curl -X POST --data '{"jsonrpc":"2.0","method":"net_peerCount","params":[],"id":1}' localhost:8545
 ```
 
 The result confirms Node-1 (the node running the JSON-RPC service) has two peers (Node-2 and Node-3):
