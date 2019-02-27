@@ -67,6 +67,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -77,11 +78,13 @@ public final class RunnerTest {
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
   @Test
+  @Ignore
   public void fullSyncFromGenesis() throws Exception {
     syncFromGenesis(SyncMode.FULL);
   }
 
   @Test
+  @Ignore
   public void fastSyncFromGenesis() throws Exception {
     syncFromGenesis(SyncMode.FAST);
   }
