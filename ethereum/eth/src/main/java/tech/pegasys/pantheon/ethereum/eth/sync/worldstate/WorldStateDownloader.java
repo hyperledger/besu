@@ -44,7 +44,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -60,13 +59,12 @@ public class WorldStateDownloader {
   private final Counter retriedRequestsCounter;
   private final Counter existingNodeCounter;
   private final MetricsSystem metricsSystem;
-  private final AtomicInteger highestRetryCount = new AtomicInteger(0);
 
   private final EthContext ethContext;
   private final TaskQueue<NodeDataRequest> taskQueue;
   private final int hashCountPerRequest;
   private final int maxOutstandingRequests;
-  private final int maxNodeRequestRetries;
+  private final int maxNodeRequestsWithoutProgress;
   private final WorldStateStorage worldStateStorage;
 
   private final AtomicReference<WorldDownloadState> downloadState = new AtomicReference<>();
@@ -77,14 +75,14 @@ public class WorldStateDownloader {
       final TaskQueue<NodeDataRequest> taskQueue,
       final int hashCountPerRequest,
       final int maxOutstandingRequests,
-      final int maxNodeRequestRetries,
+      final int maxNodeRequestsWithoutProgress,
       final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.worldStateStorage = worldStateStorage;
     this.taskQueue = taskQueue;
     this.hashCountPerRequest = hashCountPerRequest;
     this.maxOutstandingRequests = maxOutstandingRequests;
-    this.maxNodeRequestRetries = maxNodeRequestRetries;
+    this.maxNodeRequestsWithoutProgress = maxNodeRequestsWithoutProgress;
     this.metricsSystem = metricsSystem;
 
     metricsSystem.createLongGauge(
@@ -112,9 +110,9 @@ public class WorldStateDownloader {
 
     metricsSystem.createIntegerGauge(
         MetricCategory.SYNCHRONIZER,
-        "world_state_node_request_failures_max",
-        "Highest number of times a node data request has been retried in this download",
-        highestRetryCount::get);
+        "world_state_node_requests_since_last_progress_current",
+        "Number of world state requests made since the last time new data was returned",
+        downloadStateValue(WorldDownloadState::getRequestsSinceLastProgress));
 
     metricsSystem.createIntegerGauge(
         MetricCategory.SYNCHRONIZER,
@@ -158,14 +156,14 @@ public class WorldStateDownloader {
       }
 
       // Room for the requests we expect to do in parallel plus some buffer but not unlimited.
-      final int persistenceQueueCapacity = hashCountPerRequest * maxNodeRequestRetries * 2;
+      final int persistenceQueueCapacity = hashCountPerRequest * maxOutstandingRequests * 2;
       final WorldDownloadState newDownloadState =
           new WorldDownloadState(
               taskQueue,
               new ArrayBlockingQueue<>(persistenceQueueCapacity),
-              maxOutstandingRequests);
+              maxOutstandingRequests,
+              maxNodeRequestsWithoutProgress);
       this.downloadState.set(newDownloadState);
-      highestRetryCount.set(0);
 
       newDownloadState.enqueueRequest(NodeDataRequest.createAccountDataRequest(stateRoot));
 
@@ -301,19 +299,15 @@ public class WorldStateDownloader {
       final BlockHeader blockHeader,
       final Map<Hash, BytesValue> data,
       final WorldDownloadState downloadState) {
+    boolean madeProgress = false;
     for (final Task<NodeDataRequest> task : requestTasks) {
       final NodeDataRequest request = task.getData();
       final BytesValue matchingData = data.get(request.getHash());
       if (matchingData == null) {
         retriedRequestsCounter.inc();
-        final int requestFailures = request.trackFailure();
-        updateHighestRetryCount(requestFailures);
         task.markFailed();
-        if (requestFailures > maxNodeRequestRetries) {
-          LOG.info("Unavailable node {}", request.getHash());
-          downloadState.markAsStalled(maxNodeRequestRetries);
-        }
       } else {
+        madeProgress = true;
         request.setData(matchingData);
         if (isRootState(blockHeader, request)) {
           downloadState.enqueueRequests(request.getChildRequests());
@@ -324,15 +318,8 @@ public class WorldStateDownloader {
         }
       }
     }
+    downloadState.requestComplete(madeProgress);
     requestNodeData(blockHeader, downloadState);
-  }
-
-  private void updateHighestRetryCount(final int requestFailures) {
-    int previousHighestRetry = highestRetryCount.get();
-    while (requestFailures > previousHighestRetry) {
-      highestRetryCount.compareAndSet(previousHighestRetry, requestFailures);
-      previousHighestRetry = highestRetryCount.get();
-    }
   }
 
   private boolean isRootState(final BlockHeader blockHeader, final NodeDataRequest request) {

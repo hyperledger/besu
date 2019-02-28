@@ -29,7 +29,7 @@ public class SynchronizerConfiguration {
   private static final Duration DEFAULT_FAST_SYNC_MAXIMUM_PEER_WAIT_TIME = Duration.ofMinutes(5);
   private static final int DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST = 384;
   private static final int DEFAULT_WORLD_STATE_REQUEST_PARALLELISM = 10;
-  private static final int DEFAULT_WORLD_STATE_REQUEST_MAX_RETRIES = 25;
+  private static final int DEFAULT_WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS = 100;
 
   // Fast sync config
   private final int fastSyncPivotDistance;
@@ -38,7 +38,7 @@ public class SynchronizerConfiguration {
   private final Duration fastSyncMaximumPeerWaitTime;
   private final int worldStateHashCountPerRequest;
   private final int worldStateRequestParallelism;
-  private final int worldStateRequestMaxRetries;
+  private final int worldStateMaxRequestsWithoutProgress;
 
   // Block propagation config
   private final Range<Long> blockPropagationRange;
@@ -66,7 +66,7 @@ public class SynchronizerConfiguration {
       final Duration fastSyncMaximumPeerWaitTime,
       final int worldStateHashCountPerRequest,
       final int worldStateRequestParallelism,
-      final int worldStateRequestMaxRetries,
+      final int worldStateMaxRequestsWithoutProgress,
       final Range<Long> blockPropagationRange,
       final SyncMode syncMode,
       final long downloaderChangeTargetThresholdByHeight,
@@ -86,7 +86,7 @@ public class SynchronizerConfiguration {
     this.fastSyncMaximumPeerWaitTime = fastSyncMaximumPeerWaitTime;
     this.worldStateHashCountPerRequest = worldStateHashCountPerRequest;
     this.worldStateRequestParallelism = worldStateRequestParallelism;
-    this.worldStateRequestMaxRetries = worldStateRequestMaxRetries;
+    this.worldStateMaxRequestsWithoutProgress = worldStateMaxRequestsWithoutProgress;
     this.blockPropagationRange = blockPropagationRange;
     this.syncMode = syncMode;
     this.downloaderChangeTargetThresholdByHeight = downloaderChangeTargetThresholdByHeight;
@@ -211,8 +211,8 @@ public class SynchronizerConfiguration {
     return worldStateRequestParallelism;
   }
 
-  public int getWorldStateRequestMaxRetries() {
-    return worldStateRequestMaxRetries;
+  public int getWorldStateMaxRequestsWithoutProgress() {
+    return worldStateMaxRequestsWithoutProgress;
   }
 
   public static class Builder {
@@ -234,7 +234,8 @@ public class SynchronizerConfiguration {
     private int fastSyncMinimumPeerCount = DEFAULT_FAST_SYNC_MINIMUM_PEERS;
     private int worldStateHashCountPerRequest = DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST;
     private int worldStateRequestParallelism = DEFAULT_WORLD_STATE_REQUEST_PARALLELISM;
-    private int worldStateRequestMaxRetries = DEFAULT_WORLD_STATE_REQUEST_MAX_RETRIES;
+    private int worldStateMaxRequestsWithoutProgress =
+        DEFAULT_WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS;
     private Duration fastSyncMaximumPeerWaitTime = DEFAULT_FAST_SYNC_MAXIMUM_PEER_WAIT_TIME;
 
     public Builder fastSyncPivotDistance(final int distance) {
@@ -332,8 +333,9 @@ public class SynchronizerConfiguration {
       return this;
     }
 
-    public Builder worldStateRequestMaxRetries(final int worldStateRequestMaxRetries) {
-      this.worldStateRequestMaxRetries = worldStateRequestMaxRetries;
+    public Builder worldStateMaxRequestsWithoutProgress(
+        final int worldStateMaxRequestsWithoutProgress) {
+      this.worldStateMaxRequestsWithoutProgress = worldStateMaxRequestsWithoutProgress;
       return this;
     }
 
@@ -350,7 +352,7 @@ public class SynchronizerConfiguration {
           fastSyncMaximumPeerWaitTime,
           worldStateHashCountPerRequest,
           worldStateRequestParallelism,
-          worldStateRequestMaxRetries,
+          worldStateMaxRequestsWithoutProgress,
           blockPropagationRange,
           syncMode,
           downloaderChangeTargetThresholdByHeight,

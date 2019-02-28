@@ -97,7 +97,7 @@ class FastSynchronizer<C> {
             stateQueue,
             syncConfig.getWorldStateHashCountPerRequest(),
             syncConfig.getWorldStateRequestParallelism(),
-            syncConfig.getWorldStateRequestMaxRetries(),
+            syncConfig.getWorldStateMaxRequestsWithoutProgress(),
             metricsSystem);
     final FastSyncDownloader<C> fastSyncDownloader =
         new FastSyncDownloader<>(
