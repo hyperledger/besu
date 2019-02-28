@@ -101,7 +101,7 @@ public class WorldStateDownloaderBenchmark {
             pendingRequests,
             syncConfig.getWorldStateHashCountPerRequest(),
             syncConfig.getWorldStateRequestParallelism(),
-            syncConfig.getWorldStateRequestMaxRetries(),
+            syncConfig.getWorldStateMaxRequestsWithoutProgress(),
             metricsSystem);
   }
 
