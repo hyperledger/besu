@@ -67,14 +67,15 @@ public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnabl
   public void run() {
 
     boolean blockMined = false;
-    while (!blockMined) {
+    while (!blockMined && !blockCreator.isCancelled()) {
       try {
         blockMined = mineBlock();
       } catch (final CancellationException ex) {
         LOG.debug("Block creation process cancelled.");
         break;
       } catch (final InterruptedException ex) {
-        LOG.error("Block mining was interrupted.", ex);
+        LOG.debug("Block mining was interrupted.", ex);
+        Thread.currentThread().interrupt();
       } catch (final Exception ex) {
         LOG.error("Block mining threw an unhandled exception.", ex);
       }
