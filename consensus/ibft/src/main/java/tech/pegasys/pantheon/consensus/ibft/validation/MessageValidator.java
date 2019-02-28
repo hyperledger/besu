@@ -55,7 +55,7 @@ public class MessageValidator {
   public boolean validateProposal(final Proposal msg) {
 
     if (!signedDataValidator.validateProposal(msg.getSignedPayload())) {
-      LOG.debug("Illegal Proposal message, embedded signed data failed validation");
+      LOG.info("Illegal Proposal message, embedded signed data failed validation");
       return false;
     }
 
@@ -64,7 +64,7 @@ public class MessageValidator {
     }
 
     if (!validateProposalAndRoundChangeAreConsistent(msg)) {
-      LOG.debug("Illegal Proposal message, embedded roundChange does not match proposal.");
+      LOG.info("Illegal Proposal message, embedded roundChange does not match proposal.");
       return false;
     }
 
@@ -97,7 +97,7 @@ public class MessageValidator {
 
   private boolean validateRoundZeroProposalHasNoRoundChangeCertificate(final Proposal proposal) {
     if (proposal.getRoundChangeCertificate().isPresent()) {
-      LOG.debug(
+      LOG.info(
           "Illegal Proposal message, round-0 proposal must not contain a round change certificate.");
       return false;
     }
@@ -111,7 +111,7 @@ public class MessageValidator {
         proposal.getRoundChangeCertificate();
 
     if (!roundChangeCertificate.isPresent()) {
-      LOG.debug(
+      LOG.info(
           "Illegal Proposal message, rounds other than 0 must contain a round change certificate.");
       return false;
     }
@@ -120,13 +120,13 @@ public class MessageValidator {
 
     if (!roundChangeCertificateValidator.validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
         proposal.getRoundIdentifier(), roundChangeCert)) {
-      LOG.debug("Illegal Proposal message, embedded RoundChangeCertificate is not self-consistent");
+      LOG.info("Illegal Proposal message, embedded RoundChangeCertificate is not self-consistent");
       return false;
     }
 
     if (!roundChangeCertificateValidator.validateProposalMessageMatchesLatestPrepareCertificate(
         roundChangeCert, proposal.getBlock())) {
-      LOG.debug(
+      LOG.info(
           "Illegal Proposal message, piggybacked block does not match latest PrepareCertificate");
       return false;
     }

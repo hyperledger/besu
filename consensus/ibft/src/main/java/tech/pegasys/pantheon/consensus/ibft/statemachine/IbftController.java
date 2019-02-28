@@ -71,6 +71,8 @@ public class IbftController {
     if (!duplicateMessageTracker.hasSeenMessage(data)) {
       duplicateMessageTracker.addSeenMessage(data);
       handleMessage(msg.getMessage());
+    } else {
+      LOG.trace("Discarded duplicate message");
     }
   }
 
@@ -115,10 +117,7 @@ public class IbftController {
 
   private <P extends IbftMessage<?>> void consumeMessage(
       final Message message, final P ibftMessage, final Consumer<P> handleMessage) {
-    LOG.debug(
-        "Received IBFT message messageType={} payload={}",
-        ibftMessage.getMessageType(),
-        ibftMessage);
+    LOG.trace("Received IBFT {} message", ibftMessage.getClass().getSimpleName());
     if (processMessage(ibftMessage, message)) {
       gossiper.send(message);
       handleMessage.accept(ibftMessage);
@@ -128,7 +127,7 @@ public class IbftController {
   public void handleNewBlockEvent(final NewChainHead newChainHead) {
     final BlockHeader newBlockHeader = newChainHead.getNewChainHeadHeader();
     final BlockHeader currentMiningParent = currentHeightManager.getParentBlockHeader();
-    LOG.debug("Handling New Chain head event, chain height = {}", currentMiningParent.getNumber());
+    LOG.debug("Handling New Chain head event, chain height={}", currentMiningParent.getNumber());
     if (newBlockHeader.getNumber() < currentMiningParent.getNumber()) {
       LOG.trace(
           "Discarding NewChainHead event, was for previous block height. chainHeight={} eventHeight={}",
@@ -188,13 +187,14 @@ public class IbftController {
     if (isMsgForCurrentHeight(msgRoundIdentifier)) {
       return isMsgFromKnownValidator(msg) && ibftFinalState.isLocalNodeValidator();
     } else if (isMsgForFutureChainHeight(msgRoundIdentifier)) {
+      LOG.trace("Received message for future block height round={}", msgRoundIdentifier);
       futureMessageBuffer.addMessage(msgRoundIdentifier.getSequenceNumber(), rawMsg);
       // Notify the synchronizer the transmitting peer must have the parent block to the received
       // message's target height.
       sychronizerUpdater.updatePeerChainState(
           msgRoundIdentifier.getSequenceNumber() - 1L, rawMsg.getConnection());
     } else {
-      LOG.debug(
+      LOG.trace(
           "IBFT message discarded as it is from a previous block height messageType={} chainHeight={} eventHeight={}",
           msg.getMessageType(),
           currentHeightManager.getChainHeight(),

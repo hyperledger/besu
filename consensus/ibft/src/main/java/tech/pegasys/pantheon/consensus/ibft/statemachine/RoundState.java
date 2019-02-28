@@ -80,7 +80,7 @@ public class RoundState {
   public void addPrepareMessage(final Prepare msg) {
     if (!proposalMessage.isPresent() || validator.validatePrepare(msg)) {
       prepareMessages.add(msg);
-      LOG.debug("Round state added prepare message prepare={}", msg);
+      LOG.trace("Round state added prepare message prepare={}", msg);
     }
     updateState();
   }
@@ -88,7 +88,7 @@ public class RoundState {
   public void addCommitMessage(final Commit msg) {
     if (!proposalMessage.isPresent() || validator.validateCommit(msg)) {
       commitMessages.add(msg);
-      LOG.debug("Round state added commit message commit={}", msg);
+      LOG.trace("Round state added commit message commit={}", msg);
     }
 
     updateState();
@@ -100,11 +100,13 @@ public class RoundState {
     final long prepareQuorum = prepareMessageCountForQuorum(quorum);
     prepared = (prepareMessages.size() >= prepareQuorum) && proposalMessage.isPresent();
     committed = (commitMessages.size() >= quorum) && proposalMessage.isPresent();
-    LOG.debug(
-        "Round state updated prepared={} committed={} prepareQuorum={} quorum={}",
+    LOG.trace(
+        "Round state updated prepared={} committed={} preparedQuorum={}/{} committedQuorum={}/{}",
         prepared,
         committed,
+        prepareMessages.size(),
         prepareQuorum,
+        commitMessages.size(),
         quorum);
   }
 

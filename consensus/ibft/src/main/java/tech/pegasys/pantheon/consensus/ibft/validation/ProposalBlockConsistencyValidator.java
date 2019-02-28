@@ -29,7 +29,7 @@ public class ProposalBlockConsistencyValidator {
       final SignedData<ProposalPayload> signedPayload, final Block proposedBlock) {
 
     if (!signedPayload.getPayload().getDigest().equals(proposedBlock.getHash())) {
-      LOG.debug("Invalid Proposal, embedded digest does not match block's hash.");
+      LOG.info("Invalid Proposal, embedded digest does not match block's hash.");
       return false;
     }
 

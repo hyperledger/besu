@@ -40,7 +40,7 @@ public class IbftEventQueue {
    */
   public void add(final IbftEvent event) {
     if (queue.size() > messageQueueLimit) {
-      LOG.warn("Queue size exceeded trying to add new ibft event {}", event.toString());
+      LOG.warn("Queue size exceeded trying to add new ibft event {}", event);
     } else {
       queue.add(event);
     }

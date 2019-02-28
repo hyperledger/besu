@@ -21,6 +21,8 @@ import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.StringJoiner;
+
 public class IbftMessage<P extends Payload> implements Authored, RoundSpecific {
 
   private final SignedData<P> payload;
@@ -55,5 +57,12 @@ public class IbftMessage<P extends Payload> implements Authored, RoundSpecific {
 
   protected P getPayload() {
     return payload.getPayload();
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", IbftMessage.class.getSimpleName() + "[", "]")
+        .add("payload=" + payload)
+        .toString();
   }
 }
