@@ -96,21 +96,6 @@ public class PantheonNodeFactory {
             .build());
   }
 
-  public PantheonNode createMinerNodeWithCustomRefreshDelay(
-      final String name, final Long refreshDelay) throws IOException {
-
-    WebSocketConfiguration wsConfig = createWebSocketEnabledConfig();
-    wsConfig.setRefreshDelay(refreshDelay);
-
-    return create(
-        new PantheonFactoryConfigurationBuilder()
-            .setName(name)
-            .miningEnabled()
-            .setJsonRpcConfiguration(createJsonRpcEnabledConfig())
-            .setWebSocketConfiguration(wsConfig)
-            .build());
-  }
-
   public PantheonNode createArchiveNode(final String name) throws IOException {
     return create(
         new PantheonFactoryConfigurationBuilder()
@@ -177,19 +162,6 @@ public class PantheonNodeFactory {
             .setName(name)
             .setP2pEnabled(false)
             .setJsonRpcConfiguration(jsonRpcConfigWithPermissioningAndAdmin())
-            .build());
-  }
-
-  public PantheonNode createArchiveNodeWithCustomRefreshDelay(
-      final String name, final Long refreshDelay) throws IOException {
-    WebSocketConfiguration wsConfig = createWebSocketEnabledConfig();
-    wsConfig.setRefreshDelay(refreshDelay);
-
-    return create(
-        new PantheonFactoryConfigurationBuilder()
-            .setName(name)
-            .setJsonRpcConfiguration(createJsonRpcEnabledConfig())
-            .setWebSocketConfiguration(wsConfig)
             .build());
   }
 

@@ -26,4 +26,13 @@ public interface Synchronizer {
   Optional<SyncStatus> getSyncStatus();
 
   boolean hasSufficientPeers();
+
+  long observeSyncStatus(final SyncStatusListener listener);
+
+  boolean removeObserver(long observerId);
+
+  @FunctionalInterface
+  interface SyncStatusListener {
+    void onSyncStatus(final SyncStatus status);
+  }
 }

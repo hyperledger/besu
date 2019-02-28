@@ -935,20 +935,6 @@ The default is 8546. Ports must be [exposed appropriately](../Configuring-Panthe
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
 
-### rpc-ws-refresh-delay
-
-```bash tab="Syntax"
---rpc-ws-refresh-delay=<refresh delay>
-```
-
-```bash tab="Example"
---rpc-ws-refresh-delay="10000"
-```
-
-Refresh delay for Websocket synchronizing subscription in milliseconds. 
-The default is 5000. 
-
-
 ### help
 
 ```bash tab="Syntax"

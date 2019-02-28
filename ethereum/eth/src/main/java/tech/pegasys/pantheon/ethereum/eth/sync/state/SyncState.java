@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.eth.sync.state;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.SyncStatus;
+import tech.pegasys.pantheon.ethereum.core.Synchronizer.SyncStatusListener;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
 import tech.pegasys.pantheon.util.Subscribers;
@@ -30,6 +31,7 @@ public class SyncState {
   private final long startingBlock;
   private boolean lastInSync = true;
   private final Subscribers<InSyncListener> inSyncListeners = new Subscribers<>();
+  private final Subscribers<SyncStatusListener> syncStatusListeners = new Subscribers<>();
   private Optional<SyncTarget> syncTarget = Optional.empty();
   private long chainHeightListenerId;
 
@@ -42,11 +44,21 @@ public class SyncState {
           if (event.isNewCanonicalHead()) {
             checkInSync();
           }
+          publishSyncStatus();
         });
+  }
+
+  private void publishSyncStatus() {
+    final SyncStatus syncStatus = syncStatus();
+    syncStatusListeners.forEach(c -> c.onSyncStatus(syncStatus));
   }
 
   public void addInSyncListener(final InSyncListener observer) {
     inSyncListeners.subscribe(observer);
+  }
+
+  public void addSyncStatusListener(final SyncStatusListener observer) {
+    syncStatusListeners.subscribe(observer);
   }
 
   public SyncStatus syncStatus() {

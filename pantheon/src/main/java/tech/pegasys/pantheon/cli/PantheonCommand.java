@@ -19,7 +19,6 @@ import static tech.pegasys.pantheon.cli.NetworkName.MAINNET;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis.DEFAULT_JSON_RPC_APIS;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
-import static tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_REFRESH_DELAY;
 import static tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer.DEFAULT_PORT;
 import static tech.pegasys.pantheon.metrics.MetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
@@ -310,27 +309,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Collection<RpcApi> rpcWsApis = DEFAULT_JSON_RPC_APIS;
 
   private Long rpcWsRefreshDelay;
-
-  @Option(
-      names = {"--rpc-ws-refresh-delay"},
-      paramLabel = "<refresh delay>",
-      arity = "1",
-      description =
-          "Refresh delay of WebSocket subscription sync in milliseconds "
-              + "(default: ${DEFAULT-VALUE})",
-      defaultValue = "" + DEFAULT_WEBSOCKET_REFRESH_DELAY)
-  private Long configureRefreshDelay(final Long refreshDelay) {
-    if (refreshDelay < DEFAULT_MIN_REFRESH_DELAY || refreshDelay > DEFAULT_MAX_REFRESH_DELAY) {
-      throw new ParameterException(
-          this.commandLine,
-          String.format(
-              "Refresh delay must be a positive integer between %s and %s",
-              String.valueOf(DEFAULT_MIN_REFRESH_DELAY),
-              String.valueOf(DEFAULT_MAX_REFRESH_DELAY)));
-    }
-    this.rpcWsRefreshDelay = refreshDelay;
-    return refreshDelay;
-  }
 
   @Option(
       names = {"--rpc-ws-authentication-enabled"},
@@ -718,7 +696,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         Arrays.asList(
             "--rpc-ws-api",
             "--rpc-ws-apis",
-            "--rpc-ws-refresh-delay",
             "--rpc-ws-host",
             "--rpc-ws-port",
             "--rpc-ws-authentication-enabled",
@@ -735,7 +712,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setHost(rpcWsHost);
     webSocketConfiguration.setPort(rpcWsPort);
     webSocketConfiguration.setRpcApis(rpcWsApis);
-    webSocketConfiguration.setRefreshDelay(rpcWsRefreshDelay);
     webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
     webSocketConfiguration.setHostsWhitelist(hostsWhitelist);
