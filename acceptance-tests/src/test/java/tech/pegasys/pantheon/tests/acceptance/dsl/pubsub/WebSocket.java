@@ -13,10 +13,9 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.pubsub;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils.waitFor;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.NodeConfiguration;
-
-import java.util.List;
 
 import io.vertx.core.Vertx;
 
@@ -51,8 +50,6 @@ public class WebSocket {
   }
 
   public void verifyTotalEventsReceived(final int expectedTotalEventCount) {
-    final List<SubscriptionEvent> events = connection.getSubscriptionEvents();
-    assertThat(events).isNotNull();
-    assertThat(events.size()).isEqualTo(expectedTotalEventCount);
+    waitFor(() -> assertThat(connection.getSubscriptionEvents()).hasSize(expectedTotalEventCount));
   }
 }
