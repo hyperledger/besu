@@ -42,6 +42,13 @@ public class WaitConditions {
     return new ExpectBlockNumberAbove(eth, futureBlock)::verify;
   }
 
+  public WaitCondition chainHeadHasProgressedByAtLeast(
+      final PantheonNode node, final int blocksAheadOfLatest, final int timeout) {
+    final BigInteger futureBlock =
+        node.execute(eth.blockNumber()).add(BigInteger.valueOf(blocksAheadOfLatest));
+    return new ExpectBlockNumberAbove(eth, futureBlock, timeout)::verify;
+  }
+
   public WaitCondition cliqueValidatorsChanged(final Node node) {
     return new WaitUntilSignersChanged(node.execute(clique.createGetSigners(LATEST)), clique);
   }

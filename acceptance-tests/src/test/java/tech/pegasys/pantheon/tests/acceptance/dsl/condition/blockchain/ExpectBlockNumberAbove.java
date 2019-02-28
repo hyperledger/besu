@@ -24,14 +24,23 @@ import java.math.BigInteger;
 public class ExpectBlockNumberAbove implements Condition {
   private final EthTransactions eth;
   private final BigInteger blockNumber;
+  private final int timeout;
 
   public ExpectBlockNumberAbove(final EthTransactions eth, final BigInteger blockNumber) {
+    this(eth, blockNumber, 30);
+  }
+
+  public ExpectBlockNumberAbove(
+      final EthTransactions eth, final BigInteger blockNumber, final int timeout) {
     this.eth = eth;
     this.blockNumber = blockNumber;
+    this.timeout = timeout;
   }
 
   @Override
   public void verify(final Node node) {
-    waitFor(() -> assertThat(node.execute(eth.blockNumber())).isGreaterThanOrEqualTo(blockNumber));
+    waitFor(
+        timeout,
+        () -> assertThat(node.execute(eth.blockNumber())).isGreaterThanOrEqualTo(blockNumber));
   }
 }
