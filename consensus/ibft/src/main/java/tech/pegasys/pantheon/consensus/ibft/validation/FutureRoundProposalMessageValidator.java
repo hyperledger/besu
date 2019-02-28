@@ -41,7 +41,7 @@ public class FutureRoundProposalMessageValidator {
   public boolean validateProposalMessage(final Proposal msg) {
 
     if (msg.getRoundIdentifier().getSequenceNumber() != chainHeight) {
-      LOG.debug("Illegal Proposal message, does not target the correct round height.");
+      LOG.info("Illegal Proposal message, does not target the correct round height.");
       return false;
     }
 

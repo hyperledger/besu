@@ -77,7 +77,7 @@ public class ProposerSelector {
     final long prevBlockNumber = roundIdentifier.getSequenceNumber() - 1;
     final Optional<BlockHeader> maybeParentHeader = blockchain.getBlockHeader(prevBlockNumber);
     if (!maybeParentHeader.isPresent()) {
-      LOG.trace("Unable to determine proposer for requested block");
+      LOG.trace("Unable to determine proposer for requested block {}", prevBlockNumber);
       throw new RuntimeException("Unable to determine past proposer");
     }
 

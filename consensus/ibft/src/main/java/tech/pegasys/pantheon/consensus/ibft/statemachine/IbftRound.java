@@ -85,12 +85,9 @@ public class IbftRound {
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
     final Block block = blockCreator.createBlock(headerTimeStampSeconds);
     final IbftExtraData extraData = IbftExtraData.decode(block.getHeader().getExtraData());
-    LOG.debug(
-        "Creating proposed block. round={} extraData={} blockHeader={}",
-        roundState.getRoundIdentifier(),
-        extraData,
-        block.getHeader());
-
+    LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
+    LOG.trace(
+        "Creating proposed block with extraData={} blockHeader={}", extraData, block.getHeader());
     updateStateWithProposalAndTransmit(block, Optional.empty());
   }
 
@@ -102,12 +99,11 @@ public class IbftRound {
         roundChangeArtifacts.getRoundChangeCertificate();
     Block blockToPublish;
     if (!bestBlockFromRoundChange.isPresent()) {
-      LOG.debug("Multicasting Proposal with new block. round={}", roundState.getRoundIdentifier());
+      LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
       blockToPublish = blockCreator.createBlock(headerTimestamp);
     } else {
       LOG.debug(
-          "Multicasting Proposal from PreparedCertificate. round={}",
-          roundState.getRoundIdentifier());
+          "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
       blockToPublish =
           IbftBlockInterface.replaceRoundInBlock(
               bestBlockFromRoundChange.get(),
@@ -129,11 +125,11 @@ public class IbftRound {
   }
 
   public void handleProposalMessage(final Proposal msg) {
-    LOG.debug("Handling a Proposal message.");
+    LOG.debug("Received a proposal message. round={}", roundState.getRoundIdentifier());
     final Block block = msg.getBlock();
 
     if (updateStateWithProposedBlock(msg)) {
-      LOG.debug("Sending prepare message.");
+      LOG.debug("Sending prepare message. round={}", roundState.getRoundIdentifier());
       final Prepare localPrepareMessage =
           messageFactory.createPrepare(getRoundIdentifier(), block.getHash());
       transmitter.multicastPrepare(
@@ -211,7 +207,7 @@ public class IbftRound {
         "Importing block to chain. round={}, hash={}",
         getRoundIdentifier(),
         blockToImport.getHash());
-    LOG.debug("ExtraData = {}", extraData);
+    LOG.trace("Importing block with extraData={}", extraData);
     final boolean result =
         blockImporter.importBlock(protocolContext, blockToImport, HeaderValidationMode.FULL);
     if (!result) {

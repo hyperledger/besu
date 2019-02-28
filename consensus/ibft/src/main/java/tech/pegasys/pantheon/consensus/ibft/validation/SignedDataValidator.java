@@ -81,7 +81,7 @@ public class SignedDataValidator {
   private boolean handleSubsequentProposal(
       final SignedData<ProposalPayload> existingMsg, final SignedData<ProposalPayload> newMsg) {
     if (!existingMsg.getAuthor().equals(newMsg.getAuthor())) {
-      LOG.debug("Received subsequent invalid Proposal message; sender differs from original.");
+      LOG.info("Received subsequent invalid Proposal message; sender differs from original.");
       return false;
     }
 
@@ -89,7 +89,7 @@ public class SignedDataValidator {
     final ProposalPayload newData = newMsg.getPayload();
 
     if (!proposalMessagesAreIdentical(existingData, newData)) {
-      LOG.debug("Received subsequent invalid Proposal message; content differs from original.");
+      LOG.info("Received subsequent invalid Proposal message; content differs from original.");
       return false;
     }
 

@@ -159,7 +159,7 @@ public class IbftBlockHeightManager implements BlockHeightManager {
     } else {
       if (messageAge == FUTURE_ROUND) {
         if (!futureRoundProposalMessageValidator.validateProposalMessage(proposal)) {
-          LOG.debug("Received future Proposal which is illegal, no round change triggered.");
+          LOG.info("Received future Proposal which is illegal, no round change triggered.");
           return;
         }
         startNewRound(proposal.getRoundIdentifier().getRoundNumber());
