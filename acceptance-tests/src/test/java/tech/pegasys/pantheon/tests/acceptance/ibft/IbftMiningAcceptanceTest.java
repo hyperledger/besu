@@ -100,6 +100,8 @@ public class IbftMiningAcceptanceTest extends AcceptanceTestBase {
     final PantheonNode nonProposerNode = validators.get(validators.size() - 1);
     cluster.start(validators);
 
+    cluster.waitUntil(wait.chainHeadHasProgressedByAtLeast(validators.get(0), 1));
+
     final Account receiver = accounts.createAccount("account2");
 
     cluster.stopNode(nonProposerNode);
