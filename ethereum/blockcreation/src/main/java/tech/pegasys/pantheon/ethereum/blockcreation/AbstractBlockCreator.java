@@ -236,6 +236,11 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
     isCancelled.set(true);
   }
 
+  @Override
+  public boolean isCancelled() {
+    return isCancelled.get();
+  }
+
   protected void throwIfStopped() throws CancellationException {
     if (isCancelled.get()) {
       throw new CancellationException();
