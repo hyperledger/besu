@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.core;
 
+import com.google.common.base.Objects;
+
 public final class SyncStatus {
 
   private final long startingBlock;
@@ -34,5 +36,24 @@ public final class SyncStatus {
 
   public long getHighestBlock() {
     return highestBlock;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    SyncStatus that = (SyncStatus) o;
+    return startingBlock == that.startingBlock
+        && currentBlock == that.currentBlock
+        && highestBlock == that.highestBlock;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(startingBlock, currentBlock, highestBlock);
   }
 }

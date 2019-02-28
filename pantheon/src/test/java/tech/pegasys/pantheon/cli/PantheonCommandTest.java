@@ -794,28 +794,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcWsRefreshDelayMustBeUsed() {
-    parseCommand("--rpc-ws-enabled", "--rpc-ws-refresh-delay", "2000");
-
-    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(wsRpcConfigArgumentCaptor.getValue().getRefreshDelay()).isEqualTo(2000);
-
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void rpcWsRefreshDelayWithNegativeValueMustError() {
-    parseCommand("--rpc-ws-enabled", "--rpc-ws-refresh-delay", "-2000");
-
-    assertThat(commandOutput.toString()).isEmpty();
-    final String expectedErrorMsg = "Refresh delay must be a positive integer between";
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorMsg);
-  }
-
-  @Test
   public void bannedNodeIdsOptionMustBeUsed() {
     final String[] nodes = {"0001", "0002", "0003"};
     parseCommand("--banned-node-ids", String.join(",", nodes));
@@ -1368,19 +1346,10 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   @Test
   public void rpcWsOptionsRequiresServiceToBeEnabled() {
-    parseCommand(
-        "--rpc-ws-api",
-        "ETH,NET",
-        "--rpc-ws-host",
-        "0.0.0.0",
-        "--rpc-ws-port",
-        "1234",
-        "--rpc-ws-refresh-delay",
-        "2");
+    parseCommand("--rpc-ws-api", "ETH,NET", "--rpc-ws-host", "0.0.0.0", "--rpc-ws-port", "1234");
 
     verifyOptionsConstraintLoggerCall(
-        "--rpc-ws-host, --rpc-ws-port, --rpc-ws-api and --rpc-ws-refresh-delay",
-        "--rpc-ws-enabled");
+        "--rpc-ws-host, --rpc-ws-port and --rpc-ws-api", "--rpc-ws-enabled");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();

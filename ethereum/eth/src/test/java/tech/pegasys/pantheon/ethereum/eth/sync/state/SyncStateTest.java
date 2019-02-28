@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.state;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -25,6 +26,7 @@ import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
+import tech.pegasys.pantheon.ethereum.core.Synchronizer.SyncStatusListener;
 import tech.pegasys.pantheon.ethereum.eth.manager.ChainState;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
@@ -98,6 +100,21 @@ public class SyncStateTest {
 
     assertThat(syncState.isInSync()).isTrue();
     verify(inSyncListener).onSyncStatusChanged(true);
+  }
+
+  @Test
+  public void shouldSendSyncStatusWhenBlockIsAddedToTheChain() {
+    SyncStatusListener syncStatusListener = mock(SyncStatusListener.class);
+    syncState.addSyncStatusListener(syncStatusListener);
+
+    blockAddedObserver.onBlockAdded(
+        BlockAddedEvent.createForHeadAdvancement(
+            new Block(
+                targetBlockHeader(),
+                new BlockBody(Collections.emptyList(), Collections.emptyList()))),
+        blockchain);
+
+    verify(syncStatusListener).onSyncStatus(eq(syncState.syncStatus()));
   }
 
   private void setupOutOfSyncState() {

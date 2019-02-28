@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.SyncStatus;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
@@ -25,6 +27,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.ExceptionUtils;
+import tech.pegasys.pantheon.util.Subscribers;
 
 import java.nio.file.Path;
 import java.util.Optional;
@@ -44,6 +47,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   private final BlockPropagationManager<C> blockPropagationManager;
   private final FullSyncDownloader<C> fullSyncDownloader;
   private final Optional<FastSynchronizer<C>> fastSynchronizer;
+  private final Subscribers<SyncStatusListener> syncStatusListeners = new Subscribers<>();
 
   public DefaultSynchronizer(
       final SynchronizerConfiguration syncConfig,
@@ -91,6 +95,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   @Override
   public void start() {
     if (started.compareAndSet(false, true)) {
+      syncState.addSyncStatusListener(this::syncStatusCallback);
       if (fastSynchronizer.isPresent()) {
         fastSynchronizer.get().start().whenComplete(this::handleFastSyncResult);
       } else {
@@ -138,5 +143,20 @@ public class DefaultSynchronizer<C> implements Synchronizer {
     final int requiredPeerCount =
         fastSynchronizer.isPresent() ? syncConfig.getFastSyncMinimumPeerCount() : 1;
     return ethContext.getEthPeers().availablePeerCount() >= requiredPeerCount;
+  }
+
+  @Override
+  public long observeSyncStatus(final SyncStatusListener listener) {
+    checkNotNull(listener);
+    return syncStatusListeners.subscribe(listener);
+  }
+
+  @Override
+  public boolean removeObserver(final long observerId) {
+    return syncStatusListeners.unsubscribe(observerId);
+  }
+
+  private void syncStatusCallback(final SyncStatus status) {
+    syncStatusListeners.forEach(c -> c.onSyncStatus(status));
   }
 }
