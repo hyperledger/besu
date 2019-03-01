@@ -14,31 +14,32 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.CallParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonCallParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.TransientTransactionProcessingResult;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.TransientTransactionProcessor;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
+import tech.pegasys.pantheon.ethereum.transaction.CallParameter;
+import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulator;
+import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulatorResult;
 
 import java.util.function.Function;
 
 public class EthEstimateGas implements JsonRpcMethod {
 
   private final BlockchainQueries blockchainQueries;
-  private final TransientTransactionProcessor transientTransactionProcessor;
+  private final TransactionSimulator transactionSimulator;
   private final JsonRpcParameter parameters;
 
   public EthEstimateGas(
       final BlockchainQueries blockchainQueries,
-      final TransientTransactionProcessor transientTransactionProcessor,
+      final TransactionSimulator transactionSimulator,
       final JsonRpcParameter parameters) {
     this.blockchainQueries = blockchainQueries;
-    this.transientTransactionProcessor = transientTransactionProcessor;
+    this.transactionSimulator = transactionSimulator;
     this.parameters = parameters;
   }
 
@@ -49,18 +50,18 @@ public class EthEstimateGas implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    final CallParameter callParams =
-        parameters.required(request.getParams(), 0, CallParameter.class);
+    final JsonCallParameter callParams =
+        parameters.required(request.getParams(), 0, JsonCallParameter.class);
 
     final BlockHeader blockHeader = blockHeader();
     if (blockHeader == null) {
       return errorResponse(request);
     }
 
-    final CallParameter modifiedCallParams =
+    final JsonCallParameter modifiedCallParams =
         overrideGasLimitAndPrice(callParams, blockHeader.getGasLimit());
 
-    return transientTransactionProcessor
+    return transactionSimulator
         .process(modifiedCallParams, blockHeader.getNumber())
         .map(gasEstimateResponse(request))
         .orElse(errorResponse(request));
@@ -71,9 +72,9 @@ public class EthEstimateGas implements JsonRpcMethod {
     return blockchainQueries.getBlockchain().getBlockHeader(headBlockNumber).orElse(null);
   }
 
-  private CallParameter overrideGasLimitAndPrice(
+  private JsonCallParameter overrideGasLimitAndPrice(
       final CallParameter callParams, final long gasLimit) {
-    return new CallParameter(
+    return new JsonCallParameter(
         callParams.getFrom() != null ? callParams.getFrom().toString() : null,
         callParams.getTo() != null ? callParams.getTo().toString() : null,
         Quantity.create(gasLimit),
@@ -82,7 +83,7 @@ public class EthEstimateGas implements JsonRpcMethod {
         callParams.getPayload() != null ? callParams.getPayload().toString() : null);
   }
 
-  private Function<TransientTransactionProcessingResult, JsonRpcResponse> gasEstimateResponse(
+  private Function<TransactionSimulatorResult, JsonRpcResponse> gasEstimateResponse(
       final JsonRpcRequest request) {
     return result ->
         new JsonRpcSuccessResponse(request.getId(), Quantity.create(result.getGasEstimate()));

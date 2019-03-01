@@ -18,9 +18,10 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.BlockchainImporter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcTestMethodsFactory;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.CallParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonCallParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.transaction.CallParameter;
 
 import java.net.URL;
 import java.util.Map;
@@ -65,7 +66,7 @@ public class EthEstimateGasIntegrationTest {
 
   @Test
   public void shouldReturnExpectedValueForEmptyCallParameter() {
-    final CallParameter callParameter = new CallParameter(null, null, null, null, null, null);
+    final CallParameter callParameter = new JsonCallParameter(null, null, null, null, null, null);
     final JsonRpcRequest request = requestWithParams(callParameter);
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x5208");
 
@@ -77,7 +78,7 @@ public class EthEstimateGasIntegrationTest {
   @Test
   public void shouldReturnExpectedValueForTransfer() {
     final CallParameter callParameter =
-        new CallParameter(
+        new JsonCallParameter(
             "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
             "0x8888f1f195afa192cfee860698584c030f4c9db1",
             null,
@@ -95,7 +96,7 @@ public class EthEstimateGasIntegrationTest {
   @Test
   public void shouldReturnExpectedValueForContractDeploy() {
     final CallParameter callParameter =
-        new CallParameter(
+        new JsonCallParameter(
             "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
             null,
             null,
@@ -113,7 +114,7 @@ public class EthEstimateGasIntegrationTest {
   @Test
   public void shouldIgnoreGasLimitAndGasPriceAndReturnExpectedValue() {
     final CallParameter callParameter =
-        new CallParameter(
+        new JsonCallParameter(
             "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
             null,
             "0x1",
@@ -130,7 +131,7 @@ public class EthEstimateGasIntegrationTest {
 
   @Test
   public void shouldReturnExpectedValueForInsufficientGas() {
-    final CallParameter callParameter = new CallParameter(null, null, "0x1", null, null, null);
+    final CallParameter callParameter = new JsonCallParameter(null, null, "0x1", null, null, null);
     final JsonRpcRequest request = requestWithParams(callParameter);
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x5208");
 

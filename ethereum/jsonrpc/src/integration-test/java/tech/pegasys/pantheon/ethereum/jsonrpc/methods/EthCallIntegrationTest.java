@@ -20,11 +20,12 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcTestMethodsFactory;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.CallParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonCallParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.transaction.CallParameter;
 
 import java.net.URL;
 import java.util.Map;
@@ -70,7 +71,7 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnExpectedResultForCallAtLatestBlock() {
     final CallParameter callParameter =
-        new CallParameter(
+        new JsonCallParameter(
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
             null,
@@ -90,7 +91,7 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnExpectedResultForCallAtSpecificBlock() {
     final CallParameter callParameter =
-        new CallParameter(
+        new JsonCallParameter(
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
             null,
@@ -110,7 +111,7 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnInvalidRequestWhenMissingToField() {
     final CallParameter callParameter =
-        new CallParameter(
+        new JsonCallParameter(
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b", null, null, null, null, "0x12a7b914");
     final JsonRpcRequest request = requestWithParams(callParameter, "latest");
 
@@ -125,7 +126,7 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnErrorWithGasLimitTooLow() {
     final CallParameter callParameter =
-        new CallParameter(
+        new JsonCallParameter(
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
             "0x0",
@@ -144,7 +145,7 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnErrorWithGasPriceTooHigh() {
     final CallParameter callParameter =
-        new CallParameter(
+        new JsonCallParameter(
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
             "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
             null,
@@ -163,7 +164,7 @@ public class EthCallIntegrationTest {
   @Test
   public void shouldReturnEmptyHashResultForCallWithOnlyToField() {
     final CallParameter callParameter =
-        new CallParameter(
+        new JsonCallParameter(
             null, "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f", null, null, null, null);
     final JsonRpcRequest request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x");

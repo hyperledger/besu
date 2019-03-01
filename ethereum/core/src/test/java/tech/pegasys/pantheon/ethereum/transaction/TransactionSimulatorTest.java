@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
+package tech.pegasys.pantheon.ethereum.transaction;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,9 +28,6 @@ import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.CallParameter;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.TransientTransactionProcessingResult;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.TransientTransactionProcessor;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionProcessor;
@@ -49,7 +46,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class TransientTransactionProcessorTest {
+public class TransactionSimulatorTest {
 
   private static final SECP256K1.Signature FAKE_SIGNATURE =
       SECP256K1.Signature.create(SECP256K1.HALF_CURVE_ORDER, SECP256K1.HALF_CURVE_ORDER, (byte) 0);
@@ -57,7 +54,10 @@ public class TransientTransactionProcessorTest {
   private static final Address DEFAULT_FROM =
       Address.fromHexString("0x0000000000000000000000000000000000000000");
 
-  private TransientTransactionProcessor transientTransactionProcessor;
+  private static final Hash DEFAULT_BLOCK_HEADER_HASH =
+      Hash.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
+
+  private TransactionSimulator transactionSimulator;
 
   @Mock private Blockchain blockchain;
   @Mock private WorldStateArchive worldStateArchive;
@@ -68,16 +68,16 @@ public class TransientTransactionProcessorTest {
 
   @Before
   public void setUp() {
-    this.transientTransactionProcessor =
-        new TransientTransactionProcessor(blockchain, worldStateArchive, protocolSchedule);
+    this.transactionSimulator =
+        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
   }
 
   @Test
   public void shouldReturnEmptyWhenBlockDoesNotExist() {
     when(blockchain.getBlockHeader(eq(1L))).thenReturn(Optional.empty());
 
-    final Optional<TransientTransactionProcessingResult> result =
-        transientTransactionProcessor.process(callParameter(), 1L);
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.process(callParameter(), 1L);
 
     assertThat(result.isPresent()).isFalse();
   }
@@ -103,8 +103,8 @@ public class TransientTransactionProcessorTest {
     mockProcessorStatusForTransaction(
         1L, expectedTransaction, Status.SUCCESSFUL, callParameter.getPayload());
 
-    final Optional<TransientTransactionProcessingResult> result =
-        transientTransactionProcessor.process(callParameter, 1L);
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.process(callParameter, 1L);
 
     assertThat(result.get().isSuccessful()).isTrue();
     verifyTransactionWasProcessed(expectedTransaction);
@@ -130,7 +130,7 @@ public class TransientTransactionProcessorTest {
             .build();
     mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL, BytesValue.of());
 
-    transientTransactionProcessor.process(callParameter, 1L);
+    transactionSimulator.process(callParameter, 1L);
 
     verifyTransactionWasProcessed(expectedTransaction);
   }
@@ -155,7 +155,7 @@ public class TransientTransactionProcessorTest {
             .build();
     mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL, BytesValue.of());
 
-    transientTransactionProcessor.process(callParameter, 1L);
+    transactionSimulator.process(callParameter, 1L);
 
     verifyTransactionWasProcessed(expectedTransaction);
   }
@@ -180,8 +180,123 @@ public class TransientTransactionProcessorTest {
             .build();
     mockProcessorStatusForTransaction(1L, expectedTransaction, Status.FAILED, null);
 
-    final Optional<TransientTransactionProcessingResult> result =
-        transientTransactionProcessor.process(callParameter, 1L);
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.process(callParameter, 1L);
+
+    assertThat(result.get().isSuccessful()).isFalse();
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
+  @Test
+  public void shouldReturnEmptyWhenBlockDoesNotExistByHash() {
+    when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.empty());
+
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.process(callParameter(), Hash.ZERO);
+
+    assertThat(result.isPresent()).isFalse();
+  }
+
+  @Test
+  public void shouldReturnSuccessfulResultWhenProcessingIsSuccessfulByHash() {
+    final CallParameter callParameter = callParameter();
+
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L, DEFAULT_BLOCK_HEADER_HASH);
+    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .nonce(1L)
+            .gasPrice(callParameter.getGasPrice())
+            .gasLimit(callParameter.getGasLimit())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .signature(FAKE_SIGNATURE)
+            .build();
+    mockProcessorStatusForTransaction(
+        1L, expectedTransaction, Status.SUCCESSFUL, callParameter.getPayload());
+
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.process(callParameter, DEFAULT_BLOCK_HEADER_HASH);
+
+    assertThat(result.get().isSuccessful()).isTrue();
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
+  @Test
+  public void shouldUseDefaultValuesWhenMissingOptionalFieldsByHash() {
+    final CallParameter callParameter = callParameter();
+
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L, DEFAULT_BLOCK_HEADER_HASH);
+    mockWorldStateForAccount(Hash.ZERO, Address.fromHexString("0x0"), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .nonce(1L)
+            .gasPrice(Wei.ZERO)
+            .gasLimit(0L)
+            .to(DEFAULT_FROM)
+            .sender(Address.fromHexString("0x0"))
+            .value(Wei.ZERO)
+            .payload(BytesValue.EMPTY)
+            .signature(FAKE_SIGNATURE)
+            .build();
+    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL, BytesValue.of());
+
+    transactionSimulator.process(callParameter, DEFAULT_BLOCK_HEADER_HASH);
+
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
+  @Test
+  public void shouldUseZeroNonceWhenAccountDoesNotExistByHash() {
+    final CallParameter callParameter = callParameter();
+
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L, DEFAULT_BLOCK_HEADER_HASH);
+    mockWorldStateForAbsentAccount(Hash.ZERO);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .nonce(0L)
+            .gasPrice(Wei.ZERO)
+            .gasLimit(0L)
+            .to(DEFAULT_FROM)
+            .sender(Address.fromHexString("0x0"))
+            .value(Wei.ZERO)
+            .payload(BytesValue.EMPTY)
+            .signature(FAKE_SIGNATURE)
+            .build();
+    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL, BytesValue.of());
+
+    transactionSimulator.process(callParameter, DEFAULT_BLOCK_HEADER_HASH);
+
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
+  @Test
+  public void shouldReturnFailureResultWhenProcessingFailsByHash() {
+    final CallParameter callParameter = callParameter();
+
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L, DEFAULT_BLOCK_HEADER_HASH);
+    mockWorldStateForAccount(Hash.ZERO, Address.fromHexString("0x0"), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .nonce(1L)
+            .gasPrice(callParameter.getGasPrice())
+            .gasLimit(callParameter.getGasLimit())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .signature(FAKE_SIGNATURE)
+            .build();
+    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.FAILED, null);
+
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.process(callParameter, DEFAULT_BLOCK_HEADER_HASH);
 
     assertThat(result.get().isSuccessful()).isFalse();
     verifyTransactionWasProcessed(expectedTransaction);
@@ -201,10 +316,16 @@ public class TransientTransactionProcessorTest {
   }
 
   private void mockBlockchainForBlockHeader(final Hash stateRoot, final long blockNumber) {
+    mockBlockchainForBlockHeader(stateRoot, blockNumber, Hash.ZERO);
+  }
+
+  private void mockBlockchainForBlockHeader(
+      final Hash stateRoot, final long blockNumber, final Hash headerHash) {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getStateRoot()).thenReturn(stateRoot);
     when(blockHeader.getNumber()).thenReturn(blockNumber);
     when(blockchain.getBlockHeader(blockNumber)).thenReturn(Optional.of(blockHeader));
+    when(blockchain.getBlockHeader(headerHash)).thenReturn(Optional.of(blockHeader));
   }
 
   private void mockProcessorStatusForTransaction(
@@ -238,6 +359,12 @@ public class TransientTransactionProcessorTest {
   }
 
   private CallParameter callParameter() {
-    return new CallParameter("0x0", "0x0", "0x0", "0x0", "0x0", "");
+    return new CallParameter(
+        Address.fromHexString("0x0"),
+        Address.fromHexString("0x0"),
+        0,
+        Wei.of(0),
+        Wei.of(0),
+        BytesValue.EMPTY);
   }
 }
