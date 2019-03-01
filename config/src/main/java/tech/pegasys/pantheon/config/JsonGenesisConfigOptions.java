@@ -12,9 +12,11 @@
  */
 package tech.pegasys.pantheon.config;
 
+import java.util.Map;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 
+import com.google.common.collect.ImmutableMap;
 import io.vertx.core.json.JsonObject;
 
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
@@ -117,6 +119,49 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return configRoot.containsKey("chainid")
         ? OptionalInt.of(configRoot.getInteger("chainid"))
         : OptionalInt.empty();
+  }
+
+  @Override
+  public Map<String, Object> asMap() {
+    final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
+    builder.put("chainId", getChainId().getAsInt());
+    getHomesteadBlockNumber().ifPresent(l -> builder.put("homesteadBlock", l));
+    getDaoForkBlock()
+        .ifPresent(
+            l -> {
+              builder.put("daoForkBlock", l);
+              builder.put("daoForkSupport", Boolean.TRUE);
+            });
+    getTangerineWhistleBlockNumber()
+        .ifPresent(
+            l -> {
+              builder.put("eip150Block", l);
+              if (configRoot.containsKey("eip150hash")) {
+                builder.put("eip150Hash", configRoot.getString("eip150hash"));
+              }
+            });
+    getSpuriousDragonBlockNumber()
+        .ifPresent(
+            l -> {
+              builder.put("eip155Block", l);
+              builder.put("eip158Block", l);
+            });
+    getByzantiumBlockNumber().ifPresent(l -> builder.put("byzantiumBlock", l));
+    getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
+    getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("constantinopleFixBlock", l));
+    if (isClique()) {
+      builder.put("clique", getCliqueConfigOptions().asMap());
+    }
+    if (isEthHash()) {
+      builder.put("ethash", getEthashConfigOptions().asMap());
+    }
+    if (isIbftLegacy()) {
+      builder.put("ibft", getIbftLegacyConfigOptions().asMap());
+    }
+    if (isIbft2()) {
+      builder.put("ibft2", getIbft2ConfigOptions().asMap());
+    }
+    return builder.build();
   }
 
   private OptionalLong getOptionalLong(final String key) {

@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.controller;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
+import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.DefaultBlockScheduler;
@@ -59,6 +60,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
 
   private final ProtocolSchedule<Void> protocolSchedule;
   private final ProtocolContext<Void> protocolContext;
+  private final GenesisConfigOptions genesisConfigOptions;
   private final ProtocolManager ethProtocolManager;
   private final KeyPair keyPair;
   private final Synchronizer synchronizer;
@@ -68,9 +70,10 @@ public class MainnetPantheonController implements PantheonController<Void> {
   private final PrivacyParameters privacyParameters;
   private final Runnable close;
 
-  public MainnetPantheonController(
+  private MainnetPantheonController(
       final ProtocolSchedule<Void> protocolSchedule,
       final ProtocolContext<Void> protocolContext,
+      final GenesisConfigOptions genesisConfigOptions,
       final ProtocolManager ethProtocolManager,
       final Synchronizer synchronizer,
       final KeyPair keyPair,
@@ -80,6 +83,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
       final Runnable close) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
+    this.genesisConfigOptions = genesisConfigOptions;
     this.ethProtocolManager = ethProtocolManager;
     this.synchronizer = synchronizer;
     this.keyPair = keyPair;
@@ -131,11 +135,11 @@ public class MainnetPantheonController implements PantheonController<Void> {
             dataDirectory,
             metricsSystem);
 
-    OptionalLong daoBlock = genesisConfig.getConfigOptions().getDaoForkBlock();
+    final OptionalLong daoBlock = genesisConfig.getConfigOptions().getDaoForkBlock();
     if (daoBlock.isPresent()) {
       // Setup dao validator
-      EthContext ethContext = ethProtocolManager.ethContext();
-      DaoForkPeerValidator daoForkPeerValidator =
+      final EthContext ethContext = ethProtocolManager.ethContext();
+      final DaoForkPeerValidator daoForkPeerValidator =
           new DaoForkPeerValidator(
               ethContext, protocolSchedule, metricsSystem, daoBlock.getAsLong());
       PeerValidatorRunner.runValidator(ethContext, daoForkPeerValidator);
@@ -168,6 +172,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
     return new MainnetPantheonController(
         protocolSchedule,
         protocolContext,
+        genesisConfig.getConfigOptions(),
         ethProtocolManager,
         synchronizer,
         nodeKeys,
@@ -198,6 +203,11 @@ public class MainnetPantheonController implements PantheonController<Void> {
   @Override
   public ProtocolSchedule<Void> getProtocolSchedule() {
     return protocolSchedule;
+  }
+
+  @Override
+  public GenesisConfigOptions getGenesisConfigOptions() {
+    return genesisConfigOptions;
   }
 
   @Override

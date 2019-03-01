@@ -16,6 +16,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.config.CliqueConfigOptions;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
+import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.consensus.clique.CliqueBlockInterface;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueMiningTracker;
@@ -70,6 +71,7 @@ public class CliquePantheonController implements PantheonController<CliqueContex
   private static final Logger LOG = getLogger();
   private final ProtocolSchedule<CliqueContext> protocolSchedule;
   private final ProtocolContext<CliqueContext> context;
+  private final GenesisConfigOptions genesisConfigOptions;
   private final Synchronizer synchronizer;
   private final ProtocolManager ethProtocolManager;
   private final KeyPair keyPair;
@@ -78,9 +80,10 @@ public class CliquePantheonController implements PantheonController<CliqueContex
 
   private final MiningCoordinator miningCoordinator;
 
-  CliquePantheonController(
+  private CliquePantheonController(
       final ProtocolSchedule<CliqueContext> protocolSchedule,
       final ProtocolContext<CliqueContext> context,
+      final GenesisConfigOptions genesisConfigOptions,
       final ProtocolManager ethProtocolManager,
       final Synchronizer synchronizer,
       final KeyPair keyPair,
@@ -90,6 +93,7 @@ public class CliquePantheonController implements PantheonController<CliqueContex
 
     this.protocolSchedule = protocolSchedule;
     this.context = context;
+    this.genesisConfigOptions = genesisConfigOptions;
     this.ethProtocolManager = ethProtocolManager;
     this.synchronizer = synchronizer;
     this.keyPair = keyPair;
@@ -98,7 +102,7 @@ public class CliquePantheonController implements PantheonController<CliqueContex
     this.miningCoordinator = miningCoordinator;
   }
 
-  public static PantheonController<CliqueContext> init(
+  static PantheonController<CliqueContext> init(
       final StorageProvider storageProvider,
       final GenesisConfigFile genesisConfig,
       final SynchronizerConfiguration syncConfig,
@@ -192,6 +196,7 @@ public class CliquePantheonController implements PantheonController<CliqueContex
     return new CliquePantheonController(
         protocolSchedule,
         protocolContext,
+        genesisConfig.getConfigOptions(),
         ethProtocolManager,
         synchronizer,
         nodeKeys,
@@ -221,6 +226,11 @@ public class CliquePantheonController implements PantheonController<CliqueContex
   @Override
   public ProtocolSchedule<CliqueContext> getProtocolSchedule() {
     return protocolSchedule;
+  }
+
+  @Override
+  public GenesisConfigOptions getGenesisConfigOptions() {
+    return genesisConfigOptions;
   }
 
   @Override

@@ -30,14 +30,14 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 
 public class EthNetworkConfig {
-  private static final int MAINNET_NETWORK_ID = 1;
-  private static final int RINKEBY_NETWORK_ID = 4;
-  private static final int ROPSTEN_NETWORK_ID = 3;
-  private static final int GOERLI_NETWORK_ID = 5;
-  private static final int DEV_NETWORK_ID = 2018;
+  public static final int MAINNET_NETWORK_ID = 1;
+  public static final int ROPSTEN_NETWORK_ID = 3;
+  public static final int RINKEBY_NETWORK_ID = 4;
+  public static final int GOERLI_NETWORK_ID = 5;
+  public static final int DEV_NETWORK_ID = 2018;
   private static final String MAINNET_GENESIS = "mainnet.json";
-  private static final String RINKEBY_GENESIS = "rinkeby.json";
   private static final String ROPSTEN_GENESIS = "ropsten.json";
+  private static final String RINKEBY_GENESIS = "rinkeby.json";
   private static final String GOERLI_GENESIS = "goerli.json";
   private static final String DEV_GENESIS = "dev.json";
   private final String genesisConfig;
@@ -118,10 +118,27 @@ public class EthNetworkConfig {
 
   private static String jsonConfig(final String resourceName) {
     try {
-      URI uri = Resources.getResource(resourceName).toURI();
+      final URI uri = Resources.getResource(resourceName).toURI();
       return Resources.toString(uri.toURL(), UTF_8);
     } catch (final URISyntaxException | IOException e) {
       throw new IllegalStateException(e);
+    }
+  }
+
+  public static String jsonConfig(final NetworkName network) {
+    switch (network) {
+      case MAINNET:
+        return jsonConfig(MAINNET_GENESIS);
+      case ROPSTEN:
+        return jsonConfig(ROPSTEN_GENESIS);
+      case RINKEBY:
+        return jsonConfig(RINKEBY_GENESIS);
+      case GOERLI:
+        return jsonConfig(GOERLI_GENESIS);
+      case DEV:
+        return jsonConfig(DEV_GENESIS);
+      default:
+        throw new IllegalArgumentException("Unknown network:" + network);
     }
   }
 

@@ -12,8 +12,11 @@
  */
 package tech.pegasys.pantheon.config;
 
+import java.util.Map;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
+
+import com.google.common.collect.ImmutableMap;
 
 public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
@@ -104,6 +107,42 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalInt getChainId() {
     return chainId;
+  }
+
+  @Override
+  public Map<String, Object> asMap() {
+    final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
+    builder.put("chainId", getChainId().getAsInt());
+    getHomesteadBlockNumber().ifPresent(l -> builder.put("homesteadBlock", l));
+    getDaoForkBlock()
+        .ifPresent(
+            l -> {
+              builder.put("daoForkBlock", l);
+              builder.put("daoForkSupport", Boolean.TRUE);
+            });
+    getTangerineWhistleBlockNumber().ifPresent(l -> builder.put("eip150Block", l));
+    getSpuriousDragonBlockNumber()
+        .ifPresent(
+            l -> {
+              builder.put("eip155Block", l);
+              builder.put("eip158Block", l);
+            });
+    getByzantiumBlockNumber().ifPresent(l -> builder.put("byzantiumBlock", l));
+    getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
+    getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("constantinopleFixBlock", l));
+    if (isClique()) {
+      builder.put("clique", getCliqueConfigOptions().asMap());
+    }
+    if (isEthHash()) {
+      builder.put("ethash", getEthashConfigOptions().asMap());
+    }
+    if (isIbftLegacy()) {
+      builder.put("ibft", getIbftLegacyConfigOptions().asMap());
+    }
+    if (isIbft2()) {
+      builder.put("ibft2", getIbft2ConfigOptions().asMap());
+    }
+    return builder.build();
   }
 
   public StubGenesisConfigOptions homesteadBlock(final long blockNumber) {

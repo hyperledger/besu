@@ -114,6 +114,8 @@ public class JsonRpcHttpServiceTest {
             new JsonRpcMethodsFactory()
                 .methods(
                     CLIENT_VERSION,
+                    CHAIN_ID,
+                    new StubGenesisConfigOptions(),
                     peerDiscoveryMock,
                     blockchainQueries,
                     synchronizer,

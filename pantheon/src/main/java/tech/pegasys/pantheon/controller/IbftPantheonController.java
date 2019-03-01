@@ -16,6 +16,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import static tech.pegasys.pantheon.ethereum.eth.manager.MonitoredExecutors.newScheduledThreadPool;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
+import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.config.IbftConfigOptions;
 import tech.pegasys.pantheon.consensus.common.BlockInterface;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
@@ -94,18 +95,20 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
   private static final Logger LOG = getLogger();
   private final ProtocolSchedule<IbftContext> protocolSchedule;
   private final ProtocolContext<IbftContext> context;
+  private final GenesisConfigOptions genesisConfigOptions;
   private final Synchronizer synchronizer;
   private final SubProtocol ethSubProtocol;
   private final ProtocolManager ethProtocolManager;
   private final IbftProtocolManager ibftProtocolManager;
   private final KeyPair keyPair;
   private final TransactionPool transactionPool;
-  private MiningCoordinator ibftMiningCoordinator;
+  private final MiningCoordinator ibftMiningCoordinator;
   private final Runnable closer;
 
-  IbftPantheonController(
+  private IbftPantheonController(
       final ProtocolSchedule<IbftContext> protocolSchedule,
       final ProtocolContext<IbftContext> context,
+      final GenesisConfigOptions genesisConfigOptions,
       final SubProtocol ethSubProtocol,
       final ProtocolManager ethProtocolManager,
       final IbftProtocolManager ibftProtocolManager,
@@ -116,6 +119,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
       final Runnable closer) {
     this.protocolSchedule = protocolSchedule;
     this.context = context;
+    this.genesisConfigOptions = genesisConfigOptions;
     this.ethSubProtocol = ethSubProtocol;
     this.ethProtocolManager = ethProtocolManager;
     this.ibftProtocolManager = ibftProtocolManager;
@@ -126,7 +130,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
     this.closer = closer;
   }
 
-  public static PantheonController<IbftContext> init(
+  static PantheonController<IbftContext> init(
       final StorageProvider storageProvider,
       final GenesisConfigFile genesisConfig,
       final SynchronizerConfiguration syncConfig,
@@ -303,6 +307,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
     return new IbftPantheonController(
         protocolSchedule,
         protocolContext,
+        genesisConfig.getConfigOptions(),
         ethSubProtocol,
         ethProtocolManager,
         new IbftProtocolManager(ibftEventQueue, peers),
@@ -321,6 +326,11 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
   @Override
   public ProtocolSchedule<IbftContext> getProtocolSchedule() {
     return protocolSchedule;
+  }
+
+  @Override
+  public GenesisConfigOptions getGenesisConfigOptions() {
+    return genesisConfigOptions;
   }
 
   @Override
