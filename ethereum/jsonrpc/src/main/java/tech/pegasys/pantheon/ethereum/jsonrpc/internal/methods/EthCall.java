@@ -17,24 +17,25 @@ import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcErrorConverter.conve
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.BlockParameter;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.CallParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonCallParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.TransientTransactionProcessor;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.transaction.CallParameter;
+import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulator;
 
 public class EthCall extends AbstractBlockParameterMethod {
 
-  private final TransientTransactionProcessor transientTransactionProcessor;
+  private final TransactionSimulator transactionSimulator;
 
   public EthCall(
       final BlockchainQueries blockchainQueries,
-      final TransientTransactionProcessor transientTransactionProcessor,
+      final TransactionSimulator transactionSimulator,
       final JsonRpcParameter parameters) {
     super(blockchainQueries, parameters);
-    this.transientTransactionProcessor = transientTransactionProcessor;
+    this.transactionSimulator = transactionSimulator;
   }
 
   @Override
@@ -51,7 +52,7 @@ public class EthCall extends AbstractBlockParameterMethod {
   protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
     final CallParameter callParams = validateAndGetCallParams(request);
 
-    return transientTransactionProcessor
+    return transactionSimulator
         .process(callParams, blockNumber)
         .map(
             result ->
@@ -77,8 +78,8 @@ public class EthCall extends AbstractBlockParameterMethod {
   }
 
   private CallParameter validateAndGetCallParams(final JsonRpcRequest request) {
-    final CallParameter callParams =
-        parameters().required(request.getParams(), 0, CallParameter.class);
+    final JsonCallParameter callParams =
+        parameters().required(request.getParams(), 0, JsonCallParameter.class);
     if (callParams.getTo() == null) {
       throw new InvalidJsonRpcParameters("Missing \"to\" field in call arguments");
     }

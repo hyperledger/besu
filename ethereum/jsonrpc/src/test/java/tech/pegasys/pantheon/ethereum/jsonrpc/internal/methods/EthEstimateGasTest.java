@@ -20,16 +20,17 @@ import static org.mockito.Mockito.when;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.CallParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonCallParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.TransientTransactionProcessingResult;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.TransientTransactionProcessor;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
+import tech.pegasys.pantheon.ethereum.transaction.CallParameter;
+import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulator;
+import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulatorResult;
 
 import java.util.Optional;
 
@@ -47,7 +48,7 @@ public class EthEstimateGasTest {
   @Mock private BlockHeader blockHeader;
   @Mock private Blockchain blockchain;
   @Mock private BlockchainQueries blockchainQueries;
-  @Mock private TransientTransactionProcessor transientTransactionProcessor;
+  @Mock private TransactionSimulator transactionSimulator;
 
   @Before
   public void setUp() {
@@ -57,9 +58,7 @@ public class EthEstimateGasTest {
     when(blockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
     when(blockHeader.getNumber()).thenReturn(1L);
 
-    method =
-        new EthEstimateGas(
-            blockchainQueries, transientTransactionProcessor, new JsonRpcParameter());
+    method = new EthEstimateGas(blockchainQueries, transactionSimulator, new JsonRpcParameter());
   }
 
   @Test
@@ -70,7 +69,7 @@ public class EthEstimateGasTest {
   @Test
   public void shouldReturnErrorWhenTransientTransactionProcessorReturnsEmpty() {
     final JsonRpcRequest request = ethEstimateGasRequest(callParameter());
-    when(transientTransactionProcessor.process(eq(modifiedCallParameter()), eq(1L)))
+    when(transactionSimulator.process(eq(modifiedCallParameter()), eq(1L)))
         .thenReturn(Optional.empty());
 
     final JsonRpcResponse expectedResponse =
@@ -90,19 +89,18 @@ public class EthEstimateGasTest {
   }
 
   private void mockTransientProcessorResultGasEstimate(final long gasEstimate) {
-    final TransientTransactionProcessingResult result =
-        mock(TransientTransactionProcessingResult.class);
+    final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
     when(result.getGasEstimate()).thenReturn(gasEstimate);
-    when(transientTransactionProcessor.process(eq(modifiedCallParameter()), eq(1L)))
+    when(transactionSimulator.process(eq(modifiedCallParameter()), eq(1L)))
         .thenReturn(Optional.of(result));
   }
 
-  private CallParameter callParameter() {
-    return new CallParameter("0x0", "0x0", "0x0", "0x0", "0x0", "");
+  private JsonCallParameter callParameter() {
+    return new JsonCallParameter("0x0", "0x0", "0x0", "0x0", "0x0", "");
   }
 
-  private CallParameter modifiedCallParameter() {
-    return new CallParameter("0x0", "0x0", Quantity.create(Long.MAX_VALUE), "0x0", "0x0", "");
+  private JsonCallParameter modifiedCallParameter() {
+    return new JsonCallParameter("0x0", "0x0", Quantity.create(Long.MAX_VALUE), "0x0", "0x0", "");
   }
 
   private JsonRpcRequest ethEstimateGasRequest(final CallParameter callParameter) {

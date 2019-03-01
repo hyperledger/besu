@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor;
+package tech.pegasys.pantheon.ethereum.transaction;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -26,36 +26,35 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class TransientTransactionProcessingResultTest {
+public class TransactionSimulatorResultTest {
 
-  private TransientTransactionProcessingResult transientTransactionProcessingResult;
+  private TransactionSimulatorResult transactionSimulatorResult;
 
   @Mock private Transaction transaction;
   @Mock private Result result;
 
   @Before
   public void before() {
-    this.transientTransactionProcessingResult =
-        new TransientTransactionProcessingResult(transaction, result);
+    this.transactionSimulatorResult = new TransactionSimulatorResult(transaction, result);
   }
 
   @Test
   public void shouldDelegateToTransactionProcessorResultWhenOutputIsCalled() {
-    transientTransactionProcessingResult.getOutput();
+    transactionSimulatorResult.getOutput();
 
     verify(result).getOutput();
   }
 
   @Test
   public void shouldDelegateToTransactionProcessorResultWhenIsSuccessfulIsCalled() {
-    transientTransactionProcessingResult.isSuccessful();
+    transactionSimulatorResult.isSuccessful();
 
     verify(result).isSuccessful();
   }
 
   @Test
   public void shouldUseTransactionProcessorResultAndTransactionToCalculateGasEstimate() {
-    transientTransactionProcessingResult.getGasEstimate();
+    transactionSimulatorResult.getGasEstimate();
 
     verify(transaction).getGasLimit();
     verify(result).getGasRemaining();
@@ -66,7 +65,7 @@ public class TransientTransactionProcessingResultTest {
     when(transaction.getGasLimit()).thenReturn(5L);
     when(result.getGasRemaining()).thenReturn(0L);
 
-    assertThat(transientTransactionProcessingResult.getGasEstimate()).isEqualTo(5L);
+    assertThat(transactionSimulatorResult.getGasEstimate()).isEqualTo(5L);
   }
 
   @Test
@@ -74,7 +73,7 @@ public class TransientTransactionProcessingResultTest {
     when(transaction.getGasLimit()).thenReturn(1L);
     when(result.getGasRemaining()).thenReturn(-5L);
 
-    assertThat(transientTransactionProcessingResult.getGasEstimate()).isEqualTo(6L);
+    assertThat(transactionSimulatorResult.getGasEstimate()).isEqualTo(6L);
   }
 
   @Test
@@ -82,6 +81,6 @@ public class TransientTransactionProcessingResultTest {
     when(transaction.getGasLimit()).thenReturn(10L);
     when(result.getGasRemaining()).thenReturn(3L);
 
-    assertThat(transientTransactionProcessingResult.getGasEstimate()).isEqualTo(7L);
+    assertThat(transactionSimulatorResult.getGasEstimate()).isEqualTo(7L);
   }
 }

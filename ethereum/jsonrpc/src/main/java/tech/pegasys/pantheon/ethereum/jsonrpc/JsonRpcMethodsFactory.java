@@ -84,7 +84,6 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaSendRa
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.BlockReplay;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.TransactionTracer;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.TransientTransactionProcessor;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.BlockResultFactory;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -92,6 +91,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionHandler;
+import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
@@ -173,7 +173,7 @@ public class JsonRpcMethodsFactory {
           new EthGetBlockTransactionCountByHash(blockchainQueries, parameter),
           new EthCall(
               blockchainQueries,
-              new TransientTransactionProcessor(
+              new TransactionSimulator(
                   blockchainQueries.getBlockchain(),
                   blockchainQueries.getWorldStateArchive(),
                   protocolSchedule),
@@ -202,7 +202,7 @@ public class JsonRpcMethodsFactory {
           new EthSendRawTransaction(transactionPool, parameter),
           new EthEstimateGas(
               blockchainQueries,
-              new TransientTransactionProcessor(
+              new TransactionSimulator(
                   blockchainQueries.getBlockchain(),
                   blockchainQueries.getWorldStateArchive(),
                   protocolSchedule),

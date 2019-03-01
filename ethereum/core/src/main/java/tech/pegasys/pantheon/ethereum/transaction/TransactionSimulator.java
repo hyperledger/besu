@@ -10,17 +10,17 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor;
+package tech.pegasys.pantheon.ethereum.transaction;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.CallParameter;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionProcessor;
@@ -36,7 +36,7 @@ import java.util.Optional;
  * The processing won't affect the world state, it is used to execute read operations on the
  * blockchain or to estimate the transaction gas cost.
  */
-public class TransientTransactionProcessor {
+public class TransactionSimulator {
 
   // Dummy signature for transactions to not fail being processed.
   private static final SECP256K1.Signature FAKE_SIGNATURE =
@@ -51,7 +51,7 @@ public class TransientTransactionProcessor {
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule<?> protocolSchedule;
 
-  public TransientTransactionProcessor(
+  public TransactionSimulator(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule<?> protocolSchedule) {
@@ -60,9 +60,20 @@ public class TransientTransactionProcessor {
     this.protocolSchedule = protocolSchedule;
   }
 
-  public Optional<TransientTransactionProcessingResult> process(
+  public Optional<TransactionSimulatorResult> process(
+      final CallParameter callParams, final Hash blockHeaderHash) {
+    final BlockHeader header = blockchain.getBlockHeader(blockHeaderHash).orElse(null);
+    return process(callParams, header);
+  }
+
+  public Optional<TransactionSimulatorResult> process(
       final CallParameter callParams, final long blockNumber) {
     final BlockHeader header = blockchain.getBlockHeader(blockNumber).orElse(null);
+    return process(callParams, header);
+  }
+
+  private Optional<TransactionSimulatorResult> process(
+      final CallParameter callParams, final BlockHeader header) {
     if (header == null) {
       return Optional.empty();
     }
@@ -108,6 +119,6 @@ public class TransientTransactionProcessor {
             protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
             new BlockHashLookup(header, blockchain));
 
-    return Optional.of(new TransientTransactionProcessingResult(transaction, result));
+    return Optional.of(new TransactionSimulatorResult(transaction, result));
   }
 }

@@ -10,14 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters;
+package tech.pegasys.pantheon.ethereum.transaction;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 
 // Represents parameters for a eth_call or eth_estimateGas JSON-RPC methods.
@@ -35,20 +33,19 @@ public class CallParameter {
 
   private final BytesValue payload;
 
-  @JsonCreator
   public CallParameter(
-      @JsonProperty("from") final String from,
-      @JsonProperty("to") final String to,
-      @JsonProperty("gas") final String gasLimit,
-      @JsonProperty("gasPrice") final String gasPrice,
-      @JsonProperty("value") final String value,
-      @JsonProperty("data") final String payload) {
-    this.from = from != null ? Address.fromHexString(from) : null;
-    this.to = to != null ? Address.fromHexString(to) : null;
-    this.gasLimit = gasLimit != null ? Long.decode(gasLimit) : -1;
-    this.gasPrice = gasPrice != null ? Wei.fromHexString(gasPrice) : null;
-    this.value = value != null ? Wei.fromHexString(value) : null;
-    this.payload = payload != null ? BytesValue.fromHexString(payload) : null;
+      final Address from,
+      final Address to,
+      final long gasLimit,
+      final Wei gasPrice,
+      final Wei value,
+      final BytesValue payload) {
+    this.from = from;
+    this.to = to;
+    this.gasLimit = gasLimit;
+    this.gasPrice = gasPrice;
+    this.value = value;
+    this.payload = payload;
   }
 
   public Address getFrom() {

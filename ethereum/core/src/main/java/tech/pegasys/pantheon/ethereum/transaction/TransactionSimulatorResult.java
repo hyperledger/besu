@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor;
+package tech.pegasys.pantheon.ethereum.transaction;
 
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionProcessor.Result;
@@ -20,12 +20,12 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import com.google.common.base.Objects;
 
-public class TransientTransactionProcessingResult {
+public class TransactionSimulatorResult {
 
   private final Transaction transaction;
   private final Result result;
 
-  TransientTransactionProcessingResult(final Transaction transaction, final Result result) {
+  TransactionSimulatorResult(final Transaction transaction, final Result result) {
     this.transaction = transaction;
     this.result = result;
   }
@@ -58,7 +58,7 @@ public class TransientTransactionProcessingResult {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    final TransientTransactionProcessingResult that = (TransientTransactionProcessingResult) o;
+    final TransactionSimulatorResult that = (TransactionSimulatorResult) o;
     return Objects.equal(transaction, that.transaction) && Objects.equal(result, that.result);
   }
 
