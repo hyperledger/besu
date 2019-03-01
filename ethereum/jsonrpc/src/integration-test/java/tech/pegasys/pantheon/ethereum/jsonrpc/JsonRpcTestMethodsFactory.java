@@ -16,6 +16,7 @@ import static org.mockito.Mockito.mock;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
+import tech.pegasys.pantheon.config.StubGenesisConfigOptions;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
@@ -47,6 +48,7 @@ import java.util.Optional;
 public class JsonRpcTestMethodsFactory {
 
   private static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
+  private static final int NETWORK_ID = 123;
 
   private final BlockchainImporter importer;
 
@@ -87,6 +89,8 @@ public class JsonRpcTestMethodsFactory {
     return new JsonRpcMethodsFactory()
         .methods(
             CLIENT_VERSION,
+            NETWORK_ID,
+            new StubGenesisConfigOptions(),
             peerDiscovery,
             blockchainQueries,
             synchronizer,

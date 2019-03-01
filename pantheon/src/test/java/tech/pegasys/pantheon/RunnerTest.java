@@ -13,8 +13,11 @@
 package tech.pegasys.pantheon;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.cli.EthNetworkConfig.DEV_NETWORK_ID;
+import static tech.pegasys.pantheon.cli.NetworkName.DEV;
 import static tech.pegasys.pantheon.controller.KeyPairUtil.loadKeyPair;
 
+import tech.pegasys.pantheon.cli.EthNetworkConfig;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.controller.MainnetPantheonController;
 import tech.pegasys.pantheon.controller.PantheonController;
@@ -144,7 +147,7 @@ public final class RunnerTest {
     final Runner runnerAhead =
         runnerBuilder
             .pantheonController(controllerAhead)
-            .bootstrapPeers(Collections.emptyList())
+            .ethNetworkConfig(EthNetworkConfig.getNetworkConfig(DEV))
             .jsonRpcConfiguration(aheadJsonRpcConfiguration)
             .webSocketConfiguration(aheadWebSocketConfiguration)
             .metricsConfiguration(aheadMetricsConfiguration)
@@ -189,16 +192,20 @@ public final class RunnerTest {
               PrivacyParameters.noPrivacy(),
               dataDirBehind,
               noOpMetricsSystem);
+      final EthNetworkConfig behindEthNetworkConfiguration =
+          new EthNetworkConfig(
+              EthNetworkConfig.jsonConfig(DEV),
+              DEV_NETWORK_ID,
+              Collections.singletonList(
+                  new DefaultPeer(
+                      aheadDbNodeKeys.getPublicKey().getEncodedBytes(),
+                      listenHost,
+                      runnerAhead.getP2pUdpPort(),
+                      runnerAhead.getP2pTcpPort())));
       final Runner runnerBehind =
           runnerBuilder
               .pantheonController(controllerBehind)
-              .bootstrapPeers(
-                  Collections.singletonList(
-                      new DefaultPeer(
-                          aheadDbNodeKeys.getPublicKey().getEncodedBytes(),
-                          listenHost,
-                          runnerAhead.getP2pUdpPort(),
-                          runnerAhead.getP2pTcpPort())))
+              .ethNetworkConfig(behindEthNetworkConfiguration)
               .jsonRpcConfiguration(behindJsonRpcConfiguration)
               .webSocketConfiguration(behindWebSocketConfiguration)
               .metricsConfiguration(behindMetricsConfiguration)

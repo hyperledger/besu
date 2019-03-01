@@ -12,8 +12,10 @@
  */
 package tech.pegasys.pantheon.config;
 
+import java.util.Map;
 import java.util.OptionalLong;
 
+import com.google.common.collect.ImmutableMap;
 import io.vertx.core.json.JsonObject;
 
 public class EthashConfigOptions {
@@ -27,5 +29,11 @@ public class EthashConfigOptions {
 
   public OptionalLong getFixedDifficulty() {
     return ConfigUtil.getOptionalLong(ethashConfigRoot, "fixeddifficulty");
+  }
+
+  Map<String, Object> asMap() {
+    final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
+    getFixedDifficulty().ifPresent(l -> builder.put("fixeddifficulty", l));
+    return builder.build();
   }
 }

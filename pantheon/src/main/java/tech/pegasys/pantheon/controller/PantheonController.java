@@ -106,6 +106,8 @@ public interface PantheonController<C> extends Closeable {
 
   ProtocolSchedule<C> getProtocolSchedule();
 
+  GenesisConfigOptions getGenesisConfigOptions();
+
   Synchronizer getSynchronizer();
 
   SubProtocolConfiguration subProtocolConfiguration();

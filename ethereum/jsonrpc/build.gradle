@@ -26,6 +26,7 @@ jar {
 }
 
 dependencies {
+  implementation project(':config')
   implementation project(':crypto')
   implementation project(':enclave')
   implementation project(':ethereum:blockcreation')

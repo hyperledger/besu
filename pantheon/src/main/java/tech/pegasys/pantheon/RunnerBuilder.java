@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon;
 
+import tech.pegasys.pantheon.cli.EthNetworkConfig;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -78,7 +79,7 @@ public class RunnerBuilder {
   private PantheonController<?> pantheonController;
   private boolean p2pEnabled = true;
   private boolean discovery;
-  private Collection<?> bootstrapPeers;
+  private EthNetworkConfig ethNetworkConfig;
   private String discoveryHost;
   private int listenPort;
   private int maxPeers;
@@ -110,8 +111,8 @@ public class RunnerBuilder {
     return this;
   }
 
-  public RunnerBuilder bootstrapPeers(final Collection<?> bootstrapPeers) {
-    this.bootstrapPeers = bootstrapPeers;
+  public RunnerBuilder ethNetworkConfig(final EthNetworkConfig ethNetworkConfig) {
+    this.ethNetworkConfig = ethNetworkConfig;
     return this;
   }
 
@@ -173,10 +174,10 @@ public class RunnerBuilder {
     final DiscoveryConfiguration discoveryConfiguration;
     if (discovery) {
       final Collection<?> bootstrap;
-      if (bootstrapPeers == null) {
+      if (ethNetworkConfig.getBootNodes() == null) {
         bootstrap = DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
       } else {
-        bootstrap = bootstrapPeers;
+        bootstrap = ethNetworkConfig.getBootNodes();
       }
       discoveryConfiguration =
           DiscoveryConfiguration.create()
@@ -251,7 +252,7 @@ public class RunnerBuilder {
             .filter(PermissioningConfiguration::isAccountWhitelistEnabled)
             .map(
                 configuration -> {
-                  AccountWhitelistController whitelistController =
+                  final AccountWhitelistController whitelistController =
                       new AccountWhitelistController(configuration);
                   transactionPool.setAccountWhitelist(whitelistController);
                   return whitelistController;
@@ -363,6 +364,8 @@ public class RunnerBuilder {
         new JsonRpcMethodsFactory()
             .methods(
                 PantheonInfo.version(),
+                ethNetworkConfig.getNetworkId(),
+                pantheonController.getGenesisConfigOptions(),
                 network,
                 context.getBlockchain(),
                 context.getWorldStateArchive(),

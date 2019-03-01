@@ -33,7 +33,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collection;
 
@@ -78,13 +77,12 @@ public abstract class CommandTestAbstract {
   @Captor ArgumentCaptor<File> fileArgumentCaptor;
   @Captor ArgumentCaptor<String> stringArgumentCaptor;
   @Captor ArgumentCaptor<Integer> intArgumentCaptor;
+  @Captor ArgumentCaptor<EthNetworkConfig> ethNetworkConfigArgumentCaptor;
   @Captor ArgumentCaptor<JsonRpcConfiguration> jsonRpcConfigArgumentCaptor;
   @Captor ArgumentCaptor<WebSocketConfiguration> wsRpcConfigArgumentCaptor;
   @Captor ArgumentCaptor<MetricsConfiguration> metricsConfigArgumentCaptor;
 
   @Captor ArgumentCaptor<PermissioningConfiguration> permissioningConfigurationArgumentCaptor;
-
-  @Captor ArgumentCaptor<Collection<URI>> uriListArgumentCaptor;
 
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
@@ -113,7 +111,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.vertx(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.pantheonController(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.discovery(anyBoolean())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.bootstrapPeers(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.ethNetworkConfig(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.discoveryHost(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.discoveryPort(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.maxPeers(anyInt())).thenReturn(mockRunnerBuilder);

@@ -86,6 +86,8 @@ public class JsonRpcHttpServiceHostWhitelistTest {
             new JsonRpcMethodsFactory()
                 .methods(
                     CLIENT_VERSION,
+                    CHAIN_ID,
+                    new StubGenesisConfigOptions(),
                     peerDiscoveryMock,
                     blockchainQueries,
                     synchronizer,

@@ -12,6 +12,9 @@
  */
 package tech.pegasys.pantheon.config;
 
+import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
 import io.vertx.core.json.JsonObject;
 
 public class CliqueConfigOptions {
@@ -33,5 +36,10 @@ public class CliqueConfigOptions {
 
   public int getBlockPeriodSeconds() {
     return cliqueConfigRoot.getInteger("blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
+  }
+
+  Map<String, Object> asMap() {
+    return ImmutableMap.of(
+        "epochLength", getEpochLength(), "blockPeriodSeconds", getBlockPeriodSeconds());
   }
 }

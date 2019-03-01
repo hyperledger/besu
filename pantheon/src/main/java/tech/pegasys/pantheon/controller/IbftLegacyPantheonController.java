@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.controller;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
+import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.config.IbftConfigOptions;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
@@ -62,6 +63,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
   private static final Logger LOG = getLogger();
   private final ProtocolSchedule<IbftContext> protocolSchedule;
   private final ProtocolContext<IbftContext> context;
+  private final GenesisConfigOptions genesisConfigOptions;
   private final Synchronizer synchronizer;
   private final SubProtocol ethSubProtocol;
   private final ProtocolManager ethProtocolManager;
@@ -69,9 +71,10 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
   private final TransactionPool transactionPool;
   private final Runnable closer;
 
-  IbftLegacyPantheonController(
+  private IbftLegacyPantheonController(
       final ProtocolSchedule<IbftContext> protocolSchedule,
       final ProtocolContext<IbftContext> context,
+      final GenesisConfigOptions genesisConfigOptions,
       final SubProtocol ethSubProtocol,
       final ProtocolManager ethProtocolManager,
       final Synchronizer synchronizer,
@@ -81,6 +84,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
 
     this.protocolSchedule = protocolSchedule;
     this.context = context;
+    this.genesisConfigOptions = genesisConfigOptions;
     this.ethSubProtocol = ethSubProtocol;
     this.ethProtocolManager = ethProtocolManager;
     this.synchronizer = synchronizer;
@@ -89,7 +93,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
     this.closer = closer;
   }
 
-  public static PantheonController<IbftContext> init(
+  static PantheonController<IbftContext> init(
       final StorageProvider storageProvider,
       final GenesisConfigFile genesisConfig,
       final SynchronizerConfiguration syncConfig,
@@ -183,6 +187,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
     return new IbftLegacyPantheonController(
         protocolSchedule,
         protocolContext,
+        genesisConfig.getConfigOptions(),
         ethSubProtocol,
         ethProtocolManager,
         synchronizer,
@@ -199,6 +204,11 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
   @Override
   public ProtocolSchedule<IbftContext> getProtocolSchedule() {
     return protocolSchedule;
+  }
+
+  @Override
+  public GenesisConfigOptions getGenesisConfigOptions() {
+    return genesisConfigOptions;
   }
 
   @Override
