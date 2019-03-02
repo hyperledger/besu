@@ -72,7 +72,12 @@ allprojects {
 
   version = rootProject.version
 
-  jacoco { toolVersion = '0.8.2' }
+  jacoco {
+    toolVersion = '0.8.2'
+    if (project.tasks.findByName('referenceTests')) {
+      applyTo referenceTests
+    }
+  }
 
   sourceCompatibility = '1.8'
   targetCompatibility = '1.8'
@@ -389,16 +394,13 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
   sourceDirectories.from files(subprojects.sourceSets.main.allSource.srcDirs)
   classDirectories.from files(subprojects.sourceSets.main.output)
-  executionData.from files(subprojects.jacocoTestReport.executionData) //how to exclude some package/classes com.test.**
+  executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
   reports {
     xml.enabled true
     csv.enabled true
     html.destination file("build/reports/jacocoHtml")
   }
   onlyIf = { true }
-  doFirst {
-    executionData = files(executionData.findAll { it.exists() })
-  }
 }
 
 configurations { annotationProcessor }
