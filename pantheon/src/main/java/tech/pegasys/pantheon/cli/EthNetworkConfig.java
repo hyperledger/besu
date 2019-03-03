@@ -42,10 +42,10 @@ public class EthNetworkConfig {
   private static final String DEV_GENESIS = "dev.json";
   private final String genesisConfig;
   private final int networkId;
-  private final Collection<?> bootNodes;
+  private final Collection<URI> bootNodes;
 
   public EthNetworkConfig(
-      final String genesisConfig, final int networkId, final Collection<?> bootNodes) {
+      final String genesisConfig, final int networkId, final Collection<URI> bootNodes) {
     Preconditions.checkNotNull(genesisConfig);
     Preconditions.checkNotNull(bootNodes);
     this.genesisConfig = genesisConfig;
@@ -61,7 +61,7 @@ public class EthNetworkConfig {
     return networkId;
   }
 
-  public Collection<?> getBootNodes() {
+  public Collection<URI> getBootNodes() {
     return bootNodes;
   }
 
@@ -146,7 +146,7 @@ public class EthNetworkConfig {
 
     private String genesisConfig;
     private int networkId;
-    private Collection<?> bootNodes;
+    private Collection<URI> bootNodes;
 
     public Builder(final EthNetworkConfig ethNetworkConfig) {
       this.genesisConfig = ethNetworkConfig.genesisConfig;
@@ -164,7 +164,7 @@ public class EthNetworkConfig {
       return this;
     }
 
-    public Builder setBootNodes(final Collection<?> bootNodes) {
+    public Builder setBootNodes(final Collection<URI> bootNodes) {
       this.bootNodes = bootNodes;
       return this;
     }

@@ -13,8 +13,6 @@
 package tech.pegasys.pantheon.util;
 
 import tech.pegasys.pantheon.cli.EthNetworkConfig;
-import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 
 import java.net.URI;
@@ -29,30 +27,24 @@ public class PermissioningConfigurationValidator {
       final EthNetworkConfig ethNetworkConfig,
       final PermissioningConfiguration permissioningConfiguration)
       throws Exception {
-    List<Peer> bootnodesNotInWhitelist = new ArrayList<>();
-    final List<Peer> bootnodes =
-        DiscoveryConfiguration.getBootstrapPeersFromGenericCollection(
-            ethNetworkConfig.getBootNodes());
+    List<URI> bootnodesNotInWhitelist = new ArrayList<>();
+    final Collection<URI> bootnodes = ethNetworkConfig.getBootNodes();
     if (permissioningConfiguration.isNodeWhitelistEnabled() && bootnodes != null) {
       bootnodesNotInWhitelist =
           bootnodes.stream()
-              .filter(
-                  node ->
-                      !permissioningConfiguration
-                          .getNodeWhitelist()
-                          .contains(URI.create(node.getEnodeURI())))
+              .filter(enode -> !permissioningConfiguration.getNodeWhitelist().contains(enode))
               .collect(Collectors.toList());
     }
     if (!bootnodesNotInWhitelist.isEmpty()) {
       throw new Exception(
-          "Bootnode(s) not in nodes-whitelist " + nodeToURI(bootnodesNotInWhitelist));
+          "Bootnode(s) not in nodes-whitelist " + enodesAsStrings(bootnodesNotInWhitelist));
     }
   }
 
-  private static Collection<String> nodeToURI(final List<Peer> bootnodesNotInWhitelist) {
+  private static Collection<String> enodesAsStrings(final List<URI> bootnodesNotInWhitelist) {
     return bootnodesNotInWhitelist
         .parallelStream()
-        .map(Peer::getEnodeURI)
+        .map(URI::toASCIIString)
         .collect(Collectors.toList());
   }
 }

@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
+import static java.util.Arrays.asList;
+
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
@@ -19,11 +21,12 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.MockPeerDiscoveryAg
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.util.Arrays;
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -114,13 +117,13 @@ public class PeerDiscoveryTestHelper {
    * @return a list of discovery agents.
    */
   public MockPeerDiscoveryAgent startDiscoveryAgent(final List<DiscoveryPeer> bootstrapPeers) {
-    AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers);
+    final AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers);
 
     return startDiscoveryAgent(agentBuilder);
   }
 
   public MockPeerDiscoveryAgent startDiscoveryAgent(final DiscoveryPeer... bootstrapPeers) {
-    AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers);
+    final AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers);
 
     return startDiscoveryAgent(agentBuilder);
   }
@@ -134,7 +137,8 @@ public class PeerDiscoveryTestHelper {
    */
   public MockPeerDiscoveryAgent startDiscoveryAgent(
       final List<DiscoveryPeer> bootstrapPeers, final PeerBlacklist blacklist) {
-    AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers).blacklist(blacklist);
+    final AgentBuilder agentBuilder =
+        agentBuilder().bootstrapPeers(bootstrapPeers).blacklist(blacklist);
 
     return startDiscoveryAgent(agentBuilder);
   }
@@ -146,13 +150,13 @@ public class PeerDiscoveryTestHelper {
   }
 
   public MockPeerDiscoveryAgent createDiscoveryAgent(final List<DiscoveryPeer> bootstrapPeers) {
-    AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers);
+    final AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers);
 
     return createDiscoveryAgent(agentBuilder);
   }
 
   public MockPeerDiscoveryAgent createDiscoveryAgent(final DiscoveryPeer... bootstrapPeers) {
-    AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers);
+    final AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers);
 
     return createDiscoveryAgent(agentBuilder);
   }
@@ -169,7 +173,7 @@ public class PeerDiscoveryTestHelper {
 
     private PeerBlacklist blacklist = new PeerBlacklist();
     private Optional<NodeWhitelistController> whitelist = Optional.empty();
-    private List<DiscoveryPeer> bootstrapPeers = Collections.emptyList();
+    private List<URI> bootstrapPeers = Collections.emptyList();
     private boolean active = true;
 
     public AgentBuilder(
@@ -180,13 +184,16 @@ public class PeerDiscoveryTestHelper {
     }
 
     public AgentBuilder bootstrapPeers(final List<DiscoveryPeer> peers) {
-      this.bootstrapPeers = peers;
+      this.bootstrapPeers = asEnodes(peers);
       return this;
     }
 
     public AgentBuilder bootstrapPeers(final DiscoveryPeer... peers) {
-      this.bootstrapPeers = Arrays.asList(peers);
-      return this;
+      return bootstrapPeers(asList(peers));
+    }
+
+    private List<URI> asEnodes(final List<DiscoveryPeer> peers) {
+      return peers.stream().map(Peer::getEnodeURI).map(URI::create).collect(Collectors.toList());
     }
 
     public AgentBuilder whiteList(final Optional<NodeWhitelistController> whitelist) {

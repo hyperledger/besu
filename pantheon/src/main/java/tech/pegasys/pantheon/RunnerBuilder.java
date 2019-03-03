@@ -62,6 +62,7 @@ import tech.pegasys.pantheon.metrics.prometheus.MetricsService;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -173,7 +174,7 @@ public class RunnerBuilder {
 
     final DiscoveryConfiguration discoveryConfiguration;
     if (discovery) {
-      final Collection<?> bootstrap;
+      final Collection<URI> bootstrap;
       if (ethNetworkConfig.getBootNodes() == null) {
         bootstrap = DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
       } else {

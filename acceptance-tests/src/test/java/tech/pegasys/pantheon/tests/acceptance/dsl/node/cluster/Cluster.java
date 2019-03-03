@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeRunner;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.waitcondition.WaitCondition;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -79,7 +80,12 @@ public class Cluster implements AutoCloseable {
           node.getConfiguration()
               .genesisConfigProvider()
               .createGenesisConfig(nodes)
-              .map(config -> new EthNetworkConfig(config, NETWORK_ID, bootNodes));
+              .map(
+                  config ->
+                      new EthNetworkConfig(
+                          config,
+                          NETWORK_ID,
+                          bootNodes.stream().map(URI::create).collect(Collectors.toList())));
       node.getConfiguration().ethNetworkConfig(ethNetworkConfig);
       node.start(pantheonNodeRunner);
     }
