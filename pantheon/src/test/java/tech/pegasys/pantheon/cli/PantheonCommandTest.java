@@ -544,8 +544,8 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     final Path path = Paths.get(".");
 
-    parseCommand("--datadir", path.toString());
-    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: --datadir, .");
+    parseCommand("--data-path", path.toString());
+    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: --data-path, .");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
