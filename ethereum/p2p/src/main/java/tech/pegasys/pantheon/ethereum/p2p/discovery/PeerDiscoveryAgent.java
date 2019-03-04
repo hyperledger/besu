@@ -125,7 +125,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
 
   public abstract CompletableFuture<?> stop();
 
-  public CompletableFuture<?> start() {
+  public CompletableFuture<?> start(final int tcpPort) {
     if (config.isActive()) {
       final String host = config.getBindHost();
       final int port = config.getBindPort();
@@ -138,10 +138,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
                 this.localAddress = localAddress;
                 advertisedPeer =
                     new DiscoveryPeer(
-                        id,
-                        config.getAdvertisedHost(),
-                        localAddress.getPort(),
-                        localAddress.getPort());
+                        id, config.getAdvertisedHost(), localAddress.getPort(), tcpPort);
                 isActive = true;
                 startController();
               });

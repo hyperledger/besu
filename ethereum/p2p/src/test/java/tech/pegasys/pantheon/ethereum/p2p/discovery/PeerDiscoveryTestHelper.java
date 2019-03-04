@@ -145,7 +145,7 @@ public class PeerDiscoveryTestHelper {
 
   public MockPeerDiscoveryAgent startDiscoveryAgent(final AgentBuilder agentBuilder) {
     final MockPeerDiscoveryAgent agent = createDiscoveryAgent(agentBuilder);
-    agent.start();
+    agent.start(nextAvailablePort.incrementAndGet()).join();
     return agent;
   }
 

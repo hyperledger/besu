@@ -469,7 +469,7 @@ public class NettyP2PNetwork implements P2PNetwork {
   @Override
   public void run() {
     try {
-      peerDiscoveryAgent.start().join();
+      peerDiscoveryAgent.start(ourPeerInfo.getPort()).join();
       peerBondedObserverId =
           OptionalLong.of(peerDiscoveryAgent.observePeerBondedEvents(handlePeerBondedEvent()));
       peerDroppedObserverId =

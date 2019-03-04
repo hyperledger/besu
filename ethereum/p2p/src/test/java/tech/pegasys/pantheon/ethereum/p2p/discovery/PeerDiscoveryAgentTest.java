@@ -36,6 +36,8 @@ import java.util.stream.Collectors;
 import org.junit.Test;
 
 public class PeerDiscoveryAgentTest {
+
+  private static final int BROADCAST_TCP_PORT = 30303;
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
   @Test
@@ -113,11 +115,11 @@ public class PeerDiscoveryAgentTest {
   @Test
   public void shouldEvictPeerOnDisconnect() {
     final MockPeerDiscoveryAgent peerDiscoveryAgent1 = helper.startDiscoveryAgent();
-    peerDiscoveryAgent1.start().join();
+    peerDiscoveryAgent1.start(BROADCAST_TCP_PORT).join();
     final DiscoveryPeer peer = peerDiscoveryAgent1.getAdvertisedPeer();
 
     final MockPeerDiscoveryAgent peerDiscoveryAgent2 = helper.startDiscoveryAgent(peer);
-    peerDiscoveryAgent2.start().join();
+    peerDiscoveryAgent2.start(BROADCAST_TCP_PORT).join();
 
     assertThat(peerDiscoveryAgent2.getPeers().size()).isEqualTo(1);
 
