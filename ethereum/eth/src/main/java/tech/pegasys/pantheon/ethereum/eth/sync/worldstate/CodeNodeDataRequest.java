@@ -17,8 +17,9 @@ import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage.Updater;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 class CodeNodeDataRequest extends NodeDataRequest {
 
@@ -32,9 +33,9 @@ class CodeNodeDataRequest extends NodeDataRequest {
   }
 
   @Override
-  public Stream<NodeDataRequest> getChildRequests() {
+  public List<NodeDataRequest> getChildRequests() {
     // Code nodes have nothing further to download
-    return Stream.empty();
+    return Collections.emptyList();
   }
 
   @Override

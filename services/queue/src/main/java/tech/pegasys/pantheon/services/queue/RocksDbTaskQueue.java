@@ -38,9 +38,9 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
 
   private long lastEnqueuedKey = 0;
   private long lastDequeuedKey = 0;
+  private long oldestKey = 0;
   private RocksIterator dequeueIterator;
   private long lastValidKeyFromIterator;
-  private long oldestKey = 0;
   private final Set<RocksDbTask<T>> outstandingTasks = new HashSet<>();
 
   private boolean closed = false;
@@ -73,9 +73,28 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
               MetricCategory.BIG_QUEUE,
               "dequeue_latency_seconds",
               "Latency for dequeuing an item.");
+
+      // Initialize queue from existing db
+      initializeQueue();
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
+  }
+
+  private void initializeQueue() {
+    RocksIterator iter = db.newIterator();
+    iter.seekToFirst();
+    if (!iter.isValid()) {
+      // There is no data yet, nothing to do
+      return;
+    }
+    long firstKey = Longs.fromByteArray(iter.key());
+    iter.seekToLast();
+    long lastKey = Longs.fromByteArray(iter.key());
+
+    lastDequeuedKey = firstKey - 1;
+    oldestKey = firstKey;
+    lastEnqueuedKey = lastKey;
   }
 
   public static <T> RocksDbTaskQueue<T> create(

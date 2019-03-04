@@ -41,22 +41,41 @@ public class RocksDbTaskQueueTest extends AbstractTaskQueueTest<RocksDbTaskQueue
   }
 
   @Test
-  public void shouldIgnoreExistingData() throws Exception {
+  public void shouldResumeFromExistingQueue() throws Exception {
+    testResumeFromExistingQueue(10);
+  }
+
+  @Test
+  public void shouldResumeFromExistingQueueWithOneElement() throws Exception {
+    testResumeFromExistingQueue(1);
+  }
+
+  @Test
+  public void shouldResumeFromExistingQueueWithNoElements() throws Exception {
+    testResumeFromExistingQueue(0);
+  }
+
+  private void testResumeFromExistingQueue(final int elementCount) throws Exception {
     final Path dataDir = folder.newFolder().toPath();
     try (final RocksDbTaskQueue<BytesValue> queue = createQueue(dataDir)) {
-      queue.enqueue(BytesValue.of(1));
-      queue.enqueue(BytesValue.of(2));
-      queue.enqueue(BytesValue.of(3));
+      for (int i = 0; i < elementCount; i++) {
+        queue.enqueue(BytesValue.of(i));
+      }
     }
 
     try (final RocksDbTaskQueue<BytesValue> resumedQueue = createQueue(dataDir)) {
-      assertThat(resumedQueue.dequeue()).isEqualTo(null);
+      assertThat(resumedQueue.size()).isEqualTo(elementCount);
+      // Queue an additional element
+      resumedQueue.enqueue(BytesValue.of(99));
+      assertThat(resumedQueue.size()).isEqualTo(elementCount + 1);
 
-      resumedQueue.enqueue(BytesValue.of(50));
-      assertThat(resumedQueue.dequeue().getData()).isEqualTo(BytesValue.of(50));
+      // Check that everything dequeues in order as expected
+      for (int i = 0; i < elementCount; i++) {
+        assertThat(resumedQueue.dequeue().getData()).isEqualTo(BytesValue.of(i));
+      }
+      assertThat(resumedQueue.dequeue().getData()).isEqualTo(BytesValue.of(99));
 
-      resumedQueue.enqueue(BytesValue.of(60));
-      assertThat(resumedQueue.dequeue().getData()).isEqualTo(BytesValue.of(60));
+      assertThat(resumedQueue.size()).isEqualTo(0);
     }
   }
 }
