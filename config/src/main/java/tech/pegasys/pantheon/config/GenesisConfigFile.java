@@ -63,7 +63,7 @@ public class GenesisConfigFile {
   }
 
   public Stream<GenesisAllocation> getAllocations() {
-    final JsonObject allocations = configRoot.getJsonObject("alloc");
+    final JsonObject allocations = configRoot.getJsonObject("alloc", new JsonObject());
     return allocations.fieldNames().stream()
         .map(key -> new GenesisAllocation(key, allocations.getJsonObject(key)));
   }
@@ -80,8 +80,8 @@ public class GenesisConfigFile {
     return configRoot.getString("extradata", "");
   }
 
-  public Long getGasLimit() {
-    return Long.decode(getRequiredString("gaslimit"));
+  public long getGasLimit() {
+    return parseLong("gasLimit", getRequiredString("gaslimit"));
   }
 
   public String getMixHash() {
@@ -89,7 +89,7 @@ public class GenesisConfigFile {
   }
 
   public String getNonce() {
-    return configRoot.getString("nonce", "");
+    return configRoot.getString("nonce", "0x0");
   }
 
   public Optional<String> getCoinbase() {
@@ -97,15 +97,28 @@ public class GenesisConfigFile {
   }
 
   public long getTimestamp() {
-    return Long.parseLong(configRoot.getString("timestamp", "0x0").substring(2), 16);
+    return parseLong("timestamp", configRoot.getString("timestamp", "0x0"));
   }
 
   private String getRequiredString(final String key) {
     if (!configRoot.containsKey(key)) {
       throw new IllegalArgumentException(
-          String.format("Invalid Genesis block configuration, missing value for '%s'", key));
+          String.format("Invalid genesis block configuration, missing value for '%s'", key));
     }
     return configRoot.getString(key);
+  }
+
+  private long parseLong(final String name, final String value) {
+    try {
+      return Long.decode(value);
+    } catch (final NumberFormatException e) {
+      throw new IllegalArgumentException(
+          "Invalid genesis block configuration, "
+              + name
+              + " must be a number but was '"
+              + value
+              + "'");
+    }
   }
 
   /* Converts the {@link JsonObject} describing the Genesis Block to a {@link Map}. This method

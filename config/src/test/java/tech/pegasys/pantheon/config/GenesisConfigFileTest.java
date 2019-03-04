@@ -106,12 +106,12 @@ public class GenesisConfigFileTest {
 
   @Test
   public void shouldGetNonce() {
-    assertThat(configWithProperty("nonce", "ABCD").getNonce()).isEqualTo("ABCD");
+    assertThat(configWithProperty("nonce", "0x10").getNonce()).isEqualTo("0x10");
   }
 
   @Test
-  public void shouldDefaultNonceToEmptyString() {
-    assertThat(EMPTY_CONFIG.getNonce()).isEmpty();
+  public void shouldDefaultNonceToZero() {
+    assertThat(EMPTY_CONFIG.getNonce()).isEqualTo("0x0");
   }
 
   @Test
@@ -164,6 +164,12 @@ public class GenesisConfigFileTest {
             entry("f17f52151ebef6c7334fad080c5704d77216b732", "90000000000000000000000"));
   }
 
+  @Test
+  public void shouldGetEmptyAllocationsWhenAllocNotPresent() {
+    final GenesisConfigFile config = GenesisConfigFile.fromConfig("{}");
+    assertThat(config.getAllocations()).isEmpty();
+  }
+
   private GenesisConfigFile configWithProperty(final String key, final String value) {
     return GenesisConfigFile.fromConfig("{\"" + key + "\":\"" + value + "\"}");
   }
@@ -171,6 +177,6 @@ public class GenesisConfigFileTest {
   private void assertInvalidConfiguration(final ThrowingCallable getter) {
     assertThatThrownBy(getter)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid Genesis block configuration");
+        .hasMessageContaining("Invalid genesis block configuration");
   }
 }

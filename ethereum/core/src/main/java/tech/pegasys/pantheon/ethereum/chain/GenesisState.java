@@ -30,7 +30,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
-import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -40,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -153,36 +153,56 @@ public final class GenesisState {
   private static Address parseCoinbase(final GenesisConfigFile genesis) {
     return genesis
         .getCoinbase()
-        .map(Address::fromHexString)
+        .map(str -> withNiceErrorMessage("coinbase", str, Address::fromHexString))
         .orElseGet(() -> Address.wrap(BytesValue.wrap(new byte[Address.SIZE])));
   }
 
+  private static <T> T withNiceErrorMessage(
+      final String name, final String value, final Function<String, T> parser) {
+    try {
+      return parser.apply(value);
+    } catch (final IllegalArgumentException e) {
+      throw createInvalidBlockConfigException(name, value, e);
+    }
+  }
+
+  private static IllegalArgumentException createInvalidBlockConfigException(
+      final String name, final String value, final IllegalArgumentException e) {
+    return new IllegalArgumentException(
+        "Invalid " + name + " in genesis block configuration: " + value, e);
+  }
+
   private static Hash parseParentHash(final GenesisConfigFile genesis) {
-    return Hash.wrap(Bytes32.fromHexString(genesis.getParentHash()));
+    return withNiceErrorMessage("parentHash", genesis.getParentHash(), Hash::fromHexStringLenient);
   }
 
   private static BytesValue parseExtraData(final GenesisConfigFile genesis) {
-    return BytesValue.fromHexString(genesis.getExtraData());
+    return withNiceErrorMessage("extraData", genesis.getExtraData(), BytesValue::fromHexString);
   }
 
   private static UInt256 parseDifficulty(final GenesisConfigFile genesis) {
-    return UInt256.fromHexString(genesis.getDifficulty());
+    return withNiceErrorMessage("difficulty", genesis.getDifficulty(), UInt256::fromHexString);
   }
 
   private static Hash parseMixHash(final GenesisConfigFile genesis) {
-    return Hash.wrap(Bytes32.fromHexString(genesis.getMixHash()));
-  }
-
-  private static long parseNonce(final GenesisConfigFile genesis) {
-    String nonce = genesis.getNonce().toLowerCase(Locale.US);
-    if (nonce.startsWith("0x")) {
-      nonce = nonce.substring(2);
-    }
-    return Long.parseUnsignedLong(nonce, 16);
+    return withNiceErrorMessage("mixHash", genesis.getMixHash(), Hash::fromHexStringLenient);
   }
 
   private static Stream<GenesisAccount> parseAllocations(final GenesisConfigFile genesis) {
     return genesis.getAllocations().map(GenesisAccount::fromAllocation);
+  }
+
+  private static long parseNonce(final GenesisConfigFile genesis) {
+    return withNiceErrorMessage(
+        "nonce",
+        genesis.getNonce(),
+        value -> {
+          String nonce = value.toLowerCase(Locale.US);
+          if (nonce.startsWith("0x")) {
+            nonce = nonce.substring(2);
+          }
+          return Long.parseUnsignedLong(nonce, 16);
+        });
   }
 
   @Override
@@ -213,8 +233,8 @@ public final class GenesisState {
         final String balance,
         final String hexCode,
         final Map<String, Object> storage) {
-      this.address = Address.fromHexString(hexAddress);
-      this.balance = parseBalance(balance);
+      this.address = withNiceErrorMessage("address", hexAddress, Address::fromHexString);
+      this.balance = withNiceErrorMessage("balance", balance, this::parseBalance);
       this.code = hexCode != null ? BytesValue.fromHexString(hexCode) : null;
       this.storage = parseStorage(storage);
     }
@@ -234,7 +254,10 @@ public final class GenesisState {
       final Map<UInt256, UInt256> parsedStorage = new HashMap<>();
       storage.forEach(
           (key, value) ->
-              parsedStorage.put(UInt256.fromHexString(key), UInt256.fromHexString((String) value)));
+              parsedStorage.put(
+                  withNiceErrorMessage("storage key", key, UInt256::fromHexString),
+                  withNiceErrorMessage(
+                      "storage value", String.valueOf(value), UInt256::fromHexString)));
       return parsedStorage;
     }
 
