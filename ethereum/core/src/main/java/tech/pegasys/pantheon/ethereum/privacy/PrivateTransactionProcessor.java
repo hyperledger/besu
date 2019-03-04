@@ -154,7 +154,7 @@ public class PrivateTransactionProcessor {
     final MutableAccount sender =
         maybePrivateSender != null
             ? maybePrivateSender
-            : resolveAccountFromPublicState(publicWorldState, privateWorldState, senderAddress);
+            : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO);
 
     final long previousNonce = sender.incrementNonce();
     LOG.trace(
@@ -166,8 +166,8 @@ public class PrivateTransactionProcessor {
     final MessageFrame initialFrame;
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
     if (transaction.isContractCreation()) {
-      final Address contractAddress =
-          Address.contractAddress(senderAddress, sender.getNonce() - 1L);
+      final Address privateContractAddress =
+          Address.privateContractAddress(senderAddress, sender.getNonce() - 1L, BytesValue.EMPTY);
 
       initialFrame =
           MessageFrame.builder()
@@ -175,9 +175,9 @@ public class PrivateTransactionProcessor {
               .messageFrameStack(messageFrameStack)
               .blockchain(blockchain)
               .worldState(privateWorldState.updater())
-              .address(contractAddress)
+              .address(privateContractAddress)
               .originator(senderAddress)
-              .contract(contractAddress)
+              .contract(privateContractAddress)
               .initialGas(Gas.MAX_VALUE)
               .gasPrice(transaction.getGasPrice())
               .inputData(BytesValue.EMPTY)
@@ -237,14 +237,6 @@ public class PrivateTransactionProcessor {
       return Result.failed(
           0, ValidationResult.invalid(TransactionInvalidReason.PRIVATE_TRANSACTION_FAILED));
     }
-  }
-
-  private MutableAccount resolveAccountFromPublicState(
-      final WorldUpdater publicWorldState,
-      final WorldUpdater privateWorldState,
-      final Address senderAddress) {
-    final MutableAccount publicSender = publicWorldState.getOrCreate(senderAddress);
-    return privateWorldState.createAccount(senderAddress, publicSender.getNonce(), Wei.ZERO);
   }
 
   private static void clearEmptyAccounts(final WorldUpdater worldState) {
