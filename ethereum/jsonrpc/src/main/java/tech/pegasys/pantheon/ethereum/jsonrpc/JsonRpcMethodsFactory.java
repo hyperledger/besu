@@ -66,6 +66,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.NetListening;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.NetPeerCount;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.NetVersion;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.RpcModules;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.Web3ClientVersion;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.Web3Sha3;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.miner.MinerSetCoinbase;
@@ -160,7 +161,9 @@ public class JsonRpcMethodsFactory {
       final Collection<RpcApi> rpcApis,
       final PrivacyParameters privacyParameters) {
     final Map<String, JsonRpcMethod> enabledMethods = new HashMap<>();
-    // @formatter:off
+    if (!rpcApis.isEmpty()) {
+      addMethods(enabledMethods, new RpcModules(rpcApis));
+    }
     if (rpcApis.contains(RpcApis.ETH)) {
       addMethods(
           enabledMethods,
@@ -277,7 +280,6 @@ public class JsonRpcMethodsFactory {
           new EeaGetTransactionReceipt(
               blockchainQueries, new Enclave(privacyParameters.getUrl()), parameter));
     }
-    // @formatter:off
     return enabledMethods;
   }
 
