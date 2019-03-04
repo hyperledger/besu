@@ -12,10 +12,9 @@
  */
 package tech.pegasys.pantheon.tests.acceptance;
 
-import static org.web3j.utils.Convert.Unit.ETHER;
-
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
+import tech.pegasys.pantheon.tests.acceptance.dsl.blockchain.Amount;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 
 import org.junit.Before;
@@ -27,14 +26,17 @@ public class CreateAccountAcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
-    minerNode = pantheon.createMinerNode("node1");
-    cluster.start(minerNode, pantheon.createArchiveNode("node2"));
+    minerNode = pantheon.createMinerNode("minerNode");
+    cluster.start(minerNode, pantheon.createArchiveNode("archiveNode"));
   }
 
   @Test
   public void shouldCreateAnAccount() {
-    final Account account = accounts.createAccount("a-new-account");
-    minerNode.execute(transactions.createTransfer(account, 20));
-    cluster.verify(account.balanceEquals("20", ETHER));
+    final Account account = accounts.createAccount("account-one");
+    final Amount balance = Amount.ether(20);
+
+    minerNode.execute(transactions.createTransfer(account, balance));
+
+    cluster.verify(account.balanceEquals(balance));
   }
 }

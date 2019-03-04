@@ -14,7 +14,9 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Accounts;
+import tech.pegasys.pantheon.tests.acceptance.dsl.blockchain.Amount;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account.TransferTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account.TransferTransactionBuilder;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account.TransferTransactionSet;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaGetTransactionReceiptTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaSendRawTransactionTransaction;
@@ -33,7 +35,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.web3j.tx.Contract;
-import org.web3j.utils.Convert.Unit;
 
 public class Transactions {
 
@@ -47,14 +48,46 @@ public class Transactions {
     return createTransfer(accounts.getPrimaryBenefactor(), recipient, amount);
   }
 
+  public TransferTransaction createTransfer(final Account recipient, final Amount amount) {
+    return createTransfer(accounts.getPrimaryBenefactor(), recipient, amount);
+  }
+
   public TransferTransaction createTransfer(
       final Account sender, final Account recipient, final int amount) {
-    return new TransferTransaction(sender, recipient, String.valueOf(amount), Unit.ETHER);
+    return new TransferTransactionBuilder()
+        .sender(sender)
+        .recipient(recipient)
+        .amount(Amount.ether(amount))
+        .build();
+  }
+
+  public TransferTransaction createTransfer(
+      final Account sender, final Account recipient, final Amount amount, final Amount gasPrice) {
+    return new TransferTransactionBuilder()
+        .sender(sender)
+        .recipient(recipient)
+        .amount(amount)
+        .gasPrice(gasPrice)
+        .build();
+  }
+
+  public TransferTransaction createTransfer(
+      final Account sender, final Account recipient, final Amount amount) {
+    return new TransferTransactionBuilder()
+        .sender(sender)
+        .recipient(recipient)
+        .amount(amount)
+        .build();
   }
 
   public TransferTransaction createTransfer(
       final Account sender, final Account recipient, final int amount, final BigInteger nonce) {
-    return new TransferTransaction(sender, recipient, String.valueOf(amount), Unit.ETHER, nonce);
+    return new TransferTransactionBuilder()
+        .sender(sender)
+        .recipient(recipient)
+        .amount(Amount.ether(amount))
+        .nonce(nonce)
+        .build();
   }
 
   public EeaSendRawTransactionTransaction createPrivateRawTransaction(
@@ -65,9 +98,14 @@ public class Transactions {
   public TransferTransactionSet createIncrementalTransfers(
       final Account sender, final Account recipient, final int etherAmount) {
     final List<TransferTransaction> transfers = new ArrayList<>();
+    final TransferTransactionBuilder transferOneEther =
+        new TransferTransactionBuilder()
+            .sender(sender)
+            .recipient(recipient)
+            .amount(Amount.ether(1));
 
     for (int i = 1; i <= etherAmount; i++) {
-      transfers.add(new TransferTransaction(sender, recipient, "1", Unit.ETHER));
+      transfers.add(transferOneEther.build());
     }
 
     return new TransferTransactionSet(transfers);
