@@ -205,7 +205,10 @@ class MetricsHttpService implements MetricsService {
         false,
         (res) -> {
           if (res.failed()) {
+            LOG.error("Request for metrics failed", res.cause());
             response.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end();
+          } else if (response.closed()) {
+            LOG.trace("Request for metrics closed before response was generated");
           } else {
             response.setStatusCode(HttpResponseStatus.OK.code());
             response.putHeader("Content-Type", TextFormat.CONTENT_TYPE_004);
