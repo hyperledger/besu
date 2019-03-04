@@ -107,9 +107,7 @@ markdown_extensions:
     - pymdownx.arithmatex
     - pymdownx.betterem:
           smart_enable: all
-    - pymdownx.caret
     - pymdownx.keys
-    - pymdownx.critic
     - pymdownx.details
     - pymdownx.emoji
     - pymdownx.magiclink
