@@ -23,7 +23,7 @@ public class DiscoveryProtocolLogger {
 
   static void logSendingPacket(final Peer peer, final Packet packet) {
     LOG.trace(
-        "<<< Sending  {} packet from peer {} ({}): {}",
+        "<<< Sending  {} packet to peer {} ({}): {}",
         shortenPacketType(packet),
         peer.getId().slice(0, 16),
         peer.getEndpoint(),
