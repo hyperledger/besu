@@ -50,7 +50,7 @@ public class PeerDiscoveryBondingTest {
 
     final PongPacketData pong =
         otherAgentIncomingPongs.get(0).packet.getPacketData(PongPacketData.class).get();
-    assertThat(pong.getTo()).isEqualTo(otherAgent.getAdvertisedPeer().getEndpoint());
+    assertThat(pong.getTo()).isEqualTo(otherAgent.getAdvertisedPeer().get().getEndpoint());
 
     // The agent considers the test peer BONDED.
     assertThat(agent.getPeers()).hasSize(1);
@@ -87,7 +87,8 @@ public class PeerDiscoveryBondingTest {
     Optional<PongPacketData> maybePongData =
         incomingPongs.get(0).packet.getPacketData(PongPacketData.class);
     assertThat(maybePongData).isPresent();
-    assertThat(maybePongData.get().getTo()).isEqualTo(otherNode.getAdvertisedPeer().getEndpoint());
+    assertThat(maybePongData.get().getTo())
+        .isEqualTo(otherNode.getAdvertisedPeer().get().getEndpoint());
 
     // No more packets.
     assertThat(otherNode.getIncomingPackets()).hasSize(0);

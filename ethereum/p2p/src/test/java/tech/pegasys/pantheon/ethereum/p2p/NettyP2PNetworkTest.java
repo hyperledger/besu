@@ -105,8 +105,8 @@ public final class NettyP2PNetworkTest {
                 Optional.empty())) {
 
       final int listenPort = listener.getLocalPeerInfo().getPort();
-      listener.run();
-      connector.run();
+      listener.start();
+      connector.start();
       final BytesValue listenId = listenKp.getPublicKey().getEncodedBytes();
       assertThat(
               connector
@@ -158,8 +158,8 @@ public final class NettyP2PNetworkTest {
                 new NoOpMetricsSystem(),
                 Optional.empty())) {
       final int listenPort = listener.getLocalPeerInfo().getPort();
-      listener.run();
-      connector.run();
+      listener.start();
+      connector.start();
       final BytesValue listenId = listenKp.getPublicKey().getEncodedBytes();
       assertThat(
               connector
@@ -242,8 +242,8 @@ public final class NettyP2PNetworkTest {
 
       final int listenPort = listener.getLocalPeerInfo().getPort();
       // Setup listener and first connection
-      listener.run();
-      connector1.run();
+      listener.start();
+      connector1.start();
       final BytesValue listenId = listenKp.getPublicKey().getEncodedBytes();
       final Peer listeningPeer =
           new DefaultPeer(
@@ -263,7 +263,7 @@ public final class NettyP2PNetworkTest {
             peerFuture.complete(peerConnection);
             reasonFuture.complete(reason);
           });
-      connector2.run();
+      connector2.start();
       assertThat(connector2.connect(listeningPeer).get(30L, TimeUnit.SECONDS).getPeer().getNodeId())
           .isEqualTo(listenId);
       assertThat(peerFuture.get(30L, TimeUnit.SECONDS).getPeer().getNodeId()).isEqualTo(listenId);
@@ -308,8 +308,8 @@ public final class NettyP2PNetworkTest {
                 new NoOpMetricsSystem(),
                 Optional.empty())) {
       final int listenPort = listener.getLocalPeerInfo().getPort();
-      listener.run();
-      connector.run();
+      listener.start();
+      connector.start();
       final BytesValue listenId = listenKp.getPublicKey().getEncodedBytes();
 
       final Peer listenerPeer =
@@ -383,8 +383,8 @@ public final class NettyP2PNetworkTest {
       // Blacklist the remote peer
       localBlacklist.add(remotePeer);
 
-      localNetwork.run();
-      remoteNetwork.run();
+      localNetwork.start();
+      remoteNetwork.start();
 
       // Setup disconnect listener
       final CompletableFuture<PeerConnection> peerFuture = new CompletableFuture<>();
@@ -461,8 +461,8 @@ public final class NettyP2PNetworkTest {
                   localListenPort,
                   OptionalInt.of(localListenPort)));
 
-      localNetwork.run();
-      remoteNetwork.run();
+      localNetwork.start();
+      remoteNetwork.start();
 
       // Setup disconnect listener
       final CompletableFuture<PeerConnection> peerFuture = new CompletableFuture<>();

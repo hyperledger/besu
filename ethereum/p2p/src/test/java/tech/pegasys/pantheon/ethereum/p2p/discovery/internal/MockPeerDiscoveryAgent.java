@@ -51,7 +51,7 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
     // This ensures that any data passed between agents is not shared
     final Packet packetClone = Packet.decode(packet.encode());
     incomingPackets.add(new IncomingPacket(fromAgent, packetClone));
-    handleIncomingPacket(fromAgent.getAdvertisedPeer().getEndpoint(), packetClone);
+    handleIncomingPacket(fromAgent.getAdvertisedPeer().get().getEndpoint(), packetClone);
   }
 
   /**

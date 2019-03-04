@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.Test;
 
@@ -39,7 +40,8 @@ public class PeerDiscoveryBootstrappingTest {
     final MockPeerDiscoveryAgent testAgent = helper.startDiscoveryAgent();
 
     // Start an agent.
-    final PeerDiscoveryAgent agent = helper.startDiscoveryAgent(testAgent.getAdvertisedPeer());
+    final PeerDiscoveryAgent agent =
+        helper.startDiscoveryAgent(testAgent.getAdvertisedPeer().get());
 
     final List<IncomingPacket> incomingPackets =
         testAgent.getIncomingPackets().stream()
@@ -47,13 +49,13 @@ public class PeerDiscoveryBootstrappingTest {
             .collect(toList());
     assertThat(incomingPackets.size()).isEqualTo(1);
     Packet pingPacket = incomingPackets.get(0).packet;
-    assertThat(pingPacket.getNodeId()).isEqualTo(agent.getAdvertisedPeer().getId());
+    assertThat(pingPacket.getNodeId()).isEqualTo(agent.getAdvertisedPeer().get().getId());
 
     final PingPacketData pingData = pingPacket.getPacketData(PingPacketData.class).get();
     assertThat(pingData.getExpiration())
         .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
-    assertThat(pingData.getFrom()).isEqualTo(agent.getAdvertisedPeer().getEndpoint());
-    assertThat(pingData.getTo()).isEqualTo(testAgent.getAdvertisedPeer().getEndpoint());
+    assertThat(pingData.getFrom()).isEqualTo(agent.getAdvertisedPeer().get().getEndpoint());
+    assertThat(pingData.getTo()).isEqualTo(testAgent.getAdvertisedPeer().get().getEndpoint());
   }
 
   @Test
@@ -61,7 +63,10 @@ public class PeerDiscoveryBootstrappingTest {
     // Use these peers as bootstrap peers.
     final List<MockPeerDiscoveryAgent> bootstrapAgents = helper.startDiscoveryAgents(3);
     final List<DiscoveryPeer> bootstrapPeers =
-        bootstrapAgents.stream().map(PeerDiscoveryAgent::getAdvertisedPeer).collect(toList());
+        bootstrapAgents.stream()
+            .map(PeerDiscoveryAgent::getAdvertisedPeer)
+            .map(Optional::get)
+            .collect(toList());
 
     // Start five agents.
     List<MockPeerDiscoveryAgent> agents = helper.startDiscoveryAgents(5, bootstrapPeers);
@@ -78,6 +83,7 @@ public class PeerDiscoveryBootstrappingTest {
       final List<BytesValue> agentIds =
           agents.stream()
               .map(PeerDiscoveryAgent::getAdvertisedPeer)
+              .map(Optional::get)
               .map(Peer::getId)
               .distinct()
               .collect(toList());
@@ -95,7 +101,7 @@ public class PeerDiscoveryBootstrappingTest {
         final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
         assertThat(ping.getExpiration())
             .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
-        assertThat(ping.getTo()).isEqualTo(bootstrapAgent.getAdvertisedPeer().getEndpoint());
+        assertThat(ping.getTo()).isEqualTo(bootstrapAgent.getAdvertisedPeer().get().getEndpoint());
       }
     }
   }
@@ -107,7 +113,7 @@ public class PeerDiscoveryBootstrappingTest {
 
     // Start other five agents, pointing to the one above as a bootstrap peer.
     final List<MockPeerDiscoveryAgent> otherAgents =
-        helper.startDiscoveryAgents(5, singletonList(bootstrapAgent.getAdvertisedPeer()));
+        helper.startDiscoveryAgents(5, singletonList(bootstrapAgent.getAdvertisedPeer().get()));
 
     final BytesValue[] otherPeersIds =
         otherAgents.stream().map(PeerDiscoveryAgent::getId).toArray(BytesValue[]::new);
@@ -123,7 +129,7 @@ public class PeerDiscoveryBootstrappingTest {
     // and will
     // bond with them, ultimately adding all 7 nodes in the network to its table.
     final PeerDiscoveryAgent newAgent =
-        helper.startDiscoveryAgent(bootstrapAgent.getAdvertisedPeer());
+        helper.startDiscoveryAgent(bootstrapAgent.getAdvertisedPeer().get());
     assertThat(newAgent.getPeers()).hasSize(6);
   }
 }

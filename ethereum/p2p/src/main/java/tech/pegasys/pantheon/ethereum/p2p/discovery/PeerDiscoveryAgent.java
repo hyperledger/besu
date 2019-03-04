@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static tech.pegasys.pantheon.util.bytes.BytesValue.wrapBuffer;
 
@@ -83,7 +82,6 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
 
   /* This is the {@link tech.pegasys.pantheon.ethereum.p2p.Peer} object holding who we are. */
   private DiscoveryPeer advertisedPeer;
-  private InetSocketAddress localAddress;
 
   /* Is discovery enabled? */
   private boolean isActive = false;
@@ -135,7 +133,6 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
           .thenAccept(
               (InetSocketAddress localAddress) -> {
                 // Once listener is set up, finish initializing
-                this.localAddress = localAddress;
                 advertisedPeer =
                     new DiscoveryPeer(
                         id, config.getAdvertisedHost(), localAddress.getPort(), tcpPort);
@@ -221,17 +218,12 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
         .orElse(Collections.emptyList());
   }
 
-  public DiscoveryPeer getAdvertisedPeer() {
-    return advertisedPeer;
+  public Optional<DiscoveryPeer> getAdvertisedPeer() {
+    return Optional.ofNullable(advertisedPeer);
   }
 
   public BytesValue getId() {
     return id;
-  }
-
-  public InetSocketAddress localAddress() {
-    checkState(localAddress != null, "Uninitialized discovery agent");
-    return localAddress;
   }
 
   /**

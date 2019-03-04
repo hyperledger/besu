@@ -75,7 +75,8 @@ public class PeerDiscoveryTestHelper {
     return Packet.create(
         PacketType.PING,
         PingPacketData.create(
-            fromAgent.getAdvertisedPeer().getEndpoint(), toAgent.getAdvertisedPeer().getEndpoint()),
+            fromAgent.getAdvertisedPeer().get().getEndpoint(),
+            toAgent.getAdvertisedPeer().get().getEndpoint()),
         fromAgent.getKeyPair());
   }
 

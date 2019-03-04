@@ -17,6 +17,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.Message;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.DefaultMessage;
@@ -25,7 +26,6 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.Discon
 import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
 import tech.pegasys.pantheon.util.Subscribers;
 
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -177,12 +177,12 @@ public final class MockNetwork {
     public void awaitStop() {}
 
     @Override
-    public InetSocketAddress getDiscoverySocketAddress() {
-      return null;
+    public Optional<Peer> getAdvertisedPeer() {
+      return Optional.of(new DefaultPeer(self.getId(), "127.0.0.1", 0, 0));
     }
 
     @Override
-    public void run() {}
+    public void start() {}
 
     @Override
     public void close() {}

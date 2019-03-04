@@ -22,7 +22,6 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -63,9 +62,8 @@ public class NoopP2PNetwork implements P2PNetwork {
   public void awaitStop() {}
 
   @Override
-  public InetSocketAddress getDiscoverySocketAddress() {
-    throw new P2pDisabledException(
-        "P2P networking disabled.  Discovery socket address unavailable.");
+  public Optional<Peer> getAdvertisedPeer() {
+    return Optional.empty();
   }
 
   @Override
@@ -92,5 +90,5 @@ public class NoopP2PNetwork implements P2PNetwork {
   public void close() throws IOException {}
 
   @Override
-  public void run() {}
+  public void start() {}
 }

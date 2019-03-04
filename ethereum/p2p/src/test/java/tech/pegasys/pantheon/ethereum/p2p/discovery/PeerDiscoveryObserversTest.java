@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -84,6 +85,7 @@ public class PeerDiscoveryObserversTest {
     final List<DiscoveryPeer> peers1 =
         others1.stream()
             .map(MockPeerDiscoveryAgent::getAdvertisedPeer)
+            .map(Optional::get)
             .collect(Collectors.toList());
 
     // Create two discovery agents pointing to the above as bootstrap peers.
@@ -91,6 +93,7 @@ public class PeerDiscoveryObserversTest {
     final List<DiscoveryPeer> peers2 =
         others2.stream()
             .map(MockPeerDiscoveryAgent::getAdvertisedPeer)
+            .map(Optional::get)
             .collect(Collectors.toList());
 
     // A list of all peers.
@@ -129,7 +132,7 @@ public class PeerDiscoveryObserversTest {
     // Create 3 discovery agents with no bootstrap peers.
     final List<MockPeerDiscoveryAgent> others =
         helper.startDiscoveryAgents(3, Collections.emptyList());
-    final DiscoveryPeer peer = others.get(0).getAdvertisedPeer();
+    final DiscoveryPeer peer = others.get(0).getAdvertisedPeer().get();
 
     // Create a discovery agent (which we'll assert on), using the above two peers as bootstrap
     // peers.

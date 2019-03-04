@@ -61,7 +61,7 @@ public class TestNodeList implements Closeable {
 
   public void startNetworks() {
     for (final TestNode node : nodes) {
-      node.network.run();
+      node.network.start();
     }
   }
 
