@@ -103,6 +103,6 @@ public class GenesisBlockMismatchTest {
         .isThrownBy(() -> blockchain00.setGenesis(genesisBlock01))
         .withMessageContaining(
             "Supplied genesis block does not match stored chain data.\n"
-                + "Please specify a different data directory with --datadir or specify the original genesis file with --genesis.");
+                + "Please specify a different data directory with --data-path or specify the original genesis file with --genesis-file.");
   }
 }
