@@ -181,7 +181,7 @@ public class WebSocketService {
         LOG.info(
             "Websocket service started and listening on {}:{}",
             configuration.getHost(),
-            httpServer.actualPort());
+            res.result().actualPort());
 
         resultFuture.complete(null);
       } else {
