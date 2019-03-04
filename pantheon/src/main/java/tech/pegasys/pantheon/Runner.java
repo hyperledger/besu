@@ -168,8 +168,4 @@ public class Runner implements AutoCloseable {
   public Optional<? extends Peer> getAdvertisedPeer() {
     return networkRunner.getNetwork().getAdvertisedPeer();
   }
-
-  public int getP2pTcpPort() {
-    return networkRunner.getNetwork().getLocalPeerInfo().getPort();
-  }
 }

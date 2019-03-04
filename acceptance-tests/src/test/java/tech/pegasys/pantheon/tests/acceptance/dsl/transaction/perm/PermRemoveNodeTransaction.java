@@ -19,12 +19,13 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.Remo
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 
 public class PermRemoveNodeTransaction implements Transaction<String> {
-  private final List<String> enodeList;
+  private final List<URI> enodeList;
 
-  public PermRemoveNodeTransaction(final List<String> enodeList) {
+  public PermRemoveNodeTransaction(final List<URI> enodeList) {
     this.enodeList = enodeList;
   }
 

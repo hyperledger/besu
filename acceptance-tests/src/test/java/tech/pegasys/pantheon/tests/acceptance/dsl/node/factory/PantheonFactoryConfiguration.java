@@ -20,7 +20,6 @@ import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.GenesisConfigProvider;
 
-import java.util.List;
 import java.util.Optional;
 
 class PantheonFactoryConfiguration {
@@ -34,10 +33,9 @@ class PantheonFactoryConfiguration {
   private final Optional<PermissioningConfiguration> permissioningConfiguration;
   private final boolean devMode;
   private final GenesisConfigProvider genesisConfigProvider;
-  private final Boolean p2pEnabled;
+  private final boolean p2pEnabled;
   private final boolean discoveryEnabled;
-  private final boolean isBootnode;
-  private List<String> bootnodes;
+  private final boolean bootnodeEligible;
 
   PantheonFactoryConfiguration(
       final String name,
@@ -49,10 +47,9 @@ class PantheonFactoryConfiguration {
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final boolean devMode,
       final GenesisConfigProvider genesisConfigProvider,
-      final Boolean p2pEnabled,
+      final boolean p2pEnabled,
       final boolean discoveryEnabled,
-      final boolean isBootnode,
-      final List<String> bootnodes) {
+      final boolean bootnodeEligible) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.privacyParameters = privacyParameters;
@@ -64,8 +61,7 @@ class PantheonFactoryConfiguration {
     this.genesisConfigProvider = genesisConfigProvider;
     this.p2pEnabled = p2pEnabled;
     this.discoveryEnabled = discoveryEnabled;
-    this.isBootnode = isBootnode;
-    this.bootnodes = bootnodes;
+    this.bootnodeEligible = bootnodeEligible;
   }
 
   public String getName() {
@@ -108,15 +104,11 @@ class PantheonFactoryConfiguration {
     return genesisConfigProvider;
   }
 
-  public Boolean getP2pEnabled() {
+  public boolean isP2pEnabled() {
     return p2pEnabled;
   }
 
-  public boolean isBootnode() {
-    return isBootnode;
-  }
-
-  public List<String> getBootnodes() {
-    return bootnodes;
+  public boolean isBootnodeEligible() {
+    return bootnodeEligible;
   }
 }

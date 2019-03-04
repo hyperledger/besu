@@ -18,6 +18,8 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.Cluster;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
+import java.net.URI;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +46,7 @@ public class AdminAddPeerAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void adminAddPeerForcesConnection() {
-    final String nodeBEnode = nodeB.enodeUrl();
+    final URI nodeBEnode = nodeB.enodeUrl();
     nodeA.verify(net.awaitPeerCount(0));
     nodeA.verify(admin.addPeer(nodeBEnode));
     nodeA.verify(net.awaitPeerCount(1));

@@ -12,17 +12,13 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
-import tech.pegasys.pantheon.cli.EthNetworkConfig;
-
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
 public interface NodeConfiguration {
 
-  String enodeUrl();
-
-  void bootnodes(List<String> bootnodes);
+  void bootnodes(List<URI> bootnodes);
 
   List<URI> bootnodes();
 
@@ -38,9 +34,13 @@ public interface NodeConfiguration {
 
   GenesisConfigProvider genesisConfigProvider();
 
-  Optional<EthNetworkConfig> ethNetworkConfig();
+  Optional<String> getGenesisConfig();
 
-  void ethNetworkConfig(Optional<EthNetworkConfig> ethNetworkConfig);
+  void setGenesisConfig(final String config);
 
-  boolean isBootnode();
+  boolean isP2pEnabled();
+
+  boolean isDiscoveryEnabled();
+
+  boolean isBootnodeEligible();
 }

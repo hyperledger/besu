@@ -30,6 +30,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermRemoveAcc
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermRemoveNodeTransaction;
 
 import java.math.BigInteger;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -142,11 +143,11 @@ public class Transactions {
     return new EeaGetTransactionReceiptTransaction(transactionHash, publicKey);
   }
 
-  public PermAddNodeTransaction addNodesToWhitelist(final List<String> enodeList) {
+  public PermAddNodeTransaction addNodesToWhitelist(final List<URI> enodeList) {
     return new PermAddNodeTransaction(enodeList);
   }
 
-  public PermRemoveNodeTransaction removeNodesFromWhitelist(final List<String> enodeList) {
+  public PermRemoveNodeTransaction removeNodesFromWhitelist(final List<URI> enodeList) {
     return new PermRemoveNodeTransaction(enodeList);
   }
 

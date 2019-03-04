@@ -37,7 +37,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
-import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
@@ -189,14 +188,7 @@ public final class RunnerTest {
           new EthNetworkConfig(
               EthNetworkConfig.jsonConfig(DEV),
               DEV_NETWORK_ID,
-              Collections.singletonList(
-                  URI.create(
-                      new DefaultPeer(
-                              advertisedPeer.getId(),
-                              advertisedPeer.getEndpoint().getHost(),
-                              advertisedPeer.getEndpoint().getUdpPort(),
-                              runnerAhead.getP2pTcpPort())
-                          .getEnodeURI())));
+              Collections.singletonList(URI.create(advertisedPeer.getEnodeURI())));
       final Runner runnerBehind =
           runnerBuilder
               .pantheonController(controllerBehind)
