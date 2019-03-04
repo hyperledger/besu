@@ -25,7 +25,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
-import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,7 +49,7 @@ public class TransactionPool implements BlockAddedObserver {
   private final ProtocolSchedule<?> protocolSchedule;
   private final ProtocolContext<?> protocolContext;
   private final TransactionBatchAddedListener transactionBatchAddedListener;
-  private Optional<AccountWhitelistController> accountWhitelistController = Optional.empty();
+  private Optional<AccountFilter> accountFilter = Optional.empty();
 
   public TransactionPool(
       final PendingTransactions pendingTransactions,
@@ -136,7 +135,7 @@ public class TransactionPool implements BlockAddedObserver {
     }
 
     final String sender = transaction.getSender().toString();
-    if (accountIsNotWhitelisted(sender)) {
+    if (accountIsNotPermitted(sender)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
           String.format("Sender %s is not on the Account Whitelist", sender));
@@ -166,8 +165,8 @@ public class TransactionPool implements BlockAddedObserver {
         .orElseGet(() -> ValidationResult.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
   }
 
-  private boolean accountIsNotWhitelisted(final String account) {
-    return accountWhitelistController.map(c -> !c.contains(account)).orElse(false);
+  private boolean accountIsNotPermitted(final String account) {
+    return accountFilter.map(c -> !c.permitted(account)).orElse(false);
   }
 
   private BlockHeader getChainHeadBlockHeader() {
@@ -180,7 +179,7 @@ public class TransactionPool implements BlockAddedObserver {
     void onTransactionsAdded(Iterable<Transaction> transactions);
   }
 
-  public void setAccountWhitelist(AccountWhitelistController accountWhitelist) {
-    accountWhitelistController = Optional.of(accountWhitelist);
+  public void setAccountFilter(final AccountFilter accountFilter) {
+    this.accountFilter = Optional.of(accountFilter);
   }
 }
