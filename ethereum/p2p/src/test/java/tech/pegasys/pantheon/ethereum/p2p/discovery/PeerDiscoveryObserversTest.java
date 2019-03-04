@@ -27,13 +27,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 public class PeerDiscoveryObserversTest {
-  private static final Logger LOG = LogManager.getLogger();
-  private static final int BROADCAST_TCP_PORT = 26422;
+  private static final int BROADCAST_TCP_PORT = 30303;
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
   @Test
@@ -106,7 +103,7 @@ public class PeerDiscoveryObserversTest {
     // A queue for storing peer bonded events.
     final List<PeerBondedEvent> events = new ArrayList<>(10);
     agent.observePeerBondedEvents(events::add);
-    agent.start();
+    agent.start(BROADCAST_TCP_PORT).join();
 
     final HashSet<BytesValue> seenPeers = new HashSet<>();
     List<DiscoveryPeer> discoveredPeers =
@@ -146,7 +143,7 @@ public class PeerDiscoveryObserversTest {
     queues.forEach(q -> agent.observePeerBondedEvents(q::add));
 
     // Start the agent and wait until each queue receives one event.
-    agent.start();
+    agent.start(BROADCAST_TCP_PORT).join();
     for (List<PeerBondedEvent> eventQueue : queues) {
       assertThat(eventQueue.size()).isEqualTo(1);
     }
