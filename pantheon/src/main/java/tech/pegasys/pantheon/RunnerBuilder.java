@@ -255,7 +255,7 @@ public class RunnerBuilder {
                 configuration -> {
                   final AccountWhitelistController whitelistController =
                       new AccountWhitelistController(configuration);
-                  transactionPool.setAccountWhitelist(whitelistController);
+                  transactionPool.setAccountFilter(whitelistController::contains);
                   return whitelistController;
                 });
 
