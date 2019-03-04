@@ -7,6 +7,10 @@ A permissioned network is a network where only specified nodes and accounts (par
 Nodes and accounts outside those specified are prevented from participating. Permissioned networks can have node permissions enabled, 
 account permissions enabled, or both. 
 
+![Node Permissions](../images/node-permissioning-bad-actor.png)
+
+![Account Permissions](../images/account-permissioning.png)
+
 ## Node Whitelisting 
 
 Node whitelisting is specified by the nodes whitelist in the [permissions configuration file](#permissions-configuration-file) file. 
