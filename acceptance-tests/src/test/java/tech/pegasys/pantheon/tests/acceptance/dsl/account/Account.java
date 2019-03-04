@@ -16,6 +16,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.crypto.SECP256K1.PrivateKey;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.tests.acceptance.dsl.blockchain.Amount;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.account.ExpectAccountBalance;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
@@ -68,5 +69,10 @@ public class Account {
 
   public Condition balanceEquals(final int expectedBalance) {
     return balanceEquals(String.valueOf(expectedBalance), Unit.ETHER);
+  }
+
+  public Condition balanceEquals(final Amount expectedBalance) {
+    return new ExpectAccountBalance(
+        eth, this, expectedBalance.getValue(), expectedBalance.getUnit());
   }
 }
