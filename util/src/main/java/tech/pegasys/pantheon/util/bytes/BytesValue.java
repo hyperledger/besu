@@ -549,4 +549,9 @@ public interface BytesValue extends Comparable<BytesValue> {
    */
   @Override
   String toString();
+
+  default String toUnprefixedString() {
+    final String prefixedHex = toString();
+    return prefixedHex.startsWith("0x") ? prefixedHex.substring(2) : prefixedHex;
+  }
 }

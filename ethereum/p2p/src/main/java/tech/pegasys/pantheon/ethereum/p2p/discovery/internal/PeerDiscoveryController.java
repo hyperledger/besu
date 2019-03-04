@@ -164,7 +164,7 @@ public class PeerDiscoveryController {
     this.peerDroppedObservers = peerDroppedObservers;
   }
 
-  public CompletableFuture<?> start() {
+  public void start() {
     if (!started.compareAndSet(false, true)) {
       throw new IllegalStateException("The peer table had already been started");
     }
@@ -199,8 +199,6 @@ public class PeerDiscoveryController {
 
     nodeWhitelistController.ifPresent(
         c -> c.subscribeToListUpdatedEvent(this::handleNodeWhitelistUpdatedEvent));
-
-    return CompletableFuture.completedFuture(null);
   }
 
   public CompletableFuture<?> stop() {

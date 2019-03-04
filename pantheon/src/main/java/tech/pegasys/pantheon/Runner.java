@@ -16,6 +16,8 @@ import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcHttpService;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketService;
 import tech.pegasys.pantheon.ethereum.p2p.NetworkRunner;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsService;
 
 import java.io.File;
@@ -112,9 +114,17 @@ public class Runner implements AutoCloseable {
   private void writePantheonPortsToFile() {
     final Properties properties = new Properties();
 
-    if (networkRunner.getNetwork().isListening()) {
-      properties.setProperty("discovery", String.valueOf(getP2pUdpPort()));
-      properties.setProperty("p2p", String.valueOf(getP2pTcpPort()));
+    if (networkRunner.getNetwork().isP2pEnabled()) {
+      networkRunner
+          .getNetwork()
+          .getAdvertisedPeer()
+          .ifPresent(
+              advertisedPeer -> {
+                final Endpoint endpoint = advertisedPeer.getEndpoint();
+                properties.setProperty("discovery", String.valueOf(endpoint.getUdpPort()));
+              });
+      final int tcpPort = networkRunner.getNetwork().getLocalPeerInfo().getPort();
+      properties.setProperty("p2p", String.valueOf(tcpPort));
     }
 
     if (getJsonRpcPort().isPresent()) {
@@ -155,8 +165,8 @@ public class Runner implements AutoCloseable {
     }
   }
 
-  public int getP2pUdpPort() {
-    return networkRunner.getNetwork().getDiscoverySocketAddress().getPort();
+  public Optional<? extends Peer> getAdvertisedPeer() {
+    return networkRunner.getNetwork().getAdvertisedPeer();
   }
 
   public int getP2pTcpPort() {

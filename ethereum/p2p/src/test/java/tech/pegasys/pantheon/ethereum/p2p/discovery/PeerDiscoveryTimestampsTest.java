@@ -47,7 +47,7 @@ public class PeerDiscoveryTimestampsTest {
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(keypairs);
 
     final MockPeerDiscoveryAgent agent = mock(MockPeerDiscoveryAgent.class);
-    when(agent.getAdvertisedPeer()).thenReturn(peers.get(0));
+    when(agent.getAdvertisedPeer()).thenReturn(Optional.of(peers.get(0)));
     DiscoveryPeer localPeer = peers.get(0);
     KeyPair localKeyPair = keypairs.get(0);
 
@@ -55,7 +55,7 @@ public class PeerDiscoveryTimestampsTest {
         new PeerDiscoveryController(
             localKeyPair,
             localPeer,
-            new PeerTable(agent.getAdvertisedPeer().getId()),
+            new PeerTable(agent.getAdvertisedPeer().get().getId()),
             Collections.emptyList(),
             OutboundMessageHandler.NOOP,
             new MockTimerUtil(),

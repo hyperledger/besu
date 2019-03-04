@@ -467,16 +467,12 @@ public class NettyP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public void run() {
-    try {
-      peerDiscoveryAgent.start(ourPeerInfo.getPort()).join();
-      peerBondedObserverId =
-          OptionalLong.of(peerDiscoveryAgent.observePeerBondedEvents(handlePeerBondedEvent()));
-      peerDroppedObserverId =
-          OptionalLong.of(peerDiscoveryAgent.observePeerDroppedEvents(handlePeerDroppedEvents()));
-    } catch (final Exception ex) {
-      throw new IllegalStateException(ex);
-    }
+  public void start() {
+    peerDiscoveryAgent.start(ourPeerInfo.getPort()).join();
+    peerBondedObserverId =
+        OptionalLong.of(peerDiscoveryAgent.observePeerBondedEvents(handlePeerBondedEvent()));
+    peerDroppedObserverId =
+        OptionalLong.of(peerDiscoveryAgent.observePeerDroppedEvents(handlePeerDroppedEvents()));
   }
 
   private Consumer<PeerBondedEvent> handlePeerBondedEvent() {
@@ -546,8 +542,8 @@ public class NettyP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public InetSocketAddress getDiscoverySocketAddress() {
-    return peerDiscoveryAgent.localAddress();
+  public Optional<? extends Peer> getAdvertisedPeer() {
+    return peerDiscoveryAgent.getAdvertisedPeer();
   }
 
   @Override

@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -37,7 +36,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -48,9 +46,6 @@ public class NetworkRunner implements AutoCloseable {
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
-  private final ExecutorService networkExecutor =
-      Executors.newFixedThreadPool(
-          1, new ThreadFactoryBuilder().setNameFormat(this.getClass().getSimpleName()).build());
   private final ScheduledExecutorService networkCheckExecutor =
       Executors.newSingleThreadScheduledExecutor();
 
@@ -89,7 +84,7 @@ public class NetworkRunner implements AutoCloseable {
     if (started.compareAndSet(false, true)) {
       LOG.info("Starting Network.");
       setupHandlers();
-      networkExecutor.submit(network);
+      network.start();
       networkCheckExecutor.scheduleWithFixedDelay(
           network::checkMaintainedConnectionPeers, 60, 60, TimeUnit.SECONDS);
     } else {
@@ -104,7 +99,6 @@ public class NetworkRunner implements AutoCloseable {
       for (final ProtocolManager protocolManager : protocolManagers) {
         protocolManager.stop();
       }
-      networkExecutor.shutdown();
       networkCheckExecutor.shutdown();
       shutdown.countDown();
     } else {
@@ -117,11 +111,6 @@ public class NetworkRunner implements AutoCloseable {
     network.awaitStop();
     for (final ProtocolManager protocolManager : protocolManagers) {
       protocolManager.awaitStop();
-    }
-    if (!networkExecutor.awaitTermination(2L, TimeUnit.MINUTES)) {
-      LOG.error("Network executor did not shutdown cleanly.");
-      networkExecutor.shutdownNow();
-      networkExecutor.awaitTermination(2L, TimeUnit.MINUTES);
     }
     LOG.info("Network stopped.");
   }

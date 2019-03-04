@@ -26,10 +26,10 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryServiceExceptio
 import tech.pegasys.pantheon.ethereum.p2p.netty.NettyP2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
-import tech.pegasys.pantheon.util.NetworkUtility;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 import io.vertx.core.Vertx;
 import org.assertj.core.api.Assertions;
@@ -48,22 +48,27 @@ public class NetworkingServiceLifecycleTest {
   @Test
   public void createPeerDiscoveryAgent() {
     final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
+    final NetworkingConfiguration config = configWithRandomPorts();
     try (final NettyP2PNetwork service =
         new NettyP2PNetwork(
             vertx,
             keyPair,
-            configWithRandomPorts(),
+            config,
             emptyList(),
             () -> true,
             new PeerBlacklist(),
             new NoOpMetricsSystem(),
             Optional.empty())) {
-      service.run();
-      final int port = service.getDiscoverySocketAddress().getPort();
+      service.start();
+      final int udpPort = service.getAdvertisedPeer().get().getEndpoint().getUdpPort();
+      final OptionalInt tcpPort = service.getAdvertisedPeer().get().getEndpoint().getTcpPort();
 
       assertEquals(
-          (NetworkUtility.isIPv6Available() ? "/0:0:0:0:0:0:0:0:" : "/0.0.0.0:") + port,
-          service.getDiscoverySocketAddress().toString());
+          config.getDiscovery().getAdvertisedHost(),
+          service.getAdvertisedPeer().get().getEndpoint().getHost());
+      assertThat(udpPort).isNotZero();
+      assertThat(tcpPort).isPresent();
+      assertThat(tcpPort.getAsInt()).isNotZero();
       assertThat(service.getDiscoveryPeers()).hasSize(0);
     }
   }
@@ -157,9 +162,9 @@ public class NetworkingServiceLifecycleTest {
             new PeerBlacklist(),
             new NoOpMetricsSystem(),
             Optional.empty())) {
-      service.run();
+      service.start();
       service.stop();
-      service.run();
+      service.start();
     }
   }
 
@@ -186,9 +191,9 @@ public class NetworkingServiceLifecycleTest {
                 new PeerBlacklist(),
                 new NoOpMetricsSystem(),
                 Optional.empty())) {
-      service1.run();
+      service1.start();
       service1.stop();
-      service2.run();
+      service2.start();
       service2.stop();
     }
   }
@@ -206,9 +211,11 @@ public class NetworkingServiceLifecycleTest {
             new PeerBlacklist(),
             new NoOpMetricsSystem(),
             Optional.empty())) {
-      service1.run();
+      service1.start();
       final NetworkingConfiguration config = configWithRandomPorts();
-      config.getDiscovery().setBindPort(service1.getDiscoverySocketAddress().getPort());
+      config
+          .getDiscovery()
+          .setBindPort(service1.getAdvertisedPeer().get().getEndpoint().getUdpPort());
       try (final NettyP2PNetwork service2 =
           new NettyP2PNetwork(
               vertx,
@@ -220,10 +227,10 @@ public class NetworkingServiceLifecycleTest {
               new NoOpMetricsSystem(),
               Optional.empty())) {
         try {
-          service2.run();
+          service2.start();
         } catch (final Exception e) {
-          assertThat(e.getCause()).hasCauseExactlyInstanceOf(PeerDiscoveryServiceException.class);
-          assertThat(e.getCause())
+          assertThat(e).hasCauseExactlyInstanceOf(PeerDiscoveryServiceException.class);
+          assertThat(e)
               .hasMessageStartingWith(
                   "tech.pegasys.pantheon.ethereum.p2p.discovery."
                       + "PeerDiscoveryServiceException: Failed to bind Ethereum UDP discovery listener to 0.0.0.0:");

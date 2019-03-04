@@ -38,6 +38,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
@@ -159,16 +160,6 @@ public final class RunnerTest {
 
       executorService.submit(runnerAhead::execute);
 
-      // Wait for network to initialize to get the P2P UDP port
-      Awaitility.await()
-          .atMost(20, TimeUnit.SECONDS)
-          .ignoreExceptions()
-          .untilAsserted(() -> assertThat(runnerAhead.getP2pUdpPort()).isNotNull());
-      Awaitility.await()
-          .atMost(20, TimeUnit.SECONDS)
-          .ignoreExceptions()
-          .untilAsserted(() -> assertThat(runnerAhead.getP2pTcpPort()).isNotNull());
-
       final SynchronizerConfiguration syncConfigBehind =
           SynchronizerConfiguration.builder()
               .syncMode(mode)
@@ -193,6 +184,7 @@ public final class RunnerTest {
               PrivacyParameters.noPrivacy(),
               dataDirBehind,
               noOpMetricsSystem);
+      final Peer advertisedPeer = runnerAhead.getAdvertisedPeer().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
               EthNetworkConfig.jsonConfig(DEV),
@@ -200,9 +192,9 @@ public final class RunnerTest {
               Collections.singletonList(
                   URI.create(
                       new DefaultPeer(
-                              aheadDbNodeKeys.getPublicKey().getEncodedBytes(),
-                              listenHost,
-                              runnerAhead.getP2pUdpPort(),
+                              advertisedPeer.getId(),
+                              advertisedPeer.getEndpoint().getHost(),
+                              advertisedPeer.getEndpoint().getUdpPort(),
                               runnerAhead.getP2pTcpPort())
                           .getEnodeURI())));
       final Runner runnerBehind =

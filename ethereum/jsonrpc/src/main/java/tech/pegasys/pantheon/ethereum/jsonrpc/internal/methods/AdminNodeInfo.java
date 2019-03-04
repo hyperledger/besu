@@ -22,15 +22,13 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
+import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.net.InetAddresses;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -67,25 +65,26 @@ public class AdminNodeInfo implements JsonRpcMethod {
 
     try {
       final Map<String, Object> response = new HashMap<>();
-      final BytesValue nodeId = peerNetwork.getLocalPeerInfo().getNodeId();
-      final InetSocketAddress address = peerNetwork.getDiscoverySocketAddress();
-      final int port = peerNetwork.getLocalPeerInfo().getPort();
+      final Map<String, Integer> ports = new HashMap<>();
 
-      final InetAddress inetAddress = address.getAddress();
-      response.put(
-          "enode",
-          "enode://"
-              + nodeId.toString().substring(2)
-              + "@"
-              + InetAddresses.toUriString(inetAddress)
-              + ":"
-              + port);
+      final PeerInfo peerInfo = peerNetwork.getLocalPeerInfo();
+      final BytesValue nodeId = peerInfo.getNodeId();
+      peerNetwork
+          .getAdvertisedPeer()
+          .ifPresent(
+              advertisedPeer -> {
+                response.put("enode", advertisedPeer.getEnodeURI());
+                ports.put("discovery", advertisedPeer.getEndpoint().getUdpPort());
+                response.put("ip", advertisedPeer.getEndpoint().getHost());
+                response.put(
+                    "listenAddr",
+                    advertisedPeer.getEndpoint().getHost() + ":" + peerInfo.getPort());
+              });
       response.put("id", nodeId.toString().substring(2));
-      // this doesn't provide a useful value yet.
-      // response.put("ip", inetAddress.getHostAddress());
-      response.put("listenAddr", InetAddresses.toUriString(inetAddress) + ":" + port);
       response.put("name", clientVersion);
-      response.put("ports", ImmutableMap.of("discovery", port, "listener", port /*??*/));
+
+      ports.put("listener", peerInfo.getPort());
+      response.put("ports", ports);
 
       final ChainHead chainHead = blockchainQueries.getBlockchain().getChainHead();
       response.put(
