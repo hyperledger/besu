@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.services.queue.TaskQueue.Task;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -29,7 +30,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,6 +37,7 @@ import org.apache.logging.log4j.Logger;
 class WorldDownloadState {
   private static final Logger LOG = LogManager.getLogger();
 
+  private final boolean downloadWasResumed;
   private final TaskQueue<NodeDataRequest> pendingRequests;
   private final ArrayBlockingQueue<Task<NodeDataRequest>> requestsToPersist;
   private final int maxOutstandingRequests;
@@ -57,6 +58,7 @@ class WorldDownloadState {
       final ArrayBlockingQueue<Task<NodeDataRequest>> requestsToPersist,
       final int maxOutstandingRequests,
       final int maxRequestsWithoutProgress) {
+    this.downloadWasResumed = !pendingRequests.isEmpty();
     this.pendingRequests = pendingRequests;
     this.requestsToPersist = requestsToPersist;
     this.maxOutstandingRequests = maxOutstandingRequests;
@@ -96,6 +98,10 @@ class WorldDownloadState {
     } else {
       downloadFuture.complete(result);
     }
+  }
+
+  public boolean downloadWasResumed() {
+    return downloadWasResumed;
   }
 
   public void whileAdditionalRequestsCanBeSent(final Runnable action) {
@@ -149,7 +155,7 @@ class WorldDownloadState {
     }
   }
 
-  public synchronized void enqueueRequests(final Stream<NodeDataRequest> requests) {
+  public synchronized void enqueueRequests(final Collection<NodeDataRequest> requests) {
     if (!internalFuture.isDone()) {
       requests.forEach(pendingRequests::enqueue);
     }
@@ -212,9 +218,14 @@ class WorldDownloadState {
     internalFuture.completeExceptionally(e);
   }
 
+  public synchronized boolean shouldRequestRootNode() {
+    // If we get to the end of the download and we don't have the root, request it
+    return !internalFuture.isDone() && pendingRequests.allTasksCompleted() && rootNodeData == null;
+  }
+
   public synchronized boolean checkCompletion(
       final WorldStateStorage worldStateStorage, final BlockHeader header) {
-    if (!internalFuture.isDone() && pendingRequests.allTasksCompleted()) {
+    if (!internalFuture.isDone() && pendingRequests.allTasksCompleted() && rootNodeData != null) {
       final Updater updater = worldStateStorage.updater();
       updater.putAccountStateTrieNode(header.getStateRoot(), rootNodeData);
       updater.commit();

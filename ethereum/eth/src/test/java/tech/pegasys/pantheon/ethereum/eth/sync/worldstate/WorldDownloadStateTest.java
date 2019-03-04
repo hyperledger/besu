@@ -32,9 +32,9 @@ import tech.pegasys.pantheon.services.queue.InMemoryTaskQueue;
 import tech.pegasys.pantheon.services.queue.TaskQueue.Task;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Stream;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -226,7 +226,7 @@ public class WorldDownloadStateTest {
   public void shouldNotEnqueueRequestsAfterDownloadIsStalled() {
     downloadState.checkCompletion(worldStateStorage, header);
 
-    downloadState.enqueueRequests(Stream.of(createAccountDataRequest(Hash.EMPTY_TRIE_HASH)));
+    downloadState.enqueueRequests(Arrays.asList(createAccountDataRequest(Hash.EMPTY_TRIE_HASH)));
     downloadState.enqueueRequest(createAccountDataRequest(Hash.EMPTY_TRIE_HASH));
 
     assertThat(pendingRequests.isEmpty()).isTrue();
