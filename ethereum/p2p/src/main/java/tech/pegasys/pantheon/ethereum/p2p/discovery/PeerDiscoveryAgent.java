@@ -201,13 +201,6 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
    * @param packet the packet to send
    */
   protected void handleOutgoingPacket(final DiscoveryPeer peer, final Packet packet) {
-    LOG.trace(
-        ">>> Sending {} discovery packet to {} ({}): {}",
-        packet.getType(),
-        peer.getEndpoint(),
-        peer.getId().slice(0, 16),
-        packet);
-
     sendOutgoingPacket(peer, packet)
         .whenComplete(
             (res, err) -> {
