@@ -12,9 +12,11 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.cli.EthNetworkConfig;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Net;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
@@ -24,21 +26,24 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.waitcondition.WaitCondition;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Cluster implements AutoCloseable {
-  public static final int NETWORK_ID = 10;
+  private static final Logger LOG = LogManager.getLogger();
 
   private final Map<String, RunnableNode> nodes = new HashMap<>();
   private final PantheonNodeRunner pantheonNodeRunner = PantheonNodeRunner.instance();
   private final Net net;
   private final ClusterConfiguration clusterConfiguration;
+  private List<? extends RunnableNode> originalNodes = emptyList();
+  private List<URI> bootnodes = emptyList();
 
   public Cluster(final Net net) {
     this(new ClusterConfigurationBuilder().build(), net);
@@ -57,44 +62,67 @@ public class Cluster implements AutoCloseable {
                   assertThat(n instanceof RunnableNode).isTrue();
                   return (RunnableNode) n;
                 })
-            .collect(Collectors.toList()));
+            .collect(toList()));
   }
 
   public void start(final List<? extends RunnableNode> nodes) {
+    if (nodes.isEmpty()) {
+      throw new IllegalArgumentException("Can't start a cluster with no nodes");
+    }
+    this.originalNodes = nodes;
     this.nodes.clear();
+    nodes.forEach(node -> this.nodes.put(node.getName(), node));
 
-    final List<String> bootNodes = new ArrayList<>();
+    final Optional<? extends RunnableNode> bootnode = selectAndStartBootnode(nodes);
 
-    for (final RunnableNode node : nodes) {
-      this.nodes.put(node.getName(), node);
-      if (node.getConfiguration().isBootnode()) {
-        bootNodes.add(node.getConfiguration().enodeUrl());
-      }
-    }
-
-    for (final RunnableNode node : nodes) {
-      if (node.getConfiguration().bootnodes().isEmpty()) {
-        node.getConfiguration().bootnodes(bootNodes);
-      }
-      Optional<EthNetworkConfig> ethNetworkConfig =
-          node.getConfiguration()
-              .genesisConfigProvider()
-              .createGenesisConfig(nodes)
-              .map(
-                  config ->
-                      new EthNetworkConfig(
-                          config,
-                          NETWORK_ID,
-                          bootNodes.stream().map(URI::create).collect(Collectors.toList())));
-      node.getConfiguration().ethNetworkConfig(ethNetworkConfig);
-      node.start(pantheonNodeRunner);
-    }
+    nodes.stream()
+        .filter(node -> bootnode.map(boot -> boot != node).orElse(true))
+        .forEach(this::startNode);
 
     if (clusterConfiguration.isAwaitPeerDiscovery()) {
       for (final RunnableNode node : nodes) {
+        LOG.info("Awaiting peer discovery for node {}", node.getName());
         node.awaitPeerDiscovery(net.awaitPeerCount(nodes.size() - 1));
       }
     }
+  }
+
+  private Optional<? extends RunnableNode> selectAndStartBootnode(
+      final List<? extends RunnableNode> nodes) {
+    final Optional<? extends RunnableNode> bootnode =
+        nodes.stream()
+            .filter(node -> node.getConfiguration().isBootnodeEligible())
+            .filter(node -> node.getConfiguration().isP2pEnabled())
+            .filter(node -> node.getConfiguration().isDiscoveryEnabled())
+            .findFirst();
+
+    bootnode.ifPresent(this::startNode);
+    bootnodes = bootnode.map(node -> singletonList(node.enodeUrl())).orElse(emptyList());
+    return bootnode;
+  }
+
+  public void addNode(final Node node) {
+    assertThat(node).isInstanceOf(RunnableNode.class);
+    final RunnableNode runnableNode = (RunnableNode) node;
+
+    nodes.put(runnableNode.getName(), runnableNode);
+    startNode(runnableNode);
+
+    if (clusterConfiguration.isAwaitPeerDiscovery()) {
+      runnableNode.awaitPeerDiscovery(net.awaitPeerCount(nodes.size() - 1));
+    }
+  }
+
+  private void startNode(final RunnableNode node) {
+    if (node.getConfiguration().bootnodes().isEmpty()) {
+      node.getConfiguration().bootnodes(bootnodes);
+    }
+    node.getConfiguration()
+        .genesisConfigProvider()
+        .createGenesisConfig(originalNodes)
+        .ifPresent(node.getConfiguration()::setGenesisConfig);
+    LOG.info("Starting node {}", node.getName());
+    node.start(pantheonNodeRunner);
   }
 
   public void stop() {

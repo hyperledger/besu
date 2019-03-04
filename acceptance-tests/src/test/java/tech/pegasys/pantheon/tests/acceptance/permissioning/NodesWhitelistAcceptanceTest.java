@@ -14,16 +14,10 @@ package tech.pegasys.pantheon.tests.acceptance.permissioning;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.Cluster;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
-import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
-
-import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,16 +36,14 @@ public class NodesWhitelistAcceptanceTest extends AcceptanceTestBase {
 
     permissionedCluster = new Cluster(clusterConfiguration, net);
     bootnode = pantheon.createArchiveNode("bootnode");
-    forbiddenNode = pantheon.createNonBootnodeArchiveNode("forbidden-node");
-    allowedNode = pantheon.createNonBootnodeArchiveNode("allowed-node");
+    forbiddenNode = pantheon.createArchiveNodeThatMustNotBeTheBootnode("forbidden-node");
+    allowedNode = pantheon.createArchiveNode("allowed-node");
 
-    final List<URI> bootnodes = Arrays.asList(getEnodeURI(bootnode));
-    final List<URI> nodeWhitelist = Arrays.asList(getEnodeURI(bootnode), getEnodeURI(allowedNode));
+    permissionedCluster.start(bootnode, allowedNode, forbiddenNode);
 
     permissionedNode =
-        pantheon.createNodeWithBootnodeAndNodesWhitelist(
-            "permissioned-node", bootnodes, nodeWhitelist);
-    permissionedCluster.start(bootnode, allowedNode, forbiddenNode, permissionedNode);
+        pantheon.createNodeWithNodesWhitelist("permissioned-node", bootnode, allowedNode);
+    permissionedCluster.addNode(permissionedNode);
   }
 
   @Test
@@ -67,14 +59,9 @@ public class NodesWhitelistAcceptanceTest extends AcceptanceTestBase {
     permissionedNode.verify(net.awaitPeerCount(2));
 
     // remove allowed node from the whitelist
-    permissionedNode.verify(
-        perm.removeNodesFromWhitelist(Lists.newArrayList(((PantheonNode) allowedNode).enodeUrl())));
+    permissionedNode.verify(perm.removeNodesFromWhitelist(allowedNode));
 
     permissionedNode.verify(net.awaitPeerCount(1));
-  }
-
-  private URI getEnodeURI(final Node node) {
-    return URI.create(((PantheonNode) node).getConfiguration().enodeUrl());
   }
 
   @Override

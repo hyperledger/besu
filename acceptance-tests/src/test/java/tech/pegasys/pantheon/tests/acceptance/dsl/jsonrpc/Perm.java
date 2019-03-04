@@ -12,7 +12,10 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
 
-import tech.pegasys.pantheon.ethereum.permissioning.WhitelistPersistor;
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
+
+import tech.pegasys.pantheon.ethereum.permissioning.WhitelistPersistor.WHITELIST_TYPE;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.AddAccountsToWhitelistSuccessfully;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.AddNodeSuccess;
@@ -21,12 +24,14 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.GetNodesWhiteli
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.RemoveAccountsFromWhitelistSuccessfully;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.RemoveNodeSuccess;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.WhiteListContainsKeyAndValue;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transactions;
 
+import java.net.URI;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Perm {
 
@@ -47,14 +52,32 @@ public class Perm {
 
   public Condition expectAccountsWhitelist(final String... expectedAccounts) {
     return new GetExpectedAccountsWhitelist(
-        transactions.getAccountsWhiteList(), Arrays.asList(expectedAccounts));
+        transactions.getAccountsWhiteList(), asList(expectedAccounts));
   }
 
-  public Condition addNodesToWhitelist(final List<String> enodeList) {
+  public Condition addNodesToWhitelist(final String... nodes) {
+    return addNodesToWhitelist(Stream.of(nodes).map(URI::create).collect(toList()));
+  }
+
+  public Condition addNodesToWhitelist(final Node... nodes) {
+    final List<URI> enodeList = toEnodeUris(nodes);
+    return addNodesToWhitelist(enodeList);
+  }
+
+  private Condition addNodesToWhitelist(final List<URI> enodeList) {
     return new AddNodeSuccess(transactions.addNodesToWhitelist(enodeList));
   }
 
-  public Condition removeNodesFromWhitelist(final List<String> enodeList) {
+  public Condition removeNodesFromWhitelist(final String... nodes) {
+    return removeNodesFromWhitelist(Stream.of(nodes).map(URI::create).collect(toList()));
+  }
+
+  public Condition removeNodesFromWhitelist(final Node... nodes) {
+    final List<URI> enodeList = toEnodeUris(nodes);
+    return removeNodesFromWhitelist(enodeList);
+  }
+
+  private Condition removeNodesFromWhitelist(final List<URI> enodeList) {
     return new RemoveNodeSuccess(transactions.removeNodesFromWhitelist(enodeList));
   }
 
@@ -63,9 +86,14 @@ public class Perm {
   }
 
   public Condition expectPermissioningWhitelistFileKeyValue(
-      final WhitelistPersistor.WHITELIST_TYPE whitelistType,
-      final Collection<String> val,
-      final Path configFilePath) {
-    return new WhiteListContainsKeyAndValue(whitelistType, val, configFilePath);
+      final WHITELIST_TYPE whitelistType, final Path configFilePath, final String... val) {
+    return new WhiteListContainsKeyAndValue(whitelistType, asList(val), configFilePath);
+  }
+
+  private List<URI> toEnodeUris(final Node[] nodes) {
+    return Stream.of(nodes)
+        .map(node -> (RunnableNode) node)
+        .map(RunnableNode::enodeUrl)
+        .collect(toList());
   }
 }

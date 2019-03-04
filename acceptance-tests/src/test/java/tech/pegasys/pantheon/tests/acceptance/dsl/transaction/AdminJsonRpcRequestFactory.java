@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction;
 
+import java.net.URI;
 import java.util.Collections;
 
 import org.web3j.protocol.Web3jService;
@@ -28,10 +29,10 @@ public class AdminJsonRpcRequestFactory {
     this.web3jService = web3jService;
   }
 
-  public Request<?, AdminAddPeerResponse> adminAddPeer(final String enodeAddress) {
+  public Request<?, AdminAddPeerResponse> adminAddPeer(final URI enodeAddress) {
     return new Request<>(
         "admin_addPeer",
-        Collections.singletonList(enodeAddress),
+        Collections.singletonList(enodeAddress.toASCIIString()),
         web3jService,
         AdminAddPeerResponse.class);
   }

@@ -62,7 +62,7 @@ public class NoopP2PNetwork implements P2PNetwork {
   public void awaitStop() {}
 
   @Override
-  public Optional<Peer> getAdvertisedPeer() {
+  public Optional<? extends Peer> getAdvertisedPeer() {
     return Optional.empty();
   }
 

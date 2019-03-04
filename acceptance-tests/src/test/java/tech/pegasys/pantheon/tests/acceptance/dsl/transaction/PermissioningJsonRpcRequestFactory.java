@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.GetN
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.RemoveAccountsFromWhitelistResponse;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.RemoveNodeResponse;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class PermissioningJsonRpcRequestFactory {
     this.web3jService = web3jService;
   }
 
-  public Request<?, AddNodeResponse> addNodesToWhitelist(final List<String> enodeList) {
+  public Request<?, AddNodeResponse> addNodesToWhitelist(final List<URI> enodeList) {
     return new Request<>(
         "perm_addNodesToWhitelist",
         Collections.singletonList(enodeList),
@@ -41,7 +42,7 @@ public class PermissioningJsonRpcRequestFactory {
         AddNodeResponse.class);
   }
 
-  public Request<?, RemoveNodeResponse> removeNodesFromWhitelist(final List<String> enodeList) {
+  public Request<?, RemoveNodeResponse> removeNodesFromWhitelist(final List<URI> enodeList) {
     return new Request<>(
         "perm_removeNodesFromWhitelist",
         Collections.singletonList(enodeList),

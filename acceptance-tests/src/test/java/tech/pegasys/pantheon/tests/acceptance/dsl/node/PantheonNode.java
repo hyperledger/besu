@@ -12,9 +12,9 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
+import static java.util.Collections.unmodifiableList;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import tech.pegasys.pantheon.cli.EthNetworkConfig;
 import tech.pegasys.pantheon.controller.KeyPairUtil;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -44,13 +44,13 @@ import java.net.ConnectException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.io.MoreFiles;
@@ -67,14 +67,13 @@ import org.web3j.protocol.websocket.WebSocketListener;
 import org.web3j.protocol.websocket.WebSocketService;
 import org.web3j.utils.Async;
 
-public class PantheonNode implements Node, NodeConfiguration, RunnableNode, AutoCloseable {
+public class PantheonNode implements NodeConfiguration, RunnableNode, AutoCloseable {
 
   private static final String LOCALHOST = "127.0.0.1";
   private static final Logger LOG = getLogger();
 
   private final Path homeDirectory;
   private final KeyPair keyPair;
-  private final int p2pPort;
   private final Properties portsProperties = new Properties();
   private final Boolean p2pEnabled;
 
@@ -88,12 +87,12 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
   private final GenesisConfigProvider genesisConfigProvider;
   private final boolean devMode;
   private final boolean discoveryEnabled;
-  private final boolean isBootnode;
-  private final List<String> bootnodes;
+  private final List<URI> bootnodes = new ArrayList<>();
+  private final boolean bootnodeEligible;
 
+  private Optional<String> genesisConfig = Optional.empty();
   private JsonRequestFactories jsonRequestFactories;
   private HttpRequestFactory httpRequestFactory;
-  private Optional<EthNetworkConfig> ethNetworkConfig = Optional.empty();
   private boolean useWsForJsonRpc = false;
   private String token = null;
 
@@ -107,15 +106,13 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final boolean devMode,
       final GenesisConfigProvider genesisConfigProvider,
-      final int p2pPort,
-      final Boolean p2pEnabled,
+      final boolean p2pEnabled,
       final boolean discoveryEnabled,
-      final boolean isBootnode,
-      final List<String> bootnodes)
+      final boolean bootnodeEligible)
       throws IOException {
+    this.bootnodeEligible = bootnodeEligible;
     this.homeDirectory = Files.createTempDirectory("acctest");
     this.keyPair = KeyPairUtil.loadKeyPair(homeDirectory);
-    this.p2pPort = p2pPort;
     this.name = name;
     this.miningParameters = miningParameters;
     this.privacyParameters = privacyParameters;
@@ -127,8 +124,6 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     this.devMode = devMode;
     this.p2pEnabled = p2pEnabled;
     this.discoveryEnabled = discoveryEnabled;
-    this.isBootnode = isBootnode;
-    this.bootnodes = bootnodes;
     LOG.info("Created PantheonNode {}", this.toString());
   }
 
@@ -146,13 +141,33 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
   }
 
   @Override
-  public String enodeUrl() {
-    return "enode://"
-        + keyPair.getPublicKey().toString().substring(2)
-        + "@"
-        + LOCALHOST
-        + ":"
-        + p2pPort;
+  public URI enodeUrl() {
+    final String discport = isDiscoveryEnabled() ? "?discport=" + getDiscoveryPort() : "";
+    return URI.create(
+        "enode://"
+            + keyPair.getPublicKey().toString().substring(2)
+            + "@"
+            + LOCALHOST
+            + ":"
+            + getP2pPort()
+            + discport);
+  }
+
+  private String getP2pPort() {
+    final String port = portsProperties.getProperty("p2p");
+    if (port == null) {
+      throw new IllegalStateException("Requested p2p port before ports properties was written");
+    }
+    return port;
+  }
+
+  private String getDiscoveryPort() {
+    final String port = portsProperties.getProperty("discovery");
+    if (port == null) {
+      throw new IllegalStateException(
+          "Requested discovery port before ports properties was written");
+    }
+    return port;
   }
 
   private Optional<String> jsonRpcBaseUrl() {
@@ -218,7 +233,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
         web3jService = new WebSocketService(wsClient, false);
         try {
           ((WebSocketService) web3jService).connect();
-        } catch (ConnectException e) {
+        } catch (final ConnectException e) {
           throw new RuntimeException(e);
         }
 
@@ -299,10 +314,6 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     this.token = token;
   }
 
-  public KeyPair getKeyPair() {
-    return keyPair;
-  }
-
   private void checkIfWebSocketEndpointIsAvailable(final String url) {
     final WebSocketClient webSocketClient = new WebSocketClient(URI.create(url));
     // Web3j implementation always invoke the listener (even when one hasn't been set). We are using
@@ -359,6 +370,7 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     try (final FileInputStream fis =
         new FileInputStream(new File(homeDirectory.toFile(), "pantheon.ports"))) {
       portsProperties.load(fis);
+      LOG.info("Ports for node {}: {}", name, portsProperties);
     } catch (final IOException e) {
       throw new RuntimeException("Error reading Pantheon ports file", e);
     }
@@ -418,32 +430,27 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     return metricsConfiguration;
   }
 
-  int p2pPort() {
-    return p2pPort;
-  }
-
   String p2pListenHost() {
     return LOCALHOST;
   }
 
-  int p2pListenPort() {
-    return p2pPort;
+  @Override
+  public List<URI> bootnodes() {
+    return unmodifiableList(bootnodes);
   }
 
   @Override
-  public List<URI> bootnodes() {
-    return bootnodes.stream()
-        .filter(node -> !node.equals(this.enodeUrl()))
-        .map(URI::create)
-        .collect(Collectors.toList());
-  }
-
-  Boolean p2pEnabled() {
+  public boolean isP2pEnabled() {
     return p2pEnabled;
   }
 
   @Override
-  public void bootnodes(final List<String> bootnodes) {
+  public boolean isBootnodeEligible() {
+    return bootnodeEligible;
+  }
+
+  @Override
+  public void bootnodes(final List<URI> bootnodes) {
     this.bootnodes.clear();
     this.bootnodes.addAll(bootnodes);
   }
@@ -460,13 +467,9 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
     return devMode;
   }
 
+  @Override
   public boolean isDiscoveryEnabled() {
     return discoveryEnabled;
-  }
-
-  @Override
-  public boolean isBootnode() {
-    return isBootnode;
   }
 
   Optional<PermissioningConfiguration> getPermissioningConfiguration() {
@@ -477,7 +480,6 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("name", name)
-        .add("p2pPort", p2pPort)
         .add("homeDirectory", homeDirectory)
         .add("keyPair", keyPair)
         .add("p2pEnabled", p2pEnabled)
@@ -509,13 +511,13 @@ public class PantheonNode implements Node, NodeConfiguration, RunnableNode, Auto
   }
 
   @Override
-  public Optional<EthNetworkConfig> ethNetworkConfig() {
-    return ethNetworkConfig;
+  public Optional<String> getGenesisConfig() {
+    return genesisConfig;
   }
 
   @Override
-  public void ethNetworkConfig(final Optional<EthNetworkConfig> ethNetworkConfig) {
-    this.ethNetworkConfig = ethNetworkConfig;
+  public void setGenesisConfig(final String config) {
+    this.genesisConfig = Optional.of(config);
   }
 
   @Override

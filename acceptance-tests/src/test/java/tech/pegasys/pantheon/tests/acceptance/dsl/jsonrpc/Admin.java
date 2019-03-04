@@ -18,11 +18,12 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
+import java.net.URI;
 
 import org.web3j.protocol.core.Response;
 
 public class Admin {
-  private Transaction<Boolean> addPeerTransaction(final String enode) {
+  private Transaction<Boolean> addPeerTransaction(final URI enode) {
     return (n) -> {
       try {
         final Response<Boolean> resp = n.admin().adminAddPeer(enode).send();
@@ -35,7 +36,7 @@ public class Admin {
     };
   }
 
-  public Condition addPeer(final String enode) {
+  public Condition addPeer(final URI enode) {
     return (n) -> {
       final Boolean result = n.execute(addPeerTransaction(enode));
       assertThat(result).isTrue();

@@ -17,7 +17,6 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 
 import java.util.ArrayList;
 
-import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -40,11 +39,11 @@ public class PermAddNodesToWhitelistAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldAddSinglePeer() {
-    node.verify(perm.addNodesToWhitelist(Lists.newArrayList(enode1)));
+    node.verify(perm.addNodesToWhitelist(enode1));
   }
 
   @Test
   public void shouldAddMultiplePeers() {
-    node.verify(perm.addNodesToWhitelist(Lists.newArrayList(enode1, enode2, enode3)));
+    node.verify(perm.addNodesToWhitelist(enode1, enode2, enode3));
   }
 }

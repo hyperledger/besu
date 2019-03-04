@@ -24,7 +24,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -64,44 +63,39 @@ public class WhitelistPersistorAcceptanceTest extends AcceptanceTestBase {
   public void manipulatedAccountsWhitelistIsPersisted() {
     node.verify(
         perm.expectPermissioningWhitelistFileKeyValue(
-            WHITELIST_TYPE.ACCOUNTS, Collections.singleton(senderA.getAddress()), tempFile));
+            WHITELIST_TYPE.ACCOUNTS, tempFile, senderA.getAddress()));
 
     node.execute(transactions.addAccountsToWhitelist(senderB.getAddress()));
     node.verify(perm.expectAccountsWhitelist(senderA.getAddress(), senderB.getAddress()));
     node.verify(
         perm.expectPermissioningWhitelistFileKeyValue(
-            WHITELIST_TYPE.ACCOUNTS,
-            Lists.list(senderA.getAddress(), senderB.getAddress()),
-            tempFile));
+            WHITELIST_TYPE.ACCOUNTS, tempFile, senderA.getAddress(), senderB.getAddress()));
 
     node.execute(transactions.removeAccountsFromWhitelist(senderB.getAddress()));
     node.verify(perm.expectAccountsWhitelist(senderA.getAddress()));
     node.verify(
         perm.expectPermissioningWhitelistFileKeyValue(
-            WHITELIST_TYPE.ACCOUNTS, Collections.singleton(senderA.getAddress()), tempFile));
+            WHITELIST_TYPE.ACCOUNTS, tempFile, senderA.getAddress()));
 
     node.execute(transactions.removeAccountsFromWhitelist(senderA.getAddress()));
     node.verify(perm.expectAccountsWhitelist());
-    node.verify(
-        perm.expectPermissioningWhitelistFileKeyValue(
-            WHITELIST_TYPE.ACCOUNTS, Collections.emptyList(), tempFile));
+    node.verify(perm.expectPermissioningWhitelistFileKeyValue(WHITELIST_TYPE.ACCOUNTS, tempFile));
   }
 
   @Test
   public void manipulatedNodesWhitelistIsPersisted() {
-    node.verify(perm.addNodesToWhitelist(Lists.newArrayList(enode1, enode2)));
+    node.verify(perm.addNodesToWhitelist(enode1, enode2));
     node.verify(
         perm.expectPermissioningWhitelistFileKeyValue(
-            WHITELIST_TYPE.NODES, Lists.newArrayList(enode1, enode2), tempFile));
+            WHITELIST_TYPE.NODES, tempFile, enode1, enode2));
 
-    node.verify(perm.removeNodesFromWhitelist(Lists.newArrayList(enode1)));
+    node.verify(perm.removeNodesFromWhitelist(enode1));
     node.verify(
-        perm.expectPermissioningWhitelistFileKeyValue(
-            WHITELIST_TYPE.NODES, Collections.singleton(enode2), tempFile));
+        perm.expectPermissioningWhitelistFileKeyValue(WHITELIST_TYPE.NODES, tempFile, enode2));
 
-    node.verify(perm.addNodesToWhitelist(Lists.newArrayList(enode1, enode3)));
+    node.verify(perm.addNodesToWhitelist(enode1, enode3));
     node.verify(
         perm.expectPermissioningWhitelistFileKeyValue(
-            WHITELIST_TYPE.NODES, Lists.newArrayList(enode2, enode1, enode3), tempFile));
+            WHITELIST_TYPE.NODES, tempFile, enode2, enode1, enode3));
   }
 }

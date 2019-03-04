@@ -15,6 +15,8 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 
+import java.net.URI;
+
 public interface RunnableNode extends Node {
 
   void stop();
@@ -30,4 +32,6 @@ public interface RunnableNode extends Node {
   String getName();
 
   Address getAddress();
+
+  URI enodeUrl();
 }
