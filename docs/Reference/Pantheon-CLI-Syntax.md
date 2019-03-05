@@ -186,6 +186,23 @@ max-peers=42
 Specifies the maximum P2P peer connections that can be established.
 The default is 25.
 
+### metrics-category
+
+```bash tab="Syntax"
+--metrics-category=<metrics-category>[,metrics-category...]...
+```
+
+```bash tab="Example Command Line"
+--metrics-category=BLOCKCHAIN,PEERS,PROCESS
+```
+
+```bash tab="Example Configuration File"
+metrics-category=["BLOCKCHAIN","PEERS","PROCESS"]
+```
+
+Comma separated list of categories for which to track metrics. The default is all categories: 
+`BIG_QUEUE`, `BLOCKCHAIN`, `EXECUTORS`, `JVM`, `NETWORK`, `PEERS`, `PROCESS`, `ROCKSDB`, `RPC`, `SYNCHRONIZER`. 
+
 ### metrics-enabled
 
 ```bash tab="Syntax"
