@@ -52,6 +52,80 @@ The enode is `enode://<id>@<host:port>` where:
     }
     ```
 
+### admin_nodeInfo
+
+Returns networking information about the node. The information includes general information about the node
+and specific information from each running Ethereum sub-protocol (for example, `eth`). 
+
+**Parameters**
+
+None
+
+**Returns**
+
+`result` : Node object 
+
+Properties of the node object are:
+
+* `enode` - [Enode URL](../Configuring-Pantheon/Node-Keys.md#enode-url) for the node  
+* `listenAddr` - Host and port for the node
+* `name` - Client name
+* `id` - [Node public key](../Configuring-Pantheon/Node-Keys.md#node-public-key)
+* `ports` - Peer discovery and listening [ports](../Configuring-Pantheon/Networking.md#port-configuration) 
+* `protocols` - List of objects containing information for each Ethereum sub-protocol 
+
+!!! note
+    If the node is running locally, the host of the `enode` and `listenAddr` are displayed as `[::]` in the result. 
+
+!!! example
+    ```bash tab="curl HTTP request"
+    $ curl -X POST --data '{"jsonrpc":"2.0","method":"admin_nodeInfo","params":[],"id":1}' <JSON-RPC-http-endpoint:port>
+    ```
+    
+    ```bash tab="wscat WS request"
+    {"jsonrpc":"2.0","method":"admin_nodeInfo","params":[],"id":1}
+    ```
+    
+    ```json tab="JSON result"
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+            "enode": "enode://87ec35d558352cc55cd1bf6a472557797f91287b78fe5e86760219124563450ad1bb807e4cc61e86c574189a851733227155551a14b9d0e1f62c5e11332a18a3@[::]:30303",
+            "listenAddr": "[::]:30303",
+            "name": "pantheon/v1.0.1-dev-0d2294a5/osx-x86_64/oracle-java-1.8",
+            "id": "87ec35d558352cc55cd1bf6a472557797f91287b78fe5e86760219124563450ad1bb807e4cc61e86c574189a851733227155551a14b9d0e1f62c5e11332a18a3",
+            "ports": {
+                "discovery": 30303,
+                "listener": 30303
+            },
+            "protocols": {
+                "eth": {
+                    "config": {
+                        "chainId": 2018,
+                        "homesteadBlock": 0,
+                        "daoForkBlock": 0,
+                        "daoForkSupport": true,
+                        "eip150Block": 0,
+                        "eip155Block": 0,
+                        "eip158Block": 0,
+                        "byzantiumBlock": 0,
+                        "constantinopleBlock": 0,
+                        "constantinopleFixBlock": 0,
+                        "ethash": {
+                            "fixeddifficulty": 100
+                        }
+                    },
+                    "difficulty": 78536,
+                    "genesis": "0x43ee12d45470e57c86a0dfe008a5b847af9e372d05e8ba8f01434526eb2bea0f",
+                    "head": "0xc6677651f16d07ae59cab3a5e1f0b814ed2ec27c00a93297b2aa2e29707844d9",
+                    "network": 2018
+                }
+            }
+        }
+    }
+    ```
+
 ### admin_peers
 
 Returns networking information about connected remote nodes. 
@@ -195,9 +269,7 @@ None
     ```
     
     ```bash tab="wscat WS request"
-    $ wscat -c <JSON-RPC-ws-endpoint:port>
-    connected (press CTRL+C to quit)
-    > '{"jsonrpc":"2.0","method":"net_version","params":[],"id":53}
+    {"jsonrpc":"2.0","method":"net_version","params":[],"id":53}
     ```
     
     ```json tab="JSON result for Mainnet"
