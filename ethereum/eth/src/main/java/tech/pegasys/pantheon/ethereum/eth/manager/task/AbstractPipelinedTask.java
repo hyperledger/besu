@@ -12,9 +12,11 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.manager.task;
 
+import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.EthTaskException;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -119,9 +121,13 @@ public abstract class AbstractPipelinedTask<I, O> extends AbstractEthTask<List<O
   }
 
   protected void failExceptionally(final Throwable t) {
-    if (!(t instanceof InterruptedException)) {
+    Throwable rootCause = ExceptionUtils.rootCause(t);
+    if (rootCause instanceof InterruptedException || rootCause instanceof EthTaskException) {
+      LOG.debug("Task Failure: {}", t.toString());
+    } else {
       LOG.error("Task Failure", t);
     }
+
     processingException.compareAndSet(null, t);
     result.get().completeExceptionally(t);
     cancel();
