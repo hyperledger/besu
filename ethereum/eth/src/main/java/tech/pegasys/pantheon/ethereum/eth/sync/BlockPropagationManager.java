@@ -231,7 +231,8 @@ public class BlockPropagationManager<C> {
   private CompletableFuture<Block> processAnnouncedBlock(
       final EthPeer peer, final NewBlockHash newBlock) {
     final AbstractPeerTask<Block> getBlockTask =
-        GetBlockFromPeerTask.create(protocolSchedule, ethContext, newBlock.hash(), metricsSystem)
+        GetBlockFromPeerTask.create(
+                protocolSchedule, ethContext, newBlock.hash(), newBlock.number(), metricsSystem)
             .assignPeer(peer);
 
     return getBlockTask.run().thenCompose((r) -> importOrSavePendingBlock(r.getResult()));

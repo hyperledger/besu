@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
@@ -36,14 +37,17 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
 
   private final ProtocolSchedule<?> protocolSchedule;
   private final Hash hash;
+  private final long blockNumber;
   private final MetricsSystem metricsSystem;
 
   protected GetBlockFromPeerTask(
       final ProtocolSchedule<?> protocolSchedule,
       final EthContext ethContext,
       final Hash hash,
+      final long blockNumber,
       final MetricsSystem metricsSystem) {
     super(ethContext, metricsSystem);
+    this.blockNumber = blockNumber;
     this.metricsSystem = metricsSystem;
     this.protocolSchedule = protocolSchedule;
     this.hash = hash;
@@ -53,8 +57,14 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
       final ProtocolSchedule<?> protocolSchedule,
       final EthContext ethContext,
       final Hash hash,
+      final long blockNumber,
       final MetricsSystem metricsSystem) {
-    return new GetBlockFromPeerTask(protocolSchedule, ethContext, hash, metricsSystem);
+    return new GetBlockFromPeerTask(protocolSchedule, ethContext, hash, blockNumber, metricsSystem);
+  }
+
+  @Override
+  protected Optional<EthPeer> findSuitablePeer() {
+    return ethContext.getEthPeers().idlePeer(blockNumber);
   }
 
   @Override

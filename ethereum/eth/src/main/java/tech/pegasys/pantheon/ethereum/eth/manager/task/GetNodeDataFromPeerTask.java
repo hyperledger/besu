@@ -41,20 +41,24 @@ public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<Map<Hash, B
   private static final Logger LOG = LogManager.getLogger();
 
   private final Set<Hash> hashes;
+  private final long pivotBlockNumber;
 
   private GetNodeDataFromPeerTask(
       final EthContext ethContext,
       final Collection<Hash> hashes,
+      final long pivotBlockNumber,
       final MetricsSystem metricsSystem) {
     super(ethContext, EthPV63.GET_NODE_DATA, metricsSystem);
     this.hashes = new HashSet<>(hashes);
+    this.pivotBlockNumber = pivotBlockNumber;
   }
 
   public static GetNodeDataFromPeerTask forHashes(
       final EthContext ethContext,
       final Collection<Hash> hashes,
+      final long pivotBlockNumber,
       final MetricsSystem metricsSystem) {
-    return new GetNodeDataFromPeerTask(ethContext, hashes, metricsSystem);
+    return new GetNodeDataFromPeerTask(ethContext, hashes, pivotBlockNumber, metricsSystem);
   }
 
   @Override
@@ -90,5 +94,10 @@ public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<Map<Hash, B
       nodeDataByHash.put(hash, data);
     }
     return Optional.of(nodeDataByHash);
+  }
+
+  @Override
+  protected Optional<EthPeer> findSuitablePeer() {
+    return ethContext.getEthPeers().idlePeer(pivotBlockNumber);
   }
 }

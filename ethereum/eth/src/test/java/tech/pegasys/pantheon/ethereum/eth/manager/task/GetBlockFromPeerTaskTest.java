@@ -37,9 +37,11 @@ import org.junit.Test;
 public class GetBlockFromPeerTaskTest
     extends AbstractMessageTaskTest<Block, PeerTaskResult<Block>> {
 
+  private static final int BLOCK_NUMBER = 5;
+
   @Override
   protected Block generateDataToBeRequested() {
-    final BlockHeader header = blockchain.getBlockHeader(5).get();
+    final BlockHeader header = blockchain.getBlockHeader(BLOCK_NUMBER).get();
     final BlockBody body = blockchain.getBlockBody(header.getHash()).get();
     return new Block(header, body);
   }
@@ -47,7 +49,7 @@ public class GetBlockFromPeerTaskTest
   @Override
   protected EthTask<PeerTaskResult<Block>> createTask(final Block requestedData) {
     return GetBlockFromPeerTask.create(
-        protocolSchedule, ethContext, requestedData.getHash(), metricsSystem);
+        protocolSchedule, ethContext, requestedData.getHash(), BLOCK_NUMBER, metricsSystem);
   }
 
   @Override
