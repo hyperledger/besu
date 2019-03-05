@@ -22,12 +22,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 /**
  * Holds the current set of pending transactions with the ability to iterate them based on priority
@@ -185,6 +187,12 @@ public class PendingTransactions {
     }
   }
 
+  public Set<TransactionInfo> getTransactionInfo() {
+    synchronized (pendingTransactions) {
+      return pendingTransactions.values().stream().collect(Collectors.toSet());
+    }
+  }
+
   public void addTransactionListener(final PendingTransactionListener listener) {
     listeners.add(listener);
   }
@@ -204,7 +212,7 @@ public class PendingTransactions {
    * Tracks the additional metadata associated with transactions to enable prioritization for mining
    * and deciding which transactions to drop when the transaction pool reaches its size limit.
    */
-  private static class TransactionInfo {
+  public static class TransactionInfo {
 
     private static final AtomicLong TRANSACTIONS_ADDED = new AtomicLong();
     private final Transaction transaction;
