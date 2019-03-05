@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.eth.manager.task;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.ethereum.core.BlockHeader.GENESIS_BLOCK_NUMBER;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
@@ -46,7 +47,8 @@ public class GetNodeDataFromPeerTaskTest extends PeerMessageTaskTest<Map<Hash, B
   protected EthTask<PeerTaskResult<Map<Hash, BytesValue>>> createTask(
       final Map<Hash, BytesValue> requestedData) {
     final List<Hash> hashes = Lists.newArrayList(requestedData.keySet());
-    return GetNodeDataFromPeerTask.forHashes(ethContext, hashes, metricsSystem);
+    return GetNodeDataFromPeerTask.forHashes(
+        ethContext, hashes, GENESIS_BLOCK_NUMBER, metricsSystem);
   }
 
   @Override

@@ -53,9 +53,7 @@ public abstract class AbstractPeerTask<R> extends AbstractEthTask<PeerTaskResult
     }
   }
 
-  protected Optional<EthPeer> findSuitablePeer() {
-    return this.ethContext.getEthPeers().idlePeer();
-  }
+  protected abstract Optional<EthPeer> findSuitablePeer();
 
   protected abstract void executeTaskWithPeer(EthPeer peer) throws PeerNotConnected;
 

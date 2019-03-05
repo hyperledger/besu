@@ -270,7 +270,9 @@ public class WorldStateDownloader {
             .distinct()
             .collect(Collectors.toList());
     final AbstractPeerTask<Map<Hash, BytesValue>> ethTask =
-        GetNodeDataFromPeerTask.forHashes(ethContext, hashes, metricsSystem).assignPeer(peer);
+        GetNodeDataFromPeerTask.forHashes(
+                ethContext, hashes, blockHeader.getNumber(), metricsSystem)
+            .assignPeer(peer);
     downloadState.addOutstandingTask(ethTask);
     return ethTask
         .run()
