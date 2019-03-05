@@ -63,6 +63,19 @@ public interface Blockchain {
     return new Block(header, body);
   }
 
+  default Block getGenesisBlock() {
+    final Hash genesisHash =
+        getBlockHashByNumber(BlockHeader.GENESIS_BLOCK_NUMBER)
+            .orElseThrow(() -> new IllegalStateException("Missing genesis block."));
+    final BlockHeader header =
+        getBlockHeader(genesisHash)
+            .orElseThrow(() -> new IllegalStateException("Missing genesis block."));
+    final BlockBody body =
+        getBlockBody(genesisHash)
+            .orElseThrow(() -> new IllegalStateException("Missing genesis block."));
+    return new Block(header, body);
+  }
+
   /**
    * Checks whether the block corresponding to the given hash is on the canonical chain.
    *

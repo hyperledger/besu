@@ -32,6 +32,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.DefaultMessage;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
@@ -80,6 +81,16 @@ public class RespondingEthPeer {
 
   public static void respondOnce(final Responder responder, final RespondingEthPeer... peers) {
     respondOnce(responder, Arrays.asList(peers));
+  }
+
+  public boolean disconnect(final DisconnectReason reason) {
+    if (ethPeer.isDisconnected()) {
+      return false;
+    }
+
+    ethPeer.disconnect(reason);
+    ethProtocolManager.handleDisconnect(getPeerConnection(), reason, true);
+    return true;
   }
 
   public MockPeerConnection getPeerConnection() {
