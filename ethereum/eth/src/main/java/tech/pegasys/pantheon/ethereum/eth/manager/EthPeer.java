@@ -101,8 +101,8 @@ public class EthPeer {
     reputation.recordRequestTimeout(requestCode).ifPresent(this::disconnect);
   }
 
-  public void recordUselessResponse() {
-    LOG.debug("Received useless response from peer {}", this);
+  public void recordUselessResponse(final String requestType) {
+    LOG.debug("Received useless response for {} from peer {}", requestType, this);
     reputation.recordUselessResponse(System.currentTimeMillis()).ifPresent(this::disconnect);
   }
 

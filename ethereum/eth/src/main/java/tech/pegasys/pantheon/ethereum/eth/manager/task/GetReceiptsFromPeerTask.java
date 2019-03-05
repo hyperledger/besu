@@ -84,7 +84,7 @@ public class GetReceiptsFromPeerTask
     if (streamClosed) {
       // All outstanding requests have been responded to and we still haven't found the response
       // we wanted. It must have been empty or contain data that didn't match.
-      peer.recordUselessResponse();
+      peer.recordUselessResponse("receipts");
       return Optional.of(emptyMap());
     }
 

@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -94,6 +95,11 @@ public class ImportBlocksTask<C> extends AbstractPeerTask<List<Block>> {
                 result.get().complete(new PeerTaskResult<>(peer, r));
               }
             });
+  }
+
+  @Override
+  protected Optional<EthPeer> findSuitablePeer() {
+    return ethContext.getEthPeers().idlePeer(referenceHeader.getNumber());
   }
 
   private CompletableFuture<PeerTaskResult<List<BlockHeader>>> downloadHeaders() {
