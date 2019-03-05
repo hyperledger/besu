@@ -16,29 +16,30 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import tech.pegasys.pantheon.util.NetworkUtility;
 
+import java.net.InetAddress;
 import java.net.URI;
 import java.util.OptionalInt;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.common.base.Objects;
+import com.google.common.net.InetAddresses;
 
 public class EnodeURL {
 
-  private static final String IP_REPLACE_MARKER = "$$IP_PATTERN$$";
-  private static final String IPV4_PATTERN =
-      "(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}";
-  private static final String IPV6_PATTERN = "\\[(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\\]";
-  private static final String IPV6_COMPACT_PATTERN =
-      "\\[((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)\\]";
-  private static final String DISCOVERY_PORT_PATTERN = "\\?discport=(?<discovery>\\d+)";
   private static final String HEX_STRING_PATTERN = "[0-9a-fA-F]+";
 
-  private static final String ENODE_URL_PATTERN =
-      "enode://(?<nodeId>\\w+)@(?<ip>" + IP_REPLACE_MARKER + "):(?<listening>\\d+)";
+  private static final String ENODE_URL_PATTERN_NEW =
+      "^enode://"
+          + "(?<nodeId>\\w+)"
+          + "@"
+          + "(?<ip>.*)"
+          + ":"
+          + "(?<listening>\\d+)"
+          + "(\\?discport=(?<discovery>\\d+))?$";
 
   private final String nodeId;
-  private final String ip;
+  private final InetAddress ip;
   private final Integer listeningPort;
   private final OptionalInt discoveryPort;
 
@@ -48,71 +49,37 @@ public class EnodeURL {
       final Integer listeningPort,
       final OptionalInt discoveryPort) {
     this.nodeId = nodeId;
-    this.ip = ip;
+    this.ip = InetAddresses.forUriString(ip);
     this.listeningPort = listeningPort;
     this.discoveryPort = discoveryPort;
   }
 
   public EnodeURL(final String nodeId, final String ip, final Integer listeningPort) {
-    this.nodeId = nodeId;
-    this.ip = ip;
-    this.listeningPort = listeningPort;
-    this.discoveryPort = OptionalInt.empty();
+    this(nodeId, ip, listeningPort, OptionalInt.empty());
   }
 
   public EnodeURL(final String value) {
     checkArgument(
         value != null && !value.isEmpty(), "Can't convert null/empty string to EnodeURLProperty.");
 
-    final boolean containsDiscoveryPort = value.contains("discport");
-    final boolean isIPV4 = Pattern.compile(".*" + IPV4_PATTERN + ".*").matcher(value).matches();
-    final boolean isIPV6 = Pattern.compile(".*" + IPV6_PATTERN + ".*").matcher(value).matches();
-    final boolean isIPV6Compact =
-        Pattern.compile(".*" + IPV6_COMPACT_PATTERN + ".*").matcher(value).matches();
-
-    String pattern = ENODE_URL_PATTERN;
-    if (isIPV4) {
-      pattern = pattern.replace(IP_REPLACE_MARKER, IPV4_PATTERN);
-    } else if (isIPV6) {
-      pattern = pattern.replace(IP_REPLACE_MARKER, IPV6_PATTERN);
-    } else if (isIPV6Compact) {
-      pattern = pattern.replace(IP_REPLACE_MARKER, IPV6_COMPACT_PATTERN);
-    } else {
-      throw new IllegalArgumentException("Invalid enode URL IP format.");
-    }
-
-    if (containsDiscoveryPort) {
-      pattern += DISCOVERY_PORT_PATTERN;
-    }
-    if (isIPV6) {
-      pattern = pattern.replace(IP_REPLACE_MARKER, IPV6_PATTERN);
-    } else {
-      pattern = pattern.replace(IP_REPLACE_MARKER, IPV4_PATTERN);
-    }
-
-    final Matcher matcher = Pattern.compile(pattern).matcher(value);
+    final Matcher enodeMatcher = Pattern.compile(ENODE_URL_PATTERN_NEW).matcher(value);
     checkArgument(
-        matcher.matches(),
+        enodeMatcher.matches(),
         "Invalid enode URL syntax. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.");
 
-    this.nodeId = getAndValidateNodeId(matcher);
-    this.ip = matcher.group("ip");
-    this.listeningPort = getAndValidatePort(matcher, "listening");
-
-    if (containsDiscoveryPort(value)) {
-      this.discoveryPort = OptionalInt.of(getAndValidatePort(matcher, "discovery"));
-    } else {
-      this.discoveryPort = OptionalInt.empty();
-    }
+    this.nodeId = getAndValidateNodeId(enodeMatcher);
+    this.ip = getAndValidateIp(enodeMatcher);
+    this.listeningPort = getAndValidatePort(enodeMatcher, "listening");
+    this.discoveryPort = getAndValidateDiscoveryPort(enodeMatcher);
   }
 
   public URI toURI() {
+    final String uri =
+        String.format("enode://%s@%s:%d", nodeId, InetAddresses.toUriString(ip), listeningPort);
     if (discoveryPort.isPresent()) {
-      return URI.create(
-          String.format(
-              "enode://%s@%s:%d?discport=%d", nodeId, ip, listeningPort, discoveryPort.getAsInt()));
+      return URI.create(uri + String.format("?discport=%d", discoveryPort.getAsInt()));
     } else {
-      return URI.create(String.format("enode://%s@%s:%d", nodeId, ip, listeningPort));
+      return URI.create(uri);
     }
   }
 
@@ -131,6 +98,20 @@ public class EnodeURL {
     return nodeId;
   }
 
+  private static InetAddress getAndValidateIp(final Matcher matcher) {
+    final String ipString = matcher.group("ip");
+
+    try {
+      return InetAddresses.forUriString(ipString);
+    } catch (IllegalArgumentException e) {
+      if (e.getMessage().contains("Not a valid URI IP literal: ")) {
+        throw new IllegalArgumentException("Invalid enode URL IP format.");
+      } else {
+        throw e;
+      }
+    }
+  }
+
   private static Integer getAndValidatePort(final Matcher matcher, final String portName) {
     int port = Integer.valueOf(matcher.group(portName));
     checkArgument(
@@ -139,8 +120,12 @@ public class EnodeURL {
     return port;
   }
 
-  private static boolean containsDiscoveryPort(final String value) {
-    return value.contains("discport");
+  private static OptionalInt getAndValidateDiscoveryPort(final Matcher matcher) {
+    if (matcher.group("discovery") != null) {
+      return OptionalInt.of(getAndValidatePort(matcher, "discovery"));
+    } else {
+      return OptionalInt.empty();
+    }
   }
 
   public String getNodeId() {
@@ -148,6 +133,10 @@ public class EnodeURL {
   }
 
   public String getIp() {
+    return ip.getHostAddress();
+  }
+
+  public InetAddress getInetAddress() {
     return ip;
   }
 
