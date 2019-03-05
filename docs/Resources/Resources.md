@@ -5,6 +5,8 @@ description: Pantheon resources including blog posts, webinars, and meetup recor
 
 ## Blog Posts 
 
+[Permissioning Features in Pantheon](https://pegasys.tech/protecting-the-enterprise-permissioning-features-in-pantheon/)
+
 [Another day, another consensus algorithm. Why IBFT 2.0?](https://pegasys.tech/another-day-another-consensus-algorithm-why-ibft-2-0/)
 
 [Why We Rebuilt Ethereum from Scratch](https://media.consensys.net/why-we-rebuilt-ethereum-from-scratch-9e38b6ebd4a2)
