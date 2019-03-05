@@ -49,12 +49,6 @@ block of the `prometheus.yml` file:
         - localhost:9545
     ```
 
-    !!! note
-        The [`--host-whitelist` option](../Reference/Pantheon-CLI-Syntax.md#host-whitelist) defaults to `localhost`.
-        If `127.0.0.1` is specified instead of `localhost` in the `prometheus.yml` file, add `127.0.0.1` to the host whitelist
-        using [`--host-whitelist`](../Reference/Pantheon-CLI-Syntax.md#host-whitelist) when starting Pantheon. 
-
-
 1. Start Pantheon with the [`--metrics-enabled` option](../Reference/Pantheon-CLI-Syntax.md#metrics-enabled). To start
  a single node for testing with metrics enabled:
 
@@ -99,12 +93,7 @@ To configure Prometheus and run with Pantheon pushing to a push gateway:
           - targets:
             - localhost:9091
        ```
-   
-    !!! note
-        The [`--host-whitelist` option](../Reference/Pantheon-CLI-Syntax.md#host-whitelist) defaults to `localhost`.
-        If `127.0.0.1` is specified instead of `localhost` in the `prometheus.yml` file, add `127.0.0.1` to the host whitelist
-        using [`--host-whitelist`](../Reference/Pantheon-CLI-Syntax.md#host-whitelist) when starting Pantheon. 
-
+       
 1. Start the push gateway. The push gateway can be deployed using the Docker image: 
 
     ```bash tab="Example"
