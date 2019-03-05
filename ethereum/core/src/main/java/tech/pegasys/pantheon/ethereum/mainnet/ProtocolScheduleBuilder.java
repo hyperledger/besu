@@ -56,21 +56,19 @@ public class ProtocolScheduleBuilder<C> {
         .getDaoForkBlock()
         .ifPresent(
             daoBlockNumber -> {
-              if (daoBlockNumber > 0) {
-                final ProtocolSpec<C> originalProtocolSpec =
-                    protocolSchedule.getByBlockNumber(daoBlockNumber);
-                addProtocolSpec(
-                    protocolSchedule,
-                    OptionalLong.of(daoBlockNumber),
-                    MainnetProtocolSpecs.daoRecoveryInitDefinition());
-                addProtocolSpec(
-                    protocolSchedule,
-                    OptionalLong.of(daoBlockNumber + 1),
-                    MainnetProtocolSpecs.daoRecoveryTransitionDefinition());
+              final ProtocolSpec<C> originalProtocolSpec =
+                  protocolSchedule.getByBlockNumber(daoBlockNumber);
+              addProtocolSpec(
+                  protocolSchedule,
+                  OptionalLong.of(daoBlockNumber),
+                  MainnetProtocolSpecs.daoRecoveryInitDefinition());
+              addProtocolSpec(
+                  protocolSchedule,
+                  OptionalLong.of(daoBlockNumber + 1),
+                  MainnetProtocolSpecs.daoRecoveryTransitionDefinition());
 
-                // Return to the previous protocol spec after the dao fork has completed.
-                protocolSchedule.putMilestone(daoBlockNumber + 10, originalProtocolSpec);
-              }
+              // Return to the previous protocol spec after the dao fork has completed.
+              protocolSchedule.putMilestone(daoBlockNumber + 10, originalProtocolSpec);
             });
 
     addProtocolSpec(

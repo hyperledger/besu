@@ -77,6 +77,12 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldNotHaveDaoForkBlockWhenSetToZero() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("daoForkBlock", 0));
+    assertThat(config.getDaoForkBlock()).isEmpty();
+  }
+
+  @Test
   public void shouldGetTangerineWhistleBlockNumber() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("eip150Block", 1000));
     assertThat(config.getTangerineWhistleBlockNumber()).hasValue(1000);
