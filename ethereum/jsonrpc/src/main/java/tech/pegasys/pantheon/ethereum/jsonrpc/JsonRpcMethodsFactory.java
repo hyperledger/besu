@@ -67,6 +67,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.NetListening;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.NetPeerCount;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.NetVersion;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.RpcModules;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.TxPoolPendingTransactions;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.Web3ClientVersion;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.Web3Sha3;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.miner.MinerSetCoinbase;
@@ -248,7 +249,8 @@ public class JsonRpcMethodsFactory {
           new MinerStart(miningCoordinator),
           new MinerStop(miningCoordinator),
           minerSetCoinbase,
-          new MinerSetEtherbase(minerSetCoinbase));
+          new MinerSetEtherbase(minerSetCoinbase),
+          new TxPoolPendingTransactions(transactionPool.getPendingTransactions()));
     }
     if (rpcApis.contains(RpcApis.PERM)) {
       addMethods(
