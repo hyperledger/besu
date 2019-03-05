@@ -86,7 +86,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getDaoForkBlock() {
-    return getOptionalLong("daoforkblock");
+    final OptionalLong block = getOptionalLong("daoforkblock");
+    if (block.isPresent() && block.getAsLong() <= 0) {
+      return OptionalLong.empty();
+    }
+    return block;
   }
 
   @Override
