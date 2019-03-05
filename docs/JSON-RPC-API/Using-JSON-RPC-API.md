@@ -7,7 +7,7 @@ description: How to use Pantheon JSON-RPC API
 
 Use the button to import our collection of examples to [Postman](https://www.getpostman.com/). 
 
-[![Run in Postman](https://run.pstmn.io/button.svg)](https://app.getpostman.com/run-collection/cffe1bc034b3ab139fa7)
+[![Run in Postman](https://run.pstmn.io/button.svg)](https://app.getpostman.com/run-collection/c765d7d22b055c42a510)
 
 ## Endpoint Host and Port
 
