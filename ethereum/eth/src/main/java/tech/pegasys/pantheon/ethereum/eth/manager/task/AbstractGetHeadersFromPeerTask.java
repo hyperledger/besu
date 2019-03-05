@@ -66,7 +66,7 @@ public abstract class AbstractGetHeadersFromPeerTask
     if (streamClosed) {
       // All outstanding requests have been responded to and we still haven't found the response
       // we wanted. It must have been empty or contain data that didn't match.
-      peer.recordUselessResponse();
+      peer.recordUselessResponse("headers");
       return Optional.of(Collections.emptyList());
     }
 
