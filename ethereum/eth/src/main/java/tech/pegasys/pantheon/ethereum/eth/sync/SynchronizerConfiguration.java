@@ -220,7 +220,7 @@ public class SynchronizerConfiguration {
     private Range<Long> blockPropagationRange = Range.closed(-10L, 30L);
     private long downloaderChangeTargetThresholdByHeight = 20L;
     private UInt256 downloaderChangeTargetThresholdByTd = UInt256.of(1_000_000_000L);
-    private int downloaderHeaderRequestSize = 10;
+    private int downloaderHeaderRequestSize = 200;
     private int downloaderCheckpointTimeoutsPermitted = 5;
     private int downloaderChainSegmentTimeoutsPermitted = 5;
     private int downloaderChainSegmentSize = 200;

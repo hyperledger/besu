@@ -31,11 +31,17 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class DetermineCommonAncestorTask<C> extends AbstractEthTask<BlockHeader> {
+/**
+ * Finds the common ancestor with the given peer. It is assumed that the peer will at least share
+ * the same genesis block with this node. Running this task against a peer with a non-matching
+ * genesis block will result in undefined behavior: the task may complete exceptionally or in some
+ * cases this node's genesis block will be returned.
+ */
+public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
   private static final Logger LOG = LogManager.getLogger();
   private final EthContext ethContext;
-  private final ProtocolSchedule<C> protocolSchedule;
-  private final ProtocolContext<C> protocolContext;
+  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolContext<?> protocolContext;
   private final EthPeer peer;
   private final int headerRequestSize;
   private final MetricsSystem metricsSystem;
@@ -46,8 +52,8 @@ public class DetermineCommonAncestorTask<C> extends AbstractEthTask<BlockHeader>
   private boolean initialQuery = true;
 
   private DetermineCommonAncestorTask(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolContext<?> protocolContext,
       final EthContext ethContext,
       final EthPeer peer,
       final int headerRequestSize,
@@ -66,14 +72,14 @@ public class DetermineCommonAncestorTask<C> extends AbstractEthTask<BlockHeader>
         protocolContext.getBlockchain().getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get();
   }
 
-  public static <C> DetermineCommonAncestorTask<C> create(
-      final ProtocolSchedule<C> protocolSchedule,
-      final ProtocolContext<C> protocolContext,
+  public static DetermineCommonAncestorTask create(
+      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolContext<?> protocolContext,
       final EthContext ethContext,
       final EthPeer peer,
       final int headerRequestSize,
       final MetricsSystem metricsSystem) {
-    return new DetermineCommonAncestorTask<>(
+    return new DetermineCommonAncestorTask(
         protocolSchedule, protocolContext, ethContext, peer, headerRequestSize, metricsSystem);
   }
 
@@ -144,6 +150,10 @@ public class DetermineCommonAncestorTask<C> extends AbstractEthTask<BlockHeader>
       final AbstractPeerTask.PeerTaskResult<List<BlockHeader>> headersResult) {
     initialQuery = false;
     final List<BlockHeader> headers = headersResult.getResult();
+    if (headers.isEmpty()) {
+      // Nothing to do
+      return CompletableFuture.completedFuture(null);
+    }
 
     final OptionalInt maybeAncestorNumber =
         BlockchainUtil.findHighestKnownBlockIndex(protocolContext.getBlockchain(), headers, false);
