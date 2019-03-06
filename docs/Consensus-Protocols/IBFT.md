@@ -45,30 +45,6 @@ Properties specific to IBFT 2.0 are:
 * `requesttimeoutseconds` - Timeout for each consensus round before a round change. 
 * `extraData` - `RLP([32 Bytes Vanity, List<Validators>, No Vote, Round=Int(0), 0 Seals])`
 
-The `extraData` property is RLP encoded. RLP encoding is a space efficient object 
-serialization scheme used in Ethereum. You can use a library such as [EthereumJS RLP](https://github.com/ethereumjs/rlp)
-to encode and decode RLP strings. 
-
-!!! example "Decoding Extra Data Example"
-    
-    Using the [EthereumJS RLP](https://github.com/ethereumjs/rlp) library: 
-    ```bash
-    rlp decode "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0"
-    ```
-    
-    The decoded result is: 
-    ```json
-    [ '0000000000000000000000000000000000000000000000000000000000000000',
-      [ 'be068f726a13c8d46c44be6ce9d275600e1735a4',
-        '5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193' ],
-      '',
-      '00000000',
-      [] 
-    ]
-    ```
-    
-    
-
 Properties that have specific values in IBFT 2.0 genesis files are: 
 
 * `nonce` - `0x0`
@@ -76,6 +52,49 @@ Properties that have specific values in IBFT 2.0 genesis files are:
 * `mixHash` - `0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365` for Istanbul block identification.
 
 To start a node on an IBFT 2.0 private network, use the [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file`) option to specify the custom genesis file. 
+
+### Extra Data 
+
+The `extraData` property is RLP encoded. RLP encoding is a space efficient object serialization scheme 
+used in Ethereum. Use the Pantheon subcommand [`rlp encode`](../Reference/Pantheon-CLI-Syntax.md#rlp) 
+to generate the `extraData` RLP string to include in the genesis file. 
+
+!!! example                                        
+    ```bash
+    pantheon rlp encode --from=toEncode.json
+    ```    
+
+Where the `toEncode.json` file contains a list of the initial validators in ascending order. 
+
+!!! example "One Initial Validator"
+    ```json
+    [
+     "9811ebc35d7b06b3fa8dc5809a1f9c52751e1deb"
+    ]
+    ``` 
+
+Copy the RLP encoded data to the `extraData` in the genesis file. 
+
+### Block Time 
+
+When a new chain head is received, the block time (`blockperiodseconds`) and round timeout (`requesttimeoutseconds`) 
+timers are started. When `blockperiodseconds` is reached, a new block is proposed. 
+
+If `requesttimeoutseconds` is reached before the proposed block is added, a round change occurs, and the block time and 
+timeout timers are reset. The timeout period for the new round is two times `requesttimeoutseconds`. The 
+timeout period continues to double each time a round fails to add a block. 
+
+Generally, the proposed block is added before reaching `requesttimeoutseconds`. A new round is then started, 
+and the block time and round timeout timers are reset. When `blockperiodseconds` is reached, the next new block is proposed. 
+
+The time from proposing a block to the block being added is small (around 1s) even in networks
+with geographically dispersed validators. Setting `blockperiodseconds` to your desired block time and `requesttimeoutseconds`
+to two times `blockperiodseconds` generally results in blocks being added every `blockperiodseconds`. 
+
+!!! example 
+    An internal PegaSys IBFT 2.0 testnet has 4 geographically dispersed validators in Sweden, 
+    Sydney, and North Viringia (2 validators). With a `blockperiodseconds`of 5 and a `requesttimeoutseconds` of 10,
+    the testnet consistently creates block with a 5 second blocktime. 
 
 ### Optional Configuration Options 
 
