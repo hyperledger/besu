@@ -51,7 +51,6 @@ public class PrivacyTest {
                 GenesisConfigFile.mainnet(),
                 SynchronizerConfiguration.builder().build(),
                 new InMemoryStorageProvider(),
-                false,
                 1,
                 new MiningParametersTestBuilder().enabled(false).build(),
                 SECP256K1.KeyPair.generate(),

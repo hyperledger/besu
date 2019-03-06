@@ -99,7 +99,6 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.synchronizerConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.homePath(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.ethNetworkConfig(any())).thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.syncWithOttoman(anyBoolean())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.miningParameters(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.devMode(anyBoolean())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.nodePrivateKeyFile(any())).thenReturn(mockControllerBuilder);

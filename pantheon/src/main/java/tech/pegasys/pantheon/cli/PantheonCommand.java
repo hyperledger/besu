@@ -634,7 +634,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           .synchronizerConfiguration(buildSyncConfig())
           .homePath(dataDir())
           .ethNetworkConfig(updateNetworkConfig(getNetwork()))
-          .syncWithOttoman(false) // ottoman feature is still there but it's now removed from CLI
           .miningParameters(
               new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled))
           .devMode(NetworkName.DEV.equals(getNetwork()))
