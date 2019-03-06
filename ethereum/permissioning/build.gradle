@@ -27,6 +27,7 @@ jar {
 
 dependencies {
   implementation project(':util')
+  implementation project(':ethereum:core')
 
   implementation 'com.google.guava:guava'
   implementation 'net.consensys.cava:cava-toml'
