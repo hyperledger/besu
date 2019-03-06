@@ -30,6 +30,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.EvictResu
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodeWhitelistUpdatedEvent;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -135,6 +136,9 @@ public class PeerDiscoveryController {
 
   private RecursivePeerRefreshState recursivePeerRefreshState;
 
+  private final Optional<NodePermissioningController> nodePermissioningController =
+      Optional.empty();
+
   public PeerDiscoveryController(
       final KeyPair keypair,
       final DiscoveryPeer localPeer,
@@ -189,7 +193,15 @@ public class PeerDiscoveryController {
         bootstrapNodes.stream()
             .filter(this::whitelistIfPresentIsNodePermitted)
             .collect(Collectors.toList());
-    recursivePeerRefreshState.start(initialDiscoveryPeers, localPeer.getId());
+
+    if (nodePermissioningController.isPresent()) {
+      nodePermissioningController
+          .get()
+          .startPeerDiscoveryCallback(
+              () -> recursivePeerRefreshState.start(initialDiscoveryPeers, localPeer.getId()));
+    } else {
+      recursivePeerRefreshState.start(initialDiscoveryPeers, localPeer.getId());
+    }
 
     final long timerId =
         timerUtil.setPeriodic(
