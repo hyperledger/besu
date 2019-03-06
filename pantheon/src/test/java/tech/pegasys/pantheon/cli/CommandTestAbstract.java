@@ -20,7 +20,9 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.Runner;
 import tech.pegasys.pantheon.RunnerBuilder;
+import tech.pegasys.pantheon.cli.PublicKeySubCommand.KeyLoader;
 import tech.pegasys.pantheon.controller.PantheonController;
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
@@ -141,7 +143,17 @@ public abstract class CommandTestAbstract {
     return parseCommand(System.in, args);
   }
 
+  protected CommandLine.Model.CommandSpec parseCommand(
+      final KeyLoader keyLoader, final String... args) {
+    return parseCommand(keyLoader, System.in, args);
+  }
+
   protected CommandLine.Model.CommandSpec parseCommand(final InputStream in, final String... args) {
+    return parseCommand(f -> KeyPair.generate(), in, args);
+  }
+
+  private CommandLine.Model.CommandSpec parseCommand(
+      final KeyLoader keyLoader, final InputStream in, final String... args) {
     // turn off ansi usage globally in picocli
     System.setProperty("picocli.ansi", "false");
 
@@ -151,7 +163,8 @@ public abstract class CommandTestAbstract {
             mockBlockImporter,
             mockRunnerBuilder,
             mockControllerBuilder,
-            mockSyncConfBuilder);
+            mockSyncConfBuilder,
+            keyLoader);
 
     // parse using Ansi.OFF to be able to assert on non formatted output results
     pantheonCommand.parse(
@@ -165,19 +178,27 @@ public abstract class CommandTestAbstract {
   @CommandLine.Command
   static class TestPantheonCommand extends PantheonCommand {
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
+    private final KeyLoader keyLoader;
+
+    @Override
+    protected KeyLoader getKeyLoader() {
+      return keyLoader;
+    }
 
     TestPantheonCommand(
         final Logger mockLogger,
         final BlockImporter mockBlockImporter,
         final RunnerBuilder mockRunnerBuilder,
         final PantheonControllerBuilder mockControllerBuilder,
-        final SynchronizerConfiguration.Builder mockSyncConfBuilder) {
+        final SynchronizerConfiguration.Builder mockSyncConfBuilder,
+        final KeyLoader keyLoader) {
       super(
           mockLogger,
           mockBlockImporter,
           mockRunnerBuilder,
           mockControllerBuilder,
           mockSyncConfBuilder);
+      this.keyLoader = keyLoader;
     }
   }
 }

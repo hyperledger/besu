@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.contentOf;
-import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Util;
@@ -104,21 +103,20 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
 
   // Export public key sub-sub-command
   @Test
-  public void callingPublicKeyExportSubCommandWithoutPathMustWriteKeyToStandardOutput() {
-    final KeyPair keyPair = KeyPair.generate();
-    when(mockController.getLocalNodeKeyPair()).thenReturn(keyPair);
-
-    parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME);
-
-    final String expectedOutputStart = keyPair.getPublicKey().toString();
-    assertThat(commandOutput.toString()).startsWith(expectedOutputStart);
+  public void callingPublicKeyExportSubCommandHelpMustDisplayUsage() {
+    parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME, "--help");
+    assertThat(commandOutput.toString()).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_USAGE);
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
   @Test
-  public void callingPublicKeyExportSubCommandHelpMustDisplayUsage() {
-    parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString()).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_USAGE);
+  public void callingPublicKeyExportSubCommandWithoutPathMustWriteKeyToStandardOutput() {
+    final KeyPair keyPair = KeyPair.generate();
+
+    parseCommand(f -> keyPair, PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME);
+
+    final String expectedOutputStart = keyPair.getPublicKey().toString();
+    assertThat(commandOutput.toString()).startsWith(expectedOutputStart);
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
@@ -128,12 +126,14 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
 
     final KeyPair keyPair = KeyPair.generate();
 
-    when(mockController.getLocalNodeKeyPair()).thenReturn(keyPair);
-
     final File file = File.createTempFile("public", "key");
 
     parseCommand(
-        PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME, "--to", file.getPath());
+        f -> keyPair,
+        PUBLIC_KEY_SUBCOMMAND_NAME,
+        PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME,
+        "--to",
+        file.getPath());
 
     assertThat(contentOf(file))
         .startsWith(keyPair.getPublicKey().toString())
@@ -145,21 +145,21 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
 
   // Export address sub-sub-command
   @Test
-  public void callingPublicKeyExportAddressSubCommandWithoutPathMustWriteAddressToStandardOutput() {
-    final KeyPair keyPair = KeyPair.generate();
-    when(mockController.getLocalNodeKeyPair()).thenReturn(keyPair);
-
-    parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME);
-
-    final String expectedOutputStart = Util.publicKeyToAddress(keyPair.getPublicKey()).toString();
-    assertThat(commandOutput.toString()).startsWith(expectedOutputStart);
+  public void callingPublicKeyExportAddressSubCommandHelpMustDisplayUsage() {
+    parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME, "--help");
+    assertThat(commandOutput.toString()).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_ADDRESS_USAGE);
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
   @Test
-  public void callingPublicKeyExportAddressSubCommandHelpMustDisplayUsage() {
-    parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString()).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_ADDRESS_USAGE);
+  public void callingPublicKeyExportAddressSubCommandWithoutPathMustWriteAddressToStandardOutput() {
+    final KeyPair keyPair = KeyPair.generate();
+
+    parseCommand(
+        f -> keyPair, PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME);
+
+    final String expectedOutputStart = Util.publicKeyToAddress(keyPair.getPublicKey()).toString();
+    assertThat(commandOutput.toString()).startsWith(expectedOutputStart);
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
@@ -169,11 +169,10 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
 
     final KeyPair keyPair = KeyPair.generate();
 
-    when(mockController.getLocalNodeKeyPair()).thenReturn(keyPair);
-
     final File file = File.createTempFile("public", "address");
 
     parseCommand(
+        f -> keyPair,
         PUBLIC_KEY_SUBCOMMAND_NAME,
         PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME,
         "--to",
