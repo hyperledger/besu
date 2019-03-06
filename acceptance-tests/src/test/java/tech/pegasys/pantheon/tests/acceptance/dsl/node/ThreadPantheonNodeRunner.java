@@ -64,7 +64,6 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
               .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
               .homePath(node.homeDirectory())
               .ethNetworkConfig(ethNetworkConfig)
-              .syncWithOttoman(false)
               .miningParameters(node.getMiningParameters())
               .privacyParameters(node.getPrivacyParameters())
               .devMode(node.isDevMode())

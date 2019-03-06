@@ -35,7 +35,6 @@ import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
-import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.sync.DefaultSynchronizer;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
@@ -97,7 +96,6 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
       final StorageProvider storageProvider,
       final GenesisConfigFile genesisConfig,
       final SynchronizerConfiguration syncConfig,
-      final boolean ottomanTestnetOperation,
       final int networkId,
       final KeyPair nodeKeys,
       final Path dataDirectory,
@@ -131,32 +129,18 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
     final boolean fastSyncEnabled = syncConfig.syncMode().equals(SyncMode.FAST);
     final EthProtocolManager ethProtocolManager;
     final SubProtocol ethSubProtocol;
-    if (ottomanTestnetOperation) {
-      LOG.info("Operating on Ottoman testnet.");
-      ethSubProtocol = Istanbul64Protocol.get();
-      ethProtocolManager =
-          new Istanbul64ProtocolManager(
-              blockchain,
-              protocolContext.getWorldStateArchive(),
-              networkId,
-              fastSyncEnabled,
-              syncConfig.downloaderParallelism(),
-              syncConfig.transactionsParallelism(),
-              syncConfig.computationParallelism(),
-              metricsSystem);
-    } else {
-      ethSubProtocol = EthProtocol.get();
-      ethProtocolManager =
-          new EthProtocolManager(
-              blockchain,
-              protocolContext.getWorldStateArchive(),
-              networkId,
-              fastSyncEnabled,
-              syncConfig.downloaderParallelism(),
-              syncConfig.transactionsParallelism(),
-              syncConfig.computationParallelism(),
-              metricsSystem);
-    }
+    LOG.info("Operating on IBFT-1.0 network.");
+    ethSubProtocol = Istanbul64Protocol.get();
+    ethProtocolManager =
+        new Istanbul64ProtocolManager(
+            blockchain,
+            protocolContext.getWorldStateArchive(),
+            networkId,
+            fastSyncEnabled,
+            syncConfig.downloaderParallelism(),
+            syncConfig.transactionsParallelism(),
+            syncConfig.computationParallelism(),
+            metricsSystem);
 
     final SyncState syncState =
         new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());

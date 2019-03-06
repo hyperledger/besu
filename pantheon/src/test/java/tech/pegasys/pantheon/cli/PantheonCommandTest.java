@@ -154,7 +154,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).synchronizerConfiguration(isNotNull());
     verify(mockControllerBuilder).homePath(isNotNull());
     verify(mockControllerBuilder).ethNetworkConfig(networkArg.capture());
-    verify(mockControllerBuilder).syncWithOttoman(eq(false));
     verify(mockControllerBuilder).miningParameters(miningArg.capture());
     verify(mockControllerBuilder).devMode(eq(false));
     verify(mockControllerBuilder).nodePrivateKeyFile(isNotNull());
@@ -298,7 +297,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
             .build();
     verify(mockControllerBuilder).homePath(eq(Paths.get("~/pantheondata").toAbsolutePath()));
     verify(mockControllerBuilder).ethNetworkConfig(eq(networkConfig));
-    verify(mockControllerBuilder).syncWithOttoman(eq(false));
 
     // TODO: Re-enable as per NC-1057/NC-1681
     // verify(mockSyncConfBuilder).syncMode(ArgumentMatchers.eq(SyncMode.FAST));
@@ -445,7 +443,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).metricsConfiguration(eq(metricsConfiguration));
     verify(mockRunnerBuilder).build();
 
-    verify(mockControllerBuilder).syncWithOttoman(eq(false));
     verify(mockControllerBuilder).devMode(eq(false));
     verify(mockControllerBuilder).build();
 
@@ -478,7 +475,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
     parseCommand("--node-private-key-file", file.getPath());
 
     verify(mockControllerBuilder).homePath(isNotNull());
-    verify(mockControllerBuilder).syncWithOttoman(eq(false));
     verify(mockControllerBuilder).nodePrivateKeyFile(fileArgumentCaptor.capture());
     verify(mockControllerBuilder).build();
 
@@ -525,7 +521,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
     parseCommand("--data-path", path.toString());
 
     verify(mockControllerBuilder).homePath(pathArgumentCaptor.capture());
-    verify(mockControllerBuilder).syncWithOttoman(eq(false));
     verify(mockControllerBuilder)
         .nodePrivateKeyFile(eq(path.resolve("key").toAbsolutePath().toFile()));
     verify(mockControllerBuilder).build();
