@@ -58,6 +58,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.DefaultMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -1014,7 +1015,7 @@ public final class EthProtocolManagerTest {
       // Create a transaction pool.  This has a side effect of registring a listener for the
       // transactions message.
       TransactionPoolFactory.createTransactionPool(
-          protocolSchedule, protocolContext, ethManager.ethContext());
+          protocolSchedule, protocolContext, ethManager.ethContext(), TestClock.fixed());
 
       // Send just a transaction message.
       final PeerConnection peer = setupPeer(ethManager, (cap, msg, connection) -> {});

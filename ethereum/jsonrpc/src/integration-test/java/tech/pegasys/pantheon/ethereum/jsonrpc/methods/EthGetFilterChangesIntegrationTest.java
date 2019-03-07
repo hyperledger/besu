@@ -43,6 +43,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -63,7 +64,8 @@ public class EthGetFilterChangesIntegrationTest {
   private final String ETH_METHOD = "eth_getFilterChanges";
   private final String JSON_RPC_VERSION = "2.0";
   private TransactionPool transactionPool;
-  private final PendingTransactions transactions = new PendingTransactions(MAX_TRANSACTIONS);
+  private final PendingTransactions transactions =
+      new PendingTransactions(MAX_TRANSACTIONS, TestClock.fixed());
   private static final int MAX_TRANSACTIONS = 5;
   private static final KeyPair keyPair = KeyPair.generate();
   private final Transaction transaction = createTransaction(1);

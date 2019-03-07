@@ -52,6 +52,7 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.util.Collection;
 import java.util.Map;
 
@@ -99,7 +100,8 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
       final int networkId,
       final KeyPair nodeKeys,
       final Path dataDirectory,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Clock clock) {
     final ProtocolSchedule<IbftContext> protocolSchedule =
         IbftProtocolSchedule.create(genesisConfig.getConfigOptions());
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
@@ -166,7 +168,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
-            protocolSchedule, protocolContext, istanbul64ProtocolManager.ethContext());
+            protocolSchedule, protocolContext, istanbul64ProtocolManager.ethContext(), clock);
 
     return new IbftLegacyPantheonController(
         protocolSchedule,

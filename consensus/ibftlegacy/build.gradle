@@ -31,6 +31,7 @@ dependencies {
 
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':consensus:ibft', configuration: 'testSupportArtifacts')
+  testImplementation project(':testutil')
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'

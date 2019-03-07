@@ -103,7 +103,8 @@ public class MainnetPantheonController implements PantheonController<Void> {
       final KeyPair nodeKeys,
       final PrivacyParameters privacyParameters,
       final Path dataDirectory,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Clock clock) {
 
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
     final ProtocolContext<Void> protocolContext =
@@ -147,7 +148,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
-            protocolSchedule, protocolContext, ethProtocolManager.ethContext());
+            protocolSchedule, protocolContext, ethProtocolManager.ethContext(), clock);
 
     final ExecutorService minerThreadPool = Executors.newCachedThreadPool();
     final EthHashMinerExecutor executor =
@@ -160,7 +161,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
             new DefaultBlockScheduler(
                 MainnetBlockHeaderValidator.MINIMUM_SECONDS_SINCE_PARENT,
                 MainnetBlockHeaderValidator.TIMESTAMP_TOLERANCE_S,
-                Clock.systemUTC()));
+                clock));
 
     final EthHashMiningCoordinator miningCoordinator =
         new EthHashMiningCoordinator(blockchain, executor, syncState);

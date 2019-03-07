@@ -62,6 +62,7 @@ dependencies {
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(':services:kvstore')
+  integrationTestImplementation project(':testutil')
 
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'

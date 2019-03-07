@@ -138,7 +138,8 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
       final int networkId,
       final KeyPair nodeKeys,
       final Path dataDirectory,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Clock clock) {
     final ProtocolSchedule<IbftContext> protocolSchedule =
         IbftProtocolSchedule.create(genesisConfig.getConfigOptions());
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
@@ -194,7 +195,8 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             metricsSystem);
 
     final TransactionPool transactionPool =
-        TransactionPoolFactory.createTransactionPool(protocolSchedule, protocolContext, ethContext);
+        TransactionPoolFactory.createTransactionPool(
+            protocolSchedule, protocolContext, ethContext, clock);
 
     final IbftEventQueue ibftEventQueue = new IbftEventQueue(ibftConfig.getMessageQueueLimit());
 
@@ -232,13 +234,10 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             uniqueMessageMulticaster,
             new RoundTimer(ibftEventQueue, ibftConfig.getRequestTimeoutSeconds(), timerExecutor),
             new BlockTimer(
-                ibftEventQueue,
-                ibftConfig.getBlockPeriodSeconds(),
-                timerExecutor,
-                Clock.systemUTC()),
+                ibftEventQueue, ibftConfig.getBlockPeriodSeconds(), timerExecutor, clock),
             blockCreatorFactory,
             new MessageFactory(nodeKeys),
-            Clock.systemUTC());
+            clock);
 
     final MessageValidatorFactory messageValidatorFactory =
         new MessageValidatorFactory(proposerSelector, protocolSchedule, protocolContext);
