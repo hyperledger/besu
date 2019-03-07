@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.1
+
+Public key address export subcommand was missing in 1.0 release.
+
+### Additions and Improvements
+- Added `public-key export-address` subcommand [\#888](https://github.com/PegaSysEng/pantheon/pull/888)
+- Documentation update for the [`public-key export-address`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Pantheon-CLI-Syntax/#public-key) subcommand.
+
 ## 1.0 
 
 ### Additions and Improvements 
