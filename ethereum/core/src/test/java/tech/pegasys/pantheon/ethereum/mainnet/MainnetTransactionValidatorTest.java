@@ -31,8 +31,6 @@ import tech.pegasys.pantheon.ethereum.core.TransactionTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
 
-import java.util.OptionalLong;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -80,7 +78,7 @@ public class MainnetTransactionValidatorTest {
   public void shouldRejectTransactionWhenSenderAccountDoesNotExist() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(gasCalculator, false, 1);
-    assertThat(validator.validateForSender(basicTransaction, null, OptionalLong.empty()))
+    assertThat(validator.validateForSender(basicTransaction, null, false))
         .isEqualTo(ValidationResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE));
   }
 
@@ -90,43 +88,29 @@ public class MainnetTransactionValidatorTest {
         new MainnetTransactionValidator(gasCalculator, false, 1);
 
     final Account account = accountWithNonce(basicTransaction.getNonce() + 1);
-    assertThat(validator.validateForSender(basicTransaction, account, OptionalLong.empty()))
+    assertThat(validator.validateForSender(basicTransaction, account, false))
         .isEqualTo(ValidationResult.invalid(NONCE_TOO_LOW));
   }
 
   @Test
-  public void shouldRejectTransactionWhenTransactionNonceAboveAccountNonce() {
+  public void
+      shouldRejectTransactionWhenTransactionNonceAboveAccountNonceAndFutureNonceIsNotAllowed() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(gasCalculator, false, 1);
 
     final Account account = accountWithNonce(basicTransaction.getNonce() - 1);
-    assertThat(validator.validateForSender(basicTransaction, account, OptionalLong.empty()))
+    assertThat(validator.validateForSender(basicTransaction, account, false))
         .isEqualTo(ValidationResult.invalid(INCORRECT_NONCE));
   }
 
   @Test
-  public void shouldAcceptTransactionWhenNonceBetweenAccountNonceAndMaximumAllowedNonce() {
+  public void
+      shouldAcceptTransactionWhenTransactionNonceAboveAccountNonceAndFutureNonceIsAllowed() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(gasCalculator, false, 1);
 
-    final Transaction transaction =
-        new TransactionTestFixture().nonce(10).createTransaction(senderKeys);
-    final Account account = accountWithNonce(5);
-
-    assertThat(validator.validateForSender(transaction, account, OptionalLong.of(15)))
-        .isEqualTo(ValidationResult.valid());
-  }
-
-  @Test
-  public void shouldAcceptTransactionWhenNonceEqualsMaximumAllowedNonce() {
-    final MainnetTransactionValidator validator =
-        new MainnetTransactionValidator(gasCalculator, false, 1);
-
-    final Transaction transaction =
-        new TransactionTestFixture().nonce(10).createTransaction(senderKeys);
-    final Account account = accountWithNonce(5);
-
-    assertThat(validator.validateForSender(transaction, account, OptionalLong.of(10)))
+    final Account account = accountWithNonce(basicTransaction.getNonce() - 1);
+    assertThat(validator.validateForSender(basicTransaction, account, true))
         .isEqualTo(ValidationResult.valid());
   }
 
@@ -139,7 +123,7 @@ public class MainnetTransactionValidatorTest {
         new TransactionTestFixture().nonce(11).createTransaction(senderKeys);
     final Account account = accountWithNonce(5);
 
-    assertThat(validator.validateForSender(transaction, account, OptionalLong.of(10)))
+    assertThat(validator.validateForSender(transaction, account, false))
         .isEqualTo(ValidationResult.invalid(INCORRECT_NONCE));
   }
 
@@ -153,9 +137,7 @@ public class MainnetTransactionValidatorTest {
     final Address arbitrarySender = Address.fromHexString("1");
     builder.gasPrice(Wei.ZERO).nonce(0).sender(arbitrarySender).value(Wei.ZERO);
 
-    assertThat(
-            validator.validateForSender(
-                builder.createTransaction(senderKeyPair), null, OptionalLong.of(10)))
+    assertThat(validator.validateForSender(builder.createTransaction(senderKeyPair), null, false))
         .isEqualTo(ValidationResult.valid());
   }
 
