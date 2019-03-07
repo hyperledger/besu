@@ -152,7 +152,9 @@ public class RocksDbTaskQueue<T> implements TaskQueue<T> {
 
   @Override
   public synchronized long size() {
-    assertNotClosed();
+    if (closed) {
+      return 0;
+    }
     return lastEnqueuedKey - lastDequeuedKey;
   }
 
