@@ -64,8 +64,8 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
   private final ProtocolContext<IbftContext> context;
   private final GenesisConfigOptions genesisConfigOptions;
   private final Synchronizer synchronizer;
-  private final SubProtocol ethSubProtocol;
-  private final ProtocolManager ethProtocolManager;
+  private final SubProtocol istanbulSubProtocol;
+  private final ProtocolManager istanbulProtocolManager;
   private final KeyPair keyPair;
   private final TransactionPool transactionPool;
   private final Runnable closer;
@@ -74,8 +74,8 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
       final ProtocolSchedule<IbftContext> protocolSchedule,
       final ProtocolContext<IbftContext> context,
       final GenesisConfigOptions genesisConfigOptions,
-      final SubProtocol ethSubProtocol,
-      final ProtocolManager ethProtocolManager,
+      final SubProtocol istanbulSubProtocol,
+      final ProtocolManager istanbulProtocolManager,
       final Synchronizer synchronizer,
       final KeyPair keyPair,
       final TransactionPool transactionPool,
@@ -84,8 +84,8 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
     this.protocolSchedule = protocolSchedule;
     this.context = context;
     this.genesisConfigOptions = genesisConfigOptions;
-    this.ethSubProtocol = ethSubProtocol;
-    this.ethProtocolManager = ethProtocolManager;
+    this.istanbulSubProtocol = istanbulSubProtocol;
+    this.istanbulProtocolManager = istanbulProtocolManager;
     this.synchronizer = synchronizer;
     this.keyPair = keyPair;
     this.transactionPool = transactionPool;
@@ -127,11 +127,11 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
     final boolean fastSyncEnabled = syncConfig.syncMode().equals(SyncMode.FAST);
-    final EthProtocolManager ethProtocolManager;
-    final SubProtocol ethSubProtocol;
+    final EthProtocolManager istanbul64ProtocolManager;
+    final SubProtocol istanbul64SubProtocol;
     LOG.info("Operating on IBFT-1.0 network.");
-    ethSubProtocol = Istanbul64Protocol.get();
-    ethProtocolManager =
+    istanbul64SubProtocol = Istanbul64Protocol.get();
+    istanbul64ProtocolManager =
         new Istanbul64ProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
@@ -143,14 +143,14 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
             metricsSystem);
 
     final SyncState syncState =
-        new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
+        new SyncState(blockchain, istanbul64ProtocolManager.ethContext().getEthPeers());
     final Synchronizer synchronizer =
         new DefaultSynchronizer<>(
             syncConfig,
             protocolSchedule,
             protocolContext,
             protocolContext.getWorldStateArchive().getStorage(),
-            ethProtocolManager.ethContext(),
+            istanbul64ProtocolManager.ethContext(),
             syncState,
             dataDirectory,
             metricsSystem);
@@ -166,14 +166,14 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
-            protocolSchedule, protocolContext, ethProtocolManager.ethContext());
+            protocolSchedule, protocolContext, istanbul64ProtocolManager.ethContext());
 
     return new IbftLegacyPantheonController(
         protocolSchedule,
         protocolContext,
         genesisConfig.getConfigOptions(),
-        ethSubProtocol,
-        ethProtocolManager,
+        istanbul64SubProtocol,
+        istanbul64ProtocolManager,
         synchronizer,
         nodeKeys,
         transactionPool,
@@ -202,7 +202,8 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
 
   @Override
   public SubProtocolConfiguration subProtocolConfiguration() {
-    return new SubProtocolConfiguration().withSubProtocol(ethSubProtocol, ethProtocolManager);
+    return new SubProtocolConfiguration()
+        .withSubProtocol(istanbulSubProtocol, istanbulProtocolManager);
   }
 
   @Override
