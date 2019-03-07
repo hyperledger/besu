@@ -28,6 +28,7 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Clock;
 
 public class PantheonControllerBuilder {
 
@@ -96,7 +97,7 @@ public class PantheonControllerBuilder {
       final String genesisConfig = ethNetworkConfig.getGenesisConfig();
       genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig);
     }
-
+    Clock clock = Clock.systemUTC();
     return PantheonController.fromConfig(
         genesisConfigFile,
         synchronizerConfiguration,
@@ -106,6 +107,7 @@ public class PantheonControllerBuilder {
         nodeKeys,
         metricsSystem,
         privacyParameters,
-        homePath);
+        homePath,
+        clock);
   }
 }

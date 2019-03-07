@@ -46,6 +46,7 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.Closeable;
@@ -131,7 +132,8 @@ public class TestNode implements Closeable {
 
     final EthContext ethContext = ethProtocolManager.ethContext();
     transactionPool =
-        TransactionPoolFactory.createTransactionPool(protocolSchedule, protocolContext, ethContext);
+        TransactionPoolFactory.createTransactionPool(
+            protocolSchedule, protocolContext, ethContext, TestClock.fixed());
     networkRunner.start();
 
     selfPeer = new DefaultPeer(id(), endpoint());

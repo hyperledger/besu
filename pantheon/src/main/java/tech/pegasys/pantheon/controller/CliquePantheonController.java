@@ -110,7 +110,8 @@ public class CliquePantheonController implements PantheonController<CliqueContex
       final int networkId,
       final KeyPair nodeKeys,
       final Path dataDirectory,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Clock clock) {
     final Address localAddress = Util.publicKeyToAddress(nodeKeys.getPublicKey());
     final CliqueConfigOptions cliqueConfig =
         genesisConfig.getConfigOptions().getCliqueConfigOptions();
@@ -165,7 +166,7 @@ public class CliquePantheonController implements PantheonController<CliqueContex
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
-            protocolSchedule, protocolContext, ethProtocolManager.ethContext());
+            protocolSchedule, protocolContext, ethProtocolManager.ethContext(), clock);
 
     final ExecutorService minerThreadPool = Executors.newCachedThreadPool();
     final CliqueMinerExecutor miningExecutor =
@@ -177,7 +178,7 @@ public class CliquePantheonController implements PantheonController<CliqueContex
             nodeKeys,
             miningParams,
             new CliqueBlockScheduler(
-                Clock.systemUTC(),
+                clock,
                 protocolContext.getConsensusState().getVoteTallyCache(),
                 localAddress,
                 secondsBetweenBlocks),

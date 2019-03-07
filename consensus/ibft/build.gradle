@@ -46,10 +46,12 @@ dependencies {
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':config:', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
+  testImplementation project(':testutil')
 
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-core'
+  integrationTestImplementation project(':testutil')
 
   testImplementation 'junit:junit'
   testImplementation 'org.awaitility:awaitility'

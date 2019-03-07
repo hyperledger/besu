@@ -44,6 +44,7 @@ import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.io.IOException;
@@ -112,7 +113,8 @@ public final class RunnerTest {
             aheadDbNodeKeys,
             PrivacyParameters.noPrivacy(),
             dataDirAhead,
-            noOpMetricsSystem)) {
+            noOpMetricsSystem,
+            TestClock.fixed())) {
       setupState(blockCount, controller.getProtocolSchedule(), controller.getProtocolContext());
     }
 
@@ -128,7 +130,8 @@ public final class RunnerTest {
             aheadDbNodeKeys,
             PrivacyParameters.noPrivacy(),
             dataDirAhead,
-            noOpMetricsSystem);
+            noOpMetricsSystem,
+            TestClock.fixed());
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
     final ExecutorService executorService = Executors.newFixedThreadPool(2);
     final JsonRpcConfiguration aheadJsonRpcConfiguration = jsonRpcConfiguration();
@@ -182,7 +185,8 @@ public final class RunnerTest {
               KeyPair.generate(),
               PrivacyParameters.noPrivacy(),
               dataDirBehind,
-              noOpMetricsSystem);
+              noOpMetricsSystem,
+              TestClock.fixed());
       final Peer advertisedPeer = runnerAhead.getAdvertisedPeer().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(

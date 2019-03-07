@@ -25,6 +25,8 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessRe
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.PendingTransactionsResult;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.TransactionInfoResult;
 
+import java.time.Instant;
+
 import com.google.common.collect.Sets;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,12 +56,14 @@ public class TxPoolPendingTransactionsTest {
 
   @Test
   public void shouldReturnPendingTransactions() {
+    Instant addedAt = Instant.ofEpochMilli(10_000_000);
     final JsonRpcRequest request =
         new JsonRpcRequest(JSON_RPC_VERSION, TXPOOL_PENDING_TRANSACTIONS_METHOD, new Object[] {});
 
     TransactionInfo transactionInfo = mock(TransactionInfo.class);
     when(transactionInfo.getHash()).thenReturn(Hash.fromHexString(TRANSACTION_HASH));
     when(transactionInfo.isReceivedFromLocalSource()).thenReturn(true);
+    when(transactionInfo.getAddedToPoolAt()).thenReturn(addedAt);
     when(pendingTransactions.getTransactionInfo()).thenReturn(Sets.newHashSet(transactionInfo));
 
     final JsonRpcSuccessResponse actualResponse = (JsonRpcSuccessResponse) method.response(request);
@@ -69,5 +73,6 @@ public class TxPoolPendingTransactionsTest {
         result.getResults().stream().findFirst().get();
     assertEquals(TRANSACTION_HASH, actualTransactionInfo.getHash());
     assertEquals(true, actualTransactionInfo.isReceivedFromLocalSource());
+    assertEquals(addedAt.toString(), actualTransactionInfo.getAddedToPoolAt());
   }
 }

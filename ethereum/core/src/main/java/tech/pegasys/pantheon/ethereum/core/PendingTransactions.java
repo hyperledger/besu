@@ -15,6 +15,8 @@ package tech.pegasys.pantheon.ethereum.core;
 import static java.util.Collections.newSetFromMap;
 import static java.util.Comparator.comparing;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -53,18 +55,21 @@ public class PendingTransactions {
       newSetFromMap(new ConcurrentHashMap<>());
 
   private final int maxPendingTransactions;
+  private final Clock clock;
 
-  public PendingTransactions(final int maxPendingTransactions) {
+  public PendingTransactions(final int maxPendingTransactions, final Clock clock) {
     this.maxPendingTransactions = maxPendingTransactions;
+    this.clock = clock;
   }
 
   public boolean addRemoteTransaction(final Transaction transaction) {
-    final TransactionInfo transactionInfo = new TransactionInfo(transaction, false);
+    final TransactionInfo transactionInfo =
+        new TransactionInfo(transaction, false, clock.instant());
     return addTransaction(transactionInfo);
   }
 
   boolean addLocalTransaction(final Transaction transaction) {
-    return addTransaction(new TransactionInfo(transaction, true));
+    return addTransaction(new TransactionInfo(transaction, true, clock.instant()));
   }
 
   public void removeTransaction(final Transaction transaction) {
@@ -217,11 +222,16 @@ public class PendingTransactions {
     private static final AtomicLong TRANSACTIONS_ADDED = new AtomicLong();
     private final Transaction transaction;
     private final boolean receivedFromLocalSource;
+    private final Instant addedToPoolAt;
     private final long sequence; // Allows prioritization based on order transactions are added
 
-    private TransactionInfo(final Transaction transaction, final boolean receivedFromLocalSource) {
+    private TransactionInfo(
+        final Transaction transaction,
+        final boolean receivedFromLocalSource,
+        final Instant addedToPoolAt) {
       this.transaction = transaction;
       this.receivedFromLocalSource = receivedFromLocalSource;
+      this.addedToPoolAt = addedToPoolAt;
       this.sequence = TRANSACTIONS_ADDED.getAndIncrement();
     }
 
@@ -247,6 +257,10 @@ public class PendingTransactions {
 
     public Hash getHash() {
       return transaction.hash();
+    }
+
+    public Instant getAddedToPoolAt() {
+      return addedToPoolAt;
     }
   }
 

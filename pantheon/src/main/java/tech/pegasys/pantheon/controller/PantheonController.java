@@ -34,6 +34,7 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.io.Closeable;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.util.Collection;
 import java.util.Map;
 
@@ -50,7 +51,8 @@ public interface PantheonController<C> extends Closeable {
       final KeyPair nodeKeys,
       final MetricsSystem metricsSystem,
       final PrivacyParameters privacyParameters,
-      final Path dataDirectory) {
+      final Path dataDirectory,
+      final Clock clock) {
 
     final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
 
@@ -65,7 +67,8 @@ public interface PantheonController<C> extends Closeable {
           nodeKeys,
           privacyParameters,
           dataDirectory,
-          metricsSystem);
+          metricsSystem,
+          clock);
     } else if (configOptions.isIbft2()) {
       return IbftPantheonController.init(
           storageProvider,
@@ -75,7 +78,8 @@ public interface PantheonController<C> extends Closeable {
           networkId,
           nodeKeys,
           dataDirectory,
-          metricsSystem);
+          metricsSystem,
+          clock);
     } else if (configOptions.isIbftLegacy()) {
       return IbftLegacyPantheonController.init(
           storageProvider,
@@ -84,7 +88,8 @@ public interface PantheonController<C> extends Closeable {
           networkId,
           nodeKeys,
           dataDirectory,
-          metricsSystem);
+          metricsSystem,
+          clock);
     } else if (configOptions.isClique()) {
       return CliquePantheonController.init(
           storageProvider,
@@ -94,7 +99,8 @@ public interface PantheonController<C> extends Closeable {
           networkId,
           nodeKeys,
           dataDirectory,
-          metricsSystem);
+          metricsSystem,
+          clock);
     } else {
       throw new IllegalArgumentException("Unknown consensus mechanism defined");
     }
