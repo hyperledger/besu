@@ -15,8 +15,6 @@ package tech.pegasys.pantheon.ethereum.mainnet;
 import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 
-import java.util.OptionalLong;
-
 /** Validates transaction based on some criteria. */
 public interface TransactionValidator {
 
@@ -38,14 +36,16 @@ public interface TransactionValidator {
    *
    * @param transaction the transaction to validateMessageFrame.State.COMPLETED_FAILED
    * @param sender the sender account state to validate against
-   * @param maximumNonce the maximum transaction nonce. If not provided the transaction nonce must
-   *     equal the sender's current account nonce
+   * @param allowFutureNonce if true, transactions with nonce equal or higher than the account nonce
+   *     will be considered valid (used when received transactions in the transaction pool). If
+   *     false, only a transaction with the nonce equals the account nonce will be considered valid
+   *     (used when processing transactions).
    * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.
    */
   ValidationResult<TransactionInvalidReason> validateForSender(
-      Transaction transaction, Account sender, OptionalLong maximumNonce);
+      Transaction transaction, Account sender, boolean allowFutureNonce);
 
   enum TransactionInvalidReason {
     WRONG_CHAIN_ID,

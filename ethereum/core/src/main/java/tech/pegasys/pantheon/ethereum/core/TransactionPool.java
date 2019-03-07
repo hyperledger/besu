@@ -156,11 +156,7 @@ public class TransactionPool implements BlockAddedObserver {
         .map(
             worldState -> {
               final Account senderAccount = worldState.get(transaction.getSender());
-              return getTransactionValidator()
-                  .validateForSender(
-                      transaction,
-                      senderAccount,
-                      pendingTransactions.getNextNonceForSender(transaction.getSender()));
+              return getTransactionValidator().validateForSender(transaction, senderAccount, true);
             })
         .orElseGet(() -> ValidationResult.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
   }
