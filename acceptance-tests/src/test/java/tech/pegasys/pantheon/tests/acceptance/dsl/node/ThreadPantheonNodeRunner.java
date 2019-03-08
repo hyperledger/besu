@@ -95,9 +95,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
             .p2pEnabled(node.isP2pEnabled())
             .build();
 
-    nodeExecutor.submit(runner::execute);
-
-    waitForPortsFile(node.homeDirectory().toAbsolutePath());
+    runner.start();
 
     pantheonRunners.put(node.getName(), runner);
   }

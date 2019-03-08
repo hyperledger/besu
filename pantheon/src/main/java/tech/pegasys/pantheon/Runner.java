@@ -66,7 +66,7 @@ public class Runner implements AutoCloseable {
     this.dataDir = dataDir;
   }
 
-  public void execute() {
+  public void start() {
     try {
       LOG.info("Starting Ethereum main loop ... ");
       networkRunner.start();
@@ -78,13 +78,18 @@ public class Runner implements AutoCloseable {
       metrics.ifPresent(service -> service.start().join());
       LOG.info("Ethereum main loop is up.");
       writePantheonPortsToFile();
+    } catch (final Exception ex) {
+      LOG.error("Startup failed", ex);
+      throw new IllegalStateException(ex);
+    }
+  }
+
+  public void awaitStop() {
+    try {
       networkRunner.awaitStop();
     } catch (final InterruptedException e) {
       LOG.debug("Interrupted, exiting", e);
       Thread.currentThread().interrupt();
-    } catch (final Exception ex) {
-      LOG.error("Exception in main loop:", ex);
-      throw new IllegalStateException(ex);
     }
   }
 

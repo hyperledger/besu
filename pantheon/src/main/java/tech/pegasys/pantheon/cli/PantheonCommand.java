@@ -853,7 +853,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             .build();
 
     addShutdownHook(runner);
-    runner.execute();
+    runner.start();
+    runner.awaitStop();
   }
 
   private void addShutdownHook(final Runner runner) {
