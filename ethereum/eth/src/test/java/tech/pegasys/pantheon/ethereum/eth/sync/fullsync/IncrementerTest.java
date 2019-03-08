@@ -34,10 +34,11 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.assertj.core.util.Lists;
 import org.junit.Test;
 
 public class IncrementerTest {
@@ -95,12 +96,43 @@ public class IncrementerTest {
 
     final List<Observation> metrics =
         metricsSystem.getMetrics(MetricCategory.SYNCHRONIZER).collect(Collectors.toList());
-    final Observation inboundObservation =
-        new Observation(MetricCategory.SYNCHRONIZER, "inboundQueueCounter", 6.0, Lists.emptyList());
-    final Observation outboundObservation =
+
+    // the first iteration gets the genesis block, which results in no data
+    // being passed downstream.  So observed value is 2.
+    final Observation headerInboundObservation =
         new Observation(
-            MetricCategory.SYNCHRONIZER, "outboundQueueCounter", 5.0, Lists.emptyList());
-    assertThat(metrics).contains(inboundObservation, outboundObservation);
+            MetricCategory.SYNCHRONIZER,
+            "inboundQueueCounter",
+            2.0,
+            Collections.singletonList("ParallelDownloadHeadersTask"));
+    final Observation headerOutboundObservation =
+        new Observation(
+            MetricCategory.SYNCHRONIZER,
+            "outboundQueueCounter",
+            1.0,
+            Collections.singletonList("ParallelDownloadHeadersTask"));
+    assertThat(metrics).contains(headerInboundObservation, headerOutboundObservation);
+
+    for (final String label :
+        Arrays.asList(
+            "ParallelValidateHeadersTask",
+            "ParallelDownloadBodiesTask",
+            "ParallelExtractTxSignaturesTask",
+            "ParallelValidateAndImportBodiesTask")) {
+      final Observation inboundObservation =
+          new Observation(
+              MetricCategory.SYNCHRONIZER,
+              "inboundQueueCounter",
+              1.0,
+              Collections.singletonList(label));
+      final Observation outboundObservation =
+          new Observation(
+              MetricCategory.SYNCHRONIZER,
+              "outboundQueueCounter",
+              1.0,
+              Collections.singletonList(label));
+      assertThat(metrics).contains(inboundObservation, outboundObservation);
+    }
   }
 
   private FullSyncDownloader<?> downloader(final SynchronizerConfiguration syncConfig) {
