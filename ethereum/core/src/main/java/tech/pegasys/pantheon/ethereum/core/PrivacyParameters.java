@@ -38,6 +38,7 @@ public class PrivacyParameters {
   private String publicKey;
   private File publicKeyFile;
   private WorldStateArchive privateWorldStateArchive;
+  private StorageProvider privateStorageProvider;
 
   public String getPublicKey() {
     return publicKey;
@@ -91,7 +92,7 @@ public class PrivacyParameters {
 
   public void enablePrivateDB(final Path path) throws IOException {
     final Path privateDbPath = path.resolve(PRIVATE_DATABASE_PATH);
-    final StorageProvider privateStorageProvider =
+    this.privateStorageProvider =
         RocksDbStorageProvider.create(privateDbPath, new NoOpMetricsSystem());
     final WorldStateStorage privateWorldStateStorage =
         privateStorageProvider.createWorldStateStorage();
@@ -100,5 +101,9 @@ public class PrivacyParameters {
 
   public WorldStateArchive getPrivateWorldStateArchive() {
     return privateWorldStateArchive;
+  }
+
+  public StorageProvider getPrivateStorageProvider() {
+    return this.privateStorageProvider;
   }
 }
