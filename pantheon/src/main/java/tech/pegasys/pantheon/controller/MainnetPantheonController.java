@@ -190,6 +190,9 @@ public class MainnetPantheonController implements PantheonController<Void> {
           }
           try {
             storageProvider.close();
+            if (privacyParameters.getPrivateStorageProvider() != null) {
+              privacyParameters.getPrivateStorageProvider().close();
+            }
           } catch (final IOException e) {
             LOG.error("Failed to close storage provider", e);
           }
