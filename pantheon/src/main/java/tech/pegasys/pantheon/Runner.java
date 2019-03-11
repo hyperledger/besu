@@ -25,9 +25,10 @@ import java.io.FileOutputStream;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
@@ -38,8 +39,6 @@ public class Runner implements AutoCloseable {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Vertx vertx;
-
-  private final ExecutorService exec = Executors.newCachedThreadPool();
 
   private final NetworkRunner networkRunner;
   private final Optional<JsonRpcHttpService> jsonRpc;
@@ -73,9 +72,9 @@ public class Runner implements AutoCloseable {
       if (networkRunner.getNetwork().isP2pEnabled()) {
         pantheonController.getSynchronizer().start();
       }
-      jsonRpc.ifPresent(service -> service.start().join());
-      websocketRpc.ifPresent(service -> service.start().join());
-      metrics.ifPresent(service -> service.start().join());
+      jsonRpc.ifPresent(service -> waitForServiceToStart("jsonRpc", service.start()));
+      websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.start()));
+      metrics.ifPresent(service -> waitForServiceToStart("metrics", service.start()));
       LOG.info("Ethereum main loop is up.");
       writePantheonPortsToFile();
     } catch (final Exception ex) {
@@ -98,20 +97,46 @@ public class Runner implements AutoCloseable {
     networkRunner.stop();
     networkRunner.awaitStop();
 
-    exec.shutdown();
     try {
-      jsonRpc.ifPresent(service -> service.stop().join());
-      websocketRpc.ifPresent(service -> service.stop().join());
-      metrics.ifPresent(service -> service.stop().join());
+      jsonRpc.ifPresent(service -> waitForServiceToStop("jsonRpc", service.stop()));
+      websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
+      metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
     } finally {
       try {
-        exec.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+        vertx.close();
       } finally {
-        try {
-          vertx.close();
-        } finally {
-          pantheonController.close();
-        }
+        pantheonController.close();
+      }
+    }
+  }
+
+  private void waitForServiceToStop(
+      final String serviceName, final CompletableFuture<?> stopFuture) {
+    try {
+      stopFuture.get(30, TimeUnit.SECONDS);
+    } catch (final InterruptedException e) {
+      LOG.debug("Interrupted while waiting for service to complete", e);
+      Thread.currentThread().interrupt();
+    } catch (final ExecutionException e) {
+      LOG.error("Service " + serviceName + " failed to shutdown", e);
+    } catch (final TimeoutException e) {
+      LOG.error("Service {} did not shut down cleanly", serviceName);
+    }
+  }
+
+  private void waitForServiceToStart(
+      final String serviceName, final CompletableFuture<?> startFuture) {
+    while (!startFuture.isDone()) {
+      try {
+        startFuture.get(60, TimeUnit.SECONDS);
+      } catch (final InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IllegalStateException("Interrupted while waiting for service to start", e);
+      } catch (final ExecutionException e) {
+        LOG.error("Service " + serviceName + " failed to start", e);
+        throw new IllegalStateException(e);
+      } catch (final TimeoutException e) {
+        LOG.warn("Service {} is taking an unusually long time to start", serviceName);
       }
     }
   }
