@@ -25,7 +25,7 @@ Set the host to `0.0.0.0` to allow remote connections.
 
 !!! caution 
     Setting the host to 0.0.0.0 exposes the RPC connection on your node to any remote connection. In a 
-    production environment, ensure you are using a firewall to avoid exposing your node to the internet.  
+    production environment, ensure you use a firewall to avoid exposing your node to the internet.  
 
 Use the [--rpc-http-port](../Reference/Pantheon-CLI-Syntax.md#rpc-http-port) and [--rpc-ws-port](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-port)
 options to specify the port on which the JSON-RPC listens. The default ports are: 
@@ -35,6 +35,29 @@ options to specify the port on which the JSON-RPC listens. The default ports are
 
 Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration).
 
+## Geth Console 
+
+The geth console is a REPL (Read, Evaluate, & Print Loop) Javascript console. Use JSON-RPC APIs supported by geth and 
+Pantheon directly in the console.  
+
+To use the geth console with Pantheon: 
+
+1. Start Pantheon with the [`--rpc-http-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled) option. 
+
+1. Specify which APIs to enable using the [`--rpc-http-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-api) option. 
+
+1. Start the geth console: 
+   ```bash
+    geth attach http://localhost:8545
+   ``` 
+   
+Use the geth console to call [JSON-RPC API methods](../Reference/JSON-RPC-API-Methods.md) that geth and Pantheon share. 
+
+!!! example 
+    ```bash
+    eth.syncing
+    ```
+    
 ## Host Whitelist 
 
 To prevent DNS rebinding, incoming HTTP requests and WebSockets connections are only accepted from hostnames 
@@ -77,7 +100,7 @@ First connect to the WebSockets server using `wscat` (you only need to connect o
 $ wscat -c ws://<JSON-RPC-ws-endpoint:port>
 ```
 
-After the connection is established, the terminal will display a '>' prompt.
+After the connection is established, the terminal displays a '>' prompt.
 Send individual requests as a JSON data package at each prompt:
 
 ```bash
