@@ -122,30 +122,6 @@ It displays titles to the third level (`###`). After the third level, titles won
 This extension also displays a link on the right of any title called "permalink".
 This link can be used to point directly to the title from another website.
 
-### Highlight
-
-This extension enables automatic syntax highlighting of code blocks. Define the language to ensure correct 
-highlighting. If you don't provide the language name, the extension attempts to automatically discover it 
-but this can lead to errors. 
-
-Example:
-````markdown
-```json
-{
-  "jsonrpc" : "2.0",
-  "id" : 51,
-  "result" : {
-    "startingBlock" : "0x5a0",
-    "currentBlock" : "0xad9",
-    "highestBlock" : "0xad9"
-  }
-}
-```
-```` 
-
-Pygment is the implementation for this extension, refer to Pygment website for a 
-[list of the supported languages](http://pygments.org/languages/).
-
 ### Include
 
 If you have content to be repeated on multiple pages, you can create it in a common page in and include 
@@ -364,6 +340,8 @@ For example, a JSON result is written as:
 ```
 ````
 
+#### Tabbed Code Blocks
+
 [SuperFences] enables additional functionality such as the tabbed code-block.
 
 For example, to group the usage syntax and a usage example in the same block with tabs:
@@ -382,7 +360,45 @@ $ cat extra_data.json | pantheon rlp encode > rlp.txt
 ```
 ````
 
-[SuperFences] also adds line numbers to the code sample which makes it easier when discussing the code the sample.
+#### Line Numbers On Long Code Samples
+
+[SuperFences] can also add [line numbers](https://facelessuser.github.io/pymdown-extensions/extensions/superfences/#showing-line-numbers)
+to the code sample which makes it easier when discussing the code the sample.
+
+The line numbers will only appear on the code block that uses the `linenums="1"` parameter.
+
+Example:
+````markdown
+    ```javascript linenums="1"
+    // A very long javascript sample code
+    ```
+```` 
+
+#### Code Syntax Highlight
+
+Codehilite extension enables automatic syntax highlighting of code blocks. Define the language after
+the code block delimiter to ensure correct highlighting.
+If you don't provide the language name, the extension attempts to automatically discover it 
+but this can lead to errors. 
+
+Example:
+````markdown
+```json
+{
+  "jsonrpc" : "2.0",
+  "id" : 51,
+  "result" : {
+    "startingBlock" : "0x5a0",
+    "currentBlock" : "0xad9",
+    "highestBlock" : "0xad9"
+  }
+}
+```
+```` 
+
+Pygment is the implementation for this extension, refer to Pygment website for a 
+[list of the supported languages](http://pygments.org/languages/).
+
 
 
 [MkDocs]: https://www.mkdocs.org/

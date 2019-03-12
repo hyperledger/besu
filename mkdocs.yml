@@ -97,7 +97,7 @@ markdown_extensions:
     - toc:
         permalink: 
         toc_depth: 3
-    - pymdownx.highlight:
+    - codehilite
     - markdown_include.include:
         base_path: docs
     - admonition
