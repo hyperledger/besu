@@ -63,6 +63,10 @@ pantheon --data-path=Node-1-data-path public-key export --to=Node-1-data-path/pu
 pantheon --data-path=Node-1-data-path public-key export --to=Node-1-data-path\publicKeyNode1
 ```
 
+!!!note
+    The [`--data-path`](../Reference/Pantheon-CLI-Syntax.md#data-path) option is not used when running Pantheon 
+    from the [Docker image](../Getting-Started/Run-Docker-Image.md). Use a volume to [specify the data directory](../Getting-Started/Run-Docker-Image.md#data-directory).
+
 Your node 1 directory now contains: 
 ```bash
 ├── Node-1
@@ -215,6 +219,11 @@ pantheon --data-path=Node-1-data-path --genesis-file=../cliqueGenesis.json --per
 ```bash tab="Windows"
 pantheon --data-path=Node-1-data-path --genesis-file=..\cliqueGenesis.json --permissions-nodes-enabled --permissions-accounts-enabled --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=*    
 ```
+
+!!!note
+    The [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file) option is not used when running 
+    Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md). Use a bind mount to 
+    [specify a configuration file with Docker](../Getting-Started/Run-Docker-Image.md#custom-genesis-file).
 
 The command line specifies: 
 
