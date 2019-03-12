@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Collection;
 import java.util.concurrent.CancellationException;
@@ -26,34 +27,44 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+
+import com.google.common.base.Stopwatch;
 
 public abstract class AbstractEthTask<T> implements EthTask<T> {
 
   private double taskTimeInSec = -1.0D;
-  private final LabelledMetric<OperationTimer> ethTasksTimer;
   private final OperationTimer taskTimer;
   protected final AtomicReference<CompletableFuture<T>> result = new AtomicReference<>();
-  private volatile Collection<CompletableFuture<?>> subTaskFutures = new ConcurrentLinkedDeque<>();
+  private final Collection<CompletableFuture<?>> subTaskFutures = new ConcurrentLinkedDeque<>();
 
   protected AbstractEthTask(final MetricsSystem metricsSystem) {
-    ethTasksTimer =
+    final LabelledMetric<OperationTimer> ethTasksTimer =
         metricsSystem.createLabelledTimer(
             MetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName");
-    taskTimer = ethTasksTimer.labels(getClass().getSimpleName());
+    if (ethTasksTimer == NoOpMetricsSystem.NO_OP_LABELLED_TIMER) {
+      taskTimer =
+          () ->
+              new OperationTimer.TimingContext() {
+                final Stopwatch stopwatch = Stopwatch.createStarted();
+
+                @Override
+                public double stopTimer() {
+                  return stopwatch.elapsed(TimeUnit.MILLISECONDS) / 1000.0;
+                }
+              };
+    } else {
+      taskTimer = ethTasksTimer.labels(getClass().getSimpleName());
+    }
   }
 
   @Override
   public final CompletableFuture<T> run() {
     if (result.compareAndSet(null, new CompletableFuture<>())) {
       executeTaskTimed();
-      result
-          .get()
-          .whenComplete(
-              (r, t) -> {
-                cleanup();
-              });
+      result.get().whenComplete((r, t) -> cleanup());
     }
     return result.get();
   }
@@ -62,12 +73,7 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
   public final CompletableFuture<T> runAsync(final ExecutorService executor) {
     if (result.compareAndSet(null, new CompletableFuture<>())) {
       executor.submit(this::executeTaskTimed);
-      result
-          .get()
-          .whenComplete(
-              (r, t) -> {
-                cleanup();
-              });
+      result.get().whenComplete((r, t) -> cleanup());
     }
     return result.get();
   }
@@ -109,10 +115,7 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
       if (!isCancelled()) {
         final CompletableFuture<S> subTaskFuture = subTask.get();
         subTaskFutures.add(subTaskFuture);
-        subTaskFuture.whenComplete(
-            (r, t) -> {
-              subTaskFutures.remove(subTaskFuture);
-            });
+        subTaskFuture.whenComplete((r, t) -> subTaskFutures.remove(subTaskFuture));
         return subTaskFuture;
       } else {
         return completedExceptionally(new CancellationException());
@@ -121,24 +124,16 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
   }
 
   /**
-   * Utility for registring completable futures for cleanup if this EthTask is cancelled.
+   * Utility for registering completable futures for cleanup if this EthTask is cancelled.
    *
-   * @param subTaskFuture the future to be reigstered.
    * @param <S> the type of data returned from the CompletableFuture
-   * @return The completableFuture that was executed
+   * @param subTaskFuture the future to be registered.
    */
-  protected final <S> CompletableFuture<S> registerSubTask(
-      final CompletableFuture<S> subTaskFuture) {
+  protected final <S> void registerSubTask(final CompletableFuture<S> subTaskFuture) {
     synchronized (result) {
       if (!isCancelled()) {
         subTaskFutures.add(subTaskFuture);
-        subTaskFuture.whenComplete(
-            (r, t) -> {
-              subTaskFutures.remove(subTaskFuture);
-            });
-        return subTaskFuture;
-      } else {
-        return completedExceptionally(new CancellationException());
+        subTaskFuture.whenComplete((r, t) -> subTaskFutures.remove(subTaskFuture));
       }
     }
   }

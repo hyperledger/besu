@@ -15,10 +15,14 @@ package tech.pegasys.pantheon.ethereum.eth.manager.task;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
+import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.LockSupport;
 
 import com.google.common.collect.Lists;
 import org.junit.Test;
@@ -30,7 +34,7 @@ public class AbstractEthTaskTest {
     final CompletableFuture<Void> subtask1 = new CompletableFuture<>();
     final CompletableFuture<Void> subtask2 = new CompletableFuture<>();
     final EthTaskWithMultipleSubtasks task =
-        new EthTaskWithMultipleSubtasks(Lists.newArrayList(subtask1, subtask2));
+        new EthTaskWithMultipleSubtasks(Arrays.asList(subtask1, subtask2));
 
     task.run();
     task.cancel();
@@ -45,7 +49,7 @@ public class AbstractEthTaskTest {
     final CompletableFuture<Void> subtask2 = new CompletableFuture<>();
     final CompletableFuture<Void> subtask3 = new CompletableFuture<>();
     final EthTaskWithMultipleSubtasks task =
-        new EthTaskWithMultipleSubtasks(Lists.newArrayList(subtask1, subtask2, subtask3));
+        new EthTaskWithMultipleSubtasks(Arrays.asList(subtask1, subtask2, subtask3));
 
     task.run();
     subtask1.complete(null);
@@ -63,7 +67,7 @@ public class AbstractEthTaskTest {
     final CompletableFuture<Void> subtask1 = new CompletableFuture<>();
     final CompletableFuture<Void> subtask2 = new CompletableFuture<>();
     final EthTaskWithMultipleSubtasks task =
-        new EthTaskWithMultipleSubtasks(Lists.newArrayList(subtask1, subtask2));
+        new EthTaskWithMultipleSubtasks(Arrays.asList(subtask1, subtask2));
 
     final CompletableFuture<Void> future = task.run();
     subtask1.complete(null);
@@ -76,6 +80,38 @@ public class AbstractEthTaskTest {
         });
 
     assertThat(done).isTrue();
+  }
+
+  @Test
+  public void shouldTakeTimeToExecuteNoOpMetrics() {
+    final AbstractEthTask<Void> waitTask =
+        new AbstractEthTask<Void>(new NoOpMetricsSystem()) {
+          @Override
+          protected void executeTask() {
+            LockSupport.parkNanos(1_000_000);
+          }
+        };
+
+    waitTask.run();
+
+    assertThat(waitTask.getTaskTimeInSec()).isGreaterThan(0.0);
+  }
+
+  @Test
+  public void shouldTakeTimeToExecutePrometheusMetrics() {
+    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
+    metricsConfiguration.setEnabled(true);
+    final AbstractEthTask<Void> waitTask =
+        new AbstractEthTask<Void>(PrometheusMetricsSystem.init(metricsConfiguration)) {
+          @Override
+          protected void executeTask() {
+            LockSupport.parkNanos(1_000_000);
+          }
+        };
+
+    waitTask.run();
+
+    assertThat(waitTask.getTaskTimeInSec()).isGreaterThan(0.0);
   }
 
   private class EthTaskWithMultipleSubtasks extends AbstractEthTask<Void> {

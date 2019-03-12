@@ -22,7 +22,9 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -89,9 +91,10 @@ public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnabl
 
     final long newBlockTimestamp = scheduler.waitUntilNextBlockCanBeMined(parentHeader);
 
+    final Stopwatch stopwatch = Stopwatch.createStarted();
     LOG.trace("Mining a new block with timestamp {}", newBlockTimestamp);
     final Block block = blockCreator.createBlock(newBlockTimestamp);
-    LOG.info(
+    LOG.trace(
         "Block created, importing to local chain, block includes {} transactions",
         block.getBody().getTransactions().size());
 
@@ -101,10 +104,21 @@ public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnabl
         importer.importBlock(protocolContext, block, HeaderValidationMode.FULL);
     if (blockImported) {
       notifyNewBlockListeners(block);
-      LOG.trace("Block {} imported to block chain.", block.getHeader().getNumber());
+      final double taskTimeInSec = stopwatch.elapsed(TimeUnit.MILLISECONDS) / 1000.0;
+      LOG.info(
+          String.format(
+              "Produced and imported block #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs",
+              block.getHeader().getNumber(),
+              block.getBody().getTransactions().size(),
+              block.getBody().getOmmers().size(),
+              block.getHeader().getGasUsed(),
+              (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
+              block.getHash(),
+              taskTimeInSec));
     } else {
       LOG.error("Illegal block mined, could not be imported to local chain.");
     }
+
     return blockImported;
   }
 
