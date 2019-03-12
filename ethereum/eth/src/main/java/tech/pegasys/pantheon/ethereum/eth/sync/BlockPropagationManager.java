@@ -148,7 +148,7 @@ public class BlockPropagationManager<C> {
     }
   }
 
-  void handleNewBlockFromNetwork(final EthMessage message) {
+  private void handleNewBlockFromNetwork(final EthMessage message) {
     final Blockchain blockchain = protocolContext.getBlockchain();
     final NewBlockMessage newBlockMessage = NewBlockMessage.readFrom(message.getData());
     try {
@@ -330,11 +330,17 @@ public class BlockPropagationManager<C> {
                     block.getHeader().getNumber(),
                     block.getHash());
               } else {
-                final double timeInMs = importTask.getTaskTimeInSec() * 1000;
+                final double timeInS = importTask.getTaskTimeInSec();
                 LOG.info(
                     String.format(
-                        "Successfully imported announced block %d (%s) in %01.3fms.",
-                        block.getHeader().getNumber(), block.getHash(), timeInMs));
+                        "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs.",
+                        block.getHeader().getNumber(),
+                        block.getBody().getTransactions().size(),
+                        block.getBody().getOmmers().size(),
+                        block.getHeader().getGasUsed(),
+                        (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
+                        block.getHash(),
+                        timeInS));
               }
             });
   }
