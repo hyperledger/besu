@@ -27,8 +27,9 @@ public enum MetricCategory {
   RPC("rpc"),
   SYNCHRONIZER("synchronizer");
 
+  // Why not BIG_QUEUE and ROCKSDB?  They hurt performance under load.
   public static final Set<MetricCategory> DEFAULT_METRIC_CATEGORIES =
-      EnumSet.allOf(MetricCategory.class);
+      EnumSet.complementOf(EnumSet.of(BIG_QUEUE, ROCKSDB));
 
   private final String name;
   private final boolean pantheonSpecific;
