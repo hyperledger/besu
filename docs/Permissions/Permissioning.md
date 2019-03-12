@@ -143,6 +143,11 @@ must be in the [data directory](../Reference/Pantheon-CLI-Syntax.md#data-path) f
 
 Use the [`--permissions-config-file`](../Reference/Pantheon-CLI-Syntax.md#permissions-config-file) option to specify a permissions configuration file
  in any location.
+ 
+!!!note
+    The [`--permissions-config-file`](../Reference/Pantheon-CLI-Syntax.md#permissions-config-file) option is 
+    not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md). 
+    Use a bind mount to [specify a permissions configuration file with Docker](../Getting-Started/Run-Docker-Image.md#permissions-configuration-file).
 
 !!! example "Example Permissions Configuration File"  
     ```toml 

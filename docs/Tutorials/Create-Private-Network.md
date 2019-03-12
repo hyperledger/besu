@@ -101,6 +101,12 @@ pantheon --data-path=Node-1-data-path --genesis-file=../privateNetworkGenesis.js
 pantheon --data-path=Node-1-data-path --genesis-file=..\privateNetworkGenesis.json public-key export --to=Node-1-data-path\publicKeyNode1
 ```
 
+!!!note
+    The [`--data-path`](../Reference/Pantheon-CLI-Syntax.md#data-path) and [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file) 
+    options are not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md). 
+    Use a bind mount to [specify a configuration file with Docker](../Getting-Started/Run-Docker-Image.md#custom-genesis-file)
+    and volume to [specify the data directory](../Getting-Started/Run-Docker-Image.md#data-directory).
+
 Your node 1 directory now contains: 
 ```bash
 ├── Node-1
