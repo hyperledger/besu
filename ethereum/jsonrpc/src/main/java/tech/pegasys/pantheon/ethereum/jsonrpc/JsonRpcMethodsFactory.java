@@ -280,7 +280,10 @@ public class JsonRpcMethodsFactory {
       addMethods(
           enabledMethods,
           new EeaGetTransactionReceipt(
-              blockchainQueries, new Enclave(privacyParameters.getUrl()), parameter));
+              blockchainQueries,
+              new Enclave(privacyParameters.getUrl()),
+              parameter,
+              privacyParameters));
     }
     return enabledMethods;
   }

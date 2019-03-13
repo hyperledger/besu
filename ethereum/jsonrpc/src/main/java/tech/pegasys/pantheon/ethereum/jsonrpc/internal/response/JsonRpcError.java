@@ -85,7 +85,8 @@ public enum JsonRpcError {
 
   // Private transaction errors
   ENCLAVE_IS_DOWN(-50100, "Enclave is down"),
-  UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE(-50100, "Unimplemented private transaction type");
+  UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE(-50100, "Unimplemented private transaction type"),
+  PRIVATE_TRANSACTION_RECEIPT_ERROR(-50100, "Error generating the private transaction receipt");
 
   private final int code;
   private final String message;

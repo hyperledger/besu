@@ -91,6 +91,11 @@ public class Transactions {
         .build();
   }
 
+  public EeaSendRawTransactionTransaction deployPrivateSmartContract(
+      final String signedRawPrivateTransaction) {
+    return new EeaSendRawTransactionTransaction(signedRawPrivateTransaction);
+  }
+
   public EeaSendRawTransactionTransaction createPrivateRawTransaction(
       final String signedRawPrivateTransaction) {
     return new EeaSendRawTransactionTransaction(signedRawPrivateTransaction);

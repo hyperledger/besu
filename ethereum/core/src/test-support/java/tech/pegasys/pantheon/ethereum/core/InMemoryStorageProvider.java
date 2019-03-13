@@ -18,6 +18,10 @@ import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateKeyValueStorage;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateStateKeyValueStorage;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateStateStorage;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionStorage;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
@@ -55,6 +59,16 @@ public class InMemoryStorageProvider implements StorageProvider {
   @Override
   public WorldStateStorage createWorldStateStorage() {
     return new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+  }
+
+  @Override
+  public PrivateTransactionStorage createPrivateTransactionStorage() {
+    return new PrivateKeyValueStorage(new InMemoryKeyValueStorage());
+  }
+
+  @Override
+  public PrivateStateStorage createPrivateStateStorage() {
+    return new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
   }
 
   @Override

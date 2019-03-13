@@ -1842,6 +1842,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).privacyParameters(enclaveArg.capture());
     verify(mockControllerBuilder).build();
 
+    assertThat(enclaveArg.getValue().isEnabled()).isEqualTo(true);
     assertThat(enclaveArg.getValue().getUrl()).isEqualTo(ENCLAVE_URI);
     assertThat(enclaveArg.getValue().getPublicKey()).isEqualTo(ENCLAVE_PUBLIC_KEY);
 

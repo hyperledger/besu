@@ -18,27 +18,31 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
 
 import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.LogSeries;
 import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.ProcessableBlockHeader;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.mainnet.SpuriousDragonGasCalculator;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateStateStorage;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransaction;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionProcessor;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionStorage;
 import tech.pegasys.pantheon.ethereum.vm.BlockHashLookup;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
 import tech.pegasys.pantheon.ethereum.vm.OperationTracer;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -81,10 +85,11 @@ public class PrivacyPrecompiledContractTest {
 
   private PrivateTransactionProcessor mockPrivateTxProcessor() {
     PrivateTransactionProcessor mockPrivateTransactionProcessor =
-        mock(PrivateTransactionProcessor.class, withSettings().verboseLogging());
+        mock(PrivateTransactionProcessor.class);
+    LogSeries logs = mock(LogSeries.class);
     PrivateTransactionProcessor.Result result =
         PrivateTransactionProcessor.Result.successful(
-            null, 0, BytesValue.fromHexString(DEFAULT_OUTPUT), null);
+            logs, 0, BytesValue.fromHexString(DEFAULT_OUTPUT), null);
     when(mockPrivateTransactionProcessor.processTransaction(
             nullable(Blockchain.class),
             nullable(WorldUpdater.class),
@@ -112,14 +117,37 @@ public class PrivacyPrecompiledContractTest {
     MutableWorldState mutableWorldState = mock(MutableWorldState.class);
     when(mutableWorldState.updater()).thenReturn(mock(WorldUpdater.class));
     when(worldStateArchive.getMutable()).thenReturn(mutableWorldState);
+    when(worldStateArchive.getMutable(any())).thenReturn(Optional.of(mutableWorldState));
+
+    PrivateTransactionStorage privateTransactionStorage = mock(PrivateTransactionStorage.class);
+    PrivateTransactionStorage.Updater updater = mock(PrivateTransactionStorage.Updater.class);
+    when(updater.putTransactionLogs(nullable(Bytes32.class), any())).thenReturn(updater);
+    when(updater.putTransactionResult(nullable(Bytes32.class), any())).thenReturn(updater);
+    when(privateTransactionStorage.updater()).thenReturn(updater);
+
+    PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
+    PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
+    when(storageUpdater.putPrivateAccountState(nullable(Bytes32.class), any()))
+        .thenReturn(storageUpdater);
+    when(privateStateStorage.updater()).thenReturn(storageUpdater);
 
     privacyPrecompiledContract =
         new PrivacyPrecompiledContract(
-            new SpuriousDragonGasCalculator(), publicKey, mockEnclave(), worldStateArchive);
+            new SpuriousDragonGasCalculator(),
+            publicKey,
+            mockEnclave(),
+            worldStateArchive,
+            privateTransactionStorage,
+            privateStateStorage);
     privacyPrecompiledContract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
     brokenPrivateTransactionHandler =
         new PrivacyPrecompiledContract(
-            new SpuriousDragonGasCalculator(), publicKey, brokenMockEnclave(), worldStateArchive);
+            new SpuriousDragonGasCalculator(),
+            publicKey,
+            brokenMockEnclave(),
+            worldStateArchive,
+            privateTransactionStorage,
+            privateStateStorage);
     messageFrame = mock(MessageFrame.class);
   }
 

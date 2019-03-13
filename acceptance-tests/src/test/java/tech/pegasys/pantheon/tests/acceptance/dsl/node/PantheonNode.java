@@ -484,6 +484,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
         .add("keyPair", keyPair)
         .add("p2pEnabled", p2pEnabled)
         .add("discoveryEnabled", discoveryEnabled)
+        .add("privacyEnabled", privacyParameters.isEnabled())
         .toString();
   }
 

@@ -807,6 +807,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
     final PrivacyParameters privacyParameters = PrivacyParameters.noPrivacy();
     if (isPrivacyEnabled) {
+      privacyParameters.setEnabled(true);
       privacyParameters.setUrl(privacyUrl.toString());
       if (privacyPublicKeyFile() != null) {
         privacyParameters.setPublicKeyUsingFile(privacyPublicKeyFile());

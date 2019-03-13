@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Log;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.TransactionReceiptLogResult;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,20 +27,32 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   "contractAddress",
   "from",
   "to",
+  "output",
+  "logs",
 })
 public class PrivateTransactionReceiptResult {
 
   private final String contractAddress;
   private final String from;
   private final String to;
+  private final String output;
+  private final List<TransactionReceiptLogResult> logs;
 
   public PrivateTransactionReceiptResult(
-      final String contractAddress, final String from, final String to) {
-
+      final String contractAddress,
+      final String from,
+      final String to,
+      final List<Log> logs,
+      final BytesValue output,
+      final Hash blockHash,
+      final Hash hash,
+      final long blockNumber,
+      final int txIndex) {
     this.contractAddress = contractAddress;
     this.from = from;
-    // TODO: handle logs as in TransactionReceiptResult
     this.to = to;
+    this.output = output.toString();
+    this.logs = logReceipts(logs, blockNumber, hash, blockHash, txIndex);
   }
 
   @JsonGetter(value = "contractAddress")
@@ -55,6 +68,16 @@ public class PrivateTransactionReceiptResult {
   @JsonGetter(value = "to")
   public String getTo() {
     return to;
+  }
+
+  @JsonGetter(value = "output")
+  public String getOutput() {
+    return output;
+  }
+
+  @JsonGetter(value = "logs")
+  public List<TransactionReceiptLogResult> getLogs() {
+    return logs;
   }
 
   private List<TransactionReceiptLogResult> logReceipts(
