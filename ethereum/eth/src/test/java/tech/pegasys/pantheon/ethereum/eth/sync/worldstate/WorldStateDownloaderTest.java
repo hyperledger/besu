@@ -58,8 +58,8 @@ import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage.Updater;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
-import tech.pegasys.pantheon.services.queue.InMemoryTaskQueue;
-import tech.pegasys.pantheon.services.queue.TaskQueue;
+import tech.pegasys.pantheon.services.tasks.CachingTaskCollection;
+import tech.pegasys.pantheon.services.tasks.InMemoryTaskQueue;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
@@ -152,11 +152,12 @@ public class WorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    final TaskQueue<NodeDataRequest> queue = new InMemoryTaskQueue<>();
+    final CachingTaskCollection<NodeDataRequest> taskCollection =
+        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateStorage localStorage =
         new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
     final WorldStateDownloader downloader =
-        createDownloader(ethProtocolManager.ethContext(), localStorage, queue);
+        createDownloader(ethProtocolManager.ethContext(), localStorage, taskCollection);
 
     final CompletableFuture<Void> future = downloader.run(header);
     assertThat(future).isDone();
@@ -192,9 +193,10 @@ public class WorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    final TaskQueue<NodeDataRequest> queue = new InMemoryTaskQueue<>();
+    final CachingTaskCollection<NodeDataRequest> taskCollection =
+        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateDownloader downloader =
-        createDownloader(ethProtocolManager.ethContext(), storage, queue);
+        createDownloader(ethProtocolManager.ethContext(), storage, taskCollection);
 
     final CompletableFuture<Void> future = downloader.run(header);
     assertThat(future).isDone();
@@ -234,11 +236,12 @@ public class WorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    final TaskQueue<NodeDataRequest> queue = new InMemoryTaskQueue<>();
+    final CachingTaskCollection<NodeDataRequest> taskCollection =
+        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateStorage localStorage =
         new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
     final WorldStateDownloader downloader =
-        createDownloader(ethProtocolManager.ethContext(), localStorage, queue);
+        createDownloader(ethProtocolManager.ethContext(), localStorage, taskCollection);
 
     final CompletableFuture<Void> result = downloader.run(header);
 
@@ -292,7 +295,8 @@ public class WorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    final TaskQueue<NodeDataRequest> queue = new InMemoryTaskQueue<>();
+    final CachingTaskCollection<NodeDataRequest> taskCollection =
+        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateStorage localStorage =
         new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
 
@@ -304,7 +308,7 @@ public class WorldStateDownloaderTest {
     localStorageUpdater.commit();
 
     final WorldStateDownloader downloader =
-        createDownloader(ethProtocolManager.ethContext(), localStorage, queue);
+        createDownloader(ethProtocolManager.ethContext(), localStorage, taskCollection);
 
     final CompletableFuture<Void> result = downloader.run(header);
 
@@ -377,12 +381,13 @@ public class WorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    final TaskQueue<NodeDataRequest> queue = spy(new InMemoryTaskQueue<>());
+    final CachingTaskCollection<NodeDataRequest> taskCollection =
+        spy(new CachingTaskCollection<>(new InMemoryTaskQueue<>()));
     final WorldStateStorage localStorage =
         new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
 
     final WorldStateDownloader downloader =
-        createDownloader(ethProtocolManager.ethContext(), localStorage, queue);
+        createDownloader(ethProtocolManager.ethContext(), localStorage, taskCollection);
 
     final CompletableFuture<Void> result = downloader.run(header);
 
@@ -398,8 +403,8 @@ public class WorldStateDownloaderTest {
     }
     assertThat(result.isDone()).isFalse(); // Sanity check
 
-    // Reset queue so we can track interactions after the cancellation
-    reset(queue);
+    // Reset taskCollection so we can track interactions after the cancellation
+    reset(taskCollection);
     if (shouldCancelFuture) {
       result.cancel(true);
     } else {
@@ -418,9 +423,9 @@ public class WorldStateDownloaderTest {
     // Now allow the persistence service to run which should exit immediately
     serviceExecutor.runPendingFutures();
 
-    verify(queue, times(1)).clear();
-    verify(queue, never()).dequeue();
-    verify(queue, never()).enqueue(any());
+    verify(taskCollection, times(1)).clear();
+    verify(taskCollection, never()).remove();
+    verify(taskCollection, never()).add(any());
     // Target world state should not be available
     assertThat(localStorage.isWorldStateAvailable(header.getStateRoot())).isFalse();
   }
@@ -450,7 +455,8 @@ public class WorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    final TaskQueue<NodeDataRequest> queue = new InMemoryTaskQueue<>();
+    final CachingTaskCollection<NodeDataRequest> taskCollection =
+        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateStorage localStorage =
         new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
 
@@ -475,7 +481,7 @@ public class WorldStateDownloaderTest {
     localStorageUpdater.commit();
 
     final WorldStateDownloader downloader =
-        createDownloader(ethProtocolManager.ethContext(), localStorage, queue);
+        createDownloader(ethProtocolManager.ethContext(), localStorage, taskCollection);
 
     final CompletableFuture<Void> result = downloader.run(header);
 
@@ -536,7 +542,8 @@ public class WorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    final TaskQueue<NodeDataRequest> queue = new InMemoryTaskQueue<>();
+    final CachingTaskCollection<NodeDataRequest> taskCollection =
+        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateStorage localStorage =
         new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
 
@@ -576,7 +583,7 @@ public class WorldStateDownloaderTest {
     localStorageUpdater.commit();
 
     final WorldStateDownloader downloader =
-        createDownloader(ethProtocolManager.ethContext(), localStorage, queue);
+        createDownloader(ethProtocolManager.ethContext(), localStorage, taskCollection);
 
     final CompletableFuture<Void> result = downloader.run(header);
 
@@ -632,13 +639,14 @@ public class WorldStateDownloaderTest {
     final BlockHeader header =
         dataGen.block(BlockOptions.create().setStateRoot(stateRoot).setBlockNumber(10)).getHeader();
 
-    final TaskQueue<NodeDataRequest> queue = new InMemoryTaskQueue<>();
+    final CachingTaskCollection<NodeDataRequest> taskCollection =
+        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateStorage localStorage =
         new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
     final SynchronizerConfiguration syncConfig =
         SynchronizerConfiguration.builder().worldStateMaxRequestsWithoutProgress(10).build();
     final WorldStateDownloader downloader =
-        createDownloader(syncConfig, ethProtocolManager.ethContext(), localStorage, queue);
+        createDownloader(syncConfig, ethProtocolManager.ethContext(), localStorage, taskCollection);
 
     // Create a peer that can respond
     final RespondingEthPeer peer =
@@ -687,17 +695,18 @@ public class WorldStateDownloaderTest {
     final BlockHeader header =
         dataGen.block(BlockOptions.create().setStateRoot(stateRoot).setBlockNumber(10)).getHeader();
 
-    // Add some nodes to the queue
-    final TaskQueue<NodeDataRequest> queue = spy(new InMemoryTaskQueue<>());
+    // Add some nodes to the taskCollection
+    final CachingTaskCollection<NodeDataRequest> taskCollection =
+        spy(new CachingTaskCollection<>(new InMemoryTaskQueue<>()));
     List<Bytes32> queuedHashes = getFirstSetOfChildNodeRequests(remoteStorage, stateRoot);
     assertThat(queuedHashes.size()).isGreaterThan(0); // Sanity check
     for (Bytes32 bytes32 : queuedHashes) {
-      queue.enqueue(new AccountTrieNodeDataRequest(Hash.wrap(bytes32)));
+      taskCollection.add(new AccountTrieNodeDataRequest(Hash.wrap(bytes32)));
     }
     // Sanity check
     for (Bytes32 bytes32 : queuedHashes) {
       final Hash hash = Hash.wrap(bytes32);
-      verify(queue, times(1)).enqueue(argThat((r) -> r.getHash().equals(hash)));
+      verify(taskCollection, times(1)).add(argThat((r) -> r.getHash().equals(hash)));
     }
 
     final WorldStateStorage localStorage =
@@ -705,7 +714,7 @@ public class WorldStateDownloaderTest {
     final SynchronizerConfiguration syncConfig =
         SynchronizerConfiguration.builder().worldStateMaxRequestsWithoutProgress(10).build();
     final WorldStateDownloader downloader =
-        createDownloader(syncConfig, ethProtocolManager.ethContext(), localStorage, queue);
+        createDownloader(syncConfig, ethProtocolManager.ethContext(), localStorage, taskCollection);
 
     // Create a peer that can respond
     final RespondingEthPeer peer =
@@ -738,7 +747,7 @@ public class WorldStateDownloaderTest {
     // Check that already enqueued requests were not enqueued more than once
     for (Bytes32 bytes32 : queuedHashes) {
       final Hash hash = Hash.wrap(bytes32);
-      verify(queue, times(1)).enqueue(argThat((r) -> r.getHash().equals(hash)));
+      verify(taskCollection, times(1)).add(argThat((r) -> r.getHash().equals(hash)));
     }
 
     // Check that all expected account data was downloaded
@@ -837,7 +846,8 @@ public class WorldStateDownloaderTest {
             .getHeader();
     assertThat(otherStateRoot).isNotEqualTo(stateRoot); // Sanity check
 
-    final TaskQueue<NodeDataRequest> queue = new InMemoryTaskQueue<>();
+    final CachingTaskCollection<NodeDataRequest> taskCollection =
+        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateStorage localStorage =
         new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
     final WorldStateArchive localWorldStateArchive = new WorldStateArchive(localStorage);
@@ -847,7 +857,7 @@ public class WorldStateDownloaderTest {
             .worldStateRequestParallelism(maxOutstandingRequests)
             .build();
     final WorldStateDownloader downloader =
-        createDownloader(syncConfig, ethProtocolManager.ethContext(), localStorage, queue);
+        createDownloader(syncConfig, ethProtocolManager.ethContext(), localStorage, taskCollection);
 
     // Create some peers that can respond
     final List<RespondingEthPeer> usefulPeers =
@@ -977,19 +987,20 @@ public class WorldStateDownloaderTest {
   private WorldStateDownloader createDownloader(
       final EthContext context,
       final WorldStateStorage storage,
-      final TaskQueue<NodeDataRequest> queue) {
-    return createDownloader(SynchronizerConfiguration.builder().build(), context, storage, queue);
+      final CachingTaskCollection<NodeDataRequest> taskCollection) {
+    return createDownloader(
+        SynchronizerConfiguration.builder().build(), context, storage, taskCollection);
   }
 
   private WorldStateDownloader createDownloader(
       final SynchronizerConfiguration config,
       final EthContext context,
       final WorldStateStorage storage,
-      final TaskQueue<NodeDataRequest> queue) {
+      final CachingTaskCollection<NodeDataRequest> taskCollection) {
     return new WorldStateDownloader(
         context,
         storage,
-        queue,
+        taskCollection,
         config.getWorldStateHashCountPerRequest(),
         config.getWorldStateRequestParallelism(),
         config.getWorldStateMaxRequestsWithoutProgress(),

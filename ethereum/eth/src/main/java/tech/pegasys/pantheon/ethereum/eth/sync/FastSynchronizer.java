@@ -25,9 +25,10 @@ import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
+import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
-import tech.pegasys.pantheon.services.queue.RocksDbTaskQueue;
-import tech.pegasys.pantheon.services.queue.TaskQueue;
+import tech.pegasys.pantheon.services.tasks.CachingTaskCollection;
+import tech.pegasys.pantheon.services.tasks.RocksDbTaskQueue;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,19 +46,19 @@ class FastSynchronizer<C> {
 
   private final FastSyncDownloader<C> fastSyncDownloader;
   private final Path fastSyncDataDirectory;
-  private final TaskQueue<NodeDataRequest> stateQueue;
+  private final CachingTaskCollection<NodeDataRequest> taskCollection;
   private final WorldStateDownloader worldStateDownloader;
   private final FastSyncState initialSyncState;
 
   private FastSynchronizer(
       final FastSyncDownloader<C> fastSyncDownloader,
       final Path fastSyncDataDirectory,
-      final TaskQueue<NodeDataRequest> stateQueue,
+      final CachingTaskCollection<NodeDataRequest> taskCollection,
       final WorldStateDownloader worldStateDownloader,
       final FastSyncState initialSyncState) {
     this.fastSyncDownloader = fastSyncDownloader;
     this.fastSyncDataDirectory = fastSyncDataDirectory;
-    this.stateQueue = stateQueue;
+    this.taskCollection = taskCollection;
     this.worldStateDownloader = worldStateDownloader;
     this.initialSyncState = initialSyncState;
   }
@@ -88,13 +89,14 @@ class FastSynchronizer<C> {
       return Optional.empty();
     }
 
-    final TaskQueue<NodeDataRequest> stateQueue =
-        createWorldStateDownloaderQueue(getStateQueueDirectory(dataDirectory), metricsSystem);
+    final CachingTaskCollection<NodeDataRequest> taskCollection =
+        createWorldStateDownloaderTaskCollection(
+            getStateQueueDirectory(dataDirectory), metricsSystem);
     final WorldStateDownloader worldStateDownloader =
         new WorldStateDownloader(
             ethContext,
             worldStateStorage,
-            stateQueue,
+            taskCollection,
             syncConfig.getWorldStateHashCountPerRequest(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
@@ -114,7 +116,7 @@ class FastSynchronizer<C> {
         new FastSynchronizer<>(
             fastSyncDownloader,
             fastSyncDataDirectory,
-            stateQueue,
+            taskCollection,
             worldStateDownloader,
             fastSyncState));
   }
@@ -128,7 +130,7 @@ class FastSynchronizer<C> {
     // Make sure downloader is stopped before we start cleaning up its dependencies
     worldStateDownloader.cancel();
     try {
-      stateQueue.close();
+      taskCollection.close();
       if (fastSyncDataDirectory.toFile().exists()) {
         // Clean up this data for now (until fast sync resume functionality is in place)
         MoreFiles.deleteRecursively(fastSyncDataDirectory, RecursiveDeleteOption.ALLOW_INSECURE);
@@ -156,9 +158,33 @@ class FastSynchronizer<C> {
     }
   }
 
-  private static TaskQueue<NodeDataRequest> createWorldStateDownloaderQueue(
+  private static CachingTaskCollection<NodeDataRequest> createWorldStateDownloaderTaskCollection(
       final Path dataDirectory, final MetricsSystem metricsSystem) {
-    return RocksDbTaskQueue.create(
-        dataDirectory, NodeDataRequest::serialize, NodeDataRequest::deserialize, metricsSystem);
+    final CachingTaskCollection<NodeDataRequest> taskCollection =
+        new CachingTaskCollection<>(
+            RocksDbTaskQueue.create(
+                dataDirectory,
+                NodeDataRequest::serialize,
+                NodeDataRequest::deserialize,
+                metricsSystem));
+
+    metricsSystem.createLongGauge(
+        MetricCategory.SYNCHRONIZER,
+        "world_state_pending_requests_current",
+        "Number of pending requests for fast sync world state download",
+        taskCollection::size);
+
+    metricsSystem.createIntegerGauge(
+        MetricCategory.SYNCHRONIZER,
+        "world_state_pending_requests_cache_size",
+        "Pending request cache size for fast sync world state download",
+        taskCollection::cacheSize);
+
+    // We're using the CachingTaskCollection which isn't designed to reliably persist all
+    // added tasks.  We therefore can't resume from previously added tasks.
+    // So for now, clear tasks when we start up.
+    taskCollection.clear();
+
+    return taskCollection;
   }
 }
