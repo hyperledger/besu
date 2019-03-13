@@ -14,7 +14,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'pantheon-eth'
+  baseName 'pantheon-tasks'
   manifest {
     attributes(
       'Specification-Title': baseName,
@@ -26,31 +26,19 @@ jar {
 }
 
 dependencies {
-  implementation project(':ethereum:core')
-  implementation project(':ethereum:p2p')
-  implementation project(':ethereum:rlp')
-  implementation project(':ethereum:trie')
-  implementation project(':ethereum:permissioning')
-  implementation project(':metrics')
-  implementation project(':services:kvstore')
-  implementation project(':services:tasks')
-
-  implementation 'io.vertx:vertx-core'
-  implementation 'com.google.guava:guava'
+  api project(':util')
 
   compileOnly 'org.openjdk.jmh:jmh-generator-annprocess'
 
-  testImplementation project(':config')
-  testImplementation project(':crypto')
-  testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
-  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation project(':ethereum:mock-p2p')
-  testImplementation project(':testutil')
+  implementation project(':metrics')
+  implementation project(':services:util')
+
+  implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'com.google.guava:guava'
+  implementation 'org.rocksdb:rocksdbjni'
+
+  runtime 'org.apache.logging.log4j:log4j-core'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.awaitility:awaitility'
-  testImplementation 'org.mockito:mockito-core'
-
-  jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 }
