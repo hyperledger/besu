@@ -11,7 +11,9 @@ Pantheon implements a number of consensus protocols:
   
 * [IBFT 2.0](IBFT.md) (Proof of Authority) 
 
-The genesis file specifies the consensus protocol for a chain `config`: 
+* [Quorum IBFT 1.0](QuorumIBFT.md) (Proof of Authority) 
+
+The genesis file specifies the consensus protocol for a chain in the `config` property: 
 
 ```json tab="Ethash"
 {
@@ -48,3 +50,16 @@ The genesis file specifies the consensus protocol for a chain `config`:
   ...
 }
 ``` 
+
+```json tab="IBFT 1.0" 
+{
+  "config": {
+    ....
+    "ibft": {
+      ...     
+   }
+  },
+  ...
+}
+```
+
