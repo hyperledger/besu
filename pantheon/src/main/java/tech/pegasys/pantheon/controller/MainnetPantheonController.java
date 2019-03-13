@@ -104,7 +104,8 @@ public class MainnetPantheonController implements PantheonController<Void> {
       final PrivacyParameters privacyParameters,
       final Path dataDirectory,
       final MetricsSystem metricsSystem,
-      final Clock clock) {
+      final Clock clock,
+      final int maxPendingTransactions) {
 
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
     final ProtocolContext<Void> protocolContext =
@@ -148,7 +149,11 @@ public class MainnetPantheonController implements PantheonController<Void> {
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
-            protocolSchedule, protocolContext, ethProtocolManager.ethContext(), clock);
+            protocolSchedule,
+            protocolContext,
+            ethProtocolManager.ethContext(),
+            clock,
+            maxPendingTransactions);
 
     final ExecutorService minerThreadPool = Executors.newCachedThreadPool();
     final EthHashMinerExecutor executor =

@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
+import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
@@ -60,7 +61,8 @@ public final class BlockImporterTest {
             new NoOpMetricsSystem(),
             PrivacyParameters.noPrivacy(),
             dataDir,
-            TestClock.fixed());
+            TestClock.fixed(),
+            PendingTransactions.MAX_PENDING_TRANSACTIONS);
     final BlockImporter.ImportResult result =
         blockImporter.importBlockchain(source, targetController);
     // Don't count the Genesis block
@@ -96,7 +98,8 @@ public final class BlockImporterTest {
             new NoOpMetricsSystem(),
             PrivacyParameters.noPrivacy(),
             dataDir,
-            TestClock.fixed());
+            TestClock.fixed(),
+            PendingTransactions.MAX_PENDING_TRANSACTIONS);
     final BlockImporter.ImportResult result = blockImporter.importBlockchain(source, controller);
 
     // Don't count the Genesis block

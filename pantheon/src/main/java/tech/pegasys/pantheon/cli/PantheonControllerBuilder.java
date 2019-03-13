@@ -40,6 +40,7 @@ public class PantheonControllerBuilder {
   private File nodePrivateKeyFile;
   private MetricsSystem metricsSystem;
   private PrivacyParameters privacyParameters;
+  private Integer maxPendingTransactions;
 
   public PantheonControllerBuilder synchronizerConfiguration(
       final SynchronizerConfiguration synchronizerConfiguration) {
@@ -77,6 +78,11 @@ public class PantheonControllerBuilder {
     return this;
   }
 
+  public PantheonControllerBuilder maxPendingTransactions(final Integer maxPendingTransactions) {
+    this.maxPendingTransactions = maxPendingTransactions;
+    return this;
+  }
+
   public PantheonControllerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
     this.privacyParameters = privacyParameters;
     return this;
@@ -108,6 +114,7 @@ public class PantheonControllerBuilder {
         metricsSystem,
         privacyParameters,
         homePath,
-        clock);
+        clock,
+        maxPendingTransactions);
   }
 }

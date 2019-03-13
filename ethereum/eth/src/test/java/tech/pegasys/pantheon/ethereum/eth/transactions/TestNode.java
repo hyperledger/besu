@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
+import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
@@ -133,7 +134,11 @@ public class TestNode implements Closeable {
     final EthContext ethContext = ethProtocolManager.ethContext();
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
-            protocolSchedule, protocolContext, ethContext, TestClock.fixed());
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            TestClock.fixed(),
+            PendingTransactions.MAX_PENDING_TRANSACTIONS);
     networkRunner.start();
 
     selfPeer = new DefaultPeer(id(), endpoint());

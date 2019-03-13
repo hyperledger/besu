@@ -101,7 +101,8 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
       final KeyPair nodeKeys,
       final Path dataDirectory,
       final MetricsSystem metricsSystem,
-      final Clock clock) {
+      final Clock clock,
+      final int maxPendingTransactions) {
     final ProtocolSchedule<IbftContext> protocolSchedule =
         IbftProtocolSchedule.create(genesisConfig.getConfigOptions());
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
@@ -168,7 +169,11 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
-            protocolSchedule, protocolContext, istanbul64ProtocolManager.ethContext(), clock);
+            protocolSchedule,
+            protocolContext,
+            istanbul64ProtocolManager.ethContext(),
+            clock,
+            maxPendingTransactions);
 
     return new IbftLegacyPantheonController(
         protocolSchedule,
