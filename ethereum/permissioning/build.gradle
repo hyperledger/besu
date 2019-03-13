@@ -28,12 +28,16 @@ jar {
 dependencies {
   implementation project(':util')
   implementation project(':ethereum:core')
+  implementation project(':crypto')
 
   implementation 'com.google.guava:guava'
   implementation 'net.consensys.cava:cava-toml'
   implementation 'org.apache.logging.log4j:log4j-api'
 
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(':config')
   testImplementation 'junit:junit'
+  testImplementation 'io.vertx:vertx-core'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
 }

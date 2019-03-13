@@ -72,6 +72,10 @@ public class TransactionSimulator {
     return process(callParams, header);
   }
 
+  public Optional<TransactionSimulatorResult> processAtHead(final CallParameter callParams) {
+    return process(callParams, blockchain.getChainHeadHeader());
+  }
+
   private Optional<TransactionSimulatorResult> process(
       final CallParameter callParams, final BlockHeader header) {
     if (header == null) {
