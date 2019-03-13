@@ -139,7 +139,8 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
       final KeyPair nodeKeys,
       final Path dataDirectory,
       final MetricsSystem metricsSystem,
-      final Clock clock) {
+      final Clock clock,
+      final int maxPendingTransactions) {
     final ProtocolSchedule<IbftContext> protocolSchedule =
         IbftProtocolSchedule.create(genesisConfig.getConfigOptions());
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
@@ -196,7 +197,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
-            protocolSchedule, protocolContext, ethContext, clock);
+            protocolSchedule, protocolContext, ethContext, clock, maxPendingTransactions);
 
     final IbftEventQueue ibftEventQueue = new IbftEventQueue(ibftConfig.getMessageQueueLimit());
 

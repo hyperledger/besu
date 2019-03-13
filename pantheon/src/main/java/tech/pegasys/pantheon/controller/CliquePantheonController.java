@@ -111,7 +111,8 @@ public class CliquePantheonController implements PantheonController<CliqueContex
       final KeyPair nodeKeys,
       final Path dataDirectory,
       final MetricsSystem metricsSystem,
-      final Clock clock) {
+      final Clock clock,
+      final int maxPendingTransactions) {
     final Address localAddress = Util.publicKeyToAddress(nodeKeys.getPublicKey());
     final CliqueConfigOptions cliqueConfig =
         genesisConfig.getConfigOptions().getCliqueConfigOptions();
@@ -166,7 +167,11 @@ public class CliquePantheonController implements PantheonController<CliqueContex
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
-            protocolSchedule, protocolContext, ethProtocolManager.ethContext(), clock);
+            protocolSchedule,
+            protocolContext,
+            ethProtocolManager.ethContext(),
+            clock,
+            maxPendingTransactions);
 
     final ExecutorService minerThreadPool = Executors.newCachedThreadPool();
     final CliqueMinerExecutor miningExecutor =

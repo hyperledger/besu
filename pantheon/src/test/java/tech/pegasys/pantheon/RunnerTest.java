@@ -28,6 +28,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockImporter;
 import tech.pegasys.pantheon.ethereum.core.BlockSyncTestUtils;
 import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
+import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
@@ -111,7 +112,8 @@ public final class RunnerTest {
             PrivacyParameters.noPrivacy(),
             dataDirAhead,
             noOpMetricsSystem,
-            TestClock.fixed())) {
+            TestClock.fixed(),
+            PendingTransactions.MAX_PENDING_TRANSACTIONS)) {
       setupState(blockCount, controller.getProtocolSchedule(), controller.getProtocolContext());
     }
 
@@ -128,7 +130,8 @@ public final class RunnerTest {
             PrivacyParameters.noPrivacy(),
             dataDirAhead,
             noOpMetricsSystem,
-            TestClock.fixed());
+            TestClock.fixed(),
+            PendingTransactions.MAX_PENDING_TRANSACTIONS);
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
     final JsonRpcConfiguration aheadJsonRpcConfiguration = jsonRpcConfiguration();
     final WebSocketConfiguration aheadWebSocketConfiguration = wsRpcConfiguration();
@@ -184,7 +187,8 @@ public final class RunnerTest {
               PrivacyParameters.noPrivacy(),
               dataDirBehind,
               noOpMetricsSystem,
-              TestClock.fixed());
+              TestClock.fixed(),
+              PendingTransactions.MAX_PENDING_TRANSACTIONS);
       final Peer advertisedPeer = runnerAhead.getAdvertisedPeer().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(

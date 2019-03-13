@@ -29,6 +29,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
@@ -1015,7 +1016,11 @@ public final class EthProtocolManagerTest {
       // Create a transaction pool.  This has a side effect of registring a listener for the
       // transactions message.
       TransactionPoolFactory.createTransactionPool(
-          protocolSchedule, protocolContext, ethManager.ethContext(), TestClock.fixed());
+          protocolSchedule,
+          protocolContext,
+          ethManager.ethContext(),
+          TestClock.fixed(),
+          PendingTransactions.MAX_PENDING_TRANSACTIONS);
 
       // Send just a transaction message.
       final PeerConnection peer = setupPeer(ethManager, (cap, msg, connection) -> {});

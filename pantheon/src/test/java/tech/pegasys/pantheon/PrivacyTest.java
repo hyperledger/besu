@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
+import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.mainnet.PrecompiledContract;
@@ -58,7 +59,8 @@ public class PrivacyTest {
                 new NoOpMetricsSystem(),
                 privacyParameters,
                 dataDir,
-                TestClock.fixed());
+                TestClock.fixed(),
+                PendingTransactions.MAX_PENDING_TRANSACTIONS);
 
     Address privacyContractAddress = Address.privacyPrecompiled(ADDRESS);
     PrecompiledContract precompiledContract =
