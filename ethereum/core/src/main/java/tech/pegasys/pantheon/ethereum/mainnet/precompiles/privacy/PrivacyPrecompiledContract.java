@@ -18,17 +18,24 @@ import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
 import tech.pegasys.pantheon.ethereum.core.Gas;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.mainnet.AbstractPrecompiledContract;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionProcessor;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateStateStorage;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransaction;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionProcessor;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionStorage;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
+import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
 import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
 import tech.pegasys.pantheon.ethereum.vm.OperationTracer;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -41,7 +48,10 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   private final Enclave enclave;
   private final String enclavePublicKey;
   private final WorldStateArchive privateWorldStateArchive;
+  private final PrivateTransactionStorage privateTransactionStorage;
+  private final PrivateStateStorage privateStateStorage;
   private PrivateTransactionProcessor privateTransactionProcessor;
+  private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -51,18 +61,24 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         gasCalculator,
         privacyParameters.getPublicKey(),
         new Enclave(privacyParameters.getUrl()),
-        privacyParameters.getPrivateWorldStateArchive());
+        privacyParameters.getPrivateWorldStateArchive(),
+        privacyParameters.getPrivateTransactionStorage(),
+        privacyParameters.getPrivateStateStorage());
   }
 
   PrivacyPrecompiledContract(
       final GasCalculator gasCalculator,
       final String publicKey,
       final Enclave enclave,
-      final WorldStateArchive worldStateArchive) {
+      final WorldStateArchive worldStateArchive,
+      final PrivateTransactionStorage privateTransactionStorage,
+      final PrivateStateStorage privateStateStorage) {
     super("Privacy", gasCalculator);
     this.enclave = enclave;
     this.enclavePublicKey = publicKey;
     this.privateWorldStateArchive = worldStateArchive;
+    this.privateTransactionStorage = privateTransactionStorage;
+    this.privateStateStorage = privateStateStorage;
   }
 
   public void setPrivateTransactionProcessor(
@@ -89,21 +105,50 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       PrivateTransaction privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
 
       WorldUpdater publicWorldState = messageFrame.getWorldState();
-      WorldUpdater privateWorldState = privateWorldStateArchive.getMutable().updater();
+      // get the last world state root hash - or create a new one
+      BytesValue privacyGroupId = BytesValue.wrap("0".getBytes(UTF_8));
+
+      Hash lastRootHash =
+          privateStateStorage.getPrivateAccountState(privacyGroupId).orElse(EMPTY_ROOT_HASH);
+      MutableWorldState disposablePrivateState =
+          privateWorldStateArchive.getMutable(lastRootHash).get();
+
+      WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
+
       TransactionProcessor.Result result =
           privateTransactionProcessor.processTransaction(
               messageFrame.getBlockchain(),
               publicWorldState,
-              privateWorldState,
+              privateWorldStateUpdater,
               messageFrame.getBlockHeader(),
               privateTransaction,
               messageFrame.getMiningBeneficiary(),
               OperationTracer.NO_TRACING,
               messageFrame.getBlockHashLookup());
 
+      if (result.isInvalid() || !result.isSuccessful()) {
+        throw new Exception("Unable to process the private transaction");
+      }
+
+      privateWorldStateUpdater.commit();
+      disposablePrivateState.persist();
+      PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
+      privateStateUpdater.putPrivateAccountState(privacyGroupId, disposablePrivateState.rootHash());
+      privateStateUpdater.commit();
+
+      BytesValue rlpEncoded = RLP.encode(privateTransaction::writeTo);
+      Bytes32 txHash = tech.pegasys.pantheon.crypto.Hash.keccak256(rlpEncoded);
+      PrivateTransactionStorage.Updater privateUpdater = privateTransactionStorage.updater();
+      privateUpdater.putTransactionLogs(txHash, result.getLogs());
+      privateUpdater.putTransactionResult(txHash, result.getOutput());
+      privateUpdater.commit();
+
       return result.getOutput();
     } catch (IOException e) {
       LOG.fatal("Enclave threw an unhandled exception.", e);
+      return BytesValue.EMPTY;
+    } catch (Exception e) {
+      LOG.fatal(e.getMessage());
       return BytesValue.EMPTY;
     }
   }

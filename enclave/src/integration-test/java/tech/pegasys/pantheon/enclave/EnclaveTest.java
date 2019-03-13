@@ -17,6 +17,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import tech.pegasys.orion.testutil.OrionTestHarness;
+import tech.pegasys.orion.testutil.OrionTestHarnessFactory;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
 import tech.pegasys.pantheon.enclave.types.SendRequest;
@@ -45,7 +46,9 @@ public class EnclaveTest {
   public static void setUpOnce() throws Exception {
     folder.create();
 
-    testHarness = OrionTestHarness.create(folder.newFolder().toPath());
+    testHarness =
+        OrionTestHarnessFactory.create(
+            folder.newFolder().toPath(), "orion_key_0.pub", "orion_key_0.key");
 
     enclave = new Enclave(testHarness.clientUrl());
   }
@@ -65,10 +68,10 @@ public class EnclaveTest {
     List<String> publicKeys = testHarness.getPublicKeys();
 
     SendRequest sc =
-        new SendRequest(PAYLOAD, publicKeys.get(0), Lists.newArrayList(publicKeys.get(1)));
+        new SendRequest(PAYLOAD, publicKeys.get(0), Lists.newArrayList(publicKeys.get(0)));
     SendResponse sr = enclave.send(sc);
 
-    ReceiveRequest rc = new ReceiveRequest(sr.getKey(), publicKeys.get(1));
+    ReceiveRequest rc = new ReceiveRequest(sr.getKey(), publicKeys.get(0));
     ReceiveResponse rr = enclave.receive(rc);
 
     assertEquals(PAYLOAD, new String(rr.getPayload(), UTF_8));

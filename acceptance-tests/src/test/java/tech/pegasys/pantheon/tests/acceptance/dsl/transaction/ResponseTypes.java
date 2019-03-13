@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.web3j.protocol.core.Response;
+import org.web3j.protocol.core.methods.response.Log;
 
 public class ResponseTypes {
   public static class ProposeResponse extends Response<Boolean> {}
@@ -47,6 +48,8 @@ public class ResponseTypes {
     private String contractAddress;
     private String from;
     private String to;
+    private String output;
+    private List<Log> logs;
 
     public PrivateTransactionReceipt() {}
 
@@ -72,6 +75,22 @@ public class ResponseTypes {
 
     public void setTo(final String to) {
       this.to = to;
+    }
+
+    public List<Log> getLogs() {
+      return logs;
+    }
+
+    public void setLogs(final List<Log> logs) {
+      this.logs = logs;
+    }
+
+    public String getOutput() {
+      return output;
+    }
+
+    public void setOutput(final String output) {
+      this.output = output;
     }
   }
 }

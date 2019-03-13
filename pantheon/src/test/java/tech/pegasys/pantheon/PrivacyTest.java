@@ -46,6 +46,7 @@ public class PrivacyTest {
     PrivacyParameters privacyParameters = PrivacyParameters.noPrivacy();
     privacyParameters.setPrivacyAddress(ADDRESS);
     privacyParameters.setEnabled(true);
+    privacyParameters.enablePrivateDB(dataDir);
 
     MainnetPantheonController mainnetPantheonController =
         (MainnetPantheonController)
