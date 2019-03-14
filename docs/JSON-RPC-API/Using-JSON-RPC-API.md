@@ -46,7 +46,7 @@ To use the geth console with Pantheon:
 
 1. Specify which APIs to enable using the [`--rpc-http-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-api) option. 
 
-1. Start the geth console: 
+1. Start the geth console specifying the JSON-RPC endpoint: 
    ```bash
     geth attach http://localhost:8545
    ``` 
@@ -87,7 +87,7 @@ Specify * or all for `--host-whitelist` to effectively disable host protection.
 To make RPC requests over HTTP, you can use [`curl`](https://curl.haxx.se/download.html).
 
 ```bash
-$ curl -X POST --data '{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":53}' <JSON-RPC-http-endpoint:port>
+curl -X POST --data '{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":53}' <JSON-RPC-http-endpoint:port>
 ```
 
 ### WebSockets
@@ -97,14 +97,14 @@ To make RPC requests over WebSockets, you can use [wscat](https://github.com/web
 First connect to the WebSockets server using `wscat` (you only need to connect once per session):
 
 ```bash
-$ wscat -c ws://<JSON-RPC-ws-endpoint:port>
+wscat -c ws://<JSON-RPC-ws-endpoint:port>
 ```
 
 After the connection is established, the terminal displays a '>' prompt.
 Send individual requests as a JSON data package at each prompt:
 
 ```bash
-> {"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":53}
+{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":53}
 ```
 
 !!! note 
