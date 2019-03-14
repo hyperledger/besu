@@ -15,8 +15,10 @@ package tech.pegasys.pantheon.ethereum.permissioning.node;
 import tech.pegasys.pantheon.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
+import java.util.List;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,26 +27,43 @@ public class NodePermissioningController {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Optional<SyncStatusNodePermissioningProvider> syncStatusNodePermissioningProvider;
+  private List<NodePermissioningProvider> providers;
 
   public NodePermissioningController(
-      final SyncStatusNodePermissioningProvider syncStatusNodePermissioningProvider) {
-    this.syncStatusNodePermissioningProvider = Optional.of(syncStatusNodePermissioningProvider);
-  }
-
-  public NodePermissioningController() {
-    this.syncStatusNodePermissioningProvider = Optional.empty();
+      final Optional<SyncStatusNodePermissioningProvider> syncStatusNodePermissioningProvider,
+      final List<NodePermissioningProvider> providers) {
+    this.providers = providers;
+    this.syncStatusNodePermissioningProvider = syncStatusNodePermissioningProvider;
   }
 
   public boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
     LOG.trace("Checking node permission: {} -> {}", sourceEnode, destinationEnode);
 
-    return syncStatusNodePermissioningProvider
-        .map((provider) -> provider.isPermitted(sourceEnode, destinationEnode))
-        .orElse(true);
+    if (syncStatusNodePermissioningProvider.isPresent()
+        && !syncStatusNodePermissioningProvider.get().isPermitted(sourceEnode, destinationEnode)) {
+      return false;
+    } else {
+      for (NodePermissioningProvider provider : providers) {
+        if (!provider.isPermitted(sourceEnode, destinationEnode)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   public void startPeerDiscoveryCallback(final Runnable peerDiscoveryCallback) {
     syncStatusNodePermissioningProvider.ifPresent(
         (p) -> p.setHasReachedSyncCallback(peerDiscoveryCallback));
+  }
+
+  @VisibleForTesting
+  Optional<SyncStatusNodePermissioningProvider> getSyncStatusNodePermissioningProvider() {
+    return syncStatusNodePermissioningProvider;
+  }
+
+  @VisibleForTesting
+  List<NodePermissioningProvider> getProviders() {
+    return providers;
   }
 }

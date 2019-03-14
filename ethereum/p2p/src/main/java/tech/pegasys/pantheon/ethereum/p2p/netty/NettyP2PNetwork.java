@@ -37,7 +37,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
@@ -161,9 +161,8 @@ public class NettyP2PNetwork implements P2PNetwork {
 
   private final LabelledMetric<Counter> outboundMessagesCounter;
 
-  private final Optional<NodeWhitelistController> nodeWhitelistController;
-
   private final Optional<NodePermissioningController> nodePermissioningController;
+  private final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController;
   private final Optional<Blockchain> blockchain;
   private OptionalLong blockAddedObserverId = OptionalLong.empty();
 
@@ -175,7 +174,7 @@ public class NettyP2PNetwork implements P2PNetwork {
       final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
       final MetricsSystem metricsSystem,
-      final Optional<NodeWhitelistController> nodeWhitelistController) {
+      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController) {
     this(
         vertx,
         keyPair,
@@ -203,7 +202,7 @@ public class NettyP2PNetwork implements P2PNetwork {
    * @param peerBlacklist The peers with which this node will not connect
    * @param peerRequirement Queried to determine if enough peers are currently connected.
    * @param metricsSystem The metrics system to capture metrics with.
-   * @param nodeWhitelistController Controls the whitelist of nodes to which this node will connect.
+   * @param nodeLocalConfigPermissioningController local file config for permissioning
    * @param nodePermissioningController Controls node permissioning.
    * @param blockchain The blockchain to subscribe to BlockAddedEvents.
    */
@@ -215,13 +214,13 @@ public class NettyP2PNetwork implements P2PNetwork {
       final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
       final MetricsSystem metricsSystem,
-      final Optional<NodeWhitelistController> nodeWhitelistController,
+      final Optional<NodeLocalConfigPermissioningController> nodeLocalConfigPermissioningController,
       final NodePermissioningController nodePermissioningController,
       final Blockchain blockchain) {
 
     connections = new PeerConnectionRegistry(metricsSystem);
     this.peerBlacklist = peerBlacklist;
-    this.nodeWhitelistController = nodeWhitelistController;
+    this.nodePermissioningController = Optional.ofNullable(nodePermissioningController);
     this.peerMaintainConnectionList = new HashSet<>();
     peerDiscoveryAgent =
         new VertxPeerDiscoveryAgent(
@@ -230,7 +229,7 @@ public class NettyP2PNetwork implements P2PNetwork {
             config.getDiscovery(),
             peerRequirement,
             peerBlacklist,
-            nodeWhitelistController);
+            nodeLocalConfigPermissioningController);
 
     outboundMessagesCounter =
         metricsSystem.createLabelledCounter(
@@ -301,7 +300,7 @@ public class NettyP2PNetwork implements P2PNetwork {
       throw new RuntimeException("Interrupted before startup completed", e);
     }
 
-    this.nodePermissioningController = Optional.ofNullable(nodePermissioningController);
+    this.nodeWhitelistController = nodeLocalConfigPermissioningController;
     this.blockchain = Optional.ofNullable(blockchain);
   }
 
@@ -649,7 +648,7 @@ public class NettyP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public Optional<NodeWhitelistController> getNodeWhitelistController() {
+  public Optional<NodeLocalConfigPermissioningController> getNodeWhitelistController() {
     return nodeWhitelistController;
   }
 

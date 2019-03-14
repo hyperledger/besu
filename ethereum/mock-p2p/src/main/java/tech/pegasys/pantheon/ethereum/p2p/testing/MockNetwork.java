@@ -23,7 +23,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.DefaultMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.net.SocketAddress;
@@ -204,7 +204,7 @@ public final class MockNetwork {
     }
 
     @Override
-    public Optional<NodeWhitelistController> getNodeWhitelistController() {
+    public Optional<NodeLocalConfigPermissioningController> getNodeWhitelistController() {
       return Optional.empty();
     }
   }

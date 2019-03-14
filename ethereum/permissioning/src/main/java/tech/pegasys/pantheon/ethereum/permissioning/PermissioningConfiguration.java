@@ -12,60 +12,24 @@
  */
 package tech.pegasys.pantheon.ethereum.permissioning;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.Optional;
 
 public class PermissioningConfiguration {
-  private List<URI> nodeWhitelist;
-  private List<String> accountWhitelist;
-  private boolean nodeWhitelistEnabled;
-  private boolean accountWhitelistEnabled;
-  private String configurationFilePath;
+  private Optional<LocalPermissioningConfiguration> localConfig;
+  private Optional<SmartContractPermissioningConfiguration> smartContractConfig;
 
-  public List<URI> getNodeWhitelist() {
-    return nodeWhitelist;
+  public PermissioningConfiguration(
+      final Optional<LocalPermissioningConfiguration> localConfig,
+      final Optional<SmartContractPermissioningConfiguration> smartContractConfig) {
+    this.localConfig = localConfig;
+    this.smartContractConfig = smartContractConfig;
   }
 
-  public static PermissioningConfiguration createDefault() {
-    final PermissioningConfiguration config = new PermissioningConfiguration();
-    config.nodeWhitelist = new ArrayList<>();
-    config.accountWhitelist = new ArrayList<>();
-    return config;
+  public Optional<LocalPermissioningConfiguration> getLocalConfig() {
+    return localConfig;
   }
 
-  public void setNodeWhitelist(final Collection<URI> nodeWhitelist) {
-    if (nodeWhitelist != null) {
-      this.nodeWhitelist.addAll(nodeWhitelist);
-      this.nodeWhitelistEnabled = true;
-    }
-  }
-
-  public boolean isNodeWhitelistEnabled() {
-    return nodeWhitelistEnabled;
-  }
-
-  public List<String> getAccountWhitelist() {
-    return accountWhitelist;
-  }
-
-  public void setAccountWhitelist(final Collection<String> accountWhitelist) {
-    if (accountWhitelist != null) {
-      this.accountWhitelist.addAll(accountWhitelist);
-      this.accountWhitelistEnabled = true;
-    }
-  }
-
-  public boolean isAccountWhitelistEnabled() {
-    return accountWhitelistEnabled;
-  }
-
-  public String getConfigurationFilePath() {
-    return configurationFilePath;
-  }
-
-  public void setConfigurationFilePath(final String configurationFilePath) {
-    this.configurationFilePath = configurationFilePath;
+  public Optional<SmartContractPermissioningConfiguration> getSmartContractConfig() {
+    return smartContractConfig;
   }
 }

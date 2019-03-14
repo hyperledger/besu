@@ -19,18 +19,18 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResp
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
-import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 
 import java.util.Optional;
 
 public class PermReloadPermissionsFromFile implements JsonRpcMethod {
 
   private final Optional<AccountWhitelistController> accountWhitelistController;
-  private final Optional<NodeWhitelistController> nodesWhitelistController;
+  private final Optional<NodeLocalConfigPermissioningController> nodesWhitelistController;
 
   public PermReloadPermissionsFromFile(
       final Optional<AccountWhitelistController> accountWhitelistController,
-      final Optional<NodeWhitelistController> nodesWhitelistController) {
+      final Optional<NodeLocalConfigPermissioningController> nodesWhitelistController) {
     this.accountWhitelistController = accountWhitelistController;
     this.nodesWhitelistController = nodesWhitelistController;
   }
@@ -48,7 +48,7 @@ public class PermReloadPermissionsFromFile implements JsonRpcMethod {
 
     try {
       accountWhitelistController.ifPresent(AccountWhitelistController::reload);
-      nodesWhitelistController.ifPresent(NodeWhitelistController::reload);
+      nodesWhitelistController.ifPresent(NodeLocalConfigPermissioningController::reload);
       return new JsonRpcSuccessResponse(request.getId());
     } catch (Exception e) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.WHITELIST_RELOAD_ERROR);

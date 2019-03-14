@@ -40,7 +40,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class AccountWhitelistControllerTest {
 
   private AccountWhitelistController controller;
-  @Mock private PermissioningConfiguration permissioningConfig;
+  @Mock private LocalPermissioningConfiguration permissioningConfig;
   @Mock private WhitelistPersistor whitelistPersistor;
 
   @Before

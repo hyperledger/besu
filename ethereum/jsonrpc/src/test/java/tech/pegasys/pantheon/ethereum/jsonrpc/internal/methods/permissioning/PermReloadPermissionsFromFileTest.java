@@ -22,7 +22,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResp
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
-import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 
 import java.util.Optional;
 
@@ -36,14 +36,15 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class PermReloadPermissionsFromFileTest {
 
   @Mock private AccountWhitelistController accountWhitelistController;
-  @Mock private NodeWhitelistController nodeWhitelistController;
+  @Mock private NodeLocalConfigPermissioningController nodeLocalConfigPermissioningController;
   private PermReloadPermissionsFromFile method;
 
   @Before
   public void before() {
     method =
         new PermReloadPermissionsFromFile(
-            Optional.of(accountWhitelistController), Optional.of(nodeWhitelistController));
+            Optional.of(accountWhitelistController),
+            Optional.of(nodeLocalConfigPermissioningController));
   }
 
   @Test
@@ -68,7 +69,7 @@ public class PermReloadPermissionsFromFileTest {
     JsonRpcResponse response = method.response(reloadRequest());
 
     verify(accountWhitelistController).reload();
-    verify(nodeWhitelistController).reload();
+    verify(nodeLocalConfigPermissioningController).reload();
 
     assertThat(response).isEqualToComparingFieldByField(successResponse());
   }

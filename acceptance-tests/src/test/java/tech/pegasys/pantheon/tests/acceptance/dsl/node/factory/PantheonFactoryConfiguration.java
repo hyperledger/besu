@@ -16,7 +16,7 @@ import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.GenesisConfigProvider;
 
@@ -30,7 +30,7 @@ class PantheonFactoryConfiguration {
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
-  private final Optional<PermissioningConfiguration> permissioningConfiguration;
+  private final Optional<LocalPermissioningConfiguration> permissioningConfiguration;
   private final boolean devMode;
   private final GenesisConfigProvider genesisConfigProvider;
   private final boolean p2pEnabled;
@@ -44,7 +44,7 @@ class PantheonFactoryConfiguration {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
-      final Optional<PermissioningConfiguration> permissioningConfiguration,
+      final Optional<LocalPermissioningConfiguration> permissioningConfiguration,
       final boolean devMode,
       final GenesisConfigProvider genesisConfigProvider,
       final boolean p2pEnabled,
@@ -88,7 +88,7 @@ class PantheonFactoryConfiguration {
     return metricsConfiguration;
   }
 
-  public Optional<PermissioningConfiguration> getPermissioningConfiguration() {
+  public Optional<LocalPermissioningConfiguration> getPermissioningConfiguration() {
     return permissioningConfiguration;
   }
 

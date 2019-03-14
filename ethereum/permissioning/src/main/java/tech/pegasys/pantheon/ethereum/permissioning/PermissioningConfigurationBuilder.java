@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.permissioning;
 
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.net.URI;
@@ -26,18 +27,16 @@ public class PermissioningConfigurationBuilder {
   public static final String ACCOUNTS_WHITELIST = "accounts-whitelist";
   public static final String NODES_WHITELIST = "nodes-whitelist";
 
-  // will be used to reload the config from a file while node is running
-  public static PermissioningConfiguration permissioningConfigurationFromToml(
-      final String configFilePath,
-      final boolean permissionedNodeEnabled,
-      final boolean permissionedAccountEnabled)
-      throws Exception {
-
-    return permissioningConfiguration(
-        configFilePath, permissionedNodeEnabled, permissionedAccountEnabled);
+  public static SmartContractPermissioningConfiguration smartContractPermissioningConfiguration(
+      final Address address, final boolean smartContractPermissionedNodeEnabled) {
+    SmartContractPermissioningConfiguration config = new SmartContractPermissioningConfiguration();
+    config.setSmartContractAddress(address);
+    config.setSmartContractNodeWhitelistEnabled(smartContractPermissionedNodeEnabled);
+    return config;
   }
 
-  public static PermissioningConfiguration permissioningConfiguration(
+  // will be used to reload the config from a file while node is running
+  public static LocalPermissioningConfiguration permissioningConfiguration(
       final String configFilePath,
       final boolean permissionedNodeEnabled,
       final boolean permissionedAccountEnabled)
@@ -55,8 +54,8 @@ public class PermissioningConfigurationBuilder {
     TomlArray accountWhitelistTomlArray = permToml.getArray(ACCOUNTS_WHITELIST);
     TomlArray nodeWhitelistTomlArray = permToml.getArray(NODES_WHITELIST);
 
-    final PermissioningConfiguration permissioningConfiguration =
-        PermissioningConfiguration.createDefault();
+    final LocalPermissioningConfiguration permissioningConfiguration =
+        LocalPermissioningConfiguration.createDefault();
     permissioningConfiguration.setConfigurationFilePath(configFilePath);
     if (permissionedAccountEnabled) {
       if (accountWhitelistTomlArray != null) {

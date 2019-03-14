@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import static tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController.NodesWhitelistResult;
+import static tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController.NodesWhitelistResult;
 
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodeWhitelistUpdatedEvent;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
@@ -48,23 +48,28 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class NodeWhitelistControllerTest {
+public class NodeLocalConfigPermissioningControllerTest {
 
   @Mock private WhitelistPersistor whitelistPersistor;
   private final List<EnodeURL> bootnodesList = new ArrayList<>();
-  private NodeWhitelistController controller;
+  private NodeLocalConfigPermissioningController controller;
 
   private final String enode1 =
       "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
   private final String enode2 =
       "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
+  private final String selfEnode =
+      "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:1111";
 
   @Before
   public void setUp() {
     bootnodesList.clear();
     controller =
-        new NodeWhitelistController(
-            PermissioningConfiguration.createDefault(), bootnodesList, whitelistPersistor);
+        new NodeLocalConfigPermissioningController(
+            LocalPermissioningConfiguration.createDefault(),
+            bootnodesList,
+            new EnodeURL(selfEnode),
+            whitelistPersistor);
   }
 
   @Test
@@ -74,6 +79,17 @@ public class NodeWhitelistControllerTest {
 
     assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
     assertThat(controller.getNodesWhitelist()).containsExactly(enode1);
+  }
+
+  @Test
+  public void whenAddNodesInputContainsSelfShouldReturnAddingSelfError() {
+    controller.addNodes(Arrays.asList(enode1));
+
+    NodesWhitelistResult expected =
+        new NodesWhitelistResult(WhitelistOperationResult.ERROR_SELF_CANNOT_BE_ADDED);
+    NodesWhitelistResult actualResult = controller.addNodes(Lists.newArrayList(selfEnode, enode1));
+
+    assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
   }
 
   @Test
@@ -212,6 +228,15 @@ public class NodeWhitelistControllerTest {
   }
 
   @Test
+  public void whenCheckingIfNodeIsPermittedOrderDoesNotMatter() {
+    controller.addNodes(Arrays.asList(enode1));
+    assertThat(controller.isPermitted(new EnodeURL(enode1), new EnodeURL(selfEnode))).isTrue();
+    assertThat(controller.isPermitted(new EnodeURL(selfEnode), new EnodeURL(enode1))).isTrue();
+
+    assertThat(controller.isPermitted(new EnodeURL(selfEnode), new EnodeURL(selfEnode))).isFalse();
+  }
+
+  @Test
   public void stateShouldRevertIfWhitelistPersistFails()
       throws IOException, WhitelistFileSyncException {
     List<String> newNode1 = singletonList(new EnodeURL(enode1).toString());
@@ -238,14 +263,17 @@ public class NodeWhitelistControllerTest {
     final String expectedEnodeURL =
         "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.9:4567";
     final Path permissionsFile = createPermissionsFileWithNode(expectedEnodeURL);
-    final PermissioningConfiguration permissioningConfig = mock(PermissioningConfiguration.class);
+    final LocalPermissioningConfiguration permissioningConfig =
+        mock(LocalPermissioningConfiguration.class);
 
     when(permissioningConfig.getConfigurationFilePath())
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeWhitelist())
         .thenReturn(Arrays.asList(URI.create(expectedEnodeURL)));
-    controller = new NodeWhitelistController(permissioningConfig, bootnodesList);
+    controller =
+        new NodeLocalConfigPermissioningController(
+            permissioningConfig, bootnodesList, new EnodeURL(selfEnode));
 
     controller.reload();
 
@@ -256,13 +284,16 @@ public class NodeWhitelistControllerTest {
   public void reloadNodeWhitelistWithErrorReadingConfigFileShouldKeepOldWhitelist() {
     final String expectedEnodeURI =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.9:4567";
-    final PermissioningConfiguration permissioningConfig = mock(PermissioningConfiguration.class);
+    final LocalPermissioningConfiguration permissioningConfig =
+        mock(LocalPermissioningConfiguration.class);
 
     when(permissioningConfig.getConfigurationFilePath()).thenReturn("foo");
     when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeWhitelist())
         .thenReturn(Arrays.asList(URI.create(expectedEnodeURI)));
-    controller = new NodeWhitelistController(permissioningConfig, bootnodesList);
+    controller =
+        new NodeLocalConfigPermissioningController(
+            permissioningConfig, bootnodesList, new EnodeURL(selfEnode));
 
     final Throwable thrown = catchThrowable(() -> controller.reload());
 
@@ -347,7 +378,8 @@ public class NodeWhitelistControllerTest {
   @SuppressWarnings("unchecked")
   public void whenReloadingWhitelistShouldNotifyWhitelistModifiedSubscribers() throws Exception {
     final Path permissionsFile = createPermissionsFileWithNode(enode2);
-    final PermissioningConfiguration permissioningConfig = mock(PermissioningConfiguration.class);
+    final LocalPermissioningConfiguration permissioningConfig =
+        mock(LocalPermissioningConfiguration.class);
     final Consumer<NodeWhitelistUpdatedEvent> consumer = mock(Consumer.class);
     final NodeWhitelistUpdatedEvent expectedEvent =
         new NodeWhitelistUpdatedEvent(
@@ -357,7 +389,9 @@ public class NodeWhitelistControllerTest {
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeWhitelist()).thenReturn(Arrays.asList(URI.create(enode1)));
-    controller = new NodeWhitelistController(permissioningConfig, bootnodesList);
+    controller =
+        new NodeLocalConfigPermissioningController(
+            permissioningConfig, bootnodesList, new EnodeURL(selfEnode));
     controller.subscribeToListUpdatedEvent(consumer);
 
     controller.reload();
@@ -370,14 +404,17 @@ public class NodeWhitelistControllerTest {
   public void whenReloadingWhitelistAndNothingChangesShouldNotNotifyWhitelistModifiedSubscribers()
       throws Exception {
     final Path permissionsFile = createPermissionsFileWithNode(enode1);
-    final PermissioningConfiguration permissioningConfig = mock(PermissioningConfiguration.class);
+    final LocalPermissioningConfiguration permissioningConfig =
+        mock(LocalPermissioningConfiguration.class);
     final Consumer<NodeWhitelistUpdatedEvent> consumer = mock(Consumer.class);
 
     when(permissioningConfig.getConfigurationFilePath())
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeWhitelist()).thenReturn(Arrays.asList(URI.create(enode1)));
-    controller = new NodeWhitelistController(permissioningConfig, bootnodesList);
+    controller =
+        new NodeLocalConfigPermissioningController(
+            permissioningConfig, bootnodesList, new EnodeURL(selfEnode));
     controller.subscribeToListUpdatedEvent(consumer);
 
     controller.reload();
