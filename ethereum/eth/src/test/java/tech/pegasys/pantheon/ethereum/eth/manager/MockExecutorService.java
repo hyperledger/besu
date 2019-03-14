@@ -42,8 +42,13 @@ public class MockExecutorService implements ExecutorService {
   }
 
   public void runPendingFutures() {
-    ArrayList<ExecutorTask<?>> currentTasks = new ArrayList<>(tasks);
+    final List<ExecutorTask<?>> currentTasks = new ArrayList<>(tasks);
     currentTasks.forEach(ExecutorTask::run);
+  }
+
+  public void runPendingFuturesInSeparateThreads(final ExecutorService executorService) {
+    final List<ExecutorTask<?>> currentTasks = new ArrayList<>(tasks);
+    currentTasks.forEach(task -> executorService.execute(task::run));
   }
 
   @Override

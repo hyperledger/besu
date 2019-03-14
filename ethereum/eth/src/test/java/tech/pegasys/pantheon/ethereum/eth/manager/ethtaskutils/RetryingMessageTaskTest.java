@@ -138,7 +138,8 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
     assertThat(future.isDone()).isFalse();
 
     // Setup a peer
-    final Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
+    final Responder responder =
+        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
     final RespondingEthPeer respondingPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
     respondingPeer.respondWhile(responder, () -> !future.isDone());
@@ -150,7 +151,8 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
   public void completeWhenPeersTimeoutTemporarily()
       throws ExecutionException, InterruptedException {
     peerCountToTimeout.set(1);
-    final Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
+    final Responder responder =
+        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
     final RespondingEthPeer respondingPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
     final T requestedData = generateDataToBeRequested();

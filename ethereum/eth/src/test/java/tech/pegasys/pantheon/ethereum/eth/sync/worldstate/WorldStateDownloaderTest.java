@@ -94,7 +94,7 @@ public class WorldStateDownloaderTest {
 
   private final BlockDataGenerator dataGen = new BlockDataGenerator(1);
   private final ExecutorService persistenceThread =
-      Executors.newSingleThreadExecutor(
+      Executors.newCachedThreadPool(
           new ThreadFactoryBuilder()
               .setDaemon(true)
               .setNameFormat(WorldStateDownloaderTest.class.getSimpleName() + "-persistence-%d")
@@ -245,7 +245,7 @@ public class WorldStateDownloaderTest {
 
     final CompletableFuture<Void> result = downloader.run(header);
 
-    persistenceThread.submit(serviceExecutor::runPendingFutures);
+    serviceExecutor.runPendingFuturesInSeparateThreads(persistenceThread);
 
     // Respond to node data requests
     final Responder responder =
@@ -425,7 +425,7 @@ public class WorldStateDownloaderTest {
 
     verify(taskCollection, times(1)).clear();
     verify(taskCollection, never()).remove();
-    verify(taskCollection, never()).add(any());
+    verify(taskCollection, never()).add(any(NodeDataRequest.class));
     // Target world state should not be available
     assertThat(localStorage.isWorldStateAvailable(header.getStateRoot())).isFalse();
   }
@@ -704,7 +704,7 @@ public class WorldStateDownloaderTest {
       taskCollection.add(new AccountTrieNodeDataRequest(Hash.wrap(bytes32)));
     }
     // Sanity check
-    for (Bytes32 bytes32 : queuedHashes) {
+    for (final Bytes32 bytes32 : queuedHashes) {
       final Hash hash = Hash.wrap(bytes32);
       verify(taskCollection, times(1)).add(argThat((r) -> r.getHash().equals(hash)));
     }
@@ -889,10 +889,7 @@ public class WorldStateDownloaderTest {
       peer.respond(fullResponder);
     }
     // Respond to remaining queued requests in custom way
-    while (!result.isDone()) {
-      networkResponder.respond(usefulPeers, remoteWorldStateArchive, result);
-      giveOtherThreadsAGo();
-    }
+    networkResponder.respond(usefulPeers, remoteWorldStateArchive, result);
 
     // Check that trailing peers were not queried for data
     for (final RespondingEthPeer trailingPeer : trailingPeers) {
@@ -1008,7 +1005,7 @@ public class WorldStateDownloaderTest {
   }
 
   private void giveOtherThreadsAGo() {
-    LockSupport.parkNanos(2000);
+    LockSupport.parkNanos(10);
   }
 
   @FunctionalInterface
