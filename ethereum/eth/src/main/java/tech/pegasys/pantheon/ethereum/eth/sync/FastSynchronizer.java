@@ -180,11 +180,6 @@ class FastSynchronizer<C> {
         "Pending request cache size for fast sync world state download",
         taskCollection::cacheSize);
 
-    // We're using the CachingTaskCollection which isn't designed to reliably persist all
-    // added tasks.  We therefore can't resume from previously added tasks.
-    // So for now, clear tasks when we start up.
-    taskCollection.clear();
-
     return taskCollection;
   }
 }
