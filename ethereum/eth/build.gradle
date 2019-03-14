@@ -33,6 +33,7 @@ dependencies {
   implementation project(':ethereum:permissioning')
   implementation project(':metrics')
   implementation project(':services:kvstore')
+  implementation project(':services:pipeline')
   implementation project(':services:tasks')
 
   implementation 'io.vertx:vertx-core'

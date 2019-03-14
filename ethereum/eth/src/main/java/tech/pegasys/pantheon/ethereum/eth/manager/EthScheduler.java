@@ -19,6 +19,7 @@ import static tech.pegasys.pantheon.util.FutureUtils.propagateResult;
 
 import tech.pegasys.pantheon.ethereum.eth.manager.task.EthTask;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.services.pipeline.Pipeline;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.time.Duration;
@@ -115,6 +116,13 @@ public class EthScheduler {
     serviceFutures.add(serviceFuture);
     serviceFuture.whenComplete((r, t) -> serviceFutures.remove(serviceFuture));
     return serviceFuture;
+  }
+
+  public CompletableFuture<Void> startPipeline(final Pipeline pipeline) {
+    final CompletableFuture<Void> pipelineFuture = pipeline.start(servicesExecutor);
+    serviceFutures.add(pipelineFuture);
+    pipelineFuture.whenComplete((r, t) -> serviceFutures.remove(pipelineFuture));
+    return pipelineFuture;
   }
 
   public <T> CompletableFuture<T> scheduleComputationTask(final Supplier<T> computation) {
