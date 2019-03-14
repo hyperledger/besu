@@ -19,7 +19,6 @@ import tech.pegasys.pantheon.services.util.RocksDbUtil;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,7 +37,6 @@ public class RocksDbTaskQueue<T> implements TaskCollection<T> {
 
   private long lastEnqueuedKey = 0;
   private long lastDequeuedKey = 0;
-  private long oldestKey = 0;
   private RocksIterator dequeueIterator;
   private long lastValidKeyFromIterator;
   private final Set<RocksDbTask<T>> outstandingTasks = new HashSet<>();
@@ -60,7 +58,9 @@ public class RocksDbTaskQueue<T> implements TaskCollection<T> {
     this.deserializer = deserializer;
     try {
       RocksDbUtil.loadNativeLibrary();
-      options = new Options().setCreateIfMissing(true);
+      // We don't support reloading data so ensure we're starting from a clean slate.
+      RocksDB.destroyDB(storageDirectory.toString(), new Options());
+      options = new Options().setCreateIfMissing(true).setErrorIfExists(true);
       db = RocksDB.open(options, storageDirectory.toString());
 
       enqueueLatency =
@@ -74,27 +74,9 @@ public class RocksDbTaskQueue<T> implements TaskCollection<T> {
               "dequeue_latency_seconds",
               "Latency for dequeuing an item.");
 
-      // Initialize queue from existing db
-      initializeQueue();
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
-  }
-
-  private void initializeQueue() {
-    RocksIterator iter = db.newIterator();
-    iter.seekToFirst();
-    if (!iter.isValid()) {
-      // There is no data yet, nothing to do
-      return;
-    }
-    long firstKey = Longs.fromByteArray(iter.key());
-    iter.seekToLast();
-    long lastKey = Longs.fromByteArray(iter.key());
-
-    lastDequeuedKey = firstKey - 1;
-    oldestKey = firstKey;
-    lastEnqueuedKey = lastKey;
   }
 
   public static <T> RocksDbTaskQueue<T> create(
@@ -167,7 +149,7 @@ public class RocksDbTaskQueue<T> implements TaskCollection<T> {
   public synchronized void clear() {
     assertNotClosed();
     outstandingTasks.clear();
-    final byte[] from = Longs.toByteArray(oldestKey);
+    final byte[] from = Longs.toByteArray(0);
     final byte[] to = Longs.toByteArray(lastEnqueuedKey + 1);
     try {
       db.deleteRange(from, to);
@@ -177,7 +159,6 @@ public class RocksDbTaskQueue<T> implements TaskCollection<T> {
       }
       lastDequeuedKey = 0;
       lastEnqueuedKey = 0;
-      oldestKey = 0;
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
@@ -186,26 +167,6 @@ public class RocksDbTaskQueue<T> implements TaskCollection<T> {
   @Override
   public synchronized boolean allTasksCompleted() {
     return isEmpty() && outstandingTasks.isEmpty();
-  }
-
-  private synchronized void deleteCompletedTasks() {
-    final long oldestOutstandingKey =
-        outstandingTasks.stream()
-            .min(Comparator.comparingLong(RocksDbTask::getKey))
-            .map(RocksDbTask::getKey)
-            .orElse(lastDequeuedKey + 1);
-
-    if (oldestKey < oldestOutstandingKey) {
-      // Delete all contiguous completed tasks
-      final byte[] fromKey = Longs.toByteArray(oldestKey);
-      final byte[] toKey = Longs.toByteArray(oldestOutstandingKey);
-      try {
-        db.deleteRange(fromKey, toKey);
-        oldestKey = oldestOutstandingKey;
-      } catch (final RocksDBException e) {
-        throw new StorageException(e);
-      }
-    }
   }
 
   @Override
@@ -228,11 +189,7 @@ public class RocksDbTaskQueue<T> implements TaskCollection<T> {
   }
 
   private synchronized boolean markTaskCompleted(final RocksDbTask<T> task) {
-    if (outstandingTasks.remove(task)) {
-      deleteCompletedTasks();
-      return true;
-    }
-    return false;
+    return outstandingTasks.remove(task);
   }
 
   private synchronized void handleFailedTask(final RocksDbTask<T> task) {

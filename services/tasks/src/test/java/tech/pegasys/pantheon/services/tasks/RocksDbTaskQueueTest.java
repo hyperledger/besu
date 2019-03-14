@@ -12,8 +12,6 @@
  */
 package tech.pegasys.pantheon.services.tasks;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -22,7 +20,6 @@ import java.nio.file.Path;
 import java.util.function.Function;
 
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 public class RocksDbTaskQueueTest extends AbstractTaskQueueTest<RocksDbTaskQueue<BytesValue>> {
@@ -38,44 +35,5 @@ public class RocksDbTaskQueueTest extends AbstractTaskQueueTest<RocksDbTaskQueue
   private RocksDbTaskQueue<BytesValue> createQueue(final Path dataDir) {
     return RocksDbTaskQueue.create(
         dataDir, Function.identity(), Function.identity(), new NoOpMetricsSystem());
-  }
-
-  @Test
-  public void shouldResumeFromExistingQueue() throws Exception {
-    testResumeFromExistingQueue(10);
-  }
-
-  @Test
-  public void shouldResumeFromExistingQueueWithOneElement() throws Exception {
-    testResumeFromExistingQueue(1);
-  }
-
-  @Test
-  public void shouldResumeFromExistingQueueWithNoElements() throws Exception {
-    testResumeFromExistingQueue(0);
-  }
-
-  private void testResumeFromExistingQueue(final int elementCount) throws Exception {
-    final Path dataDir = folder.newFolder().toPath();
-    try (final RocksDbTaskQueue<BytesValue> queue = createQueue(dataDir)) {
-      for (int i = 0; i < elementCount; i++) {
-        queue.add(BytesValue.of(i));
-      }
-    }
-
-    try (final RocksDbTaskQueue<BytesValue> resumedQueue = createQueue(dataDir)) {
-      assertThat(resumedQueue.size()).isEqualTo(elementCount);
-      // Queue an additional element
-      resumedQueue.add(BytesValue.of(99));
-      assertThat(resumedQueue.size()).isEqualTo(elementCount + 1);
-
-      // Check that everything dequeues in order as expected
-      for (int i = 0; i < elementCount; i++) {
-        assertThat(resumedQueue.remove().getData()).isEqualTo(BytesValue.of(i));
-      }
-      assertThat(resumedQueue.remove().getData()).isEqualTo(BytesValue.of(99));
-
-      assertThat(resumedQueue.size()).isEqualTo(0);
-    }
   }
 }
