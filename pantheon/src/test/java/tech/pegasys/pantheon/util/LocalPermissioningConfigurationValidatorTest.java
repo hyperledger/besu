@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import tech.pegasys.pantheon.cli.EthNetworkConfig;
 import tech.pegasys.pantheon.cli.NetworkName;
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfigurationBuilder;
 
 import java.net.URL;
@@ -27,7 +27,7 @@ import java.nio.file.Path;
 import com.google.common.io.Resources;
 import org.junit.Test;
 
-public class PermissioningConfigurationValidatorTest {
+public class LocalPermissioningConfigurationValidatorTest {
 
   static final String PERMISSIONING_CONFIG_ROPSTEN_BOOTNODES =
       "permissioning_config_ropsten_bootnodes.toml";
@@ -43,7 +43,7 @@ public class PermissioningConfigurationValidatorTest {
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, Resources.toByteArray(configFile));
 
-    PermissioningConfiguration permissioningConfiguration =
+    LocalPermissioningConfiguration permissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfiguration(
             toml.toAbsolutePath().toString(), true, true);
 
@@ -61,7 +61,7 @@ public class PermissioningConfigurationValidatorTest {
     toml.toFile().deleteOnExit();
     Files.write(toml, Resources.toByteArray(configFile));
 
-    PermissioningConfiguration permissioningConfiguration =
+    LocalPermissioningConfiguration permissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfiguration(
             toml.toAbsolutePath().toString(), true, true);
 

@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.permissioning;
 
+import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningProvider;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodeWhitelistUpdatedEvent;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
@@ -31,39 +32,45 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class NodeWhitelistController {
+public class NodeLocalConfigPermissioningController implements NodePermissioningProvider {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private PermissioningConfiguration configuration;
+  private LocalPermissioningConfiguration configuration;
   private final List<EnodeURL> bootnodes;
+  private final EnodeURL selfEnode;
   private final List<EnodeURL> nodesWhitelist = new ArrayList<>();
   private final WhitelistPersistor whitelistPersistor;
   private final Subscribers<Consumer<NodeWhitelistUpdatedEvent>> nodeWhitelistUpdatedObservers =
       new Subscribers<>();
 
-  public NodeWhitelistController(
-      final PermissioningConfiguration permissioningConfiguration, final List<EnodeURL> bootnodes) {
+  public NodeLocalConfigPermissioningController(
+      final LocalPermissioningConfiguration permissioningConfiguration,
+      final List<EnodeURL> bootnodes,
+      final EnodeURL selfEnode) {
     this(
         permissioningConfiguration,
         bootnodes,
+        selfEnode,
         new WhitelistPersistor(permissioningConfiguration.getConfigurationFilePath()));
   }
 
-  public NodeWhitelistController(
-      final PermissioningConfiguration configuration,
+  public NodeLocalConfigPermissioningController(
+      final LocalPermissioningConfiguration configuration,
       final List<EnodeURL> bootnodes,
+      final EnodeURL selfEnode,
       final WhitelistPersistor whitelistPersistor) {
     this.configuration = configuration;
     this.bootnodes = bootnodes;
+    this.selfEnode = selfEnode;
     this.whitelistPersistor = whitelistPersistor;
     readNodesFromConfig(configuration);
   }
 
-  private void readNodesFromConfig(final PermissioningConfiguration configuration) {
+  private void readNodesFromConfig(final LocalPermissioningConfiguration configuration) {
     if (configuration.isNodeWhitelistEnabled() && configuration.getNodeWhitelist() != null) {
       for (URI uri : configuration.getNodeWhitelist()) {
-        nodesWhitelist.add(new EnodeURL(uri.toString()));
+        addNode(new EnodeURL(uri.toString()));
       }
     }
   }
@@ -81,6 +88,13 @@ public class NodeWhitelistController {
             WhitelistOperationResult.ERROR_EXISTING_ENTRY,
             String.format("Specified peer: %s already exists in whitelist.", peer.getNodeId()));
       }
+      if (peer.equals(selfEnode)) {
+        return new NodesWhitelistResult(
+            WhitelistOperationResult.ERROR_SELF_CANNOT_BE_ADDED,
+            String.format(
+                "Specified peer %s is equal to self. Cannot add self to whitelist",
+                peer.getNodeId()));
+      }
     }
 
     final List<EnodeURL> oldWhitelist = new ArrayList<>(this.nodesWhitelist);
@@ -96,7 +110,12 @@ public class NodeWhitelistController {
   }
 
   private boolean addNode(final EnodeURL enodeURL) {
-    return nodesWhitelist.add(enodeURL);
+    // must not add self to whitelist
+    if (!enodeURL.equals(selfEnode)) {
+      return nodesWhitelist.add(enodeURL);
+    } else {
+      return false;
+    }
   }
 
   public NodesWhitelistResult removeNodes(final List<String> enodeURLs) {
@@ -192,7 +211,7 @@ public class NodeWhitelistController {
     return isPermitted(new EnodeURL(enodeURL));
   }
 
-  private boolean isPermitted(final EnodeURL node) {
+  public boolean isPermitted(final EnodeURL node) {
     return nodesWhitelist.stream()
         .anyMatch(
             p -> {
@@ -218,8 +237,8 @@ public class NodeWhitelistController {
     nodesWhitelist.clear();
 
     try {
-      final PermissioningConfiguration updatedConfig =
-          PermissioningConfigurationBuilder.permissioningConfigurationFromToml(
+      final LocalPermissioningConfiguration updatedConfig =
+          PermissioningConfigurationBuilder.permissioningConfiguration(
               configuration.getConfigurationFilePath(),
               configuration.isNodeWhitelistEnabled(),
               configuration.isAccountWhitelistEnabled());
@@ -291,5 +310,10 @@ public class NodeWhitelistController {
     public Optional<String> message() {
       return message;
     }
+  }
+
+  @Override
+  public boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+    return isPermitted(sourceEnode) || isPermitted(destinationEnode);
   }
 }

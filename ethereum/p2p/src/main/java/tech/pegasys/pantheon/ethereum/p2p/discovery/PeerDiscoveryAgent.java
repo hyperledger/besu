@@ -34,7 +34,7 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeerId;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
-import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.util.NetworkUtility;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -70,7 +70,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
   protected final List<DiscoveryPeer> bootstrapPeers;
   private final PeerRequirement peerRequirement;
   private final PeerBlacklist peerBlacklist;
-  private final Optional<NodeWhitelistController> nodeWhitelistController;
+  private final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController;
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
 
@@ -93,7 +93,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
       final DiscoveryConfiguration config,
       final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
-      final Optional<NodeWhitelistController> nodeWhitelistController) {
+      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController) {
     checkArgument(keyPair != null, "keypair cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
 

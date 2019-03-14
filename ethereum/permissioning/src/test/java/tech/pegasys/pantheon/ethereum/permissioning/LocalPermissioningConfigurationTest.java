@@ -19,7 +19,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-public class PermissioningConfigurationTest {
+public class LocalPermissioningConfigurationTest {
 
   final URI[] nodes = {
     URI.create("enode://001@123:4567"),
@@ -29,7 +29,8 @@ public class PermissioningConfigurationTest {
 
   @Test
   public void defaultConfiguration() {
-    final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
+    final LocalPermissioningConfiguration configuration =
+        LocalPermissioningConfiguration.createDefault();
     assertThat(configuration.getNodeWhitelist()).isEmpty();
     assertThat(configuration.isNodeWhitelistEnabled()).isFalse();
     assertThat(configuration.getAccountWhitelist()).isEmpty();
@@ -38,7 +39,8 @@ public class PermissioningConfigurationTest {
 
   @Test
   public void setNodeWhitelist() {
-    final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
+    final LocalPermissioningConfiguration configuration =
+        LocalPermissioningConfiguration.createDefault();
     configuration.setNodeWhitelist(Arrays.asList(nodes));
     assertThat(configuration.getNodeWhitelist()).containsExactlyInAnyOrder(nodes);
     assertThat(configuration.isNodeWhitelistEnabled()).isTrue();
@@ -46,7 +48,8 @@ public class PermissioningConfigurationTest {
 
   @Test
   public void setNodeWhiteListPassingNull() {
-    final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
+    final LocalPermissioningConfiguration configuration =
+        LocalPermissioningConfiguration.createDefault();
     configuration.setNodeWhitelist(null);
     assertThat(configuration.getNodeWhitelist()).isEmpty();
     assertThat(configuration.isNodeWhitelistEnabled()).isFalse();
@@ -55,7 +58,8 @@ public class PermissioningConfigurationTest {
   @Test
   public void setAccountWhitelist() {
     final String[] accounts = {"1111111111111111", "2222222222222222", "ffffffffffffffff"};
-    final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
+    final LocalPermissioningConfiguration configuration =
+        LocalPermissioningConfiguration.createDefault();
     configuration.setAccountWhitelist(Arrays.asList(accounts));
     assertThat(configuration.getAccountWhitelist()).containsExactlyInAnyOrder(accounts);
     assertThat(configuration.isAccountWhitelistEnabled()).isTrue();
@@ -63,7 +67,8 @@ public class PermissioningConfigurationTest {
 
   @Test
   public void setAccountWhiteListPassingNull() {
-    final PermissioningConfiguration configuration = PermissioningConfiguration.createDefault();
+    final LocalPermissioningConfiguration configuration =
+        LocalPermissioningConfiguration.createDefault();
     configuration.setAccountWhitelist(null);
     assertThat(configuration.getAccountWhitelist()).isEmpty();
     assertThat(configuration.isAccountWhitelistEnabled()).isFalse();

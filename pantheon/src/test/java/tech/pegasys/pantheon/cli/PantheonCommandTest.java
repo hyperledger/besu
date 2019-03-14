@@ -44,7 +44,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -359,8 +359,8 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     parseCommand(
         "--permissions-accounts-enabled", "--permissions-config-file", permToml.toString());
-    final PermissioningConfiguration permissioningConfiguration =
-        PermissioningConfiguration.createDefault();
+    final LocalPermissioningConfiguration permissioningConfiguration =
+        LocalPermissioningConfiguration.createDefault();
     permissioningConfiguration.setConfigurationFilePath(permToml.toString());
     permissioningConfiguration.setAccountWhitelist(
         Collections.singletonList("0x0000000000000000000000000000000000000009"));

@@ -26,7 +26,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
-import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.WhitelistPersistor;
 import tech.pegasys.pantheon.ethereum.permissioning.WhitelistPersistor.WHITELIST_TYPE;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.GenesisConfigProvider;
@@ -183,8 +183,8 @@ public class PantheonNodeFactory {
       final List<String> accountsWhitelist,
       final String tempFilePath)
       throws IOException {
-    final PermissioningConfiguration permissioningConfiguration =
-        PermissioningConfiguration.createDefault();
+    final LocalPermissioningConfiguration permissioningConfiguration =
+        LocalPermissioningConfiguration.createDefault();
     permissioningConfiguration.setNodeWhitelist(nodesWhitelist);
     permissioningConfiguration.setAccountWhitelist(accountsWhitelist);
     permissioningConfiguration.setConfigurationFilePath(tempFilePath);
@@ -204,8 +204,8 @@ public class PantheonNodeFactory {
 
   public PantheonNode createNodeWithNodesWhitelist(
       final String name, final List<URI> nodesWhitelist) throws IOException {
-    final PermissioningConfiguration permissioningConfiguration =
-        PermissioningConfiguration.createDefault();
+    final LocalPermissioningConfiguration permissioningConfiguration =
+        LocalPermissioningConfiguration.createDefault();
     permissioningConfiguration.setNodeWhitelist(nodesWhitelist);
 
     final List<String> whitelistAsStrings =
@@ -241,8 +241,8 @@ public class PantheonNodeFactory {
 
   public PantheonNode createNodeWithAccountsWhitelist(
       final String name, final List<String> accountsWhitelist) throws IOException {
-    final PermissioningConfiguration permissioningConfiguration =
-        PermissioningConfiguration.createDefault();
+    final LocalPermissioningConfiguration permissioningConfiguration =
+        LocalPermissioningConfiguration.createDefault();
     permissioningConfiguration.setAccountWhitelist(accountsWhitelist);
     permissioningConfiguration.setConfigurationFilePath(
         createTempPermissioningConfigurationFile().getPath());

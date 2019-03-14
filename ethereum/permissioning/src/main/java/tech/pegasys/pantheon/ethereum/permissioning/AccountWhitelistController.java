@@ -28,22 +28,23 @@ public class AccountWhitelistController {
   private static final Logger LOG = LogManager.getLogger();
 
   private static final int ACCOUNT_BYTES_SIZE = 20;
-  private PermissioningConfiguration configuration;
+  private LocalPermissioningConfiguration configuration;
   private List<String> accountWhitelist = new ArrayList<>();
   private final WhitelistPersistor whitelistPersistor;
 
-  public AccountWhitelistController(final PermissioningConfiguration configuration) {
+  public AccountWhitelistController(final LocalPermissioningConfiguration configuration) {
     this(configuration, new WhitelistPersistor(configuration.getConfigurationFilePath()));
   }
 
   public AccountWhitelistController(
-      final PermissioningConfiguration configuration, final WhitelistPersistor whitelistPersistor) {
+      final LocalPermissioningConfiguration configuration,
+      final WhitelistPersistor whitelistPersistor) {
     this.configuration = configuration;
     this.whitelistPersistor = whitelistPersistor;
     readAccountsFromConfig(configuration);
   }
 
-  private void readAccountsFromConfig(final PermissioningConfiguration configuration) {
+  private void readAccountsFromConfig(final LocalPermissioningConfiguration configuration) {
     if (configuration != null && configuration.isAccountWhitelistEnabled()) {
       if (!configuration.getAccountWhitelist().isEmpty()) {
         addAccounts(configuration.getAccountWhitelist());
@@ -166,8 +167,8 @@ public class AccountWhitelistController {
     accountWhitelist.clear();
 
     try {
-      final PermissioningConfiguration updatedConfig =
-          PermissioningConfigurationBuilder.permissioningConfigurationFromToml(
+      final LocalPermissioningConfiguration updatedConfig =
+          PermissioningConfigurationBuilder.permissioningConfiguration(
               configuration.getConfigurationFilePath(),
               configuration.isNodeWhitelistEnabled(),
               configuration.isAccountWhitelistEnabled());

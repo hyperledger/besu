@@ -17,7 +17,7 @@ import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistance
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.permissioning.NodeWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
@@ -39,7 +39,7 @@ public class RecursivePeerRefreshState {
   private static final int MAX_CONCURRENT_REQUESTS = 3;
   private BytesValue target;
   private final PeerBlacklist peerBlacklist;
-  private final Optional<NodeWhitelistController> peerWhitelist;
+  private final Optional<NodeLocalConfigPermissioningController> peerWhitelist;
   private final PeerTable peerTable;
   private final BytesValue localPeerId;
 
@@ -59,7 +59,7 @@ public class RecursivePeerRefreshState {
 
   RecursivePeerRefreshState(
       final PeerBlacklist peerBlacklist,
-      final Optional<NodeWhitelistController> peerWhitelist,
+      final Optional<NodeLocalConfigPermissioningController> peerWhitelist,
       final BondingAgent bondingAgent,
       final FindNeighbourDispatcher neighborFinder,
       final TimerUtil timerUtil,
