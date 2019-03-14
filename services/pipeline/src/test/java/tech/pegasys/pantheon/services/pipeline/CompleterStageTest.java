@@ -31,7 +31,7 @@ public class CompleterStageTest {
   private final List<String> output = new ArrayList<>();
   private final Counter outputCounter = mock(Counter.class);
   private final CompleterStage<String> stage =
-      new CompleterStage<>(pipe, output::add, outputCounter);
+      new CompleterStage<>("name", pipe, output::add, outputCounter);
 
   @Test
   public void shouldAddItemsToOutputUntilPipeHasNoMore() {

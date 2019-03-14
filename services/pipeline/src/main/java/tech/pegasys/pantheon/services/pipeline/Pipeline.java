@@ -31,7 +31,7 @@ import org.apache.logging.log4j.Logger;
 public class Pipeline {
   private static final Logger LOG = LogManager.getLogger();
   private final Pipe<?> inputPipe;
-  private final Collection<Runnable> stages;
+  private final Collection<Stage> stages;
   private final Collection<Pipe<?>> pipes;
   private final CompleterStage<?> completerStage;
   private final AtomicBoolean started = new AtomicBoolean(false);
@@ -49,7 +49,7 @@ public class Pipeline {
 
   Pipeline(
       final Pipe<?> inputPipe,
-      final Collection<Runnable> stages,
+      final Collection<Stage> stages,
       final Collection<Pipe<?>> pipes,
       final CompleterStage<?> completerStage) {
     this.inputPipe = inputPipe;
@@ -109,11 +109,13 @@ public class Pipeline {
     abort(exception);
   }
 
-  private Future<?> runWithErrorHandling(
-      final ExecutorService executorService, final Runnable task) {
+  private Future<?> runWithErrorHandling(final ExecutorService executorService, final Stage task) {
     return executorService.submit(
         () -> {
+          final Thread thread = Thread.currentThread();
+          final String originalName = thread.getName();
           try {
+            thread.setName(originalName + " (" + task.getName() + ")");
             task.run();
           } catch (final Throwable t) {
             LOG.debug("Unhandled exception in pipeline. Aborting.", t);
@@ -125,6 +127,8 @@ public class Pipeline {
               // need to call get on it which would normally expose the error.
               LOG.error("Failed to abort pipeline after error", t2);
             }
+          } finally {
+            thread.setName(originalName);
           }
         });
   }

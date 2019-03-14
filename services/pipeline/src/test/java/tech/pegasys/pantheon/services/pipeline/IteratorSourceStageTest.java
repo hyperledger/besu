@@ -23,7 +23,7 @@ public class IteratorSourceStageTest {
   private final Pipe<String> output = new Pipe<>(10, NO_OP_COUNTER);
 
   private final IteratorSourceStage<String> stage =
-      new IteratorSourceStage<>(Iterators.forArray("a", "b", "c", "d"), output);
+      new IteratorSourceStage<>("name", Iterators.forArray("a", "b", "c", "d"), output);
 
   @Test
   public void shouldOutputEntriesThenClosePipe() {

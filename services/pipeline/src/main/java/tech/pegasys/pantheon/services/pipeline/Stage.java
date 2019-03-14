@@ -12,32 +12,6 @@
  */
 package tech.pegasys.pantheon.services.pipeline;
 
-import java.util.Iterator;
-
-class IteratorSourceStage<T> implements Stage {
-  private final Iterator<T> source;
-  private final Pipe<T> pipe;
-  private final String name;
-
-  IteratorSourceStage(final String name, final Iterator<T> source, final Pipe<T> pipe) {
-    this.source = source;
-    this.pipe = pipe;
-    this.name = name;
-  }
-
-  @Override
-  public void run() {
-    while (pipe.isOpen() && source.hasNext()) {
-      final T value = source.next();
-      if (value != null) {
-        pipe.put(value);
-      }
-    }
-    pipe.close();
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
+public interface Stage extends Runnable {
+  String getName();
 }

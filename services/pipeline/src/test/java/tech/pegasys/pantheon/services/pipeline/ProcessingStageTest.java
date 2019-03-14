@@ -37,7 +37,7 @@ public class ProcessingStageTest {
 
   @Before
   public void setUp() {
-    stage = new ProcessingStage<>(inputPipe, outputPipe, singleStep);
+    stage = new ProcessingStage<>("name", inputPipe, outputPipe, singleStep);
     doAnswer(
             invocation -> {
               outputPipe.put(inputPipe.get().toLowerCase(Locale.UK));
