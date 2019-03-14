@@ -12,14 +12,19 @@
  */
 package tech.pegasys.pantheon.services.pipeline;
 
-class ProcessingStage<I, O> implements Runnable {
+class ProcessingStage<I, O> implements Stage {
 
+  private final String name;
   private final ReadPipe<I> inputPipe;
   private final WritePipe<O> outputPipe;
   private final Processor<I, O> processor;
 
   public ProcessingStage(
-      final ReadPipe<I> inputPipe, final WritePipe<O> outputPipe, final Processor<I, O> processor) {
+      final String name,
+      final ReadPipe<I> inputPipe,
+      final WritePipe<O> outputPipe,
+      final Processor<I, O> processor) {
+    this.name = name;
     this.inputPipe = inputPipe;
     this.outputPipe = outputPipe;
     this.processor = processor;
@@ -32,5 +37,10 @@ class ProcessingStage<I, O> implements Runnable {
     }
     processor.finalize(outputPipe);
     outputPipe.close();
+  }
+
+  @Override
+  public String getName() {
+    return name;
   }
 }

@@ -41,7 +41,7 @@ import java.util.stream.Stream;
 public class PipelineBuilder<T> {
 
   private final Pipe<?> inputPipe;
-  private final Collection<Runnable> stages;
+  private final Collection<Stage> stages;
   private final Collection<Pipe<?>> pipes;
   private final ReadPipe<T> pipeEnd;
   private final int bufferSize;
@@ -49,7 +49,7 @@ public class PipelineBuilder<T> {
 
   public PipelineBuilder(
       final Pipe<?> inputPipe,
-      final Collection<Runnable> stages,
+      final Collection<Stage> stages,
       final Collection<Pipe<?>> pipes,
       final ReadPipe<T> pipeEnd,
       final int bufferSize,
@@ -82,7 +82,7 @@ public class PipelineBuilder<T> {
       final int bufferSize,
       final LabelledMetric<Counter> outputCounter) {
     final Pipe<T> pipe = new Pipe<>(bufferSize, outputCounter.labels(sourceName));
-    final IteratorSourceStage<T> sourceStage = new IteratorSourceStage<>(source, pipe);
+    final IteratorSourceStage<T> sourceStage = new IteratorSourceStage<>(sourceName, source, pipe);
     return new PipelineBuilder<>(
         pipe, singleton(sourceStage), singleton(pipe), pipe, bufferSize, outputCounter);
   }
@@ -134,10 +134,10 @@ public class PipelineBuilder<T> {
       final String stageName, final Function<T, O> processor, final int numberOfThreads) {
     final Pipe<O> newPipeEnd = new Pipe<>(bufferSize, outputCounter.labels(stageName));
     final WritePipe<O> outputPipe = new SharedWritePipe<>(newPipeEnd, numberOfThreads);
-    final ArrayList<Runnable> newStages = new ArrayList<>(stages);
+    final ArrayList<Stage> newStages = new ArrayList<>(stages);
     for (int i = 0; i < numberOfThreads; i++) {
-      final Runnable processStage =
-          new ProcessingStage<>(pipeEnd, outputPipe, new MapProcessor<>(processor));
+      final Stage processStage =
+          new ProcessingStage<>(stageName, pipeEnd, outputPipe, new MapProcessor<>(processor));
       newStages.add(processStage);
     }
     return new PipelineBuilder<>(
@@ -218,7 +218,7 @@ public class PipelineBuilder<T> {
         inputPipe,
         stages,
         pipes,
-        new CompleterStage<>(pipeEnd, completer, outputCounter.labels(stageName)));
+        new CompleterStage<>(stageName, pipeEnd, completer, outputCounter.labels(stageName)));
   }
 
   private <O> PipelineBuilder<O> addStage(final Processor<T, O> processor, final String stageName) {
@@ -228,12 +228,12 @@ public class PipelineBuilder<T> {
   private <O> PipelineBuilder<O> addStage(
       final Processor<T, O> processor, final int newBufferSize, final String stageName) {
     final Pipe<O> outputPipe = new Pipe<>(newBufferSize, outputCounter.labels(stageName));
-    final Runnable processStage = new ProcessingStage<>(pipeEnd, outputPipe, processor);
+    final Stage processStage = new ProcessingStage<>(stageName, pipeEnd, outputPipe, processor);
     return addStage(processStage, outputPipe);
   }
 
-  private <O> PipelineBuilder<O> addStage(final Runnable stage, final Pipe<O> outputPipe) {
-    final List<Runnable> newStages = concat(stages, stage);
+  private <O> PipelineBuilder<O> addStage(final Stage stage, final Pipe<O> outputPipe) {
+    final List<Stage> newStages = concat(stages, stage);
     return new PipelineBuilder<>(
         inputPipe, newStages, concat(pipes, outputPipe), outputPipe, bufferSize, outputCounter);
   }
