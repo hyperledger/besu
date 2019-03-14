@@ -707,7 +707,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
         String.join(",", nodes));
 
     verifyOptionsConstraintLoggerCall(
-        "--discovery-enabled, --bootnodes, --max-peers and --banned-node-ids", "--p2p-enabled");
+        "--p2p-enabled", "--discovery-enabled", "--bootnodes", "--max-peers", "--banned-node-ids");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -733,16 +733,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
-  @Ignore("NC-2015 - Temporarily enabling zero-arg --bootnodes to permit 'bootnode' configuration")
-  @Test
-  public void callingWithBootnodesOptionButNoValueMustDisplayErrorAndUsage() {
-    parseCommand("--bootnodes");
-    assertThat(commandOutput.toString()).isEmpty();
-    final String expectedErrorOutputStart =
-        "Missing required parameter for option '--bootnodes' at index 0 (<enode://id@host:port>)";
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
-  }
-
   @Test
   public void callingWithBootnodesOptionButNoValueMustPassEmptyBootnodeList() {
     parseCommand("--bootnodes");
@@ -756,22 +746,33 @@ public class PantheonCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
-  @Ignore(
-      "NC-2015 - Temporarily enabling zero-arg --bootnodes to permit 'bootnode' configuration, which changes the error.")
   @Test
-  public void callingWithInvalidBootnodesMustDisplayErrorAndUsage() {
-    parseCommand("--bootnodes", "invalid_enode_url");
+  public void callingWithValidBootnodeMustSucceed() {
+    parseCommand(
+        "--bootnodes",
+        "enode://d2567893371ea5a6fa6371d483891ed0d129e79a8fc74d6df95a00a6545444cd4a6960bbffe0b4e2edcf35135271de57ee559c0909236bbc2074346ef2b5b47c@127.0.0.1:30304");
     assertThat(commandOutput.toString()).isEmpty();
-    final String expectedErrorOutputStart =
-        "Invalid value for option '--bootnodes' at index 0 (<enode://id@host:port>)";
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+    assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
   @Test
-  public void callingWithInvalidBootnodesAndZeroArityMustDisplayAlternateErrorAndUsage() {
+  public void callingWithInvalidBootnodeMustDisplayErrorAndUsage() {
     parseCommand("--bootnodes", "invalid_enode_url");
     assertThat(commandOutput.toString()).isEmpty();
-    final String expectedErrorOutputStart = "Unmatched argument: invalid_enode_url";
+    final String expectedErrorOutputStart =
+        "Invalid enode URL syntax. Enode URL should have the following format "
+            + "'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.";
+    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+  }
+
+  // This test ensures non regression on https://pegasys1.atlassian.net/browse/PAN-2387
+  @Test
+  public void callingWithInvalidBootnodeAndEqualSignMustDisplayErrorAndUsage() {
+    parseCommand("--bootnodes=invalid_enode_url");
+    assertThat(commandOutput.toString()).isEmpty();
+    final String expectedErrorOutputStart =
+        "Invalid enode URL syntax. Enode URL should have the following format "
+            + "'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.";
     assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
   }
 
@@ -944,8 +945,11 @@ public class PantheonCommandTest extends CommandTestAbstract {
         "all");
 
     verifyOptionsConstraintLoggerCall(
-        "--rpc-http-host, --rpc-http-port, --rpc-http-cors-origins and --rpc-http-api",
-        "--rpc-http-enabled");
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        "--rpc-http-port",
+        "--rpc-http-cors-origins",
+        "--rpc-http-api");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1354,7 +1358,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     parseCommand("--rpc-ws-api", "ETH,NET", "--rpc-ws-host", "0.0.0.0", "--rpc-ws-port", "1234");
 
     verifyOptionsConstraintLoggerCall(
-        "--rpc-ws-host, --rpc-ws-port and --rpc-ws-api", "--rpc-ws-enabled");
+        "--rpc-ws-enabled", "--rpc-ws-host", "--rpc-ws-port", "--rpc-ws-api");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1457,8 +1461,11 @@ public class PantheonCommandTest extends CommandTestAbstract {
         "job-name");
 
     verifyOptionsConstraintLoggerCall(
-        "--metrics-push-host, --metrics-push-port, --metrics-push-interval and --metrics-push-prometheus-job",
-        "--metrics-push-enabled");
+        "--metrics-push-enabled",
+        "--metrics-push-host",
+        "--metrics-push-port",
+        "--metrics-push-interval",
+        "--metrics-push-prometheus-job");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1468,7 +1475,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   public void metricsOptionsRequiresPullMetricsToBeEnabled() {
     parseCommand("--metrics-host", "0.0.0.0", "--metrics-port", "1234");
 
-    verifyOptionsConstraintLoggerCall("--metrics-host and --metrics-port", "--metrics-enabled");
+    verifyOptionsConstraintLoggerCall("--metrics-enabled", "--metrics-host", "--metrics-port");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1660,7 +1667,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
         "0x1122334455667788990011223344556677889900112233445566778899001122");
 
     verifyOptionsConstraintLoggerCall(
-        "--miner-coinbase, --min-gas-price and --miner-extra-data", "--miner-enabled");
+        "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1865,8 +1872,10 @@ public class PantheonCommandTest extends CommandTestAbstract {
         String.valueOf(Byte.MAX_VALUE - 1));
 
     verifyOptionsConstraintLoggerCall(
-        "--privacy-url, --privacy-precompiled-address and --privacy-public-key-file",
-        "--privacy-enabled");
+        "--privacy-enabled",
+        "--privacy-url",
+        "--privacy-precompiled-address",
+        "--privacy-public-key-file");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1930,7 +1939,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
    * @param mainOption the main option name
    */
   private void verifyOptionsConstraintLoggerCall(
-      final String dependentOptions, final String mainOption) {
+      final String mainOption, final String... dependentOptions) {
     verify(mockLogger, atLeast(1))
         .warn(
             stringArgumentCaptor.capture(),
@@ -1938,7 +1947,11 @@ public class PantheonCommandTest extends CommandTestAbstract {
             stringArgumentCaptor.capture());
     assertThat(stringArgumentCaptor.getAllValues().get(0))
         .isEqualTo("{} will have no effect unless {} is defined on the command line.");
-    assertThat(stringArgumentCaptor.getAllValues().get(1)).isEqualTo(dependentOptions);
+
+    for (String option : dependentOptions) {
+      assertThat(stringArgumentCaptor.getAllValues().get(1)).contains(option);
+    }
+
     assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(mainOption);
   }
 

@@ -29,7 +29,6 @@ import tech.pegasys.pantheon.Runner;
 import tech.pegasys.pantheon.RunnerBuilder;
 import tech.pegasys.pantheon.cli.PublicKeySubCommand.KeyLoader;
 import tech.pegasys.pantheon.cli.custom.CorsAllowedOriginsProperty;
-import tech.pegasys.pantheon.cli.custom.EnodeToURIPropertyConverter;
 import tech.pegasys.pantheon.cli.custom.JsonRPCWhitelistHostsProperty;
 import tech.pegasys.pantheon.cli.custom.RpcAuthFileValidator;
 import tech.pegasys.pantheon.cli.rlp.RLPSubCommand;
@@ -59,6 +58,7 @@ import tech.pegasys.pantheon.util.BlockImporter;
 import tech.pegasys.pantheon.util.InvalidConfigurationException;
 import tech.pegasys.pantheon.util.PermissioningConfigurationValidator;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,6 +75,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.base.Suppliers;
@@ -186,9 +187,16 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           "Comma separated enode URLs for P2P discovery bootstrap. "
               + "Default is a predefined list.",
       split = ",",
-      arity = "0..*",
-      converter = EnodeToURIPropertyConverter.class)
-  private final Collection<URI> bootNodes = null;
+      arity = "0..*")
+  void setBootnodes(final List<String> values) {
+    try {
+      bootNodes = values.stream().map((s) -> new EnodeURL(s).toURI()).collect(Collectors.toList());
+    } catch (IllegalArgumentException e) {
+      throw new ParameterException(commandLine, e.getMessage());
+    }
+  }
+
+  private Collection<URI> bootNodes = null;
 
   @Option(
       names = {"--max-peers"},
