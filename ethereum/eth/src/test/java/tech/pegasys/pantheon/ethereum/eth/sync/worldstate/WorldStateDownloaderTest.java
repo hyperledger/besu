@@ -86,9 +86,13 @@ import java.util.stream.StreamSupport;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 public class WorldStateDownloaderTest {
+
+  @Rule public Timeout globalTimeout = Timeout.seconds(60); // 1 minute max per test
 
   private static final Hash EMPTY_TRIE_ROOT = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
