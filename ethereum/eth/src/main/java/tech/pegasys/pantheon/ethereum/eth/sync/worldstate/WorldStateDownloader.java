@@ -19,9 +19,7 @@ import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.services.tasks.CachingTaskCollection;
-import tech.pegasys.pantheon.util.ExceptionUtils;
 
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -130,19 +128,7 @@ public class WorldStateDownloader {
 
       newDownloadState.setWorldStateDownloadProcess(downloadProcess);
 
-      final CompletableFuture<Void> downloadProcessFuture =
-          downloadProcess.start(ethContext.getScheduler());
-      downloadProcessFuture.whenComplete(
-          (result, error) -> {
-            if (error != null
-                && !(ExceptionUtils.rootCause(error) instanceof CancellationException)) {
-              // If the pipeline was cancelled it's because the download state cancelled it
-              // so don't propagate the cancellation or we'll interfere with the clean up it's
-              // doing.
-              newDownloadState.getDownloadFuture().completeExceptionally(error);
-            }
-          });
-      return newDownloadState.getDownloadFuture();
+      return newDownloadState.startDownload(downloadProcess, ethContext.getScheduler());
     }
   }
 

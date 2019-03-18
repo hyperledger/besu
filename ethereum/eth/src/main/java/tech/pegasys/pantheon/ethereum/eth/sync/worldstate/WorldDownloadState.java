@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.worldstate;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.EthTask;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage.Updater;
@@ -199,5 +200,24 @@ class WorldDownloadState {
 
   public synchronized void notifyTaskAvailable() {
     notifyAll();
+  }
+
+  public CompletableFuture<Void> startDownload(
+      final WorldStateDownloadProcess worldStateDownloadProcess, final EthScheduler ethScheduler) {
+    this.worldStateDownloadProcess = worldStateDownloadProcess;
+    final CompletableFuture<Void> processFuture = worldStateDownloadProcess.start(ethScheduler);
+
+    processFuture.whenComplete(
+        (result, error) -> {
+          if (error != null
+              && !(ExceptionUtils.rootCause(error) instanceof CancellationException)) {
+            // The pipeline is only ever cancelled by us or shutdown closing the EthScheduler
+            // In either case we don't want to consider the download failed as we either already
+            // dealing with it or it's just a normal shutdown. Hence, don't propagate
+            // CancellationException
+            internalFuture.completeExceptionally(error);
+          }
+        });
+    return downloadFuture;
   }
 }
