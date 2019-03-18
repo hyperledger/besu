@@ -32,4 +32,8 @@ public class PermissioningConfiguration {
   public Optional<SmartContractPermissioningConfiguration> getSmartContractConfig() {
     return smartContractConfig;
   }
+
+  public static PermissioningConfiguration createDefault() {
+    return new PermissioningConfiguration(Optional.empty(), Optional.empty());
+  }
 }

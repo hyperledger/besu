@@ -64,6 +64,7 @@ public class PeerDiscoveryTimestampsTest {
             () -> true,
             new PeerBlacklist(),
             Optional.empty(),
+            Optional.empty(),
             new Subscribers<>(),
             new Subscribers<>());
     controller.start();

@@ -17,8 +17,9 @@ import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistance
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.List;
 import java.util.Map;
@@ -39,9 +40,9 @@ public class RecursivePeerRefreshState {
   private static final int MAX_CONCURRENT_REQUESTS = 3;
   private BytesValue target;
   private final PeerBlacklist peerBlacklist;
-  private final Optional<NodeLocalConfigPermissioningController> peerWhitelist;
+  private final Optional<NodePermissioningController> nodePermissioningController;
   private final PeerTable peerTable;
-  private final BytesValue localPeerId;
+  private final DiscoveryPeer localPeer;
 
   private final BondingAgent bondingAgent;
   private final FindNeighbourDispatcher findNeighbourDispatcher;
@@ -59,20 +60,20 @@ public class RecursivePeerRefreshState {
 
   RecursivePeerRefreshState(
       final PeerBlacklist peerBlacklist,
-      final Optional<NodeLocalConfigPermissioningController> peerWhitelist,
+      final Optional<NodePermissioningController> nodePermissioningController,
       final BondingAgent bondingAgent,
       final FindNeighbourDispatcher neighborFinder,
       final TimerUtil timerUtil,
-      final BytesValue localPeerId,
+      final DiscoveryPeer localPeer,
       final PeerTable peerTable,
       final int timeoutPeriodInSeconds,
       final int maxRounds) {
     this.peerBlacklist = peerBlacklist;
-    this.peerWhitelist = peerWhitelist;
+    this.nodePermissioningController = nodePermissioningController;
     this.bondingAgent = bondingAgent;
     this.findNeighbourDispatcher = neighborFinder;
     this.timerUtil = timerUtil;
-    this.localPeerId = localPeerId;
+    this.localPeer = localPeer;
     this.peerTable = peerTable;
     this.timeoutPeriodInSeconds = timeoutPeriodInSeconds;
     this.maxRounds = maxRounds;
@@ -183,11 +184,18 @@ public class RecursivePeerRefreshState {
   private boolean satisfiesMapAdditionCriteria(final DiscoveryPeer discoPeer) {
     return !oneTrueMap.containsKey(discoPeer.getId())
         && !peerBlacklist.contains(discoPeer)
-        && peerWhitelist
-            .map(whitelist -> whitelist.isPermitted(discoPeer.getEnodeURI()))
-            .orElse(true)
+        && isPeerPermitted(discoPeer)
         && (initialPeers.contains(discoPeer) || !peerTable.get(discoPeer).isPresent())
-        && !discoPeer.getId().equals(localPeerId);
+        && !discoPeer.getId().equals(localPeer);
+  }
+
+  private Boolean isPeerPermitted(final DiscoveryPeer discoPeer) {
+    return nodePermissioningController
+        .map(
+            controller ->
+                controller.isPermitted(
+                    new EnodeURL(localPeer.getEnodeURI()), new EnodeURL(discoPeer.getEnodeURI())))
+        .orElse(true);
   }
 
   void onNeighboursPacketReceived(

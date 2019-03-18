@@ -34,6 +34,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningContro
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodeWhitelistUpdatedEvent;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.Collection;
 import java.util.List;
@@ -118,6 +119,7 @@ public class PeerDiscoveryController {
   private final OutboundMessageHandler outboundMessageHandler;
   private final PeerBlacklist peerBlacklist;
   private final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController;
+  private final Optional<NodePermissioningController> nodePermissioningController;
 
   private RetryDelayFunction retryDelayFunction = RetryDelayFunction.linear(1.5, 2000, 60000);
 
@@ -136,9 +138,6 @@ public class PeerDiscoveryController {
 
   private RecursivePeerRefreshState recursivePeerRefreshState;
 
-  private final Optional<NodePermissioningController> nodePermissioningController =
-      Optional.empty();
-
   public PeerDiscoveryController(
       final KeyPair keypair,
       final DiscoveryPeer localPeer,
@@ -151,6 +150,7 @@ public class PeerDiscoveryController {
       final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
       final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController,
+      final Optional<NodePermissioningController> nodePermissioningController,
       final Subscribers<Consumer<PeerBondedEvent>> peerBondedObservers,
       final Subscribers<Consumer<PeerDroppedEvent>> peerDroppedObservers) {
     this.timerUtil = timerUtil;
@@ -163,6 +163,7 @@ public class PeerDiscoveryController {
     this.peerRequirement = peerRequirement;
     this.peerBlacklist = peerBlacklist;
     this.nodeWhitelistController = nodeWhitelistController;
+    this.nodePermissioningController = nodePermissioningController;
     this.outboundMessageHandler = outboundMessageHandler;
     this.peerBondedObservers = peerBondedObservers;
     this.peerDroppedObservers = peerDroppedObservers;
@@ -173,25 +174,23 @@ public class PeerDiscoveryController {
       throw new IllegalStateException("The peer table had already been started");
     }
 
-    bootstrapNodes.stream()
-        .filter(this::whitelistIfPresentIsNodePermitted)
-        .forEach(peerTable::tryAdd);
+    bootstrapNodes.stream().filter(p -> isPeerPermitted(localPeer, p)).forEach(peerTable::tryAdd);
 
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(
             peerBlacklist,
-            nodeWhitelistController,
+            nodePermissioningController,
             this::bond,
             this::findNodes,
             timerUtil,
-            localPeer.getId(),
+            localPeer,
             peerTable,
             PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS,
             100);
 
     final List<DiscoveryPeer> initialDiscoveryPeers =
         bootstrapNodes.stream()
-            .filter(this::whitelistIfPresentIsNodePermitted)
+            .filter(p -> isPeerPermitted(localPeer, p))
             .collect(Collectors.toList());
 
     if (nodePermissioningController.isPresent()) {
@@ -225,9 +224,13 @@ public class PeerDiscoveryController {
     return CompletableFuture.completedFuture(null);
   }
 
-  private boolean whitelistIfPresentIsNodePermitted(final DiscoveryPeer sender) {
-    return nodeWhitelistController
-        .map(nodeWhitelistController -> nodeWhitelistController.isPermitted(sender.getEnodeURI()))
+  private boolean isPeerPermitted(final Peer sourcePeer, final Peer destinationPeer) {
+    return nodePermissioningController
+        .map(
+            c ->
+                c.isPermitted(
+                    new EnodeURL(sourcePeer.getEnodeURI()),
+                    new EnodeURL(destinationPeer.getEnodeURI())))
         .orElse(true);
   }
 
@@ -250,7 +253,7 @@ public class PeerDiscoveryController {
       return;
     }
 
-    if (!whitelistIfPresentIsNodePermitted(sender)) {
+    if (!isPeerPermitted(sender, localPeer)) {
       LOG.trace("Dropping packet from peer not in the whitelist ({})", sender.getEnodeURI());
       return;
     }

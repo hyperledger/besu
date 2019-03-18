@@ -123,6 +123,7 @@ public class TestNode implements Closeable {
                         () -> true,
                         new PeerBlacklist(),
                         new NoOpMetricsSystem(),
+                        Optional.empty(),
                         Optional.empty()))
             .metricsSystem(new NoOpMetricsSystem())
             .build();

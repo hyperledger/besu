@@ -31,6 +31,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.ethereum.p2p.NodePermissioningControllerTestHelper;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerDroppedEvent;
@@ -42,6 +43,7 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -986,87 +988,81 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
-  public void shouldNotBondWithNonWhitelistedPeer() throws IOException {
+  public void shouldNotBondWithNonPermittedPeer() {
     final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 3);
 
-    final DiscoveryPeer discoPeer = peers.get(0);
-    final DiscoveryPeer otherPeer = peers.get(1);
-    final DiscoveryPeer otherPeer2 = peers.get(2);
+    final DiscoveryPeer discoveryPeer = peers.get(0);
+    final DiscoveryPeer notPermittedPeer = peers.get(1);
+    final DiscoveryPeer permittedPeer = peers.get(2);
 
     final PeerBlacklist blacklist = new PeerBlacklist();
-    final LocalPermissioningConfiguration config = permissioningConfigurationWithTempFile();
-    final NodeLocalConfigPermissioningController nodeLocalConfigPermissioningController =
-        new NodeLocalConfigPermissioningController(config, Collections.emptyList(), selfEnode);
 
-    // Whitelist peers
-    nodeLocalConfigPermissioningController.addNodes(Arrays.asList(discoPeer.getEnodeURI()));
-    nodeLocalConfigPermissioningController.addNodes(Arrays.asList(otherPeer2.getEnodeURI()));
+    final NodePermissioningController nodePermissioningController =
+        new NodePermissioningControllerTestHelper(localPeer)
+            .withPermittedPeers(discoveryPeer, permittedPeer)
+            .withForbiddenPeers(notPermittedPeer)
+            .build();
 
     final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
-            .peers(discoPeer)
+            .peers(discoveryPeer)
             .blacklist(blacklist)
-            .whitelist(nodeLocalConfigPermissioningController)
+            .nodePermissioningController(nodePermissioningController)
             .outboundMessageHandler(outboundMessageHandler)
             .build();
 
     final Endpoint localEndpoint = localPeer.getEndpoint();
 
-    // Setup ping to be sent to discoPeer
+    // Setup ping to be sent to discoveryPeer
     List<SECP256K1.KeyPair> keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(1);
-    PingPacketData pingPacketData = PingPacketData.create(localEndpoint, discoPeer.getEndpoint());
+    PingPacketData pingPacketData =
+        PingPacketData.create(localEndpoint, discoveryPeer.getEndpoint());
     final Packet discoPeerPing = Packet.create(PacketType.PING, pingPacketData, keyPairs.get(0));
-    mockPacketCreation(PacketType.PING, discoPeer, discoPeerPing);
+    mockPacketCreation(PacketType.PING, discoveryPeer, discoPeerPing);
 
     controller.start();
     verify(outboundMessageHandler, times(1)).send(any(), matchPacketOfType(PacketType.PING));
 
     final Packet pongFromDiscoPeer =
-        MockPacketDataFactory.mockPongPacket(discoPeer, discoPeerPing.getHash());
-    controller.onMessage(pongFromDiscoPeer, discoPeer);
+        MockPacketDataFactory.mockPongPacket(discoveryPeer, discoPeerPing.getHash());
+    controller.onMessage(pongFromDiscoPeer, discoveryPeer);
 
     verify(outboundMessageHandler, times(1))
-        .send(eq(discoPeer), matchPacketOfType(PacketType.FIND_NEIGHBORS));
+        .send(eq(discoveryPeer), matchPacketOfType(PacketType.FIND_NEIGHBORS));
 
     // Setup ping to be sent to otherPeer after neighbors packet is received
     keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(1);
-    pingPacketData = PingPacketData.create(localEndpoint, otherPeer.getEndpoint());
+    pingPacketData = PingPacketData.create(localEndpoint, notPermittedPeer.getEndpoint());
     final Packet pingPacket = Packet.create(PacketType.PING, pingPacketData, keyPairs.get(0));
-    mockPacketCreation(PacketType.PING, otherPeer, pingPacket);
+    mockPacketCreation(PacketType.PING, notPermittedPeer, pingPacket);
 
     // Setup ping to be sent to otherPeer2 after neighbors packet is received
     keyPairs = PeerDiscoveryTestHelper.generateKeyPairs(1);
-    pingPacketData = PingPacketData.create(localEndpoint, otherPeer2.getEndpoint());
+    pingPacketData = PingPacketData.create(localEndpoint, permittedPeer.getEndpoint());
     final Packet pingPacket2 = Packet.create(PacketType.PING, pingPacketData, keyPairs.get(0));
-    mockPacketCreation(PacketType.PING, otherPeer2, pingPacket2);
+    mockPacketCreation(PacketType.PING, permittedPeer, pingPacket2);
 
     final Packet neighborsPacket =
-        MockPacketDataFactory.mockNeighborsPacket(discoPeer, otherPeer, otherPeer2);
-    controller.onMessage(neighborsPacket, discoPeer);
+        MockPacketDataFactory.mockNeighborsPacket(discoveryPeer, notPermittedPeer, permittedPeer);
+    controller.onMessage(neighborsPacket, discoveryPeer);
 
-    verify(controller, times(0)).bond(otherPeer);
-    verify(controller, times(1)).bond(otherPeer2);
+    verify(controller, times(0)).bond(notPermittedPeer);
+    verify(controller, times(1)).bond(permittedPeer);
   }
 
   @Test
-  public void shouldNotRespondToPingFromNonWhitelistedDiscoveryPeer() throws IOException {
+  public void shouldNotRespondToPingFromNonWhitelistedDiscoveryPeer() {
     final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 3);
     final DiscoveryPeer discoPeer = peers.get(0);
 
-    final PeerBlacklist blacklist = new PeerBlacklist();
-
-    // don't add disco peer to whitelist
-    LocalPermissioningConfiguration config = permissioningConfigurationWithTempFile();
-    config.setNodeWhitelist(new ArrayList<>());
-    NodeLocalConfigPermissioningController nodeLocalConfigPermissioningController =
-        new NodeLocalConfigPermissioningController(config, Collections.emptyList(), selfEnode);
+    final NodePermissioningController nodePermissioningController =
+        new NodePermissioningControllerTestHelper(localPeer).withForbiddenPeers(discoPeer).build();
 
     controller =
         getControllerBuilder()
             .peers(discoPeer)
-            .blacklist(blacklist)
-            .whitelist(nodeLocalConfigPermissioningController)
+            .nodePermissioningController(nodePermissioningController)
             .build();
 
     final Packet pingPacket = mockPingPacket(peers.get(0), localPeer);
@@ -1229,6 +1225,7 @@ public class PeerDiscoveryControllerTest {
     private Collection<DiscoveryPeer> discoPeers = Collections.emptyList();
     private PeerBlacklist blacklist = new PeerBlacklist();
     private Optional<NodeLocalConfigPermissioningController> whitelist = Optional.empty();
+    private Optional<NodePermissioningController> nodePermissioningController = Optional.empty();
     private MockTimerUtil timerUtil = new MockTimerUtil();
     private KeyPair keypair;
     private DiscoveryPeer localPeer;
@@ -1259,6 +1256,11 @@ public class PeerDiscoveryControllerTest {
 
     ControllerBuilder whitelist(final NodeLocalConfigPermissioningController whitelist) {
       this.whitelist = Optional.of(whitelist);
+      return this;
+    }
+
+    ControllerBuilder nodePermissioningController(final NodePermissioningController controller) {
+      this.nodePermissioningController = Optional.of(controller);
       return this;
     }
 
@@ -1319,6 +1321,7 @@ public class PeerDiscoveryControllerTest {
               PEER_REQUIREMENT,
               blacklist,
               whitelist,
+              nodePermissioningController,
               peerBondedObservers,
               peerDroppedObservers));
     }

@@ -161,8 +161,8 @@ public class NettyP2PNetwork implements P2PNetwork {
 
   private final LabelledMetric<Counter> outboundMessagesCounter;
 
-  private final Optional<NodePermissioningController> nodePermissioningController;
   private final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController;
+  private final Optional<NodePermissioningController> nodePermissioningController;
   private final Optional<Blockchain> blockchain;
   private OptionalLong blockAddedObserverId = OptionalLong.empty();
 
@@ -174,7 +174,8 @@ public class NettyP2PNetwork implements P2PNetwork {
       final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
       final MetricsSystem metricsSystem,
-      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController) {
+      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController,
+      final Optional<NodePermissioningController> nodePermissioningController) {
     this(
         vertx,
         keyPair,
@@ -184,7 +185,7 @@ public class NettyP2PNetwork implements P2PNetwork {
         peerBlacklist,
         metricsSystem,
         nodeWhitelistController,
-        null,
+        nodePermissioningController,
         null);
   }
 
@@ -215,12 +216,11 @@ public class NettyP2PNetwork implements P2PNetwork {
       final PeerBlacklist peerBlacklist,
       final MetricsSystem metricsSystem,
       final Optional<NodeLocalConfigPermissioningController> nodeLocalConfigPermissioningController,
-      final NodePermissioningController nodePermissioningController,
+      final Optional<NodePermissioningController> nodePermissioningController,
       final Blockchain blockchain) {
 
     connections = new PeerConnectionRegistry(metricsSystem);
     this.peerBlacklist = peerBlacklist;
-    this.nodePermissioningController = Optional.ofNullable(nodePermissioningController);
     this.peerMaintainConnectionList = new HashSet<>();
     peerDiscoveryAgent =
         new VertxPeerDiscoveryAgent(
@@ -229,7 +229,8 @@ public class NettyP2PNetwork implements P2PNetwork {
             config.getDiscovery(),
             peerRequirement,
             peerBlacklist,
-            nodeLocalConfigPermissioningController);
+            nodeLocalConfigPermissioningController,
+            nodePermissioningController);
 
     outboundMessagesCounter =
         metricsSystem.createLabelledCounter(
@@ -301,6 +302,7 @@ public class NettyP2PNetwork implements P2PNetwork {
     }
 
     this.nodeWhitelistController = nodeLocalConfigPermissioningController;
+    this.nodePermissioningController = nodePermissioningController;
     this.blockchain = Optional.ofNullable(blockchain);
   }
 

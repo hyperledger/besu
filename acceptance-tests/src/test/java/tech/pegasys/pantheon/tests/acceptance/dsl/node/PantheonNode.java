@@ -23,7 +23,7 @@ import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
-import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.httptransaction.HttpRequestFactory;
@@ -83,7 +83,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
-  private final Optional<LocalPermissioningConfiguration> permissioningConfiguration;
+  private final Optional<PermissioningConfiguration> permissioningConfiguration;
   private final GenesisConfigProvider genesisConfigProvider;
   private final boolean devMode;
   private final boolean discoveryEnabled;
@@ -103,7 +103,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
-      final Optional<LocalPermissioningConfiguration> permissioningConfiguration,
+      final Optional<PermissioningConfiguration> permissioningConfiguration,
       final boolean devMode,
       final GenesisConfigProvider genesisConfigProvider,
       final boolean p2pEnabled,
@@ -472,7 +472,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
     return discoveryEnabled;
   }
 
-  Optional<LocalPermissioningConfiguration> getPermissioningConfiguration() {
+  Optional<PermissioningConfiguration> getPermissioningConfiguration() {
     return permissioningConfiguration;
   }
 
