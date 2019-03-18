@@ -26,6 +26,7 @@ public class RpcApis {
   public static final RpcApi WEB3 = new RpcApi("WEB3");
   public static final RpcApi ADMIN = new RpcApi("ADMIN");
   public static final RpcApi EEA = new RpcApi("EEA");
+  public static final RpcApi TX_POOL = new RpcApi("TXPOOL");
 
   public static final Collection<RpcApi> DEFAULT_JSON_RPC_APIS = Arrays.asList(ETH, NET, WEB3);
 
@@ -46,6 +47,8 @@ public class RpcApis {
       return Optional.of(ADMIN);
     } else if (name.equals(EEA.getCliValue())) {
       return Optional.of(EEA);
+    } else if (name.equals(TX_POOL.getCliValue())) {
+      return Optional.of(TX_POOL);
     } else {
       return Optional.empty();
     }
