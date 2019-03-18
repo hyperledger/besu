@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
+import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
@@ -40,7 +41,7 @@ public class PantheonControllerBuilder {
   private File nodePrivateKeyFile;
   private MetricsSystem metricsSystem;
   private PrivacyParameters privacyParameters;
-  private Integer maxPendingTransactions;
+  private Integer maxPendingTransactions = PendingTransactions.MAX_PENDING_TRANSACTIONS;
 
   public PantheonControllerBuilder synchronizerConfiguration(
       final SynchronizerConfiguration synchronizerConfiguration) {
