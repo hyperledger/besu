@@ -51,6 +51,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfigurationBuilder;
+import tech.pegasys.pantheon.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
@@ -443,6 +444,17 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final BytesValue extraData = DEFAULT_EXTRA_DATA;
 
   @Option(
+      names = {"--permissions-nodes-contract-address"},
+      description = "Address of the node permissioning smart contract",
+      arity = "1")
+  private final Address permissionsNodesContractAddress = null;
+
+  @Option(
+      names = {"--permissions-nodes-contract-enabled"},
+      description = "Enable node level permissions via smart contract (default: ${DEFAULT-VALUE})")
+  private final Boolean permissionsNodesContractEnabled = false;
+
+  @Option(
       names = {"--permissions-nodes-enabled"},
       description = "Enable node level permissions (default: ${DEFAULT-VALUE})")
   private final Boolean permissionsNodesEnabled = false;
@@ -601,13 +613,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           this.commandLine,
           "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled)"
               + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
-    }
-
-    if (permissionsConfigFile() != null) {
-      if (!permissionsAccountsEnabled && !permissionsNodesEnabled) {
-        logger.warn(
-            "Permissions config file set {} but no permissions enabled", permissionsConfigFile());
-      }
     }
 
     final EthNetworkConfig ethNetworkConfig = updateNetworkConfig(getNetwork());
@@ -791,7 +796,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   }
 
   private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
-    if (!permissionsAccountsEnabled && !permissionsNodesEnabled) {
+    Optional<LocalPermissioningConfiguration> localPermissioningConfigurationOptional;
+    Optional<SmartContractPermissioningConfiguration>
+        smartContractPermissioningConfigurationOptional;
+
+    if (!(localPermissionsEnabled() || contractPermissionsEnabled())) {
       if (rpcHttpApis.contains(RpcApis.PERM) || rpcWsApis.contains(RpcApis.PERM)) {
         logger.warn(
             "Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
@@ -799,15 +808,55 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       return Optional.empty();
     }
 
-    final LocalPermissioningConfiguration localPermissioningConfiguration =
-        PermissioningConfigurationBuilder.permissioningConfiguration(
-            getPermissionsConfigFile(), permissionsNodesEnabled, permissionsAccountsEnabled);
+    if (localPermissionsEnabled()) {
+      final LocalPermissioningConfiguration localPermissioningConfiguration =
+          PermissioningConfigurationBuilder.permissioningConfiguration(
+              getPermissionsConfigFile(), permissionsNodesEnabled, permissionsAccountsEnabled);
+      localPermissioningConfigurationOptional = Optional.of(localPermissioningConfiguration);
+    } else {
+      if (permissionsConfigFile() != null) {
+        logger.warn(
+            "Permissions config file set {} but no local permissions enabled",
+            permissionsConfigFile());
+      }
+      localPermissioningConfigurationOptional = Optional.empty();
+    }
+
+    if (contractPermissionsEnabled()) {
+      if (permissionsNodesContractAddress == null) {
+        throw new ParameterException(
+            this.commandLine,
+            "No contract address specified. Cannot enable contract based permissions.");
+      }
+      final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
+          PermissioningConfigurationBuilder.smartContractPermissioningConfiguration(
+              permissionsNodesContractAddress, permissionsNodesContractEnabled);
+      smartContractPermissioningConfigurationOptional =
+          Optional.of(smartContractPermissioningConfiguration);
+    } else {
+      if (permissionsNodesContractAddress != null) {
+        logger.warn(
+            "Smart contract address set {} but no contract permissions enabled",
+            permissionsNodesContractAddress);
+      }
+      smartContractPermissioningConfigurationOptional = Optional.empty();
+    }
 
     final PermissioningConfiguration permissioningConfiguration =
         new PermissioningConfiguration(
-            Optional.of(localPermissioningConfiguration), Optional.empty());
+            localPermissioningConfigurationOptional,
+            smartContractPermissioningConfigurationOptional);
 
     return Optional.of(permissioningConfiguration);
+  }
+
+  private boolean localPermissionsEnabled() {
+    return permissionsAccountsEnabled || permissionsNodesEnabled;
+  }
+
+  private boolean contractPermissionsEnabled() {
+    // TODO add permissionsAccountsContractEnabled
+    return permissionsNodesContractEnabled;
   }
 
   private PrivacyParameters privacyParameters() throws IOException {
