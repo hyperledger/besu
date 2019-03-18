@@ -16,6 +16,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static tech.pegasys.pantheon.metrics.MetricCategory.JVM;
 import static tech.pegasys.pantheon.metrics.MetricCategory.NETWORK;
 import static tech.pegasys.pantheon.metrics.MetricCategory.PEERS;
@@ -161,12 +162,13 @@ public class PrometheusMetricsSystemTest {
   }
 
   @Test
-  public void shouldHandleDuplicateGaugeDeclaration() {
+  public void shouldNotAllowDuplicateGaugeCreation() {
+    // Gauges have a reference to the source of their data so creating it twice will still only
+    // pull data from the first instance, possibly leaking memory and likely returning the wrong
+    // results.
     metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7d);
-    metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7d);
-
-    assertThat(metricsSystem.getMetrics())
-        .containsExactlyInAnyOrder(new Observation(JVM, "myValue", 7d, emptyList()));
+    assertThatThrownBy(() -> metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7d))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
