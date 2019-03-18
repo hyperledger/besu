@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.util.NetworkUtility;
 import tech.pegasys.pantheon.util.Preconditions;
 
@@ -58,8 +59,15 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final DiscoveryConfiguration config,
       final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
-      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController) {
-    super(keyPair, config, peerRequirement, peerBlacklist, nodeWhitelistController);
+      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController,
+      final Optional<NodePermissioningController> nodePermissioningController) {
+    super(
+        keyPair,
+        config,
+        peerRequirement,
+        peerBlacklist,
+        nodeWhitelistController,
+        nodePermissioningController);
     checkArgument(vertx != null, "vertx instance cannot be null");
     this.vertx = vertx;
   }

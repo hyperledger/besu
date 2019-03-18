@@ -35,6 +35,7 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.util.NetworkUtility;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -71,6 +72,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
   private final PeerRequirement peerRequirement;
   private final PeerBlacklist peerBlacklist;
   private final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController;
+  private final Optional<NodePermissioningController> nodePermissioningController;
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
 
@@ -93,7 +95,8 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
       final DiscoveryConfiguration config,
       final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
-      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController) {
+      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController,
+      final Optional<NodePermissioningController> nodePermissioningController) {
     checkArgument(keyPair != null, "keypair cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
 
@@ -102,6 +105,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
     this.peerRequirement = peerRequirement;
     this.peerBlacklist = peerBlacklist;
     this.nodeWhitelistController = nodeWhitelistController;
+    this.nodePermissioningController = nodePermissioningController;
     this.bootstrapPeers =
         config.getBootstrapPeers().stream().map(DiscoveryPeer::new).collect(Collectors.toList());
 
@@ -164,6 +168,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
         peerRequirement,
         peerBlacklist,
         nodeWhitelistController,
+        nodePermissioningController,
         peerBondedObservers,
         peerDroppedObservers);
   }

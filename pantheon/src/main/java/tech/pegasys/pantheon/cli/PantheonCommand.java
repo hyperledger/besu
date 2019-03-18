@@ -49,6 +49,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfigurationBuilder;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
@@ -613,10 +614,12 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     try {
       final JsonRpcConfiguration jsonRpcConfiguration = jsonRpcConfiguration();
       final WebSocketConfiguration webSocketConfiguration = webSocketConfiguration();
-      final Optional<LocalPermissioningConfiguration> permissioningConfiguration =
+      final Optional<PermissioningConfiguration> permissioningConfiguration =
           permissioningConfiguration();
-      permissioningConfiguration.ifPresent(
-          p -> ensureAllBootnodesAreInWhitelist(ethNetworkConfig, p));
+
+      permissioningConfiguration
+          .flatMap(PermissioningConfiguration::getLocalConfig)
+          .ifPresent(p -> ensureAllBootnodesAreInWhitelist(ethNetworkConfig, p));
 
       synchronize(
           buildController(),
@@ -787,8 +790,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     return metricsConfiguration;
   }
 
-  private Optional<LocalPermissioningConfiguration> permissioningConfiguration() throws Exception {
-
+  private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
     if (!permissionsAccountsEnabled && !permissionsNodesEnabled) {
       if (rpcHttpApis.contains(RpcApis.PERM) || rpcWsApis.contains(RpcApis.PERM)) {
         logger.warn(
@@ -797,9 +799,14 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       return Optional.empty();
     }
 
-    final LocalPermissioningConfiguration permissioningConfiguration =
+    final LocalPermissioningConfiguration localPermissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfiguration(
             getPermissionsConfigFile(), permissionsNodesEnabled, permissionsAccountsEnabled);
+
+    final PermissioningConfiguration permissioningConfiguration =
+        new PermissioningConfiguration(
+            Optional.of(localPermissioningConfiguration), Optional.empty());
+
     return Optional.of(permissioningConfiguration);
   }
 
@@ -847,7 +854,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
-      final Optional<LocalPermissioningConfiguration> permissioningConfiguration) {
+      final Optional<PermissioningConfiguration> permissioningConfiguration) {
 
     checkNotNull(runnerBuilder);
 

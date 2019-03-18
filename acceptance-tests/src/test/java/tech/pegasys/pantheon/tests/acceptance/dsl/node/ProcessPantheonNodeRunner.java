@@ -16,6 +16,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
+import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -145,6 +146,7 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
     }
 
     node.getPermissioningConfiguration()
+        .flatMap(PermissioningConfiguration::getLocalConfig)
         .ifPresent(
             permissioningConfiguration -> {
               if (permissioningConfiguration.isNodeWhitelistEnabled()) {

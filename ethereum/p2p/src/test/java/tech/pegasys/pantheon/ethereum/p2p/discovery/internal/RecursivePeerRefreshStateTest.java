@@ -16,11 +16,13 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
@@ -28,13 +30,12 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.RecursivePeerRefres
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.RecursivePeerRefreshState.FindNeighbourDispatcher;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
-import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +52,7 @@ public class RecursivePeerRefreshStateTest {
       "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:1111";
   private final EnodeURL selfEnode = new EnodeURL(selfEnodeString);
 
+  private final DiscoveryPeer localPeer = new DiscoveryPeer(createId(9), "127.0.0.9", 9, 9);
   private final DiscoveryPeer peer1 = new DiscoveryPeer(createId(1), "127.0.0.1", 1, 1);
   private final DiscoveryPeer peer2 = new DiscoveryPeer(createId(2), "127.0.0.2", 2, 2);
   private final DiscoveryPeer peer3 = new DiscoveryPeer(createId(3), "127.0.0.3", 3, 3);
@@ -63,7 +65,7 @@ public class RecursivePeerRefreshStateTest {
           bondingAgent,
           neighborFinder,
           timerUtil,
-          createId(999),
+          localPeer,
           new PeerTable(createId(999), 16),
           5,
           100);
@@ -180,7 +182,7 @@ public class RecursivePeerRefreshStateTest {
             bondingAgent,
             neighborFinder,
             timerUtil,
-            createId(999),
+            localPeer,
             new PeerTable(createId(999), 16),
             5,
             1);
@@ -462,7 +464,7 @@ public class RecursivePeerRefreshStateTest {
             bondingAgent,
             neighborFinder,
             timerUtil,
-            createId(999),
+            localPeer,
             new PeerTable(createId(999), 16),
             5,
             100);
@@ -481,7 +483,8 @@ public class RecursivePeerRefreshStateTest {
   }
 
   @Test
-  public void shouldNotBondWithNodesRejectedByWhitelist() throws Exception {
+  public void shouldNotBondWithNodesNotPermitted() throws Exception {
+    final DiscoveryPeer localPeer = new DiscoveryPeer(createId(999), "127.0.0.9", 9, 9);
     final DiscoveryPeer peerA = new DiscoveryPeer(createId(1), "127.0.0.1", 1, 1);
     final DiscoveryPeer peerB = new DiscoveryPeer(createId(2), "127.0.0.2", 2, 2);
 
@@ -491,19 +494,21 @@ public class RecursivePeerRefreshStateTest {
         LocalPermissioningConfiguration.createDefault();
     permissioningConfiguration.setConfigurationFilePath(tempFile.toAbsolutePath().toString());
 
-    final NodeLocalConfigPermissioningController peerWhitelist =
-        new NodeLocalConfigPermissioningController(
-            permissioningConfiguration, Collections.emptyList(), selfEnode);
-    peerWhitelist.addNodes(Arrays.asList(peerA.getEnodeURI()));
+    final NodePermissioningController nodeWhitelistController =
+        mock(NodePermissioningController.class);
+    when(nodeWhitelistController.isPermitted(any(), eq(new EnodeURL(peerA.getEnodeURI()))))
+        .thenReturn(true);
+    when(nodeWhitelistController.isPermitted(any(), eq(new EnodeURL(peerB.getEnodeURI()))))
+        .thenReturn(false);
 
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(
             peerBlacklist,
-            Optional.of(peerWhitelist),
+            Optional.of(nodeWhitelistController),
             bondingAgent,
             neighborFinder,
             timerUtil,
-            createId(999),
+            localPeer,
             new PeerTable(createId(999), 16),
             5,
             100);
