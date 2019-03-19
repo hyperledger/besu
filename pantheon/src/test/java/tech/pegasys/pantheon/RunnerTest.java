@@ -191,7 +191,7 @@ public final class RunnerTest {
           new EthNetworkConfig(
               EthNetworkConfig.jsonConfig(DEV),
               DEV_NETWORK_ID,
-              Collections.singletonList(URI.create(advertisedPeer.getEnodeURI())));
+              Collections.singletonList(URI.create(advertisedPeer.getEnodeURLString())));
       runnerBehind =
           runnerBuilder
               .pantheonController(controllerBehind)

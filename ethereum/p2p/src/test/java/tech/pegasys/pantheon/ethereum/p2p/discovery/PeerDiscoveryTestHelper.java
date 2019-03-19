@@ -196,7 +196,10 @@ public class PeerDiscoveryTestHelper {
     }
 
     private List<URI> asEnodes(final List<DiscoveryPeer> peers) {
-      return peers.stream().map(Peer::getEnodeURI).map(URI::create).collect(Collectors.toList());
+      return peers.stream()
+          .map(Peer::getEnodeURLString)
+          .map(URI::create)
+          .collect(Collectors.toList());
     }
 
     public AgentBuilder whiteList(
