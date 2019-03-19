@@ -14,9 +14,7 @@ package tech.pegasys.pantheon.services.pipeline;
 
 import tech.pegasys.pantheon.metrics.Counter;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -40,14 +38,16 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
   private static final Logger LOG = LogManager.getLogger();
   private final BlockingQueue<T> queue;
   private final int capacity;
-  private final Counter itemCounter;
+  private final Counter inputCounter;
+  private final Counter outputCounter;
   private final AtomicBoolean closed = new AtomicBoolean();
   private final AtomicBoolean aborted = new AtomicBoolean();
 
-  public Pipe(final int capacity, final Counter itemCounter) {
+  public Pipe(final int capacity, final Counter inputCounter, final Counter outputCounter) {
     queue = new ArrayBlockingQueue<>(capacity);
     this.capacity = capacity;
-    this.itemCounter = itemCounter;
+    this.inputCounter = inputCounter;
+    this.outputCounter = outputCounter;
   }
 
   @Override
@@ -93,6 +93,7 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
       while (hasMore()) {
         final T value = queue.poll(1, TimeUnit.SECONDS);
         if (value != null) {
+          outputCounter.inc();
           return value;
         }
       }
@@ -104,19 +105,17 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
 
   @Override
   public T poll() {
-    return queue.poll();
+    final T item = queue.poll();
+    if (item != null) {
+      outputCounter.inc();
+    }
+    return item;
   }
 
   @Override
-  public List<T> getBatch(final int maximumBatchSize) {
-    final T nextItem = get();
-    if (nextItem == null) {
-      return Collections.emptyList();
-    }
-    final List<T> batch = new ArrayList<>();
-    batch.add(nextItem);
-    queue.drainTo(batch, maximumBatchSize - 1);
-    return batch;
+  public void drainTo(final Collection<T> output, final int maxElements) {
+    final int count = queue.drainTo(output, maxElements);
+    outputCounter.inc(count);
   }
 
   @Override
@@ -124,7 +123,7 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
     while (isOpen()) {
       try {
         if (queue.offer(value, 1, TimeUnit.SECONDS)) {
-          itemCounter.inc();
+          inputCounter.inc();
           return;
         }
       } catch (final InterruptedException e) {

@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.services.pipeline;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * The interface used to read items from a pipe.
@@ -47,15 +47,11 @@ public interface ReadPipe<T> {
   T poll();
 
   /**
-   * Get a batch of values from the pipe containing at most <code>maximumBatchSize</code> items.
-   * This method will block until at least one item is available but will not wait until the batch
-   * is full.
+   * Removes at most the given number of available elements from the pipe and adds them to the given
+   * collection. This method does not block.
    *
-   * <p>An empty list will be returned if the queue is closed or the thread interrupted while
-   * waiting for the next value.
-   *
-   * @param maximumBatchSize the maximum number of items to read.
-   * @return the batch that was read.
+   * @param output the collection to transfer elements into
+   * @param maxElements the maximum number of elements to transfer
    */
-  List<T> getBatch(int maximumBatchSize);
+  void drainTo(Collection<T> output, int maxElements);
 }

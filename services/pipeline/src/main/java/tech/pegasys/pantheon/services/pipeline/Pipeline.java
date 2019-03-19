@@ -28,9 +28,9 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class Pipeline {
+public class Pipeline<I> {
   private static final Logger LOG = LogManager.getLogger();
-  private final Pipe<?> inputPipe;
+  private final Pipe<I> inputPipe;
   private final Collection<Stage> stages;
   private final Collection<Pipe<?>> pipes;
   private final CompleterStage<?> completerStage;
@@ -48,7 +48,7 @@ public class Pipeline {
   private volatile List<Future<?>> futures;
 
   Pipeline(
-      final Pipe<?> inputPipe,
+      final Pipe<I> inputPipe,
       final Collection<Stage> stages,
       final Collection<Pipe<?>> pipes,
       final CompleterStage<?> completerStage) {
@@ -56,6 +56,15 @@ public class Pipeline {
     this.stages = stages;
     this.pipes = pipes;
     this.completerStage = completerStage;
+  }
+
+  /**
+   * Get the input pipe for this pipeline.
+   *
+   * @return the input pipe.
+   */
+  public Pipe<I> getInputPipe() {
+    return inputPipe;
   }
 
   /**
