@@ -117,4 +117,10 @@ public class PipeTest {
     assertThat(pipe.get()).isNull();
     verify(outputCounter, times(2)).inc();
   }
+
+  @Test
+  public void shouldReturnNullFromGetImmediatelyIfThreadIsInterrupted() {
+    Thread.currentThread().interrupt();
+    assertThat(pipe.get()).isNull();
+  }
 }
