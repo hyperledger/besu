@@ -188,7 +188,7 @@ public class AccountWhitelistControllerTest {
     final String expectedAccount = "0x627306090abab3a6e1400e9345bc60c78a8bef57";
     final Path permissionsFile = createPermissionsFileWithAccount(expectedAccount);
 
-    when(permissioningConfig.getConfigurationFilePath())
+    when(permissioningConfig.getAccountPermissioningConfigFilePath())
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getAccountWhitelist())
@@ -202,7 +202,7 @@ public class AccountWhitelistControllerTest {
 
   @Test
   public void reloadAccountWhitelistWithErrorReadingConfigFileShouldKeepOldWhitelist() {
-    when(permissioningConfig.getConfigurationFilePath()).thenReturn("foo");
+    when(permissioningConfig.getAccountPermissioningConfigFilePath()).thenReturn("foo");
     when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getAccountWhitelist())
         .thenReturn(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
@@ -212,7 +212,7 @@ public class AccountWhitelistControllerTest {
 
     assertThat(thrown)
         .isInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Unable to read permissions TOML config file");
+        .hasMessageContaining("Unable to read permissioning TOML config file");
 
     assertThat(controller.getAccountWhitelist())
         .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");

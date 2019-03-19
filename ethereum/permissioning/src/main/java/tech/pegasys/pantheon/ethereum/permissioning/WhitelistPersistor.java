@@ -20,7 +20,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -58,9 +58,15 @@ public class WhitelistPersistor {
       final Collection<String> checkLists,
       final Path configurationFilePath)
       throws IOException, WhitelistFileSyncException {
-    boolean listsMatch =
-        new HashSet<>(existingConfigItems(configurationFilePath).get(whitelistType))
-            .equals(new HashSet<>(checkLists));
+
+    final Map<WHITELIST_TYPE, Collection<String>> configItems =
+        existingConfigItems(configurationFilePath);
+    final Collection<String> existingValues =
+        configItems.get(whitelistType) != null
+            ? configItems.get(whitelistType)
+            : Collections.emptyList();
+
+    boolean listsMatch = existingValues.containsAll(checkLists);
     if (!listsMatch) {
       throw new WhitelistFileSyncException();
     }
@@ -85,6 +91,7 @@ public class WhitelistPersistor {
     TomlParseResult parsedToml = Toml.parse(configurationFilePath);
 
     return Arrays.stream(WHITELIST_TYPE.values())
+        .filter(k -> parsedToml.contains(k.getTomlKey()))
         .map(
             whitelist_type ->
                 new AbstractMap.SimpleImmutableEntry<>(

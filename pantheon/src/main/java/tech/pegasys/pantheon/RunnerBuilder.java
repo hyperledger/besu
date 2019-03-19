@@ -233,10 +233,12 @@ public class RunnerBuilder {
         permissioningConfiguration.flatMap(PermissioningConfiguration::getLocalConfig);
 
     final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController =
-        localPermissioningConfiguration.map(
-            config ->
-                new NodeLocalConfigPermissioningController(
-                    config, bootnodesAsEnodeURLs, getSelfEnode()));
+        localPermissioningConfiguration
+            .filter(LocalPermissioningConfiguration::isNodeWhitelistEnabled)
+            .map(
+                config ->
+                    new NodeLocalConfigPermissioningController(
+                        config, bootnodesAsEnodeURLs, getSelfEnode()));
 
     final Synchronizer synchronizer = pantheonController.getSynchronizer();
 

@@ -459,7 +459,7 @@ public final class NettyP2PNetworkTest {
     final LocalPermissioningConfiguration config = LocalPermissioningConfiguration.createDefault();
     final Path tempFile = Files.createTempFile("test", "test");
     tempFile.toFile().deleteOnExit();
-    config.setConfigurationFilePath(tempFile.toAbsolutePath().toString());
+    config.setNodePermissioningConfigFilePath(tempFile.toAbsolutePath().toString());
 
     final NodeLocalConfigPermissioningController localWhitelistController =
         new NodeLocalConfigPermissioningController(config, Collections.emptyList(), selfEnode);

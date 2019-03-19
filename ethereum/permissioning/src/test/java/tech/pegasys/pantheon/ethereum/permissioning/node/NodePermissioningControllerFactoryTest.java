@@ -87,7 +87,7 @@ public class NodePermissioningControllerFactoryTest {
   public void testCreateWithLocalNodePermissioningEnabledOnly() {
     localPermissioningConfig = LocalPermissioningConfiguration.createDefault();
     localPermissioningConfig.setNodeWhitelist(Collections.emptyList());
-    localPermissioningConfig.setConfigurationFilePath("fake-file-path");
+    localPermissioningConfig.setNodePermissioningConfigFilePath("fake-file-path");
     config =
         new PermissioningConfiguration(Optional.of(localPermissioningConfig), Optional.empty());
 
@@ -107,7 +107,7 @@ public class NodePermissioningControllerFactoryTest {
   public void testCreateWithLocalNodeAndSmartContractPermissioningEnabled() {
     localPermissioningConfig = LocalPermissioningConfiguration.createDefault();
     localPermissioningConfig.setNodeWhitelist(Collections.emptyList());
-    localPermissioningConfig.setConfigurationFilePath("fake-file-path");
+    localPermissioningConfig.setNodePermissioningConfigFilePath("fake-file-path");
 
     smartContractPermissioningConfiguration = new SmartContractPermissioningConfiguration();
     smartContractPermissioningConfiguration.setSmartContractAddress(

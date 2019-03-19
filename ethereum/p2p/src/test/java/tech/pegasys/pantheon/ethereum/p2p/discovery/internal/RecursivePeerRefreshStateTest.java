@@ -492,7 +492,8 @@ public class RecursivePeerRefreshStateTest {
     tempFile.toFile().deleteOnExit();
     final LocalPermissioningConfiguration permissioningConfiguration =
         LocalPermissioningConfiguration.createDefault();
-    permissioningConfiguration.setConfigurationFilePath(tempFile.toAbsolutePath().toString());
+    permissioningConfiguration.setNodePermissioningConfigFilePath(
+        tempFile.toAbsolutePath().toString());
 
     final NodePermissioningController nodeWhitelistController =
         mock(NodePermissioningController.class);
