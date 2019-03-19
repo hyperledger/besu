@@ -12,7 +12,6 @@
  */
 package tech.pegasys.errorpronechecks;
 
-import static com.google.errorprone.BugPattern.Category.JDK;
 import static com.google.errorprone.BugPattern.SeverityLevel.SUGGESTION;
 import static com.google.errorprone.matchers.Matchers.contains;
 import static com.sun.source.tree.Tree.Kind.NULL_LITERAL;
@@ -37,7 +36,6 @@ import com.sun.source.tree.Tree;
 @BugPattern(
     name = "DoNotReturnNullOptionals",
     summary = "Do not return null optionals.",
-    category = JDK,
     severity = SUGGESTION)
 public class DoNotReturnNullOptionals extends BugChecker implements MethodTreeMatcher {
 
@@ -55,6 +53,7 @@ public class DoNotReturnNullOptionals extends BugChecker implements MethodTreeMa
   private static final Matcher<Tree> RETURN_NULL = new ReturnNullMatcher();
   private static final Matcher<Tree> CONTAINS_RETURN_NULL = contains(RETURN_NULL);
 
+  @SuppressWarnings("TreeToString")
   @Override
   public Description matchMethod(final MethodTree tree, final VisitorState state) {
     if ((tree.getReturnType() == null)

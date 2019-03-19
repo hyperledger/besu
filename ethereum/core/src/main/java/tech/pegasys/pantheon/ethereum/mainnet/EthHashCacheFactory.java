@@ -17,12 +17,8 @@ import java.util.concurrent.ExecutionException;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.primitives.Ints;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class EthHashCacheFactory {
-
-  private static final Logger LOG = LogManager.getLogger();
 
   public static class EthHashDescriptor {
     private final long datasetSize;

@@ -75,4 +75,19 @@ public class Account {
     return new ExpectAccountBalance(
         eth, this, expectedBalance.getValue(), expectedBalance.getUnit());
   }
+
+  @Override
+  public String toString() {
+    return "Account{"
+        + "eth="
+        + eth
+        + ", name='"
+        + name
+        + '\''
+        + ", keyPair="
+        + keyPair
+        + ", nonce="
+        + nonce
+        + '}';
+  }
 }

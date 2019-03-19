@@ -53,13 +53,13 @@ public class CommandLineUtilsTest {
     final Boolean optionEnabled = true;
 
     @Option(names = {"--option2"})
-    private final Integer option2 = 2;
+    final Integer option2 = 2;
 
     @Option(names = {"--option3"})
-    private final Integer option3 = 3;
+    final Integer option3 = 3;
 
     @Option(names = {"--option4"})
-    private final Integer option4 = 4;
+    final Integer option4 = 4;
   }
 
   private static class TestCommandWithDeps extends AbstractTestCommand {
@@ -96,7 +96,7 @@ public class CommandLineUtilsTest {
 
   @Test
   public void optionsAreNotExpected() {
-    AbstractTestCommand testCommand = new TestCommandWithDeps(mockLogger);
+    final AbstractTestCommand testCommand = new TestCommandWithDeps(mockLogger);
     testCommand.commandLine.parseWithHandlers(
         new RunLast(),
         defaultExceptionHandler(),
@@ -109,11 +109,16 @@ public class CommandLineUtilsTest {
         "--option4",
         "40");
     verifyOptionsConstraintLoggerCall(mockLogger, "--option2 and --option3", "--option-enabled");
+
+    assertThat(testCommand.optionEnabled).isFalse();
+    assertThat(testCommand.option2).isEqualTo(20);
+    assertThat(testCommand.option3).isEqualTo(30);
+    assertThat(testCommand.option4).isEqualTo(40);
   }
 
   @Test
   public void optionIsNotExpected() {
-    AbstractTestCommand testCommand = new TestCommandWithDeps(mockLogger);
+    final AbstractTestCommand testCommand = new TestCommandWithDeps(mockLogger);
     testCommand.commandLine.parseWithHandlers(
         new RunLast(),
         defaultExceptionHandler(),
@@ -124,11 +129,16 @@ public class CommandLineUtilsTest {
         "--option4",
         "40");
     verifyOptionsConstraintLoggerCall(mockLogger, "--option2", "--option-enabled");
+
+    assertThat(testCommand.optionEnabled).isFalse();
+    assertThat(testCommand.option2).isEqualTo(20);
+    assertThat(testCommand.option3).isEqualTo(3);
+    assertThat(testCommand.option4).isEqualTo(40);
   }
 
   @Test
   public void optionsAreExpected() {
-    AbstractTestCommand testCommand = new TestCommandWithDeps(mockLogger);
+    final AbstractTestCommand testCommand = new TestCommandWithDeps(mockLogger);
     testCommand.commandLine.parseWithHandlers(
         new RunLast(),
         defaultExceptionHandler(),
@@ -139,11 +149,15 @@ public class CommandLineUtilsTest {
         "--option4",
         "40");
     verifyNoMoreInteractions(mockLogger);
+    assertThat(testCommand.optionEnabled).isTrue();
+    assertThat(testCommand.option2).isEqualTo(20);
+    assertThat(testCommand.option3).isEqualTo(30);
+    assertThat(testCommand.option4).isEqualTo(40);
   }
 
   @Test
   public void noDependencies() {
-    AbstractTestCommand testCommand = new TestCommandWithoutDeps(mockLogger);
+    final AbstractTestCommand testCommand = new TestCommandWithoutDeps(mockLogger);
     testCommand.commandLine.parseWithHandlers(
         new RunLast(),
         defaultExceptionHandler(),
@@ -156,6 +170,10 @@ public class CommandLineUtilsTest {
         "--option4",
         "40");
     verifyNoMoreInteractions(mockLogger);
+    assertThat(testCommand.optionEnabled).isFalse();
+    assertThat(testCommand.option2).isEqualTo(20);
+    assertThat(testCommand.option3).isEqualTo(30);
+    assertThat(testCommand.option4).isEqualTo(40);
   }
 
   /**
@@ -170,7 +188,7 @@ public class CommandLineUtilsTest {
   private void verifyOptionsConstraintLoggerCall(
       final Logger logger, final String dependentOptions, final String mainOption) {
 
-    ArgumentCaptor<String> stringArgumentCaptor = ArgumentCaptor.forClass(String.class);
+    final ArgumentCaptor<String> stringArgumentCaptor = ArgumentCaptor.forClass(String.class);
 
     verify(logger)
         .warn(

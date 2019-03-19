@@ -31,8 +31,6 @@ import java.nio.file.Path;
 import java.util.Scanner;
 
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.Model.CommandSpec;
@@ -49,7 +47,6 @@ import picocli.CommandLine.Spec;
 public class RLPSubCommand implements Runnable {
 
   public static final String COMMAND_NAME = "rlp";
-  private static final Logger LOG = LogManager.getLogger();
 
   private final PrintStream out;
   private final InputStream in;

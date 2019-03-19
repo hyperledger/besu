@@ -26,13 +26,10 @@ import io.vertx.ext.auth.User;
 import net.consensys.cava.toml.Toml;
 import net.consensys.cava.toml.TomlParseResult;
 import net.consensys.cava.toml.TomlTable;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
 public class TomlAuth implements AuthProvider {
 
-  private static final Logger LOG = LogManager.getLogger();
   private final Vertx vertx;
   private final TomlAuthOptions options;
 

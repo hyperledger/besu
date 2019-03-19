@@ -20,10 +20,10 @@ dependencyManagement {
     dependency 'com.google.auto.service:auto-service:1.0-rc4'
 
     dependency 'com.google.errorprone:javac:9+181-r4173-1'
-    dependency 'com.google.errorprone:error_prone_check_api:2.3.2'
-    dependency 'com.google.errorprone:error_prone_core:2.3.2'
-    dependency 'com.google.errorprone:error_prone_annotation:2.3.2'
-    dependency 'com.google.errorprone:error_prone_test_helpers:2.3.2'
+    dependency 'com.google.errorprone:error_prone_check_api:2.3.3'
+    dependency 'com.google.errorprone:error_prone_core:2.3.3'
+    dependency 'com.google.errorprone:error_prone_annotation:2.3.3'
+    dependency 'com.google.errorprone:error_prone_test_helpers:2.3.3'
 
     dependency 'com.google.guava:guava:27.1-jre'
 

@@ -12,7 +12,6 @@
  */
 package tech.pegasys.errorpronechecks;
 
-import static com.google.errorprone.BugPattern.Category.JDK;
 import static com.google.errorprone.BugPattern.SeverityLevel.WARNING;
 
 import com.google.auto.service.AutoService;
@@ -31,11 +30,11 @@ import com.sun.tools.javac.code.Symbol;
 @BugPattern(
     name = "DoNotCreateSecureRandomDirectly",
     summary = "Do not create SecureRandom directly.",
-    category = JDK,
     severity = WARNING)
 public class DoNotCreateSecureRandomDirectly extends BugChecker
     implements MethodInvocationTreeMatcher, NewClassTreeMatcher {
 
+  @SuppressWarnings("TreeToString")
   @Override
   public Description matchMethodInvocation(
       final MethodInvocationTree tree, final VisitorState state) {

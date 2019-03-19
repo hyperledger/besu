@@ -95,7 +95,6 @@ public class IbftBlockHeightManagerTest {
 
   @Captor private ArgumentCaptor<Optional<PreparedRoundArtifacts>> preparedRoundArtifactsCaptor;
 
-  private final List<KeyPair> validatorKeys = Lists.newArrayList();
   private final List<Address> validators = Lists.newArrayList();
   private final List<MessageFactory> validatorMessageFactory = Lists.newArrayList();
 
@@ -105,7 +104,7 @@ public class IbftBlockHeightManagerTest {
 
   private void buildCreatedBlock() {
 
-    IbftExtraData extraData =
+    final IbftExtraData extraData =
         new IbftExtraData(
             BytesValue.wrap(new byte[32]), emptyList(), Optional.empty(), 0, validators);
 
@@ -118,7 +117,6 @@ public class IbftBlockHeightManagerTest {
   public void setup() {
     for (int i = 0; i < 3; i++) {
       final KeyPair key = KeyPair.generate();
-      validatorKeys.add(key);
       validators.add(Util.publicKeyToAddress(key.getPublicKey()));
       validatorMessageFactory.add(new MessageFactory(key));
     }
@@ -146,7 +144,7 @@ public class IbftBlockHeightManagerTest {
     when(roundFactory.createNewRound(any(), anyInt()))
         .thenAnswer(
             invocation -> {
-              final int round = (int) invocation.getArgument(1);
+              final int round = invocation.getArgument(1);
               final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(1, round);
               final RoundState createdRoundState =
                   new RoundState(roundId, finalState.getQuorum(), messageValidator);
@@ -183,14 +181,13 @@ public class IbftBlockHeightManagerTest {
   public void startsABlockTimerOnStartIfLocalNodeIsTheProoserForRound() {
     when(finalState.isLocalNodeProposerForRound(any())).thenReturn(true);
 
-    final IbftBlockHeightManager manager =
-        new IbftBlockHeightManager(
-            headerTestFixture.buildHeader(),
-            finalState,
-            roundChangeManager,
-            roundFactory,
-            clock,
-            messageValidatorFactory);
+    new IbftBlockHeightManager(
+        headerTestFixture.buildHeader(),
+        finalState,
+        roundChangeManager,
+        roundFactory,
+        clock,
+        messageValidatorFactory);
 
     verify(blockTimer, times(1)).startTimer(any(), any());
   }

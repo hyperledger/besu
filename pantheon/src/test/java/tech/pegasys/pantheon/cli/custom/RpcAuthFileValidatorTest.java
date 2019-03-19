@@ -16,7 +16,6 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.common.io.Resources;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -27,18 +26,12 @@ import picocli.CommandLine.ParameterException;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class RpcAuthFileValidatorTest {
 
-  private RpcAuthFileValidator rpcAuthFileValidator;
   private static final String CORRECT_TOML = "auth_correct.toml";
   private static final String DUPLICATE_USER_TOML = "auth_duplicate_user.toml";
   private static final String INVALID_TOML = "auth_invalid.toml";
   private static final String INVALID_VALUE_TOML = "auth_invalid_value.toml";
   private static final String NO_PASSWORD_TOML = "auth_no_password.toml";
   @Mock CommandLine commandLine;
-
-  @Before
-  public void setUp() {
-    rpcAuthFileValidator = new RpcAuthFileValidator();
-  }
 
   @Test
   public void shouldPassWhenCorrectTOML() {

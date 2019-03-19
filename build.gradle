@@ -20,7 +20,7 @@ plugins {
   id 'com.github.hierynomus.license' version '0.15.0'
   id 'io.spring.dependency-management' version '1.0.7.RELEASE'
   id 'me.champeau.gradle.jmh' version '0.4.8' apply false
-  id 'net.ltgt.errorprone' version '0.6.1'
+  id 'net.ltgt.errorprone' version '0.7.1'
   id 'net.researchgate.release' version '2.7.0'
 }
 

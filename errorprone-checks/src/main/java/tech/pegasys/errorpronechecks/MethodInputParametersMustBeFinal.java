@@ -12,7 +12,6 @@
  */
 package tech.pegasys.errorpronechecks;
 
-import static com.google.errorprone.BugPattern.Category.JDK;
 import static com.google.errorprone.BugPattern.SeverityLevel.WARNING;
 
 import javax.lang.model.element.Modifier;
@@ -33,7 +32,6 @@ import com.sun.source.tree.VariableTree;
 @BugPattern(
     name = "MethodInputParametersMustBeFinal",
     summary = "Method input parameters must be final.",
-    category = JDK,
     severity = WARNING)
 public class MethodInputParametersMustBeFinal extends BugChecker
     implements MethodTreeMatcher, ClassTreeMatcher {
@@ -82,6 +80,7 @@ public class MethodInputParametersMustBeFinal extends BugChecker
     return !mods.getFlags().contains(Modifier.ABSTRACT);
   }
 
+  @SuppressWarnings("TreeToString")
   private boolean isInterface(final ModifiersTree mods) {
     return mods.toString().contains("interface");
   }
@@ -102,6 +101,7 @@ public class MethodInputParametersMustBeFinal extends BugChecker
     return isAbstraction && isEnum(tree);
   }
 
+  @SuppressWarnings("TreeToString")
   private boolean isEnum(final ClassTree tree) {
     return tree.toString().contains("enum");
   }

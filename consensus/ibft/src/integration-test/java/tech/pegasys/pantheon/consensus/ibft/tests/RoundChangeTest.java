@@ -258,7 +258,7 @@ public class RoundChangeTest {
             new ConsensusRoundIdentifier(1, 2),
             context.createBlockForProposalFromChainHead(2, ARBITRARY_BLOCKTIME));
 
-    List<SignedData<RoundChangePayload>> roundChangeMessages = Lists.newArrayList();
+    final List<SignedData<RoundChangePayload>> roundChangeMessages = Lists.newArrayList();
     // Create a roundChange containing a PreparedCertificate
     roundChangeMessages.add(
         peers
@@ -311,9 +311,9 @@ public class RoundChangeTest {
   public void illegallyConstructedRoundChangeMessageIsDiscarded() {
     final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 4);
 
-    final RoundChange rc1 = peers.getNonProposing(0).injectRoundChange(targetRound, empty());
-    final RoundChange rc2 = peers.getNonProposing(1).injectRoundChange(targetRound, empty());
-    final RoundChange rc3 = peers.getNonProposing(2).injectRoundChange(targetRound, empty());
+    peers.getNonProposing(0).injectRoundChange(targetRound, empty());
+    peers.getNonProposing(1).injectRoundChange(targetRound, empty());
+    peers.getNonProposing(2).injectRoundChange(targetRound, empty());
 
     // create illegal RoundChangeMessage
     final PreparedRoundArtifacts illegalPreparedRoundArtifacts =

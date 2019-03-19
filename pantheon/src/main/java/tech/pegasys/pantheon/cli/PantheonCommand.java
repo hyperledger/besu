@@ -193,7 +193,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   void setBootnodes(final List<String> values) {
     try {
       bootNodes = values.stream().map((s) -> new EnodeURL(s).toURI()).collect(Collectors.toList());
-    } catch (IllegalArgumentException e) {
+    } catch (final IllegalArgumentException e) {
       throw new ParameterException(commandLine, e.getMessage());
     }
   }
@@ -326,8 +326,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       description =
           "Comma separated list of APIs to enable on JSON-RPC WebSocket service (default: ${DEFAULT-VALUE})")
   private final Collection<RpcApi> rpcWsApis = DEFAULT_JSON_RPC_APIS;
-
-  private Long rpcWsRefreshDelay;
 
   @Option(
       names = {"--rpc-ws-authentication-enabled"},

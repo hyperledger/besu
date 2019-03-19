@@ -20,7 +20,6 @@ import static org.mockito.Mockito.spy;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
-import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
@@ -49,7 +48,6 @@ public class FastSyncCheckpointHeaderManagerTest {
   protected ProtocolContext<Void> protocolContext;
   private SyncState syncState;
 
-  private BlockDataGenerator gen;
   private BlockchainSetupUtil<Void> localBlockchainSetup;
   protected MutableBlockchain localBlockchain;
   private BlockchainSetupUtil<Void> otherBlockchainSetup;
@@ -61,7 +59,6 @@ public class FastSyncCheckpointHeaderManagerTest {
 
   @Before
   public void setupTest() {
-    gen = new BlockDataGenerator();
     localBlockchainSetup = BlockchainSetupUtil.forTesting();
     localBlockchain = spy(localBlockchainSetup.getBlockchain());
     otherBlockchainSetup = BlockchainSetupUtil.forTesting();

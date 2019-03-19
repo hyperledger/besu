@@ -32,13 +32,9 @@ import tech.pegasys.pantheon.consensus.ibft.validation.SignedDataValidator;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.BlockValidator;
 import tech.pegasys.pantheon.ethereum.BlockValidator.BlockProcessingOutputs;
-import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
-import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Util;
-import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Collections;
 import java.util.List;
@@ -63,7 +59,7 @@ public class RoundChangeManagerTest {
   private final ConsensusRoundIdentifier ri2 = new ConsensusRoundIdentifier(2, 2);
   private final ConsensusRoundIdentifier ri3 = new ConsensusRoundIdentifier(2, 3);
   private final List<Address> validators = Lists.newArrayList();
-  private ProposalBlockConsistencyValidator proposalConsistencyValidator =
+  private final ProposalBlockConsistencyValidator proposalConsistencyValidator =
       mock(ProposalBlockConsistencyValidator.class);
 
   @Before
@@ -73,18 +69,13 @@ public class RoundChangeManagerTest {
     validators.add(Util.publicKeyToAddress(validator1Key.getPublicKey()));
     validators.add(Util.publicKeyToAddress(validator2Key.getPublicKey()));
 
-    final ProtocolContext<IbftContext> protocolContext =
-        new ProtocolContext<>(
-            mock(MutableBlockchain.class), mock(WorldStateArchive.class), mock(IbftContext.class));
-
     @SuppressWarnings("unchecked")
-    BlockValidator<IbftContext> blockValidator =
+    final BlockValidator<IbftContext> blockValidator =
         (BlockValidator<IbftContext>) mock(BlockValidator.class);
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
-    BlockHeader parentHeader = mock(BlockHeader.class);
 
-    RoundChangePayloadValidator.MessageValidatorForHeightFactory messageValidatorFactory =
+    final RoundChangePayloadValidator.MessageValidatorForHeightFactory messageValidatorFactory =
         mock(RoundChangePayloadValidator.MessageValidatorForHeightFactory.class);
 
     when(messageValidatorFactory.createAt(ri1))
@@ -119,7 +110,7 @@ public class RoundChangeManagerTest {
 
   private RoundChange makeRoundChangeMessage(
       final KeyPair key, final ConsensusRoundIdentifier round) {
-    MessageFactory messageFactory = new MessageFactory(key);
+    final MessageFactory messageFactory = new MessageFactory(key);
     return messageFactory.createRoundChange(round, Optional.empty());
   }
 

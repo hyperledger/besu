@@ -32,9 +32,7 @@ import tech.pegasys.pantheon.consensus.ibft.RoundTimer;
 import tech.pegasys.pantheon.consensus.ibft.blockcreation.IbftBlockCreator;
 import tech.pegasys.pantheon.consensus.ibft.network.IbftMessageTransmitter;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
-import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
-import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
 import tech.pegasys.pantheon.consensus.ibft.validation.MessageValidator;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
@@ -82,7 +80,6 @@ public class IbftRoundTest {
   @Mock private MessageValidator messageValidator;
   @Mock private RoundTimer roundTimer;
 
-  @Captor private ArgumentCaptor<SignedData<ProposalPayload>> payloadArgCaptor;
   @Captor private ArgumentCaptor<Block> blockCaptor;
 
   private Block proposedBlock;
@@ -120,17 +117,16 @@ public class IbftRoundTest {
   @Test
   public void onConstructionRoundTimerIsStarted() {
     final RoundState roundState = new RoundState(roundIdentifier, 3, messageValidator);
-    final IbftRound round =
-        new IbftRound(
-            roundState,
-            blockCreator,
-            protocolContext,
-            blockImporter,
-            subscribers,
-            localNodeKeys,
-            messageFactory,
-            transmitter,
-            roundTimer);
+    new IbftRound(
+        roundState,
+        blockCreator,
+        protocolContext,
+        blockImporter,
+        subscribers,
+        localNodeKeys,
+        messageFactory,
+        transmitter,
+        roundTimer);
     verify(roundTimer, times(1)).startTimer(roundIdentifier);
   }
 
@@ -233,11 +229,11 @@ public class IbftRoundTest {
         messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
 
     // Should import block when both commit seals are available.
-    ArgumentCaptor<Block> capturedBlock = ArgumentCaptor.forClass(Block.class);
+    final ArgumentCaptor<Block> capturedBlock = ArgumentCaptor.forClass(Block.class);
     verify(blockImporter, times(1)).importBlock(any(), capturedBlock.capture(), any());
 
     // Ensure imported block contains both commit seals.
-    IbftExtraData importedExtraData =
+    final IbftExtraData importedExtraData =
         IbftExtraData.decode(capturedBlock.getValue().getHeader().getExtraData());
     assertThat(importedExtraData.getSeals()).containsOnly(remoteCommitSeal, localCommitSeal);
   }

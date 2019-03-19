@@ -20,7 +20,6 @@ import static tech.pegasys.pantheon.consensus.ibft.IbftContextBuilder.setupConte
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
-import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibftlegacy.IbftBlockHeaderValidationRulesetFactory;
 import tech.pegasys.pantheon.consensus.ibftlegacy.IbftExtraData;
@@ -74,8 +73,6 @@ public class IbftBlockCreatorTest {
             Address.fromHexString(String.format("%020d", 3)),
             Address.fromHexString(String.format("%020d", 4)),
             localAddr);
-
-    final VoteTally voteTally = new VoteTally(initialValidatorList);
 
     final ProtocolSchedule<IbftContext> protocolSchedule =
         IbftProtocolSchedule.create(

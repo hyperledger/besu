@@ -31,8 +31,6 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Responsible for extracting transactions from PendingTransactions and determining if the
@@ -56,7 +54,6 @@ import org.apache.logging.log4j.Logger;
  */
 public class BlockTransactionSelector {
 
-  private static final Logger LOG = LogManager.getLogger();
   private final Wei minTransactionGasPrice;
 
   private static final double MIN_BLOCK_OCCUPANCY_RATIO = 0.8;

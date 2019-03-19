@@ -41,24 +41,6 @@ public abstract class Hash {
    * @param alg The name of the digest algorithm to use.
    * @return A digest.
    */
-  private static byte[] digestUsingAlgorithm(final byte[] input, final String alg) {
-    final MessageDigest digest;
-    try {
-      digest = BouncyCastleMessageDigestFactory.create(alg);
-      digest.update(input);
-      return digest.digest();
-    } catch (final NoSuchAlgorithmException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /**
-   * Helper method to generate a digest using the provided algorithm.
-   *
-   * @param input The input bytes to produce the digest for.
-   * @param alg The name of the digest algorithm to use.
-   * @return A digest.
-   */
   private static byte[] digestUsingAlgorithm(final BytesValue input, final String alg) {
     final MessageDigest digest;
     try {

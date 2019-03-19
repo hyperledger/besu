@@ -203,8 +203,4 @@ public class CachingTaskCollectionTest {
     }
     return tasks;
   }
-
-  private interface TaskCollectionSupplier {
-    TaskCollection<BytesValue> get() throws Exception;
-  }
 }

@@ -12,18 +12,15 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.validation;
 
-import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
-import tech.pegasys.pantheon.consensus.ibft.TestHelpers;
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.consensus.ibft.payload.MessageFactory;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
-import tech.pegasys.pantheon.ethereum.core.Block;
 
 import org.junit.Test;
 
@@ -34,7 +31,6 @@ public class RoundChangeMessageValidatorTest {
   private final KeyPair keyPair = KeyPair.generate();
   private final MessageFactory messageFactory = new MessageFactory(keyPair);
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 1);
-  private final Block block = TestHelpers.createProposalBlock(emptyList(), roundIdentifier);
 
   private ProposalBlockConsistencyValidator proposalBlockConsistencyValidator =
       mock(ProposalBlockConsistencyValidator.class);

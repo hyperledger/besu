@@ -149,31 +149,29 @@ public class EthPeerTest {
     // Set up stream for headers
     final AtomicInteger headersMessageCount = new AtomicInteger(0);
     final AtomicInteger headersClosedCount = new AtomicInteger(0);
-    final ResponseStream headersStream =
-        peer.getHeadersByHash(gen.hash(), 5, 0, false)
-            .then(
-                (closed, msg, p) -> {
-                  if (closed) {
-                    headersClosedCount.incrementAndGet();
-                  } else {
-                    headersMessageCount.incrementAndGet();
-                    assertThat(msg.getCode()).isEqualTo(headersMessage.getData().getCode());
-                  }
-                });
+    peer.getHeadersByHash(gen.hash(), 5, 0, false)
+        .then(
+            (closed, msg, p) -> {
+              if (closed) {
+                headersClosedCount.incrementAndGet();
+              } else {
+                headersMessageCount.incrementAndGet();
+                assertThat(msg.getCode()).isEqualTo(headersMessage.getData().getCode());
+              }
+            });
     // Set up stream for bodies
     final AtomicInteger bodiesMessageCount = new AtomicInteger(0);
     final AtomicInteger bodiesClosedCount = new AtomicInteger(0);
-    final ResponseStream bodiesStream =
-        peer.getBodies(asList(gen.hash(), gen.hash()))
-            .then(
-                (closed, msg, p) -> {
-                  if (closed) {
-                    bodiesClosedCount.incrementAndGet();
-                  } else {
-                    bodiesMessageCount.incrementAndGet();
-                    assertThat(msg.getCode()).isEqualTo(bodiesMessage.getData().getCode());
-                  }
-                });
+    peer.getBodies(asList(gen.hash(), gen.hash()))
+        .then(
+            (closed, msg, p) -> {
+              if (closed) {
+                bodiesClosedCount.incrementAndGet();
+              } else {
+                bodiesMessageCount.incrementAndGet();
+                assertThat(msg.getCode()).isEqualTo(bodiesMessage.getData().getCode());
+              }
+            });
 
     // Dispatch some messages and check expectations
     peer.dispatch(headersMessage);

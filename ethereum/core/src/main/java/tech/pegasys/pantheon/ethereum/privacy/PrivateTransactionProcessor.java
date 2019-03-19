@@ -44,8 +44,10 @@ public class PrivateTransactionProcessor {
 
   private static final Logger LOG = LogManager.getLogger();
 
+  @SuppressWarnings("unused")
   private final GasCalculator gasCalculator;
 
+  @SuppressWarnings("unused")
   private final TransactionValidator transactionValidator;
 
   private final AbstractMessageProcessor contractCreationProcessor;
@@ -123,6 +125,7 @@ public class PrivateTransactionProcessor {
     }
   }
 
+  @SuppressWarnings("unused")
   private final boolean clearEmptyAccounts;
 
   public PrivateTransactionProcessor(
@@ -138,6 +141,7 @@ public class PrivateTransactionProcessor {
     this.clearEmptyAccounts = clearEmptyAccounts;
   }
 
+  @SuppressWarnings("unused")
   public Result processTransaction(
       final Blockchain blockchain,
       final WorldUpdater publicWorldState,
@@ -239,6 +243,7 @@ public class PrivateTransactionProcessor {
     }
   }
 
+  @SuppressWarnings("unused")
   private static void clearEmptyAccounts(final WorldUpdater worldState) {
     worldState.getTouchedAccounts().stream()
         .filter(Account::isEmpty)
@@ -262,6 +267,7 @@ public class PrivateTransactionProcessor {
     }
   }
 
+  @SuppressWarnings("unused")
   private static Gas refunded(
       final Transaction transaction, final Gas gasRemaining, final Gas gasRefund) {
     // Integer truncation takes care of the the floor calculation needed after the divide.
