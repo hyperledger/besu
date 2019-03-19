@@ -48,14 +48,26 @@ public class EnodeURL {
       final String ip,
       final Integer listeningPort,
       final OptionalInt discoveryPort) {
-    this.nodeId = nodeId;
-    this.ip = InetAddresses.forUriString(ip);
-    this.listeningPort = listeningPort;
-    this.discoveryPort = discoveryPort;
+    this(nodeId, InetAddresses.forUriString(ip), listeningPort, discoveryPort);
   }
 
   public EnodeURL(final String nodeId, final String ip, final Integer listeningPort) {
     this(nodeId, ip, listeningPort, OptionalInt.empty());
+  }
+
+  public EnodeURL(final String nodeId, final InetAddress address, final Integer listeningPort) {
+    this(nodeId, address, listeningPort, OptionalInt.empty());
+  }
+
+  public EnodeURL(
+      final String nodeId,
+      final InetAddress address,
+      final Integer listeningPort,
+      final OptionalInt discoveryPort) {
+    this.nodeId = nodeId;
+    this.ip = address;
+    this.listeningPort = listeningPort;
+    this.discoveryPort = discoveryPort;
   }
 
   public EnodeURL(final String value) {

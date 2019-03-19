@@ -19,7 +19,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.List;
 import java.util.Map;
@@ -191,10 +190,7 @@ public class RecursivePeerRefreshState {
 
   private Boolean isPeerPermitted(final DiscoveryPeer discoPeer) {
     return nodePermissioningController
-        .map(
-            controller ->
-                controller.isPermitted(
-                    new EnodeURL(localPeer.getEnodeURI()), new EnodeURL(discoPeer.getEnodeURI())))
+        .map(controller -> controller.isPermitted(localPeer.getEnodeURL(), discoPeer.getEnodeURL()))
         .orElse(true);
   }
 

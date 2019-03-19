@@ -32,7 +32,6 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -494,10 +493,8 @@ public class RecursivePeerRefreshStateTest {
 
     final NodePermissioningController nodeWhitelistController =
         mock(NodePermissioningController.class);
-    when(nodeWhitelistController.isPermitted(any(), eq(new EnodeURL(peerA.getEnodeURI()))))
-        .thenReturn(true);
-    when(nodeWhitelistController.isPermitted(any(), eq(new EnodeURL(peerB.getEnodeURI()))))
-        .thenReturn(false);
+    when(nodeWhitelistController.isPermitted(any(), eq(peerA.getEnodeURL()))).thenReturn(true);
+    when(nodeWhitelistController.isPermitted(any(), eq(peerB.getEnodeURL()))).thenReturn(false);
 
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(

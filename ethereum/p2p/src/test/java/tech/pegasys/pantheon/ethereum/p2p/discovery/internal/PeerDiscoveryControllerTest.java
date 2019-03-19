@@ -1079,7 +1079,7 @@ public class PeerDiscoveryControllerTest {
     peerTableSpy.tryAdd(peer);
 
     final LocalPermissioningConfiguration config = permissioningConfigurationWithTempFile();
-    final URI peerURI = URI.create(peer.getEnodeURI());
+    final URI peerURI = URI.create(peer.getEnodeURLString());
     config.setNodeWhitelist(Lists.newArrayList(peerURI));
     final NodeLocalConfigPermissioningController nodeLocalConfigPermissioningController =
         new NodeLocalConfigPermissioningController(config, Collections.emptyList(), selfEnode);
@@ -1106,7 +1106,7 @@ public class PeerDiscoveryControllerTest {
     peerTableSpy.tryAdd(peer);
 
     final LocalPermissioningConfiguration config = permissioningConfigurationWithTempFile();
-    final URI peerURI = URI.create(peer.getEnodeURI());
+    final URI peerURI = URI.create(peer.getEnodeURLString());
     config.setNodeWhitelist(Lists.newArrayList(peerURI));
     final NodeLocalConfigPermissioningController nodeLocalConfigPermissioningController =
         new NodeLocalConfigPermissioningController(config, Collections.emptyList(), selfEnode);
@@ -1129,7 +1129,8 @@ public class PeerDiscoveryControllerTest {
 
     ArgumentCaptor<PeerDroppedEvent> captor = ArgumentCaptor.forClass(PeerDroppedEvent.class);
     verify(peerDroppedEventConsumer).accept(captor.capture());
-    assertThat(captor.getValue().getPeer()).isEqualTo(DiscoveryPeer.fromURI(peer.getEnodeURI()));
+    assertThat(captor.getValue().getPeer())
+        .isEqualTo(DiscoveryPeer.fromURI(peer.getEnodeURLString()));
   }
 
   @Test

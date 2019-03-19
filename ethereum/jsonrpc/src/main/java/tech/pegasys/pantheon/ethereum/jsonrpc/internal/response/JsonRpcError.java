@@ -77,8 +77,7 @@ public enum JsonRpcError {
       -32000,
       "Error reloading permissions file. Please use perm_getAccountsWhitelist and perm_getNodesWhitelist to review the current state of the whitelists"),
   PERMISSIONING_NOT_ENABLED(-32000, "Node/Account whitelisting has not been enabled"),
-  NON_WHITELISTED_NODE_CANNOT_BE_ADDED_AS_A_PEER(
-      -32000, "Cannot add a non-whitelisted node as a peer"),
+  NON_PERMITTED_NODE_CANNOT_BE_ADDED_AS_A_PEER(-32000, "Cannot add a non-permitted node as a peer"),
 
   // Permissioning/Authorization errors
   UNAUTHORIZED(-40100, "Unauthorized"),

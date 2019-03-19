@@ -17,7 +17,7 @@ import static com.google.common.base.Preconditions.checkState;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
-import tech.pegasys.pantheon.ethereum.p2p.PeerNotWhitelistedException;
+import tech.pegasys.pantheon.ethereum.p2p.PeerNotPermittedException;
 import tech.pegasys.pantheon.ethereum.p2p.api.DisconnectCallback;
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
@@ -29,7 +29,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBonde
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerDroppedEvent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerRequirement;
-import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
@@ -46,6 +45,7 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashSet;
@@ -350,10 +350,7 @@ public class NettyP2PNetwork implements P2PNetwork {
                 return;
               }
 
-              final boolean isPeerBlacklisted = peerBlacklist.contains(connection);
-              final boolean isPeerNotWhitelisted = !isPeerWhitelisted(connection, ch);
-
-              if (isPeerBlacklisted || isPeerNotWhitelisted) {
+              if (!isPeerConnectionAllowed(connection)) {
                 connection.disconnect(DisconnectReason.UNKNOWN);
                 return;
               }
@@ -367,28 +364,10 @@ public class NettyP2PNetwork implements P2PNetwork {
     };
   }
 
-  private boolean isPeerWhitelisted(final PeerConnection connection, final SocketChannel ch) {
-    return nodeWhitelistController
-        .map(
-            nwc ->
-                nwc.isPermitted(
-                    new DefaultPeer(
-                            connection.getPeer().getNodeId(),
-                            ch.remoteAddress().getAddress().getHostAddress(),
-                            connection.getPeer().getPort(),
-                            connection.getPeer().getPort())
-                        .getEnodeURI()))
-        .orElse(true);
-  }
-
-  private boolean isPeerWhitelisted(final Peer peer) {
-    return nodeWhitelistController.map(nwc -> nwc.isPermitted(peer.getEnodeURI())).orElse(true);
-  }
-
   @Override
   public boolean addMaintainConnectionPeer(final Peer peer) {
-    if (!isPeerWhitelisted(peer)) {
-      throw new PeerNotWhitelistedException("Cannot add a peer that is not whitelisted");
+    if (!isPeerAllowed(peer)) {
+      throw new PeerNotPermittedException();
     }
     final boolean added = peerMaintainConnectionList.add(peer);
     if (added) {
@@ -562,24 +541,48 @@ public class NettyP2PNetwork implements P2PNetwork {
   }
 
   private boolean isPeerConnectionAllowed(final PeerConnection peerConnection) {
+    if (peerBlacklist.contains(peerConnection)) {
+      return false;
+    }
+
     LOG.trace(
         "Checking if connection with peer {} is permitted", peerConnection.getPeer().getNodeId());
 
-    final EnodeURL localPeerEnodeURL =
-        peerInfoToEnodeURL(ourPeerInfo, (InetSocketAddress) peerConnection.getLocalAddress());
-    final EnodeURL remotePeerEnodeURL =
-        peerInfoToEnodeURL(
-            peerConnection.getPeer(), (InetSocketAddress) peerConnection.getRemoteAddress());
+    return nodePermissioningController
+        .map(
+            c -> {
+              final EnodeURL localPeerEnodeURL =
+                  peerInfoToEnodeURL(
+                      ourPeerInfo, (InetSocketAddress) peerConnection.getLocalAddress());
+              final EnodeURL remotePeerEnodeURL =
+                  peerInfoToEnodeURL(
+                      peerConnection.getPeer(),
+                      (InetSocketAddress) peerConnection.getRemoteAddress());
+              return c.isPermitted(localPeerEnodeURL, remotePeerEnodeURL);
+            })
+        .orElse(true);
+  }
+
+  private boolean isPeerAllowed(final Peer peer) {
+    if (peerBlacklist.contains(peer)) {
+      return false;
+    }
 
     return nodePermissioningController
-        .map(c -> c.isPermitted(localPeerEnodeURL, remotePeerEnodeURL))
+        .map(
+            c -> {
+              final InetSocketAddress socket = (InetSocketAddress) server.channel().localAddress();
+              final EnodeURL localPeerEnodeUrl = peerInfoToEnodeURL(ourPeerInfo, socket);
+
+              return c.isPermitted(localPeerEnodeUrl, peer.getEnodeURL());
+            })
         .orElse(true);
   }
 
   private EnodeURL peerInfoToEnodeURL(final PeerInfo ourPeerInfo, final InetSocketAddress address) {
     final String localNodeId = ourPeerInfo.getNodeId().toString().substring(2);
-    final String localHostAddress = address.getHostString();
-    final int localPort = address.getPort();
+    final InetAddress localHostAddress = address.getAddress();
+    final int localPort = ourPeerInfo.getPort();
     return new EnodeURL(localNodeId, localHostAddress, localPort);
   }
 

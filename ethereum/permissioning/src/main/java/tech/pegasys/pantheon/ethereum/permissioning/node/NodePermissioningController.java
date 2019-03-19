@@ -65,8 +65,7 @@ public class NodePermissioningController {
     return syncStatusNodePermissioningProvider;
   }
 
-  @VisibleForTesting
-  List<NodePermissioningProvider> getProviders() {
+  public List<NodePermissioningProvider> getProviders() {
     return providers;
   }
 }

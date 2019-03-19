@@ -73,7 +73,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
           .getAdvertisedPeer()
           .ifPresent(
               advertisedPeer -> {
-                response.put("enode", advertisedPeer.getEnodeURI());
+                response.put("enode", advertisedPeer.getEnodeURLString());
                 ports.put("discovery", advertisedPeer.getEndpoint().getUdpPort());
                 response.put("ip", advertisedPeer.getEndpoint().getHost());
                 response.put(

@@ -12,8 +12,12 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p;
 
-public class PeerNotWhitelistedException extends RuntimeException {
-  public PeerNotWhitelistedException(final String message) {
+public class PeerNotPermittedException extends RuntimeException {
+  public PeerNotPermittedException(final String message) {
     super(message);
+  }
+
+  public PeerNotPermittedException() {
+    super("Cannot add a peer that is not permitted");
   }
 }

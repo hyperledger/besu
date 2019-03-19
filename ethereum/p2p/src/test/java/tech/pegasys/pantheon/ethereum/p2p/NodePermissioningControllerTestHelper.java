@@ -36,18 +36,18 @@ public class NodePermissioningControllerTestHelper {
   private boolean denyAll = false;
 
   public NodePermissioningControllerTestHelper(final Peer localPeer) {
-    this.localNode = new EnodeURL(localPeer.getEnodeURI());
+    this.localNode = localPeer.getEnodeURL();
   }
 
   public NodePermissioningControllerTestHelper withPermittedPeers(final Peer... peers) {
     this.permittedNodes.addAll(
-        Arrays.stream(peers).map(p -> new EnodeURL(p.getEnodeURI())).collect(Collectors.toList()));
+        Arrays.stream(peers).map(Peer::getEnodeURL).collect(Collectors.toList()));
     return this;
   }
 
   public NodePermissioningControllerTestHelper withForbiddenPeers(final Peer... peers) {
     this.notPermittedNodes.addAll(
-        Arrays.stream(peers).map(p -> new EnodeURL(p.getEnodeURI())).collect(Collectors.toList()));
+        Arrays.stream(peers).map(Peer::getEnodeURL).collect(Collectors.toList()));
     return this;
   }
 

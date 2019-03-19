@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.p2p.peers;
 import tech.pegasys.pantheon.crypto.SecureRandomProvider;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.OptionalInt;
 
@@ -53,22 +54,28 @@ public interface Peer extends PeerId {
   }
 
   /**
-   * Returns this peer's enode URI.
+   * Returns this peer's enode URL.
    *
-   * @return The enode URI as a String.
+   * @return The enode URL as a String.
    */
-  default String getEnodeURI() {
-    String url = this.getId().toUnprefixedString();
-    Endpoint endpoint = this.getEndpoint();
-    String nodeIp = endpoint.getHost();
-    OptionalInt tcpPort = endpoint.getTcpPort();
-    int udpPort = endpoint.getUdpPort();
+  default String getEnodeURLString() {
+    return this.getEnodeURL().toString();
+  }
+
+  default EnodeURL getEnodeURL() {
+    final Endpoint endpoint = this.getEndpoint();
+
+    final OptionalInt tcpPort = endpoint.getTcpPort();
+    final int udpPort = endpoint.getUdpPort();
 
     if (tcpPort.isPresent() && (tcpPort.getAsInt() != udpPort)) {
-      return String.format(
-          "enode://%s@%s:%d?discport=%d", url, nodeIp, tcpPort.getAsInt(), udpPort);
+      return new EnodeURL(
+          this.getId().toUnprefixedString(),
+          endpoint.getHost(),
+          tcpPort.getAsInt(),
+          OptionalInt.of(endpoint.getUdpPort()));
     } else {
-      return String.format("enode://%s@%s:%d", url, nodeIp, udpPort);
+      return new EnodeURL(this.getId().toUnprefixedString(), endpoint.getHost(), udpPort);
     }
   }
 }

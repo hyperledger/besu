@@ -34,7 +34,6 @@ import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningContro
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodeWhitelistUpdatedEvent;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.Collection;
 import java.util.List;
@@ -226,11 +225,7 @@ public class PeerDiscoveryController {
 
   private boolean isPeerPermitted(final Peer sourcePeer, final Peer destinationPeer) {
     return nodePermissioningController
-        .map(
-            c ->
-                c.isPermitted(
-                    new EnodeURL(sourcePeer.getEnodeURI()),
-                    new EnodeURL(destinationPeer.getEnodeURI())))
+        .map(c -> c.isPermitted(sourcePeer.getEnodeURL(), destinationPeer.getEnodeURL()))
         .orElse(true);
   }
 
@@ -254,7 +249,7 @@ public class PeerDiscoveryController {
     }
 
     if (!isPeerPermitted(sender, localPeer)) {
-      LOG.trace("Dropping packet from peer not in the whitelist ({})", sender.getEnodeURI());
+      LOG.trace("Dropping packet from peer not in the whitelist ({})", sender.getEnodeURLString());
       return;
     }
 
