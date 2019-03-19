@@ -118,7 +118,7 @@ public class EthScheduler {
     return serviceFuture;
   }
 
-  public CompletableFuture<Void> startPipeline(final Pipeline pipeline) {
+  public CompletableFuture<Void> startPipeline(final Pipeline<?> pipeline) {
     final CompletableFuture<Void> pipelineFuture = pipeline.start(servicesExecutor);
     serviceFutures.add(pipelineFuture);
     pipelineFuture.whenComplete((r, t) -> serviceFutures.remove(pipelineFuture));

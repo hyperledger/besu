@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.services.pipeline.Pipe;
 import tech.pegasys.pantheon.services.pipeline.Pipeline;
+import tech.pegasys.pantheon.services.pipeline.PipelineBuilder;
 import tech.pegasys.pantheon.services.pipeline.WritePipe;
 import tech.pegasys.pantheon.services.tasks.Task;
 import tech.pegasys.pantheon.util.ExceptionUtils;
@@ -75,13 +76,13 @@ import org.apache.logging.log4j.Logger;
  */
 public class WorldStateDownloadProcess {
   private static final Logger LOG = LogManager.getLogger();
-  private final Pipeline fetchDataPipeline;
-  private final Pipeline completionPipeline;
+  private final Pipeline<Task<NodeDataRequest>> fetchDataPipeline;
+  private final Pipeline<Task<NodeDataRequest>> completionPipeline;
   private final WritePipe<Task<NodeDataRequest>> requestsToComplete;
 
   private WorldStateDownloadProcess(
-      final Pipeline fetchDataPipeline,
-      final Pipeline completionPipeline,
+      final Pipeline<Task<NodeDataRequest>> fetchDataPipeline,
+      final Pipeline<Task<NodeDataRequest>> completionPipeline,
       final WritePipe<Task<NodeDataRequest>> requestsToComplete) {
     this.fetchDataPipeline = fetchDataPipeline;
     this.completionPipeline = completionPipeline;
@@ -198,11 +199,20 @@ public class WorldStateDownloadProcess {
               MetricCategory.SYNCHRONIZER,
               "world_state_pipeline_processed_total",
               "Number of entries processed by each world state download pipeline stage",
-              "step");
+              "step",
+              "action");
 
-      final Pipe<Task<NodeDataRequest>> requestsToComplete =
-          new Pipe<>(bufferCapacity, outputCounter.labels("requestDataAvailable"));
-      final Pipeline fetchDataPipeline =
+      final Pipeline<Task<NodeDataRequest>> completionPipeline =
+          PipelineBuilder.<Task<NodeDataRequest>>createPipeline(
+                  "requestDataAvailable", bufferCapacity, outputCounter)
+              .andFinishWith(
+                  "requestCompleteTask",
+                  task ->
+                      completeTaskStep.markAsCompleteOrFailed(
+                          pivotBlockHeader, downloadState, task));
+
+      final Pipe<Task<NodeDataRequest>> requestsToComplete = completionPipeline.getInputPipe();
+      final Pipeline<Task<NodeDataRequest>> fetchDataPipeline =
           createPipelineFrom(
                   "requestDequeued",
                   new TaskQueueIterator(downloadState),
@@ -213,7 +223,7 @@ public class WorldStateDownloadProcess {
                   task -> loadLocalDataStep.loadLocalData(task, requestsToComplete),
                   3,
                   bufferCapacity)
-              .inBatches("batchCreate", hashCountPerRequest)
+              .inBatches(hashCountPerRequest)
               .thenProcessAsync(
                   "batchDownloadData",
                   requestTasks ->
@@ -224,14 +234,6 @@ public class WorldStateDownloadProcess {
                   tasks -> persistDataStep.persist(tasks, pivotBlockHeader, downloadState))
               .andFinishWith(
                   "batchDataDownloaded", tasks -> tasks.forEach(requestsToComplete::put));
-
-      final Pipeline completionPipeline =
-          createPipelineFrom(requestsToComplete, outputCounter)
-              .andFinishWith(
-                  "requestCompleteTask",
-                  task ->
-                      completeTaskStep.markAsCompleteOrFailed(
-                          pivotBlockHeader, downloadState, task));
 
       return new WorldStateDownloadProcess(
           fetchDataPipeline, completionPipeline, requestsToComplete);

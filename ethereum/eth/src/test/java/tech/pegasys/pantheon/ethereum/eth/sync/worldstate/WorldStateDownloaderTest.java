@@ -1011,7 +1011,7 @@ public class WorldStateDownloaderTest {
   }
 
   private void giveOtherThreadsAGo() {
-    LockSupport.parkNanos(10);
+    LockSupport.parkNanos(200);
   }
 
   @FunctionalInterface

@@ -37,26 +37,30 @@ import java.util.stream.Stream;
  * received by the consumer. The pipeline will halt immediately if an exception is thrown from any
  * processing stage.
  *
+ * @param <I> the type of item input to the very start of this pipeline.
  * @param <T> the output type of the last stage in the pipeline.
  */
-public class PipelineBuilder<T> {
+public class PipelineBuilder<I, T> {
 
-  private final Pipe<?> inputPipe;
+  private final Pipe<I> inputPipe;
   private final Collection<Stage> stages;
   private final Collection<Pipe<?>> pipes;
+  private final String lastStageName;
   private final ReadPipe<T> pipeEnd;
   private final int bufferSize;
   private final LabelledMetric<Counter> outputCounter;
 
   public PipelineBuilder(
-      final Pipe<?> inputPipe,
+      final Pipe<I> inputPipe,
       final Collection<Stage> stages,
       final Collection<Pipe<?>> pipes,
+      final String lastStageName,
       final ReadPipe<T> pipeEnd,
       final int bufferSize,
       final LabelledMetric<Counter> outputCounter) {
-    this.outputCounter = outputCounter;
     checkArgument(!pipes.isEmpty(), "Must have at least one pipe in a pipeline");
+    this.lastStageName = lastStageName;
+    this.outputCounter = outputCounter;
     this.inputPipe = inputPipe;
     this.stages = stages;
     this.pipes = pipes;
@@ -72,36 +76,38 @@ public class PipelineBuilder<T> {
    * @param sourceName the name of this stage. Used as the label for the output count metric.
    * @param source the source to pull items from for processing.
    * @param bufferSize the number of items to be buffered between each stage in the pipeline.
-   * @param outputCounter the counter to increment for each output of a stage. Must have a single
-   *     label which will be filled with the stage name.
+   * @param itemCounter the counter to increment for each output of a stage. Must accept two labels,
+   *     the stage name and action (output or drained).
    * @param <T> the type of items input into the pipeline.
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
    */
-  public static <T> PipelineBuilder<T> createPipelineFrom(
+  public static <T> PipelineBuilder<T, T> createPipelineFrom(
       final String sourceName,
       final Iterator<T> source,
       final int bufferSize,
-      final LabelledMetric<Counter> outputCounter) {
-    final Pipe<T> pipe = new Pipe<>(bufferSize, outputCounter.labels(sourceName));
+      final LabelledMetric<Counter> itemCounter) {
+    final Pipe<T> pipe = createPipe(bufferSize, sourceName, itemCounter);
     final IteratorSourceStage<T> sourceStage = new IteratorSourceStage<>(sourceName, source, pipe);
     return new PipelineBuilder<>(
-        pipe, singleton(sourceStage), singleton(pipe), pipe, bufferSize, outputCounter);
+        pipe, singleton(sourceStage), singleton(pipe), sourceName, pipe, bufferSize, itemCounter);
   }
 
   /**
    * Create a new pipeline that processes inputs added to <i>pipe</i>. The pipeline completes when
    * <i>pipe</i> is closed and the last item has been reached the end of the pipeline.
    *
-   * @param pipe the pipe feeding the pipeline.
+   * @param sourceName the name of this stage. Used as the label for the output count metric.
+   * @param bufferSize the number of items to be buffered between each stage in the pipeline.
    * @param outputCounter the counter to increment for each output of a stage. Must have a single
    *     label which will be filled with the stage name.
    * @param <T> the type of items input into the pipeline.
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
    */
-  public static <T> PipelineBuilder<T> createPipelineFrom(
-      final Pipe<T> pipe, final LabelledMetric<Counter> outputCounter) {
+  public static <T> PipelineBuilder<T, T> createPipeline(
+      final String sourceName, final int bufferSize, final LabelledMetric<Counter> outputCounter) {
+    final Pipe<T> pipe = createPipe(bufferSize, sourceName, outputCounter);
     return new PipelineBuilder<>(
-        pipe, emptyList(), singleton(pipe), pipe, pipe.getCapacity(), outputCounter);
+        pipe, emptyList(), singleton(pipe), sourceName, pipe, pipe.getCapacity(), outputCounter);
   }
 
   /**
@@ -113,7 +119,7 @@ public class PipelineBuilder<T> {
    * @param <O> the output type for this processing step.
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
    */
-  public <O> PipelineBuilder<O> thenProcess(
+  public <O> PipelineBuilder<I, O> thenProcess(
       final String stageName, final Function<T, O> processor) {
     final Processor<T, O> singleStepStage = new MapProcessor<>(processor);
     return addStage(singleStepStage, stageName);
@@ -131,7 +137,7 @@ public class PipelineBuilder<T> {
    * @param <O> the output type for this processing step.
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
    */
-  public <O> PipelineBuilder<O> thenProcessInParallel(
+  public <O> PipelineBuilder<I, O> thenProcessInParallel(
       final String stageName, final Function<T, O> processor, final int numberOfThreads) {
     return thenProcessInParallel(
         stageName, () -> new MapProcessor<>(processor), numberOfThreads, bufferSize);
@@ -154,7 +160,7 @@ public class PipelineBuilder<T> {
    * @param <O> the output type for this processing step.
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
    */
-  public <O> PipelineBuilder<O> thenProcessAsync(
+  public <O> PipelineBuilder<I, O> thenProcessAsync(
       final String stageName,
       final Function<T, CompletableFuture<O>> processor,
       final int maxConcurrency) {
@@ -169,14 +175,22 @@ public class PipelineBuilder<T> {
    *
    * <p>The output buffer size is reduced to <code>bufferSize / maximumBatchSize + 1</code>.
    *
-   * @param stageName the name of this stage. Used as the label for the output count metric.
    * @param maximumBatchSize the maximum number of items to include in a batch.
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
    */
-  public PipelineBuilder<List<T>> inBatches(final String stageName, final int maximumBatchSize) {
+  public PipelineBuilder<I, List<T>> inBatches(final int maximumBatchSize) {
     checkArgument(maximumBatchSize > 0, "Maximum batch size must be greater than 0");
-    return addStage(
-        new BatchingProcessor<>(maximumBatchSize), bufferSize / maximumBatchSize + 1, stageName);
+    return new PipelineBuilder<>(
+        inputPipe,
+        stages,
+        pipes,
+        lastStageName,
+        new BatchingReadPipe<>(
+            pipeEnd,
+            maximumBatchSize,
+            outputCounter.labels(lastStageName + "_outputPipe", "batches")),
+        bufferSize / maximumBatchSize + 1,
+        outputCounter);
   }
 
   /**
@@ -184,7 +198,7 @@ public class PipelineBuilder<T> {
    * is called and each item of the {@link Stream} it returns is output as an individual item. The
    * returned Stream may be empty to remove an item.
    *
-   * <p>This can be used to reverse the effect of {@link #inBatches(String, int)} with:
+   * <p>This can be used to reverse the effect of {@link #inBatches(int)} with:
    *
    * <pre>thenFlatMap(List::stream, newBufferSize)</pre>
    *
@@ -194,7 +208,7 @@ public class PipelineBuilder<T> {
    * @param <O> the type of items to be output from this stage.
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
    */
-  public <O> PipelineBuilder<O> thenFlatMap(
+  public <O> PipelineBuilder<I, O> thenFlatMap(
       final String stageName, final Function<T, Stream<O>> mapper, final int newBufferSize) {
     return addStage(new FlatMapProcessor<>(mapper), newBufferSize, stageName);
   }
@@ -205,7 +219,7 @@ public class PipelineBuilder<T> {
    * returned Stream may be empty to remove an item. Multiple threads process items in the pipeline
    * concurrently.
    *
-   * <p>This can be used to reverse the effect of {@link #inBatches(String, int)} with:
+   * <p>This can be used to reverse the effect of {@link #inBatches(int)} with:
    *
    * <pre>thenFlatMap(List::stream, newBufferSize)</pre>
    *
@@ -216,7 +230,7 @@ public class PipelineBuilder<T> {
    * @param <O> the type of items to be output from this stage.
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
    */
-  public <O> PipelineBuilder<O> thenFlatMapInParallel(
+  public <O> PipelineBuilder<I, O> thenFlatMapInParallel(
       final String stageName,
       final Function<T, Stream<O>> mapper,
       final int numberOfThreads,
@@ -232,20 +246,17 @@ public class PipelineBuilder<T> {
    * @param completer the {@link Consumer} that accepts the final output of the pipeline.
    * @return the constructed pipeline ready to execute.
    */
-  public Pipeline andFinishWith(final String stageName, final Consumer<T> completer) {
-    return new Pipeline(
-        inputPipe,
-        stages,
-        pipes,
-        new CompleterStage<>(stageName, pipeEnd, completer, outputCounter.labels(stageName)));
+  public Pipeline<I> andFinishWith(final String stageName, final Consumer<T> completer) {
+    return new Pipeline<>(
+        inputPipe, stages, pipes, new CompleterStage<>(stageName, pipeEnd, completer));
   }
 
-  private <O> PipelineBuilder<O> thenProcessInParallel(
+  private <O> PipelineBuilder<I, O> thenProcessInParallel(
       final String stageName,
       final Supplier<Processor<T, O>> createProcessor,
       final int numberOfThreads,
       final int newBufferSize) {
-    final Pipe<O> newPipeEnd = new Pipe<>(newBufferSize, outputCounter.labels(stageName));
+    final Pipe<O> newPipeEnd = createPipe(newBufferSize, stageName, outputCounter);
     final WritePipe<O> outputPipe = new SharedWritePipe<>(newPipeEnd, numberOfThreads);
     final ArrayList<Stage> newStages = new ArrayList<>(stages);
     for (int i = 0; i < numberOfThreads; i++) {
@@ -254,29 +265,53 @@ public class PipelineBuilder<T> {
       newStages.add(processStage);
     }
     return new PipelineBuilder<>(
-        inputPipe, newStages, concat(pipes, newPipeEnd), newPipeEnd, newBufferSize, outputCounter);
+        inputPipe,
+        newStages,
+        concat(pipes, newPipeEnd),
+        stageName,
+        newPipeEnd,
+        newBufferSize,
+        outputCounter);
   }
 
-  private <O> PipelineBuilder<O> addStage(final Processor<T, O> processor, final String stageName) {
+  private <O> PipelineBuilder<I, O> addStage(
+      final Processor<T, O> processor, final String stageName) {
     return addStage(processor, bufferSize, stageName);
   }
 
-  private <O> PipelineBuilder<O> addStage(
+  private <O> PipelineBuilder<I, O> addStage(
       final Processor<T, O> processor, final int newBufferSize, final String stageName) {
-    final Pipe<O> outputPipe = new Pipe<>(newBufferSize, outputCounter.labels(stageName));
+    final Pipe<O> outputPipe = createPipe(newBufferSize, stageName, outputCounter);
     final Stage processStage = new ProcessingStage<>(stageName, pipeEnd, outputPipe, processor);
     return addStage(processStage, outputPipe);
   }
 
-  private <O> PipelineBuilder<O> addStage(final Stage stage, final Pipe<O> outputPipe) {
+  private <O> PipelineBuilder<I, O> addStage(final Stage stage, final Pipe<O> outputPipe) {
     final List<Stage> newStages = concat(stages, stage);
     return new PipelineBuilder<>(
-        inputPipe, newStages, concat(pipes, outputPipe), outputPipe, bufferSize, outputCounter);
+        inputPipe,
+        newStages,
+        concat(pipes, outputPipe),
+        stage.getName(),
+        outputPipe,
+        bufferSize,
+        outputCounter);
   }
 
   private <X> List<X> concat(final Collection<X> existing, final X newItem) {
     final List<X> newList = new ArrayList<>(existing);
     newList.add(newItem);
     return newList;
+  }
+
+  private static <O> Pipe<O> createPipe(
+      final int newBufferSize,
+      final String stageName,
+      final LabelledMetric<Counter> outputCounter) {
+    final String labelName = stageName + "_outputPipe";
+    return new Pipe<>(
+        newBufferSize,
+        outputCounter.labels(labelName, "added"),
+        outputCounter.labels(labelName, "removed"));
   }
 }
