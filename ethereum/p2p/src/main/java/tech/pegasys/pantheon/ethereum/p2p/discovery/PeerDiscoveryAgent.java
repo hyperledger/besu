@@ -41,6 +41,7 @@ import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
+import java.net.SocketException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -204,11 +205,16 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
         .whenComplete(
             (res, err) -> {
               if (err != null) {
-                LOG.warn(
-                    "Sending to peer {} failed, packet: {}",
-                    peer,
-                    wrapBuffer(packet.encode()),
-                    err);
+                if (err instanceof SocketException && err.getMessage().contains("unreachable")) {
+                  LOG.debug(
+                      "Peer {} is unreachable, packet: {}", peer, wrapBuffer(packet.encode()), err);
+                } else {
+                  LOG.warn(
+                      "Sending to peer {} failed, packet: {}",
+                      peer,
+                      wrapBuffer(packet.encode()),
+                      err);
+                }
                 return;
               }
               peer.setLastContacted(System.currentTimeMillis());
