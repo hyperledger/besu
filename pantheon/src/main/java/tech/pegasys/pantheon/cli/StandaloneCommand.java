@@ -74,8 +74,14 @@ class StandaloneCommand implements DefaultCommandValues {
   final File privacyPublicKeyFile = null;
 
   @CommandLine.Option(
-      names = {"--permissions-config-file"},
+      names = {"--permissions-nodes-config-file"},
       description =
-          "Permissions config TOML file (default: a file named \"permissions_config.toml\" in the Pantheon data folder)")
-  String permissionsConfigFile = null;
+          "Node permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Pantheon data folder)")
+  String nodePermissionsConfigFile = null;
+
+  @CommandLine.Option(
+      names = {"--permissions-accounts-config-file"},
+      description =
+          "Account permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Pantheon data folder)")
+  String accountPermissionsConfigFile = null;
 }

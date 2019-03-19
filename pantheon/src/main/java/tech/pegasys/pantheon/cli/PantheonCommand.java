@@ -444,6 +444,16 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final BytesValue extraData = DEFAULT_EXTRA_DATA;
 
   @Option(
+      names = {"--permissions-nodes-config-file-enabled"},
+      description = "Enable node level permissions (default: ${DEFAULT-VALUE})")
+  private final Boolean permissionsNodesEnabled = false;
+
+  @Option(
+      names = {"--permissions-accounts-config-file-enabled"},
+      description = "Enable account level permissions (default: ${DEFAULT-VALUE})")
+  private final Boolean permissionsAccountsEnabled = false;
+
+  @Option(
       names = {"--permissions-nodes-contract-address"},
       description = "Address of the node permissioning smart contract",
       arity = "1")
@@ -453,16 +463,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       names = {"--permissions-nodes-contract-enabled"},
       description = "Enable node level permissions via smart contract (default: ${DEFAULT-VALUE})")
   private final Boolean permissionsNodesContractEnabled = false;
-
-  @Option(
-      names = {"--permissions-nodes-enabled"},
-      description = "Enable node level permissions (default: ${DEFAULT-VALUE})")
-  private final Boolean permissionsNodesEnabled = false;
-
-  @Option(
-      names = {"--permissions-accounts-enabled"},
-      description = "Enable account level permissions (default: ${DEFAULT-VALUE})")
-  private final Boolean permissionsAccountsEnabled = false;
 
   @Option(
       names = {"--privacy-enabled"},
@@ -680,15 +680,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private String getPermissionsConfigFile() {
-
-    return permissionsConfigFile() != null
-        ? permissionsConfigFile()
-        : dataDir().toAbsolutePath()
-            + System.getProperty("file.separator")
-            + DefaultCommandValues.PERMISSIONING_CONFIG_LOCATION;
-  }
-
   private JsonRpcConfiguration jsonRpcConfiguration() {
 
     CommandLineUtils.checkOptionDependencies(
@@ -809,15 +800,30 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     }
 
     if (localPermissionsEnabled()) {
+      final Optional<String> nodePermissioningConfigFile =
+          Optional.ofNullable(nodePermissionsConfigFile());
+      final Optional<String> accountPermissioningConfigFile =
+          Optional.ofNullable(accountsPermissionsConfigFile());
+
       final LocalPermissioningConfiguration localPermissioningConfiguration =
           PermissioningConfigurationBuilder.permissioningConfiguration(
-              getPermissionsConfigFile(), permissionsNodesEnabled, permissionsAccountsEnabled);
+              permissionsNodesEnabled,
+              nodePermissioningConfigFile.orElse(getDefaultPermissioningFilePath()),
+              permissionsAccountsEnabled,
+              accountPermissioningConfigFile.orElse(getDefaultPermissioningFilePath()));
+
       localPermissioningConfigurationOptional = Optional.of(localPermissioningConfiguration);
     } else {
-      if (permissionsConfigFile() != null) {
+      if (nodePermissionsConfigFile() != null && !permissionsNodesEnabled) {
         logger.warn(
-            "Permissions config file set {} but no local permissions enabled",
-            permissionsConfigFile());
+            "Node permissioning config file set {} but no permissions enabled",
+            nodePermissionsConfigFile());
+      }
+
+      if (accountsPermissionsConfigFile() != null && !permissionsAccountsEnabled) {
+        logger.warn(
+            "Account permissioning config file set {} but no permissions enabled",
+            accountsPermissionsConfigFile());
       }
       localPermissioningConfigurationOptional = Optional.empty();
     }
@@ -1117,18 +1123,31 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     return filename;
   }
 
-  private String permissionsConfigFile() {
+  private String nodePermissionsConfigFile() {
+    return permissionsConfigFile(standaloneCommands.nodePermissionsConfigFile);
+  }
+
+  private String accountsPermissionsConfigFile() {
+    return permissionsConfigFile(standaloneCommands.accountPermissionsConfigFile);
+  }
+
+  private String permissionsConfigFile(final String permissioningFilename) {
     String filename = null;
     if (isFullInstantiation()) {
-      filename = standaloneCommands.permissionsConfigFile;
+      filename = permissioningFilename;
     } else if (isDocker) {
       final File file = new File(DOCKER_PERMISSIONS_CONFIG_FILE_LOCATION);
       if (file.exists()) {
         filename = file.getAbsolutePath();
       }
     }
-
     return filename;
+  }
+
+  private String getDefaultPermissioningFilePath() {
+    return dataDir().toAbsolutePath()
+        + System.getProperty("file.separator")
+        + DefaultCommandValues.PERMISSIONING_CONFIG_LOCATION;
   }
 
   private boolean isFullInstantiation() {

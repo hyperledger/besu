@@ -33,7 +33,9 @@ public class AccountWhitelistController {
   private final WhitelistPersistor whitelistPersistor;
 
   public AccountWhitelistController(final LocalPermissioningConfiguration configuration) {
-    this(configuration, new WhitelistPersistor(configuration.getConfigurationFilePath()));
+    this(
+        configuration,
+        new WhitelistPersistor(configuration.getAccountPermissioningConfigFilePath()));
   }
 
   public AccountWhitelistController(
@@ -169,9 +171,10 @@ public class AccountWhitelistController {
     try {
       final LocalPermissioningConfiguration updatedConfig =
           PermissioningConfigurationBuilder.permissioningConfiguration(
-              configuration.getConfigurationFilePath(),
               configuration.isNodeWhitelistEnabled(),
-              configuration.isAccountWhitelistEnabled());
+              configuration.getNodePermissioningConfigFilePath(),
+              configuration.isAccountWhitelistEnabled(),
+              configuration.getAccountPermissioningConfigFilePath());
       readAccountsFromConfig(updatedConfig);
       configuration = updatedConfig;
     } catch (Exception e) {

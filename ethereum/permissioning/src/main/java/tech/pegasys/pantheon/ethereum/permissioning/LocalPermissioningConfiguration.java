@@ -21,8 +21,9 @@ public class LocalPermissioningConfiguration {
   private List<URI> nodeWhitelist;
   private List<String> accountWhitelist;
   private boolean nodeWhitelistEnabled;
+  private String nodePermissioningConfigFilePath;
   private boolean accountWhitelistEnabled;
-  private String configurationFilePath;
+  private String accountPermissioningConfigFilePath;
 
   public List<URI> getNodeWhitelist() {
     return nodeWhitelist;
@@ -61,11 +62,20 @@ public class LocalPermissioningConfiguration {
     return accountWhitelistEnabled;
   }
 
-  public String getConfigurationFilePath() {
-    return configurationFilePath;
+  public String getNodePermissioningConfigFilePath() {
+    return nodePermissioningConfigFilePath;
   }
 
-  public void setConfigurationFilePath(final String configurationFilePath) {
-    this.configurationFilePath = configurationFilePath;
+  public void setNodePermissioningConfigFilePath(final String nodePermissioningConfigFilePath) {
+    this.nodePermissioningConfigFilePath = nodePermissioningConfigFilePath;
+  }
+
+  public String getAccountPermissioningConfigFilePath() {
+    return accountPermissioningConfigFilePath;
+  }
+
+  public void setAccountPermissioningConfigFilePath(
+      final String accountPermissioningConfigFilePath) {
+    this.accountPermissioningConfigFilePath = accountPermissioningConfigFilePath;
   }
 }

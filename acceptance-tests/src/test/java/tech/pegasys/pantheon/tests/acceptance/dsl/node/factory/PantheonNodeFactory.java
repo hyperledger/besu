@@ -187,8 +187,9 @@ public class PantheonNodeFactory {
     final LocalPermissioningConfiguration localPermissioningConfiguration =
         LocalPermissioningConfiguration.createDefault();
     localPermissioningConfiguration.setNodeWhitelist(nodesWhitelist);
+    localPermissioningConfiguration.setNodePermissioningConfigFilePath(tempFilePath);
     localPermissioningConfiguration.setAccountWhitelist(accountsWhitelist);
-    localPermissioningConfiguration.setConfigurationFilePath(tempFilePath);
+    localPermissioningConfiguration.setAccountPermissioningConfigFilePath(tempFilePath);
 
     final PermissioningConfiguration permissioningConfiguration =
         new PermissioningConfiguration(
@@ -217,7 +218,7 @@ public class PantheonNodeFactory {
         nodesWhitelist.parallelStream().map(URI::toString).collect(toList());
     final File tempFile = createTempPermissioningConfigurationFile();
     tempFile.deleteOnExit();
-    localPermissioningConfiguration.setConfigurationFilePath(tempFile.getPath());
+    localPermissioningConfiguration.setNodePermissioningConfigFilePath(tempFile.getPath());
     initPermissioningConfigurationFile(
         WhitelistPersistor.WHITELIST_TYPE.NODES, whitelistAsStrings, tempFile.toPath());
 
@@ -253,12 +254,12 @@ public class PantheonNodeFactory {
     final LocalPermissioningConfiguration localPermissioningConfiguration =
         LocalPermissioningConfiguration.createDefault();
     localPermissioningConfiguration.setAccountWhitelist(accountsWhitelist);
-    localPermissioningConfiguration.setConfigurationFilePath(
+    localPermissioningConfiguration.setAccountPermissioningConfigFilePath(
         createTempPermissioningConfigurationFile().getPath());
 
     final File tempFile = createTempPermissioningConfigurationFile();
     tempFile.deleteOnExit();
-    localPermissioningConfiguration.setConfigurationFilePath(tempFile.getPath());
+    localPermissioningConfiguration.setAccountPermissioningConfigFilePath(tempFile.getPath());
     initPermissioningConfigurationFile(
         WHITELIST_TYPE.ACCOUNTS, accountsWhitelist, tempFile.toPath());
 

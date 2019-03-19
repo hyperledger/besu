@@ -71,9 +71,10 @@ miner-extra-data="0x444F4E27542050414E4943202120484F444C2C20484F444C2C20484F444C
 min-gas-price="1"
 
 # Permissioning
-permissions-nodes-enabled=false
-permissions-accounts-enabled=false
-permissions-config-file="./permissions_config.toml"
+permissions-nodes-config-file-enabled=false
+permissions-nodes-config-file="./permissions_config.toml"
+permissions-accounts-config-file-enabled=false
+permissions-accounts-config-file="./permissions_config.toml"
 permissions-nodes-contract-enabled=false
 permissions-nodes-contract-address="0x0000000000000000000000000000000000001234"
 

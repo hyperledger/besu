@@ -266,7 +266,7 @@ public class NodeLocalConfigPermissioningControllerTest {
     final LocalPermissioningConfiguration permissioningConfig =
         mock(LocalPermissioningConfiguration.class);
 
-    when(permissioningConfig.getConfigurationFilePath())
+    when(permissioningConfig.getNodePermissioningConfigFilePath())
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeWhitelist())
@@ -287,7 +287,7 @@ public class NodeLocalConfigPermissioningControllerTest {
     final LocalPermissioningConfiguration permissioningConfig =
         mock(LocalPermissioningConfiguration.class);
 
-    when(permissioningConfig.getConfigurationFilePath()).thenReturn("foo");
+    when(permissioningConfig.getNodePermissioningConfigFilePath()).thenReturn("foo");
     when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeWhitelist())
         .thenReturn(Arrays.asList(URI.create(expectedEnodeURI)));
@@ -299,7 +299,7 @@ public class NodeLocalConfigPermissioningControllerTest {
 
     assertThat(thrown)
         .isInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Unable to read permissions TOML config file");
+        .hasMessageContaining("Unable to read permissioning TOML config file");
 
     assertThat(controller.getNodesWhitelist()).containsExactly(expectedEnodeURI);
   }
@@ -385,7 +385,7 @@ public class NodeLocalConfigPermissioningControllerTest {
         new NodeWhitelistUpdatedEvent(
             Lists.newArrayList(new EnodeURL(enode2)), Lists.newArrayList(new EnodeURL(enode1)));
 
-    when(permissioningConfig.getConfigurationFilePath())
+    when(permissioningConfig.getNodePermissioningConfigFilePath())
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeWhitelist()).thenReturn(Arrays.asList(URI.create(enode1)));
@@ -408,7 +408,7 @@ public class NodeLocalConfigPermissioningControllerTest {
         mock(LocalPermissioningConfiguration.class);
     final Consumer<NodeWhitelistUpdatedEvent> consumer = mock(Consumer.class);
 
-    when(permissioningConfig.getConfigurationFilePath())
+    when(permissioningConfig.getNodePermissioningConfigFilePath())
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeWhitelist()).thenReturn(Arrays.asList(URI.create(enode1)));

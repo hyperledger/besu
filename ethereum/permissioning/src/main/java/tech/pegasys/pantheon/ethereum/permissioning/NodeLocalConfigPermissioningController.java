@@ -52,7 +52,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
         permissioningConfiguration,
         bootnodes,
         selfEnode,
-        new WhitelistPersistor(permissioningConfiguration.getConfigurationFilePath()));
+        new WhitelistPersistor(permissioningConfiguration.getNodePermissioningConfigFilePath()));
   }
 
   public NodeLocalConfigPermissioningController(
@@ -239,9 +239,10 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
     try {
       final LocalPermissioningConfiguration updatedConfig =
           PermissioningConfigurationBuilder.permissioningConfiguration(
-              configuration.getConfigurationFilePath(),
               configuration.isNodeWhitelistEnabled(),
-              configuration.isAccountWhitelistEnabled());
+              configuration.getNodePermissioningConfigFilePath(),
+              configuration.isAccountWhitelistEnabled(),
+              configuration.getAccountPermissioningConfigFilePath());
 
       readNodesFromConfig(updatedConfig);
       configuration = updatedConfig;

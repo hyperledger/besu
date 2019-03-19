@@ -45,7 +45,7 @@ public class LocalPermissioningConfigurationValidatorTest {
 
     LocalPermissioningConfiguration permissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfiguration(
-            toml.toAbsolutePath().toString(), true, true);
+            true, toml.toAbsolutePath().toString(), true, toml.toAbsolutePath().toString());
 
     PermissioningConfigurationValidator.areAllBootnodesAreInWhitelist(
         ethNetworkConfig, permissioningConfiguration);
@@ -63,7 +63,7 @@ public class LocalPermissioningConfigurationValidatorTest {
 
     LocalPermissioningConfiguration permissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfiguration(
-            toml.toAbsolutePath().toString(), true, true);
+            true, toml.toAbsolutePath().toString(), true, toml.toAbsolutePath().toString());
 
     try {
       PermissioningConfigurationValidator.areAllBootnodesAreInWhitelist(
