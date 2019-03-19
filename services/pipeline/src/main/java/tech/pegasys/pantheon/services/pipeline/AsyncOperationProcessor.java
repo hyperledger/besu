@@ -46,11 +46,10 @@ class AsyncOperationProcessor<I, O> implements Processor<I, O> {
         // When the future completes, interrupt so if we're waiting for new input we wake up and
         // schedule the output.
         final Thread stageThread = Thread.currentThread();
-        future.whenComplete((result, error) -> stageThread.interrupt());
         inProgress.add(future);
+        future.whenComplete((result, error) -> stageThread.interrupt());
       }
-
-      outputCompletedTasks(0, outputPipe);
+      outputCompletedTasks(outputPipe);
     } else {
       outputNextCompletedTask(outputPipe);
     }
@@ -66,7 +65,7 @@ class AsyncOperationProcessor<I, O> implements Processor<I, O> {
   private void outputNextCompletedTask(final WritePipe<O> outputPipe) {
     try {
       waitForAnyFutureToComplete();
-      outputCompletedTasks(1, outputPipe);
+      outputCompletedTasks(outputPipe);
     } catch (final InterruptedException e) {
       LOG.trace("Interrupted while waiting for processing to complete", e);
     } catch (final ExecutionException e) {
@@ -82,16 +81,13 @@ class AsyncOperationProcessor<I, O> implements Processor<I, O> {
     CompletableFuture.anyOf(inProgress.toArray(new CompletableFuture[0])).get(1, TimeUnit.SECONDS);
   }
 
-  private void outputCompletedTasks(final int minTasksToOutput, final WritePipe<O> outputPipe) {
-    int outputTasks = 0;
-    for (final Iterator<CompletableFuture<O>> i = inProgress.iterator();
-        i.hasNext() && (outputTasks < minTasksToOutput || outputPipe.hasRemainingCapacity()); ) {
+  private void outputCompletedTasks(final WritePipe<O> outputPipe) {
+    for (final Iterator<CompletableFuture<O>> i = inProgress.iterator(); i.hasNext(); ) {
       final CompletableFuture<O> process = i.next();
       final O result = process.getNow(null);
       if (result != null) {
         outputPipe.put(result);
         i.remove();
-        outputTasks++;
       }
     }
   }

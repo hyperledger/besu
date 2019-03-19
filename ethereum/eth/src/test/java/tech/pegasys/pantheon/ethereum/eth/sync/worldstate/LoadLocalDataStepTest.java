@@ -56,7 +56,7 @@ public class LoadLocalDataStepTest {
 
   @Test
   public void shouldReturnEmptyStreamAndSendTaskToCompletedPipeWhenDataIsPresent() {
-    when(worldStateStorage.getNodeData(HASH)).thenReturn(Optional.of(DATA));
+    when(worldStateStorage.getCode(HASH)).thenReturn(Optional.of(DATA));
 
     final Stream<Task<NodeDataRequest>> output =
         loadLocalDataStep.loadLocalData(task, completedTasks);
