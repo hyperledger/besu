@@ -48,7 +48,7 @@ public class EthPeer {
   private static final Logger LOG = LogManager.getLogger();
   private final PeerConnection connection;
 
-  private final int maxTrackedSeenBlocks = 30_000;
+  private final int maxTrackedSeenBlocks = 300;
 
   private final Set<Hash> knownBlocks;
   private final String protocolName;
