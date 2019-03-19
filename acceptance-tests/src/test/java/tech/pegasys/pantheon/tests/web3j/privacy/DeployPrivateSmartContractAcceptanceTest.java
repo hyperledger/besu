@@ -14,14 +14,10 @@ package tech.pegasys.pantheon.tests.web3j.privacy;
 
 import tech.pegasys.orion.testutil.OrionTestHarness;
 import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 
-import java.io.IOException;
-
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class DeployPrivateSmartContractAcceptanceTest extends PrivateAcceptanceTestBase {
@@ -33,59 +29,55 @@ public class DeployPrivateSmartContractAcceptanceTest extends PrivateAcceptanceT
 
   private PantheonNode minerNode;
   private static OrionTestHarness enclave;
-  private static PrivacyParameters privacyParameters;
-
-  @BeforeClass
-  public static void setUpOnce() throws Exception {
-    enclave = createEnclave("orion_key_0.pub", "orion_key_0.key");
-    privacyParameters = getPrivacyParams(enclave);
-  }
-
-  @AfterClass
-  public static void tearDownOnce() {
-    enclave.getOrion().stop();
-  }
 
   @Before
   public void setUp() throws Exception {
-    minerNode = pantheon.createPrivateTransactionEnabledMinerNode("miner-node", privacyParameters);
+    enclave = createEnclave("orion_key_0.pub", "orion_key_0.key");
+    minerNode =
+        pantheon.createPrivateTransactionEnabledMinerNode(
+            "miner-node", getPrivacyParams(enclave), "key");
     cluster.start(minerNode);
   }
 
   @Test
-  public void deployingMustGiveValidReceipt() throws IOException {
+  public void deployingMustGiveValidReceipt() {
     final String transactionHash =
-        minerNode.execute(transactions.deployPrivateSmartContract(getDeploySimpleStorage()));
+        minerNode.execute(transactions.deployPrivateSmartContract(getDeployEventEmitter()));
 
-    privateContractVerifier
-        .validPrivateTransactionReceipt(CONTRACT_ADDRESS.toString())
+    privateTransactionVerifier
+        .validPrivateContractDeployed(CONTRACT_ADDRESS.toString())
         .verify(minerNode, transactionHash, PUBLIC_KEY);
   }
 
   @Test
-  public void privateSmartContractMustEmitEvents() throws IOException {
-    minerNode.execute(transactions.deployPrivateSmartContract(getDeploySimpleStorage()));
+  public void privateSmartContractMustEmitEvents() {
+    minerNode.execute(transactions.deployPrivateSmartContract(getDeployEventEmitter()));
 
     final String transactionHash =
         minerNode.execute(transactions.createPrivateRawTransaction(getExecuteStoreFunc()));
 
-    privateContractVerifier
-        .validPrivateTransactionReceiptReturnsEvents("1000")
+    privateTransactionVerifier
+        .validEventReturned("1000")
         .verify(minerNode, transactionHash, PUBLIC_KEY);
   }
 
   @Test
-  public void privateSmartContractMustReturnValues() throws IOException {
+  public void privateSmartContractMustReturnValues() {
 
-    minerNode.execute(transactions.deployPrivateSmartContract(getDeploySimpleStorage()));
+    minerNode.execute(transactions.deployPrivateSmartContract(getDeployEventEmitter()));
 
     minerNode.execute(transactions.createPrivateRawTransaction(getExecuteStoreFunc()));
 
     final String transactionHash =
         minerNode.execute(transactions.createPrivateRawTransaction(getExecuteGetFunc()));
 
-    privateContractVerifier
-        .validPrivateTransactionReceiptReturnsValues("1000")
+    privateTransactionVerifier
+        .validOutputReturned("1000")
         .verify(minerNode, transactionHash, PUBLIC_KEY);
+  }
+
+  @After
+  public void tearDown() {
+    enclave.getOrion().stop();
   }
 }

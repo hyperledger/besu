@@ -80,7 +80,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
 
     if (!privateTransaction
         .getRestriction()
-        .equals(BytesValue.wrap("unrestricted".getBytes(UTF_8)))) {
+        .equals(BytesValue.wrap("restricted".getBytes(UTF_8)))) {
       return new JsonRpcErrorResponse(
           request.getId(), JsonRpcError.UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE);
     }
@@ -106,7 +106,6 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
     try {
       return privateTransactionHandler.handle(privateTransaction);
     } catch (final IOException e) {
-      LOG.debug(e);
       throw new InvalidJsonRpcRequestException("Unable to handle private transaction", e);
     }
   }

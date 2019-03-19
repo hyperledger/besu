@@ -15,28 +15,30 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.privacy;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transactions;
 
-public class PrivateContractVerifier {
+public class PrivateTransactionVerifier {
 
   private final Transactions transactions;
   private final Eea eea;
 
-  public PrivateContractVerifier(final Eea eea, final Transactions transactions) {
+  public PrivateTransactionVerifier(final Eea eea, final Transactions transactions) {
     this.eea = eea;
     this.transactions = transactions;
   }
 
-  public ExpectValidPrivateContractDeployedReceipt validPrivateTransactionReceipt(
+  public ExpectValidPrivateTransactionReceipt validPrivateTransactionReceipt() {
+    return new ExpectValidPrivateTransactionReceipt(eea, transactions);
+  }
+
+  public ExpectValidPrivateContractDeployedReceipt validPrivateContractDeployed(
       final String contractAddress) {
     return new ExpectValidPrivateContractDeployedReceipt(contractAddress, eea, transactions);
   }
 
-  public ExpectValidPrivateContractEventsEmitted validPrivateTransactionReceiptReturnsEvents(
-      final String eventValue) {
+  public ExpectValidPrivateContractEventsEmitted validEventReturned(final String eventValue) {
     return new ExpectValidPrivateContractEventsEmitted(eventValue, eea, transactions);
   }
 
-  public ExpectValidPrivateContractValuesReturned validPrivateTransactionReceiptReturnsValues(
-      final String returnValue) {
+  public ExpectValidPrivateContractValuesReturned validOutputReturned(final String returnValue) {
     return new ExpectValidPrivateContractValuesReturned(returnValue, eea, transactions);
   }
 }

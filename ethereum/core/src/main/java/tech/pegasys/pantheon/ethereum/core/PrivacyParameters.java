@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateStateStorage;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionStorage;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
@@ -38,25 +39,34 @@ public class PrivacyParameters {
   private Integer privacyAddress;
   private boolean enabled;
   private String url;
-  private String publicKey;
-  private File publicKeyFile;
+  private String enclavePublicKey;
+  private File enclavePublicKeyFile;
+  private SECP256K1.KeyPair signingKeyPair;
   private WorldStateArchive privateWorldStateArchive;
   private StorageProvider privateStorageProvider;
 
   private PrivateTransactionStorage privateTransactionStorage;
   private PrivateStateStorage privateStateStorage;
 
-  public String getPublicKey() {
-    return publicKey;
+  public String getEnclavePublicKey() {
+    return enclavePublicKey;
   }
 
-  public File getPublicKeyFile() {
-    return publicKeyFile;
+  public File getEnclavePublicKeyFile() {
+    return enclavePublicKeyFile;
   }
 
-  public void setPublicKeyUsingFile(final File publicKeyFile) throws IOException {
-    this.publicKeyFile = publicKeyFile;
-    this.publicKey = Files.asCharSource(publicKeyFile, UTF_8).read();
+  public void setEnclavePublicKeyUsingFile(final File publicKeyFile) throws IOException {
+    this.enclavePublicKeyFile = publicKeyFile;
+    this.enclavePublicKey = Files.asCharSource(publicKeyFile, UTF_8).read();
+  }
+
+  public void setSigningKeyPair(final SECP256K1.KeyPair signingKeyPair) {
+    this.signingKeyPair = signingKeyPair;
+  }
+
+  public SECP256K1.KeyPair getSigningKeyPair() {
+    return signingKeyPair;
   }
 
   public static PrivacyParameters noPrivacy() {

@@ -19,8 +19,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transactions;
 
-public class ExpectValidPrivateContractDeployedReceipt
-    extends ExpectValidPrivateTransactionReceipt {
+public class ExpectValidPrivateContractDeployedReceipt extends GetValidPrivateTransactionReceipt {
 
   private final String contractAddress;
 

@@ -93,6 +93,7 @@ public class PantheonControllerBuilder {
     // instantiate a controller with mainnet config if no genesis file is defined
     // otherwise use the indicated genesis file
     final KeyPair nodeKeys = loadKeyPair(nodePrivateKeyFile);
+    privacyParameters.setSigningKeyPair(nodeKeys);
 
     final StorageProvider storageProvider =
         RocksDbStorageProvider.create(homePath.resolve(DATABASE_PATH), metricsSystem);
