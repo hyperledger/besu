@@ -81,6 +81,19 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
           metricsSystem.createTimer(
               MetricCategory.ROCKSDB, "commit_latency_seconds", "Latency for commits to RocksDB.");
 
+      metricsSystem.createLongGauge(
+          MetricCategory.ROCKSDB,
+          "rocks_db_table_readers_memory_bytes",
+          "Estimated memory used for RocksDB index and filter blocks in bytes",
+          () -> {
+            try {
+              return db.getLongProperty("rocksdb.estimate-table-readers-mem");
+            } catch (final RocksDBException e) {
+              LOG.debug("Failed to get RocksDB metric", e);
+              return 0L;
+            }
+          });
+
       rollbackCount =
           metricsSystem.createCounter(
               MetricCategory.ROCKSDB,
