@@ -18,7 +18,9 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
+import tech.pegasys.pantheon.ethereum.chain.TransactionLocation;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Log;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
@@ -48,11 +50,12 @@ import org.apache.logging.log4j.Logger;
 
 public class EeaGetTransactionReceipt implements JsonRpcMethod {
 
+  private static final Logger LOG = getLogger();
+
   private final BlockchainQueries blockchain;
   private final Enclave enclave;
   private final JsonRpcParameter parameters;
   private final PrivacyParameters privacyParameters;
-  private static final Logger LOG = getLogger();
 
   public EeaGetTransactionReceipt(
       final BlockchainQueries blockchain,
@@ -73,22 +76,20 @@ public class EeaGetTransactionReceipt implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
     LOG.trace("Executing eea_getTransactionReceipt");
-    final Hash hash = parameters.required(request.getParams(), 0, Hash.class);
+    final Hash transactionHash = parameters.required(request.getParams(), 0, Hash.class);
     final String publicKey = parameters.required(request.getParams(), 1, String.class);
-    final Optional<Transaction> transactionCompleteResult =
-        blockchain.getBlockchain().getTransactionByHash(hash);
-
-    PrivateTransactionReceiptResult result;
-
-    if (!transactionCompleteResult.isPresent()) {
+    final Optional<TransactionLocation> maybeLocation =
+        blockchain.getBlockchain().getTransactionLocation(transactionHash);
+    if (!maybeLocation.isPresent()) {
       return new JsonRpcSuccessResponse(request.getId(), null);
     }
+    final TransactionLocation location = maybeLocation.get();
+    final BlockBody blockBody =
+        blockchain.getBlockchain().getBlockBody(location.getBlockHash()).get();
+    final Transaction transaction = blockBody.getTransactions().get(location.getTransactionIndex());
 
-    Transaction transaction = transactionCompleteResult.get();
-
-    Hash blockHash = blockchain.getBlockchain().getChainHeadBlock().getHash();
-    long blockNumber = blockchain.getBlockchain().getChainHeadBlockNumber();
-    int txIndex = getTransactionIndex(blockchain, transaction, blockNumber);
+    final Hash blockhash = location.getBlockHash();
+    final long blockNumber = blockchain.getBlockchain().getBlockHeader(blockhash).get().getNumber();
 
     PrivateTransaction privateTransaction;
     try {
@@ -100,49 +101,50 @@ public class EeaGetTransactionReceipt implements JsonRpcMethod {
     }
 
     final String contractAddress =
-        Address.privateContractAddress(
-                privateTransaction.getSender(), privateTransaction.getNonce(), BytesValue.EMPTY)
-            .toString();
+        !privateTransaction.getTo().isPresent()
+            ? Address.privateContractAddress(
+                    privateTransaction.getSender(), privateTransaction.getNonce(), BytesValue.EMPTY)
+                .toString()
+            : null;
+
+    LOG.trace("Calculated contractAddress: {}", contractAddress);
 
     BytesValue rlpEncoded = RLP.encode(privateTransaction::writeTo);
     Bytes32 txHash = tech.pegasys.pantheon.crypto.Hash.keccak256(rlpEncoded);
+
+    LOG.trace("Calculated private transaction hash: {}", txHash);
 
     List<Log> events =
         privacyParameters
             .getPrivateTransactionStorage()
             .getEvents(txHash)
             .orElse(Collections.emptyList());
+
+    LOG.trace("Processed private transaction events");
+
     BytesValue output =
         privacyParameters
             .getPrivateTransactionStorage()
             .getOutput(txHash)
             .orElse(BytesValue.wrap(new byte[0]));
 
-    result =
+    LOG.trace("Processed private transaction output");
+
+    PrivateTransactionReceiptResult result =
         new PrivateTransactionReceiptResult(
             contractAddress,
             privateTransaction.getSender().toString(),
             privateTransaction.getTo().map(Address::toString).orElse(null),
             events,
             output,
-            blockHash,
-            hash,
+            blockhash,
+            transactionHash,
             blockNumber,
-            txIndex);
+            location.getTransactionIndex());
 
     LOG.trace("Created Private Transaction from given Transaction Hash");
 
     return new JsonRpcSuccessResponse(request.getId(), result);
-  }
-
-  private int getTransactionIndex(
-      final BlockchainQueries blockchain, final Transaction transaction, final long blockNumber) {
-    return blockchain
-        .getBlockchain()
-        .getBlockBody(blockchain.getBlockchain().getBlockHeader(blockNumber).get().getHash())
-        .get()
-        .getTransactions()
-        .indexOf(transaction);
   }
 
   private PrivateTransaction getTransactionFromEnclave(

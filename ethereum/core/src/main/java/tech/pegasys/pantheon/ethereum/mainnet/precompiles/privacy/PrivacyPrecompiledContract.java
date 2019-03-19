@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.mainnet.precompiles.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static tech.pegasys.pantheon.crypto.Hash.keccak256;
 
 import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
@@ -59,7 +60,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
     this(
         gasCalculator,
-        privacyParameters.getPublicKey(),
+        privacyParameters.getEnclavePublicKey(),
         new Enclave(privacyParameters.getUrl()),
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateTransactionStorage(),
@@ -136,8 +137,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       privateStateUpdater.putPrivateAccountState(privacyGroupId, disposablePrivateState.rootHash());
       privateStateUpdater.commit();
 
-      BytesValue rlpEncoded = RLP.encode(privateTransaction::writeTo);
-      Bytes32 txHash = tech.pegasys.pantheon.crypto.Hash.keccak256(rlpEncoded);
+      Bytes32 txHash = keccak256(RLP.encode(privateTransaction::writeTo));
       PrivateTransactionStorage.Updater privateUpdater = privateTransactionStorage.updater();
       privateUpdater.putTransactionLogs(txHash, result.getLogs());
       privateUpdater.putTransactionResult(txHash, result.getOutput());

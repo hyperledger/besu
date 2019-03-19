@@ -12,33 +12,29 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.privacy;
 
-import static org.junit.Assert.assertEquals;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils.waitFor;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transactions;
 
-import java.math.BigInteger;
+public abstract class GetValidPrivateTransactionReceipt {
 
-import org.web3j.utils.Numeric;
+  private Eea eea;
+  private Transactions transactions;
 
-public class ExpectValidPrivateContractEventsEmitted extends GetValidPrivateTransactionReceipt {
-  private final String eventValue;
-
-  public ExpectValidPrivateContractEventsEmitted(
-      final String eventValue, final Eea eea, final Transactions transactions) {
-    super(eea, transactions);
-    this.eventValue = eventValue;
+  GetValidPrivateTransactionReceipt(final Eea eea, final Transactions transactions) {
+    this.eea = eea;
+    this.transactions = transactions;
   }
 
-  public void verify(
+  ResponseTypes.PrivateTransactionReceipt getPrivateTransactionReceipt(
       final PantheonNode node, final String transactionHash, final String publicKey) {
-    ResponseTypes.PrivateTransactionReceipt privateTxReceipt =
-        getPrivateTransactionReceipt(node, transactionHash, publicKey);
 
-    String event = privateTxReceipt.getLogs().get(0).getData().substring(66, 130);
-    assertEquals(
-        new BigInteger(eventValue), Numeric.decodeQuantity(Numeric.prependHexPrefix(event)));
+    waitFor(() -> node.verify(eea.expectSuccessfulTransactionReceipt(transactionHash, publicKey)));
+    ResponseTypes.PrivateTransactionReceipt privateTxReceipt =
+        node.execute(transactions.getPrivateTransactionReceipt(transactionHash, publicKey));
+    return privateTxReceipt;
   }
 }

@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
 import static java.util.Collections.unmodifiableList;
+import static net.consensys.cava.io.file.Files.copyResource;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.controller.KeyPairUtil;
@@ -104,6 +105,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
+      final Optional<String> keyfilePath,
       final boolean devMode,
       final GenesisConfigProvider genesisConfigProvider,
       final boolean p2pEnabled,
@@ -112,10 +114,19 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
       throws IOException {
     this.bootnodeEligible = bootnodeEligible;
     this.homeDirectory = Files.createTempDirectory("acctest");
+    keyfilePath.ifPresent(
+        path -> {
+          try {
+            copyResource(path, homeDirectory.resolve("key"));
+          } catch (IOException e) {
+            LOG.error("Could not find key file \"{}\" in resources", path);
+          }
+        });
     this.keyPair = KeyPairUtil.loadKeyPair(homeDirectory);
     this.name = name;
     this.miningParameters = miningParameters;
     this.privacyParameters = privacyParameters;
+    this.privacyParameters.setSigningKeyPair(keyPair);
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
     this.metricsConfiguration = metricsConfiguration;

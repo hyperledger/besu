@@ -12,19 +12,26 @@
  */
 package tech.pegasys.pantheon.tests.web3j.privacy;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import tech.pegasys.orion.testutil.OrionTestHarness;
 import tech.pegasys.orion.testutil.OrionTestHarnessFactory;
+import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateTransaction;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
-import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivateContractVerifier;
+import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivateTransactionVerifier;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaTransactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.PrivateTransactionFactory;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.math.BigInteger;
 
-import com.google.common.io.Resources;
+import com.google.common.collect.Lists;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
@@ -32,12 +39,14 @@ public class PrivateAcceptanceTestBase extends AcceptanceTestBase {
   @ClassRule public static final TemporaryFolder privacy = new TemporaryFolder();
 
   protected final Eea eea;
-  final PrivateContractVerifier privateContractVerifier;
+  protected final PrivateTransactionFactory privateTx;
+  protected final PrivateTransactionVerifier privateTransactionVerifier;
 
   PrivateAcceptanceTestBase() {
     final EeaTransactions eeaTransactions = new EeaTransactions();
     eea = new Eea(eeaTransactions);
-    privateContractVerifier = new PrivateContractVerifier(eea, transactions);
+    privateTx = new PrivateTransactionFactory();
+    privateTransactionVerifier = new PrivateTransactionVerifier(eea, transactions);
   }
 
   static OrionTestHarness createEnclave(
@@ -45,16 +54,48 @@ public class PrivateAcceptanceTestBase extends AcceptanceTestBase {
     return OrionTestHarnessFactory.create(privacy.newFolder().toPath(), pubKey, privKey, othernode);
   }
 
-  String getDeploySimpleStorage() throws IOException {
-    return loadRawTransaction("privacy/single-instance/deployPrivateSmartContractRLP.txt");
+  String getDeployEventEmitter() {
+    Address from = Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
+    BytesValue privateFrom =
+        BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8));
+    SECP256K1.KeyPair keypair =
+        SECP256K1.KeyPair.create(
+            SECP256K1.PrivateKey.create(
+                new BigInteger(
+                    "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
+    PrivateTransaction pTx =
+        privateTx.createContractTransaction(0, from, privateFrom, Lists.newArrayList(), keypair);
+    return RLP.encode(pTx::writeTo).toString();
   }
 
-  String getExecuteStoreFunc() throws IOException {
-    return loadRawTransaction("privacy/single-instance/executeStoreFuncRLP.txt");
+  String getExecuteStoreFunc() {
+    Address to = Address.fromHexString("0x0bac79b78b9866ef11c989ad21a7fcf15f7a18d7");
+    Address from = Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
+    BytesValue privateFrom =
+        BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8));
+    SECP256K1.KeyPair keypair =
+        SECP256K1.KeyPair.create(
+            SECP256K1.PrivateKey.create(
+                new BigInteger(
+                    "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
+    PrivateTransaction pTx =
+        privateTx.storeFunctionTransaction(1, to, from, privateFrom, Lists.newArrayList(), keypair);
+    return RLP.encode(pTx::writeTo).toString();
   }
 
-  String getExecuteGetFunc() throws IOException {
-    return loadRawTransaction("privacy/single-instance/executeGetFuncRLP.txt");
+  String getExecuteGetFunc() {
+    Address to = Address.fromHexString("0x0bac79b78b9866ef11c989ad21a7fcf15f7a18d7");
+    Address from = Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
+    BytesValue privateFrom =
+        BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8));
+    SECP256K1.KeyPair keypair =
+        SECP256K1.KeyPair.create(
+            SECP256K1.PrivateKey.create(
+                new BigInteger(
+                    "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
+    PrivateTransaction pTx =
+        privateTx.getFunctionTransaction(2, to, from, privateFrom, Lists.newArrayList(), keypair);
+    return RLP.encode(pTx::writeTo).toString();
   }
 
   static PrivacyParameters getPrivacyParams(final OrionTestHarness testHarness) throws IOException {
@@ -62,12 +103,9 @@ public class PrivateAcceptanceTestBase extends AcceptanceTestBase {
     privacyParameters.setEnabled(true);
     privacyParameters.setUrl(testHarness.clientUrl());
     privacyParameters.setPrivacyAddress(Address.PRIVACY);
-    privacyParameters.setPublicKeyUsingFile(testHarness.getConfig().publicKeys().get(0).toFile());
-    privacyParameters.enablePrivateDB(privacy.newFolder("private").toPath());
+    privacyParameters.setEnclavePublicKeyUsingFile(
+        testHarness.getConfig().publicKeys().get(0).toFile());
+    privacyParameters.enablePrivateDB(privacy.newFolder().toPath());
     return privacyParameters;
-  }
-
-  private String loadRawTransaction(final String path) throws IOException {
-    return Resources.toString(Resources.getResource(path), Charset.defaultCharset());
   }
 }
