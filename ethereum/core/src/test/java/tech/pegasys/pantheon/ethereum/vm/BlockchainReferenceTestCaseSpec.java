@@ -49,8 +49,6 @@ public class BlockchainReferenceTestCaseSpec {
 
   private final BlockHeaderMock genesisBlockHeader;
 
-  private final BytesValue genesisRLP;
-
   private final Hash lastBlockHash;
 
   private final WorldStateArchive worldStateArchive;
@@ -87,14 +85,13 @@ public class BlockchainReferenceTestCaseSpec {
       @JsonProperty("network") final String network,
       @JsonProperty("blocks") final CandidateBlock[] candidateBlocks,
       @JsonProperty("genesisBlockHeader") final BlockHeaderMock genesisBlockHeader,
-      @JsonProperty("genesisRLP") final String genesisRLP,
+      @SuppressWarnings("unused") @JsonProperty("genesisRLP") final String genesisRLP,
       @JsonProperty("pre") final Map<String, WorldStateMock.AccountMock> accounts,
       @JsonProperty("lastblockhash") final String lastBlockHash,
       @JsonProperty("sealEngine") final String sealEngine) {
     this.network = network;
     this.candidateBlocks = candidateBlocks;
     this.genesisBlockHeader = genesisBlockHeader;
-    this.genesisRLP = genesisRLP == null ? null : BytesValue.fromHexString(genesisRLP);
     this.lastBlockHash = Hash.fromHexString(lastBlockHash);
     this.worldStateArchive = buildWorldStateArchive(accounts);
     this.blockchain = buildBlockchain(genesisBlockHeader);

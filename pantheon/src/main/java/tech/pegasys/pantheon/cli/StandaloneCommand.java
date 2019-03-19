@@ -21,6 +21,9 @@ import picocli.CommandLine;
 
 class StandaloneCommand implements DefaultCommandValues {
 
+  // While this variable is never read it is needed for the PicoCLI to create
+  // the config file option that is read elsewhere.
+  @SuppressWarnings("UnusedVariable")
   @CommandLine.Option(
       names = {CONFIG_FILE_OPTION_NAME},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,

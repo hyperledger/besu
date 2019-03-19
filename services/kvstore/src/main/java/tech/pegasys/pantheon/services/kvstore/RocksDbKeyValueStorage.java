@@ -21,20 +21,13 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.Closeable;
 import java.nio.file.Path;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDBException;
-import org.rocksdb.RocksIterator;
 import org.rocksdb.TransactionDB;
 import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
@@ -135,61 +128,6 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
     if (closed.get()) {
       LOG.error("Attempting to use a closed RocksDbKeyValueStorage");
       throw new IllegalStateException("Storage has been closed");
-    }
-  }
-
-  /**
-   * Iterates over rocksDB key-value entries. Reads from a db snapshot implicitly taken when the
-   * RocksIterator passed to the constructor was created.
-   *
-   * <p>Implements {@link AutoCloseable} and can be used with try-with-resources construct. When
-   * transformed to a stream (see {@link #toStream}), iterator is automatically closed when the
-   * stream is closed.
-   */
-  private static class RocksDbEntryIterator implements Iterator<Entry>, AutoCloseable {
-    private final RocksIterator rocksIt;
-    private volatile boolean closed = false;
-
-    RocksDbEntryIterator(final RocksIterator rocksIt) {
-      this.rocksIt = rocksIt;
-    }
-
-    @Override
-    public boolean hasNext() {
-      return rocksIt.isValid();
-    }
-
-    @Override
-    public Entry next() {
-      if (closed) {
-        throw new IllegalStateException("Attempt to read from a closed RocksDbEntryIterator.");
-      }
-      try {
-        rocksIt.status();
-      } catch (final RocksDBException e) {
-        LOG.error("RocksDbEntryIterator encountered a problem while iterating.", e);
-      }
-      if (!hasNext()) {
-        throw new NoSuchElementException();
-      }
-      final Entry entry =
-          Entry.create(BytesValue.wrap(rocksIt.key()), BytesValue.wrap(rocksIt.value()));
-      rocksIt.next();
-      return entry;
-    }
-
-    Stream<Entry> toStream() {
-      final Spliterator<Entry> split =
-          Spliterators.spliteratorUnknownSize(
-              this, Spliterator.IMMUTABLE | Spliterator.DISTINCT | Spliterator.NONNULL);
-
-      return StreamSupport.stream(split, false).onClose(this::close);
-    }
-
-    @Override
-    public void close() {
-      rocksIt.close();
-      closed = true;
     }
   }
 

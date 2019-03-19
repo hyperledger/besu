@@ -29,7 +29,6 @@ import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Test;
@@ -99,7 +98,6 @@ public class GetBlockFromPeerTaskTest
     final Block requestedData = generateDataToBeRequested();
 
     // Execute task and wait for response
-    final AtomicBoolean done = new AtomicBoolean(false);
     final EthTask<PeerTaskResult<Block>> task = createTask(requestedData);
     final CompletableFuture<PeerTaskResult<Block>> future = task.run();
     respondingEthPeer.respondWhile(responder, () -> !future.isDone());

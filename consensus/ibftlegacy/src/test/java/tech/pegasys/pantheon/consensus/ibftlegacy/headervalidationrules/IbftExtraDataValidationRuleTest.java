@@ -17,7 +17,6 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.pantheon.consensus.ibft.IbftContextBuilder.setupContextWithValidators;
 
-import tech.pegasys.pantheon.consensus.common.VoteTally;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibftlegacy.IbftBlockHashing;
 import tech.pegasys.pantheon.consensus.ibftlegacy.IbftExtraData;
@@ -186,7 +185,6 @@ public class IbftExtraDataValidationRuleTest {
         Lists.newArrayList(
             AddressHelpers.calculateAddressWithRespectTo(proposerAddress, 1), proposerAddress);
 
-    final VoteTally voteTally = new VoteTally(validators);
     final ProtocolContext<IbftContext> context =
         new ProtocolContext<>(null, null, setupContextWithValidators(validators));
 
@@ -312,7 +310,6 @@ public class IbftExtraDataValidationRuleTest {
     }
 
     Collections.sort(validators);
-    final VoteTally voteTally = new VoteTally(validators);
     BlockHeader header = createProposedBlockHeader(proposerKeyPair, validators);
     final IbftExtraData commitedExtraData =
         createExtraDataWithCommitSeals(header, committerKeys.subList(0, committerCount));

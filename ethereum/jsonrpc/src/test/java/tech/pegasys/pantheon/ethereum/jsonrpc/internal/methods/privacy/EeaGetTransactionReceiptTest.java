@@ -108,38 +108,34 @@ public class EeaGetTransactionReceiptTest {
           privateTransaction.getSender(),
           privateTransaction.getChainId().getAsInt());
 
-  private final Hash hash =
-      Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-  private final Hash blockHash =
-      Hash.fromHexString("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
-
   private final JsonRpcParameter parameters = new JsonRpcParameter();
 
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final Blockchain blockchain = mock(Blockchain.class);
   private final Enclave enclave = mock(Enclave.class);
 
-  private PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
+  private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
   @Test
   public void createsPrivateTransactionReceipt() throws IOException {
-    Hash mockHash = mock(Hash.class);
-    BytesValue mockBytesValue = mock(BytesValue.class);
-    Block chainBlock = mock(Block.class);
-    long mockLong = 10;
-    BlockBody blockBody = mock(BlockBody.class);
-    Transaction mockTx = mock(Transaction.class);
-    BlockHeader mockBlockHeader = mock(BlockHeader.class);
+    final Hash mockHash = mock(Hash.class);
+    final BytesValue mockBytesValue = mock(BytesValue.class);
+    final Block chainBlock = mock(Block.class);
+    final long mockLong = 10;
+    final BlockBody blockBody = mock(BlockBody.class);
+    final Transaction mockTx = mock(Transaction.class);
+    final BlockHeader mockBlockHeader = mock(BlockHeader.class);
 
-    Log mockLog = mock(Log.class);
-    Address mockAddress = mock(Address.class);
+    final Log mockLog = mock(Log.class);
+    final Address mockAddress = mock(Address.class);
     when(mockLog.getLogger()).thenReturn(mockAddress);
-    LogTopic mockLogTopic = mock(LogTopic.class);
-    List<LogTopic> listLogTopic = Arrays.asList(mockLogTopic);
+    final LogTopic mockLogTopic = mock(LogTopic.class);
+    final List<LogTopic> listLogTopic = Arrays.asList(mockLogTopic);
     when(mockLog.getTopics()).thenReturn(listLogTopic);
     when(mockLog.getData()).thenReturn(mockBytesValue);
-    List<Log> mockLogList = Arrays.asList(mockLog);
-    PrivateTransactionStorage privateTransactionStorage = mock(PrivateTransactionStorage.class);
+    final List<Log> mockLogList = Arrays.asList(mockLog);
+    final PrivateTransactionStorage privateTransactionStorage =
+        mock(PrivateTransactionStorage.class);
 
     doReturn(privateTransactionStorage).when(privacyParameters).getPrivateTransactionStorage();
     when(privateTransactionStorage.getEvents(any(Bytes32.class)))
@@ -149,7 +145,7 @@ public class EeaGetTransactionReceiptTest {
 
     final EeaGetTransactionReceipt eeaGetTransactionReceipt =
         new EeaGetTransactionReceipt(blockchainQueries, enclave, parameters, privacyParameters);
-    Object[] params = new Object[] {transaction.hash(), "EnclavePublicKey"};
+    final Object[] params = new Object[] {transaction.hash(), "EnclavePublicKey"};
     final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getTransactionReceipt", params);
 
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
@@ -163,7 +159,7 @@ public class EeaGetTransactionReceiptTest {
                     .encodeToString(bvrlp.encoded().extractArray())
                     .getBytes(UTF_8)));
 
-    List<Transaction> mockListTx = Arrays.asList(mockTx, transaction);
+    final List<Transaction> mockListTx = Arrays.asList(mockTx, transaction);
     when(blockchain.getChainHeadBlock()).thenReturn(chainBlock);
     when(chainBlock.getHash()).thenReturn(mockHash);
     when(blockchainQueries.getBlockchain().getChainHeadBlockNumber()).thenReturn(mockLong);

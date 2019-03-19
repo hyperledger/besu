@@ -14,16 +14,13 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
-import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.BlockParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
 
-import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class EthGetTransactionCount extends AbstractBlockParameterMethod {
 
@@ -50,8 +47,6 @@ public class EthGetTransactionCount extends AbstractBlockParameterMethod {
   @Override
   protected Object pendingResult(final JsonRpcRequest request) {
     final Address address = parameters().required(request.getParams(), 0, Address.class);
-    final AtomicReference<Optional<Transaction>> pendingTransaction =
-        new AtomicReference<>(Optional.empty());
     final OptionalLong pendingNonce = pendingTransactions.getNextNonceForSender(address);
     if (pendingNonce.isPresent()) {
       return Quantity.create(pendingNonce.getAsLong());

@@ -32,10 +32,6 @@ public class BytesValueTest {
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
-  private static BytesValue h(final String hex) {
-    return fromHexString(hex);
-  }
-
   /** Checks that modifying a wrapped array modifies the value itself. */
   @Test
   public void wrapReflectsUpdates() {

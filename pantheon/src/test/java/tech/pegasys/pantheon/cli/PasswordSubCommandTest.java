@@ -21,7 +21,7 @@ public class PasswordSubCommandTest extends CommandTestAbstract {
 
   @Test
   public void passwordSubCommandExistAnbHaveSubCommands() {
-    CommandSpec spec = parseCommand();
+    final CommandSpec spec = parseCommand();
     assertThat(spec.subcommands()).containsKeys("password");
     assertThat(spec.subcommands().get("password").getSubcommands()).containsKeys("hash");
     assertThat(commandOutput.toString()).isEmpty();
@@ -30,7 +30,6 @@ public class PasswordSubCommandTest extends CommandTestAbstract {
 
   @Test
   public void passwordSubCommandExists() {
-    CommandSpec spec = parseCommand();
     parseCommand("password");
 
     assertThat(commandOutput.toString()).contains("This command provides password related actions");

@@ -37,7 +37,7 @@ public class WebSocketMethodsFactoryTest {
 
   @Before
   public void before() {
-    jsonRpcMethods.put("eth_unsubscribe", jsonRpcMethod("eth_unsubscribe"));
+    jsonRpcMethods.put("eth_unsubscribe", jsonRpcMethod());
     factory = new WebSocketMethodsFactory(subscriptionManager, jsonRpcMethods);
   }
 
@@ -65,8 +65,8 @@ public class WebSocketMethodsFactoryTest {
 
   @Test
   public void factoryIncludesJsonRpcMethodsWhenCreatingWebsocketMethods() {
-    final JsonRpcMethod jsonRpcMethod1 = jsonRpcMethod("method1");
-    final JsonRpcMethod jsonRpcMethod2 = jsonRpcMethod("method2");
+    final JsonRpcMethod jsonRpcMethod1 = jsonRpcMethod();
+    final JsonRpcMethod jsonRpcMethod2 = jsonRpcMethod();
 
     final Map<String, JsonRpcMethod> jsonRpcMethodsMap = new HashMap<>();
     jsonRpcMethodsMap.put("method1", jsonRpcMethod1);
@@ -78,8 +78,7 @@ public class WebSocketMethodsFactoryTest {
     assertThat(methods).containsKeys("method1", "method2");
   }
 
-  private JsonRpcMethod jsonRpcMethod(final String name) {
-    final JsonRpcMethod jsonRpcMethod = mock(JsonRpcMethod.class);
-    return jsonRpcMethod;
+  private JsonRpcMethod jsonRpcMethod() {
+    return mock(JsonRpcMethod.class);
   }
 }

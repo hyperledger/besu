@@ -25,13 +25,9 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.Discon
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class IbftProtocolManager implements ProtocolManager {
   private final IbftEventQueue ibftEventQueue;
 
-  private final Logger LOG = LogManager.getLogger();
   private final PeerConnectionTracker peers;
 
   /**

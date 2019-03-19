@@ -145,10 +145,6 @@ public class MainnetTransactionValidatorTest {
     return account(basicTransaction.getUpfrontCost(), nonce);
   }
 
-  private Account accountWithBalance(final Wei balance) {
-    return account(balance, basicTransaction.getNonce());
-  }
-
   private Account account(final Wei balance, final long nonce) {
     final Account account = mock(Account.class);
     when(account.getBalance()).thenReturn(balance);

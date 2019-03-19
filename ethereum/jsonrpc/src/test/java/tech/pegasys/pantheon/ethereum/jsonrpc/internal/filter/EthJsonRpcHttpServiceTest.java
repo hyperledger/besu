@@ -32,8 +32,8 @@ import org.junit.Test;
 public class EthJsonRpcHttpServiceTest extends AbstractEthJsonRpcHttpServiceTest {
 
   private Hash recordPendingTransaction(final int blockNumber, final int transactionIndex) {
-    final Block block = BLOCKS.get(1);
-    final Transaction transaction = block.getBody().getTransactions().get(0);
+    final Block block = BLOCKS.get(blockNumber);
+    final Transaction transaction = block.getBody().getTransactions().get(transactionIndex);
     filterManager.recordPendingTransactionEvent(transaction);
     return transaction.hash();
   }
@@ -82,7 +82,7 @@ public class EthJsonRpcHttpServiceTest extends AbstractEthJsonRpcHttpServiceTest
     final ResponseBody body = ethNewPendingTransactionFilter(1).body();
     final String result = getResult(body);
     body.close();
-    final Hash transactionHash = recordPendingTransaction(1, 1);
+    final Hash transactionHash = recordPendingTransaction(1, 0);
 
     final Response resp = ethGetFilterChanges(2, result);
     assertThat(resp.code()).isEqualTo(200);

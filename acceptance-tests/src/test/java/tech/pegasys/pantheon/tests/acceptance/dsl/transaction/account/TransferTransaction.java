@@ -95,7 +95,7 @@ public class TransferTransaction implements Transaction<Hash> {
     final BigInteger price =
         Convert.toWei(unconverted.getValue(), unconverted.getUnit()).toBigInteger();
 
-    if (MINIMUM_GAS_PRICE.compareTo(price) == 1) {
+    if (MINIMUM_GAS_PRICE.compareTo(price) > 0) {
       throw new IllegalArgumentException(
           String.format(
               "Gas price: %s WEI, is below the accepted minimum: %s WEI",

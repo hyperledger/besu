@@ -94,6 +94,7 @@ public class JsonTestParameters<S, T> {
   // Note that we don't really use this field as of now, but as this is the actual type of the final
   // spec used by tests, it feels "right" to have it passed explicitly at construction and having it
   // around could prove useful later.
+  @SuppressWarnings({"FieldCanBeLocal", "unused"})
   private final Class<T> testCaseSpec;
 
   private final Set<String> fileExcludes = new HashSet<>();
@@ -101,7 +102,6 @@ public class JsonTestParameters<S, T> {
 
   private final List<Predicate<String>> testIncludes = new ArrayList<>();
   private final List<Predicate<String>> testBlackList = new ArrayList<>();
-  private boolean blackListedAll;
 
   private JsonTestParameters(final Class<S> jsonFileMappedType, final Class<T> testCaseSpec) {
     this.jsonFileMappedType = jsonFileMappedType;
@@ -122,6 +122,7 @@ public class JsonTestParameters<S, T> {
     return new JsonTestParameters<>(jsonFileMappedType, testCaseSpec);
   }
 
+  @SuppressWarnings("unused")
   public JsonTestParameters<S, T> excludeFiles(final String... filenames) {
     fileExcludes.addAll(Arrays.asList(filenames));
     return this;
@@ -134,6 +135,7 @@ public class JsonTestParameters<S, T> {
     }
   }
 
+  @SuppressWarnings({"unused"})
   public JsonTestParameters<S, T> includeTests(final String... patterns) {
     addPatterns(patterns, testIncludes);
     return this;
@@ -146,7 +148,6 @@ public class JsonTestParameters<S, T> {
 
   public JsonTestParameters<S, T> blacklistAll() {
     testBlackList.add(t -> true);
-    blackListedAll = true;
     return this;
   }
 

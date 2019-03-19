@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.ethereum.core;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.SortedSet;
+import java.util.NavigableSet;
 import java.util.TreeSet;
 import java.util.stream.Stream;
 
@@ -23,8 +23,8 @@ public class AccountTransactionOrder {
 
   private static final Comparator<Transaction> SORT_BY_NONCE =
       Comparator.comparing(Transaction::getNonce);
-  private final SortedSet<Transaction> transactionsForSender = new TreeSet<>(SORT_BY_NONCE);
-  private final SortedSet<Transaction> deferredTransactions = new TreeSet<>(SORT_BY_NONCE);
+  private final NavigableSet<Transaction> transactionsForSender = new TreeSet<>(SORT_BY_NONCE);
+  private final NavigableSet<Transaction> deferredTransactions = new TreeSet<>(SORT_BY_NONCE);
 
   public AccountTransactionOrder(final Stream<Transaction> senderTransactions) {
     senderTransactions.forEach(this.transactionsForSender::add);

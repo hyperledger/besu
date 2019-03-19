@@ -31,11 +31,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class FullSyncDownloader<C> {
-  private static final Logger LOG = LogManager.getLogger();
   private final ChainDownloader<C> chainDownloader;
   private final SynchronizerConfiguration config;
   private final ProtocolSchedule<C> protocolSchedule;

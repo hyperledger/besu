@@ -16,7 +16,6 @@ import static tech.pegasys.pantheon.consensus.ibft.IbftBlockHeaderValidationRule
 
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.config.IbftConfigOptions;
-import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.ethereum.MainnetBlockValidator;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Wei;
@@ -35,9 +34,7 @@ public class IbftProtocolSchedule {
 
   public static ProtocolSchedule<IbftContext> create(final GenesisConfigOptions config) {
     final IbftConfigOptions ibftConfig = config.getIbftLegacyConfigOptions();
-    final long epochLength = ibftConfig.getEpochLength();
     final long blockPeriod = ibftConfig.getBlockPeriodSeconds();
-    final EpochManager epochManager = new EpochManager(epochLength);
 
     return new ProtocolScheduleBuilder<>(
             config,

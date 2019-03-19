@@ -46,7 +46,7 @@ public class Amount {
   public Amount subtract(final Amount subtracting) {
 
     final Unit denominator;
-    if (unit.getWeiFactor().compareTo(subtracting.unit.getWeiFactor()) == -1) {
+    if (unit.getWeiFactor().compareTo(subtracting.unit.getWeiFactor()) < 0) {
       denominator = unit;
     } else {
       denominator = subtracting.unit;
