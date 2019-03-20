@@ -49,6 +49,8 @@ import tech.pegasys.pantheon.ethereum.p2p.config.NetworkingConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.config.RlpxConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.netty.NettyP2PNetwork;
+import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
@@ -95,6 +97,7 @@ public class RunnerBuilder {
   private MetricsConfiguration metricsConfiguration;
   private MetricsSystem metricsSystem;
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
+  private Set<EnodeURL> staticNodes;
 
   private EnodeURL getSelfEnode() {
     String nodeId = pantheonController.getLocalNodeKeyPair().getPublicKey().toString();
@@ -174,6 +177,11 @@ public class RunnerBuilder {
 
   public RunnerBuilder metricsSystem(final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
+    return this;
+  }
+
+  public RunnerBuilder staticNodes(final Set<EnodeURL> staticNodes) {
+    this.staticNodes = staticNodes;
     return this;
   }
 
@@ -291,6 +299,14 @@ public class RunnerBuilder {
     final PrivacyParameters privacyParameters = pantheonController.getPrivacyParameters();
     final FilterManager filterManager = createFilterManager(vertx, context, transactionPool);
 
+    final P2PNetwork peerNetwork = networkRunner.getNetwork();
+    staticNodes.stream()
+        .forEach(
+            enodeURL -> {
+              final Peer peer = DefaultPeer.fromEnodeURL(enodeURL);
+              peerNetwork.addMaintainConnectionPeer(peer);
+            });
+
     Optional<JsonRpcHttpService> jsonRpcHttpService = Optional.empty();
     if (jsonRpcConfiguration.isEnabled()) {
       final Map<String, JsonRpcMethod> jsonRpcMethods =
@@ -298,7 +314,7 @@ public class RunnerBuilder {
               context,
               protocolSchedule,
               pantheonController,
-              networkRunner.getNetwork(),
+              peerNetwork,
               synchronizer,
               transactionPool,
               miningCoordinator,
@@ -321,7 +337,7 @@ public class RunnerBuilder {
               context,
               protocolSchedule,
               pantheonController,
-              networkRunner.getNetwork(),
+              peerNetwork,
               synchronizer,
               transactionPool,
               miningCoordinator,

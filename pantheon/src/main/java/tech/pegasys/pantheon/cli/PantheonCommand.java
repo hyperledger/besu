@@ -48,6 +48,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.peers.StaticNodesParser;
 import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfigurationBuilder;
@@ -907,7 +908,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
-      final Optional<PermissioningConfiguration> permissioningConfiguration) {
+      final Optional<PermissioningConfiguration> permissioningConfiguration)
+      throws IOException {
 
     checkNotNull(runnerBuilder);
 
@@ -929,6 +931,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             .bannedNodeIds(bannedNodeIds)
             .metricsSystem(metricsSystem.get())
             .metricsConfiguration(metricsConfiguration)
+            .staticNodes(loadStaticNodes())
             .build();
 
     addShutdownHook(runner);
@@ -1158,5 +1161,12 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   public PantheonExceptionHandler exceptionHandler() {
     return exceptionHandlerSupplier.get();
+  }
+
+  private Set<EnodeURL> loadStaticNodes() throws IOException {
+    final String staticNodesFilname = "static-nodes.json";
+    final Path staticNodesPath = dataDir().resolve(staticNodesFilname);
+
+    return StaticNodesParser.fromPath(staticNodesPath);
   }
 }
