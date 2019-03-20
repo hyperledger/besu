@@ -270,7 +270,6 @@ public class RunnerBuilder {
                             keyPair,
                             networkConfig,
                             caps,
-                            synchronizer::hasSufficientPeers,
                             peerBlacklist,
                             metricsSystem,
                             nodeWhitelistController,

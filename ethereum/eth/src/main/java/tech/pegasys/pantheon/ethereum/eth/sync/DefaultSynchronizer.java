@@ -40,8 +40,6 @@ public class DefaultSynchronizer<C> implements Synchronizer {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final SynchronizerConfiguration syncConfig;
-  private final EthContext ethContext;
   private final SyncState syncState;
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final BlockPropagationManager<C> blockPropagationManager;
@@ -58,8 +56,6 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       final SyncState syncState,
       final Path dataDirectory,
       final MetricsSystem metricsSystem) {
-    this.syncConfig = syncConfig;
-    this.ethContext = ethContext;
     this.syncState = syncState;
 
     this.blockPropagationManager =
@@ -149,13 +145,6 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       return Optional.empty();
     }
     return Optional.of(syncState.syncStatus());
-  }
-
-  @Override
-  public boolean hasSufficientPeers() {
-    final int requiredPeerCount =
-        fastSynchronizer.isPresent() ? syncConfig.getFastSyncMinimumPeerCount() : 1;
-    return ethContext.getEthPeers().availablePeerCount() >= requiredPeerCount;
   }
 
   @Override

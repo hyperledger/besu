@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.p2p.netty;
 import static com.google.common.base.Preconditions.checkState;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.p2p.PeerNotPermittedException;
@@ -28,7 +29,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerDroppedEvent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerRequirement;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
@@ -173,10 +173,9 @@ public class NettyP2PNetwork implements P2PNetwork {
 
   public NettyP2PNetwork(
       final Vertx vertx,
-      final SECP256K1.KeyPair keyPair,
+      final KeyPair keyPair,
       final NetworkingConfiguration config,
       final List<Capability> supportedCapabilities,
-      final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
       final MetricsSystem metricsSystem,
       final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController,
@@ -186,7 +185,6 @@ public class NettyP2PNetwork implements P2PNetwork {
         keyPair,
         config,
         supportedCapabilities,
-        peerRequirement,
         peerBlacklist,
         metricsSystem,
         nodeWhitelistController,
@@ -206,7 +204,6 @@ public class NettyP2PNetwork implements P2PNetwork {
    * @param config The network configuration to use.
    * @param supportedCapabilities The wire protocol capabilities to advertise to connected peers.
    * @param peerBlacklist The peers with which this node will not connect
-   * @param peerRequirement Queried to determine if enough peers are currently connected.
    * @param metricsSystem The metrics system to capture metrics with.
    * @param nodeLocalConfigPermissioningController local file config for permissioning
    * @param nodePermissioningController Controls node permissioning.
@@ -217,13 +214,13 @@ public class NettyP2PNetwork implements P2PNetwork {
       final SECP256K1.KeyPair keyPair,
       final NetworkingConfiguration config,
       final List<Capability> supportedCapabilities,
-      final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
       final MetricsSystem metricsSystem,
       final Optional<NodeLocalConfigPermissioningController> nodeLocalConfigPermissioningController,
       final Optional<NodePermissioningController> nodePermissioningController,
       final Blockchain blockchain) {
 
+    maxPeers = config.getRlpx().getMaxPeers();
     connections = new PeerConnectionRegistry(metricsSystem);
     this.peerBlacklist = peerBlacklist;
     this.peerMaintainConnectionList = new HashSet<>();
@@ -232,7 +229,7 @@ public class NettyP2PNetwork implements P2PNetwork {
             vertx,
             keyPair,
             config.getDiscovery(),
-            peerRequirement,
+            () -> connections.size() >= maxPeers,
             peerBlacklist,
             nodeLocalConfigPermissioningController,
             nodePermissioningController);
@@ -262,7 +259,6 @@ public class NettyP2PNetwork implements P2PNetwork {
     subscribeDisconnect(peerBlacklist);
     subscribeDisconnect(connections);
 
-    maxPeers = config.getRlpx().getMaxPeers();
     this.keyPair = keyPair;
     this.subProtocols = config.getSupportedProtocols();
 
