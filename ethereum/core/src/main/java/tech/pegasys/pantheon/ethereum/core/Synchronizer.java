@@ -25,8 +25,6 @@ public interface Synchronizer {
    */
   Optional<SyncStatus> getSyncStatus();
 
-  boolean hasSufficientPeers();
-
   long observeSyncStatus(final SyncStatusListener listener);
 
   boolean removeObserver(long observerId);

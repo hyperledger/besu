@@ -120,7 +120,6 @@ public class TestNode implements Closeable {
                         this.kp,
                         networkingConfiguration,
                         capabilities,
-                        () -> true,
                         new PeerBlacklist(),
                         new NoOpMetricsSystem(),
                         Optional.empty(),
