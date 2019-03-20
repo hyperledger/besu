@@ -53,8 +53,6 @@ public class SynchronizerConfiguration {
   private final int downloaderCheckpointTimeoutsPermitted;
   private final int downloaderChainSegmentTimeoutsPermitted;
   private final int downloaderChainSegmentSize;
-  private final long trailingPeerBlocksBehindThreshold;
-  private final int maxTrailingPeers;
   private final int downloaderParallelism;
   private final int transactionsParallelism;
   private final int computationParallelism;
@@ -75,8 +73,6 @@ public class SynchronizerConfiguration {
       final int downloaderCheckpointTimeoutsPermitted,
       final int downloaderChainSegmentTimeoutsPermitted,
       final int downloaderChainSegmentSize,
-      final long trailingPeerBlocksBehindThreshold,
-      final int maxTrailingPeers,
       final int downloaderParallelism,
       final int transactionsParallelism,
       final int computationParallelism) {
@@ -95,8 +91,6 @@ public class SynchronizerConfiguration {
     this.downloaderCheckpointTimeoutsPermitted = downloaderCheckpointTimeoutsPermitted;
     this.downloaderChainSegmentTimeoutsPermitted = downloaderChainSegmentTimeoutsPermitted;
     this.downloaderChainSegmentSize = downloaderChainSegmentSize;
-    this.trailingPeerBlocksBehindThreshold = trailingPeerBlocksBehindThreshold;
-    this.maxTrailingPeers = maxTrailingPeers;
     this.downloaderParallelism = downloaderParallelism;
     this.transactionsParallelism = transactionsParallelism;
     this.computationParallelism = computationParallelism;
@@ -159,19 +153,6 @@ public class SynchronizerConfiguration {
     return downloaderChainSegmentSize;
   }
 
-  /**
-   * The number of blocks behind we allow a peer to be before considering them a trailing peer.
-   *
-   * @return the maximum number of blocks behind a peer can be while being considered current.
-   */
-  public long trailingPeerBlocksBehindThreshold() {
-    return trailingPeerBlocksBehindThreshold;
-  }
-
-  public int maxTrailingPeers() {
-    return maxTrailingPeers;
-  }
-
   public int downloaderParallelism() {
     return downloaderParallelism;
   }
@@ -224,8 +205,6 @@ public class SynchronizerConfiguration {
     private int downloaderCheckpointTimeoutsPermitted = 5;
     private int downloaderChainSegmentTimeoutsPermitted = 5;
     private int downloaderChainSegmentSize = 200;
-    private long trailingPeerBlocksBehindThreshold;
-    private int maxTrailingPeers = Integer.MAX_VALUE;
     private int downloaderParallelism = 4;
     private int transactionsParallelism = 2;
     private int computationParallelism = Runtime.getRuntime().availableProcessors();
@@ -293,16 +272,6 @@ public class SynchronizerConfiguration {
       return this;
     }
 
-    public Builder trailingPeerBlocksBehindThreshold(final long trailingPeerBlocksBehindThreshold) {
-      this.trailingPeerBlocksBehindThreshold = trailingPeerBlocksBehindThreshold;
-      return this;
-    }
-
-    public Builder maxTrailingPeers(final int maxTrailingPeers) {
-      this.maxTrailingPeers = maxTrailingPeers;
-      return this;
-    }
-
     public Builder downloaderParallelisim(final int downloaderParallelism) {
       this.downloaderParallelism = downloaderParallelism;
       return this;
@@ -361,8 +330,6 @@ public class SynchronizerConfiguration {
           downloaderCheckpointTimeoutsPermitted,
           downloaderChainSegmentTimeoutsPermitted,
           downloaderChainSegmentSize,
-          trailingPeerBlocksBehindThreshold,
-          maxTrailingPeers,
           downloaderParallelism,
           transactionsParallelism,
           computationParallelism);

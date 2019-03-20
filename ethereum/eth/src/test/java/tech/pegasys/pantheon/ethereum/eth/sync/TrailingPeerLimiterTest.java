@@ -48,12 +48,14 @@ public class TrailingPeerLimiterTest {
   private final List<EthPeer> peers = new ArrayList<>();
   private final TrailingPeerLimiter trailingPeerLimiter =
       new TrailingPeerLimiter(
-          ethPeers, blockchain, TRAILING_PEER_BLOCKS_BEHIND_THRESHOLD, MAX_TRAILING_PEERS);
+          ethPeers,
+          () ->
+              new TrailingPeerRequirements(
+                  CHAIN_HEAD - TRAILING_PEER_BLOCKS_BEHIND_THRESHOLD, MAX_TRAILING_PEERS));
 
   @Before
   public void setUp() {
     when(ethPeers.availablePeers()).then(invocation -> peers.stream());
-    when(blockchain.getChainHeadBlockNumber()).thenReturn(CHAIN_HEAD);
   }
 
   @Test

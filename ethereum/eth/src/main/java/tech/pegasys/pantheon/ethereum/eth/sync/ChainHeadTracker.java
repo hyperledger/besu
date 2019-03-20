@@ -25,6 +25,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
+import java.util.function.Supplier;
+
 import org.apache.logging.log4j.Logger;
 
 public class ChainHeadTracker implements ConnectCallback {
@@ -51,14 +53,10 @@ public class ChainHeadTracker implements ConnectCallback {
       final EthContext ethContext,
       final ProtocolSchedule<?> protocolSchedule,
       final Blockchain blockchain,
-      final SynchronizerConfiguration syncConfiguration,
+      final Supplier<TrailingPeerRequirements> trailingPeerRequirementsCalculator,
       final MetricsSystem metricsSystem) {
     final TrailingPeerLimiter trailingPeerLimiter =
-        new TrailingPeerLimiter(
-            ethContext.getEthPeers(),
-            blockchain,
-            syncConfiguration.trailingPeerBlocksBehindThreshold(),
-            syncConfiguration.maxTrailingPeers());
+        new TrailingPeerLimiter(ethContext.getEthPeers(), trailingPeerRequirementsCalculator);
     final ChainHeadTracker tracker =
         new ChainHeadTracker(ethContext, protocolSchedule, trailingPeerLimiter, metricsSystem);
     ethContext.getEthPeers().subscribeConnect(tracker);

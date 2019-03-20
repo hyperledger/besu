@@ -902,7 +902,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   private SynchronizerConfiguration buildSyncConfig() {
     synchronizerConfigurationBuilder.syncMode(syncMode);
-    synchronizerConfigurationBuilder.maxTrailingPeers(MAX_TRAILING_PEERS);
     return synchronizerConfigurationBuilder.build();
   }
 

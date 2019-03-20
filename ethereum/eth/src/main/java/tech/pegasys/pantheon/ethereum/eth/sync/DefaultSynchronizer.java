@@ -74,7 +74,11 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             new BlockBroadcaster(ethContext));
 
     ChainHeadTracker.trackChainHeadForPeers(
-        ethContext, protocolSchedule, protocolContext.getBlockchain(), syncConfig, metricsSystem);
+        ethContext,
+        protocolSchedule,
+        protocolContext.getBlockchain(),
+        this::calculateTrailingPeerRequirements,
+        metricsSystem);
 
     this.fullSyncDownloader =
         new FullSyncDownloader<>(
@@ -90,6 +94,12 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             ethContext,
             worldStateStorage,
             syncState);
+  }
+
+  private TrailingPeerRequirements calculateTrailingPeerRequirements() {
+    return fastSynchronizer
+        .flatMap(FastSynchronizer::calculateTrailingPeerRequirements)
+        .orElse(TrailingPeerRequirements.UNRESTRICTED);
   }
 
   @Override
