@@ -217,14 +217,14 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
             p -> {
               boolean idsMatch = node.getNodeId().equals(p.getNodeId());
               boolean hostsMatch = node.getIp().equals(p.getIp());
-              boolean udpPortsMatch = node.getListeningPort().equals(p.getListeningPort());
-              boolean tcpPortsMatchIfPresent = true;
+              boolean listeningPortsMatch = node.getListeningPort().equals(p.getListeningPort());
+              boolean discoveryPortsMatch = true;
               if (node.getDiscoveryPort().isPresent() && p.getDiscoveryPort().isPresent()) {
-                tcpPortsMatchIfPresent =
+                discoveryPortsMatch =
                     node.getDiscoveryPort().getAsInt() == p.getDiscoveryPort().getAsInt();
               }
 
-              return idsMatch && hostsMatch && udpPortsMatch && tcpPortsMatchIfPresent;
+              return idsMatch && hostsMatch && listeningPortsMatch && discoveryPortsMatch;
             });
   }
 

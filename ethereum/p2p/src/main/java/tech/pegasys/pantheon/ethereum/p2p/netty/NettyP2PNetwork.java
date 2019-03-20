@@ -428,7 +428,7 @@ public class NettyP2PNetwork implements P2PNetwork {
     new Bootstrap()
         .group(workers)
         .channel(NioSocketChannel.class)
-        .remoteAddress(new InetSocketAddress(endpoint.getHost(), endpoint.getTcpPort().getAsInt()))
+        .remoteAddress(new InetSocketAddress(endpoint.getHost(), endpoint.getFunctionalTcpPort()))
         .option(ChannelOption.TCP_NODELAY, true)
         .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, TIMEOUT_SECONDS * 1000)
         .handler(
@@ -526,13 +526,11 @@ public class NettyP2PNetwork implements P2PNetwork {
     LOG.info("Enode URL {}", ourEnodeURL.toString());
   }
 
-  private Consumer<PeerBondedEvent> handlePeerBondedEvent() {
+  @VisibleForTesting
+  Consumer<PeerBondedEvent> handlePeerBondedEvent() {
     return event -> {
       final Peer peer = event.getPeer();
-      if (connectionCount() < maxPeers
-          && peer.getEndpoint().getTcpPort().isPresent()
-          && !isConnecting(peer)
-          && !isConnected(peer)) {
+      if (connectionCount() < maxPeers && !isConnecting(peer) && !isConnected(peer)) {
         connect(peer);
       }
     };
