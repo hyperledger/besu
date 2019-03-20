@@ -17,16 +17,12 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.util.Optional;
 
 public class NetEnode implements JsonRpcMethod {
-
-  private static final Logger LOG = LogManager.getLogger();
 
   private final P2PNetwork p2pNetwork;
 
@@ -41,26 +37,23 @@ public class NetEnode implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest req) {
-    try {
-      if (p2pNetwork.isP2pEnabled()) {
-        String enodeURI = p2pNetwork.getAdvertisedPeer().map(Peer::getEnodeURLString).orElse("");
-        if (!enodeURI.isEmpty()) {
-          return new JsonRpcSuccessResponse(req.getId(), enodeURI);
-        } else {
-          return p2pDisabledResponse(req);
-        }
-      } else {
-        return p2pDisabledResponse(req);
-      }
-    } catch (final P2pDisabledException e) {
+    if (!p2pNetwork.isP2pEnabled()) {
       return p2pDisabledResponse(req);
-    } catch (final Exception e) {
-      LOG.error("Error processing request: " + req, e);
-      throw e;
     }
+
+    final Optional<EnodeURL> enodeURL = p2pNetwork.getSelfEnodeURL();
+    if (!enodeURL.isPresent()) {
+      return enodeUrlNotAvailable(req);
+    }
+
+    return new JsonRpcSuccessResponse(req.getId(), enodeURL.get().toString());
   }
 
   private JsonRpcErrorResponse p2pDisabledResponse(final JsonRpcRequest req) {
     return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
+  }
+
+  private JsonRpcErrorResponse enodeUrlNotAvailable(final JsonRpcRequest req) {
+    return new JsonRpcErrorResponse(req.getId(), JsonRpcError.ENODE_NOT_AVAILABLE);
   }
 }

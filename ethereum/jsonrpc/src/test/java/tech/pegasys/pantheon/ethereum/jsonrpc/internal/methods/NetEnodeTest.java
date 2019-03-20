@@ -23,8 +23,8 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.Optional;
 
@@ -37,8 +37,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class NetEnodeTest {
 
-  private static final String TESTED_METHOD_NAME = "net_enode";
-
   private NetEnode method;
 
   private final BytesValue nodeId =
@@ -46,7 +44,7 @@ public class NetEnodeTest {
           "0x0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807");
 
   private final DefaultPeer defaultPeer = new DefaultPeer(nodeId, "1.2.3.4", 7890, 30303);
-  private final Optional<Peer> advertisedPeer = Optional.of(defaultPeer);
+  private final Optional<EnodeURL> enodeURL = Optional.of(defaultPeer.getEnodeURL());
 
   @Mock private P2PNetwork p2PNetwork;
 
@@ -57,17 +55,17 @@ public class NetEnodeTest {
 
   @Test
   public void shouldReturnExpectedMethodName() {
-    assertThat(method.getName()).isEqualTo(TESTED_METHOD_NAME);
+    assertThat(method.getName()).isEqualTo("net_enode");
   }
 
   @Test
   public void shouldReturnEnode() {
     when(p2PNetwork.isP2pEnabled()).thenReturn(true);
-    doReturn(advertisedPeer).when(p2PNetwork).getAdvertisedPeer();
+    doReturn(enodeURL).when(p2PNetwork).getSelfEnodeURL();
 
     final JsonRpcRequest request = netEnodeRequest();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(request.getId(), advertisedPeer.get().getEnodeURLString());
+        new JsonRpcSuccessResponse(request.getId(), enodeURL.get().toString());
 
     assertThat(method.response(request)).isEqualToComparingFieldByField(expectedResponse);
   }
@@ -86,16 +84,16 @@ public class NetEnodeTest {
   @Test
   public void shouldReturnErrorWhenP2PEnabledButNoEnodeFound() {
     when(p2PNetwork.isP2pEnabled()).thenReturn(true);
-    doReturn(Optional.empty()).when(p2PNetwork).getAdvertisedPeer();
+    doReturn(Optional.empty()).when(p2PNetwork).getSelfEnodeURL();
 
     final JsonRpcRequest request = netEnodeRequest();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.P2P_DISABLED);
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.ENODE_NOT_AVAILABLE);
 
     assertThat(method.response(request)).isEqualToComparingFieldByField(expectedResponse);
   }
 
   private JsonRpcRequest netEnodeRequest() {
-    return new JsonRpcRequest("2.0", TESTED_METHOD_NAME, new Object[] {});
+    return new JsonRpcRequest("2.0", "net_enode", new Object[] {});
   }
 }

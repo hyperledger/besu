@@ -25,7 +25,10 @@ public enum JsonRpcError {
   METHOD_NOT_FOUND(-32601, "Method not found"),
   INVALID_PARAMS(-32602, "Invalid params"),
   INTERNAL_ERROR(-32603, "Internal error"),
+
+  // P2P related errors
   P2P_DISABLED(-32000, "P2P has been disabled. This functionality is not available"),
+  ENODE_NOT_AVAILABLE(-32000, "Enode URL not available"),
 
   // Filter & Subscription Errors
   FILTER_NOT_FOUND(-32000, "Filter not found"),
