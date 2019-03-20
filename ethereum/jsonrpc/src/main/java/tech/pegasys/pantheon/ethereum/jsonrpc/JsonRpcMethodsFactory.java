@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminAddPeer;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminNodeInfo;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminPeers;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminRemovePeer;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.DebugMetrics;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.DebugStorageRangeAt;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.DebugTraceTransaction;
@@ -273,6 +274,7 @@ public class JsonRpcMethodsFactory {
       addMethods(
           enabledMethods,
           new AdminAddPeer(p2pNetwork, parameter),
+          new AdminRemovePeer(p2pNetwork, parameter),
           new AdminNodeInfo(
               clientVersion, networkId, genesisConfigOptions, p2pNetwork, blockchainQueries),
           new AdminPeers(p2pNetwork));

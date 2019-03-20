@@ -13,43 +13,34 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import tech.pegasys.pantheon.ethereum.p2p.PeerNotPermittedException;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class AdminAddPeer extends AdminModifyPeer {
+public class AdminRemovePeer extends AdminModifyPeer {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  public AdminAddPeer(final P2PNetwork peerNetwork, final JsonRpcParameter parameters) {
+  public AdminRemovePeer(final P2PNetwork peerNetwork, final JsonRpcParameter parameters) {
     super(peerNetwork, parameters);
   }
 
   @Override
   public String getName() {
-    return "admin_addPeer";
+    return "admin_removePeer";
   }
 
   @Override
   protected JsonRpcResponse performOperation(final Object id, final String enode) {
-    try {
-      LOG.debug("Adding ({}) to peers", enode);
-      final EnodeURL enodeURL = new EnodeURL(enode);
-      final Peer peer = DefaultPeer.fromEnodeURL(enodeURL);
-      boolean addedToNetwork = peerNetwork.addMaintainConnectionPeer(peer);
-      return new JsonRpcSuccessResponse(id, addedToNetwork);
-    } catch (final PeerNotPermittedException e) {
-      return new JsonRpcErrorResponse(
-          id, JsonRpcError.NON_PERMITTED_NODE_CANNOT_BE_ADDED_AS_A_PEER);
-    }
+    LOG.debug("Remove ({}) to peer cache", enode);
+    final EnodeURL enodeURL = new EnodeURL(enode);
+    final boolean result =
+        peerNetwork.removeMaintainedConnectionPeer(DefaultPeer.fromEnodeURL(enodeURL));
+    return new JsonRpcSuccessResponse(id, result);
   }
 }

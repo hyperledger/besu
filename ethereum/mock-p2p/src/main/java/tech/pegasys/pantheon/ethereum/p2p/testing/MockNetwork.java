@@ -168,6 +168,11 @@ public final class MockNetwork {
     }
 
     @Override
+    public boolean removeMaintainedConnectionPeer(final Peer peer) {
+      return true;
+    }
+
+    @Override
     public void checkMaintainedConnectionPeers() {}
 
     @Override
