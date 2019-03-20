@@ -26,6 +26,7 @@ import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncState.EMP
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
+import tech.pegasys.pantheon.ethereum.eth.sync.TrailingPeerRequirements;
 import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.StalledDownloadException;
 import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.WorldStateDownloader;
 
@@ -307,6 +308,55 @@ public class FastSyncDownloaderTest {
     secondWorldStateFuture.complete(null);
 
     assertThat(result).isCompletedWithValue(secondDownloadPivotBlockHeaderState);
+  }
+
+  @Test
+  public void shouldNotHaveTrailingPeerRequirementsBeforePivotBlockSelected() {
+    when(fastSyncActions.waitForSuitablePeers(EMPTY_SYNC_STATE))
+        .thenReturn(new CompletableFuture<>());
+
+    downloader.start(EMPTY_SYNC_STATE);
+
+    verify(fastSyncActions).waitForSuitablePeers(EMPTY_SYNC_STATE);
+    assertThat(downloader.getTrailingPeerRequirements()).isEmpty();
+  }
+
+  @Test
+  public void shouldNotAllowPeersBeforePivotBlockOnceSelected() {
+    final FastSyncState selectPivotBlockState = new FastSyncState(50);
+    final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().number(50).buildHeader();
+    final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader);
+    when(fastSyncActions.waitForSuitablePeers(EMPTY_SYNC_STATE)).thenReturn(COMPLETE);
+    when(fastSyncActions.selectPivotBlock(EMPTY_SYNC_STATE))
+        .thenReturn(completedFuture(selectPivotBlockState));
+    when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
+        .thenReturn(completedFuture(downloadPivotBlockHeaderState));
+    when(fastSyncActions.downloadChain(downloadPivotBlockHeaderState))
+        .thenReturn(new CompletableFuture<>());
+    when(worldStateDownloader.run(pivotBlockHeader)).thenReturn(new CompletableFuture<>());
+
+    downloader.start(EMPTY_SYNC_STATE);
+    assertThat(downloader.getTrailingPeerRequirements())
+        .contains(new TrailingPeerRequirements(50, 0));
+  }
+
+  @Test
+  public void shouldNotHaveTrailingPeerRequirementsAfterDownloadCompletes() {
+    final FastSyncState selectPivotBlockState = new FastSyncState(50);
+    final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().number(50).buildHeader();
+    final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader);
+    when(fastSyncActions.waitForSuitablePeers(EMPTY_SYNC_STATE)).thenReturn(COMPLETE);
+    when(fastSyncActions.selectPivotBlock(EMPTY_SYNC_STATE))
+        .thenReturn(completedFuture(selectPivotBlockState));
+    when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
+        .thenReturn(completedFuture(downloadPivotBlockHeaderState));
+    when(fastSyncActions.downloadChain(downloadPivotBlockHeaderState)).thenReturn(COMPLETE);
+    when(worldStateDownloader.run(pivotBlockHeader)).thenReturn(completedFuture(null));
+
+    final CompletableFuture<FastSyncState> result = downloader.start(EMPTY_SYNC_STATE);
+    assertThat(result).isDone();
+
+    assertThat(downloader.getTrailingPeerRequirements()).isEmpty();
   }
 
   private <T> CompletableFuture<T> completedExceptionally(final Throwable error) {

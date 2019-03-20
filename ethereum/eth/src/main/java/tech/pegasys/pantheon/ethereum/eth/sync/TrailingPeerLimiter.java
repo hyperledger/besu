@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.Discon
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Logger;
@@ -37,30 +38,27 @@ public class TrailingPeerLimiter implements BlockAddedObserver {
   // how often we rerun the check.
   private static final int RECHECK_PEERS_WHEN_BLOCK_NUMBER_MULTIPLE_OF = 100;
   private final EthPeers ethPeers;
-  private final Blockchain blockchain;
-  private final long trailingPeerBlocksBehindThreshold;
-  private final int maxTrailingPeers;
+  private final Supplier<TrailingPeerRequirements> trailingPeerRequirementsCalculator;
 
   public TrailingPeerLimiter(
       final EthPeers ethPeers,
-      final Blockchain blockchain,
-      final long trailingPeerBlocksBehindThreshold,
-      final int maxTrailingPeers) {
+      final Supplier<TrailingPeerRequirements> trailingPeerRequirementsCalculator) {
     this.ethPeers = ethPeers;
-    this.blockchain = blockchain;
-    this.trailingPeerBlocksBehindThreshold = trailingPeerBlocksBehindThreshold;
-    this.maxTrailingPeers = maxTrailingPeers;
+    this.trailingPeerRequirementsCalculator = trailingPeerRequirementsCalculator;
   }
 
   public void enforceTrailingPeerLimit() {
+    final TrailingPeerRequirements requirements = trailingPeerRequirementsCalculator.get();
+    if (requirements.getMaxTrailingPeers() == Long.MAX_VALUE) {
+      return;
+    }
+    final long minimumHeightToBeUpToDate = requirements.getMinimumHeightToBeUpToDate();
+    final long maxTrailingPeers = requirements.getMaxTrailingPeers();
     final List<EthPeer> trailingPeers =
         ethPeers
             .availablePeers()
             .filter(peer -> peer.chainState().hasEstimatedHeight())
-            .filter(
-                peer ->
-                    peer.chainState().getEstimatedHeight() + trailingPeerBlocksBehindThreshold
-                        < blockchain.getChainHeadBlockNumber())
+            .filter(peer -> peer.chainState().getEstimatedHeight() < minimumHeightToBeUpToDate)
             .sorted(BY_CHAIN_HEIGHT)
             .collect(Collectors.toList());
 

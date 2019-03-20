@@ -15,10 +15,12 @@ package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 import static tech.pegasys.pantheon.util.FutureUtils.completedExceptionally;
 import static tech.pegasys.pantheon.util.FutureUtils.exceptionallyCompose;
 
+import tech.pegasys.pantheon.ethereum.eth.sync.TrailingPeerRequirements;
 import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.StalledDownloadException;
 import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
@@ -29,6 +31,7 @@ public class FastSyncDownloader<C> {
   private final FastSyncActions<C> fastSyncActions;
   private final WorldStateDownloader worldStateDownloader;
   private final FastSyncStateStorage fastSyncStateStorage;
+  private volatile Optional<TrailingPeerRequirements> trailingPeerRequirements = Optional.empty();
 
   public FastSyncDownloader(
       final FastSyncActions<C> fastSyncActions,
@@ -45,12 +48,14 @@ public class FastSyncDownloader<C> {
             .waitForSuitablePeers(fastSyncState)
             .thenCompose(fastSyncActions::selectPivotBlock)
             .thenCompose(fastSyncActions::downloadPivotBlockHeader)
+            .thenApply(this::updateMaxTrailingPeers)
             .thenApply(this::storeState)
             .thenCompose(this::downloadChainAndWorldState),
         this::handleWorldStateUnavailable);
   }
 
   private CompletableFuture<FastSyncState> handleWorldStateUnavailable(final Throwable error) {
+    trailingPeerRequirements = Optional.empty();
     if (ExceptionUtils.rootCause(error) instanceof StalledDownloadException) {
       LOG.warn(
           "Fast sync was unable to download the world state. Retrying with a new pivot block.");
@@ -58,6 +63,16 @@ public class FastSyncDownloader<C> {
     } else {
       return completedExceptionally(error);
     }
+  }
+
+  private FastSyncState updateMaxTrailingPeers(final FastSyncState state) {
+    if (state.getPivotBlockNumber().isPresent()) {
+      trailingPeerRequirements =
+          Optional.of(new TrailingPeerRequirements(state.getPivotBlockNumber().getAsLong(), 0));
+    } else {
+      trailingPeerRequirements = Optional.empty();
+    }
+    return state;
   }
 
   private FastSyncState storeState(final FastSyncState state) {
@@ -85,6 +100,14 @@ public class FastSyncDownloader<C> {
         });
 
     return CompletableFuture.allOf(worldStateFuture, chainFuture)
-        .thenApply(complete -> currentState);
+        .thenApply(
+            complete -> {
+              trailingPeerRequirements = Optional.empty();
+              return currentState;
+            });
+  }
+
+  public Optional<TrailingPeerRequirements> getTrailingPeerRequirements() {
+    return trailingPeerRequirements;
   }
 }

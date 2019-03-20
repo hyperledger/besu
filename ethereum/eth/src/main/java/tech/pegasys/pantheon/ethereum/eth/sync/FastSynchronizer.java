@@ -182,4 +182,8 @@ class FastSynchronizer<C> {
 
     return taskCollection;
   }
+
+  public Optional<TrailingPeerRequirements> calculateTrailingPeerRequirements() {
+    return fastSyncDownloader.getTrailingPeerRequirements();
+  }
 }
