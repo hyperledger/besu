@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
  * <p>This class is safe for use across multiple threads.
  */
 public class PendingTransactions {
-  public static final int MAX_PENDING_TRANSACTIONS = 30_000;
+  public static final int MAX_PENDING_TRANSACTIONS = 4096;
 
   private final Map<Hash, TransactionInfo> pendingTransactions = new HashMap<>();
   private final SortedSet<TransactionInfo> prioritizedTransactions =
