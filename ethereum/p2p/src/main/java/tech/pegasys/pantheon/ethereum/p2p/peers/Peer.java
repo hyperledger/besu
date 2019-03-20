@@ -65,14 +65,14 @@ public interface Peer extends PeerId {
   default EnodeURL getEnodeURL() {
     final Endpoint endpoint = this.getEndpoint();
 
-    final OptionalInt tcpPort = endpoint.getTcpPort();
+    final int tcpPort = endpoint.getFunctionalTcpPort();
     final int udpPort = endpoint.getUdpPort();
 
-    if (tcpPort.isPresent() && (tcpPort.getAsInt() != udpPort)) {
+    if (tcpPort != udpPort) {
       return new EnodeURL(
           this.getId().toUnprefixedString(),
           endpoint.getHost(),
-          tcpPort.getAsInt(),
+          tcpPort,
           OptionalInt.of(endpoint.getUdpPort()));
     } else {
       return new EnodeURL(this.getId().toUnprefixedString(), endpoint.getHost(), udpPort);

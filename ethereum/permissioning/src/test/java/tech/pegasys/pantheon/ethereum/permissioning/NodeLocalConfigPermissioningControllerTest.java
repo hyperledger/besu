@@ -192,7 +192,7 @@ public class NodeLocalConfigPermissioningControllerTest {
   }
 
   @Test
-  public void whenNodesUdpPortsAreDifferentItShouldNotBePermitted() {
+  public void whenNodesListeningPortsAreDifferentItShouldNotBePermitted() {
     String peer1 =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30301";
     String peer2 =
@@ -204,27 +204,27 @@ public class NodeLocalConfigPermissioningControllerTest {
   }
 
   @Test
-  public void whenCheckingIfNodeIsPermittedTcpPortShouldNotBeConsideredIfAbsent() {
-    String peerWithTcpPortSet =
+  public void whenCheckingIfNodeIsPermittedDiscoveryPortShouldNotBeConsideredIfAbsent() {
+    String peerWithDiscoveryPortSet =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=10001";
-    String peerWithoutTcpPortSet =
+    String peerWithoutDiscoveryPortSet =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303";
 
-    controller.addNodes(Arrays.asList(peerWithTcpPortSet));
+    controller.addNodes(Arrays.asList(peerWithDiscoveryPortSet));
 
-    assertThat(controller.isPermitted(peerWithoutTcpPortSet)).isTrue();
+    assertThat(controller.isPermitted(peerWithoutDiscoveryPortSet)).isTrue();
   }
 
   @Test
-  public void whenCheckingIfNodeIsPermittedTcpPortShouldBeConsideredIfPresent() {
-    String peerWithTcpPortSet =
+  public void whenCheckingIfNodeIsPermittedDiscoveryPortShouldBeConsideredIfPresent() {
+    String peerWithDiscoveryPortSet =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=10001";
-    String peerWithDifferentTcpPortSet =
+    String peerWithDifferentDiscoveryPortSet =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=10002";
 
-    controller.addNodes(Arrays.asList(peerWithDifferentTcpPortSet));
+    controller.addNodes(Arrays.asList(peerWithDifferentDiscoveryPortSet));
 
-    assertThat(controller.isPermitted(peerWithTcpPortSet)).isFalse();
+    assertThat(controller.isPermitted(peerWithDiscoveryPortSet)).isFalse();
   }
 
   @Test

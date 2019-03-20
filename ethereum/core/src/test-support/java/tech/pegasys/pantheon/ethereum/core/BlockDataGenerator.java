@@ -285,7 +285,7 @@ public class BlockDataGenerator {
     return Bytes32.wrap(bytes(Bytes32.SIZE));
   }
 
-  private BytesValue bytesValue(final int size) {
+  public BytesValue bytesValue(final int size) {
     return BytesValue.wrap(bytes(size));
   }
 

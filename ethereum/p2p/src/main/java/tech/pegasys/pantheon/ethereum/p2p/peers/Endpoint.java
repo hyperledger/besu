@@ -59,6 +59,16 @@ public class Endpoint {
     return tcpPort;
   }
 
+  /**
+   * If the tcp port is explicitly defined, return it. Otherwise, return the udp port assuming that
+   * the tcp port should match the udp port.
+   *
+   * @return The tcp port to use for this endpoint.
+   */
+  public int getFunctionalTcpPort() {
+    return tcpPort.orElse(udpPort);
+  }
+
   @Override
   public boolean equals(final Object obj) {
     if (obj == null) {
