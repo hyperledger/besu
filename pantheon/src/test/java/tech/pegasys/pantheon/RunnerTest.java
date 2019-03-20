@@ -224,20 +224,50 @@ public final class RunnerTest {
                                         MediaType.parse("application/json; charset=utf-8"),
                                         "{\"jsonrpc\":\"2.0\",\"id\":"
                                             + Json.encode(7)
-                                            + ",\"method\":\"eth_syncing\"}"))
+                                            + ",\"method\":\"eth_blockNumber\"}"))
                                 .url(baseUrl)
                                 .build())
                         .execute()) {
 
                   assertThat(resp.code()).isEqualTo(200);
+                  final Response syncingResp =
+                      client
+                          .newCall(
+                              new Request.Builder()
+                                  .post(
+                                      RequestBody.create(
+                                          MediaType.parse("application/json; charset=utf-8"),
+                                          "{\"jsonrpc\":\"2.0\",\"id\":"
+                                              + Json.encode(7)
+                                              + ",\"method\":\"eth_syncing\"}"))
+                                  .url(baseUrl)
+                                  .build())
+                          .execute();
+                  assertThat(syncingResp.code()).isEqualTo(200);
 
                   final int currentBlock =
                       UInt256.fromHexString(
-                              new JsonObject(resp.body().string())
-                                  .getJsonObject("result")
-                                  .getString("currentBlock"))
+                              new JsonObject(resp.body().string()).getString("result"))
                           .toInt();
+                  System.out.println("******current block  " + currentBlock);
+                  if (currentBlock < blockCount) {
+                    // if not yet at blockCount, we should get a sync result from eth_syncing
+                    final int syncResultCurrentBlock =
+                        UInt256.fromHexString(
+                                new JsonObject(syncingResp.body().string())
+                                    .getJsonObject("result")
+                                    .getString("currentBlock"))
+                            .toInt();
+                    assertThat(syncResultCurrentBlock).isLessThan(blockCount);
+                  }
                   assertThat(currentBlock).isEqualTo(blockCount);
+                  resp.close();
+
+                  // when we have synced to blockCount, eth_syncing should return false
+                  final boolean syncResult =
+                      new JsonObject(syncingResp.body().string()).getBoolean("result");
+                  assertThat(syncResult).isFalse();
+                  syncingResp.close();
                 }
               });
 
