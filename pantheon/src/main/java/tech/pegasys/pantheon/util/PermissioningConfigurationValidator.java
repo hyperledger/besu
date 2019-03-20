@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.util;
 
-import tech.pegasys.pantheon.cli.EthNetworkConfig;
 import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
 
 import java.net.URI;
@@ -23,21 +22,20 @@ import java.util.stream.Collectors;
 
 public class PermissioningConfigurationValidator {
 
-  public static void areAllBootnodesAreInWhitelist(
-      final EthNetworkConfig ethNetworkConfig,
+  public static void areAllNodesAreInWhitelist(
+      final Collection<URI> nodeURIs,
       final LocalPermissioningConfiguration permissioningConfiguration)
       throws Exception {
-    List<URI> bootnodesNotInWhitelist = new ArrayList<>();
-    final Collection<URI> bootnodes = ethNetworkConfig.getBootNodes();
-    if (permissioningConfiguration.isNodeWhitelistEnabled() && bootnodes != null) {
-      bootnodesNotInWhitelist =
-          bootnodes.stream()
+    List<URI> nodesNotInWhitelist = new ArrayList<>();
+    if (permissioningConfiguration.isNodeWhitelistEnabled() && nodeURIs != null) {
+      nodesNotInWhitelist =
+          nodeURIs.stream()
               .filter(enode -> !permissioningConfiguration.getNodeWhitelist().contains(enode))
               .collect(Collectors.toList());
     }
-    if (!bootnodesNotInWhitelist.isEmpty()) {
+    if (!nodesNotInWhitelist.isEmpty()) {
       throw new Exception(
-          "Bootnode(s) not in nodes-whitelist " + enodesAsStrings(bootnodesNotInWhitelist));
+          "Specified node(s) not in nodes-whitelist " + enodesAsStrings(nodesNotInWhitelist));
     }
   }
 

@@ -97,7 +97,7 @@ public class RunnerBuilder {
   private MetricsConfiguration metricsConfiguration;
   private MetricsSystem metricsSystem;
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
-  private Set<EnodeURL> staticNodes;
+  private Collection<EnodeURL> staticNodes;
 
   private EnodeURL getSelfEnode() {
     String nodeId = pantheonController.getLocalNodeKeyPair().getPublicKey().toString();
@@ -180,7 +180,7 @@ public class RunnerBuilder {
     return this;
   }
 
-  public RunnerBuilder staticNodes(final Set<EnodeURL> staticNodes) {
+  public RunnerBuilder staticNodes(final Collection<EnodeURL> staticNodes) {
     this.staticNodes = staticNodes;
     return this;
   }
@@ -300,12 +300,12 @@ public class RunnerBuilder {
     final FilterManager filterManager = createFilterManager(vertx, context, transactionPool);
 
     final P2PNetwork peerNetwork = networkRunner.getNetwork();
-    staticNodes.stream()
-        .forEach(
-            enodeURL -> {
-              final Peer peer = DefaultPeer.fromEnodeURL(enodeURL);
-              peerNetwork.addMaintainConnectionPeer(peer);
-            });
+
+    staticNodes.forEach(
+        enodeURL -> {
+          final Peer peer = DefaultPeer.fromEnodeURL(enodeURL);
+          peerNetwork.addMaintainConnectionPeer(peer);
+        });
 
     Optional<JsonRpcHttpService> jsonRpcHttpService = Optional.empty();
     if (jsonRpcConfiguration.isEnabled()) {
