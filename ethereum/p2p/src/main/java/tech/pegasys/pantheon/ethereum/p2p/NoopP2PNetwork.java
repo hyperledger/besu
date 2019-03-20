@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -88,6 +89,11 @@ public class NoopP2PNetwork implements P2PNetwork {
 
   @Override
   public Optional<NodeLocalConfigPermissioningController> getNodeWhitelistController() {
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<EnodeURL> getSelfEnodeURL() {
     return Optional.empty();
   }
 
