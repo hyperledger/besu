@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingE
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.util.NetworkUtility;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.net.URI;
 import java.util.Objects;
@@ -41,6 +42,18 @@ public class DefaultPeer extends DefaultPeerId implements Peer {
       Pattern.compile("discport=([0-9]{1,5})");
 
   private final Endpoint endpoint;
+
+  public static DefaultPeer fromEnodeURL(final EnodeURL enodeURL) {
+    final int udpPort = enodeURL.getDiscoveryPort().orElse(enodeURL.getListeningPort());
+
+    final Endpoint endpoint =
+        new Endpoint(
+            enodeURL.getInetAddress().getHostAddress(),
+            udpPort,
+            OptionalInt.of(enodeURL.getListeningPort()));
+
+    return new DefaultPeer(BytesValue.fromHexString(enodeURL.getNodeId()), endpoint);
+  }
 
   /**
    * Creates a {@link DefaultPeer} instance from a String representation of an enode URL.
