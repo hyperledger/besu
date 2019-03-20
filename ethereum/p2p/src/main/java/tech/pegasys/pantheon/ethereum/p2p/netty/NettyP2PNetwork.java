@@ -379,6 +379,21 @@ public class NettyP2PNetwork implements P2PNetwork {
   }
 
   @Override
+  public boolean removeMaintainedConnectionPeer(final Peer peer) {
+    final boolean removed = peerMaintainConnectionList.remove(peer);
+
+    final CompletableFuture<PeerConnection> connectionFuture = pendingConnections.get(peer);
+    if (connectionFuture != null) {
+      connectionFuture.thenAccept(connection -> connection.disconnect(DisconnectReason.REQUESTED));
+    }
+
+    final Optional<PeerConnection> peerConnection = connections.getConnectionForPeer(peer.getId());
+    peerConnection.ifPresent(pc -> pc.disconnect(DisconnectReason.REQUESTED));
+
+    return removed;
+  }
+
+  @Override
   public void checkMaintainedConnectionPeers() {
     for (final Peer peer : peerMaintainConnectionList) {
       if (!(isConnecting(peer) || isConnected(peer))) {

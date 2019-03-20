@@ -77,6 +77,16 @@ public interface P2PNetwork extends Closeable {
   boolean addMaintainConnectionPeer(final Peer peer);
 
   /**
+   * Removes a {@link Peer} from a list indicating any existing efforts to connect to a given peer
+   * should be removed, and if connected, the peer should be disconnected
+   *
+   * @param peer The peer to which connections are not longer required
+   * @return boolean representing whether or not the peer has been disconnected, or if it was not
+   *     currently connected.
+   */
+  boolean removeMaintainedConnectionPeer(final Peer peer);
+
+  /**
    * Trigger that an external clock can use to make the network attempt connections to maintained
    * peers
    */

@@ -53,6 +53,11 @@ public class NoopP2PNetwork implements P2PNetwork {
   }
 
   @Override
+  public boolean removeMaintainedConnectionPeer(final Peer peer) {
+    throw new P2pDisabledException("P2P networking disabled.  Unable to remove a connected peer.");
+  }
+
+  @Override
   public void checkMaintainedConnectionPeers() {}
 
   @Override

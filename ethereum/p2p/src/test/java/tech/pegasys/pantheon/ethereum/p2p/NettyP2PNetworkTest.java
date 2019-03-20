@@ -753,6 +753,51 @@ public final class NettyP2PNetworkTest {
     verify(permittedPeerConnection, never()).disconnect(any());
   }
 
+  @Test
+  public void removePeerReturnsTrueIfNodeWasInMaintaineConnectionsAndDisconnectsIfInPending() {
+    final NettyP2PNetwork nettyP2PNetwork = mockNettyP2PNetwork();
+    nettyP2PNetwork.start();
+
+    final Peer localPeer = mockPeer("127.0.0.1", 30301);
+    final Peer remotePeer = mockPeer("127.0.0.2", 30302);
+    final PeerConnection peerConnection = mockPeerConnection(localPeer, remotePeer);
+
+    nettyP2PNetwork.addMaintainConnectionPeer(remotePeer);
+    assertThat(nettyP2PNetwork.peerMaintainConnectionList.contains(remotePeer)).isTrue();
+    assertThat(nettyP2PNetwork.pendingConnections.containsKey(remotePeer)).isTrue();
+    assertThat(nettyP2PNetwork.removeMaintainedConnectionPeer(remotePeer)).isTrue();
+    assertThat(nettyP2PNetwork.peerMaintainConnectionList.contains(remotePeer)).isFalse();
+
+    // Note: The pendingConnection future is not removed.
+    assertThat(nettyP2PNetwork.pendingConnections.containsKey(remotePeer)).isTrue();
+
+    // Complete the connection, and ensure "disconnect is automatically called.
+    nettyP2PNetwork.pendingConnections.get(remotePeer).complete(peerConnection);
+    verify(peerConnection).disconnect(DisconnectReason.REQUESTED);
+  }
+
+  @Test
+  public void removePeerReturnsFalseIfNotInMaintainedListButDisconnectsPeer() {
+    final NettyP2PNetwork nettyP2PNetwork = mockNettyP2PNetwork();
+    nettyP2PNetwork.start();
+
+    final Peer localPeer = mockPeer("127.0.0.1", 30301);
+    final Peer remotePeer = mockPeer("127.0.0.2", 30302);
+    final PeerConnection peerConnection = mockPeerConnection(localPeer, remotePeer);
+
+    CompletableFuture<PeerConnection> future = nettyP2PNetwork.connect(remotePeer);
+
+    assertThat(nettyP2PNetwork.peerMaintainConnectionList.contains(remotePeer)).isFalse();
+    assertThat(nettyP2PNetwork.pendingConnections.containsKey(remotePeer)).isTrue();
+    future.complete(peerConnection);
+    assertThat(nettyP2PNetwork.pendingConnections.containsKey(remotePeer)).isFalse();
+
+    assertThat(nettyP2PNetwork.removeMaintainedConnectionPeer(remotePeer)).isFalse();
+    assertThat(nettyP2PNetwork.peerMaintainConnectionList.contains(remotePeer)).isFalse();
+
+    verify(peerConnection).disconnect(DisconnectReason.REQUESTED);
+  }
+
   private BlockAddedEvent blockAddedEvent() {
     return mock(BlockAddedEvent.class);
   }
