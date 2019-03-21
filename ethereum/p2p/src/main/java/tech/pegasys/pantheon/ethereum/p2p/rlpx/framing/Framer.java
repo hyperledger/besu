@@ -162,20 +162,21 @@ public class Framer {
    * <p>This method expects a buffer containing the exact number of bytes a well-formed header
    * consists of (32 bytes at this time). Returns the frame size as extracted from the header.
    *
-   * @param tainedHeader The header.
+   * @param encryptedHeader The header as seen on the wire.
    * @throws FramingException If header parsing or decryption failed.
    * @return The frame size as extracted from the header.
    */
-  private int processHeader(final ByteBuf tainedHeader) throws FramingException {
-    if (tainedHeader.readableBytes() != LENGTH_FULL_HEADER) {
+  private int processHeader(final ByteBuf encryptedHeader) throws FramingException {
+    if (encryptedHeader.readableBytes() != LENGTH_FULL_HEADER) {
       throw error(
-          "Expected %s bytes in header, got %s", LENGTH_FULL_HEADER, tainedHeader.readableBytes());
+          "Expected %s bytes in header, got %s",
+          LENGTH_FULL_HEADER, encryptedHeader.readableBytes());
     }
 
     // Decrypt the header.
     final byte[] hCipher = new byte[LENGTH_HEADER_DATA];
     final byte[] hMac = new byte[LENGTH_MAC];
-    tainedHeader.readBytes(hCipher).readBytes(hMac);
+    encryptedHeader.readBytes(hCipher).readBytes(hMac);
 
     // Header MAC validation.
     byte[] expectedMac = new byte[16];
@@ -183,7 +184,7 @@ public class Framer {
     expectedMac = secrets.updateIngress(xor(expectedMac, hCipher)).getIngressMac();
     expectedMac = Arrays.copyOf(expectedMac, LENGTH_MAC);
 
-    validateMac(expectedMac, hMac);
+    validateMac(hMac, expectedMac);
 
     // Perform the header decryption.
     decryptor.processBytes(hCipher, 0, hCipher.length, hCipher, 0);
@@ -199,6 +200,11 @@ public class Framer {
     // Discard the header data (RLP): being set to fixed value 0xc28080 (list of two null
     // elements) by other clients.
     final int headerDataLength = RLP.calculateSize(BytesValue.wrapBuffer(h.nioBuffer()));
+    if (h.readableBytes() < headerDataLength) {
+      throw error(
+          "Expected at least %d readable bytes while processing header, remaining: %s",
+          headerDataLength, h.readableBytes());
+    }
     h.skipBytes(headerDataLength);
 
     // Discard padding in header (= zero-fill to 16-byte boundary).
