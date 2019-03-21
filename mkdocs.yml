@@ -87,6 +87,11 @@ nav:
         - Mining: Using-Pantheon/Mining.md
         - RPC Pub/Sub: Using-Pantheon/RPC-PubSub.md
         - Debugging Pantheon: Using-Pantheon/Debugging.md
+    - Monitoring Pantheon:
+        - EthStats:
+          - Overview: EthStats/Overview.md
+          - Lite Block Explorer: EthStats/Lite-Block-Explorer.md
+          - Lite Network Health Monitor: EthStats/Lite-Network-Health-Monitor.md
     - Reference:
         - Pantheon Command Line: Reference/Pantheon-CLI-Syntax.md
         - JSON-RPC API Methods: Reference/JSON-RPC-API-Methods.md
