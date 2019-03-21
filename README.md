@@ -36,8 +36,8 @@ User and reference documentation available includes:
 Instructions for how to get started with developing on the Pantheon codebase. Please also read the
 [contribution guidelines](CONTRIBUTING.md) for more detail on how to submit a pull request (PR).
 
-* [Checking out and building](docs/development/building.md)
-* [Running Pantheon via Gradle](docs/development/running-with-gradle.md)
+* [Checking Out and Building](docs/development/building.md)
+* [Running Developer Builds](docs/development/running-developer-builds.md)
 * [Code Coverage](docs/development/code-coverage.md)
 * [Logging](docs/development/logging.md)
 
