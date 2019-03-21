@@ -952,6 +952,22 @@ The default is 8546. Ports must be [exposed appropriately](../Configuring-Panthe
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
 
+### tx-pool-max-size
+
+```bash tab="Syntax"
+--tx-pool-max-size=<INTEGER>
+```
+
+```bash tab="Example Command Line"
+--tx-pool-max-size=2000
+```
+
+```bash tab="Example Configuration File"
+tx-pool-max-size="2000"
+```
+
+Maximum number of transactions kept in the transaction pool. Default is 4096. 
+
 ### help
 
 ```bash tab="Syntax"

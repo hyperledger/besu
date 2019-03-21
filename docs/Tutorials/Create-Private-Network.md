@@ -205,7 +205,7 @@ Import accounts to MetaMask and send transactions as described in the [Private N
 !!! info 
     Pantheon does not implement [private key management](../Using-Pantheon/Account-Management.md).
     
-Send transactions using `eth_sendRawTransaction` to [send ether or, deploy or invoke contracts](../Using-Pantheon/Transactions.md).
+Send transactions using `eth_sendRawTransaction` to [send ether or, deploy or invoke contracts](../Using-Pantheon/Transactions/Transactions.md).
 
 Use the [JSON-RPC API](../JSON-RPC-API/Using-JSON-RPC-API.md). 
 
