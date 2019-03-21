@@ -348,6 +348,17 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void permissionsEnabledWithTooShortContractAddressMustError() {
+    parseCommand(
+        "--permissions-nodes-contract-enabled", "--permissions-nodes-contract-address", "0x1234");
+
+    verifyZeroInteractions(mockRunnerBuilder);
+
+    assertThat(commandErrorOutput.toString()).contains("Invalid value");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void permissionsSmartContractMustUseOption() {
 
     String smartContractAddress = "0x0000000000000000000000000000000000001234";
@@ -1800,7 +1811,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   @Test
   public void miningIsEnabledWhenSpecified() throws Exception {
-    final String coinbaseStr = String.format("%020x", 1);
+    final String coinbaseStr = String.format("%040x", 1);
     parseCommand("--miner-enabled", "--miner-coinbase=" + coinbaseStr);
 
     final ArgumentCaptor<MiningParameters> miningArg =

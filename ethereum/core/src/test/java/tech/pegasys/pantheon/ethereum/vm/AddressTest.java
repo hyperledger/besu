@@ -51,4 +51,14 @@ public class AddressTest {
   public void invalidAccountAddress() {
     Address.wrap(BytesValue.fromHexString("0x00101010"));
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void tooShortAccountAddress() {
+    Address.fromHexStringStrict("0x00101010");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void nullAccountAddress() {
+    Address.fromHexStringStrict(null);
+  }
 }
