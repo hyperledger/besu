@@ -120,7 +120,7 @@ You can search for a specific block, transaction hash, or address by clicking th
 You can run RPC requests on `rpcnode`, the node exposed to the host in order to listen for requests. This tutorial uses 
 [cURL](https://curl.haxx.se/download.html) to make JSON-RPC requests.
 
-For the RPC URL, this tutorial uses the placeholder `http://localhost:<http-rpc-port>`. When you run the tutorial, 
+For the RPC URL, this tutorial uses the placeholder `<http-rpc-endpoint>`. When you run the tutorial, 
 replace this placeholder with the JSON-RPC HTTP service endpoint provided when you list the endpoints. (For example,
 `http://localhost:32770/jsonrpc`.) The dynamic docker port mapping changes each time you run the network.
 
@@ -130,7 +130,7 @@ replace this placeholder with the JSON-RPC HTTP service endpoint provided when y
 Run the following command from the host shell:
 
 ```bash
-curl -X POST --data '{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":1}' http://localhost:<http-rpc-port>
+curl -X POST --data '{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":1}' <http-rpc-endpoint>
 ```
 
 The result specifies the client version: 
@@ -155,7 +155,7 @@ Peers are the number of other nodes connected to the RPC node.
 Poll the peer count using `net_peerCount`:
 
 ```bash
-curl -X POST --data '{"jsonrpc":"2.0","method":"net_peerCount","params":[],"id":1}' http://localhost:<http-rpc-port>
+curl -X POST --data '{"jsonrpc":"2.0","method":"net_peerCount","params":[],"id":1}' <http-rpc-endpoint>
 ```
 
 The result indicates that there are 6 peers:
@@ -173,7 +173,7 @@ The result indicates that there are 6 peers:
 Call `eth_blockNumber` to retrieve the number of the most recent block:
 
 ```bash
-curl -X POST --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' http://localhost:<http-rpc-port>
+curl -X POST --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' <http-rpc-endpoint>
 ```
 
 The result provides the most recently mined block:
@@ -193,7 +193,7 @@ The hexadecimal value `0x8b8` translates to `2232` in decimal, the number of blo
 Call `eth_getBalance` to retrieve the balance of the mining address (coinbase) defined in the miner node:
 
 ```bash
-curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getBalance","params":["0xfe3b557e8fb62b89f4916b721be55ceb828dbd73","latest"],"id":1}' http://localhost:<http-rpc-port>
+curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getBalance","params":["0xfe3b557e8fb62b89f4916b721be55ceb828dbd73","latest"],"id":1}' <http-rpc-endpoint>
 ```
 
 The result specifies the miner account balance:
