@@ -79,10 +79,12 @@ nav:
     - Permissions:
         - Nodes and Accounts Whitelists: Permissions/Permissioning.md
     - Using Pantheon:
+        - Transactions:
+          - Creating and Sending Transactions: Using-Pantheon/Transactions/Transactions.md
+          - Transaction Pool: Using-Pantheon/Transactions/Transaction-Pool.md
         - Events and Logs:
           - Overview: Using-Pantheon/Events-and-Logs.md
           - Accessing Logs Using JSON-RPC API: Using-Pantheon/Accessing-Logs-Using-JSON-RPC.md
-        - Creating and Sending Transactions: Using-Pantheon/Transactions.md
         - Using Wallets for Account Management: Using-Pantheon/Account-Management.md
         - Mining: Using-Pantheon/Mining.md
         - RPC Pub/Sub: Using-Pantheon/RPC-PubSub.md
