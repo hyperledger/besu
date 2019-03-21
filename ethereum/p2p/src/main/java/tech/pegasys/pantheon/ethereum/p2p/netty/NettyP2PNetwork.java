@@ -166,7 +166,6 @@ public class NettyP2PNetwork implements P2PNetwork {
 
   private EnodeURL ourEnodeURL;
 
-  private final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController;
   private final Optional<NodePermissioningController> nodePermissioningController;
   private final Optional<Blockchain> blockchain;
   private OptionalLong blockAddedObserverId = OptionalLong.empty();
@@ -302,7 +301,6 @@ public class NettyP2PNetwork implements P2PNetwork {
       throw new RuntimeException("Interrupted before startup completed", e);
     }
 
-    this.nodeWhitelistController = nodeLocalConfigPermissioningController;
     this.nodePermissioningController = nodePermissioningController;
     this.blockchain = Optional.ofNullable(blockchain);
     this.advertisedHost = config.getDiscovery().getAdvertisedHost();
@@ -668,11 +666,6 @@ public class NettyP2PNetwork implements P2PNetwork {
   @Override
   public boolean isP2pEnabled() {
     return true;
-  }
-
-  @Override
-  public Optional<NodeLocalConfigPermissioningController> getNodeWhitelistController() {
-    return nodeWhitelistController;
   }
 
   @Override

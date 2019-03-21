@@ -186,6 +186,7 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
                 new NoOpMetricsSystem(),
                 supportedCapabilities,
                 Optional.empty(),
+                Optional.empty(),
                 JSON_RPC_APIS,
                 privacyParameters);
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();

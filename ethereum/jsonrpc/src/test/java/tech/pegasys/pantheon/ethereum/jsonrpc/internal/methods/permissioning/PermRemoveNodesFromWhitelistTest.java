@@ -27,8 +27,6 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
-import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.WhitelistOperationResult;
 
@@ -57,16 +55,15 @@ public class PermRemoveNodesFromWhitelistTest {
       "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
   private final String badEnode = "enod://dog@cat:fish";
 
-  @Mock private P2PNetwork p2pNetwork;
-  @Mock NodeLocalConfigPermissioningController nodeLocalConfigPermissioningController;
+  @Mock private NodeLocalConfigPermissioningController nodeLocalConfigPermissioningController;
 
   private JsonRpcParameter params = new JsonRpcParameter();
 
   @Before
   public void setUp() {
-    when(p2pNetwork.getNodeWhitelistController())
-        .thenReturn(Optional.of(nodeLocalConfigPermissioningController));
-    method = new PermRemoveNodesFromWhitelist(p2pNetwork, params);
+    method =
+        new PermRemoveNodesFromWhitelist(
+            Optional.of(nodeLocalConfigPermissioningController), params);
   }
 
   @Test
@@ -136,12 +133,10 @@ public class PermRemoveNodesFromWhitelistTest {
 
   @Test
   public void shouldFailWhenP2pDisabled() {
-    when(p2pNetwork.getNodeWhitelistController())
-        .thenThrow(new P2pDisabledException("P2P disabled."));
-
+    method = new PermRemoveNodesFromWhitelist(Optional.empty(), params);
     final JsonRpcRequest request = buildRequest(Lists.newArrayList(enode1, enode2, enode3));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.P2P_DISABLED);
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
 
     assertThat(method.response(request)).isEqualToComparingFieldByField(expectedResponse);
   }
