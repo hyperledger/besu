@@ -2518,6 +2518,52 @@ None
         "result": "Success"
     }
     ```
+
+## Txpool Methods 
+
+!!! note
+    The `TXPOOL` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
+    or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `TXPOOL` API methods.
+
+### txpool_pantheonTransactions
+
+Lists transactions in the node transaction pool. 
+
+**Parameters** 
+
+None
+
+**Returns** 
+
+`result` - List of transactions 
+
+!!! example
+    ```bash tab="curl HTTP request"
+    curl -X POST --data '{"jsonrpc":"2.0","method":"txpool_pantheonTransactions","params":[],"id":1}' http://127.0.0.1:8545
+    ```
+    
+    ```bash tab="wscat WS request"
+    {"jsonrpc":"2.0","method":"txpool_pantheonTransactions","params":[],"id":1}
+    ```
+    
+    ```json tab="JSON result"
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": [
+            {
+                "hash": "0x8a66830098be4006a3f63a03b6e9b67aa721e04bd6b46d420b8f1937689fb4f1",
+                "isReceivedFromLocalSource": true,
+                "addedToPoolAt": "2019-03-21T01:35:50.911Z"
+            },
+            {
+                "hash": "0x41ee803c3987ceb5bcea0fad7a76a8106a2a6dd654409007d9931032ea54579b",
+                "isReceivedFromLocalSource": true,
+                "addedToPoolAt": "2019-03-21T01:36:00.374Z"
+            }
+        ]
+    }
+    ``` 
     
 ## Miscellaneous Methods 
 

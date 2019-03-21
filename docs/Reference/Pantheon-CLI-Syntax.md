@@ -1,4 +1,4 @@
-description: Pantheon commande line interface reference
+description: Pantheon command line interface reference
 <!--- END of page meta data -->
 
 # Pantheon Command Line
@@ -39,7 +39,7 @@ banned-nodeids=["0xc35c3...d615f","0xf42c13...fc456"]
 List of node IDs with which this node will not peer. The node ID is the public key of the node. You can specify the banned node IDs with or without the `0x` prefix.
 
 !!!tip
-    The singular `--banned-node-id` and plural `--banned-node-ids` are available and are just two
+    The singular `--banned-node-id` and plural `--banned-node-ids` are available and are two
     names for the same option.
  
 ### bootnodes
@@ -684,14 +684,14 @@ rpc-http-api=["ETH","NET","WEB3"]
 
 Comma-separated APIs to enable on the HTTP JSON-RPC channel.
 When you use this option, the `--rpc-http-enabled` option must also be specified.
-The available API options are: `ADMIN`, `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`, `PERM`, `DEBUG`, `MINER`, and `EEA`.
+The available API options are: `ADMIN`, `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`, `PERM`, `DEBUG`, `MINER`, `EEA`, and `TXPOOL`.
 The default is: `ETH`, `NET`, `WEB3`.
 
 !!!note
     EEA methods are for privacy features. Privacy features are under development and will be available in v1.1.  
 
 !!!tip
-    The singular `--rpc-http-api` and plural `--rpc-http-apis` are available and are just two
+    The singular `--rpc-http-api` and plural `--rpc-http-apis` are available and are two
     names for the same option.
     
 ### rpc-http-authentication-credentials-file
@@ -846,7 +846,7 @@ rpc-ws-api=["ETH","NET","WEB3"]
 
 Comma-separated APIs to enable on WebSockets channel.
 When you use this option, the `--rpc-ws-enabled` option must also be specified.
-The available API options are: `ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`, `PERM', DEBUG`, `MINER` and `EEA`.
+The available API options are: `ADMIN`,`ETH`, `NET`, `WEB3`, `CLIQUE`, `IBFT`, `PERM', DEBUG`, `MINER`, `EEA`, and `TXPOOL`.
 The default is: `ETH`, `NET`, `WEB3`.
 
 !!!note
