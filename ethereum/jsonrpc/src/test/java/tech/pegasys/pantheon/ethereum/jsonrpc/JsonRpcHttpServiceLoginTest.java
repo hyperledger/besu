@@ -131,6 +131,7 @@ public class JsonRpcHttpServiceLoginTest {
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
                     Optional.empty(),
+                    Optional.empty(),
                     JSON_RPC_APIS,
                     mock(PrivacyParameters.class)));
     service = createJsonRpcHttpService();

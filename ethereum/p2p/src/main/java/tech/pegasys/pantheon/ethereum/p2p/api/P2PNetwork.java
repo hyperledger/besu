@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.ethereum.p2p.api;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
-import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.Closeable;
@@ -121,13 +120,6 @@ public interface P2PNetwork extends Closeable {
    * @return true if the P2P network is enabled, false, otherwise.
    */
   boolean isP2pEnabled();
-
-  /**
-   * Returns the node whitelist controller
-   *
-   * @return an instance of NodeLocalConfigPermissioningController, if set.
-   */
-  Optional<NodeLocalConfigPermissioningController> getNodeWhitelistController();
 
   /**
    * Returns the EnodeURL used to identify this peer in the network.

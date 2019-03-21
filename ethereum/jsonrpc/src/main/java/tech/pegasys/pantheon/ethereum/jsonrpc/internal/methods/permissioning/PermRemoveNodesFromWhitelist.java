@@ -21,19 +21,21 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResp
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
-import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 
 import java.util.List;
+import java.util.Optional;
 
 public class PermRemoveNodesFromWhitelist implements JsonRpcMethod {
 
-  private final P2PNetwork p2pNetwork;
+  private final Optional<NodeLocalConfigPermissioningController>
+      nodeWhitelistPermissioningController;
   private final JsonRpcParameter parameters;
 
   public PermRemoveNodesFromWhitelist(
-      final P2PNetwork p2pNetwork, final JsonRpcParameter parameters) {
-    this.p2pNetwork = p2pNetwork;
+      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistPermissioningController,
+      final JsonRpcParameter parameters) {
+    this.nodeWhitelistPermissioningController = nodeWhitelistPermissioningController;
     this.parameters = parameters;
   }
 
@@ -47,11 +49,11 @@ public class PermRemoveNodesFromWhitelist implements JsonRpcMethod {
     final StringListParameter enodeListParam =
         parameters.required(req.getParams(), 0, StringListParameter.class);
     try {
-      if (p2pNetwork.getNodeWhitelistController().isPresent()) {
+      if (nodeWhitelistPermissioningController.isPresent()) {
         try {
           final List<String> enodeURLs = enodeListParam.getStringList();
           final NodeLocalConfigPermissioningController.NodesWhitelistResult nodesWhitelistResult =
-              p2pNetwork.getNodeWhitelistController().get().removeNodes(enodeURLs);
+              nodeWhitelistPermissioningController.get().removeNodes(enodeURLs);
 
           switch (nodesWhitelistResult.result()) {
             case SUCCESS:

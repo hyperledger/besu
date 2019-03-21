@@ -31,6 +31,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.HashSet;
@@ -183,6 +184,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
                     Optional.of(mock(AccountWhitelistController.class)),
+                    Optional.of(mock(NodeLocalConfigPermissioningController.class)),
                     config.getRpcApis(),
                     mock(PrivacyParameters.class)));
     final JsonRpcHttpService jsonRpcHttpService =

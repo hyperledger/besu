@@ -19,16 +19,19 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResp
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
-import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 
 import java.util.List;
+import java.util.Optional;
 
 public class PermGetNodesWhitelist implements JsonRpcMethod {
 
-  private final P2PNetwork p2pNetwork;
+  private final Optional<NodeLocalConfigPermissioningController>
+      nodeWhitelistPermissioningController;
 
-  public PermGetNodesWhitelist(final P2PNetwork p2pNetwork) {
-    this.p2pNetwork = p2pNetwork;
+  public PermGetNodesWhitelist(
+      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistPermissioningController) {
+    this.nodeWhitelistPermissioningController = nodeWhitelistPermissioningController;
   }
 
   @Override
@@ -39,9 +42,9 @@ public class PermGetNodesWhitelist implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequest req) {
     try {
-      if (p2pNetwork.getNodeWhitelistController().isPresent()) {
+      if (nodeWhitelistPermissioningController.isPresent()) {
         final List<String> enodeList =
-            p2pNetwork.getNodeWhitelistController().get().getNodesWhitelist();
+            nodeWhitelistPermissioningController.get().getNodesWhitelist();
 
         return new JsonRpcSuccessResponse(req.getId(), enodeList);
       } else {

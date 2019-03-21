@@ -23,8 +23,6 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
-import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 
 import java.util.List;
@@ -50,12 +48,11 @@ public class PermGetNodesWhitelistTest {
   private final String enode3 =
       "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.12:4567";
 
-  @Mock private P2PNetwork p2pNetwork;
   @Mock private NodeLocalConfigPermissioningController nodeLocalConfigPermissioningController;
 
   @Before
   public void setUp() {
-    method = new PermGetNodesWhitelist(p2pNetwork);
+    method = new PermGetNodesWhitelist(Optional.of(nodeLocalConfigPermissioningController));
   }
 
   @Test
@@ -69,8 +66,6 @@ public class PermGetNodesWhitelistTest {
     final JsonRpcResponse expected =
         new JsonRpcSuccessResponse(request.getId(), Lists.newArrayList(enode1, enode2, enode3));
 
-    when(p2pNetwork.getNodeWhitelistController())
-        .thenReturn(Optional.of(nodeLocalConfigPermissioningController));
     when(nodeLocalConfigPermissioningController.getNodesWhitelist())
         .thenReturn(buildNodesList(enode1, enode2, enode3));
 
@@ -87,8 +82,6 @@ public class PermGetNodesWhitelistTest {
     final JsonRpcRequest request = buildRequest();
     final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getId(), Lists.emptyList());
 
-    when(p2pNetwork.getNodeWhitelistController())
-        .thenReturn(java.util.Optional.of(nodeLocalConfigPermissioningController));
     when(nodeLocalConfigPermissioningController.getNodesWhitelist()).thenReturn(buildNodesList());
 
     final JsonRpcResponse actual = method.response(request);
@@ -101,12 +94,11 @@ public class PermGetNodesWhitelistTest {
 
   @Test
   public void shouldFailWhenP2pDisabled() {
-    when(p2pNetwork.getNodeWhitelistController())
-        .thenThrow(new P2pDisabledException("P2P disabled."));
+    method = new PermGetNodesWhitelist(Optional.empty());
 
     final JsonRpcRequest request = buildRequest();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.P2P_DISABLED);
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
 
     assertThat(method.response(request)).isEqualToComparingFieldByField(expectedResponse);
   }
