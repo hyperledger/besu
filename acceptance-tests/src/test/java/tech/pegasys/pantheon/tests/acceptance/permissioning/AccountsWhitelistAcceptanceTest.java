@@ -36,7 +36,12 @@ public class AccountsWhitelistAcceptanceTest extends AcceptanceTestBase {
     senderA = accounts.getPrimaryBenefactor();
     senderB = accounts.getSecondaryBenefactor();
 
-    node = pantheon.createNodeWithAccountsWhitelist("node", Arrays.asList(senderA.getAddress()));
+    node =
+        permissionedNodeBuilder
+            .name("node")
+            .accountsPermittedInConfig(Arrays.asList(senderA.getAddress()))
+            .build();
+
     cluster.start(node);
   }
 
