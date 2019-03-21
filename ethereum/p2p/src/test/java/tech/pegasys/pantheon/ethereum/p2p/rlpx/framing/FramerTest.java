@@ -108,6 +108,23 @@ public class FramerTest {
   }
 
   @Test
+  public void deframeExcessDataThrowsException() throws IOException {
+    final JsonNode td = MAPPER.readTree(FramerTest.class.getResource("/peer2.json"));
+    final HandshakeSecrets secrets = secretsFrom(td, false);
+    final Framer framer = new Framer(secrets);
+
+    // frame has 19 byte protocol header
+    final ByteBuf badFrame =
+        Unpooled.wrappedBuffer(
+            decodeHexDump(
+                "1457498af1e2ccd62d3ed4e013b1c78ab1a2790b7edbf77cf5fe903ae15beb024d264ee0942c5ac7c0f8fd1098f36a360cfcabdb958e9c6145b1ff6d41f937aa"));
+
+    assertThatThrownBy(() -> framer.deframe(badFrame))
+        .isInstanceOf(FramingException.class)
+        .hasMessage("Expected at least 19 readable bytes while processing header, remaining: 13");
+  }
+
+  @Test
   public void deframeManyNoFragmentation() throws IOException {
     // Load test data.
     final JsonNode td = MAPPER.readTree(FramerTest.class.getResource("/peer1.json"));
