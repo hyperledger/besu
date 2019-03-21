@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.tests.acceptance.jsonrpc.perm;
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 
-import java.util.ArrayList;
+import java.util.Collections;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -33,7 +33,11 @@ public class PermAddNodesToWhitelistAcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
-    node = pantheon.createNodeWithNodesWhitelist("node1", new ArrayList<>());
+    node =
+        permissionedNodeBuilder
+            .name("node1")
+            .nodesPermittedInConfig(Collections.emptyList())
+            .build();
     cluster.start(node);
   }
 
