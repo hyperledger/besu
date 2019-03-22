@@ -42,7 +42,7 @@ This tutorial contains some optional steps that will increase the duration.
 
 Deploy the Pantheon Quickstart on [Microsoft Azure](https://azure.microsoft.com) by clicking the button below.
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FNicolasMassart%2Fpantheon-quickstart%2Fazure_deploy_button%2Fazure%2Fazuredeploy.json)
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FPegaSysEng%2Fpantheon-quickstart%2Fmaster%2Fazure%2Fazuredeploy.json)
 
 If prompted to log in to the Azure Portal, log in before being redirected to the deployment form.  
 
