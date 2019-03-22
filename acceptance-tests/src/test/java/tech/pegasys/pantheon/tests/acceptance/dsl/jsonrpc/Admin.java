@@ -13,8 +13,11 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
@@ -36,9 +39,13 @@ public class Admin {
     };
   }
 
-  public Condition addPeer(final URI enode) {
+  public Condition addPeer(final Node node) {
+    if (!(node instanceof RunnableNode)) {
+      fail("Admin.addPeer() needs a RunnableNode instance");
+    }
+
     return (n) -> {
-      final Boolean result = n.execute(addPeerTransaction(enode));
+      final Boolean result = n.execute(addPeerTransaction(((RunnableNode) node).enodeUrl()));
       assertThat(result).isTrue();
     };
   }

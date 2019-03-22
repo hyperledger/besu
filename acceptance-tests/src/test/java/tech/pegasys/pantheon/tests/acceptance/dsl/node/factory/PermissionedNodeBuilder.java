@@ -213,6 +213,7 @@ public class PermissionedNodeBuilder {
     jsonRpcConfig.setHostsWhitelist(singletonList("*"));
     final List<RpcApi> rpcApis = new ArrayList<>(jsonRpcConfig.getRpcApis());
     rpcApis.add(RpcApis.PERM);
+    rpcApis.add(RpcApis.ADMIN);
     jsonRpcConfig.setRpcApis(rpcApis);
     return jsonRpcConfig;
   }

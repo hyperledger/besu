@@ -59,10 +59,23 @@ public class NodesWhitelistAcceptanceTest extends AcceptanceTestBase {
   public void permissionedNodeShouldDisconnectFromNodeRemovedFromWhitelist() {
     permissionedNode.verify(net.awaitPeerCount(2));
 
-    // remove allowed node from the whitelist
+    // remove node from the whitelist
     permissionedNode.verify(perm.removeNodesFromWhitelist(allowedNode));
+    permissionedNode.verify(perm.getNodesWhitelist(1));
 
     permissionedNode.verify(net.awaitPeerCount(1));
+  }
+
+  @Test
+  public void forbiddenNodeAddedToWhitelistCanConnectToPermissionedNode() {
+    permissionedNode.verify(net.awaitPeerCount(2));
+
+    // add node to the whitelist
+    permissionedNode.verify(perm.addNodesToWhitelist(forbiddenNode));
+    permissionedNode.verify(perm.getNodesWhitelist(3));
+
+    permissionedNode.verify(admin.addPeer(forbiddenNode));
+    permissionedNode.verify(net.awaitPeerCount(3));
   }
 
   @Override
