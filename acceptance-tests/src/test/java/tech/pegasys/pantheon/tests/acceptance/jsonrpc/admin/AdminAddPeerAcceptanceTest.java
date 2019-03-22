@@ -13,42 +13,40 @@
 package tech.pegasys.pantheon.tests.acceptance.jsonrpc.admin;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.Cluster;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
-
-import java.net.URI;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 public class AdminAddPeerAcceptanceTest extends AcceptanceTestBase {
-  private PantheonNode nodeA;
-  private PantheonNode nodeB;
-  private Cluster p2pDisabledCluster;
+  private Cluster noDiscoveryCluster;
+
+  private Node nodeA;
+  private Node nodeB;
 
   @Before
   public void setUp() throws Exception {
     final ClusterConfiguration clusterConfiguration =
         new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
-    p2pDisabledCluster = new Cluster(clusterConfiguration, net);
+    noDiscoveryCluster = new Cluster(clusterConfiguration, net);
     nodeA = pantheon.createArchiveNodeWithDiscoveryDisabledAndAdmin("nodeA");
     nodeB = pantheon.createArchiveNodeWithDiscoveryDisabledAndAdmin("nodeB");
-    p2pDisabledCluster.start(nodeA, nodeB);
+    noDiscoveryCluster.start(nodeA, nodeB);
   }
 
   @After
   public void tearDown() {
-    p2pDisabledCluster.stop();
+    noDiscoveryCluster.stop();
   }
 
   @Test
   public void adminAddPeerForcesConnection() {
-    final URI nodeBEnode = nodeB.enodeUrl();
     nodeA.verify(net.awaitPeerCount(0));
-    nodeA.verify(admin.addPeer(nodeBEnode));
+    nodeA.verify(admin.addPeer(nodeB));
     nodeA.verify(net.awaitPeerCount(1));
     nodeB.verify(net.awaitPeerCount(1));
   }
