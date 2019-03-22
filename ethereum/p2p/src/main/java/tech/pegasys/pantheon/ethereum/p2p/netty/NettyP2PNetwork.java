@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.p2p.ConnectingToLocalNodeException;
 import tech.pegasys.pantheon.ethereum.p2p.PeerNotPermittedException;
 import tech.pegasys.pantheon.ethereum.p2p.api.DisconnectCallback;
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;
@@ -369,6 +370,11 @@ public class NettyP2PNetwork implements P2PNetwork {
     if (!isPeerAllowed(peer)) {
       throw new PeerNotPermittedException();
     }
+
+    if (peer.getId().equals(ourPeerInfo.getNodeId())) {
+      throw new ConnectingToLocalNodeException();
+    }
+
     final boolean added = peerMaintainConnectionList.add(peer);
     if (added) {
       connect(peer);
