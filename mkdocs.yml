@@ -52,6 +52,7 @@ nav:
         - Running Pantheon from Docker Image: Getting-Started/Run-Docker-Image.md
     - Tutorials:
         - Private Network Quickstart: Tutorials/Private-Network-Quickstart.md
+        - Private Network Quickstart On Azure: Tutorials/Azure/Azure-Private-Network-Quickstart.md
         - Create a Private Network using Ethash (Pow): Tutorials/Create-Private-Network.md
         - Create a Private Network using Clique (PoA): Tutorials/Create-Private-Clique-Network.md
         - Create a Private Network using IBFT 2.0 (PoA): Tutorials/Create-IBFT-Network.md
