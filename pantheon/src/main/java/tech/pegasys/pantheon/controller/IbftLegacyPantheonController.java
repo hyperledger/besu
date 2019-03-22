@@ -70,6 +70,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
   private final KeyPair keyPair;
   private final TransactionPool transactionPool;
   private final Runnable closer;
+  private final PrivacyParameters privacyParameters;
 
   private IbftLegacyPantheonController(
       final ProtocolSchedule<IbftContext> protocolSchedule,
@@ -80,6 +81,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
       final Synchronizer synchronizer,
       final KeyPair keyPair,
       final TransactionPool transactionPool,
+      final PrivacyParameters privacyParameters,
       final Runnable closer) {
 
     this.protocolSchedule = protocolSchedule;
@@ -90,6 +92,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
     this.synchronizer = synchronizer;
     this.keyPair = keyPair;
     this.transactionPool = transactionPool;
+    this.privacyParameters = privacyParameters;
     this.closer = closer;
   }
 
@@ -102,9 +105,10 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
       final Path dataDirectory,
       final MetricsSystem metricsSystem,
       final Clock clock,
-      final int maxPendingTransactions) {
+      final int maxPendingTransactions,
+      final PrivacyParameters privacyParameters) {
     final ProtocolSchedule<IbftContext> protocolSchedule =
-        IbftProtocolSchedule.create(genesisConfig.getConfigOptions());
+        IbftProtocolSchedule.create(genesisConfig.getConfigOptions(), privacyParameters);
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
     final IbftConfigOptions ibftConfig =
         genesisConfig.getConfigOptions().getIbftLegacyConfigOptions();
@@ -162,6 +166,9 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
         () -> {
           try {
             storageProvider.close();
+            if (privacyParameters.isEnabled()) {
+              privacyParameters.getPrivateStorageProvider().close();
+            }
           } catch (final IOException e) {
             LOG.error("Failed to close storage provider", e);
           }
@@ -184,6 +191,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
         synchronizer,
         nodeKeys,
         transactionPool,
+        privacyParameters,
         closer);
   }
 
@@ -230,7 +238,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
 
   @Override
   public PrivacyParameters getPrivacyParameters() {
-    return PrivacyParameters.noPrivacy();
+    return privacyParameters;
   }
 
   @Override

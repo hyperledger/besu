@@ -82,7 +82,8 @@ public interface PantheonController<C> extends Closeable {
           dataDirectory,
           metricsSystem,
           clock,
-          maxPendingTransactions);
+          maxPendingTransactions,
+          privacyParameters);
     } else if (configOptions.isIbftLegacy()) {
       return IbftLegacyPantheonController.init(
           storageProvider,
@@ -93,7 +94,8 @@ public interface PantheonController<C> extends Closeable {
           dataDirectory,
           metricsSystem,
           clock,
-          maxPendingTransactions);
+          maxPendingTransactions,
+          privacyParameters);
     } else if (configOptions.isClique()) {
       return CliquePantheonController.init(
           storageProvider,
