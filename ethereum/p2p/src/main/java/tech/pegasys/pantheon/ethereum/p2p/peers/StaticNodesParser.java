@@ -40,7 +40,7 @@ public class StaticNodesParser {
     try {
       return readEnodesFromPath(path);
     } catch (FileNotFoundException | NoSuchFileException ex) {
-      LOG.info("No StaticNodes file  ({}) exists, creating empty cache.", path);
+      LOG.info("StaticNodes file {} does not exist, no static connections will be created.", path);
       return emptySet();
     } catch (IOException ex) {
       LOG.info("Unable to parse static nodes file ({})", path);

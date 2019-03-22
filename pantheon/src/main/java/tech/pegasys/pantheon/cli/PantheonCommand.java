@@ -622,6 +622,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           permissioningConfiguration();
 
       final Collection<EnodeURL> staticNodes = loadStaticNodes();
+      logger.info("Connecting to {} static nodes.", staticNodes.size());
+      logger.trace("Static Nodes = {}", staticNodes);
 
       permissioningConfiguration
           .flatMap(PermissioningConfiguration::getLocalConfig)
