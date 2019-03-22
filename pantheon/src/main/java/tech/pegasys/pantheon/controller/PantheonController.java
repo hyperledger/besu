@@ -105,7 +105,8 @@ public interface PantheonController<C> extends Closeable {
           dataDirectory,
           metricsSystem,
           clock,
-          maxPendingTransactions);
+          maxPendingTransactions,
+          privacyParameters);
     } else {
       throw new IllegalArgumentException("Unknown consensus mechanism defined");
     }
