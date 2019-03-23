@@ -25,11 +25,10 @@ To create a permissoned network:
 1. [Get Address of Node-1](#3-get-address-of-node-1)
 1. [Create Genesis File](#4-create-genesis-file)
 1. [Create Permissions Configuration File](#5-create-permissions-configuration-file)
-1. [Delete Database Directories](#6-delete-database-directories)
-1. [Start First Node as Bootnode](#7-start-first-node-as-bootnode)
-1. [Start Node-2](#8-start-node-2)
-1. [Start Node-3](#9-start-node-3)
-1. [Confirm Permissioned Network is Working](#10-confirm-permissioned-network-is-working)
+1. [Start First Node as Bootnode](#6-start-first-node-as-bootnode)
+1. [Start Node-2](#7-start-node-2)
+1. [Start Node-3](#8-start-node-3)
+1. [Confirm Permissioned Network is Working](#9-confirm-permissioned-network-is-working)
 
 ### 1. Create Folders 
 
@@ -41,11 +40,11 @@ Create directories for your permissioned network, each of the three nodes, and a
 ```bash
 Permissioned-Network/
 ├── Node-1
-│   ├── Node-1-data-path
+│   ├── data
 ├── Node-2
-│   ├── Node-2-data-path
+│   ├── data
 └── Node-3
-    ├── Node-3-data-path
+    ├── data
 ```
 
 ### 2. Get Node Public Keys
@@ -56,11 +55,11 @@ In the `Node-1` directory, use the [`public-key`](../Reference/Pantheon-CLI-Synt
 the [node public key](../Configuring-Pantheon/Node-Keys.md) to the specified file (`publicKeyNode1` in this example):
 
 ```bash tab="MacOS"
-pantheon --data-path=Node-1-data-path public-key export --to=Node-1-data-path/publicKeyNode1
+pantheon --data-path=data public-key export --to=data/publicKeyNode1
 ```
 
 ```bash tab="Windows"
-pantheon --data-path=Node-1-data-path public-key export --to=Node-1-data-path\publicKeyNode1
+pantheon --data-path=data public-key export --to=data\publicKeyNode1
 ```
 
 !!!note
@@ -70,26 +69,23 @@ pantheon --data-path=Node-1-data-path public-key export --to=Node-1-data-path\pu
 Your node 1 directory now contains: 
 ```bash
 ├── Node-1
-    ├── Node-1-data-path
-        ├── database
+    ├── data
         ├── key
         ├── publicKeyNode1
 ```
-      
-The `database` directory contains the blockchain data. 
 
 Repeat this for Node-2 and Node-3 in the `Node-2` and `Node-3` directories: 
 
 ```bash tab="MacOS"
-pantheon --data-path=Node-2-data-path public-key export --to=Node-2-data-path/publicKeyNode2
+pantheon --data-path=data public-key export --to=data/publicKeyNode2
 
-pantheon --data-path=Node-3-data-path public-key export --to=Node-3-data-path/publicKeyNode3
+pantheon --data-path=data public-key export --to=data/publicKeyNode3
 ```
 
 ```bash tab="Windows"
-pantheon --data-path=Node-2-data-path public-key export --to=Node-2-data-path\publicKeyNode2
+pantheon --data-path=data public-key export --to=data\publicKeyNode2
 
-pantheon --data-path=Node-3-data-path public-key export --to=Node-3-data-path\publicKeyNode3
+pantheon --data-path=data public-key export --to=data\publicKeyNode3
 ``` 
 
 ### 3. Get Address of Node-1 
@@ -101,11 +97,11 @@ To obtain the address for Node-1, in the `Node-1` directory, use the [`public-ke
 subcommand to write the node address to the specified file (`nodeAddress1` in this example)
 
 ```bash tab="MacOS"
-pantheon --data-path=Node-1-data-path public-key export-address --to=Node-1-data-path/nodeAddress1
+pantheon --data-path=data public-key export-address --to=data/nodeAddress1
 ```
 
 ```bash tab="Windows"
-pantheon --data-path=Node-1-data-path public-key export-address --to=Node-1-data-path\nodeAddress1
+pantheon --data-path=data public-key export-address --to=data\nodeAddress1
 ```
 
 ### 4. Create Genesis File 
@@ -179,8 +175,8 @@ In `extraData`, replace `<Node 1 Address>` with the [address for Node-1](#3-get-
 
 The permissions configuration file defines the nodes and accounts whitelists. 
 
-Copy the following permissions configuration to a file called `permissions_config.toml` and save a copy in the `Node-1-data-path`, 
-`Node-2-data-path`, and `Node-3-data-path` directories:
+Copy the following permissions configuration to a file called `permissions_config.toml` and save a copy in the `Node-1/data`, 
+`Node-2/data`, and `Node-3/data` directories:
 
 !!! example "permissions_config.toml"
     ```toml 
@@ -203,21 +199,16 @@ The permissions configuration file includes:
     On-chain permissioning is under development. On-chain permissioning will use one on-chain 
     nodes whitelist and accounts whitelist. 
 
-### 6. Delete Database Directories
-
-Delete the `database` directories created when [getting the public keys for each node](#2-get-public-keys).
-The nodes cannot be started while the previously generated data is in the `database` directory. 
-
-### 7. Start First Node as Bootnode 
+### 6. Start First Node as Bootnode 
 
 Start Node-1:
 
 ```bash tab="MacOS"
-pantheon --data-path=Node-1-data-path --genesis-file=../cliqueGenesis.json --permissions-nodes-enabled --permissions-accounts-enabled --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=*      
+pantheon --data-path=data --genesis-file=../cliqueGenesis.json --permissions-nodes-enabled --permissions-accounts-enabled --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=*      
 ```
 
 ```bash tab="Windows"
-pantheon --data-path=Node-1-data-path --genesis-file=..\cliqueGenesis.json --permissions-nodes-enabled --permissions-accounts-enabled --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=*    
+pantheon --data-path=data --genesis-file=..\cliqueGenesis.json --permissions-nodes-enabled --permissions-accounts-enabled --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=*    
 ```
 
 !!!note
@@ -235,18 +226,18 @@ and [`--permissions-accounts-enabled`](../Reference/Pantheon-CLI-Syntax.md#permi
 * All domains can access the node using the HTTP JSON-RPC API using the [`--rpc-http-cors-origins`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-cors-origins) option. 
 
 
-### 8. Start Node-2 
+### 7. Start Node-2 
 
 You need the [enode URL](../Configuring-Pantheon/Node-Keys.md#enode-url) for Node-1 to specify Node-1 as a bootnode. 
 
 Start another terminal, change to the `Node-2` directory and start Node-2 replacing the public key in the enode URL with your bootonde:
 
 ```bash tab="MacOS"
-pantheon --data-path=Node-2-data-path --bootnodes="enode://<publicKeyNode1 ex 0x>@127.0.0.1:30303" --genesis-file=../cliqueGenesis.json --permissions-nodes-enabled --permissions-accounts-enabled --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=* --p2p-port=30304 --rpc-http-port=8546    
+pantheon --data-path=data --bootnodes="enode://<publicKeyNode1 ex 0x>@127.0.0.1:30303" --genesis-file=../cliqueGenesis.json --permissions-nodes-enabled --permissions-accounts-enabled --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=* --p2p-port=30304 --rpc-http-port=8546    
 ```
 
 ```bash tab="Windows"
-pantheon --data-path=Node-2-data-path --bootnodes="enode://<publicKeyNode1 ex 0x>@127.0.0.1:30303" --genesis-file=..\cliqueGenesis.json --permissions-nodes-enabled --permissions-accounts-enabled --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=* --p2p-port=30304 --rpc-http-port=8546   
+pantheon --data-path=data --bootnodes="enode://<publicKeyNode1 ex 0x>@127.0.0.1:30303" --genesis-file=..\cliqueGenesis.json --permissions-nodes-enabled --permissions-accounts-enabled --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=* --p2p-port=30304 --rpc-http-port=8546   
 ```
 
 The command line specifies:
@@ -258,16 +249,16 @@ The command line specifies:
 * Other options as for as for Node-1.  
 
 
-### 9. Start Node-3
+### 8. Start Node-3
 
 Start another terminal, change to the `Node-3` directory and start Node-3 replacing the public key in the enode URL with your bootonde:
 
 ```bash tab="MacOS"
-pantheon --data-path=Node-3-data-path --bootnodes="enode://<publicKeyNode1 ex 0x>@127.0.0.1:30303" --genesis-file=../cliqueGenesis.json --permissions-nodes-enabled --permissions-accounts-enabled --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=* --p2p-port=30305 --rpc-http-port=8547    
+pantheon --data-path=data --bootnodes="enode://<publicKeyNode1 ex 0x>@127.0.0.1:30303" --genesis-file=../cliqueGenesis.json --permissions-nodes-enabled --permissions-accounts-enabled --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=* --p2p-port=30305 --rpc-http-port=8547    
 ```
 
 ```bash tab="Windows"
-pantheon --data-path=Node-3-data-path --bootnodes="enode://<publicKeyNode1 ex 0x>@127.0.0.1:30303" --genesis-file=..\cliqueGenesis.json --permissions-nodes-enabled --permissions-accounts-enabled --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=* --p2p-port=30305 --rpc-http-port=8547   
+pantheon --data-path=data --bootnodes="enode://<publicKeyNode1 ex 0x>@127.0.0.1:30303" --genesis-file=..\cliqueGenesis.json --permissions-nodes-enabled --permissions-accounts-enabled --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=* --p2p-port=30305 --rpc-http-port=8547   
 ```
 
 The command line specifies:
@@ -278,7 +269,7 @@ The command line specifies:
 * Data directory for Node-3 using the [`--data-path`](../Reference/Pantheon-CLI-Syntax.md#data-path) option
 * Other options as for as for Node-1.  
 
-### 10. Confirm Permissioned Network is Working 
+### 9. Confirm Permissioned Network is Working 
 
 #### Check Peer Count 
 
@@ -320,17 +311,17 @@ Import the last account from the genesis file into MetaMask and try to send a tr
 
 ### Start a Node Not on the Nodes Whitelist   
 
-In your `Permissioned-Network` directory, create a `Node-4` directory and `Node-4-data-path` directory inside it. 
+In your `Permissioned-Network` directory, create a `Node-4` directory and `data` directory inside it. 
 
 Change to the `Node-4` directory and start Node-4 replacing the public key in the enode URL with your bootnode as when
 starting Node-1 and Node-2:
 
 ```bash tab="MacOS"
-pantheon --data-path=Node-4-data-path --bootnodes="enode://<publicKeyNode1 ex 0x>@127.0.0.1:30303" --genesis-file=../cliqueGenesis.json --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=* --p2p-port=30306 --rpc-http-port=8548    
+pantheon --data-path=data --bootnodes="enode://<publicKeyNode1 ex 0x>@127.0.0.1:30303" --genesis-file=../cliqueGenesis.json --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=* --p2p-port=30306 --rpc-http-port=8548    
 ```
 
 ```bash tab="Windows"
-pantheon --data-path=Node-4-data-path --bootnodes="enode://<publicKeyNode1 ex 0x>@127.0.0.1:30303" --genesis-file=..\cliqueGenesis.json --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=* --p2p-port=30306 --rpc-http-port=8548    
+pantheon --data-path=data --bootnodes="enode://<publicKeyNode1 ex 0x>@127.0.0.1:30303" --genesis-file=..\cliqueGenesis.json --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=* --p2p-port=30306 --rpc-http-port=8548    
 ```
 
 Start another terminal, use curl to call the JSON-RPC API [`net_peerCount`](../Reference/JSON-RPC-API-Methods.md#net_peercount) method: 
@@ -353,4 +344,4 @@ The result confirms Node-4 has no peers even though it specifies Node-1 as a boo
 When finished using the permissioned network, stop all nodes using ++ctrl+c++ in each terminal window. 
 
 !!!tip
-    To restart the permissioned network in the future, start from [7. Start First Node as Bootnode](#7-restart-first-node-as-bootnode). 
+    To restart the permissioned network in the future, start from [6. Start First Node as Bootnode](#6-start-first-node-as-bootnode). 
