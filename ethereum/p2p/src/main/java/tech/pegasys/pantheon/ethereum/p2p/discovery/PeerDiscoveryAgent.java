@@ -36,6 +36,7 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.NetworkUtility;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -74,6 +75,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
   private final PeerBlacklist peerBlacklist;
   private final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController;
   private final Optional<NodePermissioningController> nodePermissioningController;
+  private final MetricsSystem metricsSystem;
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
 
@@ -97,7 +99,9 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
       final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
       final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController,
-      final Optional<NodePermissioningController> nodePermissioningController) {
+      final Optional<NodePermissioningController> nodePermissioningController,
+      final MetricsSystem metricsSystem) {
+    this.metricsSystem = metricsSystem;
     checkArgument(keyPair != null, "keypair cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
 
@@ -171,7 +175,8 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
         nodeWhitelistController,
         nodePermissioningController,
         peerBondedObservers,
-        peerDroppedObservers);
+        peerDroppedObservers,
+        metricsSystem);
   }
 
   protected boolean validatePacketSize(final int packetSize) {

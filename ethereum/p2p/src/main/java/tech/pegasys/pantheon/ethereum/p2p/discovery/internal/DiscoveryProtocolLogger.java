@@ -13,6 +13,10 @@
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,8 +24,26 @@ import org.apache.logging.log4j.Logger;
 public class DiscoveryProtocolLogger {
 
   private static final Logger LOG = LogManager.getLogger();
+  private final LabelledMetric<Counter> outgoingMessageCounter;
+  private final LabelledMetric<Counter> incomingMessageCounter;
 
-  static void logSendingPacket(final Peer peer, final Packet packet) {
+  public DiscoveryProtocolLogger(final MetricsSystem metricsSystem) {
+    outgoingMessageCounter =
+        metricsSystem.createLabelledCounter(
+            MetricCategory.NETWORK,
+            "discovery_messages_outbound",
+            "Total number of P2P discovery messages sent",
+            "name");
+    incomingMessageCounter =
+        metricsSystem.createLabelledCounter(
+            MetricCategory.NETWORK,
+            "discovery_messages_inbound",
+            "Total number of P2P discovery messages received",
+            "name");
+  }
+
+  void logSendingPacket(final Peer peer, final Packet packet) {
+    outgoingMessageCounter.labels(packet.getType().name()).inc();
     LOG.trace(
         "<<< Sending  {} packet to peer {} ({}): {}",
         shortenPacketType(packet),
@@ -30,7 +52,8 @@ public class DiscoveryProtocolLogger {
         packet);
   }
 
-  static void logReceivedPacket(final Peer peer, final Packet packet) {
+  void logReceivedPacket(final Peer peer, final Packet packet) {
+    incomingMessageCounter.labels(packet.getType().name()).inc();
     LOG.trace(
         ">>> Received {} packet from peer {} ({}): {}",
         shortenPacketType(packet),
@@ -39,7 +62,7 @@ public class DiscoveryProtocolLogger {
         packet);
   }
 
-  private static String shortenPacketType(final Packet packet) {
+  private String shortenPacketType(final Packet packet) {
     switch (packet.getType()) {
       case PING:
         return "PING ";

@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -67,7 +68,8 @@ public class PeerDiscoveryTableRefreshTest {
                 Optional.empty(),
                 Optional.empty(),
                 new Subscribers<>(),
-                new Subscribers<>()));
+                new Subscribers<>(),
+                new NoOpMetricsSystem()));
     controller.start();
 
     // Send a PING, so as to add a Peer in the controller.
