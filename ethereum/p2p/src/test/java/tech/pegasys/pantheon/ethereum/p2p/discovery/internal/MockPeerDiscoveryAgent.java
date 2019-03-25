@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryContro
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
@@ -50,7 +51,8 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
         peerRequirement,
         peerBlacklist,
         nodeWhitelistController,
-        nodePermissioningController);
+        nodePermissioningController,
+        new NoOpMetricsSystem());
     this.agentNetwork = agentNetwork;
   }
 

@@ -232,7 +232,8 @@ public class NettyP2PNetwork implements P2PNetwork {
             () -> connections.size() >= maxPeers,
             peerBlacklist,
             nodeLocalConfigPermissioningController,
-            nodePermissioningController);
+            nodePermissioningController,
+            metricsSystem);
 
     outboundMessagesCounter =
         metricsSystem.createLabelledCounter(
