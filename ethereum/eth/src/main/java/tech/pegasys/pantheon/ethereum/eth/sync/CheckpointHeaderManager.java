@@ -118,7 +118,7 @@ public class CheckpointHeaderManager<C> {
     final int skip = config.downloaderChainSegmentSize() - 1;
     final int additionalHeaderCount =
         calculateAdditionalCheckpointHeadersToRequest(lastHeader, skip);
-    if (additionalHeaderCount == 0) {
+    if (additionalHeaderCount <= 0) {
       return CompletableFuture.completedFuture(emptyList());
     }
     return GetHeadersFromPeerByHashTask.startingAtHash(
