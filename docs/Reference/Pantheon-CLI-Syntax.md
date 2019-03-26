@@ -60,10 +60,10 @@ When connecting to MainNet or public testnets, the default is a predefined list 
 
 On custom networks defined by [`--genesis-file`](#genesis-file) option,
 an empty list of bootnodes is defined by default unless you define custom bootnodes as described in 
-[private network documentation](../Configuring-Pantheon/Bootnodes.md#bootnodes).
+[private network documentation](../Configuring-Pantheon/Networking/Bootnodes.md#bootnodes).
 
 !!! note
-    Specifying that a node is a [bootnode](../Configuring-Pantheon/Bootnodes.md#bootnodes) 
+    Specifying that a node is a [bootnode](../Configuring-Pantheon/Networking/Bootnodes.md#bootnodes) 
     must be done on the command line using [`--bootnodes`](#bootnodes) option without value,
     not in a [configuration file](../Configuring-Pantheon/Using-Configuration-File.md).  
 
@@ -247,7 +247,7 @@ metrics-port="6174"
 ```
 
 Specifies the port (TCP) on which [Prometheus](https://prometheus.io/) accesses [Pantheon metrics](../Using-Pantheon/Debugging.md#monitor-node-performance-using-prometheus).
-The default is `9545`. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration).
+The default is `9545`. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking/Configuring-Ports.md).
 
 ### metrics-push-enabled 
 
@@ -321,7 +321,7 @@ metrics-push-port="6174"
 ```
 
 Port (TCP) of the [Prometheus Push Gateway](https://github.com/prometheus/pushgateway).
-The default is `9001`. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration).
+The default is `9001`. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking/Configuring-Ports.md).
 
 ### metrics-push-prometheus-job
 
@@ -545,7 +545,7 @@ p2p-port="1789"
 ```
 
 Specifies the P2P listening ports (UDP and TCP).
-The default is 30303. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration).
+The default is 30303. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking/Configuring-Ports.md).
 
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
@@ -819,7 +819,7 @@ rpc-http-port="3435"
 ```
 
 Specifies HTTP JSON-RPC listening port (TCP).
-The default is 8545. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration). 
+The default is 8545. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking/Configuring-Ports.md). 
 
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
@@ -941,7 +941,7 @@ rpc-ws-port="6174"
 ```
 
 Specifies Websockets JSON-RPC listening port (TCP).
-The default is 8546. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration).
+The default is 8546. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking/Configuring-Ports.md).
 
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 

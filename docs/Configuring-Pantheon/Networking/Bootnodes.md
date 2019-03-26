@@ -29,28 +29,28 @@ To start a bootnode for a private network:
         The node public key is exported to the `bootnode` file.
     
     !!!note
-        The [`--data-path`](../Reference/Pantheon-CLI-Syntax.md#data-path) and [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file) 
-        options are not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md). 
-        Use a bind mount to [specify a configuration file with Docker](../Getting-Started/Run-Docker-Image.md#custom-genesis-file)
-        and volume to [specify the data directory](../Getting-Started/Run-Docker-Image.md#data-directory).
+        The [`--data-path`](../../Reference/Pantheon-CLI-Syntax.md#data-path) and [`--genesis-file`](../../Reference/Pantheon-CLI-Syntax.md#genesis-file) 
+        options are not used when running Pantheon from the [Docker image](../../Getting-Started/Run-Docker-Image.md). 
+        Use a bind mount to [specify a configuration file with Docker](../../Getting-Started/Run-Docker-Image.md#custom-genesis-file)
+        and volume to [specify the data directory](../../Getting-Started/Run-Docker-Image.md#data-directory).
     
 2. Start the bootnode, specifying:
 
     * Genesis file and data directory as in the previous step. 
-    * No arguments for the [`--bootnodes` option](../Reference/Pantheon-CLI-Syntax.md#bootnodes) because this is your bootnode.
+    * No arguments for the [`--bootnodes` option](../../Reference/Pantheon-CLI-Syntax.md#bootnodes) because this is your bootnode.
     
     !!! example
         ```
         pantheon --genesis-file=privateNetworkGenesis.json --data-path=nodeDataPath --bootnodes
          ```
      
-To specify this bootnode for another node, specify the [enode URL](Node-Keys.md#enode-url) using the [`--bootnodes`](../Reference/Pantheon-CLI-Syntax.md#bootnodes) 
+To specify this bootnode for another node, specify the [enode URL](../Node-Keys.md#enode-url) using the [`--bootnodes`](../../Reference/Pantheon-CLI-Syntax.md#bootnodes) 
 option.
 
 !!! info
     The default host and port for P2P peer discovery is `127.0.0.1:30303`.
-    Use the [`--p2p-host`](../Reference/Pantheon-CLI-Syntax.md#p2p-host) and
-    [`--p2p-port`](../Reference/Pantheon-CLI-Syntax.md#p2p-port) option to specify a host and port. 
+    Use the [`--p2p-host`](../../Reference/Pantheon-CLI-Syntax.md#p2p-host) and
+    [`--p2p-port`](../../Reference/Pantheon-CLI-Syntax.md#p2p-port) option to specify a host and port. 
 
 ### Start Node Specifying the Bootnode
 
