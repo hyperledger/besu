@@ -41,7 +41,6 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
   private final SynchronizerConfiguration config;
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
-  private final SyncState syncState;
 
   FullSyncTargetManager(
       final SynchronizerConfiguration config,
@@ -54,7 +53,6 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
     this.config = config;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.syncState = syncState;
   }
 
   @Override
@@ -82,16 +80,22 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
       return completedFuture(Optional.empty());
     } else {
       final EthPeer bestPeer = maybeBestPeer.get();
-      final long peerHeight = bestPeer.chainState().getEstimatedHeight();
-      final UInt256 peerTd = bestPeer.chainState().getBestBlock().getTotalDifficulty();
-      if (peerTd.compareTo(syncState.chainHeadTotalDifficulty()) <= 0
-          && peerHeight <= syncState.chainHeadNumber()) {
+      if (isSyncTargetReached(bestPeer)) {
         // We're caught up to our best peer, try again when a new peer connects
         LOG.debug("Caught up to best peer: " + bestPeer.chainState().getEstimatedHeight());
         return completedFuture(Optional.empty());
       }
       return completedFuture(maybeBestPeer);
     }
+  }
+
+  @Override
+  public boolean isSyncTargetReached(final EthPeer peer) {
+    final long peerHeight = peer.chainState().getEstimatedHeight();
+    final UInt256 peerTd = peer.chainState().getBestBlock().getTotalDifficulty();
+
+    return peerTd.compareTo(syncState.chainHeadTotalDifficulty()) <= 0
+        && peerHeight <= syncState.chainHeadNumber();
   }
 
   @Override
