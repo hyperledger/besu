@@ -95,7 +95,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   private TrailingPeerRequirements calculateTrailingPeerRequirements() {
     return fastSynchronizer
         .flatMap(FastSynchronizer::calculateTrailingPeerRequirements)
-        .orElse(TrailingPeerRequirements.UNRESTRICTED);
+        .orElseGet(fullSyncDownloader::calculateTrailingPeerRequirements);
   }
 
   @Override

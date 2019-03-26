@@ -56,6 +56,7 @@ public class SynchronizerConfiguration {
   private final int downloaderParallelism;
   private final int transactionsParallelism;
   private final int computationParallelism;
+  private final int maxTrailingPeers;
 
   private SynchronizerConfiguration(
       final int fastSyncPivotDistance,
@@ -75,7 +76,8 @@ public class SynchronizerConfiguration {
       final int downloaderChainSegmentSize,
       final int downloaderParallelism,
       final int transactionsParallelism,
-      final int computationParallelism) {
+      final int computationParallelism,
+      final int maxTrailingPeers) {
     this.fastSyncPivotDistance = fastSyncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
     this.fastSyncMinimumPeerCount = fastSyncMinimumPeerCount;
@@ -94,6 +96,7 @@ public class SynchronizerConfiguration {
     this.downloaderParallelism = downloaderParallelism;
     this.transactionsParallelism = transactionsParallelism;
     this.computationParallelism = computationParallelism;
+    this.maxTrailingPeers = maxTrailingPeers;
   }
 
   public static Builder builder() {
@@ -196,6 +199,10 @@ public class SynchronizerConfiguration {
     return worldStateMaxRequestsWithoutProgress;
   }
 
+  public int getMaxTrailingPeers() {
+    return maxTrailingPeers;
+  }
+
   public static class Builder {
     private SyncMode syncMode = SyncMode.FULL;
     private Range<Long> blockPropagationRange = Range.closed(-10L, 30L);
@@ -216,6 +223,7 @@ public class SynchronizerConfiguration {
     private int worldStateMaxRequestsWithoutProgress =
         DEFAULT_WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS;
     private Duration fastSyncMaximumPeerWaitTime = DEFAULT_FAST_SYNC_MAXIMUM_PEER_WAIT_TIME;
+    private int maxTrailingPeers = Integer.MAX_VALUE;
 
     public Builder fastSyncPivotDistance(final int distance) {
       fastSyncPivotDistance = distance;
@@ -313,6 +321,11 @@ public class SynchronizerConfiguration {
       return this;
     }
 
+    public Builder maxTrailingPeers(final int maxTailingPeers) {
+      this.maxTrailingPeers = maxTailingPeers;
+      return this;
+    }
+
     public SynchronizerConfiguration build() {
       return new SynchronizerConfiguration(
           fastSyncPivotDistance,
@@ -332,7 +345,8 @@ public class SynchronizerConfiguration {
           downloaderChainSegmentSize,
           downloaderParallelism,
           transactionsParallelism,
-          computationParallelism);
+          computationParallelism,
+          maxTrailingPeers);
     }
   }
 }

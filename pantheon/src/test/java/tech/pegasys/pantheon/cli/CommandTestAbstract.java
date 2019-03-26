@@ -108,6 +108,8 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.metricsSystem(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.privacyParameters(any())).thenReturn(mockControllerBuilder);
 
+    when(mockSyncConfBuilder.syncMode(any())).thenReturn(mockSyncConfBuilder);
+    when(mockSyncConfBuilder.maxTrailingPeers(anyInt())).thenReturn(mockSyncConfBuilder);
     when(mockSyncConfBuilder.build()).thenReturn(mockSyncConf);
 
     when(mockRunnerBuilder.vertx(any())).thenReturn(mockRunnerBuilder);
