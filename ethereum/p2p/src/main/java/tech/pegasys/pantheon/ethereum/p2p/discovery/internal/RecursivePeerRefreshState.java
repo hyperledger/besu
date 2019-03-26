@@ -185,7 +185,7 @@ public class RecursivePeerRefreshState {
         && !peerBlacklist.contains(discoPeer)
         && isPeerPermitted(discoPeer)
         && (initialPeers.contains(discoPeer) || !peerTable.get(discoPeer).isPresent())
-        && !discoPeer.getId().equals(localPeer);
+        && !discoPeer.getId().equals(localPeer.getId());
   }
 
   private Boolean isPeerPermitted(final DiscoveryPeer discoPeer) {

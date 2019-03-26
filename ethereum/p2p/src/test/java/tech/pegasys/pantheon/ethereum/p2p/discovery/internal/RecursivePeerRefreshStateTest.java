@@ -479,6 +479,26 @@ public class RecursivePeerRefreshStateTest {
   }
 
   @Test
+  public void shouldNotBondWithSelf() {
+    final DiscoveryPeer peerA = new DiscoveryPeer(createId(1), "127.0.0.1", 1, 1);
+    final DiscoveryPeer peerB = new DiscoveryPeer(createId(2), "127.0.0.2", 2, 2);
+
+    recursivePeerRefreshState.start(singletonList(peerA), TARGET);
+
+    verify(bondingAgent).performBonding(peerA);
+
+    completeBonding(peerA);
+
+    verify(neighborFinder).findNeighbours(peerA, TARGET);
+
+    recursivePeerRefreshState.onNeighboursPacketReceived(
+        peerA, NeighborsPacketData.create(asList(peerB, localPeer)));
+
+    verify(bondingAgent).performBonding(peerB);
+    verify(bondingAgent, never()).performBonding(localPeer);
+  }
+
+  @Test
   public void shouldNotBondWithNodesNotPermitted() throws Exception {
     final DiscoveryPeer localPeer = new DiscoveryPeer(createId(999), "127.0.0.9", 9, 9);
     final DiscoveryPeer peerA = new DiscoveryPeer(createId(1), "127.0.0.1", 1, 1);
