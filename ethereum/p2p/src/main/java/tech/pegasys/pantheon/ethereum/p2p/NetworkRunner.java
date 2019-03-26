@@ -29,9 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -45,9 +42,6 @@ public class NetworkRunner implements AutoCloseable {
   private final CountDownLatch shutdown = new CountDownLatch(1);;
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
-
-  private final ScheduledExecutorService networkCheckExecutor =
-      Executors.newSingleThreadScheduledExecutor();
 
   private final P2PNetwork network;
   private final Map<String, SubProtocol> subProtocols;
@@ -85,8 +79,6 @@ public class NetworkRunner implements AutoCloseable {
       LOG.info("Starting Network.");
       setupHandlers();
       network.start();
-      networkCheckExecutor.scheduleWithFixedDelay(
-          network::checkMaintainedConnectionPeers, 60, 60, TimeUnit.SECONDS);
     } else {
       LOG.error("Attempted to start already running network.");
     }
@@ -99,7 +91,6 @@ public class NetworkRunner implements AutoCloseable {
       for (final ProtocolManager protocolManager : protocolManagers) {
         protocolManager.stop();
       }
-      networkCheckExecutor.shutdown();
       shutdown.countDown();
     } else {
       LOG.error("Attempted to stop already stopped network.");

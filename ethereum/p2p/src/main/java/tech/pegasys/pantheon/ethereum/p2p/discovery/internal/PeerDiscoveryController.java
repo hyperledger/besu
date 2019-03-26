@@ -49,6 +49,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
@@ -545,7 +546,7 @@ public class PeerDiscoveryController {
    *
    * @return List of peers.
    */
-  public Collection<DiscoveryPeer> getPeers() {
+  public Stream<DiscoveryPeer> getPeers() {
     return peerTable.getAllPeers();
   }
 
