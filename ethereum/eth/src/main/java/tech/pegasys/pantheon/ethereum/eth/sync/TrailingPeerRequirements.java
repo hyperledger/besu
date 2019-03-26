@@ -63,4 +63,19 @@ public class TrailingPeerRequirements {
         .add("maxTrailingPeers", maxTrailingPeers)
         .toString();
   }
+
+  /**
+   * Calculate a reasonable value for the maximum number of trailing peers to allow while behind the
+   * chain.
+   *
+   * <p>The number of peers is restricted to ensure we have room for peers ahead of us on the chain
+   * to connect and to limit the amount of work required to support requests from trailing peers
+   * while we're working to catch up.
+   *
+   * @param maxPeers the overall peer limit.
+   * @return the number of trailing peers allowed while catching up to the best peer.
+   */
+  public static int calculateMaxTrailingPeers(final int maxPeers) {
+    return Math.max((int) Math.ceil(maxPeers * 0.25), 1);
+  }
 }
