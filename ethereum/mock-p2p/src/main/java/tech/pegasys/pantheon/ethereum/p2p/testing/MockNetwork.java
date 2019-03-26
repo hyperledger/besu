@@ -173,9 +173,6 @@ public final class MockNetwork {
     }
 
     @Override
-    public void checkMaintainedConnectionPeers() {}
-
-    @Override
     public void stop() {}
 
     @Override

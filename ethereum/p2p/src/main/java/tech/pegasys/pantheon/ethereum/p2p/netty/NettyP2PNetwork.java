@@ -29,6 +29,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerDroppedEvent;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
@@ -49,6 +50,7 @@ import tech.pegasys.pantheon.util.enode.EnodeURL;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -58,10 +60,14 @@ import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -124,6 +130,9 @@ public class NettyP2PNetwork implements P2PNetwork {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final int TIMEOUT_SECONDS = 30;
+
+  private final ScheduledExecutorService peerConnectionScheduler =
+      Executors.newSingleThreadScheduledExecutor();
 
   final Map<Capability, Subscribers<Consumer<Message>>> protocolCallbacks =
       new ConcurrentHashMap<>();
@@ -406,7 +415,6 @@ public class NettyP2PNetwork implements P2PNetwork {
     return removed;
   }
 
-  @Override
   public void checkMaintainedConnectionPeers() {
     for (final Peer peer : peerMaintainConnectionList) {
       if (!(isConnecting(peer) || isConnected(peer))) {
@@ -415,7 +423,31 @@ public class NettyP2PNetwork implements P2PNetwork {
     }
   }
 
-  private int connectionCount() {
+  @VisibleForTesting
+  void attemptPeerConnections() {
+    final int availablePeerSlots = Math.max(0, maxPeers - connectionCount());
+    if (availablePeerSlots <= 0) {
+      return;
+    }
+
+    final List<DiscoveryPeer> peers =
+        getDiscoveryPeers()
+            .filter(peer -> peer.getStatus() == PeerDiscoveryStatus.BONDED)
+            .filter(peer -> !isConnected(peer) && !isConnecting(peer))
+            .collect(Collectors.toList());
+    Collections.shuffle(peers);
+    if (peers.size() == 0) {
+      return;
+    }
+
+    LOG.trace(
+        "Initiating connection to {} peers from the peer table",
+        Math.min(availablePeerSlots, peers.size()));
+    peers.stream().limit(availablePeerSlots).forEach(this::connect);
+  }
+
+  @VisibleForTesting
+  int connectionCount() {
     return pendingConnections.size() + connections.size();
   }
 
@@ -535,6 +567,11 @@ public class NettyP2PNetwork implements P2PNetwork {
 
     this.ourEnodeURL = buildSelfEnodeURL();
     LOG.info("Enode URL {}", ourEnodeURL.toString());
+
+    peerConnectionScheduler.scheduleWithFixedDelay(
+        this::checkMaintainedConnectionPeers, 60, 60, TimeUnit.SECONDS);
+    peerConnectionScheduler.scheduleWithFixedDelay(
+        this::attemptPeerConnections, 30, 30, TimeUnit.SECONDS);
   }
 
   @VisibleForTesting
@@ -615,17 +652,20 @@ public class NettyP2PNetwork implements P2PNetwork {
     return new EnodeURL(localNodeId, localHostAddress, localPort);
   }
 
-  private boolean isConnecting(final Peer peer) {
+  @VisibleForTesting
+  boolean isConnecting(final Peer peer) {
     return pendingConnections.containsKey(peer);
   }
 
-  private boolean isConnected(final Peer peer) {
+  @VisibleForTesting
+  boolean isConnected(final Peer peer) {
     return connections.isAlreadyConnected(peer.getId());
   }
 
   @Override
   public void stop() {
     sendClientQuittingToPeers();
+    peerConnectionScheduler.shutdownNow();
     peerDiscoveryAgent.stop().join();
     peerBondedObserverId.ifPresent(peerDiscoveryAgent::removePeerBondedObserver);
     peerBondedObserverId = OptionalLong.empty();
@@ -657,7 +697,7 @@ public class NettyP2PNetwork implements P2PNetwork {
   }
 
   @VisibleForTesting
-  public Collection<DiscoveryPeer> getDiscoveryPeers() {
+  public Stream<DiscoveryPeer> getDiscoveryPeers() {
     return peerDiscoveryAgent.getPeers();
   }
 

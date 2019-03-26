@@ -43,8 +43,6 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
 import java.net.SocketException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -52,6 +50,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.net.InetAddresses;
@@ -226,12 +225,8 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
             });
   }
 
-  @VisibleForTesting
-  public Collection<DiscoveryPeer> getPeers() {
-    return controller
-        .map(PeerDiscoveryController::getPeers)
-        .map(Collections::unmodifiableCollection)
-        .orElse(Collections.emptyList());
+  public Stream<DiscoveryPeer> getPeers() {
+    return controller.map(PeerDiscoveryController::getPeers).orElse(Stream.empty());
   }
 
   public Optional<DiscoveryPeer> getAdvertisedPeer() {

@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -94,7 +95,7 @@ public class PeerDiscoveryAgentTest {
     List<IncomingPacket> incomingPackets =
         testAgent.getIncomingPackets().stream()
             .filter(p -> p.packet.getType().equals(PacketType.NEIGHBORS))
-            .collect(Collectors.toList());
+            .collect(toList());
     assertThat(incomingPackets.size()).isEqualTo(1);
     IncomingPacket neighborsPacket = incomingPackets.get(0);
     assertThat(neighborsPacket.fromAgent).isEqualTo(agent);
@@ -123,12 +124,12 @@ public class PeerDiscoveryAgentTest {
     final MockPeerDiscoveryAgent peerDiscoveryAgent2 = helper.startDiscoveryAgent(peer);
     peerDiscoveryAgent2.start(BROADCAST_TCP_PORT).join();
 
-    assertThat(peerDiscoveryAgent2.getPeers().size()).isEqualTo(1);
+    assertThat(peerDiscoveryAgent2.getPeers().collect(toList()).size()).isEqualTo(1);
 
     final PeerConnection peerConnection = createAnonymousPeerConnection(peer.getId());
     peerDiscoveryAgent2.onDisconnect(peerConnection, DisconnectReason.REQUESTED, true);
 
-    assertThat(peerDiscoveryAgent2.getPeers().size()).isEqualTo(0);
+    assertThat(peerDiscoveryAgent2.getPeers().collect(toList()).size()).isEqualTo(0);
   }
 
   @Test

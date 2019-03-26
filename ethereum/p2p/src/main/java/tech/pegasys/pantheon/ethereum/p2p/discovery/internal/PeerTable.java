@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
-import static java.util.Collections.unmodifiableList;
 import static java.util.Comparator.comparingInt;
 import static java.util.stream.Collectors.toList;
 import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistanceCalculator.distance;
@@ -26,7 +25,6 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.PeerId;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -178,7 +176,7 @@ public class PeerTable {
   private void buildBloomFilter() {
     final BloomFilter<BytesValue> bf =
         BloomFilter.create((id, val) -> val.putBytes(id.extractArray()), maxEntriesCnt, 0.001);
-    getAllPeers().stream().map(Peer::getId).forEach(bf::put);
+    getAllPeers().map(Peer::getId).forEach(bf::put);
     this.evictionCnt = 0;
     this.idBloom = bf;
   }
@@ -193,16 +191,15 @@ public class PeerTable {
    */
   public List<DiscoveryPeer> nearestPeers(final BytesValue target, final int limit) {
     final BytesValue keccak256 = Hash.keccak256(target);
-    return getAllPeers().stream()
+    return getAllPeers()
         .filter(p -> p.getStatus() == PeerDiscoveryStatus.BONDED)
         .sorted(comparingInt((peer) -> distance(peer.keccak256(), keccak256)))
         .limit(limit)
         .collect(toList());
   }
 
-  public Collection<DiscoveryPeer> getAllPeers() {
-    return unmodifiableList(
-        Arrays.stream(table).flatMap(e -> e.peers().stream()).collect(toList()));
+  public Stream<DiscoveryPeer> getAllPeers() {
+    return Arrays.stream(table).flatMap(e -> e.peers().stream());
   }
 
   /**
