@@ -195,4 +195,34 @@ public class PrometheusMetricsSystemTest {
     assertThat(localMetricSystem.getMetrics())
         .containsExactly(new Observation(RPC, "name", 1.0, singletonList("op")));
   }
+
+  @Test
+  public void returnsNoOpMetricsWhenAllDisabled() {
+    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
+    metricsConfiguration.setEnabled(false);
+    metricsConfiguration.setPushEnabled(false);
+    final MetricsSystem localMetricSystem = PrometheusMetricsSystem.init(metricsConfiguration);
+
+    assertThat(localMetricSystem).isInstanceOf(NoOpMetricsSystem.class);
+  }
+
+  @Test
+  public void returnsPrometheusMetricsWhenEnabled() {
+    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
+    metricsConfiguration.setEnabled(true);
+    metricsConfiguration.setPushEnabled(false);
+    final MetricsSystem localMetricSystem = PrometheusMetricsSystem.init(metricsConfiguration);
+
+    assertThat(localMetricSystem).isInstanceOf(PrometheusMetricsSystem.class);
+  }
+
+  @Test
+  public void returnsNoOpMetricsWhenPushEnabled() {
+    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
+    metricsConfiguration.setEnabled(false);
+    metricsConfiguration.setPushEnabled(true);
+    final MetricsSystem localMetricSystem = PrometheusMetricsSystem.init(metricsConfiguration);
+
+    assertThat(localMetricSystem).isInstanceOf(PrometheusMetricsSystem.class);
+  }
 }

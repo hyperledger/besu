@@ -61,7 +61,7 @@ public class PrometheusMetricsSystem implements MetricsSystem {
   PrometheusMetricsSystem() {}
 
   public static MetricsSystem init(final MetricsConfiguration metricsConfiguration) {
-    if (!metricsConfiguration.isEnabled()) {
+    if (!metricsConfiguration.isEnabled() && !metricsConfiguration.isPushEnabled()) {
       return new NoOpMetricsSystem();
     }
     final PrometheusMetricsSystem metricsSystem = new PrometheusMetricsSystem();

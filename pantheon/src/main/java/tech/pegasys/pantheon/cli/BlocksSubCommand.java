@@ -105,7 +105,7 @@ class BlocksSubCommand implements Runnable {
       try {
         final MetricsConfiguration metricsConfiguration =
             parentCommand.parentCommand.metricsConfiguration();
-        if (metricsConfiguration.isEnabled()) {
+        if (metricsConfiguration.isEnabled() || metricsConfiguration.isPushEnabled()) {
           metricsService =
               Optional.of(
                   MetricsService.create(
