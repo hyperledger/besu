@@ -33,7 +33,7 @@ options to specify the port on which the JSON-RPC listens. The default ports are
 * 8545 for HTTP
 * 8546 for WebSockets
 
-Ports must be [exposed appropriately](../Configuring-Pantheon/Networking.md#port-configuration).
+Ports must be [exposed appropriately](../Configuring-Pantheon/Networking/Managing-Peers.md#port-configuration).
 
 ## Geth Console 
 

@@ -69,13 +69,15 @@ nav:
         - Authentication: JSON-RPC-API/Authentication.md
     - Configuring Pantheon:
         - Configuration File: Configuring-Pantheon/Using-Configuration-File.md
+        - Networking:
+          - Bootnodes: Configuring-Pantheon/Networking/Bootnodes.md
+          - Configuring Ports: Configuring-Pantheon/Networking/Configuring-Ports.md
+          - Managing Peers: Configuring-Pantheon/Networking/Managing-Peers.md
         - Network ID and Chain ID: Configuring-Pantheon/NetworkID-And-ChainID.md
         - Contracts in Genesis: Configuring-Pantheon/Contracts-in-Genesis.md
         - Node Keys: Configuring-Pantheon/Node-Keys.md
-        - Networking: Configuring-Pantheon/Networking.md
         - Accounts for Testing: Configuring-Pantheon/Accounts-for-Testing.md
         - Logging: Configuring-Pantheon/Logging.md
-        - Bootnodes: Configuring-Pantheon/Bootnodes.md
         - Passing JVM Options: Configuring-Pantheon/Passing-JVM-Options.md
     - Permissions:
         - Nodes and Accounts Whitelists: Permissions/Permissioning.md

@@ -17,8 +17,7 @@ description: Pantheon JSON-RPC API methods reference
 
 ### admin_addPeer
 
-Adds a node to the list of tracked static nodes. The node attempts to maintain connectivity to tracked static nodes.
-If the remote connection goes down, the node attempts to reconnect every 60 seconds.
+Adds a [static node](../Configuring-Pantheon/Networking/Managing-Peers.md#static-nodes).  
 
 !!! caution 
     If connections are timing out, ensure the node ID in the [enode URL](../Node-Keys.md#enode-url) is correct. 
@@ -29,7 +28,7 @@ If the remote connection goes down, the node attempts to reconnect every 60 seco
 
 **Returns**
 
-`result` : `boolean` - `true` if peer added or `false` if peer already on list of static nodes. 
+`result` : `boolean` - `true` if peer added or `false` if peer already a [static node](../Configuring-Pantheon/Networking/Managing-Peers.md#static-nodes). 
 
 !!! example
     ```bash tab="curl HTTP request"
@@ -67,7 +66,7 @@ Properties of the node object are:
 * `listenAddr` - Host and port for the node
 * `name` - Client name
 * `id` - [Node public key](../Configuring-Pantheon/Node-Keys.md#node-public-key)
-* `ports` - Peer discovery and listening [ports](../Configuring-Pantheon/Networking.md#port-configuration) 
+* `ports` - Peer discovery and listening [ports](../Configuring-Pantheon/Networking/Managing-Peers.md#port-configuration) 
 * `protocols` - List of objects containing information for each Ethereum sub-protocol 
 
 !!! note
