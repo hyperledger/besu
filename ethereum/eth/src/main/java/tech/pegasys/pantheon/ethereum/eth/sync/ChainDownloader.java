@@ -165,7 +165,7 @@ public class ChainDownloader<C> {
   }
 
   private boolean finishedSyncingToCurrentTarget() {
-    return syncTargetManager.isSyncTargetDisconnected()
+    return !syncTargetManager.syncTargetCanProvideMoreBlocks()
         || checkpointHeaderManager.checkpointsHaveTimedOut()
         || chainSegmentsHaveTimedOut();
   }

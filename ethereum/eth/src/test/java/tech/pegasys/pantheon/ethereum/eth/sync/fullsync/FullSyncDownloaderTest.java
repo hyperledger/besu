@@ -230,8 +230,8 @@ public class FullSyncDownloaderTest {
     peer.respondWhileOtherThreadsWork(
         responder, () -> localBlockchain.getChainHeadBlockNumber() < targetBlock);
 
-    assertThat(syncState.syncTarget()).isPresent();
-    assertThat(syncState.syncTarget().get().peer()).isEqualTo(peer.getEthPeer());
+    // Synctarget should not exist as chain has fully downloaded.
+    assertThat(syncState.syncTarget().isPresent()).isFalse();
     assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(targetBlock);
   }
 
