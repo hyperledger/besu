@@ -88,7 +88,9 @@ public enum JsonRpcError {
   // Private transaction errors
   ENCLAVE_IS_DOWN(-50100, "Enclave is down"),
   UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE(-50100, "Unimplemented private transaction type"),
-  PRIVATE_TRANSACTION_RECEIPT_ERROR(-50100, "Error generating the private transaction receipt");
+  PRIVATE_TRANSACTION_RECEIPT_ERROR(-50100, "Error generating the private transaction receipt"),
+
+  CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer.");
 
   private final int code;
   private final String message;
