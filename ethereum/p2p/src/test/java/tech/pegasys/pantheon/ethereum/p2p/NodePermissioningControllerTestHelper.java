@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.p2p;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -26,6 +27,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.mockito.ArgumentCaptor;
 
 public class NodePermissioningControllerTestHelper {
 
@@ -87,6 +90,15 @@ public class NodePermissioningControllerTestHelper {
                 .thenReturn(false);
           });
     }
+
+    ArgumentCaptor<Runnable> callback = ArgumentCaptor.forClass(Runnable.class);
+    doAnswer(
+            (i) -> {
+              callback.getValue().run();
+              return null;
+            })
+        .when(nodePermissioningController)
+        .startPeerDiscoveryCallback(callback.capture());
 
     return nodePermissioningController;
   }

@@ -201,7 +201,11 @@ public class PeerDiscoveryController {
       throw new IllegalStateException("The peer table had already been started");
     }
 
-    bootstrapNodes.stream().filter(p -> isPeerPermitted(localPeer, p)).forEach(peerTable::tryAdd);
+    final List<DiscoveryPeer> initialDiscoveryPeers =
+        bootstrapNodes.stream()
+            .filter(p -> isPeerPermitted(localPeer, p))
+            .collect(Collectors.toList());
+    initialDiscoveryPeers.stream().forEach(peerTable::tryAdd);
 
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(
@@ -215,16 +219,20 @@ public class PeerDiscoveryController {
             PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS,
             100);
 
-    final List<DiscoveryPeer> initialDiscoveryPeers =
-        bootstrapNodes.stream()
-            .filter(p -> isPeerPermitted(localPeer, p))
-            .collect(Collectors.toList());
-
     if (nodePermissioningController.isPresent()) {
+
+      // if smart contract permissioning is enabled, bond with bootnodes
+      if (nodePermissioningController.get().getSyncStatusNodePermissioningProvider().isPresent()) {
+        for (DiscoveryPeer p : initialDiscoveryPeers) {
+          bond(p);
+        }
+      }
+
       nodePermissioningController
           .get()
           .startPeerDiscoveryCallback(
               () -> recursivePeerRefreshState.start(initialDiscoveryPeers, localPeer.getId()));
+
     } else {
       recursivePeerRefreshState.start(initialDiscoveryPeers, localPeer.getId());
     }
