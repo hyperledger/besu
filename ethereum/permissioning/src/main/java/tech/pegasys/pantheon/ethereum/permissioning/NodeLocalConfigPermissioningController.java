@@ -103,12 +103,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   }
 
   private boolean addNode(final EnodeURL enodeURL) {
-    // must not add self to whitelist
-    if (!enodeURL.equals(selfEnode)) {
-      return nodesWhitelist.add(enodeURL);
-    } else {
-      return false;
-    }
+    return nodesWhitelist.add(enodeURL);
   }
 
   public NodesWhitelistResult removeNodes(final List<String> enodeURLs) {
