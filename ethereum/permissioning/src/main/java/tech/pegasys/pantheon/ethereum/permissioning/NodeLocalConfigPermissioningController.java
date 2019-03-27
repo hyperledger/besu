@@ -88,13 +88,6 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
             WhitelistOperationResult.ERROR_EXISTING_ENTRY,
             String.format("Specified peer: %s already exists in whitelist.", peer.getNodeId()));
       }
-      if (peer.equals(selfEnode)) {
-        return new NodesWhitelistResult(
-            WhitelistOperationResult.ERROR_SELF_CANNOT_BE_ADDED,
-            String.format(
-                "Specified peer %s is equal to self. Cannot add self to whitelist",
-                peer.getNodeId()));
-      }
     }
 
     final List<EnodeURL> oldWhitelist = new ArrayList<>(this.nodesWhitelist);
