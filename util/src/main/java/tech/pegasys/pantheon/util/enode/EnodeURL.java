@@ -64,7 +64,11 @@ public class EnodeURL {
       final InetAddress address,
       final Integer listeningPort,
       final OptionalInt discoveryPort) {
-    this.nodeId = nodeId;
+    if (nodeId.startsWith("0x")) {
+      this.nodeId = nodeId.substring(2);
+    } else {
+      this.nodeId = nodeId;
+    }
     this.ip = address;
     this.listeningPort = listeningPort;
     this.discoveryPort = discoveryPort;

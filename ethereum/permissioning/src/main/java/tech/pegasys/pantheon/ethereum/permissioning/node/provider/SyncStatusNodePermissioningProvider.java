@@ -24,8 +24,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.OptionalLong;
 
-import com.google.common.annotations.VisibleForTesting;
-
 public class SyncStatusNodePermissioningProvider implements NodePermissioningProvider {
 
   private final Synchronizer synchronizer;
@@ -95,8 +93,7 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
     }
   }
 
-  @VisibleForTesting
-  boolean hasReachedSync() {
+  public boolean hasReachedSync() {
     return hasReachedSync;
   }
 }
