@@ -194,8 +194,6 @@ Copy the enode URL to specify Node-1 as the bootnode in the following steps.
 
 ### 7. Start Node-2 
 
-You need the [enode URL](../Configuring-Pantheon/Node-Keys.md#enode-url) for Node-1 to specify Node-1 as a bootnode. 
-
 Start another terminal, change to the `Node-2` directory and start Node-2 specifying the Node-1 enode URL copied when starting Node-1 as the bootnode:
  
 ```bash tab="MacOS"
