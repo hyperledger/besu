@@ -66,7 +66,7 @@ The bootnodes must be included in the nodes whitelist or Pantheon does not start
 
 ### Enabling Node Whitelisting     
 
-To enable node whitelisting, specify the [`--permissions-nodes-enabled`](../Reference/Pantheon-CLI-Syntax.md#permissions-nodes-enabled) option 
+To enable node whitelisting, specify the [`--permissions-nodes-config-file-enabled`](../Reference/Pantheon-CLI-Syntax.md#permissions-nodes-enabled) option 
 when starting Pantheon. 
 
 The `PERM` API methods are not enabled by default. Use the [`--rpc-http-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-api) 
@@ -129,7 +129,7 @@ To view the accounts whitelist, use the [`perm_getAccountsWhitelist`](../Referen
 
 ### Enabling Account Whitelisting 
 
-To enable account whitelisting, specify the [`--permissions-accounts-enabled`](../Reference/Pantheon-CLI-Syntax.md#permissions-accounts-enabled) option 
+To enable account whitelisting, specify the [`--permissions-accounts-config-file-enabled`](../Reference/Pantheon-CLI-Syntax.md#permissions-accounts-enabled) option 
 when starting Pantheon. 
 
 The `PERM` API methods are not enabled by default. Use the [`--rpc-http-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-api) 
