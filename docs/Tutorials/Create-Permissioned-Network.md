@@ -255,7 +255,7 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"perm_addNodesToWhitelist","param
 !!! tip
     The curl call is the same for each node except for the JSON-RPC endpoint. 
 
-### 9. Add Node-1 as a Peer
+### 9. Add Nodes as Peers
 
 Use the [`admin_addPeer`](../Reference/JSON-RPC-API-Methods.md#admin_addpeer) JSON-RPC API method to add 
 Node-1 as a peer for Node-2 and Node-3. 
@@ -274,6 +274,13 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"admin_addPeer","params":["<Enode
 
 !!! tip
     The curl call is the same for both nodes except for the JSON-RPC endpoint. 
+
+Replace `<EnodeNode2>` with the enode URL displayed when starting Node-2. 
+
+Node 3:
+```bash
+curl -X POST --data '{"jsonrpc":"2.0","method":"admin_addPeer","params":["<EnodeNode2>"],"id":1}' http://127.0.0.1:8547
+```
 
 ### 10. Confirm Permissioned Network is Working 
 
