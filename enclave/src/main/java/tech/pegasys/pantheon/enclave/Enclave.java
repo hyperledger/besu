@@ -29,9 +29,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class Enclave {
-  private static final MediaType JSON = MediaType.parse("application/json");
-  private static final ObjectMapper objectMapper = new ObjectMapper();
   private static final Logger LOG = LogManager.getLogger();
+  private static final ObjectMapper objectMapper = new ObjectMapper();
+  private static final MediaType JSON = MediaType.parse("application/json");
+  private static final MediaType ORION = MediaType.get("application/vnd.orion.v1+json");
 
   private final String url;
   private final OkHttpClient client;
@@ -53,25 +54,30 @@ public class Enclave {
   }
 
   public SendResponse send(final SendRequest content) throws IOException {
-    return executePost("/send", objectMapper.writeValueAsString(content), SendResponse.class);
+    Request request = buildPostRequest(JSON, content, "/send");
+
+    return executePost(request, SendResponse.class);
   }
 
   public ReceiveResponse receive(final ReceiveRequest content) throws IOException {
-    return executePost("/receive", objectMapper.writeValueAsString(content), ReceiveResponse.class);
+    Request request = buildPostRequest(ORION, content, "/receive");
+    return executePost(request, ReceiveResponse.class);
   }
 
-  private <T> T executePost(final String path, final String content, final Class<T> responseType)
-      throws IOException {
-    OkHttpClient client = new OkHttpClient();
+  private Request buildPostRequest(
+      final MediaType mediaType, final Object content, final String endpoint) throws IOException {
+    RequestBody body = RequestBody.create(mediaType, objectMapper.writeValueAsString(content));
+    return new Request.Builder().url(url + endpoint).post(body).build();
+  }
 
-    RequestBody body = RequestBody.create(JSON, content);
-    Request request = new Request.Builder().url(url + path).post(body).build();
+  private <T> T executePost(final Request request, final Class<T> responseType) throws IOException {
+    OkHttpClient client = new OkHttpClient();
 
     try (Response response = client.newCall(request).execute()) {
       return objectMapper.readValue(response.body().string(), responseType);
     } catch (IOException e) {
-      LOG.error("Enclave failed to execute ", path);
-      throw new IOException("Failed to execute post", e);
+      LOG.error("Enclave failed to execute ", request);
+      throw new IOException("Enclave failed to execute post", e);
     }
   }
 }

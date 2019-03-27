@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.enclave;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import tech.pegasys.orion.testutil.OrionTestHarness;
@@ -75,6 +76,7 @@ public class EnclaveTest {
     ReceiveResponse rr = enclave.receive(rc);
 
     assertEquals(PAYLOAD, new String(rr.getPayload(), UTF_8));
+    assertNotNull(rr.getPrivacyGroupId());
   }
 
   @Test(expected = IOException.class)

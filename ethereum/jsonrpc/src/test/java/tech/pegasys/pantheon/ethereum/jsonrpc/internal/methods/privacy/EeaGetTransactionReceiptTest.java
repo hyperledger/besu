@@ -167,9 +167,8 @@ public class EeaGetTransactionReceiptTest {
     when(enclave.receive(any(ReceiveRequest.class)))
         .thenReturn(
             new ReceiveResponse(
-                Base64.getEncoder()
-                    .encodeToString(bvrlp.encoded().extractArray())
-                    .getBytes(UTF_8)));
+                Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()).getBytes(UTF_8),
+                new byte[0]));
 
     when(blockchain.getChainHeadBlock()).thenReturn(chainBlock);
     when(chainBlock.getHash()).thenReturn(mockTransactionHash);
