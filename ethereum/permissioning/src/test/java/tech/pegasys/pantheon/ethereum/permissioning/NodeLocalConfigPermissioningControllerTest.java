@@ -232,8 +232,6 @@ public class NodeLocalConfigPermissioningControllerTest {
     controller.addNodes(Arrays.asList(enode1));
     assertThat(controller.isPermitted(new EnodeURL(enode1), new EnodeURL(selfEnode))).isTrue();
     assertThat(controller.isPermitted(new EnodeURL(selfEnode), new EnodeURL(enode1))).isTrue();
-
-    assertThat(controller.isPermitted(new EnodeURL(selfEnode), new EnodeURL(selfEnode))).isFalse();
   }
 
   @Test

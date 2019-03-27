@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.permissioning.node;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -64,7 +65,7 @@ public class NodePermissioningControllerTest {
   public void isPermittedShouldDelegateToSyncStatusProvider() {
     controller.isPermitted(enode1, enode2);
 
-    verify(syncStatusNodePermissioningProvider).isPermitted(eq(enode1), eq(enode2));
+    verify(syncStatusNodePermissioningProvider, atLeast(1)).isPermitted(eq(enode1), eq(enode2));
   }
 
   @Test
@@ -103,6 +104,7 @@ public class NodePermissioningControllerTest {
         new NodePermissioningController(syncStatusNodePermissioningProviderOptional, providers);
 
     when(syncStatusNodePermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
+    when(syncStatusNodePermissioningProvider.hasReachedSync()).thenReturn(true);
     when(localConfigNodePermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
     when(otherPermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
 
@@ -129,6 +131,7 @@ public class NodePermissioningControllerTest {
         new NodePermissioningController(syncStatusNodePermissioningProviderOptional, providers);
 
     when(syncStatusNodePermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
+    when(syncStatusNodePermissioningProvider.hasReachedSync()).thenReturn(true);
     when(localConfigNodePermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
     when(otherPermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(false);
 
