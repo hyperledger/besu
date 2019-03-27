@@ -16,6 +16,7 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPipelinedTask;
+import tech.pegasys.pantheon.ethereum.eth.sync.ValidationPolicy;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
@@ -36,6 +37,7 @@ public class ParallelDownloadHeadersTask<C>
   private final ProtocolSchedule<C> protocolSchedule;
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
+  private final ValidationPolicy validationPolicy;
   private final MetricsSystem metricsSystem;
 
   ParallelDownloadHeadersTask(
@@ -44,12 +46,14 @@ public class ParallelDownloadHeadersTask<C>
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
+      final ValidationPolicy validationPolicy,
       final MetricsSystem metricsSystem) {
     super(inboundQueue, outboundBacklogSize, metricsSystem);
 
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
+    this.validationPolicy = validationPolicy;
     this.metricsSystem = metricsSystem;
   }
 
@@ -73,6 +77,7 @@ public class ParallelDownloadHeadersTask<C>
             ethContext,
             nextCheckpointHeader,
             segmentLength,
+            validationPolicy,
             metricsSystem);
     final CompletableFuture<List<BlockHeader>> headerFuture = executeSubTask(downloadTask::run);
 

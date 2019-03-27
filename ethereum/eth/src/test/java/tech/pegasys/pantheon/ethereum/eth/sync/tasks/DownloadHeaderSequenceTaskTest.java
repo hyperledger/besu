@@ -24,6 +24,8 @@ import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.MaxRetriesReachedEx
 import tech.pegasys.pantheon.ethereum.eth.manager.task.EthTask;
 import tech.pegasys.pantheon.ethereum.eth.messages.BlockHeadersMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
+import tech.pegasys.pantheon.ethereum.eth.sync.ValidationPolicy;
+import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 
 import java.util.ArrayList;
@@ -36,6 +38,8 @@ import java.util.stream.Collectors;
 import org.junit.Test;
 
 public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List<BlockHeader>> {
+
+  private final ValidationPolicy validationPolicy = () -> HeaderValidationMode.DETACHED_ONLY;
 
   @Override
   protected List<BlockHeader> generateDataToBeRequested() {
@@ -59,6 +63,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
         referenceHeader,
         requestedData.size(),
         maxRetries,
+        validationPolicy,
         metricsSystem);
   }
 
@@ -77,6 +82,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             referenceHeader,
             10,
             maxRetries,
+            validationPolicy,
             metricsSystem);
     final CompletableFuture<List<BlockHeader>> future = task.run();
 
@@ -106,6 +112,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             referenceHeader,
             10,
             maxRetries,
+            validationPolicy,
             metricsSystem);
     final CompletableFuture<List<BlockHeader>> future = task.run();
 

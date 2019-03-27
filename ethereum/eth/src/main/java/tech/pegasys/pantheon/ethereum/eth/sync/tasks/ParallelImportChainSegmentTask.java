@@ -112,6 +112,7 @@ public class ParallelImportChainSegmentTask<C, B> extends AbstractEthTask<List<B
               protocolSchedule,
               protocolContext,
               ethContext,
+              validationPolicy,
               metricsSystem);
       final ParallelValidateHeadersTask<C> validateHeadersTask =
           new ParallelValidateHeadersTask<>(

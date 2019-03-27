@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
 import static java.util.Arrays.asList;
-import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.DETACHED_ONLY;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -24,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractGetHeadersFromPee
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractRetryingPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
+import tech.pegasys.pantheon.ethereum.eth.sync.ValidationPolicy;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -59,6 +59,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
   private final BlockHeader referenceHeader;
   private final int segmentLength;
   private final long startingBlockNumber;
+  private final ValidationPolicy validationPolicy;
   private final MetricsSystem metricsSystem;
 
   private int lastFilledHeaderIndex;
@@ -70,6 +71,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
       final BlockHeader referenceHeader,
       final int segmentLength,
       final int maxRetries,
+      final ValidationPolicy validationPolicy,
       final MetricsSystem metricsSystem) {
     super(ethContext, maxRetries, Collection::isEmpty, metricsSystem);
     this.protocolSchedule = protocolSchedule;
@@ -77,6 +79,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
     this.ethContext = ethContext;
     this.referenceHeader = referenceHeader;
     this.segmentLength = segmentLength;
+    this.validationPolicy = validationPolicy;
     this.metricsSystem = metricsSystem;
 
     startingBlockNumber = referenceHeader.getNumber() - segmentLength;
@@ -91,6 +94,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
       final BlockHeader referenceHeader,
       final int segmentLength,
       final int maxRetries,
+      final ValidationPolicy validationPolicy,
       final MetricsSystem metricsSystem) {
     return new DownloadHeaderSequenceTask<>(
         protocolSchedule,
@@ -99,6 +103,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
         referenceHeader,
         segmentLength,
         maxRetries,
+        validationPolicy,
         metricsSystem);
   }
 
@@ -108,6 +113,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
       final EthContext ethContext,
       final BlockHeader referenceHeader,
       final int segmentLength,
+      final ValidationPolicy validationPolicy,
       final MetricsSystem metricsSystem) {
     return new DownloadHeaderSequenceTask<>(
         protocolSchedule,
@@ -116,6 +122,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
         referenceHeader,
         segmentLength,
         DEFAULT_RETRIES,
+        validationPolicy,
         metricsSystem);
   }
 
@@ -220,6 +227,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
 
     final ProtocolSpec<C> protocolSpec = protocolSchedule.getByBlockNumber(child.getNumber());
     final BlockHeaderValidator<C> blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
-    return blockHeaderValidator.validateHeader(child, header, protocolContext, DETACHED_ONLY);
+    return blockHeaderValidator.validateHeader(
+        child, header, protocolContext, validationPolicy.getValidationModeForNextBlock());
   }
 }
