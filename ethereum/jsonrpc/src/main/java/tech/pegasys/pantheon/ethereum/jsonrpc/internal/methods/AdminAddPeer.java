@@ -52,7 +52,7 @@ public class AdminAddPeer extends AdminModifyPeer {
       return new JsonRpcErrorResponse(
           id, JsonRpcError.NON_PERMITTED_NODE_CANNOT_BE_ADDED_AS_A_PEER);
     } catch (final ConnectingToLocalNodeException e) {
-      return new JsonRpcErrorResponse(id, JsonRpcError.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(id, JsonRpcError.CANT_CONNECT_TO_LOCAL_PEER);
     }
   }
 }
