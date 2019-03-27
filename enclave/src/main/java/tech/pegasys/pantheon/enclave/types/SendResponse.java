@@ -12,20 +12,20 @@
  */
 package tech.pegasys.pantheon.enclave.types;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+@JsonPropertyOrder({"key"})
 public class SendResponse {
-  String key;
+  private String key;
+
+  @JsonCreator
+  public SendResponse(@JsonProperty("key") final String key) {
+    this.key = key;
+  }
 
   public String getKey() {
     return key;
   }
-
-  public void setKey(final String key) {
-    this.key = key;
-  }
-
-  public SendResponse(final String key) {
-    this.key = key;
-  }
-
-  public SendResponse() {}
 }

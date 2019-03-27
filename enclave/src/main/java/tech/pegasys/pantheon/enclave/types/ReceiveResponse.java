@@ -12,21 +12,29 @@
  */
 package tech.pegasys.pantheon.enclave.types;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+@JsonPropertyOrder({"payload", "privacyGroupId"})
 public class ReceiveResponse {
 
-  byte[] payload;
+  private byte[] payload;
+  private byte[] privacyGroupId;
+
+  @JsonCreator
+  public ReceiveResponse(
+      @JsonProperty(value = "payload") final byte[] payload,
+      @JsonProperty(value = "privacyGroupId") final byte[] privacyGroupId) {
+    this.payload = payload;
+    this.privacyGroupId = privacyGroupId;
+  }
 
   public byte[] getPayload() {
     return payload;
   }
 
-  public void setPayload(final byte[] payload) {
-    this.payload = payload;
+  public byte[] getPrivacyGroupId() {
+    return privacyGroupId;
   }
-
-  public ReceiveResponse(final byte[] payload) {
-    this.payload = payload;
-  }
-
-  public ReceiveResponse() {}
 }

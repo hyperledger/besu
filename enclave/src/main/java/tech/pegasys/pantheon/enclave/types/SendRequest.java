@@ -16,12 +16,19 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+@JsonPropertyOrder({"payload", "from", "to"})
 public class SendRequest {
   private byte[] payload;
   private String from;
   private List<String> to;
 
-  public SendRequest(final String payload, final String from, final List<String> to) {
+  public SendRequest(
+      @JsonProperty(value = "payload") final String payload,
+      @JsonProperty(value = "from") final String from,
+      @JsonProperty(value = "to") final List<String> to) {
     this.payload = payload.getBytes(UTF_8);
     this.from = from;
     this.to = to;
@@ -31,23 +38,11 @@ public class SendRequest {
     return payload;
   }
 
-  public void setPayload(final String payload) {
-    this.payload = payload.getBytes(UTF_8);
-  }
-
   public String getFrom() {
     return from;
   }
 
-  public void setFrom(final String from) {
-    this.from = from;
-  }
-
   public List<String> getTo() {
     return to;
-  }
-
-  public void setTo(final List<String> to) {
-    this.to = to;
   }
 }

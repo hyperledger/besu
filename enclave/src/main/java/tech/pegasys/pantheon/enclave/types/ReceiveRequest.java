@@ -12,12 +12,16 @@
  */
 package tech.pegasys.pantheon.enclave.types;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+@JsonPropertyOrder({"key", "to"})
 public class ReceiveRequest {
   private String key;
   private String to;
 
-  public ReceiveRequest(final String key, final String to) {
-
+  public ReceiveRequest(
+      @JsonProperty(value = "key") final String key, @JsonProperty(value = "to") final String to) {
     this.key = key;
     this.to = to;
   }
@@ -26,15 +30,7 @@ public class ReceiveRequest {
     return key;
   }
 
-  public void setKey(final String key) {
-    this.key = key;
-  }
-
   public String getTo() {
     return to;
-  }
-
-  public void setTo(final String to) {
-    this.to = to;
   }
 }

@@ -84,8 +84,7 @@ public class PrivateTransactionHandlerTest {
 
   Enclave mockEnclave() throws IOException {
     Enclave mockEnclave = mock(Enclave.class);
-    SendResponse response = new SendResponse();
-    response.setKey(TRANSACTION_KEY);
+    SendResponse response = new SendResponse(TRANSACTION_KEY);
     when(mockEnclave.send(any(SendRequest.class))).thenReturn(response);
     return mockEnclave;
   }

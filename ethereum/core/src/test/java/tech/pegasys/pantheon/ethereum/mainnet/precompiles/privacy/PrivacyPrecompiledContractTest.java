@@ -78,7 +78,8 @@ public class PrivacyPrecompiledContractTest {
 
   private Enclave mockEnclave() throws IOException {
     Enclave mockEnclave = mock(Enclave.class);
-    ReceiveResponse response = new ReceiveResponse(VALID_PRIVATE_TRANSACTION_RLP_BASE64);
+    ReceiveResponse response =
+        new ReceiveResponse(VALID_PRIVATE_TRANSACTION_RLP_BASE64, new byte[0]);
     when(mockEnclave.receive(any(ReceiveRequest.class))).thenReturn(response);
     return mockEnclave;
   }
