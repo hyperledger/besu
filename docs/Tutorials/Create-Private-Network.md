@@ -17,14 +17,7 @@ You can test multi-block and multi-user scenarios on a private network before mo
 
 ## Steps
 
-To create a private network: 
-
-1. [Create Folders](#1-create-folders)
-1. [Create Genesis File](#2-create-genesis-file)
-1. [Start First Node as Bootnode](#3-start-first-node-as-bootnode)
-1. [Start Node-2](#4-start-node-2)
-1. [Start Node-3](#5-start-node-3)
-1. [Confirm Private Network is Working](#6-confirm-private-network-is-working)
+The steps to create a private network using Ethash are displayed on the right.
 
 ### 1. Create Folders 
 
