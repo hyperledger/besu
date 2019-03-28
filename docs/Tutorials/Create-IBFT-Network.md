@@ -15,17 +15,8 @@ consensus protocol](../Consensus-Protocols/IBFT.md).
 
 ## Steps
 
-To create a private network using IBFT 2.0 with three nodes and one initial validator: 
-
-1. [Create Folders](#1-create-folders)
-1. [Get Node Addresses](#2-get-node-addresses)
-1. [Create JSON File to RLP Encode](#3-create-json-file-to-rlp-encode)
-1. [RLP Encode Extra Data](#4-rlp-encode-extra-data)
-1. [Create Genesis File](#5-create-genesis-file)
-1. [Start First Node as Bootnode](#6-start-first-node-as-bootnode)
-1. [Start Node-2](#7-start-node-2)
-1. [Start Node-3](#8-start-node-3)
-1. [Confirm Private Network is Working](#9-confirm-private-network-is-working)
+The steps to create a private network using IBFT 2.0 with three nodes and one initial validator are displayed 
+on the right. 
 
 ### 1. Create Folders 
 

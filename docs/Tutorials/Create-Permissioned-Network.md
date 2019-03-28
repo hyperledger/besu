@@ -18,17 +18,7 @@ The following steps set up a permissioned network with node and account permissi
 
 ## Steps
 
-To create a permissoned network: 
-
-1. [Create Folders](#1-create-folders)
-1. [Get Node Public Keys](#2-get-node-public-keys)
-1. [Get Address of Node-1](#3-get-address-of-node-1)
-1. [Create Genesis File](#4-create-genesis-file)
-1. [Create Permissions Configuration File](#5-create-permissions-configuration-file)
-1. [Start First Node as Bootnode](#6-start-first-node-as-bootnode)
-1. [Start Node-2](#7-start-node-2)
-1. [Start Node-3](#8-start-node-3)
-1. [Confirm Permissioned Network is Working](#9-confirm-permissioned-network-is-working)
+The steps to create a permissoned network are displayed on the right.
 
 ### 1. Create Folders 
 
@@ -154,7 +144,7 @@ Permissioned nodes are added using the JSON-RPC API after starting the nodes.
     On-chain permissioning is under development. On-chain permissioning will use one on-chain 
     nodes whitelist and accounts whitelist. 
 
-### 5. Start First Node 
+### 5. Start Node-1 
 
 Start Node-1:
 
@@ -356,4 +346,4 @@ The result confirms Node-4 has no peers even though it specifies Node-1 as a boo
 When finished using the permissioned network, stop all nodes using ++ctrl+c++ in each terminal window. 
 
 !!!tip
-    To restart the permissioned network in the future, start from [6. Start First Node as Bootnode](#6-start-first-node-as-bootnode). 
+    To restart the permissioned network in the future, start from [5. Start Node-1](#5-start-node-1). 
