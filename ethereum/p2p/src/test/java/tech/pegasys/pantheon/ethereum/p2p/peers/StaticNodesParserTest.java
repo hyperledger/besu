@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -61,11 +62,10 @@ public class StaticNodesParserTest {
   @Rule public TemporaryFolder testFolder = new TemporaryFolder();
 
   @Test
-  public void validFileLoadsWithExpectedEnodes() throws IOException {
+  public void validFileLoadsWithExpectedEnodes() throws IOException, URISyntaxException {
     final URL resource = StaticNodesParserTest.class.getResource("valid_static_nodes.json");
-    final Path path = Paths.get(resource.getPath());
-
-    final Set<EnodeURL> enodes = StaticNodesParser.fromPath(path);
+    final File validFile = new File(resource.getFile());
+    final Set<EnodeURL> enodes = StaticNodesParser.fromPath(validFile.toPath());
 
     assertThat(enodes).containsExactly(validFileItems.toArray(new EnodeURL[validFileItems.size()]));
   }
@@ -73,9 +73,9 @@ public class StaticNodesParserTest {
   @Test
   public void invalidFileThrowsAnException() {
     final URL resource = StaticNodesParserTest.class.getResource("invalid_static_nodes.json");
-    final Path path = Paths.get(resource.getPath());
+    final File invalidFile = new File(resource.getFile());
 
-    assertThatThrownBy(() -> StaticNodesParser.fromPath(path))
+    assertThatThrownBy(() -> StaticNodesParser.fromPath(invalidFile.toPath()))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
