@@ -44,7 +44,7 @@ public class DeFramerTest {
           new PeerInfo(5, "abc", Collections.emptyList(), 0, BytesValue.fromHexString("0x01")),
           callbacks,
           connectFuture,
-          NoOpMetricsSystem.NO_OP_LABELLED_COUNTER);
+          NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER);
 
   @Test
   public void shouldDisconnectForBreachOfProtocolWhenFramingExceptionThrown() throws Exception {

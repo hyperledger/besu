@@ -20,27 +20,25 @@ import tech.pegasys.pantheon.metrics.Observation;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.OperationTimer.TimingContext;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import io.prometheus.client.Collector;
+import com.google.common.base.Preconditions;
 
 public class NoOpMetricsSystem implements MetricsSystem {
 
   public static final Counter NO_OP_COUNTER = new NoOpCounter();
   private static final TimingContext NO_OP_TIMING_CONTEXT = () -> 0;
-  private static final OperationTimer NO_OP_TIMER = () -> NO_OP_TIMING_CONTEXT;
-  public static final LabelledMetric<OperationTimer> NO_OP_LABELLED_TIMER = label -> NO_OP_TIMER;
-  public static final LabelledMetric<Counter> NO_OP_LABELLED_COUNTER = label -> NO_OP_COUNTER;
-  public static final Collector NO_OP_COLLECTOR =
-      new Collector() {
-        @Override
-        public List<MetricFamilySamples> collect() {
-          return Collections.emptyList();
-        }
-      };
+  public static final OperationTimer NO_OP_OPERATION_TIMER = () -> NO_OP_TIMING_CONTEXT;
+
+  public static final LabelledMetric<Counter> NO_OP_LABELLED_1_COUNTER =
+      new LabelCountingNoOpMetric<>(1, NO_OP_COUNTER);
+  public static final LabelledMetric<Counter> NO_OP_LABELLED_2_COUNTER =
+      new LabelCountingNoOpMetric<>(2, NO_OP_COUNTER);
+  public static final LabelledMetric<Counter> NO_OP_LABELLED_3_COUNTER =
+      new LabelCountingNoOpMetric<>(3, NO_OP_COUNTER);
+  public static final LabelledMetric<OperationTimer> NO_OP_LABELLED_1_OPERATION_TIMER =
+      new LabelCountingNoOpMetric<>(1, NO_OP_OPERATION_TIMER);
 
   @Override
   public LabelledMetric<Counter> createLabelledCounter(
@@ -48,7 +46,20 @@ public class NoOpMetricsSystem implements MetricsSystem {
       final String name,
       final String help,
       final String... labelNames) {
-    return NO_OP_LABELLED_COUNTER;
+    return getCounterLabelledMetric(labelNames.length);
+  }
+
+  public static LabelledMetric<Counter> getCounterLabelledMetric(final int labelCount) {
+    switch (labelCount) {
+      case 1:
+        return NO_OP_LABELLED_1_COUNTER;
+      case 2:
+        return NO_OP_LABELLED_2_COUNTER;
+      case 3:
+        return NO_OP_LABELLED_3_COUNTER;
+      default:
+        return new LabelCountingNoOpMetric<>(labelCount, NO_OP_COUNTER);
+    }
   }
 
   @Override
@@ -57,7 +68,16 @@ public class NoOpMetricsSystem implements MetricsSystem {
       final String name,
       final String help,
       final String... labelNames) {
-    return NO_OP_LABELLED_TIMER;
+    return getOperationTimerLabelledMetric(labelNames.length);
+  }
+
+  public static LabelledMetric<OperationTimer> getOperationTimerLabelledMetric(
+      final int labelCount) {
+    if (labelCount == 1) {
+      return NO_OP_LABELLED_1_OPERATION_TIMER;
+    } else {
+      return new LabelCountingNoOpMetric<>(labelCount, NO_OP_OPERATION_TIMER);
+    }
   }
 
   @Override
@@ -75,5 +95,24 @@ public class NoOpMetricsSystem implements MetricsSystem {
   @Override
   public Stream<Observation> getMetrics() {
     return Stream.empty();
+  }
+
+  public static class LabelCountingNoOpMetric<T> implements LabelledMetric<T> {
+
+    final int labelCount;
+    final T fakeMetric;
+
+    LabelCountingNoOpMetric(final int labelCount, final T fakeMetric) {
+      this.labelCount = labelCount;
+      this.fakeMetric = fakeMetric;
+    }
+
+    @Override
+    public T labels(final String... labels) {
+      Preconditions.checkArgument(
+          labels.length == labelCount,
+          "The count of labels used must match the count of labels expected.");
+      return fakeMetric;
+    }
   }
 }
