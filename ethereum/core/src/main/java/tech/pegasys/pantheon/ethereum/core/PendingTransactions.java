@@ -24,6 +24,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -34,7 +35,6 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 /**
  * Holds the current set of pending transactions with the ability to iterate them based on priority
@@ -62,7 +62,7 @@ public class PendingTransactions {
   private final int maxPendingTransactions;
   private final Clock clock;
 
-  private final LabelledMetric<Counter> transactionCounter;
+  private final LabelledMetric<Counter> transactionRemovedCounter;
   private final Counter localTransactionAddedCounter;
   private final Counter remoteTransactionAddedCounter;
 
@@ -70,37 +70,45 @@ public class PendingTransactions {
       final int maxPendingTransactions, final Clock clock, final MetricsSystem metricsSystem) {
     this.maxPendingTransactions = maxPendingTransactions;
     this.clock = clock;
-    transactionCounter =
+    final LabelledMetric<Counter> transactionAddedCounter =
         metricsSystem.createLabelledCounter(
             MetricCategory.TRANSACTION_POOL,
-            "transactions_total",
-            "Count of transactions changed in the transaction pool",
+            "transactions_added_total",
+            "Count of transactions added to the transaction pool",
             "source");
-    localTransactionAddedCounter = transactionCounter.labels("local", "added");
-    remoteTransactionAddedCounter = transactionCounter.labels("remote", "added");
+    localTransactionAddedCounter = transactionAddedCounter.labels("local");
+    remoteTransactionAddedCounter = transactionAddedCounter.labels("remote");
+
+    transactionRemovedCounter =
+        metricsSystem.createLabelledCounter(
+            MetricCategory.TRANSACTION_POOL,
+            "transactions_removed_total",
+            "Count of transactions removed from the transaction pool",
+            "source",
+            "operation");
   }
 
   public boolean addRemoteTransaction(final Transaction transaction) {
     final TransactionInfo transactionInfo =
         new TransactionInfo(transaction, false, clock.instant());
-    boolean addTransaction = addTransaction(transactionInfo);
+    final boolean addTransaction = addTransaction(transactionInfo);
     remoteTransactionAddedCounter.inc();
     return addTransaction;
   }
 
   boolean addLocalTransaction(final Transaction transaction) {
-    boolean addTransaction =
+    final boolean addTransaction =
         addTransaction(new TransactionInfo(transaction, true, clock.instant()));
     localTransactionAddedCounter.inc();
     return addTransaction;
   }
 
-  public void removeTransaction(final Transaction transaction) {
+  void removeTransaction(final Transaction transaction) {
     doRemoveTransaction(transaction, false);
     notifyTransactionDropped(transaction);
   }
 
-  public void transactionAddedToBlock(final Transaction transaction) {
+  void transactionAddedToBlock(final Transaction transaction) {
     doRemoveTransaction(transaction, true);
   }
 
@@ -127,7 +135,7 @@ public class PendingTransactions {
       final boolean receivedFromLocalSource, final boolean addedToBlock) {
     final String location = receivedFromLocalSource ? "local" : "remote";
     final String operation = addedToBlock ? "addedToBlock" : "dropped";
-    transactionCounter.labels(location, "removed", operation).inc();
+    transactionRemovedCounter.labels(location, operation).inc();
   }
 
   /*
@@ -239,15 +247,15 @@ public class PendingTransactions {
 
   public Set<TransactionInfo> getTransactionInfo() {
     synchronized (pendingTransactions) {
-      return pendingTransactions.values().stream().collect(Collectors.toSet());
+      return new HashSet<>(pendingTransactions.values());
     }
   }
 
-  public void addTransactionListener(final PendingTransactionListener listener) {
+  void addTransactionListener(final PendingTransactionListener listener) {
     listeners.subscribe(listener);
   }
 
-  public void addTransactionDroppedListener(final PendingTransactionDroppedListener listener) {
+  void addTransactionDroppedListener(final PendingTransactionDroppedListener listener) {
     transactionDroppedListeners.subscribe(listener);
   }
 

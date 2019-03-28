@@ -99,7 +99,7 @@ public class PrometheusMetricsSystem implements MetricsSystem {
             addCollector(category, counter);
             return new PrometheusCounter(counter);
           } else {
-            return NoOpMetricsSystem.NO_OP_LABELLED_COUNTER;
+            return NoOpMetricsSystem.getCounterLabelledMetric(labelNames.length);
           }
         });
   }
@@ -128,7 +128,7 @@ public class PrometheusMetricsSystem implements MetricsSystem {
             addCollector(category, summary);
             return new PrometheusTimer(summary);
           } else {
-            return NoOpMetricsSystem.NO_OP_LABELLED_TIMER;
+            return NoOpMetricsSystem.getOperationTimerLabelledMetric(labelNames.length);
           }
         });
   }

@@ -44,7 +44,7 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
     final LabelledMetric<OperationTimer> ethTasksTimer =
         metricsSystem.createLabelledTimer(
             MetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName");
-    if (ethTasksTimer == NoOpMetricsSystem.NO_OP_LABELLED_TIMER) {
+    if (ethTasksTimer == NoOpMetricsSystem.NO_OP_LABELLED_1_OPERATION_TIMER) {
       taskTimer =
           () ->
               new OperationTimer.TimingContext() {

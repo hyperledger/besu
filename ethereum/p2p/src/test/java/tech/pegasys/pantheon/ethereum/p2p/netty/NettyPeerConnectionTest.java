@@ -50,7 +50,7 @@ public class NettyPeerConnectionTest {
     when(channel.eventLoop()).thenReturn(eventLoop);
     connection =
         new NettyPeerConnection(
-            context, peerInfo, multiplexer, callbacks, NoOpMetricsSystem.NO_OP_LABELLED_COUNTER);
+            context, peerInfo, multiplexer, callbacks, NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER);
   }
 
   @Test
