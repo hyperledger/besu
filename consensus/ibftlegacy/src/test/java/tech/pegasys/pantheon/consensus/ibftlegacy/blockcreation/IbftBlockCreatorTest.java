@@ -38,6 +38,8 @@ import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -50,6 +52,7 @@ import com.google.common.collect.Lists;
 import org.junit.Test;
 
 public class IbftBlockCreatorTest {
+  private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
   public void headerProducedPassesValidationRules() {
@@ -96,7 +99,7 @@ public class IbftBlockCreatorTest {
                         null,
                         initialValidatorList)
                     .encode(),
-            new PendingTransactions(1, TestClock.fixed()),
+            new PendingTransactions(1, TestClock.fixed(), metricsSystem),
             protContext,
             protocolSchedule,
             parentGasLimit -> parentGasLimit,

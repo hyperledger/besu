@@ -47,7 +47,9 @@ dependencies {
   testImplementation project(path: ':config:', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
   testImplementation project(':testutil')
+  testImplementation project(':metrics')
 
+  integrationTestImplementation project(':metrics')
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-core'

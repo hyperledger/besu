@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.time.Clock;
 
@@ -28,9 +29,10 @@ public class TransactionPoolFactory {
       final ProtocolContext<?> protocolContext,
       final EthContext ethContext,
       final Clock clock,
-      final int maxPendingTransactions) {
+      final int maxPendingTransactions,
+      final MetricsSystem metricsSystem) {
     final PendingTransactions pendingTransactions =
-        new PendingTransactions(maxPendingTransactions, clock);
+        new PendingTransactions(maxPendingTransactions, clock, metricsSystem);
 
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
     final TransactionsMessageSender transactionsMessageSender =

@@ -110,9 +110,13 @@ public class TransactionPool implements BlockAddedObserver {
     pendingTransactions.addTransactionListener(listener);
   }
 
+  public void addTransactionDroppedListener(final PendingTransactionDroppedListener listener) {
+    pendingTransactions.addTransactionDroppedListener(listener);
+  }
+
   @Override
   public void onBlockAdded(final BlockAddedEvent event, final Blockchain blockchain) {
-    event.getAddedTransactions().forEach(pendingTransactions::removeTransaction);
+    event.getAddedTransactions().forEach(pendingTransactions::transactionAddedToBlock);
     addRemoteTransactions(event.getRemovedTransactions());
   }
 

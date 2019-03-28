@@ -23,6 +23,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolver;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHasher.Light;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationTestUtils;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -44,6 +46,7 @@ public class EthHashBlockCreatorTest {
 
   private static final BytesValue BLOCK_1_EXTRA_DATA =
       BytesValue.fromHexString("0x476574682f76312e302e302f6c696e75782f676f312e342e32");
+  private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private final ExecutionContextTestFixture executionContextTestFixture =
       ExecutionContextTestFixture.builder()
@@ -63,7 +66,7 @@ public class EthHashBlockCreatorTest {
         new EthHashBlockCreator(
             BLOCK_1_COINBASE,
             parent -> BLOCK_1_EXTRA_DATA,
-            new PendingTransactions(1, TestClock.fixed()),
+            new PendingTransactions(1, TestClock.fixed(), metricsSystem),
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             gasLimit -> gasLimit,
