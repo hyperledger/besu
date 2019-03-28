@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.pending;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.core.PendingTransactionListener;
+import tech.pegasys.pantheon.ethereum.core.PendingTransactionDroppedListener;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.Subscription;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
@@ -21,21 +21,23 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.Sub
 
 import java.util.List;
 
-public class PendingTransactionSubscriptionService implements PendingTransactionListener {
+public class PendingTransactionDroppedSubscriptionService
+    implements PendingTransactionDroppedListener {
 
   private final SubscriptionManager subscriptionManager;
 
-  public PendingTransactionSubscriptionService(final SubscriptionManager subscriptionManager) {
+  public PendingTransactionDroppedSubscriptionService(
+      final SubscriptionManager subscriptionManager) {
     this.subscriptionManager = subscriptionManager;
   }
 
   @Override
-  public void onTransactionAdded(final Transaction pendingTransaction) {
-    notifySubscribers(pendingTransaction.hash());
+  public void onTransactionDropped(final Transaction transaction) {
+    notifySubscribers(transaction.hash());
   }
 
   private void notifySubscribers(final Hash pendingTransaction) {
-    final List<Subscription> subscriptions = pendingTransactionSubscriptions();
+    final List<Subscription> subscriptions = pendingDroppedTransactionSubscriptions();
 
     final PendingTransactionResult msg = new PendingTransactionResult(pendingTransaction);
     for (final Subscription subscription : subscriptions) {
@@ -43,8 +45,8 @@ public class PendingTransactionSubscriptionService implements PendingTransaction
     }
   }
 
-  private List<Subscription> pendingTransactionSubscriptions() {
+  private List<Subscription> pendingDroppedTransactionSubscriptions() {
     return subscriptionManager.subscriptionsOfType(
-        SubscriptionType.NEW_PENDING_TRANSACTIONS, Subscription.class);
+        SubscriptionType.DROPPED_PENDING_TRANSACTIONS, Subscription.class);
   }
 }

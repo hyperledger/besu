@@ -24,6 +24,9 @@ public enum SubscriptionType {
   @JsonProperty("newPendingTransactions")
   NEW_PENDING_TRANSACTIONS("newPendingTransactions"),
 
+  @JsonProperty("droppedPendingTransactions")
+  DROPPED_PENDING_TRANSACTIONS("droppedPendingTransactions"),
+
   @JsonProperty("syncing")
   SYNCING("syncing");
 

@@ -46,6 +46,7 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -66,6 +67,7 @@ import org.apache.logging.log4j.Logger;
 public class TestNode implements Closeable {
 
   private static final Logger LOG = LogManager.getLogger();
+  private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   protected final Integer port;
   protected final SECP256K1.KeyPair kp;
@@ -138,7 +140,8 @@ public class TestNode implements Closeable {
             protocolContext,
             ethContext,
             TestClock.fixed(),
-            PendingTransactions.MAX_PENDING_TRANSACTIONS);
+            PendingTransactions.MAX_PENDING_TRANSACTIONS,
+            metricsSystem);
     networkRunner.start();
 
     selfPeer = new DefaultPeer(id(), endpoint());

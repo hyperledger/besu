@@ -25,7 +25,8 @@ public enum MetricCategory {
   PROCESS("process", false),
   ROCKSDB("rocksdb"),
   RPC("rpc"),
-  SYNCHRONIZER("synchronizer");
+  SYNCHRONIZER("synchronizer"),
+  TRANSACTION_POOL("transaction_pool");
 
   // Why not BIG_QUEUE and ROCKSDB?  They hurt performance under load.
   public static final Set<MetricCategory> DEFAULT_METRIC_CATEGORIES =

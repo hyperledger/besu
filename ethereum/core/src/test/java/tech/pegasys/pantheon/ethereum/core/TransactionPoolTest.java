@@ -42,6 +42,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -58,6 +60,7 @@ public class TransactionPoolTest {
   private final PendingTransactionListener listener = mock(PendingTransactionListener.class);
   private final TransactionBatchAddedListener batchAddedListener =
       mock(TransactionBatchAddedListener.class);
+  private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @SuppressWarnings("unchecked")
   private final ProtocolSchedule<Void> protocolSchedule = mock(ProtocolSchedule.class);
@@ -68,7 +71,7 @@ public class TransactionPoolTest {
   private final TransactionValidator transactionValidator = mock(TransactionValidator.class);
   private MutableBlockchain blockchain;
   private final PendingTransactions transactions =
-      new PendingTransactions(MAX_TRANSACTIONS, TestClock.fixed());
+      new PendingTransactions(MAX_TRANSACTIONS, TestClock.fixed(), metricsSystem);
   private final Transaction transaction1 = createTransaction(1);
   private final Transaction transaction2 = createTransaction(2);
   private TransactionPool transactionPool;

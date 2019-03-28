@@ -17,6 +17,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.Subscribers;
 
@@ -25,6 +27,7 @@ import java.util.concurrent.Executors;
 import org.junit.Test;
 
 public class EthHashMinerExecutorTest {
+  private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
   public void startingMiningWithoutCoinbaseThrowsException() {
@@ -36,7 +39,7 @@ public class EthHashMinerExecutorTest {
             null,
             Executors.newCachedThreadPool(),
             null,
-            new PendingTransactions(1, TestClock.fixed()),
+            new PendingTransactions(1, TestClock.fixed(), metricsSystem),
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()));
 
@@ -54,7 +57,7 @@ public class EthHashMinerExecutorTest {
             null,
             Executors.newCachedThreadPool(),
             null,
-            new PendingTransactions(1, TestClock.fixed()),
+            new PendingTransactions(1, TestClock.fixed(), metricsSystem),
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()));
 

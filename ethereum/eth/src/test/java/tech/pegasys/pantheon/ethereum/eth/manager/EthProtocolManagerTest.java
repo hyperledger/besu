@@ -58,6 +58,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.DefaultMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -91,6 +92,7 @@ public final class EthProtocolManagerTest {
   private static ProtocolSchedule<Void> protocolSchedule;
   private static BlockDataGenerator gen;
   private static ProtocolContext<Void> protocolContext;
+  private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @BeforeClass
   public static void setup() {
@@ -1020,7 +1022,8 @@ public final class EthProtocolManagerTest {
           protocolContext,
           ethManager.ethContext(),
           TestClock.fixed(),
-          PendingTransactions.MAX_PENDING_TRANSACTIONS);
+          PendingTransactions.MAX_PENDING_TRANSACTIONS,
+          metricsSystem);
 
       // Send just a transaction message.
       final PeerConnection peer = setupPeer(ethManager, (cap, msg, connection) -> {});
