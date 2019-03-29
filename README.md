@@ -41,6 +41,13 @@ Instructions for how to get started with developing on the Pantheon codebase. Pl
 * [Code Coverage](docs/development/code-coverage.md)
 * [Logging](docs/development/logging.md)
 
+## Issues 
+
+Pantheon issues are tracked in [Jira](https://pegasys1.atlassian.net/secure/Dashboard.jspa?selectPageId=10000) not GitHub. 
+See our [contribution guidelines](CONTRIBUTING.md) for more detail on searching and creating issues. 
+
+If you've commented on existing issue and have been waiting for a reply, feel free to ping us on [Gitter].  
+
 [User Documentation]: https://docs.pantheon.pegasys.tech/en/latest/
 [Installation]: https://docs.pantheon.pegasys.tech/en/latest/Installation/Overview/
 [Getting Started]: https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Getting-Started/
@@ -49,6 +56,7 @@ Instructions for how to get started with developing on the Pantheon codebase. Pl
 [JSON-RPC API]: https://docs.pantheon.pegasys.tech/en/latest/Reference/Using-JSON-RPC-API/
 [Configuring Pantheon]: https://docs.pantheon.pegasys.tech/en/latest/Configuring-Pantheon/NetworkID-And-ChainID/
 [Using Pantheon]: https://docs.pantheon.pegasys.tech/en/latest/Using-Pantheon/Transactions/
+[Gitter]: https://gitter.im/PegaSysEng/pantheon
 
 ## Release Notes
 

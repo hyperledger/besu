@@ -22,13 +22,12 @@ and feel free to propose changes to this document in a pull request.
   * [Coding Conventions](#coding-conventions)
   * [Git Commit Messages & Pull Request Messages](#git-commit-messages--pull-request-messages)
   
-[Issue and Pull Request Labels](#issue-and-pull-request-labels)
+[Pull Request Labels](#pull-request-labels)
 
 ## Code of Conduct
 
 This project and everyone participating in it is governed by the [Pantheon Code of Conduct](CODE-OF-CONDUCT.md).
 By participating, you are expected to uphold this code. Please report unacceptable behavior to [private@pegasys.tech].
-
 
 ## I just have a quick question
 
@@ -46,7 +45,6 @@ and the community understand your report, reproduce the behavior, and find relat
 Before creating bug reports, please check the [before-submitting-a-bug-report](#before-submitting-a-bug-report) 
 checklist as you might find out that you don't need to create one. When you are creating a bug report, 
 please [include as many details as possible](#how-do-i-submit-a-good-bug-report).
-Fill in the [issue_template.md](.github/issue_template.md), the information it asks for helps us resolve issues faster.
 
 > **Note:** If you find a **Closed** issue that seems like it is the same thing that you're experiencing, 
 open a new issue and include a link to the original issue in the body of your new one.
@@ -54,23 +52,22 @@ open a new issue and include a link to the original issue in the body of your ne
 #### Before Submitting A Bug Report
 * **Confirm the problem** is reproducible in the latest version of the software
 * **Check the [Debugging documentation]**. You might be able to find the cause of the problem and fix things yourself. 
-* **Perform a [cursory search of project issues](https://github.com/search?q=+is%3Aissue+repo%3APegasysEng/Pantheon)** 
+* **Perform a [cursory search of project issues](https://pegasys1.atlassian.net/browse/PAN-2502?jql=project%20%3D%20PAN)** 
 to see if the problem has already been reported. If it has **and the issue is still open**, add a comment 
 to the existing issue instead of opening a new one.
 
 #### How Do I Submit A (Good) Bug Report?
-Bugs are tracked as [GitHub issues](https://guides.github.com/features/issues/).  
-Issues should provide the following information by filling in the [issue_template.md](.github/issue_template.md).
+Bugs are tracked as [Jira issues](https://pegasys1.atlassian.net/secure/Dashboard.jspa?selectPageId=10000).  
 
 Explain the problem and include additional details to help maintainers reproduce the problem:
 
-* **Use a clear and descriptive title** for the issue to identify the problem.
+* **Use a clear and descriptive summary** for the issue to identify the problem.
 * **Describe the exact steps which reproduce the problem** in as many details as possible. For example, 
 start by explaining how you started Pantheon, e.g. which command exactly you used in the terminal, 
 or how you started it otherwise. 
 * **Provide specific examples to demonstrate the steps**. Include links to files or GitHub projects, 
 or copy/pasteable snippets, which you use in those examples. If you're providing snippets in the issue, 
-use [Markdown code blocks](https://help.github.com/articles/markdown-basics/#multiple-lines).
+use backticks (```) to format the code snippets.
 * **Describe the behavior you observed after following the steps** and point out what exactly is the 
 problem with that behavior.
 * **Explain which behavior you expected to see instead and why.**
@@ -110,28 +107,25 @@ you might find out that you don't need to create one.
 
 When you are creating an enhancement suggestion, please 
 [include as many details as possible](#how-do-i-submit-a-good-enhancement-suggestion). 
-Fill in the [issue_template.md](.github/issue_template.md), including the steps that you imagine you 
-would take if the feature you're requesting existed.
 
 #### Before Submitting An Enhancement Suggestion
 
 * **Check the [Debugging documentation].** You might be able to find the cause of the problem and fix things yourself. 
-* **Perform a [cursory search of project issues](https://github.com/search?q=+is%3Aissue+repo%3APegasysEng/Pantheon)** 
+* **Perform a [cursory search of project issues](https://pegasys1.atlassian.net/browse/PAN-2502?jql=project%20%3D%20PAN)** 
 to see if the problem has already been reported. If it has **and the issue is still open**, add a comment 
 to the existing issue instead of opening a new one.
 
 #### How Do I Submit A (Good) Enhancement Suggestion?
 
-Enhancement suggestions are tracked as [GitHub issues](https://guides.github.com/features/issues/).
-Issues should provide the following information by filling in the [issue_template.md](.github/issue_template.md) 
-and providing the following information:
+Enhancement suggestions are tracked as [Jira issues](https://pegasys1.atlassian.net/secure/Dashboard.jspa?selectPageId=10000).
+Provide the following information:
 
 * **Use a clear and descriptive title** for the issue to identify the suggestion.
 * **Provide a step-by-step description of the suggested enhancement** in as many details as possible.
-* **Provide specific examples to demonstrate the steps**. Include copy/pasteable snippets which you use 
-in those examples, as [Markdown code blocks](https://help.github.com/articles/markdown-basics/#multiple-lines).
+* **Provide specific examples to demonstrate the steps**. If you're providing code snippets in the issue, 
+ use backticks (````) to format the code snippets..
 * **Describe the current behavior** and **explain which behavior you expected to see instead** and why.
-* **Include screenshots** which help you demonstrate the steps.
+* **Include screenshots** which help you demonstrate the steps where possible.
 * **Explain why this enhancement would be useful** to most users.
 * **Does this enhancement exist in other clients?**
 * **Specify which version of the software you're using.** You can get the exact version by running 
@@ -139,10 +133,12 @@ in those examples, as [Markdown code blocks](https://help.github.com/articles/ma
 * **Specify the name and version of the OS you're using.**
 
 ## Your First Contribution
-Start by looking through the 'good first issue' and 'help wanted' labeled issues:
+Start by looking through the 'good first issue' and 'help wanted' labeled issues on the [Jira dashboard](https://pegasys1.atlassian.net/secure/Dashboard.jspa?selectPageId=10000):
 * [Good First Issue][search-label-good-first-issue] - issues which should only require a few lines of code or documentation, 
 and a test or two.
 * [Help wanted issues][search-label-help-wanted] - issues which are a bit more involved than `good first issue` issues.
+
+When you've indentified an issue you'd like to work on, ping us on [Gitter] and we'll assign it to you. 
 
 ### Contribution Workflow
 The codebase and documentation are maintained using the same "*contributor workflow*" where everyone 
@@ -168,9 +164,11 @@ to be confident that your changes will pass CI tests once pushed as a Pull Reque
     * For doc changes, displaying the doc with [MkDocs] in a preview mode enables you to check the
   rendering as explained in the [MkDocs And Markdown Guide](MKDOCS-MARKDOWN-GUIDE.md#preview-the-documentation). 
 1. **Push your changes** to your remote fork (usually labeled as `origin`).
-1. **Create a pull-request** (PR) on the Pantheon repository.
+1. **Create a pull-request** (PR) on the Pantheon repository. If the PR addresses an existing Jira issue, 
+include the issue number in the PR title in square brackets (for example, `[PAN-2374]`). 
 1. **Add labels** to identify the type of your PR. _For example, if your PR only changes documentation, add the
 "documentation" label. If it fixes a bug, add the "bug" label._
+1. If the PR address an existing Jira issue, comment in the Jira issue with the PR number. 
 1. **Ensure your changes are reviewed**.
 _Select the reviewers you would like to review your PR.
 If you don't know who to choose, simply select the reviewers proposed by GitHub or leave blank._
@@ -252,34 +250,7 @@ in this guide.
 * Provide a summary on the first line with more details on additional lines as needed
 * Reference issues and pull requests liberally
 
-# Issue and Pull Request Labels
-#### Type of Issue and Issue State
-
-| Label name                                              | Description                                                                                                                     |
-|---------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| [`enhancement`][search-label-enhancement]               | Feature requests.                                                                                                               |
-| [`bug` ][search-label-bug]                              | Confirmed bugs or reports that are very likely to be bugs.                                                                      |
-| [`help wanted`][search-label-help-wanted]               | The core team would appreciate help from the community in resolving these issues.                                               |
-| [`good first issue`][search-label-good-first-issue]     | Less complex issues which would be good first issues to work on for users who want to contribute.                               |
-| [`info needed`][search-label-info-needed]               | More information needs to be collected about these problems or feature requests (e.g. steps to reproduce).                      |
-| [`needs reproduction`][search-label-needs-reproduction] | Likely bugs, but haven't been reliably reproduced.                                                                              |
-| [`blocked`][search-label-blocked]                       | Issues blocked on other issues.                                                                                                 |
-| [`duplicate`][search-label-duplicate]                   | Issues which are duplicates of other issues, i.e. they have been reported before.                                               |
-| [`wontfix`][search-label-wontfix]                       | The core team has decided not to fix these issues for now, either because they're working as intended or for some other reason. |
-| [`invalid`][search-label-invalid]                       | Issues which aren't valid (e.g. user errors).                                                                                   |
-| [`do we want this?`][search-label-do-we-want-this]      | Seeking stakeholder consensus on proposed feature.                                                                              |                                                                        |
-
-#### Topic Categories
-
-| Label name                                    | Description                          |
-|-----------------------------------------------|--------------------------------------|
-| [`windows`][search-label-windows]             | Related to running on Windows.       |
-| [`linux`][search-label-linux]                 | Related to running on Linux.         |
-| [`mac`][search-label-mac]                     | Related to running on macOS.         |
-| [`documentation`][search-label-documentation] | Related to any type of documentation |
-| [`performance`][search-label-performance]     | Related to performance.              |
-| [`security`][search-label-security]           | Related to security.                 |
-| [`api`][search-label-api]                     | Related to public APIs.              |
+# Pull Request Labels
 
 #### Pull Request Labels
 
