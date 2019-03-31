@@ -30,6 +30,7 @@ import tech.pegasys.pantheon.util.ExceptionUtils;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.nio.file.Path;
+import java.time.Clock;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -55,6 +56,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       final EthContext ethContext,
       final SyncState syncState,
       final Path dataDirectory,
+      final Clock clock,
       final MetricsSystem metricsSystem) {
     this.syncState = syncState;
 
@@ -89,7 +91,8 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             metricsSystem,
             ethContext,
             worldStateStorage,
-            syncState);
+            syncState,
+            clock);
   }
 
   private TrailingPeerRequirements calculateTrailingPeerRequirements() {

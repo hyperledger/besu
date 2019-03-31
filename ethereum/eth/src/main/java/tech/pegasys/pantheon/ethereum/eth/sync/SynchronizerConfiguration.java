@@ -17,6 +17,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Range;
 
@@ -29,7 +30,9 @@ public class SynchronizerConfiguration {
   private static final Duration DEFAULT_FAST_SYNC_MAXIMUM_PEER_WAIT_TIME = Duration.ofMinutes(5);
   private static final int DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST = 384;
   private static final int DEFAULT_WORLD_STATE_REQUEST_PARALLELISM = 10;
-  private static final int DEFAULT_WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS = 100;
+  private static final int DEFAULT_WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS = 1000;
+  private static final long DEFAULT_WORLD_STATE_MIN_MILLIS_BEFORE_STALLING =
+      TimeUnit.MINUTES.toMillis(5);
 
   // Fast sync config
   private final int fastSyncPivotDistance;
@@ -57,6 +60,7 @@ public class SynchronizerConfiguration {
   private final int transactionsParallelism;
   private final int computationParallelism;
   private final int maxTrailingPeers;
+  private final long worldStateMinMillisBeforeStalling;
 
   private SynchronizerConfiguration(
       final int fastSyncPivotDistance,
@@ -66,6 +70,7 @@ public class SynchronizerConfiguration {
       final int worldStateHashCountPerRequest,
       final int worldStateRequestParallelism,
       final int worldStateMaxRequestsWithoutProgress,
+      final long worldStateMinMillisBeforeStalling,
       final Range<Long> blockPropagationRange,
       final SyncMode syncMode,
       final long downloaderChangeTargetThresholdByHeight,
@@ -85,6 +90,7 @@ public class SynchronizerConfiguration {
     this.worldStateHashCountPerRequest = worldStateHashCountPerRequest;
     this.worldStateRequestParallelism = worldStateRequestParallelism;
     this.worldStateMaxRequestsWithoutProgress = worldStateMaxRequestsWithoutProgress;
+    this.worldStateMinMillisBeforeStalling = worldStateMinMillisBeforeStalling;
     this.blockPropagationRange = blockPropagationRange;
     this.syncMode = syncMode;
     this.downloaderChangeTargetThresholdByHeight = downloaderChangeTargetThresholdByHeight;
@@ -199,6 +205,10 @@ public class SynchronizerConfiguration {
     return worldStateMaxRequestsWithoutProgress;
   }
 
+  public long getWorldStateMinMillisBeforeStalling() {
+    return worldStateMinMillisBeforeStalling;
+  }
+
   public int getMaxTrailingPeers() {
     return maxTrailingPeers;
   }
@@ -222,6 +232,7 @@ public class SynchronizerConfiguration {
     private int worldStateRequestParallelism = DEFAULT_WORLD_STATE_REQUEST_PARALLELISM;
     private int worldStateMaxRequestsWithoutProgress =
         DEFAULT_WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS;
+    private long worldStateMinMillisBeforeStalling = DEFAULT_WORLD_STATE_MIN_MILLIS_BEFORE_STALLING;
     private Duration fastSyncMaximumPeerWaitTime = DEFAULT_FAST_SYNC_MAXIMUM_PEER_WAIT_TIME;
     private int maxTrailingPeers = Integer.MAX_VALUE;
 
@@ -335,6 +346,7 @@ public class SynchronizerConfiguration {
           worldStateHashCountPerRequest,
           worldStateRequestParallelism,
           worldStateMaxRequestsWithoutProgress,
+          worldStateMinMillisBeforeStalling,
           blockPropagationRange,
           syncMode,
           downloaderChangeTargetThresholdByHeight,

@@ -33,6 +33,7 @@ import tech.pegasys.pantheon.services.tasks.RocksDbTaskQueue;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -71,7 +72,8 @@ class FastSynchronizer<C> {
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
-      final SyncState syncState) {
+      final SyncState syncState,
+      final Clock clock) {
     if (syncConfig.syncMode() != SyncMode.FAST) {
       return Optional.empty();
     }
@@ -100,6 +102,8 @@ class FastSynchronizer<C> {
             syncConfig.getWorldStateHashCountPerRequest(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
+            syncConfig.getWorldStateMinMillisBeforeStalling(),
+            clock,
             metricsSystem);
     final FastSyncDownloader<C> fastSyncDownloader =
         new FastSyncDownloader<>(

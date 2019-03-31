@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.services.tasks.Task;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.time.Clock;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -38,21 +39,29 @@ class WorldDownloadState {
   private final boolean downloadWasResumed;
   private final CachingTaskCollection<NodeDataRequest> pendingRequests;
   private final int maxRequestsWithoutProgress;
+  private final Clock clock;
   private final Set<EthTask<?>> outstandingRequests =
       Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final CompletableFuture<Void> internalFuture;
   private final CompletableFuture<Void> downloadFuture;
   // Volatile so monitoring can access it without having to synchronize.
   private volatile int requestsSinceLastProgress = 0;
+  private final long minMillisBeforeStalling;
+  private volatile long timestampOfLastProgress;
   private BytesValue rootNodeData;
   private WorldStateDownloadProcess worldStateDownloadProcess;
 
   public WorldDownloadState(
       final CachingTaskCollection<NodeDataRequest> pendingRequests,
-      final int maxRequestsWithoutProgress) {
+      final int maxRequestsWithoutProgress,
+      final long minMillisBeforeStalling,
+      final Clock clock) {
+    this.minMillisBeforeStalling = minMillisBeforeStalling;
+    this.timestampOfLastProgress = clock.millis();
     this.downloadWasResumed = !pendingRequests.isEmpty();
     this.pendingRequests = pendingRequests;
     this.maxRequestsWithoutProgress = maxRequestsWithoutProgress;
+    this.clock = clock;
     this.internalFuture = new CompletableFuture<>();
     this.downloadFuture = new CompletableFuture<>();
     this.internalFuture.whenComplete(this::cleanup);
@@ -147,9 +156,11 @@ class WorldDownloadState {
   public synchronized void requestComplete(final boolean madeProgress) {
     if (madeProgress) {
       requestsSinceLastProgress = 0;
+      timestampOfLastProgress = clock.millis();
     } else {
       requestsSinceLastProgress++;
-      if (requestsSinceLastProgress >= maxRequestsWithoutProgress) {
+      if (requestsSinceLastProgress >= maxRequestsWithoutProgress
+          && timestampOfLastProgress + minMillisBeforeStalling < clock.millis()) {
         markAsStalled(maxRequestsWithoutProgress);
       }
     }

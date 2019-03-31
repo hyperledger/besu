@@ -135,6 +135,7 @@ public class MainnetPantheonController implements PantheonController<Void> {
             ethProtocolManager.ethContext(),
             syncState,
             dataDirectory,
+            clock,
             metricsSystem);
 
     final OptionalLong daoBlock = genesisConfig.getConfigOptions().getDaoForkBlock();
