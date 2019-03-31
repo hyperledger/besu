@@ -16,12 +16,12 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.PivotBlockRetriever.MAX_PIVOT_BLOCK_RETRIES;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncTargetManager;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
-import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByNumberTask;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -49,10 +49,9 @@ class FastSyncTargetManager<C> extends SyncTargetManager<C> {
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
-      final SyncState syncState,
       final MetricsSystem metricsSystem,
       final BlockHeader pivotBlockHeader) {
-    super(config, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
+    super(config, protocolSchedule, protocolContext, ethContext, metricsSystem);
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
@@ -121,6 +120,7 @@ class FastSyncTargetManager<C> extends SyncTargetManager<C> {
 
   @Override
   public boolean isSyncTargetReached(final EthPeer peer) {
-    return syncState.chainHeadNumber() >= pivotBlockHeader.getNumber();
+    final MutableBlockchain blockchain = protocolContext.getBlockchain();
+    return blockchain.getChainHeadBlockNumber() >= pivotBlockHeader.getNumber();
   }
 }
