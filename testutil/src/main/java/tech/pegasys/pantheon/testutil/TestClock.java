@@ -15,9 +15,31 @@ package tech.pegasys.pantheon.testutil;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 
-public class TestClock {
+public class TestClock extends Clock {
   public static Clock fixed() {
     return Clock.fixed(Instant.ofEpochSecond(10_000_000), ZoneId.systemDefault());
+  }
+
+  private Instant now = Instant.ofEpochSecond(24982948294L);
+
+  @Override
+  public ZoneId getZone() {
+    return ZoneOffset.UTC;
+  }
+
+  @Override
+  public Clock withZone(final ZoneId zone) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @Override
+  public Instant instant() {
+    return now;
+  }
+
+  public void stepMillis(final long millis) {
+    now = now.plusMillis(millis);
   }
 }

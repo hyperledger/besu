@@ -197,6 +197,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             ethProtocolManager.ethContext(),
             syncState,
             dataDirectory,
+            clock,
             metricsSystem);
 
     final TransactionPool transactionPool =

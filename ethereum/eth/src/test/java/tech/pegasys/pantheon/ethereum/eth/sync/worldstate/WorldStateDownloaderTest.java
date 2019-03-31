@@ -60,6 +60,7 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.services.tasks.CachingTaskCollection;
 import tech.pegasys.pantheon.services.tasks.InMemoryTaskQueue;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
@@ -974,6 +975,8 @@ public class WorldStateDownloaderTest {
         config.getWorldStateHashCountPerRequest(),
         config.getWorldStateRequestParallelism(),
         config.getWorldStateMaxRequestsWithoutProgress(),
+        config.getWorldStateMinMillisBeforeStalling(),
+        TestClock.fixed(),
         new NoOpMetricsSystem());
   }
 

@@ -37,6 +37,9 @@ import tech.pegasys.pantheon.services.tasks.RocksDbTaskQueue;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.nio.file.Path;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -104,6 +107,8 @@ public class WorldStateDownloaderBenchmark {
             syncConfig.getWorldStateHashCountPerRequest(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
+            syncConfig.getWorldStateMinMillisBeforeStalling(),
+            Clock.fixed(Instant.ofEpochSecond(1000), ZoneOffset.UTC),
             metricsSystem);
   }
 

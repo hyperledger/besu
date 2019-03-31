@@ -168,6 +168,7 @@ public class CliquePantheonController implements PantheonController<CliqueContex
             ethProtocolManager.ethContext(),
             syncState,
             dataDirectory,
+            clock,
             metricsSystem);
 
     final TransactionPool transactionPool =

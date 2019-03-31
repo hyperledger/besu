@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.services.tasks.CachingTaskCollection;
 
+import java.time.Clock;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -31,6 +32,8 @@ import org.apache.logging.log4j.Logger;
 public class WorldStateDownloader {
   private static final Logger LOG = LogManager.getLogger();
 
+  private final long minMillisBeforeStalling;
+  private final Clock clock;
   private final MetricsSystem metricsSystem;
 
   private final EthContext ethContext;
@@ -49,6 +52,8 @@ public class WorldStateDownloader {
       final int hashCountPerRequest,
       final int maxOutstandingRequests,
       final int maxNodeRequestsWithoutProgress,
+      final long minMillisBeforeStalling,
+      final Clock clock,
       final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.worldStateStorage = worldStateStorage;
@@ -56,6 +61,8 @@ public class WorldStateDownloader {
     this.hashCountPerRequest = hashCountPerRequest;
     this.maxOutstandingRequests = maxOutstandingRequests;
     this.maxNodeRequestsWithoutProgress = maxNodeRequestsWithoutProgress;
+    this.minMillisBeforeStalling = minMillisBeforeStalling;
+    this.clock = clock;
     this.metricsSystem = metricsSystem;
 
     metricsSystem.createIntegerGauge(
@@ -105,7 +112,8 @@ public class WorldStateDownloader {
           stateRoot);
 
       final WorldDownloadState newDownloadState =
-          new WorldDownloadState(taskCollection, maxNodeRequestsWithoutProgress);
+          new WorldDownloadState(
+              taskCollection, maxNodeRequestsWithoutProgress, minMillisBeforeStalling, clock);
       this.downloadState.set(newDownloadState);
 
       if (!newDownloadState.downloadWasResumed()) {
