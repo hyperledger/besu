@@ -96,7 +96,8 @@ public class ChainDownloader<C> {
     // Find target, pull checkpoint headers, import, repeat
     currentTask =
         waitForPeers()
-            .thenCompose(r -> syncTargetManager.findSyncTarget())
+            .thenCompose(r -> syncTargetManager.findSyncTarget(syncState.syncTarget()))
+            .thenApply(this::updateSyncState)
             .thenCompose(this::pullCheckpointHeaders)
             .thenCompose(this::importBlocks)
             .thenCompose(r -> checkSyncTarget())
@@ -128,6 +129,20 @@ public class ChainDownloader<C> {
                 });
   }
 
+  private SyncTarget updateSyncState(final SyncTarget newTarget) {
+    if (isSameAsCurrentTarget(newTarget)) {
+      return syncState.syncTarget().get();
+    }
+    return syncState.setSyncTarget(newTarget.peer(), newTarget.commonAncestor());
+  }
+
+  private Boolean isSameAsCurrentTarget(final SyncTarget newTarget) {
+    return syncState
+        .syncTarget()
+        .map(currentTarget -> currentTarget.equals(newTarget))
+        .orElse(false);
+  }
+
   private CompletableFuture<List<BlockHeader>> pullCheckpointHeaders(final SyncTarget syncTarget) {
     return syncTargetManager.isSyncTargetDisconnected()
         ? CompletableFuture.completedFuture(emptyList())
@@ -151,7 +166,7 @@ public class ChainDownloader<C> {
       clearSyncTarget(syncTarget);
       return CompletableFuture.completedFuture(null);
     }
-    if (finishedSyncingToCurrentTarget()) {
+    if (finishedSyncingToCurrentTarget(syncTarget)) {
       LOG.info("Finished syncing to target: {}.", syncTarget);
       clearSyncTarget(syncTarget);
       // Wait a bit before checking for a new sync target
@@ -164,8 +179,8 @@ public class ChainDownloader<C> {
     return CompletableFuture.completedFuture(null);
   }
 
-  private boolean finishedSyncingToCurrentTarget() {
-    return !syncTargetManager.syncTargetCanProvideMoreBlocks()
+  private boolean finishedSyncingToCurrentTarget(final SyncTarget syncTarget) {
+    return !syncTargetManager.syncTargetCanProvideMoreBlocks(syncTarget)
         || checkpointHeaderManager.checkpointsHaveTimedOut()
         || chainSegmentsHaveTimedOut();
   }

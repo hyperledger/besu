@@ -66,7 +66,6 @@ public class FastSyncChainDownloader<C> {
                 protocolSchedule,
                 protocolContext,
                 ethContext,
-                syncState,
                 metricsSystem,
                 pivotBlockHeader),
             new FastSyncCheckpointHeaderManager<>(

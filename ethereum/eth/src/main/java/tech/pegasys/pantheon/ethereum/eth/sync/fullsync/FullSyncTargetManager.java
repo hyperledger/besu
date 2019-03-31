@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.eth.sync.fullsync;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.ChainState;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
@@ -22,7 +23,6 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncTargetManager;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
-import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
@@ -47,9 +47,8 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
-      final SyncState syncState,
       final MetricsSystem metricsSystem) {
-    super(config, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
+    super(config, protocolSchedule, protocolContext, ethContext, metricsSystem);
     this.config = config;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
@@ -93,9 +92,10 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
   public boolean isSyncTargetReached(final EthPeer peer) {
     final long peerHeight = peer.chainState().getEstimatedHeight();
     final UInt256 peerTd = peer.chainState().getBestBlock().getTotalDifficulty();
+    final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
-    return peerTd.compareTo(syncState.chainHeadTotalDifficulty()) <= 0
-        && peerHeight <= syncState.chainHeadNumber();
+    return peerTd.compareTo(blockchain.getChainHead().getTotalDifficulty()) <= 0
+        && peerHeight <= blockchain.getChainHeadBlockNumber();
   }
 
   @Override

@@ -27,13 +27,13 @@ import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUtil;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
-import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.Before;
@@ -64,8 +64,6 @@ public class FullSyncTargetManagerTest {
         EthProtocolManagerTestUtil.create(
             localBlockchain, localWorldState, new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
     final EthContext ethContext = ethProtocolManager.ethContext();
-    final SyncState syncState =
-        new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
     localBlockchainSetup.importFirstBlocks(5);
     otherBlockchainSetup.importFirstBlocks(20);
     syncTargetManager =
@@ -74,7 +72,6 @@ public class FullSyncTargetManagerTest {
             protocolSchedule,
             protocolContext,
             ethContext,
-            syncState,
             new NoOpMetricsSystem());
   }
 
@@ -85,7 +82,7 @@ public class FullSyncTargetManagerTest {
     final RespondingEthPeer bestPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 20);
 
-    final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget();
+    final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget(Optional.empty());
 
     bestPeer.respond(responder);
 
@@ -100,7 +97,7 @@ public class FullSyncTargetManagerTest {
     final RespondingEthPeer bestPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 20);
 
-    final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget();
+    final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget(Optional.empty());
 
     bestPeer.respond(responder);
 
