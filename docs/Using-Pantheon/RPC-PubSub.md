@@ -59,6 +59,7 @@ Use `eth_subscribe` to create subscriptions for the following event types:
 * [New headers](#new-headers)
 * [Logs](#logs)
 * [Pending transactions](#pending-transactions)
+* [Dropped transactions](#dropped-transactions)
 * [Synchronizng](#synchronizing) 
 
 ### New Headers
@@ -231,6 +232,42 @@ This means the subscription can publish notifications for the same pending trans
       "params":{
         "subscription":"0x1",
         "result":"0x5705bc8bf875ff03e98adb98489428835892dc6ba6a6b139fee1becbc26db0b8"
+      }
+    }
+    ```
+    
+### Dropped Transactions
+
+Use the `droppedPendingTransactions` parameter with `eth_subscribe` to be notified of transactions 
+dropped from the transaction pool for the node. 
+
+The dropped transactions subscription returns the transaction hashes of the dropped transactions. 
+
+Transactions can be re-added to the transaction pool from a variety of sources after being dropped. For example, 
+receiving a previously dropped transaction from a peer. As a result it's possible to receive multiple dropped 
+transaction notifications for the same transaction.
+
+!!!example
+    To subscribe to dropped transaction notifications:
+    
+    ```json
+    {"id": 1, "method": "eth_subscribe", "params": ["droppedPendingTransactions"]}
+    ```
+    
+    Example result:
+    ```json
+    {"jsonrpc":"2.0","id":1,"result":"0x1"}
+    ```
+    
+    
+    Example notification: 
+    ```json
+    {
+      "jsonrpc":"2.0",
+      "method":"eth_subscription",
+      "params":{
+        "subscription":"0x1",
+        "result":"0xf57d6a90a7fb30880cfbdf6b432b487d0e94a3b55b34dc4b45e3b0b237ecab4c"
       }
     }
     ```
