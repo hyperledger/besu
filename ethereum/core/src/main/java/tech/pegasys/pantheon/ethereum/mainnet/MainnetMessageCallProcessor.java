@@ -119,6 +119,13 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
       frame.decrementRemainingGas(gasRequirement);
       final BytesValue output = contract.compute(frame.getInputData(), frame);
       if (output != null) {
+        if (contract.getName().equals("Privacy")) {
+          // do not decrement the gas requirement for a privacy pre-compile contract call -> leads
+          // to discrepancies in receipts root between public and private nodes in a network.
+          frame.incrementRemainingGas(gasRequirement);
+          frame.setState(MessageFrame.State.CODE_EXECUTING);
+          return;
+        }
         frame.setOutputData(output);
         LOG.trace(
             "Precompiled contract {}  successfully executed (gas consumed: {})",
