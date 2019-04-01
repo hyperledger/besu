@@ -635,13 +635,7 @@ public class NettyP2PNetwork implements P2PNetwork {
     }
 
     return nodePermissioningController
-        .map(
-            c -> {
-              final InetSocketAddress socket = (InetSocketAddress) server.channel().localAddress();
-              final EnodeURL localPeerEnodeUrl = peerInfoToEnodeURL(ourPeerInfo, socket);
-
-              return c.isPermitted(localPeerEnodeUrl, peer.getEnodeURL());
-            })
+        .map(c -> c.isPermitted(ourEnodeURL, peer.getEnodeURL()))
         .orElse(true);
   }
 

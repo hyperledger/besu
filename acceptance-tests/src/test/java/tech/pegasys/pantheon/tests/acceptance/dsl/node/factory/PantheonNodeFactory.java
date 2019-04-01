@@ -204,6 +204,20 @@ public class PantheonNodeFactory {
             .build());
   }
 
+  public PantheonNode createCustomGenesisNode(
+      final String name, final String genesisPath, final boolean canBeBootnode) throws IOException {
+    final String genesisFile = readGenesisFile(genesisPath);
+    return create(
+        new PantheonFactoryConfigurationBuilder()
+            .setName(name)
+            .jsonRpcEnabled()
+            .webSocketEnabled()
+            .setGenesisConfigProvider((a) -> Optional.of(genesisFile))
+            .setDevMode(false)
+            .bootnodeEligible(canBeBootnode)
+            .build());
+  }
+
   public PantheonNode createCliqueNodeWithValidators(final String name, final String... validators)
       throws IOException {
 
@@ -240,14 +254,14 @@ public class PantheonNodeFactory {
 
   private Optional<String> createCliqueGenesisConfig(
       final Collection<? extends RunnableNode> validators) {
-    final String template = genesisTemplateConfig("clique/clique.json");
+    final String template = readGenesisFile("clique/clique.json");
     return updateGenesisExtraData(
         validators, template, CliqueExtraData::createGenesisExtraDataString);
   }
 
   private Optional<String> createIbftGenesisConfig(
       final Collection<? extends RunnableNode> validators) {
-    final String template = genesisTemplateConfig("ibft/ibft.json");
+    final String template = readGenesisFile("ibft/ibft.json");
     return updateGenesisExtraData(
         validators, template, IbftExtraData::createGenesisExtraDataString);
   }
@@ -263,12 +277,12 @@ public class PantheonNodeFactory {
     return Optional.of(genesis);
   }
 
-  private String genesisTemplateConfig(final String template) {
+  private String readGenesisFile(final String filepath) {
     try {
-      final URI uri = Resources.getResource(template).toURI();
+      final URI uri = Resources.getResource(filepath).toURI();
       return Resources.toString(uri.toURL(), Charset.defaultCharset());
     } catch (final URISyntaxException | IOException e) {
-      throw new IllegalStateException("Unable to get test genesis config " + template);
+      throw new IllegalStateException("Unable to get test genesis config " + filepath);
     }
   }
 

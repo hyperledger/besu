@@ -10,26 +10,25 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth;
+package tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthGetTransactionReceiptTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
-public class ExpectSuccessfulEthGetTransactionReceipt implements Condition {
+public class WaitForFalseResponse implements Condition {
 
-  private final EthGetTransactionReceiptTransaction transaction;
+  private final Transaction<Boolean> transaction;
 
-  public ExpectSuccessfulEthGetTransactionReceipt(
-      final EthGetTransactionReceiptTransaction transaction) {
+  WaitForFalseResponse(final Transaction<Boolean> transaction) {
     this.transaction = transaction;
   }
 
   @Override
   public void verify(final Node node) {
-    WaitUtils.waitFor(() -> assertThat(node.execute(transaction)).isPresent());
+    WaitUtils.waitFor(() -> assertThat(node.execute(transaction)).isFalse());
   }
 }

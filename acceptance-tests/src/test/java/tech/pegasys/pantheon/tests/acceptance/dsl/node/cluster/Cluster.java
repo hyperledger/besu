@@ -96,6 +96,7 @@ public class Cluster implements AutoCloseable {
             .filter(node -> node.getConfiguration().isDiscoveryEnabled())
             .findFirst();
 
+    bootnode.ifPresent((b) -> LOG.info("Selected node {} as bootnode", b.getName()));
     bootnode.ifPresent(this::startNode);
     bootnodes = bootnode.map(node -> singletonList(node.enodeUrl())).orElse(emptyList());
     return bootnode;
@@ -121,7 +122,11 @@ public class Cluster implements AutoCloseable {
         .genesisConfigProvider()
         .createGenesisConfig(originalNodes)
         .ifPresent(node.getConfiguration()::setGenesisConfig);
-    LOG.info("Starting node {}", node.getName());
+    LOG.info(
+        "Starting node {} (id = {}...{})",
+        node.getName(),
+        node.getNodeId().substring(0, 4),
+        node.getNodeId().substring(124));
     node.start(pantheonNodeRunner);
   }
 
