@@ -165,7 +165,8 @@ public class BlockTransactionSelector {
             processableBlockHeader,
             transaction,
             miningBeneficiary,
-            blockHashLookup);
+            blockHashLookup,
+            false);
 
     if (!result.isInvalid()) {
       worldStateUpdater.commit();

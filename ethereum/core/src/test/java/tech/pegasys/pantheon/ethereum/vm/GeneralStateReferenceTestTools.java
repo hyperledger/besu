@@ -115,7 +115,8 @@ public class GeneralStateReferenceTestTools {
             blockHeader,
             transaction,
             blockHeader.getCoinbase(),
-            new BlockHashLookup(blockHeader, blockchain));
+            new BlockHashLookup(blockHeader, blockchain),
+            false);
     final Account coinbase = worldStateUpdater.getOrCreate(spec.blockHeader().getCoinbase());
     if (coinbase != null && coinbase.isEmpty() && shouldClearEmptyAccounts(spec.eip())) {
       worldStateUpdater.deleteAccount(coinbase.getAddress());

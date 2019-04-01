@@ -106,6 +106,7 @@ public interface TransactionProcessor {
    * @param transaction The transaction to process
    * @param miningBeneficiary The address which is to receive the transaction fee
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
+   * @param isPersistingState Whether the state will be modified by this process
    * @return the transaction result
    */
   default Result processTransaction(
@@ -114,7 +115,8 @@ public interface TransactionProcessor {
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
-      final BlockHashLookup blockHashLookup) {
+      final BlockHashLookup blockHashLookup,
+      final Boolean isPersistingState) {
     return processTransaction(
         blockchain,
         worldState,
@@ -122,7 +124,8 @@ public interface TransactionProcessor {
         transaction,
         miningBeneficiary,
         NO_TRACING,
-        blockHashLookup);
+        blockHashLookup,
+        isPersistingState);
   }
 
   /**
@@ -135,6 +138,7 @@ public interface TransactionProcessor {
    * @param operationTracer The tracer to record results of each EVM operation
    * @param miningBeneficiary The address which is to receive the transaction fee
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
+   * @param isPersistingState Whether the state will be modified by this process
    * @return the transaction result
    */
   Result processTransaction(
@@ -144,5 +148,6 @@ public interface TransactionProcessor {
       Transaction transaction,
       Address miningBeneficiary,
       OperationTracer operationTracer,
-      BlockHashLookup blockHashLookup);
+      BlockHashLookup blockHashLookup,
+      Boolean isPersistingState);
 }

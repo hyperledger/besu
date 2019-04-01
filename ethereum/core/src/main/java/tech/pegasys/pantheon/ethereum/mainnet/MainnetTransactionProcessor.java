@@ -142,7 +142,8 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final Transaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
-      final BlockHashLookup blockHashLookup) {
+      final BlockHashLookup blockHashLookup,
+      final Boolean isPersistingState) {
     LOG.trace("Starting execution of {}", transaction);
 
     ValidationResult<TransactionInvalidReason> validationResult =
@@ -212,6 +213,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .completer(c -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
+              .isPersistingState(isPersistingState)
               .build();
 
     } else {
@@ -239,6 +241,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .completer(c -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
+              .isPersistingState(isPersistingState)
               .build();
     }
 
