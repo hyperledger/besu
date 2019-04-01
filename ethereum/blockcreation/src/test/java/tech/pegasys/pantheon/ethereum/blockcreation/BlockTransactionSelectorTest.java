@@ -122,7 +122,7 @@ public class BlockTransactionSelectorTest {
     final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
 
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(transaction), any(), any()))
+            any(), any(), any(), eq(transaction), any(), any(), any()))
         .thenReturn(MainnetTransactionProcessor.Result.failed(5, ValidationResult.valid()));
 
     final Blockchain blockchain = new TestBlockchain();
@@ -176,7 +176,7 @@ public class BlockTransactionSelectorTest {
     }
 
     final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
-    when(transactionProcessor.processTransaction(any(), any(), any(), any(), any(), any()))
+    when(transactionProcessor.processTransaction(any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
                 new LogSeries(Lists.newArrayList()),
@@ -184,7 +184,7 @@ public class BlockTransactionSelectorTest {
                 BytesValue.EMPTY,
                 ValidationResult.valid()));
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(transactionsToInject.get(1)), any(), any()))
+            any(), any(), any(), eq(transactionsToInject.get(1)), any(), any(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.invalid(ValidationResult.invalid(NONCE_TOO_LOW)));
 
@@ -239,7 +239,7 @@ public class BlockTransactionSelectorTest {
       pendingTransactions.addRemoteTransaction(tx);
     }
     final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
-    when(transactionProcessor.processTransaction(any(), any(), any(), any(), any(), any()))
+    when(transactionProcessor.processTransaction(any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
                 new LogSeries(Lists.newArrayList()),
@@ -357,7 +357,7 @@ public class BlockTransactionSelectorTest {
 
     // TransactionProcessor mock assumes all gas in the transaction was used (i.e. gasLimit).
     final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
-    when(transactionProcessor.processTransaction(any(), any(), any(), any(), any(), any()))
+    when(transactionProcessor.processTransaction(any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
                 new LogSeries(Lists.newArrayList()),
@@ -428,7 +428,7 @@ public class BlockTransactionSelectorTest {
 
     // TransactionProcessor mock assumes all gas in the transaction was used (i.e. gasLimit).
     final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
-    when(transactionProcessor.processTransaction(any(), any(), any(), any(), any(), any()))
+    when(transactionProcessor.processTransaction(any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
                 new LogSeries(Lists.newArrayList()),
@@ -537,6 +537,7 @@ public class BlockTransactionSelectorTest {
             eq(blockHeader),
             eq(validTransaction),
             any(),
+            any(),
             any()))
         .thenReturn(
             Result.successful(
@@ -546,6 +547,7 @@ public class BlockTransactionSelectorTest {
             any(WorldUpdater.class),
             eq(blockHeader),
             eq(invalidTransaction),
+            any(),
             any(),
             any()))
         .thenReturn(

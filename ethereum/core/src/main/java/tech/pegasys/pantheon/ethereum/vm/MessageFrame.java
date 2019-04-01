@@ -214,6 +214,7 @@ public class MessageFrame {
   private final int depth;
   private final Deque<MessageFrame> messageFrameStack;
   private final Address miningBeneficiary;
+  private final Boolean isPersistingState;
 
   // Miscellaneous fields.
   private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
@@ -245,7 +246,8 @@ public class MessageFrame {
       final boolean isStatic,
       final Consumer<MessageFrame> completer,
       final Address miningBeneficiary,
-      final BlockHashLookup blockHashLookup) {
+      final BlockHashLookup blockHashLookup,
+      final Boolean isPersistingState) {
     this.type = type;
     this.blockchain = blockchain;
     this.messageFrameStack = messageFrameStack;
@@ -275,6 +277,7 @@ public class MessageFrame {
     this.isStatic = isStatic;
     this.completer = completer;
     this.miningBeneficiary = miningBeneficiary;
+    this.isPersistingState = isPersistingState;
   }
 
   /**
@@ -806,6 +809,15 @@ public class MessageFrame {
     return currentOperation;
   }
 
+  /**
+   * Returns whether Message calls will be persisted
+   *
+   * @return whether Message calls will be persisted
+   */
+  public Boolean isPersistingState() {
+    return isPersistingState;
+  }
+
   public void setCurrentOperation(final Operation currentOperation) {
     this.currentOperation = currentOperation;
   }
@@ -832,6 +844,7 @@ public class MessageFrame {
     private Consumer<MessageFrame> completer;
     private Address miningBeneficiary;
     private BlockHashLookup blockHashLookup;
+    private Boolean isPersistingState = false;
 
     public Builder type(final Type type) {
       this.type = type;
@@ -933,6 +946,11 @@ public class MessageFrame {
       return this;
     }
 
+    public Builder isPersistingState(final Boolean isPersistingState) {
+      this.isPersistingState = isPersistingState;
+      return this;
+    }
+
     private void validate() {
       checkState(type != null, "Missing message frame type");
       checkState(blockchain != null, "Missing message frame blockchain");
@@ -953,6 +971,7 @@ public class MessageFrame {
       checkState(completer != null, "Missing message frame completer");
       checkState(miningBeneficiary != null, "Missing mining beneficiary");
       checkState(blockHashLookup != null, "Missing block hash lookup");
+      checkState(isPersistingState != null, "Missing isPersistingState");
     }
 
     public MessageFrame build() {
@@ -978,7 +997,8 @@ public class MessageFrame {
           isStatic,
           completer,
           miningBeneficiary,
-          blockHashLookup);
+          blockHashLookup,
+          isPersistingState);
     }
   }
 }

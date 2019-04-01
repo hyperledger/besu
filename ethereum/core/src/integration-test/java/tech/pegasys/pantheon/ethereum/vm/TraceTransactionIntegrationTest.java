@@ -91,7 +91,8 @@ public class TraceTransactionIntegrationTest {
             genesisBlock.getHeader(),
             createTransaction,
             genesisBlock.getHeader().getCoinbase(),
-            blockHashLookup);
+            blockHashLookup,
+            false);
     assertThat(result.isSuccessful()).isTrue();
     final Account createdContract =
         createTransactionUpdater.getTouchedAccounts().stream()
@@ -121,7 +122,8 @@ public class TraceTransactionIntegrationTest {
             executeTransaction,
             genesisBlock.getHeader().getCoinbase(),
             tracer,
-            blockHashLookup);
+            blockHashLookup,
+            false);
 
     assertThat(result.isSuccessful()).isTrue();
 
@@ -157,7 +159,8 @@ public class TraceTransactionIntegrationTest {
         transaction,
         genesisBlock.getHeader().getCoinbase(),
         tracer,
-        new BlockHashLookup(genesisBlock.getHeader(), blockchain));
+        new BlockHashLookup(genesisBlock.getHeader(), blockchain),
+        false);
 
     final int expectedDepth = 0; // Reference impl returned 1. Why the difference?
 

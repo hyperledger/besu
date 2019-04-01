@@ -76,7 +76,8 @@ public class BlockReplay {
             header,
             transaction,
             spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
-            blockHashLookup);
+            blockHashLookup,
+            false);
       }
     }
     return Optional.empty();
@@ -95,7 +96,8 @@ public class BlockReplay {
               blockHeader,
               transaction,
               spec.getMiningBeneficiaryCalculator().calculateBeneficiary(blockHeader),
-              new BlockHashLookup(blockHeader, blockchain));
+              new BlockHashLookup(blockHeader, blockchain),
+              false);
           return action.performAction(
               transaction, blockHeader, blockchain, worldState, transactionProcessor);
         });

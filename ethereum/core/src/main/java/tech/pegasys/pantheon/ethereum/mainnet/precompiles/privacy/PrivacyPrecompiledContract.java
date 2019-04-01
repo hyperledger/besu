@@ -131,17 +131,20 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         throw new Exception("Unable to process the private transaction");
       }
 
-      privateWorldStateUpdater.commit();
-      disposablePrivateState.persist();
-      PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
-      privateStateUpdater.putPrivateAccountState(privacyGroupId, disposablePrivateState.rootHash());
-      privateStateUpdater.commit();
+      if (messageFrame.isPersistingState()) {
+        privateWorldStateUpdater.commit();
+        disposablePrivateState.persist();
+        PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
+        privateStateUpdater.putPrivateAccountState(
+            privacyGroupId, disposablePrivateState.rootHash());
+        privateStateUpdater.commit();
 
-      Bytes32 txHash = keccak256(RLP.encode(privateTransaction::writeTo));
-      PrivateTransactionStorage.Updater privateUpdater = privateTransactionStorage.updater();
-      privateUpdater.putTransactionLogs(txHash, result.getLogs());
-      privateUpdater.putTransactionResult(txHash, result.getOutput());
-      privateUpdater.commit();
+        Bytes32 txHash = keccak256(RLP.encode(privateTransaction::writeTo));
+        PrivateTransactionStorage.Updater privateUpdater = privateTransactionStorage.updater();
+        privateUpdater.putTransactionLogs(txHash, result.getLogs());
+        privateUpdater.putTransactionResult(txHash, result.getOutput());
+        privateUpdater.commit();
+      }
 
       return result.getOutput();
     } catch (IOException e) {

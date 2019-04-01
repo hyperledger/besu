@@ -128,7 +128,8 @@ public class MainnetBlockProcessor implements BlockProcessor {
               blockHeader,
               transaction,
               miningBeneficiary,
-              blockHashLookup);
+              blockHashLookup,
+              true);
       if (result.isInvalid()) {
         return Result.failed();
       }
