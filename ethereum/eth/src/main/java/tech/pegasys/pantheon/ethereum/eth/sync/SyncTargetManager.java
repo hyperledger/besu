@@ -34,8 +34,6 @@ public abstract class SyncTargetManager<C> {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private volatile long syncTargetDisconnectListenerId;
-  private volatile boolean syncTargetDisconnected = false;
   private final SynchronizerConfiguration config;
   private final ProtocolSchedule<C> protocolSchedule;
   private final ProtocolContext<C> protocolContext;
@@ -93,8 +91,6 @@ public abstract class SyncTargetManager<C> {
                               "Found common ancestor with peer {} at block {}",
                               bestPeer,
                               target.getNumber());
-                          syncTargetDisconnectListenerId =
-                              bestPeer.subscribeDisconnect(this::onSyncTargetPeerDisconnect);
                           return completedFuture(syncTarget);
                         })
                     .thenCompose(
@@ -124,20 +120,6 @@ public abstract class SyncTargetManager<C> {
         .timeout(WaitForPeerTask.create(ethContext, metricsSystem), Duration.ofSeconds(5));
   }
 
-  private void onSyncTargetPeerDisconnect(final EthPeer ethPeer) {
-    LOG.info("Sync target disconnected: {}", ethPeer);
-    syncTargetDisconnected = true;
-  }
-
-  public boolean isSyncTargetDisconnected() {
-    return syncTargetDisconnected;
-  }
-
-  public void clearSyncTarget(final SyncTarget syncTarget) {
-    syncTarget.peer().unsubscribeDisconnect(syncTargetDisconnectListenerId);
-    syncTargetDisconnected = false;
-  }
-
   public abstract boolean shouldSwitchSyncTarget(final SyncTarget currentTarget);
 
   public abstract boolean shouldContinueDownloading();
@@ -146,6 +128,6 @@ public abstract class SyncTargetManager<C> {
 
   public boolean syncTargetCanProvideMoreBlocks(final SyncTarget syncTarget) {
     final EthPeer currentSyncingPeer = syncTarget.peer();
-    return !isSyncTargetDisconnected() && !isSyncTargetReached(currentSyncingPeer);
+    return !currentSyncingPeer.isDisconnected() && !isSyncTargetReached(currentSyncingPeer);
   }
 }
