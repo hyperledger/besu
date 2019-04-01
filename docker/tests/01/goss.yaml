@@ -1,0 +1,65 @@
+file:
+  /etc/pantheon:
+    exists: true
+    mode: "0755"
+    owner: root
+    group: root
+    filetype: directory
+    contains: []
+  /opt/pantheon/bin/pantheon:
+    exists: true
+    mode: "0755"
+    owner: root
+    group: root
+    filetype: file
+    contains: []
+  /opt/pantheon/pantheon-entrypoint.sh:
+    exists: true
+    mode: "0755"
+    owner: root
+    group: root
+    filetype: file
+    contains: []
+  /tmp/pantheon.tar.gz:
+    exists: false
+    contains: []
+  /var/lib/pantheon:
+    exists: true
+    mode: "0755"
+    owner: root
+    group: root
+    filetype: directory
+    contains: []
+  /var/lib/pantheon/database:
+    exists: true
+    mode: "0755"
+    owner: root
+    group: root
+    filetype: directory
+    contains: []
+  /var/lib/pantheon/key:
+    exists: true
+    mode: "0600"
+    owner: root
+    group: root
+    filetype: file
+    contains: []
+package:
+  libc6:
+    installed: true
+port:
+  tcp:8545:
+    listening: false
+  tcp:8546:
+    listening: false
+  tcp:30303:
+    listening: true
+    ip:
+    - 0.0.0.0
+  udp:30303:
+    listening: true
+    ip:
+    - 0.0.0.0
+process:
+  java:
+    running: true

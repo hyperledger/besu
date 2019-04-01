@@ -22,7 +22,8 @@ if (env.BRANCH_NAME == "master") {
     ])
 }
 
-def docker_image = 'docker:18.06.0-ce-dind'
+def docker_image_dind = 'docker:18.06.0-ce-dind'
+def docker_image = 'docker:18.06.0-ce'
 def build_image = 'pegasyseng/pantheon-build:0.0.5-jdk11'
 
 def abortPreviousBuilds() {
@@ -50,7 +51,7 @@ try {
         def stage_name = "Unit tests node: "
         node {
             checkout scm
-            docker.image(docker_image).withRun('--privileged') { d ->
+            docker.image(docker_image_dind).withRun('--privileged') { d ->
                 docker.image(build_image).inside("--link ${d.id}:docker") {
                     try {
                         stage(stage_name + 'Prepare') {
@@ -65,6 +66,8 @@ try {
                         archiveArtifacts 'build/reports/**'
                         archiveArtifacts 'build/distributions/**'
 
+                        stash allowEmpty: true, includes: 'build/distributions/pantheon-*.tar.gz', name: 'distTarBall'
+
                         junit '**/build/test-results/**/*.xml'
                     }
                 }
@@ -74,7 +77,7 @@ try {
         def stage_name = "Reference tests node: "
         node {
             checkout scm
-            docker.image(docker_image).withRun('--privileged') { d ->
+            docker.image(docker_image_dind).withRun('--privileged') { d ->
                 docker.image(build_image).inside("--link ${d.id}:docker") {
                     try {
                         stage(stage_name + 'Prepare') {
@@ -98,7 +101,7 @@ try {
         def stage_name = "Integration tests node: "
         node {
             checkout scm
-            docker.image(docker_image).withRun('--privileged') { d ->
+            docker.image(docker_image_dind).withRun('--privileged') { d ->
                 docker.image(build_image).inside("--link ${d.id}:docker") {
                     try {
                         stage(stage_name + 'Prepare') {
@@ -131,7 +134,7 @@ try {
         def stage_name = "Acceptance tests node: "
         node {
             checkout scm
-            docker.image(docker_image).withRun('--privileged') { d ->
+            docker.image(docker_image_dind).withRun('--privileged') { d ->
                 docker.image(build_image).inside("--link ${d.id}:docker") {
                     try {
                         stage(stage_name + 'Prepare') {
@@ -147,6 +150,35 @@ try {
                         archiveArtifacts 'build/distributions/**'
 
                         junit '**/build/test-results/**/*.xml'
+                    }
+                }
+            }
+        }
+    }
+    if (env.BRANCH_NAME == "master") {
+        node {
+            checkout scm
+            unstash 'distTarBall'
+            docker.image(docker_image_dind).withRun('--privileged') { d ->
+                docker.image(docker_image).inside("-e DOCKER_HOST=tcp://docker:2375 --link ${d.id}:docker") {
+                    stage('build image') {
+                        sh "cd docker && cp ../build/distributions/pantheon-*.tar.gz ."
+                        pantheon = docker.build("pegasyseng/pantheon-develop:develop", "docker")
+                    }
+                    try {
+                        stage('test image') {
+                            sh "apk add bash"
+                            sh "mkdir -p docker/reports"
+                            sh "cd docker && bash test.sh pegasyseng/pantheon-develop:develop"
+                        }
+                    } finally {
+                        junit 'docker/reports/*.xml'
+                        sh "rm -rf docker/reports"
+                    }
+                    stage('push image') {
+                        docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-pegasysengci') {
+                            pantheon.push()
+                        }
                     }
                 }
             }
