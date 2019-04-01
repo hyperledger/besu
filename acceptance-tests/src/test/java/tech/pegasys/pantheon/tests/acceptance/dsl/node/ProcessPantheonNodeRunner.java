@@ -165,6 +165,19 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
               }
             });
 
+    node.getPermissioningConfiguration()
+        .flatMap(PermissioningConfiguration::getSmartContractConfig)
+        .ifPresent(
+            permissioningConfiguration -> {
+              if (permissioningConfiguration.isSmartContractNodeWhitelistEnabled()) {
+                params.add("--permissions-nodes-contract-enabled");
+              }
+              if (permissioningConfiguration.getSmartContractAddress() != null) {
+                params.add("--permissions-nodes-contract-address");
+                params.add(permissioningConfiguration.getSmartContractAddress().toString());
+              }
+            });
+
     LOG.info("Creating pantheon process with params {}", params);
     final ProcessBuilder processBuilder =
         new ProcessBuilder(params)

@@ -31,6 +31,8 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -42,11 +44,13 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
 import org.assertj.core.util.Lists;
 
 public class PermissionedNodeBuilder {
 
   private String name;
+  private String genesisFile;
 
   private boolean localConfigNodesPermissioningEnabled = false;
   private Path localConfigNodesPermissioningFile = null;
@@ -111,8 +115,17 @@ public class PermissionedNodeBuilder {
   public PermissionedNodeBuilder nodesContractEnabled(final String address) {
     this.smartContractPermissioningEnabled = true;
     this.permissioningSmartContractAddress = address;
-    throw new UnsupportedOperationException(
-        "Support for smart contract based permissioning ATs is coming soon...");
+    return this;
+  }
+
+  public PermissionedNodeBuilder genesisFile(final String path) {
+    try {
+      URI uri = Resources.getResource(path).toURI();
+      this.genesisFile = Resources.toString(uri.toURL(), Charset.defaultCharset());
+    } catch (final URISyntaxException | IOException e) {
+      throw new IllegalStateException("Unable to read genesis file from: " + path, e);
+    }
+    return this;
   }
 
   public PantheonNode build() {
@@ -133,16 +146,21 @@ public class PermissionedNodeBuilder {
     final PermissioningConfiguration permissioningConfiguration =
         new PermissioningConfiguration(localPermConfig, smartContractPermConfig);
 
-    PantheonFactoryConfiguration config =
-        new PantheonFactoryConfigurationBuilder()
-            .setName(name)
-            .setJsonRpcConfiguration(jsonRpcConfigWithPermApiEnabled())
-            .setPermissioningConfiguration(permissioningConfiguration)
-            .miningEnabled()
-            .build();
+    final PantheonFactoryConfigurationBuilder builder = new PantheonFactoryConfigurationBuilder();
+    builder
+        .setName(name)
+        .setJsonRpcConfiguration(jsonRpcConfigWithPermApiEnabled())
+        .setPermissioningConfiguration(permissioningConfiguration)
+        .bootnodeEligible(false)
+        .miningEnabled();
+
+    if (genesisFile != null) {
+      builder.setGenesisConfigProvider((a) -> Optional.of(genesisFile));
+      builder.setDevMode(false);
+    }
 
     try {
-      return new PantheonNodeFactory().create(config);
+      return new PantheonNodeFactory().create(builder.build());
     } catch (IOException e) {
       throw new RuntimeException("Error creating PantheonNode", e);
     }
@@ -211,6 +229,7 @@ public class PermissionedNodeBuilder {
     jsonRpcConfig.setEnabled(true);
     jsonRpcConfig.setPort(0);
     jsonRpcConfig.setHostsWhitelist(singletonList("*"));
+    jsonRpcConfig.setCorsAllowedDomains(singletonList("*"));
     final List<RpcApi> rpcApis = new ArrayList<>(jsonRpcConfig.getRpcApis());
     rpcApis.add(RpcApis.PERM);
     rpcApis.add(RpcApis.ADMIN);

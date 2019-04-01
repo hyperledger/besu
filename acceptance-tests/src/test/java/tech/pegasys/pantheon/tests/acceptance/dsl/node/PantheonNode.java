@@ -152,16 +152,14 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
   }
 
   @Override
+  public String getNodeId() {
+    return keyPair.getPublicKey().toString().substring(2);
+  }
+
+  @Override
   public URI enodeUrl() {
     final String discport = isDiscoveryEnabled() ? "?discport=" + getDiscoveryPort() : "";
-    return URI.create(
-        "enode://"
-            + keyPair.getPublicKey().toString().substring(2)
-            + "@"
-            + LOCALHOST
-            + ":"
-            + getP2pPort()
-            + discport);
+    return URI.create("enode://" + getNodeId() + "@" + LOCALHOST + ":" + getP2pPort() + discport);
   }
 
   private String getP2pPort() {

@@ -99,7 +99,7 @@ public class SmartContractPermissioningController implements NodePermissioningPr
 
   // Checks the returned bytes from the permissioning contract call to see if it's a value we
   // understand
-  private Boolean checkTransactionResult(final BytesValue result) {
+  public static Boolean checkTransactionResult(final BytesValue result) {
     // booleans are padded to 32 bytes
     if (result.size() != 32) {
       throw new IllegalArgumentException("Unexpected result size");
@@ -118,7 +118,8 @@ public class SmartContractPermissioningController implements NodePermissioningPr
   }
 
   // Assemble the bytevalue payload to call the contract
-  private BytesValue createPayload(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+  public static BytesValue createPayload(
+      final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
     final BytesValue signature;
     // Grab the right function signature based on the enodes provided
     if (sourceEnode.getInetAddress() instanceof Inet4Address
@@ -132,11 +133,20 @@ public class SmartContractPermissioningController implements NodePermissioningPr
       throw new IllegalArgumentException(
           "No payload possible for checking an ipv4 to ipv6 connection");
     }
+    return createPayload(signature, sourceEnode, destinationEnode);
+  }
+
+  public static BytesValue createPayload(
+      final BytesValue signature, final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
     return BytesValues.concatenate(
         signature, encodeEnodeUrl(sourceEnode), encodeEnodeUrl(destinationEnode));
   }
 
-  private BytesValue encodeEnodeUrl(final EnodeURL enode) {
+  public static BytesValue createPayload(final BytesValue signature, final EnodeURL enodeURL) {
+    return BytesValues.concatenate(signature, encodeEnodeUrl(enodeURL));
+  }
+
+  private static BytesValue encodeEnodeUrl(final EnodeURL enode) {
     return BytesValues.concatenate(
         encodeEnodeId(enode.getNodeId()),
         encodeIp(enode.getInetAddress()),
@@ -145,16 +155,17 @@ public class SmartContractPermissioningController implements NodePermissioningPr
 
   // As a function parameter an ip needs to be the appropriate number of bytes, big endian, and
   // filled to 32 bytes
-  private BytesValue encodeIp(final InetAddress addr) {
+  private static BytesValue encodeIp(final InetAddress addr) {
     // InetAddress deals with giving us the right number of bytes
     final byte[] address = addr.getAddress();
     final byte[] res = new byte[32];
     System.arraycopy(address, 0, res, 0, address.length);
-    return BytesValue.wrap(res);
+    BytesValue wrap = BytesValue.wrap(res);
+    return wrap;
   }
 
   // The port, a uint16, needs to be 2 bytes, little endian, and filled to 32 bytes
-  private BytesValue encodePort(final Integer port) {
+  private static BytesValue encodePort(final Integer port) {
     final byte[] res = new byte[32];
     res[31] = (byte) ((port) & 0xFF);
     res[30] = (byte) ((port >> 8) & 0xFF);
@@ -163,7 +174,7 @@ public class SmartContractPermissioningController implements NodePermissioningPr
 
   // The enode high and low need to be 32 bytes each. They then get concatenated as they are
   // adjacent parameters
-  private BytesValue encodeEnodeId(final String id) {
+  private static BytesValue encodeEnodeId(final String id) {
     return BytesValue.fromHexString(id);
   }
 }

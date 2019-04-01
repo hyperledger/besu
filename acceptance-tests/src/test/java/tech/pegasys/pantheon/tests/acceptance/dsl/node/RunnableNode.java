@@ -34,4 +34,6 @@ public interface RunnableNode extends Node {
   Address getAddress();
 
   URI enodeUrl();
+
+  String getNodeId();
 }
