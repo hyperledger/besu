@@ -13,5 +13,5 @@ To set custom CLI arguments for the Pantheon execution:
 ```sh
 cd build/install/pantheon
 
-./bin/pantheon --discovery=false --home=/tmp/pantheontmp
+./bin/pantheon --discovery-enabled=false --data-path=/tmp/pantheontmp
 ```
