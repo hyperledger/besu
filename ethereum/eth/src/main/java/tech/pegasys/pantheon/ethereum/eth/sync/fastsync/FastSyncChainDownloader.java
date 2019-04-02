@@ -17,12 +17,15 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.sync.ChainDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.EthTaskChainDownloader;
+import tech.pegasys.pantheon.ethereum.eth.sync.PipelineChainDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 public class FastSyncChainDownloader {
+
+  private static final boolean USE_PIPELINE_DOWNLOADER = false;
 
   private FastSyncChainDownloader() {}
 
@@ -34,12 +37,24 @@ public class FastSyncChainDownloader {
       final SyncState syncState,
       final MetricsSystem metricsSystem,
       final BlockHeader pivotBlockHeader) {
+
+    final FastSyncTargetManager<C> syncTargetManager =
+        new FastSyncTargetManager<>(
+            config, protocolSchedule, protocolContext, ethContext, metricsSystem, pivotBlockHeader);
+
+    if (USE_PIPELINE_DOWNLOADER) {
+      return new PipelineChainDownloader<>(
+          syncTargetManager,
+          new FastSyncDownloadPipelineFactory(
+              config, protocolSchedule, ethContext, pivotBlockHeader, metricsSystem),
+          ethContext.getScheduler());
+    }
+
     return new EthTaskChainDownloader<>(
         config,
         ethContext,
         syncState,
-        new FastSyncTargetManager<>(
-            config, protocolSchedule, protocolContext, ethContext, metricsSystem, pivotBlockHeader),
+        syncTargetManager,
         new FastSyncCheckpointHeaderManager<>(
             config,
             protocolContext,
