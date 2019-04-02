@@ -154,6 +154,21 @@ try {
                 }
             }
         }
+    }, DocTests: {
+        def stage_name = "Documentation tests node: "
+        node {
+            checkout scm
+            stage(stage_name + 'Build') {
+                def container = docker.image("python:3-alpine").inside() {
+                    try {
+                        sh 'pip install -r docs/requirements.txt'
+                        sh 'mkdocs build -s'
+                    } catch(e) {
+                        throw e
+                    }
+                }
+            }
+        }
     }
     if (env.BRANCH_NAME == "master") {
         node {
