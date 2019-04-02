@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.WaitForPeersTask;
+import tech.pegasys.pantheon.ethereum.eth.sync.ChainDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -153,8 +154,8 @@ public class FastSyncActions<C> {
   }
 
   public CompletableFuture<FastSyncState> downloadChain(final FastSyncState currentState) {
-    final FastSyncChainDownloader<C> downloader =
-        new FastSyncChainDownloader<>(
+    final ChainDownloader downloader =
+        FastSyncChainDownloader.create(
             syncConfig,
             protocolSchedule,
             protocolContext,

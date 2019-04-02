@@ -18,6 +18,8 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.SyncStatus;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastDownloaderFactory;
+import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncException;
 import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.fullsync.FullSyncDownloader;
@@ -43,10 +45,10 @@ public class DefaultSynchronizer<C> implements Synchronizer {
 
   private final SyncState syncState;
   private final AtomicBoolean started = new AtomicBoolean(false);
-  private final BlockPropagationManager<C> blockPropagationManager;
-  private final FullSyncDownloader<C> fullSyncDownloader;
-  private final Optional<FastSynchronizer<C>> fastSynchronizer;
   private final Subscribers<SyncStatusListener> syncStatusListeners = new Subscribers<>();
+  private final BlockPropagationManager<C> blockPropagationManager;
+  private final Optional<FastSyncDownloader<C>> fastSyncDownloader;
+  private final FullSyncDownloader<C> fullSyncDownloader;
 
   public DefaultSynchronizer(
       final SynchronizerConfiguration syncConfig,
@@ -60,6 +62,13 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       final MetricsSystem metricsSystem) {
     this.syncState = syncState;
 
+    ChainHeadTracker.trackChainHeadForPeers(
+        ethContext,
+        protocolSchedule,
+        protocolContext.getBlockchain(),
+        this::calculateTrailingPeerRequirements,
+        metricsSystem);
+
     this.blockPropagationManager =
         new BlockPropagationManager<>(
             syncConfig,
@@ -71,19 +80,11 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             metricsSystem,
             new BlockBroadcaster(ethContext));
 
-    ChainHeadTracker.trackChainHeadForPeers(
-        ethContext,
-        protocolSchedule,
-        protocolContext.getBlockchain(),
-        this::calculateTrailingPeerRequirements,
-        metricsSystem);
-
     this.fullSyncDownloader =
         new FullSyncDownloader<>(
             syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
-
-    fastSynchronizer =
-        FastSynchronizer.create(
+    this.fastSyncDownloader =
+        FastDownloaderFactory.create(
             syncConfig,
             dataDirectory,
             protocolSchedule,
@@ -96,8 +97,8 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   }
 
   private TrailingPeerRequirements calculateTrailingPeerRequirements() {
-    return fastSynchronizer
-        .flatMap(FastSynchronizer::calculateTrailingPeerRequirements)
+    return fastSyncDownloader
+        .flatMap(FastSyncDownloader::calculateTrailingPeerRequirements)
         .orElseGet(fullSyncDownloader::calculateTrailingPeerRequirements);
   }
 
@@ -105,8 +106,8 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   public void start() {
     if (started.compareAndSet(false, true)) {
       syncState.addSyncStatusListener(this::syncStatusCallback);
-      if (fastSynchronizer.isPresent()) {
-        fastSynchronizer.get().start().whenComplete(this::handleFastSyncResult);
+      if (fastSyncDownloader.isPresent()) {
+        fastSyncDownloader.get().start().whenComplete(this::handleFastSyncResult);
       } else {
         startFullSync();
       }
@@ -128,7 +129,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
           "Fast sync completed successfully with pivot block {}",
           result.getPivotBlockNumber().getAsLong());
     }
-    fastSynchronizer.ifPresent(FastSynchronizer::deleteFastSyncState);
+    fastSyncDownloader.ifPresent(FastSyncDownloader::deleteFastSyncState);
 
     startFullSync();
   }

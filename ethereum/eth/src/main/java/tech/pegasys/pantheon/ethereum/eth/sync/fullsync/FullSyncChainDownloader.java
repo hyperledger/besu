@@ -10,21 +10,21 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
+package tech.pegasys.pantheon.ethereum.eth.sync.fullsync;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.sync.ChainDownloader;
+import tech.pegasys.pantheon.ethereum.eth.sync.CheckpointHeaderManager;
 import tech.pegasys.pantheon.ethereum.eth.sync.EthTaskChainDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
-public class FastSyncChainDownloader {
+public class FullSyncChainDownloader {
 
-  private FastSyncChainDownloader() {}
+  private FullSyncChainDownloader() {}
 
   public static <C> ChainDownloader create(
       final SynchronizerConfiguration config,
@@ -32,23 +32,16 @@ public class FastSyncChainDownloader {
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final MetricsSystem metricsSystem,
-      final BlockHeader pivotBlockHeader) {
+      final MetricsSystem metricsSystem) {
     return new EthTaskChainDownloader<>(
         config,
         ethContext,
         syncState,
-        new FastSyncTargetManager<>(
-            config, protocolSchedule, protocolContext, ethContext, metricsSystem, pivotBlockHeader),
-        new FastSyncCheckpointHeaderManager<>(
-            config,
-            protocolContext,
-            ethContext,
-            syncState,
-            protocolSchedule,
-            metricsSystem,
-            pivotBlockHeader),
-        new FastSyncBlockImportTaskFactory<>(
+        new FullSyncTargetManager<>(
+            config, protocolSchedule, protocolContext, ethContext, metricsSystem),
+        new CheckpointHeaderManager<>(
+            config, protocolContext, ethContext, syncState, protocolSchedule, metricsSystem),
+        new FullSyncBlockImportTaskFactory<>(
             config, protocolSchedule, protocolContext, ethContext, metricsSystem),
         metricsSystem);
   }
