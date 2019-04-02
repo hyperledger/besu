@@ -28,13 +28,13 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUtil;
+import tech.pegasys.pantheon.ethereum.eth.sync.ChainDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -72,9 +72,9 @@ public class FastSyncChainDownloaderTest {
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
   }
 
-  private FastSyncChainDownloader<?> downloader(
+  private ChainDownloader downloader(
       final SynchronizerConfiguration syncConfig, final long pivotBlockNumber) {
-    return new FastSyncChainDownloader<>(
+    return FastSyncChainDownloader.create(
         syncConfig,
         protocolSchedule,
         protocolContext,
@@ -85,8 +85,7 @@ public class FastSyncChainDownloaderTest {
   }
 
   @Test
-  public void shouldSyncToPivotBlockInMultipleSegments()
-      throws ExecutionException, InterruptedException {
+  public void shouldSyncToPivotBlockInMultipleSegments() {
     otherBlockchainSetup.importFirstBlocks(30);
 
     final RespondingEthPeer peer =
@@ -99,7 +98,7 @@ public class FastSyncChainDownloaderTest {
             .downloaderHeadersRequestSize(3)
             .build();
     final long pivotBlockNumber = 25;
-    final FastSyncChainDownloader<?> downloader = downloader(syncConfig, pivotBlockNumber);
+    final ChainDownloader downloader = downloader(syncConfig, pivotBlockNumber);
     final CompletableFuture<Void> result = downloader.start();
 
     peer.respondWhileOtherThreadsWork(responder, () -> !result.isDone());
@@ -120,7 +119,7 @@ public class FastSyncChainDownloaderTest {
 
     final long pivotBlockNumber = 5;
     final SynchronizerConfiguration syncConfig = SynchronizerConfiguration.builder().build();
-    final FastSyncChainDownloader<?> downloader = downloader(syncConfig, pivotBlockNumber);
+    final ChainDownloader downloader = downloader(syncConfig, pivotBlockNumber);
     final CompletableFuture<Void> result = downloader.start();
 
     peer.respondWhileOtherThreadsWork(responder, () -> !result.isDone());
@@ -152,7 +151,7 @@ public class FastSyncChainDownloaderTest {
             .downloaderHeadersRequestSize(3)
             .build();
     final long pivotBlockNumber = 25;
-    final FastSyncChainDownloader<?> downloader = downloader(syncConfig, pivotBlockNumber);
+    final ChainDownloader downloader = downloader(syncConfig, pivotBlockNumber);
     final CompletableFuture<Void> result = downloader.start();
 
     while (localBlockchain.getChainHeadBlockNumber() < 15) {

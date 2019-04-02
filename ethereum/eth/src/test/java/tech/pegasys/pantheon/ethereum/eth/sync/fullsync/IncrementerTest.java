@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUtil;
+import tech.pegasys.pantheon.ethereum.eth.sync.ChainDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -82,7 +83,7 @@ public class IncrementerTest {
 
     final SynchronizerConfiguration syncConfig =
         SynchronizerConfiguration.builder().downloaderChainSegmentSize(10).build();
-    final FullSyncDownloader<?> downloader = downloader(syncConfig);
+    final ChainDownloader downloader = downloader(syncConfig);
     downloader.start();
 
     peer.respondWhileOtherThreadsWork(responder, () -> !syncState.syncTarget().isPresent());
@@ -135,8 +136,8 @@ public class IncrementerTest {
     }
   }
 
-  private FullSyncDownloader<?> downloader(final SynchronizerConfiguration syncConfig) {
-    return new FullSyncDownloader<>(
+  private ChainDownloader downloader(final SynchronizerConfiguration syncConfig) {
+    return FullSyncChainDownloader.create(
         syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
   }
 }

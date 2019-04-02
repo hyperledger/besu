@@ -10,15 +10,13 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.eth.sync;
+package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
-import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncActions;
-import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncDownloader;
-import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncState;
-import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncStateStorage;
+import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
+import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.NodeDataRequest;
 import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.WorldStateDownloader;
@@ -31,40 +29,17 @@ import tech.pegasys.pantheon.services.tasks.CachingTaskCollection;
 import tech.pegasys.pantheon.services.tasks.RocksDbTaskQueue;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
-import com.google.common.io.MoreFiles;
-import com.google.common.io.RecursiveDeleteOption;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-class FastSynchronizer<C> {
+public class FastDownloaderFactory {
   private static final Logger LOG = LogManager.getLogger();
 
-  private final FastSyncDownloader<C> fastSyncDownloader;
-  private final Path fastSyncDataDirectory;
-  private final CachingTaskCollection<NodeDataRequest> taskCollection;
-  private final WorldStateDownloader worldStateDownloader;
-  private final FastSyncState initialSyncState;
-
-  private FastSynchronizer(
-      final FastSyncDownloader<C> fastSyncDownloader,
-      final Path fastSyncDataDirectory,
-      final CachingTaskCollection<NodeDataRequest> taskCollection,
-      final WorldStateDownloader worldStateDownloader,
-      final FastSyncState initialSyncState) {
-    this.fastSyncDownloader = fastSyncDownloader;
-    this.fastSyncDataDirectory = fastSyncDataDirectory;
-    this.taskCollection = taskCollection;
-    this.worldStateDownloader = worldStateDownloader;
-    this.initialSyncState = initialSyncState;
-  }
-
-  public static <C> Optional<FastSynchronizer<C>> create(
+  public static <C> Optional<FastSyncDownloader<C>> create(
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
       final ProtocolSchedule<C> protocolSchedule,
@@ -115,33 +90,11 @@ class FastSynchronizer<C> {
                 syncState,
                 metricsSystem),
             worldStateDownloader,
-            fastSyncStateStorage);
-    return Optional.of(
-        new FastSynchronizer<>(
-            fastSyncDownloader,
-            fastSyncDataDirectory,
+            fastSyncStateStorage,
             taskCollection,
-            worldStateDownloader,
-            fastSyncState));
-  }
-
-  public CompletableFuture<FastSyncState> start() {
-    LOG.info("Fast sync enabled");
-    return fastSyncDownloader.start(initialSyncState);
-  }
-
-  public void deleteFastSyncState() {
-    // Make sure downloader is stopped before we start cleaning up its dependencies
-    worldStateDownloader.cancel();
-    try {
-      taskCollection.close();
-      if (fastSyncDataDirectory.toFile().exists()) {
-        // Clean up this data for now (until fast sync resume functionality is in place)
-        MoreFiles.deleteRecursively(fastSyncDataDirectory, RecursiveDeleteOption.ALLOW_INSECURE);
-      }
-    } catch (final IOException e) {
-      LOG.error("Unable to clean up fast sync state", e);
-    }
+            fastSyncDataDirectory,
+            fastSyncState);
+    return Optional.of(fastSyncDownloader);
   }
 
   private static Path getStateQueueDirectory(final Path dataDirectory) {
@@ -185,9 +138,5 @@ class FastSynchronizer<C> {
         taskCollection::cacheSize);
 
     return taskCollection;
-  }
-
-  public Optional<TrailingPeerRequirements> calculateTrailingPeerRequirements() {
-    return fastSyncDownloader.getTrailingPeerRequirements();
   }
 }
