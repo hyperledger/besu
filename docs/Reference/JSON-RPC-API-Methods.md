@@ -2583,7 +2583,137 @@ None
         ]
     }
     ``` 
-    
+            
+## EEA Methods
+
+!!!note
+    EEA methods are for privacy features. Privacy features are under development and will be available in v1.1.  
+
+!!! note
+    The `EEA` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
+    or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `EEA` API methods.
+
+### eea_sendRawTransaction
+
+Creates a private transaction from a signed transaction, generates the transaction hash and submits it 
+to the transaction pool, and returns the transaction hash of the Privacy Marker Transaction.
+
+The signed transaction passed as an input parameter includes the `privateFrom`, `privateFor`, and `restriction` fields.
+
+To avoid exposing your private key, create signed transactions offline and send the signed transaction 
+data using `eea_sendRawTransaction`.
+
+
+**Parameters**
+
+`data` -  Signed RLP-encoded private transaction. For example:
+
+`params: ["0xf869018203e882520894f17f52151ebef6c7334fad080c5704d77216b732881bc16d674ec80000801ba02da1c48b670996dcb1f447ef9ef00b33033c48a4fe938f420bec3e56bfd24071a062e0aa78a81bf0290afbc3a9d8e9a068e6d74caa66c5e0fa8a46deaae96b0833"]`
+
+**Returns**
+
+`result` : `data` - 32-byte transaction hash
+
+!!! tip
+    If creating a contract, use [eea_getTransactionReceipt](#eea_gettransactionreceipt) to retrieve the contract 
+    address after the transaction is finalized.
+
+!!! example 
+    ```bash tab="curl HTTP request"
+    curl -X POST --data '{"jsonrpc":"2.0","method":"eea_sendRawTransaction","params": ["0xf869018203e882520894f17f52151ebef6c7334fad080c5704d77216b732881bc16d674ec80000801ba02da1c48b670996dcb1f447ef9ef00b33033c48a4fe938f420bec3e56bfd24071a062e0aa78a81bf0290afbc3a9d8e9a068e6d74caa66c5e0fa8a46deaae96b0833"], "id":1}' http://127.0.0.1:8545
+    ```
+        
+    ```bash tab="wscat WS request"
+    {"jsonrpc":"2.0","method":"eea_sendRawTransaction","params": ["0xf869018203e882520894f17f52151ebef6c7334fad080c5704d77216b732881bc16d674ec80000801ba02da1c48b670996dcb1f447ef9ef00b33033c48a4fe938f420bec3e56bfd24071a062e0aa78a81bf0290afbc3a9d8e9a068e6d74caa66c5e0fa8a46deaae96b0833"], "id":1}
+    ```
+        
+    ```json tab="JSON result"
+    {
+      "id":1,
+      "jsonrpc": "2.0",
+      "result": "0xe670ec64341771606e55d6b4ca35a1a6b75ee3d5145a99d05921026d1527331"
+    }
+    ```
+
+### eea_getTransactionReceipt
+
+Returns information about the private transaction after the transaction was mined. Receipts for pending transactions 
+are not available.
+
+**Parameters**
+
+`DATA` - 32-byte hash of a transaction.
+
+**Returns**
+
+`Object` - [Private Transaction receipt object](JSON-RPC-API-Objects.md#private-transaction-receipt-object), or `null` if no receipt found.
+
+!!! example 
+    ```bash tab="curl HTTP request"
+    curl -X POST --data '{"jsonrpc":"2.0","method":"eea_getTransactionReceipt","params":["0x504ce587a65bdbdb6414a0c6c16d86a04dd79bfcc4f2950eec9634b30ce5370f"],"id":1}' http://127.0.0.1:8545
+    ```
+            
+    ```bash tab="wscat WS request"
+    {"jsonrpc":"2.0","method":"eea_getTransactionReceipt","params":["0x504ce587a65bdbdb6414a0c6c16d86a04dd79bfcc4f2950eec9634b30ce5370f"],"id":1}
+    ```
+            
+    ```json tab="JSON result"
+    {
+       "jsonrpc": "2.0",
+       "id": 1,
+       "result": {
+           "blockHash": "0xe7212a92cfb9b06addc80dec2a0dfae9ea94fd344efeb157c41e12994fcad60a",
+           "blockNumber": "0x50",
+           "contractAddress": null,
+           "cumulativeGasUsed": "0x5208",
+           "from": "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+           "gasUsed": "0x5208",
+           "logs": [],
+           "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+           "status": "0x1",
+           "to": "0xf17f52151ebef6c7334fad080c5704d77216b732",
+           "transactionHash": "0xc00e97af59c6f88de163306935f7682af1a34c67245e414537d02e422815efc3",
+           "transactionIndex": "0x0"
+       }
+    }
+    ```
+
+### eea_clientCapabilities
+
+Returns information about the capabilities supported by the client including private transaction restriction levels
+and supported consensus mechanisms.
+
+**Parameters**
+
+None
+
+
+**Returns**
+
+Client capability in JSON name values pairs:
+
+`consensus : ["PoW", "IBFT" , "Clique"]`
+
+`restriction: ["restricted"]`
+
+!!! example 
+    ```bash tab="curl HTTP request"
+    curl -X POST --data '{"jsonrpc":"2.0","method":"eea_clientCapabilities","params":[],"id":1}' http://127.0.0.1:8545
+    ```
+                
+    ```bash tab="wscat WS request"
+    {"jsonrpc":"2.0","method":"eea_clientCapabilities","params": [], "id":1}
+    ```
+                
+    ```json tab="JSON result"
+    {
+      "id":1,
+      "jsonrpc": "2.0",
+      "result": [{"consensus": ["PoW", "IBFT" , "Clique"]},
+      {"restriction": ["restricted", "unrestricted"]}
+    } 
+    ```
+
 ## Miscellaneous Methods 
 
 ### rpc_modules
@@ -2617,130 +2747,3 @@ Enabled JSON-RPC APIs.
             "net": "1.0"
         }
     }
-        
-## EEA Methods
-
-### eea_sendRawTransaction
-
-Creates a private transaction, which has already been signed, generates the 
-transaction hash and submits it to the transaction pool, and returns 
-the transaction hash of the Privacy Marker Transaction.
-
-The signed transaction passed as an input parameter is expected to include 
-the privateFrom, privateFor, and restriction fields.
-
-To avoid exposing your private key, create signed transactions offline
-and send the signed transaction data using `eea_sendRawTransaction`.
-
-
-**Parameters**
-
-`data` -  Signed RLP encoded private transaction. For example:
-
-`params: ["0xf869018203e882520894f17f52151ebef6c7334fad080c5704d77216b732881bc16d674ec80000801ba02da1c48b670996dcb1f447ef9ef00b33033c48a4fe938f420bec3e56bfd24071a062e0aa78a81bf0290afbc3a9d8e9a068e6d74caa66c5e0fa8a46deaae96b0833"]`
-
-**Returns**
-
-`result` : `data` - 32-byte transaction hash
-
-*If creating a contract, use eea_getTransactionReceipt to retrieve the
-contract address after the transaction is finalized.*
-
-!!! example ```bash tab="curl HTTP request" $ curl -X POST --data
-'{"jsonrpc":"2.0","method":"eea_sendRawTransaction","params": [{see
-above}], "id":1}' <JSON-RPC-http-endpoint:port> ```
-  
-   ```bash tab="wscat WS request"
-   {"jsonrpc":"2.0","method":"eea_sendRawTransaction","params": [{see above}], "id":1}
-   ```
-  
-   ```json tab="JSON result"
-   {
-     "id":1,
-     "jsonrpc": "2.0",
-     "result": "0xe670ec64341771606e55d6b4ca35a1a6b75ee3d5145a99d05921026d1527331"
-   }
-   ```
-
-### eea_getTransactionReceipt
-
-Returns information about the private transaction, after the transaction was 
-mined. Receipts for pending transactions the contract addressare not available.
-
-**Parameters**
-
-`DATA` - 32-byte hash of a transaction.
-
-**Returns**
-
-`Object` - [Private Transaction receipt object](JSON-RPC-API-Objects.md#private-transaction-receipt-object), or `null` when no receipt is found.
-
-!!! example ```bash tab="curl HTTP request" $ curl -X POST --dataFLRY3
-'{"jsonrpc":"2.0","method":"eea_getTransactionReceipt","params":["0x504ce587a65bdbdb6414a0c6c16d86a04dd79bfcc4f2950eec9634b30ce5370f"],"id":53}'
-<JSON-RPC-http-endpoint:port> ```
-  
-   ```bash tab="wscat WS request"
-   {"jsonrpc":"2.0","method":"eea_getTransactionReceipt","params":["0x504ce587a65bdbdb6414a0c6c16d86a04dd79bfcc4f2950eec9634b30ce5370f"],"id":53}
-   ```
-  
-   ```json tab="JSON result"
-   {
-       "jsonrpc": "2.0",
-       "id": 1,
-       "result": {
-           "blockHash": "0xe7212a92cfb9b06addc80dec2a0dfae9ea94fd344efeb157c41e12994fcad60a",
-           "blockNumber": "0x50",
-           "contractAddress": null,
-           "cumulativeGasUsed": "0x5208",
-           "from": "0x627306090abab3a6e1400e9345bc60c78a8bef57",
-           "gasUsed": "0x5208",
-           "logs": [],
-           "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-           "status": "0x1",
-           "to": "0xf17f52151ebef6c7334fad080c5704d77216b732",
-           "transactionHash": "0xc00e97af59c6f88de163306935f7682af1a34c67245e414537d02e422815efc3",
-           "transactionIndex": "0x0"
-       }
-   }
-   ```
-
-
-### eea_clientCapabilities
-
-
-A call to `eea_clientCapabilities` provides more information about the
-capabilities supported by the client. This call returns the private
-transaction restriction levels and the kinds of consensus mechanisms
-supported.
-
-
-**Parameters**
-
-None.
-
-
-**Returns**
-
-This call returns client capability information fields in the format of [JSON] name values pairs:
-
-consensus : ["PoW", "IBFT" , "Pos/Clique"]
-restriction: ["restricted"]
-
-!!! example ```bash tab="curl HTTP request" $ curl -X POST --data
-'{"jsonrpc":"2.0","method":"eea_clientCapabilities","params":[],"id":1
-}' <JSON-RPC-http-endpoint:port> ```
-  
-   ```bash tab="wscat WS request"
-   {"jsonrpc":"2.0","method":"eea_clientCapabilities","params": [], "id":1}
-   ```
-  
-   ```json tab="JSON result"
-   {
-     "id":1,
-     "jsonrpc": "2.0",
-     "result": [{"consensus": ["PoW", "IBFT" , "Clique"]},
-     {"restriction": ["restricted", "unrestricted"]}
-   }
-   ```
-
-!!!note EEA methods are for privacy features. Privacy features are under development and will be available in v1.1.
