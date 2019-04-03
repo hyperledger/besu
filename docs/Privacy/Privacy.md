@@ -1,92 +1,93 @@
-## Privacy
+# Privacy
 
-### Private Transaction
+Privacy in Pantheon refers to the ability to keep transactions private between the 
+involved parties. Other parties have no access to the transaction content, the sending party, or the 
+list of participating parties. 
 
-A transaction conforming to the definition of a *restricted* transaction
-as defined in the EEA Client Specification v2. The private payload is
-only stored within the nodes participating in the transaction and not
-in any other node. Private transactions are kept private between related
-parties, so unrelated parties have no access to the content of the 
-transaction, the sending party, or the list of participating addresses.
-The sending actor is specified in the `privateFrom` attribute of the 
-transaction. The receiving parties are specified in the `privateFor` 
-attribute of the transaction. See [eea_sendrawtransaction](../Reference/JSON-RPC-API-Methods.md#eea_sendRawTransaction)
-for implementation details.
+This page describes what private transactions are and how they are processed in Pantheon. Other pages describe:
 
-### Important Concepts
-- **Precompiled Contract**: A smart contract compiled from its source
- language to EVM bytecode and stored by an Ethereum node for later
- execution.
-- **Privacy**: It is “The right of individuals to control or influence
- what information related to them may be collected and stored and by
- whom and to whom that information may be disclosed.” For the purposes
- of this Specification, this right of privacy also applies to
- organizations to the extent permitted by law.
-- **Private State**: Data that is not shared in the clear in the
- globally replicated state tree. This data can represent bilateral or
- multilateral arrangements between counterparties, for example in
- private transactions.
-- **Private Transaction**: A transaction where some information about
- the transaction, such as the payload data, or the sender and
- recipient, is only available to the subset of network actors who are
- parties to that transaction.
-- **Private Transaction Manager**: A subsystem of an Enterprise Ethereum
-  system for implementing privacy known as an Enclave.
-  e.g. [Orion](https://github.com/PegaSysEng/orion).
-- **Actor**: The public key of someone involved in the private transaction (e.g. a `privateFor` actor).
-- **Privacy group id**: A unique identifier associated with the set of actors
- that are involved in private transaction.
+* How to configure Pantheon and the Private Transaction Manager (for example, Orion) to send private transactions
+* Creating and sending private transactions 
 
+## Private Transactions
 
-### How Private Transaction is Processed
+Private transactions are defined as *restricted* or *unrestricted*:  
 
-1. A private transaction is sent to the [eea_sendrawtransaction](../Reference/JSON-RPC-API-Methods.md#eea_sendRawTransaction)
-endpoint, using the `privateFor` attribute to specify the list of actors,
-The `privateFrom` attribute specifies the sending actor, and `restriction`
-attribute is set to *restricted*.
+* In restricted private transactions the payload of the private transaction is stored only in the nodes
+participating in the transaction. 
+
+* In unrestricted private transactions the payload of the private transaction is transmitted to all nodes
+in the network but is readable only by actors involved in the transaction.   
+
+!!! important 
+    Pantheon implements restricted private transactions only.
+
+## Privacy Concepts
+
+Processing private transactions involves the following concepts: 
+
+- **Precompiled Contract**: Smart contract compiled from the source language to EVM bytecode and stored by an 
+Ethereum node for later execution.
+
+- **Private State**: Data that is not shared in the globally replicated world state. Private state
+data can represent arrangements involving multiple parties. For example, data in private transactions.
+
+- **Actor**: Public key involved in a private transaction (for example, public key of the sender).
+
+- **Privacy Group ID**: Unique ID associated with the set of actors involved in a private transaction.
+
+- **Private Transaction**: Transaction where some information (for example, the payload data, or sender and
+ receiver) is available only to the actors involved in the transaction.
+
+- **Private Transaction Manager**: Network subsystem for implementing privacy. Also known as an Enclave.
+For example, [Orion](http://docs.orion.pegasys.tech).
+
+- **Privacy Marker Transaction**: Public Ethereum transaction with a payload of the transaction hash of the 
+private transaction. The `to` attribute of the Privacy Marker Transaction is the address of the privacy precompile contract. 
+The Privacy Marker Transaction is signed with the [Ethereum node private key](../Configuring-Pantheon/Node-Keys.md#node-private-key).
+
+## How a Private Transaction is Processed
+
+Private transactions are processed as illustrated and described below. The Private Transaction Manager is Orion. 
+
+![Processing Private Transctions](../images/PrivateTransactionProcessing.png)
+
+1. A private transaction is submitted using [eea_sendRawTransaction](../Reference/JSON-RPC-API-Methods.md#eea_sendrawtransaction). 
+The signed transaction includes transaction attributes that are specific to private transactions: 
+
+    * `privateFor` specifies the list of involved actors
+    * `privateFrom` specifies the sender
+    * `restriction` specifies the transaction is of type [_restricted_](#private-transactions)
  
-2. The JSON RPC endpoint hands off the private transaction to a
-Private Transaction Handler.
+1. The JSON-RPC endpoint passes the private transaction to the Private Transaction Handler.
 
-3. The Private Transaction Handler sends the private transaction to an Enclave 
-(Private Transaction Manager)
+1. The Private Transaction Handler sends the private transaction to Orion. 
 
-4. The Enclave will store the private transaction in map. The transaction will
-be associated with a random key (Enclave-key) identifying that transaction 
-in the enclave and a privacy group id.
+1. Orion distributes the private transaction directly (that is, point-to-point) to the Orion nodes of actors specified 
+in the `privateFor` attribute. All Orion nodes of involved actors store the transaction. The stored transaction is associated with 
+the transaction hash and privacy group ID.
 
-5. The Enclave distributes the private transaction point-to-point directly
-to the enclaves of actors specified in the `privateFor` attribute. All
-enclaves storing this transaction will associate it with the same key and 
-privacy group id.
-
-6. The Enclave returns the Enclave-key back to the Private
-Transaction Handler (as a response to the synchronous HTTP call).
+1. Orion returns the transaction hash to the Private Transaction Handler.
      
-7. The Private Transaction Handler will create a Privacy Marker Transaction (PMT).
-A PMT is a standard public Ethereum transaction. The payload of the PMT 
-is the Enclave-key of the private transaction. The `to` attribute of the PMT the 
-privacy precompile contract. The PMT is signed with the nodes default key.
-The PMT is sent to the transaction pool. Once the PMT has been mined in a block
-it is distributed to all nodes in the network. 
+1. The Private Transaction Handler creates a [Privacy Marker Transaction](#privacy-concepts) for the private 
+transaction. The Privacy Marker Transaction is propagated using devP2P in the same way as a public Ethereum transaction. 
 
-8. The Transaction Processor of every node in the network will process the 
-PMT as per any other public transaction. The PMT will be passed to the
-privacy precompile contract on those nodes that contain that precompile
-contract specified in the `to` attribute of the PMT.
+1. The Privacy Marker Transaction is mined into a block and distributed to all Ethereum nodes in the network. 
 
-8. The Privacy Precompile Contract queries the Enclave for the Private
-Transaction and Privacy Group Id based on the Enclave-key.
+1. The Mainnet Transaction Processor processes the Privacy Marker Transaction in the same way as any other public transaction. 
+On nodes that contain the privacy precompile contract specified in the `to` attribute of the Privacy Marker Transaction, 
+the Privacy Marker Transaction is passed to the privacy precompile contract .
 
-9. The Privacy Precompile Contract executes the Private Transaction using the
-Private Transaction Processor, specifying the private world state to use based on the
-Privacy Group Id. The Private Transaction Processor can read and write to 
+    !!! note 
+        Nodes receiving the Privacy Marker Transaction that do not contain the privacy precompile contract  
+        specified in the Privacy Marker Transaction ignore the Privacy Marker Transaction. 
+
+1. The privacy precompile contract queries Orion for the private transaction and privacy group ID using the 
+transaction hash.
+
+1. The privacy precompile contract passes the private transaction to the Private Transaction Processor.
+The privacy group ID specifies the private world state to use. 
+
+1. The Private Transaction Processor executes the transaction. The Private Transaction Processor can read and write to 
 the private world state, and read from the public world state.
-
-### Privacy JSON-RPC API method
-
-The [EEA methods](../Reference/JSON-RPC-API-Methods.md#eea_sendRawTransaction) created to
-provide and support privacy.
-
-!!!note EEA methods are for privacy features. Privacy features are under development and will be available in v1.1.
 
