@@ -34,11 +34,19 @@ public class PrivateTransactionVerifier {
     return new ExpectValidPrivateContractDeployedReceipt(contractAddress, eea, transactions);
   }
 
+  public ExpectNoPrivateContractDeployedReceipt noPrivateContractDeployed() {
+    return new ExpectNoPrivateContractDeployedReceipt(eea, transactions);
+  }
+
   public ExpectValidPrivateContractEventsEmitted validEventReturned(final String eventValue) {
     return new ExpectValidPrivateContractEventsEmitted(eventValue, eea, transactions);
   }
 
   public ExpectValidPrivateContractValuesReturned validOutputReturned(final String returnValue) {
     return new ExpectValidPrivateContractValuesReturned(returnValue, eea, transactions);
+  }
+
+  public ExpectNoValidPrivateContractValuesReturned noValidOutputReturned() {
+    return new ExpectNoValidPrivateContractValuesReturned(eea, transactions);
   }
 }

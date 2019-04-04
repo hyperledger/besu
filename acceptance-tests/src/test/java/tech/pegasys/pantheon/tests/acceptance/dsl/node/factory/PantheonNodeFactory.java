@@ -87,6 +87,19 @@ public class PantheonNodeFactory {
             .build());
   }
 
+  public PantheonNode createPrivateTransactionEnabledNode(
+      final String name, final PrivacyParameters privacyParameters, final String keyFilePath)
+      throws IOException {
+    return create(
+        new PantheonFactoryConfigurationBuilder()
+            .setName(name)
+            .jsonRpcEnabled()
+            .setKeyFilePath(keyFilePath)
+            .enablePrivateTransactions(privacyParameters)
+            .webSocketEnabled()
+            .build());
+  }
+
   public PantheonNode createArchiveNode(final String name) throws IOException {
     return create(
         new PantheonFactoryConfigurationBuilder()

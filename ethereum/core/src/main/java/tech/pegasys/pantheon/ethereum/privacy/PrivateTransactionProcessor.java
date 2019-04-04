@@ -150,7 +150,8 @@ public class PrivateTransactionProcessor {
       final PrivateTransaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
-      final BlockHashLookup blockHashLookup) {
+      final BlockHashLookup blockHashLookup,
+      final BytesValue privacyGroupId) {
     LOG.trace("Starting private execution of {}", transaction);
 
     final Address senderAddress = transaction.getSender();
@@ -171,7 +172,7 @@ public class PrivateTransactionProcessor {
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
     if (transaction.isContractCreation()) {
       final Address privateContractAddress =
-          Address.privateContractAddress(senderAddress, sender.getNonce() - 1L, BytesValue.EMPTY);
+          Address.privateContractAddress(senderAddress, sender.getNonce() - 1L, privacyGroupId);
 
       initialFrame =
           MessageFrame.builder()
