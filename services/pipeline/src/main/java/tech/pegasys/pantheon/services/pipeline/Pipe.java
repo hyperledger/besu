@@ -55,6 +55,11 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
     return !closed.get() && !aborted.get();
   }
 
+  @Override
+  public boolean isAborted() {
+    return aborted.get();
+  }
+
   /**
    * Get the number of items that can be queued inside this pipe.
    *

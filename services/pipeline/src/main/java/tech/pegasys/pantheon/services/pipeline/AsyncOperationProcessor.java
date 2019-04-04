@@ -62,6 +62,11 @@ class AsyncOperationProcessor<I, O> implements Processor<I, O> {
     }
   }
 
+  @Override
+  public void abort() {
+    inProgress.forEach(future -> future.cancel(true));
+  }
+
   private void outputNextCompletedTask(final WritePipe<O> outputPipe) {
     try {
       waitForAnyFutureToComplete();

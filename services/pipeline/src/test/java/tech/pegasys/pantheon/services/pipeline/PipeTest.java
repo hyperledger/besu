@@ -53,6 +53,7 @@ public class PipeTest {
     pipe.abort();
 
     assertThat(pipe.hasMore()).isFalse();
+    assertThat(pipe.isAborted()).isTrue();
   }
 
   @Test
@@ -79,6 +80,7 @@ public class PipeTest {
   public void shouldNotBeOpenAfterAbort() {
     pipe.abort();
     assertThat(pipe.isOpen()).isFalse();
+    assertThat(pipe.isAborted()).isTrue();
   }
 
   @Test

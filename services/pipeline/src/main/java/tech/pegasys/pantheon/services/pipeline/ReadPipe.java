@@ -31,6 +31,13 @@ public interface ReadPipe<T> {
   boolean hasMore();
 
   /**
+   * Determines if this pipeline this pipe is a part of has been aborted.
+   *
+   * @return true if the pipeline has been aborted, otherwise false.
+   */
+  boolean isAborted();
+
+  /**
    * Get and remove the next item from this pipe. This method will block until the next item is
    * available but may still return <code>null</code> if the pipe is closed or the thread
    * interrupted while waiting.
