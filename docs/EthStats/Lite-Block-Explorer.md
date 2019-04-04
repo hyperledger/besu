@@ -1,17 +1,17 @@
-description: Lite Block Explorer
+description: Ethereum Lite Explorer
 <!--- END of page meta data -->
 
-# EthStats Lite Block Explorer
+# Ethereum Lite Explorer
 
-Use the [EthStats Lite Block Explorer](https://lite.ethstats.io/) to explore blockchain data at the block, transaction, 
+Use the [Ethereum Lite Explorer](https://lite-explorer.aleth.io/) to explore blockchain data at the block, transaction, 
 and account level.
  
-The Lite Block Explorer is a client-side only web application that connects to an Ethereum 
-JSON RPC node. No server, hosting, or trusting third parties to display the blockchain data is 
+The Ethereum Lite Explorer is a client-side only web application that connects to any Ethereum 
+JSON RPC enabled node. No server, hosting, or trusting third parties to display the blockchain data is 
 required. 
 
 !!! note 
-     The EthStats Lite Block Explorer is an [Alethio product](https://aleth.io/).
+     The Ethereum Lite Explorer is an [Alethio product](https://aleth.io/).
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ required.
 
 ## Run Using Docker
 
-To run the Lite Block Explorer using the Docker image: 
+To run the Lite Explorer using the Docker image: 
 
 1. Start Pantheon with the [`--rpc-http-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled) option. 
 
@@ -31,25 +31,25 @@ To run the Lite Block Explorer using the Docker image:
         pantheon --network=dev --miner-enabled --miner-coinbase=0xfe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-cors-origins="all" --host-whitelist="all" --rpc-http-enabled --data-path=/tmp/tmpDatdir
         ```
 
-1. Run the `alethio/ethstats-lite-explorer` Docker image specifying the RPC HTTP URL (`http://localhost:8545` in this example): 
+1. Run the `alethio/ethereum-lite-explorer` Docker image specifying the RPC HTTP URL (`http://localhost:8545` in this example): 
 
     ```bash
-    docker run -p 80:80 -e NODE_URL=http://localhost:8545 alethio/ethstats-lite-explorer
+    docker run -p 80:80 -e NODE_URL=http://localhost:8545 alethio/ethereum-lite-explorer
     ```
 
-1. Open [localhost](http://localhost) in your browser to view the Lite Block Explorer. 
+1. Open [localhost](http://localhost) in your browser to view the Lite Explorer. 
 
 ## Install and Run 
 
-1. Clone the `ethstats-lite-explorer` repository: 
+1. Clone the `ethereum-lite-explorer` repository: 
    
     ```bash
-    git clone https://github.com/Alethio/ethstats-lite-explorer.git
+    git clone https://github.com/Alethio/ethereum-lite-explorer.git
     ```
 
-1. Change into the `ethstats-lite-explorer` directory: 
+1. Change into the `ethereum-lite-explorer` directory: 
    ```bash
-   cd ethstats-lite-explorer
+   cd ethereum-lite-explorer
    ```
 
 1. Install npm packages: 
@@ -58,15 +58,15 @@ To run the Lite Block Explorer using the Docker image:
     npm install
     ```
 
-1. Copy the sample environment variables: 
+1. Copy the sample config: 
 
     ```bash 
-    cp .env.example .env.local
+    cp config.default.json config.dev.json
     ```
   
-1. Update the `.env.local` file: 
+1. Update the `config.dev.json` file: 
 
-    * Set `VUE_APP_NODE_URL` to the RPC HTTP URL of your node (`http://localhost:8545` in this example)
+    * Set `APP_NODE_URL` to the RPC HTTP URL of your node (`http://localhost:8545` in this example)
    
     * Remove other environment variables. 
    
@@ -80,15 +80,16 @@ To run the Lite Block Explorer using the Docker image:
         pantheon --network=dev --miner-enabled --miner-coinbase=0xfe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-cors-origins="all" --host-whitelist="all" --rpc-http-enabled --data-path=/tmp/tmpDatdir
         ```
         
-1. In the `ethstats-lite-explorer` directory, run the Lite Block Explorer in development mode: 
+1. In the `ethereum-lite-explorer` directory, run the Lite Explorer in development mode: 
 
     ```bash
-    npm run serve
+    npm run build
+    npm run start
     ```  
    
-1. Open [localhost:8080](http://localhost:8080) in your browser to view the Lite Block Explorer.
+1. A browser windows should open displaying the Ethereum Lite Explorer (http://localhost:3000/)
    
 ## Lite Block Explorer Documentation 
 
-See the EthStats Lite Block Explorer [GitHub repository](https://github.com/Alethio/ethstats-lite-explorer) 
-for more documentation, including details on deploying the Lite Block Explorer. 
+See the Ethereum Lite Explorer [GitHub repository](https://github.com/Alethio/ethereum-lite-explorer) 
+for more documentation, including details on deploying it. 
