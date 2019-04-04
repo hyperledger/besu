@@ -35,6 +35,9 @@ class ProcessingStage<I, O> implements Stage {
     while (inputPipe.hasMore()) {
       processor.processNextInput(inputPipe, outputPipe);
     }
+    if (inputPipe.isAborted()) {
+      processor.abort();
+    }
     processor.finalize(outputPipe);
     outputPipe.close();
   }

@@ -97,6 +97,21 @@ public class AsyncOperationProcessorTest {
   }
 
   @Test
+  public void shouldCancelInProgressTasksWhenAborted() {
+    final CompletableFuture<String> task1 = new CompletableFuture<>();
+    final CompletableFuture<String> task2 = new CompletableFuture<>();
+    when(readPipe.get()).thenReturn(task1).thenReturn(task2);
+
+    processor.processNextInput(readPipe, writePipe);
+    processor.processNextInput(readPipe, writePipe);
+
+    processor.abort();
+
+    assertThat(task1).isCancelled();
+    assertThat(task2).isCancelled();
+  }
+
+  @Test
   public void shouldInterruptThreadWhenFutureCompletes() {
     // Ensures that if we're waiting for the next input we wake up and output completed tasks
 

@@ -16,4 +16,6 @@ interface Processor<I, O> {
   void processNextInput(final ReadPipe<I> inputPipe, final WritePipe<O> outputPipe);
 
   default void finalize(final WritePipe<O> outputPipe) {}
+
+  default void abort() {}
 }

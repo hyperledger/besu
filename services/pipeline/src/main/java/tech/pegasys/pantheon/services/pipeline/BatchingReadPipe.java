@@ -37,6 +37,11 @@ public class BatchingReadPipe<T> implements ReadPipe<List<T>> {
   }
 
   @Override
+  public boolean isAborted() {
+    return input.isAborted();
+  }
+
+  @Override
   public List<T> get() {
     final T firstItem = input.get();
     if (firstItem == null) {
