@@ -13,9 +13,9 @@
 package tech.pegasys.pantheon.ethereum.eth.sync;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
@@ -31,14 +31,13 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.UnaryOperator;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -47,9 +46,9 @@ public class CheckpointHeaderFetcherTest {
   private static ProtocolSchedule<Void> protocolSchedule;
   private static ProtocolContext<Void> protocolContext;
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
-  @Mock private UnaryOperator<List<BlockHeader>> filter;
   private EthProtocolManager ethProtocolManager;
-  private CheckpointHeaderFetcher checkpointHeaderFetcher;
+  private Responder responder;
+  private RespondingEthPeer respondingPeer;
 
   @BeforeClass
   public static void setUpClass() {
@@ -65,26 +64,15 @@ public class CheckpointHeaderFetcherTest {
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             blockchain, protocolContext.getWorldStateArchive(), () -> false);
-    final EthContext ethContext = ethProtocolManager.ethContext();
-    checkpointHeaderFetcher =
-        new CheckpointHeaderFetcher(
-            SynchronizerConfiguration.builder()
-                .downloaderChainSegmentSize(5)
-                .downloaderHeadersRequestSize(3)
-                .build(),
-            protocolSchedule,
-            ethContext,
-            filter,
-            metricsSystem);
+    responder =
+        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+    respondingPeer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
   }
 
   @Test
   public void shouldRequestHeadersFromPeerAndExcludeExistingHeader() {
-    when(filter.apply(any())).thenAnswer(invocation -> invocation.getArgument(0));
-    final Responder responder =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
-    final RespondingEthPeer respondingPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    final CheckpointHeaderFetcher checkpointHeaderFetcher =
+        createCheckpointHeaderFetcher(Optional.empty());
 
     final CompletableFuture<List<BlockHeader>> result =
         checkpointHeaderFetcher.getNextCheckpointHeaders(respondingPeer.getEthPeer(), header(1));
@@ -97,23 +85,74 @@ public class CheckpointHeaderFetcherTest {
   }
 
   @Test
-  public void shouldApplyFilterToDownloadedCheckpoints() {
-    final List<BlockHeader> filteredResult = asList(header(7), header(9));
-    final List<BlockHeader> unfilteredResult = asList(header(6), header(11), header(16));
-    when(filter.apply(unfilteredResult)).thenReturn(filteredResult);
-    final Responder responder =
-        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
-    final RespondingEthPeer respondingPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+  public void shouldNotRequestHeadersBeyondTargetWhenTargetIsMultipleOfSegmentSize() {
+    final CheckpointHeaderFetcher checkpointHeaderFetcher =
+        createCheckpointHeaderFetcher(Optional.of(header(11)));
 
     final CompletableFuture<List<BlockHeader>> result =
         checkpointHeaderFetcher.getNextCheckpointHeaders(respondingPeer.getEthPeer(), header(1));
 
-    assertThat(result).isNotDone();
+    respondingPeer.respond(responder);
+
+    assertThat(result).isCompletedWithValue(asList(header(6), header(11)));
+  }
+
+  @Test
+  public void shouldNotRequestHeadersBeyondTargetWhenTargetIsNotAMultipleOfSegmentSize() {
+    final CheckpointHeaderFetcher checkpointHeaderFetcher =
+        createCheckpointHeaderFetcher(Optional.of(header(15)));
+
+    final CompletableFuture<List<BlockHeader>> result =
+        checkpointHeaderFetcher.getNextCheckpointHeaders(respondingPeer.getEthPeer(), header(1));
 
     respondingPeer.respond(responder);
 
-    assertThat(result).isCompletedWithValue(filteredResult);
+    assertThat(result).isCompletedWithValue(asList(header(6), header(11)));
+  }
+
+  @Test
+  public void shouldReturnOnlyTargetHeaderWhenLastHeaderIsTheCheckpointBeforeTarget() {
+    final CheckpointHeaderFetcher checkpointHeaderFetcher =
+        createCheckpointHeaderFetcher(Optional.of(header(15)));
+
+    final CompletableFuture<List<BlockHeader>> result =
+        checkpointHeaderFetcher.getNextCheckpointHeaders(respondingPeer.getEthPeer(), header(11));
+
+    assertThat(result).isCompletedWithValue(singletonList(header(15)));
+  }
+
+  @Test
+  public void shouldReturnEmptyListWhenLastHeaderIsTarget() {
+    final CheckpointHeaderFetcher checkpointHeaderFetcher =
+        createCheckpointHeaderFetcher(Optional.of(header(15)));
+
+    final CompletableFuture<List<BlockHeader>> result =
+        checkpointHeaderFetcher.getNextCheckpointHeaders(respondingPeer.getEthPeer(), header(15));
+    assertThat(result).isCompletedWithValue(emptyList());
+  }
+
+  @Test
+  public void shouldReturnEmptyListWhenLastHeaderIsAfterTarget() {
+    final CheckpointHeaderFetcher checkpointHeaderFetcher =
+        createCheckpointHeaderFetcher(Optional.of(header(15)));
+
+    final CompletableFuture<List<BlockHeader>> result =
+        checkpointHeaderFetcher.getNextCheckpointHeaders(respondingPeer.getEthPeer(), header(16));
+    assertThat(result).isCompletedWithValue(emptyList());
+  }
+
+  private CheckpointHeaderFetcher createCheckpointHeaderFetcher(
+      final Optional<BlockHeader> targetHeader) {
+    final EthContext ethContext = ethProtocolManager.ethContext();
+    return new CheckpointHeaderFetcher(
+        SynchronizerConfiguration.builder()
+            .downloaderChainSegmentSize(5)
+            .downloaderHeadersRequestSize(3)
+            .build(),
+        protocolSchedule,
+        ethContext,
+        targetHeader,
+        metricsSystem);
   }
 
   private BlockHeader header(final long blockNumber) {
