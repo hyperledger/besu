@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.web3j.utils.Numeric.toHexString;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -33,7 +34,10 @@ import org.web3j.crypto.TransactionEncoder;
 
 public class SmartContractPermissioningAllowNodeTransaction implements Transaction<Hash> {
 
-  private static final String ADD_ENODE_IPV4_SIGNATURE = "0x680fc99c";
+  private static final BytesValue ADD_ENODE_SIGNATURE =
+      tech.pegasys.pantheon.crypto.Hash.keccak256(
+              BytesValue.of("addEnode(bytes32,bytes32,bytes16,uint16)".getBytes(UTF_8)))
+          .slice(0, 4);
 
   private final Account sender;
   private final Address contractAddress;
@@ -62,7 +66,7 @@ public class SmartContractPermissioningAllowNodeTransaction implements Transacti
     final String enodeURL = ((RunnableNode) node).enodeUrl().toASCIIString();
     final BytesValue payload =
         SmartContractPermissioningController.createPayload(
-            BytesValue.fromHexString(ADD_ENODE_IPV4_SIGNATURE), new EnodeURL(enodeURL));
+            ADD_ENODE_SIGNATURE, new EnodeURL(enodeURL));
 
     RawTransaction transaction =
         RawTransaction.createTransaction(

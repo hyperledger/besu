@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.pantheon.ethereum.permissioning.SmartContractPermissioningController.checkTransactionResult;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -29,7 +30,10 @@ import org.web3j.protocol.core.DefaultBlockParameterName;
 
 public class SmartContractPermissioningNodeIsAllowedTransaction implements Transaction<Boolean> {
 
-  private static final String IS_NODE_ALLOWED_IPV4_SIGNATURE = "0x6863d6c0";
+  private static final BytesValue IS_NODE_ALLOWED_SIGNATURE =
+      tech.pegasys.pantheon.crypto.Hash.keccak256(
+              BytesValue.of("enodeAllowed(bytes32,bytes32,bytes16,uint16)".getBytes(UTF_8)))
+          .slice(0, 4);
 
   private final Address contractAddress;
   private final Node node;
@@ -55,7 +59,7 @@ public class SmartContractPermissioningNodeIsAllowedTransaction implements Trans
     final String sourceEnodeURL = ((RunnableNode) node).enodeUrl().toASCIIString();
     final BytesValue payload =
         SmartContractPermissioningController.createPayload(
-            BytesValue.fromHexString(IS_NODE_ALLOWED_IPV4_SIGNATURE), new EnodeURL(sourceEnodeURL));
+            IS_NODE_ALLOWED_SIGNATURE, new EnodeURL(sourceEnodeURL));
 
     return org.web3j.protocol.core.methods.request.Transaction.createFunctionCallTransaction(
         null, null, null, null, contractAddress.toString(), payload.toString());
