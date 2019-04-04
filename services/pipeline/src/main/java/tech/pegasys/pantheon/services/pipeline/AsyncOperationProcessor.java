@@ -12,9 +12,11 @@
  */
 package tech.pegasys.pantheon.services.pipeline;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -27,14 +29,19 @@ import org.apache.logging.log4j.Logger;
 class AsyncOperationProcessor<I, O> implements Processor<I, O> {
   private static final Logger LOG = LogManager.getLogger();
   private final Function<I, CompletableFuture<O>> processor;
-  private final Collection<CompletableFuture<O>> inProgress;
+  private final List<CompletableFuture<O>> inProgress;
+  private CompletableFuture<?> nextOutputAvailableFuture = completedFuture(null);
+  private final boolean preserveOrder;
   private final int maxConcurrency;
 
   public AsyncOperationProcessor(
-      final Function<I, CompletableFuture<O>> processor, final int maxConcurrency) {
+      final Function<I, CompletableFuture<O>> processor,
+      final int maxConcurrency,
+      final boolean preserveOrder) {
     this.processor = processor;
     this.maxConcurrency = maxConcurrency;
     this.inProgress = new ArrayList<>(maxConcurrency);
+    this.preserveOrder = preserveOrder;
   }
 
   @Override
@@ -47,6 +54,7 @@ class AsyncOperationProcessor<I, O> implements Processor<I, O> {
         // schedule the output.
         final Thread stageThread = Thread.currentThread();
         inProgress.add(future);
+        updateNextOutputAvailableFuture();
         future.whenComplete((result, error) -> stageThread.interrupt());
       }
       outputCompletedTasks(outputPipe);
@@ -74,26 +82,48 @@ class AsyncOperationProcessor<I, O> implements Processor<I, O> {
     } catch (final InterruptedException e) {
       LOG.trace("Interrupted while waiting for processing to complete", e);
     } catch (final ExecutionException e) {
-      LOG.error("Processing failed and we don't handle exceptions properly yet", e);
+      throw new RuntimeException("Async operation failed", e);
     } catch (final TimeoutException e) {
       // Ignore and go back around the loop.
     }
   }
 
-  @SuppressWarnings("rawtypes")
   private void waitForAnyFutureToComplete()
       throws InterruptedException, ExecutionException, TimeoutException {
-    CompletableFuture.anyOf(inProgress.toArray(new CompletableFuture[0])).get(1, TimeUnit.SECONDS);
+    nextOutputAvailableFuture.get(1, TimeUnit.SECONDS);
   }
 
   private void outputCompletedTasks(final WritePipe<O> outputPipe) {
+    boolean inProgressChanged = false;
     for (final Iterator<CompletableFuture<O>> i = inProgress.iterator(); i.hasNext(); ) {
       final CompletableFuture<O> process = i.next();
       final O result = process.getNow(null);
       if (result != null) {
+        inProgressChanged = true;
         outputPipe.put(result);
         i.remove();
+      } else if (preserveOrder) {
+        break;
       }
+    }
+    if (inProgressChanged) {
+      updateNextOutputAvailableFuture();
+    }
+  }
+
+  /**
+   * CompletableFuture.anyOf adds a completion handler to every future its passed so if we call it
+   * too often we can quickly wind up with thousands of completion handlers which take a long time
+   * to iterate through and notify. So only create it when the futures it covers have actually
+   * changed.
+   */
+  @SuppressWarnings("rawtypes")
+  private void updateNextOutputAvailableFuture() {
+    if (preserveOrder) {
+      nextOutputAvailableFuture = inProgress.isEmpty() ? completedFuture(null) : inProgress.get(0);
+    } else {
+      nextOutputAvailableFuture =
+          CompletableFuture.anyOf(inProgress.toArray(new CompletableFuture[0]));
     }
   }
 }
