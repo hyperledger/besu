@@ -144,6 +144,53 @@ public class PipelineBuilderTest {
   }
 
   @Test
+  public void shouldProcessAsyncOrdered() throws Exception {
+    final Map<Integer, CompletableFuture<String>> futures = new ConcurrentHashMap<>();
+    final List<String> output = new CopyOnWriteArrayList<>();
+    final Pipeline<Integer> pipeline =
+        PipelineBuilder.createPipelineFrom("input", tasks, 15, NO_OP_LABELLED_2_COUNTER)
+            .thenProcessAsyncOrdered(
+                "toString",
+                value -> {
+                  final CompletableFuture<String> future = new CompletableFuture<>();
+                  futures.put(value, future);
+                  return future;
+                },
+                8)
+            .andFinishWith("end", output::add);
+    final CompletableFuture<?> result = pipeline.start(executorService);
+
+    waitForSize(futures.values(), 8);
+    // Complete current items out of order, except for 3
+    for (final int value : asList(2, 7, 1, 5, 8, 4, 6)) {
+      futures.get(value).complete(Integer.toString(value));
+    }
+
+    // 1 and 2 should be output and two new async processes started
+    waitForSize(output, 2);
+    assertThat(output).containsExactly("1", "2");
+    waitForSize(futures.values(), 10);
+
+    // Complete task 3 and all the remaining items should now be started
+    futures.get(3).complete("3");
+    waitForSize(futures.values(), 15);
+    // And the first 8 items should have been output
+    waitForSize(output, 8);
+    assertThat(output).containsExactly("1", "2", "3", "4", "5", "6", "7", "8");
+
+    // Complete the remaining items.
+    for (final int value : asList(14, 11, 10, 15, 12, 13, 9)) {
+      futures.get(value).complete(Integer.toString(value));
+    }
+
+    // And the final result should have everything in order
+    result.get(10, SECONDS);
+    assertThat(output)
+        .containsExactlyInAnyOrder(
+            "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15");
+  }
+
+  @Test
   public void shouldLimitInFlightProcessesWhenProcessingAsync() throws Exception {
     final List<String> output = new ArrayList<>();
     final List<CompletableFuture<String>> futures = new CopyOnWriteArrayList<>();
@@ -376,16 +423,18 @@ public class PipelineBuilderTest {
             .thenProcess("map", Function.identity())
             .thenProcessInParallel("parallel", Function.identity(), 3)
             .thenProcessAsync("async", CompletableFuture::completedFuture, 3)
+            .thenProcessAsyncOrdered("asyncOrdered", CompletableFuture::completedFuture, 3)
             .inBatches(4)
             .thenFlatMap("flatMap", List::stream, 10)
             .andFinishWith("finish", new ArrayList<>()::add);
 
     pipeline.start(executorService).get(10, SECONDS);
 
-    final List<String> stepNames = asList("input", "map", "parallel", "async", "flatMap");
+    final List<String> stepNames =
+        asList("input", "map", "parallel", "async", "asyncOrdered", "flatMap");
     final List<String> expectedMetricNames =
         Stream.concat(
-                Stream.of("async_outputPipe-batches"),
+                Stream.of("asyncOrdered_outputPipe-batches"),
                 stepNames.stream()
                     .map(stageName -> stageName + "_outputPipe")
                     .flatMap(
@@ -401,7 +450,7 @@ public class PipelineBuilderTest {
         .filter(name -> !name.endsWith("-batches") && !name.endsWith("-aborted"))
         .forEach(metric -> assertThat(counters.get(metric).count).hasValue(15));
 
-    assertThat(counters.get("async_outputPipe-batches").count).hasValueBetween(4, 15);
+    assertThat(counters.get("asyncOrdered_outputPipe-batches").count).hasValueBetween(4, 15);
   }
 
   private void waitForSize(final Collection<?> collection, final int targetSize) {

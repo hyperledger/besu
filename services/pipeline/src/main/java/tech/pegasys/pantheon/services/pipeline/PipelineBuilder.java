@@ -164,7 +164,31 @@ public class PipelineBuilder<I, T> {
       final String stageName,
       final Function<T, CompletableFuture<O>> processor,
       final int maxConcurrency) {
-    return addStage(new AsyncOperationProcessor<>(processor, maxConcurrency), stageName);
+    return addStage(new AsyncOperationProcessor<>(processor, maxConcurrency, false), stageName);
+  }
+
+  /**
+   * Adds a 1-to-1, asynchronous processing stage to the pipeline. A single thread reads items from
+   * the input and calls <i>processor</i> to begin processing. While a single thread is used to
+   * begin processing, up to <i>maxConcurrency</i> items may be in progress concurrently. As each
+   * returned {@link CompletableFuture} completes successfully the result is passed to the next
+   * stage in order.
+   *
+   * <p>If the returned {@link CompletableFuture} completes exceptionally the pipeline will abort.
+   *
+   * <p>Note: While processing may occur concurrently, order is preserved when results are output.
+   *
+   * @param stageName the name of this stage. Used as the label for the output count metric.
+   * @param processor the processing to apply to each item.
+   * @param maxConcurrency the maximum number of items being processed concurrently.
+   * @param <O> the output type for this processing step.
+   * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
+   */
+  public <O> PipelineBuilder<I, O> thenProcessAsyncOrdered(
+      final String stageName,
+      final Function<T, CompletableFuture<O>> processor,
+      final int maxConcurrency) {
+    return addStage(new AsyncOperationProcessor<>(processor, maxConcurrency, true), stageName);
   }
 
   /**
