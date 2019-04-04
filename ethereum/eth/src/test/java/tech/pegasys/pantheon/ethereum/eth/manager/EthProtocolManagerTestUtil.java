@@ -76,7 +76,7 @@ public class EthProtocolManagerTestUtil {
 
   // Utility to prevent scheduler from automatically running submitted tasks
   public static void disableEthSchedulerAutoRun(final EthProtocolManager ethProtocolManager) {
-    EthScheduler scheduler = ethProtocolManager.ethContext().getScheduler();
+    final EthScheduler scheduler = ethProtocolManager.ethContext().getScheduler();
     checkArgument(
         scheduler instanceof DeterministicEthScheduler,
         "EthProtocolManager must be set up with "
@@ -89,13 +89,29 @@ public class EthProtocolManagerTestUtil {
   // Works with {@code disableEthSchedulerAutoRun} - tasks will only be pending if
   // autoRun has been disabled.
   public static void runPendingFutures(final EthProtocolManager ethProtocolManager) {
-    EthScheduler scheduler = ethProtocolManager.ethContext().getScheduler();
+    final EthScheduler scheduler = ethProtocolManager.ethContext().getScheduler();
     checkArgument(
         scheduler instanceof DeterministicEthScheduler,
         "EthProtocolManager must be set up with "
             + DeterministicEthScheduler.class.getSimpleName()
             + " in order to manually run pending futures.");
     ((DeterministicEthScheduler) scheduler).runPendingFutures();
+  }
+
+  /**
+   * Gets the number of pending tasks submitted to the EthScheduler.
+   *
+   * <p>Works with {@code disableEthSchedulerAutoRun} - tasks will only be pending if autoRun has
+   * been disabled.
+   */
+  public static long getPendingFuturesCount(final EthProtocolManager ethProtocolManager) {
+    final EthScheduler scheduler = ethProtocolManager.ethContext().getScheduler();
+    checkArgument(
+        scheduler instanceof DeterministicEthScheduler,
+        "EthProtocolManager must be set up with "
+            + DeterministicEthScheduler.class.getSimpleName()
+            + " in order to manually run pending futures.");
+    return ((DeterministicEthScheduler) scheduler).getPendingFuturesCount();
   }
 
   public static void broadcastMessage(

@@ -107,7 +107,7 @@ public class PipelineBuilder<I, T> {
       final String sourceName, final int bufferSize, final LabelledMetric<Counter> outputCounter) {
     final Pipe<T> pipe = createPipe(bufferSize, sourceName, outputCounter);
     return new PipelineBuilder<>(
-        pipe, emptyList(), singleton(pipe), sourceName, pipe, pipe.getCapacity(), outputCounter);
+        pipe, emptyList(), singleton(pipe), sourceName, pipe, bufferSize, outputCounter);
   }
 
   /**
@@ -213,7 +213,7 @@ public class PipelineBuilder<I, T> {
             pipeEnd,
             maximumBatchSize,
             outputCounter.labels(lastStageName + "_outputPipe", "batches")),
-        bufferSize / maximumBatchSize + 1,
+        (int) Math.ceil(((double) bufferSize) / maximumBatchSize),
         outputCounter);
   }
 
@@ -307,18 +307,14 @@ public class PipelineBuilder<I, T> {
       final Processor<T, O> processor, final int newBufferSize, final String stageName) {
     final Pipe<O> outputPipe = createPipe(newBufferSize, stageName, outputCounter);
     final Stage processStage = new ProcessingStage<>(stageName, pipeEnd, outputPipe, processor);
-    return addStage(processStage, outputPipe);
-  }
-
-  private <O> PipelineBuilder<I, O> addStage(final Stage stage, final Pipe<O> outputPipe) {
-    final List<Stage> newStages = concat(stages, stage);
+    final List<Stage> newStages = concat(stages, processStage);
     return new PipelineBuilder<>(
         inputPipe,
         newStages,
         concat(pipes, outputPipe),
-        stage.getName(),
+        processStage.getName(),
         outputPipe,
-        bufferSize,
+        newBufferSize,
         outputCounter);
   }
 

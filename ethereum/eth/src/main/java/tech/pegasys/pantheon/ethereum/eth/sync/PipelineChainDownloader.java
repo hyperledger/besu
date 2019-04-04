@@ -18,6 +18,10 @@ import static tech.pegasys.pantheon.util.FutureUtils.exceptionallyCompose;
 
 import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.services.pipeline.Pipeline;
 
 import java.util.Optional;
@@ -37,15 +41,27 @@ public class PipelineChainDownloader<C> implements ChainDownloader {
 
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean cancelled = new AtomicBoolean(false);
+  private final Counter pipelineCompleteCounter;
+  private final Counter pipelineErrorCounter;
   private Pipeline<?> currentDownloadPipeline;
 
   public PipelineChainDownloader(
       final SyncTargetManager<C> syncTargetManager,
       final DownloadPipelineFactory downloadPipelineFactory,
-      final EthScheduler scheduler) {
+      final EthScheduler scheduler,
+      final MetricsSystem metricsSystem) {
     this.syncTargetManager = syncTargetManager;
     this.downloadPipelineFactory = downloadPipelineFactory;
     this.scheduler = scheduler;
+
+    final LabelledMetric<Counter> labelledCounter =
+        metricsSystem.createLabelledCounter(
+            MetricCategory.SYNCHRONIZER,
+            "chain_download_pipeline_restarts",
+            "Number of times the chain download pipeline has been restarted",
+            "reason");
+    pipelineCompleteCounter = labelledCounter.labels("complete");
+    pipelineErrorCounter = labelledCounter.labels("error");
   }
 
   @Override
@@ -72,7 +88,8 @@ public class PipelineChainDownloader<C> implements ChainDownloader {
   private CompletableFuture<Void> selectSyncTargetAndDownload() {
     return syncTargetManager
         .findSyncTarget(Optional.empty())
-        .thenCompose(this::startDownloadForSyncTarget);
+        .thenCompose(this::startDownloadForSyncTarget)
+        .thenRun(pipelineCompleteCounter::inc);
   }
 
   private CompletionStage<Void> repeatUnlessDownloadComplete(
@@ -87,6 +104,7 @@ public class PipelineChainDownloader<C> implements ChainDownloader {
 
   private CompletionStage<Void> handleFailedDownload(final Throwable error) {
     LOG.debug("Chain download failed. Will restart if required.", error);
+    pipelineErrorCounter.inc();
     if (!cancelled.get() && syncTargetManager.shouldContinueDownloading()) {
       // Drop the error, allowing the normal looping logic to retry.
       return completedFuture(null);

@@ -19,6 +19,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.util.FutureUtils.exceptionallyCompose;
+import static tech.pegasys.pantheon.util.FutureUtils.propagateCancellation;
 import static tech.pegasys.pantheon.util.FutureUtils.propagateResult;
 
 import java.util.concurrent.CompletableFuture;
@@ -72,6 +73,40 @@ public class FutureUtilsTest {
     input.completeExceptionally(ERROR);
 
     assertCompletedExceptionally(output, ERROR);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void shouldPropagateCancellation() {
+    final CompletableFuture<String> input = new CompletableFuture<>();
+    final CompletableFuture<String> output = mock(CompletableFuture.class);
+    propagateCancellation(input, output);
+
+    input.cancel(true);
+
+    verify(output).cancel(true);
+  }
+
+  @Test
+  public void shouldNotPropagateExceptionsOtherThanCancellationWhenPropagatingCancellation() {
+    final CompletableFuture<String> input = new CompletableFuture<>();
+    final CompletableFuture<String> output = new CompletableFuture<>();
+    propagateCancellation(input, output);
+    assertThat(output).isNotDone();
+
+    input.completeExceptionally(ERROR);
+    assertThat(output).isNotDone();
+  }
+
+  @Test
+  public void shouldNotPropagateResultsWhenPropagatingCancellation() {
+    final CompletableFuture<String> input = new CompletableFuture<>();
+    final CompletableFuture<String> output = new CompletableFuture<>();
+    propagateCancellation(input, output);
+    assertThat(output).isNotDone();
+
+    input.complete("foo");
+    assertThat(output).isNotDone();
   }
 
   @Test

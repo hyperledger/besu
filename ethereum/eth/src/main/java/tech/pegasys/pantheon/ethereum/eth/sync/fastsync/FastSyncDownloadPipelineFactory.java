@@ -12,15 +12,26 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 
+import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.DETACHED_ONLY;
+import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.LIGHT_DETACHED_ONLY;
+import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.LIGHT_SKIP_DETACHED;
+import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.SKIP_DETACHED;
+
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.sync.CheckpointHeaderFetcher;
+import tech.pegasys.pantheon.ethereum.eth.sync.CheckpointHeaderValidationStep;
 import tech.pegasys.pantheon.ethereum.eth.sync.CheckpointRangeSource;
+import tech.pegasys.pantheon.ethereum.eth.sync.DownloadBodiesStep;
+import tech.pegasys.pantheon.ethereum.eth.sync.DownloadHeadersStep;
 import tech.pegasys.pantheon.ethereum.eth.sync.DownloadPipelineFactory;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.services.pipeline.Pipeline;
@@ -29,54 +40,98 @@ import tech.pegasys.pantheon.services.pipeline.PipelineBuilder;
 import java.time.Duration;
 import java.util.Optional;
 
-public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory {
+public class FastSyncDownloadPipelineFactory<C> implements DownloadPipelineFactory {
   private final SynchronizerConfiguration syncConfig;
-  private final ProtocolSchedule<?> protocolSchedule;
+  private final ProtocolSchedule<C> protocolSchedule;
+  private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
   private final BlockHeader pivotBlockHeader;
   private final MetricsSystem metricsSystem;
+  private final FastSyncValidationPolicy attachedValidationPolicy;
+  private final FastSyncValidationPolicy detachedValidationPolicy;
 
   public FastSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
-      final ProtocolSchedule<?> protocolSchedule,
+      final ProtocolSchedule<C> protocolSchedule,
+      final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final BlockHeader pivotBlockHeader,
       final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
+    this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.pivotBlockHeader = pivotBlockHeader;
     this.metricsSystem = metricsSystem;
+    final LabelledMetric<Counter> fastSyncValidationCounter =
+        metricsSystem.createLabelledCounter(
+            MetricCategory.SYNCHRONIZER,
+            "fast_sync_validation_mode",
+            "Number of blocks validated using light vs full validation during fast sync",
+            "validationMode");
+    attachedValidationPolicy =
+        new FastSyncValidationPolicy(
+            this.syncConfig.fastSyncFullValidationRate(),
+            LIGHT_SKIP_DETACHED,
+            SKIP_DETACHED,
+            fastSyncValidationCounter);
+    detachedValidationPolicy =
+        new FastSyncValidationPolicy(
+            this.syncConfig.fastSyncFullValidationRate(),
+            LIGHT_DETACHED_ONLY,
+            DETACHED_ONLY,
+            fastSyncValidationCounter);
   }
 
   @Override
   public Pipeline<?> createDownloadPipelineForSyncTarget(final SyncTarget target) {
     final int downloaderParallelism = syncConfig.downloaderParallelism();
     final int headerRequestSize = syncConfig.downloaderHeaderRequestSize();
-    final int singleHeaderBufferSize = downloaderParallelism * headerRequestSize * 10;
+    final int singleHeaderBufferSize = headerRequestSize * downloaderParallelism;
+    final CheckpointRangeSource checkpointRangeSource =
+        new CheckpointRangeSource(
+            new CheckpointHeaderFetcher(
+                syncConfig,
+                protocolSchedule,
+                ethContext,
+                Optional.of(pivotBlockHeader),
+                metricsSystem),
+            this::shouldContinueDownloadingFromPeer,
+            ethContext.getScheduler(),
+            target.peer(),
+            target.commonAncestor(),
+            syncConfig.downloaderCheckpointTimeoutsPermitted(),
+            Duration.ofSeconds(5));
+    final DownloadHeadersStep<C> downloadHeadersStep =
+        new DownloadHeadersStep<>(
+            protocolSchedule, protocolContext, ethContext, detachedValidationPolicy, metricsSystem);
+    final CheckpointHeaderValidationStep<C> validateHeadersJoinUpStep =
+        new CheckpointHeaderValidationStep<>(
+            protocolSchedule, protocolContext, detachedValidationPolicy);
+    final DownloadBodiesStep<C> downloadBodiesStep =
+        new DownloadBodiesStep<>(protocolSchedule, ethContext, metricsSystem);
+    final DownloadReceiptsStep downloadReceiptsStep =
+        new DownloadReceiptsStep(ethContext, metricsSystem);
+    final FastImportBlocksStep<C> importBlockStep =
+        new FastImportBlocksStep<>(protocolSchedule, protocolContext, attachedValidationPolicy);
+
+    // TODO: Use async preserving order when that's ready.
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",
-            new CheckpointRangeSource(
-                new CheckpointHeaderFetcher(
-                    syncConfig,
-                    protocolSchedule,
-                    ethContext,
-                    Optional.of(pivotBlockHeader),
-                    metricsSystem),
-                this::shouldContinueDownloadingFromPeer,
-                ethContext.getScheduler(),
-                target.peer(),
-                target.commonAncestor(),
-                syncConfig.downloaderCheckpointTimeoutsPermitted(),
-                Duration.ofSeconds(5)),
-            singleHeaderBufferSize,
+            checkpointRangeSource,
+            downloaderParallelism,
             metricsSystem.createLabelledCounter(
                 MetricCategory.SYNCHRONIZER,
                 "chain_download_pipeline_processed_total",
                 "Number of entries process by each chain download pipeline stage",
                 "step",
                 "action"))
-        .andFinishWith("complete", result -> {});
+        .thenProcessAsync("downloadHeaders", downloadHeadersStep, downloaderParallelism)
+        .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
+        .inBatches(headerRequestSize)
+        .thenProcessAsync("downloadBodies", downloadBodiesStep, downloaderParallelism)
+        .thenProcessAsync("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
+        .andFinishWith("importBlock", importBlockStep);
   }
 
   private boolean shouldContinueDownloadingFromPeer(
