@@ -22,7 +22,7 @@ import org.junit.Test;
 
 public class CompleterStageTest {
 
-  private final Pipe<String> pipe = new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER);
+  private final Pipe<String> pipe = new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER);
   private final List<String> output = new ArrayList<>();
   private final CompleterStage<String> stage = new CompleterStage<>("name", pipe, output::add);
 

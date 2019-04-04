@@ -27,7 +27,8 @@ import org.junit.Test;
 public class PipeTest {
   private final Counter inputCounter = mock(Counter.class);
   private final Counter outputCounter = mock(Counter.class);
-  private final Pipe<String> pipe = new Pipe<>(5, inputCounter, outputCounter);
+  private final Counter abortedItemCounter = mock(Counter.class);
+  private final Pipe<String> pipe = new Pipe<>(5, inputCounter, outputCounter, abortedItemCounter);
 
   @Test
   public void shouldNotHaveMoreWhenEmptyAndClosed() {
@@ -118,6 +119,15 @@ public class PipeTest {
 
     assertThat(pipe.get()).isNull();
     verify(outputCounter, times(2)).inc();
+  }
+
+  @Test
+  public void shouldIncrementAbortedItemCounterForItemsDiscardedDueToAborting() {
+    pipe.put("A");
+    pipe.put("B");
+    pipe.abort();
+
+    verify(abortedItemCounter).inc(2);
   }
 
   @Test

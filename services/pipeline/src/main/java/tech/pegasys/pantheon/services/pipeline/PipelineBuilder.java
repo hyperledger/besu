@@ -312,6 +312,7 @@ public class PipelineBuilder<I, T> {
     return new Pipe<>(
         newBufferSize,
         outputCounter.labels(labelName, "added"),
-        outputCounter.labels(labelName, "removed"));
+        outputCounter.labels(labelName, "removed"),
+        outputCounter.labels(labelName, "aborted"));
   }
 }
