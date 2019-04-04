@@ -24,32 +24,22 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
-import java.net.Inet4Address;
-import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.util.Optional;
 
 /**
- * Controller that can read from a smart contract that exposes the permissioning calls
- * connectionAllowedIpv4(bytes32,bytes32,bytes4,uint16,bytes32,bytes32,bytes4,uint16)
- * connectionAllowedIpv6(bytes32,bytes32,bytes16,uint16,bytes32,bytes32,bytes16,uint16)
+ * Controller that can read from a smart contract that exposes the permissioning call
+ * connectionAllowed(bytes32,bytes32,bytes16,uint16,bytes32,bytes32,bytes16,uint16)
  */
 public class SmartContractPermissioningController implements NodePermissioningProvider {
   private final Address contractAddress;
   private final TransactionSimulator transactionSimulator;
 
-  // full function signature for ipv4 call
-  private static final String IPV4_FUNCTION_SIGNATURE =
-      "connectionAllowedIpv4(bytes32,bytes32,bytes4,uint16,bytes32,bytes32,bytes4,uint16)";
-  // hashed function signature for ipv4 call
-  private static final BytesValue IPV4_FUNCTION_SIGNATURE_HASH =
-      hashSignature(IPV4_FUNCTION_SIGNATURE);
-  // full function signature for ipv6 call
-  private static final String IPV6_FUNCTION_SIGNATURE =
-      "connectionAllowedIpv6(bytes32,bytes32,bytes16,uint16,bytes32,bytes32,bytes16,uint16)";
-  // hashed function signature for ipv6 call
-  private static final BytesValue IPV6_FUNCTION_SIGNATURE_HASH =
-      hashSignature(IPV6_FUNCTION_SIGNATURE);
+  // full function signature for connection allowed call
+  private static final String FUNCTION_SIGNATURE =
+      "connectionAllowed(bytes32,bytes32,bytes16,uint16,bytes32,bytes32,bytes16,uint16)";
+  // hashed function signature for connection allowed call
+  private static final BytesValue FUNCTION_SIGNATURE_HASH = hashSignature(FUNCTION_SIGNATURE);
 
   // The first 4 bytes of the hash of the full textual signature of the function is used in
   // contract calls to determine the function being called
@@ -120,20 +110,7 @@ public class SmartContractPermissioningController implements NodePermissioningPr
   // Assemble the bytevalue payload to call the contract
   public static BytesValue createPayload(
       final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
-    final BytesValue signature;
-    // Grab the right function signature based on the enodes provided
-    if (sourceEnode.getInetAddress() instanceof Inet4Address
-        && destinationEnode.getInetAddress() instanceof Inet4Address) {
-      signature = IPV4_FUNCTION_SIGNATURE_HASH;
-    } else if (sourceEnode.getInetAddress() instanceof Inet6Address
-        && destinationEnode.getInetAddress() instanceof Inet6Address) {
-      signature = IPV6_FUNCTION_SIGNATURE_HASH;
-    } else {
-      // If we got mixed mode enodes then it's wrong
-      throw new IllegalArgumentException(
-          "No payload possible for checking an ipv4 to ipv6 connection");
-    }
-    return createPayload(signature, sourceEnode, destinationEnode);
+    return createPayload(FUNCTION_SIGNATURE_HASH, sourceEnode, destinationEnode);
   }
 
   public static BytesValue createPayload(
@@ -159,9 +136,17 @@ public class SmartContractPermissioningController implements NodePermissioningPr
     // InetAddress deals with giving us the right number of bytes
     final byte[] address = addr.getAddress();
     final byte[] res = new byte[32];
-    System.arraycopy(address, 0, res, 0, address.length);
-    BytesValue wrap = BytesValue.wrap(res);
-    return wrap;
+    if (address.length == 4) {
+      // lead with 10 bytes of 0's
+      // then 2 bytes of 1's
+      res[10] = (byte) 0xFF;
+      res[11] = (byte) 0xFF;
+      // then the ipv4
+      System.arraycopy(address, 0, res, 12, 4);
+    } else {
+      System.arraycopy(address, 0, res, 0, address.length);
+    }
+    return BytesValue.wrap(res);
   }
 
   // The port, a uint16, needs to be 2 bytes, little endian, and filled to 32 bytes
