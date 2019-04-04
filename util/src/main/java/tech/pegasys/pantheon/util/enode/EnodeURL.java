@@ -164,6 +164,12 @@ public class EnodeURL {
     return discoveryPort;
   }
 
+  public boolean sameEndpoint(final EnodeURL enode) {
+    return Objects.equal(nodeId, enode.nodeId)
+        && Objects.equal(ip, enode.ip)
+        && Objects.equal(listeningPort, enode.listeningPort);
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {

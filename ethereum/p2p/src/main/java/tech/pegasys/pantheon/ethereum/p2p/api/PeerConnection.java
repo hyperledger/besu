@@ -15,8 +15,10 @@ package tech.pegasys.pantheon.ethereum.p2p.api;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Set;
 
@@ -97,5 +99,13 @@ public interface PeerConnection {
     public PeerNotConnected(final String message) {
       super(message);
     }
+  }
+
+  default boolean isRemoteEnode(final EnodeURL remoteEnodeUrl) {
+    return ((remoteEnodeUrl.getNodeId().equals(this.getPeer().getAddress().toString()))
+        && (remoteEnodeUrl.getListeningPort() == this.getPeer().getPort())
+        && (remoteEnodeUrl
+            .getInetAddress()
+            .equals(((InetSocketAddress) this.getRemoteAddress()).getAddress())));
   }
 }

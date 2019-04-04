@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.permissioning.node;
 
 import tech.pegasys.pantheon.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
+import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.List;
@@ -26,7 +27,10 @@ public class NodePermissioningController {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Optional<SyncStatusNodePermissioningProvider> syncStatusNodePermissioningProvider;
+  private Optional<ContextualNodePermissioningProvider> insufficientPeersPermissioningProvider =
+      Optional.empty();
   private final List<NodePermissioningProvider> providers;
+  private final Subscribers<Runnable> permissioningUpdateSubscribers = new Subscribers<>();
 
   public NodePermissioningController(
       final Optional<SyncStatusNodePermissioningProvider> syncStatusNodePermissioningProvider,
@@ -44,11 +48,19 @@ public class NodePermissioningController {
       return true;
     }
 
+    final Optional<Boolean> insufficientPeerPermission =
+        insufficientPeersPermissioningProvider.flatMap(
+            p -> p.isPermitted(sourceEnode, destinationEnode));
+
+    if (insufficientPeerPermission.isPresent()) {
+      return insufficientPeerPermission.get();
+    }
+
     if (syncStatusNodePermissioningProvider.isPresent()
         && !syncStatusNodePermissioningProvider.get().isPermitted(sourceEnode, destinationEnode)) {
       return false;
     } else {
-      for (NodePermissioningProvider provider : providers) {
+      for (final NodePermissioningProvider provider : providers) {
         if (!provider.isPermitted(sourceEnode, destinationEnode)) {
           return false;
         }
@@ -65,11 +77,27 @@ public class NodePermissioningController {
     }
   }
 
+  public void setInsufficientPeersPermissioningProvider(
+      final ContextualNodePermissioningProvider insufficientPeersPermissioningProvider) {
+    insufficientPeersPermissioningProvider.subscribeToUpdates(
+        () -> permissioningUpdateSubscribers.forEach(Runnable::run));
+    this.insufficientPeersPermissioningProvider =
+        Optional.of(insufficientPeersPermissioningProvider);
+  }
+
   public Optional<SyncStatusNodePermissioningProvider> getSyncStatusNodePermissioningProvider() {
     return syncStatusNodePermissioningProvider;
   }
 
   public List<NodePermissioningProvider> getProviders() {
     return providers;
+  }
+
+  public long subscribeToUpdates(final Runnable callback) {
+    return permissioningUpdateSubscribers.subscribe(callback);
+  }
+
+  public boolean unsubscribeFromUpdates(final long id) {
+    return permissioningUpdateSubscribers.unsubscribe(id);
   }
 }

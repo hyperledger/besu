@@ -321,6 +321,8 @@ public class NettyP2PNetwork implements P2PNetwork {
     this.nodePermissioningController = nodePermissioningController;
     this.blockchain = Optional.ofNullable(blockchain);
     this.advertisedHost = config.getDiscovery().getAdvertisedHost();
+    this.nodePermissioningController.ifPresent(
+        c -> c.subscribeToUpdates(this::checkCurrentConnections));
   }
 
   private Supplier<Integer> pendingTaskCounter(final EventLoopGroup eventLoopGroup) {
@@ -596,6 +598,17 @@ public class NettyP2PNetwork implements P2PNetwork {
 
   private synchronized void handleBlockAddedEvent(
       final BlockAddedEvent event, final Blockchain blockchain) {
+    connections
+        .getPeerConnections()
+        .forEach(
+            peerConnection -> {
+              if (!isPeerConnectionAllowed(peerConnection)) {
+                peerConnection.disconnect(DisconnectReason.REQUESTED);
+              }
+            });
+  }
+
+  private synchronized void checkCurrentConnections() {
     connections
         .getPeerConnections()
         .forEach(
