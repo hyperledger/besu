@@ -389,12 +389,16 @@ public class PipelineBuilderTest {
                 stepNames.stream()
                     .map(stageName -> stageName + "_outputPipe")
                     .flatMap(
-                        metricName -> Stream.of(metricName + "-added", metricName + "-removed")))
+                        metricName ->
+                            Stream.of(
+                                metricName + "-added",
+                                metricName + "-removed",
+                                metricName + "-aborted")))
             .collect(toList());
     assertThat(counters).containsOnlyKeys(expectedMetricNames);
 
     expectedMetricNames.stream()
-        .filter(name -> !name.endsWith("-batches"))
+        .filter(name -> !name.endsWith("-batches") && !name.endsWith("-aborted"))
         .forEach(metric -> assertThat(counters.get(metric).count).hasValue(15));
 
     assertThat(counters.get("async_outputPipe-batches").count).hasValueBetween(4, 15);

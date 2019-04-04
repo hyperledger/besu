@@ -29,7 +29,7 @@ import org.junit.Test;
 
 public class BatchingReadPipeTest {
 
-  private final Pipe<String> source = new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER);
+  private final Pipe<String> source = new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER);
   private final Counter batchCounter = mock(Counter.class);
   private final BatchingReadPipe<String> batchingPipe =
       new BatchingReadPipe<>(source, 3, batchCounter);

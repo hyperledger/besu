@@ -25,8 +25,8 @@ import org.junit.Test;
 
 public class MapProcessorTest {
 
-  private final Pipe<String> input = new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER);
-  private final Pipe<String> output = new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER);
+  private final Pipe<String> input = new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER);
+  private final Pipe<String> output = new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER);
 
   @SuppressWarnings("unchecked")
   private final Function<String, String> processor = mock(Function.class);
