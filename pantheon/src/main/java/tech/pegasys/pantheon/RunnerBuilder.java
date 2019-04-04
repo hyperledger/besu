@@ -42,6 +42,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.pending.Pen
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.syncing.SyncingSubscriptionService;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.ConnectingToLocalNodeException;
+import tech.pegasys.pantheon.ethereum.p2p.InsufficientPeersPermissioningProvider;
 import tech.pegasys.pantheon.ethereum.p2p.NetworkRunner;
 import tech.pegasys.pantheon.ethereum.p2p.NoopP2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
@@ -284,6 +285,12 @@ public class RunnerBuilder {
                     : caps -> new NoopP2PNetwork())
             .metricsSystem(metricsSystem)
             .build();
+
+    nodePermissioningController.ifPresent(
+        n ->
+            n.setInsufficientPeersPermissioningProvider(
+                new InsufficientPeersPermissioningProvider(
+                    networkRunner.getNetwork(), getSelfEnode(), bootnodesAsEnodeURLs)));
 
     final TransactionPool transactionPool = pantheonController.getTransactionPool();
     final MiningCoordinator miningCoordinator = pantheonController.getMiningCoordinator();
