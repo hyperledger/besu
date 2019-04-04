@@ -30,6 +30,7 @@ dependencies {
   testImplementation project(':pantheon')
   testImplementation project(':testutil')
   testImplementation project(':util')
+  testImplementation project(':enclave')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
   testImplementation 'com.google.guava:guava'

@@ -30,7 +30,6 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy.PrivateTransactionReceiptResult;
@@ -46,6 +45,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.base.Charsets;
 import org.apache.logging.log4j.Logger;
 
 public class EeaGetTransactionReceipt implements JsonRpcMethod {
@@ -92,18 +92,22 @@ public class EeaGetTransactionReceipt implements JsonRpcMethod {
     final long blockNumber = blockchain.getBlockchain().getBlockHeader(blockhash).get().getNumber();
 
     PrivateTransaction privateTransaction;
+    String privacyGroupId;
     try {
       privateTransaction = getTransactionFromEnclave(transaction, publicKey);
+      privacyGroupId = getPrivacyGroupIdFromEnclave(transaction, publicKey);
     } catch (Exception e) {
       LOG.error("Failed to fetch transaction from Enclave with error " + e.getMessage());
-      return new JsonRpcErrorResponse(
+      return new JsonRpcSuccessResponse(
           request.getId(), JsonRpcError.PRIVATE_TRANSACTION_RECEIPT_ERROR);
     }
 
     final String contractAddress =
         !privateTransaction.getTo().isPresent()
             ? Address.privateContractAddress(
-                    privateTransaction.getSender(), privateTransaction.getNonce(), BytesValue.EMPTY)
+                    privateTransaction.getSender(),
+                    privateTransaction.getNonce(),
+                    BytesValue.wrap(privacyGroupId.getBytes(Charsets.UTF_8)))
                 .toString()
             : null;
 
@@ -145,6 +149,16 @@ public class EeaGetTransactionReceipt implements JsonRpcMethod {
     LOG.trace("Created Private Transaction from given Transaction Hash");
 
     return new JsonRpcSuccessResponse(request.getId(), result);
+  }
+
+  private String getPrivacyGroupIdFromEnclave(final Transaction transaction, final String publicKey)
+      throws IOException {
+    LOG.trace("Fetching transaction information from Enclave");
+    final ReceiveRequest enclaveRequest =
+        new ReceiveRequest(new String(transaction.getPayload().extractArray(), UTF_8), publicKey);
+    ReceiveResponse enclaveResponse = enclave.receive(enclaveRequest);
+    LOG.trace("Received transaction information from Enclave");
+    return enclaveResponse.getPrivacyGroupId();
   }
 
   private PrivateTransaction getTransactionFromEnclave(

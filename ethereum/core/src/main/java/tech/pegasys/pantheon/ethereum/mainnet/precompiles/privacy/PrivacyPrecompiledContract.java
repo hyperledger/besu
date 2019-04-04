@@ -42,6 +42,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.io.IOException;
 import java.util.Base64;
 
+import com.google.common.base.Charsets;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -107,7 +108,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
       WorldUpdater publicWorldState = messageFrame.getWorldState();
 
-      BytesValue privacyGroupId = BytesValue.wrap(receiveResponse.getPrivacyGroupId());
+      BytesValue privacyGroupId =
+          BytesValue.wrap(receiveResponse.getPrivacyGroupId().getBytes(Charsets.UTF_8));
       // get the last world state root hash - or create a new one
       Hash lastRootHash =
           privateStateStorage.getPrivateAccountState(privacyGroupId).orElse(EMPTY_ROOT_HASH);
@@ -125,7 +127,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
               privateTransaction,
               messageFrame.getMiningBeneficiary(),
               OperationTracer.NO_TRACING,
-              messageFrame.getBlockHashLookup());
+              messageFrame.getBlockHashLookup(),
+              privacyGroupId);
 
       if (result.isInvalid() || !result.isSuccessful()) {
         throw new Exception("Unable to process the private transaction");
