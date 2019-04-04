@@ -46,6 +46,10 @@ public class MockExecutorService implements ExecutorService {
     currentTasks.forEach(ExecutorTask::run);
   }
 
+  public long getPendingFuturesCount() {
+    return tasks.stream().filter(ExecutorTask::isPending).count();
+  }
+
   public void runPendingFuturesInSeparateThreads(final ExecutorService executorService) {
     final List<ExecutorTask<?>> currentTasks = new ArrayList<>(tasks);
     currentTasks.forEach(task -> executorService.execute(task::run));

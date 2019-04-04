@@ -27,6 +27,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.pipeline.Pipeline;
 
 import java.util.Optional;
@@ -57,7 +58,8 @@ public class PipelineChainDownloaderTest {
   @Before
   public void setUp() {
     chainDownloader =
-        new PipelineChainDownloader<>(syncTargetManager, downloadPipelineFactory, scheduler);
+        new PipelineChainDownloader<>(
+            syncTargetManager, downloadPipelineFactory, scheduler, new NoOpMetricsSystem());
   }
 
   @Test

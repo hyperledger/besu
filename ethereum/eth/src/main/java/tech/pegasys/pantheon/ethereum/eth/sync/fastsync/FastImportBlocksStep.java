@@ -1,0 +1,60 @@
+/*
+ * Copyright 2019 ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
+
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.core.BlockImporter;
+import tech.pegasys.pantheon.ethereum.eth.sync.ValidationPolicy;
+import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+
+import java.util.List;
+import java.util.function.Consumer;
+
+public class FastImportBlocksStep<C> implements Consumer<List<BlockWithReceipts>> {
+
+  private final ProtocolSchedule<C> protocolSchedule;
+  private final ProtocolContext<C> protocolContext;
+  private final ValidationPolicy validationPolicy;
+
+  public FastImportBlocksStep(
+      final ProtocolSchedule<C> protocolSchedule,
+      final ProtocolContext<C> protocolContext,
+      final ValidationPolicy validationPolicy) {
+    this.protocolSchedule = protocolSchedule;
+    this.protocolContext = protocolContext;
+    this.validationPolicy = validationPolicy;
+  }
+
+  @Override
+  public void accept(final List<BlockWithReceipts> blocksWithReceipts) {
+    for (final BlockWithReceipts blockWithReceipts : blocksWithReceipts) {
+      if (!importBlock(blockWithReceipts)) {
+        throw new InvalidBlockException(
+            "Failed to import block",
+            blockWithReceipts.getHeader().getNumber(),
+            blockWithReceipts.getHash());
+      }
+    }
+  }
+
+  private boolean importBlock(final BlockWithReceipts blockWithReceipts) {
+    final BlockImporter<C> importer =
+        protocolSchedule.getByBlockNumber(blockWithReceipts.getNumber()).getBlockImporter();
+    return importer.fastImportBlock(
+        protocolContext,
+        blockWithReceipts.getBlock(),
+        blockWithReceipts.getReceipts(),
+        validationPolicy.getValidationModeForNextBlock());
+  }
+}

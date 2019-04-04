@@ -14,9 +14,13 @@ package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 
 import java.util.List;
+import java.util.Objects;
+
+import com.google.common.base.MoreObjects;
 
 class BlockWithReceipts {
   private final Block block;
@@ -37,5 +41,38 @@ class BlockWithReceipts {
 
   public List<TransactionReceipt> getReceipts() {
     return receipts;
+  }
+
+  public long getNumber() {
+    return block.getHeader().getNumber();
+  }
+
+  public Hash getHash() {
+    return block.getHash();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final BlockWithReceipts that = (BlockWithReceipts) o;
+    return Objects.equals(block, that.block) && Objects.equals(receipts, that.receipts);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(block, receipts);
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("block", block)
+        .add("receipts", receipts)
+        .toString();
   }
 }
