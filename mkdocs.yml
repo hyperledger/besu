@@ -25,9 +25,8 @@ extra:
     pegasys_website: https://pegasys.tech/
     issues: https://pegasys1.atlassian.net/secure/Dashboard.jspa?selectPageId=10000
   google:
-    analytics_id: 'UA-117921923-2'
     site_verification: 'za1cLzyS6LXDGO-pMzvfQdYTZ0Zc67uZtY0asA4YXZ0'
-
+    tag_manager: 'GTM-5B7N84J'
 
 # Repository
 repo_name: PegaSysEng/pantheon

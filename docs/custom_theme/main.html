@@ -9,21 +9,19 @@
       crossorigin="anonymous"></script>
   <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 
-  {% if config.extra.google.analytics_id %}
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id={{config.extra.google.analytics_id}}"></script>
-    <script>
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-
-          gtag('config', '{{config.extra.google.analytics_id}}');
-        </script>
-  {% endif %}
-
   {% if config.extra.google.site_verification %}
     <!-- Google site verification for search console -->
     <meta name="google-site-verification" content="{{config.extra.google.site_verification}}" />
+  {% endif %}
+
+  {% if config.extra.google.tag_manager %}
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','{{config.extra.google.tag_manager}}');</script>
+    <!-- End Google Tag Manager -->
   {% endif %}
 {% endblock %}
 
