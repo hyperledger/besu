@@ -44,6 +44,7 @@ public class FastSyncChainDownloader {
 
     if (USE_PIPELINE_DOWNLOADER) {
       return new PipelineChainDownloader<>(
+          syncState,
           syncTargetManager,
           new FastSyncDownloadPipelineFactory<>(
               config,

@@ -15,17 +15,21 @@ package tech.pegasys.pantheon.ethereum.eth.sync;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static tech.pegasys.pantheon.ethereum.eth.sync.PipelineChainDownloader.PAUSE_AFTER_ERROR_DURATION;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.pipeline.Pipeline;
@@ -34,6 +38,7 @@ import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -51,15 +56,23 @@ public class PipelineChainDownloaderTest {
   @Mock private Pipeline<Object> downloadPipeline2;
   @Mock private EthPeer peer1;
   @Mock private EthPeer peer2;
+  @Mock private SyncState syncState;
   private final BlockHeader commonAncestor = new BlockHeaderTestFixture().buildHeader();
-  private final SyncTarget syncTarget = new SyncTarget(peer1, commonAncestor);
+  private SyncTarget syncTarget;
   private PipelineChainDownloader<Void> chainDownloader;
 
   @Before
   public void setUp() {
+    syncTarget = new SyncTarget(peer1, commonAncestor);
     chainDownloader =
         new PipelineChainDownloader<>(
-            syncTargetManager, downloadPipelineFactory, scheduler, new NoOpMetricsSystem());
+            syncState,
+            syncTargetManager,
+            downloadPipelineFactory,
+            scheduler,
+            new NoOpMetricsSystem());
+
+    immediatelyCompletePauseAfterError();
   }
 
   @Test
@@ -86,6 +99,20 @@ public class PipelineChainDownloaderTest {
   }
 
   @Test
+  public void shouldUpdateSyncStateWhenTargetSelected() {
+    final CompletableFuture<SyncTarget> selectTargetFuture = new CompletableFuture<>();
+    when(syncTargetManager.findSyncTarget(Optional.empty())).thenReturn(selectTargetFuture);
+    expectPipelineCreation(syncTarget, downloadPipeline);
+    when(scheduler.startPipeline(downloadPipeline)).thenReturn(new CompletableFuture<>());
+    chainDownloader.start();
+    verifyZeroInteractions(downloadPipelineFactory);
+
+    selectTargetFuture.complete(syncTarget);
+
+    verify(syncState).setSyncTarget(peer1, commonAncestor);
+  }
+
+  @Test
   public void shouldRetryWhenSyncTargetSelectionFailsAndSyncTargetManagerShouldContinue() {
     final CompletableFuture<SyncTarget> selectTargetFuture = new CompletableFuture<>();
     when(syncTargetManager.shouldContinueDownloading()).thenReturn(true);
@@ -99,6 +126,36 @@ public class PipelineChainDownloaderTest {
     selectTargetFuture.completeExceptionally(new RuntimeException("Nope"));
 
     verify(syncTargetManager, times(2)).findSyncTarget(Optional.empty());
+  }
+
+  @Test // Weird but currently required behaviour to shutdown cleanly
+  public void shouldStopWithoutCompletingFutureWhenTargetSelectionUnexpectedCancelled() {
+    final CompletableFuture<SyncTarget> selectTargetFuture = new CompletableFuture<>();
+    when(syncTargetManager.findSyncTarget(Optional.empty())).thenReturn(selectTargetFuture);
+    final CompletableFuture<Void> result = chainDownloader.start();
+
+    verify(syncTargetManager).findSyncTarget(Optional.empty());
+
+    selectTargetFuture.completeExceptionally(new CancellationException("Shutting down"));
+
+    verifyNoMoreInteractions(syncTargetManager);
+    assertThat(result).isNotDone();
+  }
+
+  @Test // Weird but currently required behaviour to shutdown cleanly
+  public void shouldStopWithoutCompletingFutureWhenPipelineUnexpectedlyCancelled() {
+    when(syncTargetManager.findSyncTarget(Optional.empty()))
+        .thenReturn(completedFuture(syncTarget));
+    final CompletableFuture<Void> pipelineFuture = expectPipelineStarted(syncTarget);
+
+    final CompletableFuture<Void> result = chainDownloader.start();
+
+    verify(syncTargetManager).findSyncTarget(Optional.empty());
+
+    pipelineFuture.completeExceptionally(new CancellationException("Shutting down"));
+
+    verifyNoMoreInteractions(syncTargetManager);
+    assertThat(result).isNotDone();
   }
 
   @Test
@@ -129,6 +186,7 @@ public class PipelineChainDownloaderTest {
     pipelineFuture.complete(null);
 
     verify(syncTargetManager).shouldContinueDownloading();
+    verify(syncState).clearSyncTarget();
     verifyNoMoreInteractions(syncTargetManager);
     assertThat(result).isCompleted();
   }
@@ -254,5 +312,11 @@ public class PipelineChainDownloaderTest {
     assertThatThrownBy(future::get)
         .isInstanceOf(ExecutionException.class)
         .hasRootCauseInstanceOf(CancellationException.class);
+  }
+
+  @SuppressWarnings("unchecked")
+  private void immediatelyCompletePauseAfterError() {
+    when(scheduler.scheduleFutureTask(any(Supplier.class), same(PAUSE_AFTER_ERROR_DURATION)))
+        .then(invocation -> ((Supplier<CompletableFuture<?>>) invocation.getArgument(0)).get());
   }
 }

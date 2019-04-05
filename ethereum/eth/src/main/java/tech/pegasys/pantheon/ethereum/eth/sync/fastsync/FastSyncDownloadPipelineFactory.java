@@ -115,7 +115,6 @@ public class FastSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
     final FastImportBlocksStep<C> importBlockStep =
         new FastImportBlocksStep<>(protocolSchedule, protocolContext, attachedValidationPolicy);
 
-    // TODO: Use async preserving order when that's ready.
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",
             checkpointRangeSource,
@@ -126,11 +125,11 @@ public class FastSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
                 "Number of entries process by each chain download pipeline stage",
                 "step",
                 "action"))
-        .thenProcessAsync("downloadHeaders", downloadHeadersStep, downloaderParallelism)
+        .thenProcessAsyncOrdered("downloadHeaders", downloadHeadersStep, downloaderParallelism)
         .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
         .inBatches(headerRequestSize)
-        .thenProcessAsync("downloadBodies", downloadBodiesStep, downloaderParallelism)
-        .thenProcessAsync("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
+        .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
+        .thenProcessAsyncOrdered("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
         .andFinishWith("importBlock", importBlockStep);
   }
 

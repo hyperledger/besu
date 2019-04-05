@@ -21,8 +21,11 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class FastImportBlocksStep<C> implements Consumer<List<BlockWithReceipts>> {
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+public class FastImportBlocksStep<C> implements Consumer<List<BlockWithReceipts>> {
+  private static final Logger LOG = LogManager.getLogger();
   private final ProtocolSchedule<C> protocolSchedule;
   private final ProtocolContext<C> protocolContext;
   private final ValidationPolicy validationPolicy;
@@ -46,6 +49,9 @@ public class FastImportBlocksStep<C> implements Consumer<List<BlockWithReceipts>
             blockWithReceipts.getHash());
       }
     }
+    final long firstBlock = blocksWithReceipts.get(0).getNumber();
+    final long lastBlock = blocksWithReceipts.get(blocksWithReceipts.size() - 1).getNumber();
+    LOG.info("Completed importing chain segment {} to {}", firstBlock, lastBlock);
   }
 
   private boolean importBlock(final BlockWithReceipts blockWithReceipts) {

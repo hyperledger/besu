@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 import static tech.pegasys.pantheon.util.FutureUtils.completedExceptionally;
 import static tech.pegasys.pantheon.util.FutureUtils.exceptionallyCompose;
 
+import tech.pegasys.pantheon.ethereum.eth.sync.ChainDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.TrailingPeerRequirements;
 import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.NodeDataRequest;
 import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.StalledDownloadException;
@@ -117,8 +118,8 @@ public class FastSyncDownloader<C> {
       final FastSyncState currentState) {
     final CompletableFuture<Void> worldStateFuture =
         worldStateDownloader.run(currentState.getPivotBlockHeader().get());
-    final CompletableFuture<FastSyncState> chainFuture =
-        fastSyncActions.downloadChain(currentState);
+    final ChainDownloader chainDownloader = fastSyncActions.createChainDownloader(currentState);
+    final CompletableFuture<Void> chainFuture = chainDownloader.start();
 
     // If either download fails, cancel the other one.
     chainFuture.exceptionally(
@@ -128,7 +129,7 @@ public class FastSyncDownloader<C> {
         });
     worldStateFuture.exceptionally(
         error -> {
-          chainFuture.cancel(true);
+          chainDownloader.cancel();
           return null;
         });
 
