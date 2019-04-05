@@ -82,6 +82,9 @@ nav:
         - Accounts for Testing: Configuring-Pantheon/Accounts-for-Testing.md
         - Logging: Configuring-Pantheon/Logging.md
         - Passing JVM Options: Configuring-Pantheon/Passing-JVM-Options.md
+    - Privacy:
+        - Overview: Privacy/Privacy-Overview.md
+        - Processing Private Transactions: Privacy/Private-Transaction-Processing.md
     - Permissions:
         - Nodes and Accounts Whitelists: Permissions/Permissioning.md
     - Using Pantheon:

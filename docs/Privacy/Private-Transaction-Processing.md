@@ -1,7 +1,10 @@
 description: Private Transaction Processing
 <!--- END of page meta data -->
 
-## Processing Private Transactions
+# Processing Private Transactions
+
+!!!note
+    Privacy is under development and will be available in v1.1.
 
 Processing private transactions involves the following: 
 
@@ -55,3 +58,6 @@ The privacy group ID specifies the private world state to use.
 1. The Private Transaction Processor executes the transaction. The Private Transaction Processor can read and write to 
 the private world state, and read from the public world state.
 
+!!! important
+    For production systems requiring private transactions, we recommend using a network 
+    with a consensus mechanism supporting transaction finality. For example, [IBFT 2.0](../Consensus-Protocols/IBFT.md).

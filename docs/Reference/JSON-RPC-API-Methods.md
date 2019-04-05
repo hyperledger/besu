@@ -2603,6 +2603,9 @@ The signed transaction passed as an input parameter includes the `privateFrom`, 
 To avoid exposing your private key, create signed transactions offline and send the signed transaction 
 data using `eea_sendRawTransaction`.
 
+!!! important
+    For production systems requiring private transactions, we recommend using a network 
+    with a consensus mechanism supporting transaction finality. For example, [IBFT 2.0](../Consensus-Protocols/IBFT.md). 
 
 **Parameters**
 
