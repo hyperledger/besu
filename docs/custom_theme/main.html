@@ -23,6 +23,47 @@
     })(window,document,'script','dataLayer','{{config.extra.google.tag_manager}}');</script>
     <!-- End Google Tag Manager -->
   {% endif %}
+  {% if config.extra.google.tag_manager %}
+    <!-- Hotjar Tracking Code for https://docs.pantheon.pegasys.tech -->
+    <script>
+        (function(h,o,t,j,a,r){
+            h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+            h._hjSettings={hjid:{{config.extra.hotjar.site_id}},hjsv:6};
+            a=o.getElementsByTagName('head')[0];
+            r=o.createElement('script');r.async=1;
+            r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+            a.appendChild(r);
+        })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+    </script>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ 'assets/javascripts/application.c6f2d7d2.js' | url }}"></script>
+  {% if lang.t("search.language") != "en" %}
+    {% set languages = lang.t("search.language").split(",") %}
+    {% if languages | length and languages[0] != "" %}
+      {% set path = "assets/javascripts/lunr/" %}
+      <script src="{{ (path ~ 'lunr.stemmer.support.js') | url }}"></script>
+      {% for language in languages | map("trim") %}
+        {% if language != "en" %}
+          {% if language == "ja" %}
+            <script src="{{ (path ~ 'tinyseg.js') | url }}"></script>
+          {% endif %}
+          {% if language in ("da", "de", "es", "fi", "fr", "hu", "it", "ja", "nl", "no", "pt", "ro", "ru", "sv", "th", "tr") %}
+            <script src="{{ (path ~ 'lunr.' ~ language ~ '.js') | url }}"></script>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+      {% if languages | length > 1 %}
+        <script src="{{ (path ~ 'lunr.multi.js') | url }}"></script>
+      {% endif %}
+    {% endif %}
+  {% endif %}
+  <script>app.initialize({version:"{{ mkdocs_version }}",url:{base:"{{ base_url }}"}})</script>
+  {% for path in config["extra_javascript"] %}
+    <script src="{{ path | url }}"></script>
+  {% endfor %}
 {% endblock %}
 
 {% block analytics %}

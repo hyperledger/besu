@@ -27,6 +27,8 @@ extra:
   google:
     site_verification: 'za1cLzyS6LXDGO-pMzvfQdYTZ0Zc67uZtY0asA4YXZ0'
     tag_manager: 'GTM-5B7N84J'
+  hotjar:
+    site_id: '1161123'
 
 # Repository
 repo_name: PegaSysEng/pantheon
