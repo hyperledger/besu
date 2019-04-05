@@ -17,6 +17,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import tech.pegasys.pantheon.cli.PantheonCommand;
 import tech.pegasys.pantheon.cli.PantheonControllerBuilder;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
+import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
 import tech.pegasys.pantheon.util.BlockImporter;
 
 import picocli.CommandLine.RunLast;
@@ -33,7 +34,8 @@ public final class Pantheon {
             new BlockImporter(),
             new RunnerBuilder(),
             new PantheonControllerBuilder(),
-            new SynchronizerConfiguration.Builder());
+            new SynchronizerConfiguration.Builder(),
+            new RocksDbConfiguration.Builder());
 
     pantheonCommand.parse(
         new RunLast().andExit(SUCCESS_EXIT_CODE),

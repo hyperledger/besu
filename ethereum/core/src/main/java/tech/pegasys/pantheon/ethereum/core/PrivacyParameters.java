@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
 
 import java.io.File;
 import java.io.IOException;
@@ -109,14 +110,18 @@ public class PrivacyParameters {
   public void enablePrivateDB(final Path path) throws IOException {
     final Path privateDbPath = path.resolve(PRIVATE_DATABASE_PATH);
     this.privateStorageProvider =
-        RocksDbStorageProvider.create(privateDbPath, new NoOpMetricsSystem());
+        RocksDbStorageProvider.create(
+            new RocksDbConfiguration.Builder().databaseDir(privateDbPath).build(),
+            new NoOpMetricsSystem());
     final WorldStateStorage privateWorldStateStorage =
         privateStorageProvider.createWorldStateStorage();
     this.privateWorldStateArchive = new WorldStateArchive(privateWorldStateStorage);
 
     final Path privateStateDbPath = path.resolve(PRIVATE_STATE_DATABASE_PATH);
     final StorageProvider privateStateStorageProvider =
-        RocksDbStorageProvider.create(privateStateDbPath, new NoOpMetricsSystem());
+        RocksDbStorageProvider.create(
+            new RocksDbConfiguration.Builder().databaseDir(privateStateDbPath).build(),
+            new NoOpMetricsSystem());
     this.privateTransactionStorage = privateStateStorageProvider.createPrivateTransactionStorage();
     this.privateStateStorage = privateStateStorageProvider.createPrivateStateStorage();
   }
