@@ -59,6 +59,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -306,8 +307,10 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).homePath(eq(Paths.get("~/pantheondata").toAbsolutePath()));
     verify(mockControllerBuilder).ethNetworkConfig(eq(networkConfig));
 
-    // TODO: Re-enable as per NC-1057/NC-1681
-    // verify(mockSyncConfBuilder).syncMode(ArgumentMatchers.eq(SyncMode.FAST));
+    verify(mockSyncConfBuilder).syncMode(ArgumentMatchers.eq(SyncMode.FAST));
+    verify(mockSyncConfBuilder).fastSyncMinimumPeerCount(ArgumentMatchers.eq(13));
+    verify(mockSyncConfBuilder)
+        .fastSyncMaximumPeerWaitTime(ArgumentMatchers.eq(Duration.ofSeconds(57)));
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -608,8 +611,10 @@ public class PantheonCommandTest extends CommandTestAbstract {
         .maxPendingTransactions(eq(PendingTransactions.MAX_PENDING_TRANSACTIONS));
     verify(mockControllerBuilder).build();
 
-    // TODO: Re-enable as per NC-1057/NC-1681
-    // verify(mockSyncConfBuilder).syncMode(ArgumentMatchers.eq(SyncMode.FULL));
+    verify(mockSyncConfBuilder).syncMode(ArgumentMatchers.eq(SyncMode.FULL));
+    verify(mockSyncConfBuilder).fastSyncMinimumPeerCount(ArgumentMatchers.eq(5));
+    verify(mockSyncConfBuilder)
+        .fastSyncMaximumPeerWaitTime(ArgumentMatchers.eq(Duration.ofSeconds(0)));
 
     assertThat(commandErrorOutput.toString()).isEmpty();
 
@@ -1035,8 +1040,8 @@ public class PantheonCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
-  @Ignore("Ignored as we only have one mode available for now. See NC-1057/NC-1681")
   @Test
+  @Ignore
   public void syncModeOptionMustBeUsed() {
 
     parseCommand("--sync-mode", "FAST");
@@ -1047,6 +1052,48 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void parsesValidFastSyncTimeoutOption() {
+
+    parseCommand("--sync-mode", "FAST", "--fast-sync-max-wait-time", "17");
+    verify(mockSyncConfBuilder).syncMode(ArgumentMatchers.eq(SyncMode.FAST));
+    verify(mockSyncConfBuilder)
+        .fastSyncMaximumPeerWaitTime(ArgumentMatchers.eq(Duration.ofSeconds(17)));
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void parsesInvalidFastSyncTimeoutOptionShouldFail() {
+    parseCommand("--sync-mode", "FAST", "--fast-sync-max-wait-time", "-1");
+
+    verifyZeroInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains("--fast-sync-max-wait-time must be greater than or equal to 0");
+  }
+
+  @Test
+  public void parsesValidFastSyncMinPeersOption() {
+
+    parseCommand("--sync-mode", "FAST", "--fast-sync-min-peers", "11");
+    verify(mockSyncConfBuilder).syncMode(ArgumentMatchers.eq(SyncMode.FAST));
+    verify(mockSyncConfBuilder).fastSyncMinimumPeerCount(ArgumentMatchers.eq(11));
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void parsesInvalidFastSyncMinPeersOptionWrongFormatShouldFail() {
+
+    parseCommand("--sync-mode", "FAST", "--fast-sync-min-peers", "ten");
+    verifyZeroInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains("Invalid value for option '--fast-sync-min-peers': 'ten' is not an int");
   }
 
   @Test
