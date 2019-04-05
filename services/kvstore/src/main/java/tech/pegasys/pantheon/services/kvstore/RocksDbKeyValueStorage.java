@@ -20,7 +20,6 @@ import tech.pegasys.pantheon.services.util.RocksDbUtil;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.Closeable;
-import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -48,16 +47,22 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
   private final Counter rollbackCount;
 
   public static KeyValueStorage create(
-      final Path storageDirectory, final MetricsSystem metricsSystem) throws StorageException {
-    return new RocksDbKeyValueStorage(storageDirectory, metricsSystem);
+      final RocksDbConfiguration rocksDbConfiguration, final MetricsSystem metricsSystem)
+      throws StorageException {
+    return new RocksDbKeyValueStorage(rocksDbConfiguration, metricsSystem);
   }
 
-  private RocksDbKeyValueStorage(final Path storageDirectory, final MetricsSystem metricsSystem) {
+  private RocksDbKeyValueStorage(
+      final RocksDbConfiguration rocksDbConfiguration, final MetricsSystem metricsSystem) {
     RocksDbUtil.loadNativeLibrary();
     try {
-      options = new Options().setCreateIfMissing(true);
+
+      options =
+          new Options()
+              .setCreateIfMissing(true)
+              .setMaxOpenFiles(rocksDbConfiguration.getMaxOpenFiles());
       txOptions = new TransactionDBOptions();
-      db = TransactionDB.open(options, txOptions, storageDirectory.toString());
+      db = TransactionDB.open(options, txOptions, rocksDbConfiguration.getDatabaseDir().toString());
 
       readLatency =
           metricsSystem.createTimer(

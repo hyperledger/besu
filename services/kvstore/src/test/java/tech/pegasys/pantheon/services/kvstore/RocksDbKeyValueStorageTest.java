@@ -23,6 +23,8 @@ public class RocksDbKeyValueStorageTest extends AbstractKeyValueStorageTest {
 
   @Override
   protected KeyValueStorage createStore() throws Exception {
-    return RocksDbKeyValueStorage.create(folder.newFolder().toPath(), new NoOpMetricsSystem());
+    return RocksDbKeyValueStorage.create(
+        new RocksDbConfiguration.Builder().databaseDir(folder.newFolder().toPath()).build(),
+        new NoOpMetricsSystem());
   }
 }

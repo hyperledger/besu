@@ -575,7 +575,11 @@ public class PantheonCommandTest extends CommandTestAbstract {
       }
       options.remove(optionSpec);
     }
-    assertThat(options.stream().map(CommandLine.Model.OptionSpec::longestName)).isEmpty();
+    assertThat(
+            options.stream()
+                .filter(optionSpec -> !optionSpec.hidden())
+                .map(CommandLine.Model.OptionSpec::longestName))
+        .isEmpty();
   }
 
   @Test
