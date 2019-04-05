@@ -32,6 +32,8 @@ host-whitelist=["all"]
 network="MAINNET"
 genesis-file="~/genesis.json"
 sync-mode="fast"
+fast-sync-min-peers=5
+fast-sync-max-wait-time=30
 network-id=303
 
 # JSON-RPC

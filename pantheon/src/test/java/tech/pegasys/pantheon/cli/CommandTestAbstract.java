@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
@@ -110,6 +111,10 @@ public abstract class CommandTestAbstract {
 
     when(mockSyncConfBuilder.syncMode(any())).thenReturn(mockSyncConfBuilder);
     when(mockSyncConfBuilder.maxTrailingPeers(anyInt())).thenReturn(mockSyncConfBuilder);
+    when(mockSyncConfBuilder.fastSyncMinimumPeerCount(anyInt())).thenReturn(mockSyncConfBuilder);
+    when(mockSyncConfBuilder.fastSyncMaximumPeerWaitTime(any(Duration.class)))
+        .thenReturn(mockSyncConfBuilder);
+
     when(mockSyncConfBuilder.build()).thenReturn(mockSyncConf);
 
     when(mockRunnerBuilder.vertx(any())).thenReturn(mockRunnerBuilder);

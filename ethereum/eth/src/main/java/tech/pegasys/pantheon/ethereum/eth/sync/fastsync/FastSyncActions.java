@@ -71,8 +71,22 @@ public class FastSyncActions<C> {
             ethContext, syncConfig.getFastSyncMinimumPeerCount(), metricsSystem);
 
     final EthScheduler scheduler = ethContext.getScheduler();
+    final CompletableFuture<Void> fastSyncTask;
+    if (!syncConfig.getFastSyncMaximumPeerWaitTime().isZero()) {
+      LOG.debug(
+          "Waiting for at least {} peers, maximum wait time set to {}.",
+          syncConfig.getFastSyncMinimumPeerCount(),
+          syncConfig.getFastSyncMaximumPeerWaitTime().toString());
+      fastSyncTask =
+          scheduler.timeout(waitForPeersTask, syncConfig.getFastSyncMaximumPeerWaitTime());
+    } else {
+      LOG.debug(
+          "Waiting for at least {} peers, no maximum wait time set.",
+          syncConfig.getFastSyncMinimumPeerCount());
+      fastSyncTask = scheduler.scheduleServiceTask(waitForPeersTask);
+    }
     return exceptionallyCompose(
-            scheduler.timeout(waitForPeersTask, syncConfig.getFastSyncMaximumPeerWaitTime()),
+            fastSyncTask,
             error -> {
               if (ExceptionUtils.rootCause(error) instanceof TimeoutException) {
                 if (ethContext.getEthPeers().availablePeerCount() > 0) {
