@@ -28,6 +28,8 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUtil;
+import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
+import tech.pegasys.pantheon.ethereum.eth.messages.GetBlockHeadersMessage;
 import tech.pegasys.pantheon.ethereum.eth.sync.ChainDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
@@ -35,6 +37,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.LockSupport;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -140,23 +143,38 @@ public class FastSyncChainDownloaderTest {
 
     final RespondingEthPeer bestPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, otherBlockchain);
-    final Responder bestResponder = RespondingEthPeer.blockchainResponder(otherBlockchain);
     final RespondingEthPeer secondBestPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, shorterChain);
     final Responder shorterResponder = RespondingEthPeer.blockchainResponder(shorterChain);
+    // Doesn't respond to requests for checkpoints unless it's starting from geneis
+    // So the import can only make it as far as block 15 (3 checkpoints 5 blocks apart)
+    final Responder shorterLimitedRangeResponder =
+        RespondingEthPeer.targetedResponder(
+            (cap, msg) -> {
+              if (msg.getCode() == EthPV62.GET_BLOCK_HEADERS) {
+                final GetBlockHeadersMessage request = GetBlockHeadersMessage.readFrom(msg);
+                return request.skip() == 0
+                    || (request.hash().equals(localBlockchain.getBlockHashByNumber(0)));
+              } else {
+                return true;
+              }
+            },
+            (cap, msg) -> shorterResponder.respond(cap, msg).get());
 
     final SynchronizerConfiguration syncConfig =
         SynchronizerConfiguration.builder()
             .downloaderChainSegmentSize(5)
             .downloaderHeadersRequestSize(3)
+            .downloaderParallelisim(1)
             .build();
     final long pivotBlockNumber = 25;
     final ChainDownloader downloader = downloader(syncConfig, pivotBlockNumber);
     final CompletableFuture<Void> result = downloader.start();
 
     while (localBlockchain.getChainHeadBlockNumber() < 15) {
-      bestPeer.respond(bestResponder);
-      secondBestPeer.respond(shorterResponder);
+      bestPeer.respond(shorterLimitedRangeResponder);
+      secondBestPeer.respond(shorterLimitedRangeResponder);
+      LockSupport.parkNanos(200);
     }
 
     assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(15);

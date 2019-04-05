@@ -167,16 +167,14 @@ public class FastSyncActions<C> {
         .downloadPivotBlockHeader();
   }
 
-  public CompletableFuture<FastSyncState> downloadChain(final FastSyncState currentState) {
-    final ChainDownloader downloader =
-        FastSyncChainDownloader.create(
-            syncConfig,
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            syncState,
-            metricsSystem,
-            currentState.getPivotBlockHeader().get());
-    return downloader.start().thenApply(ignore -> currentState);
+  public ChainDownloader createChainDownloader(final FastSyncState currentState) {
+    return FastSyncChainDownloader.create(
+        syncConfig,
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        syncState,
+        metricsSystem,
+        currentState.getPivotBlockHeader().get());
   }
 }
