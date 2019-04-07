@@ -2587,7 +2587,8 @@ None
 ## EEA Methods
 
 !!!note
-    EEA methods are for privacy features. Privacy features are under development and will be available in v1.1.  
+    EEA methods are for [privacy](../Privacy/Privacy-Overview.md) features. Privacy features are under 
+    development and will be available in v1.1.  
 
 !!! note
     The `EEA` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
@@ -2645,7 +2646,9 @@ are not available.
 
 **Parameters**
 
-`DATA` - 32-byte hash of a transaction.
+`data` - 32-byte hash of a transaction.
+
+`data` - Orion node public key
 
 **Returns**
 
@@ -2653,11 +2656,11 @@ are not available.
 
 !!! example 
     ```bash tab="curl HTTP request"
-    curl -X POST --data '{"jsonrpc":"2.0","method":"eea_getTransactionReceipt","params":["0x504ce587a65bdbdb6414a0c6c16d86a04dd79bfcc4f2950eec9634b30ce5370f"],"id":1}' http://127.0.0.1:8545
+    curl -X POST --data '{"jsonrpc":"2.0","method":"eea_getTransactionReceipt","params":["0xf3ab9693ad92e277bf785e1772f29fb1864904bbbe87b0470455ddb082caab9d", "g59BmTeJIn7HIcnq8VQWgyh/pDbvbt2eyP0Ii60aDDw="],"id":1}' http://127.0.0.1:8545
     ```
             
     ```bash tab="wscat WS request"
-    {"jsonrpc":"2.0","method":"eea_getTransactionReceipt","params":["0x504ce587a65bdbdb6414a0c6c16d86a04dd79bfcc4f2950eec9634b30ce5370f"],"id":1}
+    {"jsonrpc":"2.0","method":"eea_getTransactionReceipt","params":["0xf3ab9693ad92e277bf785e1772f29fb1864904bbbe87b0470455ddb082caab9d", "g59BmTeJIn7HIcnq8VQWgyh/pDbvbt2eyP0Ii60aDDw="],"id":1}
     ```
             
     ```json tab="JSON result"
@@ -2665,56 +2668,13 @@ are not available.
        "jsonrpc": "2.0",
        "id": 1,
        "result": {
-           "blockHash": "0xe7212a92cfb9b06addc80dec2a0dfae9ea94fd344efeb157c41e12994fcad60a",
-           "blockNumber": "0x50",
-           "contractAddress": null,
-           "cumulativeGasUsed": "0x5208",
-           "from": "0x627306090abab3a6e1400e9345bc60c78a8bef57",
-           "gasUsed": "0x5208",
-           "logs": [],
-           "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-           "status": "0x1",
-           "to": "0xf17f52151ebef6c7334fad080c5704d77216b732",
-           "transactionHash": "0xc00e97af59c6f88de163306935f7682af1a34c67245e414537d02e422815efc3",
-           "transactionIndex": "0x0"
+           "contractAddress": "0xf4464be696b6531b87edbfb8c21dd178c34eb89e",
+           "from": "0x372a70ace72b02cc7f1757183f98c620254f9c8d",
+           "to": null,
+           "output": "0x6080604052600436106100565763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416633fa4f245811461005b5780636057361d1461008257806367e404ce146100ae575b600080fd5b34801561006757600080fd5b506100706100ec565b60408051918252519081900360200190f35b34801561008e57600080fd5b506100ac600480360360208110156100a557600080fd5b50356100f2565b005b3480156100ba57600080fd5b506100c3610151565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b60025490565b604080513381526020810183905281517fc9db20adedc6cf2b5d25252b101ab03e124902a73fcb12b753f3d1aaa2d8f9f5929181900390910190a16002556001805473ffffffffffffffffffffffffffffffffffffffff191633179055565b60015473ffffffffffffffffffffffffffffffffffffffff169056fea165627a7a72305820c7f729cb24e05c221f5aa913700793994656f233fe2ce3b9fd9a505ea17e8d8a0029",
+           "logs": []
        }
     }
-    ```
-
-### eea_clientCapabilities
-
-Returns information about the capabilities supported by the client including private transaction restriction levels
-and supported consensus mechanisms.
-
-**Parameters**
-
-None
-
-
-**Returns**
-
-Client capability in JSON name values pairs:
-
-`consensus : ["PoW", "IBFT" , "Clique"]`
-
-`restriction: ["restricted"]`
-
-!!! example 
-    ```bash tab="curl HTTP request"
-    curl -X POST --data '{"jsonrpc":"2.0","method":"eea_clientCapabilities","params":[],"id":1}' http://127.0.0.1:8545
-    ```
-                
-    ```bash tab="wscat WS request"
-    {"jsonrpc":"2.0","method":"eea_clientCapabilities","params": [], "id":1}
-    ```
-                
-    ```json tab="JSON result"
-    {
-      "id":1,
-      "jsonrpc": "2.0",
-      "result": [{"consensus": ["PoW", "IBFT" , "Clique"]},
-      {"restriction": ["restricted", "unrestricted"]}
-    } 
     ```
 
 ## Miscellaneous Methods 
