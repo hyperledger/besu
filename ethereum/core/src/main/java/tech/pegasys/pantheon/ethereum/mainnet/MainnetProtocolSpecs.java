@@ -28,6 +28,7 @@ import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionProcessor;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -59,7 +60,9 @@ public abstract class MainnetProtocolSpecs {
 
   private MainnetProtocolSpecs() {}
 
-  public static ProtocolSpecBuilder<Void> frontierDefinition() {
+  public static ProtocolSpecBuilder<Void> frontierDefinition(
+      final OptionalInt configContractSizeLimit) {
+    int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
     return new ProtocolSpecBuilder<Void>()
         .gasCalculator(FrontierGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::frontier)
@@ -68,7 +71,7 @@ public abstract class MainnetProtocolSpecs {
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    gasCalculator, evm, false, FRONTIER_CONTRACT_SIZE_LIMIT, 0))
+                    gasCalculator, evm, false, contractSizeLimit, 0))
         .transactionValidatorBuilder(
             gasCalculator -> new MainnetTransactionValidator(gasCalculator, false))
         .transactionProcessorBuilder(
@@ -108,22 +111,25 @@ public abstract class MainnetProtocolSpecs {
         .name("Frontier");
   }
 
-  public static ProtocolSpecBuilder<Void> homesteadDefinition() {
-    return frontierDefinition()
+  public static ProtocolSpecBuilder<Void> homesteadDefinition(
+      final OptionalInt configContractSizeLimit) {
+    int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
+    return frontierDefinition(configContractSizeLimit)
         .gasCalculator(HomesteadGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::homestead)
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    gasCalculator, evm, true, FRONTIER_CONTRACT_SIZE_LIMIT, 0))
+                    gasCalculator, evm, true, contractSizeLimit, 0))
         .transactionValidatorBuilder(
             gasCalculator -> new MainnetTransactionValidator(gasCalculator, true))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
         .name("Homestead");
   }
 
-  public static ProtocolSpecBuilder<Void> daoRecoveryInitDefinition() {
-    return homesteadDefinition()
+  public static ProtocolSpecBuilder<Void> daoRecoveryInitDefinition(
+      final OptionalInt contractSizeLimit) {
+    return homesteadDefinition(contractSizeLimit)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::createDaoValidator)
         .blockProcessorBuilder(
             (transactionProcessor,
@@ -139,20 +145,25 @@ public abstract class MainnetProtocolSpecs {
         .name("DaoRecoveryInit");
   }
 
-  public static ProtocolSpecBuilder<Void> daoRecoveryTransitionDefinition() {
-    return daoRecoveryInitDefinition()
+  public static ProtocolSpecBuilder<Void> daoRecoveryTransitionDefinition(
+      final OptionalInt contractSizeLimit) {
+    return daoRecoveryInitDefinition(contractSizeLimit)
         .blockProcessorBuilder(MainnetBlockProcessor::new)
         .name("DaoRecoveryTransition");
   }
 
-  public static ProtocolSpecBuilder<Void> tangerineWhistleDefinition() {
-    return homesteadDefinition()
+  public static ProtocolSpecBuilder<Void> tangerineWhistleDefinition(
+      final OptionalInt contractSizeLimit) {
+    return homesteadDefinition(contractSizeLimit)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .name("TangerineWhistle");
   }
 
-  public static ProtocolSpecBuilder<Void> spuriousDragonDefinition(final int chainId) {
-    return tangerineWhistleDefinition()
+  public static ProtocolSpecBuilder<Void> spuriousDragonDefinition(
+      final int chainId, final OptionalInt configContractSizeLimit) {
+    final int contractSizeLimit =
+        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+    return tangerineWhistleDefinition(OptionalInt.empty())
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .messageCallProcessorBuilder(
             (evm, precompileContractRegistry) ->
@@ -166,7 +177,7 @@ public abstract class MainnetProtocolSpecs {
                     gasCalculator,
                     evm,
                     true,
-                    SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT,
+                    contractSizeLimit,
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .transactionValidatorBuilder(
@@ -196,8 +207,9 @@ public abstract class MainnetProtocolSpecs {
         .name("SpuriousDragon");
   }
 
-  public static ProtocolSpecBuilder<Void> byzantiumDefinition(final int chainId) {
-    return spuriousDragonDefinition(chainId)
+  public static ProtocolSpecBuilder<Void> byzantiumDefinition(
+      final int chainId, final OptionalInt contractSizeLimit) {
+    return spuriousDragonDefinition(chainId, contractSizeLimit)
         .evmBuilder(MainnetEvmRegistries::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
         .difficultyCalculator(MainnetDifficultyCalculators.BYZANTIUM)
@@ -207,8 +219,9 @@ public abstract class MainnetProtocolSpecs {
         .name("Byzantium");
   }
 
-  public static ProtocolSpecBuilder<Void> constantinopleDefinition(final int chainId) {
-    return byzantiumDefinition(chainId)
+  public static ProtocolSpecBuilder<Void> constantinopleDefinition(
+      final int chainId, final OptionalInt contractSizeLimit) {
+    return byzantiumDefinition(chainId, contractSizeLimit)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
         .gasCalculator(ConstantinopleGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::constantinople)
@@ -216,8 +229,9 @@ public abstract class MainnetProtocolSpecs {
         .name("Constantinople");
   }
 
-  public static ProtocolSpecBuilder<Void> constantinopleFixDefinition(final int chainId) {
-    return constantinopleDefinition(chainId)
+  public static ProtocolSpecBuilder<Void> constantinopleFixDefinition(
+      final int chainId, final OptionalInt contractSizeLimit) {
+    return constantinopleDefinition(chainId, contractSizeLimit)
         .gasCalculator(ConstantinopleFixGasCalculator::new)
         .name("ConstantinopleFix");
   }
