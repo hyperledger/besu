@@ -17,6 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
@@ -53,8 +55,82 @@ public class FilterParameterTest {
         .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
   }
 
+  @Test
+  public void jsonWithSingleAddressAndSingleTopicShouldSerializeSuccessfully() throws Exception {
+    final String jsonWithSingleAddress =
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\":\"0x0\", \"topics\":\"0x0000000000000000000000000000000000000000000000000000000000000002\" }],\"id\":1}";
+
+    final JsonRpcRequest request = readJsonAsJsonRpcRequest(jsonWithSingleAddress);
+    final FilterParameter expectedFilterParameter =
+        filterParameterWithAddressAndSingleListOfTopics(
+            "0x0", "0x0000000000000000000000000000000000000000000000000000000000000002");
+
+    final FilterParameter parsedFilterParameter =
+        parameters.required(request.getParams(), 0, FilterParameter.class);
+
+    assertThat(parsedFilterParameter)
+        .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
+  }
+
+  @Test
+  public void jsonWithSingleAddressAndMultipleTopicsShouldSerializeSuccessfully() throws Exception {
+    final String jsonWithSingleAddress =
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\":\"0x0\", \"topics\":[[\"0x0000000000000000000000000000000000000000000000000000000000000002\",\"0x0000000000000000000000000000000000000000000000000000000000000003\"]]}],\"id\":1}";
+
+    final JsonRpcRequest request = readJsonAsJsonRpcRequest(jsonWithSingleAddress);
+    final FilterParameter expectedFilterParameter =
+        filterParameterWithAddressAndSingleListOfTopics(
+            "0x0",
+            "0x0000000000000000000000000000000000000000000000000000000000000002",
+            "0x0000000000000000000000000000000000000000000000000000000000000003");
+
+    final FilterParameter parsedFilterParameter =
+        parameters.required(request.getParams(), 0, FilterParameter.class);
+
+    assertThat(parsedFilterParameter)
+        .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
+  }
+
+  @Test
+  public void jsonWithSingleAddressAndMultipleListsOfTopicsShouldSerializeSuccessfully()
+      throws Exception {
+    final String jsonWithSingleAddress =
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\":\"0x0\", \"topics\":[[\"0x0000000000000000000000000000000000000000000000000000000000000002\",\"0x0000000000000000000000000000000000000000000000000000000000000003\"],[\"0x0000000000000000000000000000000000000000000000000000000000000002\",\"0x0000000000000000000000000000000000000000000000000000000000000003\"]]}],\"id\":1}";
+
+    final JsonRpcRequest request = readJsonAsJsonRpcRequest(jsonWithSingleAddress);
+    final FilterParameter expectedFilterParameter =
+        filterParameterWithAddressAndMultipleListOfTopics(
+            "0x0",
+            "0x0000000000000000000000000000000000000000000000000000000000000002",
+            "0x0000000000000000000000000000000000000000000000000000000000000003");
+
+    final FilterParameter parsedFilterParameter =
+        parameters.required(request.getParams(), 0, FilterParameter.class);
+
+    assertThat(parsedFilterParameter)
+        .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
+  }
+
   private FilterParameter filterParameterWithAddresses(final String... addresses) {
     return new FilterParameter("latest", "latest", Arrays.asList(addresses), null, null);
+  }
+
+  private FilterParameter filterParameterWithAddressAndSingleListOfTopics(
+      final String address, final String... topics) {
+    return new FilterParameter(
+        "latest",
+        "latest",
+        Arrays.asList(address),
+        new TopicsParameter(Collections.singletonList(Arrays.asList(topics))),
+        null);
+  }
+
+  private FilterParameter filterParameterWithAddressAndMultipleListOfTopics(
+      final String address, final String... topics) {
+    List<String> topicsList = Arrays.asList(topics);
+    List<List<String>> topicsListList = Arrays.asList(topicsList, topicsList);
+    return new FilterParameter(
+        "latest", "latest", Arrays.asList(address), new TopicsParameter(topicsListList), null);
   }
 
   private JsonRpcRequest readJsonAsJsonRpcRequest(final String jsonWithSingleAddress)

@@ -22,6 +22,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.MoreObjects;
 
 public class FilterParameter {
@@ -38,14 +39,14 @@ public class FilterParameter {
       @JsonProperty("toBlock") final String toBlock,
       @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY) @JsonProperty("address")
           final List<String> address,
-      @JsonProperty("topics") final List<List<String>> topics,
+      @JsonDeserialize(using = TopicsDeserializer.class) @JsonProperty("topics")
+          final TopicsParameter topics,
       @JsonProperty("blockhash") final String blockhash) {
     this.fromBlock =
         fromBlock != null ? new BlockParameter(fromBlock) : new BlockParameter("latest");
     this.toBlock = toBlock != null ? new BlockParameter(toBlock) : new BlockParameter("latest");
     this.addresses = address != null ? renderAddress(address) : Collections.emptyList();
-    this.topics =
-        topics != null ? new TopicsParameter(topics) : new TopicsParameter(Collections.emptyList());
+    this.topics = topics != null ? topics : new TopicsParameter(Collections.emptyList());
     this.blockhash = blockhash != null ? Hash.fromHexString(blockhash) : null;
   }
 

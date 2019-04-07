@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.FilterParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.TopicsParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.UnsignedLongParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.methods.WebSocketRpcRequest;
 
@@ -81,7 +82,7 @@ public class SubscriptionRequestMapper {
   private FilterParameter createFilterParameter(final LogsSubscriptionParam logFilterParams) {
     final List<String> addresses = hasAddresses(logFilterParams);
     final List<List<String>> topics = hasTopics(logFilterParams);
-    return new FilterParameter(null, null, addresses, topics, null);
+    return new FilterParameter(null, null, addresses, new TopicsParameter(topics), null);
   }
 
   private List<String> hasAddresses(final LogsSubscriptionParam logFilterParams) {

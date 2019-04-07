@@ -158,7 +158,7 @@ public class EthNewFilterTest {
   private FilterParameter filterParamWithAddressAndTopics(
       final Address address, final List<List<String>> topics) {
     final List<String> addresses = address != null ? Arrays.asList(address.toString()) : null;
-    return new FilterParameter("latest", "latest", addresses, topics, null);
+    return new FilterParameter("latest", "latest", addresses, new TopicsParameter(topics), null);
   }
 
   private JsonRpcRequest ethNewFilter(final FilterParameter filterParameter) {
