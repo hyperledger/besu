@@ -72,6 +72,7 @@ nav:
         - Using the JSON-RPC API: JSON-RPC-API/Using-JSON-RPC-API.md
         - Authentication: JSON-RPC-API/Authentication.md
     - Configuring Pantheon:
+        - Network vs Node Configuration: Configuring-Pantheon/Network-vs-Node.md
         - Configuration File: Configuring-Pantheon/Using-Configuration-File.md
         - Networking:
           - Bootnodes: Configuring-Pantheon/Networking/Bootnodes.md
