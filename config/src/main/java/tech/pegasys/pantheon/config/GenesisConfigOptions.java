@@ -50,5 +50,7 @@ public interface GenesisConfigOptions {
 
   OptionalInt getChainId();
 
+  OptionalInt getContractSizeLimit();
+
   Map<String, Object> asMap();
 }

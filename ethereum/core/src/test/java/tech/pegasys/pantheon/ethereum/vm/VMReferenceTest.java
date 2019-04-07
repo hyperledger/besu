@@ -30,6 +30,7 @@ import tech.pegasys.pantheon.testutil.JsonTestParameters;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.OptionalInt;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -116,7 +117,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
     final EnvironmentInformation execEnv = spec.getExec();
 
     final ProtocolSpec<Void> protocolSpec =
-        MainnetProtocolSpecs.frontierDefinition()
+        MainnetProtocolSpecs.frontierDefinition(OptionalInt.empty())
             .privacyParameters(PrivacyParameters.noPrivacy())
             .build(new MutableProtocolSchedule<>(CHAIN_ID));
 

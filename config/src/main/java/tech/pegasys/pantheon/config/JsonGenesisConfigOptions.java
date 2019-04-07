@@ -126,6 +126,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalInt getContractSizeLimit() {
+    return configRoot.containsKey("contractsizelimit")
+        ? OptionalInt.of(configRoot.getInteger("contractsizelimit"))
+        : OptionalInt.empty();
+  }
+
+  @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     builder.put("chainId", getChainId().getAsInt());
@@ -153,6 +160,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getByzantiumBlockNumber().ifPresent(l -> builder.put("byzantiumBlock", l));
     getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
     getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("constantinopleFixBlock", l));
+    getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
     }
