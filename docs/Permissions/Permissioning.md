@@ -137,16 +137,21 @@ or [`--rpc-ws-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-api) options to e
 
 ## Permissions Configuration File 
 
-The permissions configuration file contains the nodes and accounts whitelists. If the [`--permissions-config-file`](../Reference/Pantheon-CLI-Syntax.md#permissions-config-file)
-option is not specified, the permissions configuration file must be called `permissions_config.toml` and
+The permissions configuration file contains the nodes and accounts whitelists. If the [`--permissions-accounts-config-file`](../Reference/Pantheon-CLI-Syntax.md#permissions-accounts-config-file)
+and [`permissions-nodes-config-file`](../Reference/Pantheon-CLI-Syntax.md#permissions-nodes-config-file) 
+options are not specified, the permissions configuration file must be called `permissions_config.toml` and
 must be in the [data directory](../Reference/Pantheon-CLI-Syntax.md#data-path) for the node.
 
-Use the [`--permissions-config-file`](../Reference/Pantheon-CLI-Syntax.md#permissions-config-file) option to specify a permissions configuration file
- in any location.
+The accounts and nodes whitelists can be specified in the same file or in separate files for accounts and nodes. 
+
+Use the [`--permissions-accounts-config-file`](../Reference/Pantheon-CLI-Syntax.md#permissions-accounts-config-file) 
+and [`permissions-nodes-config-file`](../Reference/Pantheon-CLI-Syntax.md#permissions-nodes-config-file) 
+options to specify a permissions configuration file (or separate files for accounts and nodes) in any location.
  
 !!!note
-    The [`--permissions-config-file`](../Reference/Pantheon-CLI-Syntax.md#permissions-config-file) option is 
-    not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md). 
+    The [`--permissions-accounts-config-file`](../Reference/Pantheon-CLI-Syntax.md#permissions-accounts-config-file) 
+    and [`permissions-nodes-config-file`](../Reference/Pantheon-CLI-Syntax.md#permissions-nodes-config-file) 
+    options are not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md). 
     Use a bind mount to [specify a permissions configuration file with Docker](../Getting-Started/Run-Docker-Image.md#permissions-configuration-file).
 
 !!! example "Example Permissions Configuration File"  
