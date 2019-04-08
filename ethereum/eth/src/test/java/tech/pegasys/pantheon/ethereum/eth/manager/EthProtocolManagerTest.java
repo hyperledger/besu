@@ -116,7 +116,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       final MessageData messageData =
           BlockHeadersMessage.create(Collections.singletonList(blockchain.getBlockHeader(1).get()));
       final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
@@ -136,7 +140,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       final MessageData messageData =
           BlockHeadersMessage.create(Collections.singletonList(blockchain.getBlockHeader(1).get()));
       final MockPeerConnection peer =
@@ -157,7 +165,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       final MessageData messageData =
           BlockHeadersMessage.create(Collections.singletonList(blockchain.getBlockHeader(1).get()));
       final MockPeerConnection peer =
@@ -189,7 +201,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       final MessageData messageData =
           BlockHeadersMessage.create(Collections.singletonList(blockchain.getBlockHeader(1).get()));
       final MockPeerConnection peer =
@@ -221,7 +237,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       final MessageData messageData =
           GetBlockBodiesMessage.create(Collections.singletonList(gen.hash()));
       final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
@@ -245,7 +265,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       final long startBlock = 5L;
       final int blockCount = 5;
       final MessageData messageData =
@@ -285,8 +309,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
+            new NoOpMetricsSystem(),
             limit,
-            new NoOpMetricsSystem())) {
+            limit,
+            limit,
+            limit)) {
       final long startBlock = 5L;
       final int blockCount = 10;
       final MessageData messageData =
@@ -325,7 +352,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       final long endBlock = 10L;
       final int blockCount = 5;
       final MessageData messageData = GetBlockHeadersMessage.create(endBlock, blockCount, 0, true);
@@ -363,7 +394,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       final long startBlock = 5L;
       final int blockCount = 5;
       final int skip = 1;
@@ -404,7 +439,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       final long endBlock = 10L;
       final int blockCount = 5;
       final int skip = 1;
@@ -466,7 +505,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       final long startBlock = blockchain.getChainHeadBlockNumber() - 1L;
       final int blockCount = 5;
       final MessageData messageData =
@@ -505,7 +548,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       final long startBlock = blockchain.getChainHeadBlockNumber() + 1;
       final int blockCount = 5;
       final MessageData messageData =
@@ -541,7 +588,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       // Setup blocks query
       final long startBlock = blockchain.getChainHeadBlockNumber() - 5;
       final int blockCount = 2;
@@ -593,8 +644,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
+            new NoOpMetricsSystem(),
             limit,
-            new NoOpMetricsSystem())) {
+            limit,
+            limit,
+            limit)) {
       // Setup blocks query
       final int blockCount = 10;
       final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;
@@ -645,7 +699,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       // Setup blocks query
       final long expectedBlockNumber = blockchain.getChainHeadBlockNumber() - 1;
       final BlockHeader header = blockchain.getBlockHeader(expectedBlockNumber).get();
@@ -690,7 +748,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       // Setup blocks query
       final long startBlock = blockchain.getChainHeadBlockNumber() - 5;
       final int blockCount = 2;
@@ -741,8 +803,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
+            new NoOpMetricsSystem(),
             limit,
-            new NoOpMetricsSystem())) {
+            limit,
+            limit,
+            limit)) {
       // Setup blocks query
       final int blockCount = 10;
       final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;
@@ -792,7 +857,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       // Setup blocks query
       final long blockNumber = blockchain.getChainHeadBlockNumber() - 5;
       final BlockHeader header = blockchain.getBlockHeader(blockNumber).get();
@@ -832,7 +901,18 @@ public final class EthProtocolManagerTest {
 
     try (final EthProtocolManager ethManager =
         new EthProtocolManager(
-            blockchain, worldStateArchive, 1, true, 1, 1, 1, new NoOpMetricsSystem())) {
+            blockchain,
+            worldStateArchive,
+            1,
+            true,
+            1,
+            1,
+            1,
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       // Setup node data query
 
       final List<BytesValue> expectedResults = new ArrayList<>();
@@ -882,7 +962,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200);
 
     // Define handler to validate response
     final PeerSendHandler onSend = mock(PeerSendHandler.class);
@@ -953,7 +1037,11 @@ public final class EthProtocolManagerTest {
             1,
             1,
             1,
-            new NoOpMetricsSystem())) {
+            new NoOpMetricsSystem(),
+            200,
+            200,
+            200,
+            200)) {
       final long startBlock = 1L;
       final int requestedBlockCount = 13;
       final int receivedBlockCount = 2;
@@ -1013,7 +1101,15 @@ public final class EthProtocolManagerTest {
 
     try (final EthProtocolManager ethManager =
         new EthProtocolManager(
-            blockchain, protocolContext.getWorldStateArchive(), 1, true, 1, ethScheduler)) {
+            blockchain,
+            protocolContext.getWorldStateArchive(),
+            1,
+            true,
+            ethScheduler,
+            200,
+            200,
+            200,
+            200)) {
 
       // Create a transaction pool.  This has a side effect of registring a listener for the
       // transactions message.

@@ -44,7 +44,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
-  static final int DEFAULT_REQUEST_LIMIT = 200;
   private static final Logger LOG = LogManager.getLogger();
   private static final List<Capability> FAST_SYNC_CAPS =
       Collections.singletonList(EthProtocol.ETH63);
@@ -70,8 +69,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final WorldStateArchive worldStateArchive,
       final int networkId,
       final boolean fastSyncEnabled,
-      final int requestLimit,
-      final EthScheduler scheduler) {
+      final EthScheduler scheduler,
+      final int maxGetBlockHeaders,
+      final int maxGetBlockBodies,
+      final int maxGetReceipts,
+      final int maxGetNodeData) {
     this.networkId = networkId;
     this.scheduler = scheduler;
     this.blockchain = blockchain;
@@ -87,26 +89,14 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.blockBroadcaster = new BlockBroadcaster(ethContext);
 
     // Set up request handlers
-    new EthServer(blockchain, worldStateArchive, ethMessages, requestLimit);
-  }
-
-  EthProtocolManager(
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final int networkId,
-      final boolean fastSyncEnabled,
-      final int syncWorkers,
-      final int txWorkers,
-      final int computationWorkers,
-      final int requestLimit,
-      final MetricsSystem metricsSystem) {
-    this(
+    new EthServer(
         blockchain,
         worldStateArchive,
-        networkId,
-        fastSyncEnabled,
-        requestLimit,
-        new EthScheduler(syncWorkers, txWorkers, computationWorkers, metricsSystem));
+        ethMessages,
+        maxGetBlockHeaders,
+        maxGetBlockBodies,
+        maxGetReceipts,
+        maxGetNodeData);
   }
 
   public EthProtocolManager(
@@ -123,11 +113,36 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         worldStateArchive,
         networkId,
         fastSyncEnabled,
-        syncWorkers,
-        txWorkers,
-        computationWorkers,
-        DEFAULT_REQUEST_LIMIT,
-        metricsSystem);
+        new EthScheduler(syncWorkers, txWorkers, computationWorkers, metricsSystem),
+        EthServer.DEFAULT_MAX_GET_BLOCK_HEADERS,
+        EthServer.DEFAULT_MAX_GET_BLOCK_BODIES,
+        EthServer.DEFAULT_MAX_GET_RECEIPTS,
+        EthServer.DEFAULT_MAX_GET_NODE_DATA);
+  }
+
+  public EthProtocolManager(
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final int networkId,
+      final boolean fastSyncEnabled,
+      final int syncWorkers,
+      final int txWorkers,
+      final int computationWorkers,
+      final MetricsSystem metricsSystem,
+      final int maxGetBlockHeaders,
+      final int maxGetBlockBodies,
+      final int maxGetReceipts,
+      final int maxGetNodeData) {
+    this(
+        blockchain,
+        worldStateArchive,
+        networkId,
+        fastSyncEnabled,
+        new EthScheduler(syncWorkers, txWorkers, computationWorkers, metricsSystem),
+        maxGetBlockHeaders,
+        maxGetBlockBodies,
+        maxGetReceipts,
+        maxGetNodeData);
   }
 
   public EthContext ethContext() {

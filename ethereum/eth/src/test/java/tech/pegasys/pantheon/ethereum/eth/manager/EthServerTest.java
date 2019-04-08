@@ -45,7 +45,7 @@ public class EthServerTest {
 
   @Before
   public void setUp() {
-    new EthServer(blockchain, worldStateArchive, ethMessages, 2);
+    new EthServer(blockchain, worldStateArchive, ethMessages, 2, 2, 2, 2);
   }
 
   @Test
