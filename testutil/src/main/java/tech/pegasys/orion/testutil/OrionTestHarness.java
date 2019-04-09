@@ -15,6 +15,7 @@ package tech.pegasys.orion.testutil;
 import static com.google.common.io.Files.readLines;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -51,12 +52,6 @@ public class OrionTestHarness {
         .collect(Collectors.toList());
   }
 
-  public List<String> getPrivateKeys() {
-    return config.privateKeys().stream()
-        .map(OrionTestHarness::readFile)
-        .collect(Collectors.toList());
-  }
-
   private static String readFile(final Path path) {
     try {
       return readLines(path.toFile(), Charsets.UTF_8).get(0);
@@ -66,13 +61,11 @@ public class OrionTestHarness {
     }
   }
 
-  public String clientUrl() {
-    return new HttpUrl.Builder()
-        .scheme("http")
-        .host(HOST)
-        .port(orion.clientPort())
-        .build()
-        .toString();
+  public URI clientUrl() {
+    HttpUrl httpUrl =
+        new HttpUrl.Builder().scheme("http").host(HOST).port(orion.clientPort()).build();
+
+    return URI.create(httpUrl.toString());
   }
 
   public String nodeUrl() {

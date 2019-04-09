@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.enclave.types.SendRequest;
 import tech.pegasys.pantheon.enclave.types.SendResponse;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -81,7 +82,7 @@ public class EnclaveTest {
 
   @Test(expected = IOException.class)
   public void whenUpCheckFailsThrows() throws IOException {
-    Enclave broken = new Enclave("http:");
+    Enclave broken = new Enclave(URI.create("http://null"));
 
     broken.upCheck();
   }

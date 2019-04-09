@@ -50,8 +50,7 @@ public class MainnetProtocolScheduleTest {
   public void shouldOnlyUseFrontierWhenEmptyJsonConfigIsUsed() {
     final JsonObject json = new JsonObject("{}");
     final ProtocolSchedule<Void> sched =
-        MainnetProtocolSchedule.fromConfig(
-            GenesisConfigFile.fromConfig(json).getConfigOptions(), PrivacyParameters.noPrivacy());
+        MainnetProtocolSchedule.fromConfig(GenesisConfigFile.fromConfig(json).getConfigOptions());
     Assertions.assertThat(sched.getByBlockNumber(1L).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Frontier");
   }
@@ -62,8 +61,7 @@ public class MainnetProtocolScheduleTest {
         new JsonObject(
             "{\"config\": {\"homesteadBlock\": 2, \"daoForkBlock\": 3, \"eip150Block\": 14, \"eip158Block\": 15, \"byzantiumBlock\": 16, \"constantinopleBlock\": 18, \"constantinopleFixBlock\": 19, \"chainId\":1234}}");
     final ProtocolSchedule<Void> sched =
-        MainnetProtocolSchedule.fromConfig(
-            GenesisConfigFile.fromConfig(json).getConfigOptions(), PrivacyParameters.noPrivacy());
+        MainnetProtocolSchedule.fromConfig(GenesisConfigFile.fromConfig(json).getConfigOptions());
     Assertions.assertThat(sched.getByBlockNumber(1).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockNumber(2).getName()).isEqualTo("Homestead");
     Assertions.assertThat(sched.getByBlockNumber(3).getName()).isEqualTo("DaoRecoveryInit");
@@ -87,8 +85,7 @@ public class MainnetProtocolScheduleTest {
         .isThrownBy(
             () ->
                 MainnetProtocolSchedule.fromConfig(
-                    GenesisConfigFile.fromConfig(json).getConfigOptions(),
-                    PrivacyParameters.noPrivacy()));
+                    GenesisConfigFile.fromConfig(json).getConfigOptions()));
   }
 
   @Test
@@ -99,7 +96,7 @@ public class MainnetProtocolScheduleTest {
                     Resources.toString(
                         Resources.getResource("ropsten.json"), StandardCharsets.UTF_8))
                 .getConfigOptions(),
-            PrivacyParameters.noPrivacy());
+            PrivacyParameters.DEFAULT);
     Assertions.assertThat(sched.getByBlockNumber(0).getName()).isEqualTo("TangerineWhistle");
     Assertions.assertThat(sched.getByBlockNumber(1).getName()).isEqualTo("TangerineWhistle");
     Assertions.assertThat(sched.getByBlockNumber(10).getName()).isEqualTo("SpuriousDragon");

@@ -34,7 +34,7 @@ public class PantheonFactoryConfigurationBuilder {
   private String name;
   private MiningParameters miningParameters =
       new MiningParametersTestBuilder().enabled(false).build();
-  private PrivacyParameters privacyParameters = PrivacyParameters.noPrivacy();
+  private PrivacyParameters privacyParameters = PrivacyParameters.DEFAULT;
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();

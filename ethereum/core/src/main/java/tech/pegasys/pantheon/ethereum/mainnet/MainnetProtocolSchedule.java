@@ -26,8 +26,7 @@ public class MainnetProtocolSchedule {
   public static final int DEFAULT_CHAIN_ID = 1;
 
   public static ProtocolSchedule<Void> create() {
-    return fromConfig(
-        GenesisConfigFile.mainnet().getConfigOptions(), PrivacyParameters.noPrivacy());
+    return fromConfig(GenesisConfigFile.mainnet().getConfigOptions(), PrivacyParameters.DEFAULT);
   }
 
   /**
@@ -46,5 +45,16 @@ public class MainnetProtocolSchedule {
     return new ProtocolScheduleBuilder<>(
             config, DEFAULT_CHAIN_ID, Function.identity(), privacyParameters)
         .createProtocolSchedule();
+  }
+
+  /**
+   * Create a Mainnet protocol schedule from a config object
+   *
+   * @param config {@link GenesisConfigOptions} containing the config options for the milestone
+   *     starting points
+   * @return A configured mainnet protocol schedule
+   */
+  public static ProtocolSchedule<Void> fromConfig(final GenesisConfigOptions config) {
+    return fromConfig(config, PrivacyParameters.DEFAULT);
   }
 }

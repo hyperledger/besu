@@ -20,6 +20,7 @@ dependencies {
   testImplementation project(':consensus:clique')
   testImplementation project(':consensus:ibft')
   testImplementation project(':crypto')
+  testImplementation project(':enclave')
   testImplementation project(':ethereum:eth')
   testImplementation project(':ethereum:core')
   testImplementation project(':ethereum:blockcreation')
@@ -28,9 +29,9 @@ dependencies {
   testImplementation project(':ethereum:rlp')
   testImplementation project(':metrics')
   testImplementation project(':pantheon')
+  testImplementation project(':services:kvstore')
   testImplementation project(':testutil')
   testImplementation project(':util')
-  testImplementation project(':enclave')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
   testImplementation 'com.google.guava:guava'

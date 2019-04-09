@@ -54,6 +54,11 @@ public class CliqueProtocolSchedule {
         .createProtocolSchedule();
   }
 
+  public static ProtocolSchedule<CliqueContext> create(
+      final GenesisConfigOptions config, final KeyPair nodeKeys) {
+    return create(config, nodeKeys, PrivacyParameters.DEFAULT);
+  }
+
   private static ProtocolSpecBuilder<CliqueContext> applyCliqueSpecificModifications(
       final EpochManager epochManager,
       final long secondsBetweenBlocks,
