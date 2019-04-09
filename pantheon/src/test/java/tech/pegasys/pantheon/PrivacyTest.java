@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
+import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.mainnet.PrecompiledContract;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
@@ -54,7 +55,10 @@ public class PrivacyTest {
         (MainnetPantheonController)
             PantheonController.fromConfig(
                 GenesisConfigFile.mainnet(),
-                SynchronizerConfiguration.builder().build(),
+                SynchronizerConfiguration.builder()
+                    .ethereumWireProtocolConfiguration(
+                        EthereumWireProtocolConfiguration.builder().build())
+                    .build(),
                 new InMemoryStorageProvider(),
                 1,
                 new MiningParametersTestBuilder().enabled(false).build(),

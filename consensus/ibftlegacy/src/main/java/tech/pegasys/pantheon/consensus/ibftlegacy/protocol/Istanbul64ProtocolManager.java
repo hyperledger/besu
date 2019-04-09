@@ -33,6 +33,34 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
       final int syncWorkers,
       final int txWorkers,
       final int computationWorkers,
+      final MetricsSystem metricsSystem,
+      final int maxGetBlockHeaders,
+      final int maxGetBlockBodies,
+      final int maxGetReceipts,
+      final int maxGetNodeData) {
+    super(
+        blockchain,
+        worldStateArchive,
+        networkId,
+        fastSyncEnabled,
+        syncWorkers,
+        txWorkers,
+        computationWorkers,
+        metricsSystem,
+        maxGetBlockHeaders,
+        maxGetBlockBodies,
+        maxGetReceipts,
+        maxGetNodeData);
+  }
+
+  public Istanbul64ProtocolManager(
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final int networkId,
+      final boolean fastSyncEnabled,
+      final int syncWorkers,
+      final int txWorkers,
+      final int computationWorkers,
       final MetricsSystem metricsSystem) {
     super(
         blockchain,

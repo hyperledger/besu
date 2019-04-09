@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
+import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.messages.StatusMessage;
 import tech.pegasys.pantheon.ethereum.eth.sync.BlockBroadcaster;
@@ -64,7 +65,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final Blockchain blockchain;
   private final BlockBroadcaster blockBroadcaster;
 
-  EthProtocolManager(
+  public EthProtocolManager(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final int networkId,
@@ -114,10 +115,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         networkId,
         fastSyncEnabled,
         new EthScheduler(syncWorkers, txWorkers, computationWorkers, metricsSystem),
-        EthServer.DEFAULT_MAX_GET_BLOCK_HEADERS,
-        EthServer.DEFAULT_MAX_GET_BLOCK_BODIES,
-        EthServer.DEFAULT_MAX_GET_RECEIPTS,
-        EthServer.DEFAULT_MAX_GET_NODE_DATA);
+        EthereumWireProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS,
+        EthereumWireProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_BODIES,
+        EthereumWireProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS,
+        EthereumWireProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA);
   }
 
   public EthProtocolManager(

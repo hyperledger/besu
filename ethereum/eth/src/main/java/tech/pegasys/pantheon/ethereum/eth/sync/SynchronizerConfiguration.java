@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.time.Duration;
@@ -65,6 +66,9 @@ public class SynchronizerConfiguration {
   private final int maxTrailingPeers;
   private final long worldStateMinMillisBeforeStalling;
 
+  // Ethereum Wire Procotol config
+  private final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration;
+
   private SynchronizerConfiguration(
       final int fastSyncPivotDistance,
       final float fastSyncFullValidationRate,
@@ -85,7 +89,8 @@ public class SynchronizerConfiguration {
       final int downloaderParallelism,
       final int transactionsParallelism,
       final int computationParallelism,
-      final int maxTrailingPeers) {
+      final int maxTrailingPeers,
+      final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration) {
     this.fastSyncPivotDistance = fastSyncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
     this.fastSyncMinimumPeerCount = fastSyncMinimumPeerCount;
@@ -106,6 +111,7 @@ public class SynchronizerConfiguration {
     this.transactionsParallelism = transactionsParallelism;
     this.computationParallelism = computationParallelism;
     this.maxTrailingPeers = maxTrailingPeers;
+    this.ethereumWireProtocolConfiguration = ethereumWireProtocolConfiguration;
   }
 
   public static Builder builder() {
@@ -216,11 +222,17 @@ public class SynchronizerConfiguration {
     return maxTrailingPeers;
   }
 
+  public EthereumWireProtocolConfiguration getEthereumWireProtocolConfiguration() {
+    return ethereumWireProtocolConfiguration;
+  }
+
   public static class Builder {
     private SyncMode syncMode = SyncMode.FULL;
     private int fastSyncMinimumPeerCount = DEFAULT_FAST_SYNC_MINIMUM_PEERS;
     private Duration fastSyncMaximumPeerWaitTime = DEFAULT_FAST_SYNC_MAXIMUM_PEER_WAIT_TIME;
     private int maxTrailingPeers = Integer.MAX_VALUE;
+    private EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration =
+        EthereumWireProtocolConfiguration.defaultConfig();
 
     @CommandLine.Option(
         names = "--Xsynchronizer-block-propagation-range",
@@ -480,6 +492,12 @@ public class SynchronizerConfiguration {
       return this;
     }
 
+    public Builder ethereumWireProtocolConfiguration(
+        final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration) {
+      this.ethereumWireProtocolConfiguration = ethereumWireProtocolConfiguration;
+      return this;
+    }
+
     public SynchronizerConfiguration build() {
       return new SynchronizerConfiguration(
           fastSyncPivotDistance,
@@ -501,7 +519,8 @@ public class SynchronizerConfiguration {
           downloaderParallelism,
           transactionsParallelism,
           computationParallelism,
-          maxTrailingPeers);
+          maxTrailingPeers,
+          ethereumWireProtocolConfiguration);
     }
   }
 }
