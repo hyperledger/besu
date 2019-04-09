@@ -13,16 +13,19 @@
 package tech.pegasys.pantheon.ethereum.eth.sync;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public interface BlockHandler<B> {
-  CompletableFuture<List<B>> downloadBlocks(final List<BlockHeader> headers);
+  CompletableFuture<List<B>> downloadBlocks(List<BlockHeader> headers);
 
-  CompletableFuture<List<B>> validateAndImportBlocks(final List<B> blocks);
+  CompletableFuture<List<B>> validateAndImportBlocks(List<B> blocks);
 
-  long extractBlockNumber(final B block);
+  long extractBlockNumber(B block);
+
+  Hash extractBlockHash(B block);
 
   CompletableFuture<Void> executeParallelCalculations(List<B> blocks);
 }

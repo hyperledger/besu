@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
@@ -39,15 +40,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
 public class ImportBlocksTaskTest
-    extends AbstractMessageTaskTest<List<Block>, PeerTaskResult<List<Block>>> {
+    extends AbstractMessageTaskTest<List<Block>, PeerTaskResult<List<Hash>>> {
 
   @Override
   protected List<Block> generateDataToBeRequested() {
@@ -64,7 +65,7 @@ public class ImportBlocksTaskTest
   }
 
   @Override
-  protected EthTask<PeerTaskResult<List<Block>>> createTask(final List<Block> requestedData) {
+  protected EthTask<PeerTaskResult<List<Hash>>> createTask(final List<Block> requestedData) {
     final Block firstBlock = requestedData.get(0);
     final MutableBlockchain shortBlockchain =
         createShortChain(firstBlock.getHeader().getNumber() - 1);
@@ -85,15 +86,15 @@ public class ImportBlocksTaskTest
   @Override
   protected void assertResultMatchesExpectation(
       final List<Block> requestedData,
-      final PeerTaskResult<List<Block>> response,
+      final PeerTaskResult<List<Hash>> response,
       final EthPeer respondingPeer) {
-    assertThat(response.getResult()).isEqualTo(requestedData);
+    assertThat(response.getResult())
+        .isEqualTo(requestedData.stream().map(Block::getHash).collect(Collectors.toList()));
     assertThat(response.getPeer()).isEqualTo(respondingPeer);
   }
 
   @Test
-  public void completesWhenPeerReturnsPartialResult()
-      throws ExecutionException, InterruptedException {
+  public void completesWhenPeerReturnsPartialResult() {
 
     // Respond with some headers and all corresponding bodies
     final Responder fullResponder = RespondingEthPeer.blockchainResponder(blockchain);
@@ -116,12 +117,14 @@ public class ImportBlocksTaskTest
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
 
     // Execute task
-    final AtomicReference<List<Block>> actualResult = new AtomicReference<>();
+    final AtomicReference<List<Hash>> actualResult = new AtomicReference<>();
     final AtomicReference<EthPeer> actualPeer = new AtomicReference<>();
     final AtomicBoolean done = new AtomicBoolean(false);
     final List<Block> requestedData = generateDataToBeRequested();
-    final EthTask<PeerTaskResult<List<Block>>> task = createTask(requestedData);
-    final CompletableFuture<PeerTaskResult<List<Block>>> future = task.run();
+    final List<Hash> requestedHashes =
+        requestedData.stream().map(Block::getHash).collect(Collectors.toList());
+    final EthTask<PeerTaskResult<List<Hash>>> task = createTask(requestedData);
+    final CompletableFuture<PeerTaskResult<List<Hash>>> future = task.run();
     future.whenComplete(
         (response, error) -> {
           actualResult.set(response.getResult());
@@ -135,15 +138,14 @@ public class ImportBlocksTaskTest
     assertThat(done).isTrue();
     assertThat(actualPeer.get()).isEqualTo(peer.getEthPeer());
     assertThat(actualResult.get().size()).isLessThan(requestedData.size());
-    for (final Block block : actualResult.get()) {
-      assertThat(requestedData).contains(block);
-      assertThat(blockchain.contains(block.getHash())).isTrue();
+    for (final Hash hash : actualResult.get()) {
+      assertThat(requestedHashes).contains(hash);
+      assertThat(blockchain.contains(hash)).isTrue();
     }
   }
 
   @Test
-  public void completesWhenPeersSendEmptyResponses()
-      throws ExecutionException, InterruptedException {
+  public void completesWhenPeersSendEmptyResponses() {
     // Setup a unresponsive peer
     final Responder responder = RespondingEthPeer.emptyResponder();
     final RespondingEthPeer respondingEthPeer =
@@ -152,13 +154,10 @@ public class ImportBlocksTaskTest
     // Execute task and wait for response
     final AtomicBoolean done = new AtomicBoolean(false);
     final List<Block> requestedData = generateDataToBeRequested();
-    final EthTask<PeerTaskResult<List<Block>>> task = createTask(requestedData);
-    final CompletableFuture<PeerTaskResult<List<Block>>> future = task.run();
+    final EthTask<PeerTaskResult<List<Hash>>> task = createTask(requestedData);
+    final CompletableFuture<PeerTaskResult<List<Hash>>> future = task.run();
     respondingEthPeer.respondWhile(responder, () -> !future.isDone());
-    future.whenComplete(
-        (response, error) -> {
-          done.compareAndSet(false, true);
-        });
+    future.whenComplete((response, error) -> done.compareAndSet(false, true));
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCompletedExceptionally()).isFalse();
   }
@@ -172,8 +171,8 @@ public class ImportBlocksTaskTest
 
     // Execute task and wait for response
     final List<Block> requestedData = generateDataToBeRequested();
-    final EthTask<PeerTaskResult<List<Block>>> task = createTask(requestedData);
-    final CompletableFuture<PeerTaskResult<List<Block>>> future = task.run();
+    final EthTask<PeerTaskResult<List<Hash>>> task = createTask(requestedData);
+    final CompletableFuture<PeerTaskResult<List<Hash>>> future = task.run();
     respondingEthPeer.respondWhile(responder, () -> !future.isDone());
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCompletedExceptionally()).isTrue();

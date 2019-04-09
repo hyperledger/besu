@@ -14,8 +14,8 @@ package tech.pegasys.pantheon.ethereum.eth.sync;
 
 import static java.util.Collections.emptyList;
 
-import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.EthTaskException;
@@ -205,13 +205,13 @@ public class EthTaskChainDownloader<C> implements ChainDownloader {
     syncState.clearSyncTarget();
   }
 
-  private CompletableFuture<List<Block>> importBlocks(final List<BlockHeader> checkpointHeaders) {
+  private CompletableFuture<List<Hash>> importBlocks(final List<BlockHeader> checkpointHeaders) {
     if (checkpointHeaders.isEmpty()) {
       // No checkpoints to download
       return CompletableFuture.completedFuture(emptyList());
     }
 
-    final CompletableFuture<List<Block>> importedBlocks =
+    final CompletableFuture<List<Hash>> importedBlocks =
         blockImportTaskFactory.importBlocksForCheckpoints(checkpointHeaders);
 
     return importedBlocks.whenComplete(
@@ -261,7 +261,7 @@ public class EthTaskChainDownloader<C> implements ChainDownloader {
   }
 
   public interface BlockImportTaskFactory {
-    CompletableFuture<List<Block>> importBlocksForCheckpoints(
+    CompletableFuture<List<Hash>> importBlocksForCheckpoints(
         final List<BlockHeader> checkpointHeaders);
   }
 }

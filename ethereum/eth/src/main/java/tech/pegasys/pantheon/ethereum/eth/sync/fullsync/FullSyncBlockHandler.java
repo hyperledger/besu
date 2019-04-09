@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.eth.sync.fullsync;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
@@ -75,6 +76,11 @@ public class FullSyncBlockHandler<C> implements BlockHandler<Block> {
   @Override
   public long extractBlockNumber(final Block block) {
     return block.getHeader().getNumber();
+  }
+
+  @Override
+  public Hash extractBlockHash(final Block block) {
+    return block.getHash();
   }
 
   @Override
