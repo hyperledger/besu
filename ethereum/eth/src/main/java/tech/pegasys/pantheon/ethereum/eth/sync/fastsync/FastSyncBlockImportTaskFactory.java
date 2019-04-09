@@ -15,8 +15,8 @@ package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 import static java.util.Collections.emptyList;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.sync.EthTaskChainDownloader.BlockImportTaskFactory;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
@@ -30,7 +30,6 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 class FastSyncBlockImportTaskFactory<C> implements BlockImportTaskFactory {
 
@@ -61,7 +60,7 @@ class FastSyncBlockImportTaskFactory<C> implements BlockImportTaskFactory {
   }
 
   @Override
-  public CompletableFuture<List<Block>> importBlocksForCheckpoints(
+  public CompletableFuture<List<Hash>> importBlocksForCheckpoints(
       final List<BlockHeader> checkpointHeaders) {
     if (checkpointHeaders.size() < 2) {
       return CompletableFuture.completedFuture(emptyList());
@@ -94,10 +93,6 @@ class FastSyncBlockImportTaskFactory<C> implements BlockImportTaskFactory {
             detatchedValidationPolicy,
             checkpointHeaders,
             metricsSystem);
-    return importTask
-        .run()
-        .thenApply(
-            results ->
-                results.stream().map(BlockWithReceipts::getBlock).collect(Collectors.toList()));
+    return importTask.run();
   }
 }

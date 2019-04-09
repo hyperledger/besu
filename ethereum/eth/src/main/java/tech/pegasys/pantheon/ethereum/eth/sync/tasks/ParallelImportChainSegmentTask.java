@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractEthTask;
@@ -34,7 +35,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class ParallelImportChainSegmentTask<C, B> extends AbstractEthTask<List<B>> {
+public class ParallelImportChainSegmentTask<C, B> extends AbstractEthTask<List<Hash>> {
   private static final Logger LOG = LogManager.getLogger();
 
   private final EthContext ethContext;
@@ -149,7 +150,7 @@ public class ParallelImportChainSegmentTask<C, B> extends AbstractEthTask<List<B
       final CompletableFuture<?> extractTxSignaturesFuture =
           scheduler.scheduleServiceTask(extractTxSignaturesTask);
       registerSubTask(extractTxSignaturesFuture);
-      final CompletableFuture<List<List<B>>> validateBodiesFuture =
+      final CompletableFuture<List<List<Hash>>> validateBodiesFuture =
           scheduler.scheduleServiceTask(validateAndImportBodiesTask);
       registerSubTask(validateBodiesFuture);
 
@@ -182,7 +183,7 @@ public class ParallelImportChainSegmentTask<C, B> extends AbstractEthTask<List<B
               cancelOnException.accept(null, e);
             } else if (r != null) {
               try {
-                final List<B> importedBlocks =
+                final List<Hash> importedBlocks =
                     validateBodiesFuture.get().stream()
                         .flatMap(Collection::stream)
                         .collect(Collectors.toList());

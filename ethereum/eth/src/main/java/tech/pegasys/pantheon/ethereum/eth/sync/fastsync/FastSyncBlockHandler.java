@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.sync.BlockHandler;
@@ -127,6 +128,11 @@ public class FastSyncBlockHandler<C> implements BlockHandler<BlockWithReceipts> 
   @Override
   public long extractBlockNumber(final BlockWithReceipts blockWithReceipt) {
     return blockWithReceipt.getHeader().getNumber();
+  }
+
+  @Override
+  public Hash extractBlockHash(final BlockWithReceipts block) {
+    return block.getHash();
   }
 
   @Override

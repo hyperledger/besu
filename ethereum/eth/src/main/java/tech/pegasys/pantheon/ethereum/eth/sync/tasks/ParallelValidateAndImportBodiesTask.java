@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPipelinedTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.BlockHandler;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
@@ -21,12 +22,13 @@ import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class ParallelValidateAndImportBodiesTask<B>
-    extends AbstractPipelinedTask<List<B>, List<B>> {
+    extends AbstractPipelinedTask<List<B>, List<Hash>> {
   private static final Logger LOG = LogManager.getLogger();
 
   private final BlockHandler<B> blockHandler;
@@ -42,7 +44,7 @@ public class ParallelValidateAndImportBodiesTask<B>
   }
 
   @Override
-  protected Optional<List<B>> processStep(
+  protected Optional<List<Hash>> processStep(
       final List<B> blocks, final Optional<List<B>> previousBlocks) {
     final long firstBlock = blockHandler.extractBlockNumber(blocks.get(0));
     final long lastBlock = blockHandler.extractBlockNumber(blocks.get(blocks.size() - 1));
@@ -50,9 +52,12 @@ public class ParallelValidateAndImportBodiesTask<B>
     final CompletableFuture<List<B>> importedBlocksFuture =
         blockHandler.validateAndImportBlocks(blocks);
     try {
-      final List<B> downloadedBlocks = importedBlocksFuture.get();
+      final List<Hash> downloadedHashes =
+          importedBlocksFuture.get().stream()
+              .map(blockHandler::extractBlockHash)
+              .collect(Collectors.toList());
       LOG.info("Completed importing chain segment {} to {}", firstBlock, lastBlock);
-      return Optional.of(downloadedBlocks);
+      return Optional.of(downloadedHashes);
     } catch (final InterruptedException | ExecutionException e) {
       failExceptionally(e);
       return Optional.empty();

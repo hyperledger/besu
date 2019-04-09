@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPeerTask;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,7 +40,7 @@ import org.apache.logging.log4j.Logger;
  *
  * @param <C> the consensus algorithm context
  */
-public class ImportBlocksTask<C> extends AbstractPeerTask<List<Block>> {
+public class ImportBlocksTask<C> extends AbstractPeerTask<List<Hash>> {
   private static final Logger LOG = LogManager.getLogger();
 
   private final ProtocolContext<C> protocolContext;
@@ -92,7 +94,11 @@ public class ImportBlocksTask<C> extends AbstractPeerTask<List<Block>> {
                 result.get().completeExceptionally(t);
               } else {
                 LOG.debug("Import from block {} succeeded.", startNumber);
-                result.get().complete(new PeerTaskResult<>(peer, r));
+                result
+                    .get()
+                    .complete(
+                        new PeerTaskResult<>(
+                            peer, r.stream().map(Block::getHash).collect(Collectors.toList())));
               }
             });
   }
