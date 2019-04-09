@@ -48,6 +48,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class EeaSendRawTransactionTest {
 
+  private static final String VALUE_NON_ZERO_TRANSACTION_RLP =
+      "0xf88b808203e8832dc6c0808203e880820fe8a08b89005561f31ce861"
+          + "84949bf32087a9817b337ab1d6027d58ef4e48aea88bafa041b93a"
+          + "e41a99fe662ad7fc1406ac90bf6bd498b5fe56fd6bfea15de15714"
+          + "438eac41316156744d784c4355486d425648586f5a7a7a42675062"
+          + "572f776a3561784470573958386c393153476f3dc08a7265737472"
+          + "6963746564";
+
   private static final String VALID_PRIVATE_TRANSACTION_RLP =
       "0xf8f3800182520894095e7baea6a6c7c4c2dfeb977efac326af552d87"
           + "808025a048b55bfa915ac795c431978d8a6a992b628d557da5ff"
@@ -138,7 +146,24 @@ public class EeaSendRawTransactionTest {
         new JsonRpcRequest("2.0", "eea_sendRawTransaction", new String[] {rawTransaction});
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.DECODE_ERROR);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void valueNonZeroTransaction() {
+    when(parameter.required(any(Object[].class), anyInt(), any()))
+        .thenReturn(VALUE_NON_ZERO_TRANSACTION_RLP);
+
+    final JsonRpcRequest request =
+        new JsonRpcRequest(
+            "2.0", "eea_sendRawTransaction", new String[] {VALUE_NON_ZERO_TRANSACTION_RLP});
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.VALUE_NOT_ZERO);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -166,6 +191,25 @@ public class EeaSendRawTransactionTest {
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(privateTxHandler).handle(any(PrivateTransaction.class));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
+  }
+
+  @Test
+  public void invalidTransactionIsSentToTransactionPool() throws IOException {
+    when(parameter.required(any(Object[].class), anyInt(), any()))
+        .thenReturn(VALID_PRIVATE_TRANSACTION_RLP);
+    when(privateTxHandler.handle(any(PrivateTransaction.class)))
+        .thenThrow(new IOException("enclave failed to execute"));
+
+    final JsonRpcRequest request =
+        new JsonRpcRequest(
+            "2.0", "eea_sendRawTransaction", new String[] {VALID_PRIVATE_TRANSACTION_RLP});
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.ENCLAVE_ERROR);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
   @Test

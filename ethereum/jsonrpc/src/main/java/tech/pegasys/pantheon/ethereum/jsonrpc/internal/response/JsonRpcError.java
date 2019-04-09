@@ -86,9 +86,11 @@ public enum JsonRpcError {
   UNAUTHORIZED(-40100, "Unauthorized"),
 
   // Private transaction errors
-  ENCLAVE_IS_DOWN(-50100, "Enclave is down"),
+  ENCLAVE_ERROR(-50100, "Error communicating with enclave"),
   UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE(-50100, "Unimplemented private transaction type"),
   PRIVATE_TRANSACTION_RECEIPT_ERROR(-50100, "Error generating the private transaction receipt"),
+  VALUE_NOT_ZERO(-50100, "We cannot transfer ether in private transaction yet."),
+  DECODE_ERROR(-50100, "Unable to decode the private signed raw transaction"),
 
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer.");
 
