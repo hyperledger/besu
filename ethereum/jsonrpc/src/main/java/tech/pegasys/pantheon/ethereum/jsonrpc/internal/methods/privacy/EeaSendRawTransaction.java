@@ -71,11 +71,11 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
     try {
       privateTransaction = decodeRawTransaction(rawPrivateTransaction);
     } catch (final InvalidJsonRpcRequestException e) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.DECODE_ERROR);
     }
 
     if (!privateTransaction.getValue().isZero()) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.VALUE_NOT_ZERO);
     }
 
     if (!privateTransaction
@@ -89,7 +89,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
     try {
       transaction = handlePrivateTransaction(privateTransaction);
     } catch (final InvalidJsonRpcRequestException e) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.ENCLAVE_IS_DOWN);
+      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.ENCLAVE_ERROR);
     }
 
     final ValidationResult<TransactionInvalidReason> validationResult =

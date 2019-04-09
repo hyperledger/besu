@@ -12,8 +12,6 @@
  */
 package tech.pegasys.pantheon.tests.web3j.privacy;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import tech.pegasys.orion.testutil.OrionTestHarness;
 import tech.pegasys.orion.testutil.OrionTestHarnessFactory;
 import tech.pegasys.pantheon.crypto.SECP256K1;
@@ -29,10 +27,8 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.PrivateTransac
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
@@ -40,7 +36,7 @@ public class PrivateAcceptanceTestBase extends AcceptanceTestBase {
   @ClassRule public static final TemporaryFolder privacy = new TemporaryFolder();
 
   protected final Eea eea;
-  protected final PrivateTransactionFactory privateTx;
+  protected static PrivateTransactionFactory privateTx;
   protected final PrivateTransactionVerifier privateTransactionVerifier;
 
   PrivateAcceptanceTestBase() {
@@ -50,124 +46,77 @@ public class PrivateAcceptanceTestBase extends AcceptanceTestBase {
     privateTransactionVerifier = new PrivateTransactionVerifier(eea, transactions);
   }
 
+  public static PrivateAcceptanceTestBase.Builder builder() {
+    return new PrivateAcceptanceTestBase.Builder();
+  }
+
   static OrionTestHarness createEnclave(
       final String pubKey, final String privKey, final String... othernode) throws Exception {
     return OrionTestHarnessFactory.create(privacy.newFolder().toPath(), pubKey, privKey, othernode);
   }
 
-  String getDeployEventEmitter() {
-    Address from = Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
-    BytesValue privateFrom =
-        BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8));
-    SECP256K1.KeyPair keypair =
-        SECP256K1.KeyPair.create(
-            SECP256K1.PrivateKey.create(
-                new BigInteger(
-                    "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
-    PrivateTransaction pTx =
-        privateTx.createContractTransaction(0, from, privateFrom, Lists.newArrayList(), keypair);
-    return RLP.encode(pTx::writeTo).toString();
+  enum TransactionType {
+    CREATE_CONTRACT,
+    STORE,
+    GET
   }
 
-  String getExecuteStoreFunc() {
-    Address to = Address.fromHexString("0x99a3e1c0368cb56aeea8fc8cf5068175d0de7ac1");
-    Address from = Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
-    BytesValue privateFrom =
-        BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8));
-    SECP256K1.KeyPair keypair =
-        SECP256K1.KeyPair.create(
-            SECP256K1.PrivateKey.create(
-                new BigInteger(
-                    "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
-    PrivateTransaction pTx =
-        privateTx.storeFunctionTransaction(1, to, from, privateFrom, Lists.newArrayList(), keypair);
-    return RLP.encode(pTx::writeTo).toString();
-  }
+  public static class Builder {
+    long nonce;
+    Address from;
+    Address to;
+    BytesValue privateFrom;
+    List<BytesValue> privateFor;
+    SECP256K1.KeyPair keyPair;
 
-  String getExecuteGetFunc() {
-    Address to = Address.fromHexString("0x99a3e1c0368cb56aeea8fc8cf5068175d0de7ac1");
-    Address from = Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
-    BytesValue privateFrom =
-        BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8));
-    SECP256K1.KeyPair keypair =
-        SECP256K1.KeyPair.create(
-            SECP256K1.PrivateKey.create(
-                new BigInteger(
-                    "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
-    PrivateTransaction pTx =
-        privateTx.getFunctionTransaction(2, to, from, privateFrom, Lists.newArrayList(), keypair);
-    return RLP.encode(pTx::writeTo).toString();
-  }
+    public Builder nonce(final long nonce) {
+      this.nonce = nonce;
+      return this;
+    }
 
-  String getDeployEventEmitterCluster() {
-    Address from = Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
-    BytesValue privateFrom =
-        BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8));
-    List<BytesValue> privateFor =
-        Lists.newArrayList(
-            BytesValue.wrap("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=".getBytes(UTF_8)));
-    SECP256K1.KeyPair keypair =
-        SECP256K1.KeyPair.create(
-            SECP256K1.PrivateKey.create(
-                new BigInteger(
-                    "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
-    PrivateTransaction pTx =
-        privateTx.createContractTransaction(0, from, privateFrom, privateFor, keypair);
-    return RLP.encode(pTx::writeTo).toString();
-  }
+    public Builder from(final Address from) {
+      this.from = from;
+      return this;
+    }
 
-  String getExecuteStoreFuncCluster(final long nonce) {
-    Address to = Address.fromHexString("0x2f351161a80d74047316899342eedc606b13f9f8");
-    Address from = Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57");
-    BytesValue privateFrom =
-        BytesValue.wrap("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=".getBytes(UTF_8));
-    List<BytesValue> privateFor =
-        Lists.newArrayList(
-            BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)));
-    SECP256K1.KeyPair keypair =
-        SECP256K1.KeyPair.create(
-            SECP256K1.PrivateKey.create(
-                new BigInteger(
-                    "c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3", 16)));
-    PrivateTransaction pTx =
-        privateTx.storeFunctionTransaction(nonce, to, from, privateFrom, privateFor, keypair);
-    return RLP.encode(pTx::writeTo).toString();
-  }
+    public Builder to(final Address to) {
+      this.to = to;
+      return this;
+    }
 
-  String getExecuteGetFuncCluster(final long nonce) {
-    Address to = Address.fromHexString("0x2f351161a80d74047316899342eedc606b13f9f8");
-    Address from = Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57");
-    BytesValue privateFrom =
-        BytesValue.wrap("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=".getBytes(UTF_8));
-    List<BytesValue> privateFor =
-        Lists.newArrayList(
-            BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)));
-    SECP256K1.KeyPair keypair =
-        SECP256K1.KeyPair.create(
-            SECP256K1.PrivateKey.create(
-                new BigInteger(
-                    "c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3", 16)));
-    PrivateTransaction pTx =
-        privateTx.getFunctionTransaction(nonce, to, from, privateFrom, privateFor, keypair);
-    return RLP.encode(pTx::writeTo).toString();
-  }
+    public Builder privateFrom(final BytesValue privateFrom) {
+      this.privateFrom = privateFrom;
+      return this;
+    }
 
-  String getExecuteGetFuncClusterNode3() {
-    Address to = Address.fromHexString("0x2f351161a80d74047316899342eedc606b13f9f8");
-    Address from = Address.fromHexString("0xf17f52151EbEF6C7334FAD080c5704D77216b732");
-    BytesValue privateFrom =
-        BytesValue.wrap("k2zXEin4Ip/qBGlRkJejnGWdP9cjkK+DAvKNW31L2C8=".getBytes(UTF_8));
-    List<BytesValue> privateFor =
-        Lists.newArrayList(
-            BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)));
-    SECP256K1.KeyPair keypair =
-        SECP256K1.KeyPair.create(
-            SECP256K1.PrivateKey.create(
-                new BigInteger(
-                    "ae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f", 16)));
-    PrivateTransaction pTx =
-        privateTx.getFunctionTransaction(0, to, from, privateFrom, privateFor, keypair);
-    return RLP.encode(pTx::writeTo).toString();
+    public Builder privateFor(final List<BytesValue> privateFor) {
+      this.privateFor = privateFor;
+      return this;
+    }
+
+    public Builder keyPair(final SECP256K1.KeyPair keyPair) {
+      this.keyPair = keyPair;
+      return this;
+    }
+
+    public String build(final TransactionType type) {
+      PrivateTransaction pTx;
+      switch (type) {
+        case CREATE_CONTRACT:
+          pTx = privateTx.createContractTransaction(nonce, from, privateFrom, privateFor, keyPair);
+          break;
+        case STORE:
+          pTx =
+              privateTx.storeFunctionTransaction(nonce, to, from, privateFrom, privateFor, keyPair);
+          break;
+        case GET:
+          pTx = privateTx.getFunctionTransaction(nonce, to, from, privateFrom, privateFor, keyPair);
+          break;
+        default:
+          throw new IllegalStateException("Unexpected value: " + type);
+      }
+      return RLP.encode(pTx::writeTo).toString();
+    }
   }
 
   static PrivacyParameters getPrivacyParams(final OrionTestHarness testHarness) throws IOException {
