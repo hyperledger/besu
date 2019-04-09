@@ -88,7 +88,8 @@ nav:
         - Overview: Privacy/Privacy-Overview.md
         - Processing Private Transactions: Privacy/Private-Transaction-Processing.md
     - Permissions:
-        - Nodes and Accounts Whitelists: Permissions/Permissioning.md
+        - Overview: Permissions/Permissioning-Overview.md
+        - Local Permissions: Permissions/Local-Permissioning.md
     - Using Pantheon:
         - Transactions:
           - Creating and Sending Transactions: Using-Pantheon/Transactions/Transactions.md

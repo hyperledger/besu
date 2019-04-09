@@ -2316,7 +2316,7 @@ Proposes [adding or removing a validator](../Consensus-Protocols/IBFT.md#adding-
 
 ### perm_addAccountsToWhitelist
 
-Adds accounts (participants) to the [accounts whitelist](../Permissions/Permissioning.md#account-whitelisting). 
+Adds accounts (participants) to the [accounts whitelist](../Permissions/Local-Permissioning.md#account-whitelisting). 
 
 **Parameters** 
 
@@ -2349,7 +2349,7 @@ including invalid account addresses.
     
 ### perm_getAccountsWhitelist
 
-Lists accounts (participants) in the [accounts whitelist](../Permissions/Permissioning.md#account-whitelisting). 
+Lists accounts (participants) in the [accounts whitelist](../Permissions/Local-Permissioning.md#account-whitelisting). 
 
 **Parameters** 
 
@@ -2381,7 +2381,7 @@ None
     
 ### perm_removeAccountsFromWhitelist
 
-Removes accounts (participants) from the [accounts whitelist](../Permissions/Permissioning.md#account-whitelisting). 
+Removes accounts (participants) from the [accounts whitelist](../Permissions/Local-Permissioning.md#account-whitelisting). 
 
 **Parameters** 
 
@@ -2413,7 +2413,7 @@ including invalid account addresses.
     ```
 ### perm_addNodesToWhitelist
 
-Adds nodes to the [nodes whitelist](../Permissions/Permissioning.md#node-whitelisting). 
+Adds nodes to the [nodes whitelist](../Permissions/Local-Permissioning.md#node-whitelisting). 
 
 **Parameters** 
 
@@ -2446,7 +2446,7 @@ including invalid enode URLs.
     
 ### perm_getNodesWhitelist
 
-Lists nodes in the [nodes whitelist](../Permissions/Permissioning.md#node-whitelisting). 
+Lists nodes in the [nodes whitelist](../Permissions/Local-Permissioning.md#node-whitelisting). 
 
 **Parameters** 
 
@@ -2478,7 +2478,7 @@ None
     
 ### perm_removeNodesFromWhitelist
 
-Removes nodes from the [nodes whitelist](../Permissions/Permissioning.md#node-whitelisting). 
+Removes nodes from the [nodes whitelist](../Permissions/Local-Permissioning.md#node-whitelisting). 
 
 **Parameters** 
 
@@ -2511,7 +2511,7 @@ including invalid enode URLs.
     
 ### perm_reloadPermissionsFromFile
 
-Reloads the accounts and nodes whitelists from the [permissions configuration file](../Permissions/Permissioning.md#permissions-configuration-file). 
+Reloads the accounts and nodes whitelists from the [permissions configuration file](../Permissions/Local-Permissioning.md#permissions-configuration-file). 
 
 **Parameters** 
 

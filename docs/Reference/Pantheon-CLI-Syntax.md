@@ -580,7 +580,7 @@ Set to enable file-based account level permissions. Default is `false`.
 permissions-accounts-config-file="/home/me/me_configFiles/myPermissionsFile"
 ```
 
-Path to the [accounts permissions configuration file](../Permissions/Permissioning.md#permissions-configuration-file).
+Path to the [accounts permissions configuration file](../Permissions/Local-Permissioning.md#permissions-configuration-file).
 Default is the `permissions_config.toml` file in the [data directory](#data-path).
 
 !!! tip
@@ -620,7 +620,7 @@ Set to enable file-based node level permissions. Default is `false`.
 permissions-nodes-config-file="/home/me/me_configFiles/myPermissionsFile"
 ```
 
-Path to the [nodes permissions configuration file](../Permissions/Permissioning.md#permissions-configuration-file).
+Path to the [nodes permissions configuration file](../Permissions/Local-Permissioning.md#permissions-configuration-file).
 Default is the `permissions_config.toml` file in the [data directory](#data-path).
 
 !!! tip
