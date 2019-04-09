@@ -655,8 +655,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--sync-mode",
-        SyncMode.FAST.equals(syncMode),
-        asList("--fast-sync-num-peers", "--fast-sync-timeout"));
+        !SyncMode.FAST.equals(syncMode),
+        asList("--fast-sync-min-peers", "--fast-sync-max-wait-time"));
 
     //noinspection ConstantConditions
     if (isMiningEnabled && coinbase == null) {
