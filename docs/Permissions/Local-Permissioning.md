@@ -1,15 +1,9 @@
-description: Pantheon Permissions feature
+description: Local Permissioning 
 <!--- END of page meta data -->
 
-# Permissions 
+# Local Permissioning 
 
-A permissioned network is a network where only specified nodes and accounts (participants) can participate. 
-Nodes and accounts outside those specified are prevented from participating. Permissioned networks can have node permissions enabled, 
-account permissions enabled, or both. 
-
-![Node Permissions](../images/node-permissioning-bad-actor.png)
-
-![Account Permissions](../images/account-permissioning.png)
+Local permissioning supports node and account whitelisting. 
 
 ## Node Whitelisting 
 
@@ -56,7 +50,7 @@ To view the nodes whitelist, use the [perm_getNodesWhitelist](../Reference/JSON-
 The bootnodes must be included in the nodes whitelist or Pantheon does not start when node permissions are enabled. 
 
 !!! example 
-    If you start Pantheon with specified bootnodes and have node permissions enabled:
+    If you start Pantheon with specified bootnodes and have node permissioning enabled:
     
      ```bash
      --bootnodes="enode://7e4ef30e9ec683f26ad76ffca5b5148fa7a6575f4cfad4eb0f52f9c3d8335f4a9b6f9e66fcc73ef95ed7a2a52784d4f372e7750ac8ae0b544309a5b391a23dd7@127.0.0.1:30303","enode://2feb33b3c6c4a8f77d84a5ce44954e83e5f163e7a65f7f7a7fec499ceb0ddd76a46ef635408c513d64c076470eac86b7f2c8ae4fcd112cb28ce82c0d64ec2c94@127.0.0.1:30304","enode://7b61d5ee4b44335873e6912cb5dd3e3877c860ba21417c9b9ef1f7e500a82213737d4b269046d0669fb2299a234ca03443f25fe5f706b693b3669e5c92478ade@127.0.0.1:30305" 
@@ -75,7 +69,7 @@ or [`--rpc-ws-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-api) options to e
 ## Account Whitelisting 
 
 Account whitelisting is specified by the accounts whitelist in the [permissions configuration file](#permissions-configuration-file).
-A node with account permissions accepts transactions only from accounts in the accounts whitelist. 
+A node with account permissioning accepts transactions only from accounts in the accounts whitelist. 
 
 !!! example "Accounts Whitelist in Permissions Configuration File"
     `accounts-whitelist=["0x0000000000000000000000000000000000000009"]`

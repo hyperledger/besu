@@ -138,7 +138,7 @@ The permissions configuration file includes the first two accounts from the gene
 Permissioned nodes are added using the JSON-RPC API after starting the nodes. 
 
 !!! note
-    Permissions are specified at the node level. The [`permissions_config.toml`](../Permissions/Permissioning.md#permissions-configuration-file) 
+    Permissions are specified at the node level. The [`permissions_config.toml`](../Permissions/Local-Permissioning.md#permissions-configuration-file) 
     file must be saved in the data directory for each node. 
     
     On-chain permissioning is under development. On-chain permissioning will use one on-chain 

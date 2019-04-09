@@ -39,7 +39,7 @@ and [`admin_removePeer`](../../Reference/JSON-RPC-API-Methods.md#admin_removepee
     is not updated by `admin_addPeer` and `admin_removePeer` methods. 
     
     Nodes outside of the static nodes are not prevented from connecting.  To prevent nodes from connecting,
-    use [Permissioning](../../Permissions/Permissioning.md). 
+    use [Permissioning](../../Permissions/Permissioning-Overview.md). 
     
 !!! caution 
     If the added peer does not appear in the peer list (returned by [`admin_peers`](../../Reference/JSON-RPC-API-Methods.md#admin_peers)),

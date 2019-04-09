@@ -150,7 +150,7 @@ Specify a permissions configuration file. This is equivalent to specifying the `
 or the `--permissions-nodes-config-file` option.
 
 !!! note 
-    When using Docker, the accounts and nodes permissions must be contained in the same [permissions file](../Permissions/Permissioning.md#permissions-configuration-file). 
+    When using Docker, the accounts and nodes permissions must be contained in the same [permissions file](../Permissions/Local-Permissioning.md#permissions-configuration-file). 
 
 To run Pantheon specifying a permissions configuration file: 
 ```bash
