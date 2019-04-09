@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.RunnerBuilder;
 import tech.pegasys.pantheon.cli.PublicKeySubCommand.KeyLoader;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
@@ -71,6 +72,7 @@ public abstract class CommandTestAbstract {
   @Mock Runner mockRunner;
   @Mock PantheonControllerBuilder mockControllerBuilder;
   @Mock SynchronizerConfiguration.Builder mockSyncConfBuilder;
+  @Mock EthereumWireProtocolConfiguration.Builder mockEthereumWireProtocolConfigurationBuilder;
   @Mock SynchronizerConfiguration mockSyncConf;
   @Mock RocksDbConfiguration.Builder mockRocksDbConfBuilder;
   @Mock RocksDbConfiguration mockRocksDbConf;
@@ -118,8 +120,12 @@ public abstract class CommandTestAbstract {
     when(mockSyncConfBuilder.fastSyncMinimumPeerCount(anyInt())).thenReturn(mockSyncConfBuilder);
     when(mockSyncConfBuilder.fastSyncMaximumPeerWaitTime(any(Duration.class)))
         .thenReturn(mockSyncConfBuilder);
-
+    when(mockSyncConfBuilder.ethereumWireProtocolConfiguration(any()))
+        .thenReturn(mockSyncConfBuilder);
     when(mockSyncConfBuilder.build()).thenReturn(mockSyncConf);
+
+    when(mockEthereumWireProtocolConfigurationBuilder.build())
+        .thenReturn(EthereumWireProtocolConfiguration.defaultConfig());
 
     when(mockRocksDbConfBuilder.databaseDir(any())).thenReturn(mockRocksDbConfBuilder);
     when(mockRocksDbConfBuilder.build()).thenReturn(mockRocksDbConf);
@@ -180,6 +186,7 @@ public abstract class CommandTestAbstract {
             mockRunnerBuilder,
             mockControllerBuilder,
             mockSyncConfBuilder,
+            mockEthereumWireProtocolConfigurationBuilder,
             mockRocksDbConfBuilder,
             keyLoader);
 
@@ -208,6 +215,7 @@ public abstract class CommandTestAbstract {
         final RunnerBuilder mockRunnerBuilder,
         final PantheonControllerBuilder mockControllerBuilder,
         final SynchronizerConfiguration.Builder mockSyncConfBuilder,
+        final EthereumWireProtocolConfiguration.Builder mockEthereumConfigurationMockBuilder,
         final RocksDbConfiguration.Builder mockRocksDbConfBuilder,
         final KeyLoader keyLoader) {
       super(
@@ -216,6 +224,7 @@ public abstract class CommandTestAbstract {
           mockRunnerBuilder,
           mockControllerBuilder,
           mockSyncConfBuilder,
+          mockEthereumConfigurationMockBuilder,
           mockRocksDbConfBuilder);
       this.keyLoader = keyLoader;
     }

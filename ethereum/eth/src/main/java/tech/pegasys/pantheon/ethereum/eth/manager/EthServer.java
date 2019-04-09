@@ -17,6 +17,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
+import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.messages.BlockBodiesMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.BlockHeadersMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
@@ -46,11 +47,6 @@ import org.apache.logging.log4j.Logger;
 
 class EthServer {
   private static final Logger LOG = LogManager.getLogger();
-
-  public static final int DEFAULT_MAX_GET_BLOCK_HEADERS = 192;
-  public static final int DEFAULT_MAX_GET_BLOCK_BODIES = 128;
-  public static final int DEFAULT_MAX_GET_RECEIPTS = 256;
-  public static final int DEFAULT_MAX_GET_NODE_DATA = 384;
 
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
@@ -86,10 +82,10 @@ class EthServer {
         blockchain,
         worldStateArchive,
         ethMessages,
-        DEFAULT_MAX_GET_BLOCK_HEADERS,
-        DEFAULT_MAX_GET_BLOCK_BODIES,
-        DEFAULT_MAX_GET_RECEIPTS,
-        DEFAULT_MAX_GET_NODE_DATA);
+        EthereumWireProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS,
+        EthereumWireProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_BODIES,
+        EthereumWireProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS,
+        EthereumWireProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA);
   }
 
   private void setupListeners() {

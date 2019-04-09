@@ -16,6 +16,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.cli.PantheonCommand;
 import tech.pegasys.pantheon.cli.PantheonControllerBuilder;
+import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
 import tech.pegasys.pantheon.util.BlockImporter;
@@ -35,6 +36,7 @@ public final class Pantheon {
             new RunnerBuilder(),
             new PantheonControllerBuilder(),
             new SynchronizerConfiguration.Builder(),
+            EthereumWireProtocolConfiguration.builder(),
             new RocksDbConfiguration.Builder());
 
     pantheonCommand.parse(

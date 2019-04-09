@@ -31,6 +31,7 @@ import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
+import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
@@ -96,7 +97,10 @@ public final class RunnerTest {
     final int blockCount = 500;
     final KeyPair aheadDbNodeKeys = loadKeyPair(dbAhead);
     final SynchronizerConfiguration syncConfigAhead =
-        SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
+        SynchronizerConfiguration.builder()
+            .syncMode(SyncMode.FULL)
+            .ethereumWireProtocolConfiguration(EthereumWireProtocolConfiguration.builder().build())
+            .build();
     final MetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
     final int networkId = 2929;
 
