@@ -62,7 +62,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     this(
         gasCalculator,
         privacyParameters.getEnclavePublicKey(),
-        new Enclave(privacyParameters.getUrl()),
+        new Enclave(privacyParameters.getEnclaveUri()),
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateTransactionStorage(),
         privacyParameters.getPrivateStateStorage());

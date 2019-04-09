@@ -59,7 +59,7 @@ public final class BlockImporterTest {
             new MiningParametersTestBuilder().enabled(false).build(),
             KeyPair.generate(),
             new NoOpMetricsSystem(),
-            PrivacyParameters.noPrivacy(),
+            PrivacyParameters.DEFAULT,
             dataDir,
             TestClock.fixed(),
             PendingTransactions.MAX_PENDING_TRANSACTIONS);
@@ -96,7 +96,7 @@ public final class BlockImporterTest {
             new MiningParametersTestBuilder().enabled(false).build(),
             KeyPair.generate(),
             new NoOpMetricsSystem(),
-            PrivacyParameters.noPrivacy(),
+            PrivacyParameters.DEFAULT,
             dataDir,
             TestClock.fixed(),
             PendingTransactions.MAX_PENDING_TRANSACTIONS);

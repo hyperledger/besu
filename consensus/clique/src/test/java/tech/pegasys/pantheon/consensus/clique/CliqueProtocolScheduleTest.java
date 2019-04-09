@@ -17,7 +17,6 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
-import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
@@ -42,7 +41,7 @@ public class CliqueProtocolScheduleTest {
 
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule<CliqueContext> protocolSchedule =
-        CliqueProtocolSchedule.create(config, NODE_KEYS, PrivacyParameters.noPrivacy());
+        CliqueProtocolSchedule.create(config, NODE_KEYS);
 
     final ProtocolSpec<CliqueContext> homesteadSpec = protocolSchedule.getByBlockNumber(1);
     final ProtocolSpec<CliqueContext> tangerineWhistleSpec = protocolSchedule.getByBlockNumber(2);
@@ -57,10 +56,7 @@ public class CliqueProtocolScheduleTest {
   @Test
   public void parametersAlignWithMainnetWithAdjustments() {
     final ProtocolSpec<CliqueContext> homestead =
-        CliqueProtocolSchedule.create(
-                GenesisConfigFile.DEFAULT.getConfigOptions(),
-                NODE_KEYS,
-                PrivacyParameters.noPrivacy())
+        CliqueProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions(), NODE_KEYS)
             .getByBlockNumber(0);
 
     assertThat(homestead.getName()).isEqualTo("Frontier");

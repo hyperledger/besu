@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
 
@@ -32,14 +33,12 @@ import java.nio.file.Path;
 import com.google.common.io.Files;
 
 public class PrivacyParameters {
-  private static final String ENCLAVE_URL = "http://localhost:8888";
-  public static final URI DEFAULT_ENCLAVE_URL = URI.create(ENCLAVE_URL);
-  private final String PRIVATE_DATABASE_PATH = "private";
-  private final String PRIVATE_STATE_DATABASE_PATH = "privateState";
+  public static final URI DEFAULT_ENCLAVE_URL = URI.create("http://localhost:8888");
+  public static final PrivacyParameters DEFAULT = new PrivacyParameters();
 
-  private Integer privacyAddress;
+  private Integer privacyAddress = Address.PRIVACY;
   private boolean enabled;
-  private String url;
+  private URI enclaveUri;
   private String enclavePublicKey;
   private File enclavePublicKeyFile;
   private SECP256K1.KeyPair signingKeyPair;
@@ -49,56 +48,6 @@ public class PrivacyParameters {
   private PrivateTransactionStorage privateTransactionStorage;
   private PrivateStateStorage privateStateStorage;
 
-  public String getEnclavePublicKey() {
-    return enclavePublicKey;
-  }
-
-  public File getEnclavePublicKeyFile() {
-    return enclavePublicKeyFile;
-  }
-
-  public void setEnclavePublicKeyUsingFile(final File publicKeyFile) throws IOException {
-    this.enclavePublicKeyFile = publicKeyFile;
-    this.enclavePublicKey = Files.asCharSource(publicKeyFile, UTF_8).read();
-  }
-
-  public void setSigningKeyPair(final SECP256K1.KeyPair signingKeyPair) {
-    this.signingKeyPair = signingKeyPair;
-  }
-
-  public SECP256K1.KeyPair getSigningKeyPair() {
-    return signingKeyPair;
-  }
-
-  public static PrivacyParameters noPrivacy() {
-    final PrivacyParameters config = new PrivacyParameters();
-    config.setEnabled(false);
-    config.setUrl(ENCLAVE_URL);
-    config.setPrivacyAddress(Address.PRIVACY);
-    return config;
-  }
-
-  @Override
-  public String toString() {
-    return "PrivacyParameters{" + "enabled=" + enabled + ", url='" + url + '\'' + '}';
-  }
-
-  public void setUrl(final String url) {
-    this.url = url;
-  }
-
-  public String getUrl() {
-    return this.url;
-  }
-
-  public boolean isEnabled() {
-    return enabled;
-  }
-
-  public void setEnabled(final boolean enabled) {
-    this.enabled = enabled;
-  }
-
   public Integer getPrivacyAddress() {
     return privacyAddress;
   }
@@ -107,38 +56,161 @@ public class PrivacyParameters {
     this.privacyAddress = privacyAddress;
   }
 
-  public void enablePrivateDB(final Path path) throws IOException {
-    final Path privateDbPath = path.resolve(PRIVATE_DATABASE_PATH);
-    this.privateStorageProvider =
-        RocksDbStorageProvider.create(
-            new RocksDbConfiguration.Builder().databaseDir(privateDbPath).build(),
-            new NoOpMetricsSystem());
-    final WorldStateStorage privateWorldStateStorage =
-        privateStorageProvider.createWorldStateStorage();
-    this.privateWorldStateArchive = new WorldStateArchive(privateWorldStateStorage);
-
-    final Path privateStateDbPath = path.resolve(PRIVATE_STATE_DATABASE_PATH);
-    final StorageProvider privateStateStorageProvider =
-        RocksDbStorageProvider.create(
-            new RocksDbConfiguration.Builder().databaseDir(privateStateDbPath).build(),
-            new NoOpMetricsSystem());
-    this.privateTransactionStorage = privateStateStorageProvider.createPrivateTransactionStorage();
-    this.privateStateStorage = privateStateStorageProvider.createPrivateStateStorage();
+  public Boolean isEnabled() {
+    return enabled;
   }
 
-  public PrivateTransactionStorage getPrivateTransactionStorage() {
-    return privateTransactionStorage;
+  public void setEnabled(final boolean enabled) {
+    this.enabled = enabled;
   }
 
-  public PrivateStateStorage getPrivateStateStorage() {
-    return privateStateStorage;
+  public URI getEnclaveUri() {
+    return enclaveUri;
+  }
+
+  public void setEnclaveUri(final URI enclaveUri) {
+    this.enclaveUri = enclaveUri;
+  }
+
+  public String getEnclavePublicKey() {
+    return enclavePublicKey;
+  }
+
+  public void setEnclavePublicKey(final String enclavePublicKey) {
+    this.enclavePublicKey = enclavePublicKey;
+  }
+
+  public File getEnclavePublicKeyFile() {
+    return enclavePublicKeyFile;
+  }
+
+  public void setEnclavePublicKeyFile(final File enclavePublicKeyFile) {
+    this.enclavePublicKeyFile = enclavePublicKeyFile;
+  }
+
+  public SECP256K1.KeyPair getSigningKeyPair() {
+    return signingKeyPair;
+  }
+
+  public void setSigningKeyPair(final SECP256K1.KeyPair signingKeyPair) {
+    this.signingKeyPair = signingKeyPair;
   }
 
   public WorldStateArchive getPrivateWorldStateArchive() {
     return privateWorldStateArchive;
   }
 
+  public void setPrivateWorldStateArchive(final WorldStateArchive privateWorldStateArchive) {
+    this.privateWorldStateArchive = privateWorldStateArchive;
+  }
+
   public StorageProvider getPrivateStorageProvider() {
-    return this.privateStorageProvider;
+    return privateStorageProvider;
+  }
+
+  public void setPrivateStorageProvider(final StorageProvider privateStorageProvider) {
+    this.privateStorageProvider = privateStorageProvider;
+  }
+
+  public PrivateTransactionStorage getPrivateTransactionStorage() {
+    return privateTransactionStorage;
+  }
+
+  public void setPrivateTransactionStorage(
+      final PrivateTransactionStorage privateTransactionStorage) {
+    this.privateTransactionStorage = privateTransactionStorage;
+  }
+
+  public PrivateStateStorage getPrivateStateStorage() {
+    return privateStateStorage;
+  }
+
+  public void setPrivateStateStorage(final PrivateStateStorage privateStateStorage) {
+    this.privateStateStorage = privateStateStorage;
+  }
+
+  @Override
+  public String toString() {
+    return "PrivacyParameters{" + "enabled=" + enabled + ", enclaveUri='" + enclaveUri + '\'' + '}';
+  }
+
+  public static class Builder {
+    private final String PRIVATE_DATABASE_PATH = "private";
+    private final String PRIVATE_STATE_DATABASE_PATH = "privateState";
+
+    private boolean enabled;
+    private URI enclaveUrl;
+    private Integer privacyAddress = Address.PRIVACY;
+    private MetricsSystem metricsSystem = new NoOpMetricsSystem();
+    private Path dataDir;
+    private File enclavePublicKeyFile;
+    private String enclavePublicKey;
+
+    public Builder setPrivacyAddress(final Integer privacyAddress) {
+      this.privacyAddress = privacyAddress;
+      return this;
+    }
+
+    public Builder setEnclaveUrl(final URI enclaveUrl) {
+      this.enclaveUrl = enclaveUrl;
+      return this;
+    }
+
+    public Builder setEnabled(final boolean enabled) {
+      this.enabled = enabled;
+      return this;
+    }
+
+    public Builder setMetricsSystem(final MetricsSystem metricsSystem) {
+      this.metricsSystem = metricsSystem;
+      return this;
+    }
+
+    public Builder setDataDir(final Path dataDir) {
+      this.dataDir = dataDir;
+      return this;
+    }
+
+    public PrivacyParameters build() throws IOException {
+      PrivacyParameters config = new PrivacyParameters();
+      if (enabled) {
+        Path privateDbPath = dataDir.resolve(PRIVATE_DATABASE_PATH);
+        StorageProvider privateStorageProvider =
+            RocksDbStorageProvider.create(
+                new RocksDbConfiguration.Builder().databaseDir(privateDbPath).build(),
+                metricsSystem);
+        WorldStateStorage privateWorldStateStorage =
+            privateStorageProvider.createWorldStateStorage();
+        WorldStateArchive privateWorldStateArchive =
+            new WorldStateArchive(privateWorldStateStorage);
+
+        Path privateStateDbPath = dataDir.resolve(PRIVATE_STATE_DATABASE_PATH);
+        StorageProvider privateStateStorageProvider =
+            RocksDbStorageProvider.create(
+                new RocksDbConfiguration.Builder().databaseDir(privateStateDbPath).build(),
+                metricsSystem);
+        PrivateTransactionStorage privateTransactionStorage =
+            privateStateStorageProvider.createPrivateTransactionStorage();
+        PrivateStateStorage privateStateStorage =
+            privateStateStorageProvider.createPrivateStateStorage();
+
+        config.setPrivateWorldStateArchive(privateWorldStateArchive);
+        config.setEnclavePublicKey(enclavePublicKey);
+        config.setEnclavePublicKeyFile(enclavePublicKeyFile);
+        config.setPrivateStorageProvider(privateStorageProvider);
+        config.setPrivateTransactionStorage(privateTransactionStorage);
+        config.setPrivateStateStorage(privateStateStorage);
+      }
+      config.setEnabled(enabled);
+      config.setEnclaveUri(enclaveUrl);
+      config.setPrivacyAddress(privacyAddress);
+      return config;
+    }
+
+    public Builder setEnclavePublicKeyUsingFile(final File publicKeyFile) throws IOException {
+      this.enclavePublicKeyFile = publicKeyFile;
+      this.enclavePublicKey = Files.asCharSource(publicKeyFile, UTF_8).read();
+      return this;
+    }
   }
 }

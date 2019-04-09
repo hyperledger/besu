@@ -31,4 +31,8 @@ public class FixedDifficultyProtocolSchedule {
             privacyParameters)
         .createProtocolSchedule();
   }
+
+  public static ProtocolSchedule<Void> create(final GenesisConfigOptions config) {
+    return create(config, PrivacyParameters.DEFAULT);
+  }
 }

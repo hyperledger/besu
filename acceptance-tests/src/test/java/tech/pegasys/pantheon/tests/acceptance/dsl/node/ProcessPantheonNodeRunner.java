@@ -85,7 +85,7 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
     if (node.getPrivacyParameters().isEnabled()) {
       params.add("--privacy-enabled");
       params.add("--privacy-url");
-      params.add(node.getPrivacyParameters().getUrl());
+      params.add(node.getPrivacyParameters().getEnclaveUri().toString());
       params.add("--privacy-public-key-file");
       params.add(node.getPrivacyParameters().getEnclavePublicKeyFile().getAbsolutePath());
       params.add("--privacy-precompiled-address");

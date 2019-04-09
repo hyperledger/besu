@@ -120,13 +120,11 @@ public class PrivateAcceptanceTestBase extends AcceptanceTestBase {
   }
 
   static PrivacyParameters getPrivacyParams(final OrionTestHarness testHarness) throws IOException {
-    final PrivacyParameters privacyParameters = new PrivacyParameters();
-    privacyParameters.setEnabled(true);
-    privacyParameters.setUrl(testHarness.clientUrl());
-    privacyParameters.setPrivacyAddress(Address.PRIVACY);
-    privacyParameters.setEnclavePublicKeyUsingFile(
-        testHarness.getConfig().publicKeys().get(0).toFile());
-    privacyParameters.enablePrivateDB(privacy.newFolder().toPath());
-    return privacyParameters;
+    return new PrivacyParameters.Builder()
+        .setEnabled(true)
+        .setEnclaveUrl(testHarness.clientUrl())
+        .setEnclavePublicKeyUsingFile(testHarness.getConfig().publicKeys().get(0).toFile())
+        .setDataDir(privacy.newFolder().toPath())
+        .build();
   }
 }

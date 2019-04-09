@@ -34,7 +34,6 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
-import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
@@ -90,8 +89,7 @@ public class CliqueMinerExecutorTest {
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             Executors.newSingleThreadExecutor(),
-            CliqueProtocolSchedule.create(
-                GENESIS_CONFIG_OPTIONS, proposerKeyPair, PrivacyParameters.noPrivacy()),
+            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerKeyPair),
             new PendingTransactions(1, TestClock.fixed(), metricsSystem),
             proposerKeyPair,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, wrappedVanityData, false),
@@ -121,8 +119,7 @@ public class CliqueMinerExecutorTest {
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             Executors.newSingleThreadExecutor(),
-            CliqueProtocolSchedule.create(
-                GENESIS_CONFIG_OPTIONS, proposerKeyPair, PrivacyParameters.noPrivacy()),
+            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerKeyPair),
             new PendingTransactions(1, TestClock.fixed(), metricsSystem),
             proposerKeyPair,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, wrappedVanityData, false),

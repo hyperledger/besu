@@ -46,6 +46,10 @@ public class IbftProtocolSchedule {
         .createProtocolSchedule();
   }
 
+  public static ProtocolSchedule<IbftContext> create(final GenesisConfigOptions config) {
+    return create(config, PrivacyParameters.DEFAULT);
+  }
+
   private static ProtocolSpecBuilder<IbftContext> applyIbftChanges(
       final long secondsBetweenBlocks, final ProtocolSpecBuilder<Void> builder) {
     return builder

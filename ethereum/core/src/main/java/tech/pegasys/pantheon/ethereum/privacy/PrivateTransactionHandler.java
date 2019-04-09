@@ -42,7 +42,7 @@ public class PrivateTransactionHandler {
 
   public PrivateTransactionHandler(final PrivacyParameters privacyParameters) {
     this(
-        new Enclave(privacyParameters.getUrl()),
+        new Enclave(privacyParameters.getEnclaveUri()),
         Address.privacyPrecompiled(privacyParameters.getPrivacyAddress()),
         privacyParameters.getSigningKeyPair());
   }

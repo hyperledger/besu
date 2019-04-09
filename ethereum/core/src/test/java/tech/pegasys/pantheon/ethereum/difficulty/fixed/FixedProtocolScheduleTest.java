@@ -29,7 +29,7 @@ public class FixedProtocolScheduleTest {
 
     final ProtocolSchedule<Void> schedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.development().getConfigOptions(), PrivacyParameters.noPrivacy());
+            GenesisConfigFile.development().getConfigOptions(), PrivacyParameters.DEFAULT);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 

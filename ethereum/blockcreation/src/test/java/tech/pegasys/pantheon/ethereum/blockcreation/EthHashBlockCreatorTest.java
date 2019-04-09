@@ -55,7 +55,7 @@ public class EthHashBlockCreatorTest {
                       GenesisConfigFile.DEFAULT.getConfigOptions(),
                       42,
                       Function.identity(),
-                      PrivacyParameters.noPrivacy())
+                      PrivacyParameters.DEFAULT)
                   .createProtocolSchedule())
           .build();
 

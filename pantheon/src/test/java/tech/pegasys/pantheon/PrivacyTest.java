@@ -43,10 +43,12 @@ public class PrivacyTest {
   @Test
   public void privacyPrecompiled() throws IOException {
     final Path dataDir = folder.newFolder().toPath();
-    PrivacyParameters privacyParameters = PrivacyParameters.noPrivacy();
-    privacyParameters.setPrivacyAddress(ADDRESS);
-    privacyParameters.setEnabled(true);
-    privacyParameters.enablePrivateDB(dataDir);
+    PrivacyParameters privacyParameters =
+        new PrivacyParameters.Builder()
+            .setPrivacyAddress(ADDRESS)
+            .setEnabled(true)
+            .setDataDir(dataDir)
+            .build();
 
     MainnetPantheonController mainnetPantheonController =
         (MainnetPantheonController)
