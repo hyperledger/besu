@@ -35,6 +35,7 @@ import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
+import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.sync.DefaultSynchronizer;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
@@ -100,6 +101,7 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
       final StorageProvider storageProvider,
       final GenesisConfigFile genesisConfig,
       final SynchronizerConfiguration syncConfig,
+      final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration,
       final int networkId,
       final KeyPair nodeKeys,
       final Path dataDirectory,
@@ -147,7 +149,8 @@ public class IbftLegacyPantheonController implements PantheonController<IbftCont
             syncConfig.downloaderParallelism(),
             syncConfig.transactionsParallelism(),
             syncConfig.computationParallelism(),
-            metricsSystem);
+            metricsSystem,
+            ethereumWireProtocolConfiguration);
 
     final SyncState syncState =
         new SyncState(blockchain, istanbul64ProtocolManager.ethContext().getEthPeers());

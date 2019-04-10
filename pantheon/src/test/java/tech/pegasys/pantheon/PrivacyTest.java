@@ -55,10 +55,8 @@ public class PrivacyTest {
         (MainnetPantheonController)
             PantheonController.fromConfig(
                 GenesisConfigFile.mainnet(),
-                SynchronizerConfiguration.builder()
-                    .ethereumWireProtocolConfiguration(
-                        EthereumWireProtocolConfiguration.builder().build())
-                    .build(),
+                SynchronizerConfiguration.builder().build(),
+                EthereumWireProtocolConfiguration.defaultConfig(),
                 new InMemoryStorageProvider(),
                 1,
                 new MiningParametersTestBuilder().enabled(false).build(),

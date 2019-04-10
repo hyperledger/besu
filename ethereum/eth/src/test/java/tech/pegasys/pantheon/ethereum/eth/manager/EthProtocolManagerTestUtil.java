@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.ChainHead;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
+import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.manager.DeterministicEthScheduler.TimeoutPolicy;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -44,7 +45,12 @@ public class EthProtocolManagerTestUtil {
       final EthScheduler ethScheduler) {
     final int networkId = 1;
     return new EthProtocolManager(
-        blockchain, worldStateArchive, networkId, false, ethScheduler, 200, 200, 200, 200);
+        blockchain,
+        worldStateArchive,
+        networkId,
+        false,
+        ethScheduler,
+        EthereumWireProtocolConfiguration.defaultConfig());
   }
 
   public static EthProtocolManager create(

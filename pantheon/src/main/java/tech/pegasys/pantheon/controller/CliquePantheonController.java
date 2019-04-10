@@ -41,6 +41,7 @@ import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
+import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.sync.DefaultSynchronizer;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
@@ -109,6 +110,7 @@ public class CliquePantheonController implements PantheonController<CliqueContex
       final StorageProvider storageProvider,
       final GenesisConfigFile genesisConfig,
       final SynchronizerConfiguration syncConfig,
+      final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration,
       final MiningParameters miningParams,
       final int networkId,
       final KeyPair nodeKeys,
@@ -157,10 +159,7 @@ public class CliquePantheonController implements PantheonController<CliqueContex
             syncConfig.transactionsParallelism(),
             syncConfig.computationParallelism(),
             metricsSystem,
-            syncConfig.getEthereumWireProtocolConfiguration().getMaxGetBlockHeaders(),
-            syncConfig.getEthereumWireProtocolConfiguration().getMaxGetBlockBodies(),
-            syncConfig.getEthereumWireProtocolConfiguration().getMaxGetReceipts(),
-            syncConfig.getEthereumWireProtocolConfiguration().getMaxGetNodeData());
+            ethereumWireProtocolConfiguration);
     final SyncState syncState =
         new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
     final Synchronizer synchronizer =

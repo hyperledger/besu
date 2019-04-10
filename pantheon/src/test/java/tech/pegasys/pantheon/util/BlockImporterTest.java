@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
+import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.BlockTestUtil;
@@ -54,6 +55,7 @@ public final class BlockImporterTest {
         PantheonController.fromConfig(
             GenesisConfigFile.mainnet(),
             SynchronizerConfiguration.builder().build(),
+            EthereumWireProtocolConfiguration.defaultConfig(),
             new InMemoryStorageProvider(),
             1,
             new MiningParametersTestBuilder().enabled(false).build(),
@@ -91,6 +93,7 @@ public final class BlockImporterTest {
         PantheonController.fromConfig(
             GenesisConfigFile.fromConfig(config),
             SynchronizerConfiguration.builder().build(),
+            EthereumWireProtocolConfiguration.defaultConfig(),
             new InMemoryStorageProvider(),
             10,
             new MiningParametersTestBuilder().enabled(false).build(),

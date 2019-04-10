@@ -61,6 +61,7 @@ import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
+import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.sync.DefaultSynchronizer;
@@ -137,6 +138,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
       final StorageProvider storageProvider,
       final GenesisConfigFile genesisConfig,
       final SynchronizerConfiguration syncConfig,
+      final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration,
       final MiningParameters miningParams,
       final int networkId,
       final KeyPair nodeKeys,
@@ -182,10 +184,7 @@ public class IbftPantheonController implements PantheonController<IbftContext> {
             syncConfig.transactionsParallelism(),
             syncConfig.computationParallelism(),
             metricsSystem,
-            syncConfig.getEthereumWireProtocolConfiguration().getMaxGetBlockHeaders(),
-            syncConfig.getEthereumWireProtocolConfiguration().getMaxGetBlockBodies(),
-            syncConfig.getEthereumWireProtocolConfiguration().getMaxGetReceipts(),
-            syncConfig.getEthereumWireProtocolConfiguration().getMaxGetNodeData());
+            ethereumWireProtocolConfiguration);
     final SubProtocol ethSubProtocol = EthProtocol.get();
 
     final EthContext ethContext = ethProtocolManager.ethContext();

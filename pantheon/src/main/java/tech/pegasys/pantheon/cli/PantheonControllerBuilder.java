@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
+import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
@@ -34,6 +35,7 @@ import java.time.Clock;
 public class PantheonControllerBuilder {
 
   private SynchronizerConfiguration synchronizerConfiguration;
+  private EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration;
   private RocksDbConfiguration rocksDbConfiguration;
   private Path homePath;
   private EthNetworkConfig ethNetworkConfig;
@@ -47,6 +49,12 @@ public class PantheonControllerBuilder {
   public PantheonControllerBuilder synchronizerConfiguration(
       final SynchronizerConfiguration synchronizerConfiguration) {
     this.synchronizerConfiguration = synchronizerConfiguration;
+    return this;
+  }
+
+  public PantheonControllerBuilder ethereumWireProtocolConfiguration(
+      final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration) {
+    this.ethereumWireProtocolConfiguration = ethereumWireProtocolConfiguration;
     return this;
   }
 
@@ -116,6 +124,7 @@ public class PantheonControllerBuilder {
     return PantheonController.fromConfig(
         genesisConfigFile,
         synchronizerConfiguration,
+        ethereumWireProtocolConfiguration,
         storageProvider,
         ethNetworkConfig.getNetworkId(),
         miningParameters,
