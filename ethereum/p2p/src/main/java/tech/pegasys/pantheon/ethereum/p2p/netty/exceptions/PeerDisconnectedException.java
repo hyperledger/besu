@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -10,26 +10,13 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.p2p.wire;
+package tech.pegasys.pantheon.ethereum.p2p.netty.exceptions;
 
-import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 
-public final class RawMessage extends AbstractMessageData {
+public class PeerDisconnectedException extends RuntimeException {
 
-  private final int code;
-
-  public RawMessage(final int code, final BytesValue data) {
-    super(data);
-    this.code = code;
-  }
-
-  @Override
-  public int getCode() {
-    return code;
-  }
-
-  @Override
-  public String toString() {
-    return "RawMessage{" + "code=" + code + ", data=" + data + '}';
+  public PeerDisconnectedException(final DisconnectReason reason) {
+    super("Peer disconnected for reason: " + reason.toString());
   }
 }
