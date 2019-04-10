@@ -267,11 +267,9 @@ public class FullSyncChainDownloaderTest {
 
     final Responder responder = RespondingEthPeer.blockchainResponder(otherBlockchain);
     final RespondingEthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(100), 0);
-    peerA.getEthPeer().chainState().update(gen.hash(), 100);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(100), 100);
     final RespondingEthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(200), 0);
-    peerA.getEthPeer().chainState().update(gen.hash(), 50);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(200), 50);
 
     final ChainDownloader downloader = downloader();
     downloader.start();
@@ -281,7 +279,7 @@ public class FullSyncChainDownloaderTest {
       RespondingEthPeer.respondOnce(responder, peerA, peerB);
     }
     assertThat(syncState.syncTarget()).isPresent();
-    assertThat(syncState.syncTarget().get().peer()).isEqualTo(peerA.getEthPeer());
+    assertThat(syncState.syncTarget().get().peer()).isEqualTo(peerB.getEthPeer());
   }
 
   @Test
@@ -291,7 +289,7 @@ public class FullSyncChainDownloaderTest {
 
     // Peer A is initially better
     final RespondingEthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(200), 50);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(100), 60);
     final RespondingEthPeer peerB =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(100), 50);
 

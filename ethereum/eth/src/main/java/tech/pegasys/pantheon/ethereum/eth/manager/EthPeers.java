@@ -33,10 +33,7 @@ public class EthPeers {
   public static final Comparator<EthPeer> CHAIN_HEIGHT =
       Comparator.comparing(((final EthPeer p) -> p.chainState().getEstimatedHeight()));
 
-  private static final Comparator<EthPeer> HIGHEST_TOTAL_DIFFICULTY_PEER =
-      TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
-
-  public static final Comparator<EthPeer> BEST_CHAIN = CHAIN_HEIGHT.thenComparing(TOTAL_DIFFICULTY);
+  public static final Comparator<EthPeer> BEST_CHAIN = TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
 
   public static final Comparator<EthPeer> LEAST_TO_MOST_BUSY =
       Comparator.comparing(EthPeer::outstandingRequests);
@@ -94,10 +91,6 @@ public class EthPeers {
 
   public Optional<EthPeer> bestPeer() {
     return availablePeers().max(BEST_CHAIN);
-  }
-
-  public Optional<EthPeer> highestTotalDifficultyPeer() {
-    return availablePeers().max(HIGHEST_TOTAL_DIFFICULTY_PEER);
   }
 
   public Optional<EthPeer> idlePeer() {
