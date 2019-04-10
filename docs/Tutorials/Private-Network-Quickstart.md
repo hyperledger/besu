@@ -5,6 +5,10 @@ description: Pantheon private network quickstart tutorial
 
 The Private Network Quickstart uses the Pantheon Docker image to run a private network of Pantheon nodes managed by Docker Compose.
 
+!!! important 
+    The Private Network Quickstart runs a private network suitable for education or demonstration purposes. 
+    The Private Network Quickstart is not intended for running production networks. 
+
 ## Prerequisites
 
 To run this tutorial, you must have the following installed:
