@@ -28,6 +28,7 @@ import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionPool;
 import tech.pegasys.pantheon.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
+import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -115,10 +116,7 @@ public class TestNode implements Closeable {
             1,
             1,
             new NoOpMetricsSystem(),
-            200,
-            200,
-            200,
-            200);
+            EthereumWireProtocolConfiguration.defaultConfig());
 
     final NetworkRunner networkRunner =
         NetworkRunner.builder()

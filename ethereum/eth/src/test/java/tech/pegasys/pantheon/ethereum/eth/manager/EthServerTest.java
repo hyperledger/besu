@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.messages.GetNodeDataMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.NodeDataMessage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
@@ -45,7 +46,11 @@ public class EthServerTest {
 
   @Before
   public void setUp() {
-    new EthServer(blockchain, worldStateArchive, ethMessages, 2, 2, 2, 2);
+    new EthServer(
+        blockchain,
+        worldStateArchive,
+        ethMessages,
+        new EthereumWireProtocolConfiguration(2, 2, 2, 2));
   }
 
   @Test

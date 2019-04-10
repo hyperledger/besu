@@ -734,6 +734,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     try {
       return controllerBuilder
           .synchronizerConfiguration(buildSyncConfig())
+          .ethereumWireProtocolConfiguration(ethereumWireConfigurationBuilder.build())
           .rocksDbConfiguration(buildRocksDbConfiguration())
           .homePath(dataDir())
           .ethNetworkConfig(updateNetworkConfig(getNetwork()))
@@ -969,7 +970,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         .fastSyncMinimumPeerCount(fastSyncMinPeerCount)
         .fastSyncMaximumPeerWaitTime(Duration.ofSeconds(fastSyncMaxWaitTime))
         .maxTrailingPeers(TrailingPeerRequirements.calculateMaxTrailingPeers(maxPeers))
-        .ethereumWireProtocolConfiguration(ethereumWireConfigurationBuilder.build())
         .build();
   }
 

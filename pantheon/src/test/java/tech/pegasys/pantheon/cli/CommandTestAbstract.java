@@ -105,6 +105,8 @@ public abstract class CommandTestAbstract {
     // doReturn used because of generic PantheonController
     Mockito.doReturn(mockController).when(mockControllerBuilder).build();
     when(mockControllerBuilder.synchronizerConfiguration(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.ethereumWireProtocolConfiguration(any()))
+        .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.rocksDbConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.homePath(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.ethNetworkConfig(any())).thenReturn(mockControllerBuilder);
@@ -119,8 +121,6 @@ public abstract class CommandTestAbstract {
     when(mockSyncConfBuilder.maxTrailingPeers(anyInt())).thenReturn(mockSyncConfBuilder);
     when(mockSyncConfBuilder.fastSyncMinimumPeerCount(anyInt())).thenReturn(mockSyncConfBuilder);
     when(mockSyncConfBuilder.fastSyncMaximumPeerWaitTime(any(Duration.class)))
-        .thenReturn(mockSyncConfBuilder);
-    when(mockSyncConfBuilder.ethereumWireProtocolConfiguration(any()))
         .thenReturn(mockSyncConfBuilder);
     when(mockSyncConfBuilder.build()).thenReturn(mockSyncConf);
 

@@ -97,10 +97,7 @@ public final class RunnerTest {
     final int blockCount = 500;
     final KeyPair aheadDbNodeKeys = loadKeyPair(dbAhead);
     final SynchronizerConfiguration syncConfigAhead =
-        SynchronizerConfiguration.builder()
-            .syncMode(SyncMode.FULL)
-            .ethereumWireProtocolConfiguration(EthereumWireProtocolConfiguration.builder().build())
-            .build();
+        SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
     final MetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
     final int networkId = 2929;
 
@@ -111,6 +108,7 @@ public final class RunnerTest {
             GenesisConfigFile.mainnet(),
             MainnetProtocolSchedule.create(),
             syncConfigAhead,
+            EthereumWireProtocolConfiguration.defaultConfig(),
             new MiningParametersTestBuilder().enabled(false).build(),
             networkId,
             aheadDbNodeKeys,
@@ -129,6 +127,7 @@ public final class RunnerTest {
             GenesisConfigFile.mainnet(),
             MainnetProtocolSchedule.create(),
             syncConfigAhead,
+            EthereumWireProtocolConfiguration.defaultConfig(),
             new MiningParametersTestBuilder().enabled(false).build(),
             networkId,
             aheadDbNodeKeys,
@@ -185,6 +184,7 @@ public final class RunnerTest {
               GenesisConfigFile.mainnet(),
               MainnetProtocolSchedule.create(),
               syncConfigBehind,
+              EthereumWireProtocolConfiguration.defaultConfig(),
               new MiningParametersTestBuilder().enabled(false).build(),
               networkId,
               KeyPair.generate(),
