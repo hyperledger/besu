@@ -1,5 +1,62 @@
 # Changelog
 
+## 1.0.3
+
+### Additions and Improvements 
+
+- Notify of dropped messages [\#1156](https://github.com/PegaSysEng/pantheon/pull/1156) 
+- Documentation updates include: 
+    - Added [Permissioning Overview](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Permissioning-Overview/)
+    - Added content on [Network vs Node Configuration](https://docs.pantheon.pegasys.tech/en/latest/Configuring-Pantheon/Using-Configuration-File/)   
+    - Updated [RAM requirements](https://docs.pantheon.pegasys.tech/en/latest/Installation/Overview/)  
+    - Added [Privacy Overview](https://docs.pantheon.pegasys.tech/en/latest/Privacy/Privacy-Overview/) and [Processing Private Transactions](https://docs.pantheon.pegasys.tech/en/latest/Privacy/Private-Transaction-Processing/)
+    - Renaming of Ethstats Lite Explorer to [Ethereum Lite Explorer](https://docs.pantheon.pegasys.tech/en/latest/EthStats/Lite-Block-Explorer/) (thanks to [tzapu](https://github.com/tzapu))
+    - Added content on using [Truffle with Pantheon](https://docs.pantheon.pegasys.tech/en/latest/Using-Pantheon/Truffle/)
+    - Added [`droppedPendingTransactions` RPC Pub/Sub subscription](https://docs.pantheon.pegasys.tech/en/latest/Using-Pantheon/RPC-PubSub/#dropped-transactions) 
+    - Added [`eea_*` JSON-RPC API methods](https://docs.pantheon.pegasys.tech/en/latest/Reference/JSON-RPC-API-Methods/#eea-methods)  
+    - Added [architecture diagram](https://docs.pantheon.pegasys.tech/en/latest/Architecture/Overview/) 
+    - Updated [permissioning CLI options](https://docs.pantheon.pegasys.tech/en/latest/Reference/Pantheon-CLI-Syntax/#permissions-accounts-config-file-enabled) and [permissioned network tutorial](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Create-Permissioned-Network/)  
+
+### Technical Improvements 
+
+- Choose sync target based on td rather than height [\#1256](https://github.com/PegaSysEng/pantheon/pull/1256)
+- CLI ewp options [\#1246](https://github.com/PegaSysEng/pantheon/pull/1246)
+- Update PantheonCommand.java [\#1245](https://github.com/PegaSysEng/pantheon/pull/1245)
+- Reduce memory usage in import [\#1239](https://github.com/PegaSysEng/pantheon/pull/1239)
+- Improve eea_sendRawTransaction error messages [\#1238](https://github.com/PegaSysEng/pantheon/pull/1238) (thanks to [Puneetha17](https://github.com/Puneetha17))
+- Single topic filter [\#1235](https://github.com/PegaSysEng/pantheon/pull/1235)
+- Enable pipeline chain downloader for fast sync [\#1232](https://github.com/PegaSysEng/pantheon/pull/1232)
+- Make contract size limit configurable [\#1227](https://github.com/PegaSysEng/pantheon/pull/1227)
+- Refactor PrivacyParameters config to use builder pattern [\#1226](https://github.com/PegaSysEng/pantheon/pull/1226) (thanks to [antonydenyer](https://github.com/antonydenyer))
+- Different request limits for different request types [\#1224](https://github.com/PegaSysEng/pantheon/pull/1224)
+- Finish off fast sync pipeline download [\#1222](https://github.com/PegaSysEng/pantheon/pull/1222) 
+- Enable fast-sync options on command line [\#1218](https://github.com/PegaSysEng/pantheon/pull/1218) 
+- Replace filtering headers after the fact with calculating number to request up-front [\#1216](https://github.com/PegaSysEng/pantheon/pull/1216) 
+- Support async processing while maintaining output order [\#1215](https://github.com/PegaSysEng/pantheon/pull/1215) 
+- Add Unstable Options to the CLI [\#1213](https://github.com/PegaSysEng/pantheon/pull/1213) 
+- Add private cluster acceptance tests [\#1211](https://github.com/PegaSysEng/pantheon/pull/1211) (thanks to [Puneetha17](https://github.com/Puneetha17))
+- Re-aligned smart contract interface to EEA client spec 477 [\#1209](https://github.com/PegaSysEng/pantheon/pull/1209) 
+- Count the number of items discarded when a pipe is aborted [\#1208](https://github.com/PegaSysEng/pantheon/pull/1208) 
+- Pipeline chain download - fetch and import data [\#1207](https://github.com/PegaSysEng/pantheon/pull/1207) 
+- Permission provider that allows bootnodes if you have no other connections [\#1206](https://github.com/PegaSysEng/pantheon/pull/1206) 
+- Cancel in-progress async operations when the pipeline is aborted [\#1205](https://github.com/PegaSysEng/pantheon/pull/1205) 
+- Pipeline chain download - Checkpoints [\#1203](https://github.com/PegaSysEng/pantheon/pull/1203) 
+- Push development images to public dockerhub [\#1202](https://github.com/PegaSysEng/pantheon/pull/1202) 
+- Push builds of master as docker development images [\#1200](https://github.com/PegaSysEng/pantheon/pull/1200) 
+- Doc CI pipeline for build and tests [\#1199](https://github.com/PegaSysEng/pantheon/pull/1199) 
+- Replace the use of a disconnect listener with EthPeer.isDisconnected [\#1197](https://github.com/PegaSysEng/pantheon/pull/1197) 
+- Prep chain downloader for branch by abstraction [\#1194](https://github.com/PegaSysEng/pantheon/pull/1194) 
+- Maintain the state of MessageFrame in private Tx [\#1193](https://github.com/PegaSysEng/pantheon/pull/1193) (thanks to [Puneetha17](https://github.com/Puneetha17))
+- Persist private world state only if we are mining [\#1191](https://github.com/PegaSysEng/pantheon/pull/1191) (thanks to [Puneetha17](https://github.com/Puneetha17))
+- Remove SyncState from SyncTargetManager [\#1188](https://github.com/PegaSysEng/pantheon/pull/1188) 
+- Acceptance tests base for smart contract node permissioning [\#1186](https://github.com/PegaSysEng/pantheon/pull/1186) 
+- Fix metrics breakages [\#1185](https://github.com/PegaSysEng/pantheon/pull/1185) 
+- Typo [\#1184](https://github.com/PegaSysEng/pantheon/pull/1184) (thanks to [araskachoi](https://github.com/araskachoi))
+- StaticNodesParserTest to pass on Windows [\#1183](https://github.com/PegaSysEng/pantheon/pull/1183) 
+- Don't mark world state as stalled until a minimum time without progress is reached [\#1179](https://github.com/PegaSysEng/pantheon/pull/1179) 
+- Use header validation policy in DownloadHeaderSequenceTask [\#1172](https://github.com/PegaSysEng/pantheon/pull/1172) 
+- Bond with bootnodes [\#1160](https://github.com/PegaSysEng/pantheon/pull/1160) 
+
 ## 1.0.2 
 
 ### Additions and Improvements
