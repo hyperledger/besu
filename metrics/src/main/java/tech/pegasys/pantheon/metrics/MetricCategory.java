@@ -23,14 +23,15 @@ public enum MetricCategory {
   NETWORK("network"),
   PEERS("peers"),
   PROCESS("process", false),
-  ROCKSDB("rocksdb"),
+  KVSTORE_ROCKSDB("rocksdb"),
+  KVSTORE_ROCKSDB_STATS("rocksdb", false),
   RPC("rpc"),
   SYNCHRONIZER("synchronizer"),
   TRANSACTION_POOL("transaction_pool");
 
   // Why not BIG_QUEUE and ROCKSDB?  They hurt performance under load.
   public static final Set<MetricCategory> DEFAULT_METRIC_CATEGORIES =
-      EnumSet.complementOf(EnumSet.of(BIG_QUEUE, ROCKSDB));
+      EnumSet.complementOf(EnumSet.of(BIG_QUEUE, KVSTORE_ROCKSDB, KVSTORE_ROCKSDB_STATS));
 
   private final String name;
   private final boolean pantheonSpecific;
