@@ -27,13 +27,15 @@ jar {
 
 dependencies {
   api project(':util')
+
   implementation project(':metrics')
   implementation project(':services:util')
 
-  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'com.google.guava:guava'
-  implementation 'org.rocksdb:rocksdbjni'
   implementation 'info.picocli:picocli'
+  implementation 'io.prometheus:simpleclient'
+  implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'org.rocksdb:rocksdbjni'
 
   runtime 'org.apache.logging.log4j:log4j-core'
 
