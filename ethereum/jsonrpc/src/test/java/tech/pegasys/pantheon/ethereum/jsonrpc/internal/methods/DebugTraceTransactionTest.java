@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -85,7 +86,8 @@ public class DebugTraceTransactionTest {
             EnumSet.noneOf(ExceptionalHaltReason.class),
             Optional.empty(),
             Optional.empty(),
-            Optional.empty());
+            Optional.empty(),
+            "revert message");
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
     final TransactionTrace transactionTrace =
         new TransactionTrace(transaction, result, traceFrames);
@@ -107,5 +109,42 @@ public class DebugTraceTransactionTest {
     assertEquals("1234", transactionResult.getReturnValue());
     final List<StructLog> expectedStructLogs = Collections.singletonList(new StructLog(traceFrame));
     assertEquals(expectedStructLogs, transactionResult.getStructLogs());
+  }
+
+  @Test
+  public void shouldNotTraceTheTransactionIfNotFound() {
+    final Map<String, Boolean> map = new HashMap<>();
+    map.put("disableStorage", true);
+    final Object[] params = new Object[] {transactionHash, map};
+    final JsonRpcRequest request = new JsonRpcRequest("2.0", "debug_traceTransaction", params);
+    final Result result = mock(Result.class);
+
+    final TraceFrame traceFrame =
+        new TraceFrame(
+            12,
+            "NONE",
+            Gas.of(45),
+            Optional.of(Gas.of(56)),
+            2,
+            EnumSet.noneOf(ExceptionalHaltReason.class),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            "revert message");
+    final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
+    final TransactionTrace transactionTrace =
+        new TransactionTrace(transaction, result, traceFrames);
+    when(transaction.getGasLimit()).thenReturn(100L);
+    when(result.getGasRemaining()).thenReturn(27L);
+    when(result.getOutput()).thenReturn(BytesValue.fromHexString("1234"));
+    when(blockHeader.getNumber()).thenReturn(12L);
+    when(blockchain.headBlockNumber()).thenReturn(12L);
+    when(blockchain.transactionByHash(transactionHash)).thenReturn(Optional.empty());
+    when(transactionTracer.traceTransaction(eq(blockHash), eq(transactionHash), any()))
+        .thenReturn(Optional.of(transactionTrace));
+    final JsonRpcSuccessResponse response =
+        (JsonRpcSuccessResponse) debugTraceTransaction.response(request);
+
+    assertNull(response.getResult());
   }
 }

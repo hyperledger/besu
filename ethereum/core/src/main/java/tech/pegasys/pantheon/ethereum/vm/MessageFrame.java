@@ -32,6 +32,7 @@ import tech.pegasys.pantheon.util.uint.UInt256Value;
 import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -215,6 +216,7 @@ public class MessageFrame {
   private final Deque<MessageFrame> messageFrameStack;
   private final Address miningBeneficiary;
   private final Boolean isPersistingState;
+  private Optional<String> revertReason;
 
   // Miscellaneous fields.
   private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
@@ -247,7 +249,8 @@ public class MessageFrame {
       final Consumer<MessageFrame> completer,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingState) {
+      final Boolean isPersistingState,
+      final Optional<String> revertReason) {
     this.type = type;
     this.blockchain = blockchain;
     this.messageFrameStack = messageFrameStack;
@@ -278,6 +281,7 @@ public class MessageFrame {
     this.completer = completer;
     this.miningBeneficiary = miningBeneficiary;
     this.isPersistingState = isPersistingState;
+    this.revertReason = revertReason;
   }
 
   /**
@@ -493,6 +497,19 @@ public class MessageFrame {
    */
   public UInt256 memoryWordSize() {
     return memory.getActiveWords();
+  }
+
+  /**
+   * Returns the revertReason as string
+   *
+   * @return the revertReason string
+   */
+  public Optional<String> getRevertReason() {
+    return revertReason;
+  }
+
+  public void setRevertReason(final String revertReason) {
+    this.revertReason = Optional.ofNullable(revertReason);
   }
 
   /**
@@ -845,6 +862,7 @@ public class MessageFrame {
     private Address miningBeneficiary;
     private BlockHashLookup blockHashLookup;
     private Boolean isPersistingState = false;
+    private Optional<String> reason = Optional.empty();
 
     public Builder type(final Type type) {
       this.type = type;
@@ -951,6 +969,11 @@ public class MessageFrame {
       return this;
     }
 
+    public Builder reason(final String reason) {
+      this.reason = Optional.ofNullable(reason);
+      return this;
+    }
+
     private void validate() {
       checkState(type != null, "Missing message frame type");
       checkState(blockchain != null, "Missing message frame blockchain");
@@ -998,7 +1021,8 @@ public class MessageFrame {
           completer,
           miningBeneficiary,
           blockHashLookup,
-          isPersistingState);
+          isPersistingState,
+          reason);
     }
   }
 }

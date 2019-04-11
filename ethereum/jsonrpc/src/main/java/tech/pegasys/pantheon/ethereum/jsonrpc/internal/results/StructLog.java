@@ -36,6 +36,7 @@ public class StructLog {
   private final int pc;
   private final String[] stack;
   private final Object storage;
+  private final String reason;
 
   public StructLog(final TraceFrame traceFrame) {
     depth = traceFrame.getDepth() + 1;
@@ -54,6 +55,7 @@ public class StructLog {
             .map(a -> Arrays.stream(a).map(Bytes32s::unprefixedHexString).toArray(String[]::new))
             .orElse(null);
     storage = traceFrame.getStorage().map(StructLog::formatStorage).orElse(null);
+    reason = traceFrame.getRevertReason();
   }
 
   private static Map<String, String> formatStorage(final Map<UInt256, UInt256> storage) {
@@ -102,6 +104,11 @@ public class StructLog {
   @JsonGetter("storage")
   public Object storage() {
     return storage;
+  }
+
+  @JsonGetter("reason")
+  public String reason() {
+    return reason;
   }
 
   @Override
