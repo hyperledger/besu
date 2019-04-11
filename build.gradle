@@ -172,6 +172,11 @@ allprojects {
       // Lazy impl causes excess CPU usage O(n) of non-final fiield when it should be O(1).
       check('FieldCanBeFinal', CheckSeverity.OFF)
 
+      // This check is broken in Java 12.  See https://github.com/google/error-prone/issues/1257
+      if ((JavaVersion.current().majorVersion as Integer) > 11) {
+        check('Finally', CheckSeverity.OFF)
+      }
+
       check('InsecureCryptoUsage', CheckSeverity.WARN)
       check('WildcardImport', CheckSeverity.WARN)
     }
