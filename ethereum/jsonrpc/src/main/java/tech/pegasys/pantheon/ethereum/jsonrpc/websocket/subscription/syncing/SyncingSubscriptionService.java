@@ -35,7 +35,12 @@ public class SyncingSubscriptionService {
     final List<Subscription> syncingSubscriptions =
         subscriptionManager.subscriptionsOfType(SubscriptionType.SYNCING, Subscription.class);
 
-    syncingSubscriptions.forEach(
-        s -> subscriptionManager.sendMessage(s.getId(), new SyncingResult(syncStatus)));
+    if (syncStatus.inSync()) {
+      syncingSubscriptions.forEach(
+          s -> subscriptionManager.sendMessage(s.getId(), new NotSynchronisingResult()));
+    } else {
+      syncingSubscriptions.forEach(
+          s -> subscriptionManager.sendMessage(s.getId(), new SyncingResult(syncStatus)));
+    }
   }
 }

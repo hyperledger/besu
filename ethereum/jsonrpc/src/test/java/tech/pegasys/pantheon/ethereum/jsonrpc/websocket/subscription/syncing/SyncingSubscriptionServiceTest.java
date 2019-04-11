@@ -53,11 +53,24 @@ public class SyncingSubscriptionServiceTest {
     final SyncingSubscription subscription = new SyncingSubscription(9L, SubscriptionType.SYNCING);
     when(subscriptionManager.subscriptionsOfType(any(), any()))
         .thenReturn(Lists.newArrayList(subscription));
-    final SyncStatus syncStatus = new SyncStatus(0L, 1L, 1L);
+    final SyncStatus syncStatus = new SyncStatus(0L, 1L, 3L);
     final SyncingResult expectedSyncingResult = new SyncingResult(syncStatus);
 
     syncStatusListener.onSyncStatus(syncStatus);
 
     verify(subscriptionManager).sendMessage(eq(subscription.getId()), eq(expectedSyncingResult));
+  }
+
+  @Test
+  public void shouldSendNotSyncingStatusWhenReceiveSyncStatusAtHead() {
+    final SyncingSubscription subscription = new SyncingSubscription(9L, SubscriptionType.SYNCING);
+    when(subscriptionManager.subscriptionsOfType(any(), any()))
+        .thenReturn(Lists.newArrayList(subscription));
+    final SyncStatus syncStatus = new SyncStatus(0L, 1L, 1L);
+
+    syncStatusListener.onSyncStatus(syncStatus);
+
+    verify(subscriptionManager)
+        .sendMessage(eq(subscription.getId()), any(NotSynchronisingResult.class));
   }
 }

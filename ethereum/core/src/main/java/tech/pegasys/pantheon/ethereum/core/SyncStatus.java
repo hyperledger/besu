@@ -38,6 +38,10 @@ public final class SyncStatus {
     return highestBlock;
   }
 
+  public boolean inSync() {
+    return currentBlock == highestBlock;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
