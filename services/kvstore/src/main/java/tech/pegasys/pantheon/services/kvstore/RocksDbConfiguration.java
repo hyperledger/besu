@@ -12,18 +12,26 @@
  */
 package tech.pegasys.pantheon.services.kvstore;
 
+import tech.pegasys.pantheon.services.util.RocksDbUtil;
+
 import java.nio.file.Path;
 
+import org.rocksdb.BlockBasedTableConfig;
+import org.rocksdb.LRUCache;
 import picocli.CommandLine;
 
 public class RocksDbConfiguration {
 
   private final Path databaseDir;
   private final int maxOpenFiles;
+  private final BlockBasedTableConfig blockBasedTableConfig;
 
-  public RocksDbConfiguration(final Path databaseDir, final int maxOpenFiles) {
+  public RocksDbConfiguration(
+      final Path databaseDir, final int maxOpenFiles, final LRUCache cache) {
+    RocksDbUtil.loadNativeLibrary();
     this.databaseDir = databaseDir;
     this.maxOpenFiles = maxOpenFiles;
+    this.blockBasedTableConfig = new BlockBasedTableConfig().setBlockCache(cache);
   }
 
   public Path getDatabaseDir() {
@@ -34,9 +42,14 @@ public class RocksDbConfiguration {
     return maxOpenFiles;
   }
 
+  public BlockBasedTableConfig getBlockBasedTableConfig() {
+    return blockBasedTableConfig;
+  }
+
   public static class Builder {
 
     Path databaseDir;
+    LRUCache cache = null;
 
     @CommandLine.Option(
         names = {"--Xrocksdb-max-open-files"},
@@ -45,6 +58,14 @@ public class RocksDbConfiguration {
         paramLabel = "<INTEGER>",
         description = "Max number of files RocksDB will open (default: ${DEFAULT-VALUE})")
     int maxOpenFiles;
+
+    @CommandLine.Option(
+        names = {"--Xrocksdb-cache-capacity"},
+        hidden = true,
+        defaultValue = "8388608",
+        paramLabel = "<LONG>",
+        description = "Cache capacity of RocksDB (default: ${DEFAULT-VALUE})")
+    long cacheCapacity;
 
     public Builder databaseDir(final Path databaseDir) {
       this.databaseDir = databaseDir;
@@ -56,8 +77,21 @@ public class RocksDbConfiguration {
       return this;
     }
 
+    public Builder cacheCapacity(final long cacheCapacity) {
+      this.cacheCapacity = cacheCapacity;
+      return this;
+    }
+
+    private LRUCache createCache(final long cacheCapacity) {
+      RocksDbUtil.loadNativeLibrary();
+      return new LRUCache(cacheCapacity);
+    }
+
     public RocksDbConfiguration build() {
-      return new RocksDbConfiguration(databaseDir, maxOpenFiles);
+      if (cache == null) {
+        cache = createCache(cacheCapacity);
+      }
+      return new RocksDbConfiguration(databaseDir, maxOpenFiles, cache);
     }
   }
 }
