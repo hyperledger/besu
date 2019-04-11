@@ -63,7 +63,7 @@ public class Transaction {
   // Note that this hash does not include the transaction signature so it does not
   // fully identify the transaction (use the result of the {@code hash()} for that).
   // It is only used to compute said signature and recover the sender from it.
-  protected volatile Bytes32 hashNoSignature;
+  private volatile Bytes32 hashNoSignature;
 
   // Caches the transaction sender.
   protected volatile Address sender;

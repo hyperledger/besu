@@ -106,7 +106,6 @@ import picocli.CommandLine;
 import picocli.CommandLine.AbstractParseResultHandler;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExecutionException;
-import picocli.CommandLine.ITypeConverter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 
@@ -125,11 +124,7 @@ import picocli.CommandLine.ParameterException;
     footer = "Pantheon is licensed under the Apache License 2.0")
 public class PantheonCommand implements DefaultCommandValues, Runnable {
 
-  private final Logger logger;
-
-  private CommandLine commandLine;
-
-  public static class RpcApisConverter implements ITypeConverter<RpcApi> {
+  static class RpcApisConverter implements CommandLine.ITypeConverter<RpcApi> {
 
     @Override
     public RpcApi convert(final String name) throws RpcApisConversionException {
@@ -145,12 +140,16 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  public static class RpcApisConversionException extends Exception {
+  static class RpcApisConversionException extends Exception {
 
-    RpcApisConversionException(final String s) {
+    public RpcApisConversionException(final String s) {
       super(s);
     }
   }
+
+  private final Logger logger;
+
+  private CommandLine commandLine;
 
   private final BlockImporter blockImporter;
 

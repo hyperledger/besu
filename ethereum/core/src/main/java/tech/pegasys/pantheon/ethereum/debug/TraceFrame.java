@@ -34,6 +34,30 @@ public class TraceFrame {
   private final Optional<Bytes32[]> stack;
   private final Optional<Bytes32[]> memory;
   private final Optional<Map<UInt256, UInt256>> storage;
+  private final String revertReason;
+
+  public TraceFrame(
+      final int pc,
+      final String opcode,
+      final Gas gasRemaining,
+      final Optional<Gas> gasCost,
+      final int depth,
+      final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons,
+      final Optional<Bytes32[]> stack,
+      final Optional<Bytes32[]> memory,
+      final Optional<Map<UInt256, UInt256>> storage,
+      final String revertReason) {
+    this.pc = pc;
+    this.opcode = opcode;
+    this.gasRemaining = gasRemaining;
+    this.gasCost = gasCost;
+    this.depth = depth;
+    this.exceptionalHaltReasons = exceptionalHaltReasons;
+    this.stack = stack;
+    this.memory = memory;
+    this.storage = storage;
+    this.revertReason = revertReason;
+  }
 
   public TraceFrame(
       final int pc,
@@ -45,15 +69,17 @@ public class TraceFrame {
       final Optional<Bytes32[]> stack,
       final Optional<Bytes32[]> memory,
       final Optional<Map<UInt256, UInt256>> storage) {
-    this.pc = pc;
-    this.opcode = opcode;
-    this.gasRemaining = gasRemaining;
-    this.gasCost = gasCost;
-    this.depth = depth;
-    this.exceptionalHaltReasons = exceptionalHaltReasons;
-    this.stack = stack;
-    this.memory = memory;
-    this.storage = storage;
+    this(
+        pc,
+        opcode,
+        gasRemaining,
+        gasCost,
+        depth,
+        exceptionalHaltReasons,
+        stack,
+        memory,
+        storage,
+        null);
   }
 
   public int getPc() {
@@ -90,6 +116,10 @@ public class TraceFrame {
 
   public Optional<Map<UInt256, UInt256>> getStorage() {
     return storage;
+  }
+
+  public String getRevertReason() {
+    return revertReason;
   }
 
   @Override
