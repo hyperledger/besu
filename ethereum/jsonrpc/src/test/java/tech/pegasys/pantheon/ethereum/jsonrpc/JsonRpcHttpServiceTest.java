@@ -203,6 +203,28 @@ public class JsonRpcHttpServiceTest {
   }
 
   @Test
+  public void handleUnknownRequestFields() throws Exception {
+    final String id = "123";
+    // Create a request with an extra "beta" param
+    final RequestBody body =
+        RequestBody.create(
+            JSON,
+            "{\"jsonrpc\":\"2.0\",\"id\":"
+                + Json.encode(id)
+                + ",\"method\":\"net_version\", \"beta\":true}");
+
+    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
+      assertThat(resp.code()).isEqualTo(200);
+      // Check general format of result
+      final JsonObject json = new JsonObject(resp.body().string());
+      testHelper.assertValidJsonRpcResult(json, id);
+      // Check result
+      final String result = json.getString("result");
+      assertThat(result).isEqualTo(String.valueOf(CHAIN_ID));
+    }
+  }
+
+  @Test
   public void getSocketAddressWhenActive() {
     final InetSocketAddress socketAddress = service.socketAddress();
     assertThat("127.0.0.1").isEqualTo(socketAddress.getAddress().getHostAddress());
