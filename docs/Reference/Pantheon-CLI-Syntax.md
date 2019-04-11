@@ -1059,6 +1059,44 @@ Default is `INFO`.
 
 Print version information and exit.
 
+## Fast Sync Options 
+
+!!! important 
+    Support for fast sync is currently experimental. Fast sync is in active development. The fast sync options are available
+    but hidden on the command line. 
+
+### sync-mode
+
+```bash tab="Syntax"
+--sync-mode=FAST
+```
+
+```bash tab="Example Command Line"
+--sync-mode=FAST
+```
+
+```bash tab="Example Configuration File"
+sync-mode="FAST"
+```
+
+Specifies the synchronization mode. Default is `FULL`.
+
+### fast-sync-min-peers
+
+```bash tab="Syntax"
+--fast-sync-min-peers=<INTEGER>
+```
+
+```bash tab="Example Command Line"
+--fast-sync-min-peers=2
+```
+
+```bash tab="Example Configuration File"
+fast-sync-min-peers=2
+```
+
+Minimum number of peers required before starting fast sync. Default is 5. 
+
 ## Commands
 
 Pantheon subcommands are: 
