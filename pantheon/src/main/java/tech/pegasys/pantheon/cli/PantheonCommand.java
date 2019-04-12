@@ -31,13 +31,12 @@ import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.crea
 import tech.pegasys.pantheon.Runner;
 import tech.pegasys.pantheon.RunnerBuilder;
 import tech.pegasys.pantheon.cli.PublicKeySubCommand.KeyLoader;
+import tech.pegasys.pantheon.cli.converter.RpcApisConverter;
 import tech.pegasys.pantheon.cli.custom.CorsAllowedOriginsProperty;
 import tech.pegasys.pantheon.cli.custom.JsonRPCWhitelistHostsProperty;
 import tech.pegasys.pantheon.cli.custom.RpcAuthFileValidator;
 import tech.pegasys.pantheon.cli.rlp.RLPSubCommand;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
-import tech.pegasys.pantheon.consensus.clique.jsonrpc.CliqueRpcApis;
-import tech.pegasys.pantheon.consensus.ibft.jsonrpc.IbftRpcApis;
 import tech.pegasys.pantheon.controller.KeyPairUtil;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -86,10 +85,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
@@ -123,29 +120,6 @@ import picocli.CommandLine.ParameterException;
     footerHeading = "%n",
     footer = "Pantheon is licensed under the Apache License 2.0")
 public class PantheonCommand implements DefaultCommandValues, Runnable {
-
-  static class RpcApisConverter implements CommandLine.ITypeConverter<RpcApi> {
-
-    @Override
-    public RpcApi convert(final String name) throws RpcApisConversionException {
-      final String uppercaseName = name.trim().toUpperCase();
-
-      return Stream.<Function<String, Optional<RpcApi>>>of(
-              RpcApis::valueOf, CliqueRpcApis::valueOf, IbftRpcApis::valueOf)
-          .map(f -> f.apply(uppercaseName))
-          .filter(Optional::isPresent)
-          .map(Optional::get)
-          .findFirst()
-          .orElseThrow(() -> new RpcApisConversionException("Invalid value: " + name));
-    }
-  }
-
-  static class RpcApisConversionException extends Exception {
-
-    public RpcApisConversionException(final String s) {
-      super(s);
-    }
-  }
 
   private final Logger logger;
 
