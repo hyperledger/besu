@@ -66,7 +66,7 @@ public class SmartContractPermissioningAllowNodeTransaction implements Transacti
     final String enodeURL = ((RunnableNode) node).enodeUrl().toASCIIString();
     final BytesValue payload =
         SmartContractPermissioningController.createPayload(
-            ADD_ENODE_SIGNATURE, new EnodeURL(enodeURL));
+            ADD_ENODE_SIGNATURE, EnodeURL.fromString(enodeURL));
 
     RawTransaction transaction =
         RawTransaction.createTransaction(

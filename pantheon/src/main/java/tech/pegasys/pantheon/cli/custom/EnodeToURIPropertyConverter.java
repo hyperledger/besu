@@ -25,7 +25,7 @@ public class EnodeToURIPropertyConverter implements ITypeConverter<URI> {
   private final Function<String, URI> converter;
 
   EnodeToURIPropertyConverter() {
-    this.converter = (s) -> new EnodeURL(s).toURI();
+    this.converter = (s) -> EnodeURL.fromString(s).toURI();
   }
 
   @VisibleForTesting

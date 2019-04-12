@@ -41,6 +41,8 @@ public class EnodeURL {
   private final String nodeId;
   private final InetAddress ip;
   private final Integer listeningPort;
+  // DiscoveryPort will only be present if it differs from listening port, otherwise
+  // the discovery port is assumed to match the listening port
   private final OptionalInt discoveryPort;
 
   public EnodeURL(
@@ -71,10 +73,15 @@ public class EnodeURL {
     }
     this.ip = address;
     this.listeningPort = listeningPort;
-    this.discoveryPort = discoveryPort;
+    // Only explicitly define a discovery port if it differs from the listening port
+    if (discoveryPort.isPresent() && discoveryPort.getAsInt() != listeningPort) {
+      this.discoveryPort = discoveryPort;
+    } else {
+      this.discoveryPort = OptionalInt.empty();
+    }
   }
 
-  public EnodeURL(final String value) {
+  public static EnodeURL fromString(final String value) {
     checkArgument(
         value != null && !value.isEmpty(), "Can't convert null/empty string to EnodeURLProperty.");
 
@@ -83,10 +90,11 @@ public class EnodeURL {
         enodeMatcher.matches(),
         "Invalid enode URL syntax. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.");
 
-    this.nodeId = getAndValidateNodeId(enodeMatcher);
-    this.ip = getAndValidateIp(enodeMatcher);
-    this.listeningPort = getAndValidatePort(enodeMatcher, "listening");
-    this.discoveryPort = getAndValidateDiscoveryPort(enodeMatcher);
+    final String nodeId = getAndValidateNodeId(enodeMatcher);
+    final InetAddress ip = getAndValidateIp(enodeMatcher);
+    final int listeningPort = getAndValidatePort(enodeMatcher, "listening");
+    final OptionalInt discoveryPort = getAndValidateDiscoveryPort(enodeMatcher);
+    return new EnodeURL(nodeId, ip, listeningPort, discoveryPort);
   }
 
   public URI toURI() {
@@ -100,7 +108,7 @@ public class EnodeURL {
   }
 
   public static URI asURI(final String url) {
-    return new EnodeURL(url).toURI();
+    return fromString(url).toURI();
   }
 
   private static String getAndValidateNodeId(final Matcher matcher) {

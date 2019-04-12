@@ -40,10 +40,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class NodePermissioningControllerTest {
 
   private static final EnodeURL enode1 =
-      new EnodeURL(
+      EnodeURL.fromString(
           "enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.168.0.2:1234");
   private static final EnodeURL enode2 =
-      new EnodeURL(
+      EnodeURL.fromString(
           "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.3:5678");
 
   @Mock private SyncStatusNodePermissioningProvider syncStatusNodePermissioningProvider;

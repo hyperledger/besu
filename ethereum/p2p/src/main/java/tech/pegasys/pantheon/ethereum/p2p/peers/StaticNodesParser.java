@@ -68,7 +68,7 @@ public class StaticNodesParser {
 
   private static EnodeURL decodeString(final String input) {
     try {
-      return new EnodeURL(input);
+      return EnodeURL.fromString(input);
     } catch (IllegalArgumentException ex) {
       LOG.info("Illegally constructed enode supplied ({})", input);
       throw ex;

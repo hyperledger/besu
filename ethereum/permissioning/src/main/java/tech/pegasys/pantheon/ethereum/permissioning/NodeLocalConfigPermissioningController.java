@@ -70,7 +70,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   private void readNodesFromConfig(final LocalPermissioningConfiguration configuration) {
     if (configuration.isNodeWhitelistEnabled() && configuration.getNodeWhitelist() != null) {
       for (URI uri : configuration.getNodeWhitelist()) {
-        addNode(new EnodeURL(uri.toString()));
+        addNode(EnodeURL.fromString(uri.toString()));
       }
     }
   }
@@ -80,7 +80,8 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
     if (inputValidationResult.result() != WhitelistOperationResult.SUCCESS) {
       return inputValidationResult;
     }
-    final List<EnodeURL> peers = enodeURLs.stream().map(EnodeURL::new).collect(Collectors.toList());
+    final List<EnodeURL> peers =
+        enodeURLs.stream().map(EnodeURL::fromString).collect(Collectors.toList());
 
     for (EnodeURL peer : peers) {
       if (nodesWhitelist.contains(peer)) {
@@ -111,7 +112,8 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
     if (inputValidationResult.result() != WhitelistOperationResult.SUCCESS) {
       return inputValidationResult;
     }
-    final List<EnodeURL> peers = enodeURLs.stream().map(EnodeURL::new).collect(Collectors.toList());
+    final List<EnodeURL> peers =
+        enodeURLs.stream().map(EnodeURL::fromString).collect(Collectors.toList());
 
     boolean anyBootnode = peers.stream().anyMatch(bootnodes::contains);
     if (anyBootnode) {
@@ -213,7 +215,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   }
 
   public boolean isPermitted(final String enodeURL) {
-    return isPermitted(new EnodeURL(enodeURL));
+    return isPermitted(EnodeURL.fromString(enodeURL));
   }
 
   public boolean isPermitted(final EnodeURL node) {
