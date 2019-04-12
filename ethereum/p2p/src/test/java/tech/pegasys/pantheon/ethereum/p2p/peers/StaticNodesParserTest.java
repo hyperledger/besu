@@ -67,7 +67,8 @@ public class StaticNodesParserTest {
     final File validFile = new File(resource.getFile());
     final Set<EnodeURL> enodes = StaticNodesParser.fromPath(validFile.toPath());
 
-    assertThat(enodes).containsExactly(validFileItems.toArray(new EnodeURL[validFileItems.size()]));
+    assertThat(enodes)
+        .containsExactlyInAnyOrder(validFileItems.toArray(new EnodeURL[validFileItems.size()]));
   }
 
   @Test

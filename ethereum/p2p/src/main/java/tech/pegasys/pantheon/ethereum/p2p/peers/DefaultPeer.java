@@ -52,7 +52,7 @@ public class DefaultPeer extends DefaultPeerId implements Peer {
             udpPort,
             OptionalInt.of(enodeURL.getListeningPort()));
 
-    return new DefaultPeer(BytesValue.fromHexString(enodeURL.getNodeId()), endpoint);
+    return new DefaultPeer(enodeURL.getNodeId(), endpoint);
   }
 
   /**
