@@ -63,9 +63,9 @@ public class SmartContractPermissioningControllerTest {
 
     assertThat(
             controller.isPermitted(
-                new EnodeURL(
+                EnodeURL.fromString(
                     "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:30303"),
-                new EnodeURL(
+                EnodeURL.fromString(
                     "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:30304")))
         .isTrue();
   }
@@ -79,9 +79,9 @@ public class SmartContractPermissioningControllerTest {
 
     assertThat(
             controller.isPermitted(
-                new EnodeURL(
+                EnodeURL.fromString(
                     "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:30303"),
-                new EnodeURL(
+                EnodeURL.fromString(
                     "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:30305")))
         .isFalse();
   }
@@ -95,9 +95,9 @@ public class SmartContractPermissioningControllerTest {
 
     assertThat(
             controller.isPermitted(
-                new EnodeURL(
+                EnodeURL.fromString(
                     "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:30302"),
-                new EnodeURL(
+                EnodeURL.fromString(
                     "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:30304")))
         .isFalse();
   }
@@ -111,9 +111,9 @@ public class SmartContractPermissioningControllerTest {
 
     assertThat(
             controller.isPermitted(
-                new EnodeURL(
+                EnodeURL.fromString(
                     "enode://1234000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ab61@[1:2:3:4:5:6:7:8]:30303"),
-                new EnodeURL(
+                EnodeURL.fromString(
                     "enode://1234000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ab62@[1:2:3:4:5:6:7:8]:30304")))
         .isTrue();
   }
@@ -127,9 +127,9 @@ public class SmartContractPermissioningControllerTest {
 
     assertThat(
             controller.isPermitted(
-                new EnodeURL(
+                EnodeURL.fromString(
                     "enode://1234000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ab63@[1:2:3:4:5:6:7:8]:30303"),
-                new EnodeURL(
+                EnodeURL.fromString(
                     "enode://1234000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ab62@[1:2:3:4:5:6:7:8]:30304")))
         .isFalse();
   }
@@ -143,9 +143,9 @@ public class SmartContractPermissioningControllerTest {
 
     assertThat(
             controller.isPermitted(
-                new EnodeURL(
+                EnodeURL.fromString(
                     "enode://1234000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ab61@[1:2:3:4:5:6:7:8]:30303"),
-                new EnodeURL(
+                EnodeURL.fromString(
                     "enode://1234000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ab63@[1:2:3:4:5:6:7:8]:30304")))
         .isFalse();
   }

@@ -38,7 +38,7 @@ public class AdminRemovePeer extends AdminModifyPeer {
   @Override
   protected JsonRpcResponse performOperation(final Object id, final String enode) {
     LOG.debug("Remove ({}) to peer cache", enode);
-    final EnodeURL enodeURL = new EnodeURL(enode);
+    final EnodeURL enodeURL = EnodeURL.fromString(enode);
     final boolean result =
         peerNetwork.removeMaintainedConnectionPeer(DefaultPeer.fromEnodeURL(enodeURL));
     return new JsonRpcSuccessResponse(id, result);

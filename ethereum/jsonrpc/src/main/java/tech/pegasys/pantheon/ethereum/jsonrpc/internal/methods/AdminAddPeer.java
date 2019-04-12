@@ -44,7 +44,7 @@ public class AdminAddPeer extends AdminModifyPeer {
   protected JsonRpcResponse performOperation(final Object id, final String enode) {
     try {
       LOG.debug("Adding ({}) to peers", enode);
-      final EnodeURL enodeURL = new EnodeURL(enode);
+      final EnodeURL enodeURL = EnodeURL.fromString(enode);
       final Peer peer = DefaultPeer.fromEnodeURL(enodeURL);
       boolean addedToNetwork = peerNetwork.addMaintainConnectionPeer(peer);
       return new JsonRpcSuccessResponse(id, addedToNetwork);

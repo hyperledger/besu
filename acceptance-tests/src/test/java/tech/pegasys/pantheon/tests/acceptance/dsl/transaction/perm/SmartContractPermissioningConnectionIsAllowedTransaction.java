@@ -66,8 +66,8 @@ public class SmartContractPermissioningConnectionIsAllowedTransaction
     final BytesValue payload =
         SmartContractPermissioningController.createPayload(
             IS_CONNECTION_ALLOWED_SIGNATURE,
-            new EnodeURL(sourceEnodeURL),
-            new EnodeURL(targetEnodeURL));
+            EnodeURL.fromString(sourceEnodeURL),
+            EnodeURL.fromString(targetEnodeURL));
 
     return org.web3j.protocol.core.methods.request.Transaction.createFunctionCallTransaction(
         null, null, null, null, contractAddress.toString(), payload.toString());
