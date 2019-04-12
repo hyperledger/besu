@@ -25,13 +25,15 @@ public class RocksDbConfiguration {
   private final Path databaseDir;
   private final int maxOpenFiles;
   private final BlockBasedTableConfig blockBasedTableConfig;
+  private final String label;
 
   public RocksDbConfiguration(
-      final Path databaseDir, final int maxOpenFiles, final LRUCache cache) {
+      final Path databaseDir, final int maxOpenFiles, final LRUCache cache, final String label) {
     RocksDbUtil.loadNativeLibrary();
     this.databaseDir = databaseDir;
     this.maxOpenFiles = maxOpenFiles;
     this.blockBasedTableConfig = new BlockBasedTableConfig().setBlockCache(cache);
+    this.label = label;
   }
 
   public Path getDatabaseDir() {
@@ -46,10 +48,15 @@ public class RocksDbConfiguration {
     return blockBasedTableConfig;
   }
 
+  public String getLabel() {
+    return label;
+  }
+
   public static class Builder {
 
     Path databaseDir;
     LRUCache cache = null;
+    String label = "blockchain";
 
     @CommandLine.Option(
         names = {"--Xrocksdb-max-open-files"},
@@ -77,6 +84,11 @@ public class RocksDbConfiguration {
       return this;
     }
 
+    public Builder label(final String label) {
+      this.label = label;
+      return this;
+    }
+
     public Builder cacheCapacity(final long cacheCapacity) {
       this.cacheCapacity = cacheCapacity;
       return this;
@@ -91,7 +103,7 @@ public class RocksDbConfiguration {
       if (cache == null) {
         cache = createCache(cacheCapacity);
       }
-      return new RocksDbConfiguration(databaseDir, maxOpenFiles, cache);
+      return new RocksDbConfiguration(databaseDir, maxOpenFiles, cache, label);
     }
   }
 }

@@ -16,7 +16,6 @@ import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.OperationTimer;
-import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 import tech.pegasys.pantheon.services.util.RocksDbUtil;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -71,29 +70,37 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
       db = TransactionDB.open(options, txOptions, rocksDbConfiguration.getDatabaseDir().toString());
 
       readLatency =
-          metricsSystem.createTimer(
-              MetricCategory.KVSTORE_ROCKSDB,
-              "read_latency_seconds",
-              "Latency for read from RocksDB.");
+          metricsSystem
+              .createLabelledTimer(
+                  MetricCategory.KVSTORE_ROCKSDB,
+                  "read_latency_seconds",
+                  "Latency for read from RocksDB.",
+                  rocksDbConfiguration.getLabel())
+              .labels(rocksDbConfiguration.getLabel());
       removeLatency =
-          metricsSystem.createTimer(
-              MetricCategory.KVSTORE_ROCKSDB,
-              "remove_latency_seconds",
-              "Latency of remove requests from RocksDB.");
+          metricsSystem
+              .createLabelledTimer(
+                  MetricCategory.KVSTORE_ROCKSDB,
+                  "remove_latency_seconds",
+                  "Latency of remove requests from RocksDB.",
+                  rocksDbConfiguration.getLabel())
+              .labels(rocksDbConfiguration.getLabel());
       writeLatency =
-          metricsSystem.createTimer(
-              MetricCategory.KVSTORE_ROCKSDB,
-              "write_latency_seconds",
-              "Latency for write to RocksDB.");
+          metricsSystem
+              .createLabelledTimer(
+                  MetricCategory.KVSTORE_ROCKSDB,
+                  "write_latency_seconds",
+                  "Latency for write to RocksDB.",
+                  rocksDbConfiguration.getLabel())
+              .labels(rocksDbConfiguration.getLabel());
       commitLatency =
-          metricsSystem.createTimer(
-              MetricCategory.KVSTORE_ROCKSDB,
-              "commit_latency_seconds",
-              "Latency for commits to RocksDB.");
-
-      if (metricsSystem instanceof PrometheusMetricsSystem) {
-        RocksDBStats.registerRocksDBMetrics(stats, (PrometheusMetricsSystem) metricsSystem);
-      }
+          metricsSystem
+              .createLabelledTimer(
+                  MetricCategory.KVSTORE_ROCKSDB,
+                  "commit_latency_seconds",
+                  "Latency for commits to RocksDB.",
+                  rocksDbConfiguration.getLabel())
+              .labels(rocksDbConfiguration.getLabel());
 
       metricsSystem.createLongGauge(
           MetricCategory.KVSTORE_ROCKSDB,
@@ -109,10 +116,13 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
           });
 
       rollbackCount =
-          metricsSystem.createCounter(
-              MetricCategory.KVSTORE_ROCKSDB,
-              "rollback_count",
-              "Number of RocksDB transactions rolled back.");
+          metricsSystem
+              .createLabelledCounter(
+                  MetricCategory.KVSTORE_ROCKSDB,
+                  "rollback_count",
+                  "Number of RocksDB transactions rolled back.",
+                  rocksDbConfiguration.getLabel())
+              .labels(rocksDbConfiguration.getLabel());
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
