@@ -102,7 +102,7 @@ public interface PeerConnection {
   }
 
   default boolean isRemoteEnode(final EnodeURL remoteEnodeUrl) {
-    return ((remoteEnodeUrl.getNodeId().equals(this.getPeer().getAddress().toString()))
+    return ((remoteEnodeUrl.getNodeId().equals(this.getPeer().getAddress()))
         && (remoteEnodeUrl.getListeningPort() == this.getPeer().getPort())
         && (remoteEnodeUrl
             .getInetAddress()
