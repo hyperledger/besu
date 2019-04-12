@@ -74,7 +74,6 @@ import io.vertx.core.json.JsonObject;
 import net.consensys.cava.toml.Toml;
 import net.consensys.cava.toml.TomlParseResult;
 import org.apache.commons.text.StringEscapeUtils;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -1042,7 +1041,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  @Ignore
   public void syncModeOptionMustBeUsed() {
 
     parseCommand("--sync-mode", "FAST");
@@ -1052,6 +1050,16 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockSyncConfBuilder).syncMode(eq(SyncMode.FULL));
 
     assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void helpShouldDisplayFastSyncOptions() {
+    parseCommand("--help");
+
+    verifyZeroInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString()).contains("--fast-sync-min-peers");
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
