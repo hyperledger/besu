@@ -23,7 +23,7 @@ dependencies {
   implementation project(':ethereum:jsonrpc')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:p2p')
-  implementation project(':metrics')
+  implementation project(':metrics:core')
   implementation project(':services:kvstore')
 
   implementation 'com.google.guava:guava'
@@ -32,7 +32,7 @@ dependencies {
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':consensus:ibft', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
-  testImplementation project(':metrics')
+  testImplementation project(':metrics:core')
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'

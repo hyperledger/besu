@@ -127,6 +127,7 @@ downloadLicenses {
       (group('pantheon.ethereum'))   : apache,
       (group('pantheon.services'))   : apache,
       (group('pantheon.consensus'))  : apache,
+      (group('pantheon.metrics'))  : apache,
 
       // https://checkerframework.org/manual/#license
       // The more permissive MIT License applies to code that you might want

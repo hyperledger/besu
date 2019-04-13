@@ -39,7 +39,7 @@ dependencies {
   implementation project(':ethereum:permissioning')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:rlp')
-  implementation project(':metrics')
+  implementation project(':metrics:core')
   implementation project(':enclave')
   implementation project(':services:kvstore')
 

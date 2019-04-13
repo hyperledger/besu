@@ -27,7 +27,7 @@ dependencies {
   testImplementation project(':ethereum:jsonrpc')
   testImplementation project(':ethereum:permissioning')
   testImplementation project(':ethereum:rlp')
-  testImplementation project(':metrics')
+  testImplementation project(':metrics:core')
   testImplementation project(':pantheon')
   testImplementation project(':services:kvstore')
   testImplementation project(':testutil')

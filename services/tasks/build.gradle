@@ -30,7 +30,7 @@ dependencies {
 
   compileOnly 'org.openjdk.jmh:jmh-generator-annprocess'
 
-  implementation project(':metrics')
+  implementation project(':metrics:core')
   implementation project(':services:util')
 
   implementation 'org.apache.logging.log4j:log4j-api'
