@@ -14,7 +14,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'services-util'
+  baseName 'pantheon-metrics-rocksdb'
   manifest {
     attributes(
       'Specification-Title': baseName,
@@ -26,15 +26,12 @@ jar {
 }
 
 dependencies {
-  api project(':util')
   implementation project(':metrics:core')
+  implementation project(':services:util')
 
-  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'com.google.guava:guava'
+  implementation 'io.prometheus:simpleclient'
+  implementation 'info.picocli:picocli'
+  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.rocksdb:rocksdbjni'
-
-  runtime 'org.apache.logging.log4j:log4j-core'
-
-  testImplementation 'junit:junit'
-  testImplementation 'org.assertj:assertj-core'
 }

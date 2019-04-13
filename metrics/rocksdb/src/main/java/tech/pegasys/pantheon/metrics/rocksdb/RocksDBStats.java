@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.services.kvstore;
+package tech.pegasys.pantheon.metrics.rocksdb;
 
 import static tech.pegasys.pantheon.metrics.MetricCategory.KVSTORE_ROCKSDB_STATS;
 
@@ -26,7 +26,7 @@ import org.rocksdb.HistogramType;
 import org.rocksdb.Statistics;
 import org.rocksdb.TickerType;
 
-class RocksDBStats {
+public class RocksDBStats {
 
   static final List<String> LABELS = Collections.singletonList("quantile");
   static final List<String> LABEL_50 = Collections.singletonList("0.5");
@@ -166,7 +166,7 @@ class RocksDBStats {
     HistogramType.READ_NUM_MERGE_OPERANDS,
   };
 
-  static void registerRocksDBMetrics(
+  public static void registerRocksDBMetrics(
       final Statistics stats, final PrometheusMetricsSystem metricsSystem) {
 
     for (final TickerType ticker : TICKERS) {

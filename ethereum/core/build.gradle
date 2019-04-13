@@ -31,7 +31,7 @@ dependencies {
   implementation project(':enclave')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
-  implementation project(':metrics')
+  implementation project(':metrics:core')
   implementation project(':services:kvstore')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
@@ -71,7 +71,7 @@ dependencies {
   jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   jmhImplementation project(':ethereum:rlp')
   jmhImplementation project(':ethereum:trie')
-  jmhImplementation project(':metrics')
+  jmhImplementation project(':metrics:core')
   jmhImplementation project(':services:kvstore')
   jmhImplementation project(':util')
 
