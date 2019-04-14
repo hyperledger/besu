@@ -104,8 +104,12 @@ public class RunnerBuilder {
   private Collection<EnodeURL> staticNodes = Collections.emptyList();
 
   private EnodeURL getSelfEnode() {
-    String nodeId = pantheonController.getLocalNodeKeyPair().getPublicKey().toString();
-    return new EnodeURL(nodeId, discoveryHost, listenPort);
+    BytesValue nodeId = pantheonController.getLocalNodeKeyPair().getPublicKey().getEncodedBytes();
+    return EnodeURL.builder()
+        .nodeId(nodeId)
+        .ipAddress(discoveryHost)
+        .listeningPort(listenPort)
+        .build();
   }
 
   public RunnerBuilder vertx(final Vertx vertx) {

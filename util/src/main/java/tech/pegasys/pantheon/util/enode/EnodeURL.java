@@ -46,28 +46,12 @@ public class EnodeURL {
   // the discovery port is assumed to match the listening port
   private final OptionalInt discoveryPort;
 
-  public EnodeURL(
-      final String nodeId,
-      final String ip,
-      final Integer listeningPort,
-      final OptionalInt discoveryPort) {
-    this(nodeId, InetAddresses.forUriString(ip), listeningPort, discoveryPort);
-  }
-
-  public EnodeURL(final String nodeId, final String ip, final Integer listeningPort) {
-    this(nodeId, ip, listeningPort, OptionalInt.empty());
-  }
-
-  public EnodeURL(final String nodeId, final InetAddress address, final Integer listeningPort) {
-    this(nodeId, address, listeningPort, OptionalInt.empty());
-  }
-
-  public EnodeURL(
-      final String nodeId,
+  private EnodeURL(
+      final BytesValue nodeId,
       final InetAddress address,
       final Integer listeningPort,
       final OptionalInt discoveryPort) {
-    this.nodeId = BytesValue.fromHexString(nodeId);
+    this.nodeId = nodeId;
     this.ip = address;
     this.listeningPort = listeningPort;
     // Only explicitly define a discovery port if it differs from the listening port
@@ -76,6 +60,10 @@ public class EnodeURL {
     } else {
       this.discoveryPort = OptionalInt.empty();
     }
+  }
+
+  public static Builder builder() {
+    return new Builder();
   }
 
   public static EnodeURL fromString(final String value) {
@@ -91,7 +79,12 @@ public class EnodeURL {
     final InetAddress ip = getAndValidateIp(enodeMatcher);
     final int listeningPort = getAndValidatePort(enodeMatcher, "listening");
     final OptionalInt discoveryPort = getAndValidateDiscoveryPort(enodeMatcher);
-    return new EnodeURL(nodeId, ip, listeningPort, discoveryPort);
+    return builder()
+        .nodeId(nodeId)
+        .ipAddress(ip)
+        .listeningPort(listeningPort)
+        .discoveryPort(discoveryPort)
+        .build();
   }
 
   public URI toURI() {
@@ -200,5 +193,54 @@ public class EnodeURL {
   @Override
   public String toString() {
     return this.toURI().toString();
+  }
+
+  public static class Builder {
+
+    private BytesValue nodeId;
+    private Integer listeningPort = 30303;
+    private OptionalInt discoveryPort = OptionalInt.empty();
+    private InetAddress ip;
+
+    private Builder() {};
+
+    public EnodeURL build() {
+      return new EnodeURL(nodeId, ip, listeningPort, discoveryPort);
+    }
+
+    public Builder nodeId(final BytesValue nodeId) {
+      this.nodeId = nodeId;
+      return this;
+    }
+
+    public Builder nodeId(final String nodeId) {
+      this.nodeId = BytesValue.fromHexString(nodeId);
+      return this;
+    }
+
+    public Builder ipAddress(final InetAddress ip) {
+      this.ip = ip;
+      return this;
+    }
+
+    public Builder ipAddress(final String ip) {
+      this.ip = InetAddresses.forUriString(ip);
+      return this;
+    }
+
+    public Builder listeningPort(final Integer listeningPort) {
+      this.listeningPort = listeningPort;
+      return this;
+    }
+
+    public Builder discoveryPort(final OptionalInt discoveryPort) {
+      this.discoveryPort = discoveryPort;
+      return this;
+    }
+
+    public Builder discoveryPort(final int discoveryPort) {
+      this.discoveryPort = OptionalInt.of(discoveryPort);
+      return this;
+    }
   }
 }

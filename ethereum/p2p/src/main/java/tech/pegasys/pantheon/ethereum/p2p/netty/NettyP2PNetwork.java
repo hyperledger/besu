@@ -45,6 +45,7 @@ import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.Subscribers;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.net.InetAddress;
@@ -653,10 +654,14 @@ public class NettyP2PNetwork implements P2PNetwork {
   }
 
   private EnodeURL peerInfoToEnodeURL(final PeerInfo ourPeerInfo, final InetSocketAddress address) {
-    final String localNodeId = ourPeerInfo.getNodeId().toString().substring(2);
+    final BytesValue localNodeId = ourPeerInfo.getNodeId();
     final InetAddress localHostAddress = address.getAddress();
     final int localPort = ourPeerInfo.getPort();
-    return new EnodeURL(localNodeId, localHostAddress, localPort);
+    return EnodeURL.builder()
+        .nodeId(localNodeId)
+        .ipAddress(localHostAddress)
+        .listeningPort(localPort)
+        .build();
   }
 
   @VisibleForTesting
@@ -734,7 +739,7 @@ public class NettyP2PNetwork implements P2PNetwork {
   }
 
   private EnodeURL buildSelfEnodeURL() {
-    final String nodeId = ourPeerInfo.getNodeId().toUnprefixedString();
+    final BytesValue nodeId = ourPeerInfo.getNodeId();
     final int listeningPort = ourPeerInfo.getPort();
     final OptionalInt discoveryPort =
         peerDiscoveryAgent
@@ -743,7 +748,12 @@ public class NettyP2PNetwork implements P2PNetwork {
             .filter(port -> port.getAsInt() != listeningPort)
             .orElse(OptionalInt.empty());
 
-    return new EnodeURL(nodeId, advertisedHost, listeningPort, discoveryPort);
+    return EnodeURL.builder()
+        .nodeId(nodeId)
+        .ipAddress(advertisedHost)
+        .listeningPort(listeningPort)
+        .discoveryPort(discoveryPort)
+        .build();
   }
 
   private void onConnectionEstablished(final PeerConnection connection) {
