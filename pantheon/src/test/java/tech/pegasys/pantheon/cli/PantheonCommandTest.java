@@ -2339,16 +2339,19 @@ public class PantheonCommandTest extends CommandTestAbstract {
     permissioningConfig.deleteOnExit();
 
     final EnodeURL staticNodeURI =
-        new EnodeURL(
-            "50203c6bfca6874370e71aecc8958529fd723feb05013dc1abca8fc1fff845c5259faba05852e9dfe5ce172a7d6e7c2a3a5eaa8b541c8af15ea5518bbff5f2fa",
-            "127.0.0.1",
-            30303);
+        EnodeURL.builder()
+            .nodeId(
+                "50203c6bfca6874370e71aecc8958529fd723feb05013dc1abca8fc1fff845c5259faba05852e9dfe5ce172a7d6e7c2a3a5eaa8b541c8af15ea5518bbff5f2fa")
+            .ipAddress("127.0.0.1")
+            .build();
 
     final EnodeURL whiteListedNode =
-        new EnodeURL(
-            "50203c6bfca6874370e71aecc8958529fd723feb05013dc1abca8fc1fff845c5259faba05852e9dfe5ce172a7d6e7c2a3a5eaa8b541c8af15ea5518bbff5f2fa",
-            "127.0.0.1",
-            30304);
+        EnodeURL.builder()
+            .nodeId(
+                "50203c6bfca6874370e71aecc8958529fd723feb05013dc1abca8fc1fff845c5259faba05852e9dfe5ce172a7d6e7c2a3a5eaa8b541c8af15ea5518bbff5f2fa")
+            .ipAddress("127.0.0.1")
+            .listeningPort(30304)
+            .build();
 
     Files.write(
         staticNodesFile.toPath(), ("[\"" + staticNodeURI.toString() + "\"]").getBytes(UTF_8));

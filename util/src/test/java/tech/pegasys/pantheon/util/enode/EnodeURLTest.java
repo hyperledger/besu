@@ -34,7 +34,12 @@ public class EnodeURLTest {
   @Test
   public void new_withMatchingDiscoveryAndListeningPorts() {
     final EnodeURL enode =
-        new EnodeURL(VALID_NODE_ID, IPV4_ADDRESS, P2P_PORT, OptionalInt.of(P2P_PORT));
+        EnodeURL.builder()
+            .nodeId(VALID_NODE_ID)
+            .ipAddress(IPV4_ADDRESS)
+            .listeningPort(P2P_PORT)
+            .discoveryPort(OptionalInt.of(P2P_PORT))
+            .build();
     assertThat(enode.getListeningPort()).isEqualTo(P2P_PORT);
     // A discovery port matching the listening port should not be explicitly specified
     assertThat(enode.getDiscoveryPort()).isEmpty();
@@ -43,7 +48,12 @@ public class EnodeURLTest {
   @Test
   public void new_withNonMatchingDiscoveryAndListeningPorts() {
     final EnodeURL enode =
-        new EnodeURL(VALID_NODE_ID, IPV4_ADDRESS, P2P_PORT, OptionalInt.of(DISCOVERY_PORT));
+        EnodeURL.builder()
+            .nodeId(VALID_NODE_ID)
+            .ipAddress(IPV4_ADDRESS)
+            .listeningPort(P2P_PORT)
+            .discoveryPort(OptionalInt.of(DISCOVERY_PORT))
+            .build();
     assertThat(enode.getListeningPort()).isEqualTo(P2P_PORT);
     // A discovery port matching the listening port should not be explicitly specified
     assertThat(enode.getDiscoveryPort()).isEqualTo(OptionalInt.of(DISCOVERY_PORT));
@@ -52,7 +62,12 @@ public class EnodeURLTest {
   @Test
   public void fromString_withDiscoveryPortShouldBuildExpectedEnodeURLObject() {
     final EnodeURL expectedEnodeURL =
-        new EnodeURL(VALID_NODE_ID, IPV4_ADDRESS, P2P_PORT, OptionalInt.of(DISCOVERY_PORT));
+        EnodeURL.builder()
+            .nodeId(VALID_NODE_ID)
+            .ipAddress(IPV4_ADDRESS)
+            .listeningPort(P2P_PORT)
+            .discoveryPort(OptionalInt.of(DISCOVERY_PORT))
+            .build();
     final String enodeURLString =
         "enode://" + VALID_NODE_ID + "@" + IPV4_ADDRESS + ":" + P2P_PORT + "?" + DISCOVERY_QUERY;
 
@@ -63,7 +78,12 @@ public class EnodeURLTest {
 
   @Test
   public void fromString_withoutDiscoveryPortShouldBuildExpectedEnodeURLObject() {
-    final EnodeURL expectedEnodeURL = new EnodeURL(VALID_NODE_ID, IPV4_ADDRESS, P2P_PORT);
+    final EnodeURL expectedEnodeURL =
+        EnodeURL.builder()
+            .nodeId(VALID_NODE_ID)
+            .ipAddress(IPV4_ADDRESS)
+            .listeningPort(P2P_PORT)
+            .build();
     final String enodeURLString = "enode://" + VALID_NODE_ID + "@" + IPV4_ADDRESS + ":" + P2P_PORT;
 
     final EnodeURL enodeURL = EnodeURL.fromString(enodeURLString);
@@ -74,7 +94,12 @@ public class EnodeURLTest {
   @Test
   public void fromString_withIPV6ShouldBuildExpectedEnodeURLObject() {
     final EnodeURL expectedEnodeURL =
-        new EnodeURL(VALID_NODE_ID, IPV6_FULL_ADDRESS, P2P_PORT, OptionalInt.of(DISCOVERY_PORT));
+        EnodeURL.builder()
+            .nodeId(VALID_NODE_ID)
+            .ipAddress(IPV6_FULL_ADDRESS)
+            .listeningPort(P2P_PORT)
+            .discoveryPort(OptionalInt.of(DISCOVERY_PORT))
+            .build();
     final String enodeURLString =
         "enode://"
             + VALID_NODE_ID
@@ -93,7 +118,12 @@ public class EnodeURLTest {
   @Test
   public void fromString_ithIPV6InCompactFormShouldBuildExpectedEnodeURLObject() {
     final EnodeURL expectedEnodeURL =
-        new EnodeURL(VALID_NODE_ID, IPV6_COMPACT_ADDRESS, P2P_PORT, OptionalInt.of(DISCOVERY_PORT));
+        EnodeURL.builder()
+            .nodeId(VALID_NODE_ID)
+            .ipAddress(IPV6_COMPACT_ADDRESS)
+            .listeningPort(P2P_PORT)
+            .discoveryPort(OptionalInt.of(DISCOVERY_PORT))
+            .build();
     final String enodeURLString =
         "enode://"
             + VALID_NODE_ID
