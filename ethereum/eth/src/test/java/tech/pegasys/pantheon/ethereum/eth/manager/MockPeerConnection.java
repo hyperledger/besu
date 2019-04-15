@@ -19,7 +19,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 
-import java.net.SocketAddress;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -65,7 +65,7 @@ public class MockPeerConnection implements PeerConnection {
   }
 
   @Override
-  public PeerInfo getPeer() {
+  public PeerInfo getPeerInfo() {
     return new PeerInfo(5, "Mock", new ArrayList<>(caps), 0, nodeId);
   }
 
@@ -80,12 +80,12 @@ public class MockPeerConnection implements PeerConnection {
   }
 
   @Override
-  public SocketAddress getLocalAddress() {
+  public InetSocketAddress getLocalAddress() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public SocketAddress getRemoteAddress() {
+  public InetSocketAddress getRemoteAddress() {
     throw new UnsupportedOperationException();
   }
 

@@ -54,7 +54,7 @@ public class PeerConnectionRegistry implements DisconnectCallback {
   }
 
   public void registerConnection(final PeerConnection connection) {
-    connections.put(connection.getPeer().getNodeId(), connection);
+    connections.put(connection.getPeerInfo().getNodeId(), connection);
     connectedPeersCounter.inc();
   }
 
@@ -79,7 +79,7 @@ public class PeerConnectionRegistry implements DisconnectCallback {
       final PeerConnection connection,
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
-    connections.remove(connection.getPeer().getNodeId());
+    connections.remove(connection.getPeerInfo().getNodeId());
     disconnectCounter.labels(initiatedByPeer ? "remote" : "local", reason.name()).inc();
   }
 }

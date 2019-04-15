@@ -26,7 +26,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.messages.WireMessageCodes;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 
-import java.net.SocketAddress;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -108,7 +108,7 @@ final class NettyPeerConnection implements PeerConnection {
   }
 
   @Override
-  public PeerInfo getPeer() {
+  public PeerInfo getPeerInfo() {
     return peerInfo;
   }
 
@@ -156,13 +156,13 @@ final class NettyPeerConnection implements PeerConnection {
   }
 
   @Override
-  public SocketAddress getLocalAddress() {
-    return ctx.channel().localAddress();
+  public InetSocketAddress getLocalAddress() {
+    return (InetSocketAddress) ctx.channel().localAddress();
   }
 
   @Override
-  public SocketAddress getRemoteAddress() {
-    return ctx.channel().remoteAddress();
+  public InetSocketAddress getRemoteAddress() {
+    return (InetSocketAddress) ctx.channel().remoteAddress();
   }
 
   @Override

@@ -46,13 +46,13 @@ public class ValidatorPeers implements ValidatorMulticaster, PeerConnectionTrack
 
   @Override
   public void add(final PeerConnection newConnection) {
-    final Address peerAddress = newConnection.getPeer().getAddress();
+    final Address peerAddress = newConnection.getPeerInfo().getAddress();
     peerConnections.put(peerAddress, newConnection);
   }
 
   @Override
   public void remove(final PeerConnection removedConnection) {
-    final Address peerAddress = removedConnection.getPeer().getAddress();
+    final Address peerAddress = removedConnection.getPeerInfo().getAddress();
     peerConnections.remove(peerAddress);
   }
 
@@ -85,7 +85,7 @@ public class ValidatorPeers implements ValidatorMulticaster, PeerConnectionTrack
                 LOG.trace(
                     "Lost connection to a validator. remoteAddress={} peerInfo={}",
                     connection.getRemoteAddress(),
-                    connection.getPeer());
+                    connection.getPeerInfo());
               }
             });
   }

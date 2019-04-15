@@ -314,7 +314,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
       final PeerConnection connection,
       final DisconnectMessage.DisconnectReason reason,
       final boolean initiatedByPeer) {
-    final BytesValue nodeId = connection.getPeer().getNodeId();
+    final BytesValue nodeId = connection.getPeerInfo().getNodeId();
     peerTable.tryEvict(new DefaultPeerId(nodeId));
   }
 

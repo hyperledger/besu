@@ -73,7 +73,8 @@ public class TestNodeList implements Closeable {
         final TestNode destination = nodes.get(j);
         try {
           LOG.info("Attempting to connect source " + source.shortId() + " to dest " + destination);
-          assertThat(source.connect(destination).get(30L, TimeUnit.SECONDS).getPeer().getNodeId())
+          assertThat(
+                  source.connect(destination).get(30L, TimeUnit.SECONDS).getPeerInfo().getNodeId())
               .isEqualTo(destination.id());
           // Wait for the destination node to finish bonding.
           Awaitility.await()
@@ -118,7 +119,7 @@ public class TestNodeList implements Closeable {
 
   private boolean hasConnection(final TestNode node1, final TestNode node2) {
     for (final PeerConnection peer : node1.network.getPeers()) {
-      if (node2.id().equals(peer.getPeer().getNodeId())) {
+      if (node2.id().equals(peer.getPeerInfo().getNodeId())) {
         return true;
       }
     }
@@ -221,7 +222,7 @@ public class TestNodeList implements Closeable {
       for (final Map.Entry<PeerConnection, DisconnectReason> entry :
           node.disconnections.entrySet()) {
         final PeerConnection peer = entry.getKey();
-        final String peerString = peer.getPeer().getNodeId() + "@" + peer.getRemoteAddress();
+        final String peerString = peer.getPeerInfo().getNodeId() + "@" + peer.getRemoteAddress();
         final String unsentTxMsg =
             "Node "
                 + node.shortId()
@@ -245,7 +246,7 @@ public class TestNodeList implements Closeable {
       for (final PeerConnection peer : node.network.getPeers()) {
         final String localString = node.shortId() + "@" + peer.getLocalAddress();
         final String peerString =
-            shortId(peer.getPeer().getNodeId()) + "@" + peer.getRemoteAddress();
+            shortId(peer.getPeerInfo().getNodeId()) + "@" + peer.getRemoteAddress();
         connStr.add("Connection: " + localString + " to " + peerString);
       }
     }

@@ -34,16 +34,16 @@ public class PeerResult {
   private final String id;
 
   public PeerResult(final PeerConnection peer) {
-    this.version = Quantity.create(peer.getPeer().getVersion());
-    this.name = peer.getPeer().getClientId();
+    this.version = Quantity.create(peer.getPeerInfo().getVersion());
+    this.name = peer.getPeerInfo().getClientId();
     this.caps =
-        peer.getPeer().getCapabilities().stream()
+        peer.getPeerInfo().getCapabilities().stream()
             .map(Capability::toString)
             .map(TextNode::new)
             .collect(Collectors.toList());
     this.network = new NetworkResult(peer.getLocalAddress(), peer.getRemoteAddress());
-    this.port = Quantity.create(peer.getPeer().getPort());
-    this.id = peer.getPeer().getNodeId().toString();
+    this.port = Quantity.create(peer.getPeerInfo().getPort());
+    this.id = peer.getPeerInfo().getNodeId().toString();
   }
 
   @JsonGetter(value = "version")

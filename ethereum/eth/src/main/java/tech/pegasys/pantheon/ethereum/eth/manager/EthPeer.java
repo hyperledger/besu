@@ -329,7 +329,7 @@ public class EthPeer {
   }
 
   public BytesValue nodeId() {
-    return connection.getPeer().getNodeId();
+    return connection.getPeerInfo().getNodeId();
   }
 
   @Override

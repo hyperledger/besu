@@ -199,7 +199,7 @@ public class PeerBlacklistTest {
     final PeerInfo peerInfo = mock(PeerInfo.class);
 
     when(peerInfo.getNodeId()).thenReturn(nodeId);
-    when(peer.getPeer()).thenReturn(peerInfo);
+    when(peer.getPeerInfo()).thenReturn(peerInfo);
 
     return peer;
   }

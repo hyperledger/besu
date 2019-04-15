@@ -24,7 +24,7 @@ public class MockPeerFactory {
   public static PeerConnection create(final Address address) {
     final PeerConnection peerConnection = mock(PeerConnection.class);
     final PeerInfo peerInfo = createPeerInfo(address);
-    when(peerConnection.getPeer()).thenReturn(peerInfo);
+    when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
     return peerConnection;
   }
 
