@@ -35,10 +35,10 @@ dependencyManagement {
 
     dependency 'io.pkts:pkts-core:3.0.4'
 
-    dependency "io.prometheus:simpleclient:0.6.0"
-    dependency "io.prometheus:simpleclient_common:0.6.0"
-    dependency "io.prometheus:simpleclient_hotspot:0.6.0"
-    dependency "io.prometheus:simpleclient_pushgateway:0.6.0"
+    dependency 'io.prometheus:simpleclient:0.6.0'
+    dependency 'io.prometheus:simpleclient_common:0.6.0'
+    dependency 'io.prometheus:simpleclient_hotspot:0.6.0'
+    dependency 'io.prometheus:simpleclient_pushgateway:0.6.0'
 
     dependency 'io.reactivex.rxjava2:rxjava:2.2.7'
 
@@ -73,7 +73,7 @@ dependencyManagement {
     dependency 'org.openjdk.jmh:jmh-core:1.21'
     dependency 'org.openjdk.jmh:jmh-generator-annprocess:1.21'
 
-    dependency 'org.rocksdb:rocksdbjni:5.17.2'
+    dependency 'org.rocksdb:rocksdbjni:5.15.10'
 
     dependency 'org.springframework.security:spring-security-crypto:5.1.4.RELEASE'
     
