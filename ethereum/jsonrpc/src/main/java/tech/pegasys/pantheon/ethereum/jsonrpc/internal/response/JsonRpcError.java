@@ -52,6 +52,9 @@ public enum JsonRpcError {
   // Wallet errors
   COINBASE_NOT_SPECIFIED(-32000, "Coinbase must be explicitly specified"),
 
+  // Debug failures
+  PARENT_BLOCK_NOT_FOUND(-32000, "Parent block not found"),
+
   // Permissioning/Account whitelist errors
   ACCOUNT_WHITELIST_NOT_ENABLED(-32000, "Account whitelisting has not been enabled"),
   ACCOUNT_WHITELIST_EMPTY_ENTRY(-32000, "Request contains an empty list of accounts"),

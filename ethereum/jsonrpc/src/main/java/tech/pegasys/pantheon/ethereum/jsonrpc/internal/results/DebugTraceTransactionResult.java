@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.results;
 import tech.pegasys.pantheon.ethereum.debug.TraceFrame;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.TransactionTrace;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,6 +38,11 @@ public class DebugTraceTransactionResult {
             .map(DebugTraceTransactionResult::createStructLog)
             .collect(Collectors.toList());
     failed = !transactionTrace.getResult().isSuccessful();
+  }
+
+  public static Collection<DebugTraceTransactionResult> of(
+      final Collection<TransactionTrace> traces) {
+    return traces.stream().map(DebugTraceTransactionResult::new).collect(Collectors.toList());
   }
 
   private static StructLog createStructLog(final TraceFrame frame) {

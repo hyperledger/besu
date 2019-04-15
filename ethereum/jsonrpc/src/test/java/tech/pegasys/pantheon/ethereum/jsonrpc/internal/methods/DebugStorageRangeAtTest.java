@@ -30,7 +30,7 @@ import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.BlockReplay;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.BlockReplay.Action;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.BlockReplay.TransactionAction;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.TransactionWithMetadata;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -115,7 +115,7 @@ public class DebugStorageRangeAtTest {
 
   private Object callAction(final InvocationOnMock invocation) {
     return Optional.of(
-        ((Action) invocation.getArgument(2))
+        ((TransactionAction) invocation.getArgument(2))
             .performAction(transaction, blockHeader, blockchain, worldState, transactionProcessor));
   }
 }
