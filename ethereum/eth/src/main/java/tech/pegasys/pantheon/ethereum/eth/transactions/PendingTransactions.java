@@ -92,6 +92,18 @@ public class PendingTransactions {
             "operation");
   }
 
+  List<Transaction> getLocalTransactions() {
+    synchronized (pendingTransactions) {
+      List<Transaction> localTransactions = new ArrayList<>();
+      for (Map.Entry<Hash, TransactionInfo> transaction : pendingTransactions.entrySet()) {
+        if (transaction.getValue().isReceivedFromLocalSource()) {
+          localTransactions.add(transaction.getValue().getTransaction());
+        }
+      }
+      return localTransactions;
+    }
+  }
+
   public boolean addRemoteTransaction(final Transaction transaction) {
     final TransactionInfo transactionInfo =
         new TransactionInfo(transaction, false, clock.instant());
