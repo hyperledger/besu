@@ -158,7 +158,8 @@ public class MainnetPantheonController implements PantheonController<Void> {
             ethProtocolManager.ethContext(),
             clock,
             maxPendingTransactions,
-            metricsSystem);
+            metricsSystem,
+            syncState);
 
     final ExecutorService minerThreadPool = Executors.newCachedThreadPool();
     final EthHashMinerExecutor executor =

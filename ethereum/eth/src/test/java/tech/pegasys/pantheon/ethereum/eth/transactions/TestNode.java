@@ -14,6 +14,9 @@ package tech.pegasys.pantheon.ethereum.eth.transactions;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.util.Preconditions.checkNotNull;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
@@ -29,6 +32,7 @@ import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.p2p.NetworkRunner;
@@ -139,6 +143,10 @@ public class TestNode implements Closeable {
         (connection, reason, initiatedByPeer) -> disconnections.put(connection, reason));
 
     final EthContext ethContext = ethProtocolManager.ethContext();
+
+    SyncState syncState = mock(SyncState.class);
+    when(syncState.isInSync(anyLong())).thenReturn(true);
+
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
             protocolSchedule,
@@ -146,7 +154,8 @@ public class TestNode implements Closeable {
             ethContext,
             TestClock.fixed(),
             PendingTransactions.MAX_PENDING_TRANSACTIONS,
-            metricsSystem);
+            metricsSystem,
+            syncState);
     networkRunner.start();
 
     selfPeer = new DefaultPeer(id(), endpoint());

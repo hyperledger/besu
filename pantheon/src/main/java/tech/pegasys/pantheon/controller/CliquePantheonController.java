@@ -181,7 +181,8 @@ public class CliquePantheonController implements PantheonController<CliqueContex
             ethProtocolManager.ethContext(),
             clock,
             maxPendingTransactions,
-            metricsSystem);
+            metricsSystem,
+            syncState);
 
     final ExecutorService minerThreadPool = Executors.newCachedThreadPool();
     final CliqueMinerExecutor miningExecutor =
