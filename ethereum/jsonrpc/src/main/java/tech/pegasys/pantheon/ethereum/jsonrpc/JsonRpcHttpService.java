@@ -454,6 +454,9 @@ public class JsonRpcHttpService {
       } catch (final InvalidJsonRpcParameters e) {
         LOG.debug(e);
         return errorResponse(id, JsonRpcError.INVALID_PARAMS);
+      } catch (final RuntimeException e) {
+        LOG.debug(e);
+        return errorResponse(id, JsonRpcError.INTERNAL_ERROR);
       }
     } else {
       return unauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
