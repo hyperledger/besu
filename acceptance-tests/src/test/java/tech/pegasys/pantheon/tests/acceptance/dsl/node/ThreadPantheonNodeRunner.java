@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.cli.EthNetworkConfig;
 import tech.pegasys.pantheon.cli.PantheonControllerBuilder;
 import tech.pegasys.pantheon.controller.KeyPairUtil;
 import tech.pegasys.pantheon.controller.PantheonController;
+import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
@@ -76,6 +77,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
               .metricsSystem(noOpMetricsSystem)
               .maxPendingTransactions(PendingTransactions.MAX_PENDING_TRANSACTIONS)
               .rocksDbConfiguration(new RocksDbConfiguration.Builder().databaseDir(tempDir).build())
+              .ethereumWireProtocolConfiguration(EthereumWireProtocolConfiguration.defaultConfig())
               .build();
     } catch (final IOException e) {
       throw new RuntimeException("Error building PantheonController", e);
