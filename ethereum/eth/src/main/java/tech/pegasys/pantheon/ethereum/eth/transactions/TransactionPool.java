@@ -66,6 +66,10 @@ public class TransactionPool implements BlockAddedObserver {
     this.transactionBatchAddedListener = transactionBatchAddedListener;
   }
 
+  public List<Transaction> getLocalTransactions() {
+    return pendingTransactions.getLocalTransactions();
+  }
+
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
       final Transaction transaction) {
     final ValidationResult<TransactionInvalidReason> validationResult =

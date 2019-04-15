@@ -104,6 +104,22 @@ public class TransactionPoolTest {
   }
 
   @Test
+  public void shouldReturnExclusivelyLocalTransactionsWhenAppropriate() {
+    final Transaction localTransaction0 = createTransaction(0);
+    transactions.addLocalTransaction(localTransaction0);
+    assertThat(transactions.size()).isEqualTo(1);
+
+    transactions.addRemoteTransaction(transaction1);
+    assertThat(transactions.size()).isEqualTo(2);
+
+    transactions.addRemoteTransaction(transaction2);
+    assertThat(transactions.size()).isEqualTo(3);
+
+    List<Transaction> localTransactions = transactions.getLocalTransactions();
+    assertThat(localTransactions.size()).isEqualTo(1);
+  }
+
+  @Test
   public void shouldRemoveTransactionsFromPendingListWhenIncludedInBlockOnChain() {
     transactions.addRemoteTransaction(transaction1);
     assertTransactionPending(transaction1);
