@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.results;
 
-import tech.pegasys.pantheon.ethereum.core.PendingTransactions.TransactionInfo;
+import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
 
 import java.util.Set;
 import java.util.stream.Collectors;

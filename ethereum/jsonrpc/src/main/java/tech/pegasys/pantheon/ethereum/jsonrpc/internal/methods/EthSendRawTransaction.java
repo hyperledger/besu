@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 
 import tech.pegasys.pantheon.ethereum.core.Transaction;
-import tech.pegasys.pantheon.ethereum.core.TransactionPool;
+import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;

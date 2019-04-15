@@ -17,7 +17,7 @@ import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
-import tech.pegasys.pantheon.ethereum.core.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolver;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHasher;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;

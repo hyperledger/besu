@@ -10,10 +10,14 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.eth.transactions;
 
 import static java.util.Comparator.comparing;
 
+import tech.pegasys.pantheon.ethereum.core.AccountTransactionOrder;
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.MetricCategory;
@@ -96,7 +100,7 @@ public class PendingTransactions {
     return addTransaction;
   }
 
-  boolean addLocalTransaction(final Transaction transaction) {
+  public boolean addLocalTransaction(final Transaction transaction) {
     final boolean addTransaction =
         addTransaction(new TransactionInfo(transaction, true, clock.instant()));
     localTransactionAddedCounter.inc();
@@ -108,7 +112,7 @@ public class PendingTransactions {
     notifyTransactionDropped(transaction);
   }
 
-  void transactionAddedToBlock(final Transaction transaction) {
+  public void transactionAddedToBlock(final Transaction transaction) {
     doRemoveTransaction(transaction, true);
   }
 
@@ -251,11 +255,11 @@ public class PendingTransactions {
     }
   }
 
-  void addTransactionListener(final PendingTransactionListener listener) {
+  public void addTransactionListener(final PendingTransactionListener listener) {
     listeners.subscribe(listener);
   }
 
-  void addTransactionDroppedListener(final PendingTransactionDroppedListener listener) {
+  public void addTransactionDroppedListener(final PendingTransactionDroppedListener listener) {
     transactionDroppedListeners.subscribe(listener);
   }
 

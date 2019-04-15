@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.eth.transactions;
 
 import static java.util.Collections.singletonList;
 import static org.apache.logging.log4j.LogManager.getLogger;
@@ -21,6 +21,10 @@ import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedObserver;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.core.Account;
+import tech.pegasys.pantheon.ethereum.core.AccountFilter;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;

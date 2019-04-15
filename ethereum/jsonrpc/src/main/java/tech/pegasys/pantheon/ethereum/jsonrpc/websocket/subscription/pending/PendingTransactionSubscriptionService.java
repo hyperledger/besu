@@ -13,8 +13,8 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.pending;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.core.PendingTransactionListener;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactionListener;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.Subscription;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;

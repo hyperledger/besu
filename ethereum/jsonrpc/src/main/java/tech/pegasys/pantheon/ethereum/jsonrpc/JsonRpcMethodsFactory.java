@@ -18,7 +18,7 @@ import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
-import tech.pegasys.pantheon.ethereum.core.TransactionPool;
+import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminAddPeer;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminNodeInfo;
