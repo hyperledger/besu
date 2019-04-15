@@ -16,6 +16,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -29,6 +30,7 @@ import tech.pegasys.pantheon.ethereum.core.ExecutionContextTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
@@ -76,6 +78,7 @@ public class EthGetFilterChangesIntegrationTest {
   private final JsonRpcParameter parameters = new JsonRpcParameter();
   private FilterManager filterManager;
   private EthGetFilterChanges method;
+  private final SyncState syncState = mock(SyncState.class);
 
   @Before
   public void setUp() {
@@ -87,7 +90,8 @@ public class EthGetFilterChangesIntegrationTest {
             transactions,
             executionContext.getProtocolSchedule(),
             protocolContext,
-            batchAddedListener);
+            batchAddedListener,
+            syncState);
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, protocolContext.getWorldStateArchive());
     filterManager =
