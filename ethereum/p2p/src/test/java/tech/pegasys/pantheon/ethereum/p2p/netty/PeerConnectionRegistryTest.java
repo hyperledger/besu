@@ -38,8 +38,10 @@ public class PeerConnectionRegistryTest {
 
   @Before
   public void setUp() {
-    when(connection1.getPeer()).thenReturn(new PeerInfo(5, "client1", emptyList(), 10, PEER1_ID));
-    when(connection2.getPeer()).thenReturn(new PeerInfo(5, "client2", emptyList(), 10, PEER2_ID));
+    when(connection1.getPeerInfo())
+        .thenReturn(new PeerInfo(5, "client1", emptyList(), 10, PEER1_ID));
+    when(connection2.getPeerInfo())
+        .thenReturn(new PeerInfo(5, "client2", emptyList(), 10, PEER2_ID));
   }
 
   @Test

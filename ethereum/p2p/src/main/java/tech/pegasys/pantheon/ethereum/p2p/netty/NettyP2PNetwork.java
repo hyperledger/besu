@@ -365,7 +365,7 @@ public class NettyP2PNetwork implements P2PNetwork {
                 LOG.debug(
                     "Disconnecting incoming connection because connection limit of {} has been reached: {}",
                     maxPeers,
-                    connection.getPeer().getNodeId());
+                    connection.getPeerInfo().getNodeId());
                 connection.disconnect(DisconnectReason.TOO_MANY_PEERS);
                 return;
               }
@@ -377,7 +377,7 @@ public class NettyP2PNetwork implements P2PNetwork {
 
               onConnectionEstablished(connection);
               LOG.debug(
-                  "Successfully accepted connection from {}", connection.getPeer().getNodeId());
+                  "Successfully accepted connection from {}", connection.getPeerInfo().getNodeId());
               logConnections();
             });
       }
@@ -591,7 +591,7 @@ public class NettyP2PNetwork implements P2PNetwork {
     return event -> {
       final Peer peer = event.getPeer();
       getPeers().stream()
-          .filter(p -> p.getPeer().getNodeId().equals(peer.getId()))
+          .filter(p -> p.getPeerInfo().getNodeId().equals(peer.getId()))
           .findFirst()
           .ifPresent(p -> p.disconnect(DisconnectReason.REQUESTED));
     };
@@ -626,18 +626,17 @@ public class NettyP2PNetwork implements P2PNetwork {
     }
 
     LOG.trace(
-        "Checking if connection with peer {} is permitted", peerConnection.getPeer().getNodeId());
+        "Checking if connection with peer {} is permitted",
+        peerConnection.getPeerInfo().getNodeId());
 
     return nodePermissioningController
         .map(
             c -> {
               final EnodeURL localPeerEnodeURL =
-                  peerInfoToEnodeURL(
-                      ourPeerInfo, (InetSocketAddress) peerConnection.getLocalAddress());
+                  peerInfoToEnodeURL(ourPeerInfo, peerConnection.getLocalAddress());
               final EnodeURL remotePeerEnodeURL =
                   peerInfoToEnodeURL(
-                      peerConnection.getPeer(),
-                      (InetSocketAddress) peerConnection.getRemoteAddress());
+                      peerConnection.getPeerInfo(), peerConnection.getRemoteAddress());
               return c.isPermitted(localPeerEnodeURL, remotePeerEnodeURL);
             })
         .orElse(true);

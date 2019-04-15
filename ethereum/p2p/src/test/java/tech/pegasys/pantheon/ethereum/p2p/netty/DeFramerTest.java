@@ -156,7 +156,7 @@ public class DeFramerTest {
     assertThat(connectFuture).isDone();
     assertThat(connectFuture).isNotCompletedExceptionally();
     PeerConnection peerConnection = connectFuture.get();
-    assertThat(peerConnection.getPeer()).isEqualTo(remotePeerInfo);
+    assertThat(peerConnection.getPeerInfo()).isEqualTo(remotePeerInfo);
     assertThat(out).isEmpty();
 
     // Next phase of pipeline should be setup

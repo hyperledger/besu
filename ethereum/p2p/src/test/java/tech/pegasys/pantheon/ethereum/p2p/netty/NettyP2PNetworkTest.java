@@ -156,7 +156,7 @@ public final class NettyP2PNetworkTest {
                               listenPort,
                               OptionalInt.of(listenPort))))
                   .get(30L, TimeUnit.SECONDS)
-                  .getPeer()
+                  .getPeerInfo()
                   .getNodeId())
           .isEqualTo(listenId);
     }
@@ -209,7 +209,7 @@ public final class NettyP2PNetworkTest {
                               listenPort,
                               OptionalInt.of(listenPort))))
                   .get(30L, TimeUnit.SECONDS)
-                  .getPeer()
+                  .getPeerInfo()
                   .getNodeId())
           .isEqualTo(listenId);
       final CompletableFuture<PeerConnection> secondConnectionFuture =
@@ -290,7 +290,12 @@ public final class NettyP2PNetworkTest {
                   InetAddress.getLoopbackAddress().getHostAddress(),
                   listenPort,
                   OptionalInt.of(listenPort)));
-      assertThat(connector1.connect(listeningPeer).get(30L, TimeUnit.SECONDS).getPeer().getNodeId())
+      assertThat(
+              connector1
+                  .connect(listeningPeer)
+                  .get(30L, TimeUnit.SECONDS)
+                  .getPeerInfo()
+                  .getNodeId())
           .isEqualTo(listenId);
 
       // Setup second connection and check that connection is not accepted
@@ -302,9 +307,15 @@ public final class NettyP2PNetworkTest {
             reasonFuture.complete(reason);
           });
       connector2.start();
-      assertThat(connector2.connect(listeningPeer).get(30L, TimeUnit.SECONDS).getPeer().getNodeId())
+      assertThat(
+              connector2
+                  .connect(listeningPeer)
+                  .get(30L, TimeUnit.SECONDS)
+                  .getPeerInfo()
+                  .getNodeId())
           .isEqualTo(listenId);
-      assertThat(peerFuture.get(30L, TimeUnit.SECONDS).getPeer().getNodeId()).isEqualTo(listenId);
+      assertThat(peerFuture.get(30L, TimeUnit.SECONDS).getPeerInfo().getNodeId())
+          .isEqualTo(listenId);
       assertThat(reasonFuture.get(30L, TimeUnit.SECONDS))
           .isEqualByComparingTo(DisconnectReason.TOO_MANY_PEERS);
     }
@@ -437,8 +448,9 @@ public final class NettyP2PNetworkTest {
       final CompletableFuture<PeerConnection> connectFuture = remoteNetwork.connect(localPeer);
 
       // Check connection is made, and then a disconnect is registered at remote
-      assertThat(connectFuture.get(5L, TimeUnit.SECONDS).getPeer().getNodeId()).isEqualTo(localId);
-      assertThat(peerFuture.get(5L, TimeUnit.SECONDS).getPeer().getNodeId()).isEqualTo(localId);
+      assertThat(connectFuture.get(5L, TimeUnit.SECONDS).getPeerInfo().getNodeId())
+          .isEqualTo(localId);
+      assertThat(peerFuture.get(5L, TimeUnit.SECONDS).getPeerInfo().getNodeId()).isEqualTo(localId);
       assertThat(reasonFuture.get(5L, TimeUnit.SECONDS))
           .isEqualByComparingTo(DisconnectReason.UNKNOWN);
     }
@@ -519,8 +531,9 @@ public final class NettyP2PNetworkTest {
       final CompletableFuture<PeerConnection> connectFuture = remoteNetwork.connect(localPeer);
 
       // Check connection is made, and then a disconnect is registered at remote
-      assertThat(connectFuture.get(5L, TimeUnit.SECONDS).getPeer().getNodeId()).isEqualTo(localId);
-      assertThat(peerFuture.get(5L, TimeUnit.SECONDS).getPeer().getNodeId()).isEqualTo(localId);
+      assertThat(connectFuture.get(5L, TimeUnit.SECONDS).getPeerInfo().getNodeId())
+          .isEqualTo(localId);
+      assertThat(peerFuture.get(5L, TimeUnit.SECONDS).getPeerInfo().getNodeId()).isEqualTo(localId);
       assertThat(reasonFuture.get(5L, TimeUnit.SECONDS))
           .isEqualByComparingTo(DisconnectReason.UNKNOWN);
     }
@@ -958,7 +971,7 @@ public final class NettyP2PNetworkTest {
     final PeerInfo peerInfo = mock(PeerInfo.class);
     when(peerInfo.getNodeId()).thenReturn(id);
     final PeerConnection peerConnection = mock(PeerConnection.class);
-    when(peerConnection.getPeer()).thenReturn(peerInfo);
+    when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
     return peerConnection;
   }
 
@@ -972,7 +985,7 @@ public final class NettyP2PNetworkTest {
     doReturn(remotePeer.getEndpoint().getTcpPort().getAsInt()).when(peerInfo).getPort();
 
     final PeerConnection peerConnection = mock(PeerConnection.class);
-    when(peerConnection.getPeer()).thenReturn(peerInfo);
+    when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
 
     Endpoint localEndpoint = localPeer.getEndpoint();
     InetSocketAddress localSocketAddress =

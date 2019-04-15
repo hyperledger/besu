@@ -296,7 +296,7 @@ public class PeerDiscoveryAgentTest {
   private PeerConnection createAnonymousPeerConnection(final BytesValue id) {
     PeerConnection conn = mock(PeerConnection.class);
     PeerInfo peerInfo = new PeerInfo(0, null, null, 0, id);
-    when(conn.getPeer()).thenReturn(peerInfo);
+    when(conn.getPeerInfo()).thenReturn(peerInfo);
     return conn;
   }
 }

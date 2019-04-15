@@ -25,7 +25,7 @@ public class StubbedPeerConnection {
   public static PeerConnection create(final BytesValue nodeId) {
     PeerConnection peerConnection = mock(PeerConnection.class);
     PeerInfo peerInfo = new PeerInfo(0, "IbftIntTestPeer", emptyList(), 0, nodeId);
-    when(peerConnection.getPeer()).thenReturn(peerInfo);
+    when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
     return peerConnection;
   }
 }

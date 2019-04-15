@@ -57,7 +57,7 @@ public class ValidatorPeersTest {
 
       final PeerInfo peerInfo = mock(PeerInfo.class);
       final PeerConnection peerConnection = mock(PeerConnection.class);
-      when(peerConnection.getPeer()).thenReturn(peerInfo);
+      when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
       when(peerInfo.getAddress()).thenReturn(address);
 
       peerConnections.add(peerConnection);

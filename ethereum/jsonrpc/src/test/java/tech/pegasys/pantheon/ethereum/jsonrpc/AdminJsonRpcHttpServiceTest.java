@@ -97,7 +97,7 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTest {
       final BytesValue jsonNodeId = BytesValue.fromHexString(peerJson.getString("id"));
 
       final PeerInfo jsonPeer = new PeerInfo(jsonVersion, jsonClient, caps, jsonPort, jsonNodeId);
-      assertThat(peerConn.getPeer()).isEqualTo(jsonPeer);
+      assertThat(peerConn.getPeerInfo()).isEqualTo(jsonPeer);
     }
   }
 

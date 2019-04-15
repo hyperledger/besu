@@ -13,9 +13,6 @@
 package tech.pegasys.pantheon.ethereum.p2p;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.AdditionalMatchers.not;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -71,7 +68,7 @@ public class InsufficientPeersPermissioningProviderTest {
   @Test
   public void noResultWhenOtherConnections() {
     final PeerConnection neverMatchPeerConnection = mock(PeerConnection.class);
-    when(neverMatchPeerConnection.isRemoteEnode(any())).thenReturn(false);
+    when(neverMatchPeerConnection.getRemoteEnode()).thenReturn(ENODE_5);
     when(p2pNetwork.getPeers()).thenReturn(Collections.singletonList(neverMatchPeerConnection));
 
     final Collection<EnodeURL> bootnodes = Collections.singletonList(ENODE_2);
@@ -101,7 +98,7 @@ public class InsufficientPeersPermissioningProviderTest {
     final Collection<EnodeURL> bootnodes = Collections.singletonList(ENODE_2);
 
     final PeerConnection bootnodeMatchPeerConnection = mock(PeerConnection.class);
-    when(bootnodeMatchPeerConnection.isRemoteEnode(ENODE_2)).thenReturn(true);
+    when(bootnodeMatchPeerConnection.getRemoteEnode()).thenReturn(ENODE_2);
     when(p2pNetwork.getPeers()).thenReturn(Collections.singletonList(bootnodeMatchPeerConnection));
 
     final InsufficientPeersPermissioningProvider provider =
@@ -113,8 +110,7 @@ public class InsufficientPeersPermissioningProviderTest {
 
   private PeerConnection peerConnectionMatching(final EnodeURL enode) {
     final PeerConnection pc = mock(PeerConnection.class);
-    when(pc.isRemoteEnode(enode)).thenReturn(true);
-    when(pc.isRemoteEnode(not(eq(enode)))).thenReturn(false);
+    when(pc.getRemoteEnode()).thenReturn(enode);
     return pc;
   }
 

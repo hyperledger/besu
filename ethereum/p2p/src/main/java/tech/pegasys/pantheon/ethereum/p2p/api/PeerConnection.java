@@ -19,7 +19,6 @@ import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.Set;
 
 /** A P2P connection to another node. */
@@ -70,7 +69,7 @@ public interface PeerConnection {
    *
    * @return Peer Description
    */
-  PeerInfo getPeer();
+  PeerInfo getPeerInfo();
 
   /**
    * Immediately terminate the connection without sending a disconnect message.
@@ -90,9 +89,9 @@ public interface PeerConnection {
   /** @return True if the peer is disconnected */
   boolean isDisconnected();
 
-  SocketAddress getLocalAddress();
+  InetSocketAddress getLocalAddress();
 
-  SocketAddress getRemoteAddress();
+  InetSocketAddress getRemoteAddress();
 
   class PeerNotConnected extends IOException {
 
@@ -101,11 +100,11 @@ public interface PeerConnection {
     }
   }
 
-  default boolean isRemoteEnode(final EnodeURL remoteEnodeUrl) {
-    return ((remoteEnodeUrl.getNodeId().equals(this.getPeer().getAddress()))
-        && (remoteEnodeUrl.getListeningPort() == this.getPeer().getPort())
-        && (remoteEnodeUrl
-            .getInetAddress()
-            .equals(((InetSocketAddress) this.getRemoteAddress()).getAddress())));
+  default EnodeURL getRemoteEnode() {
+    return EnodeURL.builder()
+        .nodeId(getPeerInfo().getNodeId())
+        .listeningPort(getPeerInfo().getPort())
+        .ipAddress(getRemoteAddress().getAddress())
+        .build();
   }
 }

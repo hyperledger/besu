@@ -26,7 +26,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.Discon
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
-import java.net.SocketAddress;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -260,7 +260,7 @@ public final class MockNetwork {
     }
 
     @Override
-    public PeerInfo getPeer() {
+    public PeerInfo getPeerInfo() {
       return new PeerInfo(
           5,
           "mock-network-client",
@@ -287,12 +287,12 @@ public final class MockNetwork {
     }
 
     @Override
-    public SocketAddress getLocalAddress() {
+    public InetSocketAddress getLocalAddress() {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public SocketAddress getRemoteAddress() {
+    public InetSocketAddress getRemoteAddress() {
       throw new UnsupportedOperationException();
     }
   }

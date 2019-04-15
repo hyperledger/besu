@@ -69,7 +69,7 @@ public class IbftGossip implements Gossiper {
     }
     final List<Address> excludeAddressesList =
         Lists.newArrayList(
-            message.getConnection().getPeer().getAddress(), decodedMessage.getAuthor());
+            message.getConnection().getPeerInfo().getAddress(), decodedMessage.getAuthor());
 
     multicaster.send(messageData, excludeAddressesList);
   }
