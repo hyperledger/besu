@@ -10,10 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.core;
+package tech.pegasys.pantheon.ethereum.eth.transactions;
+
+import tech.pegasys.pantheon.ethereum.core.Transaction;
 
 @FunctionalInterface
-public interface PendingTransactionDroppedListener {
+public interface PendingTransactionListener {
 
-  void onTransactionDropped(Transaction transaction);
+  void onTransactionAdded(Transaction transaction);
 }

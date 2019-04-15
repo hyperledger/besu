@@ -43,6 +43,7 @@ dependencies {
   compileOnly 'org.openjdk.jmh:jmh-generator-annprocess'
 
   testImplementation project(':config')
+  testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(':crypto')
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
@@ -55,4 +56,6 @@ dependencies {
   testImplementation 'org.mockito:mockito-core'
 
   jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+
+  integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
 }
