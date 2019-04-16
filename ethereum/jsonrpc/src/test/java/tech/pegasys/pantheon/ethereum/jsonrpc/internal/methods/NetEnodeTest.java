@@ -61,7 +61,7 @@ public class NetEnodeTest {
   @Test
   public void shouldReturnEnode() {
     when(p2PNetwork.isP2pEnabled()).thenReturn(true);
-    doReturn(enodeURL).when(p2PNetwork).getSelfEnodeURL();
+    doReturn(enodeURL).when(p2PNetwork).getLocalEnode();
 
     final JsonRpcRequest request = netEnodeRequest();
     final JsonRpcResponse expectedResponse =
@@ -84,11 +84,11 @@ public class NetEnodeTest {
   @Test
   public void shouldReturnErrorWhenP2PEnabledButNoEnodeFound() {
     when(p2PNetwork.isP2pEnabled()).thenReturn(true);
-    doReturn(Optional.empty()).when(p2PNetwork).getSelfEnodeURL();
+    doReturn(Optional.empty()).when(p2PNetwork).getLocalEnode();
 
     final JsonRpcRequest request = netEnodeRequest();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.ENODE_NOT_AVAILABLE);
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
 
     assertThat(method.response(request)).isEqualToComparingFieldByField(expectedResponse);
   }

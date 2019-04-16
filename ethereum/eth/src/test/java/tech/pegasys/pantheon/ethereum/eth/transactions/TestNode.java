@@ -138,7 +138,6 @@ public class TestNode implements Closeable {
             .metricsSystem(new NoOpMetricsSystem())
             .build();
     network = networkRunner.getNetwork();
-    this.port = network.getLocalPeerInfo().getPort();
     network.subscribeDisconnect(
         (connection, reason, initiatedByPeer) -> disconnections.put(connection, reason));
 
@@ -157,7 +156,7 @@ public class TestNode implements Closeable {
             metricsSystem,
             syncState);
     networkRunner.start();
-
+    this.port = network.getLocalEnode().get().getListeningPort();
     selfPeer = new DefaultPeer(id(), endpoint());
   }
 

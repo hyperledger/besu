@@ -145,6 +145,7 @@ public class NettyP2PNetwork implements P2PNetwork {
 
   private final PeerDiscoveryAgent peerDiscoveryAgent;
   private final PeerBlacklist peerBlacklist;
+  private final NetworkingConfiguration config;
   private OptionalLong peerBondedObserverId = OptionalLong.empty();
   private OptionalLong peerDroppedObserverId = OptionalLong.empty();
 
@@ -174,7 +175,7 @@ public class NettyP2PNetwork implements P2PNetwork {
 
   private final String advertisedHost;
 
-  private EnodeURL ourEnodeURL;
+  private volatile EnodeURL ourEnodeURL;
 
   private final Optional<NodePermissioningController> nodePermissioningController;
   private final Optional<Blockchain> blockchain;
@@ -229,6 +230,7 @@ public class NettyP2PNetwork implements P2PNetwork {
       final Optional<NodePermissioningController> nodePermissioningController,
       final Blockchain blockchain) {
 
+    this.config = config;
     maxPeers = config.getRlpx().getMaxPeers();
     connections = new PeerConnectionRegistry(metricsSystem);
     this.peerBlacklist = peerBlacklist;
@@ -631,7 +633,7 @@ public class NettyP2PNetwork implements P2PNetwork {
     return nodePermissioningController
         .map(
             c -> {
-              final EnodeURL localPeerEnodeURL = getSelfEnodeURL().orElse(buildSelfEnodeURL());
+              final EnodeURL localPeerEnodeURL = getLocalEnode().orElse(buildSelfEnodeURL());
               final EnodeURL remotePeerEnodeURL = peerConnection.getRemoteEnode();
               return c.isPermitted(localPeerEnodeURL, remotePeerEnodeURL);
             })
@@ -698,16 +700,6 @@ public class NettyP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public Optional<? extends Peer> getAdvertisedPeer() {
-    return peerDiscoveryAgent.getAdvertisedPeer();
-  }
-
-  @Override
-  public PeerInfo getLocalPeerInfo() {
-    return ourPeerInfo;
-  }
-
-  @Override
   public boolean isListening() {
     return peerDiscoveryAgent.isActive();
   }
@@ -718,7 +710,12 @@ public class NettyP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public Optional<EnodeURL> getSelfEnodeURL() {
+  public boolean isDiscoveryEnabled() {
+    return config.getDiscovery().isActive();
+  }
+
+  @Override
+  public Optional<EnodeURL> getLocalEnode() {
     return Optional.ofNullable(ourEnodeURL);
   }
 

@@ -164,6 +164,14 @@ public class EnodeURL {
     return discoveryPort;
   }
 
+  /**
+   * @return Returns the discovery port if explicitly specified, otherwise returns the listening
+   *     port.
+   */
+  public int getEffectiveDiscoveryPort() {
+    return discoveryPort.orElse(listeningPort);
+  }
+
   public boolean sameEndpoint(final EnodeURL enode) {
     return Objects.equal(nodeId, enode.nodeId)
         && Objects.equal(ip, enode.ip)

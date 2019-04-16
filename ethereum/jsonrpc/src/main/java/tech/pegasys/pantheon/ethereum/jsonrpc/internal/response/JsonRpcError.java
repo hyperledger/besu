@@ -28,7 +28,7 @@ public enum JsonRpcError {
 
   // P2P related errors
   P2P_DISABLED(-32000, "P2P has been disabled. This functionality is not available"),
-  ENODE_NOT_AVAILABLE(-32000, "Enode URL not available"),
+  P2P_NETWORK_NOT_RUNNING(-32000, "P2P network is not running"),
 
   // Filter & Subscription Errors
   FILTER_NOT_FOUND(-32000, "Filter not found"),

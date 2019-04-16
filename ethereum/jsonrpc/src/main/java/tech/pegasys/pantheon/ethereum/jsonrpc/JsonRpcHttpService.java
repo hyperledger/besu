@@ -455,7 +455,7 @@ public class JsonRpcHttpService {
         LOG.debug(e);
         return errorResponse(id, JsonRpcError.INVALID_PARAMS);
       } catch (final RuntimeException e) {
-        LOG.debug(e);
+        LOG.error("Error processing JSON-RPC request", e);
         return errorResponse(id, JsonRpcError.INTERNAL_ERROR);
       }
     } else {
