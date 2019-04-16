@@ -244,20 +244,20 @@ public class SynchronizerConfiguration {
     @CommandLine.Option(
         names = "--Xsynchronizer-downloader-change-target-threshold-by-height",
         hidden = true,
-        defaultValue = "20",
+        defaultValue = "200",
         paramLabel = "<LONG>",
         description =
             "Minimum height difference before switching fast sync download peers (default: ${DEFAULT-VALUE})")
-    private long downloaderChangeTargetThresholdByHeight = 20L;
+    private long downloaderChangeTargetThresholdByHeight = 200L;
 
     @CommandLine.Option(
         names = "--Xsynchronizer-downloader-change-target-threshold-by-td",
         hidden = true,
-        defaultValue = "1000000000",
+        defaultValue = "1000000000000000000",
         paramLabel = "<UINT256>",
         description =
             "Minimum total difficulty difference before switching fast sync download peers (default: ${DEFAULT-VALUE})")
-    private UInt256 downloaderChangeTargetThresholdByTd = UInt256.of(1_000_000_000L);
+    private UInt256 downloaderChangeTargetThresholdByTd = UInt256.of(1_000_000_000_000_000_000L);
 
     @CommandLine.Option(
         names = "--Xsynchronizer-downloader-header-request-size",
