@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.ethereum.p2p.api;
 
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
-import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.Closeable;
@@ -92,15 +91,6 @@ public interface P2PNetwork extends Closeable {
   /** Blocks until the P2P network layer has stopped. */
   void awaitStop();
 
-  Optional<? extends Peer> getAdvertisedPeer();
-
-  /**
-   * Returns {@link PeerInfo} object for this node
-   *
-   * @return the PeerInfo for this node.
-   */
-  PeerInfo getLocalPeerInfo();
-
   /**
    * Checks if the node is listening for network connections
    *
@@ -115,11 +105,14 @@ public interface P2PNetwork extends Closeable {
    */
   boolean isP2pEnabled();
 
+  /** @return Return true if peer discovery is enabled. */
+  boolean isDiscoveryEnabled();
+
   /**
    * Returns the EnodeURL used to identify this peer in the network.
    *
    * @return the enodeURL associated with this node if P2P has been enabled. Returns empty
    *     otherwise.
    */
-  Optional<EnodeURL> getSelfEnodeURL();
+  Optional<EnodeURL> getLocalEnode();
 }

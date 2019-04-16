@@ -141,10 +141,12 @@ public final class NettyP2PNetworkTest {
                 Optional.empty(),
                 Optional.empty())) {
 
-      final int listenPort = listener.getLocalPeerInfo().getPort();
       listener.start();
       connector.start();
-      final BytesValue listenId = listenKp.getPublicKey().getEncodedBytes();
+      final EnodeURL listenerEnode = listener.getLocalEnode().get();
+      final BytesValue listenId = listenerEnode.getNodeId();
+      final int listenPort = listenerEnode.getListeningPort();
+
       assertThat(
               connector
                   .connect(
@@ -194,10 +196,13 @@ public final class NettyP2PNetworkTest {
                 new NoOpMetricsSystem(),
                 Optional.empty(),
                 Optional.empty())) {
-      final int listenPort = listener.getLocalPeerInfo().getPort();
+
       listener.start();
       connector.start();
-      final BytesValue listenId = listenKp.getPublicKey().getEncodedBytes();
+      final EnodeURL listenerEnode = listener.getLocalEnode().get();
+      final BytesValue listenId = listenerEnode.getNodeId();
+      final int listenPort = listenerEnode.getListeningPort();
+
       assertThat(
               connector
                   .connect(
@@ -277,11 +282,13 @@ public final class NettyP2PNetworkTest {
                 Optional.empty(),
                 Optional.empty())) {
 
-      final int listenPort = listener.getLocalPeerInfo().getPort();
       // Setup listener and first connection
       listener.start();
       connector1.start();
-      final BytesValue listenId = listenKp.getPublicKey().getEncodedBytes();
+      final EnodeURL listenerEnode = listener.getLocalEnode().get();
+      final BytesValue listenId = listenerEnode.getNodeId();
+      final int listenPort = listenerEnode.getListeningPort();
+
       final Peer listeningPeer =
           new DefaultPeer(
               listenId,
@@ -355,10 +362,12 @@ public final class NettyP2PNetworkTest {
                 new NoOpMetricsSystem(),
                 Optional.empty(),
                 Optional.empty())) {
-      final int listenPort = listener.getLocalPeerInfo().getPort();
+
       listener.start();
       connector.start();
-      final BytesValue listenId = listenKp.getPublicKey().getEncodedBytes();
+      final EnodeURL listenerEnode = listener.getLocalEnode().get();
+      final BytesValue listenId = listenerEnode.getNodeId();
+      final int listenPort = listenerEnode.getListeningPort();
 
       final Peer listenerPeer =
           new DefaultPeer(
@@ -377,8 +386,6 @@ public final class NettyP2PNetworkTest {
     final DiscoveryConfiguration noDiscovery = DiscoveryConfiguration.create().setActive(false);
     final SECP256K1.KeyPair localKp = SECP256K1.KeyPair.generate();
     final SECP256K1.KeyPair remoteKp = SECP256K1.KeyPair.generate();
-    final BytesValue localId = localKp.getPublicKey().getEncodedBytes();
-    final BytesValue remoteId = remoteKp.getPublicKey().getEncodedBytes();
     final PeerBlacklist localBlacklist = new PeerBlacklist();
     final PeerBlacklist remoteBlacklist = new PeerBlacklist();
 
@@ -410,23 +417,33 @@ public final class NettyP2PNetworkTest {
                 new NoOpMetricsSystem(),
                 Optional.empty(),
                 Optional.empty())) {
-      final int localListenPort = localNetwork.getLocalPeerInfo().getPort();
-      final int remoteListenPort = remoteNetwork.getLocalPeerInfo().getPort();
+
+      localNetwork.start();
+      remoteNetwork.start();
+
+      final EnodeURL localEnode = localNetwork.getLocalEnode().get();
+      final BytesValue localId = localEnode.getNodeId();
+      final int localPort = localEnode.getListeningPort();
+
+      final EnodeURL remoteEnode = remoteNetwork.getLocalEnode().get();
+      final BytesValue remoteId = remoteEnode.getNodeId();
+      final int remotePort = remoteEnode.getListeningPort();
+
       final Peer localPeer =
           new DefaultPeer(
               localId,
               new Endpoint(
                   InetAddress.getLoopbackAddress().getHostAddress(),
-                  localListenPort,
-                  OptionalInt.of(localListenPort)));
+                  localPort,
+                  OptionalInt.of(localPort)));
 
       final Peer remotePeer =
           new DefaultPeer(
               remoteId,
               new Endpoint(
                   InetAddress.getLoopbackAddress().getHostAddress(),
-                  remoteListenPort,
-                  OptionalInt.of(remoteListenPort)));
+                  remotePort,
+                  OptionalInt.of(remotePort)));
 
       // Blacklist the remote peer
       localBlacklist.add(remotePeer);
@@ -460,7 +477,6 @@ public final class NettyP2PNetworkTest {
     final DiscoveryConfiguration noDiscovery = DiscoveryConfiguration.create().setActive(false);
     final SECP256K1.KeyPair localKp = SECP256K1.KeyPair.generate();
     final SECP256K1.KeyPair remoteKp = SECP256K1.KeyPair.generate();
-    final BytesValue localId = localKp.getPublicKey().getEncodedBytes();
     final PeerBlacklist localBlacklist = new PeerBlacklist();
     final PeerBlacklist remoteBlacklist = new PeerBlacklist();
     final LocalPermissioningConfiguration config = LocalPermissioningConfiguration.createDefault();
@@ -505,17 +521,21 @@ public final class NettyP2PNetworkTest {
                 new NoOpMetricsSystem(),
                 Optional.empty(),
                 Optional.empty())) {
-      final int localListenPort = localNetwork.getLocalPeerInfo().getPort();
+
+      localNetwork.start();
+      remoteNetwork.start();
+
+      final EnodeURL localEnode = localNetwork.getLocalEnode().get();
+      final BytesValue localId = localEnode.getNodeId();
+      final int localPort = localEnode.getListeningPort();
+
       final Peer localPeer =
           new DefaultPeer(
               localId,
               new Endpoint(
                   InetAddress.getLoopbackAddress().getHostAddress(),
-                  localListenPort,
-                  OptionalInt.of(localListenPort)));
-
-      localNetwork.start();
-      remoteNetwork.start();
+                  localPort,
+                  OptionalInt.of(localPort)));
 
       // Setup disconnect listener
       final CompletableFuture<PeerConnection> peerFuture = new CompletableFuture<>();
@@ -802,7 +822,7 @@ public final class NettyP2PNetworkTest {
   public void beforeStartingNetworkEnodeURLShouldNotBePresent() {
     final NettyP2PNetwork nettyP2PNetwork = mockNettyP2PNetwork();
 
-    assertThat(nettyP2PNetwork.getSelfEnodeURL()).isNotPresent();
+    assertThat(nettyP2PNetwork.getLocalEnode()).isNotPresent();
   }
 
   @Test
@@ -810,7 +830,7 @@ public final class NettyP2PNetworkTest {
     final NettyP2PNetwork nettyP2PNetwork = mockNettyP2PNetwork();
     nettyP2PNetwork.start();
 
-    assertThat(nettyP2PNetwork.getSelfEnodeURL()).isPresent();
+    assertThat(nettyP2PNetwork.getLocalEnode()).isPresent();
   }
 
   @Test

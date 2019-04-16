@@ -16,9 +16,9 @@ import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcHttpService;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketService;
 import tech.pegasys.pantheon.ethereum.p2p.NetworkRunner;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsService;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -143,18 +144,19 @@ public class Runner implements AutoCloseable {
 
   private void writePantheonPortsToFile() {
     final Properties properties = new Properties();
-
+    final P2PNetwork network = networkRunner.getNetwork();
     if (networkRunner.getNetwork().isP2pEnabled()) {
       networkRunner
           .getNetwork()
-          .getAdvertisedPeer()
+          .getLocalEnode()
           .ifPresent(
-              advertisedPeer -> {
-                final Endpoint endpoint = advertisedPeer.getEndpoint();
-                properties.setProperty("discovery", String.valueOf(endpoint.getUdpPort()));
+              enode -> {
+                if (network.isDiscoveryEnabled()) {
+                  properties.setProperty(
+                      "discovery", String.valueOf(enode.getEffectiveDiscoveryPort()));
+                }
+                properties.setProperty("p2p", String.valueOf(enode.getListeningPort()));
               });
-      final int tcpPort = networkRunner.getNetwork().getLocalPeerInfo().getPort();
-      properties.setProperty("p2p", String.valueOf(tcpPort));
     }
 
     if (getJsonRpcPort().isPresent()) {
@@ -195,7 +197,8 @@ public class Runner implements AutoCloseable {
     }
   }
 
-  public Optional<? extends Peer> getAdvertisedPeer() {
-    return networkRunner.getNetwork().getAdvertisedPeer();
+  @VisibleForTesting
+  Optional<EnodeURL> getLocalEnode() {
+    return networkRunner.getNetwork().getLocalEnode();
   }
 }

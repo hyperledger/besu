@@ -40,7 +40,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
@@ -48,11 +47,11 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
 import tech.pegasys.pantheon.testutil.TestClock;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URI;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
@@ -193,12 +192,12 @@ public final class RunnerTest {
               noOpMetricsSystem,
               TestClock.fixed(),
               PendingTransactions.MAX_PENDING_TRANSACTIONS);
-      final Peer advertisedPeer = runnerAhead.getAdvertisedPeer().get();
+      final EnodeURL enode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
               EthNetworkConfig.jsonConfig(DEV),
               DEV_NETWORK_ID,
-              Collections.singletonList(URI.create(advertisedPeer.getEnodeURLString())));
+              Collections.singletonList(enode.toURI()));
       runnerBehind =
           runnerBuilder
               .pantheonController(controllerBehind)

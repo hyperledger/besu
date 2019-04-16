@@ -275,4 +275,34 @@ public class EnodeURLTest {
 
     assertThat(createdURI).isEqualTo(expectedURI);
   }
+
+  @Test
+  public void getEffectiveDiscoveryPort_withMatchingDiscoveryAndListeningPorts() {
+    final EnodeURL enode =
+        EnodeURL.builder()
+            .nodeId(VALID_NODE_ID)
+            .ipAddress(IPV4_ADDRESS)
+            .listeningPort(P2P_PORT)
+            .discoveryPort(OptionalInt.of(P2P_PORT))
+            .build();
+    assertThat(enode.getListeningPort()).isEqualTo(P2P_PORT);
+    // A discovery port matching the listening port should not be explicitly specified
+    assertThat(enode.getDiscoveryPort()).isEmpty();
+    assertThat(enode.getEffectiveDiscoveryPort()).isEqualTo(P2P_PORT);
+  }
+
+  @Test
+  public void getEffectiveDiscoveryPort_withDistinctDiscoveryAndListeningPorts() {
+    final EnodeURL enode =
+        EnodeURL.builder()
+            .nodeId(VALID_NODE_ID)
+            .ipAddress(IPV4_ADDRESS)
+            .listeningPort(P2P_PORT)
+            .discoveryPort(OptionalInt.of(DISCOVERY_PORT))
+            .build();
+    assertThat(enode.getListeningPort()).isEqualTo(P2P_PORT);
+    // A discovery port matching the listening port should not be explicitly specified
+    assertThat(enode.getDiscoveryPort()).isEqualTo(OptionalInt.of(DISCOVERY_PORT));
+    assertThat(enode.getEffectiveDiscoveryPort()).isEqualTo(DISCOVERY_PORT);
+  }
 }

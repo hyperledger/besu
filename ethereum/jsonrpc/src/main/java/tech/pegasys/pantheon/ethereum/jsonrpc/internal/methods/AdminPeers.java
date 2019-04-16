@@ -24,11 +24,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class AdminPeers implements JsonRpcMethod {
-  private static final Logger LOG = LogManager.getLogger();
   private final P2PNetwork peerDiscoveryAgent;
 
   public AdminPeers(final P2PNetwork peerDiscoveryAgent) {
@@ -50,9 +46,6 @@ public class AdminPeers implements JsonRpcMethod {
       return result;
     } catch (P2pDisabledException e) {
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
-    } catch (final Exception e) {
-      LOG.error("Error processing request: " + req, e);
-      throw e;
     }
   }
 }

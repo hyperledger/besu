@@ -27,10 +27,10 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryServiceExceptio
 import tech.pegasys.pantheon.ethereum.p2p.netty.NettyP2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.IOException;
 import java.util.Optional;
-import java.util.OptionalInt;
 
 import io.vertx.core.Vertx;
 import org.assertj.core.api.Assertions;
@@ -61,15 +61,13 @@ public class NetworkingServiceLifecycleTest {
             Optional.empty(),
             Optional.empty())) {
       service.start();
-      final int udpPort = service.getAdvertisedPeer().get().getEndpoint().getUdpPort();
-      final OptionalInt tcpPort = service.getAdvertisedPeer().get().getEndpoint().getTcpPort();
+      final EnodeURL enode = service.getLocalEnode().get();
+      final int udpPort = enode.getEffectiveDiscoveryPort();
+      final int tcpPort = enode.getListeningPort();
 
-      assertEquals(
-          config.getDiscovery().getAdvertisedHost(),
-          service.getAdvertisedPeer().get().getEndpoint().getHost());
+      assertEquals(config.getDiscovery().getAdvertisedHost(), enode.getIp());
       assertThat(udpPort).isNotZero();
-      assertThat(tcpPort).isPresent();
-      assertThat(tcpPort.getAsInt()).isNotZero();
+      assertThat(tcpPort).isNotZero();
       assertThat(service.getDiscoveryPeers()).hasSize(0);
     }
   }
@@ -213,9 +211,7 @@ public class NetworkingServiceLifecycleTest {
             Optional.empty())) {
       service1.start();
       final NetworkingConfiguration config = configWithRandomPorts();
-      config
-          .getDiscovery()
-          .setBindPort(service1.getAdvertisedPeer().get().getEndpoint().getUdpPort());
+      config.getDiscovery().setBindPort(service1.getLocalEnode().get().getEffectiveDiscoveryPort());
       try (final NettyP2PNetwork service2 =
           new NettyP2PNetwork(
               vertx,
