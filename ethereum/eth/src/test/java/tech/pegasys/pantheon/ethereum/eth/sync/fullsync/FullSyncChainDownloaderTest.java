@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
+import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator.BlockOptions;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
@@ -426,16 +427,10 @@ public class FullSyncChainDownloaderTest {
     assertThat(syncState.syncTarget().get().peer()).isEqualTo(bestPeer.getEthPeer());
 
     // Update otherPeer so that its a better target and send some responses to push logic forward
-    bestPeer
-        .getEthPeer()
-        .chainState()
-        .updateForAnnouncedBlock(
-            gen.header(1000), localBlockchain.getChainHead().getTotalDifficulty().plus(201));
-    otherPeer
-        .getEthPeer()
-        .chainState()
-        .updateForAnnouncedBlock(
-            gen.header(1000), localBlockchain.getChainHead().getTotalDifficulty().plus(300));
+    final BlockHeader newBestBlock =
+        gen.header(1000, new BlockOptions().setDifficulty(UInt256.ZERO));
+    bestPeer.getEthPeer().chainState().updateForAnnouncedBlock(newBestBlock, localTd.plus(201));
+    otherPeer.getEthPeer().chainState().updateForAnnouncedBlock(newBestBlock, localTd.plus(300));
 
     // Process through first task cycle
     final CompletableFuture<?> firstTask = downloader.getCurrentTask();
