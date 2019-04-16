@@ -48,7 +48,6 @@ import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
@@ -632,11 +631,8 @@ public class NettyP2PNetwork implements P2PNetwork {
     return nodePermissioningController
         .map(
             c -> {
-              final EnodeURL localPeerEnodeURL =
-                  peerInfoToEnodeURL(ourPeerInfo, peerConnection.getLocalAddress());
-              final EnodeURL remotePeerEnodeURL =
-                  peerInfoToEnodeURL(
-                      peerConnection.getPeerInfo(), peerConnection.getRemoteAddress());
+              final EnodeURL localPeerEnodeURL = getSelfEnodeURL().orElse(buildSelfEnodeURL());
+              final EnodeURL remotePeerEnodeURL = peerConnection.getRemoteEnode();
               return c.isPermitted(localPeerEnodeURL, remotePeerEnodeURL);
             })
         .orElse(true);
@@ -650,17 +646,6 @@ public class NettyP2PNetwork implements P2PNetwork {
     return nodePermissioningController
         .map(c -> c.isPermitted(ourEnodeURL, peer.getEnodeURL()))
         .orElse(true);
-  }
-
-  private EnodeURL peerInfoToEnodeURL(final PeerInfo ourPeerInfo, final InetSocketAddress address) {
-    final BytesValue localNodeId = ourPeerInfo.getNodeId();
-    final InetAddress localHostAddress = address.getAddress();
-    final int localPort = ourPeerInfo.getPort();
-    return EnodeURL.builder()
-        .nodeId(localNodeId)
-        .ipAddress(localHostAddress)
-        .listeningPort(localPort)
-        .build();
   }
 
   @VisibleForTesting
