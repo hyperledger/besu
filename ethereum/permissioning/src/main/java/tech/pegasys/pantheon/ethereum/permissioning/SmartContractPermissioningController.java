@@ -48,13 +48,12 @@ public class SmartContractPermissioningController implements NodePermissioningPr
   }
 
   // True from a contract is 1 filled to 32 bytes
-  private static final BytesValue TRUE_RESPONSE;
-
-  static {
-    final byte[] trueValue = new byte[32];
-    trueValue[31] = (byte) (0xFF & 1L);
-    TRUE_RESPONSE = BytesValue.wrap(trueValue);
-  }
+  private static final BytesValue TRUE_RESPONSE =
+      BytesValue.fromHexString(
+          "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+  private static final BytesValue FALSE_RESPONSE =
+      BytesValue.fromHexString(
+          "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
   /**
    * Creates a permissioning controller attached to a blockchain
@@ -96,7 +95,7 @@ public class SmartContractPermissioningController implements NodePermissioningPr
     }
 
     // 0 is false
-    if (result.isZero()) {
+    if (result.compareTo(FALSE_RESPONSE) == 0) {
       return false;
       // 1 filled to 32 bytes is true
     } else if (result.compareTo(TRUE_RESPONSE) == 0) {

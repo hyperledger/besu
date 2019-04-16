@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static tech.pegasys.pantheon.ethereum.permissioning.SmartContractPermissioningController.checkTransactionResult;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.permissioning.SmartContractPermissioningController;
@@ -52,6 +51,32 @@ public class SmartContractPermissioningNodeIsAllowedTransaction implements Trans
       return checkTransactionResult(BytesValue.fromHexString(value));
     } catch (final IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  // Checks the returned bytes from the permissioning contract call to see if it's a value we
+  // understand
+  static Boolean checkTransactionResult(final BytesValue result) {
+    // booleans are padded to 32 bytes
+    if (result.size() != 32) {
+      throw new IllegalArgumentException("Unexpected result size");
+    }
+
+    // 0 is false
+    if (result.compareTo(
+            BytesValue.fromHexString(
+                "0x0000000000000000000000000000000000000000000000000000000000000000"))
+        == 0) {
+      return false;
+      // 1 filled to 32 bytes is true
+    } else if (result.compareTo(
+            BytesValue.fromHexString(
+                "0x0000000000000000000000000000000000000000000000000000000000000001"))
+        == 0) {
+      return true;
+      // Anything else is wrong
+    } else {
+      throw new IllegalStateException("Unexpected result form");
     }
   }
 
