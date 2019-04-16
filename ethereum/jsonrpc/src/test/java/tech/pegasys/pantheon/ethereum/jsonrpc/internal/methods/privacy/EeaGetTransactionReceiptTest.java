@@ -155,7 +155,7 @@ public class EeaGetTransactionReceiptTest {
 
     final EeaGetTransactionReceipt eeaGetTransactionReceipt =
         new EeaGetTransactionReceipt(blockchainQueries, enclave, parameters, privacyParameters);
-    final Object[] params = new Object[] {transaction.hash(), "EnclavePublicKey"};
+    final Object[] params = new Object[] {transaction.hash()};
     final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getTransactionReceipt", params);
 
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);

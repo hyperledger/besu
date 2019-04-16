@@ -24,9 +24,8 @@ public class Eea {
     this.transactions = transactions;
   }
 
-  public Condition expectSuccessfulTransactionReceipt(
-      final String transactionHash, final String publicKey) {
+  public Condition expectSuccessfulTransactionReceipt(final String transactionHash) {
     return new ExpectSuccessfulEeaGetTransactionReceipt(
-        transactions.getTransactionReceipt(transactionHash, publicKey));
+        transactions.getTransactionReceipt(transactionHash));
   }
 }

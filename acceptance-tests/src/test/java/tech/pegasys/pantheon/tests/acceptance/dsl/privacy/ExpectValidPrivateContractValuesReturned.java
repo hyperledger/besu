@@ -33,10 +33,9 @@ public class ExpectValidPrivateContractValuesReturned extends GetValidPrivateTra
     this.returnValue = returnValue;
   }
 
-  public void verify(
-      final PantheonNode node, final String transactionHash, final String publicKey) {
+  public void verify(final PantheonNode node, final String transactionHash) {
     ResponseTypes.PrivateTransactionReceipt privateTxReceipt =
-        getPrivateTransactionReceipt(node, transactionHash, publicKey);
+        getPrivateTransactionReceipt(node, transactionHash);
 
     BytesValue output = BytesValue.fromHexString(privateTxReceipt.getOutput());
     assertEquals(new BigInteger(returnValue), Numeric.decodeQuantity(output.toString()));

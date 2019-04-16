@@ -2648,19 +2648,17 @@ are not available.
 
 `data` - 32-byte hash of a transaction.
 
-`data` - Orion node public key
-
 **Returns**
 
 `Object` - [Private Transaction receipt object](JSON-RPC-API-Objects.md#private-transaction-receipt-object), or `null` if no receipt found.
 
 !!! example 
     ```bash tab="curl HTTP request"
-    curl -X POST --data '{"jsonrpc":"2.0","method":"eea_getTransactionReceipt","params":["0xf3ab9693ad92e277bf785e1772f29fb1864904bbbe87b0470455ddb082caab9d", "g59BmTeJIn7HIcnq8VQWgyh/pDbvbt2eyP0Ii60aDDw="],"id":1}' http://127.0.0.1:8545
+    curl -X POST --data '{"jsonrpc":"2.0","method":"eea_getTransactionReceipt","params":["0xf3ab9693ad92e277bf785e1772f29fb1864904bbbe87b0470455ddb082caab9d"],"id":1}' http://127.0.0.1:8545
     ```
             
     ```bash tab="wscat WS request"
-    {"jsonrpc":"2.0","method":"eea_getTransactionReceipt","params":["0xf3ab9693ad92e277bf785e1772f29fb1864904bbbe87b0470455ddb082caab9d", "g59BmTeJIn7HIcnq8VQWgyh/pDbvbt2eyP0Ii60aDDw="],"id":1}
+    {"jsonrpc":"2.0","method":"eea_getTransactionReceipt","params":["0xf3ab9693ad92e277bf785e1772f29fb1864904bbbe87b0470455ddb082caab9d"],"id":1}
     ```
             
     ```json tab="JSON result"

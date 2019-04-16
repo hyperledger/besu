@@ -77,7 +77,6 @@ public class EeaGetTransactionReceipt implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequest request) {
     LOG.trace("Executing eea_getTransactionReceipt");
     final Hash transactionHash = parameters.required(request.getParams(), 0, Hash.class);
-    final String publicKey = parameters.required(request.getParams(), 1, String.class);
     final Optional<TransactionLocation> maybeLocation =
         blockchain.getBlockchain().getTransactionLocation(transactionHash);
     if (!maybeLocation.isPresent()) {
@@ -91,6 +90,7 @@ public class EeaGetTransactionReceipt implements JsonRpcMethod {
     final Hash blockhash = location.getBlockHash();
     final long blockNumber = blockchain.getBlockchain().getBlockHeader(blockhash).get().getNumber();
 
+    final String publicKey = privacyParameters.getEnclavePublicKey();
     PrivateTransaction privateTransaction;
     String privacyGroupId;
     try {

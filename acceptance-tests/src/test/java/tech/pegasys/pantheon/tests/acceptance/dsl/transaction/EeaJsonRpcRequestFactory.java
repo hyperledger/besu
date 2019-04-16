@@ -38,10 +38,10 @@ public class EeaJsonRpcRequestFactory {
   }
 
   public Request<?, PrivateTransactionReceiptResponse> eeaGetTransactionReceipt(
-      final String txHash, final String publicKey) {
+      final String txHash) {
     return new Request<>(
         "eea_getTransactionReceipt",
-        Lists.newArrayList(txHash, publicKey),
+        Lists.newArrayList(txHash),
         web3jService,
         PrivateTransactionReceiptResponse.class);
   }
