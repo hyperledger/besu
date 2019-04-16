@@ -146,7 +146,7 @@ public class PrivacyClusterAcceptanceTest extends PrivateAcceptanceTestBase {
 
     privateTransactionVerifier
         .validPrivateContractDeployed(CONTRACT_ADDRESS.toString())
-        .verify(node2, transactionHash, PUBLIC_KEY_2);
+        .verify(node2, transactionHash);
   }
 
   @Test
@@ -156,13 +156,11 @@ public class PrivacyClusterAcceptanceTest extends PrivateAcceptanceTestBase {
 
     privateTransactionVerifier
         .validPrivateContractDeployed(CONTRACT_ADDRESS.toString())
-        .verify(node2, transactionHash, PUBLIC_KEY_2);
+        .verify(node2, transactionHash);
 
     transactionHash = node2.execute(transactions.createPrivateRawTransaction(storeValueFromNode2));
 
-    privateTransactionVerifier
-        .validEventReturned("1000")
-        .verify(node1, transactionHash, PUBLIC_KEY_1);
+    privateTransactionVerifier.validEventReturned("1000").verify(node1, transactionHash);
   }
 
   @Test
@@ -172,23 +170,17 @@ public class PrivacyClusterAcceptanceTest extends PrivateAcceptanceTestBase {
 
     privateTransactionVerifier
         .validPrivateContractDeployed(CONTRACT_ADDRESS.toString())
-        .verify(node2, transactionHash, PUBLIC_KEY_2);
+        .verify(node2, transactionHash);
 
     transactionHash = node2.execute(transactions.createPrivateRawTransaction(storeValueFromNode2));
 
-    privateTransactionVerifier
-        .validEventReturned("1000")
-        .verify(node1, transactionHash, PUBLIC_KEY_1);
+    privateTransactionVerifier.validEventReturned("1000").verify(node1, transactionHash);
 
     transactionHash = node2.execute(transactions.createPrivateRawTransaction(getValueFromNode2));
 
-    privateTransactionVerifier
-        .validOutputReturned("1000")
-        .verify(node2, transactionHash, PUBLIC_KEY_2);
+    privateTransactionVerifier.validOutputReturned("1000").verify(node2, transactionHash);
 
-    privateTransactionVerifier
-        .validOutputReturned("1000")
-        .verify(node1, transactionHash, PUBLIC_KEY_1);
+    privateTransactionVerifier.validOutputReturned("1000").verify(node1, transactionHash);
   }
 
   @Test
@@ -196,9 +188,7 @@ public class PrivacyClusterAcceptanceTest extends PrivateAcceptanceTestBase {
     final String transactionHash =
         node1.execute(transactions.deployPrivateSmartContract(deployContractFromNode1));
 
-    privateTransactionVerifier
-        .noPrivateContractDeployed()
-        .verify(node3, transactionHash, PUBLIC_KEY_3);
+    privateTransactionVerifier.noPrivateContractDeployed().verify(node3, transactionHash);
   }
 
   @Test
@@ -208,7 +198,7 @@ public class PrivacyClusterAcceptanceTest extends PrivateAcceptanceTestBase {
     final String transactionHash =
         node3.execute(transactions.createPrivateRawTransaction(getValueFromNode3));
 
-    privateTransactionVerifier.noValidOutputReturned().verify(node3, transactionHash, PUBLIC_KEY_3);
+    privateTransactionVerifier.noValidOutputReturned().verify(node3, transactionHash);
   }
 
   @Test(expected = RuntimeException.class)

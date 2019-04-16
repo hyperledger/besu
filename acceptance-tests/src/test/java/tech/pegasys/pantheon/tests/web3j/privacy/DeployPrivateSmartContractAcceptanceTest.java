@@ -91,7 +91,7 @@ public class DeployPrivateSmartContractAcceptanceTest extends PrivateAcceptanceT
 
     privateTransactionVerifier
         .validPrivateContractDeployed(CONTRACT_ADDRESS.toString())
-        .verify(minerNode, transactionHash, PUBLIC_KEY);
+        .verify(minerNode, transactionHash);
   }
 
   @Test
@@ -101,9 +101,7 @@ public class DeployPrivateSmartContractAcceptanceTest extends PrivateAcceptanceT
     final String transactionHash =
         minerNode.execute(transactions.createPrivateRawTransaction(storeValue));
 
-    privateTransactionVerifier
-        .validEventReturned("1000")
-        .verify(minerNode, transactionHash, PUBLIC_KEY);
+    privateTransactionVerifier.validEventReturned("1000").verify(minerNode, transactionHash);
   }
 
   @Test
@@ -116,9 +114,7 @@ public class DeployPrivateSmartContractAcceptanceTest extends PrivateAcceptanceT
     final String transactionHash =
         minerNode.execute(transactions.createPrivateRawTransaction(getValue));
 
-    privateTransactionVerifier
-        .validOutputReturned("1000")
-        .verify(minerNode, transactionHash, PUBLIC_KEY);
+    privateTransactionVerifier.validOutputReturned("1000").verify(minerNode, transactionHash);
   }
 
   @After

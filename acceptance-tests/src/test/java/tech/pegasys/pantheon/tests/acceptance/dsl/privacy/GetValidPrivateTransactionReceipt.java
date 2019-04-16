@@ -30,11 +30,11 @@ public abstract class GetValidPrivateTransactionReceipt {
   }
 
   ResponseTypes.PrivateTransactionReceipt getPrivateTransactionReceipt(
-      final PantheonNode node, final String transactionHash, final String publicKey) {
+      final PantheonNode node, final String transactionHash) {
 
-    waitFor(() -> node.verify(eea.expectSuccessfulTransactionReceipt(transactionHash, publicKey)));
+    waitFor(() -> node.verify(eea.expectSuccessfulTransactionReceipt(transactionHash)));
     ResponseTypes.PrivateTransactionReceipt privateTxReceipt =
-        node.execute(transactions.getPrivateTransactionReceipt(transactionHash, publicKey));
+        node.execute(transactions.getPrivateTransactionReceipt(transactionHash));
     return privateTxReceipt;
   }
 }

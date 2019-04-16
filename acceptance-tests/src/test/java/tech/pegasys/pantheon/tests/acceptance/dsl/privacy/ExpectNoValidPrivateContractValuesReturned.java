@@ -26,10 +26,9 @@ public class ExpectNoValidPrivateContractValuesReturned extends GetValidPrivateT
     super(eea, transactions);
   }
 
-  public void verify(
-      final PantheonNode node, final String transactionHash, final String publicKey) {
+  public void verify(final PantheonNode node, final String transactionHash) {
     ResponseTypes.PrivateTransactionReceipt privateTxReceipt =
-        getPrivateTransactionReceipt(node, transactionHash, publicKey);
+        getPrivateTransactionReceipt(node, transactionHash);
 
     assertEquals("0x", privateTxReceipt.getOutput());
   }

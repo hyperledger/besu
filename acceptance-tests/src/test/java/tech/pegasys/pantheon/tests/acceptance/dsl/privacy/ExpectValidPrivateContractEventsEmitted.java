@@ -32,10 +32,9 @@ public class ExpectValidPrivateContractEventsEmitted extends GetValidPrivateTran
     this.eventValue = eventValue;
   }
 
-  public void verify(
-      final PantheonNode node, final String transactionHash, final String publicKey) {
+  public void verify(final PantheonNode node, final String transactionHash) {
     ResponseTypes.PrivateTransactionReceipt privateTxReceipt =
-        getPrivateTransactionReceipt(node, transactionHash, publicKey);
+        getPrivateTransactionReceipt(node, transactionHash);
 
     String event = privateTxReceipt.getLogs().get(0).getData().substring(66, 130);
     assertEquals(

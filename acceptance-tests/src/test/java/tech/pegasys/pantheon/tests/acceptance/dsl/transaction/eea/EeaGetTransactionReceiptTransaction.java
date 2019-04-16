@@ -24,18 +24,16 @@ import java.io.IOException;
 public class EeaGetTransactionReceiptTransaction implements Transaction<PrivateTransactionReceipt> {
 
   private final String txHash;
-  private final String publicKey;
 
-  public EeaGetTransactionReceiptTransaction(final String txHash, final String publicKey) {
+  public EeaGetTransactionReceiptTransaction(final String txHash) {
     this.txHash = txHash;
-    this.publicKey = publicKey;
   }
 
   @Override
   public PrivateTransactionReceipt execute(final JsonRequestFactories node) {
     try {
       final PrivateTransactionReceiptResponse result =
-          node.eea().eeaGetTransactionReceipt(txHash, publicKey).send();
+          node.eea().eeaGetTransactionReceipt(txHash).send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
       return result.getResult();
