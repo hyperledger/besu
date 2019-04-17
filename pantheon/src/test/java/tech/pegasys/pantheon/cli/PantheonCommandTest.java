@@ -59,7 +59,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -307,7 +306,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     verify(mockSyncConfBuilder).syncMode(eq(SyncMode.FAST));
     verify(mockSyncConfBuilder).fastSyncMinimumPeerCount(eq(13));
-    verify(mockSyncConfBuilder).fastSyncMaximumPeerWaitTime(eq(Duration.ofSeconds(57)));
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -614,7 +612,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     verify(mockSyncConfBuilder).syncMode(eq(SyncMode.FULL));
     verify(mockSyncConfBuilder).fastSyncMinimumPeerCount(eq(5));
-    verify(mockSyncConfBuilder).fastSyncMaximumPeerWaitTime(eq(Duration.ofSeconds(0)));
 
     assertThat(commandErrorOutput.toString()).isEmpty();
 
@@ -1064,27 +1061,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void parsesValidFastSyncTimeoutOption() {
-
-    parseCommand("--sync-mode", "FAST", "--fast-sync-max-wait-time", "17");
-    verify(mockSyncConfBuilder).syncMode(eq(SyncMode.FAST));
-    verify(mockSyncConfBuilder).fastSyncMaximumPeerWaitTime(eq(Duration.ofSeconds(17)));
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void parsesInvalidFastSyncTimeoutOptionShouldFail() {
-    parseCommand("--sync-mode", "FAST", "--fast-sync-max-wait-time", "-1");
-
-    verifyZeroInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
-        .contains("--fast-sync-max-wait-time must be greater than or equal to 0");
-  }
-
-  @Test
   public void parsesValidFastSyncMinPeersOption() {
 
     parseCommand("--sync-mode", "FAST", "--fast-sync-min-peers", "11");
@@ -1268,10 +1244,9 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   @Test
   public void fastSyncOptionsRequiresFastSyncModeToBeSet() {
-    parseCommand("--fast-sync-min-peers", "5", "--fast-sync-max-wait-time", "30");
+    parseCommand("--fast-sync-min-peers", "5");
 
-    verifyOptionsConstraintLoggerCall(
-        "--sync-mode", "--fast-sync-min-peers", "--fast-sync-max-wait-time");
+    verifyOptionsConstraintLoggerCall("--sync-mode", "--fast-sync-min-peers");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();

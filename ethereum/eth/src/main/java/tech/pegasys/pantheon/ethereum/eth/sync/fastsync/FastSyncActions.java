@@ -20,7 +20,6 @@ import static tech.pegasys.pantheon.util.FutureUtils.exceptionallyCompose;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
-import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.WaitForPeersTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.ChainDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
@@ -70,40 +69,10 @@ public class FastSyncActions<C> {
         WaitForPeersTask.create(
             ethContext, syncConfig.getFastSyncMinimumPeerCount(), metricsSystem);
 
-    final EthScheduler scheduler = ethContext.getScheduler();
-    final CompletableFuture<Void> fastSyncTask;
-    if (!syncConfig.getFastSyncMaximumPeerWaitTime().isZero()) {
-      LOG.debug(
-          "Waiting for at least {} peers, maximum wait time set to {}.",
-          syncConfig.getFastSyncMinimumPeerCount(),
-          syncConfig.getFastSyncMaximumPeerWaitTime().toString());
-      fastSyncTask =
-          scheduler.timeout(waitForPeersTask, syncConfig.getFastSyncMaximumPeerWaitTime());
-    } else {
-      LOG.debug(
-          "Waiting for at least {} peers, no maximum wait time set.",
-          syncConfig.getFastSyncMinimumPeerCount());
-      fastSyncTask = scheduler.scheduleServiceTask(waitForPeersTask);
-    }
-    return exceptionallyCompose(
-            fastSyncTask,
-            error -> {
-              if (ExceptionUtils.rootCause(error) instanceof TimeoutException) {
-                if (ethContext.getEthPeers().availablePeerCount() > 0) {
-                  LOG.warn(
-                      "Fast sync timed out before minimum peer count was reached. Continuing with reduced peers.");
-                  return completedFuture(null);
-                } else {
-                  LOG.warn(
-                      "Maximum wait time for fast sync reached but no peers available. Continuing to wait for any available peer.");
-                  return waitForAnyPeer();
-                }
-              } else if (error != null) {
-                LOG.error("Failed to find peers for fast sync", error);
-                return completedExceptionally(error);
-              }
-              return null;
-            })
+    LOG.debug("Waiting for at least {} peers.", syncConfig.getFastSyncMinimumPeerCount());
+    return ethContext
+        .getScheduler()
+        .scheduleServiceTask(waitForPeersTask)
         .thenApply(successfulWaitResult -> fastSyncState);
   }
 
