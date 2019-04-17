@@ -131,8 +131,8 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.pantheonController(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.discovery(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.ethNetworkConfig(any())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.discoveryHost(anyString())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.discoveryPort(anyInt())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.p2pAdvertisedHost(anyString())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.p2pListenPort(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.maxPeers(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.jsonRpcConfiguration(any())).thenReturn(mockRunnerBuilder);
