@@ -248,6 +248,10 @@ public class PendingTransactions {
     transactionDroppedListeners.forEach(listener -> listener.onTransactionDropped(transaction));
   }
 
+  public long maxSize() {
+    return maxPendingTransactions;
+  }
+
   public int size() {
     synchronized (pendingTransactions) {
       return pendingTransactions.size();
@@ -298,7 +302,7 @@ public class PendingTransactions {
     private final Instant addedToPoolAt;
     private final long sequence; // Allows prioritization based on order transactions are added
 
-    private TransactionInfo(
+    TransactionInfo(
         final Transaction transaction,
         final boolean receivedFromLocalSource,
         final Instant addedToPoolAt) {
