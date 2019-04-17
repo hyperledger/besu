@@ -1,0 +1,64 @@
+{
+  "config": {
+    "chainId": 2018,
+    "homesteadBlock": 0,
+    "daoForkBlock": 0,
+    "eip150Block": 0,
+    "eip155Block": 0,
+    "eip158Block": 0,
+    "byzantiumBlock": 0,
+    "constantinopleBlock": 0,
+    "constantinopleFixBlock": 0,
+    "ethash": {
+      "fixeddifficulty": 100
+    }
+  },
+  "nonce": "0x42",
+  "timestamp": "0x0",
+  "extraData": "0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa",
+  "gasLimit": "0x1000000",
+  "difficulty": "0x10000",
+  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "coinbase": "0x0000000000000000000000000000000000000000",
+  "alloc": {
+    "0x0000000000000000000000000000000000001234": {
+      "comment": "Smart permissioning contract",
+      "balance": "0",
+      "code": "aaaa",
+      "storage": {
+        // ipv4 values
+        // ipv4 1 enode high
+        "0xc4c3a3f99b26e5e534b71d6f33ca6ea5c174decfb16dd7237c60eff9774ef4a4": "0x937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0",
+        // ipv4 1 enode low
+        "0xc4c3a3f99b26e5e534b71d6f33ca6ea5c174decfb16dd7237c60eff9774ef4a3": "0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012",
+        // ipv4 1 port and ip together
+        "0xc4c3a3f99b26e5e534b71d6f33ca6ea5c174decfb16dd7237c60eff9774ef4a5": "0x765f00000000000000000000ffffc0a80001",
+
+        // ipv4 2 enode high
+        "0x329603b541cc3f56680450f275b934abc018b0bdbf0f839d3f00aca66d67b743": "0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012",
+        // ipv4 2 enode low
+        "0x329603b541cc3f56680450f275b934abc018b0bdbf0f839d3f00aca66d67b744": "0x937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0",
+        // ipv4 2 port and ip together
+        "0x329603b541cc3f56680450f275b934abc018b0bdbf0f839d3f00aca66d67b745": "0x766000000000000000000000ffffc0a80001",
+
+        // ipv6 values
+        // ipv6 1 enode high
+        "0x1ab0d5b7c4004723d5020bf461a01709cbabee4aaf0b414f92d903f5779b33d9": "0x1234000000000000000000000000000000000000000000000000000000000000",
+        // ipv6 1 enode low
+        "0x1ab0d5b7c4004723d5020bf461a01709cbabee4aaf0b414f92d903f5779b33da": "0xab61",
+        // ipv6 1 port followed by ip
+        "0x1ab0d5b7c4004723d5020bf461a01709cbabee4aaf0b414f92d903f5779b33db": "0x765f00010002000300040005000600070008",
+
+        // ipv6 2 enode high
+        "0x12b025583b6b680e25edb31eb9fd6afae6c4b2c1d8c4c3beb1066be39601abc5": "0x1234000000000000000000000000000000000000000000000000000000000000",
+        // ipv6 2 enode low
+        "0x12b025583b6b680e25edb31eb9fd6afae6c4b2c1d8c4c3beb1066be39601abc6": "0x000000000000000000000000000000000000000000000000000000000000ab62",
+        // ipv6 2 port followed by ip
+        "0x12b025583b6b680e25edb31eb9fd6afae6c4b2c1d8c4c3beb1066be39601abc7": "0x0000000000000000000000000000766000010002000300040005000600070008"
+      }
+    }
+  },
+  "number": "0x0",
+  "gasUsed": "0x0",
+  "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+}

@@ -126,4 +126,32 @@ public class TransactionSimulator {
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }
+
+  public Optional<Boolean> doesAddressExist(final Address address, final Hash blockHeaderHash) {
+    final BlockHeader header = blockchain.getBlockHeader(blockHeaderHash).orElse(null);
+    return doesAddressExist(address, header);
+  }
+
+  public Optional<Boolean> doesAddressExist(final Address address, final long blockNumber) {
+    final BlockHeader header = blockchain.getBlockHeader(blockNumber).orElse(null);
+    return doesAddressExist(address, header);
+  }
+
+  public Optional<Boolean> doesAddressExistAtHead(final Address address) {
+    return doesAddressExist(address, blockchain.getChainHeadHeader());
+  }
+
+  public Optional<Boolean> doesAddressExist(final Address address, final BlockHeader header) {
+    if (header == null) {
+      return Optional.empty();
+    }
+
+    final MutableWorldState worldState =
+        worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
+    if (worldState == null) {
+      return Optional.empty();
+    }
+
+    return Optional.of(worldState.get(address) != null);
+  }
 }

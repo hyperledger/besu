@@ -80,8 +80,26 @@ public class SmartContractPermissioningController implements NodePermissioningPr
     final CallParameter callParams =
         new CallParameter(null, contractAddress, -1, null, null, payload);
 
+    final Optional<Boolean> contractExists =
+        transactionSimulator.doesAddressExistAtHead(contractAddress);
+
+    if (contractExists.isPresent() && !contractExists.get()) {
+      throw new IllegalStateException("Permissioning contract does not exist");
+    }
+
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.processAtHead(callParams);
+
+    if (result.isPresent()) {
+      switch (result.get().getResult().getStatus()) {
+        case INVALID:
+          throw new IllegalStateException("Permissioning transaction found to be Invalid");
+        case FAILED:
+          throw new IllegalStateException("Permissioning transaction failed when processing");
+        default:
+          break;
+      }
+    }
 
     return result.map(r -> checkTransactionResult(r.getOutput())).orElse(false);
   }

@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.permissioning;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
@@ -148,5 +149,41 @@ public class SmartContractPermissioningControllerTest {
                 EnodeURL.fromString(
                     "enode://1234000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ab63@[1:2:3:4:5:6:7:8]:30304")))
         .isFalse();
+  }
+
+  @Test
+  public void testPermissioningContractMissing() throws IOException {
+    final SmartContractPermissioningController controller =
+        setupController(
+            "SmartContractPermissioningControllerTest/noSmartPermissioning.json",
+            "0x0000000000000000000000000000000000001234");
+
+    assertThatThrownBy(
+            () ->
+                controller.isPermitted(
+                    EnodeURL.fromString(
+                        "enode://1234000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ab61@[1:2:3:4:5:6:7:8]:30303"),
+                    EnodeURL.fromString(
+                        "enode://1234000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ab63@[1:2:3:4:5:6:7:8]:30304")))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Permissioning contract does not exist");
+  }
+
+  @Test
+  public void testPermissioningContractCorrupt() throws IOException {
+    final SmartContractPermissioningController controller =
+        setupController(
+            "SmartContractPermissioningControllerTest/corruptSmartPermissioning.json",
+            "0x0000000000000000000000000000000000001234");
+
+    assertThatThrownBy(
+            () ->
+                controller.isPermitted(
+                    EnodeURL.fromString(
+                        "enode://1234000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ab61@[1:2:3:4:5:6:7:8]:30303"),
+                    EnodeURL.fromString(
+                        "enode://1234000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ab63@[1:2:3:4:5:6:7:8]:30304")))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Permissioning transaction failed when processing");
   }
 }
