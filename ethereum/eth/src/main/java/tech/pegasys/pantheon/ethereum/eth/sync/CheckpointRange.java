@@ -17,24 +17,38 @@ import static java.lang.Math.toIntExact;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import com.google.common.base.MoreObjects;
 
 public class CheckpointRange {
   private final BlockHeader start;
-  private final BlockHeader end;
+  private final Optional<BlockHeader> end;
+
+  public CheckpointRange(final BlockHeader start) {
+    this.start = start;
+    this.end = Optional.empty();
+  }
 
   public CheckpointRange(final BlockHeader start, final BlockHeader end) {
     this.start = start;
-    this.end = end;
+    this.end = Optional.of(end);
   }
 
   public BlockHeader getStart() {
     return start;
   }
 
+  public boolean hasEnd() {
+    return end.isPresent();
+  }
+
   public BlockHeader getEnd() {
-    return end;
+    return end.get();
+  }
+
+  public int getSegmentLengthExclusive() {
+    return toIntExact(end.get().getNumber() - start.getNumber() - 1);
   }
 
   @Override
@@ -56,13 +70,6 @@ public class CheckpointRange {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("start", start.getNumber())
-        .add("end", end.getNumber())
-        .toString();
-  }
-
-  public int getSegmentLength() {
-    return toIntExact(end.getNumber() - start.getNumber());
+    return MoreObjects.toStringHelper(this).add("start", start).add("end", end).toString();
   }
 }

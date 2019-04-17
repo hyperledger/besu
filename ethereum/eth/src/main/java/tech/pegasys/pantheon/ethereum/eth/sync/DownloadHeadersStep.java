@@ -12,9 +12,14 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync;
 
+import static java.util.Collections.emptyList;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
+import tech.pegasys.pantheon.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.DownloadHeaderSequenceTask;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
@@ -25,13 +30,17 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class DownloadHeadersStep<C>
     implements Function<CheckpointRange, CompletableFuture<CheckpointRangeHeaders>> {
-
+  private static final Logger LOG = LogManager.getLogger();
   private final ProtocolSchedule<C> protocolSchedule;
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
   private final ValidationPolicy validationPolicy;
+  private final int headerRequestSize;
   private final MetricsSystem metricsSystem;
 
   public DownloadHeadersStep(
@@ -39,11 +48,13 @@ public class DownloadHeadersStep<C>
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final ValidationPolicy validationPolicy,
+      final int headerRequestSize,
       final MetricsSystem metricsSystem) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.validationPolicy = validationPolicy;
+    this.headerRequestSize = headerRequestSize;
     this.metricsSystem = metricsSystem;
   }
 
@@ -58,22 +69,50 @@ public class DownloadHeadersStep<C>
 
   private CompletableFuture<List<BlockHeader>> downloadHeaders(
       final CheckpointRange checkpointRange) {
-    return DownloadHeaderSequenceTask.endingAtHeader(
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            checkpointRange.getEnd(),
-            // -1 because we don't want to request the range starting header
-            checkpointRange.getSegmentLength() - 1,
-            validationPolicy,
-            metricsSystem)
-        .run();
+    if (checkpointRange.hasEnd()) {
+      LOG.debug(
+          "Downloading headers for range {} to {}",
+          checkpointRange.getStart().getNumber(),
+          checkpointRange.getEnd().getNumber());
+      if (checkpointRange.getSegmentLengthExclusive() == 0) {
+        // There are no extra headers to download.
+        return completedFuture(emptyList());
+      }
+      return DownloadHeaderSequenceTask.endingAtHeader(
+              protocolSchedule,
+              protocolContext,
+              ethContext,
+              checkpointRange.getEnd(),
+              checkpointRange.getSegmentLengthExclusive(),
+              validationPolicy,
+              metricsSystem)
+          .run();
+    } else {
+      LOG.debug("Downloading headers starting from {}", checkpointRange.getStart().getNumber());
+      return GetHeadersFromPeerByHashTask.startingAtHash(
+              protocolSchedule,
+              ethContext,
+              checkpointRange.getStart().getHash(),
+              checkpointRange.getStart().getNumber(),
+              headerRequestSize,
+              metricsSystem)
+          .run()
+          .thenApply(PeerTaskResult::getResult);
+    }
   }
 
   private CheckpointRangeHeaders processHeaders(
       final CheckpointRange checkpointRange, final List<BlockHeader> headers) {
-    final List<BlockHeader> headersToImport = new ArrayList<>(headers);
-    headersToImport.add(checkpointRange.getEnd());
-    return new CheckpointRangeHeaders(checkpointRange, headersToImport);
+    if (checkpointRange.hasEnd()) {
+      final List<BlockHeader> headersToImport = new ArrayList<>(headers);
+      headersToImport.add(checkpointRange.getEnd());
+      return new CheckpointRangeHeaders(checkpointRange, headersToImport);
+    } else {
+      List<BlockHeader> headersToImport = headers;
+      if (!headers.isEmpty() && headers.get(0).equals(checkpointRange.getStart())) {
+        headersToImport = headers.subList(1, headers.size());
+      }
+      return new CheckpointRangeHeaders(checkpointRange, headersToImport);
+    }
   }
 }

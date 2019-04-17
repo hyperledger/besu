@@ -174,12 +174,14 @@ public class CheckpointRangeSourceTest {
 
     assertThat(source.next()).isEqualTo(new CheckpointRange(commonAncestor, header(15)));
     verify(checkpointFetcher).getNextCheckpointHeaders(peer, commonAncestor);
+    verify(checkpointFetcher).nextCheckpointEndsAtChainHead(peer, commonAncestor);
 
     assertThat(source.next()).isEqualTo(new CheckpointRange(header(15), header(20)));
     verifyNoMoreInteractions(checkpointFetcher);
 
     assertThat(source.next()).isEqualTo(new CheckpointRange(header(20), header(25)));
     verify(checkpointFetcher).getNextCheckpointHeaders(peer, header(20));
+    verify(checkpointFetcher).nextCheckpointEndsAtChainHead(peer, header(20));
 
     assertThat(source.next()).isEqualTo(new CheckpointRange(header(25), header(30)));
     verifyNoMoreInteractions(checkpointFetcher);
@@ -209,6 +211,7 @@ public class CheckpointRangeSourceTest {
 
     assertThat(source.next()).isNull();
     verify(checkpointFetcher).getNextCheckpointHeaders(peer, commonAncestor);
+    verify(checkpointFetcher).nextCheckpointEndsAtChainHead(peer, commonAncestor);
 
     assertThat(source.next()).isNull();
     verifyNoMoreInteractions(checkpointFetcher);
@@ -239,6 +242,20 @@ public class CheckpointRangeSourceTest {
     // Then retries
     assertThat(source.next()).isEqualTo(new CheckpointRange(commonAncestor, header(15)));
     verify(checkpointFetcher, times(2)).getNextCheckpointHeaders(peer, commonAncestor);
+  }
+
+  @Test
+  public void shouldReturnUnboundedCheckpointRangeWhenNextCheckpointEndsAtChainHead() {
+    when(syncTargetChecker.shouldContinueDownloadingFromSyncTarget(peer, commonAncestor))
+        .thenReturn(true);
+    when(checkpointFetcher.nextCheckpointEndsAtChainHead(peer, commonAncestor)).thenReturn(true);
+
+    assertThat(source).hasNext();
+    assertThat(source.next()).isEqualTo(new CheckpointRange(commonAncestor));
+
+    // Once we've sent an open-ended range we shouldn't have any more ranges.
+    assertThat(source).isExhausted();
+    assertThat(source.next()).isNull();
   }
 
   private BlockHeader header(final int number) {
