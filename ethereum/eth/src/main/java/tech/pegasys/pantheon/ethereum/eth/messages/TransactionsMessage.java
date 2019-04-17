@@ -47,7 +47,7 @@ public class TransactionsMessage extends AbstractMessageData {
     return new TransactionsMessage(tmp.encoded());
   }
 
-  private TransactionsMessage(final BytesValue data) {
+  TransactionsMessage(final BytesValue data) {
     super(data);
   }
 

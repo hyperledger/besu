@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.stream.Collectors.toSet;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
@@ -31,6 +32,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.IntStream;
 
 public class BlockDataGenerator {
   private final Random random;
@@ -241,6 +244,18 @@ public class BlockDataGenerator {
     return new BlockBody(options.getTransactions(defaultTxs), ommers);
   }
 
+  public Transaction transaction(final BytesValue payload) {
+    return Transaction.builder()
+        .nonce(positiveLong())
+        .gasPrice(Wei.wrap(bytes32()))
+        .gasLimit(positiveLong())
+        .to(address())
+        .value(Wei.wrap(bytes32()))
+        .payload(payload)
+        .chainId(1)
+        .signAndBuild(SECP256K1.KeyPair.generate());
+  }
+
   public Transaction transaction() {
     return Transaction.builder()
         .nonce(positiveLong())
@@ -251,6 +266,34 @@ public class BlockDataGenerator {
         .payload(bytes32())
         .chainId(1)
         .signAndBuild(SECP256K1.KeyPair.generate());
+  }
+
+  public Set<Transaction> transactions(final int n) {
+    Wei gasPrice = Wei.wrap(bytes32());
+    long gasLimit = positiveLong();
+    Address to = address();
+    Wei value = Wei.wrap(bytes32());
+    int chainId = 1;
+    Bytes32 payload = bytes32();
+    SECP256K1.Signature signature = SECP256K1.sign(payload, SECP256K1.KeyPair.generate());
+
+    final Set<Transaction> txs =
+        IntStream.range(0, n)
+            .parallel()
+            .mapToObj(
+                v ->
+                    new Transaction(
+                        v,
+                        gasPrice,
+                        gasLimit,
+                        Optional.of(to),
+                        value,
+                        signature,
+                        payload,
+                        to,
+                        chainId))
+            .collect(toSet());
+    return txs;
   }
 
   public TransactionReceipt receipt(final long cumulativeGasUsed) {
