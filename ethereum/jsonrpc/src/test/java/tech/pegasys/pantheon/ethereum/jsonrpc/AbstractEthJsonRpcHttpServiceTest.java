@@ -38,6 +38,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterRepository;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
@@ -49,6 +50,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 
 import java.net.URL;
 import java.nio.file.Paths;
@@ -170,6 +172,7 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
     supportedCapabilities.add(EthProtocol.ETH62);
     supportedCapabilities.add(EthProtocol.ETH63);
 
+    final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -188,8 +191,11 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
                 Optional.empty(),
                 Optional.empty(),
                 JSON_RPC_APIS,
-                privacyParameters);
-    final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
+                privacyParameters,
+                config,
+                mock(WebSocketConfiguration.class),
+                mock(MetricsConfiguration.class));
+
     config.setPort(0);
     service =
         new JsonRpcHttpService(

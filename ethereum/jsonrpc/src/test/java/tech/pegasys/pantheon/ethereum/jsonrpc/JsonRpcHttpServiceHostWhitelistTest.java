@@ -25,12 +25,14 @@ import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -102,7 +104,10 @@ public class JsonRpcHttpServiceHostWhitelistTest {
                     Optional.of(mock(AccountWhitelistController.class)),
                     Optional.of(mock(NodeLocalConfigPermissioningController.class)),
                     JSON_RPC_APIS,
-                    mock(PrivacyParameters.class)));
+                    mock(PrivacyParameters.class),
+                    mock(JsonRpcConfiguration.class),
+                    mock(WebSocketConfiguration.class),
+                    mock(MetricsConfiguration.class)));
     service = createJsonRpcHttpService();
     service.start().join();
 
