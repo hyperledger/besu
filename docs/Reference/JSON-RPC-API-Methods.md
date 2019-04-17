@@ -728,17 +728,17 @@ Returns the value of a storage position at a specified address.
 
 ### eth_getTransactionCount
 
-Returns the number of transactions sent from a specified address.
+Returns the number of transactions sent from a specified address. Use the `pending` tag to get the account nonce.
 
 **Parameters**
 
-`DATA` - 20-byte account address.
+`data` - 20-byte account address.
 
-`QUANTITY|TAG` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter).
+`quantity|tag` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter).
 
 **Returns**
 
-`result` : *QUANTITY* - Integer representing the number of transactions sent from the specified address.
+`result` : *quantity* - Integer representing the number of transactions sent from the specified address.
 
 !!! example
     ```bash tab="curl HTTP request"
