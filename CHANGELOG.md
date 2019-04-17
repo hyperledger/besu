@@ -1,5 +1,39 @@
 # Changelog
 
+## 1.1 RC 
+
+### Additions and Improvements 
+
+- Better errors for when permissioning contract is set up wrong [\#1296](https://github.com/PegaSysEng/pantheon/pull/1296) 
+- Consolidate p2p node info methods [\#1288](https://github.com/PegaSysEng/pantheon/pull/1288) 
+- Update permissioning smart contract interface to match updated EEA proposal [\#1287](https://github.com/PegaSysEng/pantheon/pull/1287) 
+- Switch to new sync target if it exceeds the td threshold [\#1286](https://github.com/PegaSysEng/pantheon/pull/1286) 
+- Fix running ATs with in-process node runner [\#1285](https://github.com/PegaSysEng/pantheon/pull/1285) 
+- Simplify enode construction [\#1283](https://github.com/PegaSysEng/pantheon/pull/1283) 
+- Cleanup PeerConnection interface [\#1282](https://github.com/PegaSysEng/pantheon/pull/1282) 
+- Undo changes to PendingTransactions method visibility [\#1281](https://github.com/PegaSysEng/pantheon/pull/1281) 
+- Use default enclave public key to generate eea_getTransactionReceipt [\#1280](https://github.com/PegaSysEng/pantheon/pull/1280) (thanks to [Puneetha17](https://github.com/Puneetha17))
+- Rollback to rocksdb 5.15.10 [\#1279](https://github.com/PegaSysEng/pantheon/pull/1279) 
+- Log error when a JSON decode problem is encountered [\#1278](https://github.com/PegaSysEng/pantheon/pull/1278) 
+- Create EnodeURL builder [\#1275](https://github.com/PegaSysEng/pantheon/pull/1275) 
+- Keep enode nodeId stored as a BytesValue [\#1274](https://github.com/PegaSysEng/pantheon/pull/1274) 
+- Feature/move subclass in pantheon command [\#1272](https://github.com/PegaSysEng/pantheon/pull/1272) 
+- Expose sync mode option [\#1270](https://github.com/PegaSysEng/pantheon/pull/1270) 
+- Refactor RocksDBStats [\#1266](https://github.com/PegaSysEng/pantheon/pull/1266) 
+- Normalize EnodeURLs [\#1264](https://github.com/PegaSysEng/pantheon/pull/1264) 
+- Build broken in Java 12 [\#1263](https://github.com/PegaSysEng/pantheon/pull/1263) 
+- Make PeerDiscovertAgentTest less flakey [\#1262](https://github.com/PegaSysEng/pantheon/pull/1262) 
+- Ignore extra json rpc params [\#1261](https://github.com/PegaSysEng/pantheon/pull/1261) 
+- Fetch local transactions in isolation [\#1259](https://github.com/PegaSysEng/pantheon/pull/1259) 
+- Update to debug trace transaction [\#1258](https://github.com/PegaSysEng/pantheon/pull/1258) 
+- Use labelled timer to differentiate between rocks db metrics [\#1254](https://github.com/PegaSysEng/pantheon/pull/1254) (thanks to [Puneetha17](https://github.com/Puneetha17))
+- Migrate TransactionPool (& affiliated test) from 'core' to 'eth' [\#1251](https://github.com/PegaSysEng/pantheon/pull/1251) 
+- Use single instance of Rocksdb for privacy [\#1247](https://github.com/PegaSysEng/pantheon/pull/1247) (thanks to [Puneetha17](https://github.com/Puneetha17))
+- Subscribing to sync events should receive false when in sync [\#1240](https://github.com/PegaSysEng/pantheon/pull/1240) 
+- Ignore transactions from the network while behind chain head [\#1228](https://github.com/PegaSysEng/pantheon/pull/1228) 
+- RocksDB Statistics in Metrics [\#1169](https://github.com/PegaSysEng/pantheon/pull/1169) 
+- Add block trace RPC methods [\#1088](https://github.com/PegaSysEng/pantheon/pull/1088) (thanks to [kziemianek](https://github.com/kziemianek))
+
 ## 1.0.3
 
 ### Additions and Improvements 
