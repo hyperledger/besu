@@ -3,9 +3,6 @@ description: Private Transaction Processing
 
 # Processing Private Transactions
 
-!!!note
-    Privacy is under development and will be available in v1.1.
-
 Processing private transactions involves the following: 
 
 - **Precompiled Contract**: Smart contract compiled from the source language to EVM bytecode and stored by an 

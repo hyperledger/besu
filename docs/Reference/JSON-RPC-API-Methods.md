@@ -2586,10 +2586,6 @@ None
             
 ## EEA Methods
 
-!!!note
-    EEA methods are for [privacy](../Privacy/Privacy-Overview.md) features. Privacy features are under 
-    development and will be available in v1.1.  
-
 !!! note
     The `EEA` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
     or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `EEA` API methods.
