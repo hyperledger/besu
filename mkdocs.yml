@@ -88,6 +88,7 @@ nav:
     - Privacy:
         - Overview: Privacy/Privacy-Overview.md
         - Processing Private Transactions: Privacy/Private-Transaction-Processing.md
+        - Configuring a Privacy-Enabled Network: Privacy/Configuring-Privacy.md
     - Permissions:
         - Overview: Permissions/Permissioning-Overview.md
         - Local Permissions: Permissions/Local-Permissioning.md

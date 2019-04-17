@@ -3,9 +3,6 @@ description: Privacy
 
 # Privacy
 
-!!!note
-    Privacy is under development and will be available in v1.1.
-
 Privacy in Pantheon refers to the ability to keep transactions private between the involved parties. 
 Other parties cannot access the transaction content, sending party, or list of participating parties. 
 
