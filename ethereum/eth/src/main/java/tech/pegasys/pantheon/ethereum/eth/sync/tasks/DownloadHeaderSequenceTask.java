@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync.tasks;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Arrays.asList;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -82,6 +83,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
     this.validationPolicy = validationPolicy;
     this.metricsSystem = metricsSystem;
 
+    checkArgument(segmentLength > 0, "Segment length must not be 0");
     startingBlockNumber = referenceHeader.getNumber() - segmentLength;
     headers = new BlockHeader[segmentLength];
     lastFilledHeaderIndex = segmentLength;

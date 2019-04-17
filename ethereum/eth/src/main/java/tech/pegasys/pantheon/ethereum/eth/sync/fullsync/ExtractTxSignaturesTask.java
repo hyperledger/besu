@@ -10,24 +10,24 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.services.pipeline;
+package tech.pegasys.pantheon.ethereum.eth.sync.fullsync;
 
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
+
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-class FlatMapProcessor<I, O> implements Processor<I, O> {
-
-  private final Function<I, Stream<O>> mapper;
-
-  public FlatMapProcessor(final Function<I, Stream<O>> mapper) {
-    this.mapper = mapper;
-  }
+public class ExtractTxSignaturesTask implements Function<List<Block>, Stream<Block>> {
 
   @Override
-  public void processNextInput(final ReadPipe<I> inputPipe, final WritePipe<O> outputPipe) {
-    final I value = inputPipe.get();
-    if (value != null) {
-      mapper.apply(value).forEach(outputPipe::put);
-    }
+  public Stream<Block> apply(final List<Block> blocks) {
+    return blocks.stream().map(this::extractSignatures);
+  }
+
+  private Block extractSignatures(final Block block) {
+    block.getBody().getTransactions().forEach(Transaction::getSender);
+    return block;
   }
 }

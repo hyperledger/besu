@@ -17,12 +17,17 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.sync.ChainDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.CheckpointHeaderManager;
 import tech.pegasys.pantheon.ethereum.eth.sync.EthTaskChainDownloader;
+import tech.pegasys.pantheon.ethereum.eth.sync.PipelineChainDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class FullSyncChainDownloader {
+  private static final Logger LOG = LogManager.getLogger();
 
   private FullSyncChainDownloader() {}
 
@@ -33,12 +38,27 @@ public class FullSyncChainDownloader {
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem) {
+
+    final FullSyncTargetManager<C> syncTargetManager =
+        new FullSyncTargetManager<>(
+            config, protocolSchedule, protocolContext, ethContext, metricsSystem);
+
+    if (config.isPiplineDownloaderForFullSyncEnabled()) {
+      LOG.info("Using PipelineChainDownloader");
+      return new PipelineChainDownloader<>(
+          syncState,
+          syncTargetManager,
+          new FullSyncDownloadPipelineFactory<>(
+              config, protocolSchedule, protocolContext, ethContext, metricsSystem),
+          ethContext.getScheduler(),
+          metricsSystem);
+    }
+
     return new EthTaskChainDownloader<>(
         config,
         ethContext,
         syncState,
-        new FullSyncTargetManager<>(
-            config, protocolSchedule, protocolContext, ethContext, metricsSystem),
+        syncTargetManager,
         new CheckpointHeaderManager<>(
             config, protocolContext, ethContext, syncState, protocolSchedule, metricsSystem),
         new FullSyncBlockImportTaskFactory<>(

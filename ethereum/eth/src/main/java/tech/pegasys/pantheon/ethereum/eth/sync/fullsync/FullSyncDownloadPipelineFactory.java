@@ -10,12 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
-
-import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.DETACHED_ONLY;
-import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.LIGHT_DETACHED_ONLY;
-import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.LIGHT_SKIP_DETACHED;
-import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.SKIP_DETACHED;
+package tech.pegasys.pantheon.ethereum.eth.sync.fullsync;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -28,10 +23,10 @@ import tech.pegasys.pantheon.ethereum.eth.sync.DownloadBodiesStep;
 import tech.pegasys.pantheon.ethereum.eth.sync.DownloadHeadersStep;
 import tech.pegasys.pantheon.ethereum.eth.sync.DownloadPipelineFactory;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
+import tech.pegasys.pantheon.ethereum.eth.sync.ValidationPolicy;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
+import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.services.pipeline.Pipeline;
@@ -39,47 +34,29 @@ import tech.pegasys.pantheon.services.pipeline.PipelineBuilder;
 
 import java.util.Optional;
 
-public class FastSyncDownloadPipelineFactory<C> implements DownloadPipelineFactory {
+public class FullSyncDownloadPipelineFactory<C> implements DownloadPipelineFactory {
+
   private final SynchronizerConfiguration syncConfig;
   private final ProtocolSchedule<C> protocolSchedule;
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
-  private final BlockHeader pivotBlockHeader;
   private final MetricsSystem metricsSystem;
-  private final FastSyncValidationPolicy attachedValidationPolicy;
-  private final FastSyncValidationPolicy detachedValidationPolicy;
+  private final ValidationPolicy detachedValidationPolicy =
+      () -> HeaderValidationMode.DETACHED_ONLY;
+  private final BetterSyncTargetEvaluator betterSyncTargetEvaluator;
 
-  public FastSyncDownloadPipelineFactory(
+  public FullSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
-      final BlockHeader pivotBlockHeader,
       final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.pivotBlockHeader = pivotBlockHeader;
     this.metricsSystem = metricsSystem;
-    final LabelledMetric<Counter> fastSyncValidationCounter =
-        metricsSystem.createLabelledCounter(
-            MetricCategory.SYNCHRONIZER,
-            "fast_sync_validation_mode",
-            "Number of blocks validated using light vs full validation during fast sync",
-            "validationMode");
-    attachedValidationPolicy =
-        new FastSyncValidationPolicy(
-            this.syncConfig.fastSyncFullValidationRate(),
-            LIGHT_SKIP_DETACHED,
-            SKIP_DETACHED,
-            fastSyncValidationCounter);
-    detachedValidationPolicy =
-        new FastSyncValidationPolicy(
-            this.syncConfig.fastSyncFullValidationRate(),
-            LIGHT_DETACHED_ONLY,
-            DETACHED_ONLY,
-            fastSyncValidationCounter);
+    betterSyncTargetEvaluator = new BetterSyncTargetEvaluator(syncConfig, ethContext.getEthPeers());
   }
 
   @Override
@@ -90,11 +67,7 @@ public class FastSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
     final CheckpointRangeSource checkpointRangeSource =
         new CheckpointRangeSource(
             new CheckpointHeaderFetcher(
-                syncConfig,
-                protocolSchedule,
-                ethContext,
-                Optional.of(pivotBlockHeader),
-                metricsSystem),
+                syncConfig, protocolSchedule, ethContext, Optional.empty(), metricsSystem),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),
@@ -113,10 +86,9 @@ public class FastSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
             protocolSchedule, protocolContext, detachedValidationPolicy);
     final DownloadBodiesStep<C> downloadBodiesStep =
         new DownloadBodiesStep<>(protocolSchedule, ethContext, metricsSystem);
-    final DownloadReceiptsStep downloadReceiptsStep =
-        new DownloadReceiptsStep(ethContext, metricsSystem);
-    final FastImportBlocksStep<C> importBlockStep =
-        new FastImportBlocksStep<>(protocolSchedule, protocolContext, attachedValidationPolicy);
+    final ExtractTxSignaturesTask extractTxSignaturesTask = new ExtractTxSignaturesTask();
+    final FullImportBlockStep<C> importBlockStep =
+        new FullImportBlockStep<>(protocolSchedule, protocolContext);
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",
@@ -132,13 +104,16 @@ public class FastSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
         .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
         .inBatches(headerRequestSize)
         .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
-        .thenProcessAsyncOrdered("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
+        .thenFlatMap("extractTxSignatures", extractTxSignaturesTask, singleHeaderBufferSize)
         .andFinishWith("importBlock", importBlockStep);
   }
 
   private boolean shouldContinueDownloadingFromPeer(
       final EthPeer peer, final BlockHeader lastCheckpointHeader) {
+    final boolean caughtUpToPeer =
+        peer.chainState().getEstimatedHeight() <= lastCheckpointHeader.getNumber();
     return !peer.isDisconnected()
-        && lastCheckpointHeader.getNumber() < pivotBlockHeader.getNumber();
+        && !caughtUpToPeer
+        && !betterSyncTargetEvaluator.shouldSwitchSyncTarget(peer);
   }
 }
