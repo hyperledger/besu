@@ -38,7 +38,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
-import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -51,7 +50,6 @@ public class FastSyncActionsTest {
   private final SynchronizerConfiguration syncConfig =
       new SynchronizerConfiguration.Builder()
           .syncMode(SyncMode.FAST)
-          .fastSyncMaximumPeerWaitTime(Duration.ofMinutes(5))
           .fastSyncPivotDistance(1000)
           .build();
 
@@ -91,25 +89,6 @@ public class FastSyncActionsTest {
     }
     final CompletableFuture<FastSyncState> result =
         fastSyncActions.waitForSuitablePeers(EMPTY_SYNC_STATE);
-    assertThat(result).isCompletedWithValue(EMPTY_SYNC_STATE);
-  }
-
-  @Test
-  public void waitForPeersShouldReportSuccessWhenTimeLimitReachedAndAPeerIsAvailable() {
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
-    timeoutCount.set(Integer.MAX_VALUE);
-    assertThat(fastSyncActions.waitForSuitablePeers(EMPTY_SYNC_STATE))
-        .isCompletedWithValue(EMPTY_SYNC_STATE);
-  }
-
-  @Test
-  public void waitForPeersShouldContinueWaitingUntilAtLeastOnePeerIsAvailable() {
-    timeoutCount.set(1);
-    final CompletableFuture<FastSyncState> result =
-        fastSyncActions.waitForSuitablePeers(EMPTY_SYNC_STATE);
-    assertThat(result).isNotCompleted();
-
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
     assertThat(result).isCompletedWithValue(EMPTY_SYNC_STATE);
   }
 
