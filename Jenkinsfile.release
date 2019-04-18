@@ -12,7 +12,7 @@ pipeline {
         docker { image 'pegasyseng/pantheon-build:0.0.5-jdk8' }
     }
     parameters {
-        string(name: 'BRANCH_NAME', defaultValue: 'master', description: '[MANDATORY] The name of the branch to create the release from')
+        string(name: 'BRANCH_NAME', defaultValue: '1.1.0-RC', description: '[MANDATORY] The name of the branch to create the release from')
         string(name: 'RELEASE_VERSION', defaultValue: '', description: '[OPTIONAL] When empty: defaults to the current project version')
         string(name: 'NEXT_VERSION', defaultValue: '', description: '[OPTIONAL] When empty: defaults to next patch version after current project version')
     }
