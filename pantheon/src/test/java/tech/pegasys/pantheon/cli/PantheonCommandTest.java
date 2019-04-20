@@ -161,7 +161,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).homePath(isNotNull());
     verify(mockControllerBuilder).ethNetworkConfig(networkArg.capture());
     verify(mockControllerBuilder).miningParameters(miningArg.capture());
-    verify(mockControllerBuilder).devMode(eq(false));
     verify(mockControllerBuilder).nodePrivateKeyFile(isNotNull());
     verify(mockControllerBuilder).build();
 
@@ -605,7 +604,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).metricsConfiguration(eq(metricsConfiguration));
     verify(mockRunnerBuilder).build();
 
-    verify(mockControllerBuilder).devMode(eq(false));
     verify(mockControllerBuilder)
         .maxPendingTransactions(eq(PendingTransactions.MAX_PENDING_TRANSACTIONS));
     verify(mockControllerBuilder).build();
@@ -2002,7 +2000,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
-    verify(mockControllerBuilder).devMode(eq(true));
     verify(mockControllerBuilder).ethNetworkConfig(networkArg.capture());
     verify(mockControllerBuilder).build();
 

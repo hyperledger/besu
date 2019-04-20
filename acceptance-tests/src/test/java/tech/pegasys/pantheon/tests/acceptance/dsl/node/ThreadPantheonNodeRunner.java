@@ -72,7 +72,6 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
               .ethNetworkConfig(ethNetworkConfig)
               .miningParameters(node.getMiningParameters())
               .privacyParameters(node.getPrivacyParameters())
-              .devMode(node.isDevMode())
               .nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory()))
               .metricsSystem(noOpMetricsSystem)
               .maxPendingTransactions(PendingTransactions.MAX_PENDING_TRANSACTIONS)

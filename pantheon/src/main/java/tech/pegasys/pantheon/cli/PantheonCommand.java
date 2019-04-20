@@ -699,7 +699,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           .ethNetworkConfig(updateNetworkConfig(getNetwork()))
           .miningParameters(
               new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled))
-          .devMode(NetworkName.DEV.equals(getNetwork()))
           .maxPendingTransactions(txPoolMaxSize)
           .nodePrivateKeyFile(nodePrivateKeyFile())
           .metricsSystem(metricsSystem.get())

@@ -110,7 +110,6 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.homePath(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.ethNetworkConfig(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.miningParameters(any())).thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.devMode(anyBoolean())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxPendingTransactions(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.nodePrivateKeyFile(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.metricsSystem(any())).thenReturn(mockControllerBuilder);
