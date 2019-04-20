@@ -41,7 +41,6 @@ public class PantheonControllerBuilder {
   private Path homePath;
   private EthNetworkConfig ethNetworkConfig;
   private MiningParameters miningParameters;
-  private boolean devMode;
   private File nodePrivateKeyFile;
   private MetricsSystem metricsSystem;
   private PrivacyParameters privacyParameters;
@@ -77,11 +76,6 @@ public class PantheonControllerBuilder {
 
   public PantheonControllerBuilder miningParameters(final MiningParameters miningParameters) {
     this.miningParameters = miningParameters;
-    return this;
-  }
-
-  public PantheonControllerBuilder devMode(final boolean devMode) {
-    this.devMode = devMode;
     return this;
   }
 
@@ -124,13 +118,8 @@ public class PantheonControllerBuilder {
     final StorageProvider storageProvider =
         RocksDbStorageProvider.create(rocksDbConfiguration, metricsSystem);
 
-    final GenesisConfigFile genesisConfigFile;
-    if (devMode) {
-      genesisConfigFile = GenesisConfigFile.development();
-    } else {
-      final String genesisConfig = ethNetworkConfig.getGenesisConfig();
-      genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig);
-    }
+    final String genesisConfig = ethNetworkConfig.getGenesisConfig();
+    final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig);
     final Clock clock = Clock.systemUTC();
     return PantheonController.fromConfig(
         genesisConfigFile,
