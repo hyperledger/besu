@@ -48,6 +48,10 @@ public class FullSyncDownloader<C> {
     chainDownloader.start();
   }
 
+  public void stop() {
+    chainDownloader.cancel();
+  }
+
   public TrailingPeerRequirements calculateTrailingPeerRequirements() {
     return syncState.isInSync()
         ? TrailingPeerRequirements.UNRESTRICTED

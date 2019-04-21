@@ -95,10 +95,14 @@ public class Runner implements AutoCloseable {
 
   @Override
   public void close() throws Exception {
-    networkRunner.stop();
-    networkRunner.awaitStop();
-
     try {
+      if (networkRunner.getNetwork().isP2pEnabled()) {
+        pantheonController.getSynchronizer().stop();
+      }
+
+      networkRunner.stop();
+      networkRunner.awaitStop();
+
       jsonRpc.ifPresent(service -> waitForServiceToStop("jsonRpc", service.stop()));
       websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
       metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));

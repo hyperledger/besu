@@ -128,36 +128,6 @@ public class PipelineChainDownloaderTest {
     verify(syncTargetManager, times(2)).findSyncTarget(Optional.empty());
   }
 
-  @Test // Weird but currently required behaviour to shutdown cleanly
-  public void shouldStopWithoutCompletingFutureWhenTargetSelectionUnexpectedCancelled() {
-    final CompletableFuture<SyncTarget> selectTargetFuture = new CompletableFuture<>();
-    when(syncTargetManager.findSyncTarget(Optional.empty())).thenReturn(selectTargetFuture);
-    final CompletableFuture<Void> result = chainDownloader.start();
-
-    verify(syncTargetManager).findSyncTarget(Optional.empty());
-
-    selectTargetFuture.completeExceptionally(new CancellationException("Shutting down"));
-
-    verifyNoMoreInteractions(syncTargetManager);
-    assertThat(result).isNotDone();
-  }
-
-  @Test // Weird but currently required behaviour to shutdown cleanly
-  public void shouldStopWithoutCompletingFutureWhenPipelineUnexpectedlyCancelled() {
-    when(syncTargetManager.findSyncTarget(Optional.empty()))
-        .thenReturn(completedFuture(syncTarget));
-    final CompletableFuture<Void> pipelineFuture = expectPipelineStarted(syncTarget);
-
-    final CompletableFuture<Void> result = chainDownloader.start();
-
-    verify(syncTargetManager).findSyncTarget(Optional.empty());
-
-    pipelineFuture.completeExceptionally(new CancellationException("Shutting down"));
-
-    verifyNoMoreInteractions(syncTargetManager);
-    assertThat(result).isNotDone();
-  }
-
   @Test
   public void shouldBeCompleteWhenSyncTargetSelectionFailsAndSyncTargetManagerShouldNotContinue() {
     final CompletableFuture<SyncTarget> selectTargetFuture = new CompletableFuture<>();

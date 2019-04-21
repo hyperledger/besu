@@ -44,7 +44,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   private static final Logger LOG = LogManager.getLogger();
 
   private final SyncState syncState;
-  private final AtomicBoolean started = new AtomicBoolean(false);
+  private final AtomicBoolean running = new AtomicBoolean(false);
   private final Subscribers<SyncStatusListener> syncStatusListeners = new Subscribers<>();
   private final BlockPropagationManager<C> blockPropagationManager;
   private final Optional<FastSyncDownloader<C>> fastSyncDownloader;
@@ -104,7 +104,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
 
   @Override
   public void start() {
-    if (started.compareAndSet(false, true)) {
+    if (running.compareAndSet(false, true)) {
       syncState.addSyncStatusListener(this::syncStatusCallback);
       if (fastSyncDownloader.isPresent()) {
         fastSyncDownloader.get().start().whenComplete(this::handleFastSyncResult);
@@ -116,7 +116,20 @@ public class DefaultSynchronizer<C> implements Synchronizer {
     }
   }
 
+  @Override
+  public void stop() {
+    LOG.info("Stopping synchronizer");
+    if (running.compareAndSet(true, false)) {
+      fastSyncDownloader.ifPresent(FastSyncDownloader::stop);
+      fullSyncDownloader.stop();
+    }
+  }
+
   private void handleFastSyncResult(final FastSyncState result, final Throwable error) {
+    if (!running.get()) {
+      // We've been shutdown which will have triggered the fast sync future to complete
+      return;
+    }
     final Throwable rootCause = ExceptionUtils.rootCause(error);
     if (rootCause instanceof FastSyncException) {
       LOG.error(
@@ -142,7 +155,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
 
   @Override
   public Optional<SyncStatus> getSyncStatus() {
-    if (!started.get()) {
+    if (!running.get()) {
       return Optional.empty();
     }
     if (syncState.syncStatus().getCurrentBlock() == syncState.syncStatus().getHighestBlock()) {
