@@ -24,15 +24,30 @@ import com.google.common.collect.ImmutableMap;
 
 public class NetServices implements JsonRpcMethod {
 
-  private final ImmutableMap<String, ImmutableMap<String, String>> services;
+  private final JsonRpcConfiguration jsonRpcConfiguration;
+  private final WebSocketConfiguration webSocketConfiguration;
+  private final P2PNetwork p2pNetwork;
+  private final MetricsConfiguration metricsConfiguration;
 
   public NetServices(
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final P2PNetwork p2pNetwork,
       final MetricsConfiguration metricsConfiguration) {
+    this.jsonRpcConfiguration = jsonRpcConfiguration;
+    this.webSocketConfiguration = webSocketConfiguration;
+    this.p2pNetwork = p2pNetwork;
+    this.metricsConfiguration = metricsConfiguration;
+  }
 
-    ImmutableMap.Builder<String, ImmutableMap<String, String>> servicesMapBuilder =
+  @Override
+  public String getName() {
+    return "net_services";
+  }
+
+  @Override
+  public JsonRpcResponse response(final JsonRpcRequest req) {
+    final ImmutableMap.Builder<String, ImmutableMap<String, String>> servicesMapBuilder =
         ImmutableMap.builder();
 
     if (jsonRpcConfiguration.isEnabled()) {
@@ -47,15 +62,12 @@ public class NetServices implements JsonRpcMethod {
               webSocketConfiguration.getHost(), webSocketConfiguration.getPort()));
     }
     if (p2pNetwork.isP2pEnabled()) {
-      if (p2pNetwork.isP2pEnabled()) {
-        p2pNetwork
-            .getLocalEnode()
-            .ifPresent(
-                enode -> {
+      p2pNetwork
+          .getLocalEnode()
+          .ifPresent(
+              enode ->
                   servicesMapBuilder.put(
-                      "p2p", createServiceDetailsMap(enode.getIp(), enode.getListeningPort()));
-                });
-      }
+                      "p2p", createServiceDetailsMap(enode.getIp(), enode.getListeningPort())));
     }
     if (metricsConfiguration.isEnabled()) {
       servicesMapBuilder.put(
@@ -63,17 +75,7 @@ public class NetServices implements JsonRpcMethod {
           createServiceDetailsMap(metricsConfiguration.getHost(), metricsConfiguration.getPort()));
     }
 
-    services = servicesMapBuilder.build();
-  }
-
-  @Override
-  public String getName() {
-    return "net_services";
-  }
-
-  @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
-    return new JsonRpcSuccessResponse(req.getId(), services);
+    return new JsonRpcSuccessResponse(req.getId(), servicesMapBuilder.build());
   }
 
   private ImmutableMap<String, String> createServiceDetailsMap(final String host, final int port) {
