@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.eth.messages;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static tech.pegasys.pantheon.ethereum.eth.messages.LimitedTransactionsMessages.LIMIT;
 
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
@@ -27,8 +28,7 @@ import org.junit.Test;
 
 public class LimitedTransactionsMessagesTest {
 
-  private static final int LIMIT = 1048576;
-
+  private static final int TX_PAYLOAD_LIMIT = LIMIT - 180;
   private final BlockDataGenerator generator = new BlockDataGenerator();
   private final Set<Transaction> sampleTxs = generator.transactions(1);
   private final TransactionsMessage sampleTransactionMessages =
@@ -55,11 +55,11 @@ public class LimitedTransactionsMessagesTest {
   }
 
   @Test
-  public void createLimitedWithFirstTransactionExceedingLimit() {
+  public void createLimitedWithTransactionsJustUnderTheLimit() {
     final Set<Transaction> txs = new HashSet<>();
-    txs.add(generator.transaction(BytesValue.wrap(new byte[LIMIT - 180])));
-    txs.add(generator.transaction(BytesValue.wrap(new byte[LIMIT - 180])));
-    txs.add(generator.transaction(BytesValue.wrap(new byte[LIMIT - 180])));
+    txs.add(generator.transaction(BytesValue.wrap(new byte[TX_PAYLOAD_LIMIT])));
+    txs.add(generator.transaction(BytesValue.wrap(new byte[TX_PAYLOAD_LIMIT])));
+    txs.add(generator.transaction(BytesValue.wrap(new byte[TX_PAYLOAD_LIMIT])));
     final LimitedTransactionsMessages firstMessage = LimitedTransactionsMessages.createLimited(txs);
     assertEquals(2, firstMessage.getIncludedTransactions().size());
     txs.removeAll(firstMessage.getIncludedTransactions());
@@ -72,12 +72,13 @@ public class LimitedTransactionsMessagesTest {
   }
 
   @Test
-  public void createLimitedWithFirstTransactionExceedingLimit_2() {
+  public void createLimitedWithTransactionsJustUnderAndJustOverTheLimit() {
     final Set<Transaction> txs = new LinkedHashSet<>();
 
-    txs.add(generator.transaction(BytesValue.wrap(new byte[LIMIT - 180])));
-    txs.add(generator.transaction(BytesValue.wrap(new byte[LIMIT + 100 - 180])));
-    txs.add(generator.transaction(BytesValue.wrap(new byte[LIMIT - 180])));
+    txs.add(generator.transaction(BytesValue.wrap(new byte[TX_PAYLOAD_LIMIT])));
+    // ensure the next transaction exceed the limit TX_PAYLOAD_LIMIT + 100
+    txs.add(generator.transaction(BytesValue.wrap(new byte[TX_PAYLOAD_LIMIT + 100])));
+    txs.add(generator.transaction(BytesValue.wrap(new byte[TX_PAYLOAD_LIMIT])));
     final LimitedTransactionsMessages firstMessage = LimitedTransactionsMessages.createLimited(txs);
     assertEquals(1, firstMessage.getIncludedTransactions().size());
     txs.removeAll(firstMessage.getIncludedTransactions());

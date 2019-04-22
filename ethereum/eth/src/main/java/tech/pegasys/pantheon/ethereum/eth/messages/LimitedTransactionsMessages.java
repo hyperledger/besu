@@ -21,7 +21,7 @@ import java.util.Set;
 
 public final class LimitedTransactionsMessages {
 
-  private static final int LIMIT = 1048576;
+  static final int LIMIT = 1048576;
 
   private final TransactionsMessage transactionsMessage;
   private final Set<Transaction> includedTransactions;
