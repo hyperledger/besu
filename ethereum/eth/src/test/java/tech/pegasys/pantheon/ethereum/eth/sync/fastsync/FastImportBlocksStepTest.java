@@ -20,6 +20,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.FULL;
+import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.LIGHT;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Block;
@@ -46,6 +47,7 @@ public class FastImportBlocksStepTest {
   @Mock private ProtocolContext<Void> protocolContext;
   @Mock private BlockImporter<Void> blockImporter;
   @Mock private ValidationPolicy validationPolicy;
+  @Mock private ValidationPolicy ommerValidationPolicy;
   private final BlockDataGenerator gen = new BlockDataGenerator();
 
   private FastImportBlocksStep<Void> importBlocksStep;
@@ -55,9 +57,11 @@ public class FastImportBlocksStepTest {
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
     when(validationPolicy.getValidationModeForNextBlock()).thenReturn(FULL);
+    when(ommerValidationPolicy.getValidationModeForNextBlock()).thenReturn(LIGHT);
 
     importBlocksStep =
-        new FastImportBlocksStep<>(protocolSchedule, protocolContext, validationPolicy);
+        new FastImportBlocksStep<>(
+            protocolSchedule, protocolContext, validationPolicy, ommerValidationPolicy);
   }
 
   @Test
@@ -70,7 +74,11 @@ public class FastImportBlocksStepTest {
 
     for (final BlockWithReceipts blockWithReceipts : blocksWithReceipts) {
       when(blockImporter.fastImportBlock(
-              protocolContext, blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), FULL))
+              protocolContext,
+              blockWithReceipts.getBlock(),
+              blockWithReceipts.getReceipts(),
+              FULL,
+              LIGHT))
           .thenReturn(true);
     }
     importBlocksStep.accept(blocksWithReceipts);
@@ -87,7 +95,7 @@ public class FastImportBlocksStepTest {
     final BlockWithReceipts blockWithReceipts = new BlockWithReceipts(block, gen.receipts(block));
 
     when(blockImporter.fastImportBlock(
-            protocolContext, block, blockWithReceipts.getReceipts(), FULL))
+            protocolContext, block, blockWithReceipts.getReceipts(), FULL, LIGHT))
         .thenReturn(false);
     assertThatThrownBy(() -> importBlocksStep.accept(singletonList(blockWithReceipts)))
         .isInstanceOf(InvalidBlockException.class);

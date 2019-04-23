@@ -46,19 +46,22 @@ public class FastSyncBlockHandler<C> implements BlockHandler<BlockWithReceipts> 
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
-  private final ValidationPolicy validationPolicy;
+  private final ValidationPolicy headerValidationPolicy;
+  private final ValidationPolicy ommerValidationPolicy;
 
   public FastSyncBlockHandler(
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
-      final ValidationPolicy validationPolicy) {
+      final ValidationPolicy headerValidationPolicy,
+      final ValidationPolicy ommerValidationPolicy) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
-    this.validationPolicy = validationPolicy;
+    this.headerValidationPolicy = headerValidationPolicy;
+    this.ommerValidationPolicy = ommerValidationPolicy;
   }
 
   @Override
@@ -105,7 +108,8 @@ public class FastSyncBlockHandler<C> implements BlockHandler<BlockWithReceipts> 
           protocolContext,
           block,
           blockWithReceipt.getReceipts(),
-          validationPolicy.getValidationModeForNextBlock())) {
+          headerValidationPolicy.getValidationModeForNextBlock(),
+          ommerValidationPolicy.getValidationModeForNextBlock())) {
         return invalidBlockFailure(block);
       }
     }

@@ -43,5 +43,6 @@ public interface BlockValidator<C> {
       final ProtocolContext<C> context,
       final Block block,
       final List<TransactionReceipt> receipts,
-      final HeaderValidationMode headerValidationMode);
+      final HeaderValidationMode headerValidationMode,
+      final HeaderValidationMode ommerValidationMode);
 }

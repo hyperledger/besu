@@ -28,15 +28,18 @@ public class FastImportBlocksStep<C> implements Consumer<List<BlockWithReceipts>
   private static final Logger LOG = LogManager.getLogger();
   private final ProtocolSchedule<C> protocolSchedule;
   private final ProtocolContext<C> protocolContext;
-  private final ValidationPolicy validationPolicy;
+  private final ValidationPolicy headerValidationPolicy;
+  private final ValidationPolicy ommerValidationPolicy;
 
   public FastImportBlocksStep(
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
-      final ValidationPolicy validationPolicy) {
+      final ValidationPolicy headerValidationPolicy,
+      final ValidationPolicy ommerValidationPolicy) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
-    this.validationPolicy = validationPolicy;
+    this.headerValidationPolicy = headerValidationPolicy;
+    this.ommerValidationPolicy = ommerValidationPolicy;
   }
 
   @Override
@@ -61,6 +64,7 @@ public class FastImportBlocksStep<C> implements Consumer<List<BlockWithReceipts>
         protocolContext,
         blockWithReceipts.getBlock(),
         blockWithReceipts.getReceipts(),
-        validationPolicy.getValidationModeForNextBlock());
+        headerValidationPolicy.getValidationModeForNextBlock(),
+        ommerValidationPolicy.getValidationModeForNextBlock());
   }
 }

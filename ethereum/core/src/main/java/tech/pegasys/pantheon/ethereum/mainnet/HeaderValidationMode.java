@@ -32,5 +32,9 @@ public enum HeaderValidationMode {
   SKIP_DETACHED,
 
   /** Fully validate the header */
-  FULL
+  FULL;
+
+  public boolean isFormOfLightValidation() {
+    return this == LIGHT || this == LIGHT_DETACHED_ONLY || this == LIGHT_SKIP_DETACHED;
+  }
 }
