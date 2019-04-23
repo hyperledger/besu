@@ -66,7 +66,9 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
               .setCreateIfMissing(true)
               .setMaxOpenFiles(rocksDbConfiguration.getMaxOpenFiles())
               .setTableFormatConfig(rocksDbConfiguration.getBlockBasedTableConfig())
+              .setMaxBackgroundCompactions(rocksDbConfiguration.getMaxBackgroundCompactions())
               .setStatistics(stats);
+      options.getEnv().setBackgroundThreads(rocksDbConfiguration.getBackgroundThreadCount());
 
       txOptions = new TransactionDBOptions();
       db = TransactionDB.open(options, txOptions, rocksDbConfiguration.getDatabaseDir().toString());

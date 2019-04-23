@@ -26,9 +26,18 @@ public class RocksDbConfiguration {
   private final int maxOpenFiles;
   private final BlockBasedTableConfig blockBasedTableConfig;
   private final String label;
+  private final int maxBackgroundCompactions;
+  private final int backgroundThreadCount;
 
   public RocksDbConfiguration(
-      final Path databaseDir, final int maxOpenFiles, final LRUCache cache, final String label) {
+      final Path databaseDir,
+      final int maxOpenFiles,
+      final int maxBackgroundCompactions,
+      final int backgroundThreadCount,
+      final LRUCache cache,
+      final String label) {
+    this.maxBackgroundCompactions = maxBackgroundCompactions;
+    this.backgroundThreadCount = backgroundThreadCount;
     RocksDbUtil.loadNativeLibrary();
     this.databaseDir = databaseDir;
     this.maxOpenFiles = maxOpenFiles;
@@ -42,6 +51,14 @@ public class RocksDbConfiguration {
 
   public int getMaxOpenFiles() {
     return maxOpenFiles;
+  }
+
+  public int getMaxBackgroundCompactions() {
+    return maxBackgroundCompactions;
+  }
+
+  public int getBackgroundThreadCount() {
+    return backgroundThreadCount;
   }
 
   public BlockBasedTableConfig getBlockBasedTableConfig() {
@@ -74,6 +91,23 @@ public class RocksDbConfiguration {
         description = "Cache capacity of RocksDB (default: ${DEFAULT-VALUE})")
     long cacheCapacity;
 
+    @CommandLine.Option(
+        names = {"--Xrocksdb-max-background-compactions"},
+        hidden = true,
+        defaultValue = "1",
+        paramLabel = "<INTEGER>",
+        description =
+            "Maximum number of RocksDB background compactions (default: ${DEFAULT-VALUE})")
+    int maxBackgroundCompactions;
+
+    @CommandLine.Option(
+        names = {"--Xrocksdb-background-thread-count"},
+        hidden = true,
+        defaultValue = "1",
+        paramLabel = "<INTEGER>",
+        description = "Number of RocksDB background threads (default: ${DEFAULT-VALUE})")
+    int backgroundThreadCount;
+
     public Builder databaseDir(final Path databaseDir) {
       this.databaseDir = databaseDir;
       return this;
@@ -94,6 +128,16 @@ public class RocksDbConfiguration {
       return this;
     }
 
+    public Builder maxBackgroundCompactions(final int maxBackgroundCompactions) {
+      this.maxBackgroundCompactions = maxBackgroundCompactions;
+      return this;
+    }
+
+    public Builder backgroundThreadCount(final int backgroundThreadCount) {
+      this.backgroundThreadCount = backgroundThreadCount;
+      return this;
+    }
+
     private LRUCache createCache(final long cacheCapacity) {
       RocksDbUtil.loadNativeLibrary();
       return new LRUCache(cacheCapacity);
@@ -103,7 +147,8 @@ public class RocksDbConfiguration {
       if (cache == null) {
         cache = createCache(cacheCapacity);
       }
-      return new RocksDbConfiguration(databaseDir, maxOpenFiles, cache, label);
+      return new RocksDbConfiguration(
+          databaseDir, maxOpenFiles, maxBackgroundCompactions, backgroundThreadCount, cache, label);
     }
   }
 }
