@@ -25,6 +25,8 @@ import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.AccountFilter;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
@@ -57,18 +59,31 @@ public class TransactionPool implements BlockAddedObserver {
   private final TransactionBatchAddedListener transactionBatchAddedListener;
   private final SyncState syncState;
   private Optional<AccountFilter> accountFilter = Optional.empty();
+  private final PeerTransactionTracker peerTransactionTracker;
 
   public TransactionPool(
       final PendingTransactions pendingTransactions,
       final ProtocolSchedule<?> protocolSchedule,
       final ProtocolContext<?> protocolContext,
       final TransactionBatchAddedListener transactionBatchAddedListener,
-      final SyncState syncState) {
+      final SyncState syncState,
+      final EthContext ethContext,
+      final PeerTransactionTracker peerTransactionTracker) {
     this.pendingTransactions = pendingTransactions;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.transactionBatchAddedListener = transactionBatchAddedListener;
     this.syncState = syncState;
+    this.peerTransactionTracker = peerTransactionTracker;
+
+    ethContext.getEthPeers().subscribeConnect(this::handleConnect);
+  }
+
+  private void handleConnect(final EthPeer peer) {
+    List<Transaction> localTransactions = getLocalTransactions();
+    for (Transaction transaction : localTransactions) {
+      peerTransactionTracker.addToPeerSendQueue(peer, transaction);
+    }
   }
 
   public List<Transaction> getLocalTransactions() {

@@ -44,7 +44,9 @@ public class TransactionPoolFactory {
             protocolSchedule,
             protocolContext,
             new TransactionSender(transactionTracker, transactionsMessageSender, ethContext),
-            syncState);
+            syncState,
+            ethContext,
+            transactionTracker);
 
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
