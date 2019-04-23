@@ -141,7 +141,7 @@ public class AccountWhitelistController {
   }
 
   public boolean contains(final String account) {
-    return (accountWhitelist.contains(account));
+    return accountWhitelist.stream().anyMatch(a -> a.equalsIgnoreCase(account));
   }
 
   public List<String> getAccountWhitelist() {
