@@ -17,6 +17,7 @@ import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -30,7 +31,10 @@ import tech.pegasys.pantheon.ethereum.core.ExecutionContextTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
+import tech.pegasys.pantheon.ethereum.eth.transactions.PeerTransactionTracker;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
@@ -85,13 +89,21 @@ public class EthGetFilterChangesIntegrationTest {
     final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();
     blockchain = executionContext.getBlockchain();
     final ProtocolContext<Void> protocolContext = executionContext.getProtocolContext();
+
+    PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
+    EthContext ethContext = mock(EthContext.class);
+    EthPeers ethPeers = mock(EthPeers.class);
+    when(ethContext.getEthPeers()).thenReturn(ethPeers);
+
     transactionPool =
         new TransactionPool(
             transactions,
             executionContext.getProtocolSchedule(),
             protocolContext,
             batchAddedListener,
-            syncState);
+            syncState,
+            ethContext,
+            peerTransactionTracker);
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, protocolContext.getWorldStateArchive());
     filterManager =
