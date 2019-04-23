@@ -17,8 +17,10 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,18 +57,20 @@ public class AccountWhitelistController {
   }
 
   public WhitelistOperationResult addAccounts(final List<String> accounts) {
-    final WhitelistOperationResult inputValidationResult = inputValidation(accounts);
+    final List<String> normalizedAccounts = normalizeAccounts(accounts);
+    final WhitelistOperationResult inputValidationResult = inputValidation(normalizedAccounts);
     if (inputValidationResult != WhitelistOperationResult.SUCCESS) {
       return inputValidationResult;
     }
 
-    boolean inputHasExistingAccount = accounts.stream().anyMatch(accountWhitelist::contains);
+    boolean inputHasExistingAccount =
+        normalizedAccounts.stream().anyMatch(accountWhitelist::contains);
     if (inputHasExistingAccount) {
       return WhitelistOperationResult.ERROR_EXISTING_ENTRY;
     }
 
     final List<String> oldWhitelist = new ArrayList<>(this.accountWhitelist);
-    this.accountWhitelist.addAll(accounts);
+    this.accountWhitelist.addAll(normalizedAccounts);
     try {
       verifyConfigurationFileState(oldWhitelist);
       updateConfigurationFile(accountWhitelist);
@@ -81,18 +85,19 @@ public class AccountWhitelistController {
   }
 
   public WhitelistOperationResult removeAccounts(final List<String> accounts) {
-    final WhitelistOperationResult inputValidationResult = inputValidation(accounts);
+    final List<String> normalizedAccounts = normalizeAccounts(accounts);
+    final WhitelistOperationResult inputValidationResult = inputValidation(normalizedAccounts);
     if (inputValidationResult != WhitelistOperationResult.SUCCESS) {
       return inputValidationResult;
     }
 
-    if (!accountWhitelist.containsAll(accounts)) {
+    if (!accountWhitelist.containsAll(normalizedAccounts)) {
       return WhitelistOperationResult.ERROR_ABSENT_ENTRY;
     }
 
     final List<String> oldWhitelist = new ArrayList<>(this.accountWhitelist);
 
-    this.accountWhitelist.removeAll(accounts);
+    this.accountWhitelist.removeAll(normalizedAccounts);
     try {
       verifyConfigurationFileState(oldWhitelist);
       updateConfigurationFile(accountWhitelist);
@@ -185,6 +190,14 @@ public class AccountWhitelistController {
       accountWhitelist.clear();
       accountWhitelist.addAll(currentAccountsList);
       throw new RuntimeException(e);
+    }
+  }
+
+  private List<String> normalizeAccounts(final List<String> accounts) {
+    if (accounts != null) {
+      return accounts.parallelStream().map(String::toLowerCase).collect(Collectors.toList());
+    } else {
+      return Collections.emptyList();
     }
   }
 }

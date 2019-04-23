@@ -60,6 +60,17 @@ public class AccountWhitelistControllerTest {
   }
 
   @Test
+  public void whenLoadingAccountsFromConfigShouldNormalizeAccountsToLowerCase() {
+    when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
+    when(permissioningConfig.getAccountWhitelist())
+        .thenReturn(singletonList("0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73"));
+    controller = new AccountWhitelistController(permissioningConfig, whitelistPersistor);
+
+    assertThat(controller.getAccountWhitelist())
+        .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
+  }
+
+  @Test
   public void whenPermConfigContainsEmptyListOfAccountsContainsShouldReturnFalse() {
     when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getAccountWhitelist()).thenReturn(new ArrayList<>());
@@ -88,9 +99,30 @@ public class AccountWhitelistControllerTest {
   }
 
   @Test
+  public void addExistingAccountWithDifferentCasingShouldReturnExistingEntryResult() {
+    controller.addAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
+    WhitelistOperationResult addResult =
+        controller.addAccounts(Arrays.asList("0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73"));
+
+    assertThat(addResult).isEqualTo(WhitelistOperationResult.ERROR_EXISTING_ENTRY);
+    assertThat(controller.getAccountWhitelist())
+        .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
+  }
+
+  @Test
   public void addValidAccountsShouldReturnSuccessResult() {
     WhitelistOperationResult addResult =
         controller.addAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
+
+    assertThat(addResult).isEqualTo(WhitelistOperationResult.SUCCESS);
+    assertThat(controller.getAccountWhitelist())
+        .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
+  }
+
+  @Test
+  public void addAccountsShouldAddAccountNormalizedToLowerCase() {
+    WhitelistOperationResult addResult =
+        controller.addAccounts(Arrays.asList("0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73"));
 
     assertThat(addResult).isEqualTo(WhitelistOperationResult.SUCCESS);
     assertThat(controller.getAccountWhitelist())
@@ -103,6 +135,17 @@ public class AccountWhitelistControllerTest {
 
     WhitelistOperationResult removeResult =
         controller.removeAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
+
+    assertThat(removeResult).isEqualTo(WhitelistOperationResult.SUCCESS);
+    assertThat(controller.getAccountWhitelist()).isEmpty();
+  }
+
+  @Test
+  public void removeAccountShouldNormalizeAccountToLowerCAse() {
+    controller.addAccounts(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
+
+    WhitelistOperationResult removeResult =
+        controller.removeAccounts(Arrays.asList("0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73"));
 
     assertThat(removeResult).isEqualTo(WhitelistOperationResult.SUCCESS);
     assertThat(controller.getAccountWhitelist()).isEmpty();
