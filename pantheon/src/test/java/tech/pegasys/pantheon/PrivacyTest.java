@@ -15,9 +15,8 @@ package tech.pegasys.pantheon;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
-import tech.pegasys.pantheon.controller.MainnetPantheonController;
 import tech.pegasys.pantheon.controller.PantheonController;
-import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
@@ -44,32 +43,32 @@ public class PrivacyTest {
   @Test
   public void privacyPrecompiled() throws IOException {
     final Path dataDir = folder.newFolder().toPath();
-    PrivacyParameters privacyParameters =
+    final PrivacyParameters privacyParameters =
         new PrivacyParameters.Builder()
             .setPrivacyAddress(ADDRESS)
             .setEnabled(true)
             .setDataDir(dataDir)
             .build();
 
-    MainnetPantheonController mainnetPantheonController =
-        (MainnetPantheonController)
-            PantheonController.fromConfig(
-                GenesisConfigFile.mainnet(),
-                SynchronizerConfiguration.builder().build(),
-                EthereumWireProtocolConfiguration.defaultConfig(),
-                new InMemoryStorageProvider(),
-                1,
-                new MiningParametersTestBuilder().enabled(false).build(),
-                SECP256K1.KeyPair.generate(),
-                new NoOpMetricsSystem(),
-                privacyParameters,
-                dataDir,
-                TestClock.fixed(),
-                PendingTransactions.MAX_PENDING_TRANSACTIONS);
+    final PantheonController<?> pantheonController =
+        new PantheonController.Builder()
+            .fromGenesisConfig(GenesisConfigFile.mainnet())
+            .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
+            .ethereumWireProtocolConfiguration(EthereumWireProtocolConfiguration.defaultConfig())
+            .storageProvider(new InMemoryStorageProvider())
+            .networkId(1)
+            .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+            .nodeKeys(KeyPair.generate())
+            .metricsSystem(new NoOpMetricsSystem())
+            .dataDirectory(dataDir)
+            .clock(TestClock.fixed())
+            .privacyParameters(privacyParameters)
+            .maxPendingTransactions(PendingTransactions.MAX_PENDING_TRANSACTIONS)
+            .build();
 
-    Address privacyContractAddress = Address.privacyPrecompiled(ADDRESS);
-    PrecompiledContract precompiledContract =
-        mainnetPantheonController
+    final Address privacyContractAddress = Address.privacyPrecompiled(ADDRESS);
+    final PrecompiledContract precompiledContract =
+        pantheonController
             .getProtocolSchedule()
             .getByBlockNumber(1)
             .getPrecompileContractRegistry()

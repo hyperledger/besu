@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.consensus.ibft.jsonrpc.methods.IbftProposeValidator
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethodFactory;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 
@@ -31,13 +32,17 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class IbftJsonRpcMethodsFactory {
+public class IbftJsonRpcMethodsFactory implements JsonRpcMethodFactory {
 
   private final JsonRpcParameter jsonRpcParameter = new JsonRpcParameter();
+  private final ProtocolContext<IbftContext> context;
 
-  public Map<String, JsonRpcMethod> methods(
-      final ProtocolContext<IbftContext> context, final Collection<RpcApi> jsonRpcApis) {
+  public IbftJsonRpcMethodsFactory(final ProtocolContext<IbftContext> context) {
+    this.context = context;
+  }
 
+  @Override
+  public Map<String, JsonRpcMethod> createJsonRpcMethods(final Collection<RpcApi> jsonRpcApis) {
     final Map<String, JsonRpcMethod> rpcMethods = new HashMap<>();
 
     if (jsonRpcApis.contains(IbftRpcApis.IBFT)) {

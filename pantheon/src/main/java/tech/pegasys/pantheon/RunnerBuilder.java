@@ -217,7 +217,7 @@ public class RunnerBuilder {
     final KeyPair keyPair = pantheonController.getLocalNodeKeyPair();
 
     final SubProtocolConfiguration subProtocolConfiguration =
-        pantheonController.subProtocolConfiguration();
+        pantheonController.getSubProtocolConfiguration();
 
     final ProtocolSchedule<?> protocolSchedule = pantheonController.getProtocolSchedule();
     final ProtocolContext<?> context = pantheonController.getProtocolContext();
