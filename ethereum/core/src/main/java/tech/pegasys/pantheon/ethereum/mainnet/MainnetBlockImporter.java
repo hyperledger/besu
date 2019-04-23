@@ -64,9 +64,11 @@ public class MainnetBlockImporter<C> implements BlockImporter<C> {
       final ProtocolContext<C> context,
       final Block block,
       final List<TransactionReceipt> receipts,
-      final HeaderValidationMode headerValidationMode) {
+      final HeaderValidationMode headerValidationMode,
+      final HeaderValidationMode ommerValidationMode) {
 
-    if (blockValidator.fastBlockValidation(context, block, receipts, headerValidationMode)) {
+    if (blockValidator.fastBlockValidation(
+        context, block, receipts, headerValidationMode, ommerValidationMode)) {
       context.getBlockchain().appendBlock(block, receipts);
       return true;
     }

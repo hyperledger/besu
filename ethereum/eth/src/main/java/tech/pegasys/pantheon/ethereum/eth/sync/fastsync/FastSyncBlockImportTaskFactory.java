@@ -71,6 +71,12 @@ class FastSyncBlockImportTaskFactory<C> implements BlockImportTaskFactory {
             HeaderValidationMode.LIGHT_SKIP_DETACHED,
             HeaderValidationMode.SKIP_DETACHED,
             fastSyncValidationCounter);
+    final FastSyncValidationPolicy ommerValidationPolicy =
+        new FastSyncValidationPolicy(
+            config.fastSyncFullValidationRate(),
+            HeaderValidationMode.LIGHT,
+            HeaderValidationMode.FULL,
+            fastSyncValidationCounter);
     final FastSyncValidationPolicy detatchedValidationPolicy =
         new FastSyncValidationPolicy(
             config.fastSyncFullValidationRate(),
@@ -89,7 +95,8 @@ class FastSyncBlockImportTaskFactory<C> implements BlockImportTaskFactory {
                 protocolContext,
                 ethContext,
                 metricsSystem,
-                attachedValidationPolicy),
+                attachedValidationPolicy,
+                ommerValidationPolicy),
             detatchedValidationPolicy,
             checkpointHeaders,
             metricsSystem);

@@ -224,6 +224,15 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
       return false;
     }
 
+    if (!ommerValidationMode.isFormOfLightValidation()) {
+      return isOmmerSiblingOfAncestor(context, current, ommer);
+    } else {
+      return true;
+    }
+  }
+
+  private boolean isOmmerSiblingOfAncestor(
+      final ProtocolContext<C> context, final BlockHeader current, final BlockHeader ommer) {
     // The current block is guaranteed to have a parent because it's a valid header.
     final long lastAncestorBlockNumber = Math.max(current.getNumber() - MAX_GENERATION, 0);
 
@@ -236,7 +245,6 @@ public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
       }
       previous = ancestor;
     }
-
     return false;
   }
 }

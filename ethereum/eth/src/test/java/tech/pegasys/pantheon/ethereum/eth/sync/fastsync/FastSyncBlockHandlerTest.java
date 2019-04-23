@@ -22,6 +22,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.LIGHT;
 import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.LIGHT_SKIP_DETACHED;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -60,6 +61,7 @@ public class FastSyncBlockHandlerTest {
   private static final Block BLOCK3 =
       new Block(new BlockHeaderTestFixture().number(3).buildHeader(), EMPTY_BODY);
   private static final HeaderValidationMode VALIDATION_MODE = LIGHT_SKIP_DETACHED;
+  private static final HeaderValidationMode OMMER_VALIDATION_MODE = LIGHT;
 
   @SuppressWarnings("unchecked")
   private final ProtocolSchedule<Void> protocolSchedule = mock(ProtocolSchedule.class);
@@ -82,16 +84,23 @@ public class FastSyncBlockHandlerTest {
           new DeterministicEthScheduler());
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final ValidationPolicy validationPolicy = mock(ValidationPolicy.class);
+  private final ValidationPolicy ommerValidationPolicy = mock(ValidationPolicy.class);
 
   private final FastSyncBlockHandler<Void> blockHandler =
       new FastSyncBlockHandler<>(
-          protocolSchedule, protocolContext, ethContext, metricsSystem, validationPolicy);
+          protocolSchedule,
+          protocolContext,
+          ethContext,
+          metricsSystem,
+          validationPolicy,
+          ommerValidationPolicy);
 
   @Before
   public void setUp() {
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
     when(validationPolicy.getValidationModeForNextBlock()).thenReturn(VALIDATION_MODE);
+    when(ommerValidationPolicy.getValidationModeForNextBlock()).thenReturn(OMMER_VALIDATION_MODE);
   }
 
   @After
@@ -101,7 +110,8 @@ public class FastSyncBlockHandlerTest {
 
   @Test
   public void shouldFastImportBlocks() {
-    when(blockImporter.fastImportBlock(protocolContext, BLOCK, emptyList(), VALIDATION_MODE))
+    when(blockImporter.fastImportBlock(
+            protocolContext, BLOCK, emptyList(), VALIDATION_MODE, OMMER_VALIDATION_MODE))
         .thenReturn(true);
     final List<BlockWithReceipts> blocksWithReceipts =
         singletonList(new BlockWithReceipts(BLOCK, emptyList()));
@@ -110,12 +120,15 @@ public class FastSyncBlockHandlerTest {
         blockHandler.validateAndImportBlocks(blocksWithReceipts);
 
     assertThat(result).isCompleted();
-    verify(blockImporter).fastImportBlock(protocolContext, BLOCK, emptyList(), VALIDATION_MODE);
+    verify(blockImporter)
+        .fastImportBlock(
+            protocolContext, BLOCK, emptyList(), VALIDATION_MODE, OMMER_VALIDATION_MODE);
   }
 
   @Test
   public void shouldReturnExceptionallyCompletedFutureWhenBlockImportFails() {
-    when(blockImporter.fastImportBlock(protocolContext, BLOCK, emptyList(), VALIDATION_MODE))
+    when(blockImporter.fastImportBlock(
+            protocolContext, BLOCK, emptyList(), VALIDATION_MODE, OMMER_VALIDATION_MODE))
         .thenReturn(false);
 
     final CompletableFuture<List<BlockWithReceipts>> result =
@@ -127,9 +140,11 @@ public class FastSyncBlockHandlerTest {
 
   @Test
   public void shouldNotContinueImportingBlocksAfterValidationFailure() {
-    when(blockImporter.fastImportBlock(protocolContext, BLOCK, emptyList(), VALIDATION_MODE))
+    when(blockImporter.fastImportBlock(
+            protocolContext, BLOCK, emptyList(), VALIDATION_MODE, OMMER_VALIDATION_MODE))
         .thenReturn(true);
-    when(blockImporter.fastImportBlock(protocolContext, BLOCK2, emptyList(), VALIDATION_MODE))
+    when(blockImporter.fastImportBlock(
+            protocolContext, BLOCK2, emptyList(), VALIDATION_MODE, OMMER_VALIDATION_MODE))
         .thenReturn(false);
 
     final CompletableFuture<List<BlockWithReceipts>> result =
@@ -141,9 +156,14 @@ public class FastSyncBlockHandlerTest {
 
     assertThat(result).isCompletedExceptionally();
 
-    verify(blockImporter).fastImportBlock(protocolContext, BLOCK, emptyList(), VALIDATION_MODE);
-    verify(blockImporter).fastImportBlock(protocolContext, BLOCK2, emptyList(), VALIDATION_MODE);
+    verify(blockImporter)
+        .fastImportBlock(
+            protocolContext, BLOCK, emptyList(), VALIDATION_MODE, OMMER_VALIDATION_MODE);
+    verify(blockImporter)
+        .fastImportBlock(
+            protocolContext, BLOCK2, emptyList(), VALIDATION_MODE, OMMER_VALIDATION_MODE);
     verify(blockImporter, never())
-        .fastImportBlock(protocolContext, BLOCK3, emptyList(), VALIDATION_MODE);
+        .fastImportBlock(
+            protocolContext, BLOCK3, emptyList(), VALIDATION_MODE, OMMER_VALIDATION_MODE);
   }
 }

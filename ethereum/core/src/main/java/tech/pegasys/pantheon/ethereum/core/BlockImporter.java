@@ -66,6 +66,7 @@ public interface BlockImporter<C> {
    * @param block The block
    * @param receipts The receipts associated with this block.
    * @param headerValidationMode Determines the validation to perform on this header.
+   * @param ommerValidationMode Determines the validation to perform on ommer headers.
    * @return {@code true} if the block was added somewhere in the blockchain; otherwise {@code
    *     false}
    */
@@ -73,5 +74,6 @@ public interface BlockImporter<C> {
       ProtocolContext<C> context,
       Block block,
       List<TransactionReceipt> receipts,
-      HeaderValidationMode headerValidationMode);
+      HeaderValidationMode headerValidationMode,
+      HeaderValidationMode ommerValidationMode);
 }
