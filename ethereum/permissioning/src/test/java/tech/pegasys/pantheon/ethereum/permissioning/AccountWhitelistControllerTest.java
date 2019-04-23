@@ -231,6 +231,16 @@ public class AccountWhitelistControllerTest {
         .isTrue();
   }
 
+  @Test
+  public void shouldMatchAccountsWithInconsistentCasing() {
+    when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
+    when(permissioningConfig.getAccountWhitelist())
+        .thenReturn(singletonList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
+    controller = new AccountWhitelistController(permissioningConfig, whitelistPersistor);
+
+    assertThat(controller.contains("0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73")).isTrue();
+  }
+
   private Path createPermissionsFileWithAccount(final String account) throws IOException {
     final String nodePermissionsFileContent = "accounts-whitelist=[\"" + account + "\"]";
     final Path permissionsFile = Files.createTempFile("account_permissions", "");
