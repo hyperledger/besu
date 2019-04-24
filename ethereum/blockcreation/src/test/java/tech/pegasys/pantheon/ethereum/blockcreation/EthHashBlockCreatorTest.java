@@ -29,6 +29,7 @@ import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
@@ -53,7 +54,7 @@ public class EthHashBlockCreatorTest {
           .protocolSchedule(
               new ProtocolScheduleBuilder<>(
                       GenesisConfigFile.DEFAULT.getConfigOptions(),
-                      42,
+                      BigInteger.valueOf(42),
                       Function.identity(),
                       PrivacyParameters.DEFAULT)
                   .createProtocolSchedule())

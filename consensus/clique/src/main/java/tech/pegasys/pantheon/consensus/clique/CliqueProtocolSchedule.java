@@ -29,10 +29,12 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpecBuilder;
 
+import java.math.BigInteger;
+
 /** Defines the protocol behaviours for a blockchain using Clique. */
 public class CliqueProtocolSchedule {
 
-  private static final int DEFAULT_CHAIN_ID = 4;
+  private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(4);
 
   public static ProtocolSchedule<CliqueContext> create(
       final GenesisConfigOptions config,

@@ -28,6 +28,7 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 
+import java.math.BigInteger;
 import java.util.function.Function;
 
 public class ExecutionContextTestFixture {
@@ -111,7 +112,7 @@ public class ExecutionContextTestFixture {
         protocolSchedule =
             new ProtocolScheduleBuilder<>(
                     new StubGenesisConfigOptions().constantinopleFixBlock(0),
-                    42,
+                    BigInteger.valueOf(42),
                     Function.identity(),
                     new PrivacyParameters())
                 .createProtocolSchedule();

@@ -17,7 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -25,25 +24,24 @@ import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 
-public class EthChainIdTest {
+public class NetVersionTest {
 
-  private EthChainId method;
+  private NetVersion method;
   private final BigInteger CHAIN_ID = BigInteger.ONE;
 
   @Before
   public void setUp() {
-    method = new EthChainId(Optional.of(CHAIN_ID));
+    method = new NetVersion(Optional.of(CHAIN_ID));
   }
 
   @Test
   public void shouldReturnCorrectMethodName() {
-    assertThat(method.getName()).isEqualTo("eth_chainId");
+    assertThat(method.getName()).isEqualTo("net_version");
   }
 
   @Test
   public void shouldReturnChainId() {
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(null, Quantity.create(CHAIN_ID));
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, CHAIN_ID.toString());
 
     final JsonRpcResponse response = method.response(request());
 
@@ -52,8 +50,8 @@ public class EthChainIdTest {
 
   @Test
   public void shouldReturnNullWhenNoChainId() {
-    method = new EthChainId(Optional.empty());
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, null);
+    method = new NetVersion(Optional.empty());
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "null");
 
     final JsonRpcResponse response = method.response(request());
 
@@ -61,6 +59,6 @@ public class EthChainIdTest {
   }
 
   private JsonRpcRequest request() {
-    return new JsonRpcRequest(null, "eth_chainId", null);
+    return new JsonRpcRequest(null, "net_version", null);
   }
 }

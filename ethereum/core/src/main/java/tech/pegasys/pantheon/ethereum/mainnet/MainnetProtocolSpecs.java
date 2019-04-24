@@ -26,8 +26,10 @@ import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionProcessor;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -73,7 +75,8 @@ public abstract class MainnetProtocolSpecs {
                 new MainnetContractCreationProcessor(
                     gasCalculator, evm, false, contractSizeLimit, 0))
         .transactionValidatorBuilder(
-            gasCalculator -> new MainnetTransactionValidator(gasCalculator, false))
+            gasCalculator ->
+                new MainnetTransactionValidator(gasCalculator, false, Optional.empty()))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -122,7 +125,7 @@ public abstract class MainnetProtocolSpecs {
                 new MainnetContractCreationProcessor(
                     gasCalculator, evm, true, contractSizeLimit, 0))
         .transactionValidatorBuilder(
-            gasCalculator -> new MainnetTransactionValidator(gasCalculator, true))
+            gasCalculator -> new MainnetTransactionValidator(gasCalculator, true, Optional.empty()))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
         .name("Homestead");
   }
@@ -160,7 +163,7 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder<Void> spuriousDragonDefinition(
-      final int chainId, final OptionalInt configContractSizeLimit) {
+      final Optional<BigInteger> chainId, final OptionalInt configContractSizeLimit) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     return tangerineWhistleDefinition(OptionalInt.empty())
@@ -208,7 +211,7 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder<Void> byzantiumDefinition(
-      final int chainId, final OptionalInt contractSizeLimit) {
+      final Optional<BigInteger> chainId, final OptionalInt contractSizeLimit) {
     return spuriousDragonDefinition(chainId, contractSizeLimit)
         .evmBuilder(MainnetEvmRegistries::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
@@ -220,7 +223,7 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder<Void> constantinopleDefinition(
-      final int chainId, final OptionalInt contractSizeLimit) {
+      final Optional<BigInteger> chainId, final OptionalInt contractSizeLimit) {
     return byzantiumDefinition(chainId, contractSizeLimit)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
         .gasCalculator(ConstantinopleGasCalculator::new)
@@ -230,7 +233,7 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder<Void> constantinopleFixDefinition(
-      final int chainId, final OptionalInt contractSizeLimit) {
+      final Optional<BigInteger> chainId, final OptionalInt contractSizeLimit) {
     return constantinopleDefinition(chainId, contractSizeLimit)
         .gasCalculator(ConstantinopleFixGasCalculator::new)
         .name("ConstantinopleFix");

@@ -52,6 +52,7 @@ import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.List;
 import java.util.function.Supplier;
@@ -567,7 +568,7 @@ public class BlockTransactionSelectorTest {
         .to(Address.ID)
         .value(Wei.of(transactionNumber))
         .sender(Address.ID)
-        .chainId(1)
+        .chainId(BigInteger.ONE)
         .signAndBuild(keyPair);
   }
 

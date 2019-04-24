@@ -27,7 +27,8 @@ import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
 
-import java.util.OptionalInt;
+import java.math.BigInteger;
+import java.util.Optional;
 
 /**
  * Validates a transaction based on Frontier protocol runtime requirements.
@@ -37,30 +38,23 @@ import java.util.OptionalInt;
  */
 public class MainnetTransactionValidator implements TransactionValidator {
 
-  public static final int NO_CHAIN_ID = -1;
-
   public static MainnetTransactionValidator create() {
-    return new MainnetTransactionValidator(new FrontierGasCalculator(), false);
+    return new MainnetTransactionValidator(new FrontierGasCalculator(), false, Optional.empty());
   }
 
   private final GasCalculator gasCalculator;
 
   private final boolean disallowSignatureMalleability;
 
-  private final OptionalInt chainId;
-
-  public MainnetTransactionValidator(
-      final GasCalculator gasCalculator, final boolean checkSignatureMalleability) {
-    this(gasCalculator, checkSignatureMalleability, NO_CHAIN_ID);
-  }
+  private final Optional<BigInteger> chainId;
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
       final boolean checkSignatureMalleability,
-      final int chainId) {
+      final Optional<BigInteger> chainId) {
     this.gasCalculator = gasCalculator;
     this.disallowSignatureMalleability = checkSignatureMalleability;
-    this.chainId = chainId > 0 ? OptionalInt.of(chainId) : OptionalInt.empty();
+    this.chainId = chainId;
   }
 
   @Override
@@ -130,7 +124,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
           WRONG_CHAIN_ID,
           String.format(
               "transaction was meant for chain id %s and not this chain id %s",
-              transaction.getChainId().getAsInt(), chainId.getAsInt()));
+              transaction.getChainId().get(), chainId.get()));
     }
 
     if (!chainId.isPresent() && transaction.getChainId().isPresent()) {
