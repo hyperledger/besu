@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.controller;
 
+import tech.pegasys.pantheon.crypto.InvalidSEC256K1PrivateKeyStoreException;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 
 import java.io.File;
@@ -24,20 +25,25 @@ import org.apache.logging.log4j.Logger;
 public class KeyPairUtil {
   private static final Logger LOG = LogManager.getLogger();
 
-  public static SECP256K1.KeyPair loadKeyPair(final File keyFile) throws IOException {
-    final SECP256K1.KeyPair key;
-    if (keyFile.exists()) {
-      key = SECP256K1.KeyPair.load(keyFile);
-      LOG.info("Loaded key {} from {}", key.getPublicKey().toString(), keyFile.getAbsolutePath());
-    } else {
-      key = SECP256K1.KeyPair.generate();
-      key.getPrivateKey().store(keyFile);
-      LOG.info(
-          "Generated new key {} and stored it to {}",
-          key.getPublicKey().toString(),
-          keyFile.getAbsolutePath());
+  public static SECP256K1.KeyPair loadKeyPair(final File keyFile)
+      throws IOException, IllegalArgumentException {
+    try {
+      final SECP256K1.KeyPair key;
+      if (keyFile.exists()) {
+        key = SECP256K1.KeyPair.load(keyFile);
+        LOG.info("Loaded key {} from {}", key.getPublicKey().toString(), keyFile.getAbsolutePath());
+      } else {
+        key = SECP256K1.KeyPair.generate();
+        key.getPrivateKey().store(keyFile);
+        LOG.info(
+            "Generated new key {} and stored it to {}",
+            key.getPublicKey().toString(),
+            keyFile.getAbsolutePath());
+      }
+      return key;
+    } catch (InvalidSEC256K1PrivateKeyStoreException e) {
+      throw new IllegalArgumentException("Supplied file does not contain valid key pair.");
     }
-    return key;
   }
 
   public static SECP256K1.KeyPair loadKeyPair(final Path homeDirectory) throws IOException {
