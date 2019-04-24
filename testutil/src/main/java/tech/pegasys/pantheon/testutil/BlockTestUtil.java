@@ -34,7 +34,7 @@ public final class BlockTestUtil {
     try {
       Files.write(
           target,
-          Resources.toByteArray(Resources.getResource("1000.blocks")),
+          Resources.toByteArray(BlockTestUtil.class.getResource("/1000.blocks")),
           StandardOpenOption.CREATE,
           StandardOpenOption.TRUNCATE_EXISTING);
     } catch (final IOException ex) {

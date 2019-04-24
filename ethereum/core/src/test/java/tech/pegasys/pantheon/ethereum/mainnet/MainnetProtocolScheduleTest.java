@@ -94,7 +94,7 @@ public class MainnetProtocolScheduleTest {
         MainnetProtocolSchedule.fromConfig(
             GenesisConfigFile.fromConfig(
                     Resources.toString(
-                        Resources.getResource("ropsten.json"), StandardCharsets.UTF_8))
+                        this.getClass().getResource("/ropsten.json"), StandardCharsets.UTF_8))
                 .getConfigOptions(),
             PrivacyParameters.DEFAULT);
     Assertions.assertThat(sched.getByBlockNumber(0).getName()).isEqualTo("TangerineWhistle");

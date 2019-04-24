@@ -38,7 +38,7 @@ public final class NewBlockHashesMessageTest {
   public void blockHeadersRoundTrip() throws IOException {
     final List<NewBlockHashesMessage.NewBlockHash> hashes = new ArrayList<>();
     final ByteBuffer buffer =
-        ByteBuffer.wrap(Resources.toByteArray(Resources.getResource("50.blocks")));
+        ByteBuffer.wrap(Resources.toByteArray(this.getClass().getResource("/50.blocks")));
     for (int i = 0; i < 50; ++i) {
       final int blockSize = RLP.calculateSize(BytesValue.wrapBuffer(buffer));
       final byte[] block = new byte[blockSize];

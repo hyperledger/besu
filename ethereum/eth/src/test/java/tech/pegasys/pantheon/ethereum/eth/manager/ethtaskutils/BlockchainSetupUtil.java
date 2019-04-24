@@ -96,7 +96,7 @@ public class BlockchainSetupUtil<C> {
     final TemporaryFolder temp = new TemporaryFolder();
     try {
       temp.create();
-      final URL genesisFileUrl = getResourceUrl(temp, "testGenesis.json");
+      final URL genesisFileUrl = getResourceUrl(temp, "/testGenesis.json");
       final GenesisState genesisState =
           GenesisState.fromJson(
               Resources.toString(genesisFileUrl, Charsets.UTF_8), protocolSchedule);
@@ -107,7 +107,7 @@ public class BlockchainSetupUtil<C> {
       final ProtocolContext<Void> protocolContext =
           new ProtocolContext<>(blockchain, worldArchive, null);
 
-      final Path blocksPath = getResourcePath(temp, "testBlockchain.blocks");
+      final Path blocksPath = getResourcePath(temp, "/testBlockchain.blocks");
       final List<Block> blocks = new ArrayList<>();
       final BlockHashFunction blockHashFunction =
           ScheduleBasedBlockHashFunction.create(protocolSchedule);
@@ -128,7 +128,7 @@ public class BlockchainSetupUtil<C> {
 
   private static Path getResourcePath(final TemporaryFolder temp, final String resource)
       throws IOException {
-    final URL url = Resources.getResource(resource);
+    final URL url = BlockchainSetupUtil.class.getResource(resource);
     final Path path =
         Files.write(
             temp.newFile().toPath(),
