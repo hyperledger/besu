@@ -276,7 +276,7 @@ public abstract class MainnetProtocolSpecs {
         final JsonArray json =
             new JsonArray(
                 Resources.toString(
-                    Resources.getResource("daoAddresses.json"), StandardCharsets.UTF_8));
+                    this.getClass().getResource("/daoAddresses.json"), StandardCharsets.UTF_8));
         final List<Address> addresses =
             IntStream.range(0, json.size())
                 .mapToObj(json::getString)

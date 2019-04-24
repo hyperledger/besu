@@ -39,7 +39,8 @@ public class SmartContractPermissioningControllerTest {
       final String resourceName, final String contractAddressString) throws IOException {
     final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
 
-    final String emptyContractFile = Resources.toString(Resources.getResource(resourceName), UTF_8);
+    final String emptyContractFile =
+        Resources.toString(this.getClass().getResource(resourceName), UTF_8);
     final GenesisState genesisState =
         GenesisState.fromConfig(GenesisConfigFile.fromConfig(emptyContractFile), protocolSchedule);
 
@@ -59,7 +60,7 @@ public class SmartContractPermissioningControllerTest {
   public void testIpv4Included() throws IOException {
     final SmartContractPermissioningController controller =
         setupController(
-            "SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
+            "/SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
     assertThat(
@@ -75,7 +76,7 @@ public class SmartContractPermissioningControllerTest {
   public void testIpv4DestinationMissing() throws IOException {
     final SmartContractPermissioningController controller =
         setupController(
-            "SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
+            "/SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
     assertThat(
@@ -91,7 +92,7 @@ public class SmartContractPermissioningControllerTest {
   public void testIpv4SourceMissing() throws IOException {
     final SmartContractPermissioningController controller =
         setupController(
-            "SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
+            "/SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
     assertThat(
@@ -107,7 +108,7 @@ public class SmartContractPermissioningControllerTest {
   public void testIpv6Included() throws IOException {
     final SmartContractPermissioningController controller =
         setupController(
-            "SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
+            "/SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
     assertThat(
@@ -123,7 +124,7 @@ public class SmartContractPermissioningControllerTest {
   public void testIpv6SourceMissing() throws IOException {
     final SmartContractPermissioningController controller =
         setupController(
-            "SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
+            "/SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
     assertThat(
@@ -139,7 +140,7 @@ public class SmartContractPermissioningControllerTest {
   public void testIpv6DestinationMissing() throws IOException {
     final SmartContractPermissioningController controller =
         setupController(
-            "SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
+            "/SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
     assertThat(
@@ -155,7 +156,7 @@ public class SmartContractPermissioningControllerTest {
   public void testPermissioningContractMissing() throws IOException {
     final SmartContractPermissioningController controller =
         setupController(
-            "SmartContractPermissioningControllerTest/noSmartPermissioning.json",
+            "/SmartContractPermissioningControllerTest/noSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
     assertThatThrownBy(
@@ -173,7 +174,7 @@ public class SmartContractPermissioningControllerTest {
   public void testPermissioningContractCorrupt() throws IOException {
     final SmartContractPermissioningController controller =
         setupController(
-            "SmartContractPermissioningControllerTest/corruptSmartPermissioning.json",
+            "/SmartContractPermissioningControllerTest/corruptSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
     assertThatThrownBy(

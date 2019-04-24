@@ -120,7 +120,7 @@ public class PermissionedNodeBuilder {
 
   public PermissionedNodeBuilder genesisFile(final String path) {
     try {
-      URI uri = Resources.getResource(path).toURI();
+      URI uri = this.getClass().getResource(path).toURI();
       this.genesisFile = Resources.toString(uri.toURL(), Charset.defaultCharset());
     } catch (final URISyntaxException | IOException e) {
       throw new IllegalStateException("Unable to read genesis file from: " + path, e);

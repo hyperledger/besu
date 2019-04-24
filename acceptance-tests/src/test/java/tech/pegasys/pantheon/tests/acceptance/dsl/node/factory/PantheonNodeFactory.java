@@ -267,14 +267,14 @@ public class PantheonNodeFactory {
 
   private Optional<String> createCliqueGenesisConfig(
       final Collection<? extends RunnableNode> validators) {
-    final String template = readGenesisFile("clique/clique.json");
+    final String template = readGenesisFile("/clique/clique.json");
     return updateGenesisExtraData(
         validators, template, CliqueExtraData::createGenesisExtraDataString);
   }
 
   private Optional<String> createIbftGenesisConfig(
       final Collection<? extends RunnableNode> validators) {
-    final String template = readGenesisFile("ibft/ibft.json");
+    final String template = readGenesisFile("/ibft/ibft.json");
     return updateGenesisExtraData(
         validators, template, IbftExtraData::createGenesisExtraDataString);
   }
@@ -292,7 +292,7 @@ public class PantheonNodeFactory {
 
   private String readGenesisFile(final String filepath) {
     try {
-      final URI uri = Resources.getResource(filepath).toURI();
+      final URI uri = this.getClass().getResource(filepath).toURI();
       return Resources.toString(uri.toURL(), Charset.defaultCharset());
     } catch (final URISyntaxException | IOException e) {
       throw new IllegalStateException("Unable to get test genesis config " + filepath);

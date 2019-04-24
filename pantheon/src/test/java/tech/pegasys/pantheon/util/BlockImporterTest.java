@@ -78,12 +78,12 @@ public final class BlockImporterTest {
     final Path dataDir = folder.newFolder().toPath();
     final Path source = dataDir.resolve("ibft.blocks");
     final String config =
-        Resources.toString(Resources.getResource("ibftlegacy_genesis.json"), UTF_8);
+        Resources.toString(this.getClass().getResource("/ibftlegacy_genesis.json"), UTF_8);
 
     try {
       Files.write(
           source,
-          Resources.toByteArray(Resources.getResource("ibft.blocks")),
+          Resources.toByteArray(this.getClass().getResource("/ibft.blocks")),
           StandardOpenOption.CREATE,
           StandardOpenOption.TRUNCATE_EXISTING);
     } catch (final IOException ex) {

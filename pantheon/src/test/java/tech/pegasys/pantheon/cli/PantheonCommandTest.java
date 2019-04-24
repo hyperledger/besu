@@ -85,7 +85,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   private final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private final String VALID_NODE_ID =
       "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
-  static final String PERMISSIONING_CONFIG_TOML = "permissioning_config.toml";
+  static final String PERMISSIONING_CONFIG_TOML = "/permissioning_config.toml";
 
   private static final JsonRpcConfiguration defaultJsonRpcConfiguration;
   private static final WebSocketConfiguration defaultWebSocketConfiguration;
@@ -249,7 +249,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   public void overrideDefaultValuesIfKeyIsPresentInConfigFile() throws IOException {
     assumeTrue(isFullInstantiation());
 
-    final URL configFile = Resources.getResource("complete_config.toml");
+    final URL configFile = this.getClass().getResource("/complete_config.toml");
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
     final String updatedConfig =
         Resources.toString(configFile, UTF_8)
@@ -434,7 +434,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   @Test
   public void nodePermissioningTomlFileWithNoPermissionsEnabledMustNotError() throws IOException {
 
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_TOML);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_TOML);
     final Path permToml = createTempFile("toml", Resources.toByteArray(configFile));
     parseCommand("--permissions-nodes-config-file", permToml.toString());
 
@@ -448,7 +448,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   public void accountPermissioningTomlFileWithNoPermissionsEnabledMustNotError()
       throws IOException {
 
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_TOML);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_TOML);
     final Path permToml = createTempFile("toml", Resources.toByteArray(configFile));
     parseCommand("--permissions-accounts-config-file", permToml.toString());
 
@@ -477,7 +477,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             URI.create(
                 "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.169.0.9:4568"));
 
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_TOML);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_TOML);
     final Path permToml = createTempFile("toml", Resources.toByteArray(configFile));
 
     final String whitelistedNodesString =
@@ -508,7 +508,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   @Test
   public void accountPermissioningTomlPathMustUseOption() throws IOException {
 
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_TOML);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_TOML);
     final Path permToml = createTempFile("toml", Resources.toByteArray(configFile));
 
     parseCommand(
@@ -538,7 +538,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     assumeTrue(isFullInstantiation());
 
     // Load a TOML that configures literally everything (except permissioning TOML config)
-    final URL configFile = Resources.getResource("everything_config.toml");
+    final URL configFile = this.getClass().getResource("/everything_config.toml");
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     // Parse it.
@@ -581,7 +581,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   public void noOverrideDefaultValuesIfKeyIsNotPresentInConfigFile() throws IOException {
     assumeTrue(isFullInstantiation());
 
-    final String configFile = Resources.getResource("partial_config.toml").getFile();
+    final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
 
     parseCommand("--config-file", configFile);
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
@@ -2129,7 +2129,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   @Test
   public void mustUseEnclaveUriAndOptions() throws IOException {
-    final URL configFile = Resources.getResource("orion_publickey.pub");
+    final URL configFile = this.getClass().getResource("/orion_publickey.pub");
 
     parseCommand(
         "--privacy-enabled",

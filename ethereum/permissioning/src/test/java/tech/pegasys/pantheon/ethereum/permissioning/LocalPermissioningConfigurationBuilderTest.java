@@ -28,23 +28,23 @@ import org.junit.Test;
 
 public class LocalPermissioningConfigurationBuilderTest {
 
-  private static final String PERMISSIONING_CONFIG_VALID = "permissioning_config.toml";
+  private static final String PERMISSIONING_CONFIG_VALID = "/permissioning_config.toml";
   private static final String PERMISSIONING_CONFIG_ACCOUNT_WHITELIST_ONLY =
-      "permissioning_config_account_whitelist_only.toml";
+      "/permissioning_config_account_whitelist_only.toml";
   private static final String PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY =
-      "permissioning_config_node_whitelist_only.toml";
+      "/permissioning_config_node_whitelist_only.toml";
   private static final String PERMISSIONING_CONFIG_INVALID_ENODE =
-      "permissioning_config_invalid_enode.toml";
+      "/permissioning_config_invalid_enode.toml";
   private static final String PERMISSIONING_CONFIG_INVALID_ACCOUNT =
-      "permissioning_config_invalid_account.toml";
+      "/permissioning_config_invalid_account.toml";
   private static final String PERMISSIONING_CONFIG_EMPTY_WHITELISTS =
-      "permissioning_config_empty_whitelists.toml";
+      "/permissioning_config_empty_whitelists.toml";
   private static final String PERMISSIONING_CONFIG_ABSENT_WHITELISTS =
-      "permissioning_config_absent_whitelists.toml";
+      "/permissioning_config_absent_whitelists.toml";
   private static final String PERMISSIONING_CONFIG_UNRECOGNIZED_KEY =
-      "permissioning_config_unrecognized_key.toml";
+      "/permissioning_config_unrecognized_key.toml";
   private static final String PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY_MULTILINE =
-      "permissioning_config_node_whitelist_only_multiline.toml";
+      "/permissioning_config_node_whitelist_only_multiline.toml";
 
   private final String VALID_NODE_ID =
       "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
@@ -54,7 +54,7 @@ public class LocalPermissioningConfigurationBuilderTest {
     final String uri = "enode://" + VALID_NODE_ID + "@192.168.0.9:4567";
     final String uri2 = "enode://" + VALID_NODE_ID + "@192.169.0.9:4568";
 
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_VALID);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_VALID);
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     LocalPermissioningConfiguration permissioningConfiguration = permissioningConfig(toml);
@@ -71,7 +71,7 @@ public class LocalPermissioningConfigurationBuilderTest {
   public void permissioningConfigWithOnlyNodeWhitelistSet() throws Exception {
     final String uri = "enode://" + VALID_NODE_ID + "@192.168.0.9:4567";
 
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY);
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     LocalPermissioningConfiguration permissioningConfiguration =
@@ -85,7 +85,7 @@ public class LocalPermissioningConfigurationBuilderTest {
 
   @Test
   public void permissioningConfigWithOnlyAccountWhitelistSet() throws Exception {
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_ACCOUNT_WHITELIST_ONLY);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_ACCOUNT_WHITELIST_ONLY);
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     LocalPermissioningConfiguration permissioningConfiguration =
@@ -100,7 +100,7 @@ public class LocalPermissioningConfigurationBuilderTest {
 
   @Test
   public void permissioningConfigWithInvalidAccount() throws Exception {
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_INVALID_ACCOUNT);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_INVALID_ACCOUNT);
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     final Throwable thrown = catchThrowable(() -> accountOnlyPermissioningConfig(toml));
@@ -112,7 +112,7 @@ public class LocalPermissioningConfigurationBuilderTest {
 
   @Test
   public void permissioningConfigWithInvalidEnode() throws Exception {
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_INVALID_ENODE);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_INVALID_ENODE);
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     final Throwable thrown = catchThrowable(() -> nodeOnlyPermissioningConfig(toml));
@@ -124,7 +124,7 @@ public class LocalPermissioningConfigurationBuilderTest {
 
   @Test
   public void permissioningConfigWithEmptyWhitelistMustNotError() throws Exception {
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_EMPTY_WHITELISTS);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_EMPTY_WHITELISTS);
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     LocalPermissioningConfiguration permissioningConfiguration = permissioningConfig(toml);
@@ -137,7 +137,7 @@ public class LocalPermissioningConfigurationBuilderTest {
 
   @Test
   public void permissioningConfigWithAbsentWhitelistMustThrowException() throws Exception {
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_ABSENT_WHITELISTS);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_ABSENT_WHITELISTS);
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     final Throwable thrown = catchThrowable(() -> permissioningConfig(toml));
@@ -147,7 +147,7 @@ public class LocalPermissioningConfigurationBuilderTest {
 
   @Test
   public void permissioningConfigWithUnrecognizedKeyMustThrowException() throws Exception {
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_UNRECOGNIZED_KEY);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_UNRECOGNIZED_KEY);
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     final Throwable thrown = catchThrowable(() -> accountOnlyPermissioningConfig(toml));
@@ -170,7 +170,7 @@ public class LocalPermissioningConfigurationBuilderTest {
 
   @Test
   public void permissioningConfigFromFileMustSetFilePath() throws Exception {
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_VALID);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_VALID);
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     LocalPermissioningConfiguration permissioningConfiguration =
@@ -196,7 +196,7 @@ public class LocalPermissioningConfigurationBuilderTest {
   @Test
   public void permissioningConfigFromMultilineFileMustParseCorrectly() throws Exception {
     final URL configFile =
-        Resources.getResource(PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY_MULTILINE);
+        this.getClass().getResource(PERMISSIONING_CONFIG_NODE_WHITELIST_ONLY_MULTILINE);
     final LocalPermissioningConfiguration permissioningConfiguration =
         PermissioningConfigurationBuilder.permissioningConfiguration(
             true, configFile.getPath(), false, configFile.getPath());

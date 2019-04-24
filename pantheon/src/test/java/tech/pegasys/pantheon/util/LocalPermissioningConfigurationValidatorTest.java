@@ -30,8 +30,8 @@ import org.junit.Test;
 public class LocalPermissioningConfigurationValidatorTest {
 
   static final String PERMISSIONING_CONFIG_ROPSTEN_BOOTNODES =
-      "permissioning_config_ropsten_bootnodes.toml";
-  static final String PERMISSIONING_CONFIG = "permissioning_config.toml";
+      "/permissioning_config_ropsten_bootnodes.toml";
+  static final String PERMISSIONING_CONFIG = "/permissioning_config.toml";
 
   @Test
   public void ropstenWithNodesWhitelistOptionWhichDoesIncludeRopstenBootnodesMustNotError()
@@ -39,7 +39,7 @@ public class LocalPermissioningConfigurationValidatorTest {
 
     EthNetworkConfig ethNetworkConfig = EthNetworkConfig.getNetworkConfig(NetworkName.ROPSTEN);
 
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG_ROPSTEN_BOOTNODES);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_ROPSTEN_BOOTNODES);
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, Resources.toByteArray(configFile));
 
@@ -56,7 +56,7 @@ public class LocalPermissioningConfigurationValidatorTest {
 
     EthNetworkConfig ethNetworkConfig = EthNetworkConfig.getNetworkConfig(NetworkName.ROPSTEN);
 
-    final URL configFile = Resources.getResource(PERMISSIONING_CONFIG);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG);
     final Path toml = Files.createTempFile("toml", "");
     toml.toFile().deleteOnExit();
     Files.write(toml, Resources.toByteArray(configFile));

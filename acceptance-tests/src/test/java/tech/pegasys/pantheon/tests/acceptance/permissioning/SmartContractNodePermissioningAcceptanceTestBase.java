@@ -31,7 +31,7 @@ class SmartContractNodePermissioningAcceptanceTestBase extends AcceptanceTestBas
   private final SmartContractNodePermissioningConditions smartContractNodePermissioningConditions;
 
   private static final String CONTRACT_ADDRESS = "0x0000000000000000000000000000000000009999";
-  private static final String GENESIS_FILE = "permissioning/simple_permissioning_genesis.json";
+  private static final String GENESIS_FILE = "/permissioning/simple_permissioning_genesis.json";
 
   protected final Cluster permissionedCluster;
 
