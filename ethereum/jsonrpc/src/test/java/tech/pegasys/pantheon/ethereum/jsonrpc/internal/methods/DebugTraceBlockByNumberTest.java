@@ -12,6 +12,9 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -28,11 +31,11 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.BlockTracer;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.TransactionTrace;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.DebugTraceTransactionResult;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionProcessor;
 import tech.pegasys.pantheon.ethereum.vm.ExceptionalHaltReason;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Optional;
@@ -57,8 +60,8 @@ public class DebugTraceBlockByNumberTest {
 
   @Test
   public void shouldReturnCorrectResponse() {
-    Long blockNumber = 1L;
-    final Object[] params = new Object[] {blockNumber};
+    final long blockNumber = 1L;
+    final Object[] params = new Object[] {Long.toHexString(blockNumber)};
     final JsonRpcRequest request = new JsonRpcRequest("2.0", "debug_traceBlockByNumber", params);
 
     final TraceFrame traceFrame =
@@ -79,10 +82,10 @@ public class DebugTraceBlockByNumberTest {
     final TransactionTrace transaction1Trace = mock(TransactionTrace.class);
     final TransactionTrace transaction2Trace = mock(TransactionTrace.class);
 
-    BlockTrace blockTrace = new BlockTrace(Arrays.asList(transaction1Trace, transaction2Trace));
+    final BlockTrace blockTrace = new BlockTrace(asList(transaction1Trace, transaction2Trace));
 
-    when(transaction1Trace.getTraceFrames()).thenReturn(Arrays.asList(traceFrame));
-    when(transaction2Trace.getTraceFrames()).thenReturn(Arrays.asList(traceFrame));
+    when(transaction1Trace.getTraceFrames()).thenReturn(singletonList(traceFrame));
+    when(transaction2Trace.getTraceFrames()).thenReturn(singletonList(traceFrame));
     when(transaction1Trace.getResult()).thenReturn(transaction1Result);
     when(transaction2Trace.getResult()).thenReturn(transaction2Result);
     when(transaction1Result.getOutput()).thenReturn(BytesValue.fromHexString("1234"));
@@ -92,7 +95,14 @@ public class DebugTraceBlockByNumberTest {
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugTraceBlockByNumber.response(request);
-    final Collection<?> result = (Collection<?>) response.getResult();
-    assertEquals(2, result.size());
+    final Collection<DebugTraceTransactionResult> result = getResult(response);
+    assertThat(result)
+        .usingFieldByFieldElementComparator()
+        .isEqualTo(DebugTraceTransactionResult.of(blockTrace.getTransactionTraces()));
+  }
+
+  @SuppressWarnings("unchecked")
+  private Collection<DebugTraceTransactionResult> getResult(final JsonRpcSuccessResponse response) {
+    return (Collection<DebugTraceTransactionResult>) response.getResult();
   }
 }

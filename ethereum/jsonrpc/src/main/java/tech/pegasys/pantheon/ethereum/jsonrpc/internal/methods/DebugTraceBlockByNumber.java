@@ -15,20 +15,18 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.debug.TraceOptions;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.BlockParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.TransactionTraceParams;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.BlockTrace;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.BlockTracer;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.DebugTraceTransactionResult;
 import tech.pegasys.pantheon.ethereum.vm.DebugOperationTracer;
 
-import java.util.Collection;
 import java.util.Optional;
 
-public class DebugTraceBlockByNumber implements JsonRpcMethod {
+public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
 
   private final JsonRpcParameter parameters;
   private final BlockTracer blockTracer;
@@ -38,6 +36,7 @@ public class DebugTraceBlockByNumber implements JsonRpcMethod {
       final JsonRpcParameter parameters,
       final BlockTracer blockTracer,
       final BlockchainQueries blockchain) {
+    super(blockchain, parameters);
     this.parameters = parameters;
     this.blockTracer = blockTracer;
     this.blockchain = blockchain;
@@ -49,8 +48,12 @@ public class DebugTraceBlockByNumber implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final Long blockNumber = parameters.required(request.getParams(), 0, Long.class);
+  protected BlockParameter blockParameter(final JsonRpcRequest request) {
+    return parameters.required(request.getParams(), 0, BlockParameter.class);
+  }
+
+  @Override
+  protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
     final Optional<Hash> blockHash = this.blockchain.getBlockHashByNumber(blockNumber);
     final TraceOptions traceOptions =
         parameters
@@ -58,16 +61,13 @@ public class DebugTraceBlockByNumber implements JsonRpcMethod {
             .map(TransactionTraceParams::traceOptions)
             .orElse(TraceOptions.DEFAULT);
 
-    final Collection<DebugTraceTransactionResult> results =
-        blockHash
-            .map(
-                hash ->
-                    blockTracer
-                        .trace(hash, new DebugOperationTracer(traceOptions))
-                        .map(BlockTrace::getTransactionTraces)
-                        .map(DebugTraceTransactionResult::of))
-            .orElse(null)
-            .get();
-    return new JsonRpcSuccessResponse(request.getId(), results);
+    return blockHash
+        .flatMap(
+            hash ->
+                blockTracer
+                    .trace(hash, new DebugOperationTracer(traceOptions))
+                    .map(BlockTrace::getTransactionTraces)
+                    .map(DebugTraceTransactionResult::of))
+        .orElse(null);
   }
 }
