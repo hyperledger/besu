@@ -109,7 +109,7 @@ public class EeaGetTransactionReceiptTest {
           .value(Wei.ZERO)
           .payload(BytesValue.wrap("EnclaveKey".getBytes(UTF_8)))
           .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
-          .chainId(2018)
+          .chainId(BigInteger.valueOf(2018))
           .signAndBuild(KEY_PAIR);
 
   private final Hash mockTransactionHash =

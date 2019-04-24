@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 
+import java.math.BigInteger;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -25,7 +26,7 @@ import com.google.common.collect.ImmutableMap;
 
 public class ReferenceTestProtocolSchedules {
 
-  private static final int CHAIN_ID = 1;
+  private static final BigInteger CHAIN_ID = BigInteger.ONE;
 
   public static ReferenceTestProtocolSchedules create() {
     final ImmutableMap.Builder<String, ProtocolSchedule<Void>> builder = ImmutableMap.builder();

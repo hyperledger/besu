@@ -12,7 +12,9 @@
  */
 package tech.pegasys.pantheon.config;
 
+import java.math.BigInteger;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 
@@ -27,7 +29,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong byzantiumBlockNumber = OptionalLong.empty();
   private OptionalLong constantinopleBlockNumber = OptionalLong.empty();
   private OptionalLong constantinopleFixBlockNumber = OptionalLong.empty();
-  private OptionalInt chainId = OptionalInt.empty();
+  private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
 
   @Override
@@ -111,14 +113,14 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalInt getChainId() {
+  public Optional<BigInteger> getChainId() {
     return chainId;
   }
 
   @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
-    builder.put("chainId", getChainId().getAsInt());
+    getChainId().ifPresent(chainId -> builder.put("chainId", chainId));
     getHomesteadBlockNumber().ifPresent(l -> builder.put("homesteadBlock", l));
     getDaoForkBlock()
         .ifPresent(
@@ -187,8 +189,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return this;
   }
 
-  public StubGenesisConfigOptions chainId(final int chainId) {
-    this.chainId = OptionalInt.of(chainId);
+  public StubGenesisConfigOptions chainId(final BigInteger chainId) {
+    this.chainId = Optional.ofNullable(chainId);
     return this;
   }
 

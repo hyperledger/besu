@@ -48,6 +48,10 @@ public class Quantity {
     return uint256ToHex(UInt256.of(value));
   }
 
+  public static String create(final BigInteger value) {
+    return uint256ToHex(UInt256.of(value));
+  }
+
   public static String format(final BigInteger input) {
     return formatMinimalValue(input.toString(16));
   }

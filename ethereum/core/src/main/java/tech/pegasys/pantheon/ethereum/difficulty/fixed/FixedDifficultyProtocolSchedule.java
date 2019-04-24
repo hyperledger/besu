@@ -12,8 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.difficulty.fixed;
 
-import static tech.pegasys.pantheon.ethereum.mainnet.MainnetTransactionValidator.NO_CHAIN_ID;
-
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -26,7 +24,6 @@ public class FixedDifficultyProtocolSchedule {
       final GenesisConfigOptions config, final PrivacyParameters privacyParameters) {
     return new ProtocolScheduleBuilder<>(
             config,
-            NO_CHAIN_ID,
             builder -> builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config)),
             privacyParameters)
         .createProtocolSchedule();

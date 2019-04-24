@@ -84,7 +84,7 @@ public class EeaSendRawTransactionTest {
               Byte.valueOf("0")),
           BytesValue.fromHexString("0x"),
           Address.wrap(BytesValue.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
-          0);
+          Optional.empty());
 
   @Mock private TransactionPool transactionPool;
 
