@@ -25,12 +25,10 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.File;
 import java.math.BigInteger;
-import java.net.URL;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import com.google.common.io.Resources;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -247,8 +245,11 @@ public class SECP256K1Test {
 
   @Test
   public void fileContainsValidPrivateKey() throws Exception {
-    final URL url = Resources.getResource("tech/pegasys/pantheon/crypto/validPrivateKey.txt");
-    final File file = new File(url.getFile());
+    final File file =
+        new File(
+            this.getClass()
+                .getResource("/tech/pegasys/pantheon/crypto/validPrivateKey.txt")
+                .toURI());
     final SECP256K1.PrivateKey privateKey = SECP256K1.PrivateKey.load(file);
     assertEquals(
         BytesValue.fromHexString(
