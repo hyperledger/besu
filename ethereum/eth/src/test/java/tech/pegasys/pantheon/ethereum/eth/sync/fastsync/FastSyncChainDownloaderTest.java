@@ -39,6 +39,7 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.LockSupport;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -73,6 +74,11 @@ public class FastSyncChainDownloaderTest {
             new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
+  }
+
+  @After
+  public void tearDown() {
+    ethProtocolManager.stop();
   }
 
   private ChainDownloader downloader(
