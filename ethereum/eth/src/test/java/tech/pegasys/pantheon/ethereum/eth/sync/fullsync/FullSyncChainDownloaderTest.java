@@ -58,6 +58,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -108,6 +109,11 @@ public class FullSyncChainDownloaderTest {
             new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
+  }
+
+  @After
+  public void tearDown() {
+    ethProtocolManager.stop();
   }
 
   private ChainDownloader downloader(final SynchronizerConfiguration syncConfig) {

@@ -29,6 +29,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -58,6 +59,11 @@ public class FullSyncDownloaderTest {
             new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
+  }
+
+  @After
+  public void tearDown() {
+    ethProtocolManager.stop();
   }
 
   private FullSyncDownloader<Void> downloader(final SynchronizerConfiguration syncConfig) {

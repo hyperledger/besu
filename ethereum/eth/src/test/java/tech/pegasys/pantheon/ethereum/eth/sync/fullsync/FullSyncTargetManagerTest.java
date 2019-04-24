@@ -36,6 +36,7 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -73,6 +74,11 @@ public class FullSyncTargetManagerTest {
             protocolContext,
             ethContext,
             new NoOpMetricsSystem());
+  }
+
+  @After
+  public void tearDown() {
+    ethProtocolManager.stop();
   }
 
   @Test
