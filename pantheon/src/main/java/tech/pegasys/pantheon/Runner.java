@@ -73,6 +73,13 @@ public class Runner implements AutoCloseable {
       if (networkRunner.getNetwork().isP2pEnabled()) {
         pantheonController.getSynchronizer().start();
       }
+      vertx.setPeriodic(
+          TimeUnit.MINUTES.toMillis(1),
+          time ->
+              pantheonController
+                  .getTransactionPool()
+                  .getPendingTransactions()
+                  .evictOldTransactions());
       jsonRpc.ifPresent(service -> waitForServiceToStart("jsonRpc", service.start()));
       websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.start()));
       metrics.ifPresent(service -> waitForServiceToStart("metrics", service.start()));

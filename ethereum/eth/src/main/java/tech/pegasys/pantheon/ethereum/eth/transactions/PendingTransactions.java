@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.eth.transactions;
 
 import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.toList;
 
 import tech.pegasys.pantheon.ethereum.core.AccountTransactionOrder;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -70,8 +71,14 @@ public class PendingTransactions {
   private final Counter localTransactionAddedCounter;
   private final Counter remoteTransactionAddedCounter;
 
+  private final long transactionEvictionIntervalMs;
+
   public PendingTransactions(
-      final int maxPendingTransactions, final Clock clock, final MetricsSystem metricsSystem) {
+      final long transactionEvictionIntervalMs,
+      final int maxPendingTransactions,
+      final Clock clock,
+      final MetricsSystem metricsSystem) {
+    this.transactionEvictionIntervalMs = transactionEvictionIntervalMs;
     this.maxPendingTransactions = maxPendingTransactions;
     this.clock = clock;
     final LabelledMetric<Counter> transactionAddedCounter =
@@ -90,6 +97,19 @@ public class PendingTransactions {
             "Count of transactions removed from the transaction pool",
             "source",
             "operation");
+  }
+
+  public void evictOldTransactions() {
+    synchronized (pendingTransactions) {
+      final Instant removeTransactionsBefore =
+          clock.instant().minusMillis(transactionEvictionIntervalMs);
+      final List<TransactionInfo> transactionsToRemove =
+          prioritizedTransactions.stream()
+              .filter(
+                  transaction -> transaction.getAddedToPoolAt().isBefore(removeTransactionsBefore))
+              .collect(toList());
+      transactionsToRemove.forEach(transaction -> removeTransaction(transaction.getTransaction()));
+    }
   }
 
   List<Transaction> getLocalTransactions() {
