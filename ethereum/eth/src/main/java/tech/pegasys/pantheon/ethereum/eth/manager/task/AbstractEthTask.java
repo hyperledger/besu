@@ -41,22 +41,29 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
   private final Collection<CompletableFuture<?>> subTaskFutures = new ConcurrentLinkedDeque<>();
 
   protected AbstractEthTask(final MetricsSystem metricsSystem) {
+    this(buildOperationTimer(metricsSystem));
+  }
+
+  protected AbstractEthTask(final OperationTimer taskTimer) {
+    this.taskTimer = taskTimer;
+  }
+
+  private static OperationTimer buildOperationTimer(final MetricsSystem metricsSystem) {
     final LabelledMetric<OperationTimer> ethTasksTimer =
         metricsSystem.createLabelledTimer(
             MetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName");
     if (ethTasksTimer == NoOpMetricsSystem.NO_OP_LABELLED_1_OPERATION_TIMER) {
-      taskTimer =
-          () ->
-              new OperationTimer.TimingContext() {
-                final Stopwatch stopwatch = Stopwatch.createStarted();
+      return () ->
+          new OperationTimer.TimingContext() {
+            final Stopwatch stopwatch = Stopwatch.createStarted();
 
-                @Override
-                public double stopTimer() {
-                  return stopwatch.elapsed(TimeUnit.MILLISECONDS) / 1000.0;
-                }
-              };
+            @Override
+            public double stopTimer() {
+              return stopwatch.elapsed(TimeUnit.MILLISECONDS) / 1000.0;
+            }
+          };
     } else {
-      taskTimer = ethTasksTimer.labels(getClass().getSimpleName());
+      return ethTasksTimer.labels(AbstractEthTask.class.getSimpleName());
     }
   }
 
