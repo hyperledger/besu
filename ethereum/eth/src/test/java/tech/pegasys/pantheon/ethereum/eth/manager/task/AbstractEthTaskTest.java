@@ -13,21 +13,28 @@
 package tech.pegasys.pantheon.ethereum.eth.manager.task;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
-import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
-import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.LockSupport;
 
 import com.google.common.collect.Lists;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class AbstractEthTaskTest {
+
+  @Mock private OperationTimer mockOperationTimer;
+  @Mock private OperationTimer.TimingContext mockTimingContext;
 
   @Test
   public void shouldCancelAllIncompleteSubtasksWhenMultipleIncomplete() {
@@ -83,35 +90,16 @@ public class AbstractEthTaskTest {
   }
 
   @Test
-  public void shouldTakeTimeToExecuteNoOpMetrics() {
-    final AbstractEthTask<Void> waitTask =
-        new AbstractEthTask<Void>(new NoOpMetricsSystem()) {
+  public void shouldInvokeTimingMethods() {
+    final AbstractEthTask<Void> task =
+        new AbstractEthTask<Void>(mockOperationTimer) {
           @Override
-          protected void executeTask() {
-            LockSupport.parkNanos(1_000_000);
-          }
+          protected void executeTask() {}
         };
-
-    waitTask.run();
-
-    assertThat(waitTask.getTaskTimeInSec()).isGreaterThan(0.0);
-  }
-
-  @Test
-  public void shouldTakeTimeToExecutePrometheusMetrics() {
-    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
-    metricsConfiguration.setEnabled(true);
-    final AbstractEthTask<Void> waitTask =
-        new AbstractEthTask<Void>(PrometheusMetricsSystem.init(metricsConfiguration)) {
-          @Override
-          protected void executeTask() {
-            LockSupport.parkNanos(1_000_000);
-          }
-        };
-
-    waitTask.run();
-
-    assertThat(waitTask.getTaskTimeInSec()).isGreaterThan(0.0);
+    when(mockOperationTimer.startTimer()).thenReturn(mockTimingContext);
+    task.run();
+    verify(mockOperationTimer).startTimer();
+    verify(mockTimingContext).stopTimer();
   }
 
   private class EthTaskWithMultipleSubtasks extends AbstractEthTask<Void> {
