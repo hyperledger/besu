@@ -23,10 +23,12 @@ import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
 public class EthHashMinerExecutorTest {
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
@@ -34,12 +36,16 @@ public class EthHashMinerExecutorTest {
     final MiningParameters miningParameters =
         new MiningParametersTestBuilder().coinbase(null).build();
 
+    final PendingTransactions pendingTransactions =
+        new PendingTransactions(
+            TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem);
+
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(
             null,
             Executors.newCachedThreadPool(),
             null,
-            new PendingTransactions(1, TestClock.fixed(), metricsSystem),
+            pendingTransactions,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()));
 
@@ -52,12 +58,16 @@ public class EthHashMinerExecutorTest {
   public void settingCoinbaseToNullThrowsException() {
     final MiningParameters miningParameters = new MiningParametersTestBuilder().build();
 
+    final PendingTransactions pendingTransactions =
+        new PendingTransactions(
+            TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem);
+
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(
             null,
             Executors.newCachedThreadPool(),
             null,
-            new PendingTransactions(1, TestClock.fixed(), metricsSystem),
+            pendingTransactions,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()));
 

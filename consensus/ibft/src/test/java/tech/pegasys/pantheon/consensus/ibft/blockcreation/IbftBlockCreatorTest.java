@@ -46,11 +46,13 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
 public class IbftBlockCreatorTest {
+  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
@@ -81,6 +83,10 @@ public class IbftBlockCreatorTest {
             createInMemoryWorldStateArchive(),
             setupContextWithValidators(initialValidatorList));
 
+    final PendingTransactions pendingTransactions =
+        new PendingTransactions(
+            TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem);
+
     final IbftBlockCreator blockCreator =
         new IbftBlockCreator(
             initialValidatorList.get(0),
@@ -92,7 +98,7 @@ public class IbftBlockCreatorTest {
                         0,
                         initialValidatorList)
                     .encode(),
-            new PendingTransactions(1, TestClock.fixed(), metricsSystem),
+            pendingTransactions,
             protContext,
             protocolSchedule,
             parentGasLimit -> parentGasLimit,
