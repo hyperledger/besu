@@ -10,12 +10,23 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea;
+package tech.pegasys.pantheon.tests.acceptance.dsl.privacy;
 
-public class EeaTransactions {
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaGetTransactionCountTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaSendRawTransactionTransaction;
 
-  public EeaGetTransactionReceiptTransaction getTransactionReceipt(final String transactionHash) {
-    return new EeaGetTransactionReceiptTransaction(transactionHash);
+public class PrivateTransactions {
+
+  public PrivateTransactions() {}
+
+  public EeaSendRawTransactionTransaction deployPrivateSmartContract(
+      final String signedRawPrivateTransaction) {
+    return new EeaSendRawTransactionTransaction(signedRawPrivateTransaction);
+  }
+
+  public EeaSendRawTransactionTransaction createPrivateRawTransaction(
+      final String signedRawPrivateTransaction) {
+    return new EeaSendRawTransactionTransaction(signedRawPrivateTransaction);
   }
 
   public EeaGetTransactionCountTransaction getTransactionCount(

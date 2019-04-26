@@ -18,11 +18,12 @@ import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransaction;
+import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
 
-public class PrivateTransactionFactory {
+public class PrivateTransactionBuilder {
 
   private static BytesValue EVENT_EMITTER_CONSTRUCTOR =
       BytesValue.fromHexString(
@@ -51,56 +52,85 @@ public class PrivateTransactionFactory {
 
   private static BytesValue GET_FUNCTION_CALL = BytesValue.fromHexString("0x3fa4f245");
 
-  public PrivateTransaction createContractTransaction(
-      final long nonce,
-      final Address from,
-      final BytesValue privateFrom,
-      final List<BytesValue> privateFor,
-      final SECP256K1.KeyPair keypair) {
-    return privateTransaction(
-        nonce, null, EVENT_EMITTER_CONSTRUCTOR, from, privateFrom, privateFor, keypair);
+  public enum TransactionType {
+    CREATE_CONTRACT,
+    STORE,
+    GET
   }
 
-  public PrivateTransaction storeFunctionTransaction(
-      final long nonce,
-      final Address to,
-      final Address from,
-      final BytesValue privateFrom,
-      final List<BytesValue> privateFor,
-      final SECP256K1.KeyPair keypair) {
-    return privateTransaction(nonce, to, SET_FUNCTION_CALL, from, privateFrom, privateFor, keypair);
+  public static PrivateTransactionBuilder.Builder builder() {
+    return new PrivateTransactionBuilder.Builder();
   }
 
-  public PrivateTransaction getFunctionTransaction(
-      final long nonce,
-      final Address to,
-      final Address from,
-      final BytesValue privateFrom,
-      final List<BytesValue> privateFor,
-      final SECP256K1.KeyPair keypair) {
-    return privateTransaction(nonce, to, GET_FUNCTION_CALL, from, privateFrom, privateFor, keypair);
-  }
+  public static class Builder {
+    long nonce;
+    Address from;
+    Address to;
+    BytesValue privateFrom;
+    List<BytesValue> privateFor;
+    SECP256K1.KeyPair keyPair;
 
-  public PrivateTransaction privateTransaction(
-      final long nonce,
-      final Address to,
-      final BytesValue payload,
-      final Address from,
-      final BytesValue privateFrom,
-      final List<BytesValue> privateFor,
-      final SECP256K1.KeyPair keypair) {
-    return PrivateTransaction.builder()
-        .nonce(nonce)
-        .gasPrice(Wei.of(1000))
-        .gasLimit(3000000)
-        .to(to)
-        .value(Wei.ZERO)
-        .payload(payload)
-        .sender(from)
-        .chainId(2018)
-        .privateFrom(privateFrom)
-        .privateFor(privateFor)
-        .restriction(BytesValue.wrap("restricted".getBytes(UTF_8)))
-        .signAndBuild(keypair);
+    public Builder nonce(final long nonce) {
+      this.nonce = nonce;
+      return this;
+    }
+
+    public Builder from(final Address from) {
+      this.from = from;
+      return this;
+    }
+
+    public Builder to(final Address to) {
+      this.to = to;
+      return this;
+    }
+
+    public Builder privateFrom(final BytesValue privateFrom) {
+      this.privateFrom = privateFrom;
+      return this;
+    }
+
+    public Builder privateFor(final List<BytesValue> privateFor) {
+      this.privateFor = privateFor;
+      return this;
+    }
+
+    public Builder keyPair(final SECP256K1.KeyPair keyPair) {
+      this.keyPair = keyPair;
+      return this;
+    }
+
+    public String build(final TransactionType type) {
+      BytesValue payload;
+      switch (type) {
+        case CREATE_CONTRACT:
+          payload = EVENT_EMITTER_CONSTRUCTOR;
+          break;
+        case STORE:
+          payload = SET_FUNCTION_CALL;
+          break;
+        case GET:
+          payload = GET_FUNCTION_CALL;
+          break;
+        default:
+          throw new IllegalStateException("Unexpected value: " + type);
+      }
+      return RLP.encode(
+              PrivateTransaction.builder()
+                      .nonce(nonce)
+                      .gasPrice(Wei.of(1000))
+                      .gasLimit(63992)
+                      .to(to)
+                      .value(Wei.ZERO)
+                      .payload(payload)
+                      .sender(from)
+                      .chainId(2018)
+                      .privateFrom(privateFrom)
+                      .privateFor(privateFor)
+                      .restriction(BytesValue.wrap("restricted".getBytes(UTF_8)))
+                      .signAndBuild(keyPair)
+                  ::writeTo)
+          .toString();
+    }
   }
 }

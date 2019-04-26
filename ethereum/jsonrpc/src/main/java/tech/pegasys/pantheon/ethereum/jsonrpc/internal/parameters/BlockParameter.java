@@ -70,6 +70,6 @@ public class BlockParameter {
     EARLIEST,
     LATEST,
     PENDING,
-    NUMERIC;
+    NUMERIC
   }
 }
