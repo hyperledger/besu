@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.results;
 
-import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.JsonGetter;
 
 public class PendingTransactionsStatisticsResult {
 
@@ -27,17 +27,17 @@ public class PendingTransactionsStatisticsResult {
     this.remoteCount = remoteCount;
   }
 
-  @JsonValue
+  @JsonGetter
   public long getMaxSize() {
     return maxSize;
   }
 
-  @JsonValue
+  @JsonGetter
   public long getLocalCount() {
     return localCount;
   }
 
-  @JsonValue
+  @JsonGetter
   public long getRemoteCount() {
     return remoteCount;
   }

@@ -73,6 +73,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.NetPeerCount;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.NetServices;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.NetVersion;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.RpcModules;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.TxPoolPantheonStatistics;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.TxPoolPantheonTransactions;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.Web3ClientVersion;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.Web3Sha3;
@@ -286,7 +287,9 @@ public class JsonRpcMethodsFactory {
     }
     if (rpcApis.contains(RpcApis.TX_POOL)) {
       addMethods(
-          enabledMethods, new TxPoolPantheonTransactions(transactionPool.getPendingTransactions()));
+          enabledMethods,
+          new TxPoolPantheonTransactions(transactionPool.getPendingTransactions()),
+          new TxPoolPantheonStatistics(transactionPool.getPendingTransactions()));
     }
     if (rpcApis.contains(RpcApis.PERM)) {
       addMethods(
