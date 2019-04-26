@@ -118,7 +118,7 @@ public enum JsonRpcError {
   public static JsonRpcError fromJson(
       @JsonProperty("code") final int code, @JsonProperty("message") final String message) {
     for (final JsonRpcError error : JsonRpcError.values()) {
-      if (error.getCode() == code) {
+      if (error.code == code && error.message.equals(message)) {
         return error;
       }
     }
