@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.fullsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.spy;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
@@ -62,7 +61,7 @@ public class IncrementerTest {
     metricsSystem = PrometheusMetricsSystem.init(metricsConfiguration);
 
     final BlockchainSetupUtil<Void> localBlockchainSetup = BlockchainSetupUtil.forTesting();
-    localBlockchain = spy(localBlockchainSetup.getBlockchain());
+    localBlockchain = localBlockchainSetup.getBlockchain();
     final BlockchainSetupUtil<Void> otherBlockchainSetup = BlockchainSetupUtil.forTesting();
     otherBlockchain = otherBlockchainSetup.getBlockchain();
 

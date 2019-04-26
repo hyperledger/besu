@@ -14,6 +14,9 @@ package tech.pegasys.pantheon.ethereum.eth.sync;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -26,6 +29,7 @@ import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator.BlockOptions;
+import tech.pegasys.pantheon.ethereum.core.BlockImporter;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthMessages;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
@@ -41,6 +45,7 @@ import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockMessage;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.PendingBlocks;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.uint.UInt256;
@@ -77,7 +82,7 @@ public class BlockPropagationManagerTest {
   @Before
   public void setup() {
     blockchainUtil = BlockchainSetupUtil.forTesting();
-    blockchain = spy(blockchainUtil.getBlockchain());
+    blockchain = blockchainUtil.getBlockchain();
     protocolSchedule = blockchainUtil.getProtocolSchedule();
     final ProtocolContext<Void> tempProtocolContext = blockchainUtil.getProtocolContext();
     protocolContext =
@@ -290,6 +295,22 @@ public class BlockPropagationManagerTest {
 
   @Test
   public void handlesDuplicateAnnouncements() {
+    final ProtocolSchedule<Void> stubProtocolSchedule = spy(protocolSchedule);
+    final ProtocolSpec<Void> stubProtocolSpec = spy(protocolSchedule.getByBlockNumber(2));
+    final BlockImporter<Void> stubBlockImporter = spy(stubProtocolSpec.getBlockImporter());
+    doReturn(stubProtocolSpec).when(stubProtocolSchedule).getByBlockNumber(anyLong());
+    doReturn(stubBlockImporter).when(stubProtocolSpec).getBlockImporter();
+    final BlockPropagationManager<Void> blockPropagationManager =
+        new BlockPropagationManager<>(
+            syncConfig,
+            stubProtocolSchedule,
+            protocolContext,
+            ethProtocolManager.ethContext(),
+            syncState,
+            pendingBlocks,
+            metricsSystem,
+            blockBroadcaster);
+
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
 
@@ -320,11 +341,26 @@ public class BlockPropagationManagerTest {
     peer.respondWhile(responder, peer::hasOutstandingRequests);
 
     assertThat(blockchain.contains(nextBlock.getHash())).isTrue();
-    verify(blockchain, times(1)).appendBlock(any(), any());
+    verify(stubBlockImporter, times(1)).importBlock(eq(protocolContext), eq(nextBlock), any());
   }
 
   @Test
   public void handlesPendingDuplicateAnnouncements() {
+    final ProtocolSchedule<Void> stubProtocolSchedule = spy(protocolSchedule);
+    final ProtocolSpec<Void> stubProtocolSpec = spy(protocolSchedule.getByBlockNumber(2));
+    final BlockImporter<Void> stubBlockImporter = spy(stubProtocolSpec.getBlockImporter());
+    doReturn(stubProtocolSpec).when(stubProtocolSchedule).getByBlockNumber(anyLong());
+    doReturn(stubBlockImporter).when(stubProtocolSpec).getBlockImporter();
+    final BlockPropagationManager<Void> blockPropagationManager =
+        new BlockPropagationManager<>(
+            syncConfig,
+            stubProtocolSchedule,
+            protocolContext,
+            ethProtocolManager.ethContext(),
+            syncState,
+            pendingBlocks,
+            metricsSystem,
+            blockBroadcaster);
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
 
@@ -352,7 +388,7 @@ public class BlockPropagationManagerTest {
     peer.respondWhile(responder, peer::hasOutstandingRequests);
 
     assertThat(blockchain.contains(nextBlock.getHash())).isTrue();
-    verify(blockchain, times(1)).appendBlock(any(), any());
+    verify(stubBlockImporter, times(1)).importBlock(eq(protocolContext), eq(nextBlock), any());
   }
 
   @Test

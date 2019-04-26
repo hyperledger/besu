@@ -48,6 +48,9 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
 
   private final Subscribers<BlockAddedObserver> blockAddedObservers = new Subscribers<>();
 
+  private volatile BlockHeader chainHeader;
+  private volatile UInt256 totalDifficulty;
+
   public DefaultMutableBlockchain(
       final Block genesisBlock,
       final BlockchainStorage blockchainStorage,
@@ -55,6 +58,10 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
     checkNotNull(genesisBlock);
     this.blockchainStorage = blockchainStorage;
     this.setGenesis(genesisBlock);
+
+    final Hash chainHead = blockchainStorage.getChainHead().get();
+    chainHeader = blockchainStorage.getBlockHeader(chainHead).get();
+    totalDifficulty = blockchainStorage.getTotalDifficulty(chainHead).get();
 
     metricsSystem.createGauge(
         MetricCategory.BLOCKCHAIN,
@@ -72,25 +79,22 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
 
   @Override
   public ChainHead getChainHead() {
-    return blockchainStorage
-        .getChainHead()
-        .flatMap(h -> blockchainStorage.getTotalDifficulty(h).map(td -> new ChainHead(h, td)))
-        .get();
+    return new ChainHead(chainHeader.getHash(), totalDifficulty);
   }
 
   @Override
   public Hash getChainHeadHash() {
-    return blockchainStorage.getChainHead().get();
+    return chainHeader.getHash();
   }
 
   @Override
   public long getChainHeadBlockNumber() {
-    // Head should always be set, so we can call get()
-    return blockchainStorage
-        .getChainHead()
-        .flatMap(blockchainStorage::getBlockHeader)
-        .map(BlockHeader::getNumber)
-        .get();
+    return chainHeader.getNumber();
+  }
+
+  @Override
+  public BlockHeader getChainHeadHeader() {
+    return chainHeader;
   }
 
   @Override
@@ -171,6 +175,10 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
     final BlockAddedEvent blockAddedEvent = updateCanonicalChainData(updater, block, td);
 
     updater.commit();
+    if (blockAddedEvent.isNewCanonicalHead()) {
+      chainHeader = block.getHeader();
+      totalDifficulty = td;
+    }
 
     return blockAddedEvent;
   }
@@ -368,11 +376,17 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
     }
   }
 
-  protected boolean blockIsAlreadyTracked(final Block block) {
+  private boolean blockIsAlreadyTracked(final Block block) {
+    if (block.getHeader().getParentHash().equals(chainHeader.getHash())) {
+      // If this block builds on our chain head it would have a higher TD and be the chain head
+      // but since it isn't we mustn't have imported it yet.
+      // Saves a db read for the most common case
+      return false;
+    }
     return blockchainStorage.getBlockHeader(block.getHash()).isPresent();
   }
 
-  protected boolean blockIsConnected(final Block block) {
+  private boolean blockIsConnected(final Block block) {
     return blockchainStorage.getBlockHeader(block.getHeader().getParentHash()).isPresent();
   }
 

@@ -13,13 +13,8 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.fullsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assumptions.assumeThatObject;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -58,6 +53,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -96,7 +92,7 @@ public class FullSyncChainDownloaderTest {
   public void setupTest() {
     gen = new BlockDataGenerator();
     localBlockchainSetup = BlockchainSetupUtil.forTesting();
-    localBlockchain = spy(localBlockchainSetup.getBlockchain());
+    localBlockchain = localBlockchainSetup.getBlockchain();
     otherBlockchainSetup = BlockchainSetupUtil.forTesting();
     otherBlockchain = otherBlockchainSetup.getBlockchain();
 
@@ -229,7 +225,6 @@ public class FullSyncChainDownloaderTest {
     peer.respondWhileOtherThreadsWork(responder, peer::hasOutstandingRequests);
 
     assertThat(syncState.syncTarget()).isNotPresent();
-    verify(localBlockchain, times(0)).appendBlock(any(), any());
   }
 
   @Test
@@ -565,12 +560,18 @@ public class FullSyncChainDownloaderTest {
     assertThat(syncState.syncTarget()).isPresent();
     assertThat(syncState.syncTarget().get().peer()).isEqualTo(bestPeer.getEthPeer());
 
-    int count = 0;
     while (localBlockchain.getChainHeadBlockNumber() < bestPeerChainHead) {
-      if (count > 10_000) {
-        fail("Did not reach chain head soon enough");
-      }
-      count++;
+      // Wait until there is a request to respond to (or we reached chain head).
+      // If we don't get a new request within 30 seconds the test will fail because we've probably
+      // stalled.
+      Awaitility.await()
+          .atMost(30, TimeUnit.SECONDS)
+          .until(
+              () ->
+                  bestPeer.hasOutstandingRequests()
+                      || otherPeers.stream().anyMatch(RespondingEthPeer::hasOutstandingRequests)
+                      || localBlockchain.getChainHeadBlockNumber() >= bestPeerChainHead);
+
       // Check that any requests for checkpoint headers are only sent to the best peer
       final long checkpointRequestsToOtherPeers =
           otherPeers.stream()
