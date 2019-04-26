@@ -1059,10 +1059,6 @@ Print version information and exit.
 
 ## Fast Sync Options 
 
-!!! important 
-    Support for fast sync is currently experimental. Fast sync is in active development. The fast sync options are available
-    but hidden on the command line. 
-
 ### sync-mode
 
 ```bash tab="Syntax"
