@@ -19,6 +19,7 @@ import java.util.Collections;
 import org.assertj.core.util.Lists;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.Request;
+import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 
 public class EeaJsonRpcRequestFactory {
 
@@ -44,5 +45,14 @@ public class EeaJsonRpcRequestFactory {
         Lists.newArrayList(txHash),
         web3jService,
         PrivateTransactionReceiptResponse.class);
+  }
+
+  public Request<?, EthGetTransactionCount> eeaGetTransactionCount(
+      final String accountAddress, final String privacyGroupId) {
+    return new Request<>(
+        "eea_getTransactionCount",
+        Lists.newArrayList(accountAddress, privacyGroupId),
+        web3jService,
+        EthGetTransactionCount.class);
   }
 }

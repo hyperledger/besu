@@ -15,12 +15,14 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
@@ -42,14 +44,17 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = LogManager.getLogger();
 
+  private final BlockchainQueries blockchain;
   private final PrivateTransactionHandler privateTransactionHandler;
   private final TransactionPool transactionPool;
   private final JsonRpcParameter parameters;
 
   public EeaSendRawTransaction(
+      final BlockchainQueries blockchain,
       final PrivateTransactionHandler privateTransactionHandler,
       final TransactionPool transactionPool,
       final JsonRpcParameter parameters) {
+    this.blockchain = blockchain;
     this.privateTransactionHandler = privateTransactionHandler;
     this.transactionPool = transactionPool;
     this.parameters = parameters;
@@ -101,10 +106,15 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
                 request.getId(), convertTransactionInvalidReason(errorReason)));
   }
 
+  protected long getNonce(final Address address) {
+    return blockchain.getTransactionCount(address, blockchain.headBlockNumber());
+  }
+
   private Transaction handlePrivateTransaction(final PrivateTransaction privateTransaction)
       throws InvalidJsonRpcRequestException {
     try {
-      return privateTransactionHandler.handle(privateTransaction);
+      return privateTransactionHandler.handle(
+          privateTransaction, () -> getNonce(privateTransaction.getSender()));
     } catch (final IOException e) {
       throw new InvalidJsonRpcRequestException("Unable to handle private transaction", e);
     }

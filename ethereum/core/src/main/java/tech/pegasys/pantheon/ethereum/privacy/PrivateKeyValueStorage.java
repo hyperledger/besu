@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.privacy;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import tech.pegasys.pantheon.ethereum.core.Log;
 import tech.pegasys.pantheon.ethereum.core.LogSeries;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
@@ -27,8 +29,8 @@ public class PrivateKeyValueStorage implements PrivateTransactionStorage {
 
   private final KeyValueStorage keyValueStorage;
 
-  private static final BytesValue LOGS_PREFIX = BytesValue.of(1);
-  private static final BytesValue EVENTS_PREFIX = BytesValue.of(2);
+  private static final BytesValue EVENTS_KEY_SUFFIX = BytesValue.of("EVENTS".getBytes(UTF_8));
+  private static final BytesValue OUTPUT_KEY_SUFFIX = BytesValue.of("OUTPUT".getBytes(UTF_8));
 
   public PrivateKeyValueStorage(final KeyValueStorage keyValueStorage) {
     this.keyValueStorage = keyValueStorage;
@@ -36,26 +38,26 @@ public class PrivateKeyValueStorage implements PrivateTransactionStorage {
 
   @Override
   public Optional<List<Log>> getEvents(final Bytes32 transactionHash) {
-    return get(LOGS_PREFIX, transactionHash).map(this::rlpDecodeLog);
+    return get(transactionHash, EVENTS_KEY_SUFFIX).map(this::rlpDecodeLog);
   }
 
   @Override
   public Optional<BytesValue> getOutput(final Bytes32 transactionHash) {
-    return get(EVENTS_PREFIX, transactionHash);
+    return get(transactionHash, OUTPUT_KEY_SUFFIX);
   }
 
   @Override
   public boolean isPrivateStateAvailable(final Bytes32 transactionHash) {
-    return get(LOGS_PREFIX, transactionHash).isPresent()
-        || get(EVENTS_PREFIX, transactionHash).isPresent();
+    return get(transactionHash, EVENTS_KEY_SUFFIX).isPresent()
+        || get(transactionHash, OUTPUT_KEY_SUFFIX).isPresent();
   }
 
   private List<Log> rlpDecodeLog(final BytesValue bytes) {
     return RLP.input(bytes).readList(Log::readFrom);
   }
 
-  private Optional<BytesValue> get(final BytesValue prefix, final BytesValue key) {
-    return keyValueStorage.get(BytesValues.concatenate(prefix, key));
+  private Optional<BytesValue> get(final BytesValue key, final BytesValue keySuffix) {
+    return keyValueStorage.get(BytesValues.concatenate(key, keySuffix));
   }
 
   @Override
@@ -74,19 +76,19 @@ public class PrivateKeyValueStorage implements PrivateTransactionStorage {
     @Override
     public PrivateTransactionStorage.Updater putTransactionLogs(
         final Bytes32 transactionHash, final LogSeries logs) {
-      set(LOGS_PREFIX, transactionHash, RLP.encode(logs::writeTo));
+      set(transactionHash, EVENTS_KEY_SUFFIX, RLP.encode(logs::writeTo));
       return this;
     }
 
     @Override
     public PrivateTransactionStorage.Updater putTransactionResult(
         final Bytes32 transactionHash, final BytesValue events) {
-      set(EVENTS_PREFIX, transactionHash, events);
+      set(transactionHash, OUTPUT_KEY_SUFFIX, events);
       return this;
     }
 
-    private void set(final BytesValue prefix, final BytesValue key, final BytesValue value) {
-      transaction.put(BytesValues.concatenate(prefix, key), value);
+    private void set(final BytesValue key, final BytesValue keySuffix, final BytesValue value) {
+      transaction.put(BytesValues.concatenate(key, keySuffix), value);
     }
 
     @Override
