@@ -399,6 +399,48 @@ None
       "result" : "enode://6a63160d0ccef5e4986d270937c6c8d60a9a4d3b25471cda960900d037c61988ea14da67f69dbfb3497c465d0de1f001bb95598f74b68a39a5156a608c42fa1b@127.0.0.1:30303"
     }
     ```
+    
+### net_services
+
+Returns enabled services (for example, `jsonrpc`) and the host and port for each service.
+
+**Parameters**
+
+None
+
+**Returns**
+
+`result` : *objects* - Enabled services 
+
+!!! example
+    ```bash tab="curl HTTP request"
+    curl -X POST --data '{"jsonrpc":"2.0","method":"net_services","params":[],"id":1}' http://127.0.0.1:8545
+    ```
+    
+    ```bash tab="wscat WS request"
+    {"jsonrpc":"2.0","method":"net_services","params":[],"id":1}
+    ```
+    
+    ```json tab="JSON result"
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+            "jsonrpc": {
+                "host": "127.0.0.1",
+                "port": "8545"
+            },
+            "p2p" : {
+                "host" : "127.0.0.1",
+                "port" : "30303"
+            },
+            "metrics" : {
+                "host": "127.0.0.1",
+                "port": "9545"
+            }
+        }
+    }
+    ```
 	
 ## Eth Methods
 
