@@ -106,7 +106,7 @@ public class PrivateTransactionHandlerTest {
   @Test
   public void validTransactionThroughHandler() throws IOException {
     final Transaction transactionResponse =
-        privateTransactionHandler.handle(VALID_PRIVATE_TRANSACTION);
+        privateTransactionHandler.handle(VALID_PRIVATE_TRANSACTION, () -> 0L);
 
     assertThat(transactionResponse.contractAddress())
         .isEqualTo(PUBLIC_TRANSACTION.contractAddress());
@@ -118,6 +118,6 @@ public class PrivateTransactionHandlerTest {
 
   @Test(expected = IOException.class)
   public void enclaveIsDownWhileHandling() throws IOException {
-    brokenPrivateTransactionHandler.handle(VALID_PRIVATE_TRANSACTION);
+    brokenPrivateTransactionHandler.handle(VALID_PRIVATE_TRANSACTION, () -> 0L);
   }
 }

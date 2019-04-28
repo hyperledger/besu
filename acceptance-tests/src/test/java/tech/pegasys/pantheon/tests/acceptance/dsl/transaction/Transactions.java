@@ -19,7 +19,6 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account.TransferTr
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account.TransferTransactionBuilder;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account.TransferTransactionSet;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaGetTransactionReceiptTransaction;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaSendRawTransactionTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthGetTransactionCountTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthGetTransactionReceiptTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermAddAccountsToWhitelistTransaction;
@@ -89,16 +88,6 @@ public class Transactions {
         .amount(Amount.ether(amount))
         .nonce(nonce)
         .build();
-  }
-
-  public EeaSendRawTransactionTransaction deployPrivateSmartContract(
-      final String signedRawPrivateTransaction) {
-    return new EeaSendRawTransactionTransaction(signedRawPrivateTransaction);
-  }
-
-  public EeaSendRawTransactionTransaction createPrivateRawTransaction(
-      final String signedRawPrivateTransaction) {
-    return new EeaSendRawTransactionTransaction(signedRawPrivateTransaction);
   }
 
   public TransferTransactionSet createIncrementalTransfers(

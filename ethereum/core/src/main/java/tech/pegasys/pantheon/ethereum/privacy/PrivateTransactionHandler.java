@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValues;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Charsets;
@@ -56,8 +57,10 @@ public class PrivateTransactionHandler {
     this.nodeKeyPair = nodeKeyPair;
   }
 
-  public Transaction handle(final PrivateTransaction privateTransaction) throws IOException {
-    LOG.trace("Handling private transaction");
+  public Transaction handle(
+      final PrivateTransaction privateTransaction, final Supplier<Long> nonceSupplier)
+      throws IOException {
+    LOG.trace("Handling private transaction {}", privateTransaction.toString());
     final SendRequest sendRequest = createSendRequest(privateTransaction);
     final SendResponse sendResponse;
     try {
@@ -68,7 +71,8 @@ public class PrivateTransactionHandler {
       throw e;
     }
 
-    return createPrivacyMarkerTransaction(sendResponse.getKey(), privateTransaction);
+    return createPrivacyMarkerTransactionWithNonce(
+        sendResponse.getKey(), privateTransaction, nonceSupplier.get());
   }
 
   private SendRequest createSendRequest(final PrivateTransaction privateTransaction) {
@@ -91,11 +95,13 @@ public class PrivateTransactionHandler {
         privateFor);
   }
 
-  private Transaction createPrivacyMarkerTransaction(
-      final String transactionEnclaveKey, final PrivateTransaction privateTransaction) {
+  private Transaction createPrivacyMarkerTransactionWithNonce(
+      final String transactionEnclaveKey,
+      final PrivateTransaction privateTransaction,
+      final Long nonce) {
 
     return Transaction.builder()
-        .nonce(privateTransaction.getNonce())
+        .nonce(nonce)
         .gasPrice(privateTransaction.getGasPrice())
         .gasLimit(privateTransaction.getGasLimit())
         .to(privacyPrecompileAddress)
