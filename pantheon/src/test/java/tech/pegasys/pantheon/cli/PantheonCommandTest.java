@@ -812,7 +812,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final GenesisConfigFile genesisConfigFile =
         GenesisConfigFile.fromConfig(EthNetworkConfig.getNetworkConfig(MAINNET).getGenesisConfig());
     assertThat(genesisConfigFile.getConfigOptions().getChainId().isPresent()).isTrue();
-    assertThat(genesisConfigFile.getConfigOptions().getChainId().getAsInt())
+    assertThat(genesisConfigFile.getConfigOptions().getChainId().get().intValueExact())
         .isEqualTo(EthNetworkConfig.getNetworkConfig(MAINNET).getNetworkId());
   }
 

@@ -41,6 +41,7 @@ import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -114,7 +115,7 @@ public class JsonRpcHttpServiceLoginTest {
     supportedCapabilities.add(EthProtocol.ETH63);
 
     final StubGenesisConfigOptions genesisConfigOptions =
-        new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID);
+        new StubGenesisConfigOptions().constantinopleBlock(0).chainId(BigInteger.valueOf(CHAIN_ID));
     rpcMethods =
         spy(
             new JsonRpcMethodsFactory()
@@ -388,7 +389,7 @@ public class JsonRpcHttpServiceLoginTest {
       assertThat(token).isNotNull();
 
       JsonRpcMethod ethAccounts = new EthAccounts();
-      JsonRpcMethod netVersion = new NetVersion(123);
+      JsonRpcMethod netVersion = new NetVersion(Optional.of(BigInteger.valueOf(123)));
       JsonRpcMethod ethBlockNumber = new EthBlockNumber(blockchainQueries);
       JsonRpcMethod web3Sha3 = new Web3Sha3();
       JsonRpcMethod web3ClientVersion = new Web3ClientVersion("777");

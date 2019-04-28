@@ -31,6 +31,9 @@ import tech.pegasys.pantheon.ethereum.core.TransactionTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
 
+import java.math.BigInteger;
+import java.util.Optional;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -44,14 +47,19 @@ public class MainnetTransactionValidatorTest {
   @Mock private GasCalculator gasCalculator;
 
   private final Transaction basicTransaction =
-      new TransactionTestFixture().chainId(1).createTransaction(senderKeys);
+      new TransactionTestFixture()
+          .chainId(Optional.of(BigInteger.ONE))
+          .createTransaction(senderKeys);
 
   @Test
   public void shouldRejectTransactionIfIntrinsicGasExceedsGasLimit() {
     final MainnetTransactionValidator validator =
-        new MainnetTransactionValidator(gasCalculator, false);
+        new MainnetTransactionValidator(gasCalculator, false, Optional.empty());
     final Transaction transaction =
-        new TransactionTestFixture().gasLimit(10).chainId(0).createTransaction(senderKeys);
+        new TransactionTestFixture()
+            .gasLimit(10)
+            .chainId(Optional.empty())
+            .createTransaction(senderKeys);
     when(gasCalculator.transactionIntrinsicGasCost(transaction)).thenReturn(Gas.of(50));
 
     assertThat(validator.validate(transaction))
@@ -61,7 +69,7 @@ public class MainnetTransactionValidatorTest {
   @Test
   public void shouldRejectTransactionWhenTransactionHasChainIdAndValidatorDoesNot() {
     final MainnetTransactionValidator validator =
-        new MainnetTransactionValidator(gasCalculator, false);
+        new MainnetTransactionValidator(gasCalculator, false, Optional.empty());
     assertThat(validator.validate(basicTransaction))
         .isEqualTo(ValidationResult.invalid(REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED));
   }
@@ -69,7 +77,7 @@ public class MainnetTransactionValidatorTest {
   @Test
   public void shouldRejectTransactionWhenTransactionHasIncorrectChainId() {
     final MainnetTransactionValidator validator =
-        new MainnetTransactionValidator(gasCalculator, false, 2);
+        new MainnetTransactionValidator(gasCalculator, false, Optional.of(BigInteger.valueOf(2)));
     assertThat(validator.validate(basicTransaction))
         .isEqualTo(ValidationResult.invalid(WRONG_CHAIN_ID));
   }
@@ -77,7 +85,7 @@ public class MainnetTransactionValidatorTest {
   @Test
   public void shouldRejectTransactionWhenSenderAccountDoesNotExist() {
     final MainnetTransactionValidator validator =
-        new MainnetTransactionValidator(gasCalculator, false, 1);
+        new MainnetTransactionValidator(gasCalculator, false, Optional.of(BigInteger.ONE));
     assertThat(validator.validateForSender(basicTransaction, null, false))
         .isEqualTo(ValidationResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE));
   }
@@ -85,7 +93,7 @@ public class MainnetTransactionValidatorTest {
   @Test
   public void shouldRejectTransactionWhenTransactionNonceBelowAccountNonce() {
     final MainnetTransactionValidator validator =
-        new MainnetTransactionValidator(gasCalculator, false, 1);
+        new MainnetTransactionValidator(gasCalculator, false, Optional.of(BigInteger.ONE));
 
     final Account account = accountWithNonce(basicTransaction.getNonce() + 1);
     assertThat(validator.validateForSender(basicTransaction, account, false))
@@ -96,7 +104,7 @@ public class MainnetTransactionValidatorTest {
   public void
       shouldRejectTransactionWhenTransactionNonceAboveAccountNonceAndFutureNonceIsNotAllowed() {
     final MainnetTransactionValidator validator =
-        new MainnetTransactionValidator(gasCalculator, false, 1);
+        new MainnetTransactionValidator(gasCalculator, false, Optional.of(BigInteger.ONE));
 
     final Account account = accountWithNonce(basicTransaction.getNonce() - 1);
     assertThat(validator.validateForSender(basicTransaction, account, false))
@@ -107,7 +115,7 @@ public class MainnetTransactionValidatorTest {
   public void
       shouldAcceptTransactionWhenTransactionNonceAboveAccountNonceAndFutureNonceIsAllowed() {
     final MainnetTransactionValidator validator =
-        new MainnetTransactionValidator(gasCalculator, false, 1);
+        new MainnetTransactionValidator(gasCalculator, false, Optional.of(BigInteger.ONE));
 
     final Account account = accountWithNonce(basicTransaction.getNonce() - 1);
     assertThat(validator.validateForSender(basicTransaction, account, true))
@@ -117,7 +125,7 @@ public class MainnetTransactionValidatorTest {
   @Test
   public void shouldRejectTransactionWhenNonceExceedsMaximumAllowedNonce() {
     final MainnetTransactionValidator validator =
-        new MainnetTransactionValidator(gasCalculator, false, 1);
+        new MainnetTransactionValidator(gasCalculator, false, Optional.of(BigInteger.ONE));
 
     final Transaction transaction =
         new TransactionTestFixture().nonce(11).createTransaction(senderKeys);
@@ -130,7 +138,7 @@ public class MainnetTransactionValidatorTest {
   @Test
   public void transactionWithNullSenderCanBeValidIfGasPriceAndValueIsZero() {
     final MainnetTransactionValidator validator =
-        new MainnetTransactionValidator(gasCalculator, false, 1);
+        new MainnetTransactionValidator(gasCalculator, false, Optional.of(BigInteger.ONE));
 
     final TransactionTestFixture builder = new TransactionTestFixture();
     final KeyPair senderKeyPair = KeyPair.generate();

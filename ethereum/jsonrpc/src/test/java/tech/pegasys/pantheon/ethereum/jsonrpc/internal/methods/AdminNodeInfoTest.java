@@ -32,6 +32,7 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -57,7 +58,7 @@ public class AdminNodeInfoTest {
           "0x0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807");
   private final ChainHead testChainHead = new ChainHead(Hash.EMPTY, UInt256.ONE);
   private final GenesisConfigOptions genesisConfigOptions =
-      new StubGenesisConfigOptions().chainId(2019);
+      new StubGenesisConfigOptions().chainId(BigInteger.valueOf(2019));
   private final DefaultPeer defaultPeer = new DefaultPeer(nodeId, "1.2.3.4", 7890, 30303);
 
   @Before

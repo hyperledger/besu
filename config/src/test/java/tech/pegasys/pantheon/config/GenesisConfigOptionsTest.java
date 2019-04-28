@@ -16,6 +16,7 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Map;
 
@@ -128,8 +129,9 @@ public class GenesisConfigOptionsTest {
 
   @Test
   public void shouldGetChainIdWhenSpecified() {
-    final GenesisConfigOptions config = fromConfigOptions(singletonMap("chainId", 32));
-    assertThat(config.getChainId()).hasValue(32);
+    final GenesisConfigOptions config =
+        fromConfigOptions(singletonMap("chainId", BigInteger.valueOf(32)));
+    assertThat(config.getChainId()).hasValue(BigInteger.valueOf(32));
   }
 
   @Test

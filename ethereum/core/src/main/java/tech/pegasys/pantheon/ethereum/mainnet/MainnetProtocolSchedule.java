@@ -18,12 +18,13 @@ import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.difficulty.fixed.FixedDifficultyCalculators;
 import tech.pegasys.pantheon.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 
+import java.math.BigInteger;
 import java.util.function.Function;
 
 /** Provides {@link ProtocolSpec} lookups for mainnet hard forks. */
 public class MainnetProtocolSchedule {
 
-  public static final int DEFAULT_CHAIN_ID = 1;
+  public static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
 
   public static ProtocolSchedule<Void> create() {
     return fromConfig(GenesisConfigFile.mainnet().getConfigOptions(), PrivacyParameters.DEFAULT);

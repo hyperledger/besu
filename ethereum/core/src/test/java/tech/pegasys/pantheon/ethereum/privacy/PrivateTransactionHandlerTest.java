@@ -79,7 +79,7 @@ public class PrivateTransactionHandlerTest {
           .value(Wei.ZERO)
           .payload(BytesValue.wrap(TRANSACTION_KEY.getBytes(Charsets.UTF_8)))
           .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
-          .chainId(2018)
+          .chainId(BigInteger.valueOf(2018))
           .signAndBuild(KEY_PAIR);
 
   Enclave mockEnclave() throws IOException {
