@@ -353,7 +353,7 @@ public class NodeLocalConfigPermissioningControllerTest {
   @Test
   public void whenRemovingBootnodeShouldReturnRemoveBootnodeError() {
     NodesWhitelistResult expected =
-        new NodesWhitelistResult(WhitelistOperationResult.ERROR_BOOTNODE_CANNOT_BE_REMOVED);
+        new NodesWhitelistResult(WhitelistOperationResult.ERROR_FIXED_NODE_CANNOT_BE_REMOVED);
     bootnodesList.add(EnodeURL.fromString(enode1));
     controller.addNodes(Lists.newArrayList(enode1, enode2));
 

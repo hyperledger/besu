@@ -37,7 +37,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   private static final Logger LOG = LogManager.getLogger();
 
   private LocalPermissioningConfiguration configuration;
-  private final List<EnodeURL> bootnodes;
+  private final List<EnodeURL> fixedNodes;
   private final EnodeURL selfEnode;
   private final List<EnodeURL> nodesWhitelist = new ArrayList<>();
   private final WhitelistPersistor whitelistPersistor;
@@ -46,22 +46,22 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
 
   public NodeLocalConfigPermissioningController(
       final LocalPermissioningConfiguration permissioningConfiguration,
-      final List<EnodeURL> bootnodes,
+      final List<EnodeURL> fixedNodes,
       final EnodeURL selfEnode) {
     this(
         permissioningConfiguration,
-        bootnodes,
+        fixedNodes,
         selfEnode,
         new WhitelistPersistor(permissioningConfiguration.getNodePermissioningConfigFilePath()));
   }
 
   public NodeLocalConfigPermissioningController(
       final LocalPermissioningConfiguration configuration,
-      final List<EnodeURL> bootnodes,
+      final List<EnodeURL> fixedNodes,
       final EnodeURL selfEnode,
       final WhitelistPersistor whitelistPersistor) {
     this.configuration = configuration;
-    this.bootnodes = bootnodes;
+    this.fixedNodes = fixedNodes;
     this.selfEnode = selfEnode;
     this.whitelistPersistor = whitelistPersistor;
     readNodesFromConfig(configuration);
@@ -115,9 +115,9 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
     final List<EnodeURL> peers =
         enodeURLs.stream().map(EnodeURL::fromString).collect(Collectors.toList());
 
-    boolean anyBootnode = peers.stream().anyMatch(bootnodes::contains);
+    boolean anyBootnode = peers.stream().anyMatch(fixedNodes::contains);
     if (anyBootnode) {
-      return new NodesWhitelistResult(WhitelistOperationResult.ERROR_BOOTNODE_CANNOT_BE_REMOVED);
+      return new NodesWhitelistResult(WhitelistOperationResult.ERROR_FIXED_NODE_CANNOT_BE_REMOVED);
     }
 
     for (EnodeURL peer : peers) {
