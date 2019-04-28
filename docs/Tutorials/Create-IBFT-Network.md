@@ -101,7 +101,7 @@ Copy the following genesis definition to a file called `ibftGenesis.json` and sa
 ```json
 {
   "config": {
-    "chainId": 1981,
+    "chainId": 2018,
     "constantinoplefixblock": 0,
     "ibft2": {
       "blockperiodseconds": 2,
