@@ -73,6 +73,7 @@ import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -81,6 +82,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.vertx.core.Vertx;
 
@@ -408,15 +410,19 @@ public class RunnerBuilder {
       final List<EnodeURL> bootnodesAsEnodeURLs,
       final Synchronizer synchronizer,
       final TransactionSimulator transactionSimulator) {
+    Collection<EnodeURL> fixedNodes = getFixedNodes(bootnodesAsEnodeURLs, staticNodes);
     return permissioningConfiguration.map(
         config ->
             new NodePermissioningControllerFactory()
-                .create(
-                    config,
-                    synchronizer,
-                    bootnodesAsEnodeURLs,
-                    getSelfEnode(),
-                    transactionSimulator));
+                .create(config, synchronizer, fixedNodes, getSelfEnode(), transactionSimulator));
+  }
+
+  @VisibleForTesting
+  public static Collection<EnodeURL> getFixedNodes(
+      final Collection<EnodeURL> someFixedNodes, final Collection<EnodeURL> moreFixedNodes) {
+    Collection<EnodeURL> fixedNodes = new ArrayList<>(someFixedNodes);
+    fixedNodes.addAll(moreFixedNodes);
+    return fixedNodes;
   }
 
   private FilterManager createFilterManager(

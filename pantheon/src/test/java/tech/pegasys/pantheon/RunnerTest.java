@@ -52,6 +52,8 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -77,6 +79,24 @@ import org.junit.rules.TemporaryFolder;
 public final class RunnerTest {
 
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
+
+  @Test
+  public void getFixedNodes() {
+    EnodeURL staticNode =
+        EnodeURL.fromString(
+            "enode://8f4b88336cc40ef2516d8b27df812e007fb2384a61e93635f1899051311344f3dcdbb49a4fe49a79f66d2f589a9f282e8cc4f1d7381e8ef7e4fcc6b0db578c77@127.0.0.1:30301");
+    EnodeURL bootnode =
+        EnodeURL.fromString(
+            "enode://8f4b88336cc40ef2516d8b27df812e007fb2384a61e93635f1899051311344f3dcdbb49a4fe49a79f66d2f589a9f282e8cc4f1d7381e8ef7e4fcc6b0db578c77@127.0.0.1:30302");
+    final List<EnodeURL> bootnodes = new ArrayList<EnodeURL>();
+    bootnodes.add(bootnode);
+    Collection<EnodeURL> staticNodes = new ArrayList<EnodeURL>();
+    staticNodes.add(staticNode);
+    Collection<EnodeURL> fixedNodes = RunnerBuilder.getFixedNodes(bootnodes, staticNodes);
+    assertThat(fixedNodes).containsExactlyInAnyOrder(staticNode, bootnode);
+    // bootnodes should be unchanged
+    assertThat(bootnodes).containsExactly(bootnode);
+  }
 
   @Test
   public void fullSyncFromGenesis() throws Exception {

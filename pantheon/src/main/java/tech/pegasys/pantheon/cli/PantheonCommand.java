@@ -1219,8 +1219,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   }
 
   private Set<EnodeURL> loadStaticNodes() throws IOException {
-    final String staticNodesFilname = "static-nodes.json";
-    final Path staticNodesPath = dataDir().resolve(staticNodesFilname);
+    final String staticNodesFilename = "static-nodes.json";
+    final Path staticNodesPath = dataDir().resolve(staticNodesFilename);
 
     return StaticNodesParser.fromPath(staticNodesPath);
   }

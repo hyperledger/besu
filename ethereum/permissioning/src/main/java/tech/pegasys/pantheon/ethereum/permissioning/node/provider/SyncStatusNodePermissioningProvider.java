@@ -27,18 +27,18 @@ import java.util.OptionalLong;
 public class SyncStatusNodePermissioningProvider implements NodePermissioningProvider {
 
   private final Synchronizer synchronizer;
-  private final Collection<EnodeURL> bootnodes = new HashSet<>();
+  private final Collection<EnodeURL> fixedNodes = new HashSet<>();
   private OptionalLong syncStatusObserverId;
   private boolean hasReachedSync = false;
   private Optional<Runnable> hasReachedSyncCallback = Optional.empty();
 
   public SyncStatusNodePermissioningProvider(
-      final Synchronizer synchronizer, final Collection<EnodeURL> bootnodes) {
+      final Synchronizer synchronizer, final Collection<EnodeURL> fixedNodes) {
     checkNotNull(synchronizer);
     this.synchronizer = synchronizer;
     long id = this.synchronizer.observeSyncStatus(this::handleSyncStatusUpdate);
     this.syncStatusObserverId = OptionalLong.of(id);
-    this.bootnodes.addAll(bootnodes);
+    this.fixedNodes.addAll(fixedNodes);
   }
 
   private void handleSyncStatusUpdate(final SyncStatus syncStatus) {
@@ -74,7 +74,7 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
   }
 
   /**
-   * Before reaching a sync'd state, the node will only be allowed to talk to its bootnodes
+   * Before reaching a sync'd state, the node will only be allowed to talk to its fixedNodes
    * (outgoing connections). After reaching a sync'd state, it is expected that other providers will
    * check the permissions (most likely the smart contract based provider). That's why we always
    * return true after reaching a sync'd state.
@@ -89,7 +89,7 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
     if (hasReachedSync) {
       return true;
     } else {
-      return bootnodes.contains(destinationEnode);
+      return fixedNodes.contains(destinationEnode);
     }
   }
 
