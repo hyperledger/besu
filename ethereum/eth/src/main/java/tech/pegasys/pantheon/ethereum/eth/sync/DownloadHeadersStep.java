@@ -96,6 +96,7 @@ public class DownloadHeadersStep<C>
               checkpointRange.getStart().getNumber(),
               headerRequestSize,
               metricsSystem)
+          .assignPeer(checkpointRange.getSyncTarget())
           .run()
           .thenApply(PeerTaskResult::getResult);
     }

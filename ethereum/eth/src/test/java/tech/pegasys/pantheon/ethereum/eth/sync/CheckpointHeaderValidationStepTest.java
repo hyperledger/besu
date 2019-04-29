@@ -24,6 +24,7 @@ import static tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode.DETACH
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -44,6 +45,7 @@ public class CheckpointHeaderValidationStepTest {
   @Mock private ProtocolContext<Void> protocolContext;
   @Mock private BlockHeaderValidator<Void> headerValidator;
   @Mock private ValidationPolicy validationPolicy;
+  @Mock private EthPeer syncTarget;
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private CheckpointHeaderValidationStep<Void> validationStep;
 
@@ -51,7 +53,7 @@ public class CheckpointHeaderValidationStepTest {
   private final BlockHeader firstHeader = gen.header(11);
   private final CheckpointRangeHeaders rangeHeaders =
       new CheckpointRangeHeaders(
-          new CheckpointRange(checkpointStart, gen.header(13)),
+          new CheckpointRange(syncTarget, checkpointStart, gen.header(13)),
           asList(firstHeader, gen.header(12), gen.header(13)));
 
   @Before

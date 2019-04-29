@@ -13,11 +13,13 @@
 package tech.pegasys.pantheon.ethereum.eth.sync;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.blockchainResponder;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
@@ -42,6 +44,7 @@ public class DownloadHeadersStepTest {
   private static ProtocolContext<Void> protocolContext;
   private static MutableBlockchain blockchain;
 
+  private final EthPeer syncTarget = mock(EthPeer.class);
   private EthProtocolManager ethProtocolManager;
   private DownloadHeadersStep<Void> downloader;
   private CheckpointRange checkpointRange;
@@ -70,7 +73,7 @@ public class DownloadHeadersStepTest {
 
     checkpointRange =
         new CheckpointRange(
-            blockchain.getBlockHeader(1).get(), blockchain.getBlockHeader(10).get());
+            syncTarget, blockchain.getBlockHeader(1).get(), blockchain.getBlockHeader(10).get());
   }
 
   @Test
@@ -103,7 +106,8 @@ public class DownloadHeadersStepTest {
   @Test
   public void shouldReturnOnlyEndHeaderWhenCheckpointRangeHasLengthOfOne() {
     final CheckpointRange checkpointRange =
-        new CheckpointRange(blockchain.getBlockHeader(3).get(), blockchain.getBlockHeader(4).get());
+        new CheckpointRange(
+            syncTarget, blockchain.getBlockHeader(3).get(), blockchain.getBlockHeader(4).get());
 
     final CompletableFuture<CheckpointRangeHeaders> result = this.downloader.apply(checkpointRange);
 
@@ -113,8 +117,9 @@ public class DownloadHeadersStepTest {
 
   @Test
   public void shouldGetRemainingHeadersWhenRangeHasNoEnd() {
-    final CheckpointRange checkpointRange = new CheckpointRange(blockchain.getBlockHeader(3).get());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    final CheckpointRange checkpointRange =
+        new CheckpointRange(peer.getEthPeer(), blockchain.getBlockHeader(3).get());
 
     final CompletableFuture<CheckpointRangeHeaders> result = this.downloader.apply(checkpointRange);
 

@@ -106,7 +106,7 @@ public class CheckpointRangeSource implements Iterator<CheckpointRange> {
     }
     if (checkpointFetcher.nextCheckpointEndsAtChainHead(peer, lastRangeEnd)) {
       reachedEndOfCheckpoints = true;
-      return new CheckpointRange(lastRangeEnd);
+      return new CheckpointRange(peer, lastRangeEnd);
     }
     pendingCheckpointsRequest = Optional.of(getNextCheckpointHeaders());
     return getCheckpointRangeFromPendingRequest();
@@ -147,7 +147,7 @@ public class CheckpointRangeSource implements Iterator<CheckpointRange> {
         requestFailureCount = 0;
       }
       for (final BlockHeader checkpointHeader : newCheckpointHeaders) {
-        retrievedRanges.add(new CheckpointRange(lastRangeEnd, checkpointHeader));
+        retrievedRanges.add(new CheckpointRange(peer, lastRangeEnd, checkpointHeader));
         lastRangeEnd = checkpointHeader;
       }
       return retrievedRanges.poll();

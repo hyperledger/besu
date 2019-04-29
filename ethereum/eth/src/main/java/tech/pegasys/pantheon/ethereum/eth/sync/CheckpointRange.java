@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.eth.sync;
 import static java.lang.Math.toIntExact;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -22,17 +23,25 @@ import java.util.Optional;
 import com.google.common.base.MoreObjects;
 
 public class CheckpointRange {
+
+  private final EthPeer syncTarget;
   private final BlockHeader start;
   private final Optional<BlockHeader> end;
 
-  public CheckpointRange(final BlockHeader start) {
+  public CheckpointRange(final EthPeer syncTarget, final BlockHeader start) {
+    this.syncTarget = syncTarget;
     this.start = start;
     this.end = Optional.empty();
   }
 
-  public CheckpointRange(final BlockHeader start, final BlockHeader end) {
+  public CheckpointRange(final EthPeer syncTarget, final BlockHeader start, final BlockHeader end) {
+    this.syncTarget = syncTarget;
     this.start = start;
     this.end = Optional.of(end);
+  }
+
+  public EthPeer getSyncTarget() {
+    return syncTarget;
   }
 
   public BlockHeader getStart() {
@@ -60,16 +69,22 @@ public class CheckpointRange {
       return false;
     }
     final CheckpointRange that = (CheckpointRange) o;
-    return Objects.equals(start, that.start) && Objects.equals(end, that.end);
+    return Objects.equals(syncTarget, that.syncTarget)
+        && Objects.equals(start, that.start)
+        && Objects.equals(end, that.end);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(start, end);
+    return Objects.hash(syncTarget, start, end);
   }
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).add("start", start).add("end", end).toString();
+    return MoreObjects.toStringHelper(this)
+        .add("syncTarget", syncTarget)
+        .add("start", start)
+        .add("end", end)
+        .toString();
   }
 }
