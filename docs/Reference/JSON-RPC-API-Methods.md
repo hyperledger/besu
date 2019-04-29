@@ -2586,6 +2586,44 @@ None
     The `TXPOOL` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
     or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `TXPOOL` API methods.
 
+### txpool_pantheonStatistics
+
+Lists statistics about the node transaction pool. 
+
+**Parameters** 
+
+None
+
+**Returns** 
+
+`result` - Transaction pool statistics: 
+
+* `maxSize` - Maximum number of transactions kept in the transaction pool. Use the [`--tx-pool-max-size`](Pantheon-CLI-Syntax.md#tx-pool-max-size)
+ option to configure the maximum size. 
+* `localCount` - Number of transactions submitted directly to this node 
+* `remoteCount` - Number of transactions received from remote nodes. 
+
+!!! example
+    ```bash tab="curl HTTP request"
+    curl -X POST --data '{"jsonrpc":"2.0","method":"txpool_pantheonStatistics","params":[],"id":1}' http://127.0.0.1:8545
+    ```
+    
+    ```bash tab="wscat WS request"
+    {"jsonrpc":"2.0","method":"txpool_pantheonStatistics","params":[],"id":1}
+    ```
+    
+    ```json tab="JSON result"
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+            "maxSize": 4096,
+            "localCount": 1,
+            "remoteCount": 0
+        }
+    }
+    ``` 
+
 ### txpool_pantheonTransactions
 
 Lists transactions in the node transaction pool. 
