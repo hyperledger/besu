@@ -1,8 +1,35 @@
 # Changelog
 
-## 1.1 RC 
+## 1.1 
 
 ### Additions and Improvements 
+
+- [Privacy](https://docs.pantheon.pegasys.tech/en/latest/Privacy/Privacy-Overview/) 
+- [Onchain Permissioning](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Onchain-Permissioning/)
+- [Fastsync](https://docs.pantheon.pegasys.tech/en/latest/Reference/Pantheon-CLI-Syntax/#fast-sync-options) 
+- Documentation updates include: 
+    - Added JSON-RPC methods: 
+      - [`txpool_pantheonStatistics`](https://docs.pantheon.pegasys.tech/en/latest/Reference/JSON-RPC-API-Methods/#txpool_pantheonstatistics)
+      - [`net_services`](https://docs.pantheon.pegasys.tech/en/latest/Reference/JSON-RPC-API-Methods/#net_services)
+    - [Updated to indicate Docker image doesn't run on Windows](https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Run-Docker-Image/)
+    - [Added how to configure a free gas network](https://docs.pantheon.pegasys.tech/en/latest/Configuring-Pantheon/FreeGas/) 
+
+### Technical Improvements 
+
+- eea_getTransactionCount fails if account has not interacted with private state [\#1369](https://github.com/PegaSysEng/pantheon/pull/1369) 
+- Updating Orion to 0.9.0 [\#1360](https://github.com/PegaSysEng/pantheon/pull/1360)
+- Allow use of large chain IDs [\#1357](https://github.com/PegaSysEng/pantheon/pull/1357)
+- Allow private contract invocations in multiple privacy groups [\#1340](https://github.com/PegaSysEng/pantheon/pull/1340)
+- Missing p2p info when queried live [\#1338](https://github.com/PegaSysEng/pantheon/pull/1338)
+- Fix expose transaction statistics [\#1337](https://github.com/PegaSysEng/pantheon/pull/1337)
+- Normalize account permissioning addresses in whitelist [\#1321](https://github.com/PegaSysEng/pantheon/pull/1321)
+- Update Enclave executePost method [\#1319](https://github.com/PegaSysEng/pantheon/pull/1319)
+- Fix account permissioning check case matching [\#1315](https://github.com/PegaSysEng/pantheon/pull/1315)
+- Removing 'all' from the help wording for host-whitelist [\#1304](https://github.com/PegaSysEng/pantheon/pull/1304)
+
+## 1.1 RC 
+
+### Technical Improvements 
 
 - Better errors for when permissioning contract is set up wrong [\#1296](https://github.com/PegaSysEng/pantheon/pull/1296) 
 - Consolidate p2p node info methods [\#1288](https://github.com/PegaSysEng/pantheon/pull/1288) 
