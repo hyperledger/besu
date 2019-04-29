@@ -40,7 +40,7 @@ transaction. The Privacy Marker Transaction is propagated using devP2P in the sa
 
 1. The Mainnet Transaction Processor processes the Privacy Marker Transaction in the same way as any other public transaction. 
 On nodes that contain the privacy precompile contract specified in the `to` attribute of the Privacy Marker Transaction, 
-the Privacy Marker Transaction is passed to the privacy precompile contract .
+the Privacy Marker Transaction is passed to the privacy precompile contract.
 
     !!! note 
         Nodes receiving the Privacy Marker Transaction that do not contain the privacy precompile contract  
