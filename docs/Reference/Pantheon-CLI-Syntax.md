@@ -146,7 +146,7 @@ The path to the genesis file.
 ### host-whitelist
 
 ```bash tab="Syntax"
---host-whitelist=<hostname>[,<hostname>...]... or * or all
+--host-whitelist=<hostname>[,<hostname>...]... or *
 ```
 
 ```bash tab="Example Command Line"
@@ -161,7 +161,7 @@ Comma-separated list of hostnames to allow [access to the JSON-RPC API](../JSON-
 By default, access from `localhost` and `127.0.0.1` is accepted. 
 
 !!!tip
-    To allow all hostnames, use `*` or `all`. We don't recommend allowing all hostnames for production code.
+    To allow all hostnames, use `*`. We don't recommend allowing all hostnames for production code.
 
 ### max-peers
 
@@ -644,10 +644,7 @@ Default is the `permissions_config.toml` file in the [data directory](#data-path
 permissions-nodes-contract-address=xyz
 ```
 
-Specifies the contract address for contract-based nodes permissions.
-
-!!!note
-    Contract-based nodes permissions are under development and will be available in v1.1.  
+Specifies the contract address for [onchain node permissioning](../Permissions/Onchain-Permissioning.md).
 
 ### permissions-nodes-contract-enabled
 
@@ -663,10 +660,7 @@ Specifies the contract address for contract-based nodes permissions.
 permissions-nodes-contract-enabled=true
 ```
 
-Set to enable contract-based node level permissions. Default is `false`.
-
-!!!note
-    Contract-based nodes permissions are under development and will be available in v1.1.  
+Enables contract-based [onchain node permissioning](../Permissions/Onchain-Permissioning.md). Default is `false`.
 
 ### privacy-enabled
 
@@ -1058,10 +1052,6 @@ Default is `INFO`.
 Print version information and exit.
 
 ## Fast Sync Options 
-
-!!! important 
-    Support for fast sync is currently experimental. Fast sync is in active development. The fast sync options are available
-    but hidden on the command line. 
 
 ### sync-mode
 

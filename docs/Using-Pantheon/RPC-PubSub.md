@@ -276,10 +276,8 @@ transaction notifications for the same transaction.
 
 Use the `syncing` parameter with `eth_subscribe` to be notified about synchronization progress.
 
-The synchronizing subscription returns an object indicating the synchronization progress. 
-
-Use the [`--ws-refresh-delay` option](../Reference/Pantheon-CLI-Syntax.md#ws-refresh-delay) to configure how 
-often the synchronizing subscription returns an object. The default is 5000 milliseconds. 
+When behind the chain head, the synchronizing subscription returns an object indicating the synchronization 
+progress. When fully synchronized, returns false. 
 
 !!!example
     To subscribe to synchronizing notifications:
@@ -292,7 +290,7 @@ often the synchronizing subscription returns an object. The default is 5000 mill
     {"jsonrpc":"2.0","id":1,"result":"0x4"}
     ```
     
-    Example notification: 
+    Example notification while synchronizing: 
     
     ```json
     {
@@ -308,7 +306,20 @@ often the synchronizing subscription returns an object. The default is 5000 mill
       }
     }
     ```
-
+    
+    Example notification when synchronized with chain head:
+   
+    ```json
+    {
+      "jsonrpc":"2.0",
+      "method":"eth_subscription",
+      "params":{
+        "subscription":"0x4",
+        "result":false
+      }
+    }
+    ```
+   
 ## Unsubscribing
 
 Use the [subscription ID](#subscription-id) with `eth_unsubscribe` to cancel a subscription. Only the 

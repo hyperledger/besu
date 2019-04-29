@@ -23,7 +23,7 @@ Updates to local permissioning must be made to the configuration file for each n
 
 ## Onchain 
 
-Onchain permissioning are specified in a smart contract on the network. Specifying permissioning onchain
+Onchain permissioning is specified in a smart contract on the network. Specifying permissioning onchain
 enables all nodes to read and update permissioning in one location. 
 
 !!! note

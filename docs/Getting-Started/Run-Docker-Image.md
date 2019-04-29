@@ -9,7 +9,13 @@ Use this Docker image to run a single Pantheon node without installing Pantheon.
 
 ## Prerequisites
 
-To run Pantheon from the Docker image, you must have [Docker](https://docs.docker.com/install/) installed.  
+* [Docker](https://docs.docker.com/install/)   
+
+* MacOS or Linux 
+    
+    !!! important 
+        The Docker image does not run on Windows. 
+
 
 ## Quickstart
 
