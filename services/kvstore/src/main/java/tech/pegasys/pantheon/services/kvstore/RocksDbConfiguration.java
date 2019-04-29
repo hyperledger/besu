@@ -94,7 +94,7 @@ public class RocksDbConfiguration {
     @CommandLine.Option(
         names = {"--Xrocksdb-max-background-compactions"},
         hidden = true,
-        defaultValue = "1",
+        defaultValue = "4",
         paramLabel = "<INTEGER>",
         description =
             "Maximum number of RocksDB background compactions (default: ${DEFAULT-VALUE})")
@@ -103,7 +103,7 @@ public class RocksDbConfiguration {
     @CommandLine.Option(
         names = {"--Xrocksdb-background-thread-count"},
         hidden = true,
-        defaultValue = "1",
+        defaultValue = "4",
         paramLabel = "<INTEGER>",
         description = "Number of RocksDB background threads (default: ${DEFAULT-VALUE})")
     int backgroundThreadCount;
