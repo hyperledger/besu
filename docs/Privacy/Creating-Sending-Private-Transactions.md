@@ -10,9 +10,6 @@ RLP-encoded private transactions.
     Private transactions either deploy contracts or call contract functions. 
     Ether transfer transactions cannot be private. 
 
-The [EEAJS library README](https://github.com/PegaSysEng/eeajs/blob/master/README.md) describes how to use
-the provided examples with the [Privacy Quickstart](https://github.com/PegaSysEng/pantheon-quickstart/tree/master/privacy).
-
 ## Using Multinode Example 
 
 To use the examples provided in EEA JS library with [your privacy network](Configuring-Privacy.md):
