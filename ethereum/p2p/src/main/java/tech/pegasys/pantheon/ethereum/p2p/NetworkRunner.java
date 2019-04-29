@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -166,7 +165,7 @@ public class NetworkRunner implements AutoCloseable {
   }
 
   public static class Builder {
-    private Function<List<Capability>, P2PNetwork> networkProvider;
+    private NetworkBuilder networkProvider;
     List<ProtocolManager> protocolManagers = new ArrayList<>();
     List<SubProtocol> subProtocols = new ArrayList<>();
     MetricsSystem metricsSystem;
@@ -186,7 +185,7 @@ public class NetworkRunner implements AutoCloseable {
               "No sub-protocol found corresponding to supported capability: " + cap);
         }
       }
-      final P2PNetwork network = networkProvider.apply(caps);
+      final P2PNetwork network = networkProvider.build(caps);
       return new NetworkRunner(network, subProtocolMap, protocolManagers, metricsSystem);
     }
 
@@ -195,7 +194,7 @@ public class NetworkRunner implements AutoCloseable {
       return this;
     }
 
-    public Builder network(final Function<List<Capability>, P2PNetwork> networkProvider) {
+    public Builder network(final NetworkBuilder networkProvider) {
       this.networkProvider = networkProvider;
       return this;
     }
@@ -214,5 +213,10 @@ public class NetworkRunner implements AutoCloseable {
       this.metricsSystem = metricsSystem;
       return this;
     }
+  }
+
+  @FunctionalInterface
+  public interface NetworkBuilder {
+    P2PNetwork build(List<Capability> caps);
   }
 }

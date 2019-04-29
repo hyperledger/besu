@@ -40,7 +40,6 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   public MockPeerDiscoveryAgent(
       final KeyPair keyPair,
       final DiscoveryConfiguration config,
-      final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
       final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController,
       final Optional<NodePermissioningController> nodePermissioningController,
@@ -48,7 +47,6 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
     super(
         keyPair,
         config,
-        peerRequirement,
         peerBlacklist,
         nodeWhitelistController,
         nodePermissioningController,

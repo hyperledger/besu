@@ -19,13 +19,13 @@ import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController.AsyncExecutor;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerRequirement;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
+import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.NetworkUtility;
 import tech.pegasys.pantheon.util.Preconditions;
@@ -38,7 +38,10 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
+import java.util.stream.StreamSupport;
 
+import io.netty.channel.EventLoopGroup;
+import io.netty.util.concurrent.SingleThreadEventExecutor;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Vertx;
 import io.vertx.core.datagram.DatagramPacket;
@@ -58,7 +61,6 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final Vertx vertx,
       final KeyPair keyPair,
       final DiscoveryConfiguration config,
-      final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
       final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController,
       final Optional<NodePermissioningController> nodePermissioningController,
@@ -66,13 +68,26 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
     super(
         keyPair,
         config,
-        peerRequirement,
         peerBlacklist,
         nodeWhitelistController,
         nodePermissioningController,
         metricsSystem);
     checkArgument(vertx != null, "vertx instance cannot be null");
     this.vertx = vertx;
+
+    metricsSystem.createIntegerGauge(
+        MetricCategory.NETWORK,
+        "vertx_eventloop_pending_tasks",
+        "The number of pending tasks in the Vertx event loop",
+        pendingTaskCounter(vertx.nettyEventLoopGroup()));
+  }
+
+  private Supplier<Integer> pendingTaskCounter(final EventLoopGroup eventLoopGroup) {
+    return () ->
+        StreamSupport.stream(eventLoopGroup.spliterator(), false)
+            .filter(eventExecutor -> eventExecutor instanceof SingleThreadEventExecutor)
+            .mapToInt(eventExecutor -> ((SingleThreadEventExecutor) eventExecutor).pendingTasks())
+            .sum();
   }
 
   @Override

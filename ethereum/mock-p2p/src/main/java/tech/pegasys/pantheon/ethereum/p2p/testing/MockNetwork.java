@@ -17,6 +17,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.Message;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.DefaultMessage;
@@ -37,6 +38,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
  * Mock network implementation that allows passing {@link MessageData} between arbitrary peers. This
@@ -124,6 +126,11 @@ public final class MockNetwork {
       synchronized (network) {
         return new ArrayList<>(connections.values());
       }
+    }
+
+    @Override
+    public Stream<DiscoveryPeer> getDiscoveredPeers() {
+      return Stream.empty();
     }
 
     @Override

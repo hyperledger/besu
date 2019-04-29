@@ -232,7 +232,6 @@ public class PeerDiscoveryTestHelper {
       return new MockPeerDiscoveryAgent(
           SECP256K1.KeyPair.generate(),
           config,
-          () -> true,
           blacklist,
           whitelist,
           nodePermissioningController,
