@@ -64,8 +64,11 @@ public class EeaGetTransactionCount implements JsonRpcMethod {
 
               final Account maybePrivateSender = privateWorldState.get(address);
 
-              return new JsonRpcSuccessResponse(
-                  request.getId(), Quantity.create(maybePrivateSender.getNonce()));
+              if (maybePrivateSender != null) {
+                return new JsonRpcSuccessResponse(
+                    request.getId(), Quantity.create(maybePrivateSender.getNonce()));
+              }
+              return new JsonRpcSuccessResponse(request.getId(), Quantity.create(0));
             })
         .orElse(new JsonRpcSuccessResponse(request.getId(), Quantity.create(0)));
   }
