@@ -44,7 +44,9 @@ def abortPreviousBuilds() {
     }
 }
 
-abortPreviousBuilds()
+if (env.BRANCH_NAME != "master") {
+    abortPreviousBuilds()
+}
 
 try {
     parallel UnitTests: {
