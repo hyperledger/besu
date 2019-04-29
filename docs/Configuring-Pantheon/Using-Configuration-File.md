@@ -10,7 +10,7 @@ use the [`--config-file`](../Reference/Pantheon-CLI-Syntax.md#config-file) optio
     Use a bind mount to [specify a configuration file with Docker](../Getting-Started/Run-Docker-Image.md#custom-configuration-file). 
 
 To override an option specified in the configuration file, specify the same option on the command line. 
-When an option is specified in both places, Pantheon is started with the command line value.  
+When an option is specified in both the configuration file and the command line, Pantheon is started with the command line value.  
 
 ## TOML Specification
 
