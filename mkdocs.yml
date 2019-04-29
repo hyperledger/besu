@@ -93,6 +93,7 @@ nav:
     - Permissions:
         - Overview: Permissions/Permissioning-Overview.md
         - Local Permissions: Permissions/Local-Permissioning.md
+        - Onchain Permissions: Permissions/Onchain-Permissioning.md
     - Using Pantheon:
         - Transactions:
           - Creating and Sending Transactions: Using-Pantheon/Transactions/Transactions.md

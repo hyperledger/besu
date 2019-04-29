@@ -644,10 +644,7 @@ Default is the `permissions_config.toml` file in the [data directory](#data-path
 permissions-nodes-contract-address=xyz
 ```
 
-Specifies the contract address for contract-based nodes permissions.
-
-!!!note
-    Contract-based nodes permissions are under development and will be available in v1.1.  
+Specifies the contract address for [onchain node permissioning](../Permissions/Onchain-Permissioning.md).
 
 ### permissions-nodes-contract-enabled
 
@@ -663,10 +660,7 @@ Specifies the contract address for contract-based nodes permissions.
 permissions-nodes-contract-enabled=true
 ```
 
-Set to enable contract-based node level permissions. Default is `false`.
-
-!!!note
-    Contract-based nodes permissions are under development and will be available in v1.1.  
+Enables contract-based [onchain node permissioning](../Permissions/Onchain-Permissioning.md). Default is `false`.
 
 ### privacy-enabled
 
