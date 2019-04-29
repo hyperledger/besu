@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc;
 
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertFalse;
@@ -37,7 +36,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.config.NetworkingConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.config.RlpxConfiguration;
-import tech.pegasys.pantheon.ethereum.p2p.netty.NettyP2PNetwork;
+import tech.pegasys.pantheon.ethereum.p2p.network.DefaultP2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
@@ -233,22 +232,21 @@ public class JsonRpcHttpServiceRpcApisTest {
   }
 
   private P2PNetwork createP2pNetwork() {
-    final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
     final NetworkingConfiguration config =
         NetworkingConfiguration.create()
             .setRlpx(RlpxConfiguration.create().setBindPort(0))
             .setDiscovery(DiscoveryConfiguration.create().setBindPort(0));
 
-    final NettyP2PNetwork p2pNetwork =
-        new NettyP2PNetwork(
-            vertx,
-            keyPair,
-            config,
-            emptyList(),
-            new PeerBlacklist(),
-            new NoOpMetricsSystem(),
-            Optional.empty(),
-            Optional.empty());
+    final P2PNetwork p2pNetwork =
+        DefaultP2PNetwork.builder()
+            .supportedCapabilities(Capability.create("eth", 63))
+            .keyPair(SECP256K1.KeyPair.generate())
+            .vertx(vertx)
+            .config(config)
+            .peerBlacklist(new PeerBlacklist())
+            .metricsSystem(new NoOpMetricsSystem())
+            .build();
+
     p2pNetwork.start();
     return p2pNetwork;
   }

@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.p2p.netty;
+package tech.pegasys.pantheon.ethereum.p2p.network.netty;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -24,11 +24,11 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
-import tech.pegasys.pantheon.ethereum.p2p.netty.exceptions.BreachOfProtocolException;
-import tech.pegasys.pantheon.ethereum.p2p.netty.exceptions.IncompatiblePeerException;
-import tech.pegasys.pantheon.ethereum.p2p.netty.exceptions.PeerDisconnectedException;
-import tech.pegasys.pantheon.ethereum.p2p.netty.testhelpers.NettyMocks;
-import tech.pegasys.pantheon.ethereum.p2p.netty.testhelpers.SubProtocolMock;
+import tech.pegasys.pantheon.ethereum.p2p.network.netty.exceptions.BreachOfProtocolException;
+import tech.pegasys.pantheon.ethereum.p2p.network.netty.exceptions.IncompatiblePeerException;
+import tech.pegasys.pantheon.ethereum.p2p.network.netty.exceptions.PeerDisconnectedException;
+import tech.pegasys.pantheon.ethereum.p2p.network.netty.testhelpers.NettyMocks;
+import tech.pegasys.pantheon.ethereum.p2p.network.netty.testhelpers.SubProtocolMock;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.Framer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.FramingException;

@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -70,7 +71,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
   private static final long PEER_REFRESH_INTERVAL_MS = MILLISECONDS.convert(30, TimeUnit.MINUTES);
 
   protected final List<DiscoveryPeer> bootstrapPeers;
-  private final PeerRequirement peerRequirement;
+  private final List<PeerRequirement> peerRequirements = new CopyOnWriteArrayList<>();
   private final PeerBlacklist peerBlacklist;
   private final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController;
   private final Optional<NodePermissioningController> nodePermissioningController;
@@ -95,7 +96,6 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
   public PeerDiscoveryAgent(
       final SECP256K1.KeyPair keyPair,
       final DiscoveryConfiguration config,
-      final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
       final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController,
       final Optional<NodePermissioningController> nodePermissioningController,
@@ -106,7 +106,6 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
 
     validateConfiguration(config);
 
-    this.peerRequirement = peerRequirement;
     this.peerBlacklist = peerBlacklist;
     this.nodeWhitelistController = nodeWhitelistController;
     this.nodePermissioningController = nodePermissioningController;
@@ -153,6 +152,10 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
     }
   }
 
+  public void addPeerRequirement(final PeerRequirement peerRequirement) {
+    this.peerRequirements.add(peerRequirement);
+  }
+
   private void startController() {
     PeerDiscoveryController controller = createController();
     this.controller = Optional.of(controller);
@@ -169,7 +172,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
         createTimer(),
         createWorkerExecutor(),
         PEER_REFRESH_INTERVAL_MS,
-        peerRequirement,
+        PeerRequirement.combine(peerRequirements),
         peerBlacklist,
         nodeWhitelistController,
         nodePermissioningController,

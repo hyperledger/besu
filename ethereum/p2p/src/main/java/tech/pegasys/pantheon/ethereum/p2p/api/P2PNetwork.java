@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.api;
 
+import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
@@ -21,6 +22,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /** P2P Network Interface. */
 public interface P2PNetwork extends Closeable {
@@ -33,6 +35,14 @@ public interface P2PNetwork extends Closeable {
    * @return Peers currently connected.
    */
   Collection<PeerConnection> getPeers();
+
+  /**
+   * Returns a stream of peers that have been discovered on the network. These peers are not
+   * necessarily connected.
+   *
+   * @return A stream of discovered peers on the network.
+   */
+  Stream<DiscoveryPeer> getDiscoveredPeers();
 
   /**
    * Connects to a {@link Peer}.

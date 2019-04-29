@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.p2p.netty;
+package tech.pegasys.pantheon.ethereum.p2p.network.netty;
 
 import tech.pegasys.pantheon.ethereum.p2p.api.DisconnectCallback;
 import tech.pegasys.pantheon.ethereum.p2p.api.Message;
@@ -35,7 +35,7 @@ public class Callbacks {
 
   private final Subscribers<DisconnectCallback> disconnectCallbacks;
 
-  Callbacks(
+  public Callbacks(
       final Map<Capability, Subscribers<Consumer<Message>>> callbacks,
       final Subscribers<DisconnectCallback> disconnectCallbacks) {
     this.callbacks = callbacks;

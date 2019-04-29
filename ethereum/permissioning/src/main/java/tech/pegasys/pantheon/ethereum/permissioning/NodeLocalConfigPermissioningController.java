@@ -103,7 +103,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
     return new NodesWhitelistResult(WhitelistOperationResult.SUCCESS);
   }
 
-  private boolean addNode(final EnodeURL enodeURL) {
+  public boolean addNode(final EnodeURL enodeURL) {
     return nodesWhitelist.add(enodeURL);
   }
 
