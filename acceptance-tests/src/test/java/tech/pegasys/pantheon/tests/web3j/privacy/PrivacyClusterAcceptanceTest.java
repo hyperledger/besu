@@ -233,14 +233,101 @@ public class PrivacyClusterAcceptanceTest extends PrivateAcceptanceTestBase {
   }
 
   @Test
+  public void node1CanDeployMultipleTimes() {
+    final String privacyGroup12 =
+        "0x4479414f69462f796e70632b4a586132594147423062436974536c4f4d4e6d2b53686d422f374d364334773d";
+
+    long nextNonce = getNonce(node1, privacyGroup12);
+
+    final Address contractFor12 =
+        generateContractAddress(node1.getAddress(), nextNonce, privacyGroup12);
+
+    final String deployContractFor12 =
+        PrivateTransactionBuilder.builder()
+            .nonce(nextNonce)
+            .from(node1.getAddress())
+            .to(null)
+            .privateFrom(BytesValue.wrap(PUBLIC_KEY_1.getBytes(UTF_8)))
+            .privateFor(Lists.newArrayList(BytesValue.wrap(PUBLIC_KEY_2.getBytes(UTF_8))))
+            .keyPair(keypair1)
+            .build(TransactionType.CREATE_CONTRACT);
+
+    String transactionHash =
+        node1.execute(privateTransactions.deployPrivateSmartContract(deployContractFor12));
+
+    privateTransactionVerifier
+        .validPrivateContractDeployed(contractFor12.toString())
+        .verify(node1, transactionHash);
+
+    nextNonce = getNonce(node2, privacyGroup12);
+
+    final String storeValueFor12 =
+        PrivateTransactionBuilder.builder()
+            .nonce(nextNonce)
+            .from(node2.getAddress())
+            .to(contractFor12)
+            .privateFrom(BytesValue.wrap(PUBLIC_KEY_2.getBytes(UTF_8)))
+            .privateFor(Lists.newArrayList(BytesValue.wrap(PUBLIC_KEY_1.getBytes(UTF_8))))
+            .keyPair(keypair2)
+            .build(TransactionType.STORE);
+
+    transactionHash =
+        node2.execute(privateTransactions.createPrivateRawTransaction(storeValueFor12));
+
+    privateTransactionVerifier.validEventReturned("1000").verify(node1, transactionHash);
+
+    nextNonce = getNonce(node1, privacyGroup12);
+
+    final Address contractFor12Again =
+        Address.privateContractAddress(
+            node1.getAddress(), nextNonce, BytesValue.fromHexString(privacyGroup12));
+
+    final String deployContractFor12Again =
+        PrivateTransactionBuilder.builder()
+            .nonce(nextNonce)
+            .from(node1.getAddress())
+            .to(null)
+            .privateFrom(BytesValue.wrap(PUBLIC_KEY_1.getBytes(UTF_8)))
+            .privateFor(Lists.newArrayList(BytesValue.wrap(PUBLIC_KEY_2.getBytes(UTF_8))))
+            .keyPair(keypair1)
+            .build(TransactionType.CREATE_CONTRACT);
+
+    transactionHash =
+        node1.execute(privateTransactions.deployPrivateSmartContract(deployContractFor12Again));
+
+    privateTransactionVerifier
+        .validPrivateContractDeployed(contractFor12Again.toString())
+        .verify(node1, transactionHash);
+
+    nextNonce = getNonce(node1, privacyGroup12);
+
+    final String storeValueFor12Again =
+        PrivateTransactionBuilder.builder()
+            .nonce(nextNonce)
+            .from(node1.getAddress())
+            .to(contractFor12)
+            .privateFrom(BytesValue.wrap(PUBLIC_KEY_1.getBytes(UTF_8)))
+            .privateFor(Lists.newArrayList(BytesValue.wrap(PUBLIC_KEY_2.getBytes(UTF_8))))
+            .keyPair(keypair1)
+            .build(TransactionType.STORE);
+
+    transactionHash =
+        node1.execute(privateTransactions.createPrivateRawTransaction(storeValueFor12Again));
+
+    privateTransactionVerifier.validEventReturned("1000").verify(node1, transactionHash);
+  }
+
+  @Test
   public void node1CanInteractWithMultiplePrivacyGroups() {
     final String privacyGroup123 =
         "0x393579496e2f4f59545a31784e3753694258314d64424a763942716b364f713766792b37585361496e79593d";
     final String privacyGroup12 =
         "0x4479414f69462f796e70632b4a586132594147423062436974536c4f4d4e6d2b53686d422f374d364334773d";
-    final String contractForABC = "0x1efee0ab2c1ec40c4b48410e5832d254c2eda0b0";
 
     long nextNonce = getNonce(node1, privacyGroup123);
+
+    final Address contractForABC =
+        generateContractAddress(node1.getAddress(), nextNonce, privacyGroup123);
 
     final String deployContractFor123 =
         PrivateTransactionBuilder.builder()
@@ -259,7 +346,7 @@ public class PrivacyClusterAcceptanceTest extends PrivateAcceptanceTestBase {
         node1.execute(privateTransactions.deployPrivateSmartContract(deployContractFor123));
 
     privateTransactionVerifier
-        .validPrivateContractDeployed(contractForABC)
+        .validPrivateContractDeployed(contractForABC.toString())
         .verify(node1, transactionHash);
 
     nextNonce = getNonce(node1, privacyGroup123);
@@ -268,7 +355,7 @@ public class PrivacyClusterAcceptanceTest extends PrivateAcceptanceTestBase {
         PrivateTransactionBuilder.builder()
             .nonce(nextNonce)
             .from(node1.getAddress())
-            .to(Address.fromHexString(contractForABC))
+            .to(contractForABC)
             .privateFrom(BytesValue.wrap(PUBLIC_KEY_1.getBytes(UTF_8)))
             .privateFor(
                 Lists.newArrayList(
@@ -288,7 +375,7 @@ public class PrivacyClusterAcceptanceTest extends PrivateAcceptanceTestBase {
         PrivateTransactionBuilder.builder()
             .nonce(nextNonce)
             .from(node1.getAddress())
-            .to(Address.fromHexString(contractForABC))
+            .to(contractForABC)
             .privateFrom(BytesValue.wrap(PUBLIC_KEY_1.getBytes(UTF_8)))
             .privateFor(Lists.newArrayList(BytesValue.wrap(PUBLIC_KEY_2.getBytes(UTF_8))))
             .keyPair(keypair1)
@@ -304,8 +391,7 @@ public class PrivacyClusterAcceptanceTest extends PrivateAcceptanceTestBase {
     nextNonce = getNonce(node1, privacyGroup12);
 
     final Address contractFor12 =
-        Address.privateContractAddress(
-            node1.getAddress(), nextNonce, BytesValue.fromHexString(privacyGroup12));
+        generateContractAddress(node1.getAddress(), nextNonce, privacyGroup12);
 
     final String deployContractFor12 =
         PrivateTransactionBuilder.builder()
@@ -340,6 +426,79 @@ public class PrivacyClusterAcceptanceTest extends PrivateAcceptanceTestBase {
         node1.execute(privateTransactions.createPrivateRawTransaction(storeValueFor12));
 
     privateTransactionVerifier.validEventReturned("1000").verify(node1, transactionHash);
+  }
+
+  @Test
+  public void node1AndNode2CanInteractInAPrivacyGroup() {
+    final String privacyGroup12 =
+        "0x4479414f69462f796e70632b4a586132594147423062436974536c4f4d4e6d2b53686d422f374d364334773d";
+
+    long nextNonce = getNonce(node1, privacyGroup12);
+
+    final Address contractFor12 =
+        generateContractAddress(node1.getAddress(), nextNonce, privacyGroup12);
+
+    final String deployContractFor12 =
+        PrivateTransactionBuilder.builder()
+            .nonce(nextNonce)
+            .from(node1.getAddress())
+            .to(null)
+            .privateFrom(BytesValue.wrap(PUBLIC_KEY_1.getBytes(UTF_8)))
+            .privateFor(Lists.newArrayList(BytesValue.wrap(PUBLIC_KEY_2.getBytes(UTF_8))))
+            .keyPair(keypair1)
+            .build(TransactionType.CREATE_CONTRACT);
+
+    String transactionHash =
+        node1.execute(privateTransactions.deployPrivateSmartContract(deployContractFor12));
+
+    privateTransactionVerifier
+        .validPrivateContractDeployed(contractFor12.toString())
+        .verify(node1, transactionHash);
+
+    nextNonce = getNonce(node2, privacyGroup12);
+
+    final String storeValueFor12 =
+        PrivateTransactionBuilder.builder()
+            .nonce(nextNonce)
+            .from(node2.getAddress())
+            .to(contractFor12)
+            .privateFrom(BytesValue.wrap(PUBLIC_KEY_2.getBytes(UTF_8)))
+            .privateFor(Lists.newArrayList(BytesValue.wrap(PUBLIC_KEY_1.getBytes(UTF_8))))
+            .keyPair(keypair2)
+            .build(TransactionType.STORE);
+
+    transactionHash =
+        node2.execute(privateTransactions.createPrivateRawTransaction(storeValueFor12));
+
+    privateTransactionVerifier.validEventReturned("1000").verify(node1, transactionHash);
+
+    nextNonce = getNonce(node1, privacyGroup12);
+
+    final Address contractFor12Again =
+        Address.privateContractAddress(
+            node1.getAddress(), nextNonce, BytesValue.fromHexString(privacyGroup12));
+
+    final String deployContractFor12Again =
+        PrivateTransactionBuilder.builder()
+            .nonce(nextNonce)
+            .from(node1.getAddress())
+            .to(null)
+            .privateFrom(BytesValue.wrap(PUBLIC_KEY_1.getBytes(UTF_8)))
+            .privateFor(Lists.newArrayList(BytesValue.wrap(PUBLIC_KEY_2.getBytes(UTF_8))))
+            .keyPair(keypair1)
+            .build(TransactionType.CREATE_CONTRACT);
+
+    transactionHash =
+        node1.execute(privateTransactions.deployPrivateSmartContract(deployContractFor12Again));
+
+    privateTransactionVerifier
+        .validPrivateContractDeployed(contractFor12Again.toString())
+        .verify(node1, transactionHash);
+  }
+
+  private Address generateContractAddress(
+      final Address address, final long nonce, final String privacyGroup) {
+    return Address.privateContractAddress(address, nonce, BytesValue.fromHexString(privacyGroup));
   }
 
   private long getNonce(final PantheonNode node, final String privacyGroupId) {
