@@ -34,7 +34,7 @@ public class DeployPrivateSmartContractAcceptanceTest extends PrivateAcceptanceT
 
   // Contract address is generated from sender address and transaction nonce and privacy group id
   protected static final Address CONTRACT_ADDRESS =
-      Address.fromHexString("0x99a3e1c0368cb56aeea8fc8cf5068175d0de7ac1");
+      Address.fromHexString("0x06088ead8384df709132151403e08c2b978beb85");
   protected static final String PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private SECP256K1.KeyPair keypair =
       SECP256K1.KeyPair.create(
