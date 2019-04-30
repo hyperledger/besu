@@ -16,6 +16,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.temporal.TemporalUnit;
 
 public class TestClock extends Clock {
   public static Clock fixed() {
@@ -41,5 +42,9 @@ public class TestClock extends Clock {
 
   public void stepMillis(final long millis) {
     now = now.plusMillis(millis);
+  }
+
+  public void step(final long a, final TemporalUnit unit) {
+    now = now.plus(a, unit);
   }
 }

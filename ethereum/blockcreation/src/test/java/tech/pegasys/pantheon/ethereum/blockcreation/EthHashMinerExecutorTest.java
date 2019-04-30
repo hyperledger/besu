@@ -23,12 +23,10 @@ import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
 public class EthHashMinerExecutorTest {
-  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
@@ -38,7 +36,7 @@ public class EthHashMinerExecutorTest {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem);
+            PendingTransactions.DEFAULT_TX_RETENTION_HOURS, 1, TestClock.fixed(), metricsSystem);
 
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(
@@ -60,7 +58,7 @@ public class EthHashMinerExecutorTest {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem);
+            PendingTransactions.DEFAULT_TX_RETENTION_HOURS, 1, TestClock.fixed(), metricsSystem);
 
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(

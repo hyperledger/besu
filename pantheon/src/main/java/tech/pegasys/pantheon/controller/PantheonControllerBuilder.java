@@ -72,6 +72,7 @@ public abstract class PantheonControllerBuilder<C> {
   protected Path dataDirectory;
   protected Clock clock;
   protected Integer maxPendingTransactions;
+  protected Integer pendingTransactionRetentionPeriod;
   protected KeyPair nodeKeys;
   private StorageProvider storageProvider;
   private final List<Runnable> shutdownActions = new ArrayList<>();
@@ -151,6 +152,12 @@ public abstract class PantheonControllerBuilder<C> {
     return this;
   }
 
+  public PantheonControllerBuilder<C> pendingTransactionRetentionPeriod(
+      final int pendingTransactionRetentionPeriod) {
+    this.pendingTransactionRetentionPeriod = pendingTransactionRetentionPeriod;
+    return this;
+  }
+
   public PantheonController<C> build() throws IOException {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -223,7 +230,8 @@ public abstract class PantheonControllerBuilder<C> {
             clock,
             maxPendingTransactions,
             metricsSystem,
-            syncState);
+            syncState,
+            pendingTransactionRetentionPeriod);
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(

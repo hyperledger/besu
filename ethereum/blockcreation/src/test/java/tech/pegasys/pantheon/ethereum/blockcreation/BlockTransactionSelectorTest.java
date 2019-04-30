@@ -55,7 +55,6 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
@@ -64,7 +63,6 @@ import org.junit.Test;
 public class BlockTransactionSelectorTest {
 
   private static final KeyPair keyPair = KeyPair.generate();
-  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
@@ -78,7 +76,7 @@ public class BlockTransactionSelectorTest {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
+            PendingTransactions.DEFAULT_TX_RETENTION_HOURS, 5, TestClock.fixed(), metricsSystem);
 
     final Supplier<Boolean> isCancelled = () -> false;
 
@@ -118,7 +116,7 @@ public class BlockTransactionSelectorTest {
   public void failedTransactionsAreIncludedInTheBlock() {
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
+            PendingTransactions.DEFAULT_TX_RETENTION_HOURS, 5, TestClock.fixed(), metricsSystem);
 
     final Transaction transaction = createTransaction(1);
     pendingTransactions.addRemoteTransaction(transaction);
@@ -171,7 +169,7 @@ public class BlockTransactionSelectorTest {
   public void invalidTransactionsTransactionProcessingAreSkippedButBlockStillFills() {
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
+            PendingTransactions.DEFAULT_TX_RETENTION_HOURS, 5, TestClock.fixed(), metricsSystem);
 
     final List<Transaction> transactionsToInject = Lists.newArrayList();
     for (int i = 0; i < 5; i++) {
@@ -235,7 +233,7 @@ public class BlockTransactionSelectorTest {
   public void subsetOfPendingTransactionsIncludedWhenBlockGasLimitHit() {
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
+            PendingTransactions.DEFAULT_TX_RETENTION_HOURS, 5, TestClock.fixed(), metricsSystem);
 
     final List<Transaction> transactionsToInject = Lists.newArrayList();
     // Transactions are reported in reverse order.
@@ -302,7 +300,7 @@ public class BlockTransactionSelectorTest {
   public void transactionOfferingGasPriceLessThanMinimumIsIdentifiedAndRemovedFromPending() {
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
+            PendingTransactions.DEFAULT_TX_RETENTION_HOURS, 5, TestClock.fixed(), metricsSystem);
 
     final Blockchain blockchain = new TestBlockchain();
 
@@ -348,7 +346,7 @@ public class BlockTransactionSelectorTest {
   public void transactionTooLargeForBlockDoesNotPreventMoreBeingAddedIfBlockOccupancyNotReached() {
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
+            PendingTransactions.DEFAULT_TX_RETENTION_HOURS, 5, TestClock.fixed(), metricsSystem);
 
     final Blockchain blockchain = new TestBlockchain();
     final DefaultMutableWorldState worldState = inMemoryWorldState();
@@ -421,7 +419,7 @@ public class BlockTransactionSelectorTest {
   public void transactionSelectionStopsWhenSufficientBlockOccupancyIsReached() {
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
+            PendingTransactions.DEFAULT_TX_RETENTION_HOURS, 5, TestClock.fixed(), metricsSystem);
 
     final Blockchain blockchain = new TestBlockchain();
     final DefaultMutableWorldState worldState = inMemoryWorldState();
@@ -505,7 +503,7 @@ public class BlockTransactionSelectorTest {
   public void shouldDiscardTransactionsThatFailValidation() {
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            TRANSACTION_EVICTION_INTERVAL_MS, 5, TestClock.fixed(), metricsSystem);
+            PendingTransactions.DEFAULT_TX_RETENTION_HOURS, 5, TestClock.fixed(), metricsSystem);
 
     final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
     final Blockchain blockchain = new TestBlockchain();

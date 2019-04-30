@@ -85,4 +85,7 @@ privacy-public-key-file="./pubKey.pub"
 privacy-enabled=false
 privacy-precompiled-address=9
 
+# Transaction Pool
+tx-pool-retention-hours=999
+
 tx-pool-max-size=1234

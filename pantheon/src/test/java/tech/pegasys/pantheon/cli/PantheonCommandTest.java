@@ -607,6 +607,8 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     verify(mockControllerBuilder)
         .maxPendingTransactions(eq(PendingTransactions.MAX_PENDING_TRANSACTIONS));
+    verify(mockControllerBuilder)
+        .pendingTransactionRetentionPeriod(eq(PendingTransactions.DEFAULT_TX_RETENTION_HOURS));
     verify(mockControllerBuilder).build();
 
     verify(mockSyncConfBuilder).syncMode(eq(SyncMode.FULL));
@@ -2339,5 +2341,17 @@ public class PantheonCommandTest extends CommandTestAbstract {
         "--permissions-nodes-config-file=" + permissioningConfig.getPath());
     assertThat(commandErrorOutput.toString())
         .contains(staticNodeURI.toString(), "not in nodes-whitelist");
+  }
+
+  @Test
+  public void pendingTransactionRetentionPeriod() {
+    final int pendingTxRetentionHours = 999;
+    parseCommand("--tx-pool-retention-hours", String.valueOf(pendingTxRetentionHours));
+
+    verify(mockControllerBuilder).pendingTransactionRetentionPeriod(intArgumentCaptor.capture());
+    verify(mockControllerBuilder).pendingTransactionRetentionPeriod(eq(pendingTxRetentionHours));
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
   }
 }
