@@ -112,7 +112,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.synchronizerConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.ethereumWireProtocolConfiguration(any()))
         .thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.rocksdDbConfiguration(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.rocksDbConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.dataDirectory(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.miningParameters(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxPendingTransactions(anyInt())).thenReturn(mockControllerBuilder);
