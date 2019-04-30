@@ -374,10 +374,10 @@ public class SynchronizerConfiguration {
     @CommandLine.Option(
         names = "--Xsynchronizer-pipeline-full-sync-enabled",
         hidden = true,
-        defaultValue = "false",
+        defaultValue = "true",
         paramLabel = "<BOOLEAN>",
         description = "Enable the pipeline based chain downloader during full synchronization")
-    private Boolean piplineDownloaderForFullSyncEnabled = false;
+    private Boolean piplineDownloaderForFullSyncEnabled = true;
 
     public Builder fastSyncPivotDistance(final int distance) {
       fastSyncPivotDistance = distance;

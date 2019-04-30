@@ -94,7 +94,10 @@ public class IncrementerTest {
         RespondingEthPeer.blockchainResponder(otherBlockchain);
 
     final SynchronizerConfiguration syncConfig =
-        SynchronizerConfiguration.builder().downloaderChainSegmentSize(10).build();
+        SynchronizerConfiguration.builder()
+            .piplineDownloaderForFullSyncEnabled(false)
+            .downloaderChainSegmentSize(10)
+            .build();
     final ChainDownloader downloader = downloader(syncConfig);
     downloader.start();
 
