@@ -30,7 +30,6 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
@@ -48,7 +47,6 @@ public class EthHashBlockCreatorTest {
 
   private static final BytesValue BLOCK_1_EXTRA_DATA =
       BytesValue.fromHexString("0x476574682f76312e302e302f6c696e75782f676f312e342e32");
-  private static final long TRANSACTION_EVICTION_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1);
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private final ExecutionContextTestFixture executionContextTestFixture =
@@ -68,7 +66,7 @@ public class EthHashBlockCreatorTest {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            TRANSACTION_EVICTION_INTERVAL_MS, 1, TestClock.fixed(), metricsSystem);
+            PendingTransactions.DEFAULT_TX_RETENTION_HOURS, 1, TestClock.fixed(), metricsSystem);
 
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(
