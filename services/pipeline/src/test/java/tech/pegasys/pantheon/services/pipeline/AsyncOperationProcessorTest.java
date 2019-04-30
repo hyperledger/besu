@@ -94,7 +94,7 @@ public class AsyncOperationProcessorTest {
     task2.complete("b");
 
     // Processing
-    processor.finalize(writePipe);
+    processor.attemptFinalization(writePipe);
     verify(writePipe).put("a");
     verify(writePipe).put("b");
   }
@@ -174,7 +174,7 @@ public class AsyncOperationProcessorTest {
     // And should finalize in order
     task4.complete("d");
     task3.complete("c");
-    processor.finalize(writePipe);
+    assertThat(processor.attemptFinalization(writePipe)).isTrue();
     verify(writePipe).put("c");
     verify(writePipe).put("d");
   }

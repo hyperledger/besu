@@ -17,6 +17,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem.NO_OP_COUNTER;
 
 import java.util.Locale;
@@ -51,6 +52,7 @@ public class ProcessingStageTest {
 
   @Test
   public void shouldCallSingleStepStageForEachInput() {
+    when(singleStep.attemptFinalization(outputPipe)).thenReturn(true);
     inputPipe.put("A");
     inputPipe.put("B");
     inputPipe.put("C");
@@ -68,22 +70,42 @@ public class ProcessingStageTest {
 
   @Test
   public void shouldFinalizeSingleStepStageAndCloseOutputPipeWhenInputCloses() {
+    when(singleStep.attemptFinalization(outputPipe)).thenReturn(true);
     inputPipe.close();
 
     stage.run();
 
-    verify(singleStep).finalize(outputPipe);
+    verify(singleStep).attemptFinalization(outputPipe);
+    verifyNoMoreInteractions(singleStep);
+    assertThat(outputPipe.isOpen()).isFalse();
+  }
+
+  @Test
+  public void shouldAbortIfPipeIsCancelledWhileAttemptingToFinalise() {
+    when(singleStep.attemptFinalization(outputPipe))
+        .thenAnswer(
+            invocation -> {
+              inputPipe.abort();
+              return false;
+            });
+    inputPipe.close();
+
+    stage.run();
+
+    verify(singleStep).attemptFinalization(outputPipe);
+    verify(singleStep).abort();
     verifyNoMoreInteractions(singleStep);
     assertThat(outputPipe.isOpen()).isFalse();
   }
 
   @Test
   public void shouldAbortProcessorIfReadPipeIsAborted() {
+    when(singleStep.attemptFinalization(outputPipe)).thenReturn(true);
     inputPipe.abort();
     stage.run();
 
     verify(singleStep).abort();
-    verify(singleStep).finalize(outputPipe);
+    verify(singleStep).attemptFinalization(outputPipe);
     assertThat(outputPipe.isOpen()).isFalse();
   }
 }

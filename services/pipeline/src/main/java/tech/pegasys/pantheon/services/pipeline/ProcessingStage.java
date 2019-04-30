@@ -38,7 +38,12 @@ class ProcessingStage<I, O> implements Stage {
     if (inputPipe.isAborted()) {
       processor.abort();
     }
-    processor.finalize(outputPipe);
+    while (!processor.attemptFinalization(outputPipe)) {
+      if (inputPipe.isAborted()) {
+        processor.abort();
+        break;
+      }
+    }
     outputPipe.close();
   }
 
