@@ -64,10 +64,9 @@ class AsyncOperationProcessor<I, O> implements Processor<I, O> {
   }
 
   @Override
-  public void finalize(final WritePipe<O> outputPipe) {
-    while (!inProgress.isEmpty()) {
-      outputNextCompletedTask(outputPipe);
-    }
+  public boolean attemptFinalization(final WritePipe<O> outputPipe) {
+    outputNextCompletedTask(outputPipe);
+    return inProgress.isEmpty();
   }
 
   @Override
