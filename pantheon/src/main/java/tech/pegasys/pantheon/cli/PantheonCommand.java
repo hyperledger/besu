@@ -704,7 +704,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           .fromEthNetworkConfig(updateNetworkConfig(getNetwork()))
           .synchronizerConfiguration(buildSyncConfig())
           .ethereumWireProtocolConfiguration(ethereumWireConfigurationBuilder.build())
-          .rocksdDbConfiguration(buildRocksDbConfiguration())
+          .rocksDbConfiguration(buildRocksDbConfiguration())
           .dataDirectory(dataDir())
           .miningParameters(
               new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled))

@@ -76,11 +76,11 @@ public abstract class PantheonControllerBuilder<C> {
   protected KeyPair nodeKeys;
   private StorageProvider storageProvider;
   private final List<Runnable> shutdownActions = new ArrayList<>();
-  private RocksDbConfiguration rocksdDbConfiguration;
+  private RocksDbConfiguration rocksDbConfiguration;
 
-  public PantheonControllerBuilder<C> rocksdDbConfiguration(
+  public PantheonControllerBuilder<C> rocksDbConfiguration(
       final RocksDbConfiguration rocksDbConfiguration) {
-    this.rocksdDbConfiguration = rocksDbConfiguration;
+    this.rocksDbConfiguration = rocksDbConfiguration;
     return this;
   }
 
@@ -171,15 +171,15 @@ public abstract class PantheonControllerBuilder<C> {
     checkNotNull(maxPendingTransactions, "Missing max pending transactions");
     checkNotNull(nodeKeys, "Missing node keys");
     checkArgument(
-        storageProvider != null || rocksdDbConfiguration != null,
+        storageProvider != null || rocksDbConfiguration != null,
         "Must supply either a storage provider or RocksDB configuration");
     checkArgument(
-        storageProvider == null || rocksdDbConfiguration == null,
+        storageProvider == null || rocksDbConfiguration == null,
         "Must supply either storage provider or RocksDB confguration, but not both");
     privacyParameters.setSigningKeyPair(nodeKeys);
 
-    if (storageProvider == null && rocksdDbConfiguration != null) {
-      storageProvider = RocksDbStorageProvider.create(rocksdDbConfiguration, metricsSystem);
+    if (storageProvider == null && rocksDbConfiguration != null) {
+      storageProvider = RocksDbStorageProvider.create(rocksDbConfiguration, metricsSystem);
     }
 
     prepForBuild();
