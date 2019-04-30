@@ -54,6 +54,7 @@ public class FullSyncChainDownloader {
           metricsSystem);
     }
 
+    LOG.info("Using EthTaskChainDownloader");
     return new EthTaskChainDownloader<>(
         config,
         ethContext,
