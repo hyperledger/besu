@@ -10,15 +10,16 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.p2p.peers;
+package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static tech.pegasys.pantheon.util.Preconditions.checkGuard;
 
-import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.NetworkUtility;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.net.InetAddress;
 import java.util.Objects;
@@ -26,7 +27,10 @@ import java.util.OptionalInt;
 
 import com.google.common.net.InetAddresses;
 
-/** Encapsulates the network coordinates of a {@link Peer}. */
+/**
+ * Encapsulates the network coordinates of a {@link DiscoveryPeer} as well as serialization logic
+ * used in various Discovery messages.
+ */
 public class Endpoint {
   private final String host;
   private final int udpPort;
@@ -45,6 +49,23 @@ public class Endpoint {
     this.host = host;
     this.udpPort = udpPort;
     this.tcpPort = tcpPort;
+  }
+
+  public static Endpoint fromEnode(final EnodeURL enode) {
+    final OptionalInt tcpPort =
+        enode.getDiscoveryPort().isPresent()
+            ? OptionalInt.of(enode.getListeningPort())
+            : OptionalInt.empty();
+    return new Endpoint(enode.getIp().getHostAddress(), enode.getEffectiveDiscoveryPort(), tcpPort);
+  }
+
+  public EnodeURL toEnode(final BytesValue nodeId) {
+    return EnodeURL.builder()
+        .nodeId(nodeId)
+        .ipAddress(host)
+        .listeningPort(tcpPort.orElse(udpPort))
+        .discoveryPort(udpPort)
+        .build();
   }
 
   public String getHost() {

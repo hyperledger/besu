@@ -13,44 +13,54 @@
 package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerId;
+import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
+import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-
-import java.util.OptionalInt;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 /**
  * Represents an Ethereum node that we interacting with through the discovery and wire protocols.
  */
 public class DiscoveryPeer extends DefaultPeer {
   private PeerDiscoveryStatus status = PeerDiscoveryStatus.KNOWN;
+  // Endpoint is a datastructure used in discovery messages
+  private final Endpoint endpoint;
 
   // Timestamps.
   private long firstDiscovered = 0;
   private long lastContacted = 0;
   private long lastSeen = 0;
 
-  public DiscoveryPeer(
-      final BytesValue id, final String host, final int udpPort, final int tcpPort) {
-    super(id, host, udpPort, tcpPort);
+  private DiscoveryPeer(final EnodeURL enode, final Endpoint endpoint) {
+    super(enode);
+    this.endpoint = endpoint;
   }
 
-  public DiscoveryPeer(
-      final BytesValue id, final String host, final int udpPort, final OptionalInt tcpPort) {
-    super(id, host, udpPort, tcpPort);
+  public static DiscoveryPeer fromEnode(final EnodeURL enode) {
+    return new DiscoveryPeer(enode, Endpoint.fromEnode(enode));
   }
 
-  public DiscoveryPeer(final BytesValue id, final String host, final int udpPort) {
-    super(id, host, udpPort);
+  public static DiscoveryPeer fromIdAndEndpoint(final BytesValue id, final Endpoint endpoint) {
+    return new DiscoveryPeer(endpoint.toEnode(id), endpoint);
   }
 
-  public DiscoveryPeer(final BytesValue id, final Endpoint endpoint) {
-    super(id, endpoint);
+  public static DiscoveryPeer readFrom(final RLPInput in) {
+    final int size = in.enterList();
+
+    // The last list item will be the id, pass size - 1 to Endpoint
+    final Endpoint endpoint = Endpoint.decodeInline(in, size - 1);
+    final BytesValue id = in.readBytesValue();
+    in.leaveList();
+
+    return DiscoveryPeer.fromIdAndEndpoint(id, endpoint);
   }
 
-  public DiscoveryPeer(final Peer peer) {
-    super(peer.getId(), peer.getEndpoint());
+  public void writeTo(final RLPOutput out) {
+    out.startList();
+    endpoint.encodeInline(out);
+    out.writeBytesValue(getId());
+    out.endList();
   }
 
   public PeerDiscoveryStatus getStatus() {
@@ -86,11 +96,15 @@ public class DiscoveryPeer extends DefaultPeer {
     this.lastSeen = lastSeen;
   }
 
+  public Endpoint getEndpoint() {
+    return endpoint;
+  }
+
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("DiscoveryPeer{");
     sb.append("status=").append(status);
-    sb.append(", endPoint=").append(this.getEndpoint());
+    sb.append(", enode=").append(this.getEnodeURL());
     sb.append(", firstDiscovered=").append(firstDiscovered);
     sb.append(", lastContacted=").append(lastContacted);
     sb.append(", lastSeen=").append(lastSeen);

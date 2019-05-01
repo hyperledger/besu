@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.util.enode;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 import java.net.URI;
@@ -146,8 +147,7 @@ public class EnodeURLTest {
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage(
-            "Invalid enode URL syntax. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.");
+        .hasMessageContaining("Missing node ID.");
   }
 
   @Test
@@ -157,8 +157,7 @@ public class EnodeURLTest {
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage(
-            "Enode URL contains an invalid node ID. Node ID must have 128 characters and shouldn't include the '0x' hex prefix.");
+        .hasMessageContaining("Invalid node ID");
   }
 
   @Test
@@ -172,8 +171,7 @@ public class EnodeURLTest {
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage(
-            "Enode URL contains an invalid node ID. Node ID must have 128 characters and shouldn't include the '0x' hex prefix.");
+        .hasMessageContaining("Invalid node ID");
   }
 
   @Test
@@ -183,7 +181,7 @@ public class EnodeURLTest {
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Invalid enode URL IP format.");
+        .hasMessageContaining("Missing or invalid ip address.");
   }
 
   @Test
@@ -193,7 +191,7 @@ public class EnodeURLTest {
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Invalid enode URL IP format.");
+        .hasMessageContaining("Missing or invalid ip address.");
   }
 
   @Test
@@ -203,19 +201,18 @@ public class EnodeURLTest {
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage(
-            "Invalid enode URL syntax. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.");
+        .hasMessageContaining("Invalid listening port.");
   }
 
   @Test
   public void fromString_withoutListeningPortAndWithDiscoveryPortShouldFail() {
-    final String enodeURLString = "enode://" + VALID_NODE_ID + "@" + IPV4_ADDRESS + ":?30301";
+    final String enodeURLString =
+        "enode://" + VALID_NODE_ID + "@" + IPV4_ADDRESS + ":?discport=30301";
     final Throwable thrown = catchThrowable(() -> EnodeURL.fromString(enodeURLString));
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage(
-            "Invalid enode URL syntax. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.");
+        .hasMessageContaining("Invalid listening port.");
   }
 
   @Test
@@ -225,7 +222,7 @@ public class EnodeURLTest {
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Invalid listening port range. Port should be between 0 - 65535");
+        .hasMessageContaining("Invalid listening port.");
   }
 
   @Test
@@ -236,7 +233,62 @@ public class EnodeURLTest {
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Invalid discovery port range. Port should be between 0 - 65535");
+        .hasMessageContaining("Invalid discovery port.");
+  }
+
+  @Test
+  public void fromString_withMisspelledDiscoveryParam() {
+    final String query = "adiscport=1234";
+    final String enodeURLString =
+        "enode://" + VALID_NODE_ID + "@" + IPV6_FULL_ADDRESS + ":" + P2P_PORT + "?" + query;
+
+    assertThatThrownBy(() -> EnodeURL.fromString(enodeURLString))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Invalid discovery port: '" + query + "'");
+  }
+
+  @Test
+  public void fromString_withAdditionalTrailingQueryParam() {
+    final String query = "discport=1234&other=y";
+    final String enodeURLString =
+        "enode://" + VALID_NODE_ID + "@" + IPV6_FULL_ADDRESS + ":" + P2P_PORT + "?" + query;
+
+    assertThatThrownBy(() -> EnodeURL.fromString(enodeURLString))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Invalid discovery port: '" + query + "'");
+  }
+
+  @Test
+  public void fromString_withAdditionalLeadingQueryParam() {
+    final String query = "other=123&discport=1234";
+    final String enodeURLString =
+        "enode://" + VALID_NODE_ID + "@" + IPV6_FULL_ADDRESS + ":" + P2P_PORT + "?" + query;
+
+    assertThatThrownBy(() -> EnodeURL.fromString(enodeURLString))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Invalid discovery port: '" + query + "'");
+  }
+
+  @Test
+  public void fromString_withAdditionalLeadingAndTrailingQueryParams() {
+    final String query = "other=123&discport=1234&other2=456";
+    final String enodeURLString =
+        "enode://" + VALID_NODE_ID + "@" + IPV6_FULL_ADDRESS + ":" + P2P_PORT + "?" + query;
+
+    assertThatThrownBy(() -> EnodeURL.fromString(enodeURLString))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Invalid discovery port: '" + query + "'");
+  }
+
+  @Test
+  public void fromString_withMultipleDiscoveryParams() {
+    final String query = "discport=1234&discport=456";
+    final String enodeURLString =
+        "enode://" + VALID_NODE_ID + "@" + IPV6_FULL_ADDRESS + ":" + P2P_PORT + "?" + query;
+
+    assertThatThrownBy(() -> EnodeURL.fromString(enodeURLString))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Invalid discovery port: '" + query + "'");
   }
 
   @Test
@@ -245,7 +297,7 @@ public class EnodeURLTest {
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Can't convert null/empty string to EnodeURLProperty.");
+        .hasMessageContaining("Invalid empty value");
   }
 
   @Test
@@ -254,7 +306,16 @@ public class EnodeURLTest {
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Can't convert null/empty string to EnodeURLProperty.");
+        .hasMessageContaining("Invalid empty value.");
+  }
+
+  @Test
+  public void fromString_withWhitespaceEnodeURLShouldFail() {
+    final Throwable thrown = catchThrowable(() -> EnodeURL.fromString(" "));
+
+    assertThat(thrown)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Invalid empty value.");
   }
 
   @Test

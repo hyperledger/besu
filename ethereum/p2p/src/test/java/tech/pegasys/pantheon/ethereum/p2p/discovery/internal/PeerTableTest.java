@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.AddResult
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.EvictResult;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.EvictResult.EvictOutcome;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.List;
 
@@ -43,7 +44,13 @@ public class PeerTableTest {
 
   @Test
   public void addSelf() {
-    final DiscoveryPeer localPeer = new DiscoveryPeer(Peer.randomId(), "127.0.0.1", 12345, 12345);
+    final DiscoveryPeer localPeer =
+        DiscoveryPeer.fromEnode(
+            EnodeURL.builder()
+                .nodeId(Peer.randomId())
+                .ipAddress("127.0.0.1")
+                .listeningPort(12345)
+                .build());
     final PeerTable table = new PeerTable(localPeer.getId(), 16);
     final PeerTable.AddResult result = table.tryAdd(localPeer);
 

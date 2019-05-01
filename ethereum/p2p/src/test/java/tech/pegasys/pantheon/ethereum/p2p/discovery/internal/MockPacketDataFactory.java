@@ -30,8 +30,9 @@ public class MockPacketDataFactory {
       final DiscoveryPeer from, final DiscoveryPeer... neighbors) {
     final Packet packet = mock(Packet.class);
 
-    final NeighborsPacketData pongPacketData = NeighborsPacketData.create(Arrays.asList(neighbors));
-    when(packet.getPacketData(any())).thenReturn(Optional.of(pongPacketData));
+    final NeighborsPacketData packetData = NeighborsPacketData.create(Arrays.asList(neighbors));
+
+    when(packet.getPacketData(any())).thenReturn(Optional.of(packetData));
     final BytesValue id = from.getId();
     when(packet.getNodeId()).thenReturn(id);
     when(packet.getType()).thenReturn(PacketType.NEIGHBORS);
@@ -40,7 +41,7 @@ public class MockPacketDataFactory {
     return packet;
   }
 
-  public static Packet mockPongPacket(final Peer from, final BytesValue pingHash) {
+  public static Packet mockPongPacket(final DiscoveryPeer from, final BytesValue pingHash) {
     final Packet packet = mock(Packet.class);
 
     final PongPacketData pongPacketData = PongPacketData.create(from.getEndpoint(), pingHash);

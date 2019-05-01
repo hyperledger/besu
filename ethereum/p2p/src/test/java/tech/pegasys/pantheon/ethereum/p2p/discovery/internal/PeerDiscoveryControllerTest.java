@@ -33,12 +33,12 @@ import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.p2p.NodePermissioningControllerTestHelper;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerDroppedEvent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.EvictResult;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
@@ -63,7 +63,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -546,8 +545,7 @@ public class PeerDiscoveryControllerTest {
   @Test
   public void shouldNotAddSelfWhenReceivedPingFromSelf() {
     startPeerDiscoveryController();
-    final DiscoveryPeer localPeer =
-        new DiscoveryPeer(this.localPeer.getId(), this.localPeer.getEndpoint());
+    final DiscoveryPeer localPeer = DiscoveryPeer.fromEnode(this.localPeer.getEnodeURL());
 
     final Packet pingPacket = mockPingPacket(this.localPeer, this.localPeer);
     controller.onMessage(pingPacket, localPeer);
@@ -1148,7 +1146,7 @@ public class PeerDiscoveryControllerTest {
     verifyZeroInteractions(peerDroppedEventConsumer);
   }
 
-  private static Packet mockPingPacket(final Peer from, final Peer to) {
+  private static Packet mockPingPacket(final DiscoveryPeer from, final DiscoveryPeer to) {
     final Packet packet = mock(Packet.class);
 
     final PingPacketData pingPacketData =
@@ -1163,7 +1161,7 @@ public class PeerDiscoveryControllerTest {
   }
 
   private List<DiscoveryPeer> createPeersInLastBucket(final Peer host, final int n) {
-    final List<DiscoveryPeer> newPeers = new ArrayList<DiscoveryPeer>(n);
+    final List<DiscoveryPeer> newPeers = new ArrayList<>(n);
 
     // Flipping the most significant bit of the keccak256 will place the peer
     // in the last bucket for the corresponding host peer.
@@ -1180,12 +1178,12 @@ public class PeerDiscoveryControllerTest {
       UInt256.of(i).getBytes().copyTo(id, id.size() - UInt256Value.SIZE);
       final DiscoveryPeer peer =
           spy(
-              new DiscoveryPeer(
-                  id,
-                  new Endpoint(
-                      localPeer.getEndpoint().getHost(),
-                      100 + counter.incrementAndGet(),
-                      OptionalInt.empty())));
+              DiscoveryPeer.fromEnode(
+                  EnodeURL.builder()
+                      .nodeId(id)
+                      .ipAddress("127.0.0.1")
+                      .listeningPort(100 + counter.incrementAndGet())
+                      .build()));
       doReturn(keccak).when(peer).keccak256();
       newPeers.add(peer);
     }

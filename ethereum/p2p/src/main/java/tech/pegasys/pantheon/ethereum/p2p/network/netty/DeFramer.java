@@ -14,9 +14,9 @@ package tech.pegasys.pantheon.ethereum.p2p.network.netty;
 
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
-import tech.pegasys.pantheon.ethereum.p2p.network.netty.exceptions.BreachOfProtocolException;
-import tech.pegasys.pantheon.ethereum.p2p.network.netty.exceptions.IncompatiblePeerException;
-import tech.pegasys.pantheon.ethereum.p2p.network.netty.exceptions.PeerDisconnectedException;
+import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.BreachOfProtocolException;
+import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.IncompatiblePeerException;
+import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.PeerDisconnectedException;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.Framer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.FramingException;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;

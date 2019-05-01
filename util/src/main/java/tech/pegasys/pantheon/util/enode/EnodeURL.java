@@ -25,19 +25,14 @@ import java.util.regex.Pattern;
 
 import com.google.common.base.Objects;
 import com.google.common.net.InetAddresses;
+import com.google.common.primitives.Ints;
 
 public class EnodeURL {
 
-  private static final String HEX_STRING_PATTERN = "[0-9a-fA-F]+";
-
-  private static final String ENODE_URL_PATTERN_NEW =
-      "^enode://"
-          + "(?<nodeId>\\w+)"
-          + "@"
-          + "(?<ip>.*)"
-          + ":"
-          + "(?<listening>\\d+)"
-          + "(\\?discport=(?<discovery>\\d+))?$";
+  private static final int NODE_ID_SIZE = 64;
+  private static final Pattern DISCPORT_QUERY_STRING_REGEX =
+      Pattern.compile("^discport=([0-9]{1,5})$");
+  private static final Pattern NODE_ID_PATTERN = Pattern.compile("^[0-9a-fA-F]{128}$");
 
   private final BytesValue nodeId;
   private final InetAddress ip;
@@ -51,6 +46,15 @@ public class EnodeURL {
       final InetAddress address,
       final Integer listeningPort,
       final OptionalInt discoveryPort) {
+    checkArgument(
+        nodeId.size() == NODE_ID_SIZE, "Invalid node id.  Expected id of length: 64 bytes.");
+    checkArgument(
+        NetworkUtility.isValidPort(listeningPort),
+        "Invalid listening port.  Port should be between 1 - 65535.");
+    checkArgument(
+        !discoveryPort.isPresent() || NetworkUtility.isValidPort(discoveryPort.getAsInt()),
+        "Invalid discovery port.  Port should be between 1 - 65535.");
+
     this.nodeId = nodeId;
     this.ip = address;
     this.listeningPort = listeningPort;
@@ -67,24 +71,57 @@ public class EnodeURL {
   }
 
   public static EnodeURL fromString(final String value) {
-    checkArgument(
-        value != null && !value.isEmpty(), "Can't convert null/empty string to EnodeURLProperty.");
+    try {
+      checkStringArgumentNotEmpty(value, "Invalid empty value.");
+      return fromURI(URI.create(value));
+    } catch (IllegalArgumentException e) {
+      String message =
+          "Invalid enode URL syntax. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.";
+      if (e.getMessage() != null) {
+        message += " " + e.getMessage();
+      }
+      throw new IllegalArgumentException(message, e);
+    }
+  }
 
-    final Matcher enodeMatcher = Pattern.compile(ENODE_URL_PATTERN_NEW).matcher(value);
-    checkArgument(
-        enodeMatcher.matches(),
-        "Invalid enode URL syntax. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.");
+  public static EnodeURL fromURI(final URI uri) {
+    checkArgument(uri != null, "URI cannot be null");
+    checkStringArgumentNotEmpty(uri.getScheme(), "Missing 'enode' scheme.");
+    checkStringArgumentNotEmpty(uri.getHost(), "Missing or invalid ip address.");
+    checkStringArgumentNotEmpty(uri.getUserInfo(), "Missing node ID.");
 
-    final String nodeId = getAndValidateNodeId(enodeMatcher);
-    final InetAddress ip = getAndValidateIp(enodeMatcher);
-    final int listeningPort = getAndValidatePort(enodeMatcher, "listening");
-    final OptionalInt discoveryPort = getAndValidateDiscoveryPort(enodeMatcher);
+    checkArgument(
+        uri.getScheme().equalsIgnoreCase("enode"), "Invalid URI scheme (must equal \"enode\").");
+    checkArgument(
+        NODE_ID_PATTERN.matcher(uri.getUserInfo()).matches(),
+        "Invalid node ID: node ID must have exactly 128 hexadecimal characters and should not include any '0x' hex prefix.");
+
+    // Parse discport if it exists
+    OptionalInt discoveryPort = OptionalInt.empty();
+    String query = uri.getQuery();
+    if (query != null) {
+      final Matcher discPortMatcher = DISCPORT_QUERY_STRING_REGEX.matcher(query);
+      if (discPortMatcher.matches()) {
+        Integer discPort = Ints.tryParse(discPortMatcher.group(1));
+        discoveryPort = discPort == null ? discoveryPort : OptionalInt.of(discPort);
+      }
+      checkArgument(discoveryPort.isPresent(), "Invalid discovery port: '" + query + "'.");
+    }
+
+    final BytesValue id = BytesValue.fromHexString(uri.getUserInfo());
+    String host = uri.getHost();
+    int tcpPort = uri.getPort();
+
     return builder()
-        .nodeId(nodeId)
-        .ipAddress(ip)
-        .listeningPort(listeningPort)
+        .ipAddress(host)
+        .nodeId(id)
+        .listeningPort(tcpPort)
         .discoveryPort(discoveryPort)
         .build();
+  }
+
+  private static void checkStringArgumentNotEmpty(final String argument, final String message) {
+    checkArgument(argument != null && !argument.trim().isEmpty(), message);
   }
 
   public URI toURI() {
@@ -103,60 +140,19 @@ public class EnodeURL {
     return fromString(url).toURI();
   }
 
-  private static String getAndValidateNodeId(final Matcher matcher) {
-    final String invalidNodeIdErrorMsg =
-        "Enode URL contains an invalid node ID. Node ID must have 128 characters and shouldn't include the '0x' hex prefix.";
-    final String nodeId = matcher.group("nodeId");
-
-    checkArgument(nodeId.matches(HEX_STRING_PATTERN), invalidNodeIdErrorMsg);
-    checkArgument(nodeId.length() == 128, invalidNodeIdErrorMsg);
-
-    return nodeId;
-  }
-
-  private static InetAddress getAndValidateIp(final Matcher matcher) {
-    final String ipString = matcher.group("ip");
-
-    try {
-      return InetAddresses.forUriString(ipString);
-    } catch (IllegalArgumentException e) {
-      if (e.getMessage().contains("Not a valid URI IP literal: ")) {
-        throw new IllegalArgumentException("Invalid enode URL IP format.");
-      } else {
-        throw e;
-      }
-    }
-  }
-
-  private static Integer getAndValidatePort(final Matcher matcher, final String portName) {
-    int port = Integer.valueOf(matcher.group(portName));
-    checkArgument(
-        NetworkUtility.isValidPort(port),
-        "Invalid " + portName + " port range. Port should be between 0 - 65535");
-    return port;
-  }
-
-  private static OptionalInt getAndValidateDiscoveryPort(final Matcher matcher) {
-    if (matcher.group("discovery") != null) {
-      return OptionalInt.of(getAndValidatePort(matcher, "discovery"));
-    } else {
-      return OptionalInt.empty();
-    }
-  }
-
   public BytesValue getNodeId() {
     return nodeId;
   }
 
-  public String getIp() {
+  public String getIpAsString() {
     return ip.getHostAddress();
   }
 
-  public InetAddress getInetAddress() {
+  public InetAddress getIp() {
     return ip;
   }
 
-  public Integer getListeningPort() {
+  public int getListeningPort() {
     return listeningPort;
   }
 
@@ -221,6 +217,11 @@ public class EnodeURL {
       return this;
     }
 
+    public Builder nodeId(final byte[] nodeId) {
+      this.nodeId = BytesValue.wrap(nodeId);
+      return this;
+    }
+
     public Builder nodeId(final String nodeId) {
       this.nodeId = BytesValue.fromHexString(nodeId);
       return this;
@@ -232,7 +233,13 @@ public class EnodeURL {
     }
 
     public Builder ipAddress(final String ip) {
-      this.ip = InetAddresses.forUriString(ip);
+      if (InetAddresses.isUriInetAddress(ip)) {
+        this.ip = InetAddresses.forUriString(ip);
+      } else if (InetAddresses.isInetAddress(ip)) {
+        this.ip = InetAddresses.forString(ip);
+      } else {
+        throw new IllegalArgumentException("Invalid ip address.");
+      }
       return this;
     }
 

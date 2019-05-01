@@ -15,8 +15,6 @@ package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
-import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
@@ -45,8 +43,7 @@ public class NeighborsPacketData implements PacketData {
 
   public static NeighborsPacketData readFrom(final RLPInput in) {
     in.enterList();
-    final List<DiscoveryPeer> peers =
-        in.readList(rlp -> new DiscoveryPeer(DefaultPeer.readFrom(rlp)));
+    final List<DiscoveryPeer> peers = in.readList(DiscoveryPeer::readFrom);
     final long expiration = in.readLongScalar();
     in.leaveList();
     return new NeighborsPacketData(peers, expiration);
@@ -55,7 +52,7 @@ public class NeighborsPacketData implements PacketData {
   @Override
   public void writeTo(final RLPOutput out) {
     out.startList();
-    out.writeList(peers, Peer::writeTo);
+    out.writeList(peers, DiscoveryPeer::writeTo);
     out.writeLongScalar(expiration);
     out.endList();
   }

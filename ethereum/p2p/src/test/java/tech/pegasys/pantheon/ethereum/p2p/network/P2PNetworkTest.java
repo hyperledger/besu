@@ -25,9 +25,8 @@ import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.config.NetworkingConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.config.RlpxConfiguration;
-import tech.pegasys.pantheon.ethereum.p2p.network.netty.exceptions.IncompatiblePeerException;
+import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.IncompatiblePeerException;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
@@ -46,7 +45,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -103,13 +101,7 @@ public class P2PNetworkTest {
 
       assertThat(
               connector
-                  .connect(
-                      new DefaultPeer(
-                          listenId,
-                          new Endpoint(
-                              InetAddress.getLoopbackAddress().getHostAddress(),
-                              listenPort,
-                              OptionalInt.of(listenPort))))
+                  .connect(createPeer(listenId, listenPort))
                   .get(30L, TimeUnit.SECONDS)
                   .getPeerInfo()
                   .getNodeId())
@@ -131,25 +123,13 @@ public class P2PNetworkTest {
 
       assertThat(
               connector
-                  .connect(
-                      new DefaultPeer(
-                          listenId,
-                          new Endpoint(
-                              InetAddress.getLoopbackAddress().getHostAddress(),
-                              listenPort,
-                              OptionalInt.of(listenPort))))
+                  .connect(createPeer(listenId, listenPort))
                   .get(30L, TimeUnit.SECONDS)
                   .getPeerInfo()
                   .getNodeId())
           .isEqualTo(listenId);
       final CompletableFuture<PeerConnection> secondConnectionFuture =
-          connector.connect(
-              new DefaultPeer(
-                  listenId,
-                  new Endpoint(
-                      InetAddress.getLoopbackAddress().getHostAddress(),
-                      listenPort,
-                      OptionalInt.of(listenPort))));
+          connector.connect(createPeer(listenId, listenPort));
       assertThatThrownBy(secondConnectionFuture::get)
           .hasCause(new IllegalStateException("Client already connected"));
     }
@@ -181,13 +161,7 @@ public class P2PNetworkTest {
       final BytesValue listenId = listenerEnode.getNodeId();
       final int listenPort = listenerEnode.getListeningPort();
 
-      final Peer listeningPeer =
-          new DefaultPeer(
-              listenId,
-              new Endpoint(
-                  InetAddress.getLoopbackAddress().getHostAddress(),
-                  listenPort,
-                  OptionalInt.of(listenPort)));
+      final Peer listeningPeer = createPeer(listenId, listenPort);
       assertThat(
               connector1
                   .connect(listeningPeer)
@@ -237,13 +211,7 @@ public class P2PNetworkTest {
       final BytesValue listenId = listenerEnode.getNodeId();
       final int listenPort = listenerEnode.getListeningPort();
 
-      final Peer listenerPeer =
-          new DefaultPeer(
-              listenId,
-              new Endpoint(
-                  InetAddress.getLoopbackAddress().getHostAddress(),
-                  listenPort,
-                  OptionalInt.of(listenPort)));
+      final Peer listenerPeer = createPeer(listenId, listenPort);
       final CompletableFuture<PeerConnection> connectFuture = connector.connect(listenerPeer);
       assertThatThrownBy(connectFuture::get).hasCauseInstanceOf(IncompatiblePeerException.class);
     }
@@ -268,21 +236,8 @@ public class P2PNetworkTest {
       final BytesValue remoteId = remoteEnode.getNodeId();
       final int remotePort = remoteEnode.getListeningPort();
 
-      final Peer localPeer =
-          new DefaultPeer(
-              localId,
-              new Endpoint(
-                  InetAddress.getLoopbackAddress().getHostAddress(),
-                  localPort,
-                  OptionalInt.of(localPort)));
-
-      final Peer remotePeer =
-          new DefaultPeer(
-              remoteId,
-              new Endpoint(
-                  InetAddress.getLoopbackAddress().getHostAddress(),
-                  remotePort,
-                  OptionalInt.of(remotePort)));
+      final Peer localPeer = createPeer(localId, localPort);
+      final Peer remotePeer = createPeer(remoteId, remotePort);
 
       // Blacklist the remote peer
       localBlacklist.add(remotePeer);
@@ -343,13 +298,7 @@ public class P2PNetworkTest {
       final BytesValue localId = localEnode.getNodeId();
       final int localPort = localEnode.getListeningPort();
 
-      final Peer localPeer =
-          new DefaultPeer(
-              localId,
-              new Endpoint(
-                  InetAddress.getLoopbackAddress().getHostAddress(),
-                  localPort,
-                  OptionalInt.of(localPort)));
+      final Peer localPeer = createPeer(localId, localPort);
 
       // Setup disconnect listener
       final CompletableFuture<PeerConnection> peerFuture = new CompletableFuture<>();
@@ -370,6 +319,15 @@ public class P2PNetworkTest {
       assertThat(reasonFuture.get(5L, TimeUnit.SECONDS))
           .isEqualByComparingTo(DisconnectReason.UNKNOWN);
     }
+  }
+
+  private Peer createPeer(final BytesValue nodeId, final int listenPort) {
+    return DefaultPeer.fromEnodeURL(
+        EnodeURL.builder()
+            .ipAddress(InetAddress.getLoopbackAddress().getHostAddress())
+            .nodeId(nodeId)
+            .listeningPort(listenPort)
+            .build());
   }
 
   private static SubProtocol subProtocol() {
@@ -415,7 +373,7 @@ public class P2PNetworkTest {
       } else {
         return enodeURL.getNodeId().equals(argument.getNodeId())
             && enodeURL.getIp().equals(argument.getIp())
-            && enodeURL.getListeningPort().equals(argument.getListeningPort());
+            && enodeURL.getListeningPort() == argument.getListeningPort();
       }
     }
   }

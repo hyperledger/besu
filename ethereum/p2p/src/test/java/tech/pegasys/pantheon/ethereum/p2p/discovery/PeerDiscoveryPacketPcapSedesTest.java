@@ -20,7 +20,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.NeighborsPacketData
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PongPacketData;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.util.NetworkUtility;
 
 import java.io.IOException;
@@ -119,7 +118,7 @@ public class PeerDiscoveryPacketPcapSedesTest {
         assertThat(neighbors.getExpiration()).isGreaterThan(0);
         assertThat(neighbors.getNodes()).isNotEmpty();
 
-        for (final Peer p : neighbors.getNodes()) {
+        for (final DiscoveryPeer p : neighbors.getNodes()) {
           assertThat(NetworkUtility.isValidPort(p.getEndpoint().getUdpPort())).isTrue();
           assertThat(isInetAddress(p.getEndpoint().getHost())).isTrue();
           assertThat(p.getId().extractArray()).hasSize(64);

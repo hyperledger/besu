@@ -13,20 +13,13 @@
 package tech.pegasys.pantheon.ethereum.p2p.peers;
 
 import tech.pegasys.pantheon.crypto.SecureRandomProvider;
-import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 public interface Peer extends PeerId {
 
-  /**
-   * A struct-like immutable object encapsulating the peer's network coordinates, namely their
-   * hostname (as an IP address in the current implementation), UDP port and optional TCP port for
-   * RLPx communications.
-   *
-   * @return An object encapsulating the peer's network coordinates.
-   */
-  Endpoint getEndpoint();
+  /** @return The enode representing the location of this peer. */
+  EnodeURL getEnodeURL();
 
   /**
    * Generates a random peer ID in a secure manner.
@@ -40,37 +33,11 @@ public interface Peer extends PeerId {
   }
 
   /**
-   * Encodes this peer to its RLP representation.
-   *
-   * @param out The RLP output stream to which to write.
-   */
-  default void writeTo(final RLPOutput out) {
-    out.startList();
-    getEndpoint().encodeInline(out);
-    out.writeBytesValue(getId());
-    out.endList();
-  }
-
-  /**
    * Returns this peer's enode URL.
    *
    * @return The enode URL as a String.
    */
   default String getEnodeURLString() {
     return this.getEnodeURL().toString();
-  }
-
-  default EnodeURL getEnodeURL() {
-    final Endpoint endpoint = this.getEndpoint();
-
-    final int tcpPort = endpoint.getFunctionalTcpPort();
-    final int udpPort = endpoint.getUdpPort();
-
-    return EnodeURL.builder()
-        .nodeId(this.getId())
-        .ipAddress(endpoint.getHost())
-        .listeningPort(tcpPort)
-        .discoveryPort(udpPort)
-        .build();
   }
 }
