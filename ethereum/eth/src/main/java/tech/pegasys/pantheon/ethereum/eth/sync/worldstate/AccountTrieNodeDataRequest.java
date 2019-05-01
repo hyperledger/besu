@@ -20,9 +20,8 @@ import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage.Updater;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
@@ -46,20 +45,20 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
   }
 
   @Override
-  protected List<NodeDataRequest> getRequestsFromTrieNodeValue(final BytesValue value) {
-    List<NodeDataRequest> nodeData = new ArrayList<>(2);
-    StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(RLP.input(value));
+  protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(final BytesValue value) {
+    final Stream.Builder<NodeDataRequest> builder = Stream.builder();
+    final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(RLP.input(value));
     // Add code, if appropriate
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
-      nodeData.add(NodeDataRequest.createCodeRequest(accountValue.getCodeHash()));
+      builder.add(NodeDataRequest.createCodeRequest(accountValue.getCodeHash()));
     }
     // Add storage, if appropriate
     if (!accountValue.getStorageRoot().equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       // If storage is non-empty queue download
-      NodeDataRequest storageNode =
+      final NodeDataRequest storageNode =
           NodeDataRequest.createStorageDataRequest(accountValue.getStorageRoot());
-      nodeData.add(storageNode);
+      builder.add(storageNode);
     }
-    return nodeData;
+    return builder.build();
   }
 }

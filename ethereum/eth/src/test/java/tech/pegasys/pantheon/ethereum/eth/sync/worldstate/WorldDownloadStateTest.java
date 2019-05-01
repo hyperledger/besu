@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync.worldstate;
 
-import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
@@ -33,6 +32,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -181,7 +181,7 @@ public class WorldDownloadStateTest {
   public void shouldNotAddRequestsAfterDownloadIsCompleted() {
     downloadState.checkCompletion(worldStateStorage, header);
 
-    downloadState.enqueueRequests(singletonList(createAccountDataRequest(Hash.EMPTY_TRIE_HASH)));
+    downloadState.enqueueRequests(Stream.of(createAccountDataRequest(Hash.EMPTY_TRIE_HASH)));
     downloadState.enqueueRequest(createAccountDataRequest(Hash.EMPTY_TRIE_HASH));
 
     assertThat(pendingRequests.isEmpty()).isTrue();
