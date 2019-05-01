@@ -65,17 +65,6 @@ class EthServer {
     this.setupListeners();
   }
 
-  EthServer(
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final EthMessages ethMessages) {
-    this(
-        blockchain,
-        worldStateArchive,
-        ethMessages,
-        EthereumWireProtocolConfiguration.defaultConfig());
-  }
-
   private void setupListeners() {
     ethMessages.subscribe(EthPV62.GET_BLOCK_HEADERS, this::handleGetBlockHeaders);
     ethMessages.subscribe(EthPV62.GET_BLOCK_BODIES, this::handleGetBlockBodies);

@@ -20,7 +20,6 @@ public class EthContextTestUtil {
 
   public static EthContext createTestEthContext(final TimeoutPolicy timeoutPolicy) {
     return new EthContext(
-        PROTOCOL_NAME,
         new EthPeers(PROTOCOL_NAME),
         new EthMessages(),
         new DeterministicEthScheduler(timeoutPolicy));

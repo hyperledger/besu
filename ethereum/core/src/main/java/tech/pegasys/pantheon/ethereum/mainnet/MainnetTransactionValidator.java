@@ -38,10 +38,6 @@ import java.util.Optional;
  */
 public class MainnetTransactionValidator implements TransactionValidator {
 
-  public static MainnetTransactionValidator create() {
-    return new MainnetTransactionValidator(new FrontierGasCalculator(), false, Optional.empty());
-  }
-
   private final GasCalculator gasCalculator;
 
   private final boolean disallowSignatureMalleability;

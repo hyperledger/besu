@@ -74,10 +74,9 @@ public class SyncState {
     return syncTarget;
   }
 
-  public SyncTarget setSyncTarget(final EthPeer peer, final BlockHeader commonAncestor) {
+  public void setSyncTarget(final EthPeer peer, final BlockHeader commonAncestor) {
     final SyncTarget syncTarget = new SyncTarget(peer, commonAncestor);
     replaceSyncTarget(Optional.of(syncTarget));
-    return syncTarget;
   }
 
   public boolean isInSync() {
@@ -88,10 +87,6 @@ public class SyncState {
     return syncTarget
         .map(t -> t.estimatedTargetHeight() - blockchain.getChainHeadBlockNumber() <= syncTolerance)
         .orElse(true);
-  }
-
-  public void setCommonAncestor(final BlockHeader commonAncestor) {
-    syncTarget.ifPresent(target -> target.setCommonAncestor(commonAncestor));
   }
 
   public void clearSyncTarget() {

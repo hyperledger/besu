@@ -242,10 +242,6 @@ public class EthScheduler {
     return promise;
   }
 
-  public <T> void failAfterTimeout(final CompletableFuture<T> promise) {
-    failAfterTimeout(promise, defaultTimeout);
-  }
-
   public <T> void failAfterTimeout(final CompletableFuture<T> promise, final Duration timeout) {
     final long delay = timeout.toMillis();
     final TimeUnit unit = TimeUnit.MILLISECONDS;

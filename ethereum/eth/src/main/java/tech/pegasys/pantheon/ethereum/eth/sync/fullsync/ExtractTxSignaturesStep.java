@@ -10,22 +10,24 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.eth.sync;
+package tech.pegasys.pantheon.ethereum.eth.sync.fullsync;
 
-import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
-public interface BlockHandler<B> {
-  CompletableFuture<List<B>> downloadBlocks(List<BlockHeader> headers);
+public class ExtractTxSignaturesStep implements Function<List<Block>, Stream<Block>> {
 
-  CompletableFuture<List<B>> validateAndImportBlocks(List<B> blocks);
+  @Override
+  public Stream<Block> apply(final List<Block> blocks) {
+    return blocks.stream().map(this::extractSignatures);
+  }
 
-  long extractBlockNumber(B block);
-
-  Hash extractBlockHash(B block);
-
-  CompletableFuture<Void> executeParallelCalculations(List<B> blocks);
+  private Block extractSignatures(final Block block) {
+    block.getBody().getTransactions().forEach(Transaction::getSender);
+    return block;
+  }
 }

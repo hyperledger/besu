@@ -14,6 +14,9 @@ package tech.pegasys.pantheon.ethereum.eth;
 
 import tech.pegasys.pantheon.util.number.PositiveNumber;
 
+import java.util.Objects;
+
+import com.google.common.base.MoreObjects;
 import picocli.CommandLine;
 
 public class EthereumWireProtocolConfiguration {
@@ -68,27 +71,33 @@ public class EthereumWireProtocolConfiguration {
   }
 
   @Override
-  public boolean equals(final Object obj) {
-    if (!(obj instanceof EthereumWireProtocolConfiguration)) {
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    EthereumWireProtocolConfiguration other = ((EthereumWireProtocolConfiguration) obj);
-    return maxGetBlockHeaders == other.maxGetBlockHeaders
-        && maxGetBlockBodies == other.maxGetBlockBodies
-        && maxGetReceipts == other.maxGetReceipts
-        && maxGetNodeData == other.maxGetNodeData;
+    final EthereumWireProtocolConfiguration that = (EthereumWireProtocolConfiguration) o;
+    return maxGetBlockHeaders == that.maxGetBlockHeaders
+        && maxGetBlockBodies == that.maxGetBlockBodies
+        && maxGetReceipts == that.maxGetReceipts
+        && maxGetNodeData == that.maxGetNodeData;
   }
 
   @Override
   public int hashCode() {
-    return super.hashCode();
+    return Objects.hash(maxGetBlockHeaders, maxGetBlockBodies, maxGetReceipts, maxGetNodeData);
   }
 
   @Override
   public String toString() {
-    return String.format(
-        "maxGetBlockHeaders=%s\tmaxGetBlockBodies=%s\tmaxGetReceipts=%s\tmaxGetReceipts=%s",
-        maxGetBlockHeaders, maxGetBlockBodies, maxGetReceipts, maxGetNodeData);
+    return MoreObjects.toStringHelper(this)
+        .add("maxGetBlockHeaders", maxGetBlockHeaders)
+        .add("maxGetBlockBodies", maxGetBlockBodies)
+        .add("maxGetReceipts", maxGetReceipts)
+        .add("maxGetNodeData", maxGetNodeData)
+        .toString();
   }
 
   public static class Builder {

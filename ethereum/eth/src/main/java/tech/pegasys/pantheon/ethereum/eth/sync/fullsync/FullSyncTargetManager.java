@@ -38,7 +38,6 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
   private static final Logger LOG = LogManager.getLogger();
   private final ProtocolContext<C> protocolContext;
   private final EthContext ethContext;
-  private final BetterSyncTargetEvaluator betterSyncTargetEvaluator;
 
   FullSyncTargetManager(
       final SynchronizerConfiguration config,
@@ -49,7 +48,6 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
     super(config, protocolSchedule, protocolContext, ethContext, metricsSystem);
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    betterSyncTargetEvaluator = new BetterSyncTargetEvaluator(config, ethContext.getEthPeers());
   }
 
   @Override
@@ -86,19 +84,13 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
     }
   }
 
-  @Override
-  public boolean isSyncTargetReached(final EthPeer peer) {
+  private boolean isSyncTargetReached(final EthPeer peer) {
     final long peerHeight = peer.chainState().getEstimatedHeight();
     final UInt256 peerTd = peer.chainState().getBestBlock().getTotalDifficulty();
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
     return peerTd.compareTo(blockchain.getChainHead().getTotalDifficulty()) <= 0
         && peerHeight <= blockchain.getChainHeadBlockNumber();
-  }
-
-  @Override
-  public boolean shouldSwitchSyncTarget(final SyncTarget currentTarget) {
-    return betterSyncTargetEvaluator.shouldSwitchSyncTarget(currentTarget.peer());
   }
 
   @Override

@@ -24,7 +24,7 @@ import com.google.common.base.MoreObjects;
 public class SyncTarget {
 
   private final EthPeer peer;
-  private BlockHeader commonAncestor;
+  private final BlockHeader commonAncestor;
 
   public SyncTarget(final EthPeer peer, final BlockHeader commonAncestor) {
     this.peer = peer;
@@ -37,10 +37,6 @@ public class SyncTarget {
 
   public BlockHeader commonAncestor() {
     return commonAncestor;
-  }
-
-  void setCommonAncestor(final BlockHeader commonAncestor) {
-    this.commonAncestor = commonAncestor;
   }
 
   public long addPeerChainEstimatedHeightListener(final EstimatedHeightListener listener) {

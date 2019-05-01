@@ -82,7 +82,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     ethPeers = new EthPeers(getSupportedProtocol());
     ethMessages = new EthMessages();
-    ethContext = new EthContext(getSupportedProtocol(), ethPeers, ethMessages, scheduler);
+    ethContext = new EthContext(ethPeers, ethMessages, scheduler);
 
     this.blockBroadcaster = new BlockBroadcaster(ethContext);
 

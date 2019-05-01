@@ -27,7 +27,6 @@ import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -63,7 +62,6 @@ public class EthPeer {
 
   private final AtomicReference<Consumer<EthPeer>> onStatusesExchanged = new AtomicReference<>();
   private final PeerReputation reputation = new PeerReputation();
-  private final Subscribers<DisconnectCallback> disconnectCallbacks = new Subscribers<>();
 
   EthPeer(
       final PeerConnection connection,
@@ -108,14 +106,6 @@ public class EthPeer {
 
   public void disconnect(final DisconnectReason reason) {
     connection.disconnect(reason);
-  }
-
-  public long subscribeDisconnect(final DisconnectCallback callback) {
-    return disconnectCallbacks.subscribe(callback);
-  }
-
-  public void unsubscribeDisconnect(final long id) {
-    disconnectCallbacks.unsubscribe(id);
   }
 
   public ResponseStream send(final MessageData messageData) throws PeerNotConnected {
@@ -258,7 +248,6 @@ public class EthPeer {
     bodiesRequestManager.close();
     receiptsRequestManager.close();
     nodeDataRequestManager.close();
-    disconnectCallbacks.forEach(callback -> callback.onDisconnect(this));
   }
 
   public void registerKnownBlock(final Hash hash) {

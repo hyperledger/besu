@@ -120,14 +120,5 @@ public abstract class SyncTargetManager<C> {
         .timeout(WaitForPeerTask.create(ethContext, metricsSystem), Duration.ofSeconds(5));
   }
 
-  public abstract boolean shouldSwitchSyncTarget(final SyncTarget currentTarget);
-
   public abstract boolean shouldContinueDownloading();
-
-  public abstract boolean isSyncTargetReached(final EthPeer peer);
-
-  public boolean syncTargetCanProvideMoreBlocks(final SyncTarget syncTarget) {
-    final EthPeer currentSyncingPeer = syncTarget.peer();
-    return !currentSyncingPeer.isDisconnected() && !isSyncTargetReached(currentSyncingPeer);
-  }
 }
