@@ -17,6 +17,7 @@ import static tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage
 
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
@@ -53,14 +54,17 @@ final class NettyPeerConnection implements PeerConnection {
   private final Callbacks callbacks;
   private final CapabilityMultiplexer multiplexer;
   private final LabelledMetric<Counter> outboundMessagesCounter;
+  private final Peer peer;
 
   public NettyPeerConnection(
       final ChannelHandlerContext ctx,
+      final Peer peer,
       final PeerInfo peerInfo,
       final CapabilityMultiplexer multiplexer,
       final Callbacks callbacks,
       final LabelledMetric<Counter> outboundMessagesCounter) {
     this.ctx = ctx;
+    this.peer = peer;
     this.peerInfo = peerInfo;
     this.multiplexer = multiplexer;
     this.agreedCapabilities = multiplexer.getAgreedCapabilities();
@@ -115,6 +119,11 @@ final class NettyPeerConnection implements PeerConnection {
   @Override
   public Capability capability(final String protocol) {
     return protocolToCapability.get(protocol);
+  }
+
+  @Override
+  public Peer getPeer() {
+    return peer;
   }
 
   @Override

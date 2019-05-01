@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.p2p.network.netty;
 
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.Framer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.Handshaker;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker;
@@ -44,6 +45,8 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
 
   protected final Handshaker handshaker = new ECIESHandshaker();
 
+  // The peer we are expecting to connect to, if such a peer is known
+  private final Optional<Peer> expectedPeer;
   private final PeerInfo ourInfo;
 
   private final Callbacks callbacks;
@@ -57,12 +60,14 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
   AbstractHandshakeHandler(
       final List<SubProtocol> subProtocols,
       final PeerInfo ourInfo,
+      final Optional<Peer> expectedPeer,
       final CompletableFuture<PeerConnection> connectionFuture,
       final Callbacks callbacks,
       final PeerConnectionRegistry peerConnectionRegistry,
       final LabelledMetric<Counter> outboundMessagesCounter) {
     this.subProtocols = subProtocols;
     this.ourInfo = ourInfo;
+    this.expectedPeer = expectedPeer;
     this.connectionFuture = connectionFuture;
     this.callbacks = callbacks;
     this.peerConnectionRegistry = peerConnectionRegistry;
@@ -108,7 +113,13 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
 
       final ByteToMessageDecoder deFramer =
           new DeFramer(
-              framer, subProtocols, ourInfo, callbacks, connectionFuture, outboundMessagesCounter);
+              framer,
+              subProtocols,
+              ourInfo,
+              expectedPeer,
+              callbacks,
+              connectionFuture,
+              outboundMessagesCounter);
 
       ctx.channel()
           .pipeline()

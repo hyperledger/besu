@@ -39,6 +39,7 @@ public final class HandshakeHandlerInbound extends AbstractHandshakeHandler {
     super(
         subProtocols,
         ourInfo,
+        Optional.empty(),
         connectionFuture,
         callbacks,
         peerConnectionRegistry,

@@ -14,37 +14,36 @@ package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-
-import com.google.common.base.Strings;
 
 public class MockPeerConnection implements PeerConnection {
 
   private static final PeerSendHandler NOOP_ON_SEND = (cap, msg, conn) -> {};
-  private static final AtomicLong ID_GENERATOR = new AtomicLong();
   private final PeerSendHandler onSend;
   private final Set<Capability> caps;
   private volatile boolean disconnected = false;
-  private final Bytes32 nodeId;
+  private final BytesValue nodeId;
+  private final Peer peer;
+  private final PeerInfo peerInfo;
 
   public MockPeerConnection(final Set<Capability> caps, final PeerSendHandler onSend) {
     this.caps = caps;
     this.onSend = onSend;
-    this.nodeId = generateUsefulNodeId();
-  }
-
-  private Bytes32 generateUsefulNodeId() {
-    // EthPeer only shows the first 20 characters of the node ID so add some padding.
-    return Bytes32.fromHexStringLenient(
-        "0x" + ID_GENERATOR.incrementAndGet() + Strings.repeat("0", 46));
+    this.nodeId = Peer.randomId();
+    this.peer =
+        DefaultPeer.fromEnodeURL(
+            EnodeURL.builder().ipAddress("127.0.0.1").nodeId(nodeId).listeningPort(30303).build());
+    this.peerInfo = new PeerInfo(5, "Mock", new ArrayList<>(caps), 30303, nodeId);
   }
 
   public MockPeerConnection(final Set<Capability> caps) {
@@ -65,8 +64,13 @@ public class MockPeerConnection implements PeerConnection {
   }
 
   @Override
+  public Peer getPeer() {
+    return peer;
+  }
+
+  @Override
   public PeerInfo getPeerInfo() {
-    return new PeerInfo(5, "Mock", new ArrayList<>(caps), 0, nodeId);
+    return peerInfo;
   }
 
   @Override
