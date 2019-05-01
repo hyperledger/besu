@@ -133,7 +133,7 @@ public class IbftProcessorTest {
 
     // Start the IbftProcessor
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
-    processorExecutor.submit(processor);
+    processorExecutor.execute(processor);
 
     final RoundExpiry roundExpiryEvent = new RoundExpiry(new ConsensusRoundIdentifier(1, 1));
 

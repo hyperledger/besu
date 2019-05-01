@@ -182,7 +182,7 @@ public class IbftPantheonControllerBuilder extends PantheonControllerBuilder<Ibf
     final EventMultiplexer eventMultiplexer = new EventMultiplexer(ibftController);
     final IbftProcessor ibftProcessor = new IbftProcessor(ibftEventQueue, eventMultiplexer);
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
-    processorExecutor.submit(ibftProcessor);
+    processorExecutor.execute(ibftProcessor);
 
     final MiningCoordinator ibftMiningCoordinator =
         new IbftMiningCoordinator(ibftProcessor, blockCreatorFactory, blockchain, ibftEventQueue);

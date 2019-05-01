@@ -187,7 +187,7 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
 
     try {
       final Process process = processBuilder.start();
-      outputProcessorExecutor.submit(() -> printOutput(node, process));
+      outputProcessorExecutor.execute(() -> printOutput(node, process));
       pantheonProcesses.put(node.getName(), process);
     } catch (final IOException e) {
       LOG.error("Error starting PantheonNode process", e);
