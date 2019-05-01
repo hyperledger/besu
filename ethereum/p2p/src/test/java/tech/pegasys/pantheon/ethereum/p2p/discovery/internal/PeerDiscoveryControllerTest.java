@@ -1074,7 +1074,8 @@ public class PeerDiscoveryControllerTest {
     final URI peerURI = URI.create(peer.getEnodeURLString());
     config.setNodeWhitelist(Lists.newArrayList(peerURI));
     final NodeLocalConfigPermissioningController nodeLocalConfigPermissioningController =
-        new NodeLocalConfigPermissioningController(config, Collections.emptyList(), selfEnode);
+        new NodeLocalConfigPermissioningController(
+            config, Collections.emptyList(), selfEnode.getNodeId());
 
     controller =
         getControllerBuilder()
@@ -1101,7 +1102,8 @@ public class PeerDiscoveryControllerTest {
     final URI peerURI = URI.create(peer.getEnodeURLString());
     config.setNodeWhitelist(Lists.newArrayList(peerURI));
     final NodeLocalConfigPermissioningController nodeLocalConfigPermissioningController =
-        new NodeLocalConfigPermissioningController(config, Collections.emptyList(), selfEnode);
+        new NodeLocalConfigPermissioningController(
+            config, Collections.emptyList(), selfEnode.getNodeId());
 
     final Consumer<PeerDroppedEvent> peerDroppedEventConsumer = mock(Consumer.class);
     final Subscribers<Consumer<PeerDroppedEvent>> peerDroppedSubscribers = new Subscribers();

@@ -21,13 +21,14 @@ import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * A permissioning provider that only provides an answer when we have no peers outside of our
  * bootnodes
  */
 public class InsufficientPeersPermissioningProvider implements ContextualNodePermissioningProvider {
-  private final EnodeURL selfEnode;
+  private final Supplier<Optional<EnodeURL>> selfEnode;
   private final P2PNetwork p2pNetwork;
   private final Collection<EnodeURL> bootnodeEnodes;
   private long nonBootnodePeerConnections;
@@ -37,12 +38,13 @@ public class InsufficientPeersPermissioningProvider implements ContextualNodePer
    * Creates the provider observing the provided p2p network
    *
    * @param p2pNetwork the p2p network to observe
-   * @param selfEnode the advertised enode address of this node
+   * @param selfEnode A supplier that provides a representation of the locally running node, if
+   *     available
    * @param bootnodeEnodes the bootnodes that this node is configured to connection to
    */
   public InsufficientPeersPermissioningProvider(
       final P2PNetwork p2pNetwork,
-      final EnodeURL selfEnode,
+      final Supplier<Optional<EnodeURL>> selfEnode,
       final Collection<EnodeURL> bootnodeEnodes) {
     this.selfEnode = selfEnode;
     this.p2pNetwork = p2pNetwork;
@@ -64,17 +66,23 @@ public class InsufficientPeersPermissioningProvider implements ContextualNodePer
   @Override
   public Optional<Boolean> isPermitted(
       final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+    Optional<EnodeURL> maybeSelfEnode = selfEnode.get();
     if (nonBootnodePeerConnections > 0) {
       return Optional.empty();
-    } else if (checkEnode(sourceEnode) && checkEnode(destinationEnode)) {
+    } else if (!maybeSelfEnode.isPresent()) {
+      // The local node is not yet ready, so we can't validate enodes yet
+      return Optional.empty();
+    } else if (checkEnode(maybeSelfEnode.get(), sourceEnode)
+        && checkEnode(maybeSelfEnode.get(), destinationEnode)) {
       return Optional.of(true);
     } else {
       return Optional.empty();
     }
   }
 
-  private boolean checkEnode(final EnodeURL enode) {
-    return (enode.sameEndpoint(selfEnode) || bootnodeEnodes.stream().anyMatch(enode::sameEndpoint));
+  private boolean checkEnode(final EnodeURL localEnode, final EnodeURL enode) {
+    return (enode.sameEndpoint(localEnode)
+        || bootnodeEnodes.stream().anyMatch(enode::sameEndpoint));
   }
 
   private void handleConnect(final PeerConnection peerConnection) {

@@ -77,21 +77,23 @@ public interface P2PNetwork extends Closeable {
   void subscribeDisconnect(DisconnectCallback consumer);
 
   /**
-   * Adds a {@link Peer} to a list indicating efforts should be made to always stay connected to it
+   * Adds a {@link Peer} to a list indicating efforts should be made to always stay connected
+   * regardless of maxPeer limits. Non-permitted peers may be added to this list, but will not
+   * actually be connected to as long as they are prohibited.
    *
    * @param peer The peer that should be connected to
-   * @return boolean representing whether or not the peer has been added to the list or was already
-   *     on it
+   * @return boolean representing whether or not the peer has been added to the list, false is
+   *     returned if the peer was already on the list
    */
   boolean addMaintainConnectionPeer(final Peer peer);
 
   /**
-   * Removes a {@link Peer} from a list indicating any existing efforts to connect to a given peer
-   * should be removed, and if connected, the peer should be disconnected
+   * Disconnect and remove the given {@link Peer} from the maintained peer list. Peer is
+   * disconnected even if it is not in the maintained peer list. See {@link
+   * #addMaintainConnectionPeer(Peer)} for details on the maintained peer list.
    *
    * @param peer The peer to which connections are not longer required
-   * @return boolean representing whether or not the peer has been disconnected, or if it was not
-   *     currently connected.
+   * @return boolean representing whether the peer was removed from the maintained peer list
    */
   boolean removeMaintainedConnectionPeer(final Peer peer);
 
