@@ -79,7 +79,7 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
   @Override
   public final CompletableFuture<T> runAsync(final ExecutorService executor) {
     if (result.compareAndSet(null, new CompletableFuture<>())) {
-      executor.submit(this::executeTaskTimed);
+      executor.execute(this::executeTaskTimed);
       result.get().whenComplete((r, t) -> cleanup());
     }
     return result.get();

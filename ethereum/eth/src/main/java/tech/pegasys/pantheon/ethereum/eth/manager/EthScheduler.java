@@ -104,11 +104,11 @@ public class EthScheduler {
   }
 
   public void scheduleSyncWorkerTask(final Runnable command) {
-    syncWorkerExecutor.submit(command);
+    syncWorkerExecutor.execute(command);
   }
 
   public void scheduleTxWorkerTask(final Runnable command) {
-    txWorkerExecutor.submit(command);
+    txWorkerExecutor.execute(command);
   }
 
   public <T> CompletableFuture<T> scheduleServiceTask(final EthTask<T> task) {

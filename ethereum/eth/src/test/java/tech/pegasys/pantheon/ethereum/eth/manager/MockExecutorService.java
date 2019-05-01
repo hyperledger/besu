@@ -135,7 +135,9 @@ public class MockExecutorService implements ExecutorService {
   }
 
   @Override
-  public void execute(final Runnable command) {}
+  public void execute(final Runnable command) {
+    submit(command);
+  }
 
   private static class ExecutorTask<T> {
     private final CompletableFuture<T> future;

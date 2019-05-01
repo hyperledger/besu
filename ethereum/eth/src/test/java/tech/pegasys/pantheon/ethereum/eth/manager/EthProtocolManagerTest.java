@@ -1066,7 +1066,7 @@ public final class EthProtocolManagerTest {
       // Verify the regular message executor and scheduled executor got nothing to execute.
       verifyZeroInteractions(worker, scheduled);
       // Verify our transactions executor got something to execute.
-      verify(transactions).submit((Runnable) any());
+      verify(transactions).execute(any());
     }
   }
 }
