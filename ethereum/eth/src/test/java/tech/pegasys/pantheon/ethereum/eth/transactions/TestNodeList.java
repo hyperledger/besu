@@ -59,12 +59,6 @@ public class TestNodeList implements Closeable {
     return node;
   }
 
-  public void startNetworks() {
-    for (final TestNode node : nodes) {
-      node.network.start();
-    }
-  }
-
   public void connectAndAssertAll()
       throws InterruptedException, ExecutionException, TimeoutException {
     for (int i = 0; i < nodes.size(); i++) {

@@ -47,7 +47,6 @@ public class TransactionPoolPropagationTest {
 
   /** Helper to do common setup tasks. */
   private void initTest(final TestNodeList txNodes) throws Exception {
-    txNodes.startNetworks();
     txNodes.connectAndAssertAll();
     txNodes.logPeerConnections();
     txNodes.assertPeerCounts();

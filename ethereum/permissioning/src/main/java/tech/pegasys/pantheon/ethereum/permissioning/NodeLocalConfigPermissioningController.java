@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.permissioning;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningProvider;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodeWhitelistUpdatedEvent;
 import tech.pegasys.pantheon.util.Subscribers;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.IOException;
@@ -24,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -38,7 +40,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
 
   private LocalPermissioningConfiguration configuration;
   private final List<EnodeURL> fixedNodes;
-  private final EnodeURL selfEnode;
+  private final BytesValue localNodeId;
   private final List<EnodeURL> nodesWhitelist = new ArrayList<>();
   private final WhitelistPersistor whitelistPersistor;
   private final Subscribers<Consumer<NodeWhitelistUpdatedEvent>> nodeWhitelistUpdatedObservers =
@@ -47,22 +49,22 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   public NodeLocalConfigPermissioningController(
       final LocalPermissioningConfiguration permissioningConfiguration,
       final List<EnodeURL> fixedNodes,
-      final EnodeURL selfEnode) {
+      final BytesValue localNodeId) {
     this(
         permissioningConfiguration,
         fixedNodes,
-        selfEnode,
+        localNodeId,
         new WhitelistPersistor(permissioningConfiguration.getNodePermissioningConfigFilePath()));
   }
 
   public NodeLocalConfigPermissioningController(
       final LocalPermissioningConfiguration configuration,
       final List<EnodeURL> fixedNodes,
-      final EnodeURL selfEnode,
+      final BytesValue localNodeId,
       final WhitelistPersistor whitelistPersistor) {
     this.configuration = configuration;
     this.fixedNodes = fixedNodes;
-    this.selfEnode = selfEnode;
+    this.localNodeId = localNodeId;
     this.whitelistPersistor = whitelistPersistor;
     readNodesFromConfig(configuration);
   }
@@ -197,10 +199,6 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
     return peers.parallelStream().map(EnodeURL::toString).collect(Collectors.toList());
   }
 
-  private boolean checkSelfEnode(final EnodeURL node) {
-    return selfEnode.getNodeId().equals(node.getNodeId());
-  }
-
   private boolean compareEnodes(final EnodeURL nodeA, final EnodeURL nodeB) {
     boolean idsMatch = nodeA.getNodeId().equals(nodeB.getNodeId());
     boolean hostsMatch = nodeA.getIp().equals(nodeB.getIp());
@@ -219,7 +217,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   }
 
   public boolean isPermitted(final EnodeURL node) {
-    if (checkSelfEnode(node)) {
+    if (Objects.equals(localNodeId, node.getNodeId())) {
       return true;
     }
     return nodesWhitelist.stream().anyMatch(p -> compareEnodes(p, node));

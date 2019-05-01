@@ -319,7 +319,8 @@ public class P2PNetworkTest {
     config.setNodePermissioningConfigFilePath(tempFile.toAbsolutePath().toString());
 
     final NodeLocalConfigPermissioningController localWhitelistController =
-        new NodeLocalConfigPermissioningController(config, Collections.emptyList(), selfEnode);
+        new NodeLocalConfigPermissioningController(
+            config, Collections.emptyList(), selfEnode.getNodeId());
     // turn on whitelisting by adding a different node NOT remote node
     localWhitelistController.addNode(
         EnodeURL.builder().ipAddress("127.0.0.1").nodeId(Peer.randomId()).build());

@@ -54,7 +54,8 @@ public class NodePermissioningControllerFactoryTest {
     config = new PermissioningConfiguration(Optional.empty(), Optional.empty());
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
-        factory.create(config, synchronizer, bootnodes, selfEnode, transactionSimulator);
+        factory.create(
+            config, synchronizer, bootnodes, selfEnode.getNodeId(), transactionSimulator);
 
     List<NodePermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(0);
@@ -73,7 +74,8 @@ public class NodePermissioningControllerFactoryTest {
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
-        factory.create(config, synchronizer, bootnodes, selfEnode, transactionSimulator);
+        factory.create(
+            config, synchronizer, bootnodes, selfEnode.getNodeId(), transactionSimulator);
 
     List<NodePermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(1);
@@ -93,7 +95,8 @@ public class NodePermissioningControllerFactoryTest {
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
-        factory.create(config, synchronizer, bootnodes, selfEnode, transactionSimulator);
+        factory.create(
+            config, synchronizer, bootnodes, selfEnode.getNodeId(), transactionSimulator);
 
     List<NodePermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(1);
@@ -120,7 +123,8 @@ public class NodePermissioningControllerFactoryTest {
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
-        factory.create(config, synchronizer, bootnodes, selfEnode, transactionSimulator);
+        factory.create(
+            config, synchronizer, bootnodes, selfEnode.getNodeId(), transactionSimulator);
 
     List<NodePermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(2);
