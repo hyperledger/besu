@@ -56,7 +56,7 @@ public class NetworkingServiceLifecycleTest {
       final int udpPort = enode.getEffectiveDiscoveryPort();
       final int tcpPort = enode.getListeningPort();
 
-      assertEquals(config.getDiscovery().getAdvertisedHost(), enode.getIp());
+      assertEquals(config.getDiscovery().getAdvertisedHost(), enode.getIpAsString());
       assertThat(udpPort).isNotZero();
       assertThat(tcpPort).isNotZero();
       assertThat(service.getDiscoveredPeers()).hasSize(0);

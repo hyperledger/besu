@@ -43,7 +43,15 @@ public class NetEnodeTest {
       BytesValue.fromHexString(
           "0x0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807");
 
-  private final DefaultPeer defaultPeer = new DefaultPeer(nodeId, "1.2.3.4", 7890, 30303);
+  private final DefaultPeer defaultPeer =
+      DefaultPeer.fromEnodeURL(
+          EnodeURL.builder()
+              .nodeId(nodeId)
+              .ipAddress("1.2.3.4")
+              .discoveryPort(7890)
+              .listeningPort(30303)
+              .build());
+
   private final Optional<EnodeURL> enodeURL = Optional.of(defaultPeer.getEnodeURL());
 
   @Mock private P2PNetwork p2PNetwork;

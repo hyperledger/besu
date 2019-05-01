@@ -73,8 +73,8 @@ public class AdminNodeInfo implements JsonRpcMethod {
     final BytesValue nodeId = enode.getNodeId();
     response.put("enode", enode.toString());
     ports.put("discovery", enode.getEffectiveDiscoveryPort());
-    response.put("ip", enode.getIp());
-    response.put("listenAddr", enode.getIp() + ":" + enode.getListeningPort());
+    response.put("ip", enode.getIpAsString());
+    response.put("listenAddr", enode.getIpAsString() + ":" + enode.getListeningPort());
     response.put("id", nodeId.toUnprefixedString());
     response.put("name", clientVersion);
 

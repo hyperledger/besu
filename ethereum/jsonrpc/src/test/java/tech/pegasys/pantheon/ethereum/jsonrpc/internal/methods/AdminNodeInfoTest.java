@@ -30,6 +30,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessRe
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.math.BigInteger;
@@ -59,7 +60,14 @@ public class AdminNodeInfoTest {
   private final ChainHead testChainHead = new ChainHead(Hash.EMPTY, UInt256.ONE);
   private final GenesisConfigOptions genesisConfigOptions =
       new StubGenesisConfigOptions().chainId(BigInteger.valueOf(2019));
-  private final DefaultPeer defaultPeer = new DefaultPeer(nodeId, "1.2.3.4", 7890, 30303);
+  private final DefaultPeer defaultPeer =
+      DefaultPeer.fromEnodeURL(
+          EnodeURL.builder()
+              .nodeId(nodeId)
+              .ipAddress("1.2.3.4")
+              .discoveryPort(7890)
+              .listeningPort(30303)
+              .build());
 
   @Before
   public void setup() {

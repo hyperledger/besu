@@ -202,7 +202,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   private boolean compareEnodes(final EnodeURL nodeA, final EnodeURL nodeB) {
     boolean idsMatch = nodeA.getNodeId().equals(nodeB.getNodeId());
     boolean hostsMatch = nodeA.getIp().equals(nodeB.getIp());
-    boolean listeningPortsMatch = nodeA.getListeningPort().equals(nodeB.getListeningPort());
+    boolean listeningPortsMatch = nodeA.getListeningPort() == nodeB.getListeningPort();
     boolean discoveryPortsMatch = true;
     if (nodeA.getDiscoveryPort().isPresent() && nodeB.getDiscoveryPort().isPresent()) {
       discoveryPortsMatch =

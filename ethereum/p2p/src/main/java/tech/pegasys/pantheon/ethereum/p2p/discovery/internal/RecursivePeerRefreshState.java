@@ -80,9 +80,10 @@ public class RecursivePeerRefreshState {
 
   void start(final List<DiscoveryPeer> initialPeers, final BytesValue target) {
     if (iterativeSearchInProgress) {
-      LOG.debug("Skipping discovery because previous search is still in progress.");
+      LOG.debug("Skip peer search because previous search is still in progress.");
       return;
     }
+    LOG.debug("Start peer search.");
     iterativeSearchInProgress = true;
     this.target = target;
     currentRoundTimeout.ifPresent(RoundTimeout::cancelTimeout);
@@ -153,7 +154,10 @@ public class RecursivePeerRefreshState {
     currentRoundTimeout.ifPresent(RoundTimeout::cancelTimeout);
     final List<MetadataPeer> candidates = neighboursRoundCandidates();
     if (candidates.isEmpty() || reachedMaximumNumberOfRounds()) {
-      LOG.debug("Iterative peer search complete");
+      LOG.debug(
+          "Iterative peer search complete.  {} peers processed over {} rounds.",
+          oneTrueMap.size(),
+          currentRound + 1);
       iterativeSearchInProgress = false;
       return;
     }
@@ -194,14 +198,13 @@ public class RecursivePeerRefreshState {
         .orElse(true);
   }
 
-  void onNeighboursPacketReceived(
-      final DiscoveryPeer peer, final NeighborsPacketData neighboursPacket) {
+  void onNeighboursReceived(final DiscoveryPeer peer, final List<DiscoveryPeer> peers) {
     final MetadataPeer metadataPeer = oneTrueMap.get(peer.getId());
     if (metadataPeer == null) {
       return;
     }
-    LOG.debug("Received neighbours packet with {} neighbours", neighboursPacket.getNodes().size());
-    for (final DiscoveryPeer receivedDiscoPeer : neighboursPacket.getNodes()) {
+    LOG.debug("Received neighbours packet with {} neighbours", peers.size());
+    for (final DiscoveryPeer receivedDiscoPeer : peers) {
       if (satisfiesMapAdditionCriteria(receivedDiscoPeer)) {
         final MetadataPeer receivedMetadataPeer =
             new MetadataPeer(receivedDiscoPeer, distance(target, receivedDiscoPeer.getId()));

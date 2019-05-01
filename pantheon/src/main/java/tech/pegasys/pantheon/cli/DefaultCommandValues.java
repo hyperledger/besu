@@ -57,6 +57,7 @@ public interface DefaultCommandValues {
   SyncMode DEFAULT_SYNC_MODE = SyncMode.FULL;
   int FAST_SYNC_MAX_WAIT_TIME = 0;
   int FAST_SYNC_MIN_PEER_COUNT = 5;
+  int P2P_PORT = 30303;
   int DEFAULT_MAX_PEERS = 25;
 
   static Path getDefaultPantheonDataPath(final Object command) {

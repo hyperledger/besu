@@ -32,17 +32,16 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedObserver;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
-import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.config.NetworkingConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.config.RlpxConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Endpoint;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
@@ -54,6 +53,7 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
+import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.List;
 import java.util.OptionalInt;
@@ -344,7 +344,8 @@ public final class DefaultP2PNetworkTest {
   public void handlePeerBondedEvent_forPeerWithNoTcpPort() {
     final DefaultP2PNetwork network = mockNetwork();
     DiscoveryPeer peer =
-        new DiscoveryPeer(generatePeerId(0), "127.0.0.1", 999, OptionalInt.empty());
+        DiscoveryPeer.fromIdAndEndpoint(
+            Peer.randomId(), new Endpoint("127.0.0.1", 999, OptionalInt.empty()));
     PeerBondedEvent peerBondedEvent = new PeerBondedEvent(peer, System.currentTimeMillis());
 
     network.handlePeerBondedEvent().accept(peerBondedEvent);
@@ -358,7 +359,7 @@ public final class DefaultP2PNetworkTest {
         mockNetwork(() -> RlpxConfiguration.create().setMaxPeers(maxPeers));
 
     doReturn(2).when(network).connectionCount();
-    DiscoveryPeer peer = createDiscoveryPeer(0);
+    DiscoveryPeer peer = createDiscoveryPeer();
     peer.setStatus(PeerDiscoveryStatus.BONDED);
 
     doReturn(Stream.of(peer)).when(network).getDiscoveredPeers();
@@ -379,7 +380,7 @@ public final class DefaultP2PNetworkTest {
         mockNetwork(() -> RlpxConfiguration.create().setMaxPeers(maxPeers));
 
     doReturn(2).when(network).connectionCount();
-    DiscoveryPeer peer = createDiscoveryPeer(0);
+    DiscoveryPeer peer = createDiscoveryPeer();
     peer.setStatus(PeerDiscoveryStatus.KNOWN);
 
     doReturn(Stream.of(peer)).when(network).getDiscoveredPeers();
@@ -395,7 +396,7 @@ public final class DefaultP2PNetworkTest {
         mockNetwork(() -> RlpxConfiguration.create().setMaxPeers(maxPeers));
 
     doReturn(2).when(network).connectionCount();
-    DiscoveryPeer peer = createDiscoveryPeer(0);
+    DiscoveryPeer peer = createDiscoveryPeer();
     peer.setStatus(PeerDiscoveryStatus.BONDED);
 
     doReturn(true).when(network).isConnecting(peer);
@@ -412,7 +413,7 @@ public final class DefaultP2PNetworkTest {
         mockNetwork(() -> RlpxConfiguration.create().setMaxPeers(maxPeers));
 
     doReturn(2).when(network).connectionCount();
-    DiscoveryPeer peer = createDiscoveryPeer(0);
+    DiscoveryPeer peer = createDiscoveryPeer();
     peer.setStatus(PeerDiscoveryStatus.BONDED);
 
     doReturn(true).when(network).isConnected(peer);
@@ -434,7 +435,7 @@ public final class DefaultP2PNetworkTest {
             .limit(10)
             .map(
                 (seed) -> {
-                  DiscoveryPeer peer = createDiscoveryPeer(seed);
+                  DiscoveryPeer peer = createDiscoveryPeer();
                   peer.setStatus(PeerDiscoveryStatus.BONDED);
                   return peer;
                 })
@@ -463,7 +464,7 @@ public final class DefaultP2PNetworkTest {
             .limit(10)
             .map(
                 (seed) -> {
-                  DiscoveryPeer peer = createDiscoveryPeer(seed);
+                  DiscoveryPeer peer = createDiscoveryPeer();
                   peer.setStatus(PeerDiscoveryStatus.BONDED);
                   return peer;
                 })
@@ -475,13 +476,8 @@ public final class DefaultP2PNetworkTest {
     verify(network, times(0)).connect(any());
   }
 
-  private DiscoveryPeer createDiscoveryPeer(final int seed) {
-    return new DiscoveryPeer(generatePeerId(seed), "127.0.0.1", 999, OptionalInt.empty());
-  }
-
-  private BytesValue generatePeerId(final int seed) {
-    BlockDataGenerator gen = new BlockDataGenerator(seed);
-    return gen.bytesValue(DefaultPeer.PEER_ID_SIZE);
+  private DiscoveryPeer createDiscoveryPeer() {
+    return createDiscoveryPeer(Peer.randomId(), 999);
   }
 
   private BlockAddedEvent blockAddedEvent() {
@@ -582,6 +578,18 @@ public final class DefaultP2PNetworkTest {
     return DefaultPeer.fromURI(enodeURL);
   }
 
+  private DiscoveryPeer createDiscoveryPeer(final BytesValue nodeId, final int listenPort) {
+    return DiscoveryPeer.fromEnode(createEnode(nodeId, listenPort));
+  }
+
+  private EnodeURL createEnode(final BytesValue nodeId, final int listenPort) {
+    return EnodeURL.builder()
+        .ipAddress(InetAddress.getLoopbackAddress().getHostAddress())
+        .nodeId(nodeId)
+        .listeningPort(listenPort)
+        .build();
+  }
+
   public static class EnodeURLMatcher implements ArgumentMatcher<EnodeURL> {
 
     private final EnodeURL enodeURL;
@@ -597,7 +605,7 @@ public final class DefaultP2PNetworkTest {
       } else {
         return enodeURL.getNodeId().equals(argument.getNodeId())
             && enodeURL.getIp().equals(argument.getIp())
-            && enodeURL.getListeningPort().equals(argument.getListeningPort());
+            && enodeURL.getListeningPort() == argument.getListeningPort();
       }
     }
   }

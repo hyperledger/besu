@@ -119,7 +119,7 @@ public class LocalPermissioningConfigurationBuilderTest {
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageStartingWith("Enode URL contains an invalid node ID");
+        .hasMessageContaining("Invalid node ID");
   }
 
   @Test

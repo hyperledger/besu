@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -39,8 +40,22 @@ public final class MockNetworkTest {
   public void exchangeMessages() throws Exception {
     final Capability cap = Capability.create("eth", 63);
     final MockNetwork network = new MockNetwork(Arrays.asList(cap));
-    final Peer one = new DefaultPeer(randomId(), "192.168.1.2", 1234, 4321);
-    final Peer two = new DefaultPeer(randomId(), "192.168.1.3", 1234, 4321);
+    final Peer one =
+        DefaultPeer.fromEnodeURL(
+            EnodeURL.builder()
+                .nodeId(randomId())
+                .ipAddress("192.168.1.2")
+                .discoveryPort(1234)
+                .listeningPort(4321)
+                .build());
+    final Peer two =
+        DefaultPeer.fromEnodeURL(
+            EnodeURL.builder()
+                .nodeId(randomId())
+                .ipAddress("192.168.1.3")
+                .discoveryPort(1234)
+                .listeningPort(4321)
+                .build());
     try (final P2PNetwork network1 = network.setup(one);
         final P2PNetwork network2 = network.setup(two)) {
       final CompletableFuture<Message> messageFuture = new CompletableFuture<>();
@@ -102,8 +117,6 @@ public final class MockNetworkTest {
   }
 
   private static BytesValue randomId() {
-    final byte[] raw = new byte[DefaultPeer.PEER_ID_SIZE];
-    ThreadLocalRandom.current().nextBytes(raw);
-    return BytesValue.wrap(raw);
+    return Peer.randomId();
   }
 }
