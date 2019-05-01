@@ -17,9 +17,8 @@ import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage.Updater;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
@@ -43,8 +42,8 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
   }
 
   @Override
-  protected List<NodeDataRequest> getRequestsFromTrieNodeValue(final BytesValue value) {
+  protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(final BytesValue value) {
     // Nothing to do for terminal storage node
-    return Collections.emptyList();
+    return Stream.empty();
   }
 }

@@ -23,12 +23,12 @@ import tech.pegasys.pantheon.util.ExceptionUtils;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.time.Clock;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -126,7 +126,7 @@ class WorldDownloadState {
     }
   }
 
-  public synchronized void enqueueRequests(final Collection<NodeDataRequest> requests) {
+  public synchronized void enqueueRequests(final Stream<NodeDataRequest> requests) {
     if (!internalFuture.isDone()) {
       requests.forEach(pendingRequests::add);
       notifyAll();

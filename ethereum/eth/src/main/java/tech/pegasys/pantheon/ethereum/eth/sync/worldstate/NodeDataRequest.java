@@ -21,8 +21,8 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public abstract class NodeDataRequest {
   private final RequestType requestType;
@@ -116,7 +116,7 @@ public abstract class NodeDataRequest {
 
   protected abstract void doPersist(final WorldStateStorage.Updater updater);
 
-  public abstract List<NodeDataRequest> getChildRequests();
+  public abstract Stream<NodeDataRequest> getChildRequests();
 
   public abstract Optional<BytesValue> getExistingData(final WorldStateStorage worldStateStorage);
 }

@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.worldstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -25,7 +24,10 @@ import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.stream.Stream;
+
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 public class CompleteTaskStepTest {
 
@@ -37,6 +39,10 @@ public class CompleteTaskStepTest {
 
   private final CompleteTaskStep completeTaskStep =
       new CompleteTaskStep(worldStateStorage, new NoOpMetricsSystem());
+
+  @SuppressWarnings("unchecked")
+  private final ArgumentCaptor<Stream<NodeDataRequest>> streamCaptor =
+      ArgumentCaptor.forClass(Stream.class);
 
   @Test
   public void shouldMarkTaskAsFailedIfItDoesNotHaveData() {
@@ -65,7 +71,12 @@ public class CompleteTaskStepTest {
 
     assertThat(task.isCompleted()).isTrue();
     assertThat(task.isFailed()).isFalse();
-    verify(downloadState).enqueueRequests(refEq(task.getData().getChildRequests()));
+
+    verify(downloadState).enqueueRequests(streamCaptor.capture());
+    assertThat(streamCaptor.getValue())
+        .usingRecursiveFieldByFieldElementComparator()
+        .containsExactlyInAnyOrderElementsOf(() -> task.getData().getChildRequests().iterator());
+
     verify(downloadState).checkCompletion(worldStateStorage, blockHeader);
   }
 }
