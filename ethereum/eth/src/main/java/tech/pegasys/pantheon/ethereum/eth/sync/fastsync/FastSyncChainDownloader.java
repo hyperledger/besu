@@ -16,7 +16,6 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.sync.ChainDownloader;
-import tech.pegasys.pantheon.ethereum.eth.sync.EthTaskChainDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.PipelineChainDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
@@ -24,8 +23,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 public class FastSyncChainDownloader {
-
-  private static final boolean USE_PIPELINE_DOWNLOADER = true;
 
   private FastSyncChainDownloader() {}
 
@@ -42,36 +39,12 @@ public class FastSyncChainDownloader {
         new FastSyncTargetManager<>(
             config, protocolSchedule, protocolContext, ethContext, metricsSystem, pivotBlockHeader);
 
-    if (USE_PIPELINE_DOWNLOADER) {
-      return new PipelineChainDownloader<>(
-          syncState,
-          syncTargetManager,
-          new FastSyncDownloadPipelineFactory<>(
-              config,
-              protocolSchedule,
-              protocolContext,
-              ethContext,
-              pivotBlockHeader,
-              metricsSystem),
-          ethContext.getScheduler(),
-          metricsSystem);
-    }
-
-    return new EthTaskChainDownloader<>(
-        config,
-        ethContext,
+    return new PipelineChainDownloader<>(
         syncState,
         syncTargetManager,
-        new FastSyncCheckpointHeaderManager<>(
-            config,
-            protocolContext,
-            ethContext,
-            syncState,
-            protocolSchedule,
-            metricsSystem,
-            pivotBlockHeader),
-        new FastSyncBlockImportTaskFactory<>(
-            config, protocolSchedule, protocolContext, ethContext, metricsSystem),
+        new FastSyncDownloadPipelineFactory<>(
+            config, protocolSchedule, protocolContext, ethContext, pivotBlockHeader, metricsSystem),
+        ethContext.getScheduler(),
         metricsSystem);
   }
 }

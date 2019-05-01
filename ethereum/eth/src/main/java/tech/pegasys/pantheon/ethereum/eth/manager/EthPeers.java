@@ -73,16 +73,12 @@ public class EthPeers {
     connectCallbacks.unsubscribe(id);
   }
 
-  public long subscribeDisconnect(final DisconnectCallback callback) {
-    return disconnectCallbacks.subscribe(callback);
+  public void subscribeDisconnect(final DisconnectCallback callback) {
+    disconnectCallbacks.subscribe(callback);
   }
 
   public int peerCount() {
     return connections.size();
-  }
-
-  public int availablePeerCount() {
-    return (int) availablePeers().count();
   }
 
   public Stream<EthPeer> availablePeers() {

@@ -86,7 +86,7 @@ public class FullSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
             protocolSchedule, protocolContext, detachedValidationPolicy);
     final DownloadBodiesStep<C> downloadBodiesStep =
         new DownloadBodiesStep<>(protocolSchedule, ethContext, metricsSystem);
-    final ExtractTxSignaturesTask extractTxSignaturesTask = new ExtractTxSignaturesTask();
+    final ExtractTxSignaturesStep extractTxSignaturesStep = new ExtractTxSignaturesStep();
     final FullImportBlockStep<C> importBlockStep =
         new FullImportBlockStep<>(protocolSchedule, protocolContext);
 
@@ -104,7 +104,7 @@ public class FullSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
         .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
         .inBatches(headerRequestSize)
         .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
-        .thenFlatMap("extractTxSignatures", extractTxSignaturesTask, singleHeaderBufferSize)
+        .thenFlatMap("extractTxSignatures", extractTxSignaturesStep, singleHeaderBufferSize)
         .andFinishWith("importBlock", importBlockStep);
   }
 

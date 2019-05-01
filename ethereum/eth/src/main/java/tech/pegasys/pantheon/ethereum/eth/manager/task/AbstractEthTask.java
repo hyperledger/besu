@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -131,21 +130,6 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
   }
 
   /**
-   * Utility for registering completable futures for cleanup if this EthTask is cancelled.
-   *
-   * @param <S> the type of data returned from the CompletableFuture
-   * @param subTaskFuture the future to be registered.
-   */
-  protected final <S> void registerSubTask(final CompletableFuture<S> subTaskFuture) {
-    synchronized (result) {
-      if (!isCancelled()) {
-        subTaskFutures.add(subTaskFuture);
-        subTaskFuture.whenComplete((r, t) -> subTaskFutures.remove(subTaskFuture));
-      }
-    }
-  }
-
-  /**
    * Helper method for sending subTask to worker that will clean up if this EthTask is cancelled.
    *
    * @param scheduler the scheduler that will run worker task
@@ -156,17 +140,6 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
   protected final <S> CompletableFuture<S> executeWorkerSubTask(
       final EthScheduler scheduler, final Supplier<CompletableFuture<S>> subTask) {
     return executeSubTask(() -> scheduler.scheduleSyncWorkerTask(subTask));
-  }
-
-  public final T result() {
-    if (!isSucceeded()) {
-      return null;
-    }
-    try {
-      return result.get().get();
-    } catch (final InterruptedException | ExecutionException e) {
-      return null;
-    }
   }
 
   /** Execute core task logic. */

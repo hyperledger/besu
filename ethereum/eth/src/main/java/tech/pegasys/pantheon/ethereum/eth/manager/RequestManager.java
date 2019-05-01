@@ -148,10 +148,6 @@ public class RequestManager {
       dispatchBufferedResponses();
     }
 
-    public EthPeer peer() {
-      return peer;
-    }
-
     private void processMessage(final MessageData message) {
       if (closed) {
         return;

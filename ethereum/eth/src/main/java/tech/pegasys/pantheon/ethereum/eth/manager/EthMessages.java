@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.ethereum.eth.manager;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class EthMessages {
@@ -31,18 +30,8 @@ public class EthMessages {
     listeners.forEach(callback -> callback.exec(message));
   }
 
-  public long subscribe(final int messageCode, final MessageCallback callback) {
-    return listenersByCode
-        .computeIfAbsent(messageCode, key -> new Subscribers<>())
-        .subscribe(callback);
-  }
-
-  public void unsubscribe(final long listenerId) {
-    for (final Entry<Integer, Subscribers<MessageCallback>> entry : listenersByCode.entrySet()) {
-      if (entry.getValue().unsubscribe(listenerId)) {
-        break;
-      }
-    }
+  public void subscribe(final int messageCode, final MessageCallback callback) {
+    listenersByCode.computeIfAbsent(messageCode, key -> new Subscribers<>()).subscribe(callback);
   }
 
   @FunctionalInterface

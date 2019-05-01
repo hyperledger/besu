@@ -64,10 +64,6 @@ public final class Wei extends BaseUInt256Value<Wei> {
     return Wei.of(BigInteger.valueOf(eth).multiply(BigInteger.TEN.pow(18)));
   }
 
-  public static Counter<Wei> newCounter() {
-    return new WeiCounter();
-  }
-
   private static class WeiCounter extends Counter<Wei> {
     private WeiCounter() {
       super(Wei::new);

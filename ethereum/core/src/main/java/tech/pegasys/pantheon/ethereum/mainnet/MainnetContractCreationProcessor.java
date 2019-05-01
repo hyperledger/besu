@@ -75,10 +75,6 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
     return account.getNonce() > 0 || !account.getCode().isEmpty();
   }
 
-  protected GasCalculator gasCalculator() {
-    return gasCalculator;
-  }
-
   @Override
   public void start(final MessageFrame frame) {
     if (LOG.isTraceEnabled()) {

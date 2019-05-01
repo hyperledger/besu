@@ -54,13 +54,11 @@ public class SynchronizerConfiguration {
   private final UInt256 downloaderChangeTargetThresholdByTd;
   private final int downloaderHeaderRequestSize;
   private final int downloaderCheckpointTimeoutsPermitted;
-  private final int downloaderChainSegmentTimeoutsPermitted;
   private final int downloaderChainSegmentSize;
   private final int downloaderParallelism;
   private final int transactionsParallelism;
   private final int computationParallelism;
   private final int maxTrailingPeers;
-  private final boolean piplineDownloaderForFullSyncEnabled;
   private final long worldStateMinMillisBeforeStalling;
 
   private SynchronizerConfiguration(
@@ -77,13 +75,11 @@ public class SynchronizerConfiguration {
       final UInt256 downloaderChangeTargetThresholdByTd,
       final int downloaderHeaderRequestSize,
       final int downloaderCheckpointTimeoutsPermitted,
-      final int downloaderChainSegmentTimeoutsPermitted,
       final int downloaderChainSegmentSize,
       final int downloaderParallelism,
       final int transactionsParallelism,
       final int computationParallelism,
-      final int maxTrailingPeers,
-      final boolean piplineDownloaderForFullSyncEnabled) {
+      final int maxTrailingPeers) {
     this.fastSyncPivotDistance = fastSyncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
     this.fastSyncMinimumPeerCount = fastSyncMinimumPeerCount;
@@ -97,13 +93,11 @@ public class SynchronizerConfiguration {
     this.downloaderChangeTargetThresholdByTd = downloaderChangeTargetThresholdByTd;
     this.downloaderHeaderRequestSize = downloaderHeaderRequestSize;
     this.downloaderCheckpointTimeoutsPermitted = downloaderCheckpointTimeoutsPermitted;
-    this.downloaderChainSegmentTimeoutsPermitted = downloaderChainSegmentTimeoutsPermitted;
     this.downloaderChainSegmentSize = downloaderChainSegmentSize;
     this.downloaderParallelism = downloaderParallelism;
     this.transactionsParallelism = transactionsParallelism;
     this.computationParallelism = computationParallelism;
     this.maxTrailingPeers = maxTrailingPeers;
-    this.piplineDownloaderForFullSyncEnabled = piplineDownloaderForFullSyncEnabled;
   }
 
   public static Builder builder() {
@@ -155,10 +149,6 @@ public class SynchronizerConfiguration {
     return downloaderCheckpointTimeoutsPermitted;
   }
 
-  public int downloaderChainSegmentTimeoutsPermitted() {
-    return downloaderChainSegmentTimeoutsPermitted;
-  }
-
   public int downloaderChainSegmentSize() {
     return downloaderChainSegmentSize;
   }
@@ -208,10 +198,6 @@ public class SynchronizerConfiguration {
 
   public int getMaxTrailingPeers() {
     return maxTrailingPeers;
-  }
-
-  public boolean isPiplineDownloaderForFullSyncEnabled() {
-    return piplineDownloaderForFullSyncEnabled;
   }
 
   public static class Builder {
@@ -272,15 +258,6 @@ public class SynchronizerConfiguration {
         description =
             "Number of tries to attempt to download checkpoints before stopping (default: ${DEFAULT-VALUE})")
     private int downloaderCheckpointTimeoutsPermitted = 5;
-
-    @CommandLine.Option(
-        names = "--Xsynchronizer-downloader-chain-segment-timeouts-permitted",
-        hidden = true,
-        defaultValue = "5",
-        paramLabel = "<INTEGER>",
-        description =
-            "Number of times to attempt to download chain segments before stopping (default: ${DEFAULT-VALUE})")
-    private int downloaderChainSegmentTimeoutsPermitted = 5;
 
     @CommandLine.Option(
         names = "--Xsynchronizer-downloader-chain-segment-size",
@@ -371,14 +348,6 @@ public class SynchronizerConfiguration {
             "Minimum time in ms without progress before considering a world state download as stalled (default: ${DEFAULT-VALUE})")
     private long worldStateMinMillisBeforeStalling = DEFAULT_WORLD_STATE_MIN_MILLIS_BEFORE_STALLING;
 
-    @CommandLine.Option(
-        names = "--Xsynchronizer-pipeline-full-sync-enabled",
-        hidden = true,
-        defaultValue = "true",
-        paramLabel = "<BOOLEAN>",
-        description = "Enable the pipeline based chain downloader during full synchronization")
-    private Boolean piplineDownloaderForFullSyncEnabled = true;
-
     public Builder fastSyncPivotDistance(final int distance) {
       fastSyncPivotDistance = distance;
       return this;
@@ -414,12 +383,6 @@ public class SynchronizerConfiguration {
     public Builder downloaderCheckpointTimeoutsPermitted(
         final int downloaderCheckpointTimeoutsPermitted) {
       this.downloaderCheckpointTimeoutsPermitted = downloaderCheckpointTimeoutsPermitted;
-      return this;
-    }
-
-    public Builder downloaderChainSegmentTimeoutsPermitted(
-        final int downloaderChainSegmentTimeoutsPermitted) {
-      this.downloaderChainSegmentTimeoutsPermitted = downloaderChainSegmentTimeoutsPermitted;
       return this;
     }
 
@@ -480,12 +443,6 @@ public class SynchronizerConfiguration {
       return this;
     }
 
-    public Builder piplineDownloaderForFullSyncEnabled(
-        final Boolean piplineDownloaderForFullSyncEnabled) {
-      this.piplineDownloaderForFullSyncEnabled = piplineDownloaderForFullSyncEnabled;
-      return this;
-    }
-
     public SynchronizerConfiguration build() {
       return new SynchronizerConfiguration(
           fastSyncPivotDistance,
@@ -501,13 +458,11 @@ public class SynchronizerConfiguration {
           downloaderChangeTargetThresholdByTd,
           downloaderHeaderRequestSize,
           downloaderCheckpointTimeoutsPermitted,
-          downloaderChainSegmentTimeoutsPermitted,
           downloaderChainSegmentSize,
           downloaderParallelism,
           transactionsParallelism,
           computationParallelism,
-          maxTrailingPeers,
-          piplineDownloaderForFullSyncEnabled);
+          maxTrailingPeers);
     }
   }
 }
