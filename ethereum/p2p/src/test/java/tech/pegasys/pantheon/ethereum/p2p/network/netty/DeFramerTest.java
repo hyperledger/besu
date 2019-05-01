@@ -27,8 +27,10 @@ import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.BreachOfProtocolException;
 import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.IncompatiblePeerException;
 import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.PeerDisconnectedException;
+import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.UnexpectedPeerConnectionException;
 import tech.pegasys.pantheon.ethereum.p2p.network.netty.testhelpers.NettyMocks;
 import tech.pegasys.pantheon.ethereum.p2p.network.netty.testhelpers.SubProtocolMock;
+import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.Framer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.FramingException;
@@ -42,10 +44,13 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.messages.PingMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.WireMessageCodes;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -73,28 +78,26 @@ public class DeFramerTest {
   private final Callbacks callbacks = mock(Callbacks.class);
   private final PeerConnection peerConnection = mock(PeerConnection.class);
   private final CompletableFuture<PeerConnection> connectFuture = new CompletableFuture<>();
+  private final int remotePort = 12345;
+  private final InetSocketAddress remoteAddress = new InetSocketAddress("127.0.0.1", remotePort);
+
   private final PeerInfo peerInfo =
       new PeerInfo(
           5,
           "abc",
           Arrays.asList(Capability.create("eth", 63)),
-          0,
+          30303,
           BytesValue.fromHexString("0x01"));
-  private final DeFramer deFramer =
-      new DeFramer(
-          framer,
-          Arrays.asList(SubProtocolMock.create("eth")),
-          peerInfo,
-          callbacks,
-          connectFuture,
-          NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER);
+  private final DeFramer deFramer = createDeFramer(null);
 
   @Before
   @SuppressWarnings("unchecked")
   public void setup() {
     when(ctx.channel()).thenReturn(channel);
 
+    when(channel.remoteAddress()).thenReturn(remoteAddress);
     when(channel.pipeline()).thenReturn(pipeline);
+
     when(pipeline.addLast(any())).thenReturn(pipeline);
     when(pipeline.addFirst(any())).thenReturn(pipeline);
 
@@ -138,13 +141,9 @@ public class DeFramerTest {
     ChannelFuture future = NettyMocks.channelFuture(false);
     when(channel.closeFuture()).thenReturn(future);
 
-    PeerInfo remotePeerInfo =
-        new PeerInfo(
-            peerInfo.getVersion(),
-            peerInfo.getClientId(),
-            peerInfo.getCapabilities(),
-            peerInfo.getPort(),
-            Peer.randomId());
+    final Peer peer = createRemotePeer();
+    final PeerInfo remotePeerInfo = createPeerInfo(peer);
+
     HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
     ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().extractArray());
     when(framer.deframe(eq(data)))
@@ -174,7 +173,43 @@ public class DeFramerTest {
   }
 
   @Test
-  public void decode_handlesNoSharedCaps() throws ExecutionException, InterruptedException {
+  public void decode_handlesUnexpectedPeerId() {
+    ChannelFuture future = NettyMocks.channelFuture(false);
+    when(channel.closeFuture()).thenReturn(future);
+
+    final Peer peer = createRemotePeer();
+    final BytesValue mismatchedId = Peer.randomId();
+    final PeerInfo remotePeerInfo =
+        new PeerInfo(
+            peerInfo.getVersion(),
+            peerInfo.getClientId(),
+            peerInfo.getCapabilities(),
+            peer.getEnodeURL().getListeningPort(),
+            mismatchedId);
+    final DeFramer deFramer = createDeFramer(peer);
+
+    HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
+    ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().extractArray());
+    when(framer.deframe(eq(data)))
+        .thenReturn(new RawMessage(helloMessage.getCode(), helloMessage.getData()))
+        .thenReturn(null);
+    List<Object> out = new ArrayList<>();
+    deFramer.decode(ctx, data, out);
+
+    assertThat(connectFuture).isDone();
+    assertThat(connectFuture).isCompletedExceptionally();
+    assertThatThrownBy(connectFuture::get)
+        .hasCauseInstanceOf(UnexpectedPeerConnectionException.class)
+        .hasMessageContaining("Expected id " + peer.getId().toString());
+
+    assertThat(out).isEmpty();
+
+    // Next phase of pipeline should be setup
+    verify(pipeline, times(1)).addLast(any());
+  }
+
+  @Test
+  public void decode_handlesNoSharedCaps() {
     ChannelFuture future = NettyMocks.channelFuture(false);
     when(channel.closeFuture()).thenReturn(future);
 
@@ -246,5 +281,34 @@ public class DeFramerTest {
     assertThatThrownBy(connectFuture::get).hasCauseInstanceOf(BreachOfProtocolException.class);
     verify(ctx).close();
     assertThat(out).isEmpty();
+  }
+
+  private Peer createRemotePeer() {
+    return DefaultPeer.fromEnodeURL(
+        EnodeURL.builder()
+            .ipAddress(remoteAddress.getAddress())
+            .listeningPort(remotePort)
+            .nodeId(Peer.randomId())
+            .build());
+  }
+
+  private PeerInfo createPeerInfo(final Peer forPeer) {
+    return new PeerInfo(
+        peerInfo.getVersion(),
+        peerInfo.getClientId(),
+        peerInfo.getCapabilities(),
+        forPeer.getEnodeURL().getListeningPort(),
+        forPeer.getId());
+  }
+
+  private DeFramer createDeFramer(final Peer expectedPeer) {
+    return new DeFramer(
+        framer,
+        Arrays.asList(SubProtocolMock.create("eth")),
+        peerInfo,
+        Optional.ofNullable(expectedPeer),
+        callbacks,
+        connectFuture,
+        NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER);
   }
 }

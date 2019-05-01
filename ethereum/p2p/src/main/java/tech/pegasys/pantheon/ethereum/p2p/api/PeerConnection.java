@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.api;
 
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
@@ -64,6 +65,9 @@ public interface PeerConnection {
     send(capability(protocol), message);
   }
 
+  /** @return A representation of the remote peer this node is connected to. */
+  Peer getPeer();
+
   /**
    * Returns the Peer's Description.
    *
@@ -101,10 +105,6 @@ public interface PeerConnection {
   }
 
   default EnodeURL getRemoteEnode() {
-    return EnodeURL.builder()
-        .nodeId(getPeerInfo().getNodeId())
-        .listeningPort(getPeerInfo().getPort())
-        .ipAddress(getRemoteAddress().getAddress())
-        .build();
+    return getPeer().getEnodeURL();
   }
 }

@@ -17,11 +17,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
+import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.HelloMessage;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -48,9 +51,21 @@ public class NettyPeerConnectionTest {
     when(context.channel()).thenReturn(channel);
     when(channel.closeFuture()).thenReturn(closeFuture);
     when(channel.eventLoop()).thenReturn(eventLoop);
+    final Peer peer =
+        DefaultPeer.fromEnodeURL(
+            EnodeURL.builder()
+                .ipAddress("127.0.0.1")
+                .listeningPort(12345)
+                .nodeId(Peer.randomId())
+                .build());
     connection =
         new NettyPeerConnection(
-            context, peerInfo, multiplexer, callbacks, NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER);
+            context,
+            peer,
+            peerInfo,
+            multiplexer,
+            callbacks,
+            NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER);
   }
 
   @Test

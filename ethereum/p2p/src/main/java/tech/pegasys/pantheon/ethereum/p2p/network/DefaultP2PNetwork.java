@@ -465,7 +465,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
                                             + peer.getId()))),
                         new HandshakeHandlerOutbound(
                             keyPair,
-                            peer.getId(),
+                            peer,
                             subProtocols,
                             ourPeerInfo,
                             connectionFuture,

@@ -17,6 +17,9 @@ import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.BreachOfProtocolException;
 import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.IncompatiblePeerException;
 import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.PeerDisconnectedException;
+import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.UnexpectedPeerConnectionException;
+import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.Framer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.FramingException;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
@@ -28,9 +31,13 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.messages.WireMessageCodes;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -52,6 +59,8 @@ final class DeFramer extends ByteToMessageDecoder {
 
   private final Framer framer;
   private final PeerInfo ourInfo;
+  // The peer we are expecting to connect to, if such a peer is known
+  private final Optional<Peer> expectedPeer;
   private final List<SubProtocol> subProtocols;
   private boolean hellosExchanged;
   private final LabelledMetric<Counter> outboundMessagesCounter;
@@ -60,12 +69,14 @@ final class DeFramer extends ByteToMessageDecoder {
       final Framer framer,
       final List<SubProtocol> subProtocols,
       final PeerInfo ourInfo,
+      final Optional<Peer> expectedPeer,
       final Callbacks callbacks,
       final CompletableFuture<PeerConnection> connectFuture,
       final LabelledMetric<Counter> outboundMessagesCounter) {
     this.framer = framer;
     this.subProtocols = subProtocols;
     this.ourInfo = ourInfo;
+    this.expectedPeer = expectedPeer;
     this.connectFuture = connectFuture;
     this.callbacks = callbacks;
     this.outboundMessagesCounter = outboundMessagesCounter;
@@ -99,9 +110,22 @@ final class DeFramer extends ByteToMessageDecoder {
         final CapabilityMultiplexer capabilityMultiplexer =
             new CapabilityMultiplexer(
                 subProtocols, ourInfo.getCapabilities(), peerInfo.getCapabilities());
+        final Peer peer = expectedPeer.orElse(createPeer(peerInfo, ctx));
         final PeerConnection connection =
             new NettyPeerConnection(
-                ctx, peerInfo, capabilityMultiplexer, callbacks, outboundMessagesCounter);
+                ctx, peer, peerInfo, capabilityMultiplexer, callbacks, outboundMessagesCounter);
+
+        // Check peer is who we expected
+        if (expectedPeer.isPresent()
+            && !Objects.equals(expectedPeer.get().getId(), peerInfo.getNodeId())) {
+          String unexpectedMsg =
+              String.format(
+                  "Expected id %s, but got %s", expectedPeer.get().getId(), peerInfo.getNodeId());
+          connectFuture.completeExceptionally(new UnexpectedPeerConnectionException(unexpectedMsg));
+          connection.disconnect(DisconnectReason.UNEXPECTED_ID);
+        }
+
+        // Check that we have shared caps
         if (capabilityMultiplexer.getAgreedCapabilities().size() == 0) {
           LOG.debug(
               "Disconnecting from {} because no capabilities are shared.", peerInfo.getClientId());
@@ -141,6 +165,16 @@ final class DeFramer extends ByteToMessageDecoder {
             new BreachOfProtocolException("Message received before HELLO's exchanged"));
       }
     }
+  }
+
+  private Peer createPeer(final PeerInfo peerInfo, final ChannelHandlerContext ctx) {
+    InetSocketAddress remoteAddress = ((InetSocketAddress) ctx.channel().remoteAddress());
+    return DefaultPeer.fromEnodeURL(
+        EnodeURL.builder()
+            .nodeId(peerInfo.getNodeId())
+            .ipAddress(remoteAddress.getAddress())
+            .listeningPort(peerInfo.getPort())
+            .build());
   }
 
   @Override

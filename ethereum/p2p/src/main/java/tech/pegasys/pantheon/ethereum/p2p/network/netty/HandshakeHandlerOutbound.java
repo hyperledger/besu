@@ -14,12 +14,12 @@ package tech.pegasys.pantheon.ethereum.p2p.network.netty;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.Handshaker;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +38,7 @@ public final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
 
   public HandshakeHandlerOutbound(
       final SECP256K1.KeyPair kp,
-      final BytesValue peerId,
+      final Peer peer,
       final List<SubProtocol> subProtocols,
       final PeerInfo ourInfo,
       final CompletableFuture<PeerConnection> connectionFuture,
@@ -48,11 +48,12 @@ public final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
     super(
         subProtocols,
         ourInfo,
+        Optional.of(peer),
         connectionFuture,
         callbacks,
         peerConnectionRegistry,
         outboundMessagesCounter);
-    handshaker.prepareInitiator(kp, SECP256K1.PublicKey.create(peerId));
+    handshaker.prepareInitiator(kp, SECP256K1.PublicKey.create(peer.getId()));
     this.first = handshaker.firstMessage();
   }
 
