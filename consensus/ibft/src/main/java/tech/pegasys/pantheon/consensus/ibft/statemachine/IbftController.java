@@ -127,7 +127,10 @@ public class IbftController {
   public void handleNewBlockEvent(final NewChainHead newChainHead) {
     final BlockHeader newBlockHeader = newChainHead.getNewChainHeadHeader();
     final BlockHeader currentMiningParent = currentHeightManager.getParentBlockHeader();
-    LOG.debug("Handling New Chain head event, chain height={}", currentMiningParent.getNumber());
+    LOG.debug(
+        "New chain head detected (block number={})," + " currently mining on top of {}.",
+        newBlockHeader.getNumber(),
+        currentMiningParent.getNumber());
     if (newBlockHeader.getNumber() < currentMiningParent.getNumber()) {
       LOG.trace(
           "Discarding NewChainHead event, was for previous block height. chainHeight={} eventHeight={}",
