@@ -168,12 +168,17 @@ final class DeFramer extends ByteToMessageDecoder {
   }
 
   private Peer createPeer(final PeerInfo peerInfo, final ChannelHandlerContext ctx) {
-    InetSocketAddress remoteAddress = ((InetSocketAddress) ctx.channel().remoteAddress());
+    final InetSocketAddress remoteAddress = ((InetSocketAddress) ctx.channel().remoteAddress());
+    int port = peerInfo.getPort();
+    if (port == 0) {
+      // Most peers advertise a port of "0", just set a default best guess in this case
+      port = EnodeURL.DEFAULT_LISTENING_PORT;
+    }
     return DefaultPeer.fromEnodeURL(
         EnodeURL.builder()
             .nodeId(peerInfo.getNodeId())
             .ipAddress(remoteAddress.getAddress())
-            .listeningPort(peerInfo.getPort())
+            .listeningPort(port)
             .build());
   }
 

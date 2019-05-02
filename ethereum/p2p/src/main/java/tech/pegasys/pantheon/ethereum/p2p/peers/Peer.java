@@ -27,7 +27,7 @@ public interface Peer extends PeerId {
    * @return The generated peer ID.
    */
   static BytesValue randomId() {
-    final byte[] id = new byte[64];
+    final byte[] id = new byte[EnodeURL.NODE_ID_SIZE];
     SecureRandomProvider.publicSecureRandom().nextBytes(id);
     return BytesValue.wrap(id);
   }

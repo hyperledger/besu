@@ -173,6 +173,59 @@ public class DeFramerTest {
   }
 
   @Test
+  public void decode_handlesHelloFromPeerWithAdvertisedPortOf0()
+      throws ExecutionException, InterruptedException {
+    ChannelFuture future = NettyMocks.channelFuture(false);
+    when(channel.closeFuture()).thenReturn(future);
+
+    final Peer peer = createRemotePeer();
+    final PeerInfo remotePeerInfo =
+        new PeerInfo(
+            peerInfo.getVersion(),
+            peerInfo.getClientId(),
+            peerInfo.getCapabilities(),
+            0,
+            peer.getId());
+    final DeFramer deFramer = createDeFramer(null);
+
+    HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
+    ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().extractArray());
+    when(framer.deframe(eq(data)))
+        .thenReturn(new RawMessage(helloMessage.getCode(), helloMessage.getData()))
+        .thenReturn(null);
+    List<Object> out = new ArrayList<>();
+    deFramer.decode(ctx, data, out);
+
+    assertThat(connectFuture).isDone();
+    assertThat(connectFuture).isNotCompletedExceptionally();
+    PeerConnection peerConnection = connectFuture.get();
+    assertThat(peerConnection.getPeerInfo()).isEqualTo(remotePeerInfo);
+    assertThat(out).isEmpty();
+
+    final EnodeURL expectedEnode =
+        EnodeURL.builder()
+            .ipAddress(remoteAddress.getAddress())
+            .nodeId(peer.getId())
+            // Listening port should be replaced with default port
+            .listeningPort(EnodeURL.DEFAULT_LISTENING_PORT)
+            .build();
+    assertThat(peerConnection.getPeer().getEnodeURL()).isEqualTo(expectedEnode);
+
+    // Next phase of pipeline should be setup
+    verify(pipeline, times(1)).addLast(any());
+
+    // Next message should be pushed out
+    PingMessage nextMessage = PingMessage.get();
+    ByteBuf nextData = Unpooled.wrappedBuffer(nextMessage.getData().extractArray());
+    when(framer.deframe(eq(nextData)))
+        .thenReturn(new RawMessage(nextMessage.getCode(), nextMessage.getData()))
+        .thenReturn(null);
+    verify(pipeline, times(1)).addLast(any());
+    deFramer.decode(ctx, nextData, out);
+    assertThat(out.size()).isEqualTo(1);
+  }
+
+  @Test
   public void decode_handlesUnexpectedPeerId() {
     ChannelFuture future = NettyMocks.channelFuture(false);
     when(channel.closeFuture()).thenReturn(future);
