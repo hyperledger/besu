@@ -31,7 +31,7 @@ block and contract size limits to the maximum values.
 Set the block size limit (measured in gas) to the maximum accepted by Truffle (`0x1fffffffffffff`) in the genesis file: 
 
 ```json
-“gasLimit”: “0x1fffffffffffff”
+"gasLimit": "0x1fffffffffffff"
 ```
 
 ### 2. Set Contract Size 
@@ -39,7 +39,7 @@ Set the block size limit (measured in gas) to the maximum accepted by Truffle (`
 Set the contract size limit to the maximum supported size (in bytes) in the `config` section of the genesis file:
 
 ```json
-“contractSizeLimit”: 2147483647
+"contractSizeLimit": 2147483647
 ```
 
 ### 3. Start Pantheon with Minimum Gas Price of 0 
@@ -79,5 +79,5 @@ Update the `truffle-config.js` file:
 1. Set the gas limit for a transaction (that is, contract creation) to be the block gas limit - 1
 
     ```js
-    gas: “0x1ffffffffffffe”
+    gas: "0x1ffffffffffffe"
     ``` 
