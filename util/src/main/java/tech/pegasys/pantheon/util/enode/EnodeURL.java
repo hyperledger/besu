@@ -29,7 +29,8 @@ import com.google.common.primitives.Ints;
 
 public class EnodeURL {
 
-  private static final int NODE_ID_SIZE = 64;
+  public static final int DEFAULT_LISTENING_PORT = 30303;
+  public static final int NODE_ID_SIZE = 64;
   private static final Pattern DISCPORT_QUERY_STRING_REGEX =
       Pattern.compile("^discport=([0-9]{1,5})$");
   private static final Pattern NODE_ID_PATTERN = Pattern.compile("^[0-9a-fA-F]{128}$");

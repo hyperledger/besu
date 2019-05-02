@@ -77,6 +77,12 @@ public class PeerInfo {
     return capabilities;
   }
 
+  /**
+   * This value is meant to represent the port at which a peer is listening for connections.
+   * However, most peers actually advertise a port of "0" so this value is not reliable.
+   *
+   * @return (Unreliable) The tcp port on which the peer is listening for connections
+   */
   public int getPort() {
     return port;
   }

@@ -240,7 +240,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       paramLabel = MANDATORY_PORT_FORMAT_HELP,
       description = "Port on which to listen for p2p communication (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final Integer p2pPort = P2P_PORT;
+  private final Integer p2pPort = EnodeURL.DEFAULT_LISTENING_PORT;
 
   @Option(
       names = {"--network-id"},
