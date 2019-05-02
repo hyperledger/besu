@@ -38,34 +38,6 @@
   {% endif %}
 {% endblock %}
 
-{% block scripts %}
-  <script src="{{ 'assets/javascripts/application.c6f2d7d2.js' | url }}"></script>
-  {% if lang.t("search.language") != "en" %}
-    {% set languages = lang.t("search.language").split(",") %}
-    {% if languages | length and languages[0] != "" %}
-      {% set path = "assets/javascripts/lunr/" %}
-      <script src="{{ (path ~ 'lunr.stemmer.support.js') | url }}"></script>
-      {% for language in languages | map("trim") %}
-        {% if language != "en" %}
-          {% if language == "ja" %}
-            <script src="{{ (path ~ 'tinyseg.js') | url }}"></script>
-          {% endif %}
-          {% if language in ("da", "de", "es", "fi", "fr", "hu", "it", "ja", "nl", "no", "pt", "ro", "ru", "sv", "th", "tr") %}
-            <script src="{{ (path ~ 'lunr.' ~ language ~ '.js') | url }}"></script>
-          {% endif %}
-        {% endif %}
-      {% endfor %}
-      {% if languages | length > 1 %}
-        <script src="{{ (path ~ 'lunr.multi.js') | url }}"></script>
-      {% endif %}
-    {% endif %}
-  {% endif %}
-  <script>app.initialize({version:"{{ mkdocs_version }}",url:{base:"{{ base_url }}"}})</script>
-  {% for path in config["extra_javascript"] %}
-    <script src="{{ path | url }}"></script>
-  {% endfor %}
-{% endblock %}
-
 {% block analytics %}
   <!--Empty the footer analytics bloc as we need it the headers -->
 {% endblock %}
