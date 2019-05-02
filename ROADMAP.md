@@ -12,7 +12,7 @@ Our key areas for now are:
 * First Class Client
 
 ### Advanced Privacy
-The current privacy functionality will be enhanced with dynamic privacy groups, including the ability to and remove participants from a privacy group.
+The current privacy functionality will be enhanced as described in the [privacy roadmap](PRIVACYROADMAP.MD).
 
 ### Smart Contract Based Permissioning
 Building on the smart contract based permissioning mechanism implemented in v1.1, additional tooling will be provided through a Dapp to simplify and enhance the interaction with the smart contracts. Permissioning for Ethereum accounts will also be introduced.
