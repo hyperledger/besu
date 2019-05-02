@@ -317,6 +317,8 @@ public class FullSyncChainDownloaderTest {
     assertThat(syncState.syncTarget().get().peer()).isEqualTo(bestPeer.getEthPeer());
 
     // The next message should be for checkpoint headers from the sync target
+    Awaitility.waitAtMost(10, TimeUnit.SECONDS)
+        .until(() -> bestPeer.peekNextOutgoingRequest().isPresent());
     final Optional<MessageData> maybeNextMessage = bestPeer.peekNextOutgoingRequest();
     assertThat(maybeNextMessage).isPresent();
     final MessageData nextMessage = maybeNextMessage.get();
