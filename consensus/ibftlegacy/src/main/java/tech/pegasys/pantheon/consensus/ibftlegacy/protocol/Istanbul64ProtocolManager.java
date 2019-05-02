@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
+import java.time.Clock;
 import java.util.List;
 
 /** This allows for interoperability with Quorum, but shouldn't be used otherwise. */
@@ -34,6 +35,7 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
       final int syncWorkers,
       final int txWorkers,
       final int computationWorkers,
+      final Clock clock,
       final MetricsSystem metricsSystem,
       final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration) {
     super(
@@ -44,6 +46,7 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
         syncWorkers,
         txWorkers,
         computationWorkers,
+        clock,
         metricsSystem,
         ethereumWireProtocolConfiguration);
   }
@@ -56,6 +59,7 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
       final int syncWorkers,
       final int txWorkers,
       final int computationWorkers,
+      final Clock clock,
       final MetricsSystem metricsSystem) {
     super(
         blockchain,
@@ -65,6 +69,7 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
         syncWorkers,
         txWorkers,
         computationWorkers,
+        clock,
         metricsSystem);
   }
 

@@ -30,6 +30,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.Discon
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.time.Clock;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,16 +46,21 @@ import org.apache.logging.log4j.Logger;
 
 public class EthPeer {
   private static final Logger LOG = LogManager.getLogger();
+
+  private static final int MAX_OUTSTANDING_REQUESTS = 5;
+
   private final PeerConnection connection;
 
   private final int maxTrackedSeenBlocks = 300;
 
   private final Set<Hash> knownBlocks;
   private final String protocolName;
+  private final Clock clock;
   private final ChainState chainHeadState;
   private final AtomicBoolean statusHasBeenSentToPeer = new AtomicBoolean(false);
   private final AtomicBoolean statusHasBeenReceivedFromPeer = new AtomicBoolean(false);
 
+  private volatile long lastRequestTimestamp = 0;
   private final RequestManager headersRequestManager = new RequestManager(this);
   private final RequestManager bodiesRequestManager = new RequestManager(this);
   private final RequestManager receiptsRequestManager = new RequestManager(this);
@@ -66,9 +72,11 @@ public class EthPeer {
   EthPeer(
       final PeerConnection connection,
       final String protocolName,
-      final Consumer<EthPeer> onStatusesExchanged) {
+      final Consumer<EthPeer> onStatusesExchanged,
+      final Clock clock) {
     this.connection = connection;
     this.protocolName = protocolName;
+    this.clock = clock;
     knownBlocks =
         Collections.newSetFromMap(
             Collections.synchronizedMap(
@@ -111,13 +119,13 @@ public class EthPeer {
   public ResponseStream send(final MessageData messageData) throws PeerNotConnected {
     switch (messageData.getCode()) {
       case EthPV62.GET_BLOCK_HEADERS:
-        return sendHeadersRequest(messageData);
+        return sendRequest(headersRequestManager, messageData);
       case EthPV62.GET_BLOCK_BODIES:
-        return sendBodiesRequest(messageData);
+        return sendRequest(bodiesRequestManager, messageData);
       case EthPV63.GET_RECEIPTS:
-        return sendReceiptsRequest(messageData);
+        return sendRequest(receiptsRequestManager, messageData);
       case EthPV63.GET_NODE_DATA:
-        return sendNodeDataRequest(messageData);
+        return sendRequest(nodeDataRequestManager, messageData);
       default:
         connection.sendForProtocol(protocolName, messageData);
         return null;
@@ -129,7 +137,7 @@ public class EthPeer {
       throws PeerNotConnected {
     final GetBlockHeadersMessage message =
         GetBlockHeadersMessage.create(hash, maxHeaders, skip, reverse);
-    return sendHeadersRequest(message);
+    return sendRequest(headersRequestManager, message);
   }
 
   public ResponseStream getHeadersByNumber(
@@ -137,44 +145,29 @@ public class EthPeer {
       throws PeerNotConnected {
     final GetBlockHeadersMessage message =
         GetBlockHeadersMessage.create(blockNumber, maxHeaders, skip, reverse);
-    return sendHeadersRequest(message);
+    return sendRequest(headersRequestManager, message);
   }
 
-  private ResponseStream sendHeadersRequest(final MessageData messageData) throws PeerNotConnected {
-    return headersRequestManager.dispatchRequest(
+  private ResponseStream sendRequest(
+      final RequestManager requestManager, final MessageData messageData) throws PeerNotConnected {
+    lastRequestTimestamp = clock.millis();
+    return requestManager.dispatchRequest(
         () -> connection.sendForProtocol(protocolName, messageData));
   }
 
   public ResponseStream getBodies(final List<Hash> blockHashes) throws PeerNotConnected {
     final GetBlockBodiesMessage message = GetBlockBodiesMessage.create(blockHashes);
-    return sendBodiesRequest(message);
-  }
-
-  private ResponseStream sendBodiesRequest(final MessageData messageData) throws PeerNotConnected {
-    return bodiesRequestManager.dispatchRequest(
-        () -> connection.sendForProtocol(protocolName, messageData));
+    return sendRequest(bodiesRequestManager, message);
   }
 
   public ResponseStream getReceipts(final List<Hash> blockHashes) throws PeerNotConnected {
     final GetReceiptsMessage message = GetReceiptsMessage.create(blockHashes);
-    return sendReceiptsRequest(message);
-  }
-
-  private ResponseStream sendReceiptsRequest(final MessageData messageData)
-      throws PeerNotConnected {
-    return receiptsRequestManager.dispatchRequest(
-        () -> connection.sendForProtocol(protocolName, messageData));
+    return sendRequest(receiptsRequestManager, message);
   }
 
   public ResponseStream getNodeData(final Iterable<Hash> nodeHashes) throws PeerNotConnected {
     final GetNodeDataMessage message = GetNodeDataMessage.create(nodeHashes);
-    return sendNodeDataRequest(message);
-  }
-
-  private ResponseStream sendNodeDataRequest(final MessageData messageData)
-      throws PeerNotConnected {
-    return nodeDataRequestManager.dispatchRequest(
-        () -> connection.sendForProtocol(protocolName, messageData));
+    return sendRequest(nodeDataRequestManager, message);
   }
 
   boolean validateReceivedMessage(final EthMessage message) {
@@ -315,6 +308,14 @@ public class EthPeer {
         + bodiesRequestManager.outstandingRequests()
         + receiptsRequestManager.outstandingRequests()
         + nodeDataRequestManager.outstandingRequests();
+  }
+
+  public long getLastRequestTimestamp() {
+    return lastRequestTimestamp;
+  }
+
+  public boolean hasAvailableRequestCapacity() {
+    return outstandingRequests() < MAX_OUTSTANDING_REQUESTS;
   }
 
   public BytesValue nodeId() {

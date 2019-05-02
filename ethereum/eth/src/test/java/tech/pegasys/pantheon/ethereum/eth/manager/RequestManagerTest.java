@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
@@ -219,6 +220,6 @@ public class RequestManagerTest {
     final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.ETH63));
     final PeerConnection peerConnection = new MockPeerConnection(caps);
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
-    return new EthPeer(peerConnection, EthProtocol.NAME, onPeerReady);
+    return new EthPeer(peerConnection, EthProtocol.NAME, onPeerReady, TestClock.fixed());
   }
 }

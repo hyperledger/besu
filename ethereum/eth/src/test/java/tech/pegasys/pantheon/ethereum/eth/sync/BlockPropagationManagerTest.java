@@ -48,6 +48,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Collections;
@@ -580,7 +581,8 @@ public class BlockPropagationManagerTest {
     when(ethScheduler.scheduleSyncWorkerTask(any(Supplier.class)))
         .thenReturn(new CompletableFuture<>());
     final EthContext ethContext =
-        new EthContext(new EthPeers("eth"), new EthMessages(), ethScheduler);
+        new EthContext(
+            new EthPeers("eth", TestClock.fixed(), metricsSystem), new EthMessages(), ethScheduler);
     final BlockPropagationManager<Void> blockPropagationManager =
         new BlockPropagationManager<>(
             syncConfig,

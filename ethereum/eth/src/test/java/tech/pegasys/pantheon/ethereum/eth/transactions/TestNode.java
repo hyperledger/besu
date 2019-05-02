@@ -112,6 +112,7 @@ public class TestNode implements Closeable {
             1,
             1,
             1,
+            TestClock.fixed(),
             new NoOpMetricsSystem(),
             EthereumWireProtocolConfiguration.defaultConfig());
 

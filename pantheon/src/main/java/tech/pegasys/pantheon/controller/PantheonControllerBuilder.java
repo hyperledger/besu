@@ -310,6 +310,7 @@ public abstract class PantheonControllerBuilder<C> {
         syncConfig.downloaderParallelism(),
         syncConfig.transactionsParallelism(),
         syncConfig.computationParallelism(),
+        clock,
         metricsSystem,
         ethereumWireProtocolConfiguration);
   }

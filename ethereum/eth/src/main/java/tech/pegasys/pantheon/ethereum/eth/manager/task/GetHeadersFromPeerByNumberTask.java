@@ -14,10 +14,8 @@ package tech.pegasys.pantheon.ethereum.eth.manager.task;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
-import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
-import tech.pegasys.pantheon.ethereum.eth.manager.RequestManager.ResponseStream;
+import tech.pegasys.pantheon.ethereum.eth.manager.PendingPeerRequest;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -39,7 +37,7 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
       final int skip,
       final boolean reverse,
       final MetricsSystem metricsSystem) {
-    super(protocolSchedule, ethContext, blockNumber, count, skip, reverse, metricsSystem);
+    super(protocolSchedule, ethContext, count, skip, reverse, metricsSystem);
     this.blockNumber = blockNumber;
   }
 
@@ -74,9 +72,13 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
   }
 
   @Override
-  protected ResponseStream sendRequest(final EthPeer peer) throws PeerNotConnected {
-    LOG.debug("Requesting {} headers from peer {}.", count, peer);
-    return peer.getHeadersByNumber(blockNumber, count, skip, reverse);
+  protected PendingPeerRequest sendRequest() {
+    return sendRequestToPeer(
+        peer -> {
+          LOG.debug("Requesting {} headers from peer {}.", count, peer);
+          return peer.getHeadersByNumber(blockNumber, count, skip, reverse);
+        },
+        blockNumber);
   }
 
   @Override
