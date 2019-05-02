@@ -14,10 +14,7 @@ package tech.pegasys.pantheon.ethereum.eth.manager.task;
 
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
-import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.NoAvailablePeersException;
-import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerDisconnectedException;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
-import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.Optional;
@@ -30,32 +27,6 @@ public abstract class AbstractPeerTask<R> extends AbstractEthTask<PeerTaskResult
     super(metricsSystem);
     this.ethContext = ethContext;
   }
-
-  @Override
-  protected void executeTask() {
-    final EthPeer peer;
-    if (assignedPeer.isPresent()) {
-      peer = assignedPeer.get();
-    } else {
-      // Try to find a peer
-      final Optional<EthPeer> maybePeer = findSuitablePeer();
-      if (!maybePeer.isPresent()) {
-        result.get().completeExceptionally(new NoAvailablePeersException());
-        return;
-      }
-      peer = maybePeer.get();
-    }
-
-    try {
-      executeTaskWithPeer(peer);
-    } catch (final PeerNotConnected e) {
-      result.get().completeExceptionally(new PeerDisconnectedException(peer));
-    }
-  }
-
-  protected abstract Optional<EthPeer> findSuitablePeer();
-
-  protected abstract void executeTaskWithPeer(EthPeer peer) throws PeerNotConnected;
 
   public AbstractPeerTask<R> assignPeer(final EthPeer peer) {
     assignedPeer = Optional.of(peer);

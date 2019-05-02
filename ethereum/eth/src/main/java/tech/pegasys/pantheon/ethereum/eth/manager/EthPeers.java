@@ -14,11 +14,14 @@ package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer.DisconnectCallback;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.Subscribers;
 
-import java.util.Collections;
+import java.time.Clock;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,20 +39,29 @@ public class EthPeers {
   public static final Comparator<EthPeer> BEST_CHAIN = TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
 
   public static final Comparator<EthPeer> LEAST_TO_MOST_BUSY =
-      Comparator.comparing(EthPeer::outstandingRequests);
+      Comparator.comparing(EthPeer::outstandingRequests)
+          .thenComparing(EthPeer::getLastRequestTimestamp);
 
-  private final int maxOutstandingRequests = 5;
   private final Map<PeerConnection, EthPeer> connections = new ConcurrentHashMap<>();
   private final String protocolName;
+  private final Clock clock;
   private final Subscribers<ConnectCallback> connectCallbacks = new Subscribers<>();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = new Subscribers<>();
+  private final Collection<PendingPeerRequest> pendingRequests = new ArrayList<>();
 
-  public EthPeers(final String protocolName) {
+  public EthPeers(final String protocolName, final Clock clock, final MetricsSystem metricsSystem) {
     this.protocolName = protocolName;
+    this.clock = clock;
+    metricsSystem.createIntegerGauge(
+        MetricCategory.PEERS,
+        "pending_peer_requests_current",
+        "Number of peer requests currently pending because peers are busy",
+        pendingRequests::size);
   }
 
   void registerConnection(final PeerConnection peerConnection) {
-    final EthPeer peer = new EthPeer(peerConnection, protocolName, this::invokeConnectionCallbacks);
+    final EthPeer peer =
+        new EthPeer(peerConnection, protocolName, this::invokeConnectionCallbacks, clock);
     connections.putIfAbsent(peerConnection, peer);
   }
 
@@ -59,10 +71,36 @@ public class EthPeers {
       disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
       peer.handleDisconnect();
     }
+    checkPendingConnections();
   }
 
   public EthPeer peer(final PeerConnection peerConnection) {
     return connections.get(peerConnection);
+  }
+
+  public PendingPeerRequest executePeerRequest(
+      final PeerRequest request, final long minimumBlockNumber, final Optional<EthPeer> peer) {
+    final PendingPeerRequest pendingPeerRequest =
+        new PendingPeerRequest(this, request, minimumBlockNumber, peer);
+    synchronized (this) {
+      if (!pendingPeerRequest.attemptExecution()) {
+        pendingRequests.add(pendingPeerRequest);
+      }
+    }
+    return pendingPeerRequest;
+  }
+
+  public void dispatchMessage(final EthPeer peer, final EthMessage ethMessage) {
+    peer.dispatch(ethMessage);
+    if (peer.hasAvailableRequestCapacity()) {
+      checkPendingConnections();
+    }
+  }
+
+  private void checkPendingConnections() {
+    synchronized (this) {
+      pendingRequests.removeIf(PendingPeerRequest::attemptExecution);
+    }
   }
 
   public long subscribeConnect(final ConnectCallback callback) {
@@ -87,23 +125,6 @@ public class EthPeers {
 
   public Optional<EthPeer> bestPeer() {
     return availablePeers().max(BEST_CHAIN);
-  }
-
-  public Optional<EthPeer> idlePeer() {
-    return idlePeers().min(LEAST_TO_MOST_BUSY);
-  }
-
-  private Stream<EthPeer> idlePeers() {
-    final List<EthPeer> peers =
-        availablePeers()
-            .filter(p -> p.outstandingRequests() < maxOutstandingRequests)
-            .collect(Collectors.toList());
-    Collections.shuffle(peers);
-    return peers.stream();
-  }
-
-  public Optional<EthPeer> idlePeer(final long withBlocksUpTo) {
-    return idlePeers().filter(p -> p.chainState().getEstimatedHeight() >= withBlocksUpTo).findAny();
   }
 
   @FunctionalInterface

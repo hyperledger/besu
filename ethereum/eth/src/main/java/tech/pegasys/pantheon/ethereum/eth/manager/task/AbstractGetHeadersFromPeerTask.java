@@ -41,12 +41,10 @@ public abstract class AbstractGetHeadersFromPeerTask
   protected final int count;
   protected final int skip;
   protected final boolean reverse;
-  private final long minimumRequiredBlockNumber;
 
   protected AbstractGetHeadersFromPeerTask(
       final ProtocolSchedule<?> protocolSchedule,
       final EthContext ethContext,
-      final long minimumRequiredBlockNumber,
       final int count,
       final int skip,
       final boolean reverse,
@@ -57,7 +55,6 @@ public abstract class AbstractGetHeadersFromPeerTask
     this.count = count;
     this.skip = skip;
     this.reverse = reverse;
-    this.minimumRequiredBlockNumber = minimumRequiredBlockNumber;
   }
 
   @Override
@@ -104,11 +101,6 @@ public abstract class AbstractGetHeadersFromPeerTask
 
     LOG.debug("Received {} of {} headers requested from peer.", headersList.size(), count);
     return Optional.of(headersList);
-  }
-
-  @Override
-  protected Optional<EthPeer> findSuitablePeer() {
-    return ethContext.getEthPeers().idlePeer(minimumRequiredBlockNumber);
   }
 
   protected abstract boolean matchesFirstHeader(BlockHeader firstHeader);

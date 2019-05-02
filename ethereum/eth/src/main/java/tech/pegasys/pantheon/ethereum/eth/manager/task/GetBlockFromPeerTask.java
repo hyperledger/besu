@@ -21,11 +21,9 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.IncompleteResultsException;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
@@ -63,37 +61,40 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   }
 
   @Override
-  protected Optional<EthPeer> findSuitablePeer() {
-    return ethContext.getEthPeers().idlePeer(blockNumber);
-  }
-
-  @Override
-  protected void executeTaskWithPeer(final EthPeer peer) throws PeerNotConnected {
-    LOG.debug("Downloading block {} from peer {}.", hash, peer);
-    downloadHeader(peer)
+  protected void executeTask() {
+    LOG.debug(
+        "Downloading block {} from peer {}.",
+        hash,
+        assignedPeer.map(EthPeer::toString).orElse("<any>"));
+    downloadHeader()
         .thenCompose(this::completeBlock)
         .whenComplete(
             (r, t) -> {
               if (t != null) {
-                LOG.info("Failed to download block {} from peer {}.", hash, peer);
+                LOG.info(
+                    "Failed to download block {} from peer {}.",
+                    hash,
+                    assignedPeer.map(EthPeer::toString).orElse("<any>"));
                 result.get().completeExceptionally(t);
               } else if (r.getResult().isEmpty()) {
-                LOG.info("Failed to download block {} from peer {}.", hash, peer);
+                LOG.info("Failed to download block {} from peer {}.", hash, r.getPeer());
                 result.get().completeExceptionally(new IncompleteResultsException());
               } else {
-                LOG.debug("Successfully downloaded block {} from peer {}.", hash, peer);
+                LOG.debug("Successfully downloaded block {} from peer {}.", hash, r.getPeer());
                 result.get().complete(new PeerTaskResult<>(r.getPeer(), r.getResult().get(0)));
               }
             });
   }
 
-  private CompletableFuture<PeerTaskResult<List<BlockHeader>>> downloadHeader(final EthPeer peer) {
+  private CompletableFuture<PeerTaskResult<List<BlockHeader>>> downloadHeader() {
     return executeSubTask(
-        () ->
-            GetHeadersFromPeerByHashTask.forSingleHash(
-                    protocolSchedule, ethContext, hash, metricsSystem)
-                .assignPeer(peer)
-                .run());
+        () -> {
+          final AbstractGetHeadersFromPeerTask task =
+              GetHeadersFromPeerByHashTask.forSingleHash(
+                  protocolSchedule, ethContext, hash, blockNumber, metricsSystem);
+          assignedPeer.ifPresent(task::assignPeer);
+          return task.run();
+        });
   }
 
   private CompletableFuture<PeerTaskResult<List<Block>>> completeBlock(

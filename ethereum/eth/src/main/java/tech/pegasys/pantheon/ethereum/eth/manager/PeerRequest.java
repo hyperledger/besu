@@ -12,18 +12,9 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
-import tech.pegasys.pantheon.ethereum.eth.manager.DeterministicEthScheduler.TimeoutPolicy;
-import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
-import tech.pegasys.pantheon.testutil.TestClock;
+import tech.pegasys.pantheon.ethereum.eth.manager.RequestManager.ResponseStream;
+import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
 
-public class EthContextTestUtil {
-
-  private static final String PROTOCOL_NAME = "ETH";
-
-  public static EthContext createTestEthContext(final TimeoutPolicy timeoutPolicy) {
-    return new EthContext(
-        new EthPeers(PROTOCOL_NAME, TestClock.fixed(), new NoOpMetricsSystem()),
-        new EthMessages(),
-        new DeterministicEthScheduler(timeoutPolicy));
-  }
+public interface PeerRequest {
+  ResponseStream sendRequest(EthPeer peer) throws PeerNotConnected;
 }

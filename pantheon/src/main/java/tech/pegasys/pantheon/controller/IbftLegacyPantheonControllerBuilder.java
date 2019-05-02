@@ -92,6 +92,7 @@ public class IbftLegacyPantheonControllerBuilder extends PantheonControllerBuild
         syncConfig.downloaderParallelism(),
         syncConfig.transactionsParallelism(),
         syncConfig.computationParallelism(),
+        clock,
         metricsSystem,
         ethereumWireProtocolConfiguration);
   }
