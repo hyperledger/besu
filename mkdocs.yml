@@ -98,7 +98,7 @@ nav:
         - Transactions:
           - Creating and Sending Transactions: Using-Pantheon/Transactions/Transactions.md
           - Transaction Pool: Using-Pantheon/Transactions/Transaction-Pool.md
-        - Using Truffle with Panthen: Using-Pantheon/Truffle.md
+        - Using Truffle with Pantheon: Using-Pantheon/Truffle.md
         - Events and Logs:
           - Overview: Using-Pantheon/Events-and-Logs.md
           - Accessing Logs Using JSON-RPC API: Using-Pantheon/Accessing-Logs-Using-JSON-RPC.md
