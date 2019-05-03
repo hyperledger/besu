@@ -15,7 +15,7 @@ For mainnet, Rinkeby, Ropsten, and Görli, Pantheon predefines a list of enode U
 
 ### Start Bootnode
 
-To start a bootnode for a private network:
+To start a bootnode for a private network, complete the following steps:
 
 1.  Export the public key to a file:
 
@@ -36,7 +36,7 @@ To start a bootnode for a private network:
     
 2. Start the bootnode, specifying:
 
-    * Genesis file and data directory as in the previous step. 
+    * Genesis file and data directory, as in the previous step. 
     * No arguments for the [`--bootnodes` option](../../Reference/Pantheon-CLI-Syntax.md#bootnodes) because this is your bootnode.
     
     !!! example
