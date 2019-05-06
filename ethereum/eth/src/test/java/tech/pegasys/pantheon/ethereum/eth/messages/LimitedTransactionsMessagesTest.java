@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.messages;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static tech.pegasys.pantheon.ethereum.eth.messages.LimitedTransactionsMessages.LIMIT;
@@ -40,12 +41,13 @@ public class LimitedTransactionsMessagesTest {
   public void createLimited() {
     final Set<Transaction> txs = generator.transactions(6000);
     final LimitedTransactionsMessages firstMessage = LimitedTransactionsMessages.createLimited(txs);
-    assertEquals(5219, firstMessage.getIncludedTransactions().size());
+    assertThat(firstMessage.getIncludedTransactions().size()).isBetween(4990, 5250);
+
     txs.removeAll(firstMessage.getIncludedTransactions());
-    assertEquals(781, txs.size());
+    assertThat(txs.size()).isBetween(700, 800);
     final LimitedTransactionsMessages secondMessage =
         LimitedTransactionsMessages.createLimited(txs);
-    assertEquals(781, secondMessage.getIncludedTransactions().size());
+    assertThat(secondMessage.getIncludedTransactions().size()).isBetween(700, 800);
     txs.removeAll(secondMessage.getIncludedTransactions());
     assertEquals(0, txs.size());
     assertTrue(
