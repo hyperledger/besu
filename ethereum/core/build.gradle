@@ -91,26 +91,29 @@ test {
   exclude 'tech/pegasys/pantheon/ethereum/core/TransactionTest.class'
 }
 
-def generateTestFiles(FileTree jsonPath, File resourcesPath, File templateFile, String pathstrip, String destination, String namePrefix) {
+def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix) {
   def referenceTestTemplate = templateFile.text
 
   // This is how many json files to include in each test file
   def fileSets = jsonPath.getFiles().collate(5)
 
   fileSets.eachWithIndex { fileSet, idx ->
-    def resPath = resourcesPath.getPath().replaceAll("\\\\", "/")
-
     def paths = []
     fileSet.each { testJsonFile ->
       if (!testJsonFile.getName().toString().startsWith(".")) {
-        paths << testJsonFile.getPath().toString()
-          .replaceAll(resPath + "/", "")
+        String parentDirectory = testJsonFile.getParentFile().getName()
+        String testFile = testJsonFile.getName()
+        if(testJsonFile.getParentFile().getParentFile().getName() != pathstrip) {
+          paths << pathstrip + "/" + testJsonFile.getParentFile().getParentFile().getName() + "/" + parentDirectory + "/" + testFile
+        } else {
+          paths << pathstrip + "/" + parentDirectory + "/" + testFile
+        }
       }
     }
 
     def testFile = file(destination + "/" + namePrefix + "_" + idx + ".java")
 
-    def allPaths = '"' + paths.join('", "') + '"';
+    def allPaths = '"' + paths.join('", "') + '"'
 
     def testFileContents = referenceTestTemplate
       .replaceAll("%%TESTS_FILE%%", allPaths)
@@ -122,9 +125,8 @@ def generateTestFiles(FileTree jsonPath, File resourcesPath, File templateFile, 
 task blockchainReferenceTestsSetup {
   generateTestFiles(
     fileTree('../referencetests/src/test/resources/BlockchainTests'),
-    file("../referencetests/src/test/resources"),
     file("./src/test/resources/tech/pegasys/pantheon/ethereum/vm/BlockchainReferenceTest.java.template"),
-    "BlockchainTests/",
+    "BlockchainTests",
     "./src/test/java/tech/pegasys/pantheon/ethereum/vm/blockchain",
     "BlockchainReferenceTest"
     )
@@ -133,9 +135,8 @@ task blockchainReferenceTestsSetup {
 task generalstateReferenceTestsSetup {
   generateTestFiles(
     fileTree("../referencetests/src/test/resources/GeneralStateTests"),
-    file("../referencetests/src/test/resources"),
     file("./src/test/resources/tech/pegasys/pantheon/ethereum/vm/GeneralStateReferenceTest.java.template"),
-    "GeneralStateTests/",
+    "GeneralStateTests",
     "./src/test/java/tech/pegasys/pantheon/ethereum/vm/generalstate",
     "GeneralStateReferenceTest"
     )
@@ -144,9 +145,8 @@ task generalstateReferenceTestsSetup {
 task generalstateRegressionReferenceTestsSetup {
   generateTestFiles(
     fileTree("./src/test/resources/regressions/generalstate"),
-    file("./src/test/resources"),
     file("./src/test/resources/tech/pegasys/pantheon/ethereum/vm/GeneralStateReferenceTest.java.template"),
-    "regressions/generalstate/",
+    "regressions",
     "./src/test/java/tech/pegasys/pantheon/ethereum/vm/generalstate",
     "GeneralStateRegressionReferenceTest"
     )
