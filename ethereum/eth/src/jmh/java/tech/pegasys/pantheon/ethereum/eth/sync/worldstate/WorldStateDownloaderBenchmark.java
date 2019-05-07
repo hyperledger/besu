@@ -34,7 +34,7 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
 import tech.pegasys.pantheon.services.tasks.CachingTaskCollection;
-import tech.pegasys.pantheon.services.tasks.RocksDbTaskQueue;
+import tech.pegasys.pantheon.services.tasks.FlatFileTaskCollection;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.nio.file.Path;
@@ -97,11 +97,10 @@ public class WorldStateDownloaderBenchmark {
 
     pendingRequests =
         new CachingTaskCollection<>(
-            RocksDbTaskQueue.create(
+            new FlatFileTaskCollection<>(
                 tempDir.resolve("fastsync"),
                 NodeDataRequest::serialize,
-                NodeDataRequest::deserialize,
-                metricsSystem),
+                NodeDataRequest::deserialize),
             0);
     worldStateDownloader =
         new WorldStateDownloader(

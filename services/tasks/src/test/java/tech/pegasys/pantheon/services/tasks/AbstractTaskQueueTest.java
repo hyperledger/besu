@@ -30,10 +30,10 @@ abstract class AbstractTaskQueueTest<T extends TaskCollection<BytesValue>> {
 
   @Test
   public void enqueueAndDequeue() throws Exception {
-    try (T queue = createQueue()) {
-      BytesValue one = BytesValue.of(1);
-      BytesValue two = BytesValue.of(2);
-      BytesValue three = BytesValue.of(3);
+    try (final T queue = createQueue()) {
+      final BytesValue one = BytesValue.of(1);
+      final BytesValue two = BytesValue.of(2);
+      final BytesValue three = BytesValue.of(3);
 
       assertThat(queue.remove()).isNull();
 
@@ -54,8 +54,8 @@ abstract class AbstractTaskQueueTest<T extends TaskCollection<BytesValue>> {
 
   @Test
   public void markTaskFailed() throws Exception {
-    try (T queue = createQueue()) {
-      BytesValue value = BytesValue.of(1);
+    try (final T queue = createQueue()) {
+      final BytesValue value = BytesValue.of(1);
 
       assertThat(queue.isEmpty()).isTrue();
       assertThat(queue.allTasksCompleted()).isTrue();
@@ -65,7 +65,7 @@ abstract class AbstractTaskQueueTest<T extends TaskCollection<BytesValue>> {
       assertThat(queue.isEmpty()).isFalse();
       assertThat(queue.allTasksCompleted()).isFalse();
 
-      Task<BytesValue> task = queue.remove();
+      final Task<BytesValue> task = queue.remove();
       assertThat(task).isNotNull();
       assertThat(task.getData()).isEqualTo(value);
       assertThat(queue.isEmpty()).isTrue();
@@ -84,8 +84,8 @@ abstract class AbstractTaskQueueTest<T extends TaskCollection<BytesValue>> {
 
   @Test
   public void markTaskCompleted() throws Exception {
-    try (T queue = createQueue()) {
-      BytesValue value = BytesValue.of(1);
+    try (final T queue = createQueue()) {
+      final BytesValue value = BytesValue.of(1);
 
       assertThat(queue.isEmpty()).isTrue();
       assertThat(queue.allTasksCompleted()).isTrue();
@@ -95,7 +95,7 @@ abstract class AbstractTaskQueueTest<T extends TaskCollection<BytesValue>> {
       assertThat(queue.isEmpty()).isFalse();
       assertThat(queue.allTasksCompleted()).isFalse();
 
-      Task<BytesValue> task = queue.remove();
+      final Task<BytesValue> task = queue.remove();
       assertThat(task).isNotNull();
       assertThat(task.getData()).isEqualTo(value);
       assertThat(queue.isEmpty()).isTrue();
@@ -114,11 +114,11 @@ abstract class AbstractTaskQueueTest<T extends TaskCollection<BytesValue>> {
 
   @Test
   public void clear() throws Exception {
-    try (T queue = createQueue()) {
-      BytesValue one = BytesValue.of(1);
-      BytesValue two = BytesValue.of(2);
-      BytesValue three = BytesValue.of(3);
-      BytesValue four = BytesValue.of(4);
+    try (final T queue = createQueue()) {
+      final BytesValue one = BytesValue.of(1);
+      final BytesValue two = BytesValue.of(2);
+      final BytesValue three = BytesValue.of(3);
+      final BytesValue four = BytesValue.of(4);
 
       // Fill queue
       queue.add(one);
@@ -145,12 +145,12 @@ abstract class AbstractTaskQueueTest<T extends TaskCollection<BytesValue>> {
 
   @Test
   public void clear_emptyQueueWithOutstandingTasks() throws Exception {
-    try (T queue = createQueue()) {
-      BytesValue one = BytesValue.of(1);
+    try (final T queue = createQueue()) {
+      final BytesValue one = BytesValue.of(1);
 
       // Add and then remove task
       queue.add(one);
-      Task<BytesValue> task = queue.remove();
+      final Task<BytesValue> task = queue.remove();
       assertThat(task.getData()).isEqualTo(one);
       assertThat(queue.isEmpty()).isTrue();
       assertThat(queue.allTasksCompleted()).isFalse();
@@ -181,13 +181,13 @@ abstract class AbstractTaskQueueTest<T extends TaskCollection<BytesValue>> {
     final CountDownLatch queuingFinished = new CountDownLatch(threadCount);
 
     // Start thread for reading values
-    List<Task<BytesValue>> dequeued = new ArrayList<>();
-    Thread reader =
+    final List<Task<BytesValue>> dequeued = new ArrayList<>();
+    final Thread reader =
         new Thread(
             () -> {
               while (queuingFinished.getCount() > 0 || !queue.isEmpty()) {
                 if (!queue.isEmpty()) {
-                  Task<BytesValue> value = queue.remove();
+                  final Task<BytesValue> value = queue.remove();
                   value.markCompleted();
                   dequeued.add(value);
                 }
