@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -30,7 +31,7 @@ public class EthUninstallFilter implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "eth_uninstallFilter";
+    return RpcMethod.ETH_UNINSTALL_FILTER.getMethodName();
   }
 
   @Override

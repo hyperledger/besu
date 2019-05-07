@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -32,7 +33,7 @@ public class DebugMetrics implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "debug_metrics";
+    return RpcMethod.DEBUG_METRICS.getMethodName();
   }
 
   @Override

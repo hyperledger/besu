@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -36,7 +37,7 @@ public class EthProtocolVersion implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "eth_protocolVersion";
+    return RpcMethod.ETH_PROTOCOL_VERSION.getMethodName();
   }
 
   @Override

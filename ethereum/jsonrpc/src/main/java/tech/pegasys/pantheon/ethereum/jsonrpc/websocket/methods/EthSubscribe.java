@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.methods;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -32,7 +33,7 @@ public class EthSubscribe extends AbstractSubscriptionMethod {
 
   @Override
   public String getName() {
-    return "eth_subscribe";
+    return RpcMethod.ETH_SUBSCRIBE.getMethodName();
   }
 
   @Override

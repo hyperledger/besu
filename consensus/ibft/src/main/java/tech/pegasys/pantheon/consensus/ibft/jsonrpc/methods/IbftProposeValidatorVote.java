@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.consensus.ibft.jsonrpc.methods;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.VoteType;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -37,7 +38,7 @@ public class IbftProposeValidatorVote implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "ibft_proposeValidatorVote";
+    return RpcMethod.IBFT_PROPOSE_VALIDATOR_VOTE.getMethodName();
   }
 
   @Override

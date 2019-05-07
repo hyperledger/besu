@@ -18,6 +18,7 @@ import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcErrorConverter.conve
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
@@ -62,7 +63,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "eea_sendRawTransaction";
+    return RpcMethod.EEA_SEND_RAW_TRANSACTION.getMethodName();
   }
 
   @Override

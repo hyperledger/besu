@@ -16,6 +16,7 @@ import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -43,7 +44,7 @@ public class EeaGetTransactionCount implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "eea_getTransactionCount";
+    return RpcMethod.EEA_GET_TRANSACTION_COUNT.getMethodName();
   }
 
   @Override

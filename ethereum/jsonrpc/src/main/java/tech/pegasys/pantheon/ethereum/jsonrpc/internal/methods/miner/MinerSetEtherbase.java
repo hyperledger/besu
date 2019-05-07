@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.miner;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
@@ -27,7 +28,7 @@ public class MinerSetEtherbase implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "miner_setEtherbase";
+    return RpcMethod.MINER_SET_ETHERBASE.getMethodName();
   }
 
   @Override

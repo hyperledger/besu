@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.LogsQuery;
@@ -32,7 +33,7 @@ public class EthNewFilter implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "eth_newFilter";
+    return RpcMethod.ETH_NEW_FILTER.getMethodName();
   }
 
   @Override

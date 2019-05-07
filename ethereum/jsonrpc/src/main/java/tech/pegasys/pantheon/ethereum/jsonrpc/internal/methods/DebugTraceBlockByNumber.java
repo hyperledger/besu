@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.debug.TraceOptions;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.BlockParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -44,7 +45,7 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
 
   @Override
   public String getName() {
-    return "debug_traceBlockByNumber";
+    return RpcMethod.DEBUG_TRACE_BLOCK_BY_NUMBER.getMethodName();
   }
 
   @Override

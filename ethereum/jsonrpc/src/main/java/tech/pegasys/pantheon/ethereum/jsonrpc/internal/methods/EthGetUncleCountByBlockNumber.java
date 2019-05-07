@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.BlockParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -27,7 +28,7 @@ public class EthGetUncleCountByBlockNumber extends AbstractBlockParameterMethod 
 
   @Override
   public String getName() {
-    return "eth_getUncleCountByBlockNumber";
+    return RpcMethod.ETH_GET_UNCLE_COUNT_BY_BLOCK_NUMBER.getMethodName();
   }
 
   @Override

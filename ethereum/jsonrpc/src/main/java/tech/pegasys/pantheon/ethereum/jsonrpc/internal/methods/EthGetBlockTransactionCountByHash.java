@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
@@ -33,7 +34,7 @@ public class EthGetBlockTransactionCountByHash implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "eth_getBlockTransactionCountByHash";
+    return RpcMethod.ETH_GET_BLOCK_TRANSACTION_COUNT_BY_HASH.getMethodName();
   }
 
   @Override

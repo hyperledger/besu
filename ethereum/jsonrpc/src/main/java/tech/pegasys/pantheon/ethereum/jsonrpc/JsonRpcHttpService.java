@@ -80,7 +80,7 @@ public class JsonRpcHttpService {
 
   private final Vertx vertx;
   private final JsonRpcConfiguration config;
-  private final Map<String, JsonRpcMethod> jsonRpcMethods;
+  private final RpcMethods rpcMethods;
   private final Path dataDir;
   private final LabelledMetric<OperationTimer> requestTimer;
 
@@ -129,7 +129,7 @@ public class JsonRpcHttpService {
     validateConfig(config);
     this.config = config;
     this.vertx = vertx;
-    this.jsonRpcMethods = methods;
+    this.rpcMethods = new RpcMethods(methods);
     this.authenticationService = authenticationService;
   }
 
@@ -442,9 +442,14 @@ public class JsonRpcHttpService {
 
     LOG.debug("JSON-RPC request -> {}", request.getMethod());
     // Find method handler
-    final JsonRpcMethod method = jsonRpcMethods.get(request.getMethod());
+    final JsonRpcMethod method = rpcMethods.getMethod(request.getMethod());
     if (method == null) {
-      return errorResponse(id, JsonRpcError.METHOD_NOT_FOUND);
+      if (!rpcMethods.isDefined(request.getMethod())) {
+        return errorResponse(id, JsonRpcError.METHOD_NOT_FOUND);
+      }
+      if (!rpcMethods.isEnabled(request.getMethod())) {
+        return errorResponse(id, JsonRpcError.METHOD_NOT_ENABLED);
+      }
     }
 
     if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {

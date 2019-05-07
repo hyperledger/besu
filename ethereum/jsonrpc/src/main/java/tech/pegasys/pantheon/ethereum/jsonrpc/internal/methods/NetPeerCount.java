@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -30,7 +31,7 @@ public class NetPeerCount implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "net_peerCount";
+    return RpcMethod.NET_PEER_COUNT.getMethodName();
   }
 
   @Override

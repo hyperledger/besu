@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -38,7 +39,7 @@ public class EthGetFilterChanges implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "eth_getFilterChanges";
+    return RpcMethod.ETH_GET_FILTER_CHANGES.getMethodName();
   }
 
   @Override

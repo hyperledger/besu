@@ -16,6 +16,7 @@ import static tech.pegasys.pantheon.consensus.clique.CliqueBlockInterface.NO_VOT
 
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -35,7 +36,7 @@ public class Propose implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "clique_propose";
+    return RpcMethod.CLIQUE_PROPOSE.getMethodName();
   }
 
   @Override

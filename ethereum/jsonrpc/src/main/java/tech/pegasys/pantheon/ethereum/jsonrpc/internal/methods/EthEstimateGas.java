@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonCallParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -45,7 +46,7 @@ public class EthEstimateGas implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "eth_estimateGas";
+    return RpcMethod.ETH_ESTIMATE_GAS.getMethodName();
   }
 
   @Override

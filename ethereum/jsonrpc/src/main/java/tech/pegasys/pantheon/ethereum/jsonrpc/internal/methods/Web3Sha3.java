@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.crypto.Hash;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -26,7 +27,7 @@ public class Web3Sha3 implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "web3_sha3";
+    return RpcMethod.WEB3_SHA3.getMethodName();
   }
 
   @Override

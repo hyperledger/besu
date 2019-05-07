@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.LogsQuery;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.FilterParameter;
@@ -35,7 +36,7 @@ public class EthGetLogs implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "eth_getLogs";
+    return RpcMethod.ETH_GET_LOGS.getMethodName();
   }
 
   @Override
