@@ -8,6 +8,7 @@
     "eip158Block": 3,
     "byzantiumBlock": 1035301,
     "constantinopleBlock": 3660663,
+    "constantinopleFixBlock": 4321234,
     "clique": {
       "blockperiodseconds": 15,
       "epochlength": 30000
