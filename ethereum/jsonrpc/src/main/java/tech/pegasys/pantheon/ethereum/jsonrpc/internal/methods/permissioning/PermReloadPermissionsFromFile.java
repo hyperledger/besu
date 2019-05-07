@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
@@ -37,7 +38,7 @@ public class PermReloadPermissionsFromFile implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "perm_reloadPermissionsFromFile";
+    return RpcMethod.PERM_RELOAD_PERMISSIONS_FROM_FILE.getMethodName();
   }
 
   @Override

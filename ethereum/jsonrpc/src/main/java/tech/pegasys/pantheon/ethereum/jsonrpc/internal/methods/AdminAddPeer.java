@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -33,7 +34,7 @@ public class AdminAddPeer extends AdminModifyPeer {
 
   @Override
   public String getName() {
-    return "admin_addPeer";
+    return RpcMethod.ADMIN_ADD_PEER.getMethodName();
   }
 
   @Override

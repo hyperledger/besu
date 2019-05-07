@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
@@ -27,7 +28,7 @@ public class EthNewPendingTransactionFilter implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "eth_newPendingTransactionFilter";
+    return RpcMethod.ETH_NEW_PENDING_TRANSACTION_FILTER.getMethodName();
   }
 
   @Override

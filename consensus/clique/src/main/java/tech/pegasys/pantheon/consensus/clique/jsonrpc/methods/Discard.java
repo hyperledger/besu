@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.consensus.clique.jsonrpc.methods;
 
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -21,7 +22,6 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 public class Discard implements JsonRpcMethod {
-  private static final String CLIQUE_DISCARD = "clique_discard";
   private final VoteProposer proposer;
   private final JsonRpcParameter parameters;
 
@@ -32,7 +32,7 @@ public class Discard implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return CLIQUE_DISCARD;
+    return RpcMethod.CLIQUE_DISCARD.getMethodName();
   }
 
   @Override

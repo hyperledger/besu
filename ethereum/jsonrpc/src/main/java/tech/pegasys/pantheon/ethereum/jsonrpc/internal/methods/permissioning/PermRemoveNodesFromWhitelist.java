@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -41,7 +42,7 @@ public class PermRemoveNodesFromWhitelist implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "perm_removeNodesFromWhitelist";
+    return RpcMethod.PERM_REMOVE_NODES_FROM_WHITELIST.getMethodName();
   }
 
   @Override

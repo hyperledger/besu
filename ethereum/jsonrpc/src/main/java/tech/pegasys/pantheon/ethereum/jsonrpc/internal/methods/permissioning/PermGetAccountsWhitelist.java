@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
@@ -32,7 +33,7 @@ public class PermGetAccountsWhitelist implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "perm_getAccountsWhitelist";
+    return RpcMethod.PERM_GET_ACCOUNTS_WHITELIST.getMethodName();
   }
 
   @Override

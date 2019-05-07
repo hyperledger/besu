@@ -10,21 +10,29 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.consensus.ibft.jsonrpc.methods;
+package tech.pegasys.pantheon.ethereum.jsonrpc;
 
-import tech.pegasys.pantheon.consensus.common.VoteProposer;
-import tech.pegasys.pantheon.consensus.common.jsonrpc.AbstractVoteProposerMethod;
-import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 
-public class IbftGetPendingVotes extends AbstractVoteProposerMethod implements JsonRpcMethod {
+import java.util.Map;
 
-  public IbftGetPendingVotes(final VoteProposer voteProposer) {
-    super(voteProposer);
+public class RpcMethods {
+
+  private Map<String, JsonRpcMethod> enabledMethods;
+
+  public RpcMethods(final Map<String, JsonRpcMethod> enabledMethods) {
+    this.enabledMethods = enabledMethods;
   }
 
-  @Override
-  public String getName() {
-    return RpcMethod.IBFT_GET_PENDING_VOTES.getMethodName();
+  public JsonRpcMethod getMethod(final String methodName) {
+    return enabledMethods.get(methodName);
+  }
+
+  public boolean isEnabled(final String methodName) {
+    return enabledMethods.containsKey(methodName);
+  }
+
+  public boolean isDefined(final String methodName) {
+    return RpcMethod.rpcMethodExists(methodName) || isEnabled(methodName);
   }
 }

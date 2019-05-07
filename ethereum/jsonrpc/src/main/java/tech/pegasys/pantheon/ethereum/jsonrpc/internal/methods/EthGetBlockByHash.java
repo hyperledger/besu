@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
@@ -38,7 +39,7 @@ public class EthGetBlockByHash implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "eth_getBlockByHash";
+    return RpcMethod.ETH_GET_BLOCK_BY_HASH.getMethodName();
   }
 
   @Override

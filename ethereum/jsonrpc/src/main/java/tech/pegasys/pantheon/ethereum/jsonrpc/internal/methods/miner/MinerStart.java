@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.miner;
 
 import tech.pegasys.pantheon.ethereum.blockcreation.CoinbaseNotSetException;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
@@ -31,7 +32,7 @@ public class MinerStart implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "miner_start";
+    return RpcMethod.MINER_START.getMethodName();
   }
 
   @Override

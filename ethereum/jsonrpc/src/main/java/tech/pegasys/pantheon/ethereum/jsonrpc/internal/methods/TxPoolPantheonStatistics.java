@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -31,7 +32,7 @@ public class TxPoolPantheonStatistics implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "txpool_pantheonStatistics";
+    return RpcMethod.TX_POOL_PANTHEON_STATISTICS.getMethodName();
   }
 
   @Override

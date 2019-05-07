@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.BlockParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -31,7 +32,7 @@ public class EthGetTransactionByBlockNumberAndIndex extends AbstractBlockParamet
 
   @Override
   public String getName() {
-    return "eth_getTransactionByBlockNumberAndIndex";
+    return RpcMethod.ETH_GET_TRANSACTION_BY_BLOCK_NUMBER_AND_INDEX.getMethodName();
   }
 
   @Override

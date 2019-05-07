@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.ethereum.chain.ChainHead;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
@@ -53,7 +54,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "admin_nodeInfo";
+    return RpcMethod.ADMIN_NODE_INFO.getMethodName();
   }
 
   @Override

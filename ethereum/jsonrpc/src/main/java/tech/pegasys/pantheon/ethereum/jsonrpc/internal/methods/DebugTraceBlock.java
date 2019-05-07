@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.debug.TraceOptions;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.TransactionTraceParams;
@@ -57,7 +58,7 @@ public class DebugTraceBlock implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "debug_traceBlock";
+    return RpcMethod.DEBUG_TRACE_BLOCK.getMethodName();
   }
 
   @Override

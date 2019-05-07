@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -32,12 +33,12 @@ public class AdminRemovePeer extends AdminModifyPeer {
 
   @Override
   public String getName() {
-    return "admin_removePeer";
+    return RpcMethod.ADMIN_REMOVE_PEER.getMethodName();
   }
 
   @Override
   protected JsonRpcResponse performOperation(final Object id, final String enode) {
-    LOG.debug("Remove ({}) to peer cache", enode);
+    LOG.debug("Remove ({}) from peer cache", enode);
     final EnodeURL enodeURL = EnodeURL.fromString(enode);
     final boolean result =
         peerNetwork.removeMaintainedConnectionPeer(DefaultPeer.fromEnodeURL(enodeURL));

@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.UnsignedIntParameter;
@@ -35,7 +36,7 @@ public class EthGetUncleByBlockHashAndIndex implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "eth_getUncleByBlockHashAndIndex";
+    return RpcMethod.ETH_GET_UNCLE_BY_BLOCK_HASH_AND_INDEX.getMethodName();
   }
 
   @Override

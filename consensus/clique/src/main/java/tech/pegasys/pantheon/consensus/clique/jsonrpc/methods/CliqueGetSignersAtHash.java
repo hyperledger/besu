@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.consensus.clique.jsonrpc.methods;
 import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -30,7 +31,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class CliqueGetSignersAtHash implements JsonRpcMethod {
-  public static final String CLIQUE_GET_SIGNERS_AT_HASH = "clique_getSignersAtHash";
   private final BlockchainQueries blockchainQueries;
   private final VoteTallyCache voteTallyCache;
   private final JsonRpcParameter parameters;
@@ -46,7 +46,7 @@ public class CliqueGetSignersAtHash implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return CLIQUE_GET_SIGNERS_AT_HASH;
+    return RpcMethod.CLIQUE_GET_SIGNERS_AT_HASH.getMethodName();
   }
 
   @Override

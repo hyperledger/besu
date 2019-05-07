@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -20,7 +21,7 @@ public class EthAccounts implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return "eth_accounts";
+    return RpcMethod.ETH_ACCOUNTS.getMethodName();
   }
 
   @Override
