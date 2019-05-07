@@ -52,7 +52,15 @@ public class TransactionReceipt {
    */
   public TransactionReceipt(
       final Hash stateRoot, final long cumulativeGasUsed, final List<Log> logs) {
-    this(stateRoot, NONEXISTENT, cumulativeGasUsed, logs);
+    this(stateRoot, NONEXISTENT, cumulativeGasUsed, logs, LogsBloomFilter.compute(logs));
+  }
+
+  private TransactionReceipt(
+      final Hash stateRoot,
+      final long cumulativeGasUsed,
+      final List<Log> logs,
+      final LogsBloomFilter bloomFilter) {
+    this(stateRoot, NONEXISTENT, cumulativeGasUsed, logs, bloomFilter);
   }
 
   /**
@@ -63,16 +71,28 @@ public class TransactionReceipt {
    * @param logs the logs generated within the transaction
    */
   public TransactionReceipt(final int status, final long cumulativeGasUsed, final List<Log> logs) {
-    this(null, status, cumulativeGasUsed, logs);
+    this(null, status, cumulativeGasUsed, logs, LogsBloomFilter.compute(logs));
   }
 
   private TransactionReceipt(
-      final Hash stateRoot, final int status, final long cumulativeGasUsed, final List<Log> logs) {
+      final int status,
+      final long cumulativeGasUsed,
+      final List<Log> logs,
+      final LogsBloomFilter bloomFilter) {
+    this(null, status, cumulativeGasUsed, logs, bloomFilter);
+  }
+
+  private TransactionReceipt(
+      final Hash stateRoot,
+      final int status,
+      final long cumulativeGasUsed,
+      final List<Log> logs,
+      final LogsBloomFilter bloomFilter) {
     this.stateRoot = stateRoot;
     this.cumulativeGasUsed = cumulativeGasUsed;
     this.status = status;
     this.logs = logs;
-    this.bloomFilter = LogsBloomFilter.compute(logs);
+    this.bloomFilter = bloomFilter;
     transactionReceiptType =
         stateRoot == null ? TransactionReceiptType.STATUS : TransactionReceiptType.ROOT;
   }
@@ -115,17 +135,17 @@ public class TransactionReceipt {
       final long cumulativeGas = input.readLongScalar();
       // The logs below will populate the bloom filter upon construction.
       // TODO consider validating that the logs and bloom filter match.
-      input.skipNext();
+      final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(input);
       final List<Log> logs = input.readList(Log::readFrom);
 
       // Status code-encoded transaction receipts have a single
       // byte for success (0x01) or failure (0x80).
       if (firstElement.raw().size() == 1) {
         final int status = firstElement.readIntScalar();
-        return new TransactionReceipt(status, cumulativeGas, logs);
+        return new TransactionReceipt(status, cumulativeGas, logs, bloomFilter);
       } else {
         final Hash stateRoot = Hash.wrap(firstElement.readBytes32());
-        return new TransactionReceipt(stateRoot, cumulativeGas, logs);
+        return new TransactionReceipt(stateRoot, cumulativeGas, logs, bloomFilter);
       }
     } finally {
       input.leaveList();
