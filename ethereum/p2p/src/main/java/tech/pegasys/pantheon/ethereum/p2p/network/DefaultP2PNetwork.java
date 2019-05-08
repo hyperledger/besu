@@ -41,7 +41,6 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
@@ -733,8 +732,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private Optional<NodePermissioningController> nodePermissioningController = Optional.empty();
     private Blockchain blockchain = null;
     private Vertx vertx;
-    private Optional<NodeLocalConfigPermissioningController>
-        nodeLocalConfigPermissioningController = Optional.empty();
 
     public P2PNetwork build() {
       validate();
@@ -767,9 +764,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
           !nodePermissioningController.isPresent() || blockchain != null,
           "Network permissioning needs to listen to BlockAddedEvents. Blockchain can't be null.");
       checkState(vertx != null, "Vertx must be set.");
-      checkState(
-          nodeLocalConfigPermissioningController != null,
-          "NodeLocalConfigPermissioningController must be set.");
     }
 
     private PeerDiscoveryAgent createDiscoveryAgent() {
@@ -779,7 +773,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
           keyPair,
           config.getDiscovery(),
           peerBlacklist,
-          nodeLocalConfigPermissioningController,
           nodePermissioningController,
           metricsSystem);
     }
@@ -787,21 +780,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     public Builder vertx(final Vertx vertx) {
       checkNotNull(vertx);
       this.vertx = vertx;
-      return this;
-    }
-
-    public Builder nodeLocalConfigPermissioningController(
-        final Optional<NodeLocalConfigPermissioningController>
-            nodeLocalConfigPermissioningController) {
-      checkNotNull(nodeLocalConfigPermissioningController);
-      this.nodeLocalConfigPermissioningController = nodeLocalConfigPermissioningController;
-      return this;
-    }
-
-    public Builder nodeLocalConfigPermissioningController(
-        final NodeLocalConfigPermissioningController nodeLocalConfigPermissioningController) {
-      this.nodeLocalConfigPermissioningController =
-          Optional.ofNullable(nodeLocalConfigPermissioningController);
       return this;
     }
 

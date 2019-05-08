@@ -286,7 +286,6 @@ public class P2PNetworkTest {
     try (final P2PNetwork localNetwork =
             builder()
                 .nodePermissioningController(nodePermissioningController)
-                .nodeLocalConfigPermissioningController(localWhitelistController)
                 .blockchain(blockchain)
                 .build();
         final P2PNetwork remoteNetwork = builder().build()) {

@@ -41,8 +41,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.EvictResult;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
-import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.Subscribers;
@@ -53,10 +51,6 @@ import tech.pegasys.pantheon.util.enode.EnodeURL;
 import tech.pegasys.pantheon.util.uint.UInt256;
 import tech.pegasys.pantheon.util.uint.UInt256Value;
 
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -70,7 +64,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Lists;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -89,9 +82,6 @@ public class PeerDiscoveryControllerTest {
   private KeyPair localKeyPair;
   private final AtomicInteger counter = new AtomicInteger(1);
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
-  private final String selfEnodeString =
-      "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:1111";
-  private final EnodeURL selfEnode = EnodeURL.fromString(selfEnodeString);
 
   @Before
   public void initializeMocks() {
@@ -1061,71 +1051,6 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
-  public void whenObservingNodeWhitelistAndNodeIsRemovedShouldEvictPeerFromPeerTable()
-      throws IOException {
-    final PeerTable peerTableSpy = spy(peerTable);
-    final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 1);
-    final DiscoveryPeer peer = peers.get(0);
-    peerTableSpy.tryAdd(peer);
-
-    final LocalPermissioningConfiguration config = permissioningConfigurationWithTempFile();
-    final URI peerURI = URI.create(peer.getEnodeURLString());
-    config.setNodeWhitelist(Lists.newArrayList(peerURI));
-    final NodeLocalConfigPermissioningController nodeLocalConfigPermissioningController =
-        new NodeLocalConfigPermissioningController(
-            config, Collections.emptyList(), selfEnode.getNodeId());
-
-    controller =
-        getControllerBuilder()
-            .whitelist(nodeLocalConfigPermissioningController)
-            .peerTable(peerTableSpy)
-            .build();
-
-    controller.start();
-    nodeLocalConfigPermissioningController.removeNodes(Lists.newArrayList(peerURI.toString()));
-
-    verify(peerTableSpy).tryEvict(eq(DiscoveryPeer.fromURI(peerURI)));
-  }
-
-  @Test
-  @SuppressWarnings({"unchecked", "rawtypes"})
-  public void whenObservingNodeWhitelistAndNodeIsRemovedShouldNotifyPeerDroppedObservers()
-      throws IOException {
-    final PeerTable peerTableSpy = spy(peerTable);
-    final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 1);
-    final DiscoveryPeer peer = peers.get(0);
-    peerTableSpy.tryAdd(peer);
-
-    final LocalPermissioningConfiguration config = permissioningConfigurationWithTempFile();
-    final URI peerURI = URI.create(peer.getEnodeURLString());
-    config.setNodeWhitelist(Lists.newArrayList(peerURI));
-    final NodeLocalConfigPermissioningController nodeLocalConfigPermissioningController =
-        new NodeLocalConfigPermissioningController(
-            config, Collections.emptyList(), selfEnode.getNodeId());
-
-    final Consumer<PeerDroppedEvent> peerDroppedEventConsumer = mock(Consumer.class);
-    final Subscribers<Consumer<PeerDroppedEvent>> peerDroppedSubscribers = new Subscribers();
-    peerDroppedSubscribers.subscribe(peerDroppedEventConsumer);
-
-    doReturn(EvictResult.evicted()).when(peerTableSpy).tryEvict(any());
-
-    controller =
-        getControllerBuilder()
-            .whitelist(nodeLocalConfigPermissioningController)
-            .peerTable(peerTableSpy)
-            .peerDroppedObservers(peerDroppedSubscribers)
-            .build();
-
-    controller.start();
-    nodeLocalConfigPermissioningController.removeNodes(Lists.newArrayList(peerURI.toString()));
-
-    ArgumentCaptor<PeerDroppedEvent> captor = ArgumentCaptor.forClass(PeerDroppedEvent.class);
-    verify(peerDroppedEventConsumer).accept(captor.capture());
-    assertThat(captor.getValue().getPeer())
-        .isEqualTo(DiscoveryPeer.fromURI(peer.getEnodeURLString()));
-  }
-
-  @Test
   @SuppressWarnings({"unchecked", "rawtypes"})
   public void whenPeerIsNotEvictedDropFromTableShouldReturnFalseAndNotifyZeroObservers() {
     final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 1);
@@ -1205,20 +1130,9 @@ public class PeerDiscoveryControllerTest {
     return controller;
   }
 
-  private LocalPermissioningConfiguration permissioningConfigurationWithTempFile()
-      throws IOException {
-    final LocalPermissioningConfiguration config = LocalPermissioningConfiguration.createDefault();
-    Path tempFile = Files.createTempFile("test", "test");
-    tempFile.toFile().deleteOnExit();
-    config.setNodePermissioningConfigFilePath(tempFile.toAbsolutePath().toString());
-    config.setAccountPermissioningConfigFilePath(tempFile.toAbsolutePath().toString());
-    return config;
-  }
-
   static class ControllerBuilder {
     private Collection<DiscoveryPeer> discoPeers = Collections.emptyList();
     private PeerBlacklist blacklist = new PeerBlacklist();
-    private Optional<NodeLocalConfigPermissioningController> whitelist = Optional.empty();
     private Optional<NodePermissioningController> nodePermissioningController = Optional.empty();
     private MockTimerUtil timerUtil = new MockTimerUtil();
     private KeyPair keypair;
@@ -1245,11 +1159,6 @@ public class PeerDiscoveryControllerTest {
 
     ControllerBuilder blacklist(final PeerBlacklist blacklist) {
       this.blacklist = blacklist;
-      return this;
-    }
-
-    ControllerBuilder whitelist(final NodeLocalConfigPermissioningController whitelist) {
-      this.whitelist = Optional.of(whitelist);
       return this;
     }
 
@@ -1314,7 +1223,6 @@ public class PeerDiscoveryControllerTest {
               TABLE_REFRESH_INTERVAL_MS,
               PEER_REQUIREMENT,
               blacklist,
-              whitelist,
               nodePermissioningController,
               peerBondedObservers,
               peerDroppedObservers,
