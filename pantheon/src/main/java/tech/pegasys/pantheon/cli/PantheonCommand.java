@@ -20,6 +20,7 @@ import static tech.pegasys.pantheon.cli.CommandLineUtils.checkOptionDependencies
 import static tech.pegasys.pantheon.cli.DefaultCommandValues.getDefaultPantheonDataPath;
 import static tech.pegasys.pantheon.cli.NetworkName.MAINNET;
 import static tech.pegasys.pantheon.controller.PantheonController.DATABASE_PATH;
+import static tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLRpcConfiguration.DEFAULT_GRAPHQL_RPC_PORT;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis.DEFAULT_JSON_RPC_APIS;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
@@ -48,6 +49,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.TrailingPeerRequirements;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
@@ -153,14 +155,18 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Boolean p2pEnabled = true;
 
-  // Boolean option to indicate if peers should NOT be discovered, default to false indicates that
+  // Boolean option to indicate if peers should NOT be discovered, default to
+  // false indicates that
   // the peers should be discovered by default.
   //
-  // This negative option is required because of the nature of the option that is true when
-  // added on the command line. You can't do --option=false, so false is set as default
+  // This negative option is required because of the nature of the option that is
+  // true when
+  // added on the command line. You can't do --option=false, so false is set as
+  // default
   // and you have not to set the option at all if you want it false.
   // This seems to be the only way it works with Picocli.
-  // Also many other software use the same negative option scheme for false defaults
+  // Also many other software use the same negative option scheme for false
+  // defaults
   // meaning that it's probably the right way to handle disabling options.
   @Option(
       names = {"--discovery-enabled"},
@@ -249,6 +255,32 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           "P2P network identifier. (default: the selected network chain ID or custom genesis chain ID)",
       arity = "1")
   private final Integer networkId = null;
+
+  @Option(
+      names = {"--graphql-http-enabled"},
+      description = "Set to start the GraphQL-RPC HTTP service (default: ${DEFAULT-VALUE})")
+  private final Boolean isGraphQLHttpEnabled = false;
+
+  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @Option(
+      names = {"--graphql-http-host"},
+      paramLabel = MANDATORY_HOST_FORMAT_HELP,
+      description = "Host for GraphQL-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private String graphQLHttpHost = autoDiscoverDefaultIP().getHostAddress();
+
+  @Option(
+      names = {"--graphql-http-port"},
+      paramLabel = MANDATORY_PORT_FORMAT_HELP,
+      description = "Port for GraphQL-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer graphQLHttpPort = DEFAULT_GRAPHQL_RPC_PORT;
+
+  @Option(
+      names = {"--graphql-http-cors-origins"},
+      description = "Comma separated origin domain URLs for CORS validation (default: none)")
+  private final CorsAllowedOriginsProperty graphQLHttpCorsAllowedOrigins =
+      new CorsAllowedOriginsProperty();
 
   @Option(
       names = {"--rpc-http-enabled"},
@@ -397,7 +429,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       names = {"--host-whitelist"},
       paramLabel = "<hostname>[,<hostname>...]... or * or all",
       description =
-          "Comma separated list of hostnames to whitelist for JSON-RPC access, or * to accept any host (default: ${DEFAULT-VALUE})",
+          "Comma separated list of hostnames to whitelist for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})",
       defaultValue = "localhost,127.0.0.1")
   private final JsonRPCWhitelistHostsProperty hostsWhitelist = new JsonRPCWhitelistHostsProperty();
 
@@ -589,7 +621,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             "Ethereum Wire Protocol",
             ethereumWireConfigurationBuilder));
 
-    // Create a handler that will search for a config file option and use it for default values
+    // Create a handler that will search for a config file option and use it for
+    // default values
     // and eventually it will run regular parsing of the remaining options.
     final ConfigOptionSearchAndRunHandler configParsingHandler =
         new ConfigOptionSearchAndRunHandler(
@@ -633,7 +666,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         !SyncMode.FAST.equals(syncMode),
         singletonList("--fast-sync-min-peers"));
 
-    //noinspection ConstantConditions
+    // noinspection ConstantConditions
     if (isMiningEnabled && coinbase == null) {
       throw new ParameterException(
           this.commandLine,
@@ -644,6 +677,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     final EthNetworkConfig ethNetworkConfig = updateNetworkConfig(getNetwork());
     try {
       final JsonRpcConfiguration jsonRpcConfiguration = jsonRpcConfiguration();
+      final GraphQLRpcConfiguration graphQLRpcConfiguration = graphQLRpcConfiguration();
       final WebSocketConfiguration webSocketConfiguration = webSocketConfiguration();
       final Optional<PermissioningConfiguration> permissioningConfiguration =
           permissioningConfiguration();
@@ -671,6 +705,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           maxPeers,
           p2pHost,
           p2pPort,
+          graphQLRpcConfiguration,
           jsonRpcConfiguration,
           webSocketConfiguration,
           metricsConfiguration(),
@@ -682,7 +717,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   }
 
   private NetworkName getNetwork() {
-    //noinspection ConstantConditions network is not always null but injected by PicoCLI if used
+    // noinspection ConstantConditions network is not always null but injected by
+    // PicoCLI if used
     return network == null ? MAINNET : network;
   }
 
@@ -719,6 +755,25 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     } catch (final IOException e) {
       throw new ExecutionException(this.commandLine, "Invalid path", e);
     }
+  }
+
+  private GraphQLRpcConfiguration graphQLRpcConfiguration() {
+
+    checkOptionDependencies(
+        logger,
+        commandLine,
+        "--graphql-http-enabled",
+        !isRpcHttpEnabled,
+        asList("--graphql-http-cors-origins", "--graphql-http-host", "--graphql-http-port"));
+
+    final GraphQLRpcConfiguration graphQLRpcConfiguration = GraphQLRpcConfiguration.createDefault();
+    graphQLRpcConfiguration.setEnabled(isGraphQLHttpEnabled);
+    graphQLRpcConfiguration.setHost(graphQLHttpHost);
+    graphQLRpcConfiguration.setPort(graphQLHttpPort);
+    graphQLRpcConfiguration.setHostsWhitelist(hostsWhitelist);
+    graphQLRpcConfiguration.setCorsAllowedDomains(graphQLHttpCorsAllowedOrigins);
+
+    return graphQLRpcConfiguration;
   }
 
   private JsonRpcConfiguration jsonRpcConfiguration() {
@@ -953,6 +1008,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       final int maxPeers,
       final String p2pAdvertisedHost,
       final int p2pListenPort,
+      final GraphQLRpcConfiguration graphQLRpcConfiguration,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
@@ -974,6 +1030,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             .p2pAdvertisedHost(p2pAdvertisedHost)
             .p2pListenPort(p2pListenPort)
             .maxPeers(maxPeers)
+            .graphQLRpcConfiguration(graphQLRpcConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
             .webSocketConfiguration(webSocketConfiguration)
             .dataDir(dataDir())
@@ -1029,16 +1086,20 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     final EthNetworkConfig.Builder builder =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(network));
 
-    // custom genesis file use comes with specific default values for the genesis file itself
+    // custom genesis file use comes with specific default values for the genesis
+    // file itself
     // but also for the network id and the bootnodes list.
     final File genesisFile = genesisFile();
     if (genesisFile != null) {
 
-      //noinspection ConstantConditions network is not always null but injected by PicoCLI if used
+      // noinspection ConstantConditions network is not always null but injected by
+      // PicoCLI if used
       if (this.network != null) {
-        // We check if network option was really provided by user and not only looking at the
+        // We check if network option was really provided by user and not only looking
+        // at the
         // default value.
-        // if user provided it and provided the genesis file option at the same time, it raises a
+        // if user provided it and provided the genesis file option at the same time, it
+        // raises a
         // conflict error
         throw new ParameterException(
             this.commandLine,
@@ -1049,13 +1110,17 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       builder.setGenesisConfig(genesisConfig());
 
       if (networkId == null) {
-        // if no network id option is defined on the CLI we have to set a default value from the
+        // if no network id option is defined on the CLI we have to set a default value
+        // from the
         // genesis file.
-        // We do the genesis parsing only in this case as we already have network id constants
+        // We do the genesis parsing only in this case as we already have network id
+        // constants
         // for known networks to speed up the process.
-        // Also we have to parse the genesis as we don't already have a parsed version at this
+        // Also we have to parse the genesis as we don't already have a parsed version
+        // at this
         // stage.
-        // If no chain id is found in the genesis as it's an optional, we use mainnet network id.
+        // If no chain id is found in the genesis as it's an optional, we use mainnet
+        // network id.
         try {
           final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
           builder.setNetworkId(
@@ -1076,9 +1141,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       }
 
       if (bootNodes == null) {
-        // We default to an empty bootnodes list if the option is not provided on CLI because
+        // We default to an empty bootnodes list if the option is not provided on CLI
+        // because
         // mainnet bootnodes won't work as the default value for a custom genesis,
-        // so it's better to have an empty list as default value that forces to create a custom one
+        // so it's better to have an empty list as default value that forces to create a
+        // custom one
         // than a useless one that may make user think that it can work when it can't.
         builder.setBootNodes(new ArrayList<>());
       }

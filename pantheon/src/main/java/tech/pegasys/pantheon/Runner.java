@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon;
 
 import tech.pegasys.pantheon.controller.PantheonController;
+import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLRpcHttpService;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcHttpService;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketService;
 import tech.pegasys.pantheon.ethereum.p2p.NetworkRunner;
@@ -43,6 +44,7 @@ public class Runner implements AutoCloseable {
 
   private final NetworkRunner networkRunner;
   private final Optional<JsonRpcHttpService> jsonRpc;
+  private final Optional<GraphQLRpcHttpService> graphQLRpc;
   private final Optional<WebSocketService> websocketRpc;
   private final Optional<MetricsService> metrics;
 
@@ -53,12 +55,14 @@ public class Runner implements AutoCloseable {
       final Vertx vertx,
       final NetworkRunner networkRunner,
       final Optional<JsonRpcHttpService> jsonRpc,
+      final Optional<GraphQLRpcHttpService> graphQLRpc,
       final Optional<WebSocketService> websocketRpc,
       final Optional<MetricsService> metrics,
       final PantheonController<?> pantheonController,
       final Path dataDir) {
     this.vertx = vertx;
     this.networkRunner = networkRunner;
+    this.graphQLRpc = graphQLRpc;
     this.jsonRpc = jsonRpc;
     this.websocketRpc = websocketRpc;
     this.metrics = metrics;
@@ -81,6 +85,7 @@ public class Runner implements AutoCloseable {
                   .getPendingTransactions()
                   .evictOldTransactions());
       jsonRpc.ifPresent(service -> waitForServiceToStart("jsonRpc", service.start()));
+      graphQLRpc.ifPresent(service -> waitForServiceToStart("graphQLRpc", service.start()));
       websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.start()));
       metrics.ifPresent(service -> waitForServiceToStart("metrics", service.start()));
       LOG.info("Ethereum main loop is up.");
@@ -111,6 +116,7 @@ public class Runner implements AutoCloseable {
       networkRunner.awaitStop();
 
       jsonRpc.ifPresent(service -> waitForServiceToStop("jsonRpc", service.stop()));
+      graphQLRpc.ifPresent(service -> waitForServiceToStop("graphQLRpc", service.stop()));
       websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
       metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
     } finally {
@@ -173,6 +179,9 @@ public class Runner implements AutoCloseable {
     if (getJsonRpcPort().isPresent()) {
       properties.setProperty("json-rpc", String.valueOf(getJsonRpcPort().get()));
     }
+    if (getGraphQLRpcPort().isPresent()) {
+      properties.setProperty("graphql-rpc", String.valueOf(getGraphQLRpcPort().get()));
+    }
     if (getWebsocketPort().isPresent()) {
       properties.setProperty("ws-rpc", String.valueOf(getWebsocketPort().get()));
     }
@@ -194,6 +203,10 @@ public class Runner implements AutoCloseable {
 
   public Optional<Integer> getJsonRpcPort() {
     return jsonRpc.map(service -> service.socketAddress().getPort());
+  }
+
+  public Optional<Integer> getGraphQLRpcPort() {
+    return graphQLRpc.map(service -> service.socketAddress().getPort());
   }
 
   public Optional<Integer> getWebsocketPort() {

@@ -1,0 +1,5 @@
+{
+  "request": "{account(address: \"0x8895ee1b4f6dd65047762f924ecd367c17eabf8f\") { balance } }",
+  "statusCode": 400
+}
+

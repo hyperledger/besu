@@ -42,7 +42,7 @@ dependencies {
   implementation 'io.vertx:vertx-web'
   implementation 'net.consensys.cava:cava-toml'
   implementation 'org.springframework.security:spring-security-crypto'
-  implementation 'io.vertx:vertx-auth-jwt:3.6.2'
+  implementation 'io.vertx:vertx-auth-jwt'
 
   testImplementation project(':config')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
