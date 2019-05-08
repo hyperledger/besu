@@ -30,7 +30,7 @@ options specify the HTTP and WebSockets JSON-RPC ports. The defaults are `8545` 
 
 ## Metrics 
 
-To enable [Prometheus to access Pantheon](../../Using-Pantheon/Debugging.md#monitor-node-performance-using-prometheus), 
+To enable [Prometheus to access Pantheon](../../Using-Pantheon/Monitoring.md#monitor-node-performance-using-prometheus), 
 open the metrics port or metrics push port to Prometheus or the Prometheus push gateway on TCP.  
 
 The [`--metrics-port`](../../Reference/Pantheon-CLI-Syntax.md#metrics-port) and [`--metrics-push-port`](../../Reference/Pantheon-CLI-Syntax.md#metrics-push-port) 

@@ -207,7 +207,7 @@ Comma separated list of categories for which to track metrics. The default is al
 metrics-enabled=true
 ```
 
-Set to `true` to enable the [metrics exporter](../Using-Pantheon/Debugging.md#monitor-node-performance-using-prometheus).
+Set to `true` to enable the [metrics exporter](../Using-Pantheon/Monitoring.md#monitor-node-performance-using-prometheus).
 The default is `false`.
 
 `--metrics-enabled` cannot be specified with `--metrics-push-enabled`. That is, either Prometheus polling or Prometheus 
@@ -227,7 +227,7 @@ push gateway support can be enabled but not both at once.
 metrics-host="127.0.0.1"
 ```
 
-Specifies the host on which [Prometheus](https://prometheus.io/) accesses [Pantheon metrics](../Using-Pantheon/Debugging.md#monitor-node-performance-using-prometheus). 
+Specifies the host on which [Prometheus](https://prometheus.io/) accesses [Pantheon metrics](../Using-Pantheon/Monitoring.md#monitor-node-performance-using-prometheus). 
 The metrics server respects the [`--host-whitelist` option](#host-whitelist).
 
 The default is `127.0.0.1`. 
@@ -246,7 +246,7 @@ The default is `127.0.0.1`.
 metrics-port="6174"
 ```
 
-Specifies the port (TCP) on which [Prometheus](https://prometheus.io/) accesses [Pantheon metrics](../Using-Pantheon/Debugging.md#monitor-node-performance-using-prometheus).
+Specifies the port (TCP) on which [Prometheus](https://prometheus.io/) accesses [Pantheon metrics](../Using-Pantheon/Monitoring.md#monitor-node-performance-using-prometheus).
 The default is `9545`. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking/Configuring-Ports.md).
 
 ### metrics-push-enabled 
@@ -263,7 +263,7 @@ The default is `9545`. Ports must be [exposed appropriately](../Configuring-Pant
 metrics-push-enabled="true"
 ```
 
-Set to `true` to start the [push gateway integration](../Using-Pantheon/Debugging.md#running-prometheus-with-pantheon-in-push-mode).
+Set to `true` to start the [push gateway integration](../Using-Pantheon/Monitoring.md#running-prometheus-with-pantheon-in-push-mode).
 
 `--metrics-push-enabled` cannot be specified with `--metrics-enabled`. That is, either Prometheus polling or Prometheus 
 push gateway support can be enabled but not both at once.
