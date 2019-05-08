@@ -15,13 +15,12 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-class NewBlockHeadersSubscriptionParam {
+class SubscriptionParam {
 
   private final boolean includeTransaction;
 
   @JsonCreator
-  NewBlockHeadersSubscriptionParam(
-      @JsonProperty("includeTransactions") final boolean includeTransaction) {
+  SubscriptionParam(@JsonProperty("includeTransactions") final boolean includeTransaction) {
     this.includeTransaction = includeTransaction;
   }
 

@@ -20,7 +20,7 @@ public class NewBlockHeadersSubscription extends Subscription {
   private final boolean includeTransactions;
 
   public NewBlockHeadersSubscription(final Long subscriptionId, final boolean includeTransactions) {
-    super(subscriptionId, SubscriptionType.NEW_BLOCK_HEADERS);
+    super(subscriptionId, SubscriptionType.NEW_BLOCK_HEADERS, Boolean.FALSE);
     this.includeTransactions = includeTransactions;
   }
 

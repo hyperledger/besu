@@ -39,11 +39,11 @@ public class SubscriptionRequestMapper {
 
       final SubscriptionType subscriptionType =
           parameter.required(webSocketRpcRequest.getParams(), 0, SubscriptionType.class);
-
       switch (subscriptionType) {
         case NEW_BLOCK_HEADERS:
           {
-            return parseNewBlockHeadersRequest(webSocketRpcRequest);
+            final boolean includeTransactions = includeTransactions(webSocketRpcRequest);
+            return parseNewBlockHeadersRequest(webSocketRpcRequest, includeTransactions);
           }
         case LOGS:
           {
@@ -52,18 +52,23 @@ public class SubscriptionRequestMapper {
         case NEW_PENDING_TRANSACTIONS:
         case SYNCING:
         default:
+          final boolean includeTransactions = includeTransactions(webSocketRpcRequest);
           return new SubscribeRequest(
-              subscriptionType, null, null, webSocketRpcRequest.getConnectionId());
+              subscriptionType, null, includeTransactions, webSocketRpcRequest.getConnectionId());
       }
     } catch (final Exception e) {
       throw new InvalidSubscriptionRequestException("Error parsing subscribe request", e);
     }
   }
 
-  private SubscribeRequest parseNewBlockHeadersRequest(final WebSocketRpcRequest request) {
-    final Optional<NewBlockHeadersSubscriptionParam> params =
-        parameter.optional(request.getParams(), 1, NewBlockHeadersSubscriptionParam.class);
-    final boolean includeTransactions = params.isPresent() && params.get().includeTransaction();
+  private boolean includeTransactions(final WebSocketRpcRequest webSocketRpcRequest) {
+    final Optional<SubscriptionParam> params =
+        parameter.optional(webSocketRpcRequest.getParams(), 1, SubscriptionParam.class);
+    return params.isPresent() && params.get().includeTransaction();
+  }
+
+  private SubscribeRequest parseNewBlockHeadersRequest(
+      final WebSocketRpcRequest request, final Boolean includeTransactions) {
     return new SubscribeRequest(
         SubscriptionType.NEW_BLOCK_HEADERS, null, includeTransactions, request.getConnectionId());
   }

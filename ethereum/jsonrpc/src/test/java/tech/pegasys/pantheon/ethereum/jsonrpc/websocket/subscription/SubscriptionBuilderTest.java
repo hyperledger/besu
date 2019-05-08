@@ -65,7 +65,7 @@ public class SubscriptionBuilderTest {
     final SubscribeRequest subscribeRequest =
         new SubscribeRequest(SubscriptionType.NEW_PENDING_TRANSACTIONS, null, null, "connectionId");
     final Subscription expectedSubscription =
-        new Subscription(1L, SubscriptionType.NEW_PENDING_TRANSACTIONS);
+        new Subscription(1L, SubscriptionType.NEW_PENDING_TRANSACTIONS, null);
 
     final Subscription builtSubscription = subscriptionBuilder.build(1L, subscribeRequest);
 
@@ -107,7 +107,7 @@ public class SubscriptionBuilderTest {
     final Function<Subscription, Subscription> function =
         subscriptionBuilder.mapToSubscriptionClass(Subscription.class);
     final Subscription logsSubscription =
-        new Subscription(1L, SubscriptionType.NEW_PENDING_TRANSACTIONS);
+        new Subscription(1L, SubscriptionType.NEW_PENDING_TRANSACTIONS, Boolean.FALSE);
 
     assertThat(function.apply(logsSubscription)).isInstanceOf(Subscription.class);
   }

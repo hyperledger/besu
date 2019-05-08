@@ -281,7 +281,7 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"newPendingTransactions\"]}");
     final SubscribeRequest expectedSubscribeRequest =
-        new SubscribeRequest(SubscriptionType.NEW_PENDING_TRANSACTIONS, null, null, CONNECTION_ID);
+        new SubscribeRequest(SubscriptionType.NEW_PENDING_TRANSACTIONS, null, false, CONNECTION_ID);
 
     final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
 
@@ -289,12 +289,12 @@ public class SubscriptionRequestMapperTest {
   }
 
   @Test
-  public void mapRequestToNewPendingTransactionsIgnoresSecondParam() {
+  public void mapRequestToNewPendingTransactionsParsesSecondParam() {
     final JsonRpcRequest jsonRpcRequest =
         parseWebSocketRpcRequest(
-            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"newPendingTransactions\", {\"foo\": \"bar\"}]}");
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"newPendingTransactions\", {\"includeTransactions\": false}]}");
     final SubscribeRequest expectedSubscribeRequest =
-        new SubscribeRequest(SubscriptionType.NEW_PENDING_TRANSACTIONS, null, null, CONNECTION_ID);
+        new SubscribeRequest(SubscriptionType.NEW_PENDING_TRANSACTIONS, null, false, CONNECTION_ID);
 
     final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
 
@@ -307,7 +307,7 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"]}");
     final SubscribeRequest expectedSubscribeRequest =
-        new SubscribeRequest(SubscriptionType.SYNCING, null, null, CONNECTION_ID);
+        new SubscribeRequest(SubscriptionType.SYNCING, null, false, CONNECTION_ID);
 
     final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
 
@@ -315,12 +315,12 @@ public class SubscriptionRequestMapperTest {
   }
 
   @Test
-  public void mapRequestToSyncingSubscribeIgnoresSecondParam() {
+  public void mapRequestToSyncingSubscribeParsesSecondParam() {
     final JsonRpcRequest jsonRpcRequest =
         parseWebSocketRpcRequest(
-            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\", {\"foo\": \"bar\"}]}");
+            "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\", {\"includeTransactions\": true}]}");
     final SubscribeRequest expectedSubscribeRequest =
-        new SubscribeRequest(SubscriptionType.SYNCING, null, null, CONNECTION_ID);
+        new SubscribeRequest(SubscriptionType.SYNCING, null, true, CONNECTION_ID);
 
     final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
 

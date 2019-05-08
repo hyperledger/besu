@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.pending;
 
-import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactionListener;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.Subscription;
@@ -31,15 +30,22 @@ public class PendingTransactionSubscriptionService implements PendingTransaction
 
   @Override
   public void onTransactionAdded(final Transaction pendingTransaction) {
-    notifySubscribers(pendingTransaction.hash());
+    notifySubscribers(pendingTransaction);
   }
 
-  private void notifySubscribers(final Hash pendingTransaction) {
+  private void notifySubscribers(final Transaction pendingTransaction) {
     final List<Subscription> subscriptions = pendingTransactionSubscriptions();
 
-    final PendingTransactionResult msg = new PendingTransactionResult(pendingTransaction);
+    final PendingTransactionResult hashResult =
+        new PendingTransactionResult(pendingTransaction.hash());
+    final PendingTransactionDetailResult detailResult =
+        new PendingTransactionDetailResult(pendingTransaction);
     for (final Subscription subscription : subscriptions) {
-      subscriptionManager.sendMessage(subscription.getId(), msg);
+      if (Boolean.TRUE.equals(subscription.getIncludeTransaction())) {
+        subscriptionManager.sendMessage(subscription.getId(), detailResult);
+      } else {
+        subscriptionManager.sendMessage(subscription.getId(), hashResult);
+      }
     }
   }
 

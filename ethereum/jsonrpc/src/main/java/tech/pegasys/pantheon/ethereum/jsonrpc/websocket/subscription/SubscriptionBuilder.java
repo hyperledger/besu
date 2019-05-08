@@ -43,7 +43,7 @@ public class SubscriptionBuilder {
         }
       case NEW_PENDING_TRANSACTIONS:
       default:
-        return new Subscription(id, subscriptionType);
+        return new Subscription(id, subscriptionType, request.getIncludeTransaction());
     }
   }
 

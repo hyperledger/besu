@@ -106,7 +106,6 @@ public class DeployPrivateSmartContractAcceptanceTest extends PrivateAcceptanceT
 
     transactionHash =
         minerNode.execute(privateTransactions.createPrivateRawTransaction(storeValue));
-
     privateTransactionVerifier.validEventReturned("1000").verify(minerNode, transactionHash);
   }
 

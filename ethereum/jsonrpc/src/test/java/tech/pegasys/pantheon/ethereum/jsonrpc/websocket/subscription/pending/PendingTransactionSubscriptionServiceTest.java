@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.pending;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -25,6 +24,7 @@ import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.jsonrpc.SimpleTestTransactionBuilder;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.Subscription;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
@@ -60,14 +60,27 @@ public class PendingTransactionSubscriptionServiceTest {
   @Test
   public void onTransactionAddedMustSendMessage() {
     final long[] subscriptionIds = new long[] {5, 56, 989};
-    setUpSubscriptions(subscriptionIds);
-    final Transaction pending = transaction(TX_ONE);
+    setUpSubscriptions(Boolean.FALSE, subscriptionIds);
+    final Transaction pending = SimpleTestTransactionBuilder.transaction(TX_ONE);
 
     service.onTransactionAdded(pending);
 
     verifyZeroInteractions(block);
     verifyZeroInteractions(blockchain);
     verifySubscriptionMangerInteractions(messages(TX_ONE, subscriptionIds));
+  }
+
+  @Test
+  public void onTransactionAddedMustSendMessageWithDetails() {
+    final long[] subscriptionIds = new long[] {5, 56, 989};
+    setUpSubscriptions(Boolean.TRUE, subscriptionIds);
+    final Transaction pending = SimpleTestTransactionBuilder.transaction(TX_ONE);
+
+    service.onTransactionAdded(pending);
+
+    verifyZeroInteractions(block);
+    verifyZeroInteractions(blockchain);
+    verifySubscriptionMangerDetailInteractions(messages(pending, subscriptionIds));
   }
 
   private void verifySubscriptionMangerInteractions(final Map<Long, Hash> expected) {
@@ -83,6 +96,18 @@ public class PendingTransactionSubscriptionServiceTest {
     verifyNoMoreInteractions(subscriptionManager);
   }
 
+  private void verifySubscriptionMangerDetailInteractions(final Map<Long, Transaction> expected) {
+    verify(subscriptionManager)
+        .subscriptionsOfType(SubscriptionType.NEW_PENDING_TRANSACTIONS, Subscription.class);
+
+    for (final Map.Entry<Long, Transaction> message : expected.entrySet()) {
+      PendingTransactionDetailResult value = new PendingTransactionDetailResult(message.getValue());
+      verify(subscriptionManager).sendMessage(eq(message.getKey()), refEq(value));
+    }
+
+    verifyNoMoreInteractions(subscriptionManager);
+  }
+
   private Map<Long, Hash> messages(final Hash result, final long... subscriptionIds) {
     final Map<Long, Hash> messages = new HashMap<>();
 
@@ -93,17 +118,25 @@ public class PendingTransactionSubscriptionServiceTest {
     return messages;
   }
 
-  private Transaction transaction(final Hash hash) {
-    final Transaction tx = mock(Transaction.class);
-    when(tx.hash()).thenReturn(hash);
-    return tx;
+  private Map<Long, Transaction> messages(final Transaction result, final long... subscriptionIds) {
+    final Map<Long, Transaction> messages = new HashMap<>();
+
+    for (final long subscriptionId : subscriptionIds) {
+      messages.put(subscriptionId, result);
+    }
+
+    return messages;
   }
 
-  private void setUpSubscriptions(final long... subscriptionsIds) {
+  private void setUpSubscriptions(
+      final Boolean includeTransactions, final long... subscriptionsIds) {
     when(subscriptionManager.subscriptionsOfType(any(), any()))
         .thenReturn(
             Arrays.stream(subscriptionsIds)
-                .mapToObj(id -> new Subscription(id, SubscriptionType.NEW_PENDING_TRANSACTIONS))
+                .mapToObj(
+                    id ->
+                        new Subscription(
+                            id, SubscriptionType.NEW_PENDING_TRANSACTIONS, includeTransactions))
                 .collect(Collectors.toList()));
   }
 }
