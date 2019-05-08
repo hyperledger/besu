@@ -184,6 +184,7 @@ public final class DefaultP2PNetworkTest {
     final Peer peer = mockPeer();
     final PeerConnection peerConnection = mockPeerConnection();
 
+    network.start();
     network.connect(peer).complete(peerConnection);
     network.stop();
 
