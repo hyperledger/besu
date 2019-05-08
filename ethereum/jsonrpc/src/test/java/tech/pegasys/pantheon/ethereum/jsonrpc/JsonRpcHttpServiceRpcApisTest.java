@@ -266,6 +266,8 @@ public class JsonRpcHttpServiceRpcApisTest {
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);
     supportedCapabilities.add(EthProtocol.ETH63);
+    jsonRpcConfiguration.setPort(0);
+    webSocketConfiguration.setPort(0);
 
     final Map<String, JsonRpcMethod> rpcMethods =
         spy(
