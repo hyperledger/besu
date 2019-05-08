@@ -1,12 +1,7 @@
 description: Frequently asked questions FAQ and answers for troubleshooting Pantheon use
 <!--- END of page meta data -->
 
-# Debugging Pantheon
-
-## Command Line Options Not Working as Expected
-
-Characters such as smart quotes and long (em) hyphens won't work in Pantheon options. Ensure that quotes have
-not been automatically converted to smart quotes or that double hyphens have not been combined into em hyphens.
+# Monitoring Pantheon
 
 ## Monitor Node Performance and Connectivity Using the JSON-RPC API
 
