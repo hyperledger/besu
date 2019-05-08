@@ -34,6 +34,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 
 public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, CliqueBlockMiner> {
@@ -41,7 +42,6 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
   private final Address localAddress;
   private final KeyPair nodeKeys;
   private final EpochManager epochManager;
-  private volatile BytesValue vanityData;
 
   public CliqueMinerExecutor(
       final ProtocolContext<CliqueContext> protocolContext,
@@ -62,7 +62,6 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
     this.nodeKeys = nodeKeys;
     this.localAddress = Util.publicKeyToAddress(nodeKeys.getPublicKey());
     this.epochManager = epochManager;
-    this.vanityData = miningParams.getExtraData();
   }
 
   @Override
@@ -94,11 +93,12 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
     return currentRunningMiner;
   }
 
-  public BytesValue calculateExtraData(final BlockHeader parentHeader) {
+  @VisibleForTesting
+  BytesValue calculateExtraData(final BlockHeader parentHeader) {
     final List<Address> validators = Lists.newArrayList();
 
     final BytesValue vanityDataToInsert =
-        ConsensusHelpers.zeroLeftPad(vanityData, CliqueExtraData.EXTRA_VANITY_LENGTH);
+        ConsensusHelpers.zeroLeftPad(extraData, CliqueExtraData.EXTRA_VANITY_LENGTH);
     // Building ON TOP of canonical head, if the next block is epoch, include validators.
     if (epochManager.isEpochBlock(parentHeader.getNumber() + 1)) {
       final VoteTally voteTally =
