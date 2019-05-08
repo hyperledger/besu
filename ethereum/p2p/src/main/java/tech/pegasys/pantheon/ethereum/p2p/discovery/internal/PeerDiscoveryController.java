@@ -219,7 +219,7 @@ public class PeerDiscoveryController {
 
       // if smart contract permissioning is enabled, bond with bootnodes
       if (nodePermissioningController.get().getSyncStatusNodePermissioningProvider().isPresent()) {
-        for (DiscoveryPeer p : initialDiscoveryPeers) {
+        for (final DiscoveryPeer p : initialDiscoveryPeers) {
           bond(p);
         }
       }
@@ -554,8 +554,8 @@ public class PeerDiscoveryController {
    *
    * @return List of peers.
    */
-  public Stream<DiscoveryPeer> getPeers() {
-    return peerTable.getAllPeers();
+  public Stream<DiscoveryPeer> streamDiscoveredPeers() {
+    return peerTable.streamAllPeers();
   }
 
   public void setRetryDelayFunction(final RetryDelayFunction retryDelayFunction) {

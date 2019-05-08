@@ -75,7 +75,7 @@ public class PivotBlockRetriever<C> {
     final List<EthPeer> peersToQuery =
         ethContext
             .getEthPeers()
-            .availablePeers()
+            .streamAvailablePeers()
             .filter(peer -> peer.chainState().getEstimatedHeight() >= pivotBlockNumber)
             .collect(Collectors.toList());
 

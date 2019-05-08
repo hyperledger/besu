@@ -55,7 +55,7 @@ public class TrailingPeerLimiterTest {
 
   @Before
   public void setUp() {
-    when(ethPeers.availablePeers()).then(invocation -> peers.stream());
+    when(ethPeers.streamAvailablePeers()).then(invocation -> peers.stream());
   }
 
   @Test

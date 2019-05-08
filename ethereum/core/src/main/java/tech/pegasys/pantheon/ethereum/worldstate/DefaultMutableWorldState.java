@@ -103,13 +103,13 @@ public class DefaultMutableWorldState implements MutableWorldState {
   private AccountState deserializeAccount(
       final Address address, final Hash addressHash, final BytesValue encoded) throws RLPException {
     final RLPInput in = RLP.input(encoded);
-    StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(in);
+    final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(in);
     return new AccountState(address, addressHash, accountValue);
   }
 
   private static BytesValue serializeAccount(
       final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
-    StateTrieAccountValue accountValue =
+    final StateTrieAccountValue accountValue =
         new StateTrieAccountValue(nonce, balance, storageRoot, codeHash);
     return RLP.encode(accountValue::writeTo);
   }
@@ -120,7 +120,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
   }
 
   @Override
-  public Stream<Account> accounts() {
+  public Stream<Account> streamAccounts() {
     // TODO: the current trie implementation doesn't have walking capability yet (pending NC-746)
     // so this can't be implemented.
     throw new UnsupportedOperationException("TODO");
@@ -226,7 +226,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
         return updatedCode;
       }
       // No code is common, save the KV-store lookup.
-      Hash codeHash = getCodeHash();
+      final Hash codeHash = getCodeHash();
       if (codeHash.equals(Hash.EMPTY)) {
         return BytesValue.EMPTY;
       }

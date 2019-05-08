@@ -59,7 +59,7 @@ public class BucketTest {
       kBucket.add(peer);
     }
     kBucket.getAndTouch(peers.get(0).getId());
-    assertThat(kBucket.peers().indexOf(peers.get(0))).isEqualTo(0);
+    assertThat(kBucket.getPeers().indexOf(peers.get(0))).isEqualTo(0);
   }
 
   @Test
@@ -70,7 +70,7 @@ public class BucketTest {
       kBucket.add(p);
     }
     kBucket.evict(peers.get(4));
-    assertFalse(kBucket.peers().contains(peers.get(4)));
+    assertFalse(kBucket.getPeers().contains(peers.get(4)));
   }
 
   @Test
@@ -103,19 +103,19 @@ public class BucketTest {
     // 16.
     assertThatThrownBy(() -> kBucket.add(peers.get(0)))
         .isInstanceOf(IllegalArgumentException.class);
-    assertThat(kBucket.peers()).hasSize(16);
+    assertThat(kBucket.getPeers()).hasSize(16);
 
     // Try to evict a peer that doesn't exist, and check the result is false.
     assertThat(kBucket.evict(peers.get(17))).isFalse();
-    assertThat(kBucket.peers()).hasSize(16);
+    assertThat(kBucket.getPeers()).hasSize(16);
 
     // Evict a peer from head, another from the middle, and the tail.
     assertThat(kBucket.evict(peers.get(0))).isTrue();
-    assertThat(kBucket.peers()).hasSize(15);
+    assertThat(kBucket.getPeers()).hasSize(15);
     assertThat(kBucket.evict(peers.get(7))).isTrue();
-    assertThat(kBucket.peers()).hasSize(14);
+    assertThat(kBucket.getPeers()).hasSize(14);
     assertThat(kBucket.evict(peers.get(15))).isTrue();
-    assertThat(kBucket.peers()).hasSize(13);
+    assertThat(kBucket.getPeers()).hasSize(13);
 
     // Check that we can now add peers again.
     assertThat(kBucket.add(peers.get(0))).isNotPresent();
@@ -127,7 +127,7 @@ public class BucketTest {
     assertThat(kBucket.getAndTouch(peers.get(6).getId())).isPresent().get().isEqualTo(peers.get(6));
     assertThat(kBucket.getAndTouch(peers.get(9).getId())).isPresent().get().isEqualTo(peers.get(9));
 
-    assertThat(kBucket.peers())
+    assertThat(kBucket.getPeers())
         .containsSequence(
             peers.get(9),
             peers.get(6),

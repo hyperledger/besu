@@ -34,14 +34,14 @@ public class BlockBroadcaster {
     final NewBlockMessage newBlockMessage = NewBlockMessage.create(block, totalDifficulty);
     ethContext
         .getEthPeers()
-        .availablePeers()
+        .streamAvailablePeers()
         .filter(ethPeer -> !ethPeer.hasSeenBlock(block.getHash()))
         .forEach(
             ethPeer -> {
               ethPeer.registerKnownBlock(block.getHash());
               try {
                 ethPeer.send(newBlockMessage);
-              } catch (PeerConnection.PeerNotConnected e) {
+              } catch (final PeerConnection.PeerNotConnected e) {
                 LOG.trace("Failed to broadcast new block to peer", e);
               }
             });

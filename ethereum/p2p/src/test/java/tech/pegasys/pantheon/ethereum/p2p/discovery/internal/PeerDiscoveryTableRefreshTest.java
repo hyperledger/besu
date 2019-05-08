@@ -46,8 +46,8 @@ public class PeerDiscoveryTableRefreshTest {
   public void tableRefreshSingleNode() {
     final List<SECP256K1.KeyPair> keypairs = PeerDiscoveryTestHelper.generateKeyPairs(2);
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(keypairs);
-    DiscoveryPeer localPeer = peers.get(0);
-    KeyPair localKeyPair = keypairs.get(0);
+    final DiscoveryPeer localPeer = peers.get(0);
+    final KeyPair localKeyPair = keypairs.get(0);
 
     // Create and start the PeerDiscoveryController
     final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
@@ -78,7 +78,7 @@ public class PeerDiscoveryTableRefreshTest {
     controller.onMessage(pingPacket, peers.get(1));
 
     // Wait until the controller has added the newly found peer.
-    assertThat(controller.getPeers()).hasSize(1);
+    assertThat(controller.streamDiscoveredPeers()).hasSize(1);
 
     // Simulate a PONG message from peer 0.
     final PongPacketData pongPacketData =
@@ -92,7 +92,7 @@ public class PeerDiscoveryTableRefreshTest {
 
       controller.getRecursivePeerRefreshState().cancel();
       timer.runPeriodicHandlers();
-      controller.getPeers().forEach(p -> p.setStatus(PeerDiscoveryStatus.KNOWN));
+      controller.streamDiscoveredPeers().forEach(p -> p.setStatus(PeerDiscoveryStatus.KNOWN));
       controller.onMessage(pingPacket, peers.get(1));
     }
     verify(outboundMessageHandler, atLeast(5)).send(eq(peers.get(1)), captor.capture());
@@ -105,7 +105,7 @@ public class PeerDiscoveryTableRefreshTest {
     // Collect targets from find neighbors packets
     final List<BytesValue> targets = new ArrayList<>();
     for (final Packet captured : capturedFindNeighborsPackets) {
-      Optional<FindNeighborsPacketData> maybeData =
+      final Optional<FindNeighborsPacketData> maybeData =
           captured.getPacketData(FindNeighborsPacketData.class);
       assertThat(maybeData).isPresent();
       final FindNeighborsPacketData neighborsData = maybeData.get();

@@ -189,7 +189,7 @@ public final class GenesisState {
   }
 
   private static Stream<GenesisAccount> parseAllocations(final GenesisConfigFile genesis) {
-    return genesis.getAllocations().map(GenesisAccount::fromAllocation);
+    return genesis.streamAllocations().map(GenesisAccount::fromAllocation);
   }
 
   private static long parseNonce(final GenesisConfigFile genesis) {

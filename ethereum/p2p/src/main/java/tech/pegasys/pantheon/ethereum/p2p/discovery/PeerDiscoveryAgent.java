@@ -162,7 +162,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
   }
 
   private void startController() {
-    PeerDiscoveryController controller = createController();
+    final PeerDiscoveryController controller = createController();
     this.controller = Optional.of(controller);
     controller.start();
   }
@@ -240,8 +240,8 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
             });
   }
 
-  public Stream<DiscoveryPeer> getPeers() {
-    return controller.map(PeerDiscoveryController::getPeers).orElse(Stream.empty());
+  public Stream<DiscoveryPeer> streamDiscoveredPeers() {
+    return controller.map(PeerDiscoveryController::streamDiscoveredPeers).orElse(Stream.empty());
   }
 
   public Optional<DiscoveryPeer> getAdvertisedPeer() {

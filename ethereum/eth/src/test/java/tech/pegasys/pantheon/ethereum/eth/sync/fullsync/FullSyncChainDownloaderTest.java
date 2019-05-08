@@ -414,7 +414,7 @@ public class FullSyncChainDownloaderTest {
       // Check that any requests for checkpoint headers are only sent to the best peer
       final long checkpointRequestsToOtherPeers =
           otherPeers.stream()
-              .map(RespondingEthPeer::pendingOutgoingRequests)
+              .map(RespondingEthPeer::streamPendingOutgoingRequests)
               .flatMap(Function.identity())
               .filter(m -> m.getCode() == EthPV62.GET_BLOCK_HEADERS)
               .map(GetBlockHeadersMessage::readFrom)

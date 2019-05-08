@@ -53,8 +53,9 @@ public class PeerDiscoveryBondingTest {
     assertThat(pong.getTo()).isEqualTo(otherAgent.getAdvertisedPeer().get().getEndpoint());
 
     // The agent considers the test peer BONDED.
-    assertThat(agent.getPeers()).hasSize(1);
-    assertThat(agent.getPeers()).allMatch(p -> p.getStatus() == PeerDiscoveryStatus.BONDED);
+    assertThat(agent.streamDiscoveredPeers()).hasSize(1);
+    assertThat(agent.streamDiscoveredPeers())
+        .allMatch(p -> p.getStatus() == PeerDiscoveryStatus.BONDED);
   }
 
   @Test
@@ -67,7 +68,7 @@ public class PeerDiscoveryBondingTest {
     // we haven't bonded.
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
     final FindNeighborsPacketData data = FindNeighborsPacketData.create(otherNode.getId());
-    Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, data, otherNode.getKeyPair());
+    final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, data, otherNode.getKeyPair());
     helper.sendMessageBetweenAgents(otherNode, agent, packet);
 
     // No responses received
@@ -84,7 +85,7 @@ public class PeerDiscoveryBondingTest {
             .filter(p -> p.packet.getType().equals(PacketType.PONG))
             .collect(Collectors.toList());
     assertThat(incomingPongs.size()).isEqualTo(1);
-    Optional<PongPacketData> maybePongData =
+    final Optional<PongPacketData> maybePongData =
         incomingPongs.get(0).packet.getPacketData(PongPacketData.class);
     assertThat(maybePongData).isPresent();
     assertThat(maybePongData.get().getTo())

@@ -154,7 +154,7 @@ public class PeerTable {
 
     distanceCache.remove(id);
 
-    if (table[distance].peers().isEmpty()) {
+    if (table[distance].getPeers().isEmpty()) {
       return EvictResult.absent();
     }
 
@@ -176,7 +176,7 @@ public class PeerTable {
   private void buildBloomFilter() {
     final BloomFilter<BytesValue> bf =
         BloomFilter.create((id, val) -> val.putBytes(id.extractArray()), maxEntriesCnt, 0.001);
-    getAllPeers().map(Peer::getId).forEach(bf::put);
+    streamAllPeers().map(Peer::getId).forEach(bf::put);
     this.evictionCnt = 0;
     this.idBloom = bf;
   }
@@ -191,15 +191,15 @@ public class PeerTable {
    */
   public List<DiscoveryPeer> nearestPeers(final BytesValue target, final int limit) {
     final BytesValue keccak256 = Hash.keccak256(target);
-    return getAllPeers()
+    return streamAllPeers()
         .filter(p -> p.getStatus() == PeerDiscoveryStatus.BONDED)
         .sorted(comparingInt((peer) -> distance(peer.keccak256(), keccak256)))
         .limit(limit)
         .collect(toList());
   }
 
-  public Stream<DiscoveryPeer> getAllPeers() {
-    return Arrays.stream(table).flatMap(e -> e.peers().stream());
+  public Stream<DiscoveryPeer> streamAllPeers() {
+    return Arrays.stream(table).flatMap(e -> e.getPeers().stream());
   }
 
   /**

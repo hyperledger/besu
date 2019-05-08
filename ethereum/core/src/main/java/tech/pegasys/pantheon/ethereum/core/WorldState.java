@@ -37,5 +37,5 @@ public interface WorldState extends WorldView {
    * @return a stream of all the accounts (in no particular order) contained in the world state
    *     represented by the root hash of this object at the time of the call.
    */
-  Stream<Account> accounts();
+  Stream<Account> streamAccounts();
 }

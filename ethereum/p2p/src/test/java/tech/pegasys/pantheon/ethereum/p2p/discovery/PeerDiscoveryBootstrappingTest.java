@@ -48,7 +48,7 @@ public class PeerDiscoveryBootstrappingTest {
             .filter(p -> p.packet.getType().equals(PacketType.PING))
             .collect(toList());
     assertThat(incomingPackets.size()).isEqualTo(1);
-    Packet pingPacket = incomingPackets.get(0).packet;
+    final Packet pingPacket = incomingPackets.get(0).packet;
     assertThat(pingPacket.getNodeId()).isEqualTo(agent.getAdvertisedPeer().get().getId());
 
     final PingPacketData pingData = pingPacket.getPacketData(PingPacketData.class).get();
@@ -69,7 +69,7 @@ public class PeerDiscoveryBootstrappingTest {
             .collect(toList());
 
     // Start five agents.
-    List<MockPeerDiscoveryAgent> agents = helper.startDiscoveryAgents(5, bootstrapPeers);
+    final List<MockPeerDiscoveryAgent> agents = helper.startDiscoveryAgents(5, bootstrapPeers);
 
     // Assert that all test peers received a Find Neighbors packet.
     for (final MockPeerDiscoveryAgent bootstrapAgent : bootstrapAgents) {
@@ -91,7 +91,7 @@ public class PeerDiscoveryBootstrappingTest {
       assertThat(senderIds).containsExactlyInAnyOrderElementsOf(agentIds);
 
       // Traverse all received pings.
-      List<Packet> pingPackets =
+      final List<Packet> pingPackets =
           packets.stream().filter(p -> p.getType().equals(PacketType.PING)).collect(toList());
       for (final Packet packet : pingPackets) {
         // Assert that the packet was a Find Neighbors one.
@@ -118,11 +118,11 @@ public class PeerDiscoveryBootstrappingTest {
     final BytesValue[] otherPeersIds =
         otherAgents.stream().map(PeerDiscoveryAgent::getId).toArray(BytesValue[]::new);
 
-    assertThat(bootstrapAgent.getPeers())
+    assertThat(bootstrapAgent.streamDiscoveredPeers())
         .extracting(Peer::getId)
         .containsExactlyInAnyOrder(otherPeersIds);
 
-    assertThat(bootstrapAgent.getPeers())
+    assertThat(bootstrapAgent.streamDiscoveredPeers())
         .allMatch(p -> p.getStatus() == PeerDiscoveryStatus.BONDED);
 
     // This agent will bootstrap off the bootstrap peer, will add all nodes returned by the latter,
@@ -130,6 +130,6 @@ public class PeerDiscoveryBootstrappingTest {
     // bond with them, ultimately adding all 7 nodes in the network to its table.
     final PeerDiscoveryAgent newAgent =
         helper.startDiscoveryAgent(bootstrapAgent.getAdvertisedPeer().get());
-    assertThat(newAgent.getPeers()).hasSize(6);
+    assertThat(newAgent.streamDiscoveredPeers()).hasSize(6);
   }
 }

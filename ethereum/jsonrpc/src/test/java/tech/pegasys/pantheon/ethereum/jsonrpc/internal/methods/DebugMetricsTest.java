@@ -45,7 +45,7 @@ public class DebugMetricsTest {
 
   @Test
   public void shouldReportUnlabelledObservationsByCategory() {
-    when(metricsSystem.getMetrics())
+    when(metricsSystem.streamObservations())
         .thenReturn(
             Stream.of(
                 new Observation(PEERS, "peer1", "peer1Value", Collections.emptyList()),
@@ -62,7 +62,7 @@ public class DebugMetricsTest {
 
   @Test
   public void shouldNestObservationsByLabel() {
-    when(metricsSystem.getMetrics())
+    when(metricsSystem.streamObservations())
         .thenReturn(
             Stream.of(
                 new Observation(PEERS, "peer1", "value1", asList("label1A", "label2A")),
