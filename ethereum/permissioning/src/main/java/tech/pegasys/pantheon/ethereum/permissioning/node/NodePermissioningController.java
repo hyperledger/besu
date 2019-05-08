@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.permissioning.node;
 
+import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
@@ -99,5 +100,12 @@ public class NodePermissioningController {
 
   public boolean unsubscribeFromUpdates(final long id) {
     return permissioningUpdateSubscribers.unsubscribe(id);
+  }
+
+  public Optional<NodeLocalConfigPermissioningController> localConfigController() {
+    return getProviders().stream()
+        .filter(p -> p instanceof NodeLocalConfigPermissioningController)
+        .findFirst()
+        .map(n -> (NodeLocalConfigPermissioningController) n);
   }
 }

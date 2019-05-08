@@ -27,9 +27,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.EvictResu
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable.EvictResult.EvictOutcome;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
-import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
-import tech.pegasys.pantheon.ethereum.permissioning.node.NodeWhitelistUpdatedEvent;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.MetricCategory;
@@ -121,7 +119,6 @@ public class PeerDiscoveryController {
   private final DiscoveryPeer localPeer;
   private final OutboundMessageHandler outboundMessageHandler;
   private final PeerBlacklist peerBlacklist;
-  private final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController;
   private final Optional<NodePermissioningController> nodePermissioningController;
   private final DiscoveryProtocolLogger discoveryProtocolLogger;
   private final LabelledMetric<Counter> interactionCounter;
@@ -155,7 +152,6 @@ public class PeerDiscoveryController {
       final long tableRefreshIntervalMs,
       final PeerRequirement peerRequirement,
       final PeerBlacklist peerBlacklist,
-      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController,
       final Optional<NodePermissioningController> nodePermissioningController,
       final Subscribers<Consumer<PeerBondedEvent>> peerBondedObservers,
       final Subscribers<Consumer<PeerDroppedEvent>> peerDroppedObservers,
@@ -169,7 +165,6 @@ public class PeerDiscoveryController {
     this.tableRefreshIntervalMs = tableRefreshIntervalMs;
     this.peerRequirement = peerRequirement;
     this.peerBlacklist = peerBlacklist;
-    this.nodeWhitelistController = nodeWhitelistController;
     this.nodePermissioningController = nodePermissioningController;
     this.outboundMessageHandler = outboundMessageHandler;
     this.peerBondedObservers = peerBondedObservers;
@@ -243,9 +238,6 @@ public class PeerDiscoveryController {
             Math.min(REFRESH_CHECK_INTERVAL_MILLIS, tableRefreshIntervalMs),
             this::refreshTableIfRequired);
     tableRefreshTimerId = OptionalLong.of(timerId);
-
-    nodeWhitelistController.ifPresent(
-        c -> c.subscribeToListUpdatedEvent(this::handleNodeWhitelistUpdatedEvent));
   }
 
   public CompletableFuture<?> stop() {
@@ -373,10 +365,6 @@ public class PeerDiscoveryController {
     }
 
     return true;
-  }
-
-  private void handleNodeWhitelistUpdatedEvent(final NodeWhitelistUpdatedEvent event) {
-    event.getRemovedNodes().stream().map(DiscoveryPeer::fromEnode).forEach(this::dropFromPeerTable);
   }
 
   @VisibleForTesting
