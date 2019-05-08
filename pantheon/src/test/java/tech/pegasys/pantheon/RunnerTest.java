@@ -34,6 +34,7 @@ import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
@@ -82,17 +83,17 @@ public final class RunnerTest {
 
   @Test
   public void getFixedNodes() {
-    EnodeURL staticNode =
+    final EnodeURL staticNode =
         EnodeURL.fromString(
             "enode://8f4b88336cc40ef2516d8b27df812e007fb2384a61e93635f1899051311344f3dcdbb49a4fe49a79f66d2f589a9f282e8cc4f1d7381e8ef7e4fcc6b0db578c77@127.0.0.1:30301");
-    EnodeURL bootnode =
+    final EnodeURL bootnode =
         EnodeURL.fromString(
             "enode://8f4b88336cc40ef2516d8b27df812e007fb2384a61e93635f1899051311344f3dcdbb49a4fe49a79f66d2f589a9f282e8cc4f1d7381e8ef7e4fcc6b0db578c77@127.0.0.1:30302");
-    final List<EnodeURL> bootnodes = new ArrayList<EnodeURL>();
+    final List<EnodeURL> bootnodes = new ArrayList<>();
     bootnodes.add(bootnode);
-    Collection<EnodeURL> staticNodes = new ArrayList<EnodeURL>();
+    final Collection<EnodeURL> staticNodes = new ArrayList<>();
     staticNodes.add(staticNode);
-    Collection<EnodeURL> fixedNodes = RunnerBuilder.getFixedNodes(bootnodes, staticNodes);
+    final Collection<EnodeURL> fixedNodes = RunnerBuilder.getFixedNodes(bootnodes, staticNodes);
     assertThat(fixedNodes).containsExactlyInAnyOrder(staticNode, bootnode);
     // bootnodes should be unchanged
     assertThat(bootnodes).containsExactly(bootnode);
@@ -157,6 +158,7 @@ public final class RunnerTest {
             .build();
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
     final JsonRpcConfiguration aheadJsonRpcConfiguration = jsonRpcConfiguration();
+    final GraphQLRpcConfiguration aheadGraphQLRpcConfiguration = graphQLRpcConfiguration();
     final WebSocketConfiguration aheadWebSocketConfiguration = wsRpcConfiguration();
     final MetricsConfiguration aheadMetricsConfiguration = metricsConfiguration();
     final RunnerBuilder runnerBuilder =
@@ -176,6 +178,7 @@ public final class RunnerTest {
             .pantheonController(controllerAhead)
             .ethNetworkConfig(EthNetworkConfig.getNetworkConfig(DEV))
             .jsonRpcConfiguration(aheadJsonRpcConfiguration)
+            .graphQLRpcConfiguration(aheadGraphQLRpcConfiguration)
             .webSocketConfiguration(aheadWebSocketConfiguration)
             .metricsConfiguration(aheadMetricsConfiguration)
             .dataDir(dbAhead)
@@ -192,6 +195,7 @@ public final class RunnerTest {
               .build();
       final Path dataDirBehind = temp.newFolder().toPath();
       final JsonRpcConfiguration behindJsonRpcConfiguration = jsonRpcConfiguration();
+      final GraphQLRpcConfiguration behindGraphQLRpcConfiguration = graphQLRpcConfiguration();
       final WebSocketConfiguration behindWebSocketConfiguration = wsRpcConfiguration();
       final MetricsConfiguration behindMetricsConfiguration = metricsConfiguration();
 
@@ -223,6 +227,7 @@ public final class RunnerTest {
               .pantheonController(controllerBehind)
               .ethNetworkConfig(behindEthNetworkConfiguration)
               .jsonRpcConfiguration(behindJsonRpcConfiguration)
+              .graphQLRpcConfiguration(behindGraphQLRpcConfiguration)
               .webSocketConfiguration(behindWebSocketConfiguration)
               .metricsConfiguration(behindMetricsConfiguration)
               .dataDir(temp.newFolder().toPath())
@@ -339,6 +344,13 @@ public final class RunnerTest {
     configuration.setPort(0);
     configuration.setEnabled(true);
     configuration.setHostsWhitelist(Collections.singletonList("*"));
+    return configuration;
+  }
+
+  private GraphQLRpcConfiguration graphQLRpcConfiguration() {
+    final GraphQLRpcConfiguration configuration = GraphQLRpcConfiguration.createDefault();
+    configuration.setPort(0);
+    configuration.setEnabled(false);
     return configuration;
   }
 

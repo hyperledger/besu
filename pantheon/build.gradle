@@ -36,6 +36,7 @@ dependencies {
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
   implementation project(':ethereum:jsonrpc')
+  implementation project(':ethereum:graphqlrpc')
   implementation project(':ethereum:permissioning')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:rlp')
@@ -43,6 +44,7 @@ dependencies {
   implementation project(':enclave')
   implementation project(':services:kvstore')
 
+  implementation 'com.graphql-java:graphql-java'
   implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'
   implementation 'io.vertx:vertx-core'

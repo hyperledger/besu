@@ -41,6 +41,7 @@ import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
@@ -88,6 +89,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   static final String PERMISSIONING_CONFIG_TOML = "/permissioning_config.toml";
 
   private static final JsonRpcConfiguration defaultJsonRpcConfiguration;
+  private static final GraphQLRpcConfiguration defaultGraphQLRpcConfiguration;
   private static final WebSocketConfiguration defaultWebSocketConfiguration;
   private static final MetricsConfiguration defaultMetricsConfiguration;
   private static final int GENESIS_CONFIG_TEST_CHAINID = 3141592;
@@ -105,6 +107,8 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   static {
     defaultJsonRpcConfiguration = JsonRpcConfiguration.createDefault();
+
+    defaultGraphQLRpcConfiguration = GraphQLRpcConfiguration.createDefault();
 
     defaultWebSocketConfiguration = WebSocketConfiguration.createDefault();
 
@@ -151,6 +155,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pListenPort(eq(30303));
     verify(mockRunnerBuilder).maxPeers(eq(25));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(defaultJsonRpcConfiguration));
+    verify(mockRunnerBuilder).graphQLRpcConfiguration(eq(defaultGraphQLRpcConfiguration));
     verify(mockRunnerBuilder).webSocketConfiguration(eq(defaultWebSocketConfiguration));
     verify(mockRunnerBuilder).metricsConfiguration(eq(defaultMetricsConfiguration));
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkArg.capture());
@@ -265,6 +270,11 @@ public class PantheonCommandTest extends CommandTestAbstract {
     jsonRpcConfiguration.setCorsAllowedDomains(Collections.emptyList());
     jsonRpcConfiguration.setRpcApis(expectedApis);
 
+    final GraphQLRpcConfiguration graphQLRpcConfiguration = GraphQLRpcConfiguration.createDefault();
+    graphQLRpcConfiguration.setEnabled(false);
+    graphQLRpcConfiguration.setHost("6.7.8.9");
+    graphQLRpcConfiguration.setPort(6789);
+
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
     webSocketConfiguration.setEnabled(false);
     webSocketConfiguration.setHost("9.10.11.12");
@@ -284,6 +294,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pListenPort(eq(1234));
     verify(mockRunnerBuilder).maxPeers(eq(42));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(jsonRpcConfiguration));
+    verify(mockRunnerBuilder).graphQLRpcConfiguration(eq(graphQLRpcConfiguration));
     verify(mockRunnerBuilder).webSocketConfiguration(eq(webSocketConfiguration));
     verify(mockRunnerBuilder).metricsConfiguration(eq(metricsConfiguration));
     verify(mockRunnerBuilder).build();
@@ -586,6 +597,8 @@ public class PantheonCommandTest extends CommandTestAbstract {
     parseCommand("--config-file", configFile);
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
 
+    final GraphQLRpcConfiguration graphQLRpcConfiguration = GraphQLRpcConfiguration.createDefault();
+
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
 
     final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
@@ -601,6 +614,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pListenPort(eq(30303));
     verify(mockRunnerBuilder).maxPeers(eq(25));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(jsonRpcConfiguration));
+    verify(mockRunnerBuilder).graphQLRpcConfiguration(eq(graphQLRpcConfiguration));
     verify(mockRunnerBuilder).webSocketConfiguration(eq(webSocketConfiguration));
     verify(mockRunnerBuilder).metricsConfiguration(eq(metricsConfiguration));
     verify(mockRunnerBuilder).build();
@@ -1191,6 +1205,32 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void graphQLRpcHttpEnabledPropertyDefaultIsFalse() {
+    parseCommand();
+
+    verify(mockRunnerBuilder).graphQLRpcConfiguration(graphQLRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(graphQLRpcConfigArgumentCaptor.getValue().isEnabled()).isFalse();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void graphQLRpcHttpEnabledPropertyMustBeUsed() {
+    parseCommand("--graphql-http-enabled");
+
+    verify(mockRunnerBuilder).graphQLRpcConfiguration(graphQLRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(graphQLRpcConfigArgumentCaptor.getValue().isEnabled()).isTrue();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void rpcApisPropertyMustBeUsed() {
     parseCommand("--rpc-http-api", "ETH,NET,PERM", "--rpc-http-enabled");
 
@@ -1308,6 +1348,58 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).build();
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void graphQLRpcHttpHostAndPortOptionsMustBeUsed() {
+
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    parseCommand(
+        "--graphql-http-enabled",
+        "--graphql-http-host",
+        host,
+        "--graphql-http-port",
+        String.valueOf(port));
+
+    verify(mockRunnerBuilder).graphQLRpcConfiguration(graphQLRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(graphQLRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+    assertThat(graphQLRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void graphQLRpcHttpHostMayBeLocalhost() {
+
+    final String host = "localhost";
+    parseCommand("--graphql-http-enabled", "--graphql-http-host", host);
+
+    verify(mockRunnerBuilder).graphQLRpcConfiguration(graphQLRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(graphQLRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void graphQLRpcHttpHostMayBeIPv6() {
+
+    final String host = "2600:DB8::8545";
+    parseCommand("--graphql-http-enabled", "--graphql-http-host", host);
+
+    verify(mockRunnerBuilder).graphQLRpcConfiguration(graphQLRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(graphQLRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();

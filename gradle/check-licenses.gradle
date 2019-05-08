@@ -42,7 +42,8 @@ ext.acceptedLicenses = [
     'Mozilla Public License Version 2.0',
     'CC0 1.0 Universal License',
     'Common Development and Distribution License 1.0',
-    'Unicode/ICU License'
+    'Unicode/ICU License',
+    'Public Domain (CC0) License 1.0'
 ]*.toLowerCase()
 
 /**
@@ -64,6 +65,7 @@ downloadLicenses {
   ext.mpl2_0 = license('Mozilla Public License, Version 2.0', 'http://www.mozilla.org/MPL/2.0/')
   ext.cddl = license('Common Development and Distribution License 1.0', 'http://opensource.org/licenses/CDDL-1.0')
   ext.cddl1_1 = license('Common Development and Distribution License 1.0', 'http://oss.oracle.com/licenses/CDDL-1.1')
+  ext.cc0 =  license('Public Domain (CC0) License 1.0', 'https://creativecommons.org/publicdomain/zero/1.0')
   aliases = [
       (apache)    : [
           'The Apache Software License, Version 2.0',
@@ -79,7 +81,7 @@ downloadLicenses {
           license('Apache Software Licenses', 'http://www.apache.org/licenses/LICENSE-2.0.txt'),
           license('Apache', 'http://www.opensource.org/licenses/Apache-2.0')
       ],
-      (mit)       : ['The MIT License'],
+      (mit)       : ['The MIT License', 'MIT'],
       (bsd)       : [
           'BSD',
           'BSD licence',
@@ -115,11 +117,11 @@ downloadLicenses {
               'CDDL + GPLv2 with classpath exception',
               'Dual license consisting of the CDDL v1.1 and GPL v2'
       ],
-              (cddl1_1): [
+      (cddl1_1): [
               'CDDL 1.1',
               'COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.1',
-      ]
-
+      ],
+      (cc0): ['Public Domain (CC0) License 1.0', 'CC0']
   ]
 
   licenses = [

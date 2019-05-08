@@ -45,6 +45,12 @@ rpc-http-cors-origins=["none"]
 rpc-http-authentication-enabled=false
 rpc-http-authentication-credentials-file="none"
 
+# GRAPHQL-RPC
+graphql-http-enabled=false
+graphql-http-host="6.7.8.9"
+graphql-http-port=6789
+graphql-http-cors-origins=["none"]
+
 # WebSockets API
 rpc-ws-enabled=false
 rpc-ws-api=["DEBUG","ETH"]

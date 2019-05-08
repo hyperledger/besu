@@ -1,0 +1,40 @@
+{
+  "request": 
+    
+    "{blocks (from : \"0x1e\", to: \"0x20\") { number gasUsed gasLimit hash nonce  stateRoot receiptsRoot transactionCount }} ",
+
+
+  "response":{
+    "data" : {
+      "blocks" : [ {
+        "number"  : 30,
+        "gasUsed" : 23585,
+        "gasLimit" : 3141592,
+        "hash" : "0xc8df1f061abb4d0c107b2b1a794ade8780b3120e681f723fe55a7be586d95ba6",
+        "nonce" : "0x5c321bd9e9f040f1",
+        "stateRoot" : "0xdb46d6bb168130fe2cb60b4b24346137b5741f11283e0d7edace65c5f5466b2e",
+        "receiptsRoot" : "0x88b3b304b058b39791c26fdb94a05cc16ce67cf8f84f7348cb3c60c0ff342d0d",
+        "transactionCount" : 1
+      }, {
+        "number"  : 31,
+        "gasUsed" : 24303,
+        "gasLimit" : 3141592,
+        "hash" : "0x0f765087745aa259d9e5ac39c367c57432a16ed98e3b0d81c5b51d10f301dc49",
+        "nonce" : "0xd3a27a3001616468",
+        "stateRoot" : "0xa80997cf804269d64f2479baf535cf8f9090b70fbf515741c6995564f1e678bd",
+        "receiptsRoot" : "0x2440c44a3f75ad8b0425a73e7be2f61a5171112465cfd14e62e735b56d7178e6",
+        "transactionCount" : 1
+      }, {
+        "number"  : 32,
+        "gasUsed" : 23705,
+        "gasLimit" : 3141592,
+        "hash" : "0x71d59849ddd98543bdfbe8548f5eed559b07b8aaf196369f39134500eab68e53",
+        "nonce" : "0xdb063000b00e8026",
+        "stateRoot" : "0xf65f3dd13f72f5fa5607a5224691419969b4f4bae7a00a6cdb853f2ca9eeb1be",
+        "receiptsRoot" : "0xa50a7e67e833f4502524371ee462ccbcc6c6cabd2aeb1555c56150007a53183c",
+        "transactionCount" : 1
+      } ]
+    }
+  },
+  "statusCode": 200
+}

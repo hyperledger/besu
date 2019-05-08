@@ -237,7 +237,6 @@ public class EthJsonRpcHttpBySpecTest extends AbstractEthJsonRpcHttpServiceTest 
 
     return specs.values();
   }
-  // @formatter:on
 
   @Test
   public void jsonRPCCallWithSpecFile() throws Exception {

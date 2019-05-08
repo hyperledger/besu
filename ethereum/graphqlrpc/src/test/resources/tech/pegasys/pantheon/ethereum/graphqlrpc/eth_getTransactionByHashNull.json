@@ -1,0 +1,13 @@
+{
+  "request": 
+    
+    "{transaction (hash : \"0xffc6c7e602c56aa30c554bb691377f8703d778cec8845f4b88c0f72516b304f4\") { block{hash} gas gasPrice hash inputData nonce index value }} ",
+
+
+  "response": {
+    "data" : {
+      "transaction" : null
+    }
+  },
+  "statusCode": 200
+}

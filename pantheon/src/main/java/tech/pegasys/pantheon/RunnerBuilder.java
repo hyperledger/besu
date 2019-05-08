@@ -21,6 +21,11 @@ import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
+import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLDataFetcherContext;
+import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLDataFetchers;
+import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLProvider;
+import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLRpcConfiguration;
+import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLRpcHttpService;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcHttpService;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcMethodsFactory;
@@ -70,6 +75,7 @@ import tech.pegasys.pantheon.metrics.prometheus.MetricsService;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -83,6 +89,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import graphql.GraphQL;
 import io.vertx.core.Vertx;
 
 public class RunnerBuilder {
@@ -96,6 +103,7 @@ public class RunnerBuilder {
   private int p2pListenPort;
   private int maxPeers;
   private JsonRpcConfiguration jsonRpcConfiguration;
+  private GraphQLRpcConfiguration graphQLRpcConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
   private Path dataDir;
   private Collection<String> bannedNodeIds;
@@ -146,6 +154,12 @@ public class RunnerBuilder {
 
   public RunnerBuilder jsonRpcConfiguration(final JsonRpcConfiguration jsonRpcConfiguration) {
     this.jsonRpcConfiguration = jsonRpcConfiguration;
+    return this;
+  }
+
+  public RunnerBuilder graphQLRpcConfiguration(
+      final GraphQLRpcConfiguration graphQLRpcConfiguration) {
+    this.graphQLRpcConfiguration = graphQLRpcConfiguration;
     return this;
   }
 
@@ -331,6 +345,30 @@ public class RunnerBuilder {
                   vertx, dataDir, jsonRpcConfiguration, metricsSystem, jsonRpcMethods));
     }
 
+    Optional<GraphQLRpcHttpService> graphQLRpcHttpService = Optional.empty();
+    if (graphQLRpcConfiguration.isEnabled()) {
+      final GraphQLDataFetchers fetchers = new GraphQLDataFetchers(supportedCapabilities);
+      final GraphQLDataFetcherContext dataFetcherContext =
+          new GraphQLDataFetcherContext(
+              context.getBlockchain(),
+              context.getWorldStateArchive(),
+              protocolSchedule,
+              transactionPool,
+              miningCoordinator,
+              synchronizer);
+      GraphQL graphQL = null;
+      try {
+        graphQL = GraphQLProvider.buildGraphQL(fetchers);
+      } catch (final IOException ioe) {
+        throw new RuntimeException(ioe);
+      }
+
+      graphQLRpcHttpService =
+          Optional.of(
+              new GraphQLRpcHttpService(
+                  vertx, dataDir, graphQLRpcConfiguration, graphQL, dataFetcherContext));
+    }
+
     Optional<WebSocketService> webSocketService = Optional.empty();
     if (webSocketConfiguration.isEnabled()) {
       final Map<String, JsonRpcMethod> webSocketsJsonRpcMethods =
@@ -379,6 +417,7 @@ public class RunnerBuilder {
         vertx,
         networkRunner,
         jsonRpcHttpService,
+        graphQLRpcHttpService,
         webSocketService,
         metricsService,
         pantheonController,
@@ -390,7 +429,7 @@ public class RunnerBuilder {
       final Synchronizer synchronizer,
       final TransactionSimulator transactionSimulator,
       final BytesValue localNodeId) {
-    Collection<EnodeURL> fixedNodes = getFixedNodes(bootnodesAsEnodeURLs, staticNodes);
+    final Collection<EnodeURL> fixedNodes = getFixedNodes(bootnodesAsEnodeURLs, staticNodes);
     return permissioningConfiguration.map(
         config ->
             new NodePermissioningControllerFactory()
@@ -400,7 +439,7 @@ public class RunnerBuilder {
   @VisibleForTesting
   public static Collection<EnodeURL> getFixedNodes(
       final Collection<EnodeURL> someFixedNodes, final Collection<EnodeURL> moreFixedNodes) {
-    Collection<EnodeURL> fixedNodes = new ArrayList<>(someFixedNodes);
+    final Collection<EnodeURL> fixedNodes = new ArrayList<>(someFixedNodes);
     fixedNodes.addAll(moreFixedNodes);
     return fixedNodes;
   }
