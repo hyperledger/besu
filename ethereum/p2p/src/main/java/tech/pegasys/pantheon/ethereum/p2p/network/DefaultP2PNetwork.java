@@ -150,6 +150,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final PeerDiscoveryAgent peerDiscoveryAgent;
   private final PeerBlacklist peerBlacklist;
   private final NetworkingConfiguration config;
+  private final List<Capability> supportedCapabilities;
   private OptionalLong peerBondedObserverId = OptionalLong.empty();
   private OptionalLong peerDroppedObserverId = OptionalLong.empty();
 
@@ -169,7 +170,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   private final SECP256K1.KeyPair keyPair;
 
-  private final ChannelFuture server;
+  private ChannelFuture server;
 
   private final int maxPeers;
 
@@ -186,6 +187,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private OptionalLong blockAddedObserverId = OptionalLong.empty();
 
   private final AtomicBoolean started = new AtomicBoolean(false);
+  private final AtomicBoolean stopped = new AtomicBoolean(false);
 
   /**
    * Creates a peer networking service for production purposes.
@@ -213,14 +215,27 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final Optional<NodePermissioningController> nodePermissioningController,
       final Blockchain blockchain) {
 
+    this.peerDiscoveryAgent = peerDiscoveryAgent;
+    this.keyPair = keyPair;
     this.config = config;
-    maxPeers = config.getRlpx().getMaxPeers();
-    connections = new PeerConnectionRegistry(metricsSystem);
+    this.supportedCapabilities = supportedCapabilities;
     this.peerBlacklist = peerBlacklist;
+    this.nodePermissioningController = nodePermissioningController;
+    this.blockchain = Optional.ofNullable(blockchain);
     this.peerMaintainConnectionList = new HashSet<>();
+    this.connections = new PeerConnectionRegistry(metricsSystem);
+
+    this.subProtocols = config.getSupportedProtocols();
+    this.advertisedHost = config.getDiscovery().getAdvertisedHost();
+    this.maxPeers = config.getRlpx().getMaxPeers();
 
     peerDiscoveryAgent.addPeerRequirement(() -> connections.size() >= maxPeers);
-    this.peerDiscoveryAgent = peerDiscoveryAgent;
+    this.nodePermissioningController.ifPresent(
+        c -> c.subscribeToUpdates(this::checkCurrentConnections));
+
+    subscribeDisconnect(peerDiscoveryAgent);
+    subscribeDisconnect(peerBlacklist);
+    subscribeDisconnect(connections);
 
     outboundMessagesCounter =
         metricsSystem.createLabelledCounter(
@@ -242,14 +257,22 @@ public class DefaultP2PNetwork implements P2PNetwork {
         "netty_boss_pending_tasks",
         "The number of pending tasks in the Netty boss event loop",
         pendingTaskCounter(boss));
+  }
 
-    subscribeDisconnect(peerDiscoveryAgent);
-    subscribeDisconnect(peerBlacklist);
-    subscribeDisconnect(connections);
+  public static Builder builder() {
+    return new Builder();
+  }
 
-    this.keyPair = keyPair;
-    this.subProtocols = config.getSupportedProtocols();
+  private Supplier<Integer> pendingTaskCounter(final EventLoopGroup eventLoopGroup) {
+    return () ->
+        StreamSupport.stream(eventLoopGroup.spliterator(), false)
+            .filter(eventExecutor -> eventExecutor instanceof SingleThreadEventExecutor)
+            .mapToInt(eventExecutor -> ((SingleThreadEventExecutor) eventExecutor).pendingTasks())
+            .sum();
+  }
 
+  /** Start listening for incoming connections */
+  private void startListening() {
     server =
         new ServerBootstrap()
             .group(boss, workers)
@@ -281,7 +304,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           latch.countDown();
         });
 
-    // Ensure ourPeerInfo has been set prior to returning from the constructor.
+    // Ensure ourPeerInfo has been set prior to returning
     try {
       if (!latch.await(1, TimeUnit.MINUTES)) {
         throw new RuntimeException("Timed out while waiting for network startup");
@@ -289,24 +312,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     } catch (final InterruptedException e) {
       throw new RuntimeException("Interrupted before startup completed", e);
     }
-
-    this.nodePermissioningController = nodePermissioningController;
-    this.blockchain = Optional.ofNullable(blockchain);
-    this.advertisedHost = config.getDiscovery().getAdvertisedHost();
-    this.nodePermissioningController.ifPresent(
-        c -> c.subscribeToUpdates(this::checkCurrentConnections));
-  }
-
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  private Supplier<Integer> pendingTaskCounter(final EventLoopGroup eventLoopGroup) {
-    return () ->
-        StreamSupport.stream(eventLoopGroup.spliterator(), false)
-            .filter(eventExecutor -> eventExecutor instanceof SingleThreadEventExecutor)
-            .mapToInt(eventExecutor -> ((SingleThreadEventExecutor) eventExecutor).pendingTasks())
-            .sum();
   }
 
   /** @return a channel initializer for inbound connections */
@@ -523,6 +528,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       LOG.warn("Attempted to start an already started " + getClass().getSimpleName());
     }
 
+    startListening();
     peerDiscoveryAgent.start(ourPeerInfo.getPort()).join();
     peerBondedObserverId =
         OptionalLong.of(peerDiscoveryAgent.observePeerBondedEvents(handlePeerBondedEvent()));
@@ -637,6 +643,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public void stop() {
+    if (!this.started.get() || !stopped.compareAndSet(false, true)) {
+      // We haven't started, or we've started and stopped already
+      return;
+    }
+
     sendClientQuittingToPeers();
     peerConnectionScheduler.shutdownNow();
     peerDiscoveryAgent.stop().join();
