@@ -3,8 +3,8 @@ description: Configuring Free Gas Networks
 
 # Free Gas Networks 
 
-Transactions have an associated cost. Gas is the cost unit and the gas price is the price per gas unit. 
-The transaction cost is the gas used * gas price. 
+Transactions use computational resources so have an associated cost. Gas is the cost unit and the gas 
+price is the price per gas unit. The transaction cost is the gas used * gas price. 
 
 In public networks, the transaction cost is paid in Ether by the account submitting the transaction.
 The transaction cost is paid to the miner (or validator in PoA networks) that includes the transaction in a block.  
@@ -23,16 +23,20 @@ Transaction cost = gas used * 0 (gas price)
 
 ## Configuring Pantheon for Free Gas 
 
-When gas is free, limiting block and contract sizes is less important. In free gas networks, we set 
-block and contract size limits to the maximum values.   
+When gas is free, limiting block and contract sizes is less important. In free gas networks, we increase the 
+block size limit and set the contract size limit to the maximum value.   
 
 ### 1. Set Block Size 
 
-Set the block size limit (measured in gas) to the maximum accepted by Truffle (`0x1fffffffffffff`) in the genesis file: 
+If you want to remove gas from consideration and don't mind blocks potentially taking longer 
+to be created, set the block size limit (measured in gas) in the genesis file to the maximum accepted by Truffle (`0x1fffffffffffff`): 
 
 ```json
 "gasLimit": "0x1fffffffffffff"
 ```
+
+If you are more concerned about blocks arriving on time and don't have very expensive individual transactions, set the 
+`gasLimit` to a value closer to the amount of gas your validators can process in the configured block time.
 
 ### 2. Set Contract Size 
 
