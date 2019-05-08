@@ -42,7 +42,7 @@ public interface P2PNetwork extends Closeable {
    *
    * @return A stream of discovered peers on the network.
    */
-  Stream<DiscoveryPeer> getDiscoveredPeers();
+  Stream<DiscoveryPeer> streamDiscoveredPeers();
 
   /**
    * Connects to a {@link Peer}.

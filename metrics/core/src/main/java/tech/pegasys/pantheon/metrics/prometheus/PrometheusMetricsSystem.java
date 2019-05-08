@@ -160,7 +160,7 @@ public class PrometheusMetricsSystem implements MetricsSystem {
   }
 
   @Override
-  public Stream<Observation> getMetrics(final MetricCategory category) {
+  public Stream<Observation> streamObservations(final MetricCategory category) {
     return collectors.getOrDefault(category, Collections.emptySet()).stream()
         .flatMap(collector -> collector.collect().stream())
         .flatMap(familySamples -> convertSamplesToObservations(category, familySamples));

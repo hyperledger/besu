@@ -400,7 +400,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
 
     final List<DiscoveryPeer> peers =
-        getDiscoveredPeers()
+        streamDiscoveredPeers()
             .filter(peer -> peer.getStatus() == PeerDiscoveryStatus.BONDED)
             .filter(peer -> !isConnected(peer) && !isConnecting(peer))
             .collect(Collectors.toList());
@@ -426,8 +426,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public Stream<DiscoveryPeer> getDiscoveredPeers() {
-    return peerDiscoveryAgent.getPeers();
+  public Stream<DiscoveryPeer> streamDiscoveredPeers() {
+    return peerDiscoveryAgent.streamDiscoveredPeers();
   }
 
   @Override

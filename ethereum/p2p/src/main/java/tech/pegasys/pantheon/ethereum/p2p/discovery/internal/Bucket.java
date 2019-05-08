@@ -134,7 +134,7 @@ public class Bucket {
    *
    * @return immutable view of the peer array
    */
-  synchronized List<DiscoveryPeer> peers() {
+  synchronized List<DiscoveryPeer> getPeers() {
     return unmodifiableList(asList(Arrays.copyOf(kBucket, tailIndex + 1)));
   }
 

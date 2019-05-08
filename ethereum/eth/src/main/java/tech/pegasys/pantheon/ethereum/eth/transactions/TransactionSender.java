@@ -35,7 +35,7 @@ class TransactionSender implements TransactionBatchAddedListener {
   public void onTransactionsAdded(final Iterable<Transaction> transactions) {
     ethContext
         .getEthPeers()
-        .availablePeers()
+        .streamAvailablePeers()
         .forEach(
             peer ->
                 transactions.forEach(

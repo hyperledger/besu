@@ -214,7 +214,7 @@ public class RespondingEthPeer {
     return Optional.of(outgoingMessages.peek().messageData);
   }
 
-  public Stream<MessageData> pendingOutgoingRequests() {
+  public Stream<MessageData> streamPendingOutgoingRequests() {
     return outgoingMessages.stream().map(OutgoingMessage::messageData);
   }
 

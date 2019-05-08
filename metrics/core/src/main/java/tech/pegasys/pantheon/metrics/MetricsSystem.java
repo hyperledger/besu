@@ -52,9 +52,9 @@ public interface MetricsSystem {
     createGauge(category, name, help, () -> (double) valueSupplier.get());
   }
 
-  Stream<Observation> getMetrics(MetricCategory category);
+  Stream<Observation> streamObservations(MetricCategory category);
 
-  default Stream<Observation> getMetrics() {
-    return Stream.of(MetricCategory.values()).flatMap(this::getMetrics);
+  default Stream<Observation> streamObservations() {
+    return Stream.of(MetricCategory.values()).flatMap(this::streamObservations);
   }
 }

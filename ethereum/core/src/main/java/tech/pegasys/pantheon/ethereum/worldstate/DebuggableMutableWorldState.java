@@ -73,7 +73,7 @@ public class DebuggableMutableWorldState extends DefaultMutableWorldState {
   }
 
   @Override
-  public Stream<Account> accounts() {
+  public Stream<Account> streamAccounts() {
     return info.accounts.stream().map(this::get).filter(Objects::nonNull);
   }
 
@@ -81,7 +81,7 @@ public class DebuggableMutableWorldState extends DefaultMutableWorldState {
   public String toString() {
     final StringBuilder builder = new StringBuilder();
     builder.append(rootHash()).append(":\n");
-    accounts()
+    streamAccounts()
         .forEach(
             account -> {
               final Address address = account.getAddress();

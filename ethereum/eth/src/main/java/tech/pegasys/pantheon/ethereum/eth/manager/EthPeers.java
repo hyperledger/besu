@@ -119,12 +119,12 @@ public class EthPeers {
     return connections.size();
   }
 
-  public Stream<EthPeer> availablePeers() {
+  public Stream<EthPeer> streamAvailablePeers() {
     return connections.values().stream().filter(EthPeer::readyForRequests);
   }
 
   public Optional<EthPeer> bestPeer() {
-    return availablePeers().max(BEST_CHAIN);
+    return streamAvailablePeers().max(BEST_CHAIN);
   }
 
   @FunctionalInterface

@@ -35,7 +35,7 @@ public class GenesisConfigFileTest {
     // Sanity check some basic properties to confirm this is the mainnet file.
     assertThat(config.getConfigOptions().isEthHash()).isTrue();
     assertThat(config.getConfigOptions().getChainId()).hasValue(MAINNET_CHAIN_ID);
-    assertThat(config.getAllocations().map(GenesisAllocation::getAddress))
+    assertThat(config.streamAllocations().map(GenesisAllocation::getAddress))
         .contains(
             "000d836201318ec6899a67540690382780743280",
             "001762430ea9c3a26e5749afdb70da5f78ddbb8c",
@@ -48,7 +48,7 @@ public class GenesisConfigFileTest {
     // Sanity check some basic properties to confirm this is the dev file.
     assertThat(config.getConfigOptions().isEthHash()).isTrue();
     assertThat(config.getConfigOptions().getChainId()).hasValue(DEVELOPMENT_CHAIN_ID);
-    assertThat(config.getAllocations().map(GenesisAllocation::getAddress))
+    assertThat(config.streamAllocations().map(GenesisAllocation::getAddress))
         .contains(
             "fe3b557e8fb62b89f4916b721be55ceb828dbd73",
             "627306090abab3a6e1400e9345bc60c78a8bef57",
@@ -155,7 +155,7 @@ public class GenesisConfigFileTest {
 
     final Map<String, String> allocations =
         config
-            .getAllocations()
+            .streamAllocations()
             .collect(
                 Collectors.toMap(GenesisAllocation::getAddress, GenesisAllocation::getBalance));
     assertThat(allocations)
@@ -168,7 +168,7 @@ public class GenesisConfigFileTest {
   @Test
   public void shouldGetEmptyAllocationsWhenAllocNotPresent() {
     final GenesisConfigFile config = GenesisConfigFile.fromConfig("{}");
-    assertThat(config.getAllocations()).isEmpty();
+    assertThat(config.streamAllocations()).isEmpty();
   }
 
   @Test

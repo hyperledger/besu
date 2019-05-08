@@ -50,11 +50,11 @@ public class PrometheusMetricsSystemTest {
     final Counter counter = metricsSystem.createCounter(PEERS, "connected", "Some help string");
 
     counter.inc();
-    assertThat(metricsSystem.getMetrics())
+    assertThat(metricsSystem.streamObservations())
         .containsExactly(new Observation(PEERS, "connected", 1d, emptyList()));
 
     counter.inc();
-    assertThat(metricsSystem.getMetrics())
+    assertThat(metricsSystem.streamObservations())
         .containsExactly(new Observation(PEERS, "connected", 2d, emptyList()));
   }
 
@@ -67,11 +67,11 @@ public class PrometheusMetricsSystemTest {
     assertThat(counter1).isEqualTo(counter2);
 
     counter1.labels().inc();
-    assertThat(metricsSystem.getMetrics())
+    assertThat(metricsSystem.streamObservations())
         .containsExactly(new Observation(PEERS, "connected", 1d, emptyList()));
 
     counter2.labels().inc();
-    assertThat(metricsSystem.getMetrics())
+    assertThat(metricsSystem.streamObservations())
         .containsExactly(new Observation(PEERS, "connected", 2d, emptyList()));
   }
 
@@ -84,7 +84,7 @@ public class PrometheusMetricsSystemTest {
     counter.labels("value2").inc();
     counter.labels("value1").inc();
 
-    assertThat(metricsSystem.getMetrics())
+    assertThat(metricsSystem.streamObservations())
         .containsExactlyInAnyOrder(
             new Observation(PEERS, "connected", 2d, singletonList("value1")),
             new Observation(PEERS, "connected", 1d, singletonList("value2")));
@@ -95,11 +95,11 @@ public class PrometheusMetricsSystemTest {
     final Counter counter = metricsSystem.createCounter(PEERS, "connected", "Some help string");
 
     counter.inc(5);
-    assertThat(metricsSystem.getMetrics())
+    assertThat(metricsSystem.streamObservations())
         .containsExactly(new Observation(PEERS, "connected", 5d, emptyList()));
 
     counter.inc(6);
-    assertThat(metricsSystem.getMetrics())
+    assertThat(metricsSystem.streamObservations())
         .containsExactly(new Observation(PEERS, "connected", 11d, emptyList()));
   }
 
@@ -110,7 +110,7 @@ public class PrometheusMetricsSystemTest {
     final TimingContext context = timer.startTimer();
     context.stopTimer();
 
-    assertThat(metricsSystem.getMetrics())
+    assertThat(metricsSystem.streamObservations())
         .usingElementComparator(IGNORE_VALUES)
         .containsExactlyInAnyOrder(
             new Observation(RPC, "request", null, asList("quantile", "0.2")),
@@ -140,7 +140,7 @@ public class PrometheusMetricsSystemTest {
     //noinspection EmptyTryBlock
     try (final TimingContext ignored = timer.labels("method").startTimer()) {}
 
-    assertThat(metricsSystem.getMetrics())
+    assertThat(metricsSystem.streamObservations())
         .usingElementComparator(IGNORE_VALUES) // We don't know how long it will actually take.
         .containsExactlyInAnyOrder(
             new Observation(RPC, "request", null, asList("method", "quantile", "0.2")),
@@ -157,7 +157,7 @@ public class PrometheusMetricsSystemTest {
   public void shouldCreateObservationFromGauge() {
     metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7d);
 
-    assertThat(metricsSystem.getMetrics())
+    assertThat(metricsSystem.streamObservations())
         .containsExactlyInAnyOrder(new Observation(JVM, "myValue", 7d, emptyList()));
   }
 
@@ -184,7 +184,7 @@ public class PrometheusMetricsSystemTest {
     assertThat(counterN).isSameAs(NoOpMetricsSystem.NO_OP_LABELLED_1_COUNTER);
 
     counterN.labels("show").inc();
-    assertThat(localMetricSystem.getMetrics()).isEmpty();
+    assertThat(localMetricSystem.streamObservations()).isEmpty();
 
     // do a category we are watching
     final LabelledMetric<Counter> counterR =
@@ -192,7 +192,7 @@ public class PrometheusMetricsSystemTest {
     assertThat(counterR).isNotSameAs(NoOpMetricsSystem.NO_OP_LABELLED_1_COUNTER);
 
     counterR.labels("op").inc();
-    assertThat(localMetricSystem.getMetrics())
+    assertThat(localMetricSystem.streamObservations())
         .containsExactly(new Observation(RPC, "name", 1.0, singletonList("op")));
   }
 
