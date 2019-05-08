@@ -21,10 +21,13 @@ public class Subscription {
 
   private final Long id;
   private final SubscriptionType subscriptionType;
+  private final Boolean includeTransaction;
 
-  public Subscription(final Long id, final SubscriptionType subscriptionType) {
+  public Subscription(
+      final Long id, final SubscriptionType subscriptionType, final Boolean includeTransaction) {
     this.id = id;
     this.subscriptionType = subscriptionType;
+    this.includeTransaction = includeTransaction;
   }
 
   public SubscriptionType getSubscriptionType() {
@@ -33,6 +36,10 @@ public class Subscription {
 
   public Long getId() {
     return id;
+  }
+
+  public Boolean getIncludeTransaction() {
+    return includeTransaction;
   }
 
   @Override

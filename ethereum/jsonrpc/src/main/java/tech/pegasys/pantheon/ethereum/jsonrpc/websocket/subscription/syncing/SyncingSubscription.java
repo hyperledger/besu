@@ -19,7 +19,7 @@ public class SyncingSubscription extends Subscription {
   private boolean firstMessageHasBeenSent = false;
 
   public SyncingSubscription(final Long id, final SubscriptionType subscriptionType) {
-    super(id, subscriptionType);
+    super(id, subscriptionType, Boolean.FALSE);
   }
 
   public void setFirstMessageHasBeenSent(final boolean firstMessageHasBeenSent) {
