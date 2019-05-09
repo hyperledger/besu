@@ -14,7 +14,15 @@ package tech.pegasys.pantheon.util.bytes;
 
 public class DelegatingBytes32 extends BaseDelegatingBytesValue<Bytes32> implements Bytes32 {
   protected DelegatingBytes32(final Bytes32 wrapped) {
-    super(wrapped);
+    super(unwrap(wrapped));
+  }
+
+  // Make sure we don't end-up with giant chains of delegating through wrapping.
+  private static Bytes32 unwrap(final Bytes32 value) {
+    if (value instanceof DelegatingBytes32) {
+      return ((DelegatingBytes32) value).wrapped;
+    }
+    return value;
   }
 
   @Override

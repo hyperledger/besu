@@ -41,6 +41,9 @@ public class Hash extends DelegatingBytes32 {
   }
 
   public static Hash wrap(final Bytes32 bytes) {
+    if (bytes instanceof Hash) {
+      return (Hash) bytes;
+    }
     return new Hash(bytes);
   }
 
