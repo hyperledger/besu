@@ -2,7 +2,7 @@ pragma solidity >=0.4.0 <0.6.0;
 // THIS CONTRACT IS FOR TESTING PURPOSES ONLY
 // DO NOT USE THIS CONTRACT IN PRODUCTION APPLICATIONS
 
-contract SimplePermissioning {
+contract SimpleNodePermissioning {
     struct Enode {
         bytes32 enodeHigh;
         bytes32 enodeLow;
