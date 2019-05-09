@@ -1,5 +1,7 @@
-var SimplePermissioning = artifacts.require("SimplePermissioning");
+var SimpleNodePermissioning = artifacts.require("SimpleNodePermissioning");
+var SimpleAccountPermissioning = artifacts.require("SimpleAccountPermissioning");
 
 module.exports = function(deployer) {
-  deployer.deploy(SimplePermissioning);
+  deployer.deploy(SimpleNodePermissioning);
+  deployer.deploy(SimpleAccountPermissioning);
 };

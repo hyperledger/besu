@@ -30,7 +30,7 @@ public class SmartContractNodePermissioningAcceptanceTest
     bootnode = bootnode("bootnode");
     forbiddenNode = node("forbidden-node");
     allowedNode = node("allowed-node");
-    permissionedNode = permissionedNode("pemissioned-node");
+    permissionedNode = permissionedNode("permissioned-node");
 
     permissionedCluster.start(bootnode, forbiddenNode, allowedNode, permissionedNode);
 
