@@ -18,7 +18,7 @@ import static org.mockito.Mockito.when;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.AccountLocalConfigPermissioningController;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +36,7 @@ public class PermGetAccountsWhitelistTest {
   private static final JsonRpcRequest request =
       new JsonRpcRequest("2.0", "perm_getAccountsWhitelist", null);
 
-  @Mock private AccountWhitelistController accountWhitelist;
+  @Mock private AccountLocalConfigPermissioningController accountWhitelist;
   private PermGetAccountsWhitelist method;
 
   @Before

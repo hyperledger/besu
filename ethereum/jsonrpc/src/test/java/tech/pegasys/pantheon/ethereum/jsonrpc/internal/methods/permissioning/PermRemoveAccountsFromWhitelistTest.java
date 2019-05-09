@@ -25,7 +25,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.WhitelistOperationResult;
 
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PermRemoveAccountsFromWhitelistTest {
 
-  @Mock private AccountWhitelistController accountWhitelist;
+  @Mock private AccountLocalConfigPermissioningController accountWhitelist;
   private PermRemoveAccountsFromWhitelist method;
 
   @Before

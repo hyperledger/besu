@@ -61,7 +61,7 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
-import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.NodePermissioningControllerFactory;
@@ -295,13 +295,13 @@ public class RunnerBuilder {
 
     final TransactionPool transactionPool = pantheonController.getTransactionPool();
     final MiningCoordinator miningCoordinator = pantheonController.getMiningCoordinator();
-    final Optional<AccountWhitelistController> accountWhitelistController =
+    final Optional<AccountLocalConfigPermissioningController> accountWhitelistController =
         localPermissioningConfiguration
             .filter(LocalPermissioningConfiguration::isAccountWhitelistEnabled)
             .map(
                 configuration -> {
-                  final AccountWhitelistController whitelistController =
-                      new AccountWhitelistController(configuration);
+                  final AccountLocalConfigPermissioningController whitelistController =
+                      new AccountLocalConfigPermissioningController(configuration);
                   transactionPool.setAccountFilter(whitelistController::contains);
                   return whitelistController;
                 });
@@ -468,7 +468,7 @@ public class RunnerBuilder {
       final Set<Capability> supportedCapabilities,
       final Collection<RpcApi> jsonRpcApis,
       final FilterManager filterManager,
-      final Optional<AccountWhitelistController> accountWhitelistController,
+      final Optional<AccountLocalConfigPermissioningController> accountWhitelistController,
       final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController,
       final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,

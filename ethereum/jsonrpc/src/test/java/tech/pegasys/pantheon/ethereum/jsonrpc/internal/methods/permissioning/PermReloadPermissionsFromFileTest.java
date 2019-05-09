@@ -21,7 +21,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 
 import java.util.Optional;
@@ -35,7 +35,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PermReloadPermissionsFromFileTest {
 
-  @Mock private AccountWhitelistController accountWhitelistController;
+  @Mock private AccountLocalConfigPermissioningController accountLocalConfigPermissioningController;
   @Mock private NodeLocalConfigPermissioningController nodeLocalConfigPermissioningController;
   private PermReloadPermissionsFromFile method;
 
@@ -43,7 +43,7 @@ public class PermReloadPermissionsFromFileTest {
   public void before() {
     method =
         new PermReloadPermissionsFromFile(
-            Optional.of(accountWhitelistController),
+            Optional.of(accountLocalConfigPermissioningController),
             Optional.of(nodeLocalConfigPermissioningController));
   }
 
@@ -68,7 +68,7 @@ public class PermReloadPermissionsFromFileTest {
   public void whenControllersReloadSucceedsMethodShouldReturnSuccess() {
     JsonRpcResponse response = method.response(reloadRequest());
 
-    verify(accountWhitelistController).reload();
+    verify(accountLocalConfigPermissioningController).reload();
     verify(nodeLocalConfigPermissioningController).reload();
 
     assertThat(response).isEqualToComparingFieldByField(successResponse());
@@ -76,7 +76,7 @@ public class PermReloadPermissionsFromFileTest {
 
   @Test
   public void whenControllerReloadFailsMethodShouldReturnError() {
-    doThrow(new RuntimeException()).when(accountWhitelistController).reload();
+    doThrow(new RuntimeException()).when(accountLocalConfigPermissioningController).reload();
     JsonRpcResponse expectedErrorResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.WHITELIST_RELOAD_ERROR);
 

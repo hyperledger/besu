@@ -110,7 +110,7 @@ public class PermissioningConfigurationBuilder {
                 .collect(Collectors.toList());
 
         accountsWhitelistToml.stream()
-            .filter(s -> !AccountWhitelistController.isValidAccountString(s))
+            .filter(s -> !AccountLocalConfigPermissioningController.isValidAccountString(s))
             .findFirst()
             .ifPresent(
                 s -> {

@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class AccountWhitelistController {
+public class AccountLocalConfigPermissioningController {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -34,13 +34,14 @@ public class AccountWhitelistController {
   private List<String> accountWhitelist = new ArrayList<>();
   private final WhitelistPersistor whitelistPersistor;
 
-  public AccountWhitelistController(final LocalPermissioningConfiguration configuration) {
+  public AccountLocalConfigPermissioningController(
+      final LocalPermissioningConfiguration configuration) {
     this(
         configuration,
         new WhitelistPersistor(configuration.getAccountPermissioningConfigFilePath()));
   }
 
-  public AccountWhitelistController(
+  public AccountLocalConfigPermissioningController(
       final LocalPermissioningConfiguration configuration,
       final WhitelistPersistor whitelistPersistor) {
     this.configuration = configuration;
@@ -154,7 +155,8 @@ public class AccountWhitelistController {
   }
 
   private boolean containsInvalidAccount(final List<String> accounts) {
-    return !accounts.stream().allMatch(AccountWhitelistController::isValidAccountString);
+    return !accounts.stream()
+        .allMatch(AccountLocalConfigPermissioningController::isValidAccountString);
   }
 
   static boolean isValidAccountString(final String account) {
