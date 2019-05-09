@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockProcessor.TransactionReceiptFactory;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionProcessor;
+import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.vm.BlockHashLookup;
 
 import java.util.List;
@@ -59,6 +60,7 @@ public class BlockTransactionSelector {
   private static final double MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
 
   public static class TransactionSelectionResults {
+
     private final List<Transaction> transactions = Lists.newArrayList();
     private final List<TransactionReceipt> receipts = Lists.newArrayList();
     private long cumulativeGasUsed = 0;
@@ -172,8 +174,14 @@ public class BlockTransactionSelector {
       worldStateUpdater.commit();
       updateTransactionResultTracking(transaction, result);
     } else {
-      // Remove invalid transactions from the transaction pool but continue looking for valid ones
-      // as the block may not yet be full.
+      // If the transaction has an incorrect nonce, leave it in the pool and continue
+      if (result
+          .getValidationResult()
+          .getInvalidReason()
+          .equals(TransactionInvalidReason.INCORRECT_NONCE)) {
+        return TransactionSelectionResult.CONTINUE;
+      }
+      // If the transaction was invalid for any other reason, delete it, and continue.
       return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
     }
     return TransactionSelectionResult.CONTINUE;
