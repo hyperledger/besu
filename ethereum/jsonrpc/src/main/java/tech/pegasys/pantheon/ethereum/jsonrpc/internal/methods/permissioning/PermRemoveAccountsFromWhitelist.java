@@ -20,7 +20,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.WhitelistOperationResult;
 
 import java.util.List;
@@ -29,10 +29,10 @@ import java.util.Optional;
 public class PermRemoveAccountsFromWhitelist implements JsonRpcMethod {
 
   private final JsonRpcParameter parameters;
-  private final Optional<AccountWhitelistController> whitelistController;
+  private final Optional<AccountLocalConfigPermissioningController> whitelistController;
 
   public PermRemoveAccountsFromWhitelist(
-      final Optional<AccountWhitelistController> whitelistController,
+      final Optional<AccountLocalConfigPermissioningController> whitelistController,
       final JsonRpcParameter parameters) {
     this.whitelistController = whitelistController;
     this.parameters = parameters;
@@ -71,7 +71,8 @@ public class PermRemoveAccountsFromWhitelist implements JsonRpcMethod {
         case SUCCESS:
           return new JsonRpcSuccessResponse(request.getId());
         default:
-          throw new IllegalStateException("Unmapped result from AccountWhitelistController");
+          throw new IllegalStateException(
+              "Unmapped result from AccountLocalConfigPermissioningController");
       }
     } else {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.ACCOUNT_WHITELIST_NOT_ENABLED);

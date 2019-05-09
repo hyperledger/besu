@@ -36,7 +36,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
-import tech.pegasys.pantheon.ethereum.permissioning.AccountWhitelistController;
+import tech.pegasys.pantheon.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
@@ -85,8 +85,8 @@ public class JsonRpcTestMethodsFactory {
             blockchainQueries, transactionPool, new FilterIdGenerator(), new FilterRepository());
     final EthHashMiningCoordinator miningCoordinator = mock(EthHashMiningCoordinator.class);
     final MetricsSystem metricsSystem = new NoOpMetricsSystem();
-    final Optional<AccountWhitelistController> accountWhitelistController =
-        Optional.of(mock(AccountWhitelistController.class));
+    final Optional<AccountLocalConfigPermissioningController> accountWhitelistController =
+        Optional.of(mock(AccountLocalConfigPermissioningController.class));
     final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController =
         Optional.of(mock(NodeLocalConfigPermissioningController.class));
     final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
