@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResp
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 public abstract class AdminModifyPeer implements JsonRpcMethod {
 
@@ -42,7 +43,11 @@ public abstract class AdminModifyPeer implements JsonRpcMethod {
     } catch (final InvalidJsonRpcParameters e) {
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INVALID_PARAMS);
     } catch (final IllegalArgumentException e) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.PARSE_ERROR);
+      if (e.getMessage().contains(EnodeURL.INVALID_NODE_ID_LENGTH)) {
+        return new JsonRpcErrorResponse(req.getId(), JsonRpcError.ENODE_ID_INVALID);
+      } else {
+        return new JsonRpcErrorResponse(req.getId(), JsonRpcError.PARSE_ERROR);
+      }
     } catch (final P2pDisabledException e) {
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
     }

@@ -42,6 +42,10 @@ public class EnodeURL {
   // the discovery port is assumed to match the listening port
   private final OptionalInt discoveryPort;
 
+  // Error messages
+  public static String INVALID_NODE_ID_LENGTH =
+      "Invalid node ID: node ID must have exactly 128 hexadecimal characters and should not include any '0x' hex prefix.";
+
   private EnodeURL(
       final BytesValue nodeId,
       final InetAddress address,
@@ -93,9 +97,7 @@ public class EnodeURL {
 
     checkArgument(
         uri.getScheme().equalsIgnoreCase("enode"), "Invalid URI scheme (must equal \"enode\").");
-    checkArgument(
-        NODE_ID_PATTERN.matcher(uri.getUserInfo()).matches(),
-        "Invalid node ID: node ID must have exactly 128 hexadecimal characters and should not include any '0x' hex prefix.");
+    checkArgument(NODE_ID_PATTERN.matcher(uri.getUserInfo()).matches(), INVALID_NODE_ID_LENGTH);
 
     // Parse discport if it exists
     OptionalInt discoveryPort = OptionalInt.empty();

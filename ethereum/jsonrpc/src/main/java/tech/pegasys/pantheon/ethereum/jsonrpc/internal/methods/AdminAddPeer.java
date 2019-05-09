@@ -42,7 +42,7 @@ public class AdminAddPeer extends AdminModifyPeer {
     LOG.debug("Adding ({}) to peers", enode);
     final EnodeURL enodeURL = EnodeURL.fromString(enode);
     final Peer peer = DefaultPeer.fromEnodeURL(enodeURL);
-    boolean addedToNetwork = peerNetwork.addMaintainConnectionPeer(peer);
+    final boolean addedToNetwork = peerNetwork.addMaintainConnectionPeer(peer);
     return new JsonRpcSuccessResponse(id, addedToNetwork);
   }
 }
