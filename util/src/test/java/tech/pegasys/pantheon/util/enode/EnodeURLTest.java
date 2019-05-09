@@ -366,4 +366,13 @@ public class EnodeURLTest {
     assertThat(enode.getDiscoveryPort()).isEqualTo(OptionalInt.of(DISCOVERY_PORT));
     assertThat(enode.getEffectiveDiscoveryPort()).isEqualTo(DISCOVERY_PORT);
   }
+
+  @Test
+  public void fromStringInvalidNodeIdLengthHasDescriptiveMessage() {
+    String invalidEnodeURL =
+        String.format("enode://%s@%s:%d", VALID_NODE_ID.substring(1), IPV4_ADDRESS, P2P_PORT);
+    assertThatThrownBy(() -> EnodeURL.fromString(invalidEnodeURL))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("node ID must have exactly 128 hexadecimal");
+  }
 }
