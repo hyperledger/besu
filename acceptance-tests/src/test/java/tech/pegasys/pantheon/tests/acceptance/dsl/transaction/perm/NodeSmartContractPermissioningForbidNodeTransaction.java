@@ -17,7 +17,7 @@ import static org.web3j.utils.Numeric.toHexString;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.permissioning.SmartContractPermissioningController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeSmartContractPermissioningController;
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
@@ -32,7 +32,7 @@ import java.math.BigInteger;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
 
-public class SmartContractPermissioningForbidNodeTransaction implements Transaction<Hash> {
+public class NodeSmartContractPermissioningForbidNodeTransaction implements Transaction<Hash> {
 
   private static final BytesValue REMOVE_ENODE_SIGNATURE =
       tech.pegasys.pantheon.crypto.Hash.keccak256(
@@ -43,7 +43,7 @@ public class SmartContractPermissioningForbidNodeTransaction implements Transact
   private final Address contractAddress;
   private final Node node;
 
-  public SmartContractPermissioningForbidNodeTransaction(
+  public NodeSmartContractPermissioningForbidNodeTransaction(
       final Account sender, final Address contractAddress, final Node node) {
     this.sender = sender;
     this.contractAddress = contractAddress;
@@ -65,7 +65,7 @@ public class SmartContractPermissioningForbidNodeTransaction implements Transact
   private String signedTransactionData() {
     final String enodeURL = ((RunnableNode) node).enodeUrl().toASCIIString();
     final BytesValue payload =
-        SmartContractPermissioningController.createPayload(
+        NodeSmartContractPermissioningController.createPayload(
             REMOVE_ENODE_SIGNATURE, EnodeURL.fromString(enodeURL));
 
     RawTransaction transaction =

@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.permissioning.SmartContractPermissioningController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeSmartContractPermissioningController;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
@@ -27,7 +27,7 @@ import java.io.IOException;
 
 import org.web3j.protocol.core.DefaultBlockParameterName;
 
-public class SmartContractPermissioningNodeIsAllowedTransaction implements Transaction<Boolean> {
+public class NodeSmartContractPermissioningIsAllowedTransaction implements Transaction<Boolean> {
 
   private static final BytesValue IS_NODE_ALLOWED_SIGNATURE =
       tech.pegasys.pantheon.crypto.Hash.keccak256(
@@ -37,7 +37,7 @@ public class SmartContractPermissioningNodeIsAllowedTransaction implements Trans
   private final Address contractAddress;
   private final Node node;
 
-  public SmartContractPermissioningNodeIsAllowedTransaction(
+  public NodeSmartContractPermissioningIsAllowedTransaction(
       final Address contractAddress, final Node node) {
     this.contractAddress = contractAddress;
     this.node = node;
@@ -83,7 +83,7 @@ public class SmartContractPermissioningNodeIsAllowedTransaction implements Trans
   private org.web3j.protocol.core.methods.request.Transaction payload() {
     final String sourceEnodeURL = ((RunnableNode) node).enodeUrl().toASCIIString();
     final BytesValue payload =
-        SmartContractPermissioningController.createPayload(
+        NodeSmartContractPermissioningController.createPayload(
             IS_NODE_ALLOWED_SIGNATURE, EnodeURL.fromString(sourceEnodeURL));
 
     return org.web3j.protocol.core.methods.request.Transaction.createFunctionCallTransaction(

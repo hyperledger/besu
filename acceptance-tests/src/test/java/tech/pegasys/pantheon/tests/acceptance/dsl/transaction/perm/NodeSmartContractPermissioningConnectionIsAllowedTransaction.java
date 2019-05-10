@@ -13,10 +13,10 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static tech.pegasys.pantheon.ethereum.permissioning.SmartContractPermissioningController.checkTransactionResult;
+import static tech.pegasys.pantheon.ethereum.permissioning.NodeSmartContractPermissioningController.checkTransactionResult;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.permissioning.SmartContractPermissioningController;
+import tech.pegasys.pantheon.ethereum.permissioning.NodeSmartContractPermissioningController;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
@@ -28,7 +28,7 @@ import java.io.IOException;
 
 import org.web3j.protocol.core.DefaultBlockParameterName;
 
-public class SmartContractPermissioningConnectionIsAllowedTransaction
+public class NodeSmartContractPermissioningConnectionIsAllowedTransaction
     implements Transaction<Boolean> {
 
   private static final BytesValue IS_CONNECTION_ALLOWED_SIGNATURE =
@@ -42,7 +42,7 @@ public class SmartContractPermissioningConnectionIsAllowedTransaction
   private final Node source;
   private final Node target;
 
-  public SmartContractPermissioningConnectionIsAllowedTransaction(
+  public NodeSmartContractPermissioningConnectionIsAllowedTransaction(
       final Address contractAddress, final Node source, final Node target) {
     this.contractAddress = contractAddress;
     this.source = source;
@@ -64,7 +64,7 @@ public class SmartContractPermissioningConnectionIsAllowedTransaction
     final String sourceEnodeURL = ((RunnableNode) source).enodeUrl().toASCIIString();
     final String targetEnodeURL = ((RunnableNode) target).enodeUrl().toASCIIString();
     final BytesValue payload =
-        SmartContractPermissioningController.createPayload(
+        NodeSmartContractPermissioningController.createPayload(
             IS_CONNECTION_ALLOWED_SIGNATURE,
             EnodeURL.fromString(sourceEnodeURL),
             EnodeURL.fromString(targetEnodeURL));

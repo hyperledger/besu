@@ -207,7 +207,7 @@ public class PermissionedNodeBuilder {
     SmartContractPermissioningConfiguration config =
         SmartContractPermissioningConfiguration.createDefault();
     if (permissioningSmartContractAddress != null) {
-      config.setSmartContractAddress(Address.fromHexString(permissioningSmartContractAddress));
+      config.setNodeSmartContractAddress(Address.fromHexString(permissioningSmartContractAddress));
       config.setSmartContractNodeWhitelistEnabled(true);
     }
     return config;

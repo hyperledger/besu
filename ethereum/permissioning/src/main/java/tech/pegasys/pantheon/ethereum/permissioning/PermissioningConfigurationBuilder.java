@@ -30,7 +30,7 @@ public class PermissioningConfigurationBuilder {
   public static SmartContractPermissioningConfiguration smartContractPermissioningConfiguration(
       final Address address, final boolean smartContractPermissionedNodeEnabled) {
     SmartContractPermissioningConfiguration config = new SmartContractPermissioningConfiguration();
-    config.setSmartContractAddress(address);
+    config.setNodeSmartContractAddress(address);
     config.setSmartContractNodeWhitelistEnabled(smartContractPermissionedNodeEnabled);
     return config;
   }

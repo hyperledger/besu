@@ -16,7 +16,10 @@ import tech.pegasys.pantheon.ethereum.core.Address;
 
 public class SmartContractPermissioningConfiguration {
   private boolean smartContractNodeWhitelistEnabled;
-  private Address smartContractAddress;
+  private Address nodeSmartContractAddress;
+
+  private boolean smartContractAccountWhitelistEnabled;
+  private Address accountSmartContractAddress;
 
   public static SmartContractPermissioningConfiguration createDefault() {
     return new SmartContractPermissioningConfiguration();
@@ -31,11 +34,28 @@ public class SmartContractPermissioningConfiguration {
     this.smartContractNodeWhitelistEnabled = smartContractNodeWhitelistEnabled;
   }
 
-  public Address getSmartContractAddress() {
-    return smartContractAddress;
+  public Address getNodeSmartContractAddress() {
+    return nodeSmartContractAddress;
   }
 
-  public void setSmartContractAddress(final Address smartContractAddress) {
-    this.smartContractAddress = smartContractAddress;
+  public void setNodeSmartContractAddress(final Address nodeSmartContractAddress) {
+    this.nodeSmartContractAddress = nodeSmartContractAddress;
+  }
+
+  public boolean isSmartContractAccountWhitelistEnabled() {
+    return smartContractAccountWhitelistEnabled;
+  }
+
+  public void setSmartContractAccountWhitelistEnabled(
+      final boolean smartContractAccountWhitelistEnabled) {
+    this.smartContractAccountWhitelistEnabled = smartContractAccountWhitelistEnabled;
+  }
+
+  public Address getAccountSmartContractAddress() {
+    return accountSmartContractAddress;
+  }
+
+  public void setAccountSmartContractAddress(final Address accountSmartContractAddress) {
+    this.accountSmartContractAddress = accountSmartContractAddress;
   }
 }

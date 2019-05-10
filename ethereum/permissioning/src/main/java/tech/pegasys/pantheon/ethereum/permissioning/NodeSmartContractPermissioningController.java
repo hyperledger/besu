@@ -31,7 +31,7 @@ import java.util.Optional;
  * Controller that can read from a smart contract that exposes the permissioning call
  * connectionAllowed(bytes32,bytes32,bytes16,uint16,bytes32,bytes32,bytes16,uint16)
  */
-public class SmartContractPermissioningController implements NodePermissioningProvider {
+public class NodeSmartContractPermissioningController implements NodePermissioningProvider {
   private final Address contractAddress;
   private final TransactionSimulator transactionSimulator;
 
@@ -61,7 +61,7 @@ public class SmartContractPermissioningController implements NodePermissioningPr
    * @param contractAddress The address at which the permissioning smart contract resides
    * @param transactionSimulator A transaction simulator with attached blockchain and world state
    */
-  public SmartContractPermissioningController(
+  public NodeSmartContractPermissioningController(
       final Address contractAddress, final TransactionSimulator transactionSimulator) {
     this.contractAddress = contractAddress;
     this.transactionSimulator = transactionSimulator;
