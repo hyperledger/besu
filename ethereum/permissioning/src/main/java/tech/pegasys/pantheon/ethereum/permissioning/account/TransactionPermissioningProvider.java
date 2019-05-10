@@ -15,6 +15,6 @@ package tech.pegasys.pantheon.ethereum.permissioning.account;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 
 @FunctionalInterface
-public interface AccountPermissioningProvider {
+public interface TransactionPermissioningProvider {
   boolean isPermitted(final Transaction transaction);
 }
