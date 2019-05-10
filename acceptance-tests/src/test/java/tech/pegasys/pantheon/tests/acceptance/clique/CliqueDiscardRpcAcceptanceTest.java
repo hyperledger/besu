@@ -23,27 +23,24 @@ public class CliqueDiscardRpcAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldDiscardVotes() throws IOException {
-    final String[] initialValidators = {"miner1", "miner2"};
-    final PantheonNode minerNode1 =
-        pantheon.createCliqueNodeWithValidators("miner1", initialValidators);
-    final PantheonNode minerNode2 =
-        pantheon.createCliqueNodeWithValidators("miner2", initialValidators);
-    final PantheonNode minerNode3 =
-        pantheon.createCliqueNodeWithValidators("miner3", initialValidators);
-    cluster.start(minerNode1, minerNode2, minerNode3);
+    final String[] validators = {"validator1", "validator3"};
+    final PantheonNode validator1 =
+        pantheon.createCliqueNodeWithValidators("validator1", validators);
+    final PantheonNode validator2 =
+        pantheon.createCliqueNodeWithValidators("validator2", validators);
+    final PantheonNode validator3 =
+        pantheon.createCliqueNodeWithValidators("validator3", validators);
+    cluster.start(validator1, validator2, validator3);
 
-    minerNode1.execute(cliqueTransactions.createRemoveProposal(minerNode2));
-    minerNode2.execute(cliqueTransactions.createRemoveProposal(minerNode2));
-    minerNode1.execute(cliqueTransactions.createAddProposal(minerNode3));
-    minerNode2.execute(cliqueTransactions.createAddProposal(minerNode3));
-    minerNode1.execute(cliqueTransactions.createDiscardProposal(minerNode2));
-    minerNode1.execute(cliqueTransactions.createDiscardProposal(minerNode3));
+    validator1.execute(cliqueTransactions.createAddProposal(validator2));
+    validator1.execute(cliqueTransactions.createRemoveProposal(validator3));
+    validator1.verify(
+        clique.proposalsEqual().addProposal(validator2).removeProposal(validator3).build());
 
-    minerNode1.waitUntil(wait.chainHeadHasProgressedByAtLeast(minerNode1, 2));
+    validator1.execute(cliqueTransactions.createDiscardProposal(validator2));
+    validator1.verify(clique.proposalsEqual().removeProposal(validator3).build());
 
-    cluster.verify(clique.validatorsEqual(minerNode1, minerNode2));
-    minerNode1.verify(clique.noProposals());
-    minerNode2.verify(
-        clique.proposalsEqual().removeProposal(minerNode2).addProposal(minerNode3).build());
+    validator1.execute(cliqueTransactions.createDiscardProposal(validator3));
+    cluster.verify(clique.noProposals());
   }
 }
