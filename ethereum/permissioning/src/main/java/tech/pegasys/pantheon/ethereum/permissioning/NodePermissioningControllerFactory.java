@@ -52,9 +52,9 @@ public class NodePermissioningControllerFactory {
       SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
           permissioningConfiguration.getSmartContractConfig().get();
       if (smartContractPermissioningConfiguration.isSmartContractNodeWhitelistEnabled()) {
-        SmartContractPermissioningController smartContractProvider =
-            new SmartContractPermissioningController(
-                smartContractPermissioningConfiguration.getSmartContractAddress(),
+        NodeSmartContractPermissioningController smartContractProvider =
+            new NodeSmartContractPermissioningController(
+                smartContractPermissioningConfiguration.getNodeSmartContractAddress(),
                 transactionSimulator);
         providers.add(smartContractProvider);
       }

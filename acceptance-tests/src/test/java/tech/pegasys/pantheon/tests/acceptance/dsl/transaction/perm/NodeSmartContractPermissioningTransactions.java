@@ -18,32 +18,32 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.account.Accounts;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
-public class SmartContractNodePermissioningTransactions {
+public class NodeSmartContractPermissioningTransactions {
 
   private final Accounts accounts;
 
-  public SmartContractNodePermissioningTransactions(final Accounts accounts) {
+  public NodeSmartContractPermissioningTransactions(final Accounts accounts) {
     this.accounts = accounts;
   }
 
   public Transaction<Hash> allowNode(final String contractAddress, final Node node) {
-    return new SmartContractPermissioningAllowNodeTransaction(
+    return new NodeSmartContractPermissioningAllowNodeTransaction(
         accounts.getPrimaryBenefactor(), Address.fromHexString(contractAddress), node);
   }
 
   public Transaction<Hash> forbidNode(final String contractAddress, final Node node) {
-    return new SmartContractPermissioningForbidNodeTransaction(
+    return new NodeSmartContractPermissioningForbidNodeTransaction(
         accounts.getPrimaryBenefactor(), Address.fromHexString(contractAddress), node);
   }
 
   public Transaction<Boolean> isNodeAllowed(final String contractAddress, final Node node) {
-    return new SmartContractPermissioningNodeIsAllowedTransaction(
+    return new NodeSmartContractPermissioningIsAllowedTransaction(
         Address.fromHexString(contractAddress), node);
   }
 
   public Transaction<Boolean> isConnectionAllowed(
       final String contractAddress, final Node source, final Node target) {
-    return new SmartContractPermissioningConnectionIsAllowedTransaction(
+    return new NodeSmartContractPermissioningConnectionIsAllowedTransaction(
         Address.fromHexString(contractAddress), source, target);
   }
 }

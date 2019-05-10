@@ -15,31 +15,31 @@ package tech.pegasys.pantheon.tests.acceptance.permissioning;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.SmartContractNodePermissioningConditions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.NodeSmartContractPermissioningConditions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.Cluster;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.SmartContractNodePermissioningTransactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.NodeSmartContractPermissioningTransactions;
 
 import java.io.IOException;
 
-class SmartContractNodePermissioningAcceptanceTestBase extends AcceptanceTestBase {
+class NodeSmartContractNodePermissioningAcceptanceTestBase extends AcceptanceTestBase {
 
-  private final SmartContractNodePermissioningTransactions smartContractNodePermissioning;
-  private final SmartContractNodePermissioningConditions smartContractNodePermissioningConditions;
+  private final NodeSmartContractPermissioningTransactions smartContractNodePermissioning;
+  private final NodeSmartContractPermissioningConditions nodeSmartContractPermissioningConditions;
 
   private static final String CONTRACT_ADDRESS = "0x0000000000000000000000000000000000009999";
   private static final String GENESIS_FILE = "/permissioning/simple_permissioning_genesis.json";
 
   protected final Cluster permissionedCluster;
 
-  protected SmartContractNodePermissioningAcceptanceTestBase() {
+  protected NodeSmartContractNodePermissioningAcceptanceTestBase() {
     super();
-    smartContractNodePermissioning = new SmartContractNodePermissioningTransactions(accounts);
-    smartContractNodePermissioningConditions =
-        new SmartContractNodePermissioningConditions(smartContractNodePermissioning);
+    smartContractNodePermissioning = new NodeSmartContractPermissioningTransactions(accounts);
+    nodeSmartContractPermissioningConditions =
+        new NodeSmartContractPermissioningConditions(smartContractNodePermissioning);
     this.permissionedCluster = permissionedCluster();
   }
 
@@ -84,7 +84,7 @@ class SmartContractNodePermissioningAcceptanceTestBase extends AcceptanceTestBas
   }
 
   protected Condition nodeIsAllowed(final Node node) {
-    return smartContractNodePermissioningConditions.nodeIsAllowed(CONTRACT_ADDRESS, node);
+    return nodeSmartContractPermissioningConditions.nodeIsAllowed(CONTRACT_ADDRESS, node);
   }
 
   protected Transaction<Hash> forbidNode(final Node node) {
@@ -92,16 +92,16 @@ class SmartContractNodePermissioningAcceptanceTestBase extends AcceptanceTestBas
   }
 
   protected Condition nodeIsForbidden(final Node node) {
-    return smartContractNodePermissioningConditions.nodeIsForbidden(CONTRACT_ADDRESS, node);
+    return nodeSmartContractPermissioningConditions.nodeIsForbidden(CONTRACT_ADDRESS, node);
   }
 
   protected Condition connectionIsAllowed(final Node source, final Node target) {
-    return smartContractNodePermissioningConditions.connectionIsAllowed(
+    return nodeSmartContractPermissioningConditions.connectionIsAllowed(
         CONTRACT_ADDRESS, source, target);
   }
 
   protected Condition connectionIsForbidden(final Node source, final Node target) {
-    return smartContractNodePermissioningConditions.connectionIsForbidden(
+    return nodeSmartContractPermissioningConditions.connectionIsForbidden(
         CONTRACT_ADDRESS, source, target);
   }
 }

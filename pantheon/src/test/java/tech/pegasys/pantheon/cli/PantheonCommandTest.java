@@ -378,7 +378,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
         smartContractAddress);
     final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
         new SmartContractPermissioningConfiguration();
-    smartContractPermissioningConfiguration.setSmartContractAddress(
+    smartContractPermissioningConfiguration.setNodeSmartContractAddress(
         Address.fromHexString(smartContractAddress));
     smartContractPermissioningConfiguration.setSmartContractNodeWhitelistEnabled(true);
 

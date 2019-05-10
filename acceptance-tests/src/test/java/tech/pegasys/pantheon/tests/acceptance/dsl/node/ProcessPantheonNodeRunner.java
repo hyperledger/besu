@@ -172,9 +172,9 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
               if (permissioningConfiguration.isSmartContractNodeWhitelistEnabled()) {
                 params.add("--permissions-nodes-contract-enabled");
               }
-              if (permissioningConfiguration.getSmartContractAddress() != null) {
+              if (permissioningConfiguration.getNodeSmartContractAddress() != null) {
                 params.add("--permissions-nodes-contract-address");
-                params.add(permissioningConfiguration.getSmartContractAddress().toString());
+                params.add(permissioningConfiguration.getNodeSmartContractAddress().toString());
               }
             });
 
