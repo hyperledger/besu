@@ -49,6 +49,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * <p>This class is safe for use across multiple threads.
  */
 public class PendingTransactions {
+
   public static final int MAX_PENDING_TRANSACTIONS = 4096;
   public static final int DEFAULT_TX_RETENTION_HOURS = 13;
 
@@ -184,8 +185,8 @@ public class PendingTransactions {
    */
   public void selectTransactions(final TransactionSelector selector) {
     synchronized (pendingTransactions) {
-      final Map<Address, AccountTransactionOrder> accountTransactions = new HashMap<>();
       final List<Transaction> transactionsToRemove = new ArrayList<>();
+      final Map<Address, AccountTransactionOrder> accountTransactions = new HashMap<>();
       for (final TransactionInfo transactionInfo : prioritizedTransactions) {
         final AccountTransactionOrder accountTransactionOrder =
             accountTransactions.computeIfAbsent(
@@ -202,6 +203,7 @@ public class PendingTransactions {
             case CONTINUE:
               break;
             case COMPLETE_OPERATION:
+              transactionsToRemove.forEach(this::removeTransaction);
               return;
             default:
               throw new RuntimeException("Illegal value for TransactionSelectionResult.");
@@ -371,6 +373,7 @@ public class PendingTransactions {
 
   @FunctionalInterface
   public interface TransactionSelector {
+
     TransactionSelectionResult evaluateTransaction(final Transaction transaction);
   }
 }
