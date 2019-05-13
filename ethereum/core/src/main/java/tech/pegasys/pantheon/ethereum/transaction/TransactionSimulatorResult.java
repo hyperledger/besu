@@ -18,7 +18,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionIn
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
 
 public class TransactionSimulatorResult {
 
@@ -59,11 +59,11 @@ public class TransactionSimulatorResult {
       return false;
     }
     final TransactionSimulatorResult that = (TransactionSimulatorResult) o;
-    return Objects.equal(transaction, that.transaction) && Objects.equal(result, that.result);
+    return Objects.equals(transaction, that.transaction) && Objects.equals(result, that.result);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(transaction, result);
+    return Objects.hash(transaction, result);
   }
 }

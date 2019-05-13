@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
 
 public class RpcApi {
   private final String cliValue;
@@ -34,7 +34,7 @@ public class RpcApi {
       return false;
     }
     final RpcApi rpcApi = (RpcApi) o;
-    return Objects.equal(cliValue, rpcApi.cliValue);
+    return Objects.equals(cliValue, rpcApi.cliValue);
   }
 
   @Override

@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.consensus.ibft.tests;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 
 import tech.pegasys.pantheon.consensus.ibft.ConsensusRoundIdentifier;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
@@ -90,7 +90,7 @@ public class GossipTest {
 
     final RoundChange roundChange = msgFactory.createRoundChange(roundId, Optional.empty());
     final RoundChangeCertificate roundChangeCert =
-        new RoundChangeCertificate(singleton(roundChange.getSignedPayload()));
+        new RoundChangeCertificate(singletonList(roundChange.getSignedPayload()));
 
     final Proposal nextRoundProposal =
         sender.injectProposalForFutureRound(roundId, roundChangeCert, proposal.getBlock());

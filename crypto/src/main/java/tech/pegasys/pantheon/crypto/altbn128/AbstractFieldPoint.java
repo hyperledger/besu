@@ -13,9 +13,9 @@
 package tech.pegasys.pantheon.crypto.altbn128;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 
 /**
  * Adapted from the pc_ecc (Apache 2 License) implementation:
@@ -120,7 +120,7 @@ public abstract class AbstractFieldPoint<U extends AbstractFieldPoint> implement
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(x, y);
+    return Objects.hash(x, y);
   }
 
   @SuppressWarnings("rawtypes")
@@ -134,6 +134,6 @@ public abstract class AbstractFieldPoint<U extends AbstractFieldPoint> implement
     }
 
     final AbstractFieldPoint other = (AbstractFieldPoint) obj;
-    return Objects.equal(x, other.x) && Objects.equal(y, other.y);
+    return Objects.equals(x, other.x) && Objects.equals(y, other.y);
   }
 }

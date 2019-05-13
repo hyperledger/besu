@@ -14,8 +14,9 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription;
 
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
 
+import java.util.Objects;
+
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 
 public class Subscription {
 
@@ -63,11 +64,11 @@ public class Subscription {
       return false;
     }
     final Subscription that = (Subscription) o;
-    return Objects.equal(id, that.id) && subscriptionType == that.subscriptionType;
+    return Objects.equals(id, that.id) && subscriptionType == that.subscriptionType;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id, subscriptionType);
+    return Objects.hash(id, subscriptionType);
   }
 }

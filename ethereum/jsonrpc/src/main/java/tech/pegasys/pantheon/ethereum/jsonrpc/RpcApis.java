@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public class RpcApis {
@@ -28,7 +28,7 @@ public class RpcApis {
   public static final RpcApi EEA = new RpcApi("EEA");
   public static final RpcApi TX_POOL = new RpcApi("TXPOOL");
 
-  public static final Collection<RpcApi> DEFAULT_JSON_RPC_APIS = Arrays.asList(ETH, NET, WEB3);
+  public static final List<RpcApi> DEFAULT_JSON_RPC_APIS = Arrays.asList(ETH, NET, WEB3);
 
   public static Optional<RpcApi> valueOf(final String name) {
     if (name.equals(ETH.getCliValue())) {

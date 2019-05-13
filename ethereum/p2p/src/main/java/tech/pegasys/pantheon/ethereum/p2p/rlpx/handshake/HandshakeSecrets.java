@@ -157,6 +157,7 @@ public class HandshakeSecrets {
     return out;
   }
 
+  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass") // checked in delegated method
   @Override
   public boolean equals(final Object obj) {
     return equals(obj, false);

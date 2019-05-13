@@ -15,25 +15,25 @@ package tech.pegasys.pantheon.consensus.ibft.payload;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 
 public class PreparedCertificate {
   private final SignedData<ProposalPayload> proposalPayload;
-  private final Collection<SignedData<PreparePayload>> preparePayloads;
+  private final List<SignedData<PreparePayload>> preparePayloads;
 
   public PreparedCertificate(
       final SignedData<ProposalPayload> proposalPayload,
-      final Collection<SignedData<PreparePayload>> preparePayloads) {
+      final List<SignedData<PreparePayload>> preparePayloads) {
     this.proposalPayload = proposalPayload;
     this.preparePayloads = preparePayloads;
   }
 
   public static PreparedCertificate readFrom(final RLPInput rlpInput) {
     final SignedData<ProposalPayload> proposalMessage;
-    final Collection<SignedData<PreparePayload>> prepareMessages;
+    final List<SignedData<PreparePayload>> prepareMessages;
 
     rlpInput.enterList();
     proposalMessage = SignedData.readSignedProposalPayloadFrom(rlpInput);
@@ -68,7 +68,7 @@ public class PreparedCertificate {
     }
     final PreparedCertificate that = (PreparedCertificate) o;
     return Objects.equals(proposalPayload, that.proposalPayload)
-        && Objects.equals(new ArrayList<>(preparePayloads), new ArrayList<>(that.preparePayloads));
+        && Objects.equals(preparePayloads, that.preparePayloads);
   }
 
   @Override

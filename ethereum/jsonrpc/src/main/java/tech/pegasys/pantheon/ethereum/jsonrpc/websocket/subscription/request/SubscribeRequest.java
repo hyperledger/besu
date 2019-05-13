@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request;
 
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.FilterParameter;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
 
 public class SubscribeRequest {
 
@@ -74,13 +74,13 @@ public class SubscribeRequest {
     }
     final SubscribeRequest that = (SubscribeRequest) o;
     return subscriptionType == that.subscriptionType
-        && Objects.equal(includeTransaction, that.includeTransaction)
-        && Objects.equal(filterParameter, that.filterParameter)
-        && Objects.equal(connectionId, that.connectionId);
+        && Objects.equals(includeTransaction, that.includeTransaction)
+        && Objects.equals(filterParameter, that.filterParameter)
+        && Objects.equals(connectionId, that.connectionId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(subscriptionType, includeTransaction, filterParameter, connectionId);
+    return Objects.hash(subscriptionType, includeTransaction, filterParameter, connectionId);
   }
 }

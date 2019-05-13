@@ -26,8 +26,8 @@ import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import org.assertj.core.util.Lists;
 import org.junit.Test;
@@ -40,7 +40,7 @@ public class PreparedCertificateTest {
   @Test
   public void roundTripRlpWithNoPreparePayloads() {
     final SignedData<ProposalPayload> signedProposalPayload = signedProposal();
-    final Collection<SignedData<PreparePayload>> preparePayloads = Collections.emptyList();
+    final List<SignedData<PreparePayload>> preparePayloads = Collections.emptyList();
 
     final PreparedCertificate preparedCert =
         new PreparedCertificate(signedProposalPayload, preparePayloads);

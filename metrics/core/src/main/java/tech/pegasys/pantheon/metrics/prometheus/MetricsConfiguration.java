@@ -19,10 +19,9 @@ import tech.pegasys.pantheon.metrics.MetricCategory;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-
-import com.google.common.collect.Lists;
 
 public class MetricsConfiguration {
   private static final String DEFAULT_METRICS_HOST = "127.0.0.1";
@@ -40,7 +39,7 @@ public class MetricsConfiguration {
   private String pushHost;
   private int pushInterval;
   private String prometheusJob;
-  private Collection<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
+  private List<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
 
   public static MetricsConfiguration createDefault() {
     final MetricsConfiguration metricsConfiguration = new MetricsConfiguration();
@@ -135,7 +134,7 @@ public class MetricsConfiguration {
     return Collections.unmodifiableCollection(this.hostsWhitelist);
   }
 
-  public void setHostsWhitelist(final Collection<String> hostsWhitelist) {
+  public void setHostsWhitelist(final List<String> hostsWhitelist) {
     this.hostsWhitelist = hostsWhitelist;
   }
 
@@ -182,8 +181,7 @@ public class MetricsConfiguration {
         && Objects.equals(host, that.host)
         && Objects.equals(pushHost, that.pushHost)
         && Objects.equals(prometheusJob, that.prometheusJob)
-        && com.google.common.base.Objects.equal(
-            Lists.newArrayList(hostsWhitelist), Lists.newArrayList(that.hostsWhitelist));
+        && Objects.equals(hostsWhitelist, that.hostsWhitelist);
   }
 
   @Override

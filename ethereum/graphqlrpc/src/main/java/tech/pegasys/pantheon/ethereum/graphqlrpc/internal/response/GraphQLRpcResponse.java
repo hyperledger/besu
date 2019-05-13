@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.graphqlrpc.internal.response;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
 
 public abstract class GraphQLRpcResponse {
   public abstract GraphQLRpcResponseType getType();
@@ -36,7 +36,7 @@ public abstract class GraphQLRpcResponse {
       return false;
     }
     final GraphQLRpcResponse that = (GraphQLRpcResponse) o;
-    return Objects.equal(result, that.result);
+    return Objects.equals(result, that.result);
   }
 
   @Override

@@ -17,10 +17,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
 
 public class GraphQLRpcConfiguration {
   private static final String DEFAULT_GRAPHQL_RPC_HOST = "127.0.0.1";
@@ -29,8 +29,8 @@ public class GraphQLRpcConfiguration {
   private boolean enabled;
   private int port;
   private String host;
-  private Collection<String> corsAllowedDomains = Collections.emptyList();
-  private Collection<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
+  private List<String> corsAllowedDomains = Collections.emptyList();
+  private List<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
 
   public static GraphQLRpcConfiguration createDefault() {
     final GraphQLRpcConfiguration config = new GraphQLRpcConfiguration();
@@ -70,7 +70,7 @@ public class GraphQLRpcConfiguration {
     return corsAllowedDomains;
   }
 
-  public void setCorsAllowedDomains(final Collection<String> corsAllowedDomains) {
+  public void setCorsAllowedDomains(final List<String> corsAllowedDomains) {
     checkNotNull(corsAllowedDomains);
     this.corsAllowedDomains = corsAllowedDomains;
   }
@@ -79,7 +79,7 @@ public class GraphQLRpcConfiguration {
     return Collections.unmodifiableCollection(this.hostsWhitelist);
   }
 
-  public void setHostsWhitelist(final Collection<String> hostsWhitelist) {
+  public void setHostsWhitelist(final List<String> hostsWhitelist) {
     checkNotNull(hostsWhitelist);
     this.hostsWhitelist = hostsWhitelist;
   }
@@ -106,15 +106,13 @@ public class GraphQLRpcConfiguration {
     final GraphQLRpcConfiguration that = (GraphQLRpcConfiguration) o;
     return enabled == that.enabled
         && port == that.port
-        && Objects.equal(host, that.host)
-        && Objects.equal(
-            Lists.newArrayList(corsAllowedDomains), Lists.newArrayList(that.corsAllowedDomains))
-        && Objects.equal(
-            Lists.newArrayList(hostsWhitelist), Lists.newArrayList(that.hostsWhitelist));
+        && Objects.equals(host, that.host)
+        && Objects.equals(corsAllowedDomains, that.corsAllowedDomains)
+        && Objects.equals(hostsWhitelist, that.hostsWhitelist);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(enabled, port, host, corsAllowedDomains, hostsWhitelist);
+    return Objects.hash(enabled, port, host, corsAllowedDomains, hostsWhitelist);
   }
 }

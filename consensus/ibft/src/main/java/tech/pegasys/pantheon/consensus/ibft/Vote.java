@@ -18,7 +18,8 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
+
 import com.google.common.collect.ImmutableBiMap;
 
 /**
@@ -76,7 +77,7 @@ public class Vote {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(recipient, voteType);
+    return Objects.hash(recipient, voteType);
   }
 
   public void writeTo(final RLPOutput rlpOutput) {

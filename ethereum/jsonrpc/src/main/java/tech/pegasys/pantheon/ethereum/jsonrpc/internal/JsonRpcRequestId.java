@@ -15,10 +15,10 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.google.common.base.Objects;
 
 public class JsonRpcRequestId {
 
@@ -73,7 +73,7 @@ public class JsonRpcRequestId {
       return false;
     }
     final JsonRpcRequestId that = (JsonRpcRequestId) o;
-    return Objects.equal(id, that.id);
+    return Objects.equals(id, that.id);
   }
 
   @Override
