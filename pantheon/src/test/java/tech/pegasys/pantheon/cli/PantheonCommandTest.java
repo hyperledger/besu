@@ -235,6 +235,22 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void callingWithNoBootnodesConfig() throws Exception {
+    assumeTrue(isFullInstantiation());
+
+    final URL configFile = this.getClass().getResource("/no_bootnodes.toml");
+    final Path toml = createTempFile("toml", Resources.toString(configFile, UTF_8));
+
+    parseCommand("--config-file", toml.toAbsolutePath().toString());
+
+    verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().getBootNodes()).isEmpty();
+
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void callingWithConfigOptionButInvalidValueTomlFileShouldDisplayHelp() throws Exception {
     assumeTrue(isFullInstantiation());
 
