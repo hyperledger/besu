@@ -176,7 +176,7 @@ public class MessageFrame {
     MESSAGE_CALL,
   }
 
-  private static final int MAX_STACK_SIZE = 1024;
+  public static final int DEFAULT_MAX_STACK_SIZE = 1024;
 
   // Global data fields.
   private final WorldUpdater worldState;
@@ -189,6 +189,7 @@ public class MessageFrame {
   // Machine state fields.
   private Gas gasRemaining;
   private final BlockHashLookup blockHashLookup;
+  private final int maxStackSize;
   private int pc;
   private final Memory memory;
   private final OperandStack stack;
@@ -250,16 +251,18 @@ public class MessageFrame {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingState,
-      final Optional<String> revertReason) {
+      final Optional<String> revertReason,
+      final int maxStackSize) {
     this.type = type;
     this.blockchain = blockchain;
     this.messageFrameStack = messageFrameStack;
     this.worldState = worldState;
     this.gasRemaining = initialGas;
     this.blockHashLookup = blockHashLookup;
+    this.maxStackSize = maxStackSize;
     this.pc = 0;
     this.memory = new Memory();
-    this.stack = new PreAllocatedOperandStack(MAX_STACK_SIZE);
+    this.stack = new PreAllocatedOperandStack(maxStackSize);
     this.output = BytesValue.EMPTY;
     this.returnData = BytesValue.EMPTY;
     this.logs = LogSeries.empty();
@@ -826,6 +829,10 @@ public class MessageFrame {
     return currentOperation;
   }
 
+  public int getMaxStackSize() {
+    return maxStackSize;
+  }
+
   /**
    * Returns whether Message calls will be persisted
    *
@@ -857,6 +864,7 @@ public class MessageFrame {
     private Code code;
     private ProcessableBlockHeader blockHeader;
     private int depth = -1;
+    private int maxStackSize = DEFAULT_MAX_STACK_SIZE;
     private boolean isStatic = false;
     private Consumer<MessageFrame> completer;
     private Address miningBeneficiary;
@@ -949,6 +957,11 @@ public class MessageFrame {
       return this;
     }
 
+    public Builder maxStackSize(final int maxStackSize) {
+      this.maxStackSize = maxStackSize;
+      return this;
+    }
+
     public Builder completer(final Consumer<MessageFrame> completer) {
       this.completer = completer;
       return this;
@@ -1022,7 +1035,8 @@ public class MessageFrame {
           miningBeneficiary,
           blockHashLookup,
           isPersistingState,
-          reason);
+          reason,
+          maxStackSize);
     }
   }
 }

@@ -47,6 +47,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
   private final AbstractMessageProcessor contractCreationProcessor;
 
   private final AbstractMessageProcessor messageCallProcessor;
+  private final int maxStackSize;
 
   public static class Result implements TransactionProcessor.Result {
 
@@ -126,12 +127,14 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final TransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
-      final boolean clearEmptyAccounts) {
+      final boolean clearEmptyAccounts,
+      final int maxStackSize) {
     this.gasCalculator = gasCalculator;
     this.transactionValidator = transactionValidator;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
     this.clearEmptyAccounts = clearEmptyAccounts;
+    this.maxStackSize = maxStackSize;
   }
 
   @Override
@@ -214,6 +217,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
               .isPersistingState(isPersistingState)
+              .maxStackSize(maxStackSize)
               .build();
 
     } else {
@@ -241,6 +245,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .completer(c -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
+              .maxStackSize(maxStackSize)
               .isPersistingState(isPersistingState)
               .build();
     }

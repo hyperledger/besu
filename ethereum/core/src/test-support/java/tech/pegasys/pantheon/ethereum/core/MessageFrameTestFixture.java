@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.core;
 
+import static tech.pegasys.pantheon.ethereum.vm.MessageFrame.DEFAULT_MAX_STACK_SIZE;
+
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.vm.BlockHashLookup;
 import tech.pegasys.pantheon.ethereum.vm.Code;
@@ -29,6 +31,7 @@ import java.util.Optional;
 public class MessageFrameTestFixture {
 
   private static final Address DEFAUT_ADDRESS = AddressHelpers.ofValue(244259721);
+  private final int maxStackSize = DEFAULT_MAX_STACK_SIZE;
 
   private Type type = Type.MESSAGE_CALL;
   private Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
@@ -171,6 +174,7 @@ public class MessageFrameTestFixture {
             .miningBeneficiary(blockHeader.getCoinbase())
             .blockHashLookup(
                 blockHashLookup.orElseGet(() -> new BlockHashLookup(blockHeader, blockchain)))
+            .maxStackSize(maxStackSize)
             .build();
     stackItems.forEach(frame::pushStackItem);
     return frame;

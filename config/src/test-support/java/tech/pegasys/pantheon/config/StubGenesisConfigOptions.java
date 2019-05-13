@@ -31,6 +31,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong constantinopleFixBlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
+  private OptionalInt stackSizeLimit = OptionalInt.empty();
 
   @Override
   public boolean isEthHash() {
@@ -113,6 +114,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalInt getEvmStackSize() {
+    return stackSizeLimit;
+  }
+
+  @Override
   public Optional<BigInteger> getChainId() {
     return chainId;
   }
@@ -139,6 +145,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
     getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("constantinopleFixBlock", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
+    getEvmStackSize().ifPresent(l -> builder.put("evmStackSize", l));
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
     }
@@ -196,6 +203,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions contractSizeLimit(final int contractSizeLimit) {
     this.contractSizeLimit = OptionalInt.of(contractSizeLimit);
+    return this;
+  }
+
+  public StubGenesisConfigOptions stackSizeLimit(final int stackSizeLimit) {
+    this.stackSizeLimit = OptionalInt.of(stackSizeLimit);
     return this;
   }
 }
