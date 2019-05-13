@@ -60,7 +60,7 @@ public class NodeSmartContractPermissioningControllerTest {
   public void testIpv4Included() throws IOException {
     final NodeSmartContractPermissioningController controller =
         setupController(
-            "/SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
+            "/NodeSmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
     assertThat(
@@ -76,7 +76,7 @@ public class NodeSmartContractPermissioningControllerTest {
   public void testIpv4DestinationMissing() throws IOException {
     final NodeSmartContractPermissioningController controller =
         setupController(
-            "/SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
+            "/NodeSmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
     assertThat(
@@ -92,7 +92,7 @@ public class NodeSmartContractPermissioningControllerTest {
   public void testIpv4SourceMissing() throws IOException {
     final NodeSmartContractPermissioningController controller =
         setupController(
-            "/SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
+            "/NodeSmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
     assertThat(
@@ -108,7 +108,7 @@ public class NodeSmartContractPermissioningControllerTest {
   public void testIpv6Included() throws IOException {
     final NodeSmartContractPermissioningController controller =
         setupController(
-            "/SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
+            "/NodeSmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
     assertThat(
@@ -124,7 +124,7 @@ public class NodeSmartContractPermissioningControllerTest {
   public void testIpv6SourceMissing() throws IOException {
     final NodeSmartContractPermissioningController controller =
         setupController(
-            "/SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
+            "/NodeSmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
     assertThat(
@@ -140,7 +140,7 @@ public class NodeSmartContractPermissioningControllerTest {
   public void testIpv6DestinationMissing() throws IOException {
     final NodeSmartContractPermissioningController controller =
         setupController(
-            "/SmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
+            "/NodeSmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
     assertThat(
@@ -156,7 +156,7 @@ public class NodeSmartContractPermissioningControllerTest {
   public void testPermissioningContractMissing() throws IOException {
     final NodeSmartContractPermissioningController controller =
         setupController(
-            "/SmartContractPermissioningControllerTest/noSmartPermissioning.json",
+            "/NodeSmartContractPermissioningControllerTest/noSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
     assertThatThrownBy(
@@ -174,7 +174,7 @@ public class NodeSmartContractPermissioningControllerTest {
   public void testPermissioningContractCorrupt() throws IOException {
     final NodeSmartContractPermissioningController controller =
         setupController(
-            "/SmartContractPermissioningControllerTest/corruptSmartPermissioning.json",
+            "/NodeSmartContractPermissioningControllerTest/corruptSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
     assertThatThrownBy(
