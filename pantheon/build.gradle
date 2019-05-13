@@ -54,6 +54,7 @@ dependencies {
   implementation 'org.springframework.security:spring-security-crypto'
 
   runtime 'org.apache.logging.log4j:log4j-core'
+  runtime 'org.apache.logging.log4j:log4j-slf4j-impl'
 
   testImplementation project(':testutil')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
