@@ -17,7 +17,6 @@ import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLRpcHttpService;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcHttpService;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketService;
 import tech.pegasys.pantheon.ethereum.p2p.NetworkRunner;
-import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsService;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
@@ -161,18 +160,20 @@ public class Runner implements AutoCloseable {
 
   private void writePantheonPortsToFile() {
     final Properties properties = new Properties();
-    final P2PNetwork network = networkRunner.getNetwork();
     if (networkRunner.getNetwork().isP2pEnabled()) {
       networkRunner
           .getNetwork()
           .getLocalEnode()
           .ifPresent(
               enode -> {
-                if (network.isDiscoveryEnabled()) {
+                if (enode.getDiscoveryPort().isPresent()) {
                   properties.setProperty(
-                      "discovery", String.valueOf(enode.getEffectiveDiscoveryPort()));
+                      "discovery", String.valueOf(enode.getDiscoveryPort().getAsInt()));
                 }
-                properties.setProperty("p2p", String.valueOf(enode.getListeningPort()));
+                if (enode.getListeningPort().isPresent()) {
+                  properties.setProperty(
+                      "p2p", String.valueOf(enode.getListeningPort().getAsInt()));
+                }
               });
     }
 

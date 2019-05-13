@@ -200,7 +200,7 @@ public class TestNode implements Closeable {
         + "@"
         + selfPeer.getEnodeURL().getIpAsString()
         + ':'
-        + selfPeer.getEnodeURL().getListeningPort();
+        + selfPeer.getEnodeURL().getListeningPortOrZero();
   }
 
   public void receiveRemoteTransaction(final Transaction transaction) {

@@ -54,6 +54,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
+import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.peers.StaticNodesParser;
 import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
@@ -190,14 +191,15 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       bootNodes =
           values.stream()
               .filter(value -> !value.isEmpty())
-              .map(value -> EnodeURL.fromString(value).toURI())
+              .map(EnodeURL::fromString)
               .collect(Collectors.toList());
+      DiscoveryConfiguration.assertValidBootnodes(bootNodes);
     } catch (final IllegalArgumentException e) {
       throw new ParameterException(commandLine, e.getMessage());
     }
   }
 
-  private Collection<URI> bootNodes = null;
+  private List<EnodeURL> bootNodes = null;
 
   @Option(
       names = {"--max-peers"},
@@ -689,9 +691,13 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       logger.info("Connecting to {} static nodes.", staticNodes.size());
       logger.trace("Static Nodes = {}", staticNodes);
 
+      List<URI> enodeURIs =
+          ethNetworkConfig.getBootNodes().stream()
+              .map(EnodeURL::toURI)
+              .collect(Collectors.toList());
       permissioningConfiguration
           .flatMap(PermissioningConfiguration::getLocalConfig)
-          .ifPresent(p -> ensureAllNodesAreInWhitelist(ethNetworkConfig.getBootNodes(), p));
+          .ifPresent(p -> ensureAllNodesAreInWhitelist(enodeURIs, p));
 
       permissioningConfiguration
           .flatMap(PermissioningConfiguration::getLocalConfig)

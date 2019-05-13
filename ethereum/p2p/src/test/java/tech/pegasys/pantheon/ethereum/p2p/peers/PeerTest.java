@@ -22,8 +22,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
-import java.util.OptionalInt;
-
 import com.google.common.net.InetAddresses;
 import org.junit.Test;
 
@@ -36,10 +34,18 @@ public class PeerTest {
             "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b");
     final Peer peer =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder().nodeId(id).ipAddress("127.0.0.1").listeningPort(5000).build());
+            EnodeURL.builder()
+                .nodeId(id)
+                .ipAddress("127.0.0.1")
+                .discoveryAndListeningPorts(5000)
+                .build());
     final Peer peer2 =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder().nodeId(id).ipAddress("127.0.0.1").listeningPort(5001).build());
+            EnodeURL.builder()
+                .nodeId(id)
+                .ipAddress("127.0.0.1")
+                .discoveryAndListeningPorts(5001)
+                .build());
     assertNotEquals(peer, peer2);
   }
 
@@ -50,10 +56,18 @@ public class PeerTest {
             "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b");
     final Peer peer =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder().nodeId(id).ipAddress("127.0.0.1").listeningPort(5000).build());
+            EnodeURL.builder()
+                .nodeId(id)
+                .ipAddress("127.0.0.1")
+                .discoveryAndListeningPorts(5000)
+                .build());
     final Peer peer2 =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder().nodeId(id).ipAddress("127.0.0.1").listeningPort(5001).build());
+            EnodeURL.builder()
+                .nodeId(id)
+                .ipAddress("127.0.0.1")
+                .discoveryAndListeningPorts(5001)
+                .build());
     assertNotEquals(peer.hashCode(), peer2.hashCode());
   }
 
@@ -64,7 +78,7 @@ public class PeerTest {
             EnodeURL.builder()
                 .nodeId(Peer.randomId())
                 .ipAddress("127.0.0.1")
-                .listeningPort(5000)
+                .discoveryAndListeningPorts(5000)
                 .build());
     assertEquals(PeerDiscoveryStatus.KNOWN, peer.getStatus());
   }
@@ -79,8 +93,8 @@ public class PeerTest {
             "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b"),
         peer.getId());
     assertEquals("172.20.0.4", peer.getEnodeURL().getIpAsString());
-    assertEquals(30403, peer.getEnodeURL().getListeningPort());
-    assertEquals(OptionalInt.empty(), peer.getEnodeURL().getDiscoveryPort());
+    assertEquals(30403, peer.getEnodeURL().getListeningPortOrZero());
+    assertEquals(30403, peer.getEnodeURL().getDiscoveryPortOrZero());
   }
 
   @Test
@@ -94,8 +108,8 @@ public class PeerTest {
         peer.getId());
     assertEquals(
         InetAddresses.forString("2001:db8:85a3::8a2e:370:7334"), peer.getEnodeURL().getIp());
-    assertEquals(30403, peer.getEnodeURL().getListeningPort());
-    assertEquals(OptionalInt.empty(), peer.getEnodeURL().getDiscoveryPort());
+    assertEquals(30403, peer.getEnodeURL().getListeningPortOrZero());
+    assertEquals(30403, peer.getEnodeURL().getDiscoveryPortOrZero());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -124,8 +138,8 @@ public class PeerTest {
             "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b"),
         peer.getId());
     assertEquals("172.20.0.4", peer.getEnodeURL().getIpAsString());
-    assertEquals(22222, peer.getEnodeURL().getEffectiveDiscoveryPort());
-    assertEquals(12345, peer.getEnodeURL().getListeningPort());
+    assertEquals(22222, peer.getEnodeURL().getDiscoveryPortOrZero());
+    assertEquals(12345, peer.getEnodeURL().getListeningPortOrZero());
   }
 
   @Test

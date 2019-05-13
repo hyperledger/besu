@@ -170,18 +170,13 @@ final class DeFramer extends ByteToMessageDecoder {
   private Peer createPeer(final PeerInfo peerInfo, final ChannelHandlerContext ctx) {
     final InetSocketAddress remoteAddress = ((InetSocketAddress) ctx.channel().remoteAddress());
     int port = peerInfo.getPort();
-    if (port == 0) {
-      // Most peers advertise a port of "0", just set a default best guess in this case.
-      // We can't simply use the remote address port because peers initiating inbound connections
-      // are free to choose any port they want for their side of the connection.  The remote port
-      // does not actually correspond to the peer's listening port.
-      port = EnodeURL.DEFAULT_LISTENING_PORT;
-    }
     return DefaultPeer.fromEnodeURL(
         EnodeURL.builder()
             .nodeId(peerInfo.getNodeId())
             .ipAddress(remoteAddress.getAddress())
             .listeningPort(port)
+            // Discovery information is unknown, so disable it
+            .disableDiscovery()
             .build());
   }
 

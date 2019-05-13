@@ -194,7 +194,8 @@ public class NodeLocalConfigPermissioningControllerTest {
   }
 
   @Test
-  public void whenCheckingIfNodeIsPermittedDiscoveryPortShouldNotBeConsideredIfAbsent() {
+  public void
+      whenCheckingIfNodeIsPermittedDiscoveryPortShouldNotBeConsidered_implicitDiscPortMismatch() {
     String peerWithDiscoveryPortSet =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=10001";
     String peerWithoutDiscoveryPortSet =
@@ -206,7 +207,8 @@ public class NodeLocalConfigPermissioningControllerTest {
   }
 
   @Test
-  public void whenCheckingIfNodeIsPermittedDiscoveryPortShouldBeConsideredIfPresent() {
+  public void
+      whenCheckingIfNodeIsPermittedDiscoveryPortShouldBeNotConsidered_explicitDiscPortMismatch() {
     String peerWithDiscoveryPortSet =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=10001";
     String peerWithDifferentDiscoveryPortSet =
@@ -214,7 +216,46 @@ public class NodeLocalConfigPermissioningControllerTest {
 
     controller.addNodes(Arrays.asList(peerWithDifferentDiscoveryPortSet));
 
-    assertThat(controller.isPermitted(peerWithDiscoveryPortSet)).isFalse();
+    assertThat(controller.isPermitted(peerWithDiscoveryPortSet)).isTrue();
+  }
+
+  @Test
+  public void
+      whenCheckingIfNodeIsPermittedDiscoveryPortShouldNotBeConsidered_nodeToCheckHasDiscDisabled() {
+    String peerWithDiscoveryPortSet =
+        "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=10001";
+    String peerWithoutDiscoveryPortSet =
+        "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=0";
+
+    controller.addNodes(Arrays.asList(peerWithDiscoveryPortSet));
+
+    assertThat(controller.isPermitted(peerWithoutDiscoveryPortSet)).isTrue();
+  }
+
+  @Test
+  public void
+      whenCheckingIfNodeIsPermittedDiscoveryPortShouldNotBeConsidered_whitelistedNodeHasDiscDisabled() {
+    String peerWithDiscoveryPortSet =
+        "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=0";
+    String peerWithoutDiscoveryPortSet =
+        "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=123";
+
+    controller.addNodes(Arrays.asList(peerWithDiscoveryPortSet));
+
+    assertThat(controller.isPermitted(peerWithoutDiscoveryPortSet)).isTrue();
+  }
+
+  @Test
+  public void
+      whenCheckingIfNodeIsPermittedDiscoveryPortShouldNotBeConsidered_whitelistAndNodeHaveDiscDisabled() {
+    String peerWithDiscoveryPortSet =
+        "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=0";
+    String peerWithoutDiscoveryPortSet =
+        "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=0";
+
+    controller.addNodes(Arrays.asList(peerWithDiscoveryPortSet));
+
+    assertThat(controller.isPermitted(peerWithoutDiscoveryPortSet)).isTrue();
   }
 
   @Test

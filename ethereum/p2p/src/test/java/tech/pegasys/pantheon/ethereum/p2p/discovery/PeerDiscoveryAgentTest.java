@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -25,10 +26,12 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.MockPeerDiscoveryAg
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.NeighborsPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
+import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.Collections;
 import java.util.List;
@@ -41,6 +44,23 @@ public class PeerDiscoveryAgentTest {
 
   private static final int BROADCAST_TCP_PORT = 30303;
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
+
+  @Test
+  public void createAgentWithInvalidBootnodes() {
+    final EnodeURL invalidBootnode =
+        EnodeURL.builder()
+            .nodeId(Peer.randomId())
+            .ipAddress("127.0.0.1")
+            .listeningPort(30303)
+            .disableDiscovery()
+            .build();
+
+    assertThatThrownBy(
+            () -> helper.createDiscoveryAgent(helper.agentBuilder().bootnodes(invalidBootnode)))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Invalid bootnodes")
+        .hasMessageContaining("Bootnodes must have discovery enabled");
+  }
 
   @Test
   public void neighborsPacketFromUnbondedPeerIsDropped() {

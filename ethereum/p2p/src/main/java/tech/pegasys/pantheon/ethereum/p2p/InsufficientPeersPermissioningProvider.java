@@ -49,7 +49,9 @@ public class InsufficientPeersPermissioningProvider implements ContextualNodePer
 
   private boolean isNotABootnode(final PeerConnection peerConnection) {
     return bootnodeEnodes.stream()
-        .noneMatch((bootNode) -> peerConnection.getRemoteEnode().sameEndpoint(bootNode));
+        .noneMatch(
+            (bootNode) ->
+                EnodeURL.sameListeningEndpoint(peerConnection.getRemoteEnode(), bootNode));
   }
 
   private long countP2PNetworkNonBootnodeConnections() {
@@ -74,8 +76,9 @@ public class InsufficientPeersPermissioningProvider implements ContextualNodePer
   }
 
   private boolean checkEnode(final EnodeURL localEnode, final EnodeURL enode) {
-    return (enode.sameEndpoint(localEnode)
-        || bootnodeEnodes.stream().anyMatch(enode::sameEndpoint));
+    return (EnodeURL.sameListeningEndpoint(localEnode, enode)
+        || bootnodeEnodes.stream()
+            .anyMatch(bootNode -> EnodeURL.sameListeningEndpoint(bootNode, enode)));
   }
 
   private void handleConnect(final PeerConnection peerConnection) {

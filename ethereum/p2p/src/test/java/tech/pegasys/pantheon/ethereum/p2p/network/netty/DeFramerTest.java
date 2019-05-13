@@ -156,6 +156,14 @@ public class DeFramerTest {
     assertThat(connectFuture).isNotCompletedExceptionally();
     PeerConnection peerConnection = connectFuture.get();
     assertThat(peerConnection.getPeerInfo()).isEqualTo(remotePeerInfo);
+
+    EnodeURL expectedEnode =
+        EnodeURL.builder()
+            .configureFromEnode(peer.getEnodeURL())
+            // Discovery information is not available from peer info
+            .disableDiscovery()
+            .build();
+    assertThat(peerConnection.getPeer().getEnodeURL()).isEqualTo(expectedEnode);
     assertThat(out).isEmpty();
 
     // Next phase of pipeline should be setup
@@ -206,8 +214,10 @@ public class DeFramerTest {
         EnodeURL.builder()
             .ipAddress(remoteAddress.getAddress())
             .nodeId(peer.getId())
-            // Listening port should be replaced with default port
-            .listeningPort(EnodeURL.DEFAULT_LISTENING_PORT)
+            // Listening port should be disabled
+            .disableListening()
+            // Discovery port is unknown
+            .disableDiscovery()
             .build();
     assertThat(peerConnection.getPeer().getEnodeURL()).isEqualTo(expectedEnode);
 
@@ -237,7 +247,7 @@ public class DeFramerTest {
             peerInfo.getVersion(),
             peerInfo.getClientId(),
             peerInfo.getCapabilities(),
-            peer.getEnodeURL().getListeningPort(),
+            peer.getEnodeURL().getListeningPortOrZero(),
             mismatchedId);
     final DeFramer deFramer = createDeFramer(peer);
 
@@ -340,7 +350,7 @@ public class DeFramerTest {
     return DefaultPeer.fromEnodeURL(
         EnodeURL.builder()
             .ipAddress(remoteAddress.getAddress())
-            .listeningPort(remotePort)
+            .discoveryAndListeningPorts(remotePort)
             .nodeId(Peer.randomId())
             .build());
   }
@@ -350,7 +360,7 @@ public class DeFramerTest {
         peerInfo.getVersion(),
         peerInfo.getClientId(),
         peerInfo.getCapabilities(),
-        forPeer.getEnodeURL().getListeningPort(),
+        forPeer.getEnodeURL().getListeningPortOrZero(),
         forPeer.getId());
   }
 

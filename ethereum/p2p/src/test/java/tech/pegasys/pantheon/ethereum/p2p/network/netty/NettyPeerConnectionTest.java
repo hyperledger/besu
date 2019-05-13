@@ -55,7 +55,7 @@ public class NettyPeerConnectionTest {
         DefaultPeer.fromEnodeURL(
             EnodeURL.builder()
                 .ipAddress("127.0.0.1")
-                .listeningPort(12345)
+                .discoveryAndListeningPorts(12345)
                 .nodeId(Peer.randomId())
                 .build());
     connection =

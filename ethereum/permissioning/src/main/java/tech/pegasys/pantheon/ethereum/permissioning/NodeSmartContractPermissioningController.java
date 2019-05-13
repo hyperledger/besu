@@ -142,7 +142,7 @@ public class NodeSmartContractPermissioningController implements NodePermissioni
 
   private static BytesValue encodeEnodeUrl(final EnodeURL enode) {
     return BytesValues.concatenate(
-        enode.getNodeId(), encodeIp(enode.getIp()), encodePort(enode.getListeningPort()));
+        enode.getNodeId(), encodeIp(enode.getIp()), encodePort(enode.getListeningPortOrZero()));
   }
 
   // As a function parameter an ip needs to be the appropriate number of bytes, big endian, and

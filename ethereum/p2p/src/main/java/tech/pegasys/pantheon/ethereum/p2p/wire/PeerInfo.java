@@ -78,10 +78,11 @@ public class PeerInfo {
   }
 
   /**
-   * This value is meant to represent the port at which a peer is listening for connections.
-   * However, most peers actually advertise a port of "0" so this value is not reliable.
+   * This value is meant to represent the port at which a peer is listening for connections. A value
+   * of zero means the peer is not listening for incoming connections.
    *
-   * @return (Unreliable) The tcp port on which the peer is listening for connections
+   * @return The tcp port on which the peer is listening for connections, 0 indicates the peer is
+   *     not listening for connections.
    */
   public int getPort() {
     return port;

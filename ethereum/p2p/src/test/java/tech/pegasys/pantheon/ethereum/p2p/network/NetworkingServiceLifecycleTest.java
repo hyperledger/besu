@@ -53,8 +53,8 @@ public class NetworkingServiceLifecycleTest {
     try (final P2PNetwork service = builder().build()) {
       service.start();
       final EnodeURL enode = service.getLocalEnode().get();
-      final int udpPort = enode.getEffectiveDiscoveryPort();
-      final int tcpPort = enode.getListeningPort();
+      final int udpPort = enode.getDiscoveryPortOrZero();
+      final int tcpPort = enode.getListeningPortOrZero();
 
       assertEquals(config.getDiscovery().getAdvertisedHost(), enode.getIpAsString());
       assertThat(udpPort).isNotZero();
@@ -124,7 +124,9 @@ public class NetworkingServiceLifecycleTest {
     try (final P2PNetwork service1 = builder().config(config).build()) {
       service1.start();
       final NetworkingConfiguration config = configWithRandomPorts();
-      config.getDiscovery().setBindPort(service1.getLocalEnode().get().getEffectiveDiscoveryPort());
+      final int usedPort = service1.getLocalEnode().get().getDiscoveryPortOrZero();
+      assertThat(usedPort).isNotZero();
+      config.getDiscovery().setBindPort(usedPort);
       try (final P2PNetwork service2 = builder().config(config).build()) {
         try {
           service2.start();
