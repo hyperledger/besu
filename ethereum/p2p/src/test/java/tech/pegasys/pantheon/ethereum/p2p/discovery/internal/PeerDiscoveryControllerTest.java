@@ -1122,7 +1122,7 @@ public class PeerDiscoveryControllerTest {
                   EnodeURL.builder()
                       .nodeId(id)
                       .ipAddress("127.0.0.1")
-                      .listeningPort(100 + counter.incrementAndGet())
+                      .discoveryAndListeningPorts(100 + counter.incrementAndGet())
                       .build()));
       doReturn(keccak).when(peer).keccak256();
       newPeers.add(peer);

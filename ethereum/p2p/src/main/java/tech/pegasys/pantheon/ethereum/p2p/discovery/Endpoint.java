@@ -52,11 +52,12 @@ public class Endpoint {
   }
 
   public static Endpoint fromEnode(final EnodeURL enode) {
-    final OptionalInt tcpPort =
-        enode.getDiscoveryPort().isPresent()
-            ? OptionalInt.of(enode.getListeningPort())
-            : OptionalInt.empty();
-    return new Endpoint(enode.getIp().getHostAddress(), enode.getEffectiveDiscoveryPort(), tcpPort);
+    checkArgument(
+        enode.getDiscoveryPort().isPresent(),
+        "Attempt to create a discovery endpoint for an enode with discovery disabled.");
+    final int discoveryPort = enode.getDiscoveryPort().getAsInt();
+    final OptionalInt listeningPort = enode.getListeningPort();
+    return new Endpoint(enode.getIp().getHostAddress(), discoveryPort, listeningPort);
   }
 
   public EnodeURL toEnode(final BytesValue nodeId) {

@@ -46,24 +46,25 @@ public class StaticNodesParserTest {
               .nodeId(
                   "50203c6bfca6874370e71aecc8958529fd723feb05013dc1abca8fc1fff845c5259faba05852e9dfe5ce172a7d6e7c2a3a5eaa8b541c8af15ea5518bbff5f2fa")
               .ipAddress("127.0.0.1")
+              .useDefaultPorts()
               .build(),
           EnodeURL.builder()
               .nodeId(
                   "02beb46bc17227616be44234071dfa18516684e45eed88049190b6cb56b0bae218f045fd0450f123b8f55c60b96b78c45e8e478004293a8de6818aa4e02eff97")
               .ipAddress("127.0.0.1")
-              .listeningPort(30304)
+              .discoveryAndListeningPorts(30304)
               .build(),
           EnodeURL.builder()
               .nodeId(
                   "819e5cbd81f123516b10f04bf620daa2b385efef06d77253148b814bf1bb6197ff58ebd1fd7bf5dc765b49a4440c733bf941e479c800173f2bfeb887e4fbcbc2")
               .ipAddress("127.0.0.1")
-              .listeningPort(30305)
+              .discoveryAndListeningPorts(30305)
               .build(),
           EnodeURL.builder()
               .nodeId(
                   "6cf53e25d2a98a22e7e205a86bda7077e3c8a7bc99e5ff88ddfd2037a550969ab566f069ffa455df0cfae0c21f7aec3447e414eccc473a3e8b20984b90f164ac")
               .ipAddress("127.0.0.1")
-              .listeningPort(30306)
+              .discoveryAndListeningPorts(30306)
               .build());
 
   @Rule public TemporaryFolder testFolder = new TemporaryFolder();
@@ -85,6 +86,17 @@ public class StaticNodesParserTest {
 
     assertThatThrownBy(() -> StaticNodesParser.fromPath(invalidFile.toPath()))
         .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  public void fromPath_withNonListeningNodesThrowsException() {
+    final URL resource =
+        StaticNodesParserTest.class.getResource("invalid_static_nodes_no_listening_port.json");
+    final File invalidFile = new File(resource.getFile());
+
+    assertThatThrownBy(() -> StaticNodesParser.fromPath(invalidFile.toPath()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Static node must be configured with a valid listening port");
   }
 
   @Test

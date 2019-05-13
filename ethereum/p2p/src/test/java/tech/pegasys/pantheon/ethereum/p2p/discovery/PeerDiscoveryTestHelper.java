@@ -27,7 +27,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningContro
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
-import java.net.URI;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -69,7 +69,11 @@ public class PeerDiscoveryTestHelper {
     final BytesValue peerId = keyPair.getPublicKey().getEncodedBytes();
     final int port = nextAvailablePort.incrementAndGet();
     return DiscoveryPeer.fromEnode(
-        EnodeURL.builder().nodeId(peerId).ipAddress(LOOPBACK_IP_ADDR).listeningPort(port).build());
+        EnodeURL.builder()
+            .nodeId(peerId)
+            .ipAddress(LOOPBACK_IP_ADDR)
+            .discoveryAndListeningPorts(port)
+            .build());
   }
 
   public Packet createPingPacket(
@@ -176,10 +180,10 @@ public class PeerDiscoveryTestHelper {
 
     private PeerBlacklist blacklist = new PeerBlacklist();
     private Optional<NodePermissioningController> nodePermissioningController = Optional.empty();
-    private List<URI> bootstrapPeers = Collections.emptyList();
+    private List<EnodeURL> bootnodes = Collections.emptyList();
     private boolean active = true;
 
-    public AgentBuilder(
+    private AgentBuilder(
         final Map<BytesValue, MockPeerDiscoveryAgent> agents,
         final AtomicInteger nextAvailablePort) {
       this.agents = agents;
@@ -187,7 +191,7 @@ public class PeerDiscoveryTestHelper {
     }
 
     public AgentBuilder bootstrapPeers(final List<DiscoveryPeer> peers) {
-      this.bootstrapPeers = asEnodes(peers);
+      this.bootnodes = asEnodes(peers);
       return this;
     }
 
@@ -195,11 +199,13 @@ public class PeerDiscoveryTestHelper {
       return bootstrapPeers(asList(peers));
     }
 
-    private List<URI> asEnodes(final List<DiscoveryPeer> peers) {
-      return peers.stream()
-          .map(Peer::getEnodeURLString)
-          .map(URI::create)
-          .collect(Collectors.toList());
+    public AgentBuilder bootnodes(final EnodeURL... bootnodes) {
+      this.bootnodes = Arrays.asList(bootnodes);
+      return this;
+    }
+
+    private List<EnodeURL> asEnodes(final List<DiscoveryPeer> peers) {
+      return peers.stream().map(Peer::getEnodeURL).collect(Collectors.toList());
     }
 
     public AgentBuilder nodePermissioningController(final NodePermissioningController controller) {
@@ -219,7 +225,7 @@ public class PeerDiscoveryTestHelper {
 
     public MockPeerDiscoveryAgent build() {
       final DiscoveryConfiguration config = new DiscoveryConfiguration();
-      config.setBootstrapPeers(bootstrapPeers);
+      config.setBootnodes(bootnodes);
       config.setBindPort(nextAvailablePort.incrementAndGet());
       config.setActive(active);
 

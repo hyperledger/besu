@@ -219,9 +219,7 @@ public final class RunnerTest {
       final EnodeURL enode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
-              EthNetworkConfig.jsonConfig(DEV),
-              DEV_NETWORK_ID,
-              Collections.singletonList(enode.toURI()));
+              EthNetworkConfig.jsonConfig(DEV), DEV_NETWORK_ID, Collections.singletonList(enode));
       runnerBehind =
           runnerBuilder
               .pantheonController(controllerBehind)

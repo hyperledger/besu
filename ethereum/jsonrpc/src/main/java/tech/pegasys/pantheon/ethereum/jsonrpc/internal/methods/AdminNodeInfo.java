@@ -73,13 +73,19 @@ public class AdminNodeInfo implements JsonRpcMethod {
 
     final BytesValue nodeId = enode.getNodeId();
     response.put("enode", enode.toString());
-    ports.put("discovery", enode.getEffectiveDiscoveryPort());
     response.put("ip", enode.getIpAsString());
-    response.put("listenAddr", enode.getIpAsString() + ":" + enode.getListeningPort());
+    if (enode.isListening()) {
+      response.put("listenAddr", enode.getIpAsString() + ":" + enode.getListeningPort().getAsInt());
+    }
     response.put("id", nodeId.toUnprefixedString());
     response.put("name", clientVersion);
 
-    ports.put("listener", enode.getListeningPort());
+    if (enode.isRunningDiscovery()) {
+      ports.put("discovery", enode.getDiscoveryPortOrZero());
+    }
+    if (enode.isListening()) {
+      ports.put("listener", enode.getListeningPort().getAsInt());
+    }
     response.put("ports", ports);
 
     final ChainHead chainHead = blockchainQueries.getBlockchain().getChainHead();

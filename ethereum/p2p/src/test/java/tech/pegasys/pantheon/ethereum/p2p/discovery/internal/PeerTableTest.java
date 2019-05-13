@@ -49,7 +49,7 @@ public class PeerTableTest {
             EnodeURL.builder()
                 .nodeId(Peer.randomId())
                 .ipAddress("127.0.0.1")
-                .listeningPort(12345)
+                .discoveryAndListeningPorts(12345)
                 .build());
     final PeerTable table = new PeerTable(localPeer.getId(), 16);
     final PeerTable.AddResult result = table.tryAdd(localPeer);

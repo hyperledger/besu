@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.network;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -361,6 +362,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public boolean addMaintainConnectionPeer(final Peer peer) {
+    checkArgument(
+        peer.getEnodeURL().isListening(),
+        "Invalid enode url.  Enode url must contain a non-zero listening port.");
     final boolean added = peerMaintainConnectionList.add(peer);
     if (isPeerAllowed(peer) && !isConnectingOrConnected(peer)) {
       // Connect immediately if appropriate
@@ -440,18 +444,25 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
 
     LOG.trace("Initiating connection to peer: {}", peer.getId());
-    final EnodeURL enode = peer.getEnodeURL();
     final CompletableFuture<PeerConnection> existingPendingConnection =
         pendingConnections.putIfAbsent(peer, connectionFuture);
     if (existingPendingConnection != null) {
       LOG.debug("Attempted to connect to peer with pending connection: {}", peer.getId());
       return existingPendingConnection;
     }
+    final EnodeURL enode = peer.getEnodeURL();
+    if (!enode.isListening()) {
+      final String errorMsg =
+          "Attempt to connect to peer with no listening port: " + enode.toString();
+      LOG.warn(errorMsg);
+      connectionFuture.completeExceptionally(new IllegalStateException(errorMsg));
+      return connectionFuture;
+    }
 
     new Bootstrap()
         .group(workers)
         .channel(NioSocketChannel.class)
-        .remoteAddress(new InetSocketAddress(enode.getIp(), enode.getListeningPort()))
+        .remoteAddress(new InetSocketAddress(enode.getIp(), enode.getListeningPort().getAsInt()))
         .option(ChannelOption.TCP_NODELAY, true)
         .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, TIMEOUT_SECONDS * 1000)
         .handler(
@@ -710,8 +721,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
         peerDiscoveryAgent
             .getAdvertisedPeer()
             .map(Peer::getEnodeURL)
-            .map(EnodeURL::getEffectiveDiscoveryPort)
-            .map(OptionalInt::of)
+            .map(EnodeURL::getDiscoveryPort)
             .orElse(OptionalInt.empty());
 
     final EnodeURL localEnode =

@@ -199,19 +199,6 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
     return peers.parallelStream().map(EnodeURL::toString).collect(Collectors.toList());
   }
 
-  private boolean compareEnodes(final EnodeURL nodeA, final EnodeURL nodeB) {
-    boolean idsMatch = nodeA.getNodeId().equals(nodeB.getNodeId());
-    boolean hostsMatch = nodeA.getIp().equals(nodeB.getIp());
-    boolean listeningPortsMatch = nodeA.getListeningPort() == nodeB.getListeningPort();
-    boolean discoveryPortsMatch = true;
-    if (nodeA.getDiscoveryPort().isPresent() && nodeB.getDiscoveryPort().isPresent()) {
-      discoveryPortsMatch =
-          nodeA.getDiscoveryPort().getAsInt() == nodeB.getDiscoveryPort().getAsInt();
-    }
-
-    return idsMatch && hostsMatch && listeningPortsMatch && discoveryPortsMatch;
-  }
-
   public boolean isPermitted(final String enodeURL) {
     return isPermitted(EnodeURL.fromString(enodeURL));
   }
@@ -220,7 +207,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
     if (Objects.equals(localNodeId, node.getNodeId())) {
       return true;
     }
-    return nodesWhitelist.stream().anyMatch(p -> compareEnodes(p, node));
+    return nodesWhitelist.stream().anyMatch(p -> EnodeURL.sameListeningEndpoint(p, node));
   }
 
   public List<String> getNodesWhitelist() {

@@ -54,7 +54,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -97,7 +96,7 @@ public class P2PNetworkTest {
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
       final BytesValue listenId = listenerEnode.getNodeId();
-      final int listenPort = listenerEnode.getListeningPort();
+      final int listenPort = listenerEnode.getListeningPort().getAsInt();
 
       assertThat(
               connector
@@ -119,7 +118,7 @@ public class P2PNetworkTest {
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
       final BytesValue listenId = listenerEnode.getNodeId();
-      final int listenPort = listenerEnode.getListeningPort();
+      final int listenPort = listenerEnode.getListeningPort().getAsInt();
 
       assertThat(
               connector
@@ -159,7 +158,7 @@ public class P2PNetworkTest {
       connector1.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
       final BytesValue listenId = listenerEnode.getNodeId();
-      final int listenPort = listenerEnode.getListeningPort();
+      final int listenPort = listenerEnode.getListeningPort().getAsInt();
 
       final Peer listeningPeer = createPeer(listenId, listenPort);
       assertThat(
@@ -209,7 +208,7 @@ public class P2PNetworkTest {
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
       final BytesValue listenId = listenerEnode.getNodeId();
-      final int listenPort = listenerEnode.getListeningPort();
+      final int listenPort = listenerEnode.getListeningPort().getAsInt();
 
       final Peer listenerPeer = createPeer(listenId, listenPort);
       final CompletableFuture<PeerConnection> connectFuture = connector.connect(listenerPeer);
@@ -230,11 +229,11 @@ public class P2PNetworkTest {
 
       final EnodeURL localEnode = localNetwork.getLocalEnode().get();
       final BytesValue localId = localEnode.getNodeId();
-      final int localPort = localEnode.getListeningPort();
+      final int localPort = localEnode.getListeningPort().getAsInt();
 
       final EnodeURL remoteEnode = remoteNetwork.getLocalEnode().get();
       final BytesValue remoteId = remoteEnode.getNodeId();
-      final int remotePort = remoteEnode.getListeningPort();
+      final int remotePort = remoteEnode.getListeningPort().getAsInt();
 
       final Peer localPeer = createPeer(localId, localPort);
       final Peer remotePeer = createPeer(remoteId, remotePort);
@@ -278,7 +277,11 @@ public class P2PNetworkTest {
             config, Collections.emptyList(), selfEnode.getNodeId());
     // turn on whitelisting by adding a different node NOT remote node
     localWhitelistController.addNode(
-        EnodeURL.builder().ipAddress("127.0.0.1").nodeId(Peer.randomId()).build());
+        EnodeURL.builder()
+            .ipAddress("127.0.0.1")
+            .useDefaultPorts()
+            .nodeId(Peer.randomId())
+            .build());
     final NodePermissioningController nodePermissioningController =
         new NodePermissioningController(
             Optional.empty(), Collections.singletonList(localWhitelistController));
@@ -295,7 +298,7 @@ public class P2PNetworkTest {
 
       final EnodeURL localEnode = localNetwork.getLocalEnode().get();
       final BytesValue localId = localEnode.getNodeId();
-      final int localPort = localEnode.getListeningPort();
+      final int localPort = localEnode.getListeningPort().getAsInt();
 
       final Peer localPeer = createPeer(localId, localPort);
 
@@ -325,7 +328,7 @@ public class P2PNetworkTest {
         EnodeURL.builder()
             .ipAddress(InetAddress.getLoopbackAddress().getHostAddress())
             .nodeId(nodeId)
-            .listeningPort(listenPort)
+            .discoveryAndListeningPorts(listenPort)
             .build());
   }
 
@@ -355,26 +358,6 @@ public class P2PNetworkTest {
         return INVALID_MESSAGE_NAME;
       }
     };
-  }
-
-  public static class EnodeURLMatcher implements ArgumentMatcher<EnodeURL> {
-
-    private final EnodeURL enodeURL;
-
-    EnodeURLMatcher(final EnodeURL enodeURL) {
-      this.enodeURL = enodeURL;
-    }
-
-    @Override
-    public boolean matches(final EnodeURL argument) {
-      if (argument == null) {
-        return false;
-      } else {
-        return enodeURL.getNodeId().equals(argument.getNodeId())
-            && enodeURL.getIp().equals(argument.getIp())
-            && enodeURL.getListeningPort() == argument.getListeningPort();
-      }
-    }
   }
 
   private DefaultP2PNetwork.Builder builder() {

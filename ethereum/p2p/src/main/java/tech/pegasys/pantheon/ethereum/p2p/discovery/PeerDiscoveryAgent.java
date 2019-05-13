@@ -31,7 +31,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeerId;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
@@ -107,10 +106,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
     this.peerBlacklist = peerBlacklist;
     this.nodePermissioningController = nodePermissioningController;
     this.bootstrapPeers =
-        config.getBootstrapPeers().stream()
-            .map(Peer::getEnodeURL)
-            .map(DiscoveryPeer::fromEnode)
-            .collect(Collectors.toList());
+        config.getBootnodes().stream().map(DiscoveryPeer::fromEnode).collect(Collectors.toList());
 
     this.config = config;
     this.keyPair = keyPair;
@@ -320,7 +316,7 @@ public abstract class PeerDiscoveryAgent implements DisconnectCallback {
     checkArgument(
         config.getBindPort() == 0 || NetworkUtility.isValidPort(config.getBindPort()),
         "valid port number required");
-    checkArgument(config.getBootstrapPeers() != null, "bootstrapPeers cannot be null");
+    checkArgument(config.getBootnodes() != null, "bootstrapPeers cannot be null");
     checkArgument(config.getBucketSize() > 0, "bucket size cannot be negative nor zero");
   }
 

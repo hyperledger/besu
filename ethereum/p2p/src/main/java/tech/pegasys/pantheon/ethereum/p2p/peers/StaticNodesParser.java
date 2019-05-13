@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.peers;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptySet;
 
@@ -68,9 +69,12 @@ public class StaticNodesParser {
 
   private static EnodeURL decodeString(final String input) {
     try {
-      return EnodeURL.fromString(input);
+      final EnodeURL enode = EnodeURL.fromString(input);
+      checkArgument(
+          enode.isListening(), "Static node must be configured with a valid listening port.");
+      return enode;
     } catch (IllegalArgumentException ex) {
-      LOG.info("Illegally constructed enode supplied ({})", input);
+      LOG.info("Illegal static enode supplied ({}). {}", input, ex.getMessage());
       throw ex;
     }
   }

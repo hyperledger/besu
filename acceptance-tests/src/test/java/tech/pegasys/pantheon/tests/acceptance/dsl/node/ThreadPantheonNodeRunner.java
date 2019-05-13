@@ -23,9 +23,11 @@ import tech.pegasys.pantheon.controller.PantheonControllerBuilder;
 import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLRpcConfiguration;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
+import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -33,10 +35,12 @@ import java.time.Clock;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import com.google.common.io.Files;
 import io.vertx.core.Vertx;
@@ -56,9 +60,13 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
     }
 
     final MetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
+    final List<EnodeURL> bootnodes =
+        node.getConfiguration().bootnodes().stream()
+            .map(EnodeURL::fromURI)
+            .collect(Collectors.toList());
     final EthNetworkConfig.Builder networkConfigBuilder =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(DEV))
-            .setBootNodes(node.getConfiguration().bootnodes());
+            .setBootNodes(bootnodes);
     node.getConfiguration().getGenesisConfig().ifPresent(networkConfigBuilder::setGenesisConfig);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
     final PantheonControllerBuilder<?> builder =
@@ -104,6 +112,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
             .metricsSystem(noOpMetricsSystem)
             .metricsConfiguration(node.metricsConfiguration())
             .p2pEnabled(node.isP2pEnabled())
+            .graphQLRpcConfiguration(GraphQLRpcConfiguration.createDefault())
             .build();
 
     runner.start();

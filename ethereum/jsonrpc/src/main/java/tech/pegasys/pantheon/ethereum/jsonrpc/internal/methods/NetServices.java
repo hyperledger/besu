@@ -65,11 +65,13 @@ public class NetServices implements JsonRpcMethod {
     if (p2pNetwork.isP2pEnabled()) {
       p2pNetwork
           .getLocalEnode()
+          .filter(e -> e.isListening())
           .ifPresent(
               enode ->
                   servicesMapBuilder.put(
                       "p2p",
-                      createServiceDetailsMap(enode.getIpAsString(), enode.getListeningPort())));
+                      createServiceDetailsMap(
+                          enode.getIpAsString(), enode.getListeningPort().getAsInt())));
     }
     if (metricsConfiguration.isEnabled()) {
       servicesMapBuilder.put(
