@@ -48,8 +48,12 @@ public class IbftProcessor implements Runnable {
 
   @Override
   public void run() {
-    while (!shutdown) {
-      nextIbftEvent().ifPresent(event -> eventMultiplexer.handleIbftEvent(event));
+    try {
+      while (!shutdown) {
+        nextIbftEvent().ifPresent(eventMultiplexer::handleIbftEvent);
+      }
+    } catch (final Throwable t) {
+      LOG.error("IBFT Mining thread has suffered a fatal error, mining has been halted", t);
     }
     // Clean up the executor service the round timer has been utilising
     LOG.info("Shutting down IBFT event processor");
