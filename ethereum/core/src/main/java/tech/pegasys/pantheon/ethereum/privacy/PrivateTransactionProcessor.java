@@ -56,6 +56,8 @@ public class PrivateTransactionProcessor {
 
   private final AbstractMessageProcessor messageCallProcessor;
 
+  private final int maxStackSize;
+
   public static class Result implements TransactionProcessor.Result {
 
     private final Status status;
@@ -135,12 +137,14 @@ public class PrivateTransactionProcessor {
       final TransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
-      final boolean clearEmptyAccounts) {
+      final boolean clearEmptyAccounts,
+      final int maxStackSize) {
     this.gasCalculator = gasCalculator;
     this.transactionValidator = transactionValidator;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
     this.clearEmptyAccounts = clearEmptyAccounts;
+    this.maxStackSize = maxStackSize;
   }
 
   @SuppressWarnings("unused")
@@ -213,6 +217,7 @@ public class PrivateTransactionProcessor {
               .completer(c -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
+              .maxStackSize(maxStackSize)
               .build();
 
     } else {
@@ -240,6 +245,7 @@ public class PrivateTransactionProcessor {
               .completer(c -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
+              .maxStackSize(maxStackSize)
               .build();
     }
 

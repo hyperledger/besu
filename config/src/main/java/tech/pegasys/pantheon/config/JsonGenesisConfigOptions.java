@@ -135,6 +135,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalInt getEvmStackSize() {
+    return configRoot.containsKey("evmstacksize")
+        ? OptionalInt.of(configRoot.getInteger("evmstacksize"))
+        : OptionalInt.empty();
+  }
+
+  @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getChainId().ifPresent(chainId -> builder.put("chainId", chainId));
@@ -163,6 +170,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
     getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("constantinopleFixBlock", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
+    getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
     }

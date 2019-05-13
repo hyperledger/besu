@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.mainnet;
 
+import static tech.pegasys.pantheon.ethereum.vm.MessageFrame.DEFAULT_MAX_STACK_SIZE;
+
 import tech.pegasys.pantheon.ethereum.MainnetBlockValidator;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -63,8 +65,9 @@ public abstract class MainnetProtocolSpecs {
   private MainnetProtocolSpecs() {}
 
   public static ProtocolSpecBuilder<Void> frontierDefinition(
-      final OptionalInt configContractSizeLimit) {
-    int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
+      final OptionalInt configContractSizeLimit, final OptionalInt configStackSizeLimit) {
+    final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
+    final int stackSizeLimit = configStackSizeLimit.orElse(DEFAULT_MAX_STACK_SIZE);
     return new ProtocolSpecBuilder<Void>()
         .gasCalculator(FrontierGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::frontier)
@@ -87,7 +90,8 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    false))
+                    false,
+                    stackSizeLimit))
         .privateTransactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -98,7 +102,8 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    false))
+                    false,
+                    stackSizeLimit))
         .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::create)
         .ommerHeaderValidatorBuilder(MainnetBlockHeaderValidator::createOmmerValidator)
@@ -115,9 +120,9 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder<Void> homesteadDefinition(
-      final OptionalInt configContractSizeLimit) {
-    int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
-    return frontierDefinition(configContractSizeLimit)
+      final OptionalInt configContractSizeLimit, final OptionalInt configStackSizeLimit) {
+    final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
+    return frontierDefinition(configContractSizeLimit, configStackSizeLimit)
         .gasCalculator(HomesteadGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::homestead)
         .contractCreationProcessorBuilder(
@@ -131,8 +136,8 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder<Void> daoRecoveryInitDefinition(
-      final OptionalInt contractSizeLimit) {
-    return homesteadDefinition(contractSizeLimit)
+      final OptionalInt contractSizeLimit, final OptionalInt configStackSizeLimit) {
+    return homesteadDefinition(contractSizeLimit, configStackSizeLimit)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::createDaoValidator)
         .blockProcessorBuilder(
             (transactionProcessor,
@@ -149,24 +154,28 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder<Void> daoRecoveryTransitionDefinition(
-      final OptionalInt contractSizeLimit) {
-    return daoRecoveryInitDefinition(contractSizeLimit)
+      final OptionalInt contractSizeLimit, final OptionalInt configStackSizeLimit) {
+    return daoRecoveryInitDefinition(contractSizeLimit, configStackSizeLimit)
         .blockProcessorBuilder(MainnetBlockProcessor::new)
         .name("DaoRecoveryTransition");
   }
 
   public static ProtocolSpecBuilder<Void> tangerineWhistleDefinition(
-      final OptionalInt contractSizeLimit) {
-    return homesteadDefinition(contractSizeLimit)
+      final OptionalInt contractSizeLimit, final OptionalInt configStackSizeLimit) {
+    return homesteadDefinition(contractSizeLimit, configStackSizeLimit)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .name("TangerineWhistle");
   }
 
   public static ProtocolSpecBuilder<Void> spuriousDragonDefinition(
-      final Optional<BigInteger> chainId, final OptionalInt configContractSizeLimit) {
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
-    return tangerineWhistleDefinition(OptionalInt.empty())
+    final int stackSizeLimit = configStackSizeLimit.orElse(DEFAULT_MAX_STACK_SIZE);
+
+    return tangerineWhistleDefinition(OptionalInt.empty(), configStackSizeLimit)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .messageCallProcessorBuilder(
             (evm, precompileContractRegistry) ->
@@ -195,7 +204,8 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    true))
+                    true,
+                    stackSizeLimit))
         .privateTransactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -206,13 +216,16 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    false))
+                    false,
+                    stackSizeLimit))
         .name("SpuriousDragon");
   }
 
   public static ProtocolSpecBuilder<Void> byzantiumDefinition(
-      final Optional<BigInteger> chainId, final OptionalInt contractSizeLimit) {
-    return spuriousDragonDefinition(chainId, contractSizeLimit)
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit) {
+    return spuriousDragonDefinition(chainId, contractSizeLimit, configStackSizeLimit)
         .evmBuilder(MainnetEvmRegistries::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
         .difficultyCalculator(MainnetDifficultyCalculators.BYZANTIUM)
@@ -223,8 +236,10 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder<Void> constantinopleDefinition(
-      final Optional<BigInteger> chainId, final OptionalInt contractSizeLimit) {
-    return byzantiumDefinition(chainId, contractSizeLimit)
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit) {
+    return byzantiumDefinition(chainId, contractSizeLimit, configStackSizeLimit)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
         .gasCalculator(ConstantinopleGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::constantinople)
@@ -233,8 +248,10 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder<Void> constantinopleFixDefinition(
-      final Optional<BigInteger> chainId, final OptionalInt contractSizeLimit) {
-    return constantinopleDefinition(chainId, contractSizeLimit)
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit) {
+    return constantinopleDefinition(chainId, contractSizeLimit, configStackSizeLimit)
         .gasCalculator(ConstantinopleFixGasCalculator::new)
         .name("ConstantinopleFix");
   }

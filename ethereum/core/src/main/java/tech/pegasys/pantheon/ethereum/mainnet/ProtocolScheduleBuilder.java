@@ -66,11 +66,13 @@ public class ProtocolScheduleBuilder<C> {
     addProtocolSpec(
         protocolSchedule,
         OptionalLong.of(0),
-        MainnetProtocolSpecs.frontierDefinition(config.getContractSizeLimit()));
+        MainnetProtocolSpecs.frontierDefinition(
+            config.getContractSizeLimit(), config.getEvmStackSize()));
     addProtocolSpec(
         protocolSchedule,
         config.getHomesteadBlockNumber(),
-        MainnetProtocolSpecs.homesteadDefinition(config.getContractSizeLimit()));
+        MainnetProtocolSpecs.homesteadDefinition(
+            config.getContractSizeLimit(), config.getEvmStackSize()));
 
     config
         .getDaoForkBlock()
@@ -81,12 +83,13 @@ public class ProtocolScheduleBuilder<C> {
               addProtocolSpec(
                   protocolSchedule,
                   OptionalLong.of(daoBlockNumber),
-                  MainnetProtocolSpecs.daoRecoveryInitDefinition(config.getContractSizeLimit()));
+                  MainnetProtocolSpecs.daoRecoveryInitDefinition(
+                      config.getContractSizeLimit(), config.getEvmStackSize()));
               addProtocolSpec(
                   protocolSchedule,
                   OptionalLong.of(daoBlockNumber + 1),
                   MainnetProtocolSpecs.daoRecoveryTransitionDefinition(
-                      config.getContractSizeLimit()));
+                      config.getContractSizeLimit(), config.getEvmStackSize()));
 
               // Return to the previous protocol spec after the dao fork has completed.
               protocolSchedule.putMilestone(daoBlockNumber + 10, originalProtocolSpec);
@@ -95,23 +98,28 @@ public class ProtocolScheduleBuilder<C> {
     addProtocolSpec(
         protocolSchedule,
         config.getTangerineWhistleBlockNumber(),
-        MainnetProtocolSpecs.tangerineWhistleDefinition(config.getContractSizeLimit()));
+        MainnetProtocolSpecs.tangerineWhistleDefinition(
+            config.getContractSizeLimit(), config.getEvmStackSize()));
     addProtocolSpec(
         protocolSchedule,
         config.getSpuriousDragonBlockNumber(),
-        MainnetProtocolSpecs.spuriousDragonDefinition(chainId, config.getContractSizeLimit()));
+        MainnetProtocolSpecs.spuriousDragonDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
     addProtocolSpec(
         protocolSchedule,
         config.getByzantiumBlockNumber(),
-        MainnetProtocolSpecs.byzantiumDefinition(chainId, config.getContractSizeLimit()));
+        MainnetProtocolSpecs.byzantiumDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
     addProtocolSpec(
         protocolSchedule,
         config.getConstantinopleBlockNumber(),
-        MainnetProtocolSpecs.constantinopleDefinition(chainId, config.getContractSizeLimit()));
+        MainnetProtocolSpecs.constantinopleDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
     addProtocolSpec(
         protocolSchedule,
         config.getConstantinopleFixBlockNumber(),
-        MainnetProtocolSpecs.constantinopleFixDefinition(chainId, config.getContractSizeLimit()));
+        MainnetProtocolSpecs.constantinopleFixDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;

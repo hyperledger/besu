@@ -54,5 +54,7 @@ public interface GenesisConfigOptions {
 
   OptionalInt getContractSizeLimit();
 
+  OptionalInt getEvmStackSize();
+
   Map<String, Object> asMap();
 }
