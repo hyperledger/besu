@@ -16,7 +16,6 @@ import tech.pegasys.pantheon.consensus.ibft.messagewrappers.RoundChange;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -27,15 +26,14 @@ import com.google.common.collect.Lists;
 
 public class RoundChangeCertificate {
 
-  private final Collection<SignedData<RoundChangePayload>> roundChangePayloads;
+  private final List<SignedData<RoundChangePayload>> roundChangePayloads;
 
-  public RoundChangeCertificate(
-      final Collection<SignedData<RoundChangePayload>> roundChangePayloads) {
+  public RoundChangeCertificate(final List<SignedData<RoundChangePayload>> roundChangePayloads) {
     this.roundChangePayloads = roundChangePayloads;
   }
 
   public static RoundChangeCertificate readFrom(final RLPInput rlpInput) {
-    final Collection<SignedData<RoundChangePayload>> roundChangePayloads;
+    final List<SignedData<RoundChangePayload>> roundChangePayloads;
 
     rlpInput.enterList();
     roundChangePayloads = rlpInput.readList(SignedData::readSignedRoundChangePayloadFrom);
@@ -81,8 +79,7 @@ public class RoundChangeCertificate {
       return false;
     }
     final RoundChangeCertificate that = (RoundChangeCertificate) o;
-    return Objects.equals(
-        new ArrayList<>(roundChangePayloads), new ArrayList<>(that.roundChangePayloads));
+    return Objects.equals(roundChangePayloads, that.roundChangePayloads);
   }
 
   @Override

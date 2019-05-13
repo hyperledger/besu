@@ -14,9 +14,9 @@ package tech.pegasys.pantheon.crypto.altbn128;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 
 /**
  * Adapted from the pc_ecc (Apache 2 License) implementation:
@@ -266,7 +266,7 @@ public abstract class AbstractFqp<T extends AbstractFqp> implements FieldElement
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(
+    return Objects.hash(
         degree, Arrays.hashCode(modulusCoefficients), Arrays.hashCode(coefficients));
   }
 

@@ -37,10 +37,10 @@ import java.security.Security;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
 
-import com.google.common.base.Objects;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.asn1.x9.X9IntegerConverter;
@@ -552,7 +552,7 @@ public class SECP256K1 {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(privateKey, publicKey);
+      return Objects.hash(privateKey, publicKey);
     }
 
     @Override
@@ -664,7 +664,7 @@ public class SECP256K1 {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(r, s, recId);
+      return Objects.hash(r, s, recId);
     }
 
     public byte getRecId() {

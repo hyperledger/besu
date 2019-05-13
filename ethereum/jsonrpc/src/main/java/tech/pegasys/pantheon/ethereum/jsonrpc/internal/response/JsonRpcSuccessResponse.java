@@ -12,10 +12,11 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.response;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.google.common.base.Objects;
 
 @JsonPropertyOrder({"jsonrpc", "id", "result"})
 public class JsonRpcSuccessResponse implements JsonRpcResponse {
@@ -58,11 +59,11 @@ public class JsonRpcSuccessResponse implements JsonRpcResponse {
       return false;
     }
     final JsonRpcSuccessResponse that = (JsonRpcSuccessResponse) o;
-    return Objects.equal(id, that.id) && Objects.equal(result, that.result);
+    return Objects.equals(id, that.id) && Objects.equals(result, that.result);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id, result);
+    return Objects.hash(id, result);
   }
 }

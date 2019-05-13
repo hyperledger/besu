@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
 
 public class UnsubscribeRequest {
 
@@ -51,12 +51,12 @@ public class UnsubscribeRequest {
       return false;
     }
     final UnsubscribeRequest that = (UnsubscribeRequest) o;
-    return Objects.equal(subscriptionId, that.subscriptionId)
-        && Objects.equal(connectionId, that.connectionId);
+    return Objects.equals(subscriptionId, that.subscriptionId)
+        && Objects.equals(connectionId, that.connectionId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(subscriptionId, connectionId);
+    return Objects.hash(subscriptionId, connectionId);
   }
 }

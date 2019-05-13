@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -24,7 +25,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
-import com.google.common.base.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonRpcRequest {
@@ -112,14 +112,14 @@ public class JsonRpcRequest {
     }
     final JsonRpcRequest that = (JsonRpcRequest) o;
     return isNotification == that.isNotification
-        && Objects.equal(id, that.id)
-        && Objects.equal(method, that.method)
+        && Objects.equals(id, that.id)
+        && Objects.equals(method, that.method)
         && Arrays.equals(params, that.params)
-        && Objects.equal(version, that.version);
+        && Objects.equals(version, that.version);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id, method, Arrays.hashCode(params), version, isNotification);
+    return Objects.hash(id, method, Arrays.hashCode(params), version, isNotification);
   }
 }

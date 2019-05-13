@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.cli.custom;
 
-import java.util.AbstractCollection;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -23,7 +23,7 @@ import javax.annotation.Nonnull;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 
-public class JsonRPCWhitelistHostsProperty extends AbstractCollection<String> {
+public class JsonRPCWhitelistHostsProperty extends AbstractList<String> {
 
   private final List<String> hostnamesWhitelist = new ArrayList<>();
 
@@ -47,6 +47,11 @@ public class JsonRPCWhitelistHostsProperty extends AbstractCollection<String> {
   @Override
   public boolean add(final String string) {
     return addAll(Collections.singleton(string));
+  }
+
+  @Override
+  public String get(final int index) {
+    return hostnamesWhitelist.get(index);
   }
 
   @Override

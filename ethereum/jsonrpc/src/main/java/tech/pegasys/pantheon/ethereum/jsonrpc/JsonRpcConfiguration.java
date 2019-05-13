@@ -16,10 +16,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
 
 public class JsonRpcConfiguration {
   private static final String DEFAULT_JSON_RPC_HOST = "127.0.0.1";
@@ -28,9 +28,9 @@ public class JsonRpcConfiguration {
   private boolean enabled;
   private int port;
   private String host;
-  private Collection<String> corsAllowedDomains = Collections.emptyList();
-  private Collection<RpcApi> rpcApis;
-  private Collection<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");;
+  private List<String> corsAllowedDomains = Collections.emptyList();
+  private List<RpcApi> rpcApis;
+  private List<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
 
@@ -73,7 +73,7 @@ public class JsonRpcConfiguration {
     return corsAllowedDomains;
   }
 
-  public void setCorsAllowedDomains(final Collection<String> corsAllowedDomains) {
+  public void setCorsAllowedDomains(final List<String> corsAllowedDomains) {
     if (corsAllowedDomains != null) {
       this.corsAllowedDomains = corsAllowedDomains;
     }
@@ -83,7 +83,7 @@ public class JsonRpcConfiguration {
     return rpcApis;
   }
 
-  public void setRpcApis(final Collection<RpcApi> rpcApis) {
+  public void setRpcApis(final List<RpcApi> rpcApis) {
     this.rpcApis = rpcApis;
   }
 
@@ -96,7 +96,7 @@ public class JsonRpcConfiguration {
     return Collections.unmodifiableCollection(this.hostsWhitelist);
   }
 
-  public void setHostsWhitelist(final Collection<String> hostsWhitelist) {
+  public void setHostsWhitelist(final List<String> hostsWhitelist) {
     this.hostsWhitelist = hostsWhitelist;
   }
 
@@ -125,17 +125,15 @@ public class JsonRpcConfiguration {
     final JsonRpcConfiguration that = (JsonRpcConfiguration) o;
     return enabled == that.enabled
         && port == that.port
-        && Objects.equal(host, that.host)
-        && Objects.equal(
-            Lists.newArrayList(corsAllowedDomains), Lists.newArrayList(that.corsAllowedDomains))
-        && Objects.equal(
-            Lists.newArrayList(hostsWhitelist), Lists.newArrayList(that.hostsWhitelist))
-        && Objects.equal(Lists.newArrayList(rpcApis), Lists.newArrayList(that.rpcApis));
+        && Objects.equals(host, that.host)
+        && Objects.equals(corsAllowedDomains, that.corsAllowedDomains)
+        && Objects.equals(hostsWhitelist, that.hostsWhitelist)
+        && Objects.equals(rpcApis, that.rpcApis);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(enabled, port, host, corsAllowedDomains, hostsWhitelist, rpcApis);
+    return Objects.hash(enabled, port, host, corsAllowedDomains, hostsWhitelist, rpcApis);
   }
 
   public boolean isAuthenticationEnabled() {

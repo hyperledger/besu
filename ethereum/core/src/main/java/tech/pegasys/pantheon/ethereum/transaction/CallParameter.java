@@ -16,7 +16,7 @@ import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
 
 // Represents parameters for a eth_call or eth_estimateGas JSON-RPC methods.
 public class CallParameter {
@@ -82,15 +82,15 @@ public class CallParameter {
     }
     final CallParameter that = (CallParameter) o;
     return gasLimit == that.gasLimit
-        && Objects.equal(from, that.from)
-        && Objects.equal(to, that.to)
-        && Objects.equal(gasPrice, that.gasPrice)
-        && Objects.equal(value, that.value)
-        && Objects.equal(payload, that.payload);
+        && Objects.equals(from, that.from)
+        && Objects.equals(to, that.to)
+        && Objects.equals(gasPrice, that.gasPrice)
+        && Objects.equals(value, that.value)
+        && Objects.equals(payload, that.payload);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(from, to, gasLimit, gasPrice, value, payload);
+    return Objects.hash(from, to, gasLimit, gasPrice, value, payload);
   }
 }

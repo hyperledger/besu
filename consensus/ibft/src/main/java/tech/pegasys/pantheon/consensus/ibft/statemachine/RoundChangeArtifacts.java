@@ -20,17 +20,17 @@ import tech.pegasys.pantheon.ethereum.core.Block;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class RoundChangeArtifacts {
 
   private final Optional<Block> block;
-  private final Collection<SignedData<RoundChangePayload>> roundChangePayloads;
+  private final List<SignedData<RoundChangePayload>> roundChangePayloads;
 
   public RoundChangeArtifacts(
-      final Optional<Block> block,
-      final Collection<SignedData<RoundChangePayload>> roundChangePayloads) {
+      final Optional<Block> block, final List<SignedData<RoundChangePayload>> roundChangePayloads) {
     this.block = block;
     this.roundChangePayloads = roundChangePayloads;
   }
@@ -58,7 +58,7 @@ public class RoundChangeArtifacts {
               .compareTo(o2.getPreparedCertificateRound().get());
         };
 
-    final Collection<SignedData<RoundChangePayload>> payloads =
+    final List<SignedData<RoundChangePayload>> payloads =
         roundChanges.stream().map(RoundChange::getSignedPayload).collect(Collectors.toList());
 
     final Optional<RoundChange> roundChangeWithNewestPrepare =

@@ -15,25 +15,24 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.websocket;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
 
 public class WebSocketConfiguration {
   public static final String DEFAULT_WEBSOCKET_HOST = "127.0.0.1";
   public static final int DEFAULT_WEBSOCKET_PORT = 8546;
-  public static final Collection<RpcApi> DEFAULT_WEBSOCKET_APIS =
+  public static final List<RpcApi> DEFAULT_WEBSOCKET_APIS =
       Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
 
   private boolean enabled;
   private int port;
   private String host;
-  private Collection<RpcApi> rpcApis;
+  private List<RpcApi> rpcApis;
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
   private Collection<String> hostsWhitelist = Collections.singletonList("localhost");
@@ -77,13 +76,8 @@ public class WebSocketConfiguration {
     return rpcApis;
   }
 
-  public void setRpcApis(final Collection<RpcApi> rpcApis) {
+  public void setRpcApis(final List<RpcApi> rpcApis) {
     this.rpcApis = rpcApis;
-  }
-
-  public void addRpcApi(final RpcApi rpcApi) {
-    this.rpcApis = new ArrayList<>(rpcApis);
-    rpcApis.add(rpcApi);
   }
 
   @Override
@@ -109,13 +103,13 @@ public class WebSocketConfiguration {
     final WebSocketConfiguration that = (WebSocketConfiguration) o;
     return enabled == that.enabled
         && port == that.port
-        && Objects.equal(host, that.host)
-        && Objects.equal(Lists.newArrayList(rpcApis), Lists.newArrayList(that.rpcApis));
+        && Objects.equals(host, that.host)
+        && Objects.equals(rpcApis, that.rpcApis);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(enabled, port, host, rpcApis);
+    return Objects.hash(enabled, port, host, rpcApis);
   }
 
   public boolean isAuthenticationEnabled() {

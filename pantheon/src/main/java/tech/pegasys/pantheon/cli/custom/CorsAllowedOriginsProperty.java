@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.cli.custom;
 
-import java.util.AbstractCollection;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,7 +26,7 @@ import javax.annotation.Nonnull;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 
-public class CorsAllowedOriginsProperty extends AbstractCollection<String> {
+public class CorsAllowedOriginsProperty extends AbstractList<String> {
 
   private final List<String> domains = new ArrayList<>();
 
@@ -50,6 +50,11 @@ public class CorsAllowedOriginsProperty extends AbstractCollection<String> {
   @Override
   public boolean add(final String string) {
     return addAll(Collections.singleton(string));
+  }
+
+  @Override
+  public String get(final int index) {
+    return domains.get(index);
   }
 
   @Override

@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.core;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
 
 public final class SyncStatus {
 
@@ -58,6 +58,6 @@ public final class SyncStatus {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(startingBlock, currentBlock, highestBlock);
+    return Objects.hash(startingBlock, currentBlock, highestBlock);
   }
 }

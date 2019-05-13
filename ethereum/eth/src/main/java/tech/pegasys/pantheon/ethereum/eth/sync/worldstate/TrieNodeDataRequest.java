@@ -18,9 +18,8 @@ import tech.pegasys.pantheon.ethereum.trie.TrieNodeDecoder;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
-
-import com.google.common.base.Objects;
 
 abstract class TrieNodeDataRequest extends NodeDataRequest {
 
@@ -50,7 +49,7 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
   }
 
   private boolean nodeIsHashReferencedDescendant(final Node<BytesValue> node) {
-    return !Objects.equal(node.getHash(), getHash()) && node.isReferencedByHash();
+    return !Objects.equals(node.getHash(), getHash()) && node.isReferencedByHash();
   }
 
   protected abstract NodeDataRequest createChildNodeDataRequest(final Hash childHash);
