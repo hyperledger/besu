@@ -25,7 +25,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
-import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -72,7 +72,7 @@ public class BlockImporter {
             blocks,
             rlp ->
                 BlockHeader.readFrom(
-                    rlp, ScheduleBasedBlockHashFunction.create(protocolSchedule)))) {
+                    rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)))) {
       BlockHeader previousHeader = null;
       CompletableFuture<Void> previousBlockFuture = null;
       while (iterator.hasNext()) {

@@ -24,8 +24,8 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 public class CliqueHelpers {
 
   public static Address getProposerOfBlock(final BlockHeader header) {
-    final CliqueExtraData extraData = CliqueExtraData.decode(header.getExtraData());
-    return CliqueBlockHashing.recoverProposerAddress(header, extraData);
+    final CliqueExtraData extraData = CliqueExtraData.decode(header);
+    return extraData.getProposerAddress();
   }
 
   public static Address getProposerForBlockAfter(

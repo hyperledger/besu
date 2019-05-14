@@ -77,7 +77,7 @@ public class IbftExtraDataValidationRuleTest {
 
   private IbftExtraData createExtraDataWithCommitSeals(
       final BlockHeader header, final Collection<KeyPair> committerKeyPairs) {
-    final IbftExtraData extraDataInHeader = IbftExtraData.decode(header.getExtraData());
+    final IbftExtraData extraDataInHeader = IbftExtraData.decode(header);
 
     final Hash headerHashForCommitters =
         IbftBlockHashing.calculateDataHashForCommittedSeal(header, extraDataInHeader);
@@ -138,7 +138,7 @@ public class IbftExtraDataValidationRuleTest {
     final BlockHeader header = createProposedBlockHeader(proposerKeyPair, validators);
 
     // Note that no committer seals are in the header's IBFT extra data.
-    final IbftExtraData headerExtraData = IbftExtraData.decode(header.getExtraData());
+    final IbftExtraData headerExtraData = IbftExtraData.decode(header);
     Assertions.assertThat(headerExtraData.getSeals().size()).isEqualTo(0);
 
     assertThat(extraDataValidationRule.validate(header, null, context)).isFalse();

@@ -17,7 +17,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
@@ -57,7 +57,7 @@ public final class BlockBodiesMessageTest {
           new BlockBody(
               oneBlock.readList(Transaction::readFrom),
               oneBlock.readList(
-                  rlp -> BlockHeader.readFrom(rlp, MainnetBlockHashFunction::createHash))));
+                  rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()))));
     }
     final MessageData initialMessage = BlockBodiesMessage.create(bodies);
     final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, initialMessage.getData());

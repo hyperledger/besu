@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.vm.operations;
 
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Gas;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.ProcessableBlockHeader;
@@ -52,7 +53,7 @@ public class BlockHashOperation extends AbstractOperation {
 
     // If the current block is the genesis block or the sought block is
     // not within the last 256 completed blocks, zero is returned.
-    if (currentBlockNumber == 0
+    if (currentBlockNumber == BlockHeader.GENESIS_BLOCK_NUMBER
         || soughtBlock < (mostRecentBlockNumber - MAX_RELATIVE_BLOCK)
         || soughtBlock > mostRecentBlockNumber) {
       frame.pushStackItem(Bytes32.ZERO);

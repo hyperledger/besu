@@ -43,7 +43,7 @@ public final class EthHashTest {
                 Resources.toByteArray(EthHashTest.class.getResource("block_300005.blocks"))),
             false);
     input.enterList();
-    final BlockHeader header = BlockHeader.readFrom(input, MainnetBlockHashFunction::createHash);
+    final BlockHeader header = BlockHeader.readFrom(input, new MainnetBlockHeaderFunctions());
     final long blockNumber = header.getNumber();
     final long epoch = EthHash.epoch(blockNumber);
     final long datasetSize = EthHash.datasetSize(epoch);

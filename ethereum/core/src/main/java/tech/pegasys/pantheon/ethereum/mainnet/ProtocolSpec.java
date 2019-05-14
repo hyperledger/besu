@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.ethereum.mainnet;
 
 import tech.pegasys.pantheon.ethereum.BlockValidator;
-import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockProcessor.TransactionReceiptFactory;
@@ -41,7 +41,7 @@ public class ProtocolSpec<C> {
 
   private final BlockProcessor blockProcessor;
 
-  private final BlockHashFunction blockHashFunction;
+  private final BlockHeaderFunctions blockHeaderFunctions;
 
   private final TransactionReceiptFactory transactionReceiptFactory;
 
@@ -66,7 +66,7 @@ public class ProtocolSpec<C> {
    * @param blockProcessor the block processor to use
    * @param blockImporter the block importer to use
    * @param blockValidator the block validator to use
-   * @param blockHashFunction the block hash function to use
+   * @param blockHeaderFunctions the block hash function to use
    * @param transactionReceiptFactory the transactionReceiptFactory to use
    * @param difficultyCalculator the difficultyCalculator to use
    * @param blockReward the blockReward to use.
@@ -85,7 +85,7 @@ public class ProtocolSpec<C> {
       final BlockProcessor blockProcessor,
       final BlockImporter<C> blockImporter,
       final BlockValidator<C> blockValidator,
-      final BlockHashFunction blockHashFunction,
+      final BlockHeaderFunctions blockHeaderFunctions,
       final TransactionReceiptFactory transactionReceiptFactory,
       final DifficultyCalculator<C> difficultyCalculator,
       final Wei blockReward,
@@ -102,7 +102,7 @@ public class ProtocolSpec<C> {
     this.blockProcessor = blockProcessor;
     this.blockImporter = blockImporter;
     this.blockValidator = blockValidator;
-    this.blockHashFunction = blockHashFunction;
+    this.blockHeaderFunctions = blockHeaderFunctions;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.difficultyCalculator = difficultyCalculator;
     this.blockReward = blockReward;
@@ -196,8 +196,8 @@ public class ProtocolSpec<C> {
    *
    * @return the block hash function
    */
-  public BlockHashFunction getBlockHashFunction() {
-    return blockHashFunction;
+  public BlockHeaderFunctions getBlockHeaderFunctions() {
+    return blockHeaderFunctions;
   }
 
   /**

@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.core;
 
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
 import tech.pegasys.pantheon.testutil.BlockTestUtil;
 
@@ -38,7 +38,7 @@ public final class BlockSyncTestUtils {
       BlockTestUtil.write1000Blocks(blocks);
       try (final RawBlockIterator iterator =
           new RawBlockIterator(
-              blocks, rlp -> BlockHeader.readFrom(rlp, MainnetBlockHashFunction::createHash))) {
+              blocks, rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()))) {
         for (int i = 0; i < count; ++i) {
           result.add(iterator.next());
         }

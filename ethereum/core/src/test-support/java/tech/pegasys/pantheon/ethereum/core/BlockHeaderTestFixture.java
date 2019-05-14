@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.core;
 
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -37,6 +37,7 @@ public class BlockHeaderTestFixture {
 
   private Hash mixHash = Hash.EMPTY;
   private long nonce = 0;
+  private BlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
 
   public BlockHeader buildHeader() {
     final BlockHeaderBuilder builder = BlockHeaderBuilder.create();
@@ -55,7 +56,7 @@ public class BlockHeaderTestFixture {
     builder.extraData(extraData);
     builder.mixHash(mixHash);
     builder.nonce(nonce);
-    builder.blockHashFunction(MainnetBlockHashFunction::createHash);
+    builder.blockHeaderFunctions(blockHeaderFunctions);
 
     return builder.buildBlockHeader();
   }
@@ -132,6 +133,12 @@ public class BlockHeaderTestFixture {
 
   public BlockHeaderTestFixture nonce(final long nonce) {
     this.nonce = nonce;
+    return this;
+  }
+
+  public BlockHeaderTestFixture blockHeaderFunctions(
+      final BlockHeaderFunctions blockHeaderFunctions) {
+    this.blockHeaderFunctions = blockHeaderFunctions;
     return this;
   }
 }

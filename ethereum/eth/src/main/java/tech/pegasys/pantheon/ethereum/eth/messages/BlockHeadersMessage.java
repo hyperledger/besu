@@ -12,10 +12,10 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.messages;
 
-import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
@@ -63,9 +63,9 @@ public final class BlockHeadersMessage extends AbstractMessageData {
   }
 
   public <C> List<BlockHeader> getHeaders(final ProtocolSchedule<C> protocolSchedule) {
-    final BlockHashFunction blockHashFunction =
-        ScheduleBasedBlockHashFunction.create(protocolSchedule);
+    final BlockHeaderFunctions blockHeaderFunctions =
+        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     return new BytesValueRLPInput(data, false)
-        .readList(rlp -> BlockHeader.readFrom(rlp, blockHashFunction));
+        .readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions));
   }
 }

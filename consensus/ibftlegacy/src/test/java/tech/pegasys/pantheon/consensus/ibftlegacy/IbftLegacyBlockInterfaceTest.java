@@ -25,7 +25,6 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Util;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 
 import java.util.Collection;
 import java.util.List;
@@ -45,7 +44,7 @@ public class IbftLegacyBlockInterfaceTest {
   private final IbftLegacyBlockInterface blockInterface = new IbftLegacyBlockInterface();
   private final BlockHeaderBuilder builder =
       BlockHeaderBuilder.fromHeader(headerBuilder.buildHeader())
-          .blockHashFunction(MainnetBlockHashFunction::createHash);
+          .blockHeaderFunctions(new LegacyIbftBlockHeaderFunctions());
 
   @Before
   public void setup() {

@@ -22,12 +22,14 @@ import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.LogsBloomFilter;
 import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
+import tech.pegasys.pantheon.ethereum.core.ParsedExtraData;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
@@ -167,7 +169,17 @@ public class BlockchainReferenceTestCaseSpec {
           BytesValue.fromHexString(extraData), // extraData
           Hash.fromHexString(mixHash), // mixHash
           BytesValue.fromHexString(nonce).getLong(0),
-          header -> Hash.fromHexString(hash)); // nonce
+          new BlockHeaderFunctions() {
+            @Override
+            public Hash hash(final BlockHeader header) {
+              return Hash.fromHexString(hash);
+            }
+
+            @Override
+            public ParsedExtraData parseExtraData(final BlockHeader header) {
+              return null;
+            }
+          });
     }
   }
 
@@ -223,12 +235,12 @@ public class BlockchainReferenceTestCaseSpec {
     public Block getBlock() {
       final RLPInput input = new BytesValueRLPInput(rlp, false);
       input.enterList();
-      final BlockHeader header = BlockHeader.readFrom(input, MainnetBlockHashFunction::createHash);
+      final MainnetBlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
+      final BlockHeader header = BlockHeader.readFrom(input, blockHeaderFunctions);
       final BlockBody body =
           new BlockBody(
               input.readList(Transaction::readFrom),
-              input.readList(
-                  rlp -> BlockHeader.readFrom(rlp, MainnetBlockHashFunction::createHash)));
+              input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)));
       return new Block(header, body);
     }
   }

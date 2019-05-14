@@ -17,7 +17,6 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 
 /** A block header capable of being sealed. */
 public class SealableBlockHeader extends ProcessableBlockHeader {
-
   protected final Hash ommersHash;
 
   protected final Hash stateRoot;
@@ -111,9 +110,9 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
   }
 
   /**
-   * Returns the block extra data field.
+   * Returns the unparsed extra data field.
    *
-   * @return the block extra data field
+   * @return the raw bytes of the extra data field
    */
   public BytesValue getExtraData() {
     return extraData;

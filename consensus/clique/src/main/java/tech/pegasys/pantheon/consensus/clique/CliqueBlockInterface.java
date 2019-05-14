@@ -40,8 +40,7 @@ public class CliqueBlockInterface implements BlockInterface {
 
   @Override
   public Address getProposerOfBlock(final BlockHeader header) {
-    final CliqueExtraData cliqueExtraData = CliqueExtraData.decode(header.getExtraData());
-    return CliqueBlockHashing.recoverProposerAddress(header, cliqueExtraData);
+    return CliqueHelpers.getProposerOfBlock(header);
   }
 
   @Override
@@ -73,7 +72,7 @@ public class CliqueBlockInterface implements BlockInterface {
 
   @Override
   public Collection<Address> validatorsInBlock(final BlockHeader header) {
-    return CliqueExtraData.decode(header.getExtraData()).getValidators();
+    return CliqueExtraData.decode(header).getValidators();
   }
 
   public static boolean isValidVoteValue(final long value) {

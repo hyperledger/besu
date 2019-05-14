@@ -234,7 +234,7 @@ public class IbftRoundTest {
 
     // Ensure imported block contains both commit seals.
     final IbftExtraData importedExtraData =
-        IbftExtraData.decode(capturedBlock.getValue().getHeader().getExtraData());
+        IbftExtraData.decode(capturedBlock.getValue().getHeader());
     assertThat(importedExtraData.getSeals()).containsOnly(remoteCommitSeal, localCommitSeal);
   }
 
@@ -333,7 +333,7 @@ public class IbftRoundTest {
             eq(Optional.of(roundChangeArtifacts.getRoundChangeCertificate())));
 
     final IbftExtraData proposedExtraData =
-        IbftExtraData.decode(blockCaptor.getValue().getHeader().getExtraData());
+        IbftExtraData.decode(blockCaptor.getValue().getHeader());
     assertThat(proposedExtraData.getRound()).isEqualTo(roundIdentifier.getRoundNumber());
 
     // Inject a single Prepare message, and confirm the roundState has gone to Prepared (which

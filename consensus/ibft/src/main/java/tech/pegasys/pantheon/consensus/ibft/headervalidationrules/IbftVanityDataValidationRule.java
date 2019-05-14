@@ -31,7 +31,7 @@ public class IbftVanityDataValidationRule
       final BlockHeader header,
       final BlockHeader parent,
       final ProtocolContext<IbftContext> protocolContext) {
-    final IbftExtraData extraData = IbftExtraData.decode(header.getExtraData());
+    final IbftExtraData extraData = IbftExtraData.decode(header);
 
     if (extraData.getVanityData().size() != IbftExtraData.EXTRA_VANITY_LENGTH) {
       LOG.trace("Ibft Extra Data does not contain 32 bytes of vanity data.");

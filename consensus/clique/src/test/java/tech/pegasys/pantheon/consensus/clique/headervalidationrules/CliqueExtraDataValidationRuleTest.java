@@ -62,12 +62,13 @@ public class CliqueExtraDataValidationRuleTest {
 
   @Test
   public void missingSignerFailsValidation() {
-    final CliqueExtraData extraData =
-        new CliqueExtraData(BytesValue.wrap(new byte[32]), null, Lists.newArrayList());
+    final BytesValue extraData =
+        CliqueExtraData.createWithoutProposerSeal(
+            BytesValue.wrap(new byte[32]), Lists.newArrayList());
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     final BlockHeader parent = headerBuilder.number(1).buildHeader();
-    final BlockHeader child = headerBuilder.number(2).extraData(extraData.encode()).buildHeader();
+    final BlockHeader child = headerBuilder.number(2).extraData(extraData).buildHeader();
 
     final CliqueExtraDataValidationRule rule =
         new CliqueExtraDataValidationRule(new EpochManager(10));

@@ -26,7 +26,7 @@ import tech.pegasys.pantheon.consensus.common.VoteTallyUpdater;
 import tech.pegasys.pantheon.consensus.ibft.BlockTimer;
 import tech.pegasys.pantheon.consensus.ibft.EventMultiplexer;
 import tech.pegasys.pantheon.consensus.ibft.Gossiper;
-import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
+import tech.pegasys.pantheon.consensus.ibft.IbftBlockHeaderFunctions;
 import tech.pegasys.pantheon.consensus.ibft.IbftBlockInterface;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
 import tech.pegasys.pantheon.consensus.ibft.IbftEventQueue;
@@ -163,7 +163,7 @@ public class TestContextBuilder {
 
     final Block genesisBlock = createGenesisBlock(networkNodes.getValidatorAddresses());
     final MutableBlockchain blockChain =
-        createInMemoryBlockchain(genesisBlock, IbftBlockHashing::calculateHashOfIbftBlockOnChain);
+        createInMemoryBlockchain(genesisBlock, IbftBlockHeaderFunctions.forOnChainBlock());
 
     final KeyPair nodeKeys = networkNodes.getLocalNode().getNodeKeyPair();
 

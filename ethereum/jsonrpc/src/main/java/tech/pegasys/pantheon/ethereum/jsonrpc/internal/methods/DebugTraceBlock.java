@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.ethereum.core.Block;
-import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.debug.TraceOptions;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
@@ -42,17 +42,17 @@ public class DebugTraceBlock implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
   private final JsonRpcParameter parameters;
   private final BlockTracer blockTracer;
-  private final BlockHashFunction blockHashFunction;
+  private final BlockHeaderFunctions blockHeaderFunctions;
   private final BlockchainQueries blockchain;
 
   public DebugTraceBlock(
       final JsonRpcParameter parameters,
       final BlockTracer blockTracer,
-      final BlockHashFunction blockHashFunction,
+      final BlockHeaderFunctions blockHeaderFunctions,
       final BlockchainQueries blockchain) {
     this.parameters = parameters;
     this.blockTracer = blockTracer;
-    this.blockHashFunction = blockHashFunction;
+    this.blockHeaderFunctions = blockHeaderFunctions;
     this.blockchain = blockchain;
   }
 
@@ -66,7 +66,7 @@ public class DebugTraceBlock implements JsonRpcMethod {
     final String input = parameters.required(request.getParams(), 0, String.class);
     final Block block;
     try {
-      block = Block.readFrom(RLP.input(BytesValue.fromHexString(input)), this.blockHashFunction);
+      block = Block.readFrom(RLP.input(BytesValue.fromHexString(input)), this.blockHeaderFunctions);
     } catch (final RLPException e) {
       LOG.debug("Failed to parse block RLP", e);
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);

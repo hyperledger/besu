@@ -12,9 +12,8 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.blockcreation;
 
-import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
+import tech.pegasys.pantheon.consensus.ibft.IbftBlockHeaderFunctions;
 import tech.pegasys.pantheon.consensus.ibft.IbftContext;
-import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
 import tech.pegasys.pantheon.consensus.ibft.IbftHelpers;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.AbstractBlockCreator;
@@ -55,17 +54,12 @@ public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
 
   @Override
   protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
-
-    final IbftExtraData extraData = IbftExtraData.decode(sealableBlockHeader.getExtraData());
-
     final BlockHeaderBuilder builder =
         BlockHeaderBuilder.create()
             .populateFrom(sealableBlockHeader)
             .mixHash(IbftHelpers.EXPECTED_MIX_HASH)
             .nonce(0L)
-            .blockHashFunction(
-                blockHeader ->
-                    IbftBlockHashing.calculateDataHashForCommittedSeal(blockHeader, extraData));
+            .blockHeaderFunctions(IbftBlockHeaderFunctions.forCommittedSeal());
 
     return builder.buildBlockHeader();
   }

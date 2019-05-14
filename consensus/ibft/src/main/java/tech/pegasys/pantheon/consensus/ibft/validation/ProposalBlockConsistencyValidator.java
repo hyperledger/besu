@@ -49,7 +49,7 @@ public class ProposalBlockConsistencyValidator {
   private boolean validateBlockMatchesProposalRound(
       final ProposalPayload payload, final Block block) {
     final ConsensusRoundIdentifier msgRound = payload.getRoundIdentifier();
-    final IbftExtraData extraData = IbftExtraData.decode(block.getHeader().getExtraData());
+    final IbftExtraData extraData = IbftExtraData.decode(block.getHeader());
     if (extraData.getRound() != msgRound.getRoundNumber()) {
       LOG.info("Invalid Proposal message, round number in block does not match that in message.");
       return false;

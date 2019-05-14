@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.consensus.clique.headervalidationrules;
 
-import tech.pegasys.pantheon.consensus.clique.CliqueBlockHashing;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
@@ -76,8 +75,8 @@ public class CliqueExtraDataValidationRule
   private boolean extraDataIsValid(
       final Collection<Address> expectedValidators, final BlockHeader header) {
 
-    final CliqueExtraData cliqueExtraData = CliqueExtraData.decode(header.getExtraData());
-    final Address proposer = CliqueBlockHashing.recoverProposerAddress(header, cliqueExtraData);
+    final CliqueExtraData cliqueExtraData = CliqueExtraData.decode(header);
+    final Address proposer = cliqueExtraData.getProposerAddress();
 
     if (!expectedValidators.contains(proposer)) {
       LOG.trace("Proposer sealing block is not a member of the signers.");

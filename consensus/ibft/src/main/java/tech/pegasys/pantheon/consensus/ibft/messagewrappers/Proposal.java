@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.messagewrappers;
 
-import tech.pegasys.pantheon.consensus.ibft.IbftBlockHashing;
+import tech.pegasys.pantheon.consensus.ibft.IbftBlockHeaderFunctions;
 import tech.pegasys.pantheon.consensus.ibft.payload.ProposalPayload;
 import tech.pegasys.pantheon.consensus.ibft.payload.RoundChangeCertificate;
 import tech.pegasys.pantheon.consensus.ibft.payload.SignedData;
@@ -71,8 +71,7 @@ public class Proposal extends IbftMessage<ProposalPayload> {
     RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
     final SignedData<ProposalPayload> payload = SignedData.readSignedProposalPayloadFrom(rlpIn);
-    final Block proposedBlock =
-        Block.readFrom(rlpIn, IbftBlockHashing::calculateDataHashForCommittedSeal);
+    final Block proposedBlock = Block.readFrom(rlpIn, IbftBlockHeaderFunctions.forCommittedSeal());
 
     final Optional<RoundChangeCertificate> roundChangeCertificate =
         readRoundChangeCertificate(rlpIn);

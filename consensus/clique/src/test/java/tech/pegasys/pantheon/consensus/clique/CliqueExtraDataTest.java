@@ -19,6 +19,8 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -41,11 +43,14 @@ public class CliqueExtraDataTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
     final BytesValue vanityData = BytesValue.fromHexString("11223344", 32);
 
-    final CliqueExtraData extraData = new CliqueExtraData(vanityData, proposerSeal, validators);
+    final CliqueExtraData extraData =
+        new CliqueExtraData(
+            vanityData, proposerSeal, validators, new BlockHeaderTestFixture().buildHeader());
 
     final BytesValue serialisedData = extraData.encode();
 
-    final CliqueExtraData decodedExtraData = CliqueExtraData.decode(serialisedData);
+    final CliqueExtraData decodedExtraData =
+        CliqueExtraData.decodeRaw(createHeaderWithExtraData(serialisedData));
 
     assertThat(decodedExtraData.getValidators()).isEqualTo(validators);
     assertThat(decodedExtraData.getProposerSeal().get()).isEqualTo(proposerSeal);
@@ -61,7 +66,13 @@ public class CliqueExtraDataTest {
 
     final BytesValue bufferToInject = BytesValue.wrap(genesisBlockExtraData);
 
-    final CliqueExtraData extraData = CliqueExtraData.decode(bufferToInject);
+    final CliqueExtraData extraData =
+        CliqueExtraData.decodeRaw(
+            new BlockHeaderTestFixture()
+                .number(BlockHeader.GENESIS_BLOCK_NUMBER)
+                .blockHeaderFunctions(new CliqueBlockHeaderFunctions())
+                .extraData(bufferToInject)
+                .buildHeader());
     assertThat(extraData.getProposerSeal()).isEmpty();
     assertThat(extraData.getValidators().size()).isEqualTo(3);
   }
@@ -72,7 +83,7 @@ public class CliqueExtraDataTest {
         BytesValue.wrap(
             new byte[Signature.BYTES_REQUIRED + CliqueExtraData.EXTRA_VANITY_LENGTH - 1]);
 
-    assertThatThrownBy(() -> CliqueExtraData.decode(illegalData))
+    assertThatThrownBy(() -> CliqueExtraData.decodeRaw(createHeaderWithExtraData(illegalData)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage(
             "Invalid BytesValue supplied - too short to produce a valid Clique Extra Data object.");
@@ -88,7 +99,7 @@ public class CliqueExtraDataTest {
                     + Address.SIZE
                     - 1]);
 
-    assertThatThrownBy(() -> CliqueExtraData.decode(illegalData))
+    assertThatThrownBy(() -> CliqueExtraData.decodeRaw(createHeaderWithExtraData(illegalData)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("BytesValue is of invalid size - i.e. contains unused bytes.");
   }
@@ -108,8 +119,16 @@ public class CliqueExtraDataTest {
 
     final String hexOutput = CliqueExtraData.createGenesisExtraDataString(addresses);
 
-    final CliqueExtraData extraData = CliqueExtraData.decode(BytesValue.fromHexString(hexOutput));
+    final CliqueExtraData extraData =
+        CliqueExtraData.decodeRaw(createHeaderWithExtraData(BytesValue.fromHexString(hexOutput)));
 
     assertThat(extraData.getValidators()).containsExactly(addresses.toArray(new Address[0]));
+  }
+
+  private BlockHeader createHeaderWithExtraData(final BytesValue illegalData) {
+    return new BlockHeaderTestFixture()
+        .blockHeaderFunctions(new CliqueBlockHeaderFunctions())
+        .extraData(illegalData)
+        .buildHeader();
   }
 }

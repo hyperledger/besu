@@ -17,7 +17,7 @@ import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncState.EMP
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderFunctions;
 
 import java.io.File;
 
@@ -57,26 +57,24 @@ public class FastSyncStateStorageTest {
   @Test
   public void shouldRoundTripHeader() {
     storage.storeState(syncStateWithHeader);
-    assertThat(storage.loadState(MainnetBlockHashFunction::createHash))
-        .isEqualTo(syncStateWithHeader);
+    assertThat(storage.loadState(new MainnetBlockHeaderFunctions())).isEqualTo(syncStateWithHeader);
 
     final FastSyncStateStorage newStorage = new FastSyncStateStorage(tempDir.toPath());
-    assertThat(newStorage.loadState(MainnetBlockHashFunction::createHash))
+    assertThat(newStorage.loadState(new MainnetBlockHeaderFunctions()))
         .isEqualTo(syncStateWithHeader);
   }
 
   @Test
   public void shouldReturnEmptyWhenLoadingHeaderAndFileDoesNotExist() {
-    assertThat(storage.loadState(MainnetBlockHashFunction::createHash)).isEqualTo(EMPTY_SYNC_STATE);
+    assertThat(storage.loadState(new MainnetBlockHeaderFunctions())).isEqualTo(EMPTY_SYNC_STATE);
   }
 
   @Test
   public void shouldRemoveStateFileWhenStoringFastSyncWithoutBlockHeader() {
     storage.storeState(syncStateWithHeader);
-    assertThat(storage.loadState(MainnetBlockHashFunction::createHash))
-        .isEqualTo(syncStateWithHeader);
+    assertThat(storage.loadState(new MainnetBlockHeaderFunctions())).isEqualTo(syncStateWithHeader);
 
     storage.storeState(EMPTY_SYNC_STATE);
-    assertThat(storage.loadState(MainnetBlockHashFunction::createHash)).isEqualTo(EMPTY_SYNC_STATE);
+    assertThat(storage.loadState(new MainnetBlockHeaderFunctions())).isEqualTo(EMPTY_SYNC_STATE);
   }
 }

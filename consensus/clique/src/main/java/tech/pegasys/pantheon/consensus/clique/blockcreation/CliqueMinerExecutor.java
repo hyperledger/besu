@@ -109,8 +109,6 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
       validators.addAll(voteTally.getValidators());
     }
 
-    final CliqueExtraData extraData = new CliqueExtraData(vanityDataToInsert, null, validators);
-
-    return extraData.encode();
+    return CliqueExtraData.encodeUnsealed(vanityDataToInsert, validators);
   }
 }

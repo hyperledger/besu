@@ -35,7 +35,7 @@ public final class ValidationTestUtils {
                     EthHashTest.class.getResource(String.format("block_%d.blocks", num)))),
             false);
     input.enterList();
-    return BlockHeader.readFrom(input, MainnetBlockHashFunction::createHash);
+    return BlockHeader.readFrom(input, new MainnetBlockHeaderFunctions());
   }
 
   public static BlockBody readBody(final long num) throws IOException {
@@ -49,7 +49,7 @@ public final class ValidationTestUtils {
     input.skipNext();
     final List<Transaction> transactions = input.readList(Transaction::readFrom);
     final List<BlockHeader> ommers =
-        input.readList(rlp -> BlockHeader.readFrom(rlp, MainnetBlockHashFunction::createHash));
+        input.readList(rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()));
     return new BlockBody(transactions, ommers);
   }
 
@@ -61,10 +61,10 @@ public final class ValidationTestUtils {
                     EthHashTest.class.getResource(String.format("block_%d.blocks", num)))),
             false);
     input.enterList();
-    final BlockHeader header = BlockHeader.readFrom(input, MainnetBlockHashFunction::createHash);
+    final BlockHeader header = BlockHeader.readFrom(input, new MainnetBlockHeaderFunctions());
     final List<Transaction> transactions = input.readList(Transaction::readFrom);
     final List<BlockHeader> ommers =
-        input.readList(rlp -> BlockHeader.readFrom(rlp, MainnetBlockHashFunction::createHash));
+        input.readList(rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()));
     final BlockBody body = new BlockBody(transactions, ommers);
     return new Block(header, body);
   }

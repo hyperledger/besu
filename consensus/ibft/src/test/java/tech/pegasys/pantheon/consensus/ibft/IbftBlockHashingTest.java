@@ -59,7 +59,7 @@ public class IbftBlockHashingTest {
   public void testRecoverCommitterAddresses() {
     List<Address> actualCommitterAddresses =
         IbftBlockHashing.recoverCommitterAddresses(
-            HEADER_TO_BE_HASHED, IbftExtraData.decode(HEADER_TO_BE_HASHED.getExtraData()));
+            HEADER_TO_BE_HASHED, IbftExtraData.decode(HEADER_TO_BE_HASHED));
 
     List<Address> expectedCommitterAddresses =
         COMMITTERS_KEY_PAIRS.stream()
@@ -73,7 +73,7 @@ public class IbftBlockHashingTest {
   public void testCalculateDataHashForCommittedSeal() {
     Hash dataHahsForCommittedSeal =
         IbftBlockHashing.calculateDataHashForCommittedSeal(
-            HEADER_TO_BE_HASHED, IbftExtraData.decode(HEADER_TO_BE_HASHED.getExtraData()));
+            HEADER_TO_BE_HASHED, IbftExtraData.decode(HEADER_TO_BE_HASHED));
 
     BlockHeaderBuilder builder = setHeaderFieldsExceptForExtraData();
 
@@ -126,7 +126,7 @@ public class IbftBlockHashingTest {
     builder.mixHash(
         Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"));
     builder.nonce(0);
-    builder.blockHashFunction(IbftBlockHashing::calculateHashOfIbftBlockOnChain);
+    builder.blockHeaderFunctions(IbftBlockHeaderFunctions.forOnChainBlock());
     return builder;
   }
 

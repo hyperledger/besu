@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -13,19 +13,7 @@
 package tech.pegasys.pantheon.ethereum.core;
 
 /**
- * An interface for creating the block hash given a {@link BlockHeader}.
- *
- * <p>The algorithm to create the block hash may vary depending on the consensus mechanism used by
- * the chain.
+ * Marker interface for the classes that may be returned from {@link
+ * BlockHeader#getParsedExtraData()}
  */
-@FunctionalInterface
-public interface BlockHashFunction {
-
-  /**
-   * Create the hash for a given BlockHeader.
-   *
-   * @param header the header to create the block hash from
-   * @return a {@link Hash} containing the block hash.
-   */
-  Hash apply(BlockHeader header);
-}
+public interface ParsedExtraData {}

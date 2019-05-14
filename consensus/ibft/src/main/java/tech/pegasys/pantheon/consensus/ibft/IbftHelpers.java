@@ -41,7 +41,7 @@ public class IbftHelpers {
   public static Block createSealedBlock(
       final Block block, final Collection<Signature> commitSeals) {
     final BlockHeader initialHeader = block.getHeader();
-    final IbftExtraData initialExtraData = IbftExtraData.decode(initialHeader.getExtraData());
+    final IbftExtraData initialExtraData = IbftExtraData.decode(initialHeader);
 
     final IbftExtraData sealedExtraData =
         new IbftExtraData(
@@ -54,7 +54,7 @@ public class IbftHelpers {
     final BlockHeader sealedHeader =
         BlockHeaderBuilder.fromHeader(initialHeader)
             .extraData(sealedExtraData.encode())
-            .blockHashFunction(IbftBlockHashing::calculateHashOfIbftBlockOnChain)
+            .blockHeaderFunctions(IbftBlockHeaderFunctions.forOnChainBlock())
             .buildBlockHeader();
 
     return new Block(sealedHeader, block.getBody());

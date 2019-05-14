@@ -30,23 +30,27 @@ public class TestHelpers {
       final KeyPair signer,
       final List<Address> validators) {
 
-    final CliqueExtraData unsignedExtraData =
-        new CliqueExtraData(BytesValue.wrap(new byte[32]), null, validators);
-    blockHeaderBuilder.extraData(unsignedExtraData.encode());
+    final BlockHeader unsealedHeader =
+        blockHeaderBuilder
+            .blockHeaderFunctions(new CliqueBlockHeaderFunctions())
+            .extraData(CliqueExtraData.encodeUnsealed(BytesValue.wrap(new byte[32]), validators))
+            .buildHeader();
+    final CliqueExtraData unsignedExtraData = CliqueExtraData.decodeRaw(unsealedHeader);
 
     final Hash signingHash =
-        CliqueBlockHashing.calculateDataHashForProposerSeal(
-            blockHeaderBuilder.buildHeader(), unsignedExtraData);
+        CliqueBlockHashing.calculateDataHashForProposerSeal(unsealedHeader, unsignedExtraData);
 
     final Signature proposerSignature = SECP256K1.sign(signingHash, signer);
 
-    final CliqueExtraData signedExtraData =
+    final BytesValue signedExtraData =
         new CliqueExtraData(
-            unsignedExtraData.getVanityData(),
-            proposerSignature,
-            unsignedExtraData.getValidators());
+                unsignedExtraData.getVanityData(),
+                proposerSignature,
+                unsignedExtraData.getValidators(),
+                unsealedHeader)
+            .encode();
 
-    blockHeaderBuilder.extraData(signedExtraData.encode());
+    blockHeaderBuilder.extraData(signedExtraData);
 
     return blockHeaderBuilder.buildHeader();
   }

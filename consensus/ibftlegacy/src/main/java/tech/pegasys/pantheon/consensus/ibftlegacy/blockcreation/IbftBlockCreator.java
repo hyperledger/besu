@@ -21,16 +21,16 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.AbstractBlockCreator;
 import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.SealableBlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 
 import java.util.function.Function;
 
@@ -77,15 +77,15 @@ public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
   @Override
   protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
 
-    final BlockHashFunction blockHashFunction =
-        ScheduleBasedBlockHashFunction.create(protocolSchedule);
+    final BlockHeaderFunctions blockHeaderFunctions =
+        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
 
     final BlockHeaderBuilder builder =
         BlockHeaderBuilder.create()
             .populateFrom(sealableBlockHeader)
             .mixHash(IbftHelpers.EXPECTED_MIX_HASH)
             .nonce(0)
-            .blockHashFunction(blockHashFunction);
+            .blockHeaderFunctions(blockHeaderFunctions);
 
     final IbftExtraData sealedExtraData = constructSignedExtraData(builder.buildBlockHeader());
 
@@ -102,7 +102,7 @@ public class IbftBlockCreator extends AbstractBlockCreator<IbftContext> {
    *     proposerSeal will also be populated.
    */
   private IbftExtraData constructSignedExtraData(final BlockHeader headerToSign) {
-    final IbftExtraData extraData = IbftExtraData.decode(headerToSign.getExtraData());
+    final IbftExtraData extraData = IbftExtraData.decode(headerToSign);
     final Hash hashToSign =
         IbftBlockHashing.calculateDataHashForProposerSeal(headerToSign, extraData);
     return new IbftExtraData(

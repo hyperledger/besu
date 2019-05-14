@@ -18,7 +18,7 @@ import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 
 import java.io.DataOutputStream;
@@ -81,7 +81,7 @@ public class RawBlockIteratorTest {
     final RawBlockIterator iterator =
         new RawBlockIterator(
             blocksFile.toPath(),
-            rlp -> BlockHeader.readFrom(rlp, MainnetBlockHashFunction::createHash),
+            rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()),
             initialCapacity);
 
     // Read blocks and check that they match

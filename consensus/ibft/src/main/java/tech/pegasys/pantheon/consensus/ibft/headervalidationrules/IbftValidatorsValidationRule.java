@@ -46,7 +46,7 @@ public class IbftValidatorsValidationRule
     try {
       final ValidatorProvider validatorProvider =
           context.getConsensusState().getVoteTallyCache().getVoteTallyAfterBlock(parent);
-      final IbftExtraData ibftExtraData = IbftExtraData.decode(header.getExtraData());
+      final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
 
       final SortedSet<Address> sortedReportedValidators =
           new TreeSet<>(ibftExtraData.getValidators());

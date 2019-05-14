@@ -60,7 +60,7 @@ public class Block {
     out.endList();
   }
 
-  public static Block readFrom(final RLPInput in, final BlockHashFunction hashFunction) {
+  public static Block readFrom(final RLPInput in, final BlockHeaderFunctions hashFunction) {
     in.enterList();
     final BlockHeader header = BlockHeader.readFrom(in, hashFunction);
     final List<Transaction> transactions = in.readList(Transaction::readFrom);

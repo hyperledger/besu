@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.ethereum.eth.messages;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
@@ -47,7 +47,7 @@ public final class GetBlockBodiesMessageTest {
       buffer.compact().position(0);
       final RLPInput oneBlock = new BytesValueRLPInput(BytesValue.wrap(block), false);
       oneBlock.enterList();
-      hashes.add(BlockHeader.readFrom(oneBlock, MainnetBlockHashFunction::createHash).getHash());
+      hashes.add(BlockHeader.readFrom(oneBlock, new MainnetBlockHeaderFunctions()).getHash());
       // We don't care about the bodies, just the headers
       oneBlock.skipNext();
       oneBlock.skipNext();
