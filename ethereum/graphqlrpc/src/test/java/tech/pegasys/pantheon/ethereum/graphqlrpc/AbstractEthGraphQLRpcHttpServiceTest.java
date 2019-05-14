@@ -45,7 +45,9 @@ import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 
 import java.net.URL;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -139,6 +141,13 @@ public abstract class AbstractEthGraphQLRpcHttpServiceTest {
         .thenReturn(ValidationResult.valid());
     final PendingTransactions pendingTransactionsMock = mock(PendingTransactions.class);
     when(transactionPoolMock.getPendingTransactions()).thenReturn(pendingTransactionsMock);
+    when(pendingTransactionsMock.getTransactionInfo())
+        .thenReturn(
+            Collections.singleton(
+                new PendingTransactions.TransactionInfo(
+                    Transaction.builder().nonce(42).gasLimit(654321).build(),
+                    true,
+                    Instant.ofEpochSecond(Integer.MAX_VALUE))));
 
     stateArchive = createInMemoryWorldStateArchive();
     GENESIS_CONFIG.writeStateTo(stateArchive.getMutable());

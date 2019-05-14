@@ -15,37 +15,46 @@ package tech.pegasys.pantheon.ethereum.graphqlrpc.internal;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 
+import java.util.Optional;
+
 public class TransactionWithMetadata {
 
   private final Transaction transaction;
-  private final long blockNumber;
-  private final Hash blockHash;
-  private final int transactionIndex;
+  private final Optional<Long> blockNumber;
+  private final Optional<Hash> blockHash;
+  private final Optional<Integer> transactionIndex;
 
-  public TransactionWithMetadata(
+  public TransactionWithMetadata(final Transaction transaction) {
+    this.transaction = transaction;
+    this.blockNumber = Optional.empty();
+    this.blockHash = Optional.empty();
+    this.transactionIndex = Optional.empty();
+  }
+
+  TransactionWithMetadata(
       final Transaction transaction,
       final long blockNumber,
       final Hash blockHash,
       final int transactionIndex) {
     this.transaction = transaction;
-    this.blockNumber = blockNumber;
-    this.blockHash = blockHash;
-    this.transactionIndex = transactionIndex;
+    this.blockNumber = Optional.of(blockNumber);
+    this.blockHash = Optional.of(blockHash);
+    this.transactionIndex = Optional.of(transactionIndex);
   }
 
   public Transaction getTransaction() {
     return transaction;
   }
 
-  public long getBlockNumber() {
+  public Optional<Long> getBlockNumber() {
     return blockNumber;
   }
 
-  public Hash getBlockHash() {
+  public Optional<Hash> getBlockHash() {
     return blockHash;
   }
 
-  public int getTransactionIndex() {
+  public Optional<Integer> getTransactionIndex() {
     return transactionIndex;
   }
 }

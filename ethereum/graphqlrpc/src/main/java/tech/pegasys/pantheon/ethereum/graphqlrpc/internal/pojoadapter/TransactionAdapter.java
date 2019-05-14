@@ -17,7 +17,6 @@ import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.core.WorldState;
-import tech.pegasys.pantheon.ethereum.graphqlrpc.internal.BlockWithMetadata;
 import tech.pegasys.pantheon.ethereum.graphqlrpc.internal.BlockchainQuery;
 import tech.pegasys.pantheon.ethereum.graphqlrpc.internal.LogWithMetadata;
 import tech.pegasys.pantheon.ethereum.graphqlrpc.internal.TransactionReceiptWithMetadata;
@@ -49,18 +48,18 @@ public class TransactionAdapter extends AdapterBase {
   }
 
   public Optional<Integer> getIndex() {
-    return Optional.of(transactionWithMetadata.getTransactionIndex());
+    return transactionWithMetadata.getTransactionIndex();
   }
 
   public Optional<AccountAdapter> getFrom(final DataFetchingEnvironment environment) {
     final BlockchainQuery query = getBlockchainQuery(environment);
-    long blockNumber = transactionWithMetadata.getBlockNumber();
-    final Long bn = environment.getArgument("block");
-    if (bn != null) {
-      blockNumber = bn;
+    final Optional<Long> txBlockNumber = transactionWithMetadata.getBlockNumber();
+    final Optional<Long> bn = Optional.ofNullable(environment.getArgument("block"));
+    if (!txBlockNumber.isPresent() && !bn.isPresent()) {
+      return Optional.empty();
     }
     return query
-        .getWorldState(blockNumber)
+        .getWorldState(bn.orElseGet(txBlockNumber::get))
         .map(
             mutableWorldState ->
                 new AccountAdapter(
@@ -69,14 +68,14 @@ public class TransactionAdapter extends AdapterBase {
 
   public Optional<AccountAdapter> getTo(final DataFetchingEnvironment environment) {
     final BlockchainQuery query = getBlockchainQuery(environment);
-    long blockNumber = transactionWithMetadata.getBlockNumber();
-    final Long bn = environment.getArgument("block");
-    if (bn != null) {
-      blockNumber = bn;
+    final Optional<Long> txBlockNumber = transactionWithMetadata.getBlockNumber();
+    final Optional<Long> bn = Optional.ofNullable(environment.getArgument("block"));
+    if (!txBlockNumber.isPresent() && !bn.isPresent()) {
+      return Optional.empty();
     }
 
     return query
-        .getWorldState(blockNumber)
+        .getWorldState(bn.orElseGet(txBlockNumber::get))
         .flatMap(
             ws ->
                 transactionWithMetadata
@@ -102,11 +101,10 @@ public class TransactionAdapter extends AdapterBase {
   }
 
   public Optional<NormalBlockAdapter> getBlock(final DataFetchingEnvironment environment) {
-    final Hash blockHash = transactionWithMetadata.getBlockHash();
-    final BlockchainQuery query = getBlockchainQuery(environment);
-    final Optional<BlockWithMetadata<TransactionWithMetadata, Hash>> block =
-        query.blockByHash(blockHash);
-    return block.map(NormalBlockAdapter::new);
+    return transactionWithMetadata
+        .getBlockHash()
+        .flatMap(blockHash -> getBlockchainQuery(environment).blockByHash(blockHash))
+        .map(NormalBlockAdapter::new);
   }
 
   public Optional<Long> getStatus(final DataFetchingEnvironment environment) {
@@ -146,11 +144,12 @@ public class TransactionAdapter extends AdapterBase {
 
       if (addr.isPresent()) {
         final BlockchainQuery query = getBlockchainQuery(environment);
-        long blockNumber = transactionWithMetadata.getBlockNumber();
-        final Long bn = environment.getArgument("block");
-        if (bn != null) {
-          blockNumber = bn;
+        final Optional<Long> txBlockNumber = transactionWithMetadata.getBlockNumber();
+        final Optional<Long> bn = Optional.ofNullable(environment.getArgument("block"));
+        if (!txBlockNumber.isPresent() && !bn.isPresent()) {
+          return Optional.empty();
         }
+        final long blockNumber = bn.orElseGet(txBlockNumber::get);
 
         final Optional<WorldState> ws = query.getWorldState(blockNumber);
         if (ws.isPresent()) {
@@ -171,10 +170,10 @@ public class TransactionAdapter extends AdapterBase {
       final List<LogWithMetadata> logs =
           BlockchainQuery.generateLogWithMetadataForTransaction(
               tranRpt.get().getReceipt(),
-              transactionWithMetadata.getBlockNumber(),
-              transactionWithMetadata.getBlockHash(),
+              transactionWithMetadata.getBlockNumber().get(),
+              transactionWithMetadata.getBlockHash().get(),
               hash,
-              transactionWithMetadata.getTransactionIndex(),
+              transactionWithMetadata.getTransactionIndex().get(),
               false);
       for (final LogWithMetadata log : logs) {
         results.add(new LogAdapter(log));

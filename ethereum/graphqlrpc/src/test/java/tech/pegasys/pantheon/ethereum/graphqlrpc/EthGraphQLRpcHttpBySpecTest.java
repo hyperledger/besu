@@ -84,6 +84,8 @@ public class EthGraphQLRpcHttpBySpecTest extends AbstractEthGraphQLRpcHttpServic
     specs.add("eth_sendRawTransaction_unsignedTransaction");
 
     specs.add("eth_getLogs_matchTopic");
+
+    specs.add("graphql_pending");
     return specs;
   }
 
