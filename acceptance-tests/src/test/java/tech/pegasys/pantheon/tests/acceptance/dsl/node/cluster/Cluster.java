@@ -39,19 +39,27 @@ public class Cluster implements AutoCloseable {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Map<String, RunnableNode> nodes = new HashMap<>();
-  private final PantheonNodeRunner pantheonNodeRunner = PantheonNodeRunner.instance();
+  private final PantheonNodeRunner pantheonNodeRunner;
   private final Net net;
   private final ClusterConfiguration clusterConfiguration;
   private List<? extends RunnableNode> originalNodes = emptyList();
   private List<URI> bootnodes = emptyList();
 
   public Cluster(final Net net) {
-    this(new ClusterConfigurationBuilder().build(), net);
+    this(new ClusterConfigurationBuilder().build(), net, PantheonNodeRunner.instance());
   }
 
   public Cluster(final ClusterConfiguration clusterConfiguration, final Net net) {
+    this(clusterConfiguration, net, PantheonNodeRunner.instance());
+  }
+
+  public Cluster(
+      final ClusterConfiguration clusterConfiguration,
+      final Net net,
+      final PantheonNodeRunner pantheonNodeRunner) {
     this.clusterConfiguration = clusterConfiguration;
     this.net = net;
+    this.pantheonNodeRunner = pantheonNodeRunner;
   }
 
   public void start(final Node... nodes) {
