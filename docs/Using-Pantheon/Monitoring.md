@@ -5,7 +5,7 @@ description: Frequently asked questions FAQ and answers for troubleshooting Pant
 
 ## Monitor Node Performance and Connectivity Using the JSON-RPC API
 
-You can monitor node performance using the [`debug_metrics`](../Reference/JSON-RPC-API-Methods.md#debug_metrics)
+You can monitor node performance using the [`debug_metrics`](../Reference/Pantheon-API-Methods.md#debug_metrics)
 JSON-RPC API method.
 
 ## Monitor Node Performance Using Prometheus

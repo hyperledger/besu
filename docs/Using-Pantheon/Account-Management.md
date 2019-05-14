@@ -7,5 +7,5 @@ Pantheon does not implement private key management. Use third-party tools (for e
 
 In Pantheon, you can use the JSON-RPC methods:
 
- * [eth_getBalance](../Reference/JSON-RPC-API-Methods.md#eth_getbalance) to obtain the account balance
- * [eth_sendRawTransaction](../Reference/JSON-RPC-API-Methods.md#eth_sendrawtransaction) to transfer ether or create and interact with contracts (for more information, refer to [Transactions](Transactions/Transactions.md#transactions)).  
+ * [eth_getBalance](../Reference/Pantheon-API-Methods.md#eth_getbalance) to obtain the account balance
+ * [eth_sendRawTransaction](../Reference/Pantheon-API-Methods.md#eth_sendrawtransaction) to transfer ether or create and interact with contracts (for more information, refer to [Transactions](Transactions/Transactions.md#transactions)).  

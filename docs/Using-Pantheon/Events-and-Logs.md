@@ -8,7 +8,7 @@ be stored in and accessed from logs, the cost is reduced. For example, you can u
 transfers made using a specific contract but not the current state of the contract. 
 
 A Dapp front end can either request logs using the [JSON-RPC API filter methods](Accessing-Logs-Using-JSON-RPC.md) 
-or subscribe to logs using the [RPC Pub/Sub API](RPC-PubSub.md#logs). 
+or subscribe to logs using the [RPC Pub/Sub API](../Pantheon-API/RPC-PubSub.md#logs). 
 
 ## Topics 
 
@@ -164,7 +164,7 @@ The event signature hash for event 1 is `keccak('Event1(uint256)')` and the even
 
 ## Topic Filters
 
-[Filter options objects](../Reference/JSON-RPC-API-Objects.md#filter-options-object) have a `topics` key to filter logs by topics. 
+[Filter options objects](../Reference/Pantheon-API-Objects.md#filter-options-object) have a `topics` key to filter logs by topics. 
 
 Topics are order-dependent. A transaction with a log containing topics `[A, B]` is matched with the following topic filters:
 

@@ -188,7 +188,7 @@ Where `myprivacypublickeyfile` is the file containing the public key and `path` 
     
 ## Credentials Files 
 
-Specify a [credentials file](../JSON-RPC-API/Authentication.md#credentials-file) for JSON-RPC API [authentication](../JSON-RPC-API/Authentication.md).
+Specify a [credentials file](../Pantheon-API/Authentication.md#credentials-file) for JSON-RPC API [authentication](../Pantheon-API/Authentication.md).
 
 To run Pantheon specifying a credentials file for HTTP JSON-RPC: 
 ```bash

@@ -1,25 +1,26 @@
-description: Using RPC Pub/Sub with Pantheon Web Socket API
+description: Using RPC Pub/Sub with WebSockets
 <!--- END of page meta data -->
 
-# RPC Pub/Sub
+# RPC Pub/Sub over WebSockets
 
 ## Introduction 
 
-Use the RPC Pub/Sub API to wait for events instead of polling for them. For example, a Dapp can subscribe to logs to be notified when a specific event has occurred.
+Use RPC Pub/Sub over WebSockets to wait for events instead of polling for them. For example, a Dapp can 
+subscribe to logs to be notified when a specific event has occurred.
 
-The RPC Pub/Sub methods are: 
+Methods specific to RPC Pub/Sub are: 
 
 * `eth_subscribe` - create a subscription for specific events.
 * `eth_unsubscribe` - cancel a subscription.
 
 !!!important
-    Unlike other [JSON RPC-API methods](../Reference/JSON-RPC-API-Methods.md), 
+    Unlike other [Pantheon API methods](../Reference/Pantheon-API-Methods.md), 
     the RPC Pub/Sub methods cannot be called over HTTP. Use the [`--rpc-ws-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-enabled) option to enable
     the WebSockets JSON-RPC service. 
     
 ### Using RPC Pub/Sub
 
-The RPC Pub/Sub API is supported on [WebSockets](../JSON-RPC-API/Using-JSON-RPC-API.md#http-and-websocket-requests). 
+The RPC Pub/Sub API is supported on [WebSockets](../Pantheon-API/Using-JSON-RPC-API.md#http-and-websocket-requests). 
 
 Use `eth_subscribe` to create subscriptions. Once subscribed, notifications are published by the API using `eth_subscription`. 
 
@@ -69,8 +70,8 @@ Use the `newHeads` parameter with `eth_subscribe` to be notified each time a blo
 If a chain reorganization occurs, the subscription publishes notifications for blocks in the new chain. 
 This means the subscription can publish notifications for multiple blocks at the same height on the blockchain.
 
-The new headers notification returns [block objects](../Reference/JSON-RPC-API-Objects.md#block-object). The 
-second parameter is optional.  If specified, whole [transaction objects](../Reference/JSON-RPC-API-Objects.md#transaction-object) 
+The new headers notification returns [block objects](../Reference/Pantheon-API-Objects.md#block-object). The 
+second parameter is optional.  If specified, whole [transaction objects](../Reference/Pantheon-API-Objects.md#transaction-object) 
 are included in the notifications. Otherwise, the transaction hashes are included. 
 
 !!!example
@@ -151,19 +152,19 @@ are included in the notifications. Otherwise, the transaction hashes are include
 
 ### Logs
 
-Use the `logs` parameter with `eth_subscribe` to be notified of [logs](Events-and-Logs.md) included in new blocks. You can 
+Use the `logs` parameter with `eth_subscribe` to be notified of [logs](../Using-Pantheon/Events-and-Logs.md) included in new blocks. You can 
 specify a filter object to receive notifications only for logs matching your filter.   
 
 Logs subscriptions have an filter object parameter with the following fields:
 
   - `address` - (optional) Either an address or an array of addresses. Returns only logs created from these addresses.
-  - `topics` - (optional) Returns only logs that match the [specified topics](Events-and-Logs.md#topic-filters).
+  - `topics` - (optional) Returns only logs that match the [specified topics](../Using-Pantheon/Events-and-Logs.md#topic-filters).
 
 If a chain reorganization occurs, the subscription publishes notifications for logs from the old chain 
-with the `removed` property in the [log object](../Reference/JSON-RPC-API-Objects.md#log-object) set to `true`. 
+with the `removed` property in the [log object](../Reference/Pantheon-API-Objects.md#log-object) set to `true`. 
 This means the subscription can publish notifications for multiple logs for the same transaction.
 
-The logs subscription returns [log objects](../Reference/JSON-RPC-API-Objects.md#log-object). 
+The logs subscription returns [log objects](../Reference/Pantheon-API-Objects.md#log-object). 
 
 !!!example
     To subscribe to all logs notifications:

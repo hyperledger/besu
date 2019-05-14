@@ -1,20 +1,20 @@
-# Accessing Logs Using JSON-RPC API Methods
+# Accessing Logs Using Pantheon API
 
-Access logs using JSON-RPC API methods:
+Access logs using Pantheon API methods:
  
-* [`eth_getFilterChanges`](../Reference/JSON-RPC-API-Methods.md#eth_getfilterchanges)
-* [`eth_getFilterLogs`](../Reference/JSON-RPC-API-Methods.md#eth_getfilterlogs)
-* [`eth_getLogs`](../Reference/JSON-RPC-API-Methods.md#eth_getlogs)
+* [`eth_getFilterChanges`](../Reference/Pantheon-API-Methods.md#eth_getfilterchanges)
+* [`eth_getFilterLogs`](../Reference/Pantheon-API-Methods.md#eth_getfilterlogs)
+* [`eth_getLogs`](../Reference/Pantheon-API-Methods.md#eth_getlogs)
 
-Use [`eth_newFilter`](../Reference/JSON-RPC-API-Methods.md#eth_newfilter) to create the filter before
-using [`eth_getFilterChanges`](../Reference/JSON-RPC-API-Methods.md#eth_getfilterchanges) and [`eth_getFilterLogs`](../Reference/JSON-RPC-API-Methods.md#eth_getfilterlogs)). 
+Use [`eth_newFilter`](../Reference/Pantheon-API-Methods.md#eth_newfilter) to create the filter before
+using [`eth_getFilterChanges`](../Reference/Pantheon-API-Methods.md#eth_getfilterchanges) and [`eth_getFilterLogs`](../Reference/Pantheon-API-Methods.md#eth_getfilterlogs)). 
 
 !!! note
     The following examples are created using the sample contract included in [Events and Logs](Events-and-Logs.md). 
 
 ## Creating a Filter
 
-Create a filter using [`eth_newFilter`](../Reference/JSON-RPC-API-Methods.md#eth_newfilter). 
+Create a filter using [`eth_newFilter`](../Reference/Pantheon-API-Methods.md#eth_newfilter). 
 
 !!! example
     
@@ -40,17 +40,17 @@ Create a filter using [`eth_newFilter`](../Reference/JSON-RPC-API-Methods.md#eth
     }
     ```
         
-[`eth_newFilter`](../Reference/JSON-RPC-API-Methods.md#eth_newfilter) returns a filter ID hash (for example, `0x1ddf0c00989044e9b41cc0ae40272df3`). 
+[`eth_newFilter`](../Reference/Pantheon-API-Methods.md#eth_newfilter) returns a filter ID hash (for example, `0x1ddf0c00989044e9b41cc0ae40272df3`). 
 
 ### Polling Filter for Changes
 
-To poll the filter for changes that have occurred since the last poll, use [`eth_getFilterChanges`](../Reference/JSON-RPC-API-Methods.md#eth_getfilterchanges)
-with the filter ID hash returned by [`eth_newFilter`](../Reference/JSON-RPC-API-Methods.md#eth_newfilter). 
+To poll the filter for changes that have occurred since the last poll, use [`eth_getFilterChanges`](../Reference/Pantheon-API-Methods.md#eth_getfilterchanges)
+with the filter ID hash returned by [`eth_newFilter`](../Reference/Pantheon-API-Methods.md#eth_newfilter). 
 
 !!! example 
     
     If the contract had been executed twice since the last poll, with `valueIndexed` set to 1 and 5, 
-    [`eth_getFilterChanges`](../Reference/JSON-RPC-API-Methods.md#eth_getfilterchanges) returns
+    [`eth_getFilterChanges`](../Reference/Pantheon-API-Methods.md#eth_getfilterchanges) returns
     only the log where the [topic](Events-and-Logs.md#event-parameters) for `valueIndexed` is 5: 
     
     ```json
@@ -78,7 +78,7 @@ with the filter ID hash returned by [`eth_newFilter`](../Reference/JSON-RPC-API-
 
 ### Getting All Logs for a Filter
 
-To get all logs for a filter, use [`eth_getFilterLogs`](../Reference/JSON-RPC-API-Methods.md#eth_getfilterlogs). 
+To get all logs for a filter, use [`eth_getFilterLogs`](../Reference/Pantheon-API-Methods.md#eth_getfilterlogs). 
 
 !!! example
     
@@ -124,16 +124,16 @@ To get all logs for a filter, use [`eth_getFilterLogs`](../Reference/JSON-RPC-AP
     
 !!! tip 
     You can use [`eth_getLogs`](#getting-logs-using-a-filter-options-object) with a filter options object 
-    to get all logs matching the filter options instead of using [`eth_newFilter`](../Reference/JSON-RPC-API-Methods.md#eth_newfilter)
-    followed by [`eth_getFilterLogs`](../Reference/JSON-RPC-API-Methods.md#eth_getfilterlogs). 
+    to get all logs matching the filter options instead of using [`eth_newFilter`](../Reference/Pantheon-API-Methods.md#eth_newfilter)
+    followed by [`eth_getFilterLogs`](../Reference/Pantheon-API-Methods.md#eth_getfilterlogs). 
     
 ## Uninstalling a Filter
 
-When you are finished using a filter, use [`eth_uninstallFilter`](../Reference/JSON-RPC-API-Methods.md#eth_uninstallfilter) to remove the filter.     
+When you are finished using a filter, use [`eth_uninstallFilter`](../Reference/Pantheon-API-Methods.md#eth_uninstallfilter) to remove the filter.     
     
 ## Getting Logs Using a Filter Options Object 
 
-To get all logs for a filter options object, use [`eth_getLogs`](../Reference/JSON-RPC-API-Methods.md#eth_getlogs).   
+To get all logs for a filter options object, use [`eth_getLogs`](../Reference/Pantheon-API-Methods.md#eth_getlogs).   
 
 !!! example 
 

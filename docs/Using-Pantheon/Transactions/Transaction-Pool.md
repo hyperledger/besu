@@ -2,13 +2,13 @@
 
 Options and methods for configuring and monitoring the transaction pool include: 
 
-* [`txpool_pantheonTransactions`](../../Reference/JSON-RPC-API-Methods.md#txpool_pantheontransactions) JSON-RPC API method to list
+* [`txpool_pantheonTransactions`](../../Reference/Pantheon-API-Methods.md#txpool_pantheontransactions) JSON-RPC API method to list
 transactions in the node transaction pool
 
 * [`--tx-pool-max-size`](../../Reference/Pantheon-CLI-Syntax.md#tx-pool-max-size) command line option to specify the maximum number
 of transactions in the node transaction pool
 
-* [`newPendingTransactions`](../RPC-PubSub.md#pending-transactions) and [`droppedPendingTransactions`](../RPC-PubSub.md#dropped-transactions)
+* [`newPendingTransactions`](../../Pantheon-API/RPC-PubSub.md#pending-transactions) and [`droppedPendingTransactions`](../../Pantheon-API/RPC-PubSub.md#dropped-transactions)
 RPC subscriptions to notify of transactions added to and dropped from the node transaction pool  
 
 Once full, the Pantheon transaction pool accepts and retains local transactions in preference to remote transactions. 

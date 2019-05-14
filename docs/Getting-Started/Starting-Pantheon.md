@@ -34,7 +34,7 @@ using the [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file) o
 ## Confirm Node is Running
 
 If you have started Pantheon with the [`--rpc-http-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled) option, use [cURL](https://curl.haxx.se/) to 
-call [JSON-RPC API methods](../Reference/JSON-RPC-API-Methods.md) to confirm the node is running.
+call [JSON-RPC API methods](../Reference/Pantheon-API-Methods.md) to confirm the node is running.
 
 !!!example
 

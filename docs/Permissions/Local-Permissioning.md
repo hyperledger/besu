@@ -18,16 +18,16 @@ file in the [data directory](../Reference/Pantheon-CLI-Syntax.md#data-path) for 
 
 To update the nodes whitelist when the node is running, use the JSON-RPC API methods:
  
-* [perm_addNodesToWhitelist](../Reference/JSON-RPC-API-Methods.md#perm__addnodestowhitelist)
-* [perm_removeNodesFromWhitelist](../Reference/JSON-RPC-API-Methods.md#perm_removeNodesFromWhiteList)
+* [perm_addNodesToWhitelist](../Reference/Pantheon-API-Methods.md#perm__addnodestowhitelist)
+* [perm_removeNodesFromWhitelist](../Reference/Pantheon-API-Methods.md#perm_removeNodesFromWhiteList)
 
 Alternatively, update the [`permissions_config.toml`](#permissions-configuration-file) file directly and use the 
-[`perm_reloadPermissionsFromFile`](../Reference/JSON-RPC-API-Methods.md#perm_reloadpermissionsfromfile) method 
+[`perm_reloadPermissionsFromFile`](../Reference/Pantheon-API-Methods.md#perm_reloadpermissionsfromfile) method 
 to update the whitelists. 
 
 Updates to the permissions configuration file persist across node restarts. 
 
-To view the nodes whitelist, use the [perm_getNodesWhitelist](../Reference/JSON-RPC-API-Methods.md#perm_getNodesWhiteList) method. 
+To view the nodes whitelist, use the [perm_getNodesWhitelist](../Reference/Pantheon-API-Methods.md#perm_getNodesWhiteList) method. 
 
 !!! note
     Each node has a [permissions configuration file](#permissions-configuration-file) which means nodes can have different nodes whitelists. 
@@ -79,7 +79,7 @@ in the [data directory](../Reference/Pantheon-CLI-Syntax.md#data-path) for the n
     
 Transactions are validated against the accounts whitelist at the following points: 
 
-1. Submitted by JSON-RPC API method [`eth_sendRawTransaction`](../Reference/JSON-RPC-API-Methods.md#eth_sendrawtransaction) 
+1. Submitted by JSON-RPC API method [`eth_sendRawTransaction`](../Reference/Pantheon-API-Methods.md#eth_sendrawtransaction) 
 1. Received via propagation from another node 
 1. Added to a block by a mining node 
 
@@ -110,16 +110,16 @@ can synchronise and add blocks containing transactions from accounts that are no
 
 To update the accounts whitelist when the node is running, use the JSON-RPC API methods: 
 
-* [`perm_addAccountsToWhitelist`](../Reference/JSON-RPC-API-Methods.md#perm_addAccountsToWhitelist)
-* [`perm_removeAccountsFromWhitelist`](../Reference/JSON-RPC-API-Methods.md#perm_removeAccountsFromWhitelist)
+* [`perm_addAccountsToWhitelist`](../Reference/Pantheon-API-Methods.md#perm_addAccountsToWhitelist)
+* [`perm_removeAccountsFromWhitelist`](../Reference/Pantheon-API-Methods.md#perm_removeAccountsFromWhitelist)
 
 Alternatively, update the [`permissions_config.toml`](#permissions-configuration-file) file directly and use the 
-[`perm_reloadPermissionsFromFile`](../Reference/JSON-RPC-API-Methods.md#perm_reloadpermissionsfromfile) method 
+[`perm_reloadPermissionsFromFile`](../Reference/Pantheon-API-Methods.md#perm_reloadpermissionsfromfile) method 
 to update the whitelists.
 
 Updates to the permissions configuration file persist across node restarts.
 
-To view the accounts whitelist, use the [`perm_getAccountsWhitelist`](../Reference/JSON-RPC-API-Methods.md#perm_getAccountsWhitelist) method.
+To view the accounts whitelist, use the [`perm_getAccountsWhitelist`](../Reference/Pantheon-API-Methods.md#perm_getAccountsWhitelist) method.
 
 ### Enabling Account Whitelisting 
 
