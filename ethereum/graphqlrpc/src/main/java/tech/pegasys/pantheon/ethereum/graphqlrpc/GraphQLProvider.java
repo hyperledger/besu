@@ -67,6 +67,7 @@ public class GraphQLProvider {
                 .dataFetcher("transaction", graphQLDataFetchers.getTransactionDataFetcher())
                 .dataFetcher("gasPrice", graphQLDataFetchers.getGasPriceDataFetcher())
                 .dataFetcher("syncing", graphQLDataFetchers.getSyncingDataFetcher())
+                .dataFetcher("pending", graphQLDataFetchers.getPendingStateDataFetcher())
                 .dataFetcher(
                     "protocolVersion", graphQLDataFetchers.getProtocolVersionDataFetcher()))
         .type(

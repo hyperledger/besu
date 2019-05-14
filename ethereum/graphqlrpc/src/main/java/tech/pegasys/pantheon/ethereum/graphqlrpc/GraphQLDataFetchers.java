@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.ethereum.graphqlrpc.internal.BlockchainQuery;
 import tech.pegasys.pantheon.ethereum.graphqlrpc.internal.TransactionWithMetadata;
 import tech.pegasys.pantheon.ethereum.graphqlrpc.internal.pojoadapter.AccountAdapter;
 import tech.pegasys.pantheon.ethereum.graphqlrpc.internal.pojoadapter.NormalBlockAdapter;
+import tech.pegasys.pantheon.ethereum.graphqlrpc.internal.pojoadapter.PendingStateAdapter;
 import tech.pegasys.pantheon.ethereum.graphqlrpc.internal.pojoadapter.SyncStateAdapter;
 import tech.pegasys.pantheon.ethereum.graphqlrpc.internal.pojoadapter.TransactionAdapter;
 import tech.pegasys.pantheon.ethereum.graphqlrpc.internal.response.GraphQLRpcError;
@@ -88,6 +89,14 @@ public class GraphQLDataFetchers {
           ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getSynchronizer();
       final Optional<SyncStatus> syncStatus = synchronizer.getSyncStatus();
       return syncStatus.map(SyncStateAdapter::new);
+    };
+  }
+
+  DataFetcher<Optional<PendingStateAdapter>> getPendingStateDataFetcher() {
+    return dataFetchingEnvironment -> {
+      final TransactionPool txPool =
+          ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getTransactionPool();
+      return Optional.of(new PendingStateAdapter(txPool.getPendingTransactions()));
     };
   }
 
