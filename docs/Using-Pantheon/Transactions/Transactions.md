@@ -20,6 +20,8 @@ The examples use the following libraries to create signed transactions:
     and tools (such as [MyEtherWallet](https://kb.myetherwallet.com/offline/making-offline-transaction-on-myetherwallet.html) 
     or [MyCrypto](https://mycrypto.com/)) can also be used to create signed transactions. 
 
+    [EthSigner](https://docs.ethsigner.pegasys.tech/en/latest/) provides transaction signing and implements [`eth_sendTransaction`](https://docs.ethsigner.pegasys.tech/en/latest/Using-EthSigner#eth_sendTransaction). 
+    
 Example Javascript scripts are provided to create signed raw transaction strings to:
  
 * [Send ether](#sending-ether)
