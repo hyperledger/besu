@@ -13,9 +13,9 @@
 package tech.pegasys.pantheon.ethereum.eth.messages;
 
 import tech.pegasys.pantheon.ethereum.core.Block;
-import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.wire.AbstractMessageData;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
@@ -102,10 +102,10 @@ public class NewBlockMessage extends AbstractMessageData {
 
     public static <C> NewBlockMessageData readFrom(
         final RLPInput in, final ProtocolSchedule<C> protocolSchedule) {
-      final BlockHashFunction blockHashFunction =
-          ScheduleBasedBlockHashFunction.create(protocolSchedule);
+      final BlockHeaderFunctions blockHeaderFunctions =
+          ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
       in.enterList();
-      final Block block = Block.readFrom(in, blockHashFunction);
+      final Block block = Block.readFrom(in, blockHeaderFunctions);
       final UInt256 totaldifficulty = in.readUInt256Scalar();
       return new NewBlockMessageData(block, totaldifficulty);
     }

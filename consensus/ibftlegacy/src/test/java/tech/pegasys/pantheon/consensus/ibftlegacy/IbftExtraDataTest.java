@@ -51,7 +51,7 @@ public class IbftExtraDataTest {
     final BytesValue vanity_data = BytesValue.wrap(vanity_bytes);
     final BytesValue bufferToInject = BytesValue.wrap(vanity_data, encoder.encoded());
 
-    final IbftExtraData extraData = IbftExtraData.decode(bufferToInject);
+    final IbftExtraData extraData = IbftExtraData.decodeRaw(bufferToInject);
 
     Assertions.assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
     assertThat(extraData.getProposerSeal()).isEqualTo(proposerSeal);
@@ -82,7 +82,7 @@ public class IbftExtraDataTest {
     final BytesValue vanity_data = BytesValue.wrap(vanity_bytes);
     final BytesValue bufferToInject = BytesValue.wrap(vanity_data, encoder.encoded());
 
-    final IbftExtraData extraData = IbftExtraData.decode(bufferToInject);
+    final IbftExtraData extraData = IbftExtraData.decodeRaw(bufferToInject);
 
     Assertions.assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
     assertThat(extraData.getProposerSeal()).isEqualTo(proposerSeal);
@@ -108,7 +108,7 @@ public class IbftExtraDataTest {
     final BytesValue bufferToInject =
         BytesValue.wrap(BytesValue.wrap(new byte[32]), encoder.encoded());
 
-    IbftExtraData.decode(bufferToInject);
+    IbftExtraData.decodeRaw(bufferToInject);
   }
 
   @Test(expected = RLPException.class)
@@ -131,7 +131,7 @@ public class IbftExtraDataTest {
     final BytesValue bufferToInject =
         BytesValue.wrap(BytesValue.wrap(new byte[31]), encoder.encoded());
 
-    IbftExtraData.decode(bufferToInject);
+    IbftExtraData.decodeRaw(bufferToInject);
   }
 
   @Test
@@ -142,7 +142,7 @@ public class IbftExtraDataTest {
 
     final BytesValue bufferToInject = BytesValue.wrap(genesisBlockExtraData);
 
-    final IbftExtraData extraData = IbftExtraData.decode(bufferToInject);
+    final IbftExtraData extraData = IbftExtraData.decodeRaw(bufferToInject);
     assertThat(extraData.getProposerSeal()).isNull();
   }
 }

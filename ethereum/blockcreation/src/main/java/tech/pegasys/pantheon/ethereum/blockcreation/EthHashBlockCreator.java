@@ -24,7 +24,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolution;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolver;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolver.EthHashSolverJob;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolverInputs;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 import tech.pegasys.pantheon.util.uint.UInt256;
@@ -78,7 +77,7 @@ public class EthHashBlockCreator extends AbstractBlockCreator<Void> {
         .populateFrom(sealableBlockHeader)
         .mixHash(solution.getMixHash())
         .nonce(solution.getNonce())
-        .blockHashFunction(MainnetBlockHashFunction::createHash)
+        .blockHeaderFunctions(blockHeaderFunctions)
         .buildBlockHeader();
   }
 

@@ -16,6 +16,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.ParsedExtraData;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
@@ -27,11 +29,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * Represents the data structure stored in the extraData field of the BlockHeader used when
  * operating under an IBFT 2.0 consensus mechanism.
  */
-public class IbftExtraData {
+public class IbftExtraData implements ParsedExtraData {
+  private static final Logger LOG = LogManager.getLogger();
 
   public static final int EXTRA_VANITY_LENGTH = 32;
 
@@ -59,7 +65,18 @@ public class IbftExtraData {
     this.vote = vote;
   }
 
-  public static IbftExtraData decode(final BytesValue input) {
+  public static IbftExtraData decode(final BlockHeader blockHeader) {
+    final Object inputExtraData = blockHeader.getParsedExtraData();
+    if (inputExtraData instanceof IbftExtraData) {
+      return (IbftExtraData) inputExtraData;
+    }
+    LOG.warn(
+        "Expected a IbftExtraData instance but got {}. Reparsing required.",
+        inputExtraData != null ? inputExtraData.getClass().getName() : "null");
+    return decodeRaw(blockHeader.getExtraData());
+  }
+
+  static IbftExtraData decodeRaw(final BytesValue input) {
     final RLPInput rlpInput = new BytesValueRLPInput(input, false);
 
     rlpInput.enterList(); // This accounts for the "root node" which contains IBFT data items.

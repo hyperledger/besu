@@ -24,16 +24,16 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.AbstractBlockCreator;
 import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.SealableBlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -78,14 +78,14 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
    */
   @Override
   protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
-    final BlockHashFunction blockHashFunction =
-        ScheduleBasedBlockHashFunction.create(protocolSchedule);
+    final BlockHeaderFunctions blockHeaderFunctions =
+        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
 
     final BlockHeaderBuilder builder =
         BlockHeaderBuilder.create()
             .populateFrom(sealableBlockHeader)
             .mixHash(Hash.ZERO)
-            .blockHashFunction(blockHashFunction);
+            .blockHeaderFunctions(blockHeaderFunctions);
 
     final Optional<ValidatorVote> vote = determineCliqueVote(sealableBlockHeader);
     final BlockHeaderBuilder builderIncludingProposedVotes =
@@ -120,10 +120,13 @@ public class CliqueBlockCreator extends AbstractBlockCreator<CliqueContext> {
    *     proposerSeal will also be populated.
    */
   private CliqueExtraData constructSignedExtraData(final BlockHeader headerToSign) {
-    final CliqueExtraData extraData = CliqueExtraData.decode(headerToSign.getExtraData());
+    final CliqueExtraData extraData = CliqueExtraData.decode(headerToSign);
     final Hash hashToSign =
         CliqueBlockHashing.calculateDataHashForProposerSeal(headerToSign, extraData);
     return new CliqueExtraData(
-        extraData.getVanityData(), SECP256K1.sign(hashToSign, nodeKeys), extraData.getValidators());
+        extraData.getVanityData(),
+        SECP256K1.sign(hashToSign, nodeKeys),
+        extraData.getValidators(),
+        headerToSign);
   }
 }

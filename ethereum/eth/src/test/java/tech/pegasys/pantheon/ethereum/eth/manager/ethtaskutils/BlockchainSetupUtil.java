@@ -21,14 +21,14 @@ import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
-import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
-import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 
@@ -109,10 +109,11 @@ public class BlockchainSetupUtil<C> {
 
       final Path blocksPath = getResourcePath(temp, "/testBlockchain.blocks");
       final List<Block> blocks = new ArrayList<>();
-      final BlockHashFunction blockHashFunction =
-          ScheduleBasedBlockHashFunction.create(protocolSchedule);
+      final BlockHeaderFunctions blockHeaderFunctions =
+          ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
       try (final RawBlockIterator iterator =
-          new RawBlockIterator(blocksPath, rlp -> BlockHeader.readFrom(rlp, blockHashFunction))) {
+          new RawBlockIterator(
+              blocksPath, rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions))) {
         while (iterator.hasNext()) {
           blocks.add(iterator.next());
         }

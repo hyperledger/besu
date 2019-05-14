@@ -49,7 +49,7 @@ public class IbftCommitSealsValidationRule
       final ProtocolContext<IbftContext> protocolContext) {
     final ValidatorProvider validatorProvider =
         protocolContext.getConsensusState().getVoteTallyCache().getVoteTallyAfterBlock(parent);
-    final IbftExtraData ibftExtraData = IbftExtraData.decode(header.getExtraData());
+    final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
 
     final List<Address> committers =
         IbftBlockHashing.recoverCommitterAddresses(header, ibftExtraData);

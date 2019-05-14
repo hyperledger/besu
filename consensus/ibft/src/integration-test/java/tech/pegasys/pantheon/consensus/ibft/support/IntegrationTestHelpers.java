@@ -33,7 +33,7 @@ public class IntegrationTestHelpers {
   public static SignedData<CommitPayload> createSignedCommitPayload(
       final ConsensusRoundIdentifier roundId, final Block block, final KeyPair signingKeyPair) {
 
-    final IbftExtraData extraData = IbftExtraData.decode(block.getHeader().getExtraData());
+    final IbftExtraData extraData = IbftExtraData.decode(block.getHeader());
 
     final Signature commitSeal =
         SECP256K1.sign(

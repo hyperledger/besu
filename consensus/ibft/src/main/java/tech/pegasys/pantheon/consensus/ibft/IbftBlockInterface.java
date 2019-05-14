@@ -17,9 +17,9 @@ import tech.pegasys.pantheon.consensus.common.ValidatorVote;
 import tech.pegasys.pantheon.consensus.common.VoteType;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
-import tech.pegasys.pantheon.ethereum.core.BlockHashFunction;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderFunctions;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -33,7 +33,7 @@ public class IbftBlockInterface implements BlockInterface {
 
   @Override
   public Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header) {
-    final IbftExtraData ibftExtraData = IbftExtraData.decode(header.getExtraData());
+    final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
 
     if (ibftExtraData.getVote().isPresent()) {
       final Vote headerVote = ibftExtraData.getVote().get();
@@ -49,13 +49,13 @@ public class IbftBlockInterface implements BlockInterface {
 
   @Override
   public Collection<Address> validatorsInBlock(final BlockHeader header) {
-    final IbftExtraData ibftExtraData = IbftExtraData.decode(header.getExtraData());
+    final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
     return ibftExtraData.getValidators();
   }
 
   public static Block replaceRoundInBlock(
-      final Block block, final int round, final BlockHashFunction blockHashFunction) {
-    final IbftExtraData prevExtraData = IbftExtraData.decode(block.getHeader().getExtraData());
+      final Block block, final int round, final BlockHeaderFunctions blockHeaderFunctions) {
+    final IbftExtraData prevExtraData = IbftExtraData.decode(block.getHeader());
     final IbftExtraData substituteExtraData =
         new IbftExtraData(
             prevExtraData.getVanityData(),
@@ -65,7 +65,9 @@ public class IbftBlockInterface implements BlockInterface {
             prevExtraData.getValidators());
 
     final BlockHeaderBuilder headerBuilder = BlockHeaderBuilder.fromHeader(block.getHeader());
-    headerBuilder.extraData(substituteExtraData.encode()).blockHashFunction(blockHashFunction);
+    headerBuilder
+        .extraData(substituteExtraData.encode())
+        .blockHeaderFunctions(blockHeaderFunctions);
 
     final BlockHeader newHeader = headerBuilder.buildBlockHeader();
 

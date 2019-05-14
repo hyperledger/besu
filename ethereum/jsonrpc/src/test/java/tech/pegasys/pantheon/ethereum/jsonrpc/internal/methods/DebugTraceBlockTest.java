@@ -33,7 +33,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionProcessor;
 import tech.pegasys.pantheon.ethereum.vm.ExceptionalHaltReason;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -53,7 +53,7 @@ public class DebugTraceBlockTest {
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final DebugTraceBlock debugTraceBlock =
       new DebugTraceBlock(
-          parameters, blockTracer, MainnetBlockHashFunction::createHash, blockchainQueries);
+          parameters, blockTracer, new MainnetBlockHeaderFunctions(), blockchainQueries);
 
   @Test
   public void nameShouldBeDebugTraceBlock() {
@@ -66,12 +66,12 @@ public class DebugTraceBlockTest {
         new BlockDataGenerator()
             .block(
                 BlockDataGenerator.BlockOptions.create()
-                    .setBlockHashFunction(MainnetBlockHashFunction::createHash));
+                    .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
     final Block block =
         new BlockDataGenerator()
             .block(
                 BlockDataGenerator.BlockOptions.create()
-                    .setBlockHashFunction(MainnetBlockHashFunction::createHash)
+                    .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions())
                     .setParentHash(parentBlock.getHash()));
 
     final Object[] params = new Object[] {block.toRlp().toString()};
@@ -127,7 +127,7 @@ public class DebugTraceBlockTest {
         new BlockDataGenerator()
             .block(
                 BlockDataGenerator.BlockOptions.create()
-                    .setBlockHashFunction(MainnetBlockHashFunction::createHash));
+                    .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
 
     final Object[] params = new Object[] {block.toRlp().toString()};
     final JsonRpcRequest request = new JsonRpcRequest("2.0", "debug_traceBlock", params);

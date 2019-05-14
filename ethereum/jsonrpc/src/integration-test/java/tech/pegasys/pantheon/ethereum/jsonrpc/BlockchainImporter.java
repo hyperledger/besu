@@ -16,9 +16,9 @@ import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
 
 import java.net.URL;
@@ -46,7 +46,9 @@ public class BlockchainImporter {
     try (final RawBlockIterator iterator =
         new RawBlockIterator(
             Paths.get(blocksUrl.toURI()),
-            rlp -> BlockHeader.readFrom(rlp, MainnetBlockHashFunction::createHash))) {
+            rlp ->
+                BlockHeader.readFrom(
+                    rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)))) {
       while (iterator.hasNext()) {
         blocks.add(iterator.next());
       }

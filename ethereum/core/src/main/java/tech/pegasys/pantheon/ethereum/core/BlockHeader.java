@@ -18,6 +18,9 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Objects;
+import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
 
 /** A mined Ethereum block header. */
 public class BlockHeader extends SealableBlockHeader {
@@ -29,9 +32,10 @@ public class BlockHeader extends SealableBlockHeader {
   private final Hash mixHash;
 
   private final long nonce;
-  private final BlockHashFunction hashFunction;
 
-  private Hash hash;
+  private final Supplier<Hash> hash;
+
+  private final Supplier<ParsedExtraData> parsedExtraData;
 
   public BlockHeader(
       final Hash parentHash,
@@ -49,7 +53,7 @@ public class BlockHeader extends SealableBlockHeader {
       final BytesValue extraData,
       final Hash mixHash,
       final long nonce,
-      final BlockHashFunction hashFunction) {
+      final BlockHeaderFunctions blockHeaderFunctions) {
     super(
         parentHash,
         ommersHash,
@@ -66,7 +70,8 @@ public class BlockHeader extends SealableBlockHeader {
         extraData);
     this.mixHash = mixHash;
     this.nonce = nonce;
-    this.hashFunction = hashFunction;
+    this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
+    this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
   }
 
   /**
@@ -86,6 +91,14 @@ public class BlockHeader extends SealableBlockHeader {
   public long getNonce() {
     return nonce;
   }
+  /**
+   * Returns the block extra data field, as parsed by the {@link BlockHeaderFunctions}.
+   *
+   * @return the block extra data field
+   */
+  public ParsedExtraData getParsedExtraData() {
+    return parsedExtraData.get();
+  }
 
   /**
    * Returns the block header hash.
@@ -93,10 +106,7 @@ public class BlockHeader extends SealableBlockHeader {
    * @return the block header hash
    */
   public Hash getHash() {
-    if (hash == null) {
-      hash = hashFunction.apply(this);
-    }
-    return hash;
+    return hash.get();
   }
 
   /**
@@ -126,9 +136,10 @@ public class BlockHeader extends SealableBlockHeader {
     out.endList();
   }
 
-  public static BlockHeader readFrom(final RLPInput input, final BlockHashFunction hashFunction) {
+  public static BlockHeader readFrom(
+      final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
     input.enterList();
-    final BlockHeader header =
+    final BlockHeader blockHeader =
         new BlockHeader(
             Hash.wrap(input.readBytes32()),
             Hash.wrap(input.readBytes32()),
@@ -145,9 +156,9 @@ public class BlockHeader extends SealableBlockHeader {
             input.readBytesValue(),
             Hash.wrap(input.readBytes32()),
             input.readLong(),
-            hashFunction);
+            blockHeaderFunctions);
     input.leaveList();
-    return header;
+    return blockHeader;
   }
 
   @Override

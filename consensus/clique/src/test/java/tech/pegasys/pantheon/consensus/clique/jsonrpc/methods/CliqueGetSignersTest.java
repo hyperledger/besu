@@ -38,7 +38,6 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.util.List;
 import java.util.Optional;
 
-import org.bouncycastle.util.encoders.Hex;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,10 +60,9 @@ public class CliqueGetSignersTest {
   public void setup() {
     method = new CliqueGetSigners(blockchainQueries, voteTallyCache, new JsonRpcParameter());
 
-    final byte[] genesisBlockExtraData =
-        Hex.decode(
-            "52657370656374206d7920617574686f7269746168207e452e436172746d616e42eb768f2244c8811c63729a21a3569731535f067ffc57839b00206d1ad20c69a1981b489f772031b279182d99e65703f0076e4812653aab85fca0f00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-    final BytesValue bufferToInject = BytesValue.wrap(genesisBlockExtraData);
+    final String genesisBlockExtraData =
+        "52657370656374206d7920617574686f7269746168207e452e436172746d616e42eb768f2244c8811c63729a21a3569731535f067ffc57839b00206d1ad20c69a1981b489f772031b279182d99e65703f0076e4812653aab85fca0f00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+    final BytesValue bufferToInject = BytesValue.fromHexString(genesisBlockExtraData);
     final BlockHeaderTestFixture blockHeaderTestFixture = new BlockHeaderTestFixture();
     blockHeader = blockHeaderTestFixture.extraData(bufferToInject).buildHeader();
 

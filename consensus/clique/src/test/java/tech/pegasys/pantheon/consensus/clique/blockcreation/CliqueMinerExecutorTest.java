@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
+import tech.pegasys.pantheon.consensus.clique.CliqueBlockHeaderFunctions;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
 import tech.pegasys.pantheon.consensus.clique.CliqueExtraData;
 import tech.pegasys.pantheon.consensus.clique.CliqueProtocolSchedule;
@@ -104,7 +105,13 @@ public class CliqueMinerExecutorTest {
 
     final BytesValue extraDataBytes = executor.calculateExtraData(header);
 
-    final CliqueExtraData cliqueExtraData = CliqueExtraData.decode(extraDataBytes);
+    final CliqueExtraData cliqueExtraData =
+        CliqueExtraData.decode(
+            blockHeaderBuilder
+                .number(EPOCH_LENGTH)
+                .extraData(extraDataBytes)
+                .blockHeaderFunctions(new CliqueBlockHeaderFunctions())
+                .buildHeader());
 
     assertThat(cliqueExtraData.getVanityData()).isEqualTo(vanityData);
     assertThat(cliqueExtraData.getValidators())
@@ -135,7 +142,13 @@ public class CliqueMinerExecutorTest {
 
     final BytesValue extraDataBytes = executor.calculateExtraData(header);
 
-    final CliqueExtraData cliqueExtraData = CliqueExtraData.decode(extraDataBytes);
+    final CliqueExtraData cliqueExtraData =
+        CliqueExtraData.decode(
+            blockHeaderBuilder
+                .number(EPOCH_LENGTH)
+                .extraData(extraDataBytes)
+                .blockHeaderFunctions(new CliqueBlockHeaderFunctions())
+                .buildHeader());
 
     assertThat(cliqueExtraData.getVanityData()).isEqualTo(vanityData);
     assertThat(cliqueExtraData.getValidators()).isEqualTo(Lists.newArrayList());
@@ -164,7 +177,13 @@ public class CliqueMinerExecutorTest {
     executor.setExtraData(modifiedVanityData);
     final BytesValue extraDataBytes = executor.calculateExtraData(blockHeaderBuilder.buildHeader());
 
-    final CliqueExtraData cliqueExtraData = CliqueExtraData.decode(extraDataBytes);
+    final CliqueExtraData cliqueExtraData =
+        CliqueExtraData.decode(
+            blockHeaderBuilder
+                .number(EPOCH_LENGTH)
+                .extraData(extraDataBytes)
+                .blockHeaderFunctions(new CliqueBlockHeaderFunctions())
+                .buildHeader());
     assertThat(cliqueExtraData.getVanityData()).isEqualTo(modifiedVanityData);
   }
 

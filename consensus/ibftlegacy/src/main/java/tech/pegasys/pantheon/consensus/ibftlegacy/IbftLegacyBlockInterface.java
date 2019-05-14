@@ -40,7 +40,7 @@ public class IbftLegacyBlockInterface implements BlockInterface {
 
   @Override
   public Address getProposerOfBlock(final BlockHeader header) {
-    final IbftExtraData ibftExtraData = IbftExtraData.decode(header.getExtraData());
+    final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
     return IbftBlockHashing.recoverProposerAddress(header, ibftExtraData);
   }
 
@@ -72,7 +72,7 @@ public class IbftLegacyBlockInterface implements BlockInterface {
 
   @Override
   public Collection<Address> validatorsInBlock(final BlockHeader header) {
-    return IbftExtraData.decode(header.getExtraData()).getValidators();
+    return IbftExtraData.decode(header).getValidators();
   }
 
   public static boolean isValidVoteValue(final long value) {

@@ -25,7 +25,6 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Util;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
 
 import java.util.Collection;
 import java.util.List;
@@ -42,14 +41,15 @@ public class CliqueBlockInterfaceTest {
 
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
-  private final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
+  private final BlockHeaderTestFixture headerBuilder =
+      new BlockHeaderTestFixture().blockHeaderFunctions(new CliqueBlockHeaderFunctions());
 
   private final BlockHeader header =
       TestHelpers.createCliqueSignedBlockHeader(headerBuilder, proposerKeys, validatorList);
 
   private final BlockHeaderBuilder builder =
       BlockHeaderBuilder.fromHeader(headerBuilder.buildHeader())
-          .blockHashFunction(MainnetBlockHashFunction::createHash);
+          .blockHeaderFunctions(new CliqueBlockHeaderFunctions());
 
   @Test
   public void headerWithZeroCoinbaseReturnsAnEmptyVote() {

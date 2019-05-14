@@ -56,7 +56,7 @@ public class TestHelpers {
         BlockOptions.create()
             .setExtraData(extraData)
             .setBlockNumber(roundId.getSequenceNumber())
-            .setBlockHashFunction(IbftBlockHashing::calculateDataHashForCommittedSeal);
+            .setBlockHeaderFunctions(IbftBlockHeaderFunctions.forCommittedSeal());
     return new BlockDataGenerator().block(blockOptions);
   }
 

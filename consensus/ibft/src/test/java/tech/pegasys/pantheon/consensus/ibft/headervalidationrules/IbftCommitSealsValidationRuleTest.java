@@ -72,7 +72,7 @@ public class IbftCommitSealsValidationRuleTest {
     final BlockHeader header = createProposedBlockHeader(validators, emptyList(), false);
 
     // Note that no committer seals are in the header's IBFT extra data.
-    final IbftExtraData headerExtraData = IbftExtraData.decode(header.getExtraData());
+    final IbftExtraData headerExtraData = IbftExtraData.decode(header);
     assertThat(headerExtraData.getSeals().size()).isEqualTo(0);
 
     assertThat(commitSealsValidationRule.validate(header, null, context)).isFalse();

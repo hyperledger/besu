@@ -34,7 +34,7 @@ import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
-import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHashFunction;
+import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
@@ -114,7 +114,7 @@ public abstract class AbstractEthGraphQLRpcHttpServiceTest {
     try (final RawBlockIterator iterator =
         new RawBlockIterator(
             Paths.get(blocksUrl.toURI()),
-            rlp -> BlockHeader.readFrom(rlp, MainnetBlockHashFunction::createHash))) {
+            rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()))) {
       while (iterator.hasNext()) {
         BLOCKS.add(iterator.next());
       }
