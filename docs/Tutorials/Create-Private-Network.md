@@ -145,7 +145,7 @@ The command line specifies:
 
 ### 6. Confirm Private Network is Working 
 
-Start another terminal, use curl to call the JSON-RPC API [`net_peerCount`](../Reference/JSON-RPC-API-Methods.md#net_peercount) method and confirm the nodes are functioning as peers: 
+Start another terminal, use curl to call the JSON-RPC API [`net_peerCount`](../Reference/Pantheon-API-Methods.md#net_peercount) method and confirm the nodes are functioning as peers: 
 
 ```bash
 curl -X POST --data '{"jsonrpc":"2.0","method":"net_peerCount","params":[],"id":1}' localhost:8545
@@ -169,9 +169,9 @@ Import accounts to MetaMask and send transactions as described in the [Private N
     
 Send transactions using `eth_sendRawTransaction` to [send ether or, deploy or invoke contracts](../Using-Pantheon/Transactions/Transactions.md).
 
-Use the [JSON-RPC API](../JSON-RPC-API/Using-JSON-RPC-API.md). 
+Use the [JSON-RPC API](../Pantheon-API/Using-JSON-RPC-API.md). 
 
-Start a node with the [`--rpc-ws-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-enabled) option and use the [RPC Pub/Sub API](../Using-Pantheon/RPC-PubSub.md).       
+Start a node with the [`--rpc-ws-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-enabled) option and use the [RPC Pub/Sub API](../Pantheon-API/RPC-PubSub.md).       
 
 ## Stop Nodes
 

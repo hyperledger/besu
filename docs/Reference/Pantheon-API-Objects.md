@@ -1,13 +1,13 @@
-description: Pantheon JSON-RPC API objects reference
+description: Pantheon API objects reference
 <!--- END of page meta data -->
 
-# JSON-RPC API Objects
+# Pantheon API Objects
 
-The following objects are parameters for or returned by JSON-RPC Methods.
+The following objects are parameters for or returned by Pantheon API Methods.
 
 ## Block Object
 
-Returned by [eth_getBlockByHash](JSON-RPC-API-Methods.md#eth_getblockbyhash) and [eth_getBlockByNumber](JSON-RPC-API-Methods.md#eth_getblockbynumber).
+Returned by [eth_getBlockByHash](Pantheon-API-Methods.md#eth_getblockbyhash) and [eth_getBlockByNumber](Pantheon-API-Methods.md#eth_getblockbynumber).
 
 | Key                  | Type                  | Value                                                                                                                            |
 |----------------------|:---------------------:|----------------------------------------------------------------------------------------------------------------------------------|
@@ -34,16 +34,16 @@ Returned by [eth_getBlockByHash](JSON-RPC-API-Methods.md#eth_getblockbyhash) and
 
 ## Filter Options Object
 
-Parameter for [eth_newFilter](JSON-RPC-API-Methods.md#eth_newfilter) and [eth_getLogs](JSON-RPC-API-Methods.md#eth_getlogs). Used to [filter logs](../Using-Pantheon/Accessing-Logs-Using-JSON-RPC.md). 
+Parameter for [eth_newFilter](Pantheon-API-Methods.md#eth_newfilter) and [eth_getLogs](Pantheon-API-Methods.md#eth_getlogs). Used to [filter logs](../Using-Pantheon/Accessing-Logs-Using-JSON-RPC.md). 
 
 | Key           | Type                              | Required/Optional | Value                                                                                                                                       |
 |---------------|:---------------------------------:|:-----------------:|---------------------------------------------------------------------------------------------------------------------------------------------|
-| **fromBlock** | Quantity &#124; Tag               | Optional          | Integer block number or `latest`, `pending`, `earliest`. See [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter). Default is `latest`. |
-| **toBlock**   | Quantity &#124; Tag               | Optional          | Integer block number or `latest`, `pending`, `earliest`. See [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter). Default is `latest`. |
+| **fromBlock** | Quantity &#124; Tag               | Optional          | Integer block number or `latest`, `pending`, `earliest`. See [Block Parameter](../Pantheon-API/Using-JSON-RPC-API.md#block-parameter). Default is `latest`. |
+| **toBlock**   | Quantity &#124; Tag               | Optional          | Integer block number or `latest`, `pending`, `earliest`. See [Block Parameter](../Pantheon-API/Using-JSON-RPC-API.md#block-parameter). Default is `latest`. |
 | **address**   | Data &#124; Array                 | Optional          | Contract address or array of addresses from which [logs](../Using-Pantheon/Events-and-Logs.md) originate.                                                                           |
 | **topics**    | Array of Data, 32&nbsp;bytes each | Optional          | Array of topics by which to [filter logs](../Using-Pantheon/Events-and-Logs.md#topic-filters).                             |
 
-[eth_getLogs](JSON-RPC-API-Methods.md#eth_getlogs) has an additional key. 
+[eth_getLogs](Pantheon-API-Methods.md#eth_getlogs) has an additional key. 
 
 | Key   |   Type            | Required/Optional | Value  |  
 |------------|:-----------------:|:-----------------:|------|
@@ -51,7 +51,7 @@ Parameter for [eth_newFilter](JSON-RPC-API-Methods.md#eth_newfilter) and [eth_ge
 
 ## Log Object 
 
-Returned by [eth_getFilterChanges](JSON-RPC-API-Methods.md#eth_getfilterchanges) and [transaction receipt objects](#transaction-receipt-object) can contain an array of log objects.  
+Returned by [eth_getFilterChanges](Pantheon-API-Methods.md#eth_getfilterchanges) and [transaction receipt objects](#transaction-receipt-object) can contain an array of log objects.  
 
 | Key                  | Type                              | Value                                                                                                                                                                                                               |
 |----------------------|-:- :------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -67,7 +67,7 @@ Returned by [eth_getFilterChanges](JSON-RPC-API-Methods.md#eth_getfilterchanges)
 
 ## Range Object
 
-Returned by [debug_storageRangeAt](JSON-RPC-API-Methods.md#debug_storagerangeat).
+Returned by [debug_storageRangeAt](Pantheon-API-Methods.md#debug_storagerangeat).
 
 | Key             | Type    | Value                                                             |
 |-----------------|:-------:|-------------------------------------------------------------------|
@@ -93,7 +93,7 @@ Log information returned as part of the [Trace object](#trace-object).
 
 ## Trace Object
 
-Returned by [debug_traceTransaction](JSON-RPC-API-Methods.md#debug_tracetransaction).
+Returned by [debug_traceTransaction](Pantheon-API-Methods.md#debug_tracetransaction).
 
 | Key             | Type    | Value                                                             |
 |-----------------|:-------:|-------------------------------------------------------------------|
@@ -104,7 +104,7 @@ Returned by [debug_traceTransaction](JSON-RPC-API-Methods.md#debug_tracetransact
 
 ## Transaction Object
 
-Returned by [eth_getTransactionByHash](JSON-RPC-API-Methods.md#eth_gettransactionbyhash), [eth_getTransactionByBlockHashAndIndex](JSON-RPC-API-Methods.md#eth_gettransactionbyblockhashandindex), and [eth_getTransactionsByBlockNumberAndIndex](JSON-RPC-API-Methods.md#eth_gettransactionbyblocknumberandindex).
+Returned by [eth_getTransactionByHash](Pantheon-API-Methods.md#eth_gettransactionbyhash), [eth_getTransactionByBlockHashAndIndex](Pantheon-API-Methods.md#eth_gettransactionbyblockhashandindex), and [eth_getTransactionsByBlockNumberAndIndex](Pantheon-API-Methods.md#eth_gettransactionbyblocknumberandindex).
 
 | Key                  | Type                | Value                                                                                  |
 |----------------------|:-------------------:|----------------------------------------------------------------------------------------|
@@ -125,10 +125,10 @@ Returned by [eth_getTransactionByHash](JSON-RPC-API-Methods.md#eth_gettransactio
 
 ## Transaction Call Object
 
-Parameter for [eth_call](JSON-RPC-API-Methods.md#eth_call) and [eth_estimateGas](JSON-RPC-API-Methods.md#eth_estimategas).
+Parameter for [eth_call](Pantheon-API-Methods.md#eth_call) and [eth_estimateGas](Pantheon-API-Methods.md#eth_estimategas).
 
 !!!note
-    All parameters are optional for [eth_estimateGas](JSON-RPC-API-Methods.md#eth_estimategas)
+    All parameters are optional for [eth_estimateGas](Pantheon-API-Methods.md#eth_estimategas)
 
 | Key          | Type                | Required/Optional | Value                                                                                                                                                                  |
 |--------------|:-------------------:|:-----------------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -141,7 +141,7 @@ Parameter for [eth_call](JSON-RPC-API-Methods.md#eth_call) and [eth_estimateGas]
 
 ## Transaction Receipt Object 
 
-Returned by [eth_getTransactionReceipt](JSON-RPC-API-Methods.md#eth_gettransactionreceipt).
+Returned by [eth_getTransactionReceipt](Pantheon-API-Methods.md#eth_gettransactionreceipt).
 
 | Key                   | Type                 | Value                                                                                |
 |-----------------------|:--------------------:|--------------------------------------------------------------------------------------|
@@ -167,7 +167,7 @@ Returned by [eth_getTransactionReceipt](JSON-RPC-API-Methods.md#eth_gettransacti
 
 ## Private Transaction Receipt Object 
 
-Returned by [eea_getTransactionReceipt](JSON-RPC-API-Methods.md#eea_gettransactionreceipt).
+Returned by [eea_getTransactionReceipt](Pantheon-API-Methods.md#eea_gettransactionreceipt).
 
 | Key                   | Type                 | Value                                                                                |
 |-----------------------|:--------------------:|--------------------------------------------------------------------------------------|

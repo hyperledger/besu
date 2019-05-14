@@ -127,9 +127,9 @@ or [`--rpc-ws-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-api) option and i
 
 The JSON-RPC methods to add or remove validators are:
 
-* [ibft_getPendingVotes](../Reference/JSON-RPC-API-Methods.md#ibft_getPendingVotes)
-* [ibft_proposeValidatorVote](../Reference/JSON-RPC-API-Methods.md#ibft_proposeValidatorVote)
-* [ibft_discardValidatorVote](../Reference/JSON-RPC-API-Methods.md#ibft_discardValidatorVote)
+* [ibft_getPendingVotes](../Reference/Pantheon-API-Methods.md#ibft_getPendingVotes)
+* [ibft_proposeValidatorVote](../Reference/Pantheon-API-Methods.md#ibft_proposeValidatorVote)
+* [ibft_discardValidatorVote](../Reference/Pantheon-API-Methods.md#ibft_discardValidatorVote)
 
 To propose adding a validator, call `ibft_proposeValidatorVote` specifying the address of the node to be added and `true`.
 !!! example "JSON-RPC ibft_proposeValidatorVote Request Example"

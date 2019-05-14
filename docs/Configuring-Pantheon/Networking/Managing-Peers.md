@@ -31,8 +31,8 @@ To configure a network of static nodes:
 
 1. Start Pantheon with discovery disabled using [`--discovery-enabled=false`](../../Reference/Pantheon-CLI-Syntax.md#discovery-enabled).   
 
-To modify the static peers at run time, use the [`admin_addPeer`](../../Reference/JSON-RPC-API-Methods.md#admin_addpeer) 
-and [`admin_removePeer`](../../Reference/JSON-RPC-API-Methods.md#admin_removepeer) JSON-RPC API methods. 
+To modify the static peers at run time, use the [`admin_addPeer`](../../Reference/Pantheon-API-Methods.md#admin_addpeer) 
+and [`admin_removePeer`](../../Reference/Pantheon-API-Methods.md#admin_removepeer) JSON-RPC API methods. 
 
 !!! note
     Runtime modifications of static nodes are not persisted between runs. The `static-nodes.json` file
@@ -42,7 +42,7 @@ and [`admin_removePeer`](../../Reference/JSON-RPC-API-Methods.md#admin_removepee
     use [Permissioning](../../Permissions/Permissioning-Overview.md). 
     
 !!! caution 
-    If the added peer does not appear in the peer list (returned by [`admin_peers`](../../Reference/JSON-RPC-API-Methods.md#admin_peers)),
+    If the added peer does not appear in the peer list (returned by [`admin_peers`](../../Reference/Pantheon-API-Methods.md#admin_peers)),
     check the supplied [enode URL](../Node-Keys.md#enode-url) is correct, the node is running, the node is listening for 
     TCP connections on the endpoint, and has not reached the [maximum number of peers](#limiting-peers).
     
@@ -66,9 +66,9 @@ and contain a JSON array of [enode URLs](../Node-Keys.md#enode-url).
 
 JSON-RPC API methods to monitor peer connections include: 
 
-* [`net_peerCount`](../../Reference/JSON-RPC-API-Methods.md#net_peercount)
-* [`admin_peers`](../../Reference/JSON-RPC-API-Methods.md#admin_peers)
-* [`debug_metrics`](../../Reference/JSON-RPC-API-Methods.md#debug_metrics)
+* [`net_peerCount`](../../Reference/Pantheon-API-Methods.md#net_peercount)
+* [`admin_peers`](../../Reference/Pantheon-API-Methods.md#admin_peers)
+* [`debug_metrics`](../../Reference/Pantheon-API-Methods.md#debug_metrics)
 
 ## Node Connections
 

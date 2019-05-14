@@ -41,7 +41,7 @@ On non-mining nodes, log messages indicate blocks are being imported.
 2019-05-08 20:28:31.031+10:00 | EthScheduler-Workers-0 | INFO  | BlockPropagationManager | Imported #662 / 0 tx / 0 om / 0 (0.0%) gas / (0x0ead4e20123d3f1433d8dec894fcce386da4049819b24b309963ce7a8a0fcf03) in 0.000s.
 ``` 
 
-Use the [`eth_blockNumber`](../Reference/JSON-RPC-API-Methods.md#eth_blocknumber) JSON-RPC API method to confirm the 
+Use the [`eth_blockNumber`](../Reference/Pantheon-API-Methods.md#eth_blocknumber) JSON-RPC API method to confirm the 
 block number is increasing. 
 
 If blocks are not being created in [Clique](../Consensus-Protocols/Clique.md#extra-data) or [IBFT 2.0](../Consensus-Protocols/IBFT.md#extra-data) networks, 

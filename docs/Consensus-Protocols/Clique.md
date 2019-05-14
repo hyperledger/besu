@@ -93,9 +93,9 @@ or [`--rpc-ws-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-api) option and i
 
 The JSON-RPC methods to add or remove signers are:
 
-* [clique_propose](../Reference/JSON-RPC-API-Methods.md#clique_propose)
-* [clique_getSigners](../Reference/JSON-RPC-API-Methods.md#clique_getsigners)
-* [clique_discard](../Reference/JSON-RPC-API-Methods.md#clique_discard)
+* [clique_propose](../Reference/Pantheon-API-Methods.md#clique_propose)
+* [clique_getSigners](../Reference/Pantheon-API-Methods.md#clique_getsigners)
+* [clique_discard](../Reference/Pantheon-API-Methods.md#clique_discard)
 
 To propose adding a signer, call `clique_propose` specifying the address of the proposed signer and `true`.
 !!! example "JSON-RPC clique_propose Request Example"

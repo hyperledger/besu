@@ -9,5 +9,5 @@ Network wide settings are specified in the genesis file.  Examples include `diff
 networks and the [consensus mechanism](../Consensus-Protocols/Overview-Consensus.md). 
 
 Node settings are specified on the command line or in the [node configuration file](Using-Configuration-File.md). 
-For example, the [JSON-RPC API methods to enable](../Reference/JSON-RPC-API-Methods.md) or the 
+For example, the [JSON-RPC API methods to enable](../Reference/Pantheon-API-Methods.md) or the 
 [data directory](../Reference/Pantheon-CLI-Syntax.md#data-path) for the node. 

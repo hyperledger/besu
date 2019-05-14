@@ -1,22 +1,12 @@
-description: How to use Pantheon JSON-RPC API
+description: How to access the Pantheon API using JSON-RPC
 <!--- END of page meta data -->
 
-# Using the JSON-RPC API
-
-## Postman
-
-Use the button to import our collection of examples to [Postman](https://www.getpostman.com/). 
-
-[![Run in Postman](https://run.pstmn.io/button.svg)](https://app.getpostman.com/run-collection/c765d7d22b055c42a510)
-
-## Endpoint Host and Port
-
-The placeholder
-`<JSON-RPC-http-endpoint:port>` and `<JSON-RPC-ws-endpoint:port>` represents an endpoint (IP address and port) 
-of the JSON-RPC service of a Pantheon node for HTTP and WebSocket requests.
+# JSON-RPC over HTTP and WebSockets
 
 To enable JSON-RPC over HTTP or WebSockets, use the [`--rpc-http-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled) 
 and [`--rpc-ws-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-enabled) options.
+
+## RPC Host
 
 Use the [--rpc-http-host](../Reference/Pantheon-CLI-Syntax.md#rpc-http-host) and [--rpc-ws-host](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-host) 
 options to specify the host on which the JSON-RPC listens. The default host is 127.0.0.1 for HTTP and WebSockets.  
@@ -27,6 +17,8 @@ Set the host to `0.0.0.0` to allow remote connections.
     Setting the host to 0.0.0.0 exposes the RPC connection on your node to any remote connection. In a 
     production environment, ensure you use a firewall to avoid exposing your node to the internet.  
 
+## RPC Port
+
 Use the [--rpc-http-port](../Reference/Pantheon-CLI-Syntax.md#rpc-http-port) and [--rpc-ws-port](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-port)
 options to specify the port on which the JSON-RPC listens. The default ports are: 
 
@@ -34,6 +26,13 @@ options to specify the port on which the JSON-RPC listens. The default ports are
 * 8546 for WebSockets
 
 Ports must be [exposed appropriately](../Configuring-Pantheon/Networking/Managing-Peers.md#port-configuration).
+
+## Postman
+
+Use the button to import our collection of examples to [Postman](https://www.getpostman.com/). 
+
+[![Run in Postman](https://run.pstmn.io/button.svg)](https://app.getpostman.com/run-collection/c765d7d22b055c42a510)
+
 
 ## Geth Console 
 
@@ -51,31 +50,13 @@ To use the geth console with Pantheon:
     geth attach http://localhost:8545
    ``` 
    
-Use the geth console to call [JSON-RPC API methods](../Reference/JSON-RPC-API-Methods.md) that geth and Pantheon share. 
+Use the geth console to call [JSON-RPC API methods](../Reference/Pantheon-API-Methods.md) that geth and Pantheon share. 
 
 !!! example 
     ```bash
     eth.syncing
     ```
     
-## Host Whitelist 
-
-To prevent DNS rebinding, incoming HTTP requests and WebSockets connections are only accepted from hostnames 
-specified using the [`--host-whitelist`](../Reference/Pantheon-CLI-Syntax.md#host-whitelist) option. 
-By default, `localhost` and `127.0.0.1` are accepted.
-
-If your application publishes RPC ports, specify the hostnames when starting Pantheon.
- 
-!!! example
-    ```bash
-    pantheon --host-whitelist=example.com
-    ```
-    
-Specify * for `--host-whitelist` to effectively disable host protection.
-
-!!! caution 
-    Specifying * for `--host-whitelist` is not recommended for production code.
-
 ## JSON-RPC Authentication 
 
 [Authentication](Authentication.md) is disabled by default. 
@@ -122,25 +103,12 @@ options to enable the `ADMIN`, `CLIQUE`, `DEBUG`, `EEA`, `IBFT`, `MINER`, `PERM`
 
 When you make requests that might have different results depending on the block accessed, 
 the block parameter specifies the block. 
-Several methods, such as [eth_getTransactionByBlockNumberAndIndex](../Reference/JSON-RPC-API-Methods.md#eth_gettransactionbyblocknumberandindex), have a block parameter.
+Several methods, such as [eth_getTransactionByBlockNumberAndIndex](../Reference/Pantheon-API-Methods.md#eth_gettransactionbyblocknumberandindex), have a block parameter.
 
 The block parameter can have the following values:
 
 * `blockNumber` : `quantity` - Block number. Can be specified in hexadecimal or decimal. 0 represents the genesis block.
 * `earliest` : `tag` - Earliest (genesis) block. 
 * `latest` : `tag` - Last block mined.
-* `pending` : `tag` - Last block mined plus pending transactions. Use only with [eth_getTransactionCount](../Reference/JSON-RPC-API-Methods.md#eth_gettransactioncount).  
+* `pending` : `tag` - Last block mined plus pending transactions. Use only with [eth_getTransactionCount](../Reference/Pantheon-API-Methods.md#eth_gettransactioncount).  
 
-## Not Supported by Pantheon
-
-### Account Management 
-
-Account management relies on private key management in the client which is not implemented by Pantheon. 
-
-Use [`eth_sendRawTransaction`](../Reference/JSON-RPC-API-Methods.md#eth_sendrawtransaction) to send signed transactions; `eth_sendTransaction` is not implemented. 
-
-Use third-party wallets for [account management](../Using-Pantheon/Account-Management.md). 
-
-### Protocols
-
-Pantheon does not implement the Whisper and Swarm protocols.

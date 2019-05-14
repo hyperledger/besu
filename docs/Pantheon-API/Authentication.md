@@ -1,9 +1,9 @@
-# Authentication and Authorization 
+# Authentication and Authorization for JSON-RPC
 
 Authentication identifies a user based on a username and password. Authorization verifies whether the user has
 access to the JSON-RPC method they are requesting.  
 
-Pantheon uses the username and password to authenticate users and [JWT tokens](https://jwt.io/introduction/) to authorize JSON-RPC API requests. 
+Pantheon uses the username and password to authenticate users and [JWT tokens](https://jwt.io/introduction/) to authorize JSON-RPC requests. 
 
 !!! important 
     Authenticated requests must be made over HTTPS. HTTPS is encrypted which prevents eavesdropping on the connection

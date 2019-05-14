@@ -130,7 +130,7 @@ Waiting for transaction to be mined ...
 Get Value: 0x000000000000000000000000000000000000000000000000000000000000002a
 ```
 
-Call [`eth_getTransactionReceipt`](../Reference/JSON-RPC-API-Methods.md#eth_gettransactionreceipt) where:
+Call [`eth_getTransactionReceipt`](../Reference/Pantheon-API-Methods.md#eth_gettransactionreceipt) where:
  
 * `<TransactionHash>` is the transaction hash displayed in the Event Emitter logs. 
 * `<JSON-RPC Endpoint>` is the JSON-RPC HTTP service endpoint displayed when starting the network. 

@@ -12,7 +12,7 @@ Where `<account>` is the account to which mining rewards are to be paid. For exa
 
 JSON-RPC API methods for mining are:
 
-* [`miner_start`](../Reference/JSON-RPC-API-Methods.md#miner_start) to start mining. 
-* [`miner_stop`](../Reference/JSON-RPC-API-Methods.md#miner_stop) to stop mining. 
-* [`eth_mining`](../Reference/JSON-RPC-API-Methods.md#eth_mining) to determine whether the client is actively mining new blocks.   
-* [`eth_hashrate`](../Reference/JSON-RPC-API-Methods.md#eth_hashrate) to get the number of hashes per second with which the node is mining. 
+* [`miner_start`](../Reference/Pantheon-API-Methods.md#miner_start) to start mining. 
+* [`miner_stop`](../Reference/Pantheon-API-Methods.md#miner_stop) to stop mining. 
+* [`eth_mining`](../Reference/Pantheon-API-Methods.md#eth_mining) to determine whether the client is actively mining new blocks.   
+* [`eth_hashrate`](../Reference/Pantheon-API-Methods.md#eth_hashrate) to get the number of hashes per second with which the node is mining. 

@@ -40,7 +40,7 @@ Specified by the [`--p2p-host`](../Reference/Pantheon-CLI-Syntax.md#p2p-host) an
     The enode URL is:
     `enode://c35c3ec90a8a51fd5703594c6303382f3ae6b2ecb9589bab2c04b3794f2bc3fc2631dabb0c08af795787a6c004d8f532230ae6e9925cbbefb0b28b79295d615f@127.0.0.1:30303` 
 
-The enode is displayed when starting a Pantheon node and can be obtained using the [`net_enode`](../Reference/JSON-RPC-API-Methods.md#net_enode) 
+The enode is displayed when starting a Pantheon node and can be obtained using the [`net_enode`](../Reference/Pantheon-API-Methods.md#net_enode) 
 JSON-RPC API method. 
 
 ## Specifying a Custom Node Private Key File

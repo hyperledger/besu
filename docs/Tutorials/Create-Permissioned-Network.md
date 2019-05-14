@@ -222,7 +222,7 @@ The enode URL is required to update the permissions configuration file in the fo
 
 ### 8. Add Enode URLs for Nodes to Permissions Configuration File 
 
-In another terminal, use the [`perm_addNodesToWhitelist`](../Reference/JSON-RPC-API-Methods.md#perm_addnodestowhitelist) 
+In another terminal, use the [`perm_addNodesToWhitelist`](../Reference/Pantheon-API-Methods.md#perm_addnodestowhitelist) 
 JSON-RPC API method to add the nodes to the permissions configuration file for each node. 
 
 Replace `<EnodeNode1>`, `<EnodeNode2>`, and `<EnodeNode3>` with the enode URL displayed when starting each node. 
@@ -247,7 +247,7 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"perm_addNodesToWhitelist","param
 
 ### 9. Add Nodes as Peers
 
-Use the [`admin_addPeer`](../Reference/JSON-RPC-API-Methods.md#admin_addpeer) JSON-RPC API method to add 
+Use the [`admin_addPeer`](../Reference/Pantheon-API-Methods.md#admin_addpeer) JSON-RPC API method to add 
 Node-1 as a peer for Node-2 and Node-3. 
 
 Replace `<EnodeNode1>` with the enode URL displayed when starting Node-1. 
@@ -276,7 +276,7 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"admin_addPeer","params":["<Enode
 
 #### Check Peer Count 
 
-Use cURL to call the JSON-RPC API [`net_peerCount`](../Reference/JSON-RPC-API-Methods.md#net_peercount) method and confirm the nodes are functioning as peers: 
+Use cURL to call the JSON-RPC API [`net_peerCount`](../Reference/Pantheon-API-Methods.md#net_peercount) method and confirm the nodes are functioning as peers: 
 
 ```bash
 curl -X POST --data '{"jsonrpc":"2.0","method":"net_peerCount","params":[],"id":1}' localhost:8545
@@ -326,7 +326,7 @@ pantheon --data-path=data --bootnodes="<EnodeNode1>" --genesis-file=../cliqueGen
 pantheon --data-path=data --bootnodes="<EnodeNode1>" --genesis-file=..\cliqueGenesis.json --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist=* --rpc-http-cors-origins=* --p2p-port=30306 --rpc-http-port=8548    
 ```
 
-Start another terminal, use cURL to call the JSON-RPC API [`net_peerCount`](../Reference/JSON-RPC-API-Methods.md#net_peercount) method: 
+Start another terminal, use cURL to call the JSON-RPC API [`net_peerCount`](../Reference/Pantheon-API-Methods.md#net_peercount) method: 
 
 ```bash
 curl -X POST --data '{"jsonrpc":"2.0","method":"net_peerCount","params":[],"id":1}' localhost:8548

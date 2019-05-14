@@ -16,7 +16,7 @@ Private transactions are processed as illustrated and described below.
 
 ![Processing Private Transctions](../images/PrivateTransactionProcessing.png)
 
-1. A private transaction is submitted using [eea_sendRawTransaction](../Reference/JSON-RPC-API-Methods.md#eea_sendrawtransaction). 
+1. A private transaction is submitted using [eea_sendRawTransaction](../Reference/Pantheon-API-Methods.md#eea_sendrawtransaction). 
 The signed transaction includes transaction attributes that are specific to private transactions: 
 
     * `privateFor` specifies the list of recipients

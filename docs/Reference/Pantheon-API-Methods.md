@@ -1,7 +1,7 @@
 description: Pantheon JSON-RPC API methods reference
 <!--- END of page meta data -->
 
-# JSON-RPC API Methods
+# Pantheon API Methods
 
 !!! attention
     All JSON-RPC HTTP examples use the default host and port endpoint `http://127.0.0.1:8545`. 
@@ -12,7 +12,7 @@ description: Pantheon JSON-RPC API methods reference
 ## Admin Methods
 
 !!! note
-    The `ADMIN` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
+    The `ADMIN` API methods are not enabled by default for JSON-RPC. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
     or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `ADMIN` API methods.
 
 ### admin_addPeer
@@ -645,7 +645,7 @@ None
 Returns a list of account addresses that the client owns.
 
 !!!note
-    This method returns an empty object because Pantheon [does not support account management](../JSON-RPC-API/Using-JSON-RPC-API.md#account-management).
+    This method returns an empty object because Pantheon [does not support account management](../Pantheon-API/Using-JSON-RPC-API.md#account-management).
 
 **Parameters**
 
@@ -710,7 +710,7 @@ Returns the account balance of the specified address.
 
 `DATA` - 20-byte account address from which to retrieve the balance.
 
-`QUANTITY|TAG` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter).
+`QUANTITY|TAG` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../Pantheon-API/Using-JSON-RPC-API.md#block-parameter).
 
 **Returns**
 
@@ -743,7 +743,7 @@ Returns the value of a storage position at a specified address.
 
 `QUANTITY` - Integer index of the storage position.
 
-`QUANTITY|TAG` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter).
+`QUANTITY|TAG` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../Pantheon-API/Using-JSON-RPC-API.md#block-parameter).
 
 **Returns**
 
@@ -776,7 +776,7 @@ Returns the number of transactions sent from a specified address. Use the `pendi
 
 `data` - 20-byte account address.
 
-`quantity|tag` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter).
+`quantity|tag` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../Pantheon-API/Using-JSON-RPC-API.md#block-parameter).
 
 **Returns**
 
@@ -834,7 +834,7 @@ Returns the number of transactions in a block matching the specified block numbe
 
 **Parameters**
 
-`QUANTITY|TAG` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter).
+`QUANTITY|TAG` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../Pantheon-API/Using-JSON-RPC-API.md#block-parameter).
 
 **Returns**
 
@@ -892,7 +892,7 @@ Returns the number of uncles in a block matching the specified block number.
 
 **Parameters**
 
-`QUANTITY|TAG` - Integer representing either the 0-based index of the block within the blockchain, or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter).
+`QUANTITY|TAG` - Integer representing either the 0-based index of the block within the blockchain, or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../Pantheon-API/Using-JSON-RPC-API.md#block-parameter).
 
 **Returns**
 
@@ -923,7 +923,7 @@ Returns the code of the smart contract at the specified address. Compiled smart 
 
 `DATA` - 20-byte contract address.
 
-`QUANTITY|TAG` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter).
+`QUANTITY|TAG` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../Pantheon-API/Using-JSON-RPC-API.md#block-parameter).
 
 **Returns**
 
@@ -955,7 +955,7 @@ You can interact with contracts using [eth_sendRawTransaction or eth_call](../Us
 To avoid exposing your private key, create signed transactions offline and send the signed transaction data using `eth_sendRawTransaction`. 
 
 !!!important
-    Pantheon does not implement [eth_sendTransaction](../JSON-RPC-API/Using-JSON-RPC-API.md#account-management).
+    Pantheon does not implement [eth_sendTransaction](../Pantheon-API/Using-JSON-RPC-API.md#account-management).
 
 **Parameters**
 
@@ -995,9 +995,9 @@ You can interact with contracts using [eth_sendRawTransaction or eth_call](../Us
 
 **Parameters**
 
-*OBJECT* - [Transaction call object](JSON-RPC-API-Objects.md#transaction-call-object).
+*OBJECT* - [Transaction call object](Pantheon-API-Objects.md#transaction-call-object).
 
-*QUANTITY|TAG* - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter).
+*QUANTITY|TAG* - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../Pantheon-API/Using-JSON-RPC-API.md#block-parameter).
 
 **Returns**
 
@@ -1035,7 +1035,7 @@ The transaction call object parameters are the same as those for [eth_call](#eth
 all fields are optional. Setting a gas limit is irrelevant to the estimation process (unlike transactions, in which gas
 limits apply).
 
-*OBJECT* - [Transaction call object](JSON-RPC-API-Objects.md#transaction-call-object).
+*OBJECT* - [Transaction call object](Pantheon-API-Objects.md#transaction-call-object).
 
 **Returns**
 
@@ -1100,11 +1100,11 @@ Returns information about the block by hash.
 
 `DATA` - 32-byte hash of a block.
 
-`Boolean` - If `true`, returns the full [transaction objects](JSON-RPC-API-Objects.md#transaction-object); if `false`, returns the transaction hashes.
+`Boolean` - If `true`, returns the full [transaction objects](Pantheon-API-Objects.md#transaction-object); if `false`, returns the transaction hashes.
 
 **Returns**
 
-`result` : *OBJECT* - [Block object](JSON-RPC-API-Objects.md#block-object) , or `null` when no block is found. 
+`result` : *OBJECT* - [Block object](Pantheon-API-Objects.md#block-object) , or `null` when no block is found. 
 
 !!! example
     ```bash tab="curl HTTP request"
@@ -1149,13 +1149,13 @@ Returns information about a block by block number.
 
 **Parameters**
 
-`QUANTITY|TAG` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter).
+`QUANTITY|TAG` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../Pantheon-API/Using-JSON-RPC-API.md#block-parameter).
 
-`Boolean` - If `true`, returns the full [transaction objects](JSON-RPC-API-Objects.md#transaction-object); if `false`, returns only the hashes of the transactions.
+`Boolean` - If `true`, returns the full [transaction objects](Pantheon-API-Objects.md#transaction-object); if `false`, returns only the hashes of the transactions.
 
 **Returns**
 
-`result` : *OBJECT* - [Block object](JSON-RPC-API-Objects.md#block-object) , or `null` when no block is found. 
+`result` : *OBJECT* - [Block object](Pantheon-API-Objects.md#block-object) , or `null` when no block is found. 
 
 !!! example
     ```bash tab="curl HTTP request"
@@ -1204,7 +1204,7 @@ Returns transaction information for the specified transaction hash.
 
 **Returns**
 
-Object - [Transaction object](JSON-RPC-API-Objects.md#transaction-object), or `null` when no transaction is found.
+Object - [Transaction object](Pantheon-API-Objects.md#transaction-object), or `null` when no transaction is found.
 
 !!! example
     ```bash tab="curl HTTP request"
@@ -1250,7 +1250,7 @@ Returns transaction information for the specified block hash and transaction ind
 
 **Returns**
 
-Object - [Transaction object](JSON-RPC-API-Objects.md#transaction-object), or `null` when no transaction is found.
+Object - [Transaction object](Pantheon-API-Objects.md#transaction-object), or `null` when no transaction is found.
 
 !!! example
     ```bash tab="curl HTTP request"
@@ -1290,13 +1290,13 @@ Returns transaction information for the specified block number and transaction i
 
 **Parameters**
 
-`QUANTITY|TAG` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter).
+`QUANTITY|TAG` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../Pantheon-API/Using-JSON-RPC-API.md#block-parameter).
 
 `QUANTITY` - The transaction index position.
 
 **Returns**
 
-Object - [Transaction object](JSON-RPC-API-Objects.md#transaction-object), or `null` when no transaction is found.
+Object - [Transaction object](Pantheon-API-Objects.md#transaction-object), or `null` when no transaction is found.
 
 !!!note
     Your node must be synchronized to at least the block containing the transaction for the request to return it.
@@ -1345,7 +1345,7 @@ Returns the receipt of a transaction by transaction hash. Receipts for pending t
 
 **Returns**
 
-`Object` - [Transaction receipt object](JSON-RPC-API-Objects.md#transaction-receipt-object), or `null` when no receipt is found.
+`Object` - [Transaction receipt object](Pantheon-API-Objects.md#transaction-receipt-object), or `null` when no receipt is found.
 
 !!! example
     ```bash tab="curl HTTP request"
@@ -1383,7 +1383,7 @@ Creates a [log filter](../Using-Pantheon/Events-and-Logs.md). To poll for logs a
 
 **Parameters**
 
-`Object` - [Filter options object](JSON-RPC-API-Objects.md#filter-options-object). 
+`Object` - [Filter options object](Pantheon-API-Objects.md#filter-options-object). 
 
 !!!note
     `fromBlock` and `toBlock` in the filter options object default to `latest`. To obtain logs using `eth_getFilterLogs`, set `fromBlock` and `toBlock` appropriately.
@@ -1514,7 +1514,7 @@ Polls the specified filter and returns an array of changes that have occurred si
 
 * For filters created with `eth_newBlockFilter`, returns block hashes.
 * For filters created with `eth_newPendingTransactionFilter`, returns transaction hashes.
-* For filters created with `eth_newFilter`, returns [log objects](JSON-RPC-API-Objects.md#log-object). 
+* For filters created with `eth_newFilter`, returns [log objects](Pantheon-API-Objects.md#log-object). 
 
 !!! example
     ```bash tab="curl HTTP request"
@@ -1602,7 +1602,7 @@ Returns an array of [logs](../Using-Pantheon/Events-and-Logs.md) for the specifi
 
 **Returns**
 
-`array` - [Log objects](JSON-RPC-API-Objects.md#log-object)
+`array` - [Log objects](Pantheon-API-Objects.md#log-object)
 
 !!! example
 
@@ -1648,11 +1648,11 @@ Returns an array of [logs](../Using-Pantheon/Events-and-Logs.md) matching a spec
 
 **Parameters**
 
-`Object` - [Filter options object](JSON-RPC-API-Objects.md#filter-options-object)
+`Object` - [Filter options object](Pantheon-API-Objects.md#filter-options-object)
 
 **Returns**
 
-`array` - [Log objects](JSON-RPC-API-Objects.md#log-object)
+`array` - [Log objects](Pantheon-API-Objects.md#log-object)
 
 !!! example
     The following request returns all logs for the contract at address `0x2e1f232a9439c3d459fceca0beef13acc8259dd8`. 
@@ -1734,7 +1734,7 @@ None
 ## Clique Methods
 
 !!! note
-    The `CLIQUE` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
+    The `CLIQUE` API methods are not enabled by default for JSON-RPC. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
     or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `CLIQUE` API methods.
 
 ### clique_discard
@@ -1772,7 +1772,7 @@ Lists [signers for the specified block](../Consensus-Protocols/Clique.md#adding-
 
 **Parameters** 
 
-`quantity|tag` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter). 
+`quantity|tag` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../Pantheon-API/Using-JSON-RPC-API.md#block-parameter). 
 
 **Returns**
 
@@ -1892,7 +1892,7 @@ If the boolean value is `true`, the proposal is to add a signer. If `false`, the
 ## Debug Methods
 
 !!! note
-    The `DEBUG` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
+    The `DEBUG` API methods are not enabled by default for JSON-RPC. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
     or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `DEBUG` API methods.
 
 ### debug_storageRangeAt
@@ -1915,7 +1915,7 @@ Returns the contract storage for the specified range.
 
 **Returns**
 
-`result`:`object` - [Range object](JSON-RPC-API-Objects.md#range-object)  
+`result`:`object` - [Range object](Pantheon-API-Objects.md#range-object)  
 
 !!! example
     ```bash tab="curl HTTP request"
@@ -2087,7 +2087,7 @@ Reruns the transaction with the same state as when the transaction was executed.
 
 **Returns**
 
-`result`:`object` - [Trace object](JSON-RPC-API-Objects.md#trace-object). 
+`result`:`object` - [Trace object](Pantheon-API-Objects.md#trace-object). 
 
 !!! example
     ```bash tab="curl HTTP request"
@@ -2123,7 +2123,7 @@ Reruns the transaction with the same state as when the transaction was executed.
 ## Miner Methods
 
 !!! note
-    The `MINER` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
+    The `MINER` API methods are not enabled by default for JSON-RPC. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
     or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `MINER` API methods.
 
 ### miner_start
@@ -2187,7 +2187,7 @@ None
 ## IBFT 2.0 Methods 
 
 !!! note
-    The `IBFT` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
+    The `IBFT` API methods are not enabled by default for JSON-RPC. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
     or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `IBFT` API methods.
 
 ### ibft_discardValidatorVote
@@ -2292,7 +2292,7 @@ Lists the validators defined in the specified block.
 
 **Parameters** 
 
-`quantity|tag` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../JSON-RPC-API/Using-JSON-RPC-API.md#block-parameter). 
+`quantity|tag` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../Pantheon-API/Using-JSON-RPC-API.md#block-parameter). 
 
 **Returns**
 
@@ -2353,7 +2353,7 @@ Proposes [adding or removing a validator](../Consensus-Protocols/IBFT.md#adding-
 ## Permissioning Methods
 
 !!! note
-    The `PERM` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
+    The `PERM` API methods are not enabled by default for JSON-RPC. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
     or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `PERM` API methods.
 
 ### perm_addAccountsToWhitelist
@@ -2583,7 +2583,7 @@ None
 ## Txpool Methods 
 
 !!! note
-    The `TXPOOL` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
+    The `TXPOOL` API methods are not enabled by default for JSON-RPC. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
     or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `TXPOOL` API methods.
 
 ### txpool_pantheonStatistics
@@ -2667,7 +2667,7 @@ None
 ## EEA Methods
 
 !!! note
-    The `EEA` API methods are not enabled by default. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
+    The `EEA` API methods are not enabled by default for JSON-RPC. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
     or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `EEA` API methods.
 
 ### eea_sendRawTransaction
@@ -2726,7 +2726,7 @@ are not available.
 
 **Returns**
 
-`Object` - [Private Transaction receipt object](JSON-RPC-API-Objects.md#private-transaction-receipt-object), or `null` if no receipt found.
+`Object` - [Private Transaction receipt object](Pantheon-API-Objects.md#private-transaction-receipt-object), or `null` if no receipt found.
 
 !!! example 
     ```bash tab="curl HTTP request"
@@ -2755,7 +2755,7 @@ are not available.
 
 ### rpc_modules
 
-Lists [enabled JSON-RPC APIs](../JSON-RPC-API/Using-JSON-RPC-API.md#api-methods-enabled-by-default) and the version of each.  
+Lists [enabled APIs](../Pantheon-API/Using-JSON-RPC-API.md#api-methods-enabled-by-default) and the version of each.  
 
 **Parameters** 
 
@@ -2763,7 +2763,7 @@ None
 
 **Returns** 
 
-Enabled JSON-RPC APIs.
+Enabled APIs.
 
 !!! example
     ```bash tab="curl HTTP request"
