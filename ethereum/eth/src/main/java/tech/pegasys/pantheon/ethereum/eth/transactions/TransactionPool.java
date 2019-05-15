@@ -33,9 +33,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -106,11 +104,11 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public void addRemoteTransactions(final Collection<Transaction> transactions) {
+    if (!syncState.isInSync(SYNC_TOLERANCE)) {
+      return;
+    }
     final Set<Transaction> addedTransactions = new HashSet<>();
-    for (final Transaction transaction : sortByNonce(transactions)) {
-      if (!syncState.isInSync(SYNC_TOLERANCE)) {
-        return;
-      }
+    for (final Transaction transaction : transactions) {
       final ValidationResult<TransactionInvalidReason> validationResult =
           validateTransaction(transaction);
       if (validationResult.isValid()) {
@@ -128,13 +126,6 @@ public class TransactionPool implements BlockAddedObserver {
     if (!addedTransactions.isEmpty()) {
       transactionBatchAddedListener.onTransactionsAdded(addedTransactions);
     }
-  }
-
-  // Sort transactions by nonce to ensure we import sequences of transactions correctly
-  private List<Transaction> sortByNonce(final Collection<Transaction> transactions) {
-    final List<Transaction> sortedTransactions = new ArrayList<>(transactions);
-    sortedTransactions.sort(Comparator.comparing(Transaction::getNonce));
-    return sortedTransactions;
   }
 
   public void addTransactionListener(final PendingTransactionListener listener) {
