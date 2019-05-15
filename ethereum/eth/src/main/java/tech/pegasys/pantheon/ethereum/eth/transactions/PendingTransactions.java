@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.eth.transactions;
 
 import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.toList;
 
 import tech.pegasys.pantheon.ethereum.core.AccountTransactionOrder;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -40,7 +39,9 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 /**
  * Holds the current set of pending transactions with the ability to iterate them based on priority
@@ -56,7 +57,7 @@ public class PendingTransactions {
   private final int maxTransactionRetentionHours;
   private final Clock clock;
 
-  private final Map<Hash, TransactionInfo> pendingTransactions = new HashMap<>();
+  private final Map<Hash, TransactionInfo> pendingTransactions = new ConcurrentHashMap<>();
   private final SortedSet<TransactionInfo> prioritizedTransactions =
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
@@ -103,28 +104,19 @@ public class PendingTransactions {
   }
 
   public void evictOldTransactions() {
-    synchronized (pendingTransactions) {
-      final Instant removeTransactionsBefore =
-          clock.instant().minus(maxTransactionRetentionHours, ChronoUnit.HOURS);
-      final List<TransactionInfo> transactionsToRemove =
-          prioritizedTransactions.stream()
-              .filter(
-                  transaction -> transaction.getAddedToPoolAt().isBefore(removeTransactionsBefore))
-              .collect(toList());
-      transactionsToRemove.forEach(transaction -> removeTransaction(transaction.getTransaction()));
-    }
+    final Instant removeTransactionsBefore =
+        clock.instant().minus(maxTransactionRetentionHours, ChronoUnit.HOURS);
+
+    pendingTransactions.values().stream()
+        .filter(transaction -> transaction.getAddedToPoolAt().isBefore(removeTransactionsBefore))
+        .forEach(transaction -> removeTransaction(transaction.getTransaction()));
   }
 
   List<Transaction> getLocalTransactions() {
-    synchronized (pendingTransactions) {
-      List<Transaction> localTransactions = new ArrayList<>();
-      for (Map.Entry<Hash, TransactionInfo> transaction : pendingTransactions.entrySet()) {
-        if (transaction.getValue().isReceivedFromLocalSource()) {
-          localTransactions.add(transaction.getValue().getTransaction());
-        }
-      }
-      return localTransactions;
-    }
+    return pendingTransactions.values().stream()
+        .filter(TransactionInfo::isReceivedFromLocalSource)
+        .map(TransactionInfo::getTransaction)
+        .collect(Collectors.toList());
   }
 
   public boolean addRemoteTransaction(final Transaction transaction) {
@@ -220,6 +212,7 @@ public class PendingTransactions {
   }
 
   private boolean addTransaction(final TransactionInfo transactionInfo) {
+    Optional<Transaction> droppedTransaction = Optional.empty();
     synchronized (pendingTransactions) {
       if (pendingTransactions.containsKey(transactionInfo.getHash())) {
         return false;
@@ -231,13 +224,15 @@ public class PendingTransactions {
       prioritizedTransactions.add(transactionInfo);
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
 
-      notifyTransactionAdded(transactionInfo.getTransaction());
       if (pendingTransactions.size() > maxPendingTransactions) {
         final TransactionInfo toRemove = prioritizedTransactions.last();
-        removeTransaction(toRemove.getTransaction());
+        doRemoveTransaction(toRemove.getTransaction(), false);
+        droppedTransaction = Optional.of(toRemove.getTransaction());
       }
-      return true;
     }
+    notifyTransactionAdded(transactionInfo.getTransaction());
+    droppedTransaction.ifPresent(this::notifyTransactionDropped);
+    return true;
   }
 
   private boolean addTransactionForSenderAndNonce(final TransactionInfo transactionInfo) {
@@ -277,22 +272,16 @@ public class PendingTransactions {
   }
 
   public int size() {
-    synchronized (pendingTransactions) {
-      return pendingTransactions.size();
-    }
+    return pendingTransactions.size();
   }
 
   public Optional<Transaction> getTransactionByHash(final Hash transactionHash) {
-    synchronized (pendingTransactions) {
-      return Optional.ofNullable(pendingTransactions.get(transactionHash))
-          .map(TransactionInfo::getTransaction);
-    }
+    return Optional.ofNullable(pendingTransactions.get(transactionHash))
+        .map(TransactionInfo::getTransaction);
   }
 
   public Set<TransactionInfo> getTransactionInfo() {
-    synchronized (pendingTransactions) {
-      return new HashSet<>(pendingTransactions.values());
-    }
+    return new HashSet<>(pendingTransactions.values());
   }
 
   void addTransactionListener(final PendingTransactionListener listener) {
