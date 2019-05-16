@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster;
 public class ClusterConfigurationBuilder {
   private boolean awaitPeerDiscovery = true;
 
-  public ClusterConfigurationBuilder setAwaitPeerDiscovery(final boolean awaitPeerDiscovery) {
+  public ClusterConfigurationBuilder awaitPeerDiscovery(final boolean awaitPeerDiscovery) {
     this.awaitPeerDiscovery = awaitPeerDiscovery;
     return this;
   }

@@ -45,7 +45,7 @@ class NodeSmartContractNodePermissioningAcceptanceTestBase extends AcceptanceTes
 
   private Cluster permissionedCluster() {
     final ClusterConfiguration clusterConfiguration =
-        new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
+        new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
     return new Cluster(clusterConfiguration, net);
   }
 

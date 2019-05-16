@@ -28,7 +28,7 @@ public class P2pDisabledAcceptanceTest extends AcceptanceTestBase {
   @Before
   public void setUp() throws Exception {
     final ClusterConfiguration clusterConfiguration =
-        new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
+        new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
 
     p2pDisabledCluster = new Cluster(clusterConfiguration, net);
     node = pantheon.createNodeWithP2pDisabled("node1");

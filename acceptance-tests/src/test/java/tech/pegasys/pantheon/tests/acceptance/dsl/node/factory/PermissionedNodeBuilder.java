@@ -148,15 +148,15 @@ public class PermissionedNodeBuilder {
 
     final PantheonFactoryConfigurationBuilder builder = new PantheonFactoryConfigurationBuilder();
     builder
-        .setName(name)
-        .setJsonRpcConfiguration(jsonRpcConfigWithPermApiEnabled())
-        .setPermissioningConfiguration(permissioningConfiguration)
+        .name(name)
+        .jsonRpcConfiguration(jsonRpcConfigWithPermApiEnabled())
+        .permissioningConfiguration(permissioningConfiguration)
         .bootnodeEligible(false)
         .miningEnabled();
 
     if (genesisFile != null) {
-      builder.setGenesisConfigProvider((a) -> Optional.of(genesisFile));
-      builder.setDevMode(false);
+      builder.genesisConfigProvider((a) -> Optional.of(genesisFile));
+      builder.devMode(false);
     }
 
     try {

@@ -61,7 +61,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
 
     final MetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
     final List<EnodeURL> bootnodes =
-        node.getConfiguration().bootnodes().stream()
+        node.getConfiguration().getBootnodes().stream()
             .map(EnodeURL::fromURI)
             .collect(Collectors.toList());
     final EthNetworkConfig.Builder networkConfigBuilder =
@@ -102,7 +102,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
             .pantheonController(pantheonController)
             .ethNetworkConfig(ethNetworkConfig)
             .discovery(node.isDiscoveryEnabled())
-            .p2pAdvertisedHost(node.hostName())
+            .p2pAdvertisedHost(node.getHostName())
             .p2pListenPort(0)
             .maxPeers(25)
             .jsonRpcConfiguration(node.jsonRpcConfiguration())

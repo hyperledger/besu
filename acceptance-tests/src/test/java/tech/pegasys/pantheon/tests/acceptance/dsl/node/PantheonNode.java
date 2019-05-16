@@ -138,7 +138,8 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
     LOG.info("Created PantheonNode {}", this.toString());
   }
 
-  private boolean isJsonRpcEnabled() {
+  @Override
+  public boolean isJsonRpcEnabled() {
     return jsonRpcConfiguration().isEnabled();
   }
 
@@ -213,7 +214,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
   }
 
   @Override
-  public Optional<Integer> jsonRpcWebSocketPort() {
+  public Optional<Integer> getJsonRpcWebSocketPort() {
     if (isWebSocketsRpcEnabled()) {
       return Optional.of(Integer.valueOf(portsProperties.getProperty("ws-rpc")));
     } else {
@@ -222,7 +223,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
   }
 
   @Override
-  public String hostName() {
+  public String getHostName() {
     return LOCALHOST;
   }
 
@@ -370,7 +371,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
 
   @Override
   public void awaitPeerDiscovery(final Condition condition) {
-    if (jsonRpcEnabled()) {
+    if (this.isJsonRpcEnabled()) {
       verify(condition);
     }
   }
@@ -392,11 +393,6 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
 
   Path homeDirectory() {
     return homeDirectory;
-  }
-
-  @Override
-  public boolean jsonRpcEnabled() {
-    return isJsonRpcEnabled();
   }
 
   JsonRpcConfiguration jsonRpcConfiguration() {
@@ -444,7 +440,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
   }
 
   @Override
-  public List<URI> bootnodes() {
+  public List<URI> getBootnodes() {
     return unmodifiableList(bootnodes);
   }
 
@@ -459,7 +455,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
   }
 
   @Override
-  public void bootnodes(final List<URI> bootnodes) {
+  public void getBootnodes(final List<URI> bootnodes) {
     this.bootnodes.clear();
     this.bootnodes.addAll(bootnodes);
   }
@@ -516,7 +512,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
   }
 
   @Override
-  public GenesisConfigProvider genesisConfigProvider() {
+  public GenesisConfigProvider getGenesisConfigProvider() {
     return genesisConfigProvider;
   }
 

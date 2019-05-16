@@ -123,11 +123,11 @@ public class Cluster implements AutoCloseable {
   }
 
   private void startNode(final RunnableNode node) {
-    if (node.getConfiguration().bootnodes().isEmpty()) {
-      node.getConfiguration().bootnodes(bootnodes);
+    if (node.getConfiguration().getBootnodes().isEmpty()) {
+      node.getConfiguration().getBootnodes(bootnodes);
     }
     node.getConfiguration()
-        .genesisConfigProvider()
+        .getGenesisConfigProvider()
         .createGenesisConfig(originalNodes)
         .ifPresent(node.getConfiguration()::setGenesisConfig);
     LOG.info(
