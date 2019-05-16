@@ -1,5 +1,6 @@
 # Pantheon Ethereum Client
  [![Build Status](https://jenkins.pegasys.tech/job/Pantheon/job/master/badge/icon)](https://jenkins.pegasys.tech/job/Pantheon/job/master/)
+ [![Documentation Status](https://readthedocs.org/projects/pantheon/badge/?version=latest)](https://docs.pantheon.pegasys.tech/en/latest/?badge=latest)
  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/PegasysEng/pantheon/blob/master/LICENSE)
  [ ![Download](https://api.bintray.com/packages/consensys/pegasys-repo/pantheon/images/download.svg) ](https://bintray.com/consensys/pegasys-repo/pantheon/_latestVersion)
  [![Gitter chat](https://badges.gitter.im/PegaSysEng/pantheon.png)](https://gitter.im/PegaSysEng/pantheon)
