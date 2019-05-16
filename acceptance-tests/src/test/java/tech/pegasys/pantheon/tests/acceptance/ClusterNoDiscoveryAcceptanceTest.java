@@ -30,7 +30,7 @@ public class ClusterNoDiscoveryAcceptanceTest extends AcceptanceTestBase {
   @Before
   public void setUp() throws Exception {
     final ClusterConfiguration clusterConfiguration =
-        new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
+        new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
     noDiscoveryCluster = new Cluster(clusterConfiguration, net);
     noDiscoveryNode = pantheon.createNodeWithNoDiscovery("noDiscovery");
     fullNode = pantheon.createArchiveNode("node2");

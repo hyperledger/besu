@@ -94,11 +94,11 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
 
     params.add("--bootnodes");
 
-    if (!node.bootnodes().isEmpty()) {
-      params.add(node.bootnodes().stream().map(URI::toString).collect(Collectors.joining(",")));
+    if (!node.getBootnodes().isEmpty()) {
+      params.add(node.getBootnodes().stream().map(URI::toString).collect(Collectors.joining(",")));
     }
 
-    if (node.jsonRpcEnabled()) {
+    if (node.isJsonRpcEnabled()) {
       params.add("--rpc-http-enabled");
       params.add("--rpc-http-host");
       params.add(node.jsonRpcListenHost().get());

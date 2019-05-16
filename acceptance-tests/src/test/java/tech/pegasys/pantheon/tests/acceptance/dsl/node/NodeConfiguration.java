@@ -18,21 +18,21 @@ import java.util.Optional;
 
 public interface NodeConfiguration {
 
-  void bootnodes(List<URI> bootnodes);
+  void getBootnodes(List<URI> bootnodes);
 
-  List<URI> bootnodes();
+  List<URI> getBootnodes();
 
   void useWebSocketsForJsonRpc();
 
   void useAuthenticationTokenInHeaderForJsonRpc(String token);
 
-  Optional<Integer> jsonRpcWebSocketPort();
+  Optional<Integer> getJsonRpcWebSocketPort();
 
-  String hostName();
+  String getHostName();
 
-  boolean jsonRpcEnabled();
+  boolean isJsonRpcEnabled();
 
-  GenesisConfigProvider genesisConfigProvider();
+  GenesisConfigProvider getGenesisConfigProvider();
 
   Optional<String> getGenesisConfig();
 

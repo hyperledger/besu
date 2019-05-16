@@ -32,7 +32,7 @@ public class ClusterThreadNodeRunnerAcceptanceTest extends AcceptanceTestBase {
   @Before
   public void setUp() throws Exception {
     final ClusterConfiguration clusterConfiguration =
-        new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
+        new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
     final PantheonNodeRunner pantheonNodeRunner = new ThreadPantheonNodeRunner();
     noDiscoveryCluster = new Cluster(clusterConfiguration, net, pantheonNodeRunner);
     final PantheonNode noDiscoveryNode = pantheon.createNodeWithNoDiscovery("noDiscovery");

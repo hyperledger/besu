@@ -40,14 +40,14 @@ public class WebSocketConnection {
   private volatile WebSocket connection;
 
   public WebSocketConnection(final Vertx vertx, final NodeConfiguration node) {
-    if (!node.jsonRpcWebSocketPort().isPresent()) {
+    if (!node.getJsonRpcWebSocketPort().isPresent()) {
       throw new IllegalStateException(
           "Can't start websocket connection for node with RPC disabled");
     }
     subscriptionEvents = new ConcurrentLinkedDeque<>();
     options = new RequestOptions();
-    options.setPort(node.jsonRpcWebSocketPort().get());
-    options.setHost(node.hostName());
+    options.setPort(node.getJsonRpcWebSocketPort().get());
+    options.setHost(node.getHostName());
 
     connect(vertx);
   }

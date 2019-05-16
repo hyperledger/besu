@@ -31,7 +31,7 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
   @Before
   public void setUp() throws IOException, URISyntaxException {
     final ClusterConfiguration clusterConfiguration =
-        new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
+        new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
 
     authenticatedCluster = new Cluster(clusterConfiguration, net);
     node = pantheon.createArchiveNodeWithAuthentication("node1");

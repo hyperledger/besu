@@ -32,7 +32,7 @@ public class LocalConfigNodePermissioningAcceptanceTest extends AcceptanceTestBa
   @Before
   public void setUp() throws Exception {
     final ClusterConfiguration clusterConfiguration =
-        new ClusterConfigurationBuilder().setAwaitPeerDiscovery(false).build();
+        new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
 
     permissionedCluster = new Cluster(clusterConfiguration, net);
     bootnode = pantheon.createArchiveNode("bootnode");
