@@ -25,8 +25,8 @@ To run a Pantheon node in a container connected to the Ethereum mainnet:
 docker run pegasyseng/pantheon:latest
 ```
 
-```bash tab="1.0"
-docker run pegasyseng/pantheon:1.0
+```bash tab="{{ versions.pantheon_stable }}"
+docker run pegasyseng/pantheon:{{ versions.pantheon_stable }}
 ```
 
 !!! note
@@ -208,7 +208,7 @@ Where `myauthconfig.toml` is the credentials file and `path` is the absolute pat
     ```
     
     ```bash tab="WS"
-        docker run --mount type=bind,source=/Users/username/pantheon/myauthconfig.toml,target=/etc/pantheon/rpc_ws_auth_config.toml pegasyseng/pantheon:latest
+    docker run --mount type=bind,source=/Users/username/pantheon/myauthconfig.toml,target=/etc/pantheon/rpc_ws_auth_config.toml pegasyseng/pantheon:latest
     ```
     
 
@@ -222,7 +222,7 @@ options).
 
 To run Pantheon exposing local ports for access: 
 ```bash
-$ docker run -p <localportJSON-RPC>:8545 -p <localportWS>:8546 -p <localportP2P>:30303 pegasyseng/pantheon:latest --rpc-http-enabled --rpc-ws-enabled
+docker run -p <localportJSON-RPC>:8545 -p <localportWS>:8546 -p <localportP2P>:30303 pegasyseng/pantheon:latest --rpc-http-enabled --rpc-ws-enabled
 ```
 
 !!!example

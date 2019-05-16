@@ -19,6 +19,9 @@ copyright: Pantheon and its documentation are licensed under Apache 2.0 license 
 
 #extra project info and template customisation
 extra:
+  versions:
+    pantheon_stable: &pantheon_stable_version 1.1.0
+    quickstart: *pantheon_stable_version
   support:
     gitter: https://gitter.im/PegaSysEng/pantheon
     email: support@pegasys.tech
@@ -148,3 +151,4 @@ markdown_extensions:
 
 plugins:
     - search
+    - markdownextradata
