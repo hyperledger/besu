@@ -31,16 +31,11 @@ the MetaMask plug-in installed. This tutorial uses screenshots from Brave.
 
 ## Clone Pantheon Quickstart Source Code
 
-Clone the repository from the `pantheon-quickstart` repository where `<version>` is replaced with the latest version (for example, `0.8.5`):
+Clone the repository from the `pantheon-quickstart` with the version matching Pantheon version, currently `{{ versions.quickstart }}`:
 
 ```bash tab="Linux/MacOS"
-git clone --branch <version> https://github.com/PegaSysEng/pantheon-quickstart.git
+git clone --branch {{ versions.quickstart }} https://github.com/PegaSysEng/pantheon-quickstart.git
 ```
-
-```bash tab="Example"
-git clone --branch 0.8.5 https://github.com/PegaSysEng/pantheon-quickstart.git
-```
-
 
 ## Build Docker Images and Start Services and Network
  
@@ -58,6 +53,11 @@ When the process ends, it lists the running services:
 
 !!! example "Docker-compose services list example"
     ```log
+    *************************************
+    Pantheon Quickstart {{ versions.quickstart }}
+    *************************************
+    List endpoints and services
+    ----------------------------------
             Name                       Command               State                              Ports                           
     -----------------------------------------------------------------------------------------------------------------------------
     quickstart_bootnode_1    /opt/pantheon/bootnode_sta ...   Up      30303/tcp, 8545/tcp, 8546/tcp                              
@@ -143,7 +143,7 @@ The result specifies the client version:
 {
    "jsonrpc" : "2.0",
    "id" : 1,
-   "result" : "pantheon/1.0.0"
+   "result" : "pantheon/{{ versions.pantheon_stable }}"
 }
 ```
 Here we simply query the version of the Pantheon node, which confirms the node is running.

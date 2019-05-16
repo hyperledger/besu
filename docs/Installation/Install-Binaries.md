@@ -12,13 +12,13 @@ description: Install Pantheon from binary distribution
 ### Install Using Homebrew
 
 ```bash
-$ brew tap pegasyseng/pantheon
-$ brew install pantheon
+brew tap pegasyseng/pantheon
+brew install pantheon
 ```
 Display Pantheon command line help to confirm installation: 
 
 ```bash
-$ pantheon --help
+pantheon --help
 ```
 
 ## Windows with Chocolatey 
@@ -75,7 +75,7 @@ Unpack the downloaded files and change into the `pantheon-<release>` directory.
 Display Pantheon command line help to confirm installation: 
 
 ```bash tab="Linux/macOS"
-$ bin/pantheon --help
+bin/pantheon --help
 ```
 
 ```bat tab="Windows"

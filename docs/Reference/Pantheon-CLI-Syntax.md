@@ -1096,11 +1096,11 @@ This command provides blocks related actions.
 ### import
 
 ```bash tab="Syntax"
-$ pantheon blocks import --from=<block-file>
+pantheon blocks import --from=<block-file>
 ```
 
 ```bash tab="Example"
-$ pantheon blocks import --from=/home/me/me_project/mainnet.blocks
+pantheon blocks import --from=/home/me/me_project/mainnet.blocks
 ```
 
 Imports blocks from the specified file into the blockchain database
@@ -1112,15 +1112,15 @@ This command provides node public key related actions.
 ### export
 
 ```bash tab="Syntax"
-$ pantheon public-key export [--to=<key-file>]
+pantheon public-key export [--to=<key-file>]
 ```
 
 ```bash tab="Example (to standard output)"
-$ pantheon --data-path=<node data path> public-key export
+pantheon --data-path=<node data path> public-key export
 ```
 
 ```bash tab="Example (to file)"
-$ pantheon --data-path=<node data path> public-key export --to=/home/me/me_project/not_precious_pub_key
+pantheon --data-path=<node data path> public-key export --to=/home/me/me_project/not_precious_pub_key
 ```
 
 Outputs the node public key to standard output or writes it to the specified file if 
@@ -1129,15 +1129,15 @@ Outputs the node public key to standard output or writes it to the specified fil
 ### export-address
 
 ```bash tab="Syntax"
-$ pantheon public-key export-address [--to=<address-file>]
+pantheon public-key export-address [--to=<address-file>]
 ```
 
 ```bash tab="Example (to standard output)"
-$ pantheon --data-path=<node data path> public-key export-address
+pantheon --data-path=<node data path> public-key export-address
 ```
 
 ```bash tab="Example (to file)"
-$ pantheon --data-path=<node data path> public-key export-address --to=/home/me/me_project/me_node_address
+pantheon --data-path=<node data path> public-key export-address --to=/home/me/me_project/me_node_address
 ```
 
 Outputs the node public key address to standard output or writes it to the specified file if  
@@ -1153,11 +1153,11 @@ This command generates the hash of a given password. Include the hash in the [cr
  for JSON-RPC API [authentication](../Pantheon-API/Authentication.md). 
 
 ```bash tab="Syntax"
-$ pantheon password hash --password=<my-password>
+pantheon password hash --password=<my-password>
 ```
 
 ```bash tab="Example"
-$ pantheon password hash --password=myPassword123
+pantheon password hash --password=myPassword123
 ```
 
 ### rlp
@@ -1169,15 +1169,15 @@ This command provides RLP related actions.
 This command encodes a typed JSON value from a file or from the standard input into an RLP hexadecimal string.
 
 ```bash tab="Syntax"
-$ pantheon rlp encode [--from=<FILE>] [--to=<FILE>] [--type=<type>]
+pantheon rlp encode [--from=<FILE>] [--to=<FILE>] [--type=<type>]
 ```
 
 ```bash tab="File Example"
-$ pantheon rlp encode --from=ibft_extra_data.json --to=extra_data_for_ibft_genesis.txt --type=IBFT_EXTRA_DATA
+pantheon rlp encode --from=ibft_extra_data.json --to=extra_data_for_ibft_genesis.txt --type=IBFT_EXTRA_DATA
 ```
 
 ```bash tab="Standart Input/Output Example"
-$ cat extra_data.json | pantheon rlp encode > rlp.txt
+cat extra_data.json | pantheon rlp encode > rlp.txt
 ```
 
 The `IBFT_EXTRA_DATA` type is the only type supported for RLP encoding.

@@ -236,7 +236,7 @@ None
     {
       "jsonrpc" : "2.0",
       "id" : 53,
-      "result" : "pantheon/1.0.0"
+      "result" : "pantheon/{{ versions.pantheon_stable }}"
     }
     ```
 

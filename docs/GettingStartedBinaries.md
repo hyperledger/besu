@@ -14,4 +14,5 @@ command line examples for connecting to MainNet, public testnets, and running a 
 
 Pantheon documentation is on the [Pantheon documentation site](https://docs.pantheon.pegasys.tech/en/stable/). 
 
->**Note** Starting Pantheon by double-clicking the `pantheon` or `pantheon.bat` executables starts a node synchronizing with the Ethereum mainnet. 
+!!! note
+    Starting Pantheon by double-clicking the `pantheon` or `pantheon.bat` executables starts a node synchronizing with the Ethereum mainnet. 

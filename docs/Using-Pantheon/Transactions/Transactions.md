@@ -39,12 +39,12 @@ the `run.sh` script.
 To create and display the transaction string, run the Javascript script.
 
 ```bash
-$ node create_signed_raw_transaction.js
+node create_signed_raw_transaction.js
 ```
 
 To send a signed transaction, run:
 ```bash
-$ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["raw_transaction_string"],"id":1}' <JSON-RPC-endpoint:port>
+curl -X POST --data '{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["raw_transaction_string"],"id":1}' <JSON-RPC-endpoint:port>
 ```
 
 Where:
@@ -54,7 +54,7 @@ Where:
 
 !!!example
     ```bash
-    $ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["0xf86a808203e882520894f17f52151ebef6c7334fad080c5704d77216b732896c6b935b8bbd400000801ca08ce4a6c12f7f273321c5dc03910744f8fb11573fcce8140aa44486d385d22fb3a051f6bcc918bf3f12e06bfccfd1451bea5c517dffee0777ebd50caf177b17f383"],"id":1}' http://localhost:8545
+    curl -X POST --data '{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["0xf86a808203e882520894f17f52151ebef6c7334fad080c5704d77216b732896c6b935b8bbd400000801ca08ce4a6c12f7f273321c5dc03910744f8fb11573fcce8140aa44486d385d22fb3a051f6bcc918bf3f12e06bfccfd1451bea5c517dffee0777ebd50caf177b17f383"],"id":1}' http://localhost:8545
     ```
 
 All accounts and private keys in the examples are from the `dev.json` genesis file in the `/pantheon/ethereum/core/src/main/resources` directory.

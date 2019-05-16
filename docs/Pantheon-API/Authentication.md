@@ -69,7 +69,7 @@ To obtain an authentication token, make a request to the `/login` endpoint with 
 
 !!! example
     ```bash tab="curl HTTPS request"
-    $ curl -X POST --data '{"username":"username1","password":"pegasys"}' <JSON-RPC-https-endpoint:port>/login
+    curl -X POST --data '{"username":"username1","password":"pegasys"}' <JSON-RPC-https-endpoint:port>/login
     ```
     
     ```json tab="JSON result"
