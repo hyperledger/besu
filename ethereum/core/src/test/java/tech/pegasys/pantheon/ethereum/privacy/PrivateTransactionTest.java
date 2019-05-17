@@ -67,6 +67,23 @@ public class PrivateTransactionTest {
           + "44f6e766966746a69697a706a52742b4854754642733d8a7265737472696"
           + "3746564";
 
+  private static final String VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID_RLP =
+      "0xf901a9808203e8832dc6c08080b8ef608060405234801561001057600080"
+          + "fd5b5060d08061001f6000396000f3fe60806040526004361060485763ff"
+          + "ffffff7c0100000000000000000000000000000000000000000000000000"
+          + "00000060003504166360fe47b18114604d5780636d4ce63c146075575b60"
+          + "0080fd5b348015605857600080fd5b50607360048036036020811015606d"
+          + "57600080fd5b50356099565b005b348015608057600080fd5b506087609e"
+          + "565b60408051918252519081900360200190f35b600055565b6000549056"
+          + "fea165627a7a72305820cb1d0935d14b589300b12fcd0ab849a7e9019c81"
+          + "da24d6daa4f6b2f003d1b0180029850100000022a0ebccb6952d7ad4eb5c"
+          + "1d4da2f67a833f66c1b9127e0c592224dd24210104a095a07d35a1bbc54f"
+          + "fa5b2dc9f315b545238575c8960108076036c6ffcafedddf4d22ac413161"
+          + "56744d784c4355486d425648586f5a7a7a42675062572f776a3561784470"
+          + "573958386c393153476f3dedac4b6f32625671442b6e4e6c4e594c354545"
+          + "37793349644f6e766966746a69697a706a52742b4854754642733d8a7265"
+          + "7374726963746564";
+
   private static final PrivateTransaction VALID_PRIVATE_TRANSACTION =
       new PrivateTransaction(
           0L,
@@ -85,7 +102,7 @@ public class PrivateTransactionTest {
               Byte.valueOf("0")),
           BytesValue.fromHexString("0x"),
           Address.wrap(BytesValue.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
-          0,
+          Optional.empty(),
           BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)),
           Lists.newArrayList(
               BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)),
@@ -113,7 +130,42 @@ public class PrivateTransactionTest {
                       + "0029"))
           .sender(
               Address.wrap(BytesValue.fromHexString("0x1c9a6e1ee3b7ac6028e786d9519ae3d24ee31e79")))
-          .chainId(4)
+          .chainId(BigInteger.valueOf(4))
+          .privateFrom(
+              BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)))
+          .privateFor(
+              Lists.newArrayList(
+                  BytesValue.wrap("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=".getBytes(UTF_8))))
+          .restriction(BytesValue.wrap("restricted".getBytes(UTF_8)))
+          .signAndBuild(
+              SECP256K1.KeyPair.create(
+                  SECP256K1.PrivateKey.create(
+                      new BigInteger(
+                          "853d7f0010fd86d0d7811c1f9d968ea89a24484a8127b4a483ddf5d2cfec766d",
+                          16))));
+
+  private static final PrivateTransaction VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID =
+      PrivateTransaction.builder()
+          .nonce(0)
+          .gasPrice(Wei.of(1000))
+          .gasLimit(3000000)
+          .to(null)
+          .value(Wei.ZERO)
+          .payload(
+              BytesValue.fromHexString(
+                  "0x608060405234801561001057600080fd5b5060d08061001f6000396000"
+                      + "f3fe60806040526004361060485763ffffffff7c010000000000"
+                      + "0000000000000000000000000000000000000000000000600035"
+                      + "04166360fe47b18114604d5780636d4ce63c146075575b600080"
+                      + "fd5b348015605857600080fd5b50607360048036036020811015"
+                      + "606d57600080fd5b50356099565b005b348015608057600080fd"
+                      + "5b506087609e565b60408051918252519081900360200190f35b"
+                      + "600055565b6000549056fea165627a7a72305820cb1d0935d14b"
+                      + "589300b12fcd0ab849a7e9019c81da24d6daa4f6b2f003d1b018"
+                      + "0029"))
+          .sender(
+              Address.wrap(BytesValue.fromHexString("0x1c9a6e1ee3b7ac6028e786d9519ae3d24ee31e79")))
+          .chainId(BigInteger.valueOf(2147483647))
           .privateFrom(
               BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)))
           .privateFor(
@@ -164,5 +216,23 @@ public class PrivateTransactionTest {
   public void testReadFromInvalid() {
     PrivateTransaction.readFrom(
         new BytesValueRLPInput(BytesValue.fromHexString(INVALID_RLP), false));
+  }
+
+  @Test
+  public void testWriteToWithLargeChainId() {
+    BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
+    VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID.writeTo(bvrlpo);
+    assertEquals(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID_RLP, bvrlpo.encoded().toString());
+  }
+
+  @Test
+  public void testReadFromWithLargeChainId() {
+    PrivateTransaction p =
+        PrivateTransaction.readFrom(
+            new BytesValueRLPInput(
+                BytesValue.fromHexString(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID_RLP),
+                false));
+
+    assertEquals(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID, p);
   }
 }

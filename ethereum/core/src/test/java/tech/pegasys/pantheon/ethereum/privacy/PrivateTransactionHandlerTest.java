@@ -60,7 +60,7 @@ public class PrivateTransactionHandlerTest {
           .value(Wei.ZERO)
           .payload(BytesValue.fromHexString("0x"))
           .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
-          .chainId(2018)
+          .chainId(BigInteger.valueOf(2018))
           .privateFrom(
               BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)))
           .privateFor(

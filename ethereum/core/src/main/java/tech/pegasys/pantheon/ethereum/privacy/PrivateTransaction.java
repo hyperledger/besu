@@ -33,20 +33,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
 
 /** An operation submitted by an external actor to be applied to the system. */
 public class PrivateTransaction {
 
   // Used for transactions that are not tied to a specific chain
   // (e.g. does not have a chain id associated with it).
-  private static final int REPLAY_UNPROTECTED_V_BASE = 27;
+  private static final BigInteger REPLAY_UNPROTECTED_V_BASE = BigInteger.valueOf(27);
+  private static final BigInteger REPLAY_UNPROTECTED_V_BASE_PLUS_1 = BigInteger.valueOf(28);
 
-  private static final int REPLAY_PROTECTED_V_BASE = 35;
+  private static final BigInteger REPLAY_PROTECTED_V_BASE = BigInteger.valueOf(35);
 
   // The v signature parameter starts at 36 because 1 is the first valid chainId so:
   // chainId > 1 implies that 2 * chainId + V_BASE > 36.
-  private static final int REPLAY_PROTECTED_V_MIN = 36;
+  private static final BigInteger REPLAY_PROTECTED_V_MIN = BigInteger.valueOf(36);
+
+  private static final BigInteger TWO = BigInteger.valueOf(2);
 
   private final long nonce;
 
@@ -62,7 +64,7 @@ public class PrivateTransaction {
 
   private final BytesValue payload;
 
-  private final OptionalInt chainId;
+  private final Optional<BigInteger> chainId;
 
   private final BytesValue privateFrom;
 
@@ -98,14 +100,14 @@ public class PrivateTransaction {
             .value(input.readUInt256Scalar(Wei::wrap))
             .payload(input.readBytesValue());
 
-    final int v = input.readIntScalar();
+    final BigInteger v = input.readBigIntegerScalar();
     final byte recId;
-    int chainId = -1;
-    if (v == REPLAY_UNPROTECTED_V_BASE || v == REPLAY_UNPROTECTED_V_BASE + 1) {
-      recId = (byte) (v - REPLAY_UNPROTECTED_V_BASE);
-    } else if (v > REPLAY_PROTECTED_V_MIN) {
-      chainId = (v - REPLAY_PROTECTED_V_BASE) / 2;
-      recId = (byte) (v - (2 * chainId + REPLAY_PROTECTED_V_BASE));
+    Optional<BigInteger> chainId = Optional.empty();
+    if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+      recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
+    } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
+      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
+      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
     } else {
       throw new RuntimeException(
           String.format("An unsupported encoded `v` value of %s was found", v));
@@ -119,8 +121,8 @@ public class PrivateTransaction {
 
     input.leaveList();
 
+    chainId.ifPresent(builder::chainId);
     return builder
-        .chainId(chainId)
         .signature(signature)
         .privateFrom(privateFrom)
         .privateFor(privateFor)
@@ -158,7 +160,7 @@ public class PrivateTransaction {
       final SECP256K1.Signature signature,
       final BytesValue payload,
       final Address sender,
-      final int chainId,
+      final Optional<BigInteger> chainId,
       final BytesValue privateFrom,
       final List<BytesValue> privateFor,
       final BytesValue restriction) {
@@ -170,7 +172,7 @@ public class PrivateTransaction {
     this.signature = signature;
     this.payload = payload;
     this.sender = sender;
-    this.chainId = chainId > 0 ? OptionalInt.of(chainId) : OptionalInt.empty();
+    this.chainId = chainId;
     this.privateFrom = privateFrom;
     this.privateFor = privateFor;
     this.restriction = restriction;
@@ -250,7 +252,7 @@ public class PrivateTransaction {
    *
    * @return the transaction chain id if it exists; otherwise {@code OptionalInt.empty()}
    */
-  public OptionalInt getChainId() {
+  public Optional<BigInteger> getChainId() {
     return chainId;
   }
 
@@ -340,7 +342,7 @@ public class PrivateTransaction {
   }
 
   private void writeSignature(final RLPOutput out) {
-    out.writeIntScalar(getV());
+    out.writeBigIntegerScalar(getV());
     out.writeBigIntegerScalar(getSignature().getR());
     out.writeBigIntegerScalar(getSignature().getS());
   }
@@ -353,12 +355,13 @@ public class PrivateTransaction {
     return signature.getS();
   }
 
-  public int getV() {
-    final int v;
+  public BigInteger getV() {
+    final BigInteger v;
+    final BigInteger recId = BigInteger.valueOf(signature.getRecId());
     if (!chainId.isPresent()) {
-      v = signature.getRecId() + REPLAY_UNPROTECTED_V_BASE;
+      v = recId.add(REPLAY_UNPROTECTED_V_BASE);
     } else {
-      v = (getSignature().getRecId() + REPLAY_PROTECTED_V_BASE + 2 * chainId.getAsInt());
+      v = recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(chainId.get()));
     }
     return v;
   }
@@ -414,7 +417,7 @@ public class PrivateTransaction {
       final Address to,
       final Wei value,
       final BytesValue payload,
-      final OptionalInt chainId,
+      final Optional<BigInteger> chainId,
       final BytesValue privateFrom,
       final List<BytesValue> privateFor,
       final BytesValue restriction) {
@@ -429,7 +432,7 @@ public class PrivateTransaction {
               out.writeUInt256Scalar(value);
               out.writeBytesValue(payload);
               if (chainId.isPresent()) {
-                out.writeIntScalar(chainId.getAsInt());
+                out.writeBigIntegerScalar(chainId.get());
                 out.writeUInt256Scalar(UInt256.ZERO);
                 out.writeUInt256Scalar(UInt256.ZERO);
               }
@@ -485,7 +488,7 @@ public class PrivateTransaction {
     if (getTo().isPresent()) sb.append("to=").append(getTo().get()).append(", ");
     sb.append("value=").append(getValue()).append(", ");
     sb.append("sig=").append(getSignature()).append(", ");
-    if (chainId.isPresent()) sb.append("chainId=").append(getChainId().getAsInt()).append(", ");
+    if (chainId.isPresent()) sb.append("chainId=").append(getChainId().get()).append(", ");
     sb.append("payload=").append(getPayload());
     sb.append("privateFrom=").append(getPrivateFrom());
     sb.append("privateFor=").append(Arrays.toString(getPrivateFor().toArray()));
@@ -518,7 +521,7 @@ public class PrivateTransaction {
 
     protected Address sender;
 
-    protected int chainId = -1;
+    protected Optional<BigInteger> chainId = Optional.empty();
 
     protected BytesValue privateFrom;
 
@@ -526,8 +529,8 @@ public class PrivateTransaction {
 
     protected BytesValue restriction;
 
-    public Builder chainId(final int chainId) {
-      this.chainId = chainId;
+    public Builder chainId(final BigInteger chainId) {
+      this.chainId = Optional.of(chainId);
       return this;
     }
 
@@ -611,8 +614,6 @@ public class PrivateTransaction {
     }
 
     protected SECP256K1.Signature computeSignature(final SECP256K1.KeyPair keys) {
-      final OptionalInt optionalChainId =
-          chainId > 0 ? OptionalInt.of(chainId) : OptionalInt.empty();
       final Bytes32 hash =
           computeSenderRecoveryHash(
               nonce,
@@ -621,7 +622,7 @@ public class PrivateTransaction {
               to,
               value,
               payload,
-              optionalChainId,
+              chainId,
               privateFrom,
               privateFor,
               restriction);

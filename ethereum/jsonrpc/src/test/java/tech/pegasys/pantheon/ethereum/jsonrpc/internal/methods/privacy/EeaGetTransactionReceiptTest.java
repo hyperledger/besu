@@ -91,7 +91,7 @@ public class EeaGetTransactionReceiptTest {
                       + "5820cb1d0935d14b589300b12fcd0ab849a7e9019c81da24d6"
                       + "daa4f6b2f003d1b0180029"))
           .sender(sender)
-          .chainId(2018)
+          .chainId(BigInteger.valueOf(2018))
           .privateFrom(
               BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)))
           .privateFor(
