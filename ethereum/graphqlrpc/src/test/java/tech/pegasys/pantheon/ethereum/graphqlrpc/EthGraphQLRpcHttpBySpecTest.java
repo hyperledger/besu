@@ -72,6 +72,8 @@ public class EthGraphQLRpcHttpBySpecTest extends AbstractEthGraphQLRpcHttpServic
     specs.add("eth_call_BlockLatest");
     specs.add("eth_getBalance_latest");
     specs.add("eth_getBalance_0x19");
+    specs.add("eth_getBalance_invalidAccountBlockNumber");
+    specs.add("eth_getBalance_invalidAccountLatest");
     specs.add("eth_gasPrice");
 
     specs.add("eth_getTransactionReceipt");
