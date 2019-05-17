@@ -17,6 +17,8 @@ import java.util.Collection;
 @FunctionalInterface
 public interface PeerRequirement {
 
+  PeerRequirement NOOP = () -> true;
+
   boolean hasSufficientPeers();
 
   static PeerRequirement combine(final Collection<PeerRequirement> peerRequirements) {

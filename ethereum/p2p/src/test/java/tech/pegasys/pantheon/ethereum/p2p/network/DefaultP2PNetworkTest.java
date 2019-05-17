@@ -44,7 +44,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBonde
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
-import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
@@ -390,6 +389,7 @@ public final class DefaultP2PNetworkTest {
     final int maxPeers = 5;
     final DefaultP2PNetwork network =
         mockNetwork(() -> RlpxConfiguration.create().setMaxPeers(maxPeers));
+    network.start();
 
     doReturn(2).when(network).connectionCount();
     DiscoveryPeer peer = createDiscoveryPeer();
@@ -411,6 +411,7 @@ public final class DefaultP2PNetworkTest {
     final int maxPeers = 5;
     final DefaultP2PNetwork network =
         mockNetwork(() -> RlpxConfiguration.create().setMaxPeers(maxPeers));
+    network.start();
 
     doReturn(2).when(network).connectionCount();
     DiscoveryPeer peer = createDiscoveryPeer();
@@ -427,6 +428,7 @@ public final class DefaultP2PNetworkTest {
     final int maxPeers = 5;
     final DefaultP2PNetwork network =
         mockNetwork(() -> RlpxConfiguration.create().setMaxPeers(maxPeers));
+    network.start();
 
     doReturn(2).when(network).connectionCount();
     DiscoveryPeer peer = createDiscoveryPeer();
@@ -444,6 +446,7 @@ public final class DefaultP2PNetworkTest {
     final int maxPeers = 5;
     final DefaultP2PNetwork network =
         mockNetwork(() -> RlpxConfiguration.create().setMaxPeers(maxPeers));
+    network.start();
 
     doReturn(2).when(network).connectionCount();
     DiscoveryPeer peer = createDiscoveryPeer();
@@ -461,6 +464,7 @@ public final class DefaultP2PNetworkTest {
     final int maxPeers = 5;
     final DefaultP2PNetwork network =
         mockNetwork(() -> RlpxConfiguration.create().setMaxPeers(maxPeers));
+    network.start();
 
     doReturn(2).when(network).connectionCount();
     final List<DiscoveryPeer> peers =
@@ -474,6 +478,11 @@ public final class DefaultP2PNetworkTest {
                 })
             .collect(Collectors.toList());
 
+    final List<DiscoveryPeer> highestValuePeers = peers.subList(5, 8);
+    // Mark as high value by lowering the lastAttemptedConnection value
+    peers.forEach(p -> p.setLastAttemptedConnection(100));
+    highestValuePeers.forEach(p -> p.setLastAttemptedConnection(1));
+
     doReturn(peers.stream()).when(network).streamDiscoveredPeers();
     final ArgumentCaptor<DiscoveryPeer> peerCapture = ArgumentCaptor.forClass(DiscoveryPeer.class);
     doReturn(CompletableFuture.completedFuture(mock(PeerConnection.class)))
@@ -483,6 +492,50 @@ public final class DefaultP2PNetworkTest {
     network.attemptPeerConnections();
     verify(network, times(3)).connect(any());
     assertThat(peers.containsAll(peerCapture.getAllValues())).isTrue();
+    assertThat(peerCapture.getAllValues()).containsExactlyInAnyOrderElementsOf(highestValuePeers);
+  }
+
+  @Test
+  public void attemptPeerConnections_withNonPermittedPeers() {
+    final int maxPeers = 5;
+    final DefaultP2PNetwork network =
+        mockNetwork(() -> RlpxConfiguration.create().setMaxPeers(maxPeers));
+    network.start();
+
+    doReturn(2).when(network).connectionCount();
+    final List<DiscoveryPeer> peers =
+        Stream.iterate(1, n -> n + 1)
+            .limit(10)
+            .map(
+                (seed) -> {
+                  DiscoveryPeer peer = createDiscoveryPeer();
+                  peer.setStatus(PeerDiscoveryStatus.BONDED);
+                  return peer;
+                })
+            .collect(Collectors.toList());
+
+    // Prioritize peers
+    final List<DiscoveryPeer> highestValuePeers = peers.subList(5, 8);
+    peers.forEach(p -> p.setLastAttemptedConnection(100));
+    highestValuePeers.forEach(p -> p.setLastAttemptedConnection(2));
+    // Set up the highest value peer to lack permissions
+    DiscoveryPeer highestValueNonPermittedPeer = peers.get(0);
+    highestValueNonPermittedPeer.setLastAttemptedConnection(1);
+    when(nodePermissioningController.isPermitted(any(), any())).thenReturn(true);
+    when(nodePermissioningController.isPermitted(
+            any(), eq(highestValueNonPermittedPeer.getEnodeURL())))
+        .thenReturn(false);
+
+    doReturn(peers.stream()).when(network).streamDiscoveredPeers();
+    final ArgumentCaptor<DiscoveryPeer> peerCapture = ArgumentCaptor.forClass(DiscoveryPeer.class);
+    doReturn(CompletableFuture.completedFuture(mock(PeerConnection.class)))
+        .when(network)
+        .connect(peerCapture.capture());
+
+    network.attemptPeerConnections();
+    verify(network, times(3)).connect(any());
+    assertThat(peers.containsAll(peerCapture.getAllValues())).isTrue();
+    assertThat(peerCapture.getAllValues()).containsExactlyInAnyOrderElementsOf(highestValuePeers);
   }
 
   @Test
@@ -490,6 +543,7 @@ public final class DefaultP2PNetworkTest {
     final int maxPeers = 5;
     final DefaultP2PNetwork network =
         mockNetwork(() -> RlpxConfiguration.create().setMaxPeers(maxPeers));
+    network.start();
 
     doReturn(maxPeers).when(network).connectionCount();
     final List<DiscoveryPeer> peers =
@@ -542,6 +596,19 @@ public final class DefaultP2PNetworkTest {
             "Attempt to connect to peer with no listening port: " + peer.getEnodeURLString());
   }
 
+  @Test
+  public void connect_toDiscoveryPeerUpdatesStats() {
+    final DefaultP2PNetwork network = network();
+    network.start();
+    final DiscoveryPeer peer = createDiscoveryPeer();
+
+    assertThat(peer.getLastAttemptedConnection()).isEqualTo(0);
+
+    final CompletableFuture<PeerConnection> result = network.connect(peer);
+    assertThat(result).isNotCompletedExceptionally();
+    assertThat(peer.getLastAttemptedConnection()).isGreaterThan(0);
+  }
+
   private DiscoveryPeer createDiscoveryPeer() {
     return createDiscoveryPeer(Peer.randomId(), 999);
   }
@@ -564,6 +631,7 @@ public final class DefaultP2PNetworkTest {
 
   private PeerConnection mockPeerConnection(final Peer remotePeer) {
     final EnodeURL remoteEnode = remotePeer.getEnodeURL();
+    final Peer peer = DefaultPeer.fromEnodeURL(remoteEnode);
     final PeerInfo peerInfo =
         new PeerInfo(
             5,
@@ -573,8 +641,9 @@ public final class DefaultP2PNetworkTest {
             remoteEnode.getNodeId());
 
     final PeerConnection peerConnection = mock(PeerConnection.class);
-    when(peerConnection.getRemoteEnode()).thenReturn(remoteEnode);
-    when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
+    lenient().when(peerConnection.getRemoteEnode()).thenReturn(remoteEnode);
+    lenient().when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
+    lenient().when(peerConnection.getPeer()).thenReturn(peer);
 
     return peerConnection;
   }
@@ -616,7 +685,6 @@ public final class DefaultP2PNetworkTest {
         .vertx(vertx)
         .config(config)
         .keyPair(KeyPair.generate())
-        .peerBlacklist(new PeerBlacklist())
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)));
   }

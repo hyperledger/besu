@@ -217,7 +217,20 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       description = "A list of node IDs to ban from the P2P network.",
       split = ",",
       arity = "1..*")
-  private final Collection<String> bannedNodeIds = new ArrayList<>();
+  void setBannedNodeIds(final List<String> values) {
+    try {
+      bannedNodeIds =
+          values.stream()
+              .filter(value -> !value.isEmpty())
+              .map(EnodeURL::parseNodeId)
+              .collect(Collectors.toList());
+    } catch (final IllegalArgumentException e) {
+      throw new ParameterException(
+          commandLine, "Invalid ids supplied to '--banned-node-ids'. " + e.getMessage());
+    }
+  }
+
+  private Collection<BytesValue> bannedNodeIds = new ArrayList<>();
 
   @Option(
       names = {"--sync-mode"},

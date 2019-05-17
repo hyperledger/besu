@@ -20,13 +20,11 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.BlockingAsyncExecutor;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.MockTimerUtil;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.OutboundMessageHandler;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryController;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
-import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.Subscribers;
 
@@ -53,21 +51,16 @@ public class PeerDiscoveryTimestampsTest {
     final KeyPair localKeyPair = keypairs.get(0);
 
     final PeerDiscoveryController controller =
-        new PeerDiscoveryController(
-            localKeyPair,
-            localPeer,
-            new PeerTable(agent.getAdvertisedPeer().get().getId()),
-            Collections.emptyList(),
-            OutboundMessageHandler.NOOP,
-            new MockTimerUtil(),
-            new BlockingAsyncExecutor(),
-            TimeUnit.HOURS.toMillis(1),
-            () -> true,
-            new PeerBlacklist(),
-            Optional.empty(),
-            new Subscribers<>(),
-            new Subscribers<>(),
-            new NoOpMetricsSystem());
+        PeerDiscoveryController.builder()
+            .keypair(localKeyPair)
+            .localPeer(localPeer)
+            .peerTable(new PeerTable(agent.getAdvertisedPeer().get().getId()))
+            .timerUtil(new MockTimerUtil())
+            .workerExecutor(new BlockingAsyncExecutor())
+            .tableRefreshIntervalMs(TimeUnit.HOURS.toMillis(1))
+            .peerBondedObservers(new Subscribers<>())
+            .metricsSystem(new NoOpMetricsSystem())
+            .build();
     controller.start();
 
     final PingPacketData ping =

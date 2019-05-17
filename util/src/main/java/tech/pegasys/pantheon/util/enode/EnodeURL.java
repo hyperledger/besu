@@ -133,6 +133,17 @@ public class EnodeURL {
         && Objects.equals(enodeA.listeningPort, enodeB.listeningPort);
   }
 
+  public static BytesValue parseNodeId(final String nodeId) {
+    int expectedSize = EnodeURL.NODE_ID_SIZE * 2;
+    if (nodeId.toLowerCase().startsWith("0x")) {
+      expectedSize += 2;
+    }
+    checkArgument(
+        nodeId.length() == expectedSize,
+        "Expected " + EnodeURL.NODE_ID_SIZE + " bytes in " + nodeId);
+    return BytesValue.fromHexString(nodeId, NODE_ID_SIZE);
+  }
+
   public URI toURI() {
     final String uri =
         String.format(
