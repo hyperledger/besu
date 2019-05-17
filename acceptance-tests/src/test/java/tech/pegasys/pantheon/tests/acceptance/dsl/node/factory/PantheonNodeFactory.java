@@ -132,6 +132,30 @@ public class PantheonNodeFactory {
             .build());
   }
 
+  public PantheonNode createArchiveNodeNetServicesEnabled(final String name) throws IOException {
+    // TODO: Enable metrics coverage in the acceptance tests. See PIE-1606
+    // final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
+    // metricsConfiguration.setEnabled(true);
+    // metricsConfiguration.setPort(0);
+    return create(
+        new PantheonFactoryConfigurationBuilder()
+            .name(name)
+            // .setMetricsConfiguration(metricsConfiguration)
+            .jsonRpcConfiguration(jsonRpcConfigWithAdmin())
+            .webSocketEnabled()
+            .p2pEnabled(true)
+            .build());
+  }
+
+  public PantheonNode createArchiveNodeNetServicesDisabled(final String name) throws IOException {
+    return create(
+        new PantheonFactoryConfigurationBuilder()
+            .name(name)
+            .jsonRpcConfiguration(jsonRpcConfigWithAdmin())
+            .p2pEnabled(false)
+            .build());
+  }
+
   public PantheonNode createArchiveNodeWithAuthentication(final String name)
       throws IOException, URISyntaxException {
     return create(

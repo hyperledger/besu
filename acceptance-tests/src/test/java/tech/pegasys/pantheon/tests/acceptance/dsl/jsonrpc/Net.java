@@ -15,6 +15,8 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.AwaitNetPeerCount;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.AwaitNetPeerCountException;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetServicesReturnsAllServicesAsActive;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetServicesReturnsOnlyJsonRpcActive;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionConnectionException;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionConnectionExceptionWithCause;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionIsNotBlank;
@@ -30,6 +32,14 @@ public class Net {
 
   public Net(final NetTransactions transactions) {
     this.transactions = transactions;
+  }
+
+  public Condition netServicesAllActive() {
+    return new ExpectNetServicesReturnsAllServicesAsActive(transactions.netServices());
+  }
+
+  public Condition netServicesOnlyJsonRpcEnabled() {
+    return new ExpectNetServicesReturnsOnlyJsonRpcActive(transactions.netServices());
   }
 
   public Condition netVersion() {

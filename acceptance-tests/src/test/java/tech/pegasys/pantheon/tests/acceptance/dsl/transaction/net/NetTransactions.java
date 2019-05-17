@@ -18,6 +18,10 @@ public class NetTransactions {
     return new NetVersionTransaction();
   }
 
+  public NetServicesTransaction netServices() {
+    return new NetServicesTransaction();
+  }
+
   public NetPeerCountTransaction peerCount() {
     return new NetPeerCountTransaction();
   }
