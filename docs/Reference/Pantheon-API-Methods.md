@@ -286,11 +286,12 @@ None
 - `2` - Morden Testnet  (deprecated)
 - `3` - Ropsten Testnet
 - `4` - Rinkeby Testnet
+- `5` - Goerli Testnet
 - `42` - Kovan Testnet
 
 !!! example
     ```bash tab="curl HTTP request"
-    curl -X POST --data ''{"jsonrpc":"2.0","method":"net_version","params":[],"id":53}' http://127.0.0.1:8545
+    curl -X POST --data '{"jsonrpc":"2.0","method":"net_version","params":[],"id":53}' http://127.0.0.1:8545
     ```
     
     ```bash tab="wscat WS request"
