@@ -16,6 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+
 import java.net.URI;
 import java.util.OptionalInt;
 
@@ -723,5 +725,21 @@ public class EnodeURLTest {
             .build();
 
     assertThat(EnodeURL.sameListeningEndpoint(enodeA, enodeB)).isTrue();
+  }
+
+  @Test
+  public void parseNodeId_invalid() {
+    final String invalidId = "0x10";
+    assertThatThrownBy(() -> EnodeURL.parseNodeId(invalidId))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Expected 64 bytes in " + invalidId);
+  }
+
+  @Test
+  public void parseNodeId_valid() {
+    final String validId = VALID_NODE_ID;
+    final BytesValue nodeId = EnodeURL.parseNodeId(validId);
+    assertThat(nodeId.size()).isEqualTo(EnodeURL.NODE_ID_SIZE);
+    assertThat(nodeId.toUnprefixedString()).isEqualTo(validId);
   }
 }

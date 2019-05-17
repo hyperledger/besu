@@ -60,6 +60,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -881,7 +882,9 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   @Test
   public void p2pOptionsRequiresServiceToBeEnabled() {
-    final String[] nodes = {"0001", "0002", "0003"};
+    final String[] nodes = {
+      "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"
+    };
 
     parseCommand(
         "--p2p-enabled",
@@ -982,15 +985,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void callingWithBannedNodeidsOptionButNoValueMustDisplayErrorAndUsage() {
-    parseCommand("--banned-node-ids");
-    assertThat(commandOutput.toString()).isEmpty();
-    final String expectedErrorOutputStart =
-        "Missing required parameter for option '--banned-node-ids' at index 0 (<NODEID>)";
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
-  }
-
-  @Test
   public void bootnodesOptionMustBeUsed() {
     parseCommand("--bootnodes", String.join(",", validENodeStrings));
 
@@ -1007,16 +1001,46 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   @Test
   public void bannedNodeIdsOptionMustBeUsed() {
-    final String[] nodes = {"0001", "0002", "0003"};
-    parseCommand("--banned-node-ids", String.join(",", nodes));
+    final BytesValue[] nodes = {
+      BytesValue.fromHexString(
+          "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
+      BytesValue.fromHexString(
+          "7f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
+      BytesValue.fromHexString(
+          "0x8f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0")
+    };
 
-    verify(mockRunnerBuilder).bannedNodeIds(stringListArgumentCaptor.capture());
+    final String nodeIdsArg =
+        Arrays.asList(nodes).stream()
+            .map(BytesValue::toUnprefixedString)
+            .collect(Collectors.joining(","));
+    parseCommand("--banned-node-ids", nodeIdsArg);
+
+    verify(mockRunnerBuilder).bannedNodeIds(bytesValueCollectionCollector.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(stringListArgumentCaptor.getValue().toArray()).isEqualTo(nodes);
+    assertThat(bytesValueCollectionCollector.getValue().toArray()).isEqualTo(nodes);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void callingWithBannedNodeidsOptionButNoValueMustDisplayErrorAndUsage() {
+    parseCommand("--banned-node-ids");
+    assertThat(commandOutput.toString()).isEmpty();
+    final String expectedErrorOutputStart =
+        "Missing required parameter for option '--banned-node-ids' at index 0 (<NODEID>)";
+    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+  }
+
+  @Test
+  public void callingWithBannedNodeidsOptionWithInvalidValuesMustDisplayErrorAndUsage() {
+    parseCommand("--banned-node-ids", "0x10,20,30");
+    assertThat(commandOutput.toString()).isEmpty();
+    final String expectedErrorOutputStart =
+        "Invalid ids supplied to '--banned-node-ids'. Expected 64 bytes in 0x10";
+    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
   }
 
   @Test

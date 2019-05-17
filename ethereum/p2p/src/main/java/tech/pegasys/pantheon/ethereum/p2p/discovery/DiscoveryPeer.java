@@ -31,6 +31,7 @@ public class DiscoveryPeer extends DefaultPeer {
   private long firstDiscovered = 0;
   private long lastContacted = 0;
   private long lastSeen = 0;
+  private long lastAttemptedConnection = 0;
 
   private DiscoveryPeer(final EnodeURL enode, final Endpoint endpoint) {
     super(enode);
@@ -86,6 +87,14 @@ public class DiscoveryPeer extends DefaultPeer {
 
   public void setLastContacted(final long lastContacted) {
     this.lastContacted = lastContacted;
+  }
+
+  public long getLastAttemptedConnection() {
+    return lastAttemptedConnection;
+  }
+
+  public void setLastAttemptedConnection(final long lastAttemptedConnection) {
+    this.lastAttemptedConnection = lastAttemptedConnection;
   }
 
   public long getLastSeen() {

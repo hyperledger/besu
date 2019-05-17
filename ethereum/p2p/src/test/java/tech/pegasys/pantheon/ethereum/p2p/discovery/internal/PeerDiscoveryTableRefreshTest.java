@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
-import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
@@ -25,7 +24,6 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
-import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -54,21 +52,17 @@ public class PeerDiscoveryTableRefreshTest {
     final MockTimerUtil timer = new MockTimerUtil();
     final PeerDiscoveryController controller =
         spy(
-            new PeerDiscoveryController(
-                localKeyPair,
-                localPeer,
-                new PeerTable(localPeer.getId()),
-                emptyList(),
-                outboundMessageHandler,
-                timer,
-                new BlockingAsyncExecutor(),
-                0,
-                () -> true,
-                new PeerBlacklist(),
-                Optional.empty(),
-                new Subscribers<>(),
-                new Subscribers<>(),
-                new NoOpMetricsSystem()));
+            PeerDiscoveryController.builder()
+                .keypair(localKeyPair)
+                .localPeer(localPeer)
+                .peerTable(new PeerTable(localPeer.getId()))
+                .outboundMessageHandler(outboundMessageHandler)
+                .timerUtil(timer)
+                .workerExecutor(new BlockingAsyncExecutor())
+                .tableRefreshIntervalMs(0)
+                .peerBondedObservers(new Subscribers<>())
+                .metricsSystem(new NoOpMetricsSystem())
+                .build());
     controller.start();
 
     // Send a PING, so as to add a Peer in the controller.

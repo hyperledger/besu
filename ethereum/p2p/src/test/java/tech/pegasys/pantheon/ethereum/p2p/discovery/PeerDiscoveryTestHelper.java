@@ -22,7 +22,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
-import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
@@ -139,13 +139,13 @@ public class PeerDiscoveryTestHelper {
    * Start a single discovery agent with the provided bootstrap peers.
    *
    * @param bootstrapPeers the list of bootstrap peers
-   * @param blacklist the peer blacklist
+   * @param peerPermissions peer permissions
    * @return a list of discovery agents.
    */
   public MockPeerDiscoveryAgent startDiscoveryAgent(
-      final List<DiscoveryPeer> bootstrapPeers, final PeerBlacklist blacklist) {
+      final List<DiscoveryPeer> bootstrapPeers, final PeerPermissions peerPermissions) {
     final AgentBuilder agentBuilder =
-        agentBuilder().bootstrapPeers(bootstrapPeers).blacklist(blacklist);
+        agentBuilder().bootstrapPeers(bootstrapPeers).peerPermissions(peerPermissions);
 
     return startDiscoveryAgent(agentBuilder);
   }
@@ -178,10 +178,10 @@ public class PeerDiscoveryTestHelper {
     private final Map<BytesValue, MockPeerDiscoveryAgent> agents;
     private final AtomicInteger nextAvailablePort;
 
-    private PeerBlacklist blacklist = new PeerBlacklist();
     private Optional<NodePermissioningController> nodePermissioningController = Optional.empty();
     private List<EnodeURL> bootnodes = Collections.emptyList();
     private boolean active = true;
+    private PeerPermissions peerPermissions = PeerPermissions.noop();
 
     private AgentBuilder(
         final Map<BytesValue, MockPeerDiscoveryAgent> agents,
@@ -213,8 +213,8 @@ public class PeerDiscoveryTestHelper {
       return this;
     }
 
-    public AgentBuilder blacklist(final PeerBlacklist blacklist) {
-      this.blacklist = blacklist;
+    public AgentBuilder peerPermissions(final PeerPermissions peerPermissions) {
+      this.peerPermissions = peerPermissions;
       return this;
     }
 
@@ -230,7 +230,11 @@ public class PeerDiscoveryTestHelper {
       config.setActive(active);
 
       return new MockPeerDiscoveryAgent(
-          SECP256K1.KeyPair.generate(), config, blacklist, nodePermissioningController, agents);
+          SECP256K1.KeyPair.generate(),
+          config,
+          peerPermissions,
+          nodePermissioningController,
+          agents);
     }
   }
 }

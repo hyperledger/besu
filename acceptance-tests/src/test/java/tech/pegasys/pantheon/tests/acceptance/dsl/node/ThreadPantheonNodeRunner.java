@@ -32,7 +32,6 @@ import tech.pegasys.pantheon.util.enode.EnodeURL;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Clock;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -108,7 +107,6 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
             .jsonRpcConfiguration(node.jsonRpcConfiguration())
             .webSocketConfiguration(node.webSocketConfiguration())
             .dataDir(node.homeDirectory())
-            .bannedNodeIds(Collections.emptySet())
             .metricsSystem(noOpMetricsSystem)
             .metricsConfiguration(node.metricsConfiguration())
             .p2pEnabled(node.isP2pEnabled())

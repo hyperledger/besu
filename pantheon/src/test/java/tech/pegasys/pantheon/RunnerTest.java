@@ -169,7 +169,6 @@ public final class RunnerTest {
             .p2pListenPort(0)
             .maxPeers(3)
             .metricsSystem(noOpMetricsSystem)
-            .bannedNodeIds(emptySet())
             .staticNodes(emptySet());
 
     Runner runnerBehind = null;

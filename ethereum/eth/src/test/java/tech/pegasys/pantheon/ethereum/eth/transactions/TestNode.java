@@ -44,7 +44,6 @@ import tech.pegasys.pantheon.ethereum.p2p.config.RlpxConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.network.DefaultP2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
-import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
@@ -126,7 +125,6 @@ public class TestNode implements Closeable {
                         .vertx(vertx)
                         .keyPair(this.kp)
                         .config(networkingConfiguration)
-                        .peerBlacklist(new PeerBlacklist())
                         .metricsSystem(new NoOpMetricsSystem())
                         .supportedCapabilities(capabilities)
                         .build())

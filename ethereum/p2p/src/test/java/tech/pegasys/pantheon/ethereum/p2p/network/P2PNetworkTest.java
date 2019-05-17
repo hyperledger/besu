@@ -28,7 +28,7 @@ import tech.pegasys.pantheon.ethereum.p2p.config.RlpxConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.IncompatiblePeerException;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
-import tech.pegasys.pantheon.ethereum.p2p.peers.PeerBlacklist;
+import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissionsBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
@@ -218,11 +218,10 @@ public class P2PNetworkTest {
 
   @Test
   public void rejectIncomingConnectionFromBlacklistedPeer() throws Exception {
-    final PeerBlacklist localBlacklist = new PeerBlacklist();
-    final PeerBlacklist remoteBlacklist = new PeerBlacklist();
+    final PeerPermissionsBlacklist localBlacklist = PeerPermissionsBlacklist.create();
 
-    try (final P2PNetwork localNetwork = builder().peerBlacklist(localBlacklist).build();
-        final P2PNetwork remoteNetwork = builder().peerBlacklist(remoteBlacklist).build()) {
+    try (final P2PNetwork localNetwork = builder().peerPermissions(localBlacklist).build();
+        final P2PNetwork remoteNetwork = builder().build()) {
 
       localNetwork.start();
       remoteNetwork.start();
@@ -365,7 +364,6 @@ public class P2PNetworkTest {
         .vertx(vertx)
         .config(config)
         .keyPair(KeyPair.generate())
-        .peerBlacklist(new PeerBlacklist())
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)));
   }
