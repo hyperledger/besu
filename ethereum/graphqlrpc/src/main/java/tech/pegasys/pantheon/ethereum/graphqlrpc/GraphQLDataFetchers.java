@@ -12,7 +12,10 @@
  */
 package tech.pegasys.pantheon.ethereum.graphqlrpc;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
+import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.SyncStatus;
@@ -163,7 +166,9 @@ public class GraphQLDataFetchers {
       if (bn != null) {
         final Optional<WorldState> ws = blockchainQuery.getWorldState(bn);
         if (ws.isPresent()) {
-          return Optional.of(new AccountAdapter(ws.get().get(addr)));
+          final Account account = ws.get().get(addr);
+          checkArgument(account != null, "Account with address %s does not exist", addr);
+          return Optional.of(new AccountAdapter(account));
         } else if (bn > blockchainQuery.getBlockchain().getChainHeadBlockNumber()) {
           // block is past chainhead
           throw new GraphQLRpcException(GraphQLRpcError.INVALID_PARAMS);
@@ -171,11 +176,18 @@ public class GraphQLDataFetchers {
           // we don't have that block
           throw new GraphQLRpcException(GraphQLRpcError.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
         }
+      } else {
+        // return account on latest block
+        final long latestBn = blockchainQuery.latestBlock().get().getHeader().getNumber();
+        final Optional<WorldState> ows = blockchainQuery.getWorldState(latestBn);
+        return ows.flatMap(
+                ws -> {
+                  Account account = ws.get(addr);
+                  checkArgument(account != null, "Account with address %s does not exist", addr);
+                  return Optional.ofNullable(account);
+                })
+            .map(AccountAdapter::new);
       }
-      // return account on latest block
-      final long latestBn = blockchainQuery.latestBlock().get().getHeader().getNumber();
-      final Optional<WorldState> ows = blockchainQuery.getWorldState(latestBn);
-      return ows.flatMap(ws -> Optional.ofNullable(ws.get(addr))).map(AccountAdapter::new);
     };
   }
 
