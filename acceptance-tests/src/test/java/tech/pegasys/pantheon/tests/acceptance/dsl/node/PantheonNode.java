@@ -96,6 +96,8 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
   private HttpRequestFactory httpRequestFactory;
   private boolean useWsForJsonRpc = false;
   private String token = null;
+  private final List<String> plugins = new ArrayList<>();
+  private final List<String> extraCLIOptions;
 
   public PantheonNode(
       final String name,
@@ -110,7 +112,9 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
       final GenesisConfigProvider genesisConfigProvider,
       final boolean p2pEnabled,
       final boolean discoveryEnabled,
-      final boolean bootnodeEligible)
+      final boolean bootnodeEligible,
+      final List<String> plugins,
+      final List<String> extraCLIOptions)
       throws IOException {
     this.bootnodeEligible = bootnodeEligible;
     this.homeDirectory = Files.createTempDirectory("acctest");
@@ -118,7 +122,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
         path -> {
           try {
             copyResource(path, homeDirectory.resolve("key"));
-          } catch (IOException e) {
+          } catch (final IOException e) {
             LOG.error("Could not find key file \"{}\" in resources", path);
           }
         });
@@ -135,6 +139,18 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
     this.devMode = devMode;
     this.p2pEnabled = p2pEnabled;
     this.discoveryEnabled = discoveryEnabled;
+    plugins.forEach(
+        pluginName -> {
+          try {
+            homeDirectory.resolve("plugins").toFile().mkdirs();
+            copyResource(
+                pluginName + ".jar", homeDirectory.resolve("plugins/" + pluginName + ".jar"));
+            PantheonNode.this.plugins.add(pluginName);
+          } catch (final IOException e) {
+            LOG.error("Could not find plugin \"{}\" in resources", pluginName);
+          }
+        });
+    this.extraCLIOptions = extraCLIOptions;
     LOG.info("Created PantheonNode {}", this.toString());
   }
 
@@ -391,7 +407,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
     return Util.publicKeyToAddress(keyPair.getPublicKey());
   }
 
-  Path homeDirectory() {
+  public Path homeDirectory() {
     return homeDirectory;
   }
 
@@ -479,6 +495,15 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
 
   Optional<PermissioningConfiguration> getPermissioningConfiguration() {
     return permissioningConfiguration;
+  }
+
+  public List<String> getPlugins() {
+    return plugins;
+  }
+
+  @Override
+  public List<String> getExtraCLIOptions() {
+    return extraCLIOptions;
   }
 
   @Override

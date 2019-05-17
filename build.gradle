@@ -123,6 +123,7 @@ allprojects {
       target '*.gradle'
       greclipse().configFile(rootProject.file('gradle/formatter.properties'))
       endWithNewline()
+      paddedCell()
     }
 
     // Below this line are currently only license header tasks

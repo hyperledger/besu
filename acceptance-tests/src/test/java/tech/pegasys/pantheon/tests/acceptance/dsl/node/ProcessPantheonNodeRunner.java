@@ -177,6 +177,7 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
                 params.add(permissioningConfiguration.getNodeSmartContractAddress().toString());
               }
             });
+    params.addAll(node.getExtraCLIOptions());
 
     LOG.info("Creating pantheon process with params {}", params);
     final ProcessBuilder processBuilder =
@@ -184,6 +185,13 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
             .directory(new File(System.getProperty("user.dir")).getParentFile())
             .redirectErrorStream(true)
             .redirectInput(Redirect.INHERIT);
+    if (!node.getPlugins().isEmpty()) {
+      processBuilder
+          .environment()
+          .put(
+              "PANTHEON_OPTS",
+              "-Dpantheon.plugins.dir=" + dataDir.resolve("plugins").toAbsolutePath().toString());
+    }
 
     try {
       final Process process = processBuilder.start();

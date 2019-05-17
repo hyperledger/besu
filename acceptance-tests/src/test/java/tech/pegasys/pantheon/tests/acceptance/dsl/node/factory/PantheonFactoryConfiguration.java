@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.GenesisConfigProvider;
 
+import java.util.List;
 import java.util.Optional;
 
 class PantheonFactoryConfiguration {
@@ -37,6 +38,8 @@ class PantheonFactoryConfiguration {
   private final boolean p2pEnabled;
   private final boolean discoveryEnabled;
   private final boolean bootnodeEligible;
+  private final List<String> plugins;
+  private final List<String> extraCLIOptions;
 
   PantheonFactoryConfiguration(
       final String name,
@@ -51,7 +54,9 @@ class PantheonFactoryConfiguration {
       final GenesisConfigProvider genesisConfigProvider,
       final boolean p2pEnabled,
       final boolean discoveryEnabled,
-      final boolean bootnodeEligible) {
+      final boolean bootnodeEligible,
+      final List<String> plugins,
+      final List<String> extraCLIOptions) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.privacyParameters = privacyParameters;
@@ -65,6 +70,8 @@ class PantheonFactoryConfiguration {
     this.p2pEnabled = p2pEnabled;
     this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
+    this.plugins = plugins;
+    this.extraCLIOptions = extraCLIOptions;
   }
 
   public String getName() {
@@ -117,5 +124,13 @@ class PantheonFactoryConfiguration {
 
   public boolean isBootnodeEligible() {
     return bootnodeEligible;
+  }
+
+  public List<String> getPlugins() {
+    return plugins;
+  }
+
+  public List<String> getExtraCLIOptions() {
+    return extraCLIOptions;
   }
 }

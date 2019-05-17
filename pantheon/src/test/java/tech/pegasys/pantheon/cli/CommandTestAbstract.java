@@ -32,6 +32,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
+import tech.pegasys.pantheon.plugins.internal.PantheonPluginContextImpl;
 import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
 import tech.pegasys.pantheon.util.BlockImporter;
 
@@ -84,6 +85,7 @@ public abstract class CommandTestAbstract {
   @Mock PantheonController<Object> mockController;
   @Mock BlockImporter mockBlockImporter;
   @Mock Logger mockLogger;
+  @Mock PantheonPluginContextImpl mockPantheonPluginContext;
 
   @Captor ArgumentCaptor<Collection<String>> stringListArgumentCaptor;
   @Captor ArgumentCaptor<Path> pathArgumentCaptor;
@@ -195,7 +197,8 @@ public abstract class CommandTestAbstract {
             mockSyncConfBuilder,
             mockEthereumWireProtocolConfigurationBuilder,
             mockRocksDbConfBuilder,
-            keyLoader);
+            keyLoader,
+            mockPantheonPluginContext);
 
     // parse using Ansi.OFF to be able to assert on non formatted output results
     pantheonCommand.parse(
@@ -224,7 +227,8 @@ public abstract class CommandTestAbstract {
         final SynchronizerConfiguration.Builder mockSyncConfBuilder,
         final EthereumWireProtocolConfiguration.Builder mockEthereumConfigurationMockBuilder,
         final RocksDbConfiguration.Builder mockRocksDbConfBuilder,
-        final KeyLoader keyLoader) {
+        final KeyLoader keyLoader,
+        final PantheonPluginContextImpl pantheonPluginContext) {
       super(
           mockLogger,
           mockBlockImporter,
@@ -232,7 +236,8 @@ public abstract class CommandTestAbstract {
           controllerBuilderFactory,
           mockSyncConfBuilder,
           mockEthereumConfigurationMockBuilder,
-          mockRocksDbConfBuilder);
+          mockRocksDbConfBuilder,
+          pantheonPluginContext);
       this.keyLoader = keyLoader;
     }
   }
