@@ -43,6 +43,7 @@ public interface DefaultCommandValues {
   long DEFAULT_MIN_REFRESH_DELAY = 1;
   String DOCKER_GENESIS_LOCATION = "/etc/pantheon/genesis.json";
   String DOCKER_DATADIR_LOCATION = "/var/lib/pantheon";
+  String DOCKER_PLUGINSDIR_LOCATION = "/etc/pantheon/plugins";
   String DOCKER_RPC_HTTP_AUTHENTICATION_CREDENTIALS_FILE_LOCATION =
       "/etc/pantheon/rpc_http_auth_config.toml";
   String DOCKER_RPC_WS_AUTHENTICATION_CREDENTIALS_FILE_LOCATION =

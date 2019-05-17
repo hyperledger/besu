@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.cli.PantheonCommand;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
+import tech.pegasys.pantheon.plugins.internal.PantheonPluginContextImpl;
 import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
 import tech.pegasys.pantheon.util.BlockImporter;
 
@@ -41,7 +42,8 @@ public final class Pantheon {
             new PantheonController.Builder(),
             new SynchronizerConfiguration.Builder(),
             EthereumWireProtocolConfiguration.builder(),
-            new RocksDbConfiguration.Builder());
+            new RocksDbConfiguration.Builder(),
+            new PantheonPluginContextImpl());
 
     pantheonCommand.parse(
         new RunLast().andExit(SUCCESS_EXIT_CODE),

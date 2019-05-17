@@ -65,6 +65,8 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 import tech.pegasys.pantheon.metrics.vertx.VertxMetricsAdapterFactory;
+import tech.pegasys.pantheon.plugins.internal.PantheonPluginContextImpl;
+import tech.pegasys.pantheon.plugins.services.PicoCLIOptions;
 import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
 import tech.pegasys.pantheon.util.BlockImporter;
 import tech.pegasys.pantheon.util.InvalidConfigurationException;
@@ -135,6 +137,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final RocksDbConfiguration.Builder rocksDbConfigurationBuilder;
   private final RunnerBuilder runnerBuilder;
   private final PantheonController.Builder controllerBuilderFactory;
+  private final PantheonPluginContextImpl pantheonPluginContext;
 
   protected KeyLoader getKeyLoader() {
     return KeyPairUtil::loadKeyPair;
@@ -569,7 +572,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       final PantheonController.Builder controllerBuilderFactory,
       final SynchronizerConfiguration.Builder synchronizerConfigurationBuilder,
       final EthereumWireProtocolConfiguration.Builder ethereumWireConfigurationBuilder,
-      final RocksDbConfiguration.Builder rocksDbConfigurationBuilder) {
+      final RocksDbConfiguration.Builder rocksDbConfigurationBuilder,
+      final PantheonPluginContextImpl pantheonPluginContext) {
     this.logger = logger;
     this.blockImporter = blockImporter;
     this.runnerBuilder = runnerBuilder;
@@ -577,6 +581,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     this.synchronizerConfigurationBuilder = synchronizerConfigurationBuilder;
     this.ethereumWireConfigurationBuilder = ethereumWireConfigurationBuilder;
     this.rocksDbConfigurationBuilder = rocksDbConfigurationBuilder;
+    this.pantheonPluginContext = pantheonPluginContext;
   }
 
   private StandaloneCommand standaloneCommands;
@@ -625,6 +630,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             rocksDbConfigurationBuilder,
             "Ethereum Wire Protocol",
             ethereumWireConfigurationBuilder));
+
+    pantheonPluginContext.addService(
+        PicoCLIOptions.class,
+        (namespace, optionObject) -> commandLine.addMixin("Plugin " + namespace, optionObject));
+    pantheonPluginContext.registerPlugins(pluginsDir());
 
     // Create a handler that will search for a config file option and use it for
     // default values
@@ -691,7 +701,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       logger.info("Connecting to {} static nodes.", staticNodes.size());
       logger.trace("Static Nodes = {}", staticNodes);
 
-      List<URI> enodeURIs =
+      final List<URI> enodeURIs =
           ethNetworkConfig.getBootNodes().stream()
               .map(EnodeURL::toURI)
               .collect(Collectors.toList());
@@ -705,6 +715,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
               p ->
                   ensureAllNodesAreInWhitelist(
                       staticNodes.stream().map(EnodeURL::toURI).collect(Collectors.toList()), p));
+
+      pantheonPluginContext.startPlugins();
 
       synchronize(
           buildController(),
@@ -1068,8 +1080,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             new Thread(
                 () -> {
                   try {
+                    pantheonPluginContext.stopPlugins();
                     runner.close();
-
                     LogManager.shutdown();
                   } catch (final Exception e) {
                     logger.error("Failed to stop Pantheon");
@@ -1202,6 +1214,21 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       return Paths.get(DOCKER_DATADIR_LOCATION);
     } else {
       return getDefaultPantheonDataPath(this);
+    }
+  }
+
+  private Path pluginsDir() {
+    if (isFullInstantiation()) {
+      final String pluginsDir = System.getProperty("pantheon.plugins.dir");
+      if (pluginsDir == null) {
+        return new File("plugins").toPath();
+      } else {
+        return new File(pluginsDir).toPath();
+      }
+    } else if (isDocker) {
+      return Paths.get(DOCKER_PLUGINSDIR_LOCATION);
+    } else {
+      return null; // null means no plugins
     }
   }
 

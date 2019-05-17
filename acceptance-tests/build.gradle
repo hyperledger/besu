@@ -21,19 +21,20 @@ dependencies {
   testImplementation project(':consensus:ibft')
   testImplementation project(':crypto')
   testImplementation project(':enclave')
-  testImplementation project(':ethereum:eth')
-  testImplementation project(':ethereum:core')
   testImplementation project(':ethereum:blockcreation')
+  testImplementation project(':ethereum:core')
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(':ethereum:eth')
+  testImplementation project(':ethereum:graphqlrpc')
   testImplementation project(':ethereum:jsonrpc')
   testImplementation project(':ethereum:permissioning')
-  testImplementation project(':ethereum:graphqlrpc')
   testImplementation project(':ethereum:rlp')
   testImplementation project(':metrics:core')
+  testImplementation project(path: ':plugins', configuration: 'testArtifacts')
   testImplementation project(':pantheon')
   testImplementation project(':services:kvstore')
   testImplementation project(':testutil')
   testImplementation project(':util')
-  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
   testImplementation 'com.google.guava:guava'
   testImplementation 'com.squareup.okhttp3:okhttp'
@@ -52,10 +53,16 @@ dependencies {
 
 test.enabled = false
 
+sourceSets {
+  test { resources {  srcDirs "${rootDir}/plugins/build/libs" } }
+}
+
+processTestResources.dependsOn(':plugins:testJar')
+
 task acceptanceTest(type: Test) {
+  dependsOn(rootProject.installDist)
   systemProperty 'acctests.runPantheonAsProcess', 'true'
   mustRunAfter rootProject.subprojects*.test
   description = 'Runs Pantheon acceptance tests.'
   group = 'verification'
 }
-acceptanceTest.dependsOn(rootProject.installDist)
