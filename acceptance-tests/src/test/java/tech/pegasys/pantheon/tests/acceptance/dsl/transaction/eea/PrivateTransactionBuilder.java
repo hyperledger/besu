@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.privacy.PrivateTransaction;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.math.BigInteger;
 import java.util.List;
 
 public class PrivateTransactionBuilder {
@@ -124,7 +125,7 @@ public class PrivateTransactionBuilder {
                       .value(Wei.ZERO)
                       .payload(payload)
                       .sender(from)
-                      .chainId(2018)
+                      .chainId(BigInteger.valueOf(2018))
                       .privateFrom(privateFrom)
                       .privateFor(privateFor)
                       .restriction(BytesValue.wrap("restricted".getBytes(UTF_8)))
