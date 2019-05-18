@@ -1,0 +1,19 @@
+{
+  "request": "{ blocks(from:30) { number } }",
+  "response": {
+    "data": {
+      "blocks": [
+        {
+          "number": 30
+        },
+        {
+          "number": 31
+        },
+        {
+          "number": 32
+        }
+      ]
+    }
+  },
+  "statusCode": 200
+}
