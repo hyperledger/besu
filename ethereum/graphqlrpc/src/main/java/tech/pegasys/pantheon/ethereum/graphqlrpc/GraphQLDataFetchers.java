@@ -115,19 +115,24 @@ public class GraphQLDataFetchers {
   DataFetcher<List<NormalBlockAdapter>> getRangeBlockDataFetcher() {
 
     return dataFetchingEnvironment -> {
+      final BlockchainQuery blockchainQuery =
+          ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQuery();
+
       final long from = dataFetchingEnvironment.getArgument("from");
-      final long to = dataFetchingEnvironment.getArgument("to");
+      final long to;
+      if (dataFetchingEnvironment.containsArgument("to")) {
+        to = dataFetchingEnvironment.getArgument("to");
+      } else {
+        to = blockchainQuery.latestBlock().map(block -> block.getHeader().getNumber()).orElse(0L);
+      }
       if (from > to) {
         throw new GraphQLRpcException(GraphQLRpcError.INVALID_PARAMS);
       }
 
-      final BlockchainQuery blockchain =
-          ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQuery();
-
       final List<NormalBlockAdapter> results = new ArrayList<>();
       for (long i = from; i <= to; i++) {
         final Optional<BlockWithMetadata<TransactionWithMetadata, Hash>> block =
-            blockchain.blockByNumber(i);
+            blockchainQuery.blockByNumber(i);
         block.ifPresent(e -> results.add(new NormalBlockAdapter(e)));
       }
       return results;

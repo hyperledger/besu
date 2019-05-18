@@ -87,6 +87,7 @@ public class EthGraphQLRpcHttpBySpecTest extends AbstractEthGraphQLRpcHttpServic
 
     specs.add("eth_getLogs_matchTopic");
 
+    specs.add("graphql_blocks_noTo");
     specs.add("graphql_pending");
     return specs;
   }
@@ -108,14 +109,14 @@ public class EthGraphQLRpcHttpBySpecTest extends AbstractEthGraphQLRpcHttpServic
 
     importBlocks(1, BLOCKS.size());
     try (final Response resp = client.newCall(request).execute()) {
-      final int expectedStatusCode = spec.getInteger("statusCode");
-      assertThat(resp.code()).isEqualTo(expectedStatusCode);
-
       final JsonObject expectedRespBody = spec.getJsonObject("response");
       final String resultStr = resp.body().string();
 
       final JsonObject result = new JsonObject(resultStr);
       assertThat(result).isEqualTo(expectedRespBody);
+
+      final int expectedStatusCode = spec.getInteger("statusCode");
+      assertThat(resp.code()).isEqualTo(expectedStatusCode);
     }
   }
 
