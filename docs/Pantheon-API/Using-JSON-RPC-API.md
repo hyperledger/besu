@@ -6,27 +6,6 @@ description: How to access the Pantheon API using JSON-RPC
 To enable JSON-RPC over HTTP or WebSockets, use the [`--rpc-http-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled) 
 and [`--rpc-ws-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-enabled) options.
 
-## RPC Host
-
-Use the [--rpc-http-host](../Reference/Pantheon-CLI-Syntax.md#rpc-http-host) and [--rpc-ws-host](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-host) 
-options to specify the host on which the JSON-RPC listens. The default host is 127.0.0.1 for HTTP and WebSockets.  
-
-Set the host to `0.0.0.0` to allow remote connections. 
-
-!!! caution 
-    Setting the host to 0.0.0.0 exposes the RPC connection on your node to any remote connection. In a 
-    production environment, ensure you use a firewall to avoid exposing your node to the internet.  
-
-## RPC Port
-
-Use the [--rpc-http-port](../Reference/Pantheon-CLI-Syntax.md#rpc-http-port) and [--rpc-ws-port](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-port)
-options to specify the port on which the JSON-RPC listens. The default ports are: 
-
-* 8545 for HTTP
-* 8546 for WebSockets
-
-Ports must be [exposed appropriately](../Configuring-Pantheon/Networking/Managing-Peers.md#port-configuration).
-
 ## Postman
 
 Use the button to import our collection of examples to [Postman](https://www.getpostman.com/). 

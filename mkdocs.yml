@@ -65,8 +65,9 @@ nav:
     - Pantheon API:
         - Overview: Pantheon-API/Pantheon-API.md
         - JSON-RPC over HTTP or WebSockets: Pantheon-API/Using-JSON-RPC-API.md
-        - Authentication: Pantheon-API/Authentication.md
         - RPC Pub/Sub over WebSockets: Pantheon-API/RPC-PubSub.md
+        - GraphQL over HTTP: Pantheon-API/GraphQL.md
+        - Authentication: Pantheon-API/Authentication.md
     - Configuring Pantheon:
         - Network vs Node Configuration: Configuring-Pantheon/Network-vs-Node.md
         - Configuration File: Configuring-Pantheon/Using-Configuration-File.md
