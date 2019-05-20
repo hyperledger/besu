@@ -140,6 +140,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     return ethContext;
   }
 
+  public BlockBroadcaster getBlockBroadcaster() {
+    return blockBroadcaster;
+  }
+
   @Override
   public String getSupportedProtocol() {
     return EthProtocol.NAME;

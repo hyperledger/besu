@@ -12,23 +12,25 @@
  */
 package tech.pegasys.pantheon.plugins.services;
 
-import java.util.function.Consumer;
-
 public interface PantheonEvents {
 
   /**
-   * Returns the raw RLP of a block that Pantheon has receieved and that has passed basic validation
+   * Returns the raw RLP of a block that Pantheon has received and that has passed basic validation
    * checks.
    *
    * @param blockJSONListener The listener that will accept a JSON string as the event.
    * @return an object to be used as an identifier when de-registering the event.
    */
-  Object addBlockAddedListener(Consumer<String> blockJSONListener);
+  Object addNewBlockPropagatedListener(NewBlockPropagatedListener blockJSONListener);
 
   /**
    * Remove the blockAdded listener from pantheon notifications.
    *
    * @param listenerIdentifier The instance that was returned from addBlockAddedListener;
    */
-  void removeBlockAddedObserver(Object listenerIdentifier);
+  void removeNewBlockPropagatedListener(Object listenerIdentifier);
+
+  interface NewBlockPropagatedListener {
+    void newBlockPropagated(String jsonBlock);
+  }
 }
