@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -32,6 +31,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionIn
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransaction;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionHandler;
+import tech.pegasys.pantheon.ethereum.privacy.Restriction;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -84,9 +84,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.VALUE_NOT_ZERO);
     }
 
-    if (!privateTransaction
-        .getRestriction()
-        .equals(BytesValue.wrap("restricted".getBytes(UTF_8)))) {
+    if (!privateTransaction.getRestriction().equals(Restriction.RESTRICTED)) {
       return new JsonRpcErrorResponse(
           request.getId(), JsonRpcError.UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE);
     }

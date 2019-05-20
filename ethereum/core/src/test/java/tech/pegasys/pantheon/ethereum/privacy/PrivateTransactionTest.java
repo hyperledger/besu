@@ -107,7 +107,7 @@ public class PrivateTransactionTest {
           Lists.newArrayList(
               BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)),
               BytesValue.wrap("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=".getBytes(UTF_8))),
-          BytesValue.wrap("restricted".getBytes(UTF_8)));
+          Restriction.RESTRICTED);
 
   private static final PrivateTransaction VALID_SIGNED_PRIVATE_TRANSACTION =
       PrivateTransaction.builder()
@@ -136,7 +136,7 @@ public class PrivateTransactionTest {
           .privateFor(
               Lists.newArrayList(
                   BytesValue.wrap("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=".getBytes(UTF_8))))
-          .restriction(BytesValue.wrap("restricted".getBytes(UTF_8)))
+          .restriction(Restriction.RESTRICTED)
           .signAndBuild(
               SECP256K1.KeyPair.create(
                   SECP256K1.PrivateKey.create(
@@ -171,7 +171,7 @@ public class PrivateTransactionTest {
           .privateFor(
               Lists.newArrayList(
                   BytesValue.wrap("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=".getBytes(UTF_8))))
-          .restriction(BytesValue.wrap("restricted".getBytes(UTF_8)))
+          .restriction(Restriction.RESTRICTED)
           .signAndBuild(
               SECP256K1.KeyPair.create(
                   SECP256K1.PrivateKey.create(
