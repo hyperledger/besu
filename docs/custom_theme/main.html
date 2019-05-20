@@ -8,7 +8,7 @@
       integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="
       crossorigin="anonymous"></script>
   <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML"></script>
-
+  <script src="{{ 'assets/javascripts/pantheon_custom.js' | url }}"></script>
   {% if config.extra.google.site_verification %}
     <!-- Google site verification for search console -->
     <meta name="google-site-verification" content="{{config.extra.google.site_verification}}" />
@@ -27,4 +27,10 @@
 
 {% block analytics %}
   <!--Empty the footer analytics bloc as we need it the headers -->
+{% endblock %}
+
+{% block hero %}
+  {# hero is not used, so use it for warning banner #}
+  <script>const latestWarningTrigger = "{{config.extra.latest_version_warning.url_contains}}";</script>
+  <div class="latest-warning">{{config.extra.latest_version_warning.text}}</div>
 {% endblock %}
