@@ -1,0 +1,14 @@
+{
+  "request": {
+    "id": 2,
+    "jsonrpc": "2.0",
+    "method": "eth_protocolVersion",
+    "params": []
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "result": "0x3f"
+  },
+  "statusCode": 200
+}
