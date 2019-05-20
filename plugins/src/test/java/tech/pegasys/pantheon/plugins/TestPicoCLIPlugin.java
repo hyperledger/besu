@@ -35,7 +35,7 @@ public class TestPicoCLIPlugin implements PantheonPlugin {
 
   @Override
   public void register(final PantheonContext context) {
-    LOG.info("Registring.  Test Option is '{}'", testOption);
+    LOG.info("Registering.  Test Option is '{}'", testOption);
     state = "registering";
 
     if ("FAILREGISTER".equals(testOption)) {

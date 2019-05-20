@@ -1070,7 +1070,7 @@ public final class EthProtocolManagerTest {
             TestClock.fixed(),
             metricsSystem)) {
 
-      // Create a transaction pool.  This has a side effect of registring a listener for the
+      // Create a transaction pool.  This has a side effect of registering a listener for the
       // transactions message.
       TransactionPoolFactory.createTransactionPool(
           protocolSchedule,
