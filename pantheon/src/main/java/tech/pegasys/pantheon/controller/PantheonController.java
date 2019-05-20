@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
+import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
@@ -35,6 +36,7 @@ public class PantheonController<C> implements java.io.Closeable {
   public static final String DATABASE_PATH = "database";
   private final ProtocolSchedule<C> protocolSchedule;
   private final ProtocolContext<C> protocolContext;
+  private final EthProtocolManager ethProtocolManager;
   private final GenesisConfigOptions genesisConfigOptions;
   private final SubProtocolConfiguration subProtocolConfiguration;
   private final KeyPair keyPair;
@@ -49,6 +51,7 @@ public class PantheonController<C> implements java.io.Closeable {
   PantheonController(
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
+      final EthProtocolManager ethProtocolManager,
       final GenesisConfigOptions genesisConfigOptions,
       final SubProtocolConfiguration subProtocolConfiguration,
       final Synchronizer synchronizer,
@@ -60,6 +63,7 @@ public class PantheonController<C> implements java.io.Closeable {
       final Runnable close) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
+    this.ethProtocolManager = ethProtocolManager;
     this.genesisConfigOptions = genesisConfigOptions;
     this.subProtocolConfiguration = subProtocolConfiguration;
     this.synchronizer = synchronizer;
@@ -77,6 +81,10 @@ public class PantheonController<C> implements java.io.Closeable {
 
   public ProtocolSchedule<C> getProtocolSchedule() {
     return protocolSchedule;
+  }
+
+  public EthProtocolManager getProtocolManager() {
+    return ethProtocolManager;
   }
 
   public GenesisConfigOptions getGenesisConfigOptions() {

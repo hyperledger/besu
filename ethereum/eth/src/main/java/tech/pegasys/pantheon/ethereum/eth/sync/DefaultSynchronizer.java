@@ -55,6 +55,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final WorldStateStorage worldStateStorage,
+      final BlockBroadcaster blockBroadcaster,
       final EthContext ethContext,
       final SyncState syncState,
       final Path dataDirectory,
@@ -78,7 +79,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             syncState,
             new PendingBlocks(),
             metricsSystem,
-            new BlockBroadcaster(ethContext));
+            blockBroadcaster);
 
     this.fullSyncDownloader =
         new FullSyncDownloader<>(

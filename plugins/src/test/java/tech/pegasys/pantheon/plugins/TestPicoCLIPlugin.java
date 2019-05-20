@@ -12,14 +12,12 @@
  */
 package tech.pegasys.pantheon.plugins;
 
-import tech.pegasys.pantheon.plugins.services.PantheonEvents;
 import tech.pegasys.pantheon.plugins.services.PicoCLIOptions;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Collections;
-import java.util.Optional;
 
 import com.google.auto.service.AutoService;
 import org.apache.logging.log4j.LogManager;
@@ -27,14 +25,11 @@ import org.apache.logging.log4j.Logger;
 import picocli.CommandLine.Option;
 
 @AutoService(PantheonPlugin.class)
-public class TestPlugin implements PantheonPlugin {
+public class TestPicoCLIPlugin implements PantheonPlugin {
   private static final Logger LOG = LogManager.getLogger();
 
-  private PantheonContext context;
-  private Optional<Object> listenerReference;
-
   @Option(names = "--Xtest-option", hidden = true, defaultValue = "UNSET")
-  String testOption = System.getProperty("testPlugin.testOption");
+  String testOption = System.getProperty("testPicoCLIPlugin.testOption");
 
   private String state = "uninited";
 
@@ -48,11 +43,11 @@ public class TestPlugin implements PantheonPlugin {
       throw new RuntimeException("I was told to fail at registration");
     }
 
-    this.context = context;
     context
         .getService(PicoCLIOptions.class)
         .ifPresent(
-            picoCLIOptions -> picoCLIOptions.addPicoCLIOptions("Test Plugin", TestPlugin.this));
+            picoCLIOptions ->
+                picoCLIOptions.addPicoCLIOptions("Test PicoCLI Plugin", TestPicoCLIPlugin.this));
 
     writeSignal("registered");
     state = "registered";
@@ -68,14 +63,6 @@ public class TestPlugin implements PantheonPlugin {
       throw new RuntimeException("I was told to fail at startup");
     }
 
-    listenerReference =
-        context
-            .getService(PantheonEvents.class)
-            .map(
-                pantheonEvents ->
-                    pantheonEvents.addBlockAddedListener(
-                        s -> System.out.println("BlockAdded - " + s)));
-
     writeSignal("started");
     state = "started";
   }
@@ -89,12 +76,6 @@ public class TestPlugin implements PantheonPlugin {
       state = "failstop";
       throw new RuntimeException("I was told to fail at stop");
     }
-
-    listenerReference.ifPresent(
-        reference ->
-            context
-                .getService(PantheonEvents.class)
-                .ifPresent(pantheonEvents -> pantheonEvents.removeBlockAddedObserver(reference)));
 
     writeSignal("stopped");
     state = "stopped";

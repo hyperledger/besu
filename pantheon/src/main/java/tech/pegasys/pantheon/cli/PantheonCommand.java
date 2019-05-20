@@ -66,7 +66,10 @@ import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 import tech.pegasys.pantheon.metrics.vertx.VertxMetricsAdapterFactory;
 import tech.pegasys.pantheon.plugins.internal.PantheonPluginContextImpl;
+import tech.pegasys.pantheon.plugins.services.PantheonEvents;
 import tech.pegasys.pantheon.plugins.services.PicoCLIOptions;
+import tech.pegasys.pantheon.services.PantheonEventsImpl;
+import tech.pegasys.pantheon.services.PicoCLIOptionsImpl;
 import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
 import tech.pegasys.pantheon.util.BlockImporter;
 import tech.pegasys.pantheon.util.InvalidConfigurationException;
@@ -644,9 +647,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             "Ethereum Wire Protocol",
             ethereumWireConfigurationBuilder));
 
-    pantheonPluginContext.addService(
-        PicoCLIOptions.class,
-        (namespace, optionObject) -> commandLine.addMixin("Plugin " + namespace, optionObject));
+    pantheonPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
     pantheonPluginContext.registerPlugins(pluginsDir());
 
     // Create a handler that will search for a config file option and use it for
@@ -729,10 +730,16 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
                   ensureAllNodesAreInWhitelist(
                       staticNodes.stream().map(EnodeURL::toURI).collect(Collectors.toList()), p));
 
+      final PantheonController<?> pantheonController = buildController();
+      final MetricsConfiguration metricsConfiguration = metricsConfiguration();
+
+      pantheonPluginContext.addService(
+          PantheonEvents.class,
+          new PantheonEventsImpl((pantheonController.getProtocolManager().getBlockBroadcaster())));
       pantheonPluginContext.startPlugins();
 
       synchronize(
-          buildController(),
+          pantheonController,
           p2pEnabled,
           peerDiscoveryEnabled,
           ethNetworkConfig,
@@ -742,7 +749,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           graphQLRpcConfiguration,
           jsonRpcConfiguration,
           webSocketConfiguration,
-          metricsConfiguration(),
+          metricsConfiguration,
           permissioningConfiguration,
           staticNodes);
     } catch (final Exception e) {
@@ -1234,7 +1241,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     if (isFullInstantiation()) {
       final String pluginsDir = System.getProperty("pantheon.plugins.dir");
       if (pluginsDir == null) {
-        return new File("plugins").toPath();
+        return new File(System.getProperty("pantheon.home", "."), "plugins").toPath();
       } else {
         return new File(pluginsDir).toPath();
       }

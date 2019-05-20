@@ -16,7 +16,10 @@ import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.messages.NewBlockMessage;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.uint.UInt256;
+
+import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,12 +28,22 @@ public class BlockBroadcaster {
   private static final Logger LOG = LogManager.getLogger();
 
   private final EthContext ethContext;
+  private final Subscribers<Consumer<Block>> blockPropagatedSubscribers = new Subscribers<>();
 
   public BlockBroadcaster(final EthContext ethContext) {
     this.ethContext = ethContext;
   }
 
+  public long subscribePropagateNewBlocks(final Consumer<Block> callback) {
+    return blockPropagatedSubscribers.subscribe(callback);
+  }
+
+  public void unsubscribePropagateNewBlocks(final long id) {
+    blockPropagatedSubscribers.unsubscribe(id);
+  }
+
   public void propagate(final Block block, final UInt256 totalDifficulty) {
+    blockPropagatedSubscribers.forEach(listener -> listener.accept(block));
     final NewBlockMessage newBlockMessage = NewBlockMessage.create(block, totalDifficulty);
     ethContext
         .getEthPeers()

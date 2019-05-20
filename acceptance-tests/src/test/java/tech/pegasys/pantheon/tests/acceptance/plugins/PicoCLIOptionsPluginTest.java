@@ -30,7 +30,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class PluginsAcceptanceTest extends AcceptanceTestBase {
+public class PicoCLIOptionsPluginTest extends AcceptanceTestBase {
   private PantheonNode node;
 
   // context: https://en.wikipedia.org/wiki/The_Magic_Words_are_Squeamish_Ossifrage

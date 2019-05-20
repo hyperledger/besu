@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import tech.pegasys.pantheon.plugins.PantheonPlugin;
-import tech.pegasys.pantheon.plugins.TestPlugin;
+import tech.pegasys.pantheon.plugins.TestPicoCLIPlugin;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +43,7 @@ public class PantheonPluginContextImplTest {
 
   @After
   public void clearTestPluginState() {
-    System.clearProperty("testPlugin.testOption");
+    System.clearProperty("testPicoCLIPlugin.testOption");
   }
 
   @Test
@@ -54,75 +54,75 @@ public class PantheonPluginContextImplTest {
     contextImpl.registerPlugins(new File(".").toPath());
     assertThat(contextImpl.getPlugins()).isNotEmpty();
 
-    final Optional<TestPlugin> testPluginOptional = findTestPlugin(contextImpl.getPlugins());
+    final Optional<TestPicoCLIPlugin> testPluginOptional = findTestPlugin(contextImpl.getPlugins());
     assertThat(testPluginOptional).isPresent();
-    final TestPlugin testPlugin = testPluginOptional.get();
-    assertThat(testPlugin.getState()).isEqualTo("registered");
+    final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
+    assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
 
     contextImpl.startPlugins();
-    assertThat(testPlugin.getState()).isEqualTo("started");
+    assertThat(testPicoCLIPlugin.getState()).isEqualTo("started");
 
     contextImpl.stopPlugins();
-    assertThat(testPlugin.getState()).isEqualTo("stopped");
+    assertThat(testPicoCLIPlugin.getState()).isEqualTo("stopped");
   }
 
   @Test
   public void registrationErrorsHandledSmoothly() {
     final PantheonPluginContextImpl contextImpl = new PantheonPluginContextImpl();
-    System.setProperty("testPlugin.testOption", "FAILREGISTER");
+    System.setProperty("testPicoCLIPlugin.testOption", "FAILREGISTER");
 
     assertThat(contextImpl.getPlugins()).isEmpty();
     contextImpl.registerPlugins(new File(".").toPath());
-    assertThat(contextImpl.getPlugins()).isEmpty();
+    assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
 
     contextImpl.startPlugins();
-    assertThat(contextImpl.getPlugins()).isEmpty();
+    assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
 
     contextImpl.stopPlugins();
-    assertThat(contextImpl.getPlugins()).isEmpty();
+    assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
   }
 
   @Test
   public void startErrorsHandledSmoothly() {
     final PantheonPluginContextImpl contextImpl = new PantheonPluginContextImpl();
-    System.setProperty("testPlugin.testOption", "FAILSTART");
+    System.setProperty("testPicoCLIPlugin.testOption", "FAILSTART");
 
     assertThat(contextImpl.getPlugins()).isEmpty();
     contextImpl.registerPlugins(new File(".").toPath());
-    assertThat(contextImpl.getPlugins()).isNotEmpty();
+    assertThat(contextImpl.getPlugins()).extracting("class").contains(TestPicoCLIPlugin.class);
 
-    final Optional<TestPlugin> testPluginOptional = findTestPlugin(contextImpl.getPlugins());
+    final Optional<TestPicoCLIPlugin> testPluginOptional = findTestPlugin(contextImpl.getPlugins());
     assertThat(testPluginOptional).isPresent();
-    final TestPlugin testPlugin = testPluginOptional.get();
-    assertThat(testPlugin.getState()).isEqualTo("registered");
+    final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
+    assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
 
     contextImpl.startPlugins();
-    assertThat(testPlugin.getState()).isEqualTo("failstart");
-    assertThat(contextImpl.getPlugins()).isEmpty();
+    assertThat(testPicoCLIPlugin.getState()).isEqualTo("failstart");
+    assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
 
     contextImpl.stopPlugins();
-    assertThat(contextImpl.getPlugins()).isEmpty();
+    assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
   }
 
   @Test
   public void stopErrorsHandledSmoothly() {
     final PantheonPluginContextImpl contextImpl = new PantheonPluginContextImpl();
-    System.setProperty("testPlugin.testOption", "FAILSTOP");
+    System.setProperty("testPicoCLIPlugin.testOption", "FAILSTOP");
 
     assertThat(contextImpl.getPlugins()).isEmpty();
     contextImpl.registerPlugins(new File(".").toPath());
-    assertThat(contextImpl.getPlugins()).isNotEmpty();
+    assertThat(contextImpl.getPlugins()).extracting("class").contains(TestPicoCLIPlugin.class);
 
-    final Optional<TestPlugin> testPluginOptional = findTestPlugin(contextImpl.getPlugins());
+    final Optional<TestPicoCLIPlugin> testPluginOptional = findTestPlugin(contextImpl.getPlugins());
     assertThat(testPluginOptional).isPresent();
-    final TestPlugin testPlugin = testPluginOptional.get();
-    assertThat(testPlugin.getState()).isEqualTo("registered");
+    final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
+    assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
 
     contextImpl.startPlugins();
-    assertThat(testPlugin.getState()).isEqualTo("started");
+    assertThat(testPicoCLIPlugin.getState()).isEqualTo("started");
 
     contextImpl.stopPlugins();
-    assertThat(testPlugin.getState()).isEqualTo("failstop");
+    assertThat(testPicoCLIPlugin.getState()).isEqualTo("failstop");
   }
 
   @Test
@@ -148,10 +148,10 @@ public class PantheonPluginContextImplTest {
     assertThatExceptionOfType(IllegalStateException.class).isThrownBy(contextImpl::stopPlugins);
   }
 
-  private Optional<TestPlugin> findTestPlugin(final List<PantheonPlugin> plugins) {
+  private Optional<TestPicoCLIPlugin> findTestPlugin(final List<PantheonPlugin> plugins) {
     return plugins.stream()
-        .filter(p -> p instanceof TestPlugin)
-        .map(p -> (TestPlugin) p)
+        .filter(p -> p instanceof TestPicoCLIPlugin)
+        .map(p -> (TestPicoCLIPlugin) p)
         .findFirst();
   }
 }
