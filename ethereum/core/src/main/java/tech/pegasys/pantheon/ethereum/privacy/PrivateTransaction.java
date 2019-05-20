@@ -70,7 +70,7 @@ public class PrivateTransaction {
 
   private final List<BytesValue> privateFor;
 
-  private final BytesValue restriction;
+  private final Restriction restriction;
 
   // Caches a "hash" of a portion of the transaction used for sender recovery.
   // Note that this hash does not include the transaction signature so it does not
@@ -117,7 +117,7 @@ public class PrivateTransaction {
     final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
     final BytesValue privateFrom = input.readBytesValue();
     final List<BytesValue> privateFor = input.readList(RLPInput::readBytesValue);
-    final BytesValue restriction = input.readBytesValue();
+    final Restriction restriction = convertToEnum(input.readBytesValue());
 
     input.leaveList();
 
@@ -128,6 +128,15 @@ public class PrivateTransaction {
         .privateFor(privateFor)
         .restriction(restriction)
         .build();
+  }
+
+  private static Restriction convertToEnum(final BytesValue readBytesValue) {
+    if (readBytesValue.equals(Restriction.RESTRICTED.getBytes())) {
+      return Restriction.RESTRICTED;
+    } else if (readBytesValue.equals(Restriction.UNRESTRICTED.getBytes())) {
+      return Restriction.UNRESTRICTED;
+    }
+    return Restriction.UNSUPPORTED;
   }
 
   /**
@@ -163,7 +172,7 @@ public class PrivateTransaction {
       final Optional<BigInteger> chainId,
       final BytesValue privateFrom,
       final List<BytesValue> privateFor,
-      final BytesValue restriction) {
+      final Restriction restriction) {
     this.nonce = nonce;
     this.gasPrice = gasPrice;
     this.gasLimit = gasLimit;
@@ -279,7 +288,7 @@ public class PrivateTransaction {
    *
    * @return the restriction
    */
-  public BytesValue getRestriction() {
+  public Restriction getRestriction() {
     return restriction;
   }
 
@@ -314,7 +323,7 @@ public class PrivateTransaction {
               chainId,
               privateFrom,
               privateFor,
-              restriction);
+              restriction.getBytes());
     }
     return hashNoSignature;
   }
@@ -336,7 +345,7 @@ public class PrivateTransaction {
     writeSignature(out);
     out.writeBytesValue(getPrivateFrom());
     out.writeList(getPrivateFor(), (bv, rlpO) -> rlpO.writeBytesValue(bv));
-    out.writeBytesValue(getRestriction());
+    out.writeBytesValue(getRestriction().getBytes());
 
     out.endList();
   }
@@ -527,7 +536,7 @@ public class PrivateTransaction {
 
     protected List<BytesValue> privateFor;
 
-    protected BytesValue restriction;
+    protected Restriction restriction;
 
     public Builder chainId(final BigInteger chainId) {
       this.chainId = Optional.of(chainId);
@@ -584,7 +593,7 @@ public class PrivateTransaction {
       return this;
     }
 
-    public Builder restriction(final BytesValue restriction) {
+    public Builder restriction(final Restriction restriction) {
       this.restriction = restriction;
       return this;
     }
@@ -625,7 +634,7 @@ public class PrivateTransaction {
               chainId,
               privateFrom,
               privateFor,
-              restriction);
+              restriction.getBytes());
       return SECP256K1.sign(hash, keys);
     }
   }

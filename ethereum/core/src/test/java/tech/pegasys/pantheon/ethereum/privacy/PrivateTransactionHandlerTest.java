@@ -67,7 +67,7 @@ public class PrivateTransactionHandlerTest {
               Lists.newArrayList(
                   BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)),
                   BytesValue.wrap("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=".getBytes(UTF_8))))
-          .restriction(BytesValue.wrap("restricted".getBytes(UTF_8)))
+          .restriction(Restriction.RESTRICTED)
           .signAndBuild(KEY_PAIR);
 
   private static final Transaction PUBLIC_TRANSACTION =
