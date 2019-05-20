@@ -80,38 +80,42 @@ public class PantheonPluginContextImpl implements PantheonContext {
     }
     state = Lifecycle.REGISTERING;
 
-    LOG.debug("Searching for plugins in {}", pluginsDir.toAbsolutePath().toString());
-    try (final Stream<Path> pluginFilesList = Files.list(pluginsDir)) {
-      final URL[] pluginJarURLs =
-          pluginFilesList
-              .filter(p -> p.getFileName().toString().endsWith(".jar"))
-              .map(PantheonPluginContextImpl::pathToURIOrNull)
-              .toArray(URL[]::new);
-      final ServiceLoader<PantheonPlugin> serviceLoader =
-          ServiceLoader.load(
-              PantheonPlugin.class,
-              new URLClassLoader(pluginJarURLs, this.getClass().getClassLoader()));
+    if (pluginsDir.toFile().isDirectory()) {
+      LOG.debug("Searching for plugins in {}", pluginsDir.toAbsolutePath().toString());
+      try (final Stream<Path> pluginFilesList = Files.list(pluginsDir)) {
+        final URL[] pluginJarURLs =
+            pluginFilesList
+                .filter(p -> p.getFileName().toString().endsWith(".jar"))
+                .map(PantheonPluginContextImpl::pathToURIOrNull)
+                .toArray(URL[]::new);
+        final ServiceLoader<PantheonPlugin> serviceLoader =
+            ServiceLoader.load(
+                PantheonPlugin.class,
+                new URLClassLoader(pluginJarURLs, this.getClass().getClassLoader()));
 
-      for (final PantheonPlugin plugin : serviceLoader) {
-        try {
-          plugin.register(this);
-          LOG.debug("Registered plugin of type {}.", plugin.getClass().getName());
-        } catch (final Exception e) {
-          LOG.error(
-              "Error registering plugin of type {}, start and stop will not be called. \n{}",
-              plugin.getClass(),
-              e);
-          continue;
+        for (final PantheonPlugin plugin : serviceLoader) {
+          try {
+            plugin.register(this);
+            LOG.debug("Registered plugin of type {}.", plugin.getClass().getName());
+          } catch (final Exception e) {
+            LOG.error(
+                "Error registering plugin of type {}, start and stop will not be called. \n{}",
+                plugin.getClass(),
+                e);
+            continue;
+          }
+          plugins.add(plugin);
         }
-        plugins.add(plugin);
-      }
 
-    } catch (final MalformedURLException e) {
-      LOG.error("Error converting files to URLs, could not load plugins", e);
-    } catch (final IOException e) {
-      LOG.error("Error enumerating plugins, could not load plugins", e);
+      } catch (final MalformedURLException e) {
+        LOG.error("Error converting files to URLs, could not load plugins", e);
+      } catch (final IOException e) {
+        LOG.error("Error enumerating plugins, could not load plugins", e);
+      }
+      LOG.debug("Plugin registration complete.");
+    } else {
+      LOG.debug("Plugin directory does not exist, skipping registation. - {}", pluginsDir);
     }
-    LOG.debug("Plugin registration complete.");
     state = Lifecycle.REGISTERED;
   }
 

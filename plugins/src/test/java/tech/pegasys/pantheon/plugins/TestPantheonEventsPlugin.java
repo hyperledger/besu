@@ -36,7 +36,7 @@ public class TestPantheonEventsPlugin implements PantheonPlugin {
   @Override
   public void register(final PantheonContext context) {
     this.context = context;
-    LOG.info("Regisgered");
+    LOG.info("Registered");
   }
 
   @Override
