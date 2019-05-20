@@ -43,7 +43,7 @@ public class EthProtocolVersionTest {
     setupSupportedEthProtocols();
 
     final JsonRpcRequest request = requestWithParams();
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), 63);
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x3f");
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
@@ -69,7 +69,7 @@ public class EthProtocolVersionTest {
     method = new EthProtocolVersion(supportedCapabilities);
 
     final JsonRpcRequest request = requestWithParams();
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), 63);
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x3f");
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
