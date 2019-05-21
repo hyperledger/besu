@@ -21,11 +21,11 @@ import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
-import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLDataFetcherContext;
-import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLDataFetchers;
-import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLProvider;
-import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLRpcConfiguration;
-import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLRpcHttpService;
+import tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration;
+import tech.pegasys.pantheon.ethereum.graphql.GraphQLDataFetcherContext;
+import tech.pegasys.pantheon.ethereum.graphql.GraphQLDataFetchers;
+import tech.pegasys.pantheon.ethereum.graphql.GraphQLHttpService;
+import tech.pegasys.pantheon.ethereum.graphql.GraphQLProvider;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcHttpService;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcMethodsFactory;
@@ -102,7 +102,7 @@ public class RunnerBuilder {
   private int p2pListenPort;
   private int maxPeers;
   private JsonRpcConfiguration jsonRpcConfiguration;
-  private GraphQLRpcConfiguration graphQLRpcConfiguration;
+  private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
   private Path dataDir;
   private Collection<BytesValue> bannedNodeIds = new ArrayList<>();
@@ -156,9 +156,8 @@ public class RunnerBuilder {
     return this;
   }
 
-  public RunnerBuilder graphQLRpcConfiguration(
-      final GraphQLRpcConfiguration graphQLRpcConfiguration) {
-    this.graphQLRpcConfiguration = graphQLRpcConfiguration;
+  public RunnerBuilder graphQLConfiguration(final GraphQLConfiguration graphQLConfiguration) {
+    this.graphQLConfiguration = graphQLConfiguration;
     return this;
   }
 
@@ -340,8 +339,8 @@ public class RunnerBuilder {
                   vertx, dataDir, jsonRpcConfiguration, metricsSystem, jsonRpcMethods));
     }
 
-    Optional<GraphQLRpcHttpService> graphQLRpcHttpService = Optional.empty();
-    if (graphQLRpcConfiguration.isEnabled()) {
+    Optional<GraphQLHttpService> graphQLHttpService = Optional.empty();
+    if (graphQLConfiguration.isEnabled()) {
       final GraphQLDataFetchers fetchers = new GraphQLDataFetchers(supportedCapabilities);
       final GraphQLDataFetcherContext dataFetcherContext =
           new GraphQLDataFetcherContext(
@@ -358,10 +357,10 @@ public class RunnerBuilder {
         throw new RuntimeException(ioe);
       }
 
-      graphQLRpcHttpService =
+      graphQLHttpService =
           Optional.of(
-              new GraphQLRpcHttpService(
-                  vertx, dataDir, graphQLRpcConfiguration, graphQL, dataFetcherContext));
+              new GraphQLHttpService(
+                  vertx, dataDir, graphQLConfiguration, graphQL, dataFetcherContext));
     }
 
     Optional<WebSocketService> webSocketService = Optional.empty();
@@ -412,7 +411,7 @@ public class RunnerBuilder {
         vertx,
         networkRunner,
         jsonRpcHttpService,
-        graphQLRpcHttpService,
+        graphQLHttpService,
         webSocketService,
         metricsService,
         pantheonController,

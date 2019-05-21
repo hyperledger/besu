@@ -447,7 +447,7 @@ None
 
 !!! note
     Methods with an equivalent [GraphQL](../Pantheon-API/GraphQL.md) query include a GraphQL request and result in the method example.
-    The parameter and result descriptions apply to the JSON-RPC requests. The GraphQL specification is defined in the [schema](https://github.com/PegaSysEng/pantheon/blob/master/ethereum/graphqlrpc/src/main/resources/schema.graphqls).  
+    The parameter and result descriptions apply to the JSON-RPC requests. The GraphQL specification is defined in the [schema](https://github.com/PegaSysEng/pantheon/blob/master/ethereum/graphql/src/main/resources/schema.graphqls).  
 
 ### eth_syncing
 
