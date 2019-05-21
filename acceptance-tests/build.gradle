@@ -27,9 +27,11 @@ dependencies {
   testImplementation project(':ethereum:eth')
   testImplementation project(':ethereum:graphql')
   testImplementation project(':ethereum:jsonrpc')
+  testImplementation project(':ethereum:p2p')
   testImplementation project(':ethereum:permissioning')
   testImplementation project(':ethereum:rlp')
   testImplementation project(':metrics:core')
+  testImplementation project(':plugins')
   testImplementation project(path: ':plugins', configuration: 'testArtifacts')
   testImplementation project(':pantheon')
   testImplementation project(':services:kvstore')
@@ -38,6 +40,7 @@ dependencies {
 
   testImplementation 'com.google.guava:guava'
   testImplementation 'com.squareup.okhttp3:okhttp'
+  testImplementation 'info.picocli:picocli'
   testImplementation 'io.reactivex.rxjava2:rxjava'
   testImplementation 'io.vertx:vertx-core'
   testImplementation 'junit:junit'
