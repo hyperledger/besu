@@ -45,7 +45,7 @@ rpc-http-cors-origins=["none"]
 rpc-http-authentication-enabled=false
 rpc-http-authentication-credentials-file="none"
 
-# GRAPHQL-RPC
+# GRAPHQL HTTP
 graphql-http-enabled=false
 graphql-http-host="6.7.8.9"
 graphql-http-port=6789

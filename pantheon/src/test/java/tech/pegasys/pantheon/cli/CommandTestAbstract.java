@@ -29,7 +29,7 @@ import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.sync.BlockBroadcaster;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
-import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLRpcConfiguration;
+import tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
@@ -99,7 +99,7 @@ public abstract class CommandTestAbstract {
   @Captor ArgumentCaptor<Integer> intArgumentCaptor;
   @Captor ArgumentCaptor<EthNetworkConfig> ethNetworkConfigArgumentCaptor;
   @Captor ArgumentCaptor<JsonRpcConfiguration> jsonRpcConfigArgumentCaptor;
-  @Captor ArgumentCaptor<GraphQLRpcConfiguration> graphQLRpcConfigArgumentCaptor;
+  @Captor ArgumentCaptor<GraphQLConfiguration> graphQLConfigArgumentCaptor;
   @Captor ArgumentCaptor<WebSocketConfiguration> wsRpcConfigArgumentCaptor;
   @Captor ArgumentCaptor<MetricsConfiguration> metricsConfigArgumentCaptor;
 
@@ -158,7 +158,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.maxPeers(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.jsonRpcConfiguration(any())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.graphQLRpcConfiguration(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.graphQLConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.webSocketConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.dataDir(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.bannedNodeIds(any())).thenReturn(mockRunnerBuilder);

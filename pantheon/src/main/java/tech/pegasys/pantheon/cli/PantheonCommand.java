@@ -20,7 +20,7 @@ import static tech.pegasys.pantheon.cli.CommandLineUtils.checkOptionDependencies
 import static tech.pegasys.pantheon.cli.DefaultCommandValues.getDefaultPantheonDataPath;
 import static tech.pegasys.pantheon.cli.NetworkName.MAINNET;
 import static tech.pegasys.pantheon.controller.PantheonController.DATABASE_PATH;
-import static tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLRpcConfiguration.DEFAULT_GRAPHQL_RPC_PORT;
+import static tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis.DEFAULT_JSON_RPC_APIS;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
@@ -49,7 +49,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.TrailingPeerRequirements;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
-import tech.pegasys.pantheon.ethereum.graphqlrpc.GraphQLRpcConfiguration;
+import tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
@@ -282,23 +282,23 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   @Option(
       names = {"--graphql-http-enabled"},
-      description = "Set to start the GraphQL-RPC HTTP service (default: ${DEFAULT-VALUE})")
+      description = "Set to start the GraphQL HTTP service (default: ${DEFAULT-VALUE})")
   private final Boolean isGraphQLHttpEnabled = false;
 
   @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
   @Option(
       names = {"--graphql-http-host"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
-      description = "Host for GraphQL-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
+      description = "Host for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
       arity = "1")
   private String graphQLHttpHost = autoDiscoverDefaultIP().getHostAddress();
 
   @Option(
       names = {"--graphql-http-port"},
       paramLabel = MANDATORY_PORT_FORMAT_HELP,
-      description = "Port for GraphQL-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
+      description = "Port for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final Integer graphQLHttpPort = DEFAULT_GRAPHQL_RPC_PORT;
+  private final Integer graphQLHttpPort = DEFAULT_GRAPHQL_HTTP_PORT;
 
   @Option(
       names = {"--graphql-http-cors-origins"},
@@ -706,7 +706,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     final EthNetworkConfig ethNetworkConfig = updateNetworkConfig(getNetwork());
     try {
       final JsonRpcConfiguration jsonRpcConfiguration = jsonRpcConfiguration();
-      final GraphQLRpcConfiguration graphQLRpcConfiguration = graphQLRpcConfiguration();
+      final GraphQLConfiguration graphQLConfiguration = graphQLConfiguration();
       final WebSocketConfiguration webSocketConfiguration = webSocketConfiguration();
       final Optional<PermissioningConfiguration> permissioningConfiguration =
           permissioningConfiguration();
@@ -746,7 +746,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           maxPeers,
           p2pHost,
           p2pPort,
-          graphQLRpcConfiguration,
+          graphQLConfiguration,
           jsonRpcConfiguration,
           webSocketConfiguration,
           metricsConfiguration,
@@ -798,7 +798,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private GraphQLRpcConfiguration graphQLRpcConfiguration() {
+  private GraphQLConfiguration graphQLConfiguration() {
 
     checkOptionDependencies(
         logger,
@@ -807,14 +807,14 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         !isRpcHttpEnabled,
         asList("--graphql-http-cors-origins", "--graphql-http-host", "--graphql-http-port"));
 
-    final GraphQLRpcConfiguration graphQLRpcConfiguration = GraphQLRpcConfiguration.createDefault();
-    graphQLRpcConfiguration.setEnabled(isGraphQLHttpEnabled);
-    graphQLRpcConfiguration.setHost(graphQLHttpHost);
-    graphQLRpcConfiguration.setPort(graphQLHttpPort);
-    graphQLRpcConfiguration.setHostsWhitelist(hostsWhitelist);
-    graphQLRpcConfiguration.setCorsAllowedDomains(graphQLHttpCorsAllowedOrigins);
+    final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
+    graphQLConfiguration.setEnabled(isGraphQLHttpEnabled);
+    graphQLConfiguration.setHost(graphQLHttpHost);
+    graphQLConfiguration.setPort(graphQLHttpPort);
+    graphQLConfiguration.setHostsWhitelist(hostsWhitelist);
+    graphQLConfiguration.setCorsAllowedDomains(graphQLHttpCorsAllowedOrigins);
 
-    return graphQLRpcConfiguration;
+    return graphQLConfiguration;
   }
 
   private JsonRpcConfiguration jsonRpcConfiguration() {
@@ -1049,7 +1049,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       final int maxPeers,
       final String p2pAdvertisedHost,
       final int p2pListenPort,
-      final GraphQLRpcConfiguration graphQLRpcConfiguration,
+      final GraphQLConfiguration graphQLConfiguration,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
@@ -1071,7 +1071,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             .p2pAdvertisedHost(p2pAdvertisedHost)
             .p2pListenPort(p2pListenPort)
             .maxPeers(maxPeers)
-            .graphQLRpcConfiguration(graphQLRpcConfiguration)
+            .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
             .webSocketConfiguration(webSocketConfiguration)
             .dataDir(dataDir())

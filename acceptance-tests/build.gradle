@@ -25,7 +25,7 @@ dependencies {
   testImplementation project(':ethereum:core')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':ethereum:eth')
-  testImplementation project(':ethereum:graphqlrpc')
+  testImplementation project(':ethereum:graphql')
   testImplementation project(':ethereum:jsonrpc')
   testImplementation project(':ethereum:permissioning')
   testImplementation project(':ethereum:rlp')
