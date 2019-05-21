@@ -207,16 +207,17 @@ The logs subscription returns [log objects](../Reference/Pantheon-API-Objects.md
 Use the `newPendingTransactions` parameter with `eth_subscribe` to be notified of pending transactions 
 added to the transaction pool for the node. 
 
-The pending transactions subscription returns the transaction hashes of the pending transactions. 
+The pending transactions subscription returns the transaction hashes or transaction details of the pending transactions. 
+If the `includeTransactions` parameter is not included, the default is transaction hashes only. 
 
 If a chain reorganization occurs, transactions are resubmitted to be included in the new canonical chain. 
 This means the subscription can publish notifications for the same pending transaction more than once.
 
-!!!example
-    To subscribe to pending transaction notifications:
+!!!example "Transaction Hashes"
+    To subscribe to pending transaction notifications and receive transaction hashes only:
     
     ```json
-    {"id": 1, "method": "eth_subscribe", "params": ["newPendingTransactions"]}
+    {"id": 1, "method": "eth_subscribe", "params": ["newPendingTransactions", {"includeTransactions":false}]}
     ```
     
     Example result:
@@ -233,6 +234,42 @@ This means the subscription can publish notifications for the same pending trans
       "params":{
         "subscription":"0x1",
         "result":"0x5705bc8bf875ff03e98adb98489428835892dc6ba6a6b139fee1becbc26db0b8"
+      }
+    }
+    ```
+
+!!!example "Transaction Details"
+    To subscribe to pending transaction notifications and receive transaction details:
+    
+    ```json
+    {"id": 1, "method": "eth_subscribe", "params": ["newPendingTransactions", {"includeTransactions":true}]}
+    ```
+        
+    Example result:
+    ```json
+    {"jsonrpc":"2.0","id":1,"result":"0x2"}
+    ```    
+        
+    Example notification: 
+    ```json
+    {
+      "jsonrpc":"2.0",
+      "method":"eth_subscription",
+      "params":{
+        "subscription":"0x2",
+        "result":{
+          "from":"0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas":"0x5208",
+          "gasPrice":"0x2540be400",
+          "hash":"0x7a4185f40ee93cb27eb132f301d0a5414c1f871051f166fc8804c376aab3ffec",
+          "input":"0x",
+          "nonce":"0x13",
+          "to":"0x9d8f8572f345e1ae53db1dfa4a7fce49b467bd7f",
+          "value":"0x8ac7230489e80000",
+          "v":"0xfe7",
+          "r":"0xdd9013c67469d2fe79afdc61777c55bdced33c90fa6f9b83d8f9b7e445085123",
+          "s":"0x45823a1ab22ae9c83876ea435dc5ecc4fe3a83c1bfbc340a5f57df2f5a474fa5"
+        }
       }
     }
     ```
