@@ -28,15 +28,18 @@ import org.apache.logging.log4j.Logger;
 @AutoService(PantheonPlugin.class)
 public class TestPantheonEventsPlugin implements PantheonPlugin {
   private static final Logger LOG = LogManager.getLogger();
-  private Optional<Object> subscriptionId;
 
   private PantheonContext context;
+
+  private Optional<Object> subscriptionId;
   private final AtomicInteger blockCounter = new AtomicInteger();
+  private File callbackDir;
 
   @Override
   public void register(final PantheonContext context) {
     this.context = context;
     LOG.info("Registered");
+    callbackDir = new File(System.getProperty("pantheon.plugins.dir", "plugins"));
   }
 
   @Override
@@ -62,8 +65,7 @@ public class TestPantheonEventsPlugin implements PantheonPlugin {
     final int blockCount = blockCounter.incrementAndGet();
     LOG.info("I got a new block! (I've seen {}) - {}", blockCount, json);
     try {
-      final File callbackFile =
-          new File(System.getProperty("pantheon.plugins.dir", "plugins"), "newBlock." + blockCount);
+      final File callbackFile = new File(callbackDir, "newBlock." + blockCount);
       if (!callbackFile.getParentFile().exists()) {
         callbackFile.getParentFile().mkdirs();
         callbackFile.getParentFile().deleteOnExit();

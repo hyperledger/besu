@@ -26,9 +26,15 @@ import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.plugins.internal.PantheonPluginContextImpl;
+import tech.pegasys.pantheon.plugins.services.PantheonEvents;
+import tech.pegasys.pantheon.plugins.services.PicoCLIOptions;
+import tech.pegasys.pantheon.services.PantheonEventsImpl;
+import tech.pegasys.pantheon.services.PicoCLIOptionsImpl;
 import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -45,6 +51,8 @@ import com.google.common.io.Files;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import picocli.CommandLine;
+import picocli.CommandLine.Model.CommandSpec;
 
 public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
 
@@ -52,11 +60,27 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
   private final Map<String, Runner> pantheonRunners = new HashMap<>();
   private ExecutorService nodeExecutor = Executors.newCachedThreadPool();
 
+  private final Map<Node, PantheonPluginContextImpl> pantheonPluginContextMap = new HashMap<>();
+
   @Override
   public void startNode(final PantheonNode node) {
     if (nodeExecutor == null || nodeExecutor.isShutdown()) {
       nodeExecutor = Executors.newCachedThreadPool();
     }
+
+    final CommandLine commandLine = new CommandLine(CommandSpec.create());
+    final PantheonPluginContextImpl pantheonPluginContext =
+        pantheonPluginContextMap.computeIfAbsent(node, n -> new PantheonPluginContextImpl());
+    pantheonPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
+    final Path pluginsPath = node.homeDirectory().resolve("plugins");
+    final File pluginsDirFile = pluginsPath.toFile();
+    if (!pluginsDirFile.isDirectory()) {
+      pluginsDirFile.mkdirs();
+      pluginsDirFile.deleteOnExit();
+    }
+    System.setProperty("pantheon.plugins.dir", pluginsPath.toString());
+    pantheonPluginContext.registerPlugins(pluginsPath);
+    commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
 
     final MetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
     final List<EnodeURL> bootnodes =
@@ -95,6 +119,11 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
     node.getPermissioningConfiguration().ifPresent(runnerBuilder::permissioningConfiguration);
 
+    pantheonPluginContext.addService(
+        PantheonEvents.class,
+        new PantheonEventsImpl(pantheonController.getProtocolManager().getBlockBroadcaster()));
+    pantheonPluginContext.startPlugins();
+
     final Runner runner =
         runnerBuilder
             .vertx(Vertx.vertx())
@@ -120,6 +149,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
 
   @Override
   public void stopNode(final PantheonNode node) {
+    pantheonPluginContextMap.get(node).stopPlugins();
     node.stop();
     killRunner(node.getName());
   }

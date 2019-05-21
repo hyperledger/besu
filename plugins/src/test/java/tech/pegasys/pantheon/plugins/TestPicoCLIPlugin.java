@@ -32,6 +32,7 @@ public class TestPicoCLIPlugin implements PantheonPlugin {
   String testOption = System.getProperty("testPicoCLIPlugin.testOption");
 
   private String state = "uninited";
+  private File callbackDir;
 
   @Override
   public void register(final PantheonContext context) {
@@ -49,6 +50,7 @@ public class TestPicoCLIPlugin implements PantheonPlugin {
             picoCLIOptions ->
                 picoCLIOptions.addPicoCLIOptions("Test PicoCLI Plugin", TestPicoCLIPlugin.this));
 
+    callbackDir = new File(System.getProperty("pantheon.plugins.dir", "plugins"));
     writeSignal("registered");
     state = "registered";
   }
@@ -89,8 +91,7 @@ public class TestPicoCLIPlugin implements PantheonPlugin {
   /** This is used to signal to the acceptance test that certain tasks were completed. */
   private void writeSignal(final String signal) {
     try {
-      final File callbackFile =
-          new File(System.getProperty("pantheon.plugins.dir", "plugins"), "testPlugin." + signal);
+      final File callbackFile = new File(callbackDir, "testPlugin." + signal);
       if (!callbackFile.getParentFile().exists()) {
         callbackFile.getParentFile().mkdirs();
         callbackFile.getParentFile().deleteOnExit();
