@@ -25,7 +25,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.NodeSmartCont
 
 import java.io.IOException;
 
-class NodeSmartContractNodePermissioningAcceptanceTestBase extends AcceptanceTestBase {
+class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBase {
 
   private final NodeSmartContractPermissioningTransactions smartContractNodePermissioning;
   private final NodeSmartContractPermissioningConditions nodeSmartContractPermissioningConditions;
@@ -35,7 +35,7 @@ class NodeSmartContractNodePermissioningAcceptanceTestBase extends AcceptanceTes
 
   protected final Cluster permissionedCluster;
 
-  protected NodeSmartContractNodePermissioningAcceptanceTestBase() {
+  protected NodeSmartContractPermissioningAcceptanceTestBase() {
     super();
     smartContractNodePermissioning = new NodeSmartContractPermissioningTransactions(accounts);
     nodeSmartContractPermissioningConditions =

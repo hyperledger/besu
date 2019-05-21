@@ -17,8 +17,8 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import org.junit.Before;
 import org.junit.Test;
 
-public class NodeNodeSmartContractNodePermissioningAcceptanceTest
-    extends NodeSmartContractNodePermissioningAcceptanceTestBase {
+public class NodeSmartContractPermissioningAcceptanceTest
+    extends NodeSmartContractPermissioningAcceptanceTestBase {
 
   private Node bootnode;
   private Node permissionedNode;

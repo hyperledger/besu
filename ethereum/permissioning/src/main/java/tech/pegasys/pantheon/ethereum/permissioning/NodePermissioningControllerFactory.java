@@ -59,9 +59,12 @@ public class NodePermissioningControllerFactory {
         providers.add(smartContractProvider);
       }
 
-      final SyncStatusNodePermissioningProvider syncStatusProvider =
-          new SyncStatusNodePermissioningProvider(synchronizer, fixedNodes);
-      syncStatusProviderOptional = Optional.of(syncStatusProvider);
+      if (fixedNodes.isEmpty()) {
+        syncStatusProviderOptional = Optional.empty();
+      } else {
+        syncStatusProviderOptional =
+            Optional.of(new SyncStatusNodePermissioningProvider(synchronizer, fixedNodes));
+      }
     } else {
       syncStatusProviderOptional = Optional.empty();
     }
