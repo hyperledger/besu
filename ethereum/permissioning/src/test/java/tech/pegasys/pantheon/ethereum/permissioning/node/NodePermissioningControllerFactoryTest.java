@@ -82,7 +82,7 @@ public class NodePermissioningControllerFactoryTest {
 
     NodePermissioningProvider p1 = providers.get(0);
     assertThat(p1).isInstanceOf(NodeSmartContractPermissioningController.class);
-    assertThat(controller.getSyncStatusNodePermissioningProvider()).isPresent();
+    assertThat(controller.getSyncStatusNodePermissioningProvider()).isEmpty();
   }
 
   @Test
@@ -137,6 +137,26 @@ public class NodePermissioningControllerFactoryTest {
       assertThat(p2).isInstanceOf(NodeLocalConfigPermissioningController.class);
       assertThat(p1).isInstanceOf(NodeSmartContractPermissioningController.class);
     }
+    assertThat(controller.getSyncStatusNodePermissioningProvider()).isEmpty();
+  }
+
+  @Test
+  public void testCreateWithSmartContractNodePermissioningEnabledOnlyAndBootnode() {
+    final Collection<EnodeURL> fixedNodes = Collections.singleton(selfEnode);
+
+    smartContractPermissioningConfiguration = new SmartContractPermissioningConfiguration();
+    smartContractPermissioningConfiguration.setNodeSmartContractAddress(
+        Address.fromHexString("0x0000000000000000000000000000000000001234"));
+    smartContractPermissioningConfiguration.setSmartContractNodeWhitelistEnabled(true);
+    config =
+        new PermissioningConfiguration(
+            Optional.empty(), Optional.of(smartContractPermissioningConfiguration));
+
+    NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
+    NodePermissioningController controller =
+        factory.create(
+            config, synchronizer, fixedNodes, selfEnode.getNodeId(), transactionSimulator);
+
     assertThat(controller.getSyncStatusNodePermissioningProvider()).isPresent();
   }
 }
