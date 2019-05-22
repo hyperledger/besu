@@ -62,57 +62,58 @@ All accounts and private keys in the examples are from the `dev.json` genesis fi
 ## Sending Ether
  
 !!!example
-
-    The following is an example of JavaScript that displays a signed transaction string to send ether.
+    The following is an example of JavaScript that displays a signed raw transaction string to deploy a contract.
     
     ```javascript linenums="1"
-    const web3 = require('web3')
+    const Web3 = require('web3')
     const ethTx = require('ethereumjs-tx')
-    
+
     // web3 initialization - must point to the HTTP JSON-RPC endpoint
     const web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:8545'))
-    
+
     // Sender address and private key
     // Second acccount in dev.json genesis file
     // Exclude 0x at the beginning of the private key
     const addressFrom = '0x627306090abaB3A6e1400e9345bC60c78a8BEf57'
     const privKey = Buffer.from('c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3', 'hex')
-    
+
     // Receiver address and value to transfer
     // Third account in dev.json genesis file
     const addressTo = '0xf17f52151EbEF6C7334FAD080c5704D77216b732'
-    const valueInEther = 2000
-    
+    const valueInEther = '2000'
+
     // Get the address transaction count in order to specify the correct nonce
     txnCount = web3.eth.getTransactionCount(addressFrom, "pending");
-    
+
     // Create the transaction object
     var txObject = {
-        nonce: web3.toHex(txnCount),
-        gasPrice: web3.toHex(1000),
-        gasLimit: web3.toHex(21000),
+        nonce: web3.utils.toHex(txnCount),
+        gasPrice: web3.utils.toHex(1000),
+        gasLimit: web3.utils.toHex(21000),
         to: addressTo,
-        value: web3.toHex(web3.toWei(valueInEther, 'ether'))
+        value: web3.utils.toHex(web3.utils.toWei(valueInEther, 'ether'))
     };
-    
+
     // Sign the transaction with the private key
     const tx = new ethTx(txObject);
     tx.sign(privKey)
-    
+
     //Convert to raw transaction string
     const serializedTx = tx.serialize();
     const rawTxHex = '0x' + serializedTx.toString('hex');
-    
+
     console.log("Raw transaction string=" + rawTxHex)
     ```
+
 
 ## Deploying a Contract
 
 !!!example
+
     The following is an example of JavaScript that displays a signed raw transaction string to deploy a contract.
     
     ```javascript linenums="1"
-    const web3 = require('web3')
+    const Web3 = require('web3')
     const ethTx = require('ethereumjs-tx')
     
     // web3 initialization - must point to the HTTP JSON-RPC endpoint
@@ -131,9 +132,9 @@ All accounts and private keys in the examples are from the `dev.json` genesis fi
     txnCount = web3.eth.getTransactionCount(addressFrom, "pending");
     
     var txObject = {
-       nonce: web3.toHex(txnCount),
-       gasPrice: web3.toHex(1000),
-       gasLimit: web3.toHex(126165),
+       nonce: web3.utils.toHex(txnCount),
+       gasPrice: web3.utils.toHex(1000),
+       gasLimit: web3.utils.toHex(126165),
        data: contractData
     };
     
