@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.network;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -35,6 +34,7 @@ import tech.pegasys.pantheon.ethereum.p2p.network.netty.HandshakeHandlerOutbound
 import tech.pegasys.pantheon.ethereum.p2p.network.netty.PeerConnectionRegistry;
 import tech.pegasys.pantheon.ethereum.p2p.network.netty.TimeoutHandler;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.MaintainedPeers;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissionsBlacklist;
@@ -56,7 +56,6 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -158,7 +157,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final PeerPermissions peerPermissions;
   private volatile Optional<PeerRlpxPermissions> rlpxPermissions = Optional.empty();
 
-  @VisibleForTesting final Collection<Peer> peerMaintainConnectionList;
+  private final MaintainedPeers maintainedPeers;
   @VisibleForTesting final PeerConnectionRegistry connections;
 
   @VisibleForTesting
@@ -196,13 +195,14 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final NetworkingConfiguration config,
       final List<Capability> supportedCapabilities,
       final PeerPermissions peerPermissions,
+      final MaintainedPeers maintainedPeers,
       final MetricsSystem metricsSystem) {
 
     this.peerDiscoveryAgent = peerDiscoveryAgent;
     this.keyPair = keyPair;
     this.config = config;
     this.supportedCapabilities = supportedCapabilities;
-    this.peerMaintainConnectionList = new HashSet<>();
+    this.maintainedPeers = maintainedPeers;
     this.connections = new PeerConnectionRegistry(metricsSystem);
 
     this.nodeId = this.keyPair.getPublicKey().getEncodedBytes();
@@ -358,46 +358,19 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public boolean addMaintainConnectionPeer(final Peer peer) {
-    checkArgument(
-        peer.getEnodeURL().isListening(),
-        "Invalid enode url.  Enode url must contain a non-zero listening port.");
-    final boolean added = peerMaintainConnectionList.add(peer);
-    final boolean allowConnection =
-        rlpxPermissions.isPresent() && rlpxPermissions.get().allowNewOutboundConnectionTo(peer);
-    if (allowConnection && !isConnectingOrConnected(peer)) {
-      // Connect immediately if appropriate
-      connect(peer);
-    }
-
-    return added;
+    return maintainedPeers.add(peer);
   }
 
   @Override
   public boolean removeMaintainedConnectionPeer(final Peer peer) {
-    final boolean removed = peerMaintainConnectionList.remove(peer);
-
-    final CompletableFuture<PeerConnection> connectionFuture = pendingConnections.get(peer);
-    if (connectionFuture != null) {
-      connectionFuture.thenAccept(connection -> connection.disconnect(DisconnectReason.REQUESTED));
-    }
-
-    final Optional<PeerConnection> peerConnection = connections.getConnectionForPeer(peer.getId());
-    peerConnection.ifPresent(pc -> pc.disconnect(DisconnectReason.REQUESTED));
-
-    peerDiscoveryAgent.dropPeer(peer);
-
-    return removed;
+    return maintainedPeers.remove(peer);
   }
 
   void checkMaintainedConnectionPeers() {
     if (!rlpxPermissions.isPresent()) {
       return;
     }
-    final PeerRlpxPermissions permissions = rlpxPermissions.get();
-    peerMaintainConnectionList.stream()
-        .filter(p -> !isConnectingOrConnected(p))
-        .filter(permissions::allowNewOutboundConnectionTo)
-        .forEach(this::connect);
+    maintainedPeers.streamPeers().forEach(this::connect);
   }
 
   @VisibleForTesting
@@ -459,20 +432,35 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return connectionFuture;
     }
 
-    LOG.trace("Initiating connection to peer: {}", peer.getId());
+    // Check for existing connection
+    final Optional<PeerConnection> existingConnection =
+        connections.getConnectionForPeer(peer.getId());
+    if (existingConnection.isPresent()) {
+      connectionFuture.complete(existingConnection.get());
+      return connectionFuture;
+    }
+    // Check for existing pending connection
     final CompletableFuture<PeerConnection> existingPendingConnection =
         pendingConnections.putIfAbsent(peer, connectionFuture);
     if (existingPendingConnection != null) {
-      LOG.debug("Attempted to connect to peer with pending connection: {}", peer.getId());
       return existingPendingConnection;
     }
+
+    initiateOutboundConnection(peer, connectionFuture);
+    return connectionFuture;
+  }
+
+  @VisibleForTesting
+  void initiateOutboundConnection(
+      final Peer peer, final CompletableFuture<PeerConnection> connectionFuture) {
+    LOG.trace("Initiating connection to peer: {}", peer.getId());
     final EnodeURL enode = peer.getEnodeURL();
     if (!enode.isListening()) {
       final String errorMsg =
           "Attempt to connect to peer with no listening port: " + enode.toString();
       LOG.warn(errorMsg);
-      connectionFuture.completeExceptionally(new IllegalStateException(errorMsg));
-      return connectionFuture;
+      connectionFuture.completeExceptionally(new IllegalArgumentException(errorMsg));
+      return;
     }
 
     if (peer instanceof DiscoveryPeer) {
@@ -528,7 +516,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
           }
           logConnections();
         });
-    return connectionFuture;
   }
 
   private void logConnections() {
@@ -567,10 +554,30 @@ public class DefaultP2PNetwork implements P2PNetwork {
     final Peer ourNode = createLocalNode();
     this.rlpxPermissions = Optional.of(new PeerRlpxPermissions(ourNode, peerPermissions));
 
+    this.maintainedPeers.subscribeAdd(this::handleMaintainedPeerAdded);
+    this.maintainedPeers.subscribeRemove(this::handleMaintainedPeerRemoved);
+
     peerConnectionScheduler.scheduleWithFixedDelay(
         this::checkMaintainedConnectionPeers, 2, 60, TimeUnit.SECONDS);
     peerConnectionScheduler.scheduleWithFixedDelay(
         this::attemptPeerConnections, 30, 30, TimeUnit.SECONDS);
+  }
+
+  private void handleMaintainedPeerRemoved(final Peer peer, final boolean wasRemoved) {
+    // Drop peer from peer table
+    peerDiscoveryAgent.dropPeer(peer);
+
+    // Disconnect if connected or connecting
+    final CompletableFuture<PeerConnection> connectionFuture = pendingConnections.get(peer);
+    if (connectionFuture != null) {
+      connectionFuture.thenAccept(connection -> connection.disconnect(DisconnectReason.REQUESTED));
+    }
+    final Optional<PeerConnection> peerConnection = connections.getConnectionForPeer(peer.getId());
+    peerConnection.ifPresent(pc -> pc.disconnect(DisconnectReason.REQUESTED));
+  }
+
+  private void handleMaintainedPeerAdded(final Peer peer, final boolean wasAdded) {
+    this.connect(peer);
   }
 
   @VisibleForTesting
@@ -624,10 +631,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
   @VisibleForTesting
   boolean isConnected(final Peer peer) {
     return connections.isAlreadyConnected(peer.getId());
-  }
-
-  private boolean isConnectingOrConnected(final Peer peer) {
-    return isConnected(peer) || isConnecting(peer);
   }
 
   @Override
@@ -728,6 +731,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private Optional<NodePermissioningController> nodePermissioningController = Optional.empty();
     private Blockchain blockchain = null;
     private Vertx vertx;
+    private MaintainedPeers maintainedPeers = new MaintainedPeers();
 
     public P2PNetwork build() {
       validate();
@@ -750,6 +754,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           config,
           supportedCapabilities,
           peerPermissions,
+          maintainedPeers,
           metricsSystem);
     }
 
@@ -827,6 +832,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     public Builder blockchain(final Blockchain blockchain) {
       this.blockchain = blockchain;
+      return this;
+    }
+
+    public Builder maintainedPeers(final MaintainedPeers maintainedPeers) {
+      checkNotNull(maintainedPeers);
+      this.maintainedPeers = maintainedPeers;
       return this;
     }
   }
