@@ -1017,6 +1017,22 @@ tx-pool-max-size="2000"
 
 Maximum number of transactions kept in the transaction pool. Default is 4096. 
 
+### tx-pool-retention-hours
+
+```bash tab="Syntax"
+--tx-pool-retention-hours=<INTEGER>
+```
+
+```bash tab="Example Command Line"
+--tx-pool-retention-hours=5
+```
+
+```bash tab="Example Configuration File"
+tx-pool-retention-hours="5"
+```
+
+Maximum period in hours to retain pending transactions in the transaction pool. Default is 13. 
+
 ### help
 
 ```bash tab="Syntax"

@@ -8,6 +8,9 @@ transactions in the node transaction pool
 * [`--tx-pool-max-size`](../../Reference/Pantheon-CLI-Syntax.md#tx-pool-max-size) command line option to specify the maximum number
 of transactions in the node transaction pool
 
+* [`tx-pool-retention-hours`](../../Reference/Pantheon-CLI-Syntax.md#tx-pool-retention-hours) command line option to specify 
+the maximum number of hours to retain pending transactions in the transaction pool
+
 * [`newPendingTransactions`](../../Pantheon-API/RPC-PubSub.md#pending-transactions) and [`droppedPendingTransactions`](../../Pantheon-API/RPC-PubSub.md#dropped-transactions)
 RPC subscriptions to notify of transactions added to and dropped from the node transaction pool  
 
