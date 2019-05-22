@@ -20,9 +20,9 @@ and add blocks to the blockchain. Nodes are added to or removed from the signer/
 Properties to consider when comparing Clique and IBFT 2.0 are: 
 
 * Immediate finality 
+* Minimum number of validators 
 * Liveness 
 * Speed 
-* Minimum number of validators 
 
 ### Immediate Finality 
 
@@ -30,14 +30,26 @@ IBFT 2.0 has immediate finality. When using IBFT 2.0 there are no forks and all 
 
 Clique does not have immediate finality. Implementations using Clique must be aware of forks and chain reorganizations occurring. 
 
+### Minimum Number of Validators 
+
+IBFT 2.0 requires 4 validators to be Byzantine fault tolerant. 
+
+Clique can operate with a single validator but operating with a single validator offers no redundancy if
+the validator fails. 
+
 ### Liveness 
 
 Clique is more fault tolerant than IBFT 2.0. Clique tolerates up to half to the validators failing. IBFT 2.0 networks 
-tolerate up to (n-1)/3 faulty nodes. For example, in an IBFT 2.0 network of:
+require greater than or equal to 2/3 of validators to be operating to create blocks. For example, in an IBFT 2.0 network of:
 
-* 3, no bad node are tolerated
-* 4-6, 1 bad node is tolerated 
-* 7-9, 2 bad nodes are tolerated 
+* 4-5, 1 unresponsive node is tolerated 
+* 6-8, 2 unresponsive nodes are tolerated 
+
+Networks with 3 or less validators are able to produce blocks but do not guarantee finality when operating 
+in adversarial environments.
+
+!!! important 
+    We recommend not using IBFT 2.0 networks with 3 nodes for production purposes.  
 
 ### Speed 
 
@@ -46,9 +58,7 @@ increases number as the of validators increases.
 
 For IBFT 2.0, the time to add new blocks increases as the number of validators increases.   
 
-### Minimum Number of Validators 
 
-IBFT 2.0 requires 4 nodes to be Byzantine fault tolerant. 
 
 
 

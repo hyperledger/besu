@@ -3,6 +3,7 @@ description: Pantheon IBFT 2.0 Proof-of-Authority (PoA) consensus protocol imple
 
 *[Vanity]: Validators can include anything they like as vanity data. 
 *[RLP]: Recursive Length Prefix
+*[Byzantine fault tolerant]: Ability to function correctly and reach consensus despite nodes failing or propagating incorrect information to peers.
 
 # IBFT 2.0
 
@@ -10,6 +11,10 @@ Pantheon implements the IBFT 2.0 Proof-of-Authority (PoA) consensus protocol. IB
 
 In IBFT 2.0 networks, transactions and blocks are validated by approved accounts, known as validators. 
 Validators take turns to create the next block. Existing validators propose and vote to add or remove validators. 
+
+## Minimum Number of Validators 
+
+IBFT 2.0 requires 4 validators to be Byzantine fault tolerant. 
 
 ## Genesis File
 
