@@ -125,17 +125,18 @@ public class P2PNetworkTest {
       final BytesValue listenId = listenerEnode.getNodeId();
       final int listenPort = listenerEnode.getListeningPort().getAsInt();
 
-      assertThat(
-              connector
-                  .connect(createPeer(listenId, listenPort))
-                  .get(30L, TimeUnit.SECONDS)
-                  .getPeerInfo()
-                  .getNodeId())
-          .isEqualTo(listenId);
-      final CompletableFuture<PeerConnection> secondConnectionFuture =
+      final CompletableFuture<PeerConnection> firstFuture =
           connector.connect(createPeer(listenId, listenPort));
-      assertThatThrownBy(secondConnectionFuture::get)
-          .hasCause(new IllegalStateException("Client already connected"));
+      final CompletableFuture<PeerConnection> secondFuture =
+          connector.connect(createPeer(listenId, listenPort));
+
+      final PeerConnection firstConnection = firstFuture.get(30L, TimeUnit.SECONDS);
+      final PeerConnection secondConnection = secondFuture.get(30L, TimeUnit.SECONDS);
+      assertThat(firstConnection.getPeerInfo().getNodeId()).isEqualTo(listenId);
+
+      // Connections should reference the same instance - i.e. we shouldn't create 2 distinct
+      // connections
+      assertThat(firstConnection == secondConnection).isTrue();
     }
   }
 
