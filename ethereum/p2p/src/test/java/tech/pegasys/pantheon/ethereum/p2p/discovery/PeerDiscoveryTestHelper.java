@@ -23,7 +23,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions;
-import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
@@ -32,7 +31,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -178,7 +176,6 @@ public class PeerDiscoveryTestHelper {
     private final Map<BytesValue, MockPeerDiscoveryAgent> agents;
     private final AtomicInteger nextAvailablePort;
 
-    private Optional<NodePermissioningController> nodePermissioningController = Optional.empty();
     private List<EnodeURL> bootnodes = Collections.emptyList();
     private boolean active = true;
     private PeerPermissions peerPermissions = PeerPermissions.noop();
@@ -208,11 +205,6 @@ public class PeerDiscoveryTestHelper {
       return peers.stream().map(Peer::getEnodeURL).collect(Collectors.toList());
     }
 
-    public AgentBuilder nodePermissioningController(final NodePermissioningController controller) {
-      this.nodePermissioningController = Optional.ofNullable(controller);
-      return this;
-    }
-
     public AgentBuilder peerPermissions(final PeerPermissions peerPermissions) {
       this.peerPermissions = peerPermissions;
       return this;
@@ -230,11 +222,7 @@ public class PeerDiscoveryTestHelper {
       config.setActive(active);
 
       return new MockPeerDiscoveryAgent(
-          SECP256K1.KeyPair.generate(),
-          config,
-          peerPermissions,
-          nodePermissioningController,
-          agents);
+          SECP256K1.KeyPair.generate(), config, peerPermissions, agents);
     }
   }
 }

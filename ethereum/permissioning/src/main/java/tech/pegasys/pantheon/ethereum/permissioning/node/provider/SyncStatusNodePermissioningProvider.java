@@ -21,7 +21,6 @@ import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.OptionalLong;
 
 public class SyncStatusNodePermissioningProvider implements NodePermissioningProvider {
@@ -30,7 +29,6 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
   private final Collection<EnodeURL> fixedNodes = new HashSet<>();
   private OptionalLong syncStatusObserverId;
   private boolean hasReachedSync = false;
-  private Optional<Runnable> hasReachedSyncCallback = Optional.empty();
 
   public SyncStatusNodePermissioningProvider(
       final Synchronizer synchronizer, final Collection<EnodeURL> fixedNodes) {
@@ -47,7 +45,6 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
       if (blocksBehind <= 0) {
         synchronized (this) {
           if (!hasReachedSync) {
-            runCallback();
             syncStatusObserverId.ifPresent(
                 id -> {
                   synchronizer.removeObserver(id);
@@ -58,19 +55,6 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
         }
       }
     }
-  }
-
-  public synchronized void setHasReachedSyncCallback(final Runnable runnable) {
-    if (hasReachedSync) {
-      runCallback();
-    } else {
-      this.hasReachedSyncCallback = Optional.of(runnable);
-    }
-  }
-
-  private synchronized void runCallback() {
-    hasReachedSyncCallback.ifPresent(Runnable::run);
-    hasReachedSyncCallback = Optional.empty();
   }
 
   /**

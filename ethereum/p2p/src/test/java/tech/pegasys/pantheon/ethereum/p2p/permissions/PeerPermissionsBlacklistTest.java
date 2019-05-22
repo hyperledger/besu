@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions.Action;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.Collections;
@@ -27,6 +28,8 @@ import java.util.stream.Stream;
 import org.junit.Test;
 
 public class PeerPermissionsBlacklistTest {
+
+  private final Peer localNode = createPeer();
 
   @Test
   public void add_peer() {
@@ -111,13 +114,13 @@ public class PeerPermissionsBlacklistTest {
     PeerPermissionsBlacklist blacklist = PeerPermissionsBlacklist.create();
 
     Peer peer = createPeer();
-    assertThat(blacklist.isPermitted(peer)).isTrue();
+    checkPermissions(blacklist, peer, true);
 
     blacklist.add(peer);
-    assertThat(blacklist.isPermitted(peer)).isFalse();
+    checkPermissions(blacklist, peer, false);
 
     blacklist.remove(peer);
-    assertThat(blacklist.isPermitted(peer)).isTrue();
+    checkPermissions(blacklist, peer, true);
   }
 
   @Test
@@ -135,7 +138,7 @@ public class PeerPermissionsBlacklistTest {
           }
         });
 
-    assertThat(blacklist.isPermitted(peer)).isTrue();
+    checkPermissions(blacklist, peer, true);
     assertThat(callbackCount).hasValue(0);
     assertThat(restrictedCallbackCount).hasValue(0);
 
@@ -168,28 +171,37 @@ public class PeerPermissionsBlacklistTest {
     Peer peerC = createPeer();
 
     // All peers are initially permitted
-    assertThat(blacklist.isPermitted(peerA)).isTrue();
-    assertThat(blacklist.isPermitted(peerB)).isTrue();
-    assertThat(blacklist.isPermitted(peerC)).isTrue();
+    checkPermissions(blacklist, peerA, true);
+    checkPermissions(blacklist, peerB, true);
+    checkPermissions(blacklist, peerC, true);
 
     // Add peerA
     blacklist.add(peerA);
-    assertThat(blacklist.isPermitted(peerA)).isFalse();
-    assertThat(blacklist.isPermitted(peerB)).isTrue();
-    assertThat(blacklist.isPermitted(peerC)).isTrue();
+    checkPermissions(blacklist, peerA, false);
+    checkPermissions(blacklist, peerB, true);
+    checkPermissions(blacklist, peerC, true);
 
     // Add peerB
     blacklist.add(peerB);
-    assertThat(blacklist.isPermitted(peerA)).isFalse();
-    assertThat(blacklist.isPermitted(peerB)).isFalse();
-    assertThat(blacklist.isPermitted(peerC)).isTrue();
+    checkPermissions(blacklist, peerA, false);
+    checkPermissions(blacklist, peerB, false);
+    checkPermissions(blacklist, peerC, true);
 
     // Add peerC
     // Limit is exceeded and peerA should drop off of the list and be allowed
     blacklist.add(peerC);
-    assertThat(blacklist.isPermitted(peerA)).isTrue();
-    assertThat(blacklist.isPermitted(peerB)).isFalse();
-    assertThat(blacklist.isPermitted(peerC)).isFalse();
+    checkPermissions(blacklist, peerA, true);
+    checkPermissions(blacklist, peerB, false);
+    checkPermissions(blacklist, peerC, false);
+  }
+
+  private void checkPermissions(
+      final PeerPermissionsBlacklist blacklist,
+      final Peer remotePeer,
+      final boolean expectedResult) {
+    for (Action action : Action.values()) {
+      assertThat(blacklist.isPermitted(localNode, remotePeer, action)).isEqualTo(expectedResult);
+    }
   }
 
   @Test
@@ -199,12 +211,12 @@ public class PeerPermissionsBlacklistTest {
     final List<Peer> peers =
         Stream.generate(this::createPeer).limit(peerCount).collect(Collectors.toList());
 
-    peers.forEach(p -> assertThat(blacklist.isPermitted(p)).isTrue());
+    peers.forEach(p -> checkPermissions(blacklist, p, true));
     peers.forEach(blacklist::add);
-    peers.forEach(p -> assertThat(blacklist.isPermitted(p)).isFalse());
+    peers.forEach(p -> checkPermissions(blacklist, p, false));
 
     peers.forEach(blacklist::remove);
-    peers.forEach(p -> assertThat(blacklist.isPermitted(p)).isTrue());
+    peers.forEach(p -> checkPermissions(blacklist, p, true));
   }
 
   private Peer createPeer() {

@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions.Action;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissionsBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
@@ -28,6 +29,7 @@ import tech.pegasys.pantheon.util.enode.EnodeURL;
 import org.junit.Test;
 
 public class PeerReputationManagerTest {
+  private final Peer localNode = generatePeer();
   private final PeerReputationManager peerReputationManager;
   private final PeerPermissionsBlacklist blacklist;
 
@@ -40,68 +42,80 @@ public class PeerReputationManagerTest {
   public void doesNotBlacklistPeerForNormalDisconnect() {
     final PeerConnection peer = generatePeerConnection();
 
-    assertThat(blacklist.isPermitted(peer.getPeer())).isTrue();
+    checkPermissions(blacklist, peer.getPeer(), true);
 
     peerReputationManager.onDisconnect(peer, DisconnectReason.TOO_MANY_PEERS, false);
 
-    assertThat(blacklist.isPermitted(peer.getPeer())).isTrue();
+    checkPermissions(blacklist, peer.getPeer(), true);
   }
 
   @Test
   public void blacklistPeerForBadBehavior() {
     final PeerConnection peer = generatePeerConnection();
 
-    assertThat(blacklist.isPermitted(peer.getPeer())).isTrue();
+    checkPermissions(blacklist, peer.getPeer(), true);
     peerReputationManager.onDisconnect(peer, DisconnectReason.BREACH_OF_PROTOCOL, false);
-    assertThat(blacklist.isPermitted(peer.getPeer())).isFalse();
+    checkPermissions(blacklist, peer.getPeer(), false);
   }
 
   @Test
   public void doesNotBlacklistPeerForOurBadBehavior() {
     final PeerConnection peer = generatePeerConnection();
 
-    assertThat(blacklist.isPermitted(peer.getPeer())).isTrue();
+    checkPermissions(blacklist, peer.getPeer(), true);
     peerReputationManager.onDisconnect(peer, DisconnectReason.BREACH_OF_PROTOCOL, true);
-    assertThat(blacklist.isPermitted(peer.getPeer())).isTrue();
+    checkPermissions(blacklist, peer.getPeer(), true);
   }
 
   @Test
   public void blacklistIncompatiblePeer() {
     final PeerConnection peer = generatePeerConnection();
 
-    assertThat(blacklist.isPermitted(peer.getPeer())).isTrue();
+    checkPermissions(blacklist, peer.getPeer(), true);
     peerReputationManager.onDisconnect(
         peer, DisconnectReason.INCOMPATIBLE_P2P_PROTOCOL_VERSION, false);
-    assertThat(blacklist.isPermitted(peer.getPeer())).isFalse();
+    checkPermissions(blacklist, peer.getPeer(), false);
   }
 
   @Test
   public void blacklistIncompatiblePeerWhoIssuesDisconnect() {
     final PeerConnection peer = generatePeerConnection();
 
-    assertThat(blacklist.isPermitted(peer.getPeer())).isTrue();
+    checkPermissions(blacklist, peer.getPeer(), true);
     peerReputationManager.onDisconnect(
         peer, DisconnectReason.INCOMPATIBLE_P2P_PROTOCOL_VERSION, true);
-    assertThat(blacklist.isPermitted(peer.getPeer())).isFalse();
+    checkPermissions(blacklist, peer.getPeer(), false);
+  }
+
+  private void checkPermissions(
+      final PeerPermissionsBlacklist blacklist,
+      final Peer remotePeer,
+      final boolean expectedResult) {
+    for (Action action : Action.values()) {
+      assertThat(blacklist.isPermitted(localNode, remotePeer, action)).isEqualTo(expectedResult);
+    }
   }
 
   private PeerConnection generatePeerConnection() {
     final BytesValue nodeId = Peer.randomId();
     final PeerConnection conn = mock(PeerConnection.class);
     final PeerInfo peerInfo = mock(PeerInfo.class);
-    final Peer peer =
-        DefaultPeer.fromEnodeURL(
-            EnodeURL.builder()
-                .nodeId(Peer.randomId())
-                .ipAddress("10.9.8.7")
-                .discoveryPort(65535)
-                .listeningPort(65534)
-                .build());
+    final Peer peer = generatePeer();
 
     when(peerInfo.getNodeId()).thenReturn(nodeId);
     when(conn.getPeerInfo()).thenReturn(peerInfo);
     when(conn.getPeer()).thenReturn(peer);
 
     return conn;
+  }
+
+  private Peer generatePeer() {
+    return DefaultPeer.fromEnodeURL(
+        EnodeURL.builder()
+            .nodeId(Peer.randomId())
+            .ipAddress("10.9.8.7")
+            .discoveryPort(65535)
+            .listeningPort(65534)
+            .build());
   }
 }

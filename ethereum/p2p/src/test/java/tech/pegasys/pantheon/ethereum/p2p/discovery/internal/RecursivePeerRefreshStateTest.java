@@ -27,7 +27,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.RecursivePeerRefreshState.BondingAgent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.RecursivePeerRefreshState.FindNeighbourDispatcher;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.RecursivePeerRefreshState.OutboundDiscoveryMessagingPermissions;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
@@ -39,8 +38,7 @@ import org.junit.Test;
 
 public class RecursivePeerRefreshStateTest {
   private static final BytesValue TARGET = createId(0);
-  private final OutboundDiscoveryMessagingPermissions peerPermissions =
-      mock(OutboundDiscoveryMessagingPermissions.class);
+  private final PeerDiscoveryPermissions peerPermissions = mock(PeerDiscoveryPermissions.class);
   private final BondingAgent bondingAgent = mock(BondingAgent.class);
   private final FindNeighbourDispatcher neighborFinder = mock(FindNeighbourDispatcher.class);
   private final MockTimerUtil timerUtil = new MockTimerUtil();
@@ -65,7 +63,11 @@ public class RecursivePeerRefreshStateTest {
   @Before
   public void setup() {
     // Default peerPermissions to be permissive
-    when(peerPermissions.isPermitted(any())).thenReturn(true);
+    when(peerPermissions.isAllowedInPeerTable(any())).thenReturn(true);
+    when(peerPermissions.allowInboundBonding(any())).thenReturn(true);
+    when(peerPermissions.allowOutboundBonding(any())).thenReturn(true);
+    when(peerPermissions.allowInboundNeighborsRequest(any())).thenReturn(true);
+    when(peerPermissions.allowOutboundNeighborsRequest(any())).thenReturn(true);
   }
 
   @Test
@@ -268,17 +270,36 @@ public class RecursivePeerRefreshStateTest {
     completeBonding(peer1);
     completeBonding(peer2);
 
-    verify(neighborFinder).findNeighbours(peer1, TARGET);
-    verify(neighborFinder).findNeighbours(peer2, TARGET);
+    verify(neighborFinder, times(1)).findNeighbours(peer1, TARGET);
+    verify(neighborFinder, times(1)).findNeighbours(peer2, TARGET);
 
     recursivePeerRefreshState.onNeighboursReceived(peer1, singletonList(peer2));
     recursivePeerRefreshState.onNeighboursReceived(peer2, emptyList());
 
     verify(bondingAgent, times(1)).performBonding(peer1);
     verify(bondingAgent, times(1)).performBonding(peer2);
-    verify(neighborFinder).findNeighbours(peer1, TARGET);
-    verify(neighborFinder).findNeighbours(peer2, TARGET);
+    verify(neighborFinder, times(1)).findNeighbours(peer1, TARGET);
+    verify(neighborFinder, times(1)).findNeighbours(peer2, TARGET);
     verifyNoMoreInteractions(bondingAgent, neighborFinder);
+  }
+
+  @Test
+  public void shouldNotQueryNodeMissingPermissions() {
+    peer1.setStatus(PeerDiscoveryStatus.KNOWN);
+    peer2.setStatus(PeerDiscoveryStatus.KNOWN);
+
+    when(peerPermissions.allowOutboundNeighborsRequest(peer1)).thenReturn(false);
+
+    recursivePeerRefreshState.start(asList(peer1, peer2), TARGET);
+
+    verify(bondingAgent).performBonding(peer2);
+    verify(bondingAgent).performBonding(peer2);
+
+    completeBonding(peer1);
+    completeBonding(peer2);
+
+    verify(neighborFinder, times(0)).findNeighbours(peer1, TARGET);
+    verify(neighborFinder, times(1)).findNeighbours(peer2, TARGET);
   }
 
   @Test
@@ -435,7 +456,7 @@ public class RecursivePeerRefreshStateTest {
     final DiscoveryPeer peerA = createPeer(1, "127.0.0.1", 1, 1);
     final DiscoveryPeer peerB = createPeer(2, "127.0.0.2", 2, 2);
 
-    when(peerPermissions.isPermitted(peerB)).thenReturn(false);
+    when(peerPermissions.allowOutboundBonding(peerB)).thenReturn(false);
 
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(
