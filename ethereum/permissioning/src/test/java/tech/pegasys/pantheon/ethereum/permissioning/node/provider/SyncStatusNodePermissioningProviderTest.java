@@ -14,10 +14,7 @@ package tech.pegasys.pantheon.ethereum.permissioning.node.provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.core.SyncStatus;
@@ -91,28 +88,6 @@ public class SyncStatusNodePermissioningProviderTest {
 
     syncStatusListener.onSyncStatus(new SyncStatus(0, 2, 3));
     assertThat(provider.hasReachedSync()).isTrue();
-  }
-
-  @Test
-  public void whenNotInSyncShouldNotExecuteCallback() {
-    final Runnable callbackFunction = mock(Runnable.class);
-    provider.setHasReachedSyncCallback(callbackFunction);
-
-    syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
-
-    verifyZeroInteractions(callbackFunction);
-  }
-
-  @Test
-  public void whenInSyncShouldExecuteCallback() {
-    final Runnable callbackFunction = mock(Runnable.class);
-    provider.setHasReachedSyncCallback(callbackFunction);
-
-    syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 1));
-
-    verify(callbackFunction).run();
-    // after executing callback, it should unsubscribe from the SyncStatus updates
-    verify(synchronizer).removeObserver(eq(syncStatusObserverId));
   }
 
   @Test

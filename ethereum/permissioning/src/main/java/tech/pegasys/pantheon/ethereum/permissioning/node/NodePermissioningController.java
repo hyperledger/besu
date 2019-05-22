@@ -70,14 +70,6 @@ public class NodePermissioningController {
     return true;
   }
 
-  public void startPeerDiscoveryCallback(final Runnable peerDiscoveryCallback) {
-    if (syncStatusNodePermissioningProvider.isPresent()) {
-      syncStatusNodePermissioningProvider.get().setHasReachedSyncCallback(peerDiscoveryCallback);
-    } else {
-      peerDiscoveryCallback.run();
-    }
-  }
-
   public void setInsufficientPeersPermissioningProvider(
       final ContextualNodePermissioningProvider insufficientPeersPermissioningProvider) {
     insufficientPeersPermissioningProvider.subscribeToUpdates(

@@ -16,7 +16,6 @@ import static tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDistance
 
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
-import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
@@ -37,7 +36,7 @@ public class RecursivePeerRefreshState {
   private static final Logger LOG = LogManager.getLogger();
   private static final int MAX_CONCURRENT_REQUESTS = 3;
   private BytesValue target;
-  private final OutboundDiscoveryMessagingPermissions peerPermissions;
+  private final PeerDiscoveryPermissions peerPermissions;
   private final PeerTable peerTable;
   private final DiscoveryPeer localPeer;
 
@@ -61,7 +60,7 @@ public class RecursivePeerRefreshState {
       final TimerUtil timerUtil,
       final DiscoveryPeer localPeer,
       final PeerTable peerTable,
-      final OutboundDiscoveryMessagingPermissions peerPermissions,
+      final PeerDiscoveryPermissions peerPermissions,
       final int timeoutPeriodInSeconds,
       final int maxRounds) {
     this.bondingAgent = bondingAgent;
@@ -182,7 +181,6 @@ public class RecursivePeerRefreshState {
 
   private boolean satisfiesMapAdditionCriteria(final DiscoveryPeer discoPeer) {
     return !oneTrueMap.containsKey(discoPeer.getId())
-        && peerPermissions.isPermitted(discoPeer)
         && (initialPeers.contains(discoPeer) || !peerTable.get(discoPeer).isPresent())
         && !discoPeer.getId().equals(localPeer.getId());
   }
@@ -247,12 +245,14 @@ public class RecursivePeerRefreshState {
   private List<MetadataPeer> bondingRoundCandidates() {
     return oneTrueMap.values().stream()
         .filter(MetadataPeer::isBondingCandidate)
+        .filter(p -> peerPermissions.allowOutboundBonding(p.getPeer()))
         .collect(Collectors.toList());
   }
 
   private List<MetadataPeer> neighboursRoundCandidates() {
     return oneTrueMap.values().stream()
         .filter(MetadataPeer::isNeighboursRoundCandidate)
+        .filter(p -> peerPermissions.allowOutboundNeighborsRequest(p.getPeer()))
         .limit(MAX_CONCURRENT_REQUESTS)
         .collect(Collectors.toList());
   }
@@ -378,10 +378,5 @@ public class RecursivePeerRefreshState {
       timerUtil.cancelTimer(timerId);
       timeoutCancelled.set(true);
     }
-  }
-
-  @FunctionalInterface
-  public interface OutboundDiscoveryMessagingPermissions {
-    boolean isPermitted(Peer remotePeer);
   }
 }
