@@ -409,6 +409,10 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
     return Util.publicKeyToAddress(keyPair.getPublicKey());
   }
 
+  public KeyPair keyPair() {
+    return keyPair;
+  }
+
   public Path homeDirectory() {
     return homeDirectory;
   }

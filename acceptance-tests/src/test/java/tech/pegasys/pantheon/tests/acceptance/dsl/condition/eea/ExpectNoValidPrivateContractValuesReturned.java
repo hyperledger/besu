@@ -10,26 +10,29 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.privacy;
+package tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transactions;
 
-public class ExpectValidPrivateTransactionReceipt extends GetValidPrivateTransactionReceipt {
+public class ExpectNoValidPrivateContractValuesReturned extends GetValidPrivateTransactionReceipt {
 
-  public ExpectValidPrivateTransactionReceipt(final Eea eea, final Transactions transactions) {
+  public ExpectNoValidPrivateContractValuesReturned(
+      final Eea eea, final Transactions transactions) {
     super(eea, transactions);
   }
 
+  @Override
   public void verify(final PantheonNode node, final String transactionHash) {
     ResponseTypes.PrivateTransactionReceipt privateTxReceipt =
         getPrivateTransactionReceipt(node, transactionHash);
-    assertNotNull(privateTxReceipt);
-    assertThat(privateTxReceipt.getFrom()).isNotBlank();
+
+    if (privateTxReceipt.getOutput() != null) {
+      assertEquals("0x", privateTxReceipt.getOutput());
+    }
   }
 }
