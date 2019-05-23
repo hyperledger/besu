@@ -12,8 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.response;
 
-import tech.pegasys.pantheon.util.enode.EnodeURL;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -101,7 +99,9 @@ public enum JsonRpcError {
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer."),
 
   // Invalid input errors
-  ENODE_ID_INVALID(-32000, EnodeURL.INVALID_NODE_ID_LENGTH);
+  ENODE_ID_INVALID(
+      -32000,
+      "Invalid node ID: node ID must have exactly 128 hexadecimal characters and should not include any '0x' hex prefix.");
 
   private final int code;
   private final String message;

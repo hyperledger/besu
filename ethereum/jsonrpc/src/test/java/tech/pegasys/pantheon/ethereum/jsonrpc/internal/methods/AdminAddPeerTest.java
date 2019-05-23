@@ -101,6 +101,25 @@ public class AdminAddPeerTest {
   }
 
   @Test
+  public void requestHasInvalidEnodeLength() {
+    String invalidLengthEnode =
+        "enode://"
+            + "0000000000000000000000000000000"
+            + "00000000000000000000000000000000"
+            + "00000000000000000000000000000000"
+            + "00000000000000000000000000000000"
+            + "@127.0.0.1:30303";
+    final JsonRpcRequest request =
+        new JsonRpcRequest("2.0", "admin_addPeer", new String[] {invalidLengthEnode});
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.ENODE_ID_INVALID);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
   public void requestAddsValidEnode() {
     when(p2pNetwork.addMaintainConnectionPeer(any())).thenReturn(true);
 
