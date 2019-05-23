@@ -14,8 +14,8 @@ package tech.pegasys.pantheon.ethereum.p2p.network.netty;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.peers.LocalNode;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.Handshaker;
-import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
@@ -31,14 +31,14 @@ public final class HandshakeHandlerInbound extends AbstractHandshakeHandler {
   public HandshakeHandlerInbound(
       final SECP256K1.KeyPair kp,
       final List<SubProtocol> subProtocols,
-      final PeerInfo ourInfo,
+      final LocalNode localNode,
       final CompletableFuture<PeerConnection> connectionFuture,
       final Callbacks callbacks,
       final PeerConnectionRegistry peerConnectionRegistry,
       final LabelledMetric<Counter> outboundMessagesCounter) {
     super(
         subProtocols,
-        ourInfo,
+        localNode,
         Optional.empty(),
         connectionFuture,
         callbacks,

@@ -113,31 +113,33 @@ public abstract class PeerDiscoveryAgent {
 
   public abstract CompletableFuture<?> stop();
 
-  public CompletableFuture<?> start(final int tcpPort) {
+  public CompletableFuture<Integer> start(final int tcpPort) {
     if (config.isActive()) {
       final String host = config.getBindHost();
       final int port = config.getBindPort();
       LOG.info("Starting peer discovery agent on host={}, port={}", host, port);
 
       return listenForConnections()
-          .thenAccept(
+          .thenApply(
               (InetSocketAddress localAddress) -> {
                 // Once listener is set up, finish initializing
+                final int discoveryPort = localAddress.getPort();
                 final DiscoveryPeer ourNode =
                     DiscoveryPeer.fromEnode(
                         EnodeURL.builder()
                             .nodeId(id)
                             .ipAddress(config.getAdvertisedHost())
                             .listeningPort(tcpPort)
-                            .discoveryPort(localAddress.getPort())
+                            .discoveryPort(discoveryPort)
                             .build());
                 this.localNode = Optional.of(ourNode);
                 isActive = true;
                 startController(ourNode);
+                return discoveryPort;
               });
     } else {
       this.isActive = false;
-      return CompletableFuture.completedFuture(null);
+      return CompletableFuture.completedFuture(0);
     }
   }
 

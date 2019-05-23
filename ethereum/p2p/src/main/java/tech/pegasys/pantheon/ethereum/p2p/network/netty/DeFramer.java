@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.IncompatiblePeerExc
 import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.PeerDisconnectedException;
 import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.UnexpectedPeerConnectionException;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.LocalNode;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.Framer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.FramingException;
@@ -58,7 +59,7 @@ final class DeFramer extends ByteToMessageDecoder {
   private final Callbacks callbacks;
 
   private final Framer framer;
-  private final PeerInfo ourInfo;
+  private final LocalNode localNode;
   // The peer we are expecting to connect to, if such a peer is known
   private final Optional<Peer> expectedPeer;
   private final List<SubProtocol> subProtocols;
@@ -68,14 +69,14 @@ final class DeFramer extends ByteToMessageDecoder {
   DeFramer(
       final Framer framer,
       final List<SubProtocol> subProtocols,
-      final PeerInfo ourInfo,
+      final LocalNode localNode,
       final Optional<Peer> expectedPeer,
       final Callbacks callbacks,
       final CompletableFuture<PeerConnection> connectFuture,
       final LabelledMetric<Counter> outboundMessagesCounter) {
     this.framer = framer;
     this.subProtocols = subProtocols;
-    this.ourInfo = ourInfo;
+    this.localNode = localNode;
     this.expectedPeer = expectedPeer;
     this.connectFuture = connectFuture;
     this.callbacks = callbacks;
@@ -109,7 +110,9 @@ final class DeFramer extends ByteToMessageDecoder {
 
         final CapabilityMultiplexer capabilityMultiplexer =
             new CapabilityMultiplexer(
-                subProtocols, ourInfo.getCapabilities(), peerInfo.getCapabilities());
+                subProtocols,
+                localNode.getPeerInfo().getCapabilities(),
+                peerInfo.getCapabilities());
         final Peer peer = expectedPeer.orElse(createPeer(peerInfo, ctx));
         final PeerConnection connection =
             new NettyPeerConnection(
