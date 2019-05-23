@@ -13,11 +13,11 @@
 package tech.pegasys.pantheon.ethereum.p2p.network.netty;
 
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.peers.LocalNode;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.Framer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.Handshaker;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker;
-import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
@@ -47,7 +47,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
 
   // The peer we are expecting to connect to, if such a peer is known
   private final Optional<Peer> expectedPeer;
-  private final PeerInfo ourInfo;
+  private final LocalNode localNode;
 
   private final Callbacks callbacks;
   private final PeerConnectionRegistry peerConnectionRegistry;
@@ -59,14 +59,14 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
 
   AbstractHandshakeHandler(
       final List<SubProtocol> subProtocols,
-      final PeerInfo ourInfo,
+      final LocalNode localNode,
       final Optional<Peer> expectedPeer,
       final CompletableFuture<PeerConnection> connectionFuture,
       final Callbacks callbacks,
       final PeerConnectionRegistry peerConnectionRegistry,
       final LabelledMetric<Counter> outboundMessagesCounter) {
     this.subProtocols = subProtocols;
-    this.ourInfo = ourInfo;
+    this.localNode = localNode;
     this.expectedPeer = expectedPeer;
     this.connectionFuture = connectionFuture;
     this.callbacks = callbacks;
@@ -94,15 +94,13 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
       final BytesValue nodeId = handshaker.partyPubKey().getEncodedBytes();
       if (peerConnectionRegistry.isAlreadyConnected(nodeId)) {
         LOG.debug("Rejecting connection from already connected client {}", nodeId);
-        ctx.writeAndFlush(
-                new OutboundMessage(
-                    null, DisconnectMessage.create(DisconnectReason.ALREADY_CONNECTED)))
-            .addListener(
-                ff -> {
-                  ctx.close();
-                  connectionFuture.completeExceptionally(
-                      new IllegalStateException("Client already connected"));
-                });
+        disconnect(ctx, DisconnectReason.ALREADY_CONNECTED);
+        return;
+      }
+      if (!localNode.isReady()) {
+        // If we're handling a connection before the node is fully up, just disconnect
+        LOG.debug("Rejecting connection because local node is not ready {}", nodeId);
+        disconnect(ctx, DisconnectReason.UNKNOWN);
         return;
       }
 
@@ -115,7 +113,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
           new DeFramer(
               framer,
               subProtocols,
-              ourInfo,
+              localNode,
               expectedPeer,
               callbacks,
               connectionFuture,
@@ -126,7 +124,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
           .addFirst(new ValidateFirstOutboundMessage(framer))
           .replace(this, "DeFramer", deFramer);
 
-      ctx.writeAndFlush(new OutboundMessage(null, HelloMessage.create(ourInfo)))
+      ctx.writeAndFlush(new OutboundMessage(null, HelloMessage.create(localNode.getPeerInfo())))
           .addListener(
               ff -> {
                 if (ff.isSuccess()) {
@@ -136,6 +134,16 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
       msg.retain();
       ctx.fireChannelRead(msg);
     }
+  }
+
+  private void disconnect(final ChannelHandlerContext ctx, final DisconnectReason reason) {
+    ctx.writeAndFlush(new OutboundMessage(null, DisconnectMessage.create(reason)))
+        .addListener(
+            ff -> {
+              ctx.close();
+              connectionFuture.completeExceptionally(
+                  new IllegalStateException("Disconnecting from peer: " + reason.name()));
+            });
   }
 
   @Override
