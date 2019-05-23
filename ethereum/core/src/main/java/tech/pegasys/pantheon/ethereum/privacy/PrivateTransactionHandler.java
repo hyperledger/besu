@@ -12,21 +12,29 @@
  */
 package tech.pegasys.pantheon.ethereum.privacy;
 
+import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.INCORRECT_PRIVATE_NONCE;
+import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW;
+
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.enclave.Enclave;
+import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
+import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
 import tech.pegasys.pantheon.enclave.types.SendRequest;
 import tech.pegasys.pantheon.enclave.types.SendResponse;
+import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
+import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Charsets;
@@ -40,39 +48,97 @@ public class PrivateTransactionHandler {
   private final Enclave enclave;
   private final Address privacyPrecompileAddress;
   private final SECP256K1.KeyPair nodeKeyPair;
+  private final PrivateStateStorage privateStateStorage;
+  private final WorldStateArchive privateWorldStateArchive;
 
   public PrivateTransactionHandler(final PrivacyParameters privacyParameters) {
     this(
         new Enclave(privacyParameters.getEnclaveUri()),
         Address.privacyPrecompiled(privacyParameters.getPrivacyAddress()),
-        privacyParameters.getSigningKeyPair());
+        privacyParameters.getSigningKeyPair(),
+        privacyParameters.getPrivateStateStorage(),
+        privacyParameters.getPrivateWorldStateArchive());
   }
 
   public PrivateTransactionHandler(
       final Enclave enclave,
       final Address privacyPrecompileAddress,
-      final SECP256K1.KeyPair nodeKeyPair) {
+      final SECP256K1.KeyPair nodeKeyPair,
+      final PrivateStateStorage privateStateStorage,
+      final WorldStateArchive privateWorldStateArchive) {
     this.enclave = enclave;
     this.privacyPrecompileAddress = privacyPrecompileAddress;
     this.nodeKeyPair = nodeKeyPair;
+    this.privateStateStorage = privateStateStorage;
+    this.privateWorldStateArchive = privateWorldStateArchive;
   }
 
-  public Transaction handle(
-      final PrivateTransaction privateTransaction, final Supplier<Long> nonceSupplier)
-      throws IOException {
-    LOG.trace("Handling private transaction {}", privateTransaction.toString());
+  public String sendToOrion(final PrivateTransaction privateTransaction) throws IOException {
     final SendRequest sendRequest = createSendRequest(privateTransaction);
     final SendResponse sendResponse;
+
     try {
       LOG.trace("Storing private transaction in enclave");
       sendResponse = enclave.send(sendRequest);
+      return sendResponse.getKey();
     } catch (IOException e) {
       LOG.error("Failed to store private transaction in enclave", e);
       throw e;
     }
+  }
 
-    return createPrivacyMarkerTransactionWithNonce(
-        sendResponse.getKey(), privateTransaction, nonceSupplier.get());
+  public String getPrivacyGroup(final String key, final BytesValue from) throws IOException {
+    final ReceiveRequest receiveRequest = new ReceiveRequest(key, BytesValues.asString(from));
+    LOG.debug("Getting privacy group for {}", BytesValues.asString(from));
+    final ReceiveResponse receiveResponse;
+    try {
+      receiveResponse = enclave.receive(receiveRequest);
+      return BytesValue.wrap(receiveResponse.getPrivacyGroupId().getBytes(Charsets.UTF_8))
+          .toString();
+    } catch (IOException e) {
+      LOG.error("Failed to retrieve private transaction in enclave", e);
+      throw e;
+    }
+  }
+
+  public Transaction createPrivacyMarkerTransaction(
+      final String transactionEnclaveKey,
+      final PrivateTransaction privateTransaction,
+      final Long nonce) {
+
+    return Transaction.builder()
+        .nonce(nonce)
+        .gasPrice(privateTransaction.getGasPrice())
+        .gasLimit(privateTransaction.getGasLimit())
+        .to(privacyPrecompileAddress)
+        .value(privateTransaction.getValue())
+        .payload(BytesValue.wrap(transactionEnclaveKey.getBytes(Charsets.UTF_8)))
+        .sender(privateTransaction.getSender())
+        .signAndBuild(nodeKeyPair);
+  }
+
+  public ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
+      final PrivateTransaction privateTransaction, final String privacyGroupId) {
+    final long actualNonce = privateTransaction.getNonce();
+    final long expectedNonce = getSenderNonce(privateTransaction, privacyGroupId);
+    LOG.debug("Validating actual nonce {} with expected nonce {}", actualNonce, expectedNonce);
+    if (expectedNonce > actualNonce) {
+      return ValidationResult.invalid(
+          PRIVATE_NONCE_TOO_LOW,
+          String.format(
+              "private transaction nonce %s does not match sender account nonce %s.",
+              actualNonce, expectedNonce));
+    }
+
+    if (expectedNonce != actualNonce) {
+      return ValidationResult.invalid(
+          INCORRECT_PRIVATE_NONCE,
+          String.format(
+              "private transaction nonce %s does not match sender account nonce %s.",
+              actualNonce, expectedNonce));
+    }
+
+    return ValidationResult.valid();
   }
 
   private SendRequest createSendRequest(final PrivateTransaction privateTransaction) {
@@ -95,19 +161,29 @@ public class PrivateTransactionHandler {
         privateFor);
   }
 
-  private Transaction createPrivacyMarkerTransactionWithNonce(
-      final String transactionEnclaveKey,
-      final PrivateTransaction privateTransaction,
-      final Long nonce) {
+  private long getSenderNonce(
+      final PrivateTransaction privateTransaction, final String privacyGroupId) {
+    return privateStateStorage
+        .getPrivateAccountState(BytesValue.fromHexString(privacyGroupId))
+        .map(
+            lastRootHash ->
+                privateWorldStateArchive
+                    .getMutable(lastRootHash)
+                    .map(
+                        worldState -> {
+                          final Account maybePrivateSender =
+                              worldState.get(privateTransaction.getSender());
 
-    return Transaction.builder()
-        .nonce(nonce)
-        .gasPrice(privateTransaction.getGasPrice())
-        .gasLimit(privateTransaction.getGasLimit())
-        .to(privacyPrecompileAddress)
-        .value(privateTransaction.getValue())
-        .payload(BytesValue.wrap(transactionEnclaveKey.getBytes(Charsets.UTF_8)))
-        .sender(privateTransaction.getSender())
-        .signAndBuild(nodeKeyPair);
+                          if (maybePrivateSender != null) {
+                            return maybePrivateSender.getNonce();
+                          }
+                          // account has not interacted in this private state
+                          return Account.DEFAULT_NONCE;
+                        })
+                    // private state does not exist
+                    .orElse(Account.DEFAULT_NONCE))
+        .orElse(
+            // private state does not exist
+            Account.DEFAULT_NONCE);
   }
 }
