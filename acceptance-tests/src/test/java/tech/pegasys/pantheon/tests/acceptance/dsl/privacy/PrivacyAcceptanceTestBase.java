@@ -12,48 +12,30 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.privacy;
 
-import tech.pegasys.orion.testutil.OrionTestHarness;
-import tech.pegasys.orion.testutil.OrionTestHarnessFactory;
-import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.PrivateTransactionBuilder;
 
-import java.io.IOException;
-
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
-public class PrivateAcceptanceTestBase extends AcceptanceTestBase {
+public class PrivacyAcceptanceTestBase extends AcceptanceTestBase {
   @ClassRule public static final TemporaryFolder privacy = new TemporaryFolder();
 
   protected final Eea eea;
   protected final PrivateTransactions privateTransactions;
   protected static PrivateTransactionBuilder.Builder privateTransactionBuilder;
   protected final PrivateTransactionVerifier privateTransactionVerifier;
+  protected final PrivacyPantheonNodeFactory privacyPantheon;
 
-  public PrivateAcceptanceTestBase() {
+  public PrivacyAcceptanceTestBase() {
     final EeaTransactions eeaTransactions = new EeaTransactions();
 
     privateTransactions = new PrivateTransactions();
     eea = new Eea(eeaTransactions);
     privateTransactionBuilder = PrivateTransactionBuilder.builder();
     privateTransactionVerifier = new PrivateTransactionVerifier(eea, transactions);
-  }
-
-  protected static OrionTestHarness createEnclave(
-      final String pubKey, final String privKey, final String... othernode) throws Exception {
-    return OrionTestHarnessFactory.create(privacy.newFolder().toPath(), pubKey, privKey, othernode);
-  }
-
-  protected static PrivacyParameters getPrivacyParameters(final OrionTestHarness testHarness)
-      throws IOException {
-    return new PrivacyParameters.Builder()
-        .setEnabled(true)
-        .setEnclaveUrl(testHarness.clientUrl())
-        .setEnclavePublicKeyUsingFile(testHarness.getConfig().publicKeys().get(0).toFile())
-        .setDataDir(privacy.newFolder().toPath())
-        .build();
+    privacyPantheon = new PrivacyPantheonNodeFactory();
   }
 }

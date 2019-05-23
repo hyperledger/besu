@@ -23,7 +23,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.GenesisConfigProvider;
 import java.util.List;
 import java.util.Optional;
 
-class PantheonFactoryConfiguration {
+public class PantheonFactoryConfiguration {
 
   private final String name;
   private final MiningParameters miningParameters;
@@ -41,7 +41,7 @@ class PantheonFactoryConfiguration {
   private final List<String> plugins;
   private final List<String> extraCLIOptions;
 
-  PantheonFactoryConfiguration(
+  public PantheonFactoryConfiguration(
       final String name,
       final MiningParameters miningParameters,
       final PrivacyParameters privacyParameters,

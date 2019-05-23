@@ -10,25 +10,35 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.privacy;
+package tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea;
 
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertEquals;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transactions;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-public class ExpectNoPrivateContractDeployedReceipt extends GetValidPrivateTransactionReceipt {
+import java.math.BigInteger;
 
-  public ExpectNoPrivateContractDeployedReceipt(final Eea eea, final Transactions transactions) {
+import org.web3j.utils.Numeric;
+
+public class ExpectValidPrivateContractValuesReturned extends GetValidPrivateTransactionReceipt {
+  private final String returnValue;
+
+  public ExpectValidPrivateContractValuesReturned(
+      final String returnValue, final Eea eea, final Transactions transactions) {
     super(eea, transactions);
+    this.returnValue = returnValue;
   }
 
+  @Override
   public void verify(final PantheonNode node, final String transactionHash) {
     ResponseTypes.PrivateTransactionReceipt privateTxReceipt =
         getPrivateTransactionReceipt(node, transactionHash);
 
-    assertNull(privateTxReceipt.getContractAddress());
+    BytesValue output = BytesValue.fromHexString(privateTxReceipt.getOutput());
+    assertEquals(new BigInteger(returnValue), Numeric.decodeQuantity(output.toString()));
   }
 }

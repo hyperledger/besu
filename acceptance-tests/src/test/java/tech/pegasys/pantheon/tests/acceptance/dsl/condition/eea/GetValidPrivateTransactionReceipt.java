@@ -10,31 +10,31 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.privacy;
+package tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils.waitFor;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transactions;
 
-public class ExpectValidPrivateContractDeployedReceipt extends GetValidPrivateTransactionReceipt {
+public abstract class GetValidPrivateTransactionReceipt implements EeaCondition {
 
-  private final String contractAddress;
+  private Eea eea;
+  private Transactions transactions;
 
-  public ExpectValidPrivateContractDeployedReceipt(
-      final String contractAddress, final Eea eea, final Transactions transactions) {
-    super(eea, transactions);
-    this.contractAddress = contractAddress;
+  GetValidPrivateTransactionReceipt(final Eea eea, final Transactions transactions) {
+    this.eea = eea;
+    this.transactions = transactions;
   }
 
-  public void verify(final PantheonNode node, final String transactionHash) {
-    ResponseTypes.PrivateTransactionReceipt privateTxReceipt =
-        getPrivateTransactionReceipt(node, transactionHash);
+  ResponseTypes.PrivateTransactionReceipt getPrivateTransactionReceipt(
+      final PantheonNode node, final String transactionHash) {
 
-    assertEquals(contractAddress, privateTxReceipt.getContractAddress());
-    assertNotEquals("0x", privateTxReceipt.getOutput());
+    waitFor(() -> node.verify(eea.expectSuccessfulTransactionReceipt(transactionHash)));
+    ResponseTypes.PrivateTransactionReceipt privateTxReceipt =
+        node.execute(transactions.getPrivateTransactionReceipt(transactionHash));
+    return privateTxReceipt;
   }
 }
