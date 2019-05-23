@@ -20,7 +20,6 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResp
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 public abstract class AdminModifyPeer implements JsonRpcMethod {
 
@@ -43,7 +42,9 @@ public abstract class AdminModifyPeer implements JsonRpcMethod {
     } catch (final InvalidJsonRpcParameters e) {
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INVALID_PARAMS);
     } catch (final IllegalArgumentException e) {
-      if (e.getMessage().contains(EnodeURL.INVALID_NODE_ID_LENGTH)) {
+      if (e.getMessage()
+          .endsWith(
+              "Invalid node ID: node ID must have exactly 128 hexadecimal characters and should not include any '0x' hex prefix.")) {
         return new JsonRpcErrorResponse(req.getId(), JsonRpcError.ENODE_ID_INVALID);
       } else {
         return new JsonRpcErrorResponse(req.getId(), JsonRpcError.PARSE_ERROR);

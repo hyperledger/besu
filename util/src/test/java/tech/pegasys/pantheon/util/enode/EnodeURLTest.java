@@ -374,7 +374,8 @@ public class EnodeURLTest {
         String.format("enode://%s@%s:%d", VALID_NODE_ID.substring(1), IPV4_ADDRESS, P2P_PORT);
     assertThatThrownBy(() -> EnodeURL.fromString(invalidEnodeURL))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("node ID must have exactly 128 hexadecimal");
+        .hasMessageEndingWith(
+            "Invalid node ID: node ID must have exactly 128 hexadecimal characters and should not include any '0x' hex prefix.");
   }
 
   @Test
