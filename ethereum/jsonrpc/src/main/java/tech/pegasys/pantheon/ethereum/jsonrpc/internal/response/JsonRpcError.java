@@ -91,6 +91,8 @@ public enum JsonRpcError {
 
   // Private transaction errors
   ENCLAVE_ERROR(-50100, "Error communicating with enclave"),
+  PRIVATE_NONCE_TOO_LOW(-50100, "Private transaction nonce too low"),
+  INCORRECT_PRIVATE_NONCE(-50100, "Private transaction nonce is incorrect"),
   UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE(-50100, "Unimplemented private transaction type"),
   PRIVATE_TRANSACTION_RECEIPT_ERROR(-50100, "Error generating the private transaction receipt"),
   VALUE_NOT_ZERO(-50100, "We cannot transfer ether in private transaction yet."),

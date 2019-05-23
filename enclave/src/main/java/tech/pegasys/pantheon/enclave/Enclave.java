@@ -76,8 +76,8 @@ public class Enclave {
     try (Response response = client.newCall(request).execute()) {
       return objectMapper.readValue(response.body().string(), responseType);
     } catch (IOException e) {
-      LOG.error("Enclave failed to execute ", request);
-      throw new IOException("Enclave failed to execute post", e);
+      LOG.error("Enclave failed to execute {}", request, e);
+      throw new IOException("Enclave failed to execute post");
     }
   }
 }

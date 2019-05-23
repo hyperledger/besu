@@ -138,11 +138,17 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
             privacyGroupId);
 
     if (result.isInvalid() || !result.isSuccessful()) {
-      LOG.error("Unable to process the private transaction: {}", result.getValidationResult());
+      LOG.error(
+          "Failed to process the private transaction: {}",
+          result.getValidationResult().getErrorMessage());
       return BytesValue.EMPTY;
     }
 
     if (messageFrame.isPersistingState()) {
+      LOG.trace(
+          "Persisting private state {} for privacyGroup {}",
+          disposablePrivateState.rootHash(),
+          privacyGroupId);
       privateWorldStateUpdater.commit();
       disposablePrivateState.persist();
 
