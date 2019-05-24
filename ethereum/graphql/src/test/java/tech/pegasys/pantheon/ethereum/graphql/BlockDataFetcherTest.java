@@ -12,11 +12,15 @@
  */
 package tech.pegasys.pantheon.ethereum.graphql;
 
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.graphql.internal.BlockWithMetadata;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+
+import java.util.Optional;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,6 +47,8 @@ public class BlockDataFetcherTest extends AbstractDataFetcherTest {
 
     when(environment.getContext()).thenReturn(context);
     when(context.getBlockchainQuery()).thenReturn(query);
+    when(query.blockByNumber(anyLong()))
+        .thenReturn(Optional.of(new BlockWithMetadata<>(null, null, null, null, 0)));
 
     fetcher.get(environment);
   }

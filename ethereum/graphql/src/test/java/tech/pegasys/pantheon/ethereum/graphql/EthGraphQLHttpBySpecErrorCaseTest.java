@@ -42,10 +42,6 @@ public class EthGraphQLHttpBySpecErrorCaseTest extends AbstractEthGraphQLHttpSer
   @Parameters(name = "{index}: {0}")
   public static Collection<String> specs() {
     final List<String> specs = new ArrayList<>();
-    specs.add("eth_getBlockWrongParams");
-    specs.add("eth_getBlocksByWrongRange");
-    specs.add("eth_getBalance_toobig_bn");
-    specs.add("eth_getBalance_without_addr");
 
     return specs;
   }

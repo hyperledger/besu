@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.graphql.internal.response;
 
+import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonGetter;
 
@@ -21,7 +23,19 @@ public enum GraphQLError {
   INVALID_PARAMS(-32602, "Invalid params"),
   INTERNAL_ERROR(-32603, "Internal error"),
 
-  CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE(-32008, "Initial sync is still in progress");
+  // Transaction validation failures
+  NONCE_TOO_LOW(-32001, "Nonce too low"),
+  INVALID_TRANSACTION_SIGNATURE(-32002, "Invalid signature"),
+  INTRINSIC_GAS_EXCEEDS_LIMIT(-32003, "Intrinsic gas exceeds gas limit"),
+  TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE(-32004, "Upfront cost exceeds account balance"),
+  EXCEEDS_BLOCK_GAS_LIMIT(-32005, "Transaction gas limit exceeds block gas limit"),
+  INCORRECT_NONCE(-32006, "Incorrect nonce"),
+  TX_SENDER_NOT_AUTHORIZED(-32007, "Sender account not authorized to send transactions"),
+  CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE(-32008, "Initial sync is still in progress"),
+  WRONG_CHAIN_ID(-32000, "Wrong Chain ID in transaction signature"),
+  REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED(
+      -32000, "Signatures with replay protection are not supported"),
+  PRIVATE_TRANSACTION_FAILED(-32000, "Private transaction failed");
 
   private final int code;
   private final String message;
@@ -39,5 +53,34 @@ public enum GraphQLError {
   @JsonGetter("message")
   public String getMessage() {
     return message;
+  }
+
+  public static GraphQLError of(final TransactionInvalidReason transactionInvalidReason) {
+    switch (transactionInvalidReason) {
+      case WRONG_CHAIN_ID:
+        return WRONG_CHAIN_ID;
+      case REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED:
+        return REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED;
+      case INVALID_SIGNATURE:
+        return INVALID_TRANSACTION_SIGNATURE;
+      case UPFRONT_COST_EXCEEDS_BALANCE:
+        return TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
+      case NONCE_TOO_LOW:
+        return NONCE_TOO_LOW;
+      case INCORRECT_NONCE:
+        return INCORRECT_NONCE;
+      case INTRINSIC_GAS_EXCEEDS_GAS_LIMIT:
+        return INTRINSIC_GAS_EXCEEDS_LIMIT;
+      case EXCEEDS_BLOCK_GAS_LIMIT:
+        return EXCEEDS_BLOCK_GAS_LIMIT;
+      case TX_SENDER_NOT_AUTHORIZED:
+        return TX_SENDER_NOT_AUTHORIZED;
+      case CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE:
+        return CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
+      case PRIVATE_TRANSACTION_FAILED:
+        return PRIVATE_TRANSACTION_FAILED;
+      default:
+        return INTERNAL_ERROR;
+    }
   }
 }

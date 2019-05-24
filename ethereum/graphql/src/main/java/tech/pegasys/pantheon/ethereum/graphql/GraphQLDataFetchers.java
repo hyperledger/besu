@@ -78,11 +78,12 @@ public class GraphQLDataFetchers {
             transactionPool.addLocalTransaction(transaction);
         if (validationResult.isValid()) {
           return Optional.of(transaction.hash());
+        } else {
+          throw new GraphQLException(GraphQLError.of(validationResult.getInvalidReason()));
         }
       } catch (final IllegalArgumentException | RLPException e) {
         throw new GraphQLException(GraphQLError.INVALID_PARAMS);
       }
-      throw new GraphQLException(GraphQLError.INVALID_PARAMS);
     };
   }
 
@@ -153,8 +154,10 @@ public class GraphQLDataFetchers {
       final Optional<BlockWithMetadata<TransactionWithMetadata, Hash>> block;
       if (number != null) {
         block = blockchain.blockByNumber(number);
+        checkArgument(block.isPresent(), "Block number %s was not found", number);
       } else if (hash != null) {
         block = blockchain.blockByHash(Hash.wrap(hash));
+        checkArgument(block.isPresent(), "Block hash %s was not found", hash);
       } else {
         block = blockchain.latestBlock();
       }
