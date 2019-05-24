@@ -36,14 +36,14 @@ To run this tutorial, you must have the following installed:
 
 ## Clone Pantheon Quickstart Source Code
 
-Clone the repository from the `pantheon-quickstart` repository where `<version>` is replaced with the latest version (for example, `1.1.0`). 
+Clone the repository from the `pantheon-quickstart` repository where `<version>` is replaced with the latest version (`{{ versions.quickstart }}`). 
 
 ```bash tab="Command"
 git clone --branch <version> https://github.com/PegaSysEng/pantheon-quickstart.git
 ```
 
 ```bash tab="Example"
-git clone --branch 1.1.0 https://github.com/PegaSysEng/pantheon-quickstart.git
+git clone --branch {{ versions.quickstart }} https://github.com/PegaSysEng/pantheon-quickstart.git
 ```
 
 ## Clone EEAJS Libraries 
