@@ -105,7 +105,7 @@ allprojects {
     java {
       // This path needs to be relative to each project
       target fileTree('.') {
-        include '**/*.java'
+        include '**/src/*/java/**/*.java'
         exclude '**/generalstate/GeneralStateReferenceTest*.java'
         exclude '**/generalstate/GeneralStateRegressionReferenceTest*.java'
         exclude '**/blockchain/BlockchainReferenceTest*.java'
@@ -128,7 +128,7 @@ allprojects {
 
     // Below this line are currently only license header tasks
     format 'groovy', {
-      target '**/*.groovy'
+      target '**/src/*/grovy/**/*.groovy'
       licenseHeaderFile "${rootDir}/gradle/spotless.java.license", 'import'
     }
 
