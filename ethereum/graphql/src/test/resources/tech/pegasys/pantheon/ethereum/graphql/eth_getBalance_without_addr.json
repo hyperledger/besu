@@ -1,5 +1,18 @@
 {
-  "request": "{account(address: \"0x8895ee1b4f6dd65047762f924ecd367c17eabf8f\") { balance } }",
+  "request": "{account { balance } }",
+  "response": {
+    "errors": [
+      {
+        "message": "Validation error of type MissingFieldArgument: Missing field argument address @ 'account'",
+        "locations": [
+          {
+            "line": 1,
+            "column": 2
+          }
+        ]
+      }
+    ]
+  },
   "statusCode": 400
 }
 

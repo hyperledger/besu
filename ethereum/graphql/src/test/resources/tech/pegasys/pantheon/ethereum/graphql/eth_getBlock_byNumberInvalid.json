@@ -1,0 +1,21 @@
+{
+  "request": "{block (number: 88888888) {number }} ",
+  "response": {
+    "data": null,
+    "errors": [
+      {
+        "message": "Exception while fetching data (/block) : Block number 88888888 was not found",
+        "locations": [
+          {
+            "line": 1,
+            "column": 2
+          }
+        ],
+        "path": [
+          "block"
+        ]
+      }
+    ]
+  },
+  "statusCode": 400
+}
