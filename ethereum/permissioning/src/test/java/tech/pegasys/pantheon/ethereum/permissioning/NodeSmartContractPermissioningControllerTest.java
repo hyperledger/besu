@@ -15,6 +15,9 @@ package tech.pegasys.pantheon.ethereum.permissioning;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
@@ -26,14 +29,25 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.IOException;
 
 import com.google.common.io.Resources;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class NodeSmartContractPermissioningControllerTest {
+  @Mock private MetricsSystem metricsSystem;
+  @Mock private Counter checkCounter;
+  @Mock private Counter checkPermittedCounter;
+  @Mock private Counter checkUnpermittedCounter;
 
   private NodeSmartContractPermissioningController setupController(
       final String resourceName, final String contractAddressString) throws IOException {
@@ -53,7 +67,49 @@ public class NodeSmartContractPermissioningControllerTest {
         new TransactionSimulator(blockchain, worldArchive, protocolSchedule);
     final Address contractAddress = Address.fromHexString(contractAddressString);
 
-    return new NodeSmartContractPermissioningController(contractAddress, ts);
+    when(metricsSystem.createCounter(
+            MetricCategory.PERMISSIONING,
+            "node_smart_contract_check_count",
+            "Number of times the node smart contract permissioning provider has been checked"))
+        .thenReturn(checkCounter);
+
+    when(metricsSystem.createCounter(
+            MetricCategory.PERMISSIONING,
+            "node_smart_contract_check_count_permitted",
+            "Number of times the node smart contract permissioning provider has been checked and returned permitted"))
+        .thenReturn(checkPermittedCounter);
+
+    when(metricsSystem.createCounter(
+            MetricCategory.PERMISSIONING,
+            "node_smart_contract_check_count_unpermitted",
+            "Number of times the node smart contract permissioning provider has been checked and returned unpermitted"))
+        .thenReturn(checkUnpermittedCounter);
+
+    return new NodeSmartContractPermissioningController(contractAddress, ts, metricsSystem);
+  }
+
+  private void verifyCountersUntouched() {
+    verify(checkCounter, times(0)).inc();
+    verify(checkPermittedCounter, times(0)).inc();
+    verify(checkUnpermittedCounter, times(0)).inc();
+  }
+
+  private void verifyCountersPermitted() {
+    verify(checkCounter, times(1)).inc();
+    verify(checkPermittedCounter, times(1)).inc();
+    verify(checkUnpermittedCounter, times(0)).inc();
+  }
+
+  private void verifyCountersUnpermitted() {
+    verify(checkCounter, times(1)).inc();
+    verify(checkPermittedCounter, times(0)).inc();
+    verify(checkUnpermittedCounter, times(1)).inc();
+  }
+
+  private void verifyCountersFailedCheck() {
+    verify(checkCounter, times(1)).inc();
+    verify(checkPermittedCounter, times(0)).inc();
+    verify(checkUnpermittedCounter, times(0)).inc();
   }
 
   @Test
@@ -63,6 +119,8 @@ public class NodeSmartContractPermissioningControllerTest {
             "/NodeSmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
+    verifyCountersUntouched();
+
     assertThat(
             controller.isPermitted(
                 EnodeURL.fromString(
@@ -70,6 +128,8 @@ public class NodeSmartContractPermissioningControllerTest {
                 EnodeURL.fromString(
                     "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:30304")))
         .isTrue();
+
+    verifyCountersPermitted();
   }
 
   @Test
@@ -79,6 +139,8 @@ public class NodeSmartContractPermissioningControllerTest {
             "/NodeSmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
+    verifyCountersUntouched();
+
     assertThat(
             controller.isPermitted(
                 EnodeURL.fromString(
@@ -86,6 +148,8 @@ public class NodeSmartContractPermissioningControllerTest {
                 EnodeURL.fromString(
                     "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:30305")))
         .isFalse();
+
+    verifyCountersUnpermitted();
   }
 
   @Test
@@ -95,6 +159,8 @@ public class NodeSmartContractPermissioningControllerTest {
             "/NodeSmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
+    verifyCountersUntouched();
+
     assertThat(
             controller.isPermitted(
                 EnodeURL.fromString(
@@ -102,6 +168,8 @@ public class NodeSmartContractPermissioningControllerTest {
                 EnodeURL.fromString(
                     "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:30304")))
         .isFalse();
+
+    verifyCountersUnpermitted();
   }
 
   @Test
@@ -111,6 +179,8 @@ public class NodeSmartContractPermissioningControllerTest {
             "/NodeSmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
+    verifyCountersUntouched();
+
     assertThat(
             controller.isPermitted(
                 EnodeURL.fromString(
@@ -118,6 +188,8 @@ public class NodeSmartContractPermissioningControllerTest {
                 EnodeURL.fromString(
                     "enode://1234000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ab62@[1:2:3:4:5:6:7:8]:30304")))
         .isTrue();
+
+    verifyCountersPermitted();
   }
 
   @Test
@@ -127,6 +199,8 @@ public class NodeSmartContractPermissioningControllerTest {
             "/NodeSmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
+    verifyCountersUntouched();
+
     assertThat(
             controller.isPermitted(
                 EnodeURL.fromString(
@@ -134,6 +208,8 @@ public class NodeSmartContractPermissioningControllerTest {
                 EnodeURL.fromString(
                     "enode://1234000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ab62@[1:2:3:4:5:6:7:8]:30304")))
         .isFalse();
+
+    verifyCountersUnpermitted();
   }
 
   @Test
@@ -143,6 +219,8 @@ public class NodeSmartContractPermissioningControllerTest {
             "/NodeSmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
+    verifyCountersUntouched();
+
     assertThat(
             controller.isPermitted(
                 EnodeURL.fromString(
@@ -150,6 +228,8 @@ public class NodeSmartContractPermissioningControllerTest {
                 EnodeURL.fromString(
                     "enode://1234000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ab63@[1:2:3:4:5:6:7:8]:30304")))
         .isFalse();
+
+    verifyCountersUnpermitted();
   }
 
   @Test
@@ -158,6 +238,8 @@ public class NodeSmartContractPermissioningControllerTest {
         setupController(
             "/NodeSmartContractPermissioningControllerTest/noSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
+
+    verifyCountersUntouched();
 
     assertThatThrownBy(
             () ->
@@ -168,6 +250,8 @@ public class NodeSmartContractPermissioningControllerTest {
                         "enode://1234000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ab63@[1:2:3:4:5:6:7:8]:30304")))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("Permissioning contract does not exist");
+
+    verifyCountersFailedCheck();
   }
 
   @Test
@@ -176,6 +260,8 @@ public class NodeSmartContractPermissioningControllerTest {
         setupController(
             "/NodeSmartContractPermissioningControllerTest/corruptSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
+
+    verifyCountersUntouched();
 
     assertThatThrownBy(
             () ->
@@ -186,5 +272,7 @@ public class NodeSmartContractPermissioningControllerTest {
                         "enode://1234000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ab63@[1:2:3:4:5:6:7:8]:30304")))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("Permissioning transaction failed when processing");
+
+    verifyCountersFailedCheck();
   }
 }
