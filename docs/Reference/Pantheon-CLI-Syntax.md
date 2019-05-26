@@ -143,6 +143,80 @@ The path to the genesis file.
 !!!note
     This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#custom-genesis-file). 
 
+
+### graphql-http-cors-origins
+
+```bash tab="Syntax"
+--graphql-http-cors-origins=<graphQLHttpCorsAllowedOrigins>
+```
+
+```bash tab="Example Command Line"
+--graphql-http-cors-origins="http://medomain.com","https://meotherdomain.com"
+```
+
+```bash tab="Example Configuration File"
+graphql-http-cors-origins=["http://medomain.com","https://meotherdomain.com"]
+```
+
+Comma separated origin domain URLs for CORS validation. The default is none. 
+
+### graphql-http-enabled
+
+```bash tab="Syntax"
+--graphql-http-enabled
+```
+
+```bash tab="Example Configuration File"
+graphql-http-enabled=true
+```
+
+Set to `true` to enable the GraphQL HTTP service.
+The default is `false`.
+
+### graphql-http-host
+
+```bash tab="Syntax"
+--graphql-http-host=<HOST>
+```
+
+```bash tab="Example Command Line"
+# to listen on all interfaces
+--graphql-http-host=0.0.0.0
+```
+
+```bash tab="Example Configuration File"
+graphql-http-host="0.0.0.0"
+```
+
+Host for GraphQL HTTP to listen on.
+The default is 127.0.0.1.
+
+To allow remote connections, set to `0.0.0.0`
+
+!!!note
+    This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
+    
+### graphql-http-port
+
+```bash tab="Syntax"
+--graphql-http-port=<PORT>
+```
+
+```bash tab="Example Command Line"
+# to listen on port 6175
+--graphql-http-port=6175
+```
+
+```bash tab="Example Configuration File"
+graphql-http-port="6175"
+```
+
+Specifies GraphQL HTTP listening port (TCP).
+The default is 8547. Ports must be [exposed appropriately](../Configuring-Pantheon/Networking/Configuring-Ports.md).
+
+!!!note
+    This option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports). 
+
 ### host-whitelist
 
 ```bash tab="Syntax"

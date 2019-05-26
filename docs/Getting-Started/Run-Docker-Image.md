@@ -214,11 +214,11 @@ Where `myauthconfig.toml` is the credentials file and `path` is the absolute pat
 
 ## Exposing Ports
 
-Expose ports for P2P peer discovery, metrics, and HTTP and WebSockets JSON-RPC. This is required to use the 
+Expose ports for P2P peer discovery, GraphQL, metrics, and HTTP and WebSockets JSON-RPC. This is required to use the 
 defaults ports or specify different ports (the equivalent of specifying the [`--rpc-http-port`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-port), 
 [`--p2p-port`](../Reference/Pantheon-CLI-Syntax.md#p2p-port), [`--rpc-ws-port`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-port), 
-[`--metrics-port`](../Reference/Pantheon-CLI-Syntax.md#metrics-port), and [`--metrics-push-port`](../Reference/Pantheon-CLI-Syntax.md#metrics-push-port) 
-options).
+[`--metrics-port`](../Reference/Pantheon-CLI-Syntax.md#metrics-port), [`--graphql-http-port`](../Reference/Pantheon-CLI-Syntax.md#graphql-http-port), 
+and [`--metrics-push-port`](../Reference/Pantheon-CLI-Syntax.md#metrics-push-port) options).
 
 To run Pantheon exposing local ports for access: 
 ```bash
