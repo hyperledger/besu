@@ -15,6 +15,9 @@ package tech.pegasys.pantheon.ethereum.permissioning;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
@@ -28,14 +31,26 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
 
 import com.google.common.io.Resources;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class TransactionSmartContractPermissioningControllerTest {
+  @Mock private MetricsSystem metricsSystem;
+  @Mock private Counter checkCounter;
+  @Mock private Counter checkPermittedCounter;
+  @Mock private Counter checkUnpermittedCounter;
+
   private TransactionSmartContractPermissioningController setupController(
       final String resourceName, final String contractAddressString) throws IOException {
     final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
@@ -54,7 +69,25 @@ public class TransactionSmartContractPermissioningControllerTest {
         new TransactionSimulator(blockchain, worldArchive, protocolSchedule);
     final Address contractAddress = Address.fromHexString(contractAddressString);
 
-    return new TransactionSmartContractPermissioningController(contractAddress, ts);
+    when(metricsSystem.createCounter(
+            MetricCategory.PERMISSIONING,
+            "transaction_smart_contract_check_count",
+            "Number of times the transaction smart contract permissioning provider has been checked"))
+        .thenReturn(checkCounter);
+
+    when(metricsSystem.createCounter(
+            MetricCategory.PERMISSIONING,
+            "transaction_smart_contract_check_count_permitted",
+            "Number of times the transaction smart contract permissioning provider has been checked and returned permitted"))
+        .thenReturn(checkPermittedCounter);
+
+    when(metricsSystem.createCounter(
+            MetricCategory.PERMISSIONING,
+            "transaction_smart_contract_check_count_unpermitted",
+            "Number of times the transaction smart contract permissioning provider has been checked and returned unpermitted"))
+        .thenReturn(checkUnpermittedCounter);
+
+    return new TransactionSmartContractPermissioningController(contractAddress, ts, metricsSystem);
   }
 
   private Transaction transactionForAccount(final Address address) {
@@ -67,6 +100,30 @@ public class TransactionSmartContractPermissioningControllerTest {
         .build();
   }
 
+  private void verifyCountersUntouched() {
+    verify(checkCounter, times(0)).inc();
+    verify(checkPermittedCounter, times(0)).inc();
+    verify(checkUnpermittedCounter, times(0)).inc();
+  }
+
+  private void verifyCountersPermitted() {
+    verify(checkCounter, times(1)).inc();
+    verify(checkPermittedCounter, times(1)).inc();
+    verify(checkUnpermittedCounter, times(0)).inc();
+  }
+
+  private void verifyCountersUnpermitted() {
+    verify(checkCounter, times(1)).inc();
+    verify(checkPermittedCounter, times(0)).inc();
+    verify(checkUnpermittedCounter, times(1)).inc();
+  }
+
+  private void verifyCountersFailedCheck() {
+    verify(checkCounter, times(1)).inc();
+    verify(checkPermittedCounter, times(0)).inc();
+    verify(checkUnpermittedCounter, times(0)).inc();
+  }
+
   @Test
   public void testAccountIncluded() throws IOException {
     final TransactionSmartContractPermissioningController controller =
@@ -74,8 +131,12 @@ public class TransactionSmartContractPermissioningControllerTest {
             "/TransactionSmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
+    verifyCountersUntouched();
+
     assertThat(controller.isPermitted(transactionForAccount(Address.fromHexString("0x1"))))
         .isTrue();
+
+    verifyCountersPermitted();
   }
 
   @Test
@@ -85,8 +146,12 @@ public class TransactionSmartContractPermissioningControllerTest {
             "/TransactionSmartContractPermissioningControllerTest/preseededSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
+    verifyCountersUntouched();
+
     assertThat(controller.isPermitted(transactionForAccount(Address.fromHexString("0x2"))))
         .isFalse();
+
+    verifyCountersUnpermitted();
   }
 
   @Test
@@ -96,10 +161,14 @@ public class TransactionSmartContractPermissioningControllerTest {
             "/TransactionSmartContractPermissioningControllerTest/noSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
+    verifyCountersUntouched();
+
     assertThatThrownBy(
             () -> controller.isPermitted(transactionForAccount(Address.fromHexString("0x1"))))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("Transaction permissioning contract does not exist");
+
+    verifyCountersFailedCheck();
   }
 
   @Test
@@ -109,9 +178,13 @@ public class TransactionSmartContractPermissioningControllerTest {
             "/TransactionSmartContractPermissioningControllerTest/corruptSmartPermissioning.json",
             "0x0000000000000000000000000000000000001234");
 
+    verifyCountersUntouched();
+
     assertThatThrownBy(
             () -> controller.isPermitted(transactionForAccount(Address.fromHexString("0x1"))))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("Transaction permissioning transaction failed when processing");
+
+    verifyCountersFailedCheck();
   }
 }

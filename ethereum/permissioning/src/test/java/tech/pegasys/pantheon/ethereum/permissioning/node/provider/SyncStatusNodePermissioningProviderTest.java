@@ -14,16 +14,22 @@ package tech.pegasys.pantheon.ethereum.permissioning.node.provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.core.SyncStatus;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer.SyncStatusListener;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.function.Supplier;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +40,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SyncStatusNodePermissioningProviderTest {
+  @Mock private MetricsSystem metricsSystem;
+  @Mock private Counter checkCounter;
+  @Mock private Counter checkPermittedCounter;
+  @Mock private Counter checkUnpermittedCounter;
+  private Supplier<Integer> syncGauge;
 
   private static final EnodeURL bootnode =
       EnodeURL.fromString(
@@ -58,8 +69,34 @@ public class SyncStatusNodePermissioningProviderTest {
     when(synchronizer.observeSyncStatus(captor.capture())).thenReturn(syncStatusObserverId);
     bootnodes.add(bootnode);
 
-    this.provider = new SyncStatusNodePermissioningProvider(synchronizer, bootnodes);
+    @SuppressWarnings("unchecked")
+    final ArgumentCaptor<Supplier<Integer>> syncGaugeCallbackCaptor =
+        ArgumentCaptor.forClass(Supplier.class);
+
+    when(metricsSystem.createCounter(
+            MetricCategory.PERMISSIONING,
+            "sync_status_node_check_count",
+            "Number of times the sync status permissioning provider has been checked"))
+        .thenReturn(checkCounter);
+    when(metricsSystem.createCounter(
+            MetricCategory.PERMISSIONING,
+            "sync_status_node_check_count_permitted",
+            "Number of times the sync status permissioning provider has been checked and returned permitted"))
+        .thenReturn(checkPermittedCounter);
+    when(metricsSystem.createCounter(
+            MetricCategory.PERMISSIONING,
+            "sync_status_node_check_count_unpermitted",
+            "Number of times the sync status permissioning provider has been checked and returned unpermitted"))
+        .thenReturn(checkUnpermittedCounter);
+    this.provider = new SyncStatusNodePermissioningProvider(synchronizer, bootnodes, metricsSystem);
     this.syncStatusListener = captor.getValue();
+    verify(metricsSystem)
+        .createIntegerGauge(
+            eq(MetricCategory.PERMISSIONING),
+            eq("sync_status_node_sync_reached"),
+            eq("Whether the sync status permissioning provider has realised sync yet"),
+            syncGaugeCallbackCaptor.capture());
+    this.syncGauge = syncGaugeCallbackCaptor.getValue();
 
     verify(synchronizer).observeSyncStatus(any());
   }
@@ -69,6 +106,7 @@ public class SyncStatusNodePermissioningProviderTest {
     syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
 
     assertThat(provider.hasReachedSync()).isFalse();
+    assertThat(syncGauge.get()).isEqualTo(0);
   }
 
   @Test
@@ -76,57 +114,77 @@ public class SyncStatusNodePermissioningProviderTest {
     syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 1));
 
     assertThat(provider.hasReachedSync()).isTrue();
+    assertThat(syncGauge.get()).isEqualTo(1);
   }
 
   @Test
   public void whenInSyncChangesFromTrueToFalseHasReachedSyncShouldReturnTrue() {
     syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
     assertThat(provider.hasReachedSync()).isFalse();
+    assertThat(syncGauge.get()).isEqualTo(0);
 
     syncStatusListener.onSyncStatus(new SyncStatus(0, 2, 1));
     assertThat(provider.hasReachedSync()).isTrue();
+    assertThat(syncGauge.get()).isEqualTo(1);
 
     syncStatusListener.onSyncStatus(new SyncStatus(0, 2, 3));
     assertThat(provider.hasReachedSync()).isTrue();
+    assertThat(syncGauge.get()).isEqualTo(1);
   }
 
   @Test
   public void whenHasNotSyncedNonBootnodeShouldNotBePermitted() {
     syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
     assertThat(provider.hasReachedSync()).isFalse();
+    assertThat(syncGauge.get()).isEqualTo(0);
 
     boolean isPermitted = provider.isPermitted(enode1, enode2);
 
     assertThat(isPermitted).isFalse();
+    verify(checkCounter, times(1)).inc();
+    verify(checkPermittedCounter, times(0)).inc();
+    verify(checkUnpermittedCounter, times(1)).inc();
   }
 
   @Test
   public void whenHasNotSyncedBootnodeIncomingConnectionShouldNotBePermitted() {
     syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
     assertThat(provider.hasReachedSync()).isFalse();
+    assertThat(syncGauge.get()).isEqualTo(0);
 
     boolean isPermitted = provider.isPermitted(bootnode, enode1);
 
     assertThat(isPermitted).isFalse();
+    verify(checkCounter, times(1)).inc();
+    verify(checkPermittedCounter, times(0)).inc();
+    verify(checkUnpermittedCounter, times(1)).inc();
   }
 
   @Test
   public void whenHasNotSyncedBootnodeOutgoingConnectionShouldBePermitted() {
     syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
     assertThat(provider.hasReachedSync()).isFalse();
+    assertThat(syncGauge.get()).isEqualTo(0);
 
     boolean isPermitted = provider.isPermitted(enode1, bootnode);
 
     assertThat(isPermitted).isTrue();
+    verify(checkCounter, times(1)).inc();
+    verify(checkPermittedCounter, times(1)).inc();
+    verify(checkUnpermittedCounter, times(0)).inc();
   }
 
   @Test
   public void whenHasSyncedIsPermittedShouldReturnTrue() {
     syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 1));
     assertThat(provider.hasReachedSync()).isTrue();
+    assertThat(syncGauge.get()).isEqualTo(1);
 
     boolean isPermitted = provider.isPermitted(enode1, enode2);
 
     assertThat(isPermitted).isTrue();
+    verify(checkCounter, times(0)).inc();
+    verify(checkPermittedCounter, times(0)).inc();
+    verify(checkUnpermittedCounter, times(0)).inc();
   }
 }

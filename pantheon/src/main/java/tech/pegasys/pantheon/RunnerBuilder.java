@@ -427,7 +427,13 @@ public class RunnerBuilder {
     return permissioningConfiguration.map(
         config ->
             new NodePermissioningControllerFactory()
-                .create(config, synchronizer, fixedNodes, localNodeId, transactionSimulator));
+                .create(
+                    config,
+                    synchronizer,
+                    fixedNodes,
+                    localNodeId,
+                    transactionSimulator,
+                    metricsSystem));
   }
 
   @VisibleForTesting

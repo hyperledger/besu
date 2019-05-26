@@ -23,6 +23,7 @@ public enum MetricCategory {
   NETWORK("network"),
   PEERS("peers"),
   PROCESS("process", false),
+  PERMISSIONING("permissioning"),
   KVSTORE_ROCKSDB("rocksdb"),
   KVSTORE_ROCKSDB_STATS("rocksdb", false),
   RPC("rpc"),

@@ -29,6 +29,7 @@ dependencies {
   implementation project(':util')
   implementation project(':ethereum:core')
   implementation project(':crypto')
+  implementation project(':metrics:core')
 
   implementation 'com.google.guava:guava'
   implementation 'net.consensys.cava:cava-toml'
