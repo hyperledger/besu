@@ -7,6 +7,7 @@ GraphQL can reduce the overhead needed for common queries. For example, instead 
 block, GraphQL can obtain the same result with a single query for the entire block. 
 
 The GraphQL implementation for Ethereum is described in the [schema](https://github.com/PegaSysEng/pantheon/blob/master/ethereum/graphqlrpc/src/main/resources/schema.graphqls). 
+The GraphQL service is enabled using the [command line options](../Pantheon-API#enabling-api-access).
 
 !!! note
     GraphQL is not supported over WebSockets. 
