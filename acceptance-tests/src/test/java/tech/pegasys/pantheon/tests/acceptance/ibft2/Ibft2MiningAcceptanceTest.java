@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.ibft;
+package tech.pegasys.pantheon.tests.acceptance.ibft2;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
@@ -21,11 +21,11 @@ import java.util.List;
 
 import org.junit.Test;
 
-public class IbftMiningAcceptanceTest extends AcceptanceTestBase {
+public class Ibft2MiningAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldMineOnSingleNode() throws IOException {
-    final PantheonNode minerNode = pantheon.createIbftNode("miner1");
+    final PantheonNode minerNode = pantheon.createIbft2Node("miner1");
     cluster.start(minerNode);
 
     cluster.waitUntil(wait.chainHeadHasProgressedByAtLeast(minerNode, 1));
@@ -45,10 +45,10 @@ public class IbftMiningAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldMineOnMultipleNodes() throws IOException {
-    final PantheonNode minerNode1 = pantheon.createIbftNode("miner1");
-    final PantheonNode minerNode2 = pantheon.createIbftNode("miner2");
-    final PantheonNode minerNode3 = pantheon.createIbftNode("miner3");
-    final PantheonNode minerNode4 = pantheon.createIbftNode("miner4");
+    final PantheonNode minerNode1 = pantheon.createIbft2Node("miner1");
+    final PantheonNode minerNode2 = pantheon.createIbft2Node("miner2");
+    final PantheonNode minerNode3 = pantheon.createIbft2Node("miner3");
+    final PantheonNode minerNode4 = pantheon.createIbft2Node("miner4");
     cluster.start(minerNode1, minerNode2, minerNode3, minerNode4);
 
     cluster.waitUntil(wait.chainHeadHasProgressedByAtLeast(minerNode1, 1, 85));
@@ -72,11 +72,14 @@ public class IbftMiningAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void shouldMineOnMultipleNodesEvenWhenClusterContainsNonValidator() throws IOException {
     final String[] validators = {"validator1", "validator2", "validator3"};
-    final PantheonNode validator1 = pantheon.createIbftNodeWithValidators("validator1", validators);
-    final PantheonNode validator2 = pantheon.createIbftNodeWithValidators("validator2", validators);
-    final PantheonNode validator3 = pantheon.createIbftNodeWithValidators("validator3", validators);
+    final PantheonNode validator1 =
+        pantheon.createIbft2NodeWithValidators("validator1", validators);
+    final PantheonNode validator2 =
+        pantheon.createIbft2NodeWithValidators("validator2", validators);
+    final PantheonNode validator3 =
+        pantheon.createIbft2NodeWithValidators("validator3", validators);
     final PantheonNode nonValidatorNode =
-        pantheon.createIbftNodeWithValidators("non-validator", validators);
+        pantheon.createIbft2NodeWithValidators("non-validator", validators);
     cluster.start(validator1, validator2, validator3, nonValidatorNode);
 
     cluster.waitUntil(wait.chainHeadHasProgressedByAtLeast(validator1, 1, 85));
@@ -97,12 +100,12 @@ public class IbftMiningAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void shouldStillMineWhenANonProposerNodeFailsAndHasSufficientValidators()
       throws IOException {
-    final PantheonNode minerNode1 = pantheon.createIbftNode("miner1");
-    final PantheonNode minerNode2 = pantheon.createIbftNode("miner2");
-    final PantheonNode minerNode3 = pantheon.createIbftNode("miner3");
-    final PantheonNode minerNode4 = pantheon.createIbftNode("miner4");
+    final PantheonNode minerNode1 = pantheon.createIbft2Node("miner1");
+    final PantheonNode minerNode2 = pantheon.createIbft2Node("miner2");
+    final PantheonNode minerNode3 = pantheon.createIbft2Node("miner3");
+    final PantheonNode minerNode4 = pantheon.createIbft2Node("miner4");
     final List<PantheonNode> validators =
-        ibft.validators(new PantheonNode[] {minerNode1, minerNode2, minerNode3, minerNode4});
+        ibftTwo.validators(new PantheonNode[] {minerNode1, minerNode2, minerNode3, minerNode4});
     final PantheonNode nonProposerNode = validators.get(validators.size() - 1);
     cluster.start(validators);
 

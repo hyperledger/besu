@@ -21,7 +21,7 @@ public class JsonRequestFactories {
 
   private final JsonRpc2_0Web3j netEth;
   private final CliqueJsonRpcRequestFactory clique;
-  private final IbftJsonRpcRequestFactory ibft;
+  private final Ibft2JsonRpcRequestFactory ibft;
   private final PermissioningJsonRpcRequestFactory perm;
   private final AdminJsonRpcRequestFactory admin;
   private final EeaJsonRpcRequestFactory eea;
@@ -31,7 +31,7 @@ public class JsonRequestFactories {
   public JsonRequestFactories(
       final JsonRpc2_0Web3j netEth,
       final CliqueJsonRpcRequestFactory clique,
-      final IbftJsonRpcRequestFactory ibft,
+      final Ibft2JsonRpcRequestFactory ibft,
       final PermissioningJsonRpcRequestFactory perm,
       final AdminJsonRpcRequestFactory admin,
       final EeaJsonRpcRequestFactory eea,
@@ -59,7 +59,7 @@ public class JsonRequestFactories {
     return clique;
   }
 
-  public IbftJsonRpcRequestFactory ibft() {
+  public Ibft2JsonRpcRequestFactory ibft() {
     return ibft;
   }
 

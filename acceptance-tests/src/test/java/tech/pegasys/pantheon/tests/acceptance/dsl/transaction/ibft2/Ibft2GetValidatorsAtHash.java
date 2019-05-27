@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft;
+package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,17 +23,17 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 import java.io.IOException;
 import java.util.List;
 
-public class IbftGetValidatorsAtHash implements Transaction<List<Address>> {
+public class Ibft2GetValidatorsAtHash implements Transaction<List<Address>> {
   private final Hash hash;
 
-  public IbftGetValidatorsAtHash(final Hash hash) {
+  public Ibft2GetValidatorsAtHash(final Hash hash) {
     this.hash = hash;
   }
 
   @Override
   public List<Address> execute(final JsonRequestFactories node) {
     try {
-      final SignersBlockResponse result = node.ibft().ibftGetSignersAtHash(hash).send();
+      final SignersBlockResponse result = node.ibft().signersAtHash(hash).send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
       return result.getResult();

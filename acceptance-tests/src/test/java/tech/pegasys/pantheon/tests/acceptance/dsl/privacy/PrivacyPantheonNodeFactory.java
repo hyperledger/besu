@@ -83,7 +83,7 @@ public class PrivacyPantheonNodeFactory extends PantheonNodeFactoryUtils {
             .build());
   }
 
-  public PrivacyNode createIbftNodePrivacyEnabled(
+  public PrivacyNode createIbft2NodePrivacyEnabled(
       final String name,
       final PrivacyParameters privacyParameters,
       final String keyFilePath,
@@ -95,10 +95,10 @@ public class PrivacyPantheonNodeFactory extends PantheonNodeFactoryUtils {
                 new PantheonFactoryConfigurationBuilder()
                     .name(name)
                     .miningEnabled()
-                    .jsonRpcConfiguration(createJsonRpcConfigWithIbft())
+                    .jsonRpcConfiguration(createJsonRpcWithIbft2EnabledConfig())
                     .webSocketConfiguration(createWebSocketEnabledConfig())
                     .devMode(false)
-                    .genesisConfigProvider(this::createIbftGenesisConfig)
+                    .genesisConfigProvider(this::createIbft2GenesisConfig)
                     .keyFilePath(keyFilePath)
                     .enablePrivateTransactions(privacyParameters)
                     .build())
