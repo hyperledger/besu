@@ -26,7 +26,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class IbftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
+public class Ibft2PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   private static final String CONTRACT_NAME = "Event Emmiter";
 
   private EventEmitterHarness eventEmitterHarness;

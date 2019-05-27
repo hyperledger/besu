@@ -25,7 +25,7 @@ public class PrivacyAcceptanceTestBase extends AcceptanceTestBase {
 
   protected final Eea eea;
   protected final PrivateTransactions privateTransactions;
-  protected static PrivateTransactionBuilder.Builder privateTransactionBuilder;
+  protected final PrivateTransactionBuilder.Builder privateTransactionBuilder;
   protected final PrivateTransactionVerifier privateTransactionVerifier;
   protected final PrivacyPantheonNodeFactory privacyPantheon;
 

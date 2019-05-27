@@ -49,7 +49,7 @@ public class PantheonNodeFactoryUtils {
         validators, template, CliqueExtraData::createGenesisExtraDataString);
   }
 
-  public Optional<String> createIbftGenesisConfig(
+  public Optional<String> createIbft2GenesisConfig(
       final Collection<? extends RunnableNode> validators) {
     final String template = readGenesisFile("/ibft/ibft.json");
     return updateGenesisExtraData(
@@ -85,12 +85,12 @@ public class PantheonNodeFactoryUtils {
     return genesisConfigProvider.createGenesisConfig(nodes);
   }
 
-  public JsonRpcConfiguration createJsonRpcConfigWithClique() {
-    return createJsonRpcConfigWithRpcApiEnabled(CLIQUE);
+  public JsonRpcConfiguration createJsonRpcWithCliqueEnabledConfig() {
+    return createJsonRpcWithRpcApiEnabledConfig(CLIQUE);
   }
 
-  public JsonRpcConfiguration createJsonRpcConfigWithIbft() {
-    return createJsonRpcConfigWithRpcApiEnabled(IBFT);
+  public JsonRpcConfiguration createJsonRpcWithIbft2EnabledConfig() {
+    return createJsonRpcWithRpcApiEnabledConfig(IBFT);
   }
 
   public JsonRpcConfiguration createJsonRpcEnabledConfig() {
@@ -109,10 +109,10 @@ public class PantheonNodeFactoryUtils {
   }
 
   public JsonRpcConfiguration jsonRpcConfigWithAdmin() {
-    return createJsonRpcConfigWithRpcApiEnabled(RpcApis.ADMIN);
+    return createJsonRpcWithRpcApiEnabledConfig(RpcApis.ADMIN);
   }
 
-  public JsonRpcConfiguration createJsonRpcConfigWithRpcApiEnabled(final RpcApi... rpcApi) {
+  public JsonRpcConfiguration createJsonRpcWithRpcApiEnabledConfig(final RpcApi... rpcApi) {
     final JsonRpcConfiguration jsonRpcConfig = createJsonRpcEnabledConfig();
     final List<RpcApi> rpcApis = new ArrayList<>(jsonRpcConfig.getRpcApis());
     rpcApis.addAll(Arrays.asList(rpcApi));

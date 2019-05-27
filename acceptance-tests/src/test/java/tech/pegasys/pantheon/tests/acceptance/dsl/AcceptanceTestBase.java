@@ -18,7 +18,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.contract.ContractVerifier;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Admin;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Clique;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eth;
-import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Ibft;
+import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Ibft2;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Login;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Net;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Perm;
@@ -29,7 +29,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.factory.PermissionedNodeB
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique.CliqueTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft.IbftTransactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.web3.Web3Transactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.waitcondition.WaitConditions;
@@ -42,10 +42,10 @@ public class AcceptanceTestBase {
   protected final Blockchain blockchain;
   protected final Cluster cluster;
   protected final CliqueTransactions cliqueTransactions;
-  protected final IbftTransactions ibftTransactions;
+  protected final Ibft2Transactions ibftTwoTransactions;
   protected final Transactions transactions;
   protected final Clique clique;
-  protected final Ibft ibft;
+  protected final Ibft2 ibftTwo;
   protected final Web3 web3;
   protected final Eth eth;
   protected final Login login;
@@ -63,10 +63,10 @@ public class AcceptanceTestBase {
     blockchain = new Blockchain(ethTransactions);
     eth = new Eth(ethTransactions);
     cliqueTransactions = new CliqueTransactions();
-    ibftTransactions = new IbftTransactions();
+    ibftTwoTransactions = new Ibft2Transactions();
 
     clique = new Clique(ethTransactions, cliqueTransactions);
-    ibft = new Ibft(ibftTransactions);
+    ibftTwo = new Ibft2(ibftTwoTransactions);
     login = new Login();
     net = new Net(new NetTransactions());
     cluster = new Cluster(net);
@@ -76,7 +76,7 @@ public class AcceptanceTestBase {
     web3 = new Web3(new Web3Transactions());
     pantheon = new PantheonNodeFactory();
     contractVerifier = new ContractVerifier(accounts.getPrimaryBenefactor());
-    wait = new WaitConditions(ethTransactions, cliqueTransactions, ibftTransactions);
+    wait = new WaitConditions(ethTransactions, cliqueTransactions, ibftTwoTransactions);
     permissionedNodeBuilder = new PermissionedNodeBuilder();
   }
 

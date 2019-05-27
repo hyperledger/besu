@@ -18,17 +18,17 @@ import static tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique.Cliq
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft.IbftTransactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions;
 
 import java.util.List;
 
 public class WaitUntilValidatorsChanged implements WaitCondition {
 
-  private final IbftTransactions ibft;
+  private final Ibft2Transactions ibft;
   private final List<Address> initialSigners;
 
   public WaitUntilValidatorsChanged(
-      final List<Address> initialSigners, final IbftTransactions ibft) {
+      final List<Address> initialSigners, final Ibft2Transactions ibft) {
     this.initialSigners = initialSigners;
     this.ibft = ibft;
   }
