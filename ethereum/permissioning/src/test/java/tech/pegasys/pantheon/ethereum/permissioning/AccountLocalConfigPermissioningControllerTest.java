@@ -17,10 +17,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -289,6 +293,33 @@ public class AccountLocalConfigPermissioningControllerTest {
         new AccountLocalConfigPermissioningController(permissioningConfig, whitelistPersistor);
 
     assertThat(controller.contains("0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73")).isTrue();
+  }
+
+  @Test
+  public void isPermittedShouldCheckIfAccountExistInTheWhitelist() {
+    when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
+    when(permissioningConfig.getAccountWhitelist())
+        .thenReturn(singletonList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
+    controller =
+        new AccountLocalConfigPermissioningController(permissioningConfig, whitelistPersistor);
+
+    final Transaction transaction = mock(Transaction.class);
+    when(transaction.getSender())
+        .thenReturn(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
+
+    boolean permitted = controller.isPermitted(transaction);
+
+    assertThat(permitted).isTrue();
+  }
+
+  @Test
+  public void isPermittedShouldReturnFalseIfTransactionDoesNotContainSender() {
+    final Transaction transactionWithoutSender = mock(Transaction.class);
+    when(transactionWithoutSender.getSender()).thenReturn(null);
+
+    boolean permitted = controller.isPermitted(transactionWithoutSender);
+
+    assertThat(permitted).isFalse();
   }
 
   private Path createPermissionsFileWithAccount(final String account) throws IOException {

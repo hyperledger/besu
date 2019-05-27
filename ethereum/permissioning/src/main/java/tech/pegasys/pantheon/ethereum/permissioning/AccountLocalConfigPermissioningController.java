@@ -12,6 +12,9 @@
  */
 package tech.pegasys.pantheon.ethereum.permissioning;
 
+import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.permissioning.account.TransactionPermissioningProvider;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -25,7 +28,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class AccountLocalConfigPermissioningController {
+public class AccountLocalConfigPermissioningController implements TransactionPermissioningProvider {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -200,6 +203,16 @@ public class AccountLocalConfigPermissioningController {
       return accounts.parallelStream().map(String::toLowerCase).collect(Collectors.toList());
     } else {
       return Collections.emptyList();
+    }
+  }
+
+  @Override
+  public boolean isPermitted(final Transaction transaction) {
+    final Address sender = transaction.getSender();
+    if (sender == null) {
+      return false;
+    } else {
+      return contains(sender.toString());
     }
   }
 }
