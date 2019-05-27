@@ -29,6 +29,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidationParams;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
@@ -49,6 +50,7 @@ import org.apache.logging.log4j.Logger;
  * <p>This class is safe for use across multiple threads.
  */
 public class TransactionPool implements BlockAddedObserver {
+
   private static final Logger LOG = getLogger();
   private static final long SYNC_TOLERANCE = 100L;
   private final PendingTransactions pendingTransactions;
@@ -176,13 +178,17 @@ public class TransactionPool implements BlockAddedObserver {
               transaction.getGasLimit(), chainHeadBlockHeader.getGasLimit()));
     }
 
+    final TransactionValidationParams validationParams =
+        new TransactionValidationParams.Builder().allowFutureNonce(true).stateChange(false).build();
+
     return protocolContext
         .getWorldStateArchive()
         .get(chainHeadBlockHeader.getStateRoot())
         .map(
             worldState -> {
               final Account senderAccount = worldState.get(transaction.getSender());
-              return getTransactionValidator().validateForSender(transaction, senderAccount, true);
+              return getTransactionValidator()
+                  .validateForSender(transaction, senderAccount, validationParams);
             })
         .orElseGet(() -> ValidationResult.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
   }

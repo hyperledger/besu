@@ -159,9 +159,16 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       return Result.invalid(validationResult);
     }
 
+    final TransactionValidationParams validationParams =
+        new TransactionValidationParams.Builder()
+            .allowFutureNonce(false)
+            .stateChange(isPersistingState)
+            .build();
+
     final Address senderAddress = transaction.getSender();
     final MutableAccount sender = worldState.getOrCreate(senderAddress);
-    validationResult = transactionValidator.validateForSender(transaction, sender, false);
+    validationResult =
+        transactionValidator.validateForSender(transaction, sender, validationParams);
     if (!validationResult.isValid()) {
       LOG.warn("Invalid transaction: {}", validationResult.getErrorMessage());
       return Result.invalid(validationResult);

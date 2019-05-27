@@ -13,12 +13,15 @@
 package tech.pegasys.pantheon.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE;
 import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT;
 import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.NONCE_TOO_LOW;
 import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED;
+import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED;
 import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
 import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.WRONG_CHAIN_ID;
 
@@ -27,6 +30,7 @@ import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Gas;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.core.TransactionFilter;
 import tech.pegasys.pantheon.ethereum.core.TransactionTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
@@ -36,6 +40,7 @@ import java.util.Optional;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -149,6 +154,47 @@ public class MainnetTransactionValidatorTest {
         .isEqualTo(ValidationResult.valid());
   }
 
+  @Test
+  public void shouldRejectTransactionIfAccountIsNotPermitted() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(gasCalculator, false, Optional.empty());
+
+    validator.setTransactionFilter(transactionFilter(false));
+
+    assertThat(validator.validateForSender(basicTransaction, accountWithNonce(0), true))
+        .isEqualTo(ValidationResult.invalid(TX_SENDER_NOT_AUTHORIZED));
+  }
+
+  @Test
+  public void shouldAcceptValidTransactionIfAccountIsPermitted() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(gasCalculator, false, Optional.empty());
+
+    validator.setTransactionFilter(transactionFilter(true));
+
+    assertThat(validator.validateForSender(basicTransaction, accountWithNonce(0), true))
+        .isEqualTo(ValidationResult.valid());
+  }
+
+  @Test
+  public void shouldPropagateCorrectStateChangeParamToTransactionFilter() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(gasCalculator, false, Optional.empty());
+
+    final ArgumentCaptor<Boolean> stateChangeParamCaptor = ArgumentCaptor.forClass(Boolean.class);
+    final TransactionFilter transactionFilter = mock(TransactionFilter.class);
+    when(transactionFilter.permitted(any(Transaction.class), stateChangeParamCaptor.capture()))
+        .thenReturn(true);
+    validator.setTransactionFilter(transactionFilter);
+
+    final TransactionValidationParams validationParams =
+        new TransactionValidationParams.Builder().stateChange(true).build();
+
+    validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams);
+
+    assertThat(stateChangeParamCaptor.getValue()).isTrue();
+  }
+
   private Account accountWithNonce(final long nonce) {
     return account(basicTransaction.getUpfrontCost(), nonce);
   }
@@ -158,5 +204,11 @@ public class MainnetTransactionValidatorTest {
     when(account.getBalance()).thenReturn(balance);
     when(account.getNonce()).thenReturn(nonce);
     return account;
+  }
+
+  private TransactionFilter transactionFilter(final boolean permitted) {
+    final TransactionFilter transactionFilter = mock(TransactionFilter.class);
+    when(transactionFilter.permitted(any(Transaction.class), anyBoolean())).thenReturn(permitted);
+    return transactionFilter;
   }
 }

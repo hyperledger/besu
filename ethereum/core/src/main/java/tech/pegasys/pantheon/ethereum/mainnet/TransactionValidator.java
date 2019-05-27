@@ -44,8 +44,15 @@ public interface TransactionValidator {
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.
    */
+  default ValidationResult<TransactionInvalidReason> validateForSender(
+      final Transaction transaction, final Account sender, final boolean allowFutureNonce) {
+    final TransactionValidationParams validationParams =
+        new TransactionValidationParams.Builder().allowFutureNonce(allowFutureNonce).build();
+    return validateForSender(transaction, sender, validationParams);
+  }
+
   ValidationResult<TransactionInvalidReason> validateForSender(
-      Transaction transaction, Account sender, boolean allowFutureNonce);
+      Transaction transaction, Account sender, TransactionValidationParams validationParams);
 
   enum TransactionInvalidReason {
     WRONG_CHAIN_ID,
