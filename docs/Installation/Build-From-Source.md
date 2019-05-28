@@ -9,6 +9,8 @@ description: Building Pantheon from source code
 
 !!!important
     Pantheon requires Java 8+ to compile; earlier versions are not supported.
+    
+    From v1.2, Pantheon will require Java 11.  That is, Pantheon on Java 8 will no longer be supported.
 
 * [Git](https://git-scm.com/downloads) or [GitHub Desktop](https://desktop.github.com/)
 
