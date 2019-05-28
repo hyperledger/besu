@@ -424,7 +424,7 @@ This command stops the containers related to the services specified in the `dock
 To restart the private network:
 
 ```bash tab="Linux/MacOS"
-./start.sh
+./resume.sh
 ```
 
 ## Stop Private Network and Remove Containers
