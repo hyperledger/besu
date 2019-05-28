@@ -43,6 +43,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.Discon
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.HelloMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.PingMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.WireMessageCodes;
+import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
@@ -119,6 +120,16 @@ public class DeFramerTest {
     connectFuture.complete(peerConnection);
 
     deFramer.exceptionCaught(ctx, new DecoderException(new FramingException("Test")));
+
+    verify(peerConnection).disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+  }
+
+  @Test
+  public void exceptionCaught_shouldDisconnectForBreachOfProtocolWhenRlpExceptionThrown()
+      throws Exception {
+    connectFuture.complete(peerConnection);
+
+    deFramer.exceptionCaught(ctx, new DecoderException(new RLPException("Test")));
 
     verify(peerConnection).disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
   }
