@@ -1,6 +1,6 @@
 # this is a valid TOML config file
 
-data-path="~/pantheondata" # Path
+data-path="/opt/pantheon" # Path
 
 #invalid-option=true
 
@@ -26,7 +26,7 @@ metrics-host="8.6.7.5"
 metrics-port=309
 
 # chain
-genesis-file="~/genesis.json" # Path
+genesis-file="/opt/pantheon/genesis.json" # Path
 network-id=42
 sync-mode="fast"# should be FAST or FULL (or fast or full)
 fast-sync-min-peers=13

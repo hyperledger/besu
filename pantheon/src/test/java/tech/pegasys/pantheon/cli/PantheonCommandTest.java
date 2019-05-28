@@ -274,7 +274,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
     final String updatedConfig =
         Resources.toString(configFile, UTF_8)
-            .replace("~/genesis.json", escapeTomlString(genesisFile.toString()));
+            .replace("/opt/pantheon/genesis.json", escapeTomlString(genesisFile.toString()));
     final Path toml = createTempFile("toml", updatedConfig.getBytes(UTF_8));
 
     final List<RpcApi> expectedApis = asList(ETH, WEB3);
@@ -328,7 +328,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             .setGenesisConfig(encodeJsonGenesis(GENESIS_VALID_JSON))
             .setBootNodes(nodes)
             .build();
-    verify(mockControllerBuilder).dataDirectory(eq(Paths.get("~/pantheondata").toAbsolutePath()));
+    verify(mockControllerBuilder).dataDirectory(eq(Paths.get("/opt/pantheon").toAbsolutePath()));
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(eq(networkConfig));
 
     verify(mockSyncConfBuilder).syncMode(eq(SyncMode.FAST));
