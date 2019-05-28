@@ -81,7 +81,7 @@ downloadLicenses {
           license('Apache Software Licenses', 'http://www.apache.org/licenses/LICENSE-2.0.txt'),
           license('Apache', 'http://www.opensource.org/licenses/Apache-2.0')
       ],
-      (mit)       : ['The MIT License', 'MIT'],
+      (mit)       : ['The MIT License', 'MIT', 'MIT license'],
       (bsd)       : [
           'BSD',
           'BSD licence',

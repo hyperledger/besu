@@ -259,7 +259,7 @@ public class GraphQLHttpService {
           if (variableString != null) {
             variables = Json.decodeValue(variableString, MAP_TYPE);
           } else {
-            variables = null;
+            variables = Collections.emptyMap();
           }
           break;
         case POST:
@@ -275,7 +275,7 @@ public class GraphQLHttpService {
             // treat all else as application/graphql
             query = routingContext.getBodyAsString().trim();
             operationName = null;
-            variables = null;
+            variables = Collections.emptyMap();
           }
           break;
         default:

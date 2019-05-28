@@ -13,11 +13,11 @@
 
 dependencyManagement {
   dependencies {
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.9.9'
 
     dependency 'com.github.docker-java:docker-java:3.0.14'
 
-    dependency 'com.google.auto.service:auto-service:1.0-rc4'
+    dependency 'com.google.auto.service:auto-service:1.0-rc5'
 
     dependency 'com.google.errorprone:javac:9+181-r4173-1'
     dependency 'com.google.errorprone:error_prone_check_api:2.3.3'
@@ -25,30 +25,30 @@ dependencyManagement {
     dependency 'com.google.errorprone:error_prone_annotation:2.3.3'
     dependency 'com.google.errorprone:error_prone_test_helpers:2.3.3'
 
-    dependency 'com.graphql-java:graphql-java:11.0'
+    dependency 'com.graphql-java:graphql-java:12.0'
     
     dependency 'com.google.guava:guava:27.1-jre'
 
-    dependency 'com.squareup.okhttp3:okhttp:3.13.1'
+    dependency 'com.squareup.okhttp3:okhttp:3.14.2'
 
     dependency 'commons-cli:commons-cli:1.4'
 
-    dependency 'info.picocli:picocli:3.9.5'
+    dependency 'info.picocli:picocli:3.9.6'
 
-    dependency 'io.pkts:pkts-core:3.0.4'
+    dependency 'io.pkts:pkts-core:3.0.5'
 
     dependency 'io.prometheus:simpleclient:0.6.0'
     dependency 'io.prometheus:simpleclient_common:0.6.0'
     dependency 'io.prometheus:simpleclient_hotspot:0.6.0'
     dependency 'io.prometheus:simpleclient_pushgateway:0.6.0'
 
-    dependency 'io.reactivex.rxjava2:rxjava:2.2.7'
+    dependency 'io.reactivex.rxjava2:rxjava:2.2.8'
 
-    dependency 'io.vertx:vertx-auth-jwt:3.6.3'
-    dependency 'io.vertx:vertx-codegen:3.6.3'
-    dependency 'io.vertx:vertx-core:3.6.3'
-    dependency 'io.vertx:vertx-unit:3.6.3'
-    dependency 'io.vertx:vertx-web:3.6.3'
+    dependency 'io.vertx:vertx-auth-jwt:3.7.1'
+    dependency 'io.vertx:vertx-codegen:3.7.1'
+    dependency 'io.vertx:vertx-core:3.7.1'
+    dependency 'io.vertx:vertx-unit:3.7.1'
+    dependency 'io.vertx:vertx-web:3.7.1'
 
     dependency 'junit:junit:4.12'
 
@@ -62,7 +62,7 @@ dependencyManagement {
     dependency 'org.apache.logging.log4j:log4j-core:2.11.2'
     dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.11.2'
 
-    dependency 'org.assertj:assertj-core:3.12.1'
+    dependency 'org.assertj:assertj-core:3.12.2'
 
     dependency 'org.awaitility:awaitility:3.1.6'
 
@@ -70,19 +70,19 @@ dependencyManagement {
 
     dependency 'org.java-websocket:Java-WebSocket:1.4.0'
 
-    dependency 'org.mockito:mockito-core:2.25.0'
+    dependency 'org.mockito:mockito-core:2.27.0'
 
     dependency 'org.openjdk.jmh:jmh-core:1.21'
     dependency 'org.openjdk.jmh:jmh-generator-annprocess:1.21'
 
     dependency 'org.rocksdb:rocksdbjni:5.15.10'
 
-    dependency 'org.springframework.security:spring-security-crypto:5.1.4.RELEASE'
+    dependency 'org.springframework.security:spring-security-crypto:5.1.5.RELEASE'
     
-    dependency 'org.web3j:abi:4.1.1'
-    dependency 'org.web3j:core:4.1.1'
-    dependency 'org.web3j:crypto:4.1.1'
+    dependency 'org.web3j:abi:4.3.0'
+    dependency 'org.web3j:core:4.3.0'
+    dependency 'org.web3j:crypto:4.3.0'
 
-    dependency 'org.xerial.snappy:snappy-java:1.1.7.2'
+    dependency 'org.xerial.snappy:snappy-java:1.1.7.3'
   }
 }
