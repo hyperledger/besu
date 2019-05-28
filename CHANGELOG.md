@@ -2,6 +2,10 @@
 
 ## 1.1.1 
 
+### Java 11 Required from v1.2
+
+From v1.2, Pantheon will require Java 11.  That is, Pantheon on Java 8 will no longer be supported.
+
 ### Additions and Improvements 
 
 - [GraphQL](https://docs.pantheon.pegasys.tech/en/latest/Pantheon-API/GraphQL/) [\#1311](https://github.com/PegaSysEng/pantheon/pull/1311) (thanks to [zyfrank](https://github.com/zyfrank))
