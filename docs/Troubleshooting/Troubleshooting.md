@@ -65,6 +65,28 @@ When running Pantheon from the Docker image a number of [command line options ar
 Not including a sufficient milestone in the genesis file can lead to unexpected and inconsistent behaviour without
 specific errors. Ensure a sufficient milestone is included in the genesis file (for example, `constantinoplefixblock`). 
 
+## Illegal Reflective Access Error on Startup
+
+When using Java 9 or later, the following error message may be displayed on startup and does not affect the operation of Pantheon: 
+
+```
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.bouncycastle.jcajce.provider.drbg.DRBG (file:/Users/madelinemurray/pantheon/build/distributions/pantheon-1.1.2-SNAPSHOT/lib/bcprov-jdk15on-1.61.jar) to constructor sun.security.provider.Sun()
+WARNING: Please consider reporting this to the maintainers of org.bouncycastle.jcajce.provider.drbg.DRBG
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+```
+
+To stop the message being displayed, add the following to the environment: 
+
+```bash tab="Linux / Mac OS"
+export PANTHEON_OPTS="--add-opens java.base/sun.security.provider=ALL-UNNAMED"
+```
+    
+```bash tab="Windows"
+set PANTHEON_OPTS="--add-opens java.base/sun.security.provider=ALL-UNNAMED"
+```
+
 ## Command Line Options
 
 Characters such as smart quotes and long (em) hyphens won't work in Pantheon command line options. Ensure quotes have
