@@ -63,18 +63,24 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
     chainHeader = blockchainStorage.getBlockHeader(chainHead).get();
     totalDifficulty = blockchainStorage.getTotalDifficulty(chainHead).get();
 
-    metricsSystem.createGauge(
+    metricsSystem.createLongGauge(
         MetricCategory.BLOCKCHAIN,
         "height",
         "Height of the chainhead",
-        () -> (double) this.getChainHeadBlockNumber());
-    metricsSystem.createGauge(
+        this::getChainHeadBlockNumber);
+    metricsSystem.createLongGauge(
         MetricCategory.BLOCKCHAIN,
         "difficulty_total",
         "Total difficulty of the chainhead",
         () ->
             BytesValues.asUnsignedBigInteger(this.getChainHead().getTotalDifficulty().getBytes())
-                .doubleValue());
+                .longValue());
+
+    metricsSystem.createLongGauge(
+        MetricCategory.BLOCKCHAIN,
+        "chain_head_timestamp",
+        "Timestamp from the current chain head",
+        () -> getChainHeadHeader().getTimestamp());
   }
 
   @Override
