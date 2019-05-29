@@ -116,7 +116,7 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
             EthGraphQLHttpBySpecTest.class.getResource(testSpecFile), Charsets.UTF_8);
     final JsonObject spec = new JsonObject(json);
     final String rawRequestBody = spec.getString("request");
-    final RequestBody requestBody = RequestBody.create(JSON, rawRequestBody);
+    final RequestBody requestBody = RequestBody.create(GRAPHQL, rawRequestBody);
     final Request request = new Request.Builder().post(requestBody).url(baseUrl).build();
 
     importBlocks(1, BLOCKS.size());

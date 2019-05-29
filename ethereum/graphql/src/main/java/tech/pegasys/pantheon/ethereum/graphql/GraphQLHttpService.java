@@ -37,6 +37,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
+import com.google.common.net.MediaType;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
@@ -65,6 +66,7 @@ public class GraphQLHttpService {
 
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
   private static final String APPLICATION_JSON = "application/json";
+  private static final MediaType MEDIA_TYPE_JUST_JSON = MediaType.JSON_UTF_8.withoutParameters();
   private static final String EMPTY_RESPONSE = "";
 
   private static final TypeReference<Map<String, Object>> MAP_TYPE =
@@ -263,14 +265,19 @@ public class GraphQLHttpService {
           }
           break;
         case POST:
-          if (request.getHeader(HttpHeaders.CONTENT_TYPE).equalsIgnoreCase(APPLICATION_JSON)) {
-
+          final String contentType = request.getHeader(HttpHeaders.CONTENT_TYPE);
+          if (contentType != null && MediaType.parse(contentType).is(MEDIA_TYPE_JUST_JSON)) {
             final String requestBody = routingContext.getBodyAsString().trim();
             final GraphQLJsonRequest jsonRequest =
                 Json.decodeValue(requestBody, GraphQLJsonRequest.class);
             query = jsonRequest.getQuery();
             operationName = jsonRequest.getOperationName();
-            variables = jsonRequest.getVariables();
+            Map<String, Object> jsonVariables = jsonRequest.getVariables();
+            if (jsonVariables != null) {
+              variables = jsonVariables;
+            } else {
+              variables = Collections.emptyMap();
+            }
           } else {
             // treat all else as application/graphql
             query = routingContext.getBodyAsString().trim();
@@ -298,7 +305,7 @@ public class GraphQLHttpService {
           },
           false,
           (res) -> {
-            response.putHeader("Content-Type", APPLICATION_JSON);
+            response.putHeader("Content-Type", MediaType.JSON_UTF_8.toString());
             if (res.failed()) {
               response.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
               response.end(
