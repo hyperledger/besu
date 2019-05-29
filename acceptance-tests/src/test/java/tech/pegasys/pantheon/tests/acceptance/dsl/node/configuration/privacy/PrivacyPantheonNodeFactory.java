@@ -10,16 +10,21 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.privacy;
+package tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.privacy;
 
 import tech.pegasys.orion.testutil.OrionTestHarness;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.factory.PantheonFactoryConfigurationBuilder;
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.factory.PantheonNodeFactoryUtils;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.NodeConfigurationFactory;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.PantheonFactoryConfigurationBuilder;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
+import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivacyNode;
 
 import java.io.IOException;
 
-public class PrivacyPantheonNodeFactory extends PantheonNodeFactoryUtils {
+public class PrivacyPantheonNodeFactory {
+
+  private final GenesisConfigurationFactory genesis = new GenesisConfigurationFactory();
+  private final NodeConfigurationFactory node = new NodeConfigurationFactory();
 
   private static PrivacyNode create(final PrivacyPantheonFactoryConfiguration config)
       throws IOException {
@@ -95,10 +100,10 @@ public class PrivacyPantheonNodeFactory extends PantheonNodeFactoryUtils {
                 new PantheonFactoryConfigurationBuilder()
                     .name(name)
                     .miningEnabled()
-                    .jsonRpcConfiguration(createJsonRpcWithIbft2EnabledConfig())
-                    .webSocketConfiguration(createWebSocketEnabledConfig())
+                    .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig())
+                    .webSocketConfiguration(node.createWebSocketEnabledConfig())
                     .devMode(false)
-                    .genesisConfigProvider(this::createIbft2GenesisConfig)
+                    .genesisConfigProvider(genesis::createIbft2GenesisConfig)
                     .keyFilePath(keyFilePath)
                     .enablePrivateTransactions(privacyParameters)
                     .build())

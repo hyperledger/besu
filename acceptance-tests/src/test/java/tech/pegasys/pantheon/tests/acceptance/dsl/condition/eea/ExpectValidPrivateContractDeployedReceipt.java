@@ -17,22 +17,22 @@ import static org.junit.Assert.assertNotEquals;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaRequestFactory.PrivateTransactionReceipt;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaTransactions;
 
 public class ExpectValidPrivateContractDeployedReceipt extends GetValidPrivateTransactionReceipt {
 
   private final String contractAddress;
 
   public ExpectValidPrivateContractDeployedReceipt(
-      final String contractAddress, final Eea eea, final Transactions transactions) {
+      final String contractAddress, final Eea eea, final EeaTransactions transactions) {
     super(eea, transactions);
     this.contractAddress = contractAddress;
   }
 
   @Override
   public void verify(final PantheonNode node, final String transactionHash) {
-    ResponseTypes.PrivateTransactionReceipt privateTxReceipt =
+    final PrivateTransactionReceipt privateTxReceipt =
         getPrivateTransactionReceipt(node, transactionHash);
 
     assertEquals(contractAddress, privateTxReceipt.getContractAddress());

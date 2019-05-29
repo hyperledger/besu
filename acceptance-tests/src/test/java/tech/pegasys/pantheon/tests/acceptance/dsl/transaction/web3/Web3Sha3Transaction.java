@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.web3;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
@@ -30,7 +30,7 @@ public class Web3Sha3Transaction implements Transaction<String> {
   }
 
   @Override
-  public String execute(final JsonRequestFactories node) {
+  public String execute(final NodeRequests node) {
     try {
       final Web3Sha3 result = node.net().web3Sha3(input).send();
       assertThat(result).isNotNull();

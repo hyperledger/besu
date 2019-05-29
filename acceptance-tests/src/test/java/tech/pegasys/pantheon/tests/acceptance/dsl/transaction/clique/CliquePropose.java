@@ -14,9 +14,9 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.ProposeResponse;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique.CliqueRequestFactory.ProposeResponse;
 
 import java.io.IOException;
 
@@ -30,7 +30,7 @@ public class CliquePropose implements Transaction<Boolean> {
   }
 
   @Override
-  public Boolean execute(final JsonRequestFactories node) {
+  public Boolean execute(final NodeRequests node) {
     try {
       final ProposeResponse result = node.clique().cliquePropose(address, auth).send();
       assertThat(result).isNotNull();

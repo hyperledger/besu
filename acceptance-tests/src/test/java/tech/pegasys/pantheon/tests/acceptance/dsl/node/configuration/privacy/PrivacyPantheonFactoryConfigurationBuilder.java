@@ -10,10 +10,10 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.privacy;
+package tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.privacy;
 
 import tech.pegasys.orion.testutil.OrionTestHarness;
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.factory.PantheonFactoryConfiguration;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.PantheonFactoryConfiguration;
 
 public class PrivacyPantheonFactoryConfigurationBuilder {
 

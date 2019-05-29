@@ -20,14 +20,14 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.ExpectValidPriva
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.ExpectValidPrivateContractValuesReturned;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.ExpectValidPrivateTransactionReceipt;
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaTransactions;
 
 public class PrivateTransactionVerifier {
 
-  private final Transactions transactions;
+  private final EeaTransactions transactions;
   private final Eea eea;
 
-  public PrivateTransactionVerifier(final Eea eea, final Transactions transactions) {
+  public PrivateTransactionVerifier(final Eea eea, final EeaTransactions transactions) {
     this.eea = eea;
     this.transactions = transactions;
   }

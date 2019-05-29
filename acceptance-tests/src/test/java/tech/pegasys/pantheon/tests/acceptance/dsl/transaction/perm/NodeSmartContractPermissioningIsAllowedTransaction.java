@@ -18,7 +18,7 @@ import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeSmartContractPermissioningController;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
@@ -44,7 +44,7 @@ public class NodeSmartContractPermissioningIsAllowedTransaction implements Trans
   }
 
   @Override
-  public Boolean execute(final JsonRequestFactories node) {
+  public Boolean execute(final NodeRequests node) {
     try {
       final String value =
           node.eth().ethCall(payload(), DefaultBlockParameterName.LATEST).send().getValue();

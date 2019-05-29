@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.NodeConfiguration;
 
 import java.net.URI;
 

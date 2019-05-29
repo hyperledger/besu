@@ -35,7 +35,7 @@ public class CreateAccountAcceptanceTest extends AcceptanceTestBase {
     final Account account = accounts.createAccount("account-one");
     final Amount balance = Amount.ether(20);
 
-    minerNode.execute(transactions.createTransfer(account, balance));
+    minerNode.execute(accountTransactions.createTransfer(account, balance));
 
     cluster.verify(account.balanceEquals(balance));
   }

@@ -128,7 +128,7 @@ public class Cluster implements AutoCloseable {
     }
     node.getConfiguration()
         .getGenesisConfigProvider()
-        .createGenesisConfig(originalNodes)
+        .create(originalNodes)
         .ifPresent(node.getConfiguration()::setGenesisConfig);
     LOG.info(
         "Starting node {} (id = {}...{})",

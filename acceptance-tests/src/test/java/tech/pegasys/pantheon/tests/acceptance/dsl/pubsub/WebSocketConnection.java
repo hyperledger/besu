@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.pubsub;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils;
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.NodeConfiguration;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.NodeConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;

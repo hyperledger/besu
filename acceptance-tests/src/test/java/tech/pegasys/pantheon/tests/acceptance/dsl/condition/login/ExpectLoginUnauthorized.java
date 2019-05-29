@@ -10,28 +10,24 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.httptransaction;
+package tech.pegasys.pantheon.tests.acceptance.dsl.condition.login;
 
-import static org.junit.Assert.fail;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.login.LoginUnauthorizedTransaction;
 
-import java.io.IOException;
+public class ExpectLoginUnauthorized implements Condition {
 
-public class LoginResponds implements HttpTransaction<String> {
   private final String username;
   private final String password;
 
-  public LoginResponds(final String username, final String password) {
+  public ExpectLoginUnauthorized(final String username, final String password) {
     this.username = username;
     this.password = password;
   }
 
   @Override
-  public String execute(final HttpRequestFactory httpFactory) {
-    try {
-      return httpFactory.loginResponds(username, password);
-    } catch (IOException e) {
-      fail("Login request failed with exception: " + e.toString());
-      return null;
-    }
+  public void verify(final Node node) {
+    node.execute(new LoginUnauthorizedTransaction(username, password));
   }
 }

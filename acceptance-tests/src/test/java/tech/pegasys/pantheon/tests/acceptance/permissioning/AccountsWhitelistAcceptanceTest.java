@@ -20,7 +20,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.account.TransferTransaction;
 
 import java.math.BigInteger;
-import java.util.Arrays;
+import java.util.Collections;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -39,7 +39,7 @@ public class AccountsWhitelistAcceptanceTest extends AcceptanceTestBase {
     node =
         permissionedNodeBuilder
             .name("node")
-            .accountsPermittedInConfig(Arrays.asList(senderA.getAddress()))
+            .accountsPermittedInConfig(Collections.singletonList(senderA.getAddress()))
             .build();
 
     cluster.start(node);
@@ -49,7 +49,7 @@ public class AccountsWhitelistAcceptanceTest extends AcceptanceTestBase {
   public void onlyAllowedAccountCanSubmitTransactions() {
     Account beneficiary = accounts.createAccount("beneficiary");
 
-    node.execute(transactions.createTransfer(senderA, beneficiary, 1));
+    node.execute(accountTransactions.createTransfer(senderA, beneficiary, 1));
     node.verify(beneficiary.balanceEquals("1", ETHER));
 
     verifyTransferForbidden(senderB, beneficiary);
@@ -62,20 +62,21 @@ public class AccountsWhitelistAcceptanceTest extends AcceptanceTestBase {
 
     verifyTransferForbidden(senderB, beneficiary);
 
-    node.execute(transactions.addAccountsToWhitelist(senderB.getAddress()));
+    node.execute(permissioningTransactions.addAccountsToWhitelist(senderB.getAddress()));
     node.verify(perm.expectAccountsWhitelist(senderA.getAddress(), senderB.getAddress()));
 
-    node.execute(transactions.createTransfer(senderB, beneficiary, 1));
+    node.execute(accountTransactions.createTransfer(senderB, beneficiary, 1));
     node.verify(beneficiary.balanceEquals("1", ETHER));
 
-    node.execute(transactions.removeAccountsFromWhitelist(senderB.getAddress()));
+    node.execute(permissioningTransactions.removeAccountsFromWhitelist(senderB.getAddress()));
     node.verify(perm.expectAccountsWhitelist(senderA.getAddress()));
     verifyTransferForbidden(senderB, beneficiary);
   }
 
   private void verifyTransferForbidden(final Account sender, final Account beneficiary) {
-    BigInteger nonce = node.execute(transactions.getTransactionCount(sender.getAddress()));
-    TransferTransaction transfer = transactions.createTransfer(sender, beneficiary, 1, nonce);
+    BigInteger nonce = node.execute(ethTransactions.getTransactionCount(sender.getAddress()));
+    TransferTransaction transfer =
+        accountTransactions.createTransfer(sender, beneficiary, 1, nonce);
     node.verify(
         eth.sendRawTransactionExceptional(
             transfer.signedTransactionData(),

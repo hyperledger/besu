@@ -26,10 +26,6 @@ public class Ibft2Transactions {
     return propose(node.getAddress().toString(), true);
   }
 
-  private Ibft2Propose propose(final String address, final boolean auth) {
-    return new Ibft2Propose(address, auth);
-  }
-
   public Ibft2Proposals createProposals() {
     return new Ibft2Proposals();
   }
@@ -44,5 +40,9 @@ public class Ibft2Transactions {
 
   public Ibft2Discard createDiscardProposal(final PantheonNode node) {
     return new Ibft2Discard(node.getAddress().toString());
+  }
+
+  private Ibft2Propose propose(final String address, final boolean auth) {
+    return new Ibft2Propose(address, auth);
   }
 }

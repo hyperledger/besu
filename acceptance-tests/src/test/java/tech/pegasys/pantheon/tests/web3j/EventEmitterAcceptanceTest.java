@@ -53,7 +53,7 @@ public class EventEmitterAcceptanceTest extends AcceptanceTestBase {
   @Ignore
   public void shouldDeployContractAndAllowLookupOfValuesAndEmittingEvents() throws Exception {
     final EventEmitter eventEmitter =
-        node.execute(transactions.createSmartContract(EventEmitter.class));
+        node.execute(contractTransactions.createSmartContract(EventEmitter.class));
 
     final Flowable<StoredEventResponse> storedEventResponseObservable =
         eventEmitter.storedEventFlowable(new EthFilter());

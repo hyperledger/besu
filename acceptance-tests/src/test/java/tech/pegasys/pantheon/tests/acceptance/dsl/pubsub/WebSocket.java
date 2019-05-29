@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.pubsub;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils.waitFor;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.NodeConfiguration;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.NodeConfiguration;
 
 import io.vertx.core.Vertx;
 

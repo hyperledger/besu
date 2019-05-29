@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
@@ -27,7 +27,7 @@ public class NetPeerCountTransaction implements Transaction<BigInteger> {
   NetPeerCountTransaction() {}
 
   @Override
-  public BigInteger execute(final JsonRequestFactories node) {
+  public BigInteger execute(final NodeRequests node) {
     try {
       final NetPeerCount result = node.net().netPeerCount().send();
       assertThat(result).isNotNull();
