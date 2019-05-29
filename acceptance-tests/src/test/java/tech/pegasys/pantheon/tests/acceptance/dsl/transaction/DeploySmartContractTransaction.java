@@ -32,12 +32,12 @@ public class DeploySmartContractTransaction<T extends Contract> implements Trans
 
   private final Class<T> clazz;
 
-  DeploySmartContractTransaction(final Class<T> clazz) {
+  public DeploySmartContractTransaction(final Class<T> clazz) {
     this.clazz = clazz;
   }
 
   @Override
-  public T execute(final JsonRequestFactories node) {
+  public T execute(final NodeRequests node) {
     try {
       final Method method =
           clazz.getMethod(

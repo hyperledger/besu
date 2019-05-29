@@ -12,8 +12,7 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.CustomNetJsonRpcRequestFactory;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.util.Map;
@@ -25,7 +24,7 @@ public class NetServicesTransaction implements Transaction<Map<String, Map<Strin
   NetServicesTransaction() {}
 
   @Override
-  public Map<String, Map<String, String>> execute(final JsonRequestFactories requestFactories) {
+  public Map<String, Map<String, String>> execute(final NodeRequests requestFactories) {
     CustomNetJsonRpcRequestFactory.NetServicesResponse netServicesResponse = null;
     try {
       final CustomNetJsonRpcRequestFactory netServicesJsonRpcRequestFactory =

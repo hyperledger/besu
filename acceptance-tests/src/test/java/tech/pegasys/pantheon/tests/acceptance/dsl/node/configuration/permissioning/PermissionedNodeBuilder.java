@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.node.factory;
+package tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.permissioning;
 
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -27,6 +27,8 @@ import tech.pegasys.pantheon.ethereum.permissioning.WhitelistPersistor.WHITELIST
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.PantheonFactoryConfigurationBuilder;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.PantheonNodeFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -118,6 +120,7 @@ public class PermissionedNodeBuilder {
     return this;
   }
 
+  @SuppressWarnings("UnstableApiUsage")
   public PermissionedNodeBuilder genesisFile(final String path) {
     try {
       URI uri = this.getClass().getResource(path).toURI();

@@ -28,17 +28,17 @@ import org.junit.Test;
 
 public class WhitelistPersistorAcceptanceTest extends AcceptanceTestBase {
 
+  private static final String ENODE_ONE =
+      "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
+  private static final String ENODE_TWO =
+      "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
+  private static final String ENODE_THREE =
+      "enode://4f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
+
   private Node node;
   private Account senderA;
   private Account senderB;
   private Path tempFile;
-
-  private final String enode1 =
-      "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
-  private final String enode2 =
-      "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
-  private final String enode3 =
-      "enode://4f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
 
   @Before
   public void setUp() throws Exception {
@@ -64,37 +64,37 @@ public class WhitelistPersistorAcceptanceTest extends AcceptanceTestBase {
         perm.expectPermissioningWhitelistFileKeyValue(
             WHITELIST_TYPE.ACCOUNTS, tempFile, senderA.getAddress()));
 
-    node.execute(transactions.addAccountsToWhitelist(senderB.getAddress()));
+    node.execute(permissioningTransactions.addAccountsToWhitelist(senderB.getAddress()));
     node.verify(perm.expectAccountsWhitelist(senderA.getAddress(), senderB.getAddress()));
     node.verify(
         perm.expectPermissioningWhitelistFileKeyValue(
             WHITELIST_TYPE.ACCOUNTS, tempFile, senderA.getAddress(), senderB.getAddress()));
 
-    node.execute(transactions.removeAccountsFromWhitelist(senderB.getAddress()));
+    node.execute(permissioningTransactions.removeAccountsFromWhitelist(senderB.getAddress()));
     node.verify(perm.expectAccountsWhitelist(senderA.getAddress()));
     node.verify(
         perm.expectPermissioningWhitelistFileKeyValue(
             WHITELIST_TYPE.ACCOUNTS, tempFile, senderA.getAddress()));
 
-    node.execute(transactions.removeAccountsFromWhitelist(senderA.getAddress()));
+    node.execute(permissioningTransactions.removeAccountsFromWhitelist(senderA.getAddress()));
     node.verify(perm.expectAccountsWhitelist());
     node.verify(perm.expectPermissioningWhitelistFileKeyValue(WHITELIST_TYPE.ACCOUNTS, tempFile));
   }
 
   @Test
   public void manipulatedNodesWhitelistIsPersisted() {
-    node.verify(perm.addNodesToWhitelist(enode1, enode2));
+    node.verify(perm.addNodesToWhitelist(ENODE_ONE, ENODE_TWO));
     node.verify(
         perm.expectPermissioningWhitelistFileKeyValue(
-            WHITELIST_TYPE.NODES, tempFile, enode1, enode2));
+            WHITELIST_TYPE.NODES, tempFile, ENODE_ONE, ENODE_TWO));
 
-    node.verify(perm.removeNodesFromWhitelist(enode1));
+    node.verify(perm.removeNodesFromWhitelist(ENODE_ONE));
     node.verify(
-        perm.expectPermissioningWhitelistFileKeyValue(WHITELIST_TYPE.NODES, tempFile, enode2));
+        perm.expectPermissioningWhitelistFileKeyValue(WHITELIST_TYPE.NODES, tempFile, ENODE_TWO));
 
-    node.verify(perm.addNodesToWhitelist(enode1, enode3));
+    node.verify(perm.addNodesToWhitelist(ENODE_ONE, ENODE_THREE));
     node.verify(
         perm.expectPermissioningWhitelistFileKeyValue(
-            WHITELIST_TYPE.NODES, tempFile, enode2, enode1, enode3));
+            WHITELIST_TYPE.NODES, tempFile, ENODE_TWO, ENODE_ONE, ENODE_THREE));
   }
 }

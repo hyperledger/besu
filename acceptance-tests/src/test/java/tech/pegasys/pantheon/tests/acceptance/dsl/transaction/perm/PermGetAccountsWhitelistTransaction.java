@@ -14,9 +14,9 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.GetAccountsWhitelistResponse;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermissioningJsonRpcRequestFactory.GetAccountsWhitelistResponse;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,7 +24,7 @@ import java.util.List;
 public class PermGetAccountsWhitelistTransaction implements Transaction<List<String>> {
 
   @Override
-  public List<String> execute(final JsonRequestFactories node) {
+  public List<String> execute(final NodeRequests node) {
     try {
       GetAccountsWhitelistResponse response = node.perm().getAccountsWhitelist().send();
       assertThat(response.getResult()).isNotNull();

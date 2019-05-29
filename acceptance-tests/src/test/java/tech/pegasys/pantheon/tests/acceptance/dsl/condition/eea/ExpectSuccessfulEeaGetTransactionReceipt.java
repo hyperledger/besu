@@ -16,8 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaGetTransactionReceiptTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaRequestFactory.PrivateTransactionReceipt;
 
 public class ExpectSuccessfulEeaGetTransactionReceipt implements Condition {
 
@@ -30,7 +30,7 @@ public class ExpectSuccessfulEeaGetTransactionReceipt implements Condition {
 
   @Override
   public void verify(final Node node) {
-    final ResponseTypes.PrivateTransactionReceipt response = node.execute(transaction);
+    final PrivateTransactionReceipt response = node.execute(transaction);
     assertThat(response.getContractAddress()).isNotEqualTo("0x");
   }
 }

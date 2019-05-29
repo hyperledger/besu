@@ -14,9 +14,9 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.AddNodeResponse;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermissioningJsonRpcRequestFactory.AddNodeResponse;
 
 import java.io.IOException;
 import java.net.URI;
@@ -30,7 +30,7 @@ public class PermAddNodeTransaction implements Transaction<String> {
   }
 
   @Override
-  public String execute(final JsonRequestFactories node) {
+  public String execute(final NodeRequests node) {
     try {
       final AddNodeResponse result = node.perm().addNodesToWhitelist(enodeList).send();
       assertThat(result).isNotNull();

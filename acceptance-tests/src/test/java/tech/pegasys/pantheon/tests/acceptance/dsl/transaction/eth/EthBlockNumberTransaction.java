@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
@@ -25,7 +25,7 @@ public class EthBlockNumberTransaction implements Transaction<BigInteger> {
   EthBlockNumberTransaction() {}
 
   @Override
-  public BigInteger execute(final JsonRequestFactories node) {
+  public BigInteger execute(final NodeRequests node) {
     try {
       final org.web3j.protocol.core.methods.response.EthBlockNumber result =
           node.eth().ethBlockNumber().send();

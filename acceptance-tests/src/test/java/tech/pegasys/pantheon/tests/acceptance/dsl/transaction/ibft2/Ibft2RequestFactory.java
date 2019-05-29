@@ -10,31 +10,39 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.transaction;
+package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.DiscardResponse;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.ProposalsResponse;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.ProposeResponse;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.SignersBlockResponse;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.Request;
+import org.web3j.protocol.core.Response;
 
-public class Ibft2JsonRpcRequestFactory {
+public class Ibft2RequestFactory {
+
+  public static class ProposeResponse extends Response<Boolean> {}
+
+  public static class DiscardResponse extends Response<Boolean> {}
+
+  public static class SignersBlockResponse extends Response<List<Address>> {}
+
+  public static class ProposalsResponse extends Response<Map<Address, Boolean>> {}
 
   private final Web3jService web3jService;
 
-  public Ibft2JsonRpcRequestFactory(final Web3jService web3jService) {
+  public Ibft2RequestFactory(final Web3jService web3jService) {
     this.web3jService = web3jService;
   }
 
-  public Request<?, ProposeResponse> propose(final String address, final Boolean auth) {
+  Request<?, ProposeResponse> propose(final String address, final Boolean auth) {
     return new Request<>(
         "ibft_proposeValidatorVote",
         Arrays.asList(address, auth.toString()),
@@ -42,17 +50,17 @@ public class Ibft2JsonRpcRequestFactory {
         ProposeResponse.class);
   }
 
-  public Request<?, DiscardResponse> discard(final String address) {
+  Request<?, DiscardResponse> discard(final String address) {
     return new Request<>(
         "ibft_discardValidatorVote", singletonList(address), web3jService, DiscardResponse.class);
   }
 
-  public Request<?, ProposalsResponse> proposals() {
+  Request<?, ProposalsResponse> proposals() {
     return new Request<>(
         "ibft_getPendingVotes", emptyList(), web3jService, ProposalsResponse.class);
   }
 
-  public Request<?, SignersBlockResponse> validatorsAtBlock(final String blockNumber) {
+  Request<?, SignersBlockResponse> validatorsAtBlock(final String blockNumber) {
     return new Request<>(
         "ibft_getValidatorsByBlockNumber",
         singletonList(blockNumber),
@@ -60,7 +68,7 @@ public class Ibft2JsonRpcRequestFactory {
         SignersBlockResponse.class);
   }
 
-  public Request<?, SignersBlockResponse> signersAtHash(final Hash hash) {
+  Request<?, SignersBlockResponse> signersAtHash(final Hash hash) {
     return new Request<>(
         "ibft_getValidatorsByBlockHash",
         singletonList(hash.toString()),

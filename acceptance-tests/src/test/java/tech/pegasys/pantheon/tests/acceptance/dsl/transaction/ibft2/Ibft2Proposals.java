@@ -15,9 +15,9 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.ProposalsResponse;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2.Ibft2RequestFactory.ProposalsResponse;
 
 import java.io.IOException;
 import java.util.Map;
@@ -25,7 +25,7 @@ import java.util.Map;
 public class Ibft2Proposals implements Transaction<Map<Address, Boolean>> {
 
   @Override
-  public Map<Address, Boolean> execute(final JsonRequestFactories node) {
+  public Map<Address, Boolean> execute(final NodeRequests node) {
     try {
       final ProposalsResponse result = node.ibft().proposals().send();
       assertThat(result).isNotNull();

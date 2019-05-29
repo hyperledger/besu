@@ -63,6 +63,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
   private final Map<Node, PantheonPluginContextImpl> pantheonPluginContextMap = new HashMap<>();
 
   @Override
+  @SuppressWarnings("UnstableApiUsage")
   public void startNode(final PantheonNode node) {
     if (nodeExecutor == null || nodeExecutor.isShutdown()) {
       nodeExecutor = Executors.newCachedThreadPool();

@@ -26,7 +26,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.RemoveNodeSucce
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.WhiteListContainsKeyAndValue;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermissioningTransactions;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -35,11 +35,11 @@ import java.util.stream.Stream;
 
 public class Perm {
 
-  public Perm(final Transactions transactions) {
+  public Perm(final PermissioningTransactions transactions) {
     this.transactions = transactions;
   }
 
-  private final Transactions transactions;
+  private final PermissioningTransactions transactions;
 
   public Condition addAccountsToWhitelist(final String... accounts) {
     return new AddAccountsToWhitelistSuccessfully(transactions.addAccountsToWhitelist(accounts));

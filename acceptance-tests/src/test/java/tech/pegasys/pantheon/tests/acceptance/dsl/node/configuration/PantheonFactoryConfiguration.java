@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.node.factory;
+package tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration;
 
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
@@ -18,7 +18,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.GenesisConfigProvider;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,7 +34,7 @@ public class PantheonFactoryConfiguration {
   private final Optional<PermissioningConfiguration> permissioningConfiguration;
   private final Optional<String> keyFilePath;
   private final boolean devMode;
-  private final GenesisConfigProvider genesisConfigProvider;
+  private final GenesisConfigurationProvider genesisConfigProvider;
   private final boolean p2pEnabled;
   private final boolean discoveryEnabled;
   private final boolean bootnodeEligible;
@@ -51,7 +51,7 @@ public class PantheonFactoryConfiguration {
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final Optional<String> keyFilePath,
       final boolean devMode,
-      final GenesisConfigProvider genesisConfigProvider,
+      final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
@@ -114,7 +114,7 @@ public class PantheonFactoryConfiguration {
     return discoveryEnabled;
   }
 
-  public GenesisConfigProvider getGenesisConfigProvider() {
+  public GenesisConfigurationProvider getGenesisConfigProvider() {
     return genesisConfigProvider;
   }
 

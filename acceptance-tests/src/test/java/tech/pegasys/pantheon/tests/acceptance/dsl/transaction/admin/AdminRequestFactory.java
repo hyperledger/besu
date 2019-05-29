@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.transaction;
+package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.admin;
 
 import java.net.URI;
 import java.util.Collections;
@@ -19,13 +19,13 @@ import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
 
-public class AdminJsonRpcRequestFactory {
+public class AdminRequestFactory {
 
   public static class AdminAddPeerResponse extends Response<Boolean> {}
 
   private final Web3jService web3jService;
 
-  public AdminJsonRpcRequestFactory(final Web3jService web3jService) {
+  public AdminRequestFactory(final Web3jService web3jService) {
     this.web3jService = web3jService;
   }
 

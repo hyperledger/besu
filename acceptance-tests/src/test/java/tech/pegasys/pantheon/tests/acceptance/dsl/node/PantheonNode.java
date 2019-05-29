@@ -27,16 +27,17 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
-import tech.pegasys.pantheon.tests.acceptance.dsl.httptransaction.HttpRequestFactory;
-import tech.pegasys.pantheon.tests.acceptance.dsl.httptransaction.HttpTransaction;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.AdminJsonRpcRequestFactory;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.CliqueJsonRpcRequestFactory;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.CustomNetJsonRpcRequestFactory;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.EeaJsonRpcRequestFactory;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Ibft2JsonRpcRequestFactory;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.PermissioningJsonRpcRequestFactory;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.NodeConfiguration;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.admin.AdminRequestFactory;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique.CliqueRequestFactory;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaRequestFactory;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2.Ibft2RequestFactory;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.login.LoginRequestFactory;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.CustomNetJsonRpcRequestFactory;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermissioningJsonRpcRequestFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.waitcondition.WaitCondition;
 
 import java.io.File;
@@ -86,15 +87,15 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
   private final WebSocketConfiguration webSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
   private final Optional<PermissioningConfiguration> permissioningConfiguration;
-  private final GenesisConfigProvider genesisConfigProvider;
+  private final GenesisConfigurationProvider genesisConfigProvider;
   private final boolean devMode;
   private final boolean discoveryEnabled;
   private final List<URI> bootnodes = new ArrayList<>();
   private final boolean bootnodeEligible;
 
   private Optional<String> genesisConfig = Optional.empty();
-  private JsonRequestFactories jsonRequestFactories;
-  private HttpRequestFactory httpRequestFactory;
+  private NodeRequests nodeRequests;
+  private LoginRequestFactory loginRequestFactory;
   private boolean useWsForJsonRpc = false;
   private String token = null;
   private final List<String> plugins = new ArrayList<>();
@@ -110,7 +111,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final Optional<String> keyfilePath,
       final boolean devMode,
-      final GenesisConfigProvider genesisConfigProvider,
+      final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
@@ -244,9 +245,9 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
     return LOCALHOST;
   }
 
-  private JsonRequestFactories jsonRequestFactories() {
+  private NodeRequests nodeRequests() {
     Optional<WebSocketService> websocketService = Optional.empty();
-    if (jsonRequestFactories == null) {
+    if (nodeRequests == null) {
       final Web3jService web3jService;
 
       if (useWsForJsonRpc) {
@@ -275,23 +276,24 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
         }
       }
 
-      jsonRequestFactories =
-          new JsonRequestFactories(
+      nodeRequests =
+          new NodeRequests(
               new JsonRpc2_0Web3j(web3jService, 2000, Async.defaultExecutorService()),
-              new CliqueJsonRpcRequestFactory(web3jService),
-              new Ibft2JsonRpcRequestFactory(web3jService),
+              new CliqueRequestFactory(web3jService),
+              new Ibft2RequestFactory(web3jService),
               new PermissioningJsonRpcRequestFactory(web3jService),
-              new AdminJsonRpcRequestFactory(web3jService),
-              new EeaJsonRpcRequestFactory(web3jService),
+              new AdminRequestFactory(web3jService),
+              new EeaRequestFactory(web3jService),
               new CustomNetJsonRpcRequestFactory(web3jService),
-              websocketService);
+              websocketService,
+              loginRequestFactory());
     }
 
-    return jsonRequestFactories;
+    return nodeRequests;
   }
 
-  private HttpRequestFactory httpRequestFactory() {
-    if (httpRequestFactory == null) {
+  private LoginRequestFactory loginRequestFactory() {
+    if (loginRequestFactory == null) {
       final Optional<String> baseUrl;
       final String port;
       if (useWsForJsonRpc) {
@@ -301,10 +303,10 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
         baseUrl = jsonRpcBaseUrl();
         port = "8545";
       }
-      httpRequestFactory =
-          new HttpRequestFactory(baseUrl.orElse("http://" + LOCALHOST + ":" + port));
+      loginRequestFactory =
+          new LoginRequestFactory(baseUrl.orElse("http://" + LOCALHOST + ":" + port));
     }
-    return httpRequestFactory;
+    return loginRequestFactory;
   }
 
   /** All future JSON-RPC calls are made via a web sockets connection. */
@@ -316,13 +318,13 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
 
     useWsForJsonRpc = true;
 
-    if (jsonRequestFactories != null) {
-      jsonRequestFactories.shutdown();
-      jsonRequestFactories = null;
+    if (nodeRequests != null) {
+      nodeRequests.shutdown();
+      nodeRequests = null;
     }
 
-    if (httpRequestFactory != null) {
-      httpRequestFactory = null;
+    if (loginRequestFactory != null) {
+      loginRequestFactory = null;
     }
   }
 
@@ -330,13 +332,13 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
   @Override
   public void useAuthenticationTokenInHeaderForJsonRpc(final String token) {
 
-    if (jsonRequestFactories != null) {
-      jsonRequestFactories.shutdown();
-      jsonRequestFactories = null;
+    if (nodeRequests != null) {
+      nodeRequests.shutdown();
+      nodeRequests = null;
     }
 
-    if (httpRequestFactory != null) {
-      httpRequestFactory = null;
+    if (loginRequestFactory != null) {
+      loginRequestFactory = null;
     }
 
     this.token = token;
@@ -526,13 +528,14 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
 
   @Override
   public void stop() {
-    if (jsonRequestFactories != null) {
-      jsonRequestFactories.shutdown();
-      jsonRequestFactories = null;
+    if (nodeRequests != null) {
+      nodeRequests.shutdown();
+      nodeRequests = null;
     }
   }
 
   @Override
+  @SuppressWarnings("UnstableApiUsage")
   public void close() {
     stop();
     try {
@@ -543,7 +546,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
   }
 
   @Override
-  public GenesisConfigProvider getGenesisConfigProvider() {
+  public GenesisConfigurationProvider getGenesisConfigProvider() {
     return genesisConfigProvider;
   }
 
@@ -559,12 +562,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
 
   @Override
   public <T> T execute(final Transaction<T> transaction) {
-    return transaction.execute(jsonRequestFactories());
-  }
-
-  @Override
-  public <T> T executeHttpTransaction(final HttpTransaction<T> transaction) {
-    return transaction.execute(httpRequestFactory());
+    return transaction.execute(nodeRequests());
   }
 
   @Override

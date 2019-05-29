@@ -15,9 +15,9 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.SignersBlockResponse;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2.Ibft2RequestFactory.SignersBlockResponse;
 
 import java.io.IOException;
 import java.util.List;
@@ -30,7 +30,7 @@ public class Ibft2GetValidators implements Transaction<List<Address>> {
   }
 
   @Override
-  public List<Address> execute(final JsonRequestFactories node) {
+  public List<Address> execute(final NodeRequests node) {
     try {
       final SignersBlockResponse result = node.ibft().validatorsAtBlock(blockNumber).send();
       assertThat(result).isNotNull();

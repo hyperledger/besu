@@ -51,4 +51,8 @@ public class EthTransactions {
       final String transactionData) {
     return new EthSendRawTransactionTransaction(transactionData);
   }
+
+  public EthGetTransactionCountTransaction getTransactionCount(final String accountAddress) {
+    return new EthGetTransactionCountTransaction(accountAddress);
+  }
 }

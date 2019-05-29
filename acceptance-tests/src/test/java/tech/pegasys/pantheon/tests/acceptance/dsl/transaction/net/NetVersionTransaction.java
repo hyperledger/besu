@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import org.web3j.protocol.core.methods.response.NetVersion;
@@ -24,7 +24,7 @@ public class NetVersionTransaction implements Transaction<String> {
   NetVersionTransaction() {}
 
   @Override
-  public String execute(final JsonRequestFactories node) {
+  public String execute(final NodeRequests node) {
     try {
       final NetVersion result = node.net().netVersion().send();
       assertThat(result).isNotNull();

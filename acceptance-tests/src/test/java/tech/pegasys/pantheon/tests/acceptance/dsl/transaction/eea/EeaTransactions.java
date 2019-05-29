@@ -22,4 +22,9 @@ public class EeaTransactions {
       final String address, final String privacyGroupId) {
     return new EeaGetTransactionCountTransaction(address, privacyGroupId);
   }
+
+  public EeaGetTransactionReceiptTransaction getPrivateTransactionReceipt(
+      final String transactionHash) {
+    return new EeaGetTransactionReceiptTransaction(transactionHash);
+  }
 }

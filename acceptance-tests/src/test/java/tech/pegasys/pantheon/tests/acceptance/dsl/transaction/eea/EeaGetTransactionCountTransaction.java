@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
@@ -34,7 +34,7 @@ public class EeaGetTransactionCountTransaction implements Transaction<BigInteger
   }
 
   @Override
-  public BigInteger execute(final JsonRequestFactories node) {
+  public BigInteger execute(final NodeRequests node) {
     try {
       EthGetTransactionCount result =
           node.eea().eeaGetTransactionCount(accountAddress, privacyGroupId).send();

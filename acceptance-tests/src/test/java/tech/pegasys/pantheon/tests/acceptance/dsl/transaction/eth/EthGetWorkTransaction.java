@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.JsonRequestFactories;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
@@ -26,7 +26,7 @@ public class EthGetWorkTransaction implements Transaction<String[]> {
   EthGetWorkTransaction() {}
 
   @Override
-  public String[] execute(final JsonRequestFactories node) {
+  public String[] execute(final NodeRequests node) {
     try {
       final EthGetWork result = node.eth().ethGetWork().send();
       assertThat(result).isNotNull();

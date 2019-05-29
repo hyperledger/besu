@@ -10,36 +10,19 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.transaction;
+package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea;
 
-import tech.pegasys.pantheon.ethereum.core.Address;
-
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
+import org.assertj.core.util.Lists;
+import org.web3j.protocol.Web3jService;
+import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
+import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.Log;
 
-public class ResponseTypes {
-  public static class ProposeResponse extends Response<Boolean> {}
-
-  public static class DiscardResponse extends Response<Boolean> {}
-
-  public static class SignersBlockResponse extends Response<List<Address>> {}
-
-  public static class ProposalsResponse extends Response<Map<Address, Boolean>> {}
-
-  public static class AddAccountsToWhitelistResponse extends Response<String> {}
-
-  public static class RemoveAccountsFromWhitelistResponse extends Response<String> {}
-
-  public static class GetAccountsWhitelistResponse extends Response<List<String>> {}
-
-  public static class AddNodeResponse extends Response<String> {}
-
-  public static class RemoveNodeResponse extends Response<String> {}
-
-  public static class GetNodesWhitelistResponse extends Response<List<String>> {}
+public class EeaRequestFactory {
 
   public static class PrivateTransactionReceiptResponse
       extends Response<PrivateTransactionReceipt> {}
@@ -92,5 +75,37 @@ public class ResponseTypes {
     public void setOutput(final String output) {
       this.output = output;
     }
+  }
+
+  private final Web3jService web3jService;
+
+  public EeaRequestFactory(final Web3jService web3jService) {
+    this.web3jService = web3jService;
+  }
+
+  Request<?, org.web3j.protocol.core.methods.response.EthSendTransaction> eeaSendRawTransaction(
+      final String signedTransactionData) {
+    return new Request<>(
+        "eea_sendRawTransaction",
+        Collections.singletonList(signedTransactionData),
+        web3jService,
+        org.web3j.protocol.core.methods.response.EthSendTransaction.class);
+  }
+
+  Request<?, PrivateTransactionReceiptResponse> eeaGetTransactionReceipt(final String txHash) {
+    return new Request<>(
+        "eea_getTransactionReceipt",
+        Lists.newArrayList(txHash),
+        web3jService,
+        PrivateTransactionReceiptResponse.class);
+  }
+
+  Request<?, EthGetTransactionCount> eeaGetTransactionCount(
+      final String accountAddress, final String privacyGroupId) {
+    return new Request<>(
+        "eea_getTransactionCount",
+        Lists.newArrayList(accountAddress, privacyGroupId),
+        web3jService,
+        EthGetTransactionCount.class);
   }
 }

@@ -10,31 +10,39 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.transaction;
+package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.DiscardResponse;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.ProposalsResponse;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.ProposeResponse;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes.SignersBlockResponse;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.Request;
+import org.web3j.protocol.core.Response;
 
-public class CliqueJsonRpcRequestFactory {
+public class CliqueRequestFactory {
+
+  public static class ProposeResponse extends Response<Boolean> {}
+
+  public static class DiscardResponse extends Response<Boolean> {}
+
+  public static class SignersBlockResponse extends Response<List<Address>> {}
+
+  public static class ProposalsResponse extends Response<Map<Address, Boolean>> {}
 
   private final Web3jService web3jService;
 
-  public CliqueJsonRpcRequestFactory(final Web3jService web3jService) {
+  public CliqueRequestFactory(final Web3jService web3jService) {
     this.web3jService = web3jService;
   }
 
-  public Request<?, ProposeResponse> cliquePropose(final String address, final Boolean auth) {
+  Request<?, ProposeResponse> cliquePropose(final String address, final Boolean auth) {
     return new Request<>(
         "clique_propose",
         Arrays.asList(address, auth.toString()),
@@ -42,21 +50,21 @@ public class CliqueJsonRpcRequestFactory {
         ProposeResponse.class);
   }
 
-  public Request<?, DiscardResponse> cliqueDiscard(final String address) {
+  Request<?, DiscardResponse> cliqueDiscard(final String address) {
     return new Request<>(
         "clique_discard", singletonList(address), web3jService, DiscardResponse.class);
   }
 
-  public Request<?, ProposalsResponse> cliqueProposals() {
+  Request<?, ProposalsResponse> cliqueProposals() {
     return new Request<>("clique_proposals", emptyList(), web3jService, ProposalsResponse.class);
   }
 
-  public Request<?, SignersBlockResponse> cliqueGetSigners(final String blockNumber) {
+  Request<?, SignersBlockResponse> cliqueGetSigners(final String blockNumber) {
     return new Request<>(
         "clique_getSigners", singletonList(blockNumber), web3jService, SignersBlockResponse.class);
   }
 
-  public Request<?, SignersBlockResponse> cliqueGetSignersAtHash(final Hash hash) {
+  Request<?, SignersBlockResponse> cliqueGetSignersAtHash(final Hash hash) {
     return new Request<>(
         "clique_getSignersAtHash",
         singletonList(hash.toString()),

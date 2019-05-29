@@ -16,8 +16,8 @@ import static org.junit.Assert.assertEquals;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ResponseTypes;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaRequestFactory.PrivateTransactionReceipt;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaTransactions;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.math.BigInteger;
@@ -25,17 +25,18 @@ import java.math.BigInteger;
 import org.web3j.utils.Numeric;
 
 public class ExpectValidPrivateContractValuesReturned extends GetValidPrivateTransactionReceipt {
+
   private final String returnValue;
 
   public ExpectValidPrivateContractValuesReturned(
-      final String returnValue, final Eea eea, final Transactions transactions) {
+      final String returnValue, final Eea eea, final EeaTransactions transactions) {
     super(eea, transactions);
     this.returnValue = returnValue;
   }
 
   @Override
   public void verify(final PantheonNode node, final String transactionHash) {
-    ResponseTypes.PrivateTransactionReceipt privateTxReceipt =
+    final PrivateTransactionReceipt privateTxReceipt =
         getPrivateTransactionReceipt(node, transactionHash);
 
     BytesValue output = BytesValue.fromHexString(privateTxReceipt.getOutput());

@@ -33,22 +33,22 @@ public class MiningAcceptanceTest extends AcceptanceTestBase {
   public void shouldMineTransactions() {
     final Account sender = accounts.createAccount("account1");
     final Account receiver = accounts.createAccount("account2");
-    minerNode.execute(transactions.createTransfer(sender, 50));
+    minerNode.execute(accountTransactions.createTransfer(sender, 50));
     cluster.verify(sender.balanceEquals(50));
 
-    minerNode.execute(transactions.createIncrementalTransfers(sender, receiver, 1));
+    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1));
     cluster.verify(receiver.balanceEquals(1));
 
-    minerNode.execute(transactions.createIncrementalTransfers(sender, receiver, 2));
+    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2));
     cluster.verify(receiver.balanceEquals(3));
 
-    minerNode.execute(transactions.createIncrementalTransfers(sender, receiver, 3));
+    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 3));
     cluster.verify(receiver.balanceEquals(6));
 
-    minerNode.execute(transactions.createIncrementalTransfers(sender, receiver, 4));
+    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 4));
     cluster.verify(receiver.balanceEquals(10));
 
-    minerNode.execute(transactions.createIncrementalTransfers(sender, receiver, 5));
+    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 5));
     cluster.verify(receiver.balanceEquals(15));
   }
 }

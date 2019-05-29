@@ -10,32 +10,27 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.httptransaction;
+package tech.pegasys.pantheon.tests.acceptance.dsl.condition.login;
 
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.login.LoginSuccessfulTransaction;
 
-import io.vertx.core.json.JsonObject;
+public class ExpectLoginSuccess implements Condition {
 
-public class LoginTransaction implements HttpTransaction<String> {
   private final String username;
   private final String password;
 
-  public LoginTransaction(final String username, final String password) {
+  public ExpectLoginSuccess(final String username, final String password) {
     this.username = username;
     this.password = password;
   }
 
   @Override
-  public String execute(final HttpRequestFactory httpFactory) {
-    try {
-      final JsonObject response = httpFactory.loginSuccessful(username, password);
-      final String token = response.getString("token");
-      return token;
-    } catch (IOException e) {
-      fail("Login request failed with exception: " + e.toString());
-      return null;
-    }
+  public void verify(final Node node) {
+    final String token = node.execute(new LoginSuccessfulTransaction(username, password));
+    assertThat(token).isNotBlank();
   }
 }
