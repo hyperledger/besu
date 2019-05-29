@@ -89,6 +89,7 @@ allprojects {
     } else {
       jcenter()
       mavenCentral()
+      mavenLocal()
       maven { url  "https://consensys.bintray.com/pegasys-repo" }
     }
   }

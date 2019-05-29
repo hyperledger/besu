@@ -41,14 +41,15 @@ public class PicoCLIOptionsPluginTest extends AcceptanceTestBase {
     node =
         pantheon.createPluginsNode(
             "node1",
-            Collections.singletonList("testPlugin"),
+            Collections.singletonList("testPlugins"),
             Collections.singletonList("--Xtest-option=" + MAGIC_WORDS));
     cluster.start(node);
   }
 
   @Test
   public void shouldRegister() throws IOException {
-    final Path registrationFile = node.homeDirectory().resolve("plugins/testPlugin.registered");
+    final Path registrationFile =
+        node.homeDirectory().resolve("plugins/pluginLifecycle.registered");
     waitForFile(registrationFile);
 
     // this assert is false as CLI will not be parsed at this point
@@ -58,7 +59,7 @@ public class PicoCLIOptionsPluginTest extends AcceptanceTestBase {
 
   @Test
   public void shouldStart() throws IOException {
-    final Path registrationFile = node.homeDirectory().resolve("plugins/testPlugin.started");
+    final Path registrationFile = node.homeDirectory().resolve("plugins/pluginLifecycle.started");
     waitForFile(registrationFile);
 
     // this assert is true as CLI will be parsed at this point
@@ -70,7 +71,7 @@ public class PicoCLIOptionsPluginTest extends AcceptanceTestBase {
   @Ignore("No way to do a graceful shutdown of Pantheon at the moment.")
   public void shouldStop() {
     cluster.stopNode(node);
-    waitForFile(node.homeDirectory().resolve("plugins/testPlugin.stopped"));
+    waitForFile(node.homeDirectory().resolve("plugins/pluginLifecycle.stopped"));
   }
 
   private void waitForFile(final Path path) {

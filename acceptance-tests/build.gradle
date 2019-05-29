@@ -31,9 +31,8 @@ dependencies {
   testImplementation project(':ethereum:permissioning')
   testImplementation project(':ethereum:rlp')
   testImplementation project(':metrics:core')
-  testImplementation project(':plugins')
-  testImplementation project(path: ':plugins', configuration: 'testArtifacts')
   testImplementation project(':pantheon')
+  testImplementation project(path: ':pantheon', configuration: 'testArtifacts')
   testImplementation project(':services:kvstore')
   testImplementation project(':testutil')
   testImplementation project(':util')
@@ -52,15 +51,16 @@ dependencies {
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:core'
   testImplementation 'org.web3j:crypto'
+  testImplementation 'tech.pegasys.pantheon:plugin-api'
 }
 
 test.enabled = false
 
 sourceSets {
-  test { resources {  srcDirs "${rootDir}/plugins/build/libs" } }
+  test { resources {  srcDirs "${rootDir}/pantheon/build/libs" } }
 }
 
-processTestResources.dependsOn(':plugins:testJar')
+processTestResources.dependsOn(':pantheon:testJar')
 
 task acceptanceTest(type: Test) {
   dependsOn(rootProject.installDist)

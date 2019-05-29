@@ -12,7 +12,9 @@
  */
 package tech.pegasys.pantheon.plugins;
 
-import tech.pegasys.pantheon.plugins.services.PantheonEvents;
+import tech.pegasys.pantheon.plugin.PantheonContext;
+import tech.pegasys.pantheon.plugin.PantheonPlugin;
+import tech.pegasys.pantheon.plugin.services.PantheonEvents;
 
 import java.io.File;
 import java.io.IOException;

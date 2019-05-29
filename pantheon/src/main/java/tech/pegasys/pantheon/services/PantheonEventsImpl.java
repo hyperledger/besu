@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.services;
 
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.eth.sync.BlockBroadcaster;
-import tech.pegasys.pantheon.plugins.services.PantheonEvents;
+import tech.pegasys.pantheon.plugin.services.PantheonEvents;
 
 import com.google.common.collect.ImmutableMap;
 import io.vertx.core.json.Json;
