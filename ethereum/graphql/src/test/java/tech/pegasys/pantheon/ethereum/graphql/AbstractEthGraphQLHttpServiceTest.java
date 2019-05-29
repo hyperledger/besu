@@ -85,6 +85,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
   String baseUrl;
 
   final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+  protected static final MediaType GRAPHQL = MediaType.parse("application/graphql; charset=utf-8");
 
   private MutableBlockchain blockchain;
 

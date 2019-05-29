@@ -51,7 +51,7 @@ public class GraphQLHttpServiceHostWhitelistTest {
   private static GraphQLHttpService service;
   private static OkHttpClient client;
   private static String baseUrl;
-  private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+  protected static final MediaType GRAPHQL = MediaType.parse("application/graphql; charset=utf-8");
   private final GraphQLConfiguration graphQLConfig = createGraphQLConfig();
   private final List<String> hostsWhitelist = Arrays.asList("ally", "friend");
 
@@ -135,7 +135,7 @@ public class GraphQLHttpServiceHostWhitelistTest {
   }
 
   private int doRequest(final String hostname) throws IOException {
-    final RequestBody body = RequestBody.create(JSON, "{protocolVersion}");
+    final RequestBody body = RequestBody.create(GRAPHQL, "{protocolVersion}");
 
     final Request build =
         new Request.Builder()

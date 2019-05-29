@@ -61,6 +61,7 @@ public class GraphQLHttpServiceTest {
   private static OkHttpClient client;
   private static String baseUrl;
   protected static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+  protected static final MediaType GRAPHQL = MediaType.parse("application/graphql; charset=utf-8");
   private static BlockchainQuery blockchainQueries;
   private static Synchronizer synchronizer;
   private static GraphQL graphQL;
@@ -165,18 +166,62 @@ public class GraphQLHttpServiceTest {
 
   @Test
   public void handleInvalidQuerySchema() throws Exception {
-    final RequestBody body = RequestBody.create(JSON, "{gasPrice1}");
+    final RequestBody body = RequestBody.create(GRAPHQL, "{gasPrice1}");
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      // assertThat(resp.code()).isEqualTo(200); // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
-      testHelper.assertValidGraphQLError(json); // Check result final
+      testHelper.assertValidGraphQLError(json);
+      assertThat(resp.code()).isEqualTo(400);
     }
   }
 
   @Test
-  public void getGasprice() throws Exception {
-    final RequestBody body = RequestBody.create(JSON, "{gasPrice}");
+  public void query_get() throws Exception {
+    final Wei price = Wei.of(16);
+    when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
+
+    try (final Response resp = client.newCall(buildGetRequest("?query={gasPrice}")).execute()) {
+      assertThat(resp.code()).isEqualTo(200);
+      final JsonObject json = new JsonObject(resp.body().string());
+      testHelper.assertValidGraphQLResult(json);
+      final String result = json.getJsonObject("data").getString("gasPrice");
+      assertThat(result).isEqualTo("0x10");
+    }
+  }
+
+  @Test
+  public void query_jsonPost() throws Exception {
+    final RequestBody body = RequestBody.create(JSON, "{\"query\":\"{gasPrice}\"}");
+    final Wei price = Wei.of(16);
+    when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
+
+    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
+      assertThat(resp.code()).isEqualTo(200); // Check general format of result
+      final JsonObject json = new JsonObject(resp.body().string());
+      testHelper.assertValidGraphQLResult(json);
+      final String result = json.getJsonObject("data").getString("gasPrice");
+      assertThat(result).isEqualTo("0x10");
+    }
+  }
+
+  @Test
+  public void query_graphqlPost() throws Exception {
+    final RequestBody body = RequestBody.create(GRAPHQL, "{gasPrice}");
+    final Wei price = Wei.of(16);
+    when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
+
+    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
+      assertThat(resp.code()).isEqualTo(200); // Check general format of result
+      final JsonObject json = new JsonObject(resp.body().string());
+      testHelper.assertValidGraphQLResult(json);
+      final String result = json.getJsonObject("data").getString("gasPrice");
+      assertThat(result).isEqualTo("0x10");
+    }
+  }
+
+  @Test
+  public void query_untypedPost() throws Exception {
+    final RequestBody body = RequestBody.create(null, "{gasPrice}");
     final Wei price = Wei.of(16);
     when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
 
@@ -226,10 +271,10 @@ public class GraphQLHttpServiceTest {
   @Test
   public void responseContainsJsonContentTypeHeader() throws Exception {
 
-    final RequestBody body = RequestBody.create(JSON, "{gasPrice}");
+    final RequestBody body = RequestBody.create(GRAPHQL, "{gasPrice}");
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.header("Content-Type")).isEqualTo("application/json");
+      assertThat(resp.header("Content-Type")).isEqualTo(JSON.toString());
     }
   }
 
@@ -248,7 +293,7 @@ public class GraphQLHttpServiceTest {
 
     final String query = "{block(hash:\"" + blockHash.toString() + "\") {ommerCount}}";
 
-    final RequestBody body = RequestBody.create(JSON, query);
+    final RequestBody body = RequestBody.create(GRAPHQL, query);
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
       final String jsonStr = resp.body().string();
@@ -272,7 +317,7 @@ public class GraphQLHttpServiceTest {
 
     final String query = "{block(number:\"3\") {ommerCount}}";
 
-    final RequestBody body = RequestBody.create(JSON, query);
+    final RequestBody body = RequestBody.create(GRAPHQL, query);
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
       final String jsonStr = resp.body().string();
@@ -296,7 +341,7 @@ public class GraphQLHttpServiceTest {
 
     final String query = "{block {ommerCount}}";
 
-    final RequestBody body = RequestBody.create(JSON, query);
+    final RequestBody body = RequestBody.create(GRAPHQL, query);
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
       final String jsonStr = resp.body().string();
