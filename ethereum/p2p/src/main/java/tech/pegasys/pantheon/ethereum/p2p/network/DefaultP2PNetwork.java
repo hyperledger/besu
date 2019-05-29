@@ -237,6 +237,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
         "netty_boss_pending_tasks",
         "The number of pending tasks in the Netty boss event loop",
         pendingTaskCounter(boss));
+
+    metricsSystem.createIntegerGauge(
+        MetricCategory.NETWORK,
+        "peers_limit",
+        "Maximum P2P peer connections that can be established",
+        () -> maxPeers);
   }
 
   public static Builder builder() {
