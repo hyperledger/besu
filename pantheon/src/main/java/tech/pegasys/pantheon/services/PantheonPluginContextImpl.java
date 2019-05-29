@@ -10,13 +10,13 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.plugins.internal;
+package tech.pegasys.pantheon.services;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
-import tech.pegasys.pantheon.plugins.PantheonContext;
-import tech.pegasys.pantheon.plugins.PantheonPlugin;
+import tech.pegasys.pantheon.plugin.PantheonContext;
+import tech.pegasys.pantheon.plugin.PantheonPlugin;
 
 import java.io.IOException;
 import java.net.MalformedURLException;

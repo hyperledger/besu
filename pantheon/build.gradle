@@ -41,7 +41,6 @@ dependencies {
   implementation project(':ethereum:permissioning')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:rlp')
-  implementation project(':plugins')
   implementation project(':metrics:core')
   implementation project(':services:kvstore')
 
@@ -53,6 +52,7 @@ dependencies {
   implementation 'net.consensys.cava:cava-toml'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.springframework.security:spring-security-crypto'
+  implementation 'tech.pegasys.pantheon:plugin-api'
 
   runtime 'org.apache.logging.log4j:log4j-core'
   runtime 'org.apache.logging.log4j:log4j-slf4j-impl'
@@ -61,6 +61,7 @@ dependencies {
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
   testImplementation 'com.squareup.okhttp3:okhttp'
+  testImplementation 'com.google.auto.service:auto-service'
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
@@ -75,3 +76,21 @@ task writeInfoFile(type: ProjectPropertiesFile) {
 }
 
 compileJava.dependsOn(writeInfoFile)
+
+task testJar(type: Jar) {
+  archiveName 'testPlugins.jar'
+  manifest {
+    attributes(
+      'Specification-Title': baseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': baseName,
+      'Implementation-Version': calculateVersion()
+      )
+  }
+  archiveClassifier = 'tests'
+  from sourceSets.test.output
+}
+
+configurations { testArtifacts }
+
+artifacts { testArtifacts testJar }

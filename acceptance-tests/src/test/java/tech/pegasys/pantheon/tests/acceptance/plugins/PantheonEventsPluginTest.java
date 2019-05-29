@@ -35,7 +35,7 @@ public class PantheonEventsPluginTest extends AcceptanceTestBase {
     minerNode = pantheon.createMinerNode("minerNode");
     pluginNode =
         pantheon.createPluginsNode(
-            "node1", Collections.singletonList("testPlugin"), Collections.emptyList());
+            "node1", Collections.singletonList("testPlugins"), Collections.emptyList());
     cluster.start(pluginNode, minerNode);
   }
 

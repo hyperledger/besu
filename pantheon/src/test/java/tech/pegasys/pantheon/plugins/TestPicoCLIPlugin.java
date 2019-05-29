@@ -12,7 +12,9 @@
  */
 package tech.pegasys.pantheon.plugins;
 
-import tech.pegasys.pantheon.plugins.services.PicoCLIOptions;
+import tech.pegasys.pantheon.plugin.PantheonContext;
+import tech.pegasys.pantheon.plugin.PantheonPlugin;
+import tech.pegasys.pantheon.plugin.services.PicoCLIOptions;
 
 import java.io.File;
 import java.io.IOException;
@@ -91,7 +93,7 @@ public class TestPicoCLIPlugin implements PantheonPlugin {
   /** This is used to signal to the acceptance test that certain tasks were completed. */
   private void writeSignal(final String signal) {
     try {
-      final File callbackFile = new File(callbackDir, "testPlugin." + signal);
+      final File callbackFile = new File(callbackDir, "pluginLifecycle." + signal);
       if (!callbackFile.getParentFile().exists()) {
         callbackFile.getParentFile().mkdirs();
         callbackFile.getParentFile().deleteOnExit();

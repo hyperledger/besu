@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.services;
 
-import tech.pegasys.pantheon.plugins.services.PicoCLIOptions;
+import tech.pegasys.pantheon.plugin.services.PicoCLIOptions;
 
 import picocli.CommandLine;
 
