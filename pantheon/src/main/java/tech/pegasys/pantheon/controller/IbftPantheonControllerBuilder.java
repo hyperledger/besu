@@ -51,6 +51,7 @@ import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
@@ -76,6 +77,7 @@ public class IbftPantheonControllerBuilder extends PantheonControllerBuilder<Ibf
   private IbftEventQueue ibftEventQueue;
   private IbftConfigOptions ibftConfig;
   private ValidatorPeers peers;
+  private final BlockInterface blockInterface = new IbftBlockInterface();
 
   @Override
   protected void prepForBuild() {
@@ -116,7 +118,6 @@ public class IbftPantheonControllerBuilder extends PantheonControllerBuilder<Ibf
             miningParameters,
             Util.publicKeyToAddress(nodeKeys.getPublicKey()));
 
-    final BlockInterface blockInterface = new IbftBlockInterface();
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockchain, blockInterface, true);
 
@@ -210,6 +211,15 @@ public class IbftPantheonControllerBuilder extends PantheonControllerBuilder<Ibf
   @Override
   protected ProtocolSchedule<IbftContext> createProtocolSchedule() {
     return IbftProtocolSchedule.create(genesisConfig.getConfigOptions(), privacyParameters);
+  }
+
+  @Override
+  protected void validateContext(final ProtocolContext<IbftContext> context) {
+    final BlockHeader genesisBlockHeader = context.getBlockchain().getGenesisBlock().getHeader();
+
+    if (blockInterface.validatorsInBlock(genesisBlockHeader).isEmpty()) {
+      LOG.warn("Genesis block contains no signers - chain will not progress.");
+    }
   }
 
   @Override
