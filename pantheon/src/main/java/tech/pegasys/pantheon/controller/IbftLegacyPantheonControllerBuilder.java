@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.controller;
 
 import tech.pegasys.pantheon.config.IbftConfigOptions;
+import tech.pegasys.pantheon.consensus.common.BlockInterface;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
@@ -25,6 +26,7 @@ import tech.pegasys.pantheon.consensus.ibftlegacy.protocol.Istanbul64ProtocolMan
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
@@ -39,6 +41,7 @@ import org.apache.logging.log4j.Logger;
 public class IbftLegacyPantheonControllerBuilder extends PantheonControllerBuilder<IbftContext> {
 
   private static final Logger LOG = LogManager.getLogger();
+  private final BlockInterface blockInterface = new IbftLegacyBlockInterface();
 
   @Override
   protected SubProtocolConfiguration createSubProtocolConfiguration(
@@ -72,12 +75,21 @@ public class IbftLegacyPantheonControllerBuilder extends PantheonControllerBuild
     final VoteTallyCache voteTallyCache =
         new VoteTallyCache(
             blockchain,
-            new VoteTallyUpdater(epochManager, new IbftLegacyBlockInterface()),
+            new VoteTallyUpdater(epochManager, blockInterface),
             epochManager,
-            new IbftLegacyBlockInterface());
+            blockInterface);
 
     final VoteProposer voteProposer = new VoteProposer();
     return new IbftContext(voteTallyCache, voteProposer);
+  }
+
+  @Override
+  protected void validateContext(final ProtocolContext<IbftContext> context) {
+    final BlockHeader genesisBlockHeader = context.getBlockchain().getGenesisBlock().getHeader();
+
+    if (blockInterface.validatorsInBlock(genesisBlockHeader).isEmpty()) {
+      LOG.warn("Genesis block contains no signers - chain will not progress.");
+    }
   }
 
   @Override

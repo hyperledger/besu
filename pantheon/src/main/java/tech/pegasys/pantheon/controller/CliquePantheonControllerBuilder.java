@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.consensus.clique.blockcreation.CliqueBlockScheduler
 import tech.pegasys.pantheon.consensus.clique.blockcreation.CliqueMinerExecutor;
 import tech.pegasys.pantheon.consensus.clique.blockcreation.CliqueMiningCoordinator;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.CliqueJsonRpcMethodsFactory;
+import tech.pegasys.pantheon.consensus.common.BlockInterface;
 import tech.pegasys.pantheon.consensus.common.EpochManager;
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
@@ -29,6 +30,7 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
@@ -51,6 +53,7 @@ public class CliquePantheonControllerBuilder extends PantheonControllerBuilder<C
   private Address localAddress;
   private EpochManager epochManager;
   private long secondsBetweenBlocks;
+  private final BlockInterface blockInterface = new CliqueBlockInterface();
 
   @Override
   protected void prepForBuild() {
@@ -122,14 +125,23 @@ public class CliquePantheonControllerBuilder extends PantheonControllerBuilder<C
   }
 
   @Override
+  protected void validateContext(final ProtocolContext<CliqueContext> context) {
+    final BlockHeader genesisBlockHeader = context.getBlockchain().getGenesisBlock().getHeader();
+
+    if (blockInterface.validatorsInBlock(genesisBlockHeader).isEmpty()) {
+      LOG.warn("Genesis block contains no signers - chain will not progress.");
+    }
+  }
+
+  @Override
   protected CliqueContext createConsensusContext(
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     return new CliqueContext(
         new VoteTallyCache(
             blockchain,
-            new VoteTallyUpdater(epochManager, new CliqueBlockInterface()),
+            new VoteTallyUpdater(epochManager, blockInterface),
             epochManager,
-            new CliqueBlockInterface()),
+            blockInterface),
         new VoteProposer(),
         epochManager);
   }
