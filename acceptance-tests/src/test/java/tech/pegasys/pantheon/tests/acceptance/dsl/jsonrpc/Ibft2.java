@@ -14,8 +14,8 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.ibft.ExpectProposals;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.ibft.ExpectValidators;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.ibft2.ExpectProposals;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.ibft2.ExpectValidators;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions;
 
@@ -83,7 +83,7 @@ public class Ibft2 {
       final Map<Address, Boolean> proposalsAsAddress =
           this.proposals.entrySet().stream()
               .collect(Collectors.toMap(p -> p.getKey().getAddress(), Entry::getValue));
-      return new tech.pegasys.pantheon.tests.acceptance.dsl.condition.ibft.ExpectProposals(
+      return new tech.pegasys.pantheon.tests.acceptance.dsl.condition.ibft2.ExpectProposals(
           ibft, proposalsAsAddress);
     }
   }
