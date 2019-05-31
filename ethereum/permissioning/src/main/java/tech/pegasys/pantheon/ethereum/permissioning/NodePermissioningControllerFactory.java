@@ -45,7 +45,10 @@ public class NodePermissioningControllerFactory {
       if (localPermissioningConfiguration.isNodeWhitelistEnabled()) {
         NodeLocalConfigPermissioningController localProvider =
             new NodeLocalConfigPermissioningController(
-                localPermissioningConfiguration, new ArrayList<>(fixedNodes), localNodeId);
+                localPermissioningConfiguration,
+                new ArrayList<>(fixedNodes),
+                localNodeId,
+                metricsSystem);
         providers.add(localProvider);
       }
     }

@@ -14,6 +14,9 @@ package tech.pegasys.pantheon.ethereum.permissioning;
 
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningProvider;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodeWhitelistUpdatedEvent;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.enode.EnodeURL;
@@ -46,27 +49,50 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   private final Subscribers<Consumer<NodeWhitelistUpdatedEvent>> nodeWhitelistUpdatedObservers =
       new Subscribers<>();
 
+  private final Counter checkCounter;
+  private final Counter checkCounterPermitted;
+  private final Counter checkCounterUnpermitted;
+
   public NodeLocalConfigPermissioningController(
       final LocalPermissioningConfiguration permissioningConfiguration,
       final List<EnodeURL> fixedNodes,
-      final BytesValue localNodeId) {
+      final BytesValue localNodeId,
+      final MetricsSystem metricsSystem) {
     this(
         permissioningConfiguration,
         fixedNodes,
         localNodeId,
-        new WhitelistPersistor(permissioningConfiguration.getNodePermissioningConfigFilePath()));
+        new WhitelistPersistor(permissioningConfiguration.getNodePermissioningConfigFilePath()),
+        metricsSystem);
   }
 
   public NodeLocalConfigPermissioningController(
       final LocalPermissioningConfiguration configuration,
       final List<EnodeURL> fixedNodes,
       final BytesValue localNodeId,
-      final WhitelistPersistor whitelistPersistor) {
+      final WhitelistPersistor whitelistPersistor,
+      final MetricsSystem metricsSystem) {
     this.configuration = configuration;
     this.fixedNodes = fixedNodes;
     this.localNodeId = localNodeId;
     this.whitelistPersistor = whitelistPersistor;
     readNodesFromConfig(configuration);
+
+    this.checkCounter =
+        metricsSystem.createCounter(
+            MetricCategory.PERMISSIONING,
+            "node_local_check_count",
+            "Number of times the node local permissioning provider has been checked");
+    this.checkCounterPermitted =
+        metricsSystem.createCounter(
+            MetricCategory.PERMISSIONING,
+            "node_local_check_count_permitted",
+            "Number of times the node local permissioning provider has been checked and returned permitted");
+    this.checkCounterUnpermitted =
+        metricsSystem.createCounter(
+            MetricCategory.PERMISSIONING,
+            "node_local_check_count_unpermitted",
+            "Number of times the node local permissioning provider has been checked and returned unpermitted");
   }
 
   private void readNodesFromConfig(final LocalPermissioningConfiguration configuration) {
@@ -297,6 +323,13 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
 
   @Override
   public boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
-    return isPermitted(sourceEnode) && isPermitted(destinationEnode);
+    this.checkCounter.inc();
+    if (isPermitted(sourceEnode) && isPermitted(destinationEnode)) {
+      this.checkCounterPermitted.inc();
+      return true;
+    } else {
+      this.checkCounterUnpermitted.inc();
+      return false;
+    }
   }
 }
