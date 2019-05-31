@@ -295,7 +295,7 @@ public class RunnerBuilder {
             .map(
                 configuration -> {
                   final AccountLocalConfigPermissioningController whitelistController =
-                      new AccountLocalConfigPermissioningController(configuration);
+                      new AccountLocalConfigPermissioningController(configuration, metricsSystem);
                   transactionPool.setAccountFilter(whitelistController::contains);
                   return whitelistController;
                 });

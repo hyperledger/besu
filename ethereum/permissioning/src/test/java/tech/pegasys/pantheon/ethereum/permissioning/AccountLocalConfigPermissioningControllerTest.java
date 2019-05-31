@@ -25,6 +25,9 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -46,11 +49,35 @@ public class AccountLocalConfigPermissioningControllerTest {
   private AccountLocalConfigPermissioningController controller;
   @Mock private LocalPermissioningConfiguration permissioningConfig;
   @Mock private WhitelistPersistor whitelistPersistor;
+  @Mock private MetricsSystem metricsSystem;
+  @Mock private Counter checkCounter;
+  @Mock private Counter checkPermittedCounter;
+  @Mock private Counter checkUnpermittedCounter;
 
   @Before
   public void before() {
+
+    when(metricsSystem.createCounter(
+            MetricCategory.PERMISSIONING,
+            "account_local_check_count",
+            "Number of times the account local permissioning provider has been checked"))
+        .thenReturn(checkCounter);
+
+    when(metricsSystem.createCounter(
+            MetricCategory.PERMISSIONING,
+            "account_local_check_count_permitted",
+            "Number of times the account local permissioning provider has been checked and returned permitted"))
+        .thenReturn(checkPermittedCounter);
+
+    when(metricsSystem.createCounter(
+            MetricCategory.PERMISSIONING,
+            "account_local_check_count_unpermitted",
+            "Number of times the account local permissioning provider has been checked and returned unpermitted"))
+        .thenReturn(checkUnpermittedCounter);
+
     controller =
-        new AccountLocalConfigPermissioningController(permissioningConfig, whitelistPersistor);
+        new AccountLocalConfigPermissioningController(
+            permissioningConfig, whitelistPersistor, metricsSystem);
   }
 
   @Test
@@ -59,7 +86,8 @@ public class AccountLocalConfigPermissioningControllerTest {
     when(permissioningConfig.getAccountWhitelist())
         .thenReturn(singletonList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
     controller =
-        new AccountLocalConfigPermissioningController(permissioningConfig, whitelistPersistor);
+        new AccountLocalConfigPermissioningController(
+            permissioningConfig, whitelistPersistor, metricsSystem);
 
     assertThat(controller.getAccountWhitelist())
         .contains("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
@@ -71,7 +99,8 @@ public class AccountLocalConfigPermissioningControllerTest {
     when(permissioningConfig.getAccountWhitelist())
         .thenReturn(singletonList("0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73"));
     controller =
-        new AccountLocalConfigPermissioningController(permissioningConfig, whitelistPersistor);
+        new AccountLocalConfigPermissioningController(
+            permissioningConfig, whitelistPersistor, metricsSystem);
 
     assertThat(controller.getAccountWhitelist())
         .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
@@ -82,7 +111,8 @@ public class AccountLocalConfigPermissioningControllerTest {
     when(permissioningConfig.isAccountWhitelistEnabled()).thenReturn(true);
     when(permissioningConfig.getAccountWhitelist()).thenReturn(new ArrayList<>());
     controller =
-        new AccountLocalConfigPermissioningController(permissioningConfig, whitelistPersistor);
+        new AccountLocalConfigPermissioningController(
+            permissioningConfig, whitelistPersistor, metricsSystem);
 
     assertThat(controller.contains("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73")).isFalse();
   }
@@ -245,7 +275,8 @@ public class AccountLocalConfigPermissioningControllerTest {
     when(permissioningConfig.getAccountWhitelist())
         .thenReturn(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
     controller =
-        new AccountLocalConfigPermissioningController(permissioningConfig, whitelistPersistor);
+        new AccountLocalConfigPermissioningController(
+            permissioningConfig, whitelistPersistor, metricsSystem);
 
     controller.reload();
 
@@ -259,7 +290,8 @@ public class AccountLocalConfigPermissioningControllerTest {
     when(permissioningConfig.getAccountWhitelist())
         .thenReturn(Arrays.asList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
     controller =
-        new AccountLocalConfigPermissioningController(permissioningConfig, whitelistPersistor);
+        new AccountLocalConfigPermissioningController(
+            permissioningConfig, whitelistPersistor, metricsSystem);
 
     final Throwable thrown = catchThrowable(() -> controller.reload());
 
@@ -290,7 +322,8 @@ public class AccountLocalConfigPermissioningControllerTest {
     when(permissioningConfig.getAccountWhitelist())
         .thenReturn(singletonList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
     controller =
-        new AccountLocalConfigPermissioningController(permissioningConfig, whitelistPersistor);
+        new AccountLocalConfigPermissioningController(
+            permissioningConfig, whitelistPersistor, metricsSystem);
 
     assertThat(controller.contains("0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73")).isTrue();
   }
@@ -301,15 +334,20 @@ public class AccountLocalConfigPermissioningControllerTest {
     when(permissioningConfig.getAccountWhitelist())
         .thenReturn(singletonList("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
     controller =
-        new AccountLocalConfigPermissioningController(permissioningConfig, whitelistPersistor);
+        new AccountLocalConfigPermissioningController(
+            permissioningConfig, whitelistPersistor, metricsSystem);
 
     final Transaction transaction = mock(Transaction.class);
     when(transaction.getSender())
         .thenReturn(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
 
+    verifyCountersUntouched();
+
     boolean permitted = controller.isPermitted(transaction);
 
     assertThat(permitted).isTrue();
+
+    verifyCountersPermitted();
   }
 
   @Test
@@ -317,9 +355,13 @@ public class AccountLocalConfigPermissioningControllerTest {
     final Transaction transactionWithoutSender = mock(Transaction.class);
     when(transactionWithoutSender.getSender()).thenReturn(null);
 
+    verifyCountersUntouched();
+
     boolean permitted = controller.isPermitted(transactionWithoutSender);
 
     assertThat(permitted).isFalse();
+
+    verifyCountersUnpermitted();
   }
 
   private Path createPermissionsFileWithAccount(final String account) throws IOException {
@@ -328,5 +370,23 @@ public class AccountLocalConfigPermissioningControllerTest {
     permissionsFile.toFile().deleteOnExit();
     Files.write(permissionsFile, nodePermissionsFileContent.getBytes(StandardCharsets.UTF_8));
     return permissionsFile;
+  }
+
+  private void verifyCountersUntouched() {
+    verify(checkCounter, times(0)).inc();
+    verify(checkPermittedCounter, times(0)).inc();
+    verify(checkUnpermittedCounter, times(0)).inc();
+  }
+
+  private void verifyCountersPermitted() {
+    verify(checkCounter, times(1)).inc();
+    verify(checkPermittedCounter, times(1)).inc();
+    verify(checkUnpermittedCounter, times(0)).inc();
+  }
+
+  private void verifyCountersUnpermitted() {
+    verify(checkCounter, times(1)).inc();
+    verify(checkPermittedCounter, times(0)).inc();
+    verify(checkUnpermittedCounter, times(1)).inc();
   }
 }
