@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync.state;
 
+import static java.util.Collections.newSetFromMap;
+
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 
@@ -22,8 +24,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
-import io.netty.util.internal.ConcurrentSet;
 
 public class PendingBlocks {
 
@@ -47,7 +47,7 @@ public class PendingBlocks {
         .computeIfAbsent(
             pendingBlock.getHeader().getParentHash(),
             h -> {
-              final ConcurrentSet<Hash> set = new ConcurrentSet<>();
+              final Set<Hash> set = newSetFromMap(new ConcurrentHashMap<>());
               // Go ahead and add our value at construction, so that we don't set an empty set which
               // could be removed in deregisterPendingBlock
               set.add(pendingBlock.getHash());
