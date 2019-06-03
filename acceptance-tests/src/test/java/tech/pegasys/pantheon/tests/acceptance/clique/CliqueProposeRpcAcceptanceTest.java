@@ -13,9 +13,9 @@
 package tech.pegasys.pantheon.tests.acceptance.clique;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.ExpectNonceVote.CLIQUE_NONCE_VOTE;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
-import tech.pegasys.pantheon.tests.acceptance.dsl.waitcondition.WaitCondition;
 
 import java.io.IOException;
 
@@ -35,10 +35,8 @@ public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
     cluster.start(minerNode1, minerNode2, minerNode3);
 
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2));
-    final WaitCondition cliqueValidatorsChanged = wait.cliqueValidatorsChanged(minerNode1);
     minerNode1.execute(cliqueTransactions.createAddProposal(minerNode3));
     minerNode2.execute(cliqueTransactions.createAddProposal(minerNode3));
-    cluster.waitUntil(cliqueValidatorsChanged);
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2, minerNode3));
   }
 
@@ -54,10 +52,10 @@ public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
     cluster.start(minerNode1, minerNode2, minerNode3);
 
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2, minerNode3));
-    final WaitCondition cliqueValidatorsChanged = wait.cliqueValidatorsChanged(minerNode1);
+    final Condition cliqueValidatorsChanged = clique.awaitSignerSetChange(minerNode1);
     minerNode1.execute(cliqueTransactions.createRemoveProposal(minerNode3));
     minerNode2.execute(cliqueTransactions.createRemoveProposal(minerNode3));
-    cluster.waitUntil(cliqueValidatorsChanged);
+    cluster.verify(cliqueValidatorsChanged);
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2));
   }
 
@@ -74,7 +72,7 @@ public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
 
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2));
     minerNode1.execute(cliqueTransactions.createAddProposal(minerNode3));
-    minerNode1.waitUntil(wait.chainHeadHasProgressedByAtLeast(minerNode1, 1));
+    minerNode1.verify(blockchain.reachesHeight(minerNode1, 1));
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2));
   }
 
@@ -87,7 +85,7 @@ public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
 
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2, minerNode3));
     minerNode1.execute(cliqueTransactions.createRemoveProposal(minerNode3));
-    minerNode1.waitUntil(wait.chainHeadHasProgressedByAtLeast(minerNode1, 1));
+    minerNode1.verify(blockchain.reachesHeight(minerNode1, 1));
     cluster.verify(clique.validatorsEqual(minerNode1, minerNode2, minerNode3));
   }
 
@@ -103,12 +101,12 @@ public class CliqueProposeRpcAcceptanceTest extends AcceptanceTestBase {
     cluster.start(minerNode1, minerNode2, minerNode3);
 
     minerNode1.execute(cliqueTransactions.createAddProposal(minerNode3));
-    minerNode1.waitUntil(wait.chainHeadHasProgressedByAtLeast(minerNode1, 1));
+    minerNode1.verify(blockchain.reachesHeight(minerNode1, 1));
     minerNode1.verify(blockchain.beneficiaryEquals(minerNode3));
     minerNode1.verify(clique.nonceVoteEquals(CLIQUE_NONCE_VOTE.AUTH));
 
     minerNode1.execute(cliqueTransactions.createRemoveProposal(minerNode2));
-    minerNode1.waitUntil(wait.chainHeadHasProgressedByAtLeast(minerNode1, 1));
+    minerNode1.verify(blockchain.reachesHeight(minerNode1, 1));
     minerNode1.verify(blockchain.beneficiaryEquals(minerNode2));
     minerNode1.verify(clique.nonceVoteEquals(CLIQUE_NONCE_VOTE.DROP));
   }

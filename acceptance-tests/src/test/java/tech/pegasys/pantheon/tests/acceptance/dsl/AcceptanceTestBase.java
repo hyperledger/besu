@@ -34,7 +34,6 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2.Ibft2Transac
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermissioningTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.web3.Web3Transactions;
-import tech.pegasys.pantheon.tests.acceptance.dsl.waitcondition.WaitConditions;
 
 import org.junit.After;
 
@@ -60,7 +59,6 @@ public class AcceptanceTestBase {
   protected final PermissioningTransactions permissioningTransactions;
   protected final ContractTransactions contractTransactions;
   protected final Web3 web3;
-  protected final WaitConditions wait;
 
   protected AcceptanceTestBase() {
     ethTransactions = new EthTransactions();
@@ -83,7 +81,6 @@ public class AcceptanceTestBase {
     web3 = new Web3(new Web3Transactions());
     pantheon = new PantheonNodeFactory();
     contractVerifier = new ContractVerifier(accounts.getPrimaryBenefactor());
-    wait = new WaitConditions(ethTransactions, cliqueTransactions, ibftTwoTransactions);
     permissionedNodeBuilder = new PermissionedNodeBuilder();
   }
 

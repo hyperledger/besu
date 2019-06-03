@@ -12,10 +12,14 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
 
+import static tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique.CliqueTransactions.LATEST;
+
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.ibft2.AwaitValidatorSetChange;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.ibft2.ExpectProposals;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.ibft2.ExpectValidators;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions;
 
@@ -51,6 +55,10 @@ public class Ibft2 {
 
   private Address[] validatorAddresses(final PantheonNode[] validators) {
     return Arrays.stream(validators).map(PantheonNode::getAddress).sorted().toArray(Address[]::new);
+  }
+
+  public Condition awaitValidatorSetChange(final Node node) {
+    return new AwaitValidatorSetChange(node.execute(ibftTwo.createGetValidators(LATEST)), ibftTwo);
   }
 
   public Condition noProposals() {
