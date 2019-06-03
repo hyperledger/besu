@@ -28,6 +28,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.ExpectProposa
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.ExpectValidators;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.ExpectValidatorsAtBlock;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.ExpectValidatorsAtBlockHash;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.ExpectedBlockHasProposer;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique.CliqueTransactions;
@@ -102,6 +103,10 @@ public class Clique {
 
   private Address[] validatorAddresses(final PantheonNode[] validators) {
     return Arrays.stream(validators).map(PantheonNode::getAddress).sorted().toArray(Address[]::new);
+  }
+
+  public Condition blockIsCreatedByProposer(final PantheonNode proposer) {
+    return new ExpectedBlockHasProposer(eth, proposer.getAddress());
   }
 
   public static class ProposalsConfig {
