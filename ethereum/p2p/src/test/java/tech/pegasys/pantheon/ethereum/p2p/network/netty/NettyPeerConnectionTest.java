@@ -13,7 +13,12 @@
 package tech.pegasys.pantheon.ethereum.p2p.network.netty;
 
 import static java.util.Collections.emptyList;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
@@ -30,7 +35,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoop;
-import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -71,7 +75,21 @@ public class NettyPeerConnectionTest {
   @Test
   public void shouldThrowExceptionWhenAttemptingToSendMessageOnClosedConnection() {
     connection.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-    Assertions.assertThatThrownBy(() -> connection.send(null, HelloMessage.create(peerInfo)))
+    assertThatThrownBy(() -> connection.send(null, HelloMessage.create(peerInfo)))
         .isInstanceOfAny(PeerNotConnected.class);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenAttemptingToSendMessageWhileDisconnecting() {
+    doAnswer(
+            invocation ->
+                assertThatThrownBy(() -> connection.send(null, HelloMessage.create(peerInfo)))
+                    .isInstanceOfAny(PeerNotConnected.class))
+        .when(callbacks)
+        .invokeDisconnect(any(), any(), anyBoolean());
+
+    connection.disconnect(DisconnectReason.USELESS_PEER);
+
+    verify(callbacks).invokeDisconnect(connection, DisconnectReason.USELESS_PEER, false);
   }
 }
