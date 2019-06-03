@@ -23,7 +23,6 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeRunner;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
-import tech.pegasys.pantheon.tests.acceptance.dsl.waitcondition.WaitCondition;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -167,11 +166,5 @@ public class Cluster implements AutoCloseable {
     nodes.values().stream()
         .filter(node -> pantheonNodeRunner.isActive(node.getName()))
         .forEach(condition::verify);
-  }
-
-  public void waitUntil(final WaitCondition condition) {
-    for (final Node node : nodes.values()) {
-      node.waitUntil(condition);
-    }
   }
 }

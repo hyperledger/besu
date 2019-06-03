@@ -28,7 +28,7 @@ public class Ibft2MiningAcceptanceTest extends AcceptanceTestBase {
     final PantheonNode minerNode = pantheon.createIbft2Node("miner1");
     cluster.start(minerNode);
 
-    cluster.waitUntil(wait.chainHeadHasProgressedByAtLeast(minerNode, 1));
+    cluster.verify(blockchain.reachesHeight(minerNode, 1));
 
     final Account sender = accounts.createAccount("account1");
     final Account receiver = accounts.createAccount("account2");
@@ -51,7 +51,7 @@ public class Ibft2MiningAcceptanceTest extends AcceptanceTestBase {
     final PantheonNode minerNode4 = pantheon.createIbft2Node("miner4");
     cluster.start(minerNode1, minerNode2, minerNode3, minerNode4);
 
-    cluster.waitUntil(wait.chainHeadHasProgressedByAtLeast(minerNode1, 1, 85));
+    cluster.verify(blockchain.reachesHeight(minerNode1, 1, 85));
 
     final Account sender = accounts.createAccount("account1");
     final Account receiver = accounts.createAccount("account2");
@@ -82,7 +82,7 @@ public class Ibft2MiningAcceptanceTest extends AcceptanceTestBase {
         pantheon.createIbft2NodeWithValidators("non-validator", validators);
     cluster.start(validator1, validator2, validator3, nonValidatorNode);
 
-    cluster.waitUntil(wait.chainHeadHasProgressedByAtLeast(validator1, 1, 85));
+    cluster.verify(blockchain.reachesHeight(validator1, 1, 85));
 
     final Account sender = accounts.createAccount("account1");
     final Account receiver = accounts.createAccount("account2");
@@ -109,7 +109,7 @@ public class Ibft2MiningAcceptanceTest extends AcceptanceTestBase {
     final PantheonNode nonProposerNode = validators.get(validators.size() - 1);
     cluster.start(validators);
 
-    cluster.waitUntil(wait.chainHeadHasProgressedByAtLeast(minerNode1, 1, 85));
+    cluster.verify(blockchain.reachesHeight(minerNode1, 1, 85));
 
     final Account receiver = accounts.createAccount("account2");
 

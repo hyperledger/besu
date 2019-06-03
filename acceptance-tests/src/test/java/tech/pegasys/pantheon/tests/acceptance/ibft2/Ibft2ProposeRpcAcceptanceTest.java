@@ -13,8 +13,8 @@
 package tech.pegasys.pantheon.tests.acceptance.ibft2;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
-import tech.pegasys.pantheon.tests.acceptance.dsl.waitcondition.WaitCondition;
 
 import java.io.IOException;
 
@@ -38,18 +38,18 @@ public class Ibft2ProposeRpcAcceptanceTest extends AcceptanceTestBase {
     cluster.start(validator1, validator2, validator3, nonValidatorNode);
 
     cluster.verify(ibftTwo.validatorsEqual(validator1, validator2, validator3));
-    final WaitCondition addedCondition = wait.ibftValidatorsChanged(validator1);
+    final Condition addedCondition = ibftTwo.awaitValidatorSetChange(validator1);
     validator1.execute(ibftTwoTransactions.createAddProposal(nonValidatorNode));
     validator2.execute(ibftTwoTransactions.createAddProposal(nonValidatorNode));
 
-    cluster.waitUntil(addedCondition);
+    cluster.verify(addedCondition);
     cluster.verify(ibftTwo.validatorsEqual(validator1, validator2, validator3, nonValidatorNode));
 
-    final WaitCondition removedCondition = wait.ibftValidatorsChanged(validator1);
+    final Condition removedCondition = ibftTwo.awaitValidatorSetChange(validator1);
     validator2.execute(ibftTwoTransactions.createRemoveProposal(nonValidatorNode));
     validator3.execute(ibftTwoTransactions.createRemoveProposal(nonValidatorNode));
     nonValidatorNode.execute(ibftTwoTransactions.createRemoveProposal(nonValidatorNode));
-    cluster.waitUntil(removedCondition);
+    cluster.verify(removedCondition);
     cluster.verify(ibftTwo.validatorsEqual(validator1, validator2, validator3));
   }
 }

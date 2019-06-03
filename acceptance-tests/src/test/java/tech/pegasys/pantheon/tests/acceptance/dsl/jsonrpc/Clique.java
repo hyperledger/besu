@@ -14,12 +14,14 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
 
 import static java.util.Collections.emptyList;
 import static tech.pegasys.pantheon.ethereum.core.Hash.fromHexString;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique.CliqueTransactions.LATEST;
 
 import tech.pegasys.pantheon.config.CliqueConfigOptions;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.blockchain.ExpectBlockNotCreated;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.AwaitSignerSetChange;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.ExpectNonceVote;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.ExpectNonceVote.CLIQUE_NONCE_VOTE;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.clique.ExpectProposals;
@@ -50,7 +52,7 @@ public class Clique {
     this.clique = clique;
   }
 
-  public ExpectValidators validatorsEqual(final PantheonNode... validators) {
+  public Condition validatorsEqual(final PantheonNode... validators) {
     return new ExpectValidators(clique, validatorAddresses(validators));
   }
 
@@ -84,6 +86,10 @@ public class Clique {
     final int blockPeriodSeconds = cliqueBlockPeriod(node);
     final int blockPeriodWait = blockPeriodSeconds * 1000;
     return new ExpectBlockNotCreated(eth, blockPeriodWait, blockPeriodWait);
+  }
+
+  public Condition awaitSignerSetChange(final Node node) {
+    return new AwaitSignerSetChange(node.execute(clique.createGetSigners(LATEST)), clique);
   }
 
   private int cliqueBlockPeriod(final PantheonNode node) {

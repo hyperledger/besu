@@ -37,10 +37,10 @@ public class CliqueGetSignersRpcTest extends AcceptanceTestBase {
   @Test
   public void shouldBeAbleToGetValidatorsForBlockNumber() {
     cluster.verify(clique.validatorsAtBlockEqual("0x0", minerNode1));
-    minerNode1.waitUntil(wait.chainHeadIsAtLeast(1));
+    minerNode1.verify(blockchain.minimumHeight(1));
 
     minerNode1.execute(cliqueTransactions.createAddProposal(minerNode2));
-    cluster.waitUntil(wait.chainHeadHasProgressedByAtLeast(minerNode1, 1));
+    cluster.verify(blockchain.reachesHeight(minerNode1, 1));
     cluster.verify(clique.validatorsAtBlockEqual("0x2", minerNode1, minerNode2));
     cluster.verify(clique.validatorsAtBlockEqual(LATEST, minerNode1, minerNode2));
   }
@@ -48,10 +48,10 @@ public class CliqueGetSignersRpcTest extends AcceptanceTestBase {
   @Test
   public void shouldBeAbleToGetValidatorsForBlockHash() {
     cluster.verify(clique.validatorsAtBlockHashFromBlockNumberEqual(minerNode1, 0, minerNode1));
-    minerNode1.waitUntil(wait.chainHeadIsAtLeast(1));
+    minerNode1.verify(blockchain.minimumHeight(1));
 
     minerNode1.execute(cliqueTransactions.createAddProposal(minerNode2));
-    cluster.waitUntil(wait.chainHeadHasProgressedByAtLeast(minerNode1, 1));
+    cluster.verify(blockchain.reachesHeight(minerNode1, 1));
     cluster.verify(
         clique.validatorsAtBlockHashFromBlockNumberEqual(minerNode1, 2, minerNode1, minerNode2));
   }
