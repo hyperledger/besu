@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.privacy;
 
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.EeaConditions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.ExpectNoPrivateContractDeployedReceipt;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.ExpectNoValidPrivateContractEventsEmitted;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.ExpectNoValidPrivateContractValuesReturned;
@@ -19,15 +20,14 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.ExpectValidPriva
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.ExpectValidPrivateContractEventsEmitted;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.ExpectValidPrivateContractValuesReturned;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.ExpectValidPrivateTransactionReceipt;
-import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaTransactions;
 
 public class PrivateTransactionVerifier {
 
   private final EeaTransactions transactions;
-  private final Eea eea;
+  private final EeaConditions eea;
 
-  public PrivateTransactionVerifier(final Eea eea, final EeaTransactions transactions) {
+  public PrivateTransactionVerifier(final EeaConditions eea, final EeaTransactions transactions) {
     this.eea = eea;
     this.transactions = transactions;
   }

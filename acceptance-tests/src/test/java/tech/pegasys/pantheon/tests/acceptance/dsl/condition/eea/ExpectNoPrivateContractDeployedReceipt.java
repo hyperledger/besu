@@ -14,14 +14,14 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea;
 
 import static org.junit.Assert.assertNull;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaRequestFactory.PrivateTransactionReceipt;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaTransactions;
 
 public class ExpectNoPrivateContractDeployedReceipt extends GetValidPrivateTransactionReceipt {
 
-  public ExpectNoPrivateContractDeployedReceipt(final Eea eea, final EeaTransactions transactions) {
+  public ExpectNoPrivateContractDeployedReceipt(
+      final EeaConditions eea, final EeaTransactions transactions) {
     super(eea, transactions);
   }
 

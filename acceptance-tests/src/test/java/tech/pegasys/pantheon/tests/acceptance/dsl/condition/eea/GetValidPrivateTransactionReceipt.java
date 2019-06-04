@@ -14,17 +14,16 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea;
 
 import static tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils.waitFor;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaRequestFactory.PrivateTransactionReceipt;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaTransactions;
 
 public abstract class GetValidPrivateTransactionReceipt implements EeaCondition {
 
-  private Eea eea;
+  private EeaConditions eea;
   private EeaTransactions transactions;
 
-  GetValidPrivateTransactionReceipt(final Eea eea, final EeaTransactions transactions) {
+  GetValidPrivateTransactionReceipt(final EeaConditions eea, final EeaTransactions transactions) {
     this.eea = eea;
     this.transactions = transactions;
   }

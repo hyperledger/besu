@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea;
 
 import static org.junit.Assert.assertEquals;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaRequestFactory.PrivateTransactionReceipt;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaTransactions;
@@ -28,7 +27,7 @@ public class ExpectValidPrivateContractEventsEmitted extends GetValidPrivateTran
   private final String eventValue;
 
   public ExpectValidPrivateContractEventsEmitted(
-      final String eventValue, final Eea eea, final EeaTransactions transactions) {
+      final String eventValue, final EeaConditions eea, final EeaTransactions transactions) {
     super(eea, transactions);
     this.eventValue = eventValue;
   }

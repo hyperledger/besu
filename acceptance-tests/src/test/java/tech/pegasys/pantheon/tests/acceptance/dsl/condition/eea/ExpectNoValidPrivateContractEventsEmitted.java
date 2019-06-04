@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea;
 
 import static junit.framework.TestCase.assertTrue;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaRequestFactory.PrivateTransactionReceipt;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaTransactions;
@@ -22,7 +21,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaTransaction
 public class ExpectNoValidPrivateContractEventsEmitted extends GetValidPrivateTransactionReceipt {
 
   public ExpectNoValidPrivateContractEventsEmitted(
-      final Eea eea, final EeaTransactions transactions) {
+      final EeaConditions eea, final EeaTransactions transactions) {
     super(eea, transactions);
   }
 

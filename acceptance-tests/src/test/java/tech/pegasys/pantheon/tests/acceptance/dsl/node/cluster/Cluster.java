@@ -18,7 +18,7 @@ import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
-import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Net;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.NetConditions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNodeRunner;
@@ -39,22 +39,22 @@ public class Cluster implements AutoCloseable {
 
   private final Map<String, RunnableNode> nodes = new HashMap<>();
   private final PantheonNodeRunner pantheonNodeRunner;
-  private final Net net;
+  private final NetConditions net;
   private final ClusterConfiguration clusterConfiguration;
   private List<? extends RunnableNode> originalNodes = emptyList();
   private List<URI> bootnodes = emptyList();
 
-  public Cluster(final Net net) {
+  public Cluster(final NetConditions net) {
     this(new ClusterConfigurationBuilder().build(), net, PantheonNodeRunner.instance());
   }
 
-  public Cluster(final ClusterConfiguration clusterConfiguration, final Net net) {
+  public Cluster(final ClusterConfiguration clusterConfiguration, final NetConditions net) {
     this(clusterConfiguration, net, PantheonNodeRunner.instance());
   }
 
   public Cluster(
       final ClusterConfiguration clusterConfiguration,
-      final Net net,
+      final NetConditions net,
       final PantheonNodeRunner pantheonNodeRunner) {
     this.clusterConfiguration = clusterConfiguration;
     this.net = net;

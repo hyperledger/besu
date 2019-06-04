@@ -10,15 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
+package tech.pegasys.pantheon.tests.acceptance.dsl.condition.ibft2;
 
 import static tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique.CliqueTransactions.LATEST;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.ibft2.AwaitValidatorSetChange;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.ibft2.ExpectProposals;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.ibft2.ExpectValidators;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions;
@@ -33,11 +30,11 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableMap;
 
-public class Ibft2 {
+public class Ibft2Conditions {
 
   private final Ibft2Transactions ibftTwo;
 
-  public Ibft2(final Ibft2Transactions ibftTwo) {
+  public Ibft2Conditions(final Ibft2Transactions ibftTwo) {
     this.ibftTwo = ibftTwo;
   }
 

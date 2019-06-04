@@ -10,27 +10,18 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
+package tech.pegasys.pantheon.tests.acceptance.dsl.condition.net;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.AwaitNetPeerCount;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.AwaitNetPeerCountException;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetServicesReturnsAllServicesAsActive;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetServicesReturnsOnlyJsonRpcActive;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionConnectionException;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionConnectionExceptionWithCause;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionIsNotBlank;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionPermissionException;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.ExpectNetVersionPermissionJsonRpcUnauthorizedResponse;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetTransactions;
 
 import java.math.BigInteger;
 
-public class Net {
+public class NetConditions {
 
   private final NetTransactions transactions;
 
-  public Net(final NetTransactions transactions) {
+  public NetConditions(final NetTransactions transactions) {
     this.transactions = transactions;
   }
 

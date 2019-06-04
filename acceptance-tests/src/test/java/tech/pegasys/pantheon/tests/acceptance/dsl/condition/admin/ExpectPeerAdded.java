@@ -10,22 +10,25 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
+package tech.pegasys.pantheon.tests.acceptance.dsl.condition.admin;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.ExpectSuccessfulEeaGetTransactionReceipt;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaTransactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.admin.AddPeerTransaction;
 
-public class Eea {
+public class ExpectPeerAdded implements Condition {
 
-  EeaTransactions transactions;
+  private final AddPeerTransaction transaction;
 
-  public Eea(final EeaTransactions transactions) {
-    this.transactions = transactions;
+  public ExpectPeerAdded(final AddPeerTransaction transaction) {
+    this.transaction = transaction;
   }
 
-  public Condition expectSuccessfulTransactionReceipt(final String transactionHash) {
-    return new ExpectSuccessfulEeaGetTransactionReceipt(
-        transactions.getTransactionReceipt(transactionHash));
+  @Override
+  public void verify(final Node node) {
+    final Boolean result = node.execute(transaction);
+    assertThat(result).isTrue();
   }
 }

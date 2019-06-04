@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaRequestFactory.PrivateTransactionReceipt;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaTransactions;
@@ -25,7 +24,7 @@ public class ExpectValidPrivateContractDeployedReceipt extends GetValidPrivateTr
   private final String contractAddress;
 
   public ExpectValidPrivateContractDeployedReceipt(
-      final String contractAddress, final Eea eea, final EeaTransactions transactions) {
+      final String contractAddress, final EeaConditions eea, final EeaTransactions transactions) {
     super(eea, transactions);
     this.contractAddress = contractAddress;
   }
