@@ -10,20 +10,13 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
+package tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 
 import tech.pegasys.pantheon.ethereum.permissioning.WhitelistPersistor.WHITELIST_TYPE;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.AddAccountsToWhitelistSuccessfully;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.AddNodeSuccess;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.GetExpectedAccountsWhitelist;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.GetNodesWhitelistPopulated;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.RemoveAccountsFromWhitelistSuccessfully;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.RemoveNodeSuccess;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.WhiteListContainsKeyAndValue;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermissioningTransactions;
@@ -33,9 +26,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class Perm {
+public class PermissioningConditions {
 
-  public Perm(final PermissioningTransactions transactions) {
+  public PermissioningConditions(final PermissioningTransactions transactions) {
     this.transactions = transactions;
   }
 

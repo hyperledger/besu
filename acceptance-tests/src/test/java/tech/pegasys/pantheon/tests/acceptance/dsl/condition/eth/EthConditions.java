@@ -10,22 +10,16 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
+package tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectEthAccountsException;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectEthGetTransactionReceiptIsAbsent;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectEthGetWorkException;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectEthSendRawTransactionException;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.ExpectSuccessfulEthGetTransactionReceipt;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth.SanityCheckEthGetWorkValues;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
 
-public class Eth {
+public class EthConditions {
 
   private final EthTransactions transactions;
 
-  public Eth(final EthTransactions transactions) {
+  public EthConditions(final EthTransactions transactions) {
     this.transactions = transactions;
   }
 

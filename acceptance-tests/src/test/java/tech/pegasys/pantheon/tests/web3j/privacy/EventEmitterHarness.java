@@ -17,7 +17,7 @@ import static tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils.waitFor;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.EeaCondition;
-import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.EeaConditions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivacyNet;
 import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivateTransactionVerifier;
 import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivateTransactions;
@@ -46,7 +46,7 @@ public class EventEmitterHarness {
   private PrivacyNet privacyNet;
   private PrivateTransactions privateTransactions;
   private PrivateTransactionVerifier privateTransactionVerifier;
-  private Eea eea;
+  private EeaConditions eea;
 
   private Map<String, String> contracts;
 
@@ -55,7 +55,7 @@ public class EventEmitterHarness {
       final PrivacyNet privacyNet,
       final PrivateTransactions privateTransactions,
       final PrivateTransactionVerifier privateTransactionVerifier,
-      final Eea eea) {
+      final EeaConditions eea) {
 
     this.privateTransactionBuilder = privateTransactionBuilder;
     this.privacyNet = privacyNet;

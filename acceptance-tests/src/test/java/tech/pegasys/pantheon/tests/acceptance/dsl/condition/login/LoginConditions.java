@@ -10,15 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
+package tech.pegasys.pantheon.tests.acceptance.dsl.condition.login;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.login.AwaitLoginResponse;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.login.ExpectLoginSuccess;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.login.ExpectLoginUnauthorized;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.login.LoginTransaction;
 
-public class Login {
+public class LoginConditions {
 
   public Condition success(final String username, final String password) {
     return new ExpectLoginSuccess(username, password);

@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.privacy;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
-import tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc.Eea;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.EeaConditions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.privacy.PrivacyPantheonNodeFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.PrivateTransactionBuilder;
@@ -24,7 +24,7 @@ import org.junit.rules.TemporaryFolder;
 public class PrivacyAcceptanceTestBase extends AcceptanceTestBase {
   @ClassRule public static final TemporaryFolder privacy = new TemporaryFolder();
 
-  protected final Eea eea;
+  protected final EeaConditions eea;
   protected final PrivateTransactions privateTransactions;
   protected final PrivateTransactionBuilder.Builder privateTransactionBuilder;
   protected final PrivateTransactionVerifier privateTransactionVerifier;
@@ -34,7 +34,7 @@ public class PrivacyAcceptanceTestBase extends AcceptanceTestBase {
     final EeaTransactions eeaTransactions = new EeaTransactions();
 
     privateTransactions = new PrivateTransactions();
-    eea = new Eea(eeaTransactions);
+    eea = new EeaConditions(eeaTransactions);
     privateTransactionBuilder = PrivateTransactionBuilder.builder();
     privateTransactionVerifier = new PrivateTransactionVerifier(eea, eeaTransactions);
     privacyPantheon = new PrivacyPantheonNodeFactory();

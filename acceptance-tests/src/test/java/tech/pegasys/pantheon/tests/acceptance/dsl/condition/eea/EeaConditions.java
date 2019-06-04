@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -10,21 +10,21 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.tests.acceptance.dsl.jsonrpc;
+package tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.web3.ExpectWeb3Sha3Equals;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.web3.Web3Transactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaTransactions;
 
-public class Web3 {
+public class EeaConditions {
 
-  private final Web3Transactions transactions;
+  private final EeaTransactions transactions;
 
-  public Web3(final Web3Transactions transactions) {
+  public EeaConditions(final EeaTransactions transactions) {
     this.transactions = transactions;
   }
 
-  public Condition sha3(final String input, final String expectedHash) {
-    return new ExpectWeb3Sha3Equals(transactions.sha3(input), expectedHash);
+  public Condition expectSuccessfulTransactionReceipt(final String transactionHash) {
+    return new ExpectSuccessfulEeaGetTransactionReceipt(
+        transactions.getTransactionReceipt(transactionHash));
   }
 }
