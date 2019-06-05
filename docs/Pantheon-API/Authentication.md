@@ -6,8 +6,9 @@ access to the JSON-RPC method they are requesting.
 Pantheon uses the username and password to authenticate users and [JWT tokens](https://jwt.io/introduction/) to authorize JSON-RPC requests. 
 
 !!! important 
-    Authenticated requests must be made over HTTPS. HTTPS is encrypted which prevents eavesdropping on the connection
-    to obtain the JWT token from the requests.
+    To prevent interception of authentication credentials and authenticated tokens, make authenticated requests over HTTPS. 
+    We recommended production deployments are run behind a network layer that provides SSL termination. 
+    Pantheon does not provide a HTTPS connection natively.
 
 ## Credentials File 
 
@@ -65,11 +66,25 @@ options to specify the [credentials file](#credentials-file).
 
 ## Obtaining an Authentication Token 
 
-To obtain an authentication token, make a request to the `/login` endpoint with your username and password. 
+To obtain an authentication token, make a request to the `/login` endpoint with your username and password. Specify the 
+HTTP port or the WS port to obtain a token to authenticate over HTTP or WS respectively. A different token is required 
+for HTTP and WS. 
 
 !!! example
-    ```bash tab="curl HTTPS request"
-    curl -X POST --data '{"username":"username1","password":"pegasys"}' <JSON-RPC-https-endpoint:port>/login
+    ```bash tab="Obtain Token for HTTP"
+    curl -X POST --data '{"username":"username1","password":"pegasys"}' <JSON-RPC-http-hostname:http-port>/login
+    ```
+    
+    ```bash tab="Example for HTTP"
+    curl -X POST --data '{"username":"username1","password":"pegasys"}' http://localhost:8545/login
+    ```
+    
+    ```bash tab="Obtain Token for WS"
+    curl -X POST --data '{"username":"username1","password":"pegasys"}' <JSON-RPC-ws-hostname:ws-port>/login
+    ```
+    
+    ```bash tab="Example for WS"
+    curl -X POST --data '{"username":"username1","password":"pegasys"}' http://localhost:8546/login
     ```
     
     ```json tab="JSON result"
@@ -94,9 +109,9 @@ Specify the `Bearer` in the header.
 
 !!! example
     ```bash tab="curl Request with Authentication Placeholders"
-    curl -X POST -H 'Authorization: Bearer <JWT_TOKEN>' -d '{"jsonrpc":"2.0","method":"<API_METHOD>","params":[],"id":1}' <JSON-RPC-https-endpoint:port>
+    curl -X POST -H 'Authorization: Bearer <JWT_TOKEN>' -d '{"jsonrpc":"2.0","method":"<API_METHOD>","params":[],"id":1}' <JSON-RPC-http-hostname:port>
     ```
     
     ```bash tab="curl Request with Authentication"
-    curl -X POST -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJwZXJtaXNzaW9ucyI6WyIqOioiXSwidXNlcm5hbWUiOiJ1c2VyMiIsImlhdCI6MTU1MDQ2MTQxNiwiZXhwIjoxNTUwNDYxNzE2fQ.WQ1mqpqzRLHaoL8gOSEZPvnRs_qf6j__7A3Sg8vf9RKvWdNTww_vRJF1gjcVy-FFh96AchVnQyXVx0aNUz9O0txt8VN3jqABVWbGMfSk2T_CFdSw5aDjuriCsves9BQpP70Vhj-tseaudg-XU5hCokX0tChbAqd9fB2138zYm5M' -d '{"jsonrpc":"2.0","method":"net_listening","params":[],"id":1}' https://localhost:8545
+    curl -X POST -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJwZXJtaXNzaW9ucyI6WyIqOioiXSwidXNlcm5hbWUiOiJ1c2VyMiIsImlhdCI6MTU1MDQ2MTQxNiwiZXhwIjoxNTUwNDYxNzE2fQ.WQ1mqpqzRLHaoL8gOSEZPvnRs_qf6j__7A3Sg8vf9RKvWdNTww_vRJF1gjcVy-FFh96AchVnQyXVx0aNUz9O0txt8VN3jqABVWbGMfSk2T_CFdSw5aDjuriCsves9BQpP70Vhj-tseaudg-XU5hCokX0tChbAqd9fB2138zYm5M' -d '{"jsonrpc":"2.0","method":"net_listening","params":[],"id":1}' http://localhost:8545
     ```
