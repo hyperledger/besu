@@ -16,7 +16,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.function.DoubleSupplier;
 
 import io.prometheus.client.Collector;
 import io.prometheus.client.Collector.MetricFamilySamples.Sample;
@@ -25,10 +25,10 @@ class CurrentValueCollector extends Collector {
 
   private final String metricName;
   private final String help;
-  private final Supplier<Double> valueSupplier;
+  private final DoubleSupplier valueSupplier;
 
   public CurrentValueCollector(
-      final String metricName, final String help, final Supplier<Double> valueSupplier) {
+      final String metricName, final String help, final DoubleSupplier valueSupplier) {
     this.metricName = metricName;
     this.help = help;
     this.valueSupplier = valueSupplier;
@@ -36,7 +36,8 @@ class CurrentValueCollector extends Collector {
 
   @Override
   public List<MetricFamilySamples> collect() {
-    final Sample sample = new Sample(metricName, emptyList(), emptyList(), valueSupplier.get());
+    final Sample sample =
+        new Sample(metricName, emptyList(), emptyList(), valueSupplier.getAsDouble());
     return singletonList(
         new MetricFamilySamples(metricName, Type.GAUGE, help, singletonList(sample)));
   }

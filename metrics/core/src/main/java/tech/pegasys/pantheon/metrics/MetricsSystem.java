@@ -12,7 +12,9 @@
  */
 package tech.pegasys.pantheon.metrics;
 
-import java.util.function.Supplier;
+import java.util.function.DoubleSupplier;
+import java.util.function.IntSupplier;
+import java.util.function.LongSupplier;
 import java.util.stream.Stream;
 
 public interface MetricsSystem {
@@ -33,23 +35,22 @@ public interface MetricsSystem {
   LabelledMetric<OperationTimer> createLabelledTimer(
       MetricCategory category, String name, String help, String... labelNames);
 
-  void createGauge(
-      MetricCategory category, String name, String help, Supplier<Double> valueSupplier);
+  void createGauge(MetricCategory category, String name, String help, DoubleSupplier valueSupplier);
 
   default void createIntegerGauge(
       final MetricCategory category,
       final String name,
       final String help,
-      final Supplier<Integer> valueSupplier) {
-    createGauge(category, name, help, () -> (double) valueSupplier.get());
+      final IntSupplier valueSupplier) {
+    createGauge(category, name, help, () -> (double) valueSupplier.getAsInt());
   }
 
   default void createLongGauge(
       final MetricCategory category,
       final String name,
       final String help,
-      final Supplier<Long> valueSupplier) {
-    createGauge(category, name, help, () -> (double) valueSupplier.get());
+      final LongSupplier valueSupplier) {
+    createGauge(category, name, help, () -> (double) valueSupplier.getAsLong());
   }
 
   Stream<Observation> streamObservations(MetricCategory category);

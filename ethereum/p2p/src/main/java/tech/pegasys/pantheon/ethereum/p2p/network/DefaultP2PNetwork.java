@@ -69,7 +69,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -249,7 +249,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     return new Builder();
   }
 
-  private Supplier<Integer> pendingTaskCounter(final EventLoopGroup eventLoopGroup) {
+  private IntSupplier pendingTaskCounter(final EventLoopGroup eventLoopGroup) {
     return () ->
         StreamSupport.stream(eventLoopGroup.spliterator(), false)
             .filter(eventExecutor -> eventExecutor instanceof SingleThreadEventExecutor)
