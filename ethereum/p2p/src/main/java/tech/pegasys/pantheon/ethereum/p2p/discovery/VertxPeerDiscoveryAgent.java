@@ -32,6 +32,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
@@ -69,7 +70,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
         pendingTaskCounter(vertx.nettyEventLoopGroup()));
   }
 
-  private Supplier<Integer> pendingTaskCounter(final EventLoopGroup eventLoopGroup) {
+  private IntSupplier pendingTaskCounter(final EventLoopGroup eventLoopGroup) {
     return () ->
         StreamSupport.stream(eventLoopGroup.spliterator(), false)
             .filter(eventExecutor -> eventExecutor instanceof SingleThreadEventExecutor)

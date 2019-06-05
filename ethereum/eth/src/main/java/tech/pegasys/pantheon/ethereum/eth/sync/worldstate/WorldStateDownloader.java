@@ -24,7 +24,7 @@ import java.time.Clock;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.IntSupplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -78,7 +78,7 @@ public class WorldStateDownloader {
         downloadStateValue(WorldDownloadState::getOutstandingTaskCount));
   }
 
-  private Supplier<Integer> downloadStateValue(final Function<WorldDownloadState, Integer> getter) {
+  private IntSupplier downloadStateValue(final Function<WorldDownloadState, Integer> getter) {
     return () -> {
       final WorldDownloadState state = this.downloadState.get();
       return state != null ? getter.apply(state) : 0;

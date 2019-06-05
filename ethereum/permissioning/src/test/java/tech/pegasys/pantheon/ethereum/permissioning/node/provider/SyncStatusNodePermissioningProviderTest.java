@@ -29,7 +29,7 @@ import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.function.Supplier;
+import java.util.function.IntSupplier;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +44,7 @@ public class SyncStatusNodePermissioningProviderTest {
   @Mock private Counter checkCounter;
   @Mock private Counter checkPermittedCounter;
   @Mock private Counter checkUnpermittedCounter;
-  private Supplier<Integer> syncGauge;
+  private IntSupplier syncGauge;
 
   private static final EnodeURL bootnode =
       EnodeURL.fromString(
@@ -70,8 +70,8 @@ public class SyncStatusNodePermissioningProviderTest {
     bootnodes.add(bootnode);
 
     @SuppressWarnings("unchecked")
-    final ArgumentCaptor<Supplier<Integer>> syncGaugeCallbackCaptor =
-        ArgumentCaptor.forClass(Supplier.class);
+    final ArgumentCaptor<IntSupplier> syncGaugeCallbackCaptor =
+        ArgumentCaptor.forClass(IntSupplier.class);
 
     when(metricsSystem.createCounter(
             MetricCategory.PERMISSIONING,
@@ -106,7 +106,7 @@ public class SyncStatusNodePermissioningProviderTest {
     syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
 
     assertThat(provider.hasReachedSync()).isFalse();
-    assertThat(syncGauge.get()).isEqualTo(0);
+    assertThat(syncGauge.getAsInt()).isEqualTo(0);
   }
 
   @Test
@@ -114,29 +114,29 @@ public class SyncStatusNodePermissioningProviderTest {
     syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 1));
 
     assertThat(provider.hasReachedSync()).isTrue();
-    assertThat(syncGauge.get()).isEqualTo(1);
+    assertThat(syncGauge.getAsInt()).isEqualTo(1);
   }
 
   @Test
   public void whenInSyncChangesFromTrueToFalseHasReachedSyncShouldReturnTrue() {
     syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
     assertThat(provider.hasReachedSync()).isFalse();
-    assertThat(syncGauge.get()).isEqualTo(0);
+    assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
     syncStatusListener.onSyncStatus(new SyncStatus(0, 2, 1));
     assertThat(provider.hasReachedSync()).isTrue();
-    assertThat(syncGauge.get()).isEqualTo(1);
+    assertThat(syncGauge.getAsInt()).isEqualTo(1);
 
     syncStatusListener.onSyncStatus(new SyncStatus(0, 2, 3));
     assertThat(provider.hasReachedSync()).isTrue();
-    assertThat(syncGauge.get()).isEqualTo(1);
+    assertThat(syncGauge.getAsInt()).isEqualTo(1);
   }
 
   @Test
   public void whenHasNotSyncedNonBootnodeShouldNotBePermitted() {
     syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
     assertThat(provider.hasReachedSync()).isFalse();
-    assertThat(syncGauge.get()).isEqualTo(0);
+    assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
     boolean isPermitted = provider.isPermitted(enode1, enode2);
 
@@ -150,7 +150,7 @@ public class SyncStatusNodePermissioningProviderTest {
   public void whenHasNotSyncedBootnodeIncomingConnectionShouldNotBePermitted() {
     syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
     assertThat(provider.hasReachedSync()).isFalse();
-    assertThat(syncGauge.get()).isEqualTo(0);
+    assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
     boolean isPermitted = provider.isPermitted(bootnode, enode1);
 
@@ -164,7 +164,7 @@ public class SyncStatusNodePermissioningProviderTest {
   public void whenHasNotSyncedBootnodeOutgoingConnectionShouldBePermitted() {
     syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
     assertThat(provider.hasReachedSync()).isFalse();
-    assertThat(syncGauge.get()).isEqualTo(0);
+    assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
     boolean isPermitted = provider.isPermitted(enode1, bootnode);
 
@@ -178,7 +178,7 @@ public class SyncStatusNodePermissioningProviderTest {
   public void whenHasSyncedIsPermittedShouldReturnTrue() {
     syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 1));
     assertThat(provider.hasReachedSync()).isTrue();
-    assertThat(syncGauge.get()).isEqualTo(1);
+    assertThat(syncGauge.getAsInt()).isEqualTo(1);
 
     boolean isPermitted = provider.isPermitted(enode1, enode2);
 
