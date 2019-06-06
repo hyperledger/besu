@@ -162,7 +162,7 @@ public class SubscriptionManager extends AbstractVerticle {
         .ifPresent(connectionId -> vertx.eventBus().send(connectionId, Json.encode(response)));
   }
 
-  public <T> Void notifySubscribersOnWorkerThread(
+  public <T> void notifySubscribersOnWorkerThread(
       final SubscriptionType subscriptionType,
       final Class<T> clazz,
       final Consumer<List<T>> runnable) {
@@ -177,6 +177,5 @@ public class SubscriptionManager extends AbstractVerticle {
             LOG.error("Failed to notify subscribers.", result.cause());
           }
         });
-    return null;
   }
 }
