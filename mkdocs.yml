@@ -119,10 +119,10 @@ nav:
         - Mining: Using-Pantheon/Mining.md
         - Monitoring Pantheon: Using-Pantheon/Monitoring.md
     - Monitoring Pantheon:
-        - EthStats:
-          - Overview: EthStats/Overview.md
-          - Lite Block Explorer: EthStats/Lite-Block-Explorer.md
-          - Lite Network Health Monitor: EthStats/Lite-Network-Health-Monitor.md
+        - Alethio:
+          - Overview: Alethio/Overview.md
+          - Ethereum Lite Explorer: Alethio/Lite-Block-Explorer.md
+          - EthStats Lite Network Monitor: Alethio/Lite-Network-Monitor.md
     - Troubleshooting:
         - Troubleshooting: Troubleshooting/Troubleshooting.md
     - Reference:

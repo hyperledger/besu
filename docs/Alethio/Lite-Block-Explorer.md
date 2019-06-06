@@ -1,25 +1,29 @@
 description: Ethereum Lite Explorer
 <!--- END of page meta data -->
 
-# Ethereum Lite Explorer
+# Alethio Ethereum Lite Explorer
 
-Use the [Ethereum Lite Explorer](https://lite-explorer.aleth.io/) to explore blockchain data at the block, transaction, 
-and account level.
+Use the [Alethio Ethereum Lite Explorer](https://lite-explorer.aleth.io/) to explore blockchain data 
+at the block, transaction, and account level.
  
-The Ethereum Lite Explorer is a client-side only web application that connects to any Ethereum 
-JSON RPC enabled node. No server, hosting, or trusting third parties to display the blockchain data is 
-required. 
+The Alethio Ethereum Lite Explorer is a web application that connects to any Ethereum 
+JSON-RPC enabled node. No online server, hosting, or trusting third parties to display the blockchain
+data is required. 
 
 !!! note 
-     The Ethereum Lite Explorer is an [Alethio product](https://aleth.io/).
+     The Alethio Ethereum Lite Explorer is an [Alethio product](https://company.aleth.io/developers).
 
 ## Prerequisites
 
-[Docker](https://docs.docker.com/install/) or [npm](https://www.npmjs.com/get-npm)
+[Docker](https://docs.docker.com/install/) or [Node.js](https://nodejs.org/)
+
+!!! tip
+    Using Docker is the easiest way to get started using the Ethereum Lite Explorer with Pantheon if you 
+    do not have Node.js installed.
 
 ## Run Using Docker
 
-To run the Lite Explorer using the Docker image: 
+To run the Ethereum Lite Explorer using the Docker image: 
 
 1. Start Pantheon with the [`--rpc-http-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled) option. 
 
@@ -31,15 +35,22 @@ To run the Lite Explorer using the Docker image:
         pantheon --network=dev --miner-enabled --miner-coinbase=0xfe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-cors-origins="all" --host-whitelist=* --rpc-http-enabled --data-path=/tmp/tmpDatdir
         ```
 
-1. Run the `alethio/ethereum-lite-explorer` Docker image specifying the RPC HTTP URL (`http://localhost:8545` in this example): 
+1. Run the `alethio/ethereum-lite-explorer` Docker image specifying the JSON-RPC HTTP URL (`http://localhost:8545` in this example): 
 
     ```bash
-    docker run -p 80:80 -e NODE_URL=http://localhost:8545 alethio/ethereum-lite-explorer
+    docker run --rm -p 8080:80 -e APP_NODE_URL=http://localhost:8545 alethio/ethereum-lite-explorer
     ```
 
-1. Open [localhost](http://localhost) in your browser to view the Lite Explorer. 
+1. Open [http://localhost:8080](http://localhost) in your browser to view the Lite Explorer. 
 
-## Install and Run 
+    ![Ethereum Lite Explorer](explorer.png)
+
+    !!! note "Default HTTP port"
+        We are using port 8080 to run the Ethereum Lite Explorer so
+        the [Lite Network Monitor](Lite-Network-Monitor.md) can use port 80. You can then run 
+        both at the same time. 
+
+## Install and Run with Node.js
 
 1. Clone the `ethereum-lite-explorer` repository: 
    
@@ -66,7 +77,7 @@ To run the Lite Explorer using the Docker image:
   
 1. Update the `config.dev.json` file: 
 
-    * Set `APP_NODE_URL` to the RPC HTTP URL of your node (`http://localhost:8545` in this example)
+    * Set `APP_NODE_URL` to the JSON-RPC HTTP URL of your node (`http://localhost:8545` in this example)
    
     * Remove other environment variables. 
    
@@ -87,7 +98,7 @@ To run the Lite Explorer using the Docker image:
     npm run start
     ```  
    
-1. A browser windows should open displaying the Ethereum Lite Explorer (http://localhost:3000/)
+1. A browser window displays the Ethereum Lite Explorer (http://localhost:3000/).
    
 ## Lite Block Explorer Documentation 
 
