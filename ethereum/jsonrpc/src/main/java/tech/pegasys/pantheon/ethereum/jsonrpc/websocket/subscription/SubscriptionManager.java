@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -159,5 +160,23 @@ public class SubscriptionManager extends AbstractVerticle {
         .map(Entry::getKey)
         .findFirst()
         .ifPresent(connectionId -> vertx.eventBus().send(connectionId, Json.encode(response)));
+  }
+
+  public <T> Void notifySubscribersOnWorkerThread(
+      final SubscriptionType subscriptionType,
+      final Class<T> clazz,
+      final Consumer<List<T>> runnable) {
+    vertx.executeBlocking(
+        future -> {
+          final List<T> syncingSubscriptions = subscriptionsOfType(subscriptionType, clazz);
+          runnable.accept(syncingSubscriptions);
+          future.complete();
+        },
+        result -> {
+          if (result.failed()) {
+            LOG.error("Failed to notify subscribers.", result.cause());
+          }
+        });
+    return null;
   }
 }

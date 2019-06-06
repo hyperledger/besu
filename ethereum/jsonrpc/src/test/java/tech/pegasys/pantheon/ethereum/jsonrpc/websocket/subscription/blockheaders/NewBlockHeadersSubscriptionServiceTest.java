@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.blockheade
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
 import org.junit.Before;
@@ -74,6 +76,7 @@ public class NewBlockHeadersSubscriptionServiceTest {
   @Test
   public void shouldSendMessageWhenBlockAdded() {
     final NewBlockHeadersSubscription subscription = createSubscription(false);
+    final List<NewBlockHeadersSubscription> subscriptions = Collections.singletonList(subscription);
     final BlockWithMetadata<Hash, Hash> testBlockWithMetadata =
         new BlockWithMetadata<>(
             blockHeader, Collections.emptyList(), Collections.emptyList(), UInt256.ONE, 1);
@@ -81,6 +84,15 @@ public class NewBlockHeadersSubscriptionServiceTest {
 
     when(blockchainQueries.blockByHashWithTxHashes(testBlockWithMetadata.getHeader().getHash()))
         .thenReturn(Optional.of(testBlockWithMetadata));
+
+    doAnswer(
+            invocation -> {
+              Consumer<List<NewBlockHeadersSubscription>> consumer = invocation.getArgument(2);
+              consumer.accept(subscriptions);
+              return null;
+            })
+        .when(subscriptionManager)
+        .notifySubscribersOnWorkerThread(any(), any(), any());
 
     simulateAddingBlock();
 
@@ -98,6 +110,7 @@ public class NewBlockHeadersSubscriptionServiceTest {
   @Test
   public void shouldReturnTxHashesWhenIncludeTransactionsFalse() {
     final NewBlockHeadersSubscription subscription = createSubscription(false);
+    final List<NewBlockHeadersSubscription> subscriptions = Collections.singletonList(subscription);
     final List<Hash> txHashList = transactionsWithHashOnly();
     final BlockWithMetadata<Hash, Hash> testBlockWithMetadata =
         new BlockWithMetadata<>(blockHeader, txHashList, Collections.emptyList(), UInt256.ONE, 1);
@@ -105,6 +118,15 @@ public class NewBlockHeadersSubscriptionServiceTest {
 
     when(blockchainQueries.blockByHashWithTxHashes(testBlockWithMetadata.getHeader().getHash()))
         .thenReturn(Optional.of(testBlockWithMetadata));
+
+    doAnswer(
+            invocation -> {
+              Consumer<List<NewBlockHeadersSubscription>> consumer = invocation.getArgument(2);
+              consumer.accept(subscriptions);
+              return null;
+            })
+        .when(subscriptionManager)
+        .notifySubscribersOnWorkerThread(any(), any(), any());
 
     simulateAddingBlock();
 
@@ -127,6 +149,7 @@ public class NewBlockHeadersSubscriptionServiceTest {
   @Test
   public void shouldReturnCompleteTxWhenParameterTrue() {
     final NewBlockHeadersSubscription subscription = createSubscription(true);
+    final List<NewBlockHeadersSubscription> subscriptions = Collections.singletonList(subscription);
     final List<TransactionWithMetadata> txHashList = transactionsWithMetadata();
     final BlockWithMetadata<TransactionWithMetadata, Hash> testBlockWithMetadata =
         new BlockWithMetadata<>(
@@ -136,6 +159,15 @@ public class NewBlockHeadersSubscriptionServiceTest {
 
     when(blockchainQueries.blockByHash(testBlockWithMetadata.getHeader().getHash()))
         .thenReturn(Optional.of(testBlockWithMetadata));
+
+    doAnswer(
+            invocation -> {
+              Consumer<List<NewBlockHeadersSubscription>> consumer = invocation.getArgument(2);
+              consumer.accept(subscriptions);
+              return null;
+            })
+        .when(subscriptionManager)
+        .notifySubscribersOnWorkerThread(any(), any(), any());
 
     simulateAddingBlock();
 
@@ -184,8 +216,6 @@ public class NewBlockHeadersSubscriptionServiceTest {
   private NewBlockHeadersSubscription createSubscription(final boolean includeTransactions) {
     final NewBlockHeadersSubscription headerSub =
         new NewBlockHeadersSubscription(1L, includeTransactions);
-    when(subscriptionManager.subscriptionsOfType(any(), any()))
-        .thenReturn(Lists.newArrayList(headerSub));
     return headerSub;
   }
 }
