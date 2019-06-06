@@ -62,6 +62,10 @@ the exact version)
   ```bash
   pip install -r docs/requirements.txt
   ```
+>**note**
+> If pip raises errors like `Could not find a version that satisfies the requirement` when executing
+`pip`, you may have to use the `pip3` commend to explicitely run Python 3 specific pip depending if 
+you already have another python version installed or not and in what order you installed them.
 - Run the following command in the project directory :
   ```bash
   mkdocs serve
