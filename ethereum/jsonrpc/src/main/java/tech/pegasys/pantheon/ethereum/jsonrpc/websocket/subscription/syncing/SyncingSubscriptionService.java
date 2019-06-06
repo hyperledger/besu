@@ -19,8 +19,6 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.Subscriptio
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
 
-import java.util.List;
-
 public class SyncingSubscriptionService {
 
   private final SubscriptionManager subscriptionManager;
@@ -32,15 +30,17 @@ public class SyncingSubscriptionService {
   }
 
   private void sendSyncingToMatchingSubscriptions(final SyncStatus syncStatus) {
-    final List<Subscription> syncingSubscriptions =
-        subscriptionManager.subscriptionsOfType(SubscriptionType.SYNCING, Subscription.class);
-
-    if (syncStatus.inSync()) {
-      syncingSubscriptions.forEach(
-          s -> subscriptionManager.sendMessage(s.getId(), new NotSynchronisingResult()));
-    } else {
-      syncingSubscriptions.forEach(
-          s -> subscriptionManager.sendMessage(s.getId(), new SyncingResult(syncStatus)));
-    }
+    subscriptionManager.notifySubscribersOnWorkerThread(
+        SubscriptionType.SYNCING,
+        Subscription.class,
+        syncingSubscriptions -> {
+          if (syncStatus.inSync()) {
+            syncingSubscriptions.forEach(
+                s -> subscriptionManager.sendMessage(s.getId(), new NotSynchronisingResult()));
+          } else {
+            syncingSubscriptions.forEach(
+                s -> subscriptionManager.sendMessage(s.getId(), new SyncingResult(syncStatus)));
+          }
+        });
   }
 }
