@@ -468,11 +468,11 @@ None
 * `highestBlock`: *quantity* - Index of the highest known block in the peer network (that is, the highest block so far discovered among peer nodes). This is the same value as `currentBlock` if the current node has no peers.
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":51}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":51}
     ```
     
@@ -488,8 +488,18 @@ None
     }
     ```
     
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{ "query": "{syncing{startingBlock currentBlock highestBlock}}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      syncing {
+        startingBlock
+        currentBlock
+        highestBlock
+      }
+    }
     ```
     
     ```json tab="GraphQL result"
@@ -546,11 +556,11 @@ None
 `result` : *quantity* - Ethereum protocol version 
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_protocolVersion","params":[],"id":1}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_protocolVersion","params":[],"id":1}
     ```
     
@@ -562,8 +572,14 @@ None
     }
     ```
     
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{ "query": "{protocolVersion}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      protocolVersion
+    }
     ```
         
     ```json tab="GraphQL result"
@@ -682,11 +698,11 @@ None
 `result` : *quantity* - Current gas unit price in wei as a hexadecimal value.
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_gasPrice","params":[],"id":53}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_gasPrice","params":[],"id":53}
     ```
     
@@ -698,8 +714,14 @@ None
     }
     ```
 
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{ "query": "{gasPrice}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      gasPrice
+    }
     ```
     
     ```json tab="GraphQL result"
@@ -759,11 +781,11 @@ None
 
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":51}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":51}
     ```
     
@@ -775,8 +797,16 @@ None
     }
     ```
     
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{ "query": "{block{number}}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      block {
+        number
+      }
+    }
     ```
     
     ```bash tab="GraphQL result"
@@ -804,11 +834,11 @@ Returns the account balance of the specified address.
 `result` : *QUANTITY* - Integer value of the current balance in wei.
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getBalance","params":["0xdd37f65db31c107f773e82a4f85c693058fef7a9", "latest"],"id":53}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_getBalance","params":["0xdd37f65db31c107f773e82a4f85c693058fef7a9", "latest"],"id":53}
     ```
     
@@ -820,8 +850,16 @@ Returns the account balance of the specified address.
     }
     ```
     
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{ "query": "{ account ( address: \"0xfe3b557e8fb62b89f4916b721be55ceb828dbd73\") { balance } }"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      account(address: "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73") {
+        balance
+      }
+    }
     ```
     
     ```bash tab="GraphQL result"
@@ -853,11 +891,11 @@ Returns the value of a storage position at a specified address.
 !!! example
     Calculating the correct position depends on the storage you want to retrieve.
 
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method": "eth_getStorageAt","params": ["0x‭3B3F3E‬","0x0","latest"],"id": 53}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method": "eth_getStorageAt","params": ["0x‭3B3F3E‬","0x0","latest"],"id": 53}
     ```
     
@@ -869,8 +907,16 @@ Returns the value of a storage position at a specified address.
     }
     ```
     
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{ "query": "{account(address: \"0xfe3b557e8fb62b89f4916b721be55ceb828dbd73\") {storage(slot: \"0x04\")}}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      account(address: "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73") {
+        storage(slot: "0x04")
+      }
+    }
     ```
         
     ```bash tab="GraphQL result"
@@ -898,11 +944,11 @@ Returns the number of transactions sent from a specified address. Use the `pendi
 `result` : *quantity* - Integer representing the number of transactions sent from the specified address.
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionCount","params":["0xc94770007dda54cF92009BFF0dE90c06F603a09f","latest"],"id":1}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_getTransactionCount","params":["0xc94770007dda54cF92009BFF0dE90c06F603a09f","latest"],"id":1}
     ```
     
@@ -914,8 +960,16 @@ Returns the number of transactions sent from a specified address. Use the `pendi
     }
     ```
     
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{ "query": "{ account (address:\"0xfe3b557e8fb62b89f4916b721be55ceb828dbd73\"){transactionCount}}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      account(address: "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73") {
+        transactionCount
+      }
+    }
     ```
             
     ```bash tab="GraphQL result"
@@ -934,18 +988,18 @@ Returns the number of transactions in the block matching the given block hash.
 
 **Parameters**
 
-`DATA` - 32-byte block hash.
+`data` - 32-byte block hash.
 
 **Returns**
 
-`result` : *QUANTITY* - Integer representing the number of transactions in the specified block.
+`result` : `quantity` - Integer representing the number of transactions in the specified block.
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getBlockTransactionCountByHash","params":["0xb903239f8543d04b5dc1ba6579132b143087c68db1b2168786408fcbce568238"],"id":53}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_getBlockTransactionCountByHash","params":["0xb903239f8543d04b5dc1ba6579132b143087c68db1b2168786408fcbce568238"],"id":53}
     ```
     
@@ -957,8 +1011,16 @@ Returns the number of transactions in the block matching the given block hash.
     }
     ```
 
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{ "query": "{block(hash:\"0xe455c14f757b0b9b67774baad1be1c180a4c1657df52259dbb685bf375408097\"){transactionCount}}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      block(hash: "0xe455c14f757b0b9b67774baad1be1c180a4c1657df52259dbb685bf375408097") {
+        transactionCount
+      }
+    }
     ```
                 
     ```bash tab="GraphQL result"
@@ -984,11 +1046,11 @@ Returns the number of transactions in a block matching the specified block numbe
 `result` : *QUANTITY* - Integer representing the number of transactions in the specified block.
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getBlockTransactionCountByNumber","params":["0xe8"],"id":51}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_getBlockTransactionCountByNumber","params":["0xe8"],"id":51}
     ```
     
@@ -1000,8 +1062,16 @@ Returns the number of transactions in a block matching the specified block numbe
     }
     ```
     
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{ "query": "{block(number:232){transactionCount}}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      block(number: 232) {
+        transactionCount
+      }
+    }
     ```
                     
     ```bash tab="GraphQL result"
@@ -1033,11 +1103,11 @@ Returns uncle specified by block hash and index.
     Uncles do not contain individual transactions. 
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getUncleByBlockHashAndIndex","params":["0xc48fb64230a82f65a08e7280bd8745e7fea87bc7c206309dee32209fe9a985f7", "0x0"],"id":1}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_getUncleByBlockHashAndIndex","params":["0xc48fb64230a82f65a08e7280bd8745e7fea87bc7c206309dee32209fe9a985f7", "0x0"],"id":1}
     ```
     
@@ -1069,8 +1139,31 @@ Returns uncle specified by block hash and index.
     }
     ```
     
-    ```bash tab="curl GraphQL request"
-    curl -X POST -H "Content-Type: application/json" --data '{ "query": "{block(hash:\"0xc48fb64230a82f65a08e7280bd8745e7fea87bc7c206309dee32209fe9a985f7\){ ommerAt(index: 0) {difficulty extraData gasLimit gasUsed hash logsBloom mixHash nonce number receiptsRoot stateRoot timestamp totalDifficulty transactionsRoot}}}"}' http://localhost:8547/graphql
+    ```bash tab="curl GraphQL"
+    curl -X POST -H "Content-Type: application/json" --data '{ "query": "{block(hash:\"0xc48fb64230a82f65a08e7280bd8745e7fea87bc7c206309dee32209fe9a985f7\"){ ommerAt(index: 0) {difficulty extraData gasLimit gasUsed hash logsBloom mixHash nonce number receiptsRoot stateRoot timestamp totalDifficulty transactionsRoot}}}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      block(hash: "0xc48fb64230a82f65a08e7280bd8745e7fea87bc7c206309dee32209fe9a985f7") {
+        ommerAt(index: 0) {
+          difficulty
+          extraData
+          gasLimit
+          gasUsed
+          hash
+          logsBloom
+          mixHash
+          nonce
+          number
+          receiptsRoot
+          stateRoot
+          timestamp
+          totalDifficulty
+          transactionsRoot
+        }
+      }
+    }
     ```
                         
     ```bash tab="GraphQL result"
@@ -1114,11 +1207,11 @@ Returns uncle specified by block number and index.
     Uncles do not contain individual transactions. 
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getUncleByBlockNumberAndIndex","params":["0x7689D2", "0x0"],"id":1}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_getUncleByBlockNumberAndIndex","params":["0x7689D2", "0x0"],"id":1}
     ```
     
@@ -1150,8 +1243,31 @@ Returns uncle specified by block number and index.
     }
     ```
     
-     ```bash tab="curl GraphQL request"
+     ```bash tab="curl GraphQL"
      curl -X POST -H "Content-Type: application/json" --data '{ "query": "{block(number:2587){ ommerAt(index: 0) {difficulty extraData gasLimit gasUsed hash logsBloom mixHash nonce number receiptsRoot stateRoot timestamp totalDifficulty transactionsRoot}}}"}' http://localhost:8547/graphql
+     ```
+     
+     ```bash tab="GraphQL"
+     {
+       block(number: 2587) {
+         ommerAt(index: 0) {
+           difficulty
+           extraData
+           gasLimit
+           gasUsed
+           hash
+           logsBloom
+           mixHash
+           nonce
+           number
+           receiptsRoot
+           stateRoot
+           timestamp
+           totalDifficulty
+           transactionsRoot
+         }
+       }
+     }
      ```
                             
      ```bash tab="GraphQL result"
@@ -1177,11 +1293,11 @@ Returns the number of uncles in a block from a block matching the given block ha
 `result` : *QUANTITY* - Integer representing the number of uncles in the specified block.
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getUncleCountByBlockHash","params":["0xb903239f8543d04b5dc1ba6579132b143087c68db1b2168786408fcbce568238"],"id":1}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_getUncleCountByBlockHash","params":["0xb903239f8543d04b5dc1ba6579132b143087c68db1b2168786408fcbce568238"],"id":1}
     ```
     
@@ -1193,8 +1309,16 @@ Returns the number of uncles in a block from a block matching the given block ha
     }
     ```
     
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{ "query": "{block(hash:\"0x65c08d792e4192b9ece6b6f2390da7da464208b22d88490be8add9373917b426\"){ommerCount}}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      block(hash: "0x65c08d792e4192b9ece6b6f2390da7da464208b22d88490be8add9373917b426") {
+        ommerCount
+      }
+    }
     ```
                         
     ```bash tab="GraphQL result"
@@ -1220,11 +1344,11 @@ Returns the number of uncles in a block matching the specified block number.
 `result` : *QUANTITY* - Integer representing the number of uncles in the specified block.
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getUncleCountByBlockNumber","params":["0xe8"],"id":1}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_getUncleCountByBlockNumber","params":["0xe8"],"id":1}
     ```
     
@@ -1236,8 +1360,16 @@ Returns the number of uncles in a block matching the specified block number.
     }
     ```
     
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{ "query": "{block(number:\"0x59fd\"){ommerCount}}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      block(number: "0x59fd") {
+        ommerCount
+      }
+    }
     ```
     
     ```bash tab="GraphQL result"
@@ -1265,11 +1397,11 @@ Returns the code of the smart contract at the specified address. Compiled smart 
 `result` : *DATA* - Code stored at the specified address.
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getCode","params":["0xa50a51c09a5c451c52bb714527e1974b686d8e77", "latest"],"id":53}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_getCode","params":["0xa50a51c09a5c451c52bb714527e1974b686d8e77", "latest"],"id":53}
     ```
     
@@ -1281,8 +1413,16 @@ Returns the code of the smart contract at the specified address. Compiled smart 
     }
     ```
     
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{"query": "{account(address: \"0xa50a51c09a5c451c52bb714527e1974b686d8e77\"){ code }}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      account(address: "0xa50a51c09a5c451c52bb714527e1974b686d8e77") {
+        code
+      }
+    }
     ```
                         
     ```bash tab="GraphQL result"
@@ -1322,11 +1462,11 @@ To avoid exposing your private key, create signed transactions offline and send 
 `result` : `data` - 32-byte transaction hash
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["0xf869018203e882520894f17f52151ebef6c7334fad080c5704d77216b732881bc16d674ec80000801ba02da1c48b670996dcb1f447ef9ef00b33033c48a4fe938f420bec3e56bfd24071a062e0aa78a81bf0290afbc3a9d8e9a068e6d74caa66c5e0fa8a46deaae96b0833"],"id":1}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["0xf869018203e882520894f17f52151ebef6c7334fad080c5704d77216b732881bc16d674ec80000801ba02da1c48b670996dcb1f447ef9ef00b33033c48a4fe938f420bec3e56bfd24071a062e0aa78a81bf0290afbc3a9d8e9a068e6d74caa66c5e0fa8a46deaae96b0833"],"id":1}
     ```
     
@@ -1338,8 +1478,14 @@ To avoid exposing your private key, create signed transactions offline and send 
     }
     ```
     
-     ```bash tab="curl GraphQL request"
+     ```bash tab="curl GraphQL"
      curl -X POST -H "Content-Type: application/json" --data '{ "query": "mutation {sendRawTransaction(data: \"0xf869018203e882520894f17f52151ebef6c7334fad080c5704d77216b732881bc16d674ec80000801ba02da1c48b670996dcb1f447ef9ef00b33033c48a4fe938f420bec3e56bfd24071a062e0aa78a81bf0290afbc3a9d8e9a068e6d74caa66c5e0fa8a46deaae96b0833\")}"}' http://localhost:8547/graphql
+     ```
+     
+     ```bash tab="GraphQL"
+     mutation {
+       sendRawTransaction(data: "0xf869018203e882520894f17f52151ebef6c7334fad080c5704d77216b732881bc16d674ec80000801ba02da1c48b670996dcb1f447ef9ef00b33033c48a4fe938f420bec3e56bfd24071a062e0aa78a81bf0290afbc3a9d8e9a068e6d74caa66c5e0fa8a46deaae96b0833")
+     }
      ```
         
      ```json tab="GraphQL result"
@@ -1367,11 +1513,11 @@ You can interact with contracts using [eth_sendRawTransaction or eth_call](../Us
 `result` - `data` - Return value of the executed contract.
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x69498dd54bd25aa0c886cf1f8b8ae0856d55ff13","value":"0x1"}, "latest"],"id":53}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x69498dd54bd25aa0c886cf1f8b8ae0856d55ff13","value":"0x1"}, "latest"],"id":53}
     ```
     
@@ -1383,8 +1529,20 @@ You can interact with contracts using [eth_sendRawTransaction or eth_call](../Us
     }
     ```
 
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{ "query": "{block {number call (data : {from : \"0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b\", to: \"0x69498dd54bd25aa0c886cf1f8b8ae0856d55ff13\", data :\"0x12a7b914\"}){data status}}}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      block {
+        number
+        call(data: {from: "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b", to: "0x69498dd54bd25aa0c886cf1f8b8ae0856d55ff13", data: "0x12a7b914"}) {
+          data
+          status
+        }
+      }
+    }
     ```
         
     ```json tab="GraphQL result"
@@ -1425,11 +1583,11 @@ limits apply).
 The following example returns an estimate of 21000 wei (0x5208) for the transaction.
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_estimateGas","params":[{"from":"0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73","to":"0x44Aa93095D6749A706051658B970b941c72c1D53","value":"0x1"}],"id":53}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_estimateGas","params":[{"from":"0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73","to":"0x44Aa93095D6749A706051658B970b941c72c1D53","value":"0x1"}],"id":53}
     ```
     
@@ -1441,8 +1599,16 @@ The following example returns an estimate of 21000 wei (0x5208) for the transact
     }
     ```
     
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{ "query": "{block{estimateGas (data: {from :\"0x6295ee1b4f6dd65047762f924ecd367c17eabf8f\", to :\"0x8888f1f195afa192cfee860698584c030f4c9db1\"})}}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      block {
+        estimateGas(data: {from: "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f", to: "0x8888f1f195afa192cfee860698584c030f4c9db1"})
+      }
+    }
     ```
                 
     ```bash tab="GraphQL result"
@@ -1502,11 +1668,11 @@ Returns information about the block by hash.
 `result` : *OBJECT* - [Block object](Pantheon-API-Objects.md#block-object) , or `null` when no block is found. 
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getBlockByHash","params":["0x16b69965a5949262642cfb5e86368ddbbe57ab9f17d999174a65fd0e66580d8f", false],"id":53}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_getBlockByHash","params":["0x16b69965a5949262642cfb5e86368ddbbe57ab9f17d999174a65fd0e66580d8f", false],"id":53}
     ```
     
@@ -1538,8 +1704,35 @@ Returns information about the block by hash.
     }
     ```
     
-    ```bash tab="curl GraphQL request"
-    curl -X POST -H "Content-Type: application/json" --data '{ "query": "{block (hash : \"0xb0efed1fc9326fee967cb2d845d4ebe57c5350a0670c8e86f8052dea6f219f92\") {number transactions{hash} timestamp difficulty totalDifficulty gasUsed gasLimit hash noce ommerCount logsBloom mixHash ommerHash extraData stateRoot receiptsRoot transactionCount transactionsRoot}}"}' http://localhost:8547/graphql
+    ```bash tab="curl GraphQL"
+    curl -X POST -H "Content-Type: application/json" --data '{ "query": "{block (hash : \"0xb0efed1fc9326fee967cb2d845d4ebe57c5350a0670c8e86f8052dea6f219f92\") {number transactions{hash} timestamp difficulty totalDifficulty gasUsed gasLimit hash nonce ommerCount logsBloom mixHash ommerHash extraData stateRoot receiptsRoot transactionCount transactionsRoot}}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      block(hash: "0xb0efed1fc9326fee967cb2d845d4ebe57c5350a0670c8e86f8052dea6f219f92") {
+        number
+        transactions {
+          hash
+        }
+        timestamp
+        difficulty
+        totalDifficulty
+        gasUsed
+        gasLimit
+        hash
+        nonce
+        ommerCount
+        logsBloom
+        mixHash
+        ommerHash
+        extraData
+        stateRoot
+        receiptsRoot
+        transactionCount
+        transactionsRoot
+      }
+    }
     ```
     
     ```bash tab="GraphQL result"
@@ -1584,11 +1777,11 @@ Returns information about a block by block number.
 `result` : *OBJECT* - [Block object](Pantheon-API-Objects.md#block-object) , or `null` when no block is found. 
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["0x64", true],"id":1}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["0x64", true],"id":1}
     ```
     
@@ -1620,8 +1813,49 @@ Returns information about a block by block number.
     }
     ```
     
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{ "query": "{block (number : 100) {transactions{hash} timestamp difficulty totalDifficulty gasUsed gasLimit hash nonce ommerCount logsBloom mixHash ommerHash extraData stateRoot receiptsRoot transactionCount transactionsRoot ommers{hash} ommerAt(index : 1){hash} miner{address} account(address: \"0xfe3b557e8fb62b89f4916b721be55ceb828dbd73\"){balance} parent{hash} }}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      block(number: 100) {
+        transactions {
+          hash
+        }
+        timestamp
+        difficulty
+        totalDifficulty
+        gasUsed
+        gasLimit
+        hash
+        nonce
+        ommerCount
+        logsBloom
+        mixHash
+        ommerHash
+        extraData
+        stateRoot
+        receiptsRoot
+        transactionCount
+        transactionsRoot
+        ommers {
+          hash
+        }
+        ommerAt(index: 1) {
+          hash
+        }
+        miner {
+          address
+        }
+        account(address: "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73") {
+          balance
+        }
+        parent {
+          hash
+        }
+      }
+    }
     ```
         
     ```bash tab="GraphQL result"
@@ -1675,11 +1909,11 @@ Returns transaction information for the specified transaction hash.
 Object - [Transaction object](Pantheon-API-Objects.md#transaction-object), or `null` when no transaction is found.
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["0xa52be92809541220ee0aaaede6047d9a6c5d0cd96a517c854d944ee70a0ebb44"],"id":53}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["0xa52be92809541220ee0aaaede6047d9a6c5d0cd96a517c854d944ee70a0ebb44"],"id":53}
     ```
     
@@ -1706,8 +1940,30 @@ Object - [Transaction object](Pantheon-API-Objects.md#transaction-object), or `n
     }
     ```
     
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{"query": "{transaction(hash : \"0x03d80b9ca0a71435399a268609d6d7896f7155d2147cc22b780672bcb59b170d\") { block{hash} gas gasPrice hash nonce value from {address} to {address} status}}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      transaction(hash: "0x03d80b9ca0a71435399a268609d6d7896f7155d2147cc22b780672bcb59b170d") {
+        block {
+          hash
+        }
+        gas
+        gasPrice
+        hash
+        nonce
+        value
+        from {
+          address
+        }
+        to {
+          address
+        }
+        status
+      }
+    }
     ```
             
     ```bash tab="GraphQL result"
@@ -1749,11 +2005,11 @@ Returns transaction information for the specified block hash and transaction ind
 Object - [Transaction object](Pantheon-API-Objects.md#transaction-object), or `null` when no transaction is found.
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionByBlockHashAndIndex","params":["0xbf137c3a7a1ebdfac21252765e5d7f40d115c2757e4a4abee929be88c624fdb7", "0x2"], "id":1}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_getTransactionByBlockHashAndIndex","params":["0xbf137c3a7a1ebdfac21252765e5d7f40d115c2757e4a4abee929be88c624fdb7", "0x2"], "id":1}
     ```
     
@@ -1780,8 +2036,21 @@ Object - [Transaction object](Pantheon-API-Objects.md#transaction-object), or `n
      }
     ```
     
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{"query": "{ block(hash: \"0x9270651f9c6fa36232c379d0ecf69b519383aa275815a65f1e03114346668f69\") { transactionAt(index: 0) {block{hash}  hash } } }"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      block(hash: "0x9270651f9c6fa36232c379d0ecf69b519383aa275815a65f1e03114346668f69") {
+        transactionAt(index: 0) {
+          block {
+            hash
+          }
+          hash
+        }
+      }
+    }
     ```
                 
     ```bash tab="GraphQL result"
@@ -1816,11 +2085,11 @@ Object - [Transaction object](Pantheon-API-Objects.md#transaction-object), or `n
 !!! example
     This request returns the third transaction in the 82990 block on the Ropsten testnet. You can also view this [block](https://ropsten.etherscan.io/txs?block=82990) and [transaction](https://ropsten.etherscan.io/tx/0xfc766a71c406950d4a4955a340a092626c35083c64c7be907060368a5e6811d6) on Etherscan.
 
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionByBlockNumberAndIndex","params":["82990", "0x2"], "id":1}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_getTransactionByBlockNumberAndIndex","params":["82990", "0x2"], "id":1}
     ```
     
@@ -1847,8 +2116,21 @@ Object - [Transaction object](Pantheon-API-Objects.md#transaction-object), or `n
     }
     ```
 
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{"query": "{block(number:20303) {transactionAt(index: 0) {block{hash} hash}}}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      block(number: 20303) {
+        transactionAt(index: 0) {
+          block {
+            hash
+          }
+          hash
+        }
+      }
+    }
     ```
                     
     ```bash tab="GraphQL result"
@@ -1879,11 +2161,11 @@ Returns the receipt of a transaction by transaction hash. Receipts for pending t
 `Object` - [Transaction receipt object](Pantheon-API-Objects.md#transaction-receipt-object), or `null` when no receipt is found.
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionReceipt","params":["0x504ce587a65bdbdb6414a0c6c16d86a04dd79bfcc4f2950eec9634b30ce5370f"],"id":53}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_getTransactionReceipt","params":["0x504ce587a65bdbdb6414a0c6c16d86a04dd79bfcc4f2950eec9634b30ce5370f"],"id":53}
     ```
     
@@ -1908,8 +2190,36 @@ Returns the receipt of a transaction by transaction hash. Receipts for pending t
     }
     ```
     
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{"query": "{transaction(hash: \"0x5f5366af89e8777d5ae62a1af94a0876bdccbc22417bed0aff361eefa3e37f86\") {block{hash logsBloom} hash createdContract{address} cumulativeGasUsed gas gasUsed logs{topics} from{address} to{address} index}}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      transaction(hash: "0x5f5366af89e8777d5ae62a1af94a0876bdccbc22417bed0aff361eefa3e37f86") {
+        block {
+          hash
+          logsBloom
+        }
+        hash
+        createdContract {
+          address
+        }
+        cumulativeGasUsed
+        gas
+        gasUsed
+        logs {
+          topics
+        }
+        from {
+          address
+        }
+        to {
+          address
+        }
+        index
+      }
+    }
     ```
                         
     ```bash tab="GraphQL result"
@@ -2216,11 +2526,11 @@ Returns an array of [logs](../Using-Pantheon/Events-and-Logs.md) matching a spec
 `array` - [Log objects](Pantheon-API-Objects.md#log-object)
 
 !!! example
-    ```bash tab="curl HTTP request"
+    ```bash tab="curl HTTP"
     curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getLogs","params":[{"fromBlock":"earliest", "toBlock":"latest", "address": "0x2e1f232a9439c3d459fceca0beef13acc8259dd8", "topics":[]}], "id":1}' http://127.0.0.1:8545
     ```
     
-    ```bash tab="wscat WS request"
+    ```bash tab="wscat WS"
     {"jsonrpc":"2.0","method":"eth_getLogs","params":[{"fromBlock":"earliest", "toBlock":"latest", "address": "0x2e1f232a9439c3d459fceca0beef13acc8259dd8", "topics":[]}], "id":1}
     ```
     
@@ -2252,8 +2562,26 @@ Returns an array of [logs](../Using-Pantheon/Events-and-Logs.md) matching a spec
     }
     ```
     
-    ```bash tab="curl GraphQL request"
+    ```bash tab="curl GraphQL"
     curl -X POST -H "Content-Type: application/json" --data '{"query": "{block(number:23037) {logs(filter:{topics:[[\"0xd3610b1c54575b7f4f0dc03d210b8ac55624ae007679b7a928a4f25a709331a8\", \"0x0000000000000000000000000000000000000000000000000000000000000002\"]]}) {index topics data account{address} transaction{hash} }}}"}' http://localhost:8547/graphql
+    ```
+    
+    ```bash tab="GraphQL"
+    {
+      block(number: 23037) {
+        logs(filter: {topics: [["0xd3610b1c54575b7f4f0dc03d210b8ac55624ae007679b7a928a4f25a709331a8", "0x0000000000000000000000000000000000000000000000000000000000000002"]]}) {
+          index
+          topics
+          data
+          account {
+            address
+          }
+          transaction {
+            hash
+          }
+        }
+      }
+    }
     ```
                             
     ```bash tab="GraphQL result"
