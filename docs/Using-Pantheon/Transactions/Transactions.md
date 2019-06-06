@@ -5,151 +5,125 @@ description: Some use cases of creating transactions on a Pantheon network
 
 You can send signed transactions using the [`eth_sendRawTransaction`](../../Reference/Pantheon-API-Methods.md#eth_sendrawtransaction) JSON-RPC API method.
 
-These examples describe how to create a signed raw transaction that can be passed to [`eth_sendRawTransaction`](../../Reference/Pantheon-API-Methods.md#eth_sendrawtransaction).
+Signed transactions can be simple value transfers, contract creation, or contract invocation.
 
-!!!tip
-    To avoid exposing your private keys, create signed transactions offline.
+Example scripts are provided to create a signed raw transaction that can be passed to 
+[`eth_sendRawTransaction`](../../Reference/Pantheon-API-Methods.md#eth_sendrawtransaction) to send Ether
+and create a smart contract.
 
-The examples use the following libraries to create signed transactions:
+!!! warning "Private keys"
 
-* [web3.js](https://github.com/ethereum/web3.js/)
-* [ethereumjs](https://github.com/ethereumjs/ethereumjs-tx)
+    Do not use the accounts in the examples on mainnet or any public network except for testing.
+    The private keys are displayed which means the accounts are not secure.
+    
+    All accounts and private keys in the examples are from the `dev.json` genesis file in the 
+    [`/pantheon/ethereum/core/src/main/resources`](https://github.com/PegaSysEng/pantheon/tree/master/config/src/main/resources) directory.
+
+    In production environments avoid exposing your private keys by creating signed transactions 
+    offline, or use [EthSigner](https://docs.ethsigner.pegasys.tech/) to isolate your private keys and 
+    sign transactions with [`eth_sendTransaction`](https://docs.ethsigner.pegasys.tech/Using-EthSigner/Using-EthSigner/#eth_sendtransaction). 
                      
-!!!info
-    Other libraries (such as [web3j](https://github.com/web3j/web3j) or [ethereumj](https://github.com/ethereum/ethereumj)) 
-    and tools (such as [MyEtherWallet](https://kb.myetherwallet.com/offline/making-offline-transaction-on-myetherwallet.html) 
-    or [MyCrypto](https://mycrypto.com/)) can also be used to create signed transactions. 
+!!! tip
+    Libraries such as [web3j](https://github.com/web3j/web3j) or [ethereumj](https://github.com/ethereum/ethereumj)
+    and tools such as [MyCrypto](https://mycrypto.com/) can also be used to create signed transactions.
 
-    [EthSigner](https://docs.ethsigner.pegasys.tech/en/latest/) provides transaction signing and implements [`eth_sendTransaction`](https://docs.ethsigner.pegasys.tech/en/latest/Using-EthSigner#eth_sendTransaction). 
-    
-Example Javascript scripts are provided to create signed raw transaction strings to:
- 
-* [Send ether](#sending-ether)
-* [Deploy a contract](#deploying-a-contract)
+You can use the example Javascript scripts to create and send raw transactions in the private network 
+created by the [Private Network Quickstart](../../Tutorials/Private-Network-Quickstart.md).
 
-!!!attention
-    [Node.js](https://nodejs.org/en/download/) must be installed to run these Javascript scripts. 
+Update the `JSON-RPC endpoint` in the following examples to the endpoint for the private 
+network displayed after running the `./run.sh` script.
 
-You can use the example Javascript scripts to create and send raw transactions in the private network created by the 
-[Private Network Quickstart](../../Tutorials/Private-Network-Quickstart.md).
+## Example Javascript scripts
 
-You must update the `JSON-RPC endpoint` in the examples to the endpoint for the private network displayed after running 
-the `run.sh` script.
+### 1. Requirements
 
-To create and display the transaction string, run the Javascript script.
+- [Node.js (version > 10)](https://nodejs.org/en/download/)  
+- [web3.js 1.0.0 beta](https://github.com/ethereum/web3.js/) and [ethereumjs 1.3](https://github.com/ethereumjs/ethereumjs-tx).
+These dependencies are defined in the included [`package.json`](scripts/package.json) file.
 
+### 2. Create Directory
 ```bash
-node create_signed_raw_transaction.js
+mkdir example_scripts
 ```
 
-To send a signed transaction, run:
+### 3. Copy Files
+Copy the following files to the `example_scripts` directory:
+
+- [`package.json`](scripts/package.json)
+- [`create_value_raw_transaction.js`](scripts/create_value_raw_transaction.js)
+- [`create_contract_raw_transaction.js`](scripts/create_contract_raw_transaction.js)
+
+### 4. Retrieve Dependencies
 ```bash
-curl -X POST --data '{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["raw_transaction_string"],"id":1}' <JSON-RPC-endpoint:port>
+cd example_scripts
+npm install
 ```
 
-Where:
+### 5. Send Ether
+The following is the example JavaScript script that displays a signed raw transaction string to send Ether.
 
-* `raw_transaction_string` is the signed raw transaction string displayed by the JS script. 
-* `<JSON-RPC-endpoint:port>` is the JSON-RPC endpoint.
-
-!!!example
-    ```bash
-    curl -X POST --data '{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["0xf86a808203e882520894f17f52151ebef6c7334fad080c5704d77216b732896c6b935b8bbd400000801ca08ce4a6c12f7f273321c5dc03910744f8fb11573fcce8140aa44486d385d22fb3a051f6bcc918bf3f12e06bfccfd1451bea5c517dffee0777ebd50caf177b17f383"],"id":1}' http://localhost:8545
-    ```
-
-All accounts and private keys in the examples are from the `dev.json` genesis file in the `/pantheon/ethereum/core/src/main/resources` directory.
-
-## Sending Ether
- 
-!!!example
-    The following is an example of JavaScript that displays a signed raw transaction string to deploy a contract.
-    
+!!! example "Send Ether example : create_value_raw_transaction.js"
     ```javascript linenums="1"
-    const Web3 = require('web3')
-    const ethTx = require('ethereumjs-tx')
-
-    // web3 initialization - must point to the HTTP JSON-RPC endpoint
-    const web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:8545'))
-
-    // Sender address and private key
-    // Second acccount in dev.json genesis file
-    // Exclude 0x at the beginning of the private key
-    const addressFrom = '0x627306090abaB3A6e1400e9345bC60c78a8BEf57'
-    const privKey = Buffer.from('c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3', 'hex')
-
-    // Receiver address and value to transfer
-    // Third account in dev.json genesis file
-    const addressTo = '0xf17f52151EbEF6C7334FAD080c5704D77216b732'
-    const valueInEther = '2000'
-
-    // Get the address transaction count in order to specify the correct nonce
-    txnCount = web3.eth.getTransactionCount(addressFrom, "pending");
-
-    // Create the transaction object
-    var txObject = {
-        nonce: web3.utils.toHex(txnCount),
-        gasPrice: web3.utils.toHex(1000),
-        gasLimit: web3.utils.toHex(21000),
-        to: addressTo,
-        value: web3.utils.toHex(web3.utils.toWei(valueInEther, 'ether'))
-    };
-
-    // Sign the transaction with the private key
-    const tx = new ethTx(txObject);
-    tx.sign(privKey)
-
-    //Convert to raw transaction string
-    const serializedTx = tx.serialize();
-    const rawTxHex = '0x' + serializedTx.toString('hex');
-
-    console.log("Raw transaction string=" + rawTxHex)
+{! Using-Pantheon/Transactions/scripts/create_value_raw_transaction.js !}
+     
     ```
 
+Run the `create_value_raw_transaction.js` script:
 
-## Deploying a Contract
+```bash tab="Command"
+node create_value_raw_transaction.js <YOUR JSON-RPC HTTP ENDPOINT>
+```
 
-!!!example
+```bash tab="Example"
+node create_value_raw_transaction.js http://localhost:32770/jsonrpc
+```
 
-    The following is an example of JavaScript that displays a signed raw transaction string to deploy a contract.
+!!! tip
+    The default JSON-RPC HTTP endpoint for `create_value_raw_transaction.js` is `http://localhost:8545`.
+    If using `http://localhost:8545`, run `node create_value_raw_transaction.js`.
     
+A signed raw transaction string is displayed.
+
+You can send the raw transaction yourself or let the script send it using the web3.js library.
+
+If sending it yourself, the cURL command is displayed and can be copied and pasted. Otherwise, the script sends it and
+the transaction receipt is displayed.
+
+### 6. Create A Smart Contract
+The following is the example JavaScript script that displays a signed raw transaction string to create a contract.
+
+!!! example "Create a contract example : create_contract_raw_transaction.js"    
     ```javascript linenums="1"
-    const Web3 = require('web3')
-    const ethTx = require('ethereumjs-tx')
-    
-    // web3 initialization - must point to the HTTP JSON-RPC endpoint
-    const web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:8545'))
-    
-    // Deployer address and private key
-    // First account in the dev.json genesis file
-    const addressFrom = '0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73'
-    const privKey = Buffer.from('8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63', 'hex')
-    
-    // Compiled contract hash - can obtain from Remix by clicking the Details button in the Compile tab. 
-    // Compiled contract hash is value of data parameter in the WEB3DEPLOY section.
-    const contractData = '0x608060405234801561001057600080fd5b5060dc8061001f6000396000f3006080604052600436106049576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680633fa4f24514604e57806355241077146076575b600080fd5b348015605957600080fd5b50606060a0565b6040518082815260200191505060405180910390f35b348015608157600080fd5b50609e6004803603810190808035906020019092919050505060a6565b005b60005481565b80600081905550505600a165627a7a723058202bdbba2e694dba8fff33d9d0976df580f57bff0a40e25a46c398f8063b4c00360029'
-    
-    // Get the address transaction count in order to specify the correct nonce
-    txnCount = web3.eth.getTransactionCount(addressFrom, "pending");
-    
-    var txObject = {
-       nonce: web3.utils.toHex(txnCount),
-       gasPrice: web3.utils.toHex(1000),
-       gasLimit: web3.utils.toHex(126165),
-       data: contractData
-    };
-    
-    const tx = new ethTx(txObject);
-    tx.sign(privKey)
-    
-    const serializedTx = tx.serialize();
-    const rawTxHex = '0x' + serializedTx.toString('hex');
-    
-    console.log("Raw transaction string=" + rawTxHex); 
+{! Using-Pantheon/Transactions/scripts/create_contract_raw_transaction.js !}
+     
     ```
 
-## eth_call or eth_sendRawTransaction
+Run the `create_contract_raw_transaction.js` script:
 
-You can interact with contracts using [eth_call](../../Reference/Pantheon-API-Methods.md#eth_call) or [eth_sendRawTransaction](../../Reference/Pantheon-API-Methods.md#eth_sendrawtransaction). The table below compares the characteristics of both calls.
+```bash tab="Command"
+node create_contract_raw_transaction.js <YOUR JSON-RPC HTTP ENDPOINT>
+```
+
+```bash tab="Example"
+node create_contract_raw_transaction.js http://localhost:32770/jsonrpc
+```
+
+!!! tip
+    The default JSON-RPC HTTP endpoint for `create_contract_raw_transaction.js` is `http://localhost:8545`.
+    If using `http://localhost:8545`, run `node create_contract_raw_transaction.js`.
+    
+A signed raw transaction string is displayed.
+
+You can send the raw transaction yourself or let the script send it using the web3.js library.
+
+If sending it yourself, the cURL command is displayed and can be copied and pasted. Otherwise, the script sends it and
+the transaction receipt is displayed.
+
+## eth_call vs eth_sendRawTransaction
+
+You can interact with contracts using [eth_call](../../Reference/Pantheon-API-Methods.md#eth_call) 
+or [eth_sendRawTransaction](../../Reference/Pantheon-API-Methods.md#eth_sendrawtransaction). 
+The table below compares the characteristics of both calls.
 
 | eth_call                                                | eth_sendRawTransaction                                                                                                         |
 |---------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
