@@ -21,7 +21,7 @@ The following smart contracts are provided in the [PegaSysEng/permissioning-smar
 * Ingress - a simple contract functioning as a gateway to the Admin and Rules contracts. The Ingress contract is deployed 
 to a static address. 
 
-* Rules - stores the node whitelist and node whitelist operations (for example, add and remove). 
+* Node Rules - stores the node whitelist and node whitelist operations (for example, add and remove). 
 
 * Admin - stores the list of admin accounts and admin list operations (for example, add and remove).
 
@@ -70,7 +70,7 @@ in the [`permissioning-smart-contracts` repository](https://github.com/PegaSysEn
 
     * `PANTHEON_NODE_PERM_KEY` - private key of the account used to interact with the permissioning contracts.
 
-    * `INGRESS_CONTRACT_ADDRESS` - address of the Ingress contract in the genesis file.  
+    * `NODE_INGRESS_CONTRACT_ADDRESS` - address of the Ingress contract in the genesis file.  
 
     * `PANTHEON_NODE_PERM_ENDPOINT` - required only if your node is not using the default JSON-RPC host and port (`http://127.0.0.1:8545`). 
        Set to JSON-RPC host and port. 
@@ -151,7 +151,7 @@ To add or remove nodes:
 To display the nodes whitelist, paste the following into the Truffle Console: 
 
 ```javascript
-Rules.deployed().then(function(instance) {instance.getSize().then(function(txCount) {console.log("size of whitelist: " + txCount); var i=txCount; while(i>=0) {instance.getByIndex(i--).then(function(tx) {console.log(tx)})}});});
+NodeRules.deployed().then(function(instance) {instance.getSize().then(function(txCount) {console.log("size of whitelist: " + txCount); var i=txCount; while(i>=0) {instance.getByIndex(i--).then(function(tx) {console.log(tx)})}});});
 ```
 
 ## Start Other Network Nodes 
@@ -180,6 +180,16 @@ For participating nodes that are going to add or remove nodes from the whitelist
 1. Copy the [enode URL](../Configuring-Pantheon/Node-Keys.md#enode-url) and [have node added to the whitelist](#add-and-remove-nodes-from-the-whitelist).
 
 1. Have account for node that will interact with permissioning contracts added as an [admin account](#add-and-remove-admin-accounts). 
+
+## Bootnodes
+
+When a node is added to the network, it connects to the bootnodes until it synchronizes to the chain head regardless of
+node permissions. Once in sync, the permissioning rules are applied and connections to bootnodes are dropped if not permitted by node 
+permissions.  
+
+If a sychronized node loses all peer connections (that is, it has 0 peers), it reconnects to the bootnodes regardless of node 
+permissions. When the node has connected to 1 or more non-bootnodes, connections to bootnodes are dropped if not permitted by node 
+permissions.   
 
 ## Add and Remove Admin Accounts      
 
