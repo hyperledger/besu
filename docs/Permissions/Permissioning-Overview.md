@@ -21,9 +21,8 @@ Updates to local permissioning must be made to the configuration file for each n
 
 ## Onchain 
 
-Onchain permissioning is specified in a smart contract on the network. Specifying permissioning onchain
+[Onchain permissioning](Onchain-Permissioning.md) is specified in a smart contract on the network. Specifying permissioning onchain
 enables all nodes to read and update permissioning in one location. 
 
 !!! note
-    Onchain permissioning for nodes is under development and will be available in v1.1. Onchain permissioning
-    for accounts will be available in a future Pantheon release. 
+    Onchain permissioning for accounts will be available in a future Pantheon release. 
