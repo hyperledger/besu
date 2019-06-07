@@ -40,6 +40,7 @@ import tech.pegasys.pantheon.cli.rlp.RLPSubCommand;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.controller.KeyPairUtil;
 import tech.pegasys.pantheon.controller.PantheonController;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
@@ -54,12 +55,17 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
+import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.peers.StaticNodesParser;
+import tech.pegasys.pantheon.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfigurationBuilder;
 import tech.pegasys.pantheon.ethereum.permissioning.SmartContractPermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.permissioning.TransactionSmartContractPermissioningController;
+import tech.pegasys.pantheon.ethereum.permissioning.account.AccountPermissioningController;
+import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulator;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
@@ -515,6 +521,18 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Boolean permissionsNodesContractEnabled = false;
 
   @Option(
+      names = {"--permissions-accounts-contract-address"},
+      description = "Address of the account permissioning smart contract",
+      arity = "1")
+  private final Address permissionsAccountsContractAddress = null;
+
+  @Option(
+      names = {"--permissions-accounts-contract-enabled"},
+      description =
+          "Enable account level permissions via smart contract (default: ${DEFAULT-VALUE})")
+  private final Boolean permissionsAccountsContractEnabled = false;
+
+  @Option(
       names = {"--privacy-enabled"},
       description = "Enable private transactions (default: ${DEFAULT-VALUE})")
   private final Boolean isPrivacyEnabled = false;
@@ -733,6 +751,14 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       final PantheonController<?> pantheonController = buildController();
       final MetricsConfiguration metricsConfiguration = metricsConfiguration();
 
+      final AccountPermissioningController accountPermissioningController =
+          buildAccountPermissioningController(permissioningConfiguration, pantheonController);
+      if (permissionsAccountsEnabled || permissionsAccountsContractEnabled) {
+        pantheonController
+            .getProtocolSchedule()
+            .setTransactionFilter(accountPermissioningController::isPermitted);
+      }
+
       pantheonPluginContext.addService(
           PantheonEvents.class,
           new PantheonEventsImpl((pantheonController.getProtocolManager().getBlockBroadcaster())));
@@ -751,10 +777,62 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           webSocketConfiguration,
           metricsConfiguration,
           permissioningConfiguration,
-          staticNodes);
+          staticNodes,
+          accountPermissioningController);
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
+  }
+
+  private AccountPermissioningController buildAccountPermissioningController(
+      final Optional<PermissioningConfiguration> permissioningConfiguration,
+      final PantheonController<?> pantheonController) {
+
+    Optional<AccountLocalConfigPermissioningController> accountLocalConfigPermissioningController =
+        Optional.empty();
+    Optional<TransactionSmartContractPermissioningController>
+        transactionSmartContractPermissioningController = Optional.empty();
+
+    if (permissioningConfiguration.isPresent()) {
+      final PermissioningConfiguration config = permissioningConfiguration.get();
+      if (config.getLocalConfig().isPresent()) {
+        final LocalPermissioningConfiguration localPermissioningConfiguration =
+            config.getLocalConfig().get();
+
+        if (localPermissioningConfiguration.isAccountWhitelistEnabled()) {
+          accountLocalConfigPermissioningController =
+              Optional.of(
+                  new AccountLocalConfigPermissioningController(
+                      localPermissioningConfiguration, metricsSystem.get()));
+        }
+      }
+
+      if (config.getSmartContractConfig().isPresent()) {
+        final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
+            config.getSmartContractConfig().get();
+
+        if (smartContractPermissioningConfiguration.isSmartContractAccountWhitelistEnabled()) {
+          final Address accountSmartContractAddress =
+              smartContractPermissioningConfiguration.getAccountSmartContractAddress();
+          final ProtocolContext<?> protocolContext = pantheonController.getProtocolContext();
+          final ProtocolSchedule<?> protocolSchedule = pantheonController.getProtocolSchedule();
+
+          final TransactionSimulator transactionSimulator =
+              new TransactionSimulator(
+                  protocolContext.getBlockchain(),
+                  protocolContext.getWorldStateArchive(),
+                  protocolSchedule);
+
+          transactionSmartContractPermissioningController =
+              Optional.of(
+                  new TransactionSmartContractPermissioningController(
+                      accountSmartContractAddress, transactionSimulator, metricsSystem.get()));
+        }
+      }
+    }
+
+    return new AccountPermissioningController(
+        accountLocalConfigPermissioningController, transactionSmartContractPermissioningController);
   }
 
   private NetworkName getNetwork() {
@@ -924,10 +1002,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   }
 
   private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
-    final Optional<LocalPermissioningConfiguration> localPermissioningConfigurationOptional;
-    final Optional<SmartContractPermissioningConfiguration>
-        smartContractPermissioningConfigurationOptional;
-
     if (!(localPermissionsEnabled() || contractPermissionsEnabled())) {
       if (rpcHttpApis.contains(RpcApis.PERM) || rpcWsApis.contains(RpcApis.PERM)) {
         logger.warn(
@@ -936,6 +1010,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       return Optional.empty();
     }
 
+    final Optional<LocalPermissioningConfiguration> localPermissioningConfigurationOptional;
     if (localPermissionsEnabled()) {
       final Optional<String> nodePermissioningConfigFile =
           Optional.ofNullable(nodePermissionsConfigFile());
@@ -965,30 +1040,46 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       localPermissioningConfigurationOptional = Optional.empty();
     }
 
-    if (contractPermissionsEnabled()) {
+    final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
+        SmartContractPermissioningConfiguration.createDefault();
+    if (permissionsNodesContractEnabled) {
       if (permissionsNodesContractAddress == null) {
         throw new ParameterException(
             this.commandLine,
-            "No contract address specified. Cannot enable contract based permissions.");
-      }
-      final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
-          PermissioningConfigurationBuilder.smartContractPermissioningConfiguration(
-              permissionsNodesContractAddress, permissionsNodesContractEnabled);
-      smartContractPermissioningConfigurationOptional =
-          Optional.of(smartContractPermissioningConfiguration);
-    } else {
-      if (permissionsNodesContractAddress != null) {
-        logger.warn(
-            "Smart contract address set {} but no contract permissions enabled",
+            "No node permissioning contract address specified. Cannot enable smart contract based node permissioning.");
+      } else {
+        smartContractPermissioningConfiguration.setSmartContractNodeWhitelistEnabled(
+            permissionsNodesContractEnabled);
+        smartContractPermissioningConfiguration.setNodeSmartContractAddress(
             permissionsNodesContractAddress);
       }
-      smartContractPermissioningConfigurationOptional = Optional.empty();
+    } else if (permissionsNodesContractAddress != null) {
+      logger.warn(
+          "Node permissioning smart contract address set {} but smart contract node permissioning is disabled.",
+          permissionsNodesContractAddress);
+    }
+
+    if (permissionsAccountsContractEnabled) {
+      if (permissionsAccountsContractAddress == null) {
+        throw new ParameterException(
+            this.commandLine,
+            "No account permissioning contract address specified. Cannot enable smart contract based account permissioning.");
+      } else {
+        smartContractPermissioningConfiguration.setSmartContractAccountWhitelistEnabled(
+            permissionsAccountsContractEnabled);
+        smartContractPermissioningConfiguration.setAccountSmartContractAddress(
+            permissionsAccountsContractAddress);
+      }
+    } else if (permissionsAccountsContractAddress != null) {
+      logger.warn(
+          "Account permissioning smart contract address set {} but smart contract account permissioning is disabled.",
+          permissionsAccountsContractAddress);
     }
 
     final PermissioningConfiguration permissioningConfiguration =
         new PermissioningConfiguration(
             localPermissioningConfigurationOptional,
-            smartContractPermissioningConfigurationOptional);
+            Optional.of(smartContractPermissioningConfiguration));
 
     return Optional.of(permissioningConfiguration);
   }
@@ -998,8 +1089,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   }
 
   private boolean contractPermissionsEnabled() {
-    // TODO add permissionsAccountsContractEnabled
-    return permissionsNodesContractEnabled;
+    return permissionsNodesContractEnabled || permissionsAccountsContractEnabled;
   }
 
   private PrivacyParameters privacyParameters() throws IOException {
@@ -1054,7 +1144,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
-      final Collection<EnodeURL> staticNodes) {
+      final Collection<EnodeURL> staticNodes,
+      final AccountPermissioningController accountPermissioningController) {
 
     checkNotNull(runnerBuilder);
 
@@ -1079,6 +1170,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             .metricsSystem(metricsSystem)
             .metricsConfiguration(metricsConfiguration)
             .staticNodes(staticNodes)
+            .accountPermissioningController(accountPermissioningController)
             .build();
 
     addShutdownHook(runner);

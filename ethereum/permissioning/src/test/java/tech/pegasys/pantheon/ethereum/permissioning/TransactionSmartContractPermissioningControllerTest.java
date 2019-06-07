@@ -22,6 +22,7 @@ import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.create
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
+import tech.pegasys.pantheon.crypto.SECP256K1.Signature;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -37,6 +38,7 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
+import java.math.BigInteger;
 
 import com.google.common.io.Resources;
 import org.junit.Test;
@@ -97,6 +99,8 @@ public class TransactionSmartContractPermissioningControllerTest {
         .gasPrice(Wei.ZERO)
         .gasLimit(0)
         .payload(BytesValue.EMPTY)
+        .nonce(1)
+        .signature(Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 1))
         .build();
   }
 
