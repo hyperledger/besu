@@ -1,4 +1,15 @@
+.github
 .gradle
 .idea
 .vertx
 build
+kubernetes
+Dockerfile
+
+#Exclude doc related resources
+docs
+mkdocs.yml
+readthedocs.yml
+*.md
+
+Jenkins*

@@ -26,3 +26,5 @@ tmp/
 build/
 out/
 site/
+/kubernetes/reports/
+/kubernetes/pantheon-*.tar.gz
