@@ -25,12 +25,15 @@ import tech.pegasys.pantheon.ethereum.eth.sync.ChainDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,6 +47,8 @@ public class FastSyncActions<C> {
   private final EthContext ethContext;
   private final SyncState syncState;
   private final MetricsSystem metricsSystem;
+  private final Counter pivotBlockSelectionCounter;
+  private final AtomicLong pivotBlockGauge = new AtomicLong(0);
 
   public FastSyncActions(
       final SynchronizerConfiguration syncConfig,
@@ -58,6 +63,17 @@ public class FastSyncActions<C> {
     this.ethContext = ethContext;
     this.syncState = syncState;
     this.metricsSystem = metricsSystem;
+
+    pivotBlockSelectionCounter =
+        metricsSystem.createCounter(
+            MetricCategory.SYNCHRONIZER,
+            "fast_sync_pivot_block_selected_count",
+            "Number of times a fast sync pivot block has been selected");
+    metricsSystem.createLongGauge(
+        MetricCategory.SYNCHRONIZER,
+        "fast_sync_pivot_block_current",
+        "The current fast sync pivot block",
+        pivotBlockGauge::get);
   }
 
   public CompletableFuture<FastSyncState> waitForSuitablePeers(final FastSyncState fastSyncState) {
@@ -108,6 +124,8 @@ public class FastSyncActions<C> {
                 throw new FastSyncException(CHAIN_TOO_SHORT);
               } else {
                 LOG.info("Selecting block number {} as fast sync pivot block.", pivotBlockNumber);
+                pivotBlockSelectionCounter.inc();
+                pivotBlockGauge.set(pivotBlockNumber);
                 return completedFuture(new FastSyncState(pivotBlockNumber));
               }
             })
