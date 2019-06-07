@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.mainnet;
 import tech.pegasys.pantheon.ethereum.BlockValidator;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
+import tech.pegasys.pantheon.ethereum.core.TransactionFilter;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockProcessor.TransactionReceiptFactory;
 import tech.pegasys.pantheon.ethereum.vm.EVM;
@@ -242,5 +243,9 @@ public class ProtocolSpec<C> {
 
   public PrecompileContractRegistry getPrecompileContractRegistry() {
     return precompileContractRegistry;
+  }
+
+  public void setTransactionFilter(final TransactionFilter transactionFilter) {
+    transactionValidator.setTransactionFilter(transactionFilter);
   }
 }

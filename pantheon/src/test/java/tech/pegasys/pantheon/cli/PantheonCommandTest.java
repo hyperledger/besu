@@ -17,6 +17,7 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
@@ -48,6 +49,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.SmartContractPermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.permissioning.account.AccountPermissioningController;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -339,7 +341,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void permissionsSmartContractWithoutOptionMustError() {
+  public void nodePermissionsSmartContractWithoutOptionMustError() {
     parseCommand("--permissions-nodes-contract-address");
 
     verifyZeroInteractions(mockRunnerBuilder);
@@ -350,17 +352,18 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void permissionsEnabledWithoutContractAddressMustError() {
+  public void nodePermissionsEnabledWithoutContractAddressMustError() {
     parseCommand("--permissions-nodes-contract-enabled");
 
     verifyZeroInteractions(mockRunnerBuilder);
 
-    assertThat(commandErrorOutput.toString()).contains("No contract address specified");
+    assertThat(commandErrorOutput.toString())
+        .contains("No node permissioning contract address specified");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
   @Test
-  public void permissionsEnabledWithInvalidContractAddressMustError() {
+  public void nodePermissionsEnabledWithInvalidContractAddressMustError() {
     parseCommand(
         "--permissions-nodes-contract-enabled",
         "--permissions-nodes-contract-address",
@@ -373,7 +376,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void permissionsEnabledWithTooShortContractAddressMustError() {
+  public void nodePermissionsEnabledWithTooShortContractAddressMustError() {
     parseCommand(
         "--permissions-nodes-contract-enabled", "--permissions-nodes-contract-address", "0x1234");
 
@@ -384,7 +387,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void permissionsSmartContractMustUseOption() {
+  public void nodePermissionsSmartContractMustUseOption() {
 
     String smartContractAddress = "0x0000000000000000000000000000000000001234";
 
@@ -405,6 +408,75 @@ public class PantheonCommandTest extends CommandTestAbstract {
     PermissioningConfiguration config = permissioningConfigurationArgumentCaptor.getValue();
     assertThat(config.getSmartContractConfig().get())
         .isEqualToComparingFieldByField(smartContractPermissioningConfiguration);
+
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void accountPermissionsSmartContractWithoutOptionMustError() {
+    parseCommand("--permissions-accounts-contract-address");
+
+    verifyZeroInteractions(mockRunnerBuilder);
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith(
+            "Missing required parameter for option '--permissions-accounts-contract-address'");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void accountPermissionsEnabledWithoutContractAddressMustError() {
+    parseCommand("--permissions-accounts-contract-enabled");
+
+    verifyZeroInteractions(mockRunnerBuilder);
+
+    assertThat(commandErrorOutput.toString())
+        .contains("No account permissioning contract address specified");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void accountPermissionsEnabledWithInvalidContractAddressMustError() {
+    parseCommand(
+        "--permissions-accounts-contract-enabled",
+        "--permissions-accounts-contract-address",
+        "invalid-smart-contract-address");
+
+    verifyZeroInteractions(mockRunnerBuilder);
+
+    assertThat(commandErrorOutput.toString()).contains("Invalid value");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void accountPermissionsEnabledWithTooShortContractAddressMustError() {
+    parseCommand(
+        "--permissions-accounts-contract-enabled",
+        "--permissions-accounts-contract-address",
+        "0x1234");
+
+    verifyZeroInteractions(mockRunnerBuilder);
+
+    assertThat(commandErrorOutput.toString()).contains("Invalid value");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void accountPermissionsSmartContractMustUseOption() {
+    String smartContractAddress = "0x0000000000000000000000000000000000001234";
+
+    parseCommand(
+        "--permissions-accounts-contract-enabled",
+        "--permissions-accounts-contract-address",
+        smartContractAddress);
+    final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
+        new SmartContractPermissioningConfiguration();
+    smartContractPermissioningConfiguration.setAccountSmartContractAddress(
+        Address.fromHexString(smartContractAddress));
+    smartContractPermissioningConfiguration.setSmartContractAccountWhitelistEnabled(true);
+
+    verify(mockController.getProtocolSchedule()).setTransactionFilter(any());
 
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(commandOutput.toString()).isEmpty();
@@ -549,12 +621,11 @@ public class PantheonCommandTest extends CommandTestAbstract {
         Collections.singletonList("0x0000000000000000000000000000000000000009"));
 
     verify(mockRunnerBuilder)
-        .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
+        .accountPermissioningController(accountPermissioningControllerArgumentCaptor.capture());
 
-    PermissioningConfiguration config = permissioningConfigurationArgumentCaptor.getValue();
-    assertThat(config.getLocalConfig().get())
-        .isEqualToComparingFieldByField(localPermissioningConfiguration);
+    AccountPermissioningController controller =
+        accountPermissioningControllerArgumentCaptor.getValue();
+    assertThat(controller.getAccountLocalConfigPermissioningController()).isPresent();
 
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(commandOutput.toString()).isEmpty();

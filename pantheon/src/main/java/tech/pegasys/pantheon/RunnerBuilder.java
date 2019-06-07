@@ -62,10 +62,10 @@ import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissionsBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.permissioning.AccountLocalConfigPermissioningController;
-import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.NodePermissioningControllerFactory;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.permissioning.account.AccountPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
@@ -110,6 +110,7 @@ public class RunnerBuilder {
   private MetricsSystem metricsSystem;
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private Collection<EnodeURL> staticNodes = Collections.emptyList();
+  private AccountPermissioningController accountPermissioningController;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -197,6 +198,12 @@ public class RunnerBuilder {
     return this;
   }
 
+  public RunnerBuilder accountPermissioningController(
+      final AccountPermissioningController accountPermissioningController) {
+    this.accountPermissioningController = accountPermissioningController;
+    return this;
+  }
+
   public Runner build() {
 
     Preconditions.checkNotNull(pantheonController);
@@ -245,9 +252,6 @@ public class RunnerBuilder {
 
     final List<EnodeURL> bootnodes = discoveryConfiguration.getBootnodes();
 
-    final Optional<LocalPermissioningConfiguration> localPermissioningConfiguration =
-        permissioningConfiguration.flatMap(PermissioningConfiguration::getLocalConfig);
-
     final Synchronizer synchronizer = pantheonController.getSynchronizer();
 
     final TransactionSimulator transactionSimulator =
@@ -289,16 +293,6 @@ public class RunnerBuilder {
 
     final TransactionPool transactionPool = pantheonController.getTransactionPool();
     final MiningCoordinator miningCoordinator = pantheonController.getMiningCoordinator();
-    final Optional<AccountLocalConfigPermissioningController> accountWhitelistController =
-        localPermissioningConfiguration
-            .filter(LocalPermissioningConfiguration::isAccountWhitelistEnabled)
-            .map(
-                configuration -> {
-                  final AccountLocalConfigPermissioningController whitelistController =
-                      new AccountLocalConfigPermissioningController(configuration, metricsSystem);
-                  transactionPool.setAccountFilter(whitelistController::contains);
-                  return whitelistController;
-                });
 
     final PrivacyParameters privacyParameters = pantheonController.getPrivacyParameters();
     final FilterManager filterManager = createFilterManager(vertx, context, transactionPool);
@@ -311,6 +305,12 @@ public class RunnerBuilder {
 
     final Optional<NodeLocalConfigPermissioningController> nodeLocalConfigPermissioningController =
         nodePermissioningController.flatMap(NodePermissioningController::localConfigController);
+
+    final Optional<AccountLocalConfigPermissioningController>
+        accountLocalConfigPermissioningController =
+            accountPermissioningController != null
+                ? accountPermissioningController.getAccountLocalConfigPermissioningController()
+                : Optional.empty();
 
     Optional<JsonRpcHttpService> jsonRpcHttpService = Optional.empty();
     if (jsonRpcConfiguration.isEnabled()) {
@@ -327,7 +327,7 @@ public class RunnerBuilder {
               supportedCapabilities,
               jsonRpcConfiguration.getRpcApis(),
               filterManager,
-              accountWhitelistController,
+              accountLocalConfigPermissioningController,
               nodeLocalConfigPermissioningController,
               privacyParameters,
               jsonRpcConfiguration,
@@ -378,7 +378,7 @@ public class RunnerBuilder {
               supportedCapabilities,
               webSocketConfiguration.getRpcApis(),
               filterManager,
-              accountWhitelistController,
+              accountLocalConfigPermissioningController,
               nodeLocalConfigPermissioningController,
               privacyParameters,
               jsonRpcConfiguration,

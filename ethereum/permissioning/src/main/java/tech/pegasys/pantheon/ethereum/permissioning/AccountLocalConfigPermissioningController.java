@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.permissioning;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.permissioning.account.TransactionPermissioningProvider;
 import tech.pegasys.pantheon.metrics.Counter;
@@ -232,17 +233,32 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
 
   @Override
   public boolean isPermitted(final Transaction transaction) {
-    this.checkCounter.inc();
+    final Hash transactionHash = transaction.hash();
     final Address sender = transaction.getSender();
+
+    LOG.trace("Account permissioning - Local Config: Checking transaction {}", transactionHash);
+
+    this.checkCounter.inc();
     if (sender == null) {
       this.checkCounterUnpermitted.inc();
+      LOG.trace(
+          "Account permissioning - Local Config: Rejected transaction {} without sender",
+          transactionHash);
       return false;
     } else {
       if (contains(sender.toString())) {
         this.checkCounterPermitted.inc();
+        LOG.trace(
+            "Account permissioning - Local Config: Permitted transaction {} from {}",
+            transactionHash,
+            sender);
         return true;
       } else {
         this.checkCounterUnpermitted.inc();
+        LOG.trace(
+            "Account permissioning - Local Config: Rejected transaction {} from {}",
+            transactionHash,
+            sender);
         return false;
       }
     }

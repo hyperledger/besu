@@ -14,6 +14,8 @@ package tech.pegasys.pantheon.ethereum.mainnet;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import tech.pegasys.pantheon.ethereum.core.TransactionFilter;
+
 import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.NavigableSet;
@@ -68,5 +70,10 @@ public class MutableProtocolSchedule<C> implements ProtocolSchedule<C> {
         .sorted(Comparator.comparing(ScheduledProtocolSpec::getBlock))
         .map(spec -> spec.getSpec().getName() + ": " + spec.getBlock())
         .collect(Collectors.joining(", ", "[", "]"));
+  }
+
+  @Override
+  public void setTransactionFilter(final TransactionFilter transactionFilter) {
+    protocolSpecs.forEach(spec -> spec.getSpec().setTransactionFilter(transactionFilter));
   }
 }

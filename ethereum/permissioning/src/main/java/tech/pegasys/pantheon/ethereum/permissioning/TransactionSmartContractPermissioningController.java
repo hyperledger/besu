@@ -30,12 +30,18 @@ import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * Controller that can read from a smart contract that exposes the permissioning call
  * transactionAllowed(address,address,uint256,uint256,uint256,bytes)
  */
 public class TransactionSmartContractPermissioningController
     implements TransactionPermissioningProvider {
+
+  private static final Logger LOG = LogManager.getLogger();
+
   private final Address contractAddress;
   private final TransactionSimulator transactionSimulator;
 
@@ -101,6 +107,11 @@ public class TransactionSmartContractPermissioningController
    */
   @Override
   public boolean isPermitted(final Transaction transaction) {
+    final tech.pegasys.pantheon.ethereum.core.Hash transactionHash = transaction.hash();
+    final Address sender = transaction.getSender();
+
+    LOG.trace("Account permissioning - Smart Contract : Checking transaction {}", transactionHash);
+
     this.checkCounter.inc();
     final BytesValue payload = createPayload(transaction);
     final CallParameter callParams =
@@ -131,9 +142,17 @@ public class TransactionSmartContractPermissioningController
 
     if (result.map(r -> checkTransactionResult(r.getOutput())).orElse(false)) {
       this.checkCounterPermitted.inc();
+      LOG.trace(
+          "Account permissioning - Smart Contract: Permitted transaction {} from {}",
+          transactionHash,
+          sender);
       return true;
     } else {
       this.checkCounterUnpermitted.inc();
+      LOG.trace(
+          "Account permissioning - Smart Contract: Rejected transaction {} from {}",
+          transactionHash,
+          sender);
       return false;
     }
   }

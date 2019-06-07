@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.mainnet;
 
 import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.core.TransactionFilter;
 
 /** Validates transaction based on some criteria. */
 public interface TransactionValidator {
@@ -53,6 +54,8 @@ public interface TransactionValidator {
 
   ValidationResult<TransactionInvalidReason> validateForSender(
       Transaction transaction, Account sender, TransactionValidationParams validationParams);
+
+  void setTransactionFilter(TransactionFilter transactionFilter);
 
   enum TransactionInvalidReason {
     WRONG_CHAIN_ID,

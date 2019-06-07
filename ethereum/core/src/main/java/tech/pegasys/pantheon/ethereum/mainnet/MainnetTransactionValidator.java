@@ -166,6 +166,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
     return transactionFilter.map(c -> c.permitted(transaction, isStateChange)).orElse(true);
   }
 
+  @Override
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
     this.transactionFilter = Optional.of(transactionFilter);
   }
