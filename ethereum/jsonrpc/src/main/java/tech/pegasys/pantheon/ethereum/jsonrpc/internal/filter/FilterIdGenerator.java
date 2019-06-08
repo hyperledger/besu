@@ -12,11 +12,14 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter;
 
-import java.util.UUID;
+import tech.pegasys.pantheon.crypto.SecureRandomProvider;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
 
 public class FilterIdGenerator {
 
   public String nextId() {
-    return "0x" + UUID.randomUUID().toString().replaceAll("-", "");
+    final byte[] randomBytes = new byte[16];
+    SecureRandomProvider.createSecureRandom().nextBytes(randomBytes);
+    return Quantity.create(randomBytes);
   }
 }

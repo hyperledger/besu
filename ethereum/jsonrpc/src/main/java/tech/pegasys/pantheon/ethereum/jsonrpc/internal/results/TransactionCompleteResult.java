@@ -65,9 +65,9 @@ public class TransactionCompleteResult implements TransactionResult {
     this.to = transaction.getTo().map(BytesValue::toString).orElse(null);
     this.transactionIndex = Quantity.create(tx.getTransactionIndex());
     this.value = Quantity.create(transaction.getValue());
-    this.v = Quantity.format(transaction.getV());
-    this.r = Quantity.format(transaction.getR());
-    this.s = Quantity.format(transaction.getS());
+    this.v = Quantity.create(transaction.getV());
+    this.r = Quantity.create(transaction.getR());
+    this.s = Quantity.create(transaction.getS());
   }
 
   @JsonGetter(value = "blockHash")

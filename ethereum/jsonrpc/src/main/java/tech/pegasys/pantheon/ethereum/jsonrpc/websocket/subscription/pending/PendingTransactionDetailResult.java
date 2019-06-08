@@ -55,9 +55,9 @@ public class PendingTransactionDetailResult implements JsonRpcResult {
     this.nonce = Quantity.create(tx.getNonce());
     this.to = tx.getTo().map(BytesValue::toString).orElse(null);
     this.value = Quantity.create(tx.getValue());
-    this.v = Quantity.format(tx.getV());
-    this.r = Quantity.format(tx.getR());
-    this.s = Quantity.format(tx.getS());
+    this.v = Quantity.create(tx.getV());
+    this.r = Quantity.create(tx.getR());
+    this.s = Quantity.create(tx.getS());
   }
 
   @JsonGetter(value = "from")

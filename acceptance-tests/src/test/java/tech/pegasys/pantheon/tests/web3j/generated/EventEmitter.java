@@ -146,18 +146,15 @@ public class EventEmitter extends Contract {
     return web3j
         .ethLogFlowable(filter)
         .map(
-            new io.reactivex.functions.Function<Log, StoredEventResponse>() {
-              @Override
-              public StoredEventResponse apply(Log log) {
-                Contract.EventValuesWithLog eventValues =
-                    extractEventParametersWithLog(STORED_EVENT, log);
-                StoredEventResponse typedResponse = new StoredEventResponse();
-                typedResponse.log = log;
-                typedResponse._to = (String) eventValues.getNonIndexedValues().get(0).getValue();
-                typedResponse._amount =
-                    (BigInteger) eventValues.getNonIndexedValues().get(1).getValue();
-                return typedResponse;
-              }
+            log -> {
+              Contract.EventValuesWithLog eventValues =
+                  extractEventParametersWithLog(STORED_EVENT, log);
+              StoredEventResponse typedResponse = new StoredEventResponse();
+              typedResponse.log = log;
+              typedResponse._to = (String) eventValues.getNonIndexedValues().get(0).getValue();
+              typedResponse._amount =
+                  (BigInteger) eventValues.getNonIndexedValues().get(1).getValue();
+              return typedResponse;
             });
   }
 

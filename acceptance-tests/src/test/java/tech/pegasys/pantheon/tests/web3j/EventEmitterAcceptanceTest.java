@@ -28,7 +28,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
@@ -46,11 +45,7 @@ public class EventEmitterAcceptanceTest extends AcceptanceTestBase {
     cluster.start(node);
   }
 
-  /*
-   This test will be fixed on NC-2010
-  */
   @Test
-  @Ignore
   public void shouldDeployContractAndAllowLookupOfValuesAndEmittingEvents() throws Exception {
     final EventEmitter eventEmitter =
         node.execute(contractTransactions.createSmartContract(EventEmitter.class));
