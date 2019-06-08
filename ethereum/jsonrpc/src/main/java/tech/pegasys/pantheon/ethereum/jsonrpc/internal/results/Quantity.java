@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.results;
 
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 import tech.pegasys.pantheon.util.uint.UInt256Value;
 
@@ -48,19 +50,15 @@ public class Quantity {
     return uint256ToHex(UInt256.of(value));
   }
 
+  public static String create(final byte[] value) {
+    return uint256ToHex(UInt256.wrap(Bytes32.leftPad(BytesValue.wrap(value))));
+  }
+
   public static String create(final BigInteger value) {
     return uint256ToHex(UInt256.of(value));
   }
 
-  public static String format(final BigInteger input) {
-    return formatMinimalValue(input.toString(16));
-  }
-
-  public static String format(final byte value) {
-    return formatMinimalValue(Integer.toHexString(value));
-  }
-
-  public static String format(final int value) {
+  public static String create(final byte value) {
     return formatMinimalValue(Integer.toHexString(value));
   }
 
