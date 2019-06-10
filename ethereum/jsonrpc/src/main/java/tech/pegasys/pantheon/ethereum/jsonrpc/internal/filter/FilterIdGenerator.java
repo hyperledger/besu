@@ -15,11 +15,15 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter;
 import tech.pegasys.pantheon.crypto.SecureRandomProvider;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
 
+import java.security.SecureRandom;
+
 public class FilterIdGenerator {
+
+  private final SecureRandom secureRandom = SecureRandomProvider.createSecureRandom();
 
   public String nextId() {
     final byte[] randomBytes = new byte[16];
-    SecureRandomProvider.createSecureRandom().nextBytes(randomBytes);
+    secureRandom.nextBytes(randomBytes);
     return Quantity.create(randomBytes);
   }
 }
