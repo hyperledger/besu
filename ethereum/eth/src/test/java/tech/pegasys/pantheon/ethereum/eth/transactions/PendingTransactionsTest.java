@@ -25,8 +25,7 @@ import tech.pegasys.pantheon.ethereum.core.TransactionTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
-import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.metrics.StubMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 
 import java.time.temporal.ChronoUnit;
@@ -42,9 +41,14 @@ public class PendingTransactionsTest {
   private static final int MAX_TRANSACTIONS = 5;
   private static final KeyPair KEYS1 = KeyPair.generate();
   private static final KeyPair KEYS2 = KeyPair.generate();
+  private static final String ADDED_COUNTER = "transactions_added_total";
+  private static final String REMOVED_COUNTER = "transactions_removed_total";
+  private static final String REMOTE = "remote";
+  private static final String LOCAL = "local";
+  private static final String DROPPED = "dropped";
 
   private final TestClock clock = new TestClock();
-  private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
+  private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final PendingTransactions transactions =
       new PendingTransactions(
           PendingTransactions.DEFAULT_TX_RETENTION_HOURS,
@@ -72,7 +76,7 @@ public class PendingTransactionsTest {
     transactions.addRemoteTransaction(transaction2);
     assertThat(transactions.size()).isEqualTo(3);
 
-    List<Transaction> localTransactions = transactions.getLocalTransactions();
+    final List<Transaction> localTransactions = transactions.getLocalTransactions();
     assertThat(localTransactions.size()).isEqualTo(1);
   }
 
@@ -80,9 +84,11 @@ public class PendingTransactionsTest {
   public void shouldAddATransaction() {
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
+    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(1);
 
     transactions.addRemoteTransaction(transaction2);
     assertThat(transactions.size()).isEqualTo(2);
+    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(2);
   }
 
   @Test
@@ -104,10 +110,12 @@ public class PendingTransactionsTest {
       transactions.addRemoteTransaction(createTransaction(i));
     }
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isZero();
 
     transactions.addRemoteTransaction(createTransaction(MAX_TRANSACTIONS + 1));
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertTransactionNotPending(oldestTransaction);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
   }
 
   @Test
@@ -278,6 +286,8 @@ public class PendingTransactionsTest {
     assertTransactionPending(transaction1b);
     assertTransactionPending(transaction2);
     assertThat(transactions.size()).isEqualTo(2);
+    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(3);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
   }
 
   @Test
@@ -290,6 +300,8 @@ public class PendingTransactionsTest {
     assertTransactionNotPending(transaction1);
     assertTransactionPending(transaction1b);
     assertThat(transactions.size()).isEqualTo(1);
+    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(2);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
   }
 
   @Test
@@ -431,6 +443,7 @@ public class PendingTransactionsTest {
     clock.step(2L, ChronoUnit.HOURS);
     transactions.evictOldTransactions();
     assertThat(transactions.size()).isEqualTo(0);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(2);
   }
 
   @Test
@@ -444,6 +457,7 @@ public class PendingTransactionsTest {
     clock.step(2L, ChronoUnit.HOURS);
     transactions.evictOldTransactions();
     assertThat(transactions.size()).isEqualTo(0);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
   }
 
   @Test
@@ -459,5 +473,32 @@ public class PendingTransactionsTest {
     assertThat(transactions.size()).isEqualTo(2);
     transactions.evictOldTransactions();
     assertThat(transactions.size()).isEqualTo(1);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
+  }
+
+  @Test
+  public void shouldNotIncrementAddedCounterWhenRemoteTransactionAlreadyPresent() {
+    transactions.addLocalTransaction(transaction1);
+    assertThat(transactions.size()).isEqualTo(1);
+    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL)).isEqualTo(1);
+    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(0);
+
+    assertThat(transactions.addRemoteTransaction(transaction1)).isFalse();
+    assertThat(transactions.size()).isEqualTo(1);
+    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL)).isEqualTo(1);
+    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(0);
+  }
+
+  @Test
+  public void shouldNotIncrementAddedCounterWhenLocalTransactionAlreadyPresent() {
+    transactions.addRemoteTransaction(transaction1);
+    assertThat(transactions.size()).isEqualTo(1);
+    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL)).isEqualTo(0);
+    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(1);
+
+    assertThat(transactions.addLocalTransaction(transaction1)).isFalse();
+    assertThat(transactions.size()).isEqualTo(1);
+    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL)).isEqualTo(0);
+    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(1);
   }
 }

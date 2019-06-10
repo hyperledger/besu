@@ -48,6 +48,7 @@ dependencies {
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':ethereum:mock-p2p')
+  testImplementation project(path: ':metrics:core', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
 
   testImplementation 'junit:junit'

@@ -44,4 +44,9 @@ dependencies {
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'com.squareup.okhttp3:okhttp'
+
+  testSupportImplementation 'org.mockito:mockito-core'
 }
+
+
+artifacts { testSupportArtifacts testSupportJar }
