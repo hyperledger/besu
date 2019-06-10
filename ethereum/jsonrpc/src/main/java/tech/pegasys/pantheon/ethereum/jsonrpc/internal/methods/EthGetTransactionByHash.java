@@ -59,13 +59,9 @@ public class EthGetTransactionByHash implements JsonRpcMethod {
   }
 
   private Object getResult(final Hash hash) {
-    final Optional<Object> transactionCompleteResult =
-        blockchain.transactionByHash(hash).map(TransactionCompleteResult::new);
-    return transactionCompleteResult.orElseGet(
-        () ->
-            pendingTransactions
-                .getTransactionByHash(hash)
-                .map(TransactionPendingResult::new)
-                .orElse(null));
+    final Optional<Object> transactionPendingResult =
+        pendingTransactions.getTransactionByHash(hash).map(TransactionPendingResult::new);
+    return transactionPendingResult.orElseGet(
+        () -> blockchain.transactionByHash(hash).map(TransactionCompleteResult::new).orElse(null));
   }
 }
