@@ -17,6 +17,10 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.Sub
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.UnsubscribeRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.response.SubscriptionResponse;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.List;
 import java.util.Map;
@@ -45,6 +49,23 @@ public class SubscriptionManager extends AbstractVerticle {
   private final AtomicLong subscriptionCounter = new AtomicLong(0);
   private final Map<Long, Subscription> subscriptions = new ConcurrentHashMap<>();
   private final SubscriptionBuilder subscriptionBuilder = new SubscriptionBuilder();
+  private final LabelledMetric<Counter> subscribeCounter;
+  private final LabelledMetric<Counter> unsubscribeCounter;
+
+  public SubscriptionManager(final MetricsSystem metricsSystem) {
+    subscribeCounter =
+        metricsSystem.createLabelledCounter(
+            MetricCategory.RPC,
+            "subscription_subscribe_total",
+            "Total number of subscriptions",
+            "type");
+    unsubscribeCounter =
+        metricsSystem.createLabelledCounter(
+            MetricCategory.RPC,
+            "subscription_unsubscribe_total",
+            "Total number of unsubscriptions",
+            "type");
+  }
 
   @Override
   public void start() {
@@ -53,6 +74,7 @@ public class SubscriptionManager extends AbstractVerticle {
 
   public Long subscribe(final SubscribeRequest request) {
     LOG.debug("Subscribe request {}", request);
+    subscribeCounter.labels(request.getSubscriptionType().getCode()).inc();
 
     final long subscriptionId = subscriptionCounter.incrementAndGet();
     final Subscription subscription =
@@ -79,7 +101,10 @@ public class SubscriptionManager extends AbstractVerticle {
   }
 
   private void destroySubscription(final long subscriptionId) {
-    subscriptions.remove(subscriptionId);
+    final Subscription removed = subscriptions.remove(subscriptionId);
+    if (removed != null) {
+      unsubscribeCounter.labels(removed.getSubscriptionType().getCode()).inc();
+    }
   }
 
   private void removeSubscriptions(final Message<String> message) {

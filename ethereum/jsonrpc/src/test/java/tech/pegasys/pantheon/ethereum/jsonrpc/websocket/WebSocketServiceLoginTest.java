@@ -19,6 +19,7 @@ import static org.mockito.Mockito.spy;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.methods.WebSocketMethodsFactory;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
@@ -74,7 +75,9 @@ public class WebSocketServiceLoginTest {
     websocketConfiguration.setHostsWhitelist(Collections.singleton("*"));
 
     final Map<String, JsonRpcMethod> websocketMethods =
-        new WebSocketMethodsFactory(new SubscriptionManager(), new HashMap<>()).methods();
+        new WebSocketMethodsFactory(
+                new SubscriptionManager(new NoOpMetricsSystem()), new HashMap<>())
+            .methods();
     webSocketRequestHandlerSpy = spy(new WebSocketRequestHandler(vertx, websocketMethods));
 
     websocketService =

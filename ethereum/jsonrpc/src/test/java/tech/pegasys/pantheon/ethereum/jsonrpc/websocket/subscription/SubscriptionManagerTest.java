@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.Sub
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.UnsubscribeRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.syncing.SyncingSubscription;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.List;
 import java.util.UUID;
@@ -42,7 +43,7 @@ public class SubscriptionManagerTest {
 
   @Before
   public void before() {
-    subscriptionManager = new SubscriptionManager();
+    subscriptionManager = new SubscriptionManager(new NoOpMetricsSystem());
   }
 
   @Test

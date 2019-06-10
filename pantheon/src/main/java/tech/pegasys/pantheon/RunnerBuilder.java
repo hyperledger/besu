@@ -503,7 +503,7 @@ public class RunnerBuilder {
 
   private SubscriptionManager createSubscriptionManager(
       final Vertx vertx, final TransactionPool transactionPool) {
-    final SubscriptionManager subscriptionManager = new SubscriptionManager();
+    final SubscriptionManager subscriptionManager = new SubscriptionManager(metricsSystem);
     final PendingTransactionSubscriptionService pendingTransactions =
         new PendingTransactionSubscriptionService(subscriptionManager);
     final PendingTransactionDroppedSubscriptionService pendingTransactionsRemoved =
