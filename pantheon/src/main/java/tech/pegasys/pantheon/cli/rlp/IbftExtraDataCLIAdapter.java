@@ -18,8 +18,6 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -30,18 +28,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * encoding
  */
 public class IbftExtraDataCLIAdapter implements JSONToRLP {
+  private static final ObjectMapper MAPPER = new ObjectMapper();
+  private static final TypeReference<Collection<String>> TYPE_REF =
+      new TypeReference<Collection<String>>() {};
 
   @Override
   public BytesValue encode(final String json) throws IOException {
-    ObjectMapper mapper = new ObjectMapper();
-    TypeReference<Collection<String>> typeRef = new TypeReference<Collection<String>>() {};
-    Collection<String> validatorAddresse = mapper.readValue(json, typeRef);
+    return fromJsonAddresses(json).encode();
+  }
 
-    Collection<Address> addresses =
-        validatorAddresse.stream().map(Address::fromHexString).collect(Collectors.toList());
-
-    return new IbftExtraData(
-            BytesValue.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, addresses)
-        .encode();
+  public static IbftExtraData fromJsonAddresses(final String jsonAddresses) throws IOException {
+    final Collection<String> validatorAddresses = MAPPER.readValue(jsonAddresses, TYPE_REF);
+    return IbftExtraData.fromAddresses(
+        validatorAddresses.stream().map(Address::fromHexString).collect(Collectors.toList()));
   }
 }

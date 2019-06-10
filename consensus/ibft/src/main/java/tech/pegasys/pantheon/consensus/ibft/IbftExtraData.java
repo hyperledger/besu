@@ -65,6 +65,11 @@ public class IbftExtraData implements ParsedExtraData {
     this.vote = vote;
   }
 
+  public static IbftExtraData fromAddresses(final Collection<Address> addresses) {
+    return new IbftExtraData(
+        BytesValue.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, addresses);
+  }
+
   public static IbftExtraData decode(final BlockHeader blockHeader) {
     final Object inputExtraData = blockHeader.getParsedExtraData();
     if (inputExtraData instanceof IbftExtraData) {

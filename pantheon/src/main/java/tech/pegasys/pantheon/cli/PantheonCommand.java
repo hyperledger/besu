@@ -36,6 +36,7 @@ import tech.pegasys.pantheon.cli.converter.RpcApisConverter;
 import tech.pegasys.pantheon.cli.custom.CorsAllowedOriginsProperty;
 import tech.pegasys.pantheon.cli.custom.JsonRPCWhitelistHostsProperty;
 import tech.pegasys.pantheon.cli.custom.RpcAuthFileValidator;
+import tech.pegasys.pantheon.cli.operator.OperatorSubCommand;
 import tech.pegasys.pantheon.cli.rlp.RLPSubCommand;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.controller.KeyPairUtil;
@@ -645,6 +646,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(resultHandler.out()));
     commandLine.addSubcommand(
         RLPSubCommand.COMMAND_NAME, new RLPSubCommand(resultHandler.out(), in));
+    commandLine.addSubcommand(
+        OperatorSubCommand.COMMAND_NAME, new OperatorSubCommand(resultHandler.out()));
 
     commandLine.registerConverter(Address.class, Address::fromHexStringStrict);
     commandLine.registerConverter(BytesValue.class, BytesValue::fromHexString);
