@@ -48,7 +48,7 @@ public class NewBlockHeadersSubscriptionService implements BlockAddedObserver {
                     ? blockWithCompleteTransaction(newBlockHash)
                     : blockWithTransactionHash(newBlockHash);
 
-            subscriptionManager.sendMessage(subscription.getId(), newBlock);
+            subscriptionManager.sendMessage(subscription.getSubscriptionId(), newBlock);
           }
         });
   }

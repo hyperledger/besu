@@ -54,7 +54,8 @@ public class SyncingSubscriptionServiceTest {
 
   @Test
   public void shouldSendSyncStatusWhenReceiveSyncStatus() {
-    final SyncingSubscription subscription = new SyncingSubscription(9L, SubscriptionType.SYNCING);
+    final SyncingSubscription subscription =
+        new SyncingSubscription(9L, "conn", SubscriptionType.SYNCING);
     final List<SyncingSubscription> subscriptions = Collections.singletonList(subscription);
     final SyncStatus syncStatus = new SyncStatus(0L, 1L, 3L);
     final SyncingResult expectedSyncingResult = new SyncingResult(syncStatus);
@@ -70,12 +71,14 @@ public class SyncingSubscriptionServiceTest {
 
     syncStatusListener.onSyncStatus(syncStatus);
 
-    verify(subscriptionManager).sendMessage(eq(subscription.getId()), eq(expectedSyncingResult));
+    verify(subscriptionManager)
+        .sendMessage(eq(subscription.getSubscriptionId()), eq(expectedSyncingResult));
   }
 
   @Test
   public void shouldSendNotSyncingStatusWhenReceiveSyncStatusAtHead() {
-    final SyncingSubscription subscription = new SyncingSubscription(9L, SubscriptionType.SYNCING);
+    final SyncingSubscription subscription =
+        new SyncingSubscription(9L, "conn", SubscriptionType.SYNCING);
     final List<SyncingSubscription> subscriptions = Collections.singletonList(subscription);
     final SyncStatus syncStatus = new SyncStatus(0L, 1L, 1L);
 
@@ -91,6 +94,6 @@ public class SyncingSubscriptionServiceTest {
     syncStatusListener.onSyncStatus(syncStatus);
 
     verify(subscriptionManager)
-        .sendMessage(eq(subscription.getId()), any(NotSynchronisingResult.class));
+        .sendMessage(eq(subscription.getSubscriptionId()), any(NotSynchronisingResult.class));
   }
 }

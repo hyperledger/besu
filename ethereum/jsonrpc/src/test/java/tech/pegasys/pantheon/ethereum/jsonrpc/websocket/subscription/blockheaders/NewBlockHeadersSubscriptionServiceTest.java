@@ -101,7 +101,7 @@ public class NewBlockHeadersSubscriptionServiceTest {
     final Long actualSubscriptionId = subscriptionIdCaptor.getValue();
     final Object actualBlock = responseCaptor.getValue();
 
-    assertThat(actualSubscriptionId).isEqualTo(subscription.getId());
+    assertThat(actualSubscriptionId).isEqualTo(subscription.getSubscriptionId());
     assertThat(actualBlock).isEqualToComparingFieldByFieldRecursively(expectedNewBlock);
 
     verify(subscriptionManager, times(1)).sendMessage(any(), any());
@@ -135,7 +135,7 @@ public class NewBlockHeadersSubscriptionServiceTest {
     final Long actualSubscriptionId = subscriptionIdCaptor.getValue();
     final Object actualBlock = responseCaptor.getValue();
 
-    assertThat(actualSubscriptionId).isEqualTo(subscription.getId());
+    assertThat(actualSubscriptionId).isEqualTo(subscription.getSubscriptionId());
     assertThat(actualBlock).isInstanceOf(BlockResult.class);
     final BlockResult actualBlockResult = (BlockResult) actualBlock;
     assertThat(actualBlockResult.getTransactions()).hasSize(txHashList.size());
@@ -176,7 +176,7 @@ public class NewBlockHeadersSubscriptionServiceTest {
     final Long actualSubscriptionId = subscriptionIdCaptor.getValue();
     final Object actualBlock = responseCaptor.getValue();
 
-    assertThat(actualSubscriptionId).isEqualTo(subscription.getId());
+    assertThat(actualSubscriptionId).isEqualTo(subscription.getSubscriptionId());
     assertThat(actualBlock).isInstanceOf(BlockResult.class);
     final BlockResult actualBlockResult = (BlockResult) actualBlock;
     assertThat(actualBlockResult.getTransactions()).hasSize(txHashList.size());
@@ -214,8 +214,6 @@ public class NewBlockHeadersSubscriptionServiceTest {
   }
 
   private NewBlockHeadersSubscription createSubscription(final boolean includeTransactions) {
-    final NewBlockHeadersSubscription headerSub =
-        new NewBlockHeadersSubscription(1L, includeTransactions);
-    return headerSub;
+    return new NewBlockHeadersSubscription(1L, "conn", includeTransactions);
   }
 }

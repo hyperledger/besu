@@ -29,6 +29,7 @@ import org.junit.Test;
 
 public class SubscriptionBuilderTest {
 
+  private static final String CONNECTION_ID = "connectionId";
   private SubscriptionBuilder subscriptionBuilder;
 
   @Before
@@ -40,10 +41,12 @@ public class SubscriptionBuilderTest {
   public void shouldBuildLogsSubscriptionWhenSubscribeRequestTypeIsLogs() {
     final FilterParameter filterParameter = filterParameter();
     final SubscribeRequest subscribeRequest =
-        new SubscribeRequest(SubscriptionType.LOGS, filterParameter, null, "connectionId");
-    final LogsSubscription expectedSubscription = new LogsSubscription(1L, filterParameter);
+        new SubscribeRequest(SubscriptionType.LOGS, filterParameter, null, CONNECTION_ID);
+    final LogsSubscription expectedSubscription =
+        new LogsSubscription(1L, CONNECTION_ID, filterParameter);
 
-    final Subscription builtSubscription = subscriptionBuilder.build(1L, subscribeRequest);
+    final Subscription builtSubscription =
+        subscriptionBuilder.build(1L, CONNECTION_ID, subscribeRequest);
 
     assertThat(builtSubscription).isEqualToComparingFieldByField(expectedSubscription);
   }
@@ -51,11 +54,12 @@ public class SubscriptionBuilderTest {
   @Test
   public void shouldBuildNewBlockHeadsSubscriptionWhenSubscribeRequestTypeIsNewBlockHeads() {
     final SubscribeRequest subscribeRequest =
-        new SubscribeRequest(SubscriptionType.NEW_BLOCK_HEADERS, null, true, "connectionId");
+        new SubscribeRequest(SubscriptionType.NEW_BLOCK_HEADERS, null, true, CONNECTION_ID);
     final NewBlockHeadersSubscription expectedSubscription =
-        new NewBlockHeadersSubscription(1L, true);
+        new NewBlockHeadersSubscription(1L, CONNECTION_ID, true);
 
-    final Subscription builtSubscription = subscriptionBuilder.build(1L, subscribeRequest);
+    final Subscription builtSubscription =
+        subscriptionBuilder.build(1L, CONNECTION_ID, subscribeRequest);
 
     assertThat(builtSubscription).isEqualToComparingFieldByField(expectedSubscription);
   }
@@ -63,11 +67,12 @@ public class SubscriptionBuilderTest {
   @Test
   public void shouldBuildSubscriptionWhenSubscribeRequestTypeIsNewPendingTransactions() {
     final SubscribeRequest subscribeRequest =
-        new SubscribeRequest(SubscriptionType.NEW_PENDING_TRANSACTIONS, null, null, "connectionId");
+        new SubscribeRequest(SubscriptionType.NEW_PENDING_TRANSACTIONS, null, null, CONNECTION_ID);
     final Subscription expectedSubscription =
-        new Subscription(1L, SubscriptionType.NEW_PENDING_TRANSACTIONS, null);
+        new Subscription(1L, CONNECTION_ID, SubscriptionType.NEW_PENDING_TRANSACTIONS, null);
 
-    final Subscription builtSubscription = subscriptionBuilder.build(1L, subscribeRequest);
+    final Subscription builtSubscription =
+        subscriptionBuilder.build(1L, CONNECTION_ID, subscribeRequest);
 
     assertThat(builtSubscription).isEqualToComparingFieldByField(expectedSubscription);
   }
@@ -75,11 +80,12 @@ public class SubscriptionBuilderTest {
   @Test
   public void shouldBuildSubscriptionWhenSubscribeRequestTypeIsSyncing() {
     final SubscribeRequest subscribeRequest =
-        new SubscribeRequest(SubscriptionType.SYNCING, null, null, "connectionId");
+        new SubscribeRequest(SubscriptionType.SYNCING, null, null, CONNECTION_ID);
     final SyncingSubscription expectedSubscription =
-        new SyncingSubscription(1L, SubscriptionType.SYNCING);
+        new SyncingSubscription(1L, CONNECTION_ID, SubscriptionType.SYNCING);
 
-    final Subscription builtSubscription = subscriptionBuilder.build(1L, subscribeRequest);
+    final Subscription builtSubscription =
+        subscriptionBuilder.build(1L, CONNECTION_ID, subscribeRequest);
 
     assertThat(builtSubscription).isEqualToComparingFieldByField(expectedSubscription);
   }
@@ -88,7 +94,7 @@ public class SubscriptionBuilderTest {
   public void shouldReturnLogsSubscriptionWhenMappingLogsSubscription() {
     final Function<Subscription, LogsSubscription> function =
         subscriptionBuilder.mapToSubscriptionClass(LogsSubscription.class);
-    final Subscription subscription = new LogsSubscription(1L, filterParameter());
+    final Subscription subscription = new LogsSubscription(1L, CONNECTION_ID, filterParameter());
 
     assertThat(function.apply(subscription)).isInstanceOf(LogsSubscription.class);
   }
@@ -97,7 +103,7 @@ public class SubscriptionBuilderTest {
   public void shouldReturnNewBlockHeadsSubscriptionWhenMappingNewBlockHeadsSubscription() {
     final Function<Subscription, NewBlockHeadersSubscription> function =
         subscriptionBuilder.mapToSubscriptionClass(NewBlockHeadersSubscription.class);
-    final Subscription subscription = new NewBlockHeadersSubscription(1L, true);
+    final Subscription subscription = new NewBlockHeadersSubscription(1L, CONNECTION_ID, true);
 
     assertThat(function.apply(subscription)).isInstanceOf(NewBlockHeadersSubscription.class);
   }
@@ -107,7 +113,8 @@ public class SubscriptionBuilderTest {
     final Function<Subscription, Subscription> function =
         subscriptionBuilder.mapToSubscriptionClass(Subscription.class);
     final Subscription logsSubscription =
-        new Subscription(1L, SubscriptionType.NEW_PENDING_TRANSACTIONS, Boolean.FALSE);
+        new Subscription(
+            1L, CONNECTION_ID, SubscriptionType.NEW_PENDING_TRANSACTIONS, Boolean.FALSE);
 
     assertThat(function.apply(logsSubscription)).isInstanceOf(Subscription.class);
   }
@@ -116,7 +123,8 @@ public class SubscriptionBuilderTest {
   public void shouldReturnSubscriptionWhenMappingSyncingSubscription() {
     final Function<Subscription, SyncingSubscription> function =
         subscriptionBuilder.mapToSubscriptionClass(SyncingSubscription.class);
-    final Subscription subscription = new SyncingSubscription(1L, SubscriptionType.SYNCING);
+    final Subscription subscription =
+        new SyncingSubscription(1L, CONNECTION_ID, SubscriptionType.SYNCING);
 
     assertThat(function.apply(subscription)).isInstanceOf(SyncingSubscription.class);
   }
@@ -126,7 +134,8 @@ public class SubscriptionBuilderTest {
   public void shouldThrownIllegalArgumentExceptionWhenMappingWrongSubscriptionType() {
     final Function<Subscription, LogsSubscription> function =
         subscriptionBuilder.mapToSubscriptionClass(LogsSubscription.class);
-    final NewBlockHeadersSubscription subscription = new NewBlockHeadersSubscription(1L, true);
+    final NewBlockHeadersSubscription subscription =
+        new NewBlockHeadersSubscription(1L, CONNECTION_ID, true);
 
     final Throwable thrown = catchThrowable(() -> function.apply(subscription));
     assertThat(thrown)

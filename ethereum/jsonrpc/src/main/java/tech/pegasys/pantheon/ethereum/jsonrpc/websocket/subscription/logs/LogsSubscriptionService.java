@@ -87,7 +87,8 @@ public class LogsSubscriptionService implements BlockAddedObserver {
       final int logIndex,
       final LogsSubscription subscription) {
     final LogWithMetadata logWithMetaData = logWithMetadata(logIndex, receiptWithMetadata, removed);
-    subscriptionManager.sendMessage(subscription.getId(), new LogResult(logWithMetaData));
+    subscriptionManager.sendMessage(
+        subscription.getSubscriptionId(), new LogResult(logWithMetaData));
   }
 
   // @formatter:off

@@ -16,11 +16,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketRequestHandler;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.Subscription;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
+import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.syncing.SyncingSubscription;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -62,10 +65,9 @@ public class EthSubscribeIntegrationTest {
         .consumer(CONNECTION_ID_1)
         .handler(
             msg -> {
-              final Map<String, List<Long>> connectionSubscriptionsMap =
-                  subscriptionManager.getConnectionSubscriptionsMap();
-              assertThat(connectionSubscriptionsMap.size()).isEqualTo(1);
-              assertThat(connectionSubscriptionsMap.containsKey(CONNECTION_ID_1)).isTrue();
+              final List<SyncingSubscription> syncingSubscriptions = getSubscriptions();
+              assertThat(syncingSubscriptions).hasSize(1);
+              assertThat(syncingSubscriptions.get(0).getConnectionId()).isEqualTo(CONNECTION_ID_1);
               async.complete();
             })
         .completionHandler(
@@ -88,12 +90,9 @@ public class EthSubscribeIntegrationTest {
         .consumer(CONNECTION_ID_1)
         .handler(
             msg -> {
-              assertThat(subscriptionManager.getConnectionSubscriptionsMap().size()).isEqualTo(1);
-              assertThat(
-                      subscriptionManager
-                          .getConnectionSubscriptionsMap()
-                          .containsKey(CONNECTION_ID_1))
-                  .isTrue();
+              final List<SyncingSubscription> subscriptions = getSubscriptions();
+              assertThat(subscriptions).hasSize(1);
+              assertThat(subscriptions.get(0).getConnectionId()).isEqualTo(CONNECTION_ID_1);
               async.countDown();
 
               vertx
@@ -101,18 +100,14 @@ public class EthSubscribeIntegrationTest {
                   .consumer(CONNECTION_ID_2)
                   .handler(
                       msg2 -> {
-                        assertThat(subscriptionManager.getConnectionSubscriptionsMap().size())
-                            .isEqualTo(2);
-                        assertThat(
-                                subscriptionManager
-                                    .getConnectionSubscriptionsMap()
-                                    .containsKey(CONNECTION_ID_1))
-                            .isTrue();
-                        assertThat(
-                                subscriptionManager
-                                    .getConnectionSubscriptionsMap()
-                                    .containsKey(CONNECTION_ID_2))
-                            .isTrue();
+                        final List<SyncingSubscription> updatedSubscriptions = getSubscriptions();
+                        assertThat(updatedSubscriptions).hasSize(2);
+                        final List<String> connectionIds =
+                            updatedSubscriptions.stream()
+                                .map(Subscription::getConnectionId)
+                                .collect(Collectors.toList());
+                        assertThat(connectionIds)
+                            .containsExactlyInAnyOrder(CONNECTION_ID_1, CONNECTION_ID_2);
                         async.countDown();
                       })
                   .completionHandler(
@@ -126,6 +121,11 @@ public class EthSubscribeIntegrationTest {
                     CONNECTION_ID_1, Buffer.buffer(Json.encode(subscribeRequest1))));
 
     async.awaitSuccess(ASYNC_TIMEOUT);
+  }
+
+  private List<SyncingSubscription> getSubscriptions() {
+    return subscriptionManager.subscriptionsOfType(
+        SubscriptionType.SYNCING, SyncingSubscription.class);
   }
 
   private WebSocketRpcRequest createEthSubscribeRequest(final String connectionId) {

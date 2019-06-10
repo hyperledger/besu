@@ -106,7 +106,10 @@ public class PendingTransactionDroppedSubscriptionServiceTest {
                 .mapToObj(
                     id ->
                         new Subscription(
-                            id, SubscriptionType.DROPPED_PENDING_TRANSACTIONS, Boolean.FALSE))
+                            id,
+                            "conn",
+                            SubscriptionType.DROPPED_PENDING_TRANSACTIONS,
+                            Boolean.FALSE))
                 .collect(Collectors.toList()));
   }
 }

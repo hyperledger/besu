@@ -136,7 +136,10 @@ public class PendingTransactionSubscriptionServiceTest {
                 .mapToObj(
                     id ->
                         new Subscription(
-                            id, SubscriptionType.NEW_PENDING_TRANSACTIONS, includeTransactions))
+                            id,
+                            "conn",
+                            SubscriptionType.NEW_PENDING_TRANSACTIONS,
+                            includeTransactions))
                 .collect(Collectors.toList()));
   }
 }

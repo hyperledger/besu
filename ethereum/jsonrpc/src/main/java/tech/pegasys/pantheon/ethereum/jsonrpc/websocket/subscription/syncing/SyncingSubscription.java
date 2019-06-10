@@ -18,8 +18,11 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.Sub
 public class SyncingSubscription extends Subscription {
   private boolean firstMessageHasBeenSent = false;
 
-  public SyncingSubscription(final Long id, final SubscriptionType subscriptionType) {
-    super(id, subscriptionType, Boolean.FALSE);
+  public SyncingSubscription(
+      final Long subscriptionId,
+      final String connectionId,
+      final SubscriptionType subscriptionType) {
+    super(subscriptionId, connectionId, subscriptionType, Boolean.FALSE);
   }
 
   public void setFirstMessageHasBeenSent(final boolean firstMessageHasBeenSent) {

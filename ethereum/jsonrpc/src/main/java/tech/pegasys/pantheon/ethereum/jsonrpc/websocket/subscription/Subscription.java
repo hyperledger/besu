@@ -20,13 +20,18 @@ import com.google.common.base.MoreObjects;
 
 public class Subscription {
 
-  private final Long id;
+  private final Long subscriptionId;
+  private final String connectionId;
   private final SubscriptionType subscriptionType;
   private final Boolean includeTransaction;
 
   public Subscription(
-      final Long id, final SubscriptionType subscriptionType, final Boolean includeTransaction) {
-    this.id = id;
+      final Long subscriptionId,
+      final String connectionId,
+      final SubscriptionType subscriptionType,
+      final Boolean includeTransaction) {
+    this.subscriptionId = subscriptionId;
+    this.connectionId = connectionId;
     this.subscriptionType = subscriptionType;
     this.includeTransaction = includeTransaction;
   }
@@ -35,8 +40,12 @@ public class Subscription {
     return subscriptionType;
   }
 
-  public Long getId() {
-    return id;
+  public Long getSubscriptionId() {
+    return subscriptionId;
+  }
+
+  public String getConnectionId() {
+    return connectionId;
   }
 
   public Boolean getIncludeTransaction() {
@@ -46,8 +55,10 @@ public class Subscription {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("id", id)
+        .add("subscriptionId", subscriptionId)
+        .add("connectionId", connectionId)
         .add("subscriptionType", subscriptionType)
+        .add("includeTransaction", includeTransaction)
         .toString();
   }
 
@@ -64,11 +75,12 @@ public class Subscription {
       return false;
     }
     final Subscription that = (Subscription) o;
-    return Objects.equals(id, that.id) && subscriptionType == that.subscriptionType;
+    return Objects.equals(subscriptionId, that.subscriptionId)
+        && subscriptionType == that.subscriptionType;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, subscriptionType);
+    return Objects.hash(subscriptionId, subscriptionType);
   }
 }
