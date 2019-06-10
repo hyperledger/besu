@@ -42,9 +42,9 @@ public class PendingTransactionSubscriptionService implements PendingTransaction
         new PendingTransactionDetailResult(pendingTransaction);
     for (final Subscription subscription : subscriptions) {
       if (Boolean.TRUE.equals(subscription.getIncludeTransaction())) {
-        subscriptionManager.sendMessage(subscription.getId(), detailResult);
+        subscriptionManager.sendMessage(subscription.getSubscriptionId(), detailResult);
       } else {
-        subscriptionManager.sendMessage(subscription.getId(), hashResult);
+        subscriptionManager.sendMessage(subscription.getSubscriptionId(), hashResult);
       }
     }
   }

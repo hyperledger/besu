@@ -19,8 +19,9 @@ public class NewBlockHeadersSubscription extends Subscription {
 
   private final boolean includeTransactions;
 
-  public NewBlockHeadersSubscription(final Long subscriptionId, final boolean includeTransactions) {
-    super(subscriptionId, SubscriptionType.NEW_BLOCK_HEADERS, Boolean.FALSE);
+  public NewBlockHeadersSubscription(
+      final Long subscriptionId, final String connectionId, final boolean includeTransactions) {
+    super(subscriptionId, connectionId, SubscriptionType.NEW_BLOCK_HEADERS, Boolean.FALSE);
     this.includeTransactions = includeTransactions;
   }
 

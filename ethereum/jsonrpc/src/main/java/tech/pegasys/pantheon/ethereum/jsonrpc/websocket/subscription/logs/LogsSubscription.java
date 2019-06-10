@@ -21,8 +21,9 @@ public class LogsSubscription extends Subscription {
 
   private final FilterParameter filterParameter;
 
-  public LogsSubscription(final Long subscriptionId, final FilterParameter filterParameter) {
-    super(subscriptionId, SubscriptionType.LOGS, Boolean.FALSE);
+  public LogsSubscription(
+      final Long subscriptionId, final String connectionId, final FilterParameter filterParameter) {
+    super(subscriptionId, connectionId, SubscriptionType.LOGS, Boolean.FALSE);
     this.filterParameter = filterParameter;
   }
 

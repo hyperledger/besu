@@ -23,27 +23,31 @@ import java.util.function.Function;
 
 public class SubscriptionBuilder {
 
-  public Subscription build(final long id, final SubscribeRequest request) {
+  public Subscription build(
+      final long subscriptionId, final String connectionId, final SubscribeRequest request) {
     final SubscriptionType subscriptionType = request.getSubscriptionType();
     switch (subscriptionType) {
       case NEW_BLOCK_HEADERS:
         {
-          return new NewBlockHeadersSubscription(id, request.getIncludeTransaction());
+          return new NewBlockHeadersSubscription(
+              subscriptionId, connectionId, request.getIncludeTransaction());
         }
       case LOGS:
         {
           return new LogsSubscription(
-              id,
+              subscriptionId,
+              connectionId,
               Optional.ofNullable(request.getFilterParameter())
                   .orElseThrow(IllegalArgumentException::new));
         }
       case SYNCING:
         {
-          return new SyncingSubscription(id, subscriptionType);
+          return new SyncingSubscription(subscriptionId, connectionId, subscriptionType);
         }
       case NEW_PENDING_TRANSACTIONS:
       default:
-        return new Subscription(id, subscriptionType, request.getIncludeTransaction());
+        return new Subscription(
+            subscriptionId, connectionId, subscriptionType, request.getIncludeTransaction());
     }
   }
 

@@ -80,7 +80,8 @@ public class LogsSubscriptionServiceTest {
 
     logsSubscriptionService.onBlockAdded(createBlockAddedEvent(transaction, null), blockchain);
 
-    verify(subscriptionManager).sendMessage(eq(subscription.getId()), refEq(expectedLogResult));
+    verify(subscriptionManager)
+        .sendMessage(eq(subscription.getSubscriptionId()), refEq(expectedLogResult));
   }
 
   @Test
@@ -93,7 +94,8 @@ public class LogsSubscriptionServiceTest {
 
     logsSubscriptionService.onBlockAdded(createBlockAddedEvent(null, transaction), blockchain);
 
-    verify(subscriptionManager).sendMessage(eq(subscription.getId()), refEq(expectedLogResult));
+    verify(subscriptionManager)
+        .sendMessage(eq(subscription.getSubscriptionId()), refEq(expectedLogResult));
   }
 
   @Test
@@ -109,7 +111,8 @@ public class LogsSubscriptionServiceTest {
 
     final int totalOfLogs = addedTransactions.size() + removedTransactions.size();
 
-    verify(subscriptionManager, times(totalOfLogs)).sendMessage(eq(subscription.getId()), any());
+    verify(subscriptionManager, times(totalOfLogs))
+        .sendMessage(eq(subscription.getSubscriptionId()), any());
   }
 
   @Test
@@ -162,7 +165,7 @@ public class LogsSubscriptionServiceTest {
   private LogsSubscription createSubscription(final Address address) {
     final FilterParameter filterParameter =
         new FilterParameter(null, null, Lists.newArrayList(address.toString()), null, null);
-    final LogsSubscription logsSubscription = new LogsSubscription(1L, filterParameter);
+    final LogsSubscription logsSubscription = new LogsSubscription(1L, "conn", filterParameter);
     when(subscriptionManager.subscriptionsOfType(any(), any()))
         .thenReturn(Lists.newArrayList(logsSubscription));
     return logsSubscription;
@@ -170,10 +173,10 @@ public class LogsSubscriptionServiceTest {
 
   private List<LogsSubscription> createSubscriptions(final Address address) {
     final List<LogsSubscription> subscriptions = new ArrayList<>();
-    for (int i = 0; i < 3; i++) {
+    for (long i = 0; i < 3; i++) {
       final FilterParameter filterParameter =
           new FilterParameter(null, null, Lists.newArrayList(address.toString()), null, null);
-      subscriptions.add(new LogsSubscription((long) i, filterParameter));
+      subscriptions.add(new LogsSubscription(i, "conn", filterParameter));
     }
     when(subscriptionManager.subscriptionsOfType(any(), any()))
         .thenReturn(Lists.newArrayList(subscriptions));

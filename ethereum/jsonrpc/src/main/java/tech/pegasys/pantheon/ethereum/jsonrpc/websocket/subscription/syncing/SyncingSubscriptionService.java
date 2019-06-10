@@ -36,10 +36,14 @@ public class SyncingSubscriptionService {
         syncingSubscriptions -> {
           if (syncStatus.inSync()) {
             syncingSubscriptions.forEach(
-                s -> subscriptionManager.sendMessage(s.getId(), new NotSynchronisingResult()));
+                s ->
+                    subscriptionManager.sendMessage(
+                        s.getSubscriptionId(), new NotSynchronisingResult()));
           } else {
             syncingSubscriptions.forEach(
-                s -> subscriptionManager.sendMessage(s.getId(), new SyncingResult(syncStatus)));
+                s ->
+                    subscriptionManager.sendMessage(
+                        s.getSubscriptionId(), new SyncingResult(syncStatus)));
           }
         });
   }
