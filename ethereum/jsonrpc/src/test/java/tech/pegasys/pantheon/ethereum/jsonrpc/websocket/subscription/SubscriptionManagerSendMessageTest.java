@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.JsonRpcResult;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscribeRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.response.SubscriptionResponse;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.UUID;
 
@@ -42,7 +43,7 @@ public class SubscriptionManagerSendMessageTest {
   @Before
   public void before(final TestContext context) {
     vertx = Vertx.vertx();
-    subscriptionManager = new SubscriptionManager();
+    subscriptionManager = new SubscriptionManager(new NoOpMetricsSystem());
     vertx.deployVerticle(subscriptionManager, context.asyncAssertSuccess());
   }
 

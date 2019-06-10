@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketRequestHandler;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.SubscriptionManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscribeRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.subscription.request.SubscriptionType;
+import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.HashMap;
 
@@ -45,7 +46,7 @@ public class EthUnsubscribeIntegrationTest {
   @Before
   public void before() {
     vertx = Vertx.vertx();
-    subscriptionManager = new SubscriptionManager();
+    subscriptionManager = new SubscriptionManager(new NoOpMetricsSystem());
     webSocketMethodsFactory = new WebSocketMethodsFactory(subscriptionManager, new HashMap<>());
     webSocketRequestHandler = new WebSocketRequestHandler(vertx, webSocketMethodsFactory.methods());
   }
