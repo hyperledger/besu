@@ -33,6 +33,10 @@ import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidationParams;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
+import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -53,11 +57,14 @@ public class TransactionPool implements BlockAddedObserver {
 
   private static final Logger LOG = getLogger();
   private static final long SYNC_TOLERANCE = 100L;
+  private static final String REMOTE = "remote";
+  private static final String LOCAL = "local";
   private final PendingTransactions pendingTransactions;
   private final ProtocolSchedule<?> protocolSchedule;
   private final ProtocolContext<?> protocolContext;
   private final TransactionBatchAddedListener transactionBatchAddedListener;
   private final SyncState syncState;
+  private final LabelledMetric<Counter> duplicateTransactionCounter;
   private Optional<AccountFilter> accountFilter = Optional.empty();
   private final PeerTransactionTracker peerTransactionTracker;
 
@@ -68,7 +75,8 @@ public class TransactionPool implements BlockAddedObserver {
       final TransactionBatchAddedListener transactionBatchAddedListener,
       final SyncState syncState,
       final EthContext ethContext,
-      final PeerTransactionTracker peerTransactionTracker) {
+      final PeerTransactionTracker peerTransactionTracker,
+      final MetricsSystem metricsSystem) {
     this.pendingTransactions = pendingTransactions;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -76,12 +84,19 @@ public class TransactionPool implements BlockAddedObserver {
     this.syncState = syncState;
     this.peerTransactionTracker = peerTransactionTracker;
 
+    duplicateTransactionCounter =
+        metricsSystem.createLabelledCounter(
+            MetricCategory.TRANSACTION_POOL,
+            "transactions_duplicates_total",
+            "Total number of duplicate transactions received",
+            "source");
+
     ethContext.getEthPeers().subscribeConnect(this::handleConnect);
   }
 
   private void handleConnect(final EthPeer peer) {
-    List<Transaction> localTransactions = getLocalTransactions();
-    for (Transaction transaction : localTransactions) {
+    final List<Transaction> localTransactions = getLocalTransactions();
+    for (final Transaction transaction : localTransactions) {
       peerTransactionTracker.addToPeerSendQueue(peer, transaction);
     }
   }
@@ -100,6 +115,8 @@ public class TransactionPool implements BlockAddedObserver {
           final boolean added = pendingTransactions.addLocalTransaction(transaction);
           if (added) {
             transactionBatchAddedListener.onTransactionsAdded(singletonList(transaction));
+          } else {
+            duplicateTransactionCounter.labels(LOCAL).inc();
           }
         });
     return validationResult;
@@ -111,12 +128,19 @@ public class TransactionPool implements BlockAddedObserver {
     }
     final Set<Transaction> addedTransactions = new HashSet<>();
     for (final Transaction transaction : transactions) {
+      if (pendingTransactions.containsTransaction(transaction.hash())) {
+        // We already have this transaction, don't even validate it.
+        duplicateTransactionCounter.labels(REMOTE).inc();
+        continue;
+      }
       final ValidationResult<TransactionInvalidReason> validationResult =
           validateTransaction(transaction);
       if (validationResult.isValid()) {
         final boolean added = pendingTransactions.addRemoteTransaction(transaction);
         if (added) {
           addedTransactions.add(transaction);
+        } else {
+          duplicateTransactionCounter.labels(REMOTE).inc();
         }
       } else {
         LOG.trace(

@@ -279,6 +279,10 @@ public class PendingTransactions {
     return pendingTransactions.size();
   }
 
+  public boolean containsTransaction(final Hash transactionHash) {
+    return pendingTransactions.containsKey(transactionHash);
+  }
+
   public Optional<Transaction> getTransactionByHash(final Hash transactionHash) {
     return Optional.ofNullable(pendingTransactions.get(transactionHash))
         .map(TransactionInfo::getTransaction);
