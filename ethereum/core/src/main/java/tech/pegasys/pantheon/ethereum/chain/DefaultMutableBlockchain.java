@@ -46,7 +46,7 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
 
   private final BlockchainStorage blockchainStorage;
 
-  private final Subscribers<BlockAddedObserver> blockAddedObservers = new Subscribers<>();
+  private final Subscribers<BlockAddedObserver> blockAddedObservers = Subscribers.create();
 
   private volatile BlockHeader chainHeader;
   private volatile UInt256 totalDifficulty;

@@ -36,7 +36,7 @@ public abstract class AbstractMiningCoordinator<
   protected boolean isEnabled = false;
   protected volatile Optional<M> currentRunningMiner = Optional.empty();
 
-  private final Subscribers<MinedBlockObserver> minedBlockObservers = new Subscribers<>();
+  private final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
   private final AbstractMinerExecutor<C, M> executor;
   protected final Blockchain blockchain;
   private final SyncState syncState;

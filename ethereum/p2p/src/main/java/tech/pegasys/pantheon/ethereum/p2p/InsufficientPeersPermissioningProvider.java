@@ -30,7 +30,7 @@ public class InsufficientPeersPermissioningProvider implements ContextualNodePer
   private final P2PNetwork p2pNetwork;
   private final Collection<EnodeURL> bootnodeEnodes;
   private long nonBootnodePeerConnections;
-  private final Subscribers<Runnable> permissioningUpdateSubscribers = new Subscribers<>();
+  private final Subscribers<Runnable> permissioningUpdateSubscribers = Subscribers.create();
 
   /**
    * Creates the provider observing the provided p2p network

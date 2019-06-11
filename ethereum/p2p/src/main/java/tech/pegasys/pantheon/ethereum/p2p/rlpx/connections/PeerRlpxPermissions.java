@@ -10,15 +10,16 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.p2p.rlpx;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.connections;
 
 import tech.pegasys.pantheon.ethereum.p2p.peers.LocalNode;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions.Action;
+import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissionsException;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PermissionsUpdateCallback;
 
-public class PeerRlpxPermissions implements AutoCloseable {
+public class PeerRlpxPermissions {
   private final LocalNode localNode;
   private final PeerPermissions peerPermissions;
 
@@ -33,6 +34,10 @@ public class PeerRlpxPermissions implements AutoCloseable {
     }
     return peerPermissions.isPermitted(
         localNode.getPeer(), peer, Action.RLPX_ALLOW_NEW_OUTBOUND_CONNECTION);
+  }
+
+  public PeerPermissionsException newOutboundConnectionException(final Peer peer) {
+    return new PeerPermissionsException(peer, Action.RLPX_ALLOW_NEW_OUTBOUND_CONNECTION);
   }
 
   public boolean allowNewInboundConnectionFrom(final Peer peer) {
@@ -53,10 +58,5 @@ public class PeerRlpxPermissions implements AutoCloseable {
 
   public void subscribeUpdate(final PermissionsUpdateCallback callback) {
     peerPermissions.subscribeUpdate(callback);
-  }
-
-  @Override
-  public void close() {
-    peerPermissions.close();
   }
 }

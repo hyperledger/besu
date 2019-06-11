@@ -31,7 +31,7 @@ public class NodePermissioningController {
   private Optional<ContextualNodePermissioningProvider> insufficientPeersPermissioningProvider =
       Optional.empty();
   private final List<NodePermissioningProvider> providers;
-  private final Subscribers<Runnable> permissioningUpdateSubscribers = new Subscribers<>();
+  private final Subscribers<Runnable> permissioningUpdateSubscribers = Subscribers.create();
 
   public NodePermissioningController(
       final Optional<SyncStatusNodePermissioningProvider> syncStatusNodePermissioningProvider,

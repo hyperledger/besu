@@ -60,7 +60,7 @@ public class PeerDiscoveryTableRefreshTest {
                 .timerUtil(timer)
                 .workerExecutor(new BlockingAsyncExecutor())
                 .tableRefreshIntervalMs(0)
-                .peerBondedObservers(new Subscribers<>())
+                .peerBondedObservers(Subscribers.create())
                 .metricsSystem(new NoOpMetricsSystem())
                 .build());
     controller.start();

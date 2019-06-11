@@ -68,7 +68,7 @@ public class IbftRoundTest {
   private final KeyPair localNodeKeys = KeyPair.generate();
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final MessageFactory messageFactory = new MessageFactory(localNodeKeys);
-  private final Subscribers<MinedBlockObserver> subscribers = new Subscribers<>();
+  private final Subscribers<MinedBlockObserver> subscribers = Subscribers.create();
   private ProtocolContext<IbftContext> protocolContext;
 
   @Mock private MutableBlockchain blockChain;

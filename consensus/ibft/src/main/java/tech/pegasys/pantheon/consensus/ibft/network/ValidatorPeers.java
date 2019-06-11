@@ -19,11 +19,13 @@ import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Maps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,7 +39,9 @@ public class ValidatorPeers implements ValidatorMulticaster, PeerConnectionTrack
 
   private static final String PROTOCOL_NAME = "IBF";
 
-  private final Map<Address, PeerConnection> peerConnections = Maps.newConcurrentMap();
+  // It's possible for multiple connections between peers to exist for brief periods, so map each
+  // address to a set of connections
+  private final Map<Address, Set<PeerConnection>> connectionsByAddress = new ConcurrentHashMap<>();
   private final VoteTallyCache voteTallyCache;
 
   public ValidatorPeers(final VoteTallyCache voteTallyCache) {
@@ -47,13 +51,20 @@ public class ValidatorPeers implements ValidatorMulticaster, PeerConnectionTrack
   @Override
   public void add(final PeerConnection newConnection) {
     final Address peerAddress = newConnection.getPeerInfo().getAddress();
-    peerConnections.put(peerAddress, newConnection);
+    final Set<PeerConnection> connections =
+        connectionsByAddress.computeIfAbsent(
+            peerAddress, (k) -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
+    connections.add(newConnection);
   }
 
   @Override
   public void remove(final PeerConnection removedConnection) {
     final Address peerAddress = removedConnection.getPeerInfo().getAddress();
-    peerConnections.remove(peerAddress);
+    final Set<PeerConnection> connections = connectionsByAddress.get(peerAddress);
+    if (connections == null) {
+      return;
+    }
+    connections.remove(removedConnection);
   }
 
   @Override
@@ -75,8 +86,9 @@ public class ValidatorPeers implements ValidatorMulticaster, PeerConnectionTrack
     LOG.trace(
         "Sending message to peers messageCode={} recipients={}", message.getCode(), recipients);
     recipients.stream()
-        .map(peerConnections::get)
+        .map(connectionsByAddress::get)
         .filter(Objects::nonNull)
+        .flatMap(Set::stream)
         .forEach(
             connection -> {
               try {

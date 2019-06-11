@@ -46,7 +46,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
 
   private final SyncState syncState;
   private final AtomicBoolean running = new AtomicBoolean(false);
-  private final Subscribers<SyncStatusListener> syncStatusListeners = new Subscribers<>();
+  private final Subscribers<SyncStatusListener> syncStatusListeners = Subscribers.create();
   private final BlockPropagationManager<C> blockPropagationManager;
   private final Optional<FastSyncDownloader<C>> fastSyncDownloader;
   private final FullSyncDownloader<C> fullSyncDownloader;

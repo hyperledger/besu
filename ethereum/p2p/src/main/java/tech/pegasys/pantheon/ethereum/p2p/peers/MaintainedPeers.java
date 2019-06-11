@@ -24,8 +24,8 @@ import io.vertx.core.impl.ConcurrentHashSet;
 /** Represents a set of peers for which connections should be actively maintained. */
 public class MaintainedPeers {
   private final Set<Peer> maintainedPeers = new ConcurrentHashSet<>();
-  private final Subscribers<PeerAddedCallback> addedSubscribers = new Subscribers<>();
-  private final Subscribers<PeerRemovedCallback> removedCallbackSubscribers = new Subscribers<>();
+  private final Subscribers<PeerAddedCallback> addedSubscribers = Subscribers.create();
+  private final Subscribers<PeerRemovedCallback> removedCallbackSubscribers = Subscribers.create();
 
   public boolean add(final Peer peer) {
     checkArgument(

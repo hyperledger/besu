@@ -47,7 +47,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   private final List<EnodeURL> nodesWhitelist = new ArrayList<>();
   private final WhitelistPersistor whitelistPersistor;
   private final Subscribers<Consumer<NodeWhitelistUpdatedEvent>> nodeWhitelistUpdatedObservers =
-      new Subscribers<>();
+      Subscribers.create();
 
   private final Counter checkCounter;
   private final Counter checkCounterPermitted;

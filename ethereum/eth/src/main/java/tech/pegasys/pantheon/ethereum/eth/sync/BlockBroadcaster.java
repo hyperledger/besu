@@ -28,7 +28,7 @@ public class BlockBroadcaster {
   private static final Logger LOG = LogManager.getLogger();
 
   private final EthContext ethContext;
-  private final Subscribers<Consumer<Block>> blockPropagatedSubscribers = new Subscribers<>();
+  private final Subscribers<Consumer<Block>> blockPropagatedSubscribers = Subscribers.create();
 
   public BlockBroadcaster(final EthContext ethContext) {
     this.ethContext = ethContext;

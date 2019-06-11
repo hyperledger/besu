@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.p2p.network.netty;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.netty;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -28,14 +28,15 @@ import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.BreachOfProtocolExc
 import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.IncompatiblePeerException;
 import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.PeerDisconnectedException;
 import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.UnexpectedPeerConnectionException;
-import tech.pegasys.pantheon.ethereum.p2p.network.netty.testhelpers.NettyMocks;
-import tech.pegasys.pantheon.ethereum.p2p.network.netty.testhelpers.SubProtocolMock;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.LocalNode;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.PeerConnectionEvents;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.netty.testhelpers.NettyMocks;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.Framer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.FramingException;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.wire.MockSubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
@@ -62,6 +63,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelId;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoop;
 import io.netty.handler.codec.DecoderException;
@@ -74,10 +76,11 @@ public class DeFramerTest {
 
   private final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
   private final Channel channel = mock(Channel.class);
+  private final ChannelId channelId = mock(ChannelId.class);
   private final ChannelPipeline pipeline = mock(ChannelPipeline.class);
   private final EventLoop eventLoop = mock(EventLoop.class);
   private final Framer framer = mock(Framer.class);
-  private final Callbacks callbacks = mock(Callbacks.class);
+  private final PeerConnectionEvents connectionEventDispatcher = mock(PeerConnectionEvents.class);
   private final PeerConnection peerConnection = mock(PeerConnection.class);
   private final CompletableFuture<PeerConnection> connectFuture = new CompletableFuture<>();
   private final int remotePort = 12345;
@@ -105,6 +108,10 @@ public class DeFramerTest {
 
     when(channel.remoteAddress()).thenReturn(remoteAddress);
     when(channel.pipeline()).thenReturn(pipeline);
+    when(channel.id()).thenReturn(channelId);
+
+    when(channelId.asLongText()).thenReturn("1");
+    when(channelId.asShortText()).thenReturn("1");
 
     when(pipeline.addLast(any())).thenReturn(pipeline);
     when(pipeline.addFirst(any())).thenReturn(pipeline);
@@ -380,11 +387,11 @@ public class DeFramerTest {
   private DeFramer createDeFramer(final Peer expectedPeer) {
     return new DeFramer(
         framer,
-        Arrays.asList(SubProtocolMock.create("eth")),
+        Arrays.asList(MockSubProtocol.create("eth")),
         localNode,
         Optional.ofNullable(expectedPeer),
-        callbacks,
+        connectionEventDispatcher,
         connectFuture,
-        NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER);
+        new NoOpMetricsSystem());
   }
 }

@@ -240,12 +240,16 @@ public class RunnerBuilder {
             .flatMap(protocolManager -> protocolManager.getSupportedCapabilities().stream())
             .collect(Collectors.toSet());
 
+    final RlpxConfiguration rlpxConfiguration =
+        RlpxConfiguration.create()
+            .setBindPort(p2pListenPort)
+            .setMaxPeers(maxPeers)
+            .setSupportedProtocols(subProtocols)
+            .setClientId(PantheonInfo.version());
     final NetworkingConfiguration networkConfig =
         new NetworkingConfiguration()
-            .setRlpx(RlpxConfiguration.create().setBindPort(p2pListenPort).setMaxPeers(maxPeers))
-            .setDiscovery(discoveryConfiguration)
-            .setClientId(PantheonInfo.version())
-            .setSupportedProtocols(subProtocols);
+            .setRlpx(rlpxConfiguration)
+            .setDiscovery(discoveryConfiguration);
 
     final PeerPermissionsBlacklist bannedNodes = PeerPermissionsBlacklist.create();
     bannedNodeIds.forEach(bannedNodes::add);

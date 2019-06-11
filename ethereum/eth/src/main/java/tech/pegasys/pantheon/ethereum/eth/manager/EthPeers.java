@@ -45,8 +45,8 @@ public class EthPeers {
   private final Map<PeerConnection, EthPeer> connections = new ConcurrentHashMap<>();
   private final String protocolName;
   private final Clock clock;
-  private final Subscribers<ConnectCallback> connectCallbacks = new Subscribers<>();
-  private final Subscribers<DisconnectCallback> disconnectCallbacks = new Subscribers<>();
+  private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
+  private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
   private final Collection<PendingPeerRequest> pendingRequests = new ArrayList<>();
 
   public EthPeers(final String protocolName, final Clock clock, final MetricsSystem metricsSystem) {

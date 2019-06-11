@@ -48,7 +48,7 @@ public class EthHashMinerExecutorTest {
             new DefaultBlockScheduler(1, 10, TestClock.fixed()));
 
     assertThatExceptionOfType(CoinbaseNotSetException.class)
-        .isThrownBy(() -> executor.startAsyncMining(new Subscribers<>(), null))
+        .isThrownBy(() -> executor.startAsyncMining(Subscribers.create(), null))
         .withMessageContaining("Unable to start mining without a coinbase.");
   }
 

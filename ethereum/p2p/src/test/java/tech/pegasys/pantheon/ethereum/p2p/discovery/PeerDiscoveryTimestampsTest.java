@@ -58,7 +58,7 @@ public class PeerDiscoveryTimestampsTest {
             .timerUtil(new MockTimerUtil())
             .workerExecutor(new BlockingAsyncExecutor())
             .tableRefreshIntervalMs(TimeUnit.HOURS.toMillis(1))
-            .peerBondedObservers(new Subscribers<>())
+            .peerBondedObservers(Subscribers.create())
             .metricsSystem(new NoOpMetricsSystem())
             .build();
     controller.start();
