@@ -74,7 +74,7 @@ public class PrivateTransactionHandlerTest {
           .chainId(BigInteger.valueOf(2018))
           .signAndBuild(KEY_PAIR);
 
-  Enclave mockEnclave() throws IOException {
+  Enclave mockEnclave() throws Exception {
     Enclave mockEnclave = mock(Enclave.class);
     SendResponse response = new SendResponse(TRANSACTION_KEY);
     ReceiveResponse receiveResponse = new ReceiveResponse(new byte[0], "mock");
@@ -83,14 +83,14 @@ public class PrivateTransactionHandlerTest {
     return mockEnclave;
   }
 
-  Enclave brokenMockEnclave() throws IOException {
+  Enclave brokenMockEnclave() throws Exception {
     Enclave mockEnclave = mock(Enclave.class);
     when(mockEnclave.send(any(SendRequest.class))).thenThrow(IOException.class);
     return mockEnclave;
   }
 
   @Before
-  public void setUp() throws IOException {
+  public void setUp() throws Exception {
     PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
     Hash mockHash = mock(Hash.class);
     when(privateStateStorage.getPrivateAccountState(any(BytesValue.class)))

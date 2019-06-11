@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.privacy;
 import tech.pegasys.orion.testutil.OrionTestHarness;
 import tech.pegasys.orion.testutil.OrionTestHarnessFactory;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.Cluster;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.privacy.PrivacyPantheonNodeFactory;
 
@@ -72,7 +71,7 @@ public class PrivacyNet {
     return nodes;
   }
 
-  public PantheonNode getPantheon(final String name) {
+  public PrivacyNode getNode(final String name) {
     return nodes.get(name);
   }
 

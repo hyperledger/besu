@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy;
 
+import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -33,8 +34,6 @@ import tech.pegasys.pantheon.ethereum.privacy.Restriction;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-
-import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -90,8 +89,8 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
     final String enclaveKey;
     try {
       enclaveKey = privateTransactionHandler.sendToOrion(privateTransaction);
-    } catch (final IOException e) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.ENCLAVE_ERROR);
+    } catch (final Exception e) {
+      return new JsonRpcErrorResponse(request.getId(), convertEnclaveInvalidReason(e.getMessage()));
     }
 
     final String privacyGroupId;
@@ -99,8 +98,8 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
       privacyGroupId =
           privateTransactionHandler.getPrivacyGroup(
               enclaveKey, privateTransaction.getPrivateFrom());
-    } catch (final IOException e) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.ENCLAVE_ERROR);
+    } catch (final Exception e) {
+      return new JsonRpcErrorResponse(request.getId(), convertEnclaveInvalidReason(e.getMessage()));
     }
 
     return privateTransactionHandler

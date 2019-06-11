@@ -75,7 +75,7 @@ public class Ibft2PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase
     String invalidStoreValueFromNode2 =
         PrivateTransactionBuilder.builder()
             .nonce(0)
-            .from(privacyNet.getPantheon("Bob").getAddress())
+            .from(privacyNet.getNode("Bob").getAddress())
             .to(Address.fromHexString(eventEmitterHarness.resolveContractAddress(CONTRACT_NAME)))
             .privateFrom(
                 BytesValue.wrap(
@@ -88,11 +88,11 @@ public class Ibft2PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase
                 Lists.newArrayList(
                     BytesValue.wrap(
                         privacyNet.getEnclave("Bob").getPublicKeys().get(0).getBytes(UTF_8))))
-            .keyPair(privacyNet.getPantheon("Bob").keyPair())
+            .keyPair(privacyNet.getNode("Bob").keyPair())
             .build(TransactionType.STORE);
 
     privacyNet
-        .getPantheon("Bob")
+        .getNode("Bob")
         .execute(privateTransactions.createPrivateRawTransaction(invalidStoreValueFromNode2));
   }
 

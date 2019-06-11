@@ -76,7 +76,7 @@ public class PrivacyPrecompiledContractTest {
                           + "64")
                   .extractArray());
 
-  private Enclave mockEnclave() throws IOException {
+  private Enclave mockEnclave() throws Exception {
     Enclave mockEnclave = mock(Enclave.class);
     ReceiveResponse response = new ReceiveResponse(VALID_PRIVATE_TRANSACTION_RLP_BASE64, "");
     when(mockEnclave.receive(any(ReceiveRequest.class))).thenReturn(response);
@@ -105,14 +105,14 @@ public class PrivacyPrecompiledContractTest {
     return mockPrivateTransactionProcessor;
   }
 
-  private Enclave brokenMockEnclave() throws IOException {
+  private Enclave brokenMockEnclave() throws Exception {
     Enclave mockEnclave = mock(Enclave.class);
     when(mockEnclave.receive(any(ReceiveRequest.class))).thenThrow(IOException.class);
     return mockEnclave;
   }
 
   @Before
-  public void setUp() throws IOException {
+  public void setUp() throws Exception {
     WorldStateArchive worldStateArchive;
     worldStateArchive = mock(WorldStateArchive.class);
     MutableWorldState mutableWorldState = mock(MutableWorldState.class);

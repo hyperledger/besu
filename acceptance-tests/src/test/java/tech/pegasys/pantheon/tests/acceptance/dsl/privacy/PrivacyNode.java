@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaGetTransactionCountTransaction;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -101,5 +102,12 @@ public class PrivacyNode extends PantheonNode {
                 .map(node -> node.orion.getPublicKeys().get(0))
                 .collect(Collectors.toList()));
     waitFor(() -> orionEnclave.send(sendRequest1));
+  }
+
+  public long nextNonce(final BytesValue privacyGroupId) {
+    return execute(
+            new EeaGetTransactionCountTransaction(
+                getAddress().toString(), privacyGroupId.toString()))
+        .longValue();
   }
 }

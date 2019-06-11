@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.tests.web3j.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils.waitFor;
+import static tech.pegasys.pantheon.tests.web3j.privacy.PrivacyGroup.generatePrivacyGroup;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.EeaCondition;
@@ -24,21 +25,11 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivateTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.PrivateTransactionBuilder;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import org.web3j.crypto.Hash;
-import org.web3j.rlp.RlpEncoder;
-import org.web3j.rlp.RlpList;
-import org.web3j.rlp.RlpString;
-import org.web3j.rlp.RlpType;
-import org.web3j.utils.Numeric;
 
 public class EventEmitterHarness {
 
@@ -71,7 +62,7 @@ public class EventEmitterHarness {
   }
 
   public void deploy(final String contractName, final String sender, final String... receivers) {
-    final BytesValue privacyGroupId = generatePrivaycGroup(sender, receivers);
+    final BytesValue privacyGroupId = generatePrivacyGroup(privacyNet, sender, receivers);
     final long nonce = nextNonce(sender, privacyGroupId);
     final String contractAddress =
         generateContractAddress(sender, nonce, privacyGroupId).toString();
@@ -89,7 +80,7 @@ public class EventEmitterHarness {
       final EeaCondition forNonParticipants,
       final String sender,
       final String... receivers) {
-    final BytesValue privacyGroupId = generatePrivaycGroup(sender, receivers);
+    final BytesValue privacyGroupId = generatePrivacyGroup(privacyNet, sender, receivers);
     final long nonce = nextNonce(sender, privacyGroupId);
     final String contractAddress =
         generateContractAddress(sender, nonce, privacyGroupId).toString();
@@ -119,22 +110,22 @@ public class EventEmitterHarness {
       final String sender,
       final String... receivers) {
     final String contractAddress = resolveContractAddress(contractName);
-    final BytesValue privacyGroupId = generatePrivaycGroup(sender, receivers);
+    final BytesValue privacyGroupId = generatePrivacyGroup(privacyNet, sender, receivers);
     final long nonce = nextNonce(sender, privacyGroupId);
     final String storeValue =
         privateTransactionBuilder
             .nonce(nonce)
-            .from(privacyNet.getPantheon(sender).getAddress())
+            .from(privacyNet.getNode(sender).getAddress())
             .to(Address.fromHexString(contractAddress))
             .privateFrom(
                 BytesValue.wrap(
                     privacyNet.getEnclave(sender).getPublicKeys().get(0).getBytes(UTF_8)))
             .privateFor(convertNamesToOrionPublicKeys(receivers))
-            .keyPair(privacyNet.getPantheon(sender).keyPair())
+            .keyPair(privacyNet.getNode(sender).keyPair())
             .build(PrivateTransactionBuilder.TransactionType.STORE);
     final String transactionHash =
         privacyNet
-            .getPantheon(sender)
+            .getNode(sender)
             .execute(privateTransactions.createPrivateRawTransaction(storeValue));
 
     waitForTransactionToBeMined(transactionHash);
@@ -160,22 +151,22 @@ public class EventEmitterHarness {
       final String sender,
       final String... receivers) {
     final String contractAddress = resolveContractAddress(contractName);
-    final BytesValue privacyGroupId = generatePrivaycGroup(sender, receivers);
+    final BytesValue privacyGroupId = generatePrivacyGroup(privacyNet, sender, receivers);
     final long nonce = nextNonce(sender, privacyGroupId);
     final String getValue =
         privateTransactionBuilder
             .nonce(nonce)
-            .from(privacyNet.getPantheon(sender).getAddress())
+            .from(privacyNet.getNode(sender).getAddress())
             .to(Address.fromHexString(contractAddress))
             .privateFrom(
                 BytesValue.wrap(
                     privacyNet.getEnclave(sender).getPublicKeys().get(0).getBytes(UTF_8)))
             .privateFor(convertNamesToOrionPublicKeys(receivers))
-            .keyPair(privacyNet.getPantheon(sender).keyPair())
+            .keyPair(privacyNet.getNode(sender).keyPair())
             .build(PrivateTransactionBuilder.TransactionType.GET);
     final String transactionHash =
         privacyNet
-            .getPantheon(sender)
+            .getNode(sender)
             .execute(privateTransactions.createPrivateRawTransaction(getValue));
 
     waitForTransactionToBeMined(transactionHash);
@@ -196,17 +187,17 @@ public class EventEmitterHarness {
     final String deployContract =
         privateTransactionBuilder
             .nonce(nonce)
-            .from(privacyNet.getPantheon(sender).getAddress())
+            .from(privacyNet.getNode(sender).getAddress())
             .to(null)
             .privateFrom(
                 BytesValue.wrap(
                     privacyNet.getEnclave(sender).getPublicKeys().get(0).getBytes(UTF_8)))
             .privateFor(convertNamesToOrionPublicKeys(receivers))
-            .keyPair(privacyNet.getPantheon(sender).keyPair())
+            .keyPair(privacyNet.getNode(sender).keyPair())
             .build(PrivateTransactionBuilder.TransactionType.CREATE_CONTRACT);
     final String transactionHash =
         privacyNet
-            .getPantheon(sender)
+            .getNode(sender)
             .execute(privateTransactions.deployPrivateSmartContract(deployContract));
 
     waitForTransactionToBeMined(transactionHash);
@@ -221,44 +212,18 @@ public class EventEmitterHarness {
   private Address generateContractAddress(
       final String sender, final long nonce, final BytesValue privacyGroupId) {
     return Address.privateContractAddress(
-        privacyNet.getPantheon(sender).getAddress(), nonce, privacyGroupId);
-  }
-
-  private BytesValue generatePrivaycGroup(final String sender, final String[] receivers) {
-    final List<byte[]> stringList = new ArrayList<>();
-    stringList.add(
-        Base64.getDecoder().decode(privacyNet.getEnclave(sender).getPublicKeys().get(0)));
-    Arrays.stream(receivers)
-        .forEach(
-            (receiver) ->
-                stringList.add(
-                    Base64.getDecoder()
-                        .decode(privacyNet.getEnclave(receiver).getPublicKeys().get(0))));
-    List<RlpType> rlpList =
-        stringList.stream()
-            .distinct()
-            .sorted(Comparator.comparing(Arrays::hashCode))
-            .map(RlpString::create)
-            .collect(Collectors.toList());
-    return BytesValue.fromHexString(
-        Numeric.toHexString(
-            Base64.getEncoder().encode(Hash.sha3(RlpEncoder.encode(new RlpList(rlpList))))));
+        privacyNet.getNode(sender).getAddress(), nonce, privacyGroupId);
   }
 
   private long nextNonce(final String sender, final BytesValue privacyGroupId) {
-    return privacyNet
-        .getPantheon(sender)
-        .execute(
-            privateTransactions.getTransactionCount(
-                privacyNet.getPantheon(sender).getAddress().toString(), privacyGroupId.toString()))
-        .longValue();
+    return privacyNet.getNode(sender).nextNonce(privacyGroupId);
   }
 
   private void waitForTransactionToBeMined(final String transactionHash) {
     waitFor(
         () ->
             privacyNet
-                .getPantheon("Alice")
+                .getNode("Alice")
                 .verify(eea.expectSuccessfulTransactionReceipt(transactionHash)));
   }
 
@@ -292,6 +257,6 @@ public class EventEmitterHarness {
 
   private void verifyForParticipant(
       final EeaCondition condition, final String transactionHash, final String nodeName) {
-    condition.verify(privacyNet.getPantheon(nodeName), transactionHash);
+    condition.verify(privacyNet.getNode(nodeName), transactionHash);
   }
 }

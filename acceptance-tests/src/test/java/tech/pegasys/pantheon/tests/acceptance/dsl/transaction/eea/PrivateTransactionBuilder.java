@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PrivateTransactionBuilder {
@@ -67,7 +68,7 @@ public class PrivateTransactionBuilder {
     Address from;
     Address to;
     BytesValue privateFrom;
-    List<BytesValue> privateFor;
+    List<BytesValue> privateFor = new ArrayList<>();
     SECP256K1.KeyPair keyPair;
 
     public Builder nonce(final long nonce) {

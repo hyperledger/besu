@@ -103,7 +103,24 @@ public enum JsonRpcError {
   // Invalid input errors
   ENODE_ID_INVALID(
       -32000,
-      "Invalid node ID: node ID must have exactly 128 hexadecimal characters and should not include any '0x' hex prefix.");
+      "Invalid node ID: node ID must have exactly 128 hexadecimal characters and should not include any '0x' hex prefix."),
+
+  // Enclave errors
+  NODE_MISSING_PEER_URL(-50200, "NodeMissingPeerUrl"),
+  NODE_PUSHING_TO_PEER(-50200, "NodePushingToPeer"),
+  NODE_PROPAGATING_TO_ALL_PEERS(-50200, "NodePropagatingToAllPeers"),
+  NO_SENDER_KEY(-50200, "NoSenderKey"),
+  INVALID_PAYLOAD(-50200, "InvalidPayload"),
+  ENCLAVE_CREATE_KEY_PAIR(-50200, "EnclaveCreateKeyPair"),
+  ENCLAVE_DECODE_PUBLIC_KEY(-50200, "EnclaveDecodePublicKey"),
+  ENCLAVE_DECRYPT_WRONG_PRIVATE_KEY(-50200, "EnclaveDecryptWrongPrivateKey"),
+  ENCLAVE_ENCRYPT_COMBINE_KEYS(-50200, "EnclaveEncryptCombineKeys"),
+  ENCLAVE_MISSING_PRIVATE_KEY_PASSWORD(-50200, "EnclaveMissingPrivateKeyPasswords"),
+  ENCLAVE_NO_MATCHING_PRIVATE_KEY(-50200, "EnclaveNoMatchingPrivateKey"),
+  ENCLAVE_NOT_PAYLOAD_OWNER(-50200, "EnclaveNotPayloadOwner"),
+  ENCLAVE_UNSUPPORTED_PRIVATE_KEY_TYPE(-50200, "EnclaveUnsupportedPrivateKeyType"),
+  ENCLAVE_STORAGE_DECRYPT(-50200, "EnclaveStorageDecrypt"),
+  ENCLAVE_PRIVACY_GROUP_CREATION(-50200, "EnclavePrivacyGroupIdCreation");
 
   private final int code;
   private final String message;
