@@ -31,7 +31,7 @@ public class EthMessages {
   }
 
   public void subscribe(final int messageCode, final MessageCallback callback) {
-    listenersByCode.computeIfAbsent(messageCode, key -> new Subscribers<>()).subscribe(callback);
+    listenersByCode.computeIfAbsent(messageCode, key -> Subscribers.create()).subscribe(callback);
   }
 
   @FunctionalInterface

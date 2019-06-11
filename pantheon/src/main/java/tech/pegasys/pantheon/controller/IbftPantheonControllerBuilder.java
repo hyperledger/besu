@@ -151,7 +151,7 @@ public class IbftPantheonControllerBuilder extends PantheonControllerBuilder<Ibf
     final MessageValidatorFactory messageValidatorFactory =
         new MessageValidatorFactory(proposerSelector, protocolSchedule, protocolContext);
 
-    final Subscribers<MinedBlockObserver> minedBlockObservers = new Subscribers<>();
+    final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(ethProtocolManager);
 
     final FutureMessageBuffer futureMessageBuffer =

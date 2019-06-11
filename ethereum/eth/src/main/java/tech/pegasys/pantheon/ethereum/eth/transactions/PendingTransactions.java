@@ -66,10 +66,10 @@ public class PendingTransactions {
   private final Map<Address, SortedMap<Long, TransactionInfo>> transactionsBySender =
       new HashMap<>();
 
-  private final Subscribers<PendingTransactionListener> listeners = new Subscribers<>();
+  private final Subscribers<PendingTransactionListener> listeners = Subscribers.create();
 
   private final Subscribers<PendingTransactionDroppedListener> transactionDroppedListeners =
-      new Subscribers<>();
+      Subscribers.create();
 
   private final LabelledMetric<Counter> transactionRemovedCounter;
   private final Counter localTransactionAddedCounter;

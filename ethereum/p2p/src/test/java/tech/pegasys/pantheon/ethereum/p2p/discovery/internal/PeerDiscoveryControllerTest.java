@@ -32,7 +32,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.Endpoint;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
+import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerBondedObserver;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
@@ -1240,7 +1240,7 @@ public class PeerDiscoveryControllerTest {
     private PeerTable peerTable;
     private OutboundMessageHandler outboundMessageHandler = OutboundMessageHandler.NOOP;
     private static final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
-    private Subscribers<Consumer<PeerBondedEvent>> peerBondedObservers = new Subscribers<>();
+    private Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
     private PeerPermissions peerPermissions = PeerPermissions.noop();
 
     public static ControllerBuilder create() {
@@ -1284,11 +1284,6 @@ public class PeerDiscoveryControllerTest {
 
     ControllerBuilder outboundMessageHandler(final OutboundMessageHandler outboundMessageHandler) {
       this.outboundMessageHandler = outboundMessageHandler;
-      return this;
-    }
-
-    ControllerBuilder peerBondedObservers(final Subscribers<Consumer<PeerBondedEvent>> observers) {
-      this.peerBondedObservers = observers;
       return this;
     }
 

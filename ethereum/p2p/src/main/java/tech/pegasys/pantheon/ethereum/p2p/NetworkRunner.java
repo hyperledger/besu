@@ -108,11 +108,11 @@ public class NetworkRunner implements AutoCloseable {
   private void setupHandlers() {
     // Setup message handlers
     for (final ProtocolManager protocolManager : protocolManagers) {
-      for (final Capability cap : protocolManager.getSupportedCapabilities()) {
-        final SubProtocol protocol = subProtocols.get(cap.getName());
+      for (final Capability supportedCapability : protocolManager.getSupportedCapabilities()) {
+        final SubProtocol protocol = subProtocols.get(supportedCapability.getName());
         network.subscribe(
-            cap,
-            message -> {
+            supportedCapability,
+            (cap, message) -> {
               final int code = message.getData().getCode();
               if (!protocol.isValidMessageCode(cap.getVersion(), code)) {
                 inboundMessageCounter.labels(cap.toString(), "Invalid", "").inc();
@@ -160,7 +160,7 @@ public class NetworkRunner implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     stop();
   }
 

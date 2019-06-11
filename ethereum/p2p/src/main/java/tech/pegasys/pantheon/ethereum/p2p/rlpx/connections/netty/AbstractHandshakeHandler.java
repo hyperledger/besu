@@ -10,11 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.p2p.network.netty;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.netty;
 
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.peers.LocalNode;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.Framer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.Handshaker;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker;
@@ -23,8 +24,7 @@ import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.HelloMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.WireMessageCodes;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
@@ -49,29 +49,26 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
   private final Optional<Peer> expectedPeer;
   private final LocalNode localNode;
 
-  private final Callbacks callbacks;
-  private final PeerConnectionRegistry peerConnectionRegistry;
+  private final PeerConnectionEventDispatcher connectionEventDispatcher;
 
   private final CompletableFuture<PeerConnection> connectionFuture;
   private final List<SubProtocol> subProtocols;
 
-  private final LabelledMetric<Counter> outboundMessagesCounter;
+  private final MetricsSystem metricsSystem;
 
   AbstractHandshakeHandler(
       final List<SubProtocol> subProtocols,
       final LocalNode localNode,
       final Optional<Peer> expectedPeer,
       final CompletableFuture<PeerConnection> connectionFuture,
-      final Callbacks callbacks,
-      final PeerConnectionRegistry peerConnectionRegistry,
-      final LabelledMetric<Counter> outboundMessagesCounter) {
+      final PeerConnectionEventDispatcher connectionEventDispatcher,
+      final MetricsSystem metricsSystem) {
     this.subProtocols = subProtocols;
     this.localNode = localNode;
     this.expectedPeer = expectedPeer;
     this.connectionFuture = connectionFuture;
-    this.callbacks = callbacks;
-    this.peerConnectionRegistry = peerConnectionRegistry;
-    this.outboundMessagesCounter = outboundMessagesCounter;
+    this.connectionEventDispatcher = connectionEventDispatcher;
+    this.metricsSystem = metricsSystem;
   }
 
   /**
@@ -92,11 +89,6 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
     } else {
 
       final BytesValue nodeId = handshaker.partyPubKey().getEncodedBytes();
-      if (peerConnectionRegistry.isAlreadyConnected(nodeId)) {
-        LOG.debug("Rejecting connection from already connected client {}", nodeId);
-        disconnect(ctx, DisconnectReason.ALREADY_CONNECTED);
-        return;
-      }
       if (!localNode.isReady()) {
         // If we're handling a connection before the node is fully up, just disconnect
         LOG.debug("Rejecting connection because local node is not ready {}", nodeId);
@@ -115,9 +107,9 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
               subProtocols,
               localNode,
               expectedPeer,
-              callbacks,
+              connectionEventDispatcher,
               connectionFuture,
-              outboundMessagesCounter);
+              metricsSystem);
 
       ctx.channel()
           .pipeline()

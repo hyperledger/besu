@@ -10,16 +10,27 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.p2p.wire;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.netty;
 
-/** Signals that an exception occurred in the Wire protocol layer of the RLPx stack. */
-public class WireProtocolException extends RuntimeException {
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 
-  public WireProtocolException(final String message) {
-    super(message);
+final class OutboundMessage {
+
+  private final Capability capability;
+
+  private final MessageData messageData;
+
+  OutboundMessage(final Capability capability, final MessageData data) {
+    this.capability = capability;
+    this.messageData = data;
   }
 
-  public WireProtocolException(final String message, final Throwable cause) {
-    super(message, cause);
+  public MessageData getData() {
+    return messageData;
+  }
+
+  public Capability getCapability() {
+    return capability;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -10,15 +10,13 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.p2p.network.netty;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason.TCP_SUBSYSTEM_ERROR;
+package tech.pegasys.pantheon.ethereum.p2p.rlpx.connections;
 
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.wire.CapabilityMultiplexer;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage;
@@ -30,49 +28,53 @@ import tech.pegasys.pantheon.metrics.LabelledMetric;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import com.google.common.base.MoreObjects;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandlerContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-final class NettyPeerConnection implements PeerConnection {
-
+public abstract class AbstractPeerConnection implements PeerConnection {
   private static final Logger LOG = LogManager.getLogger();
 
-  private final ChannelHandlerContext ctx;
+  private final Peer peer;
   private final PeerInfo peerInfo;
+  private final InetSocketAddress localAddress;
+  private final InetSocketAddress remoteAddress;
+  private final String connectionId;
+  private final CapabilityMultiplexer multiplexer;
+
   private final Set<Capability> agreedCapabilities;
   private final Map<String, Capability> protocolToCapability = new HashMap<>();
   private final AtomicBoolean disconnected = new AtomicBoolean(false);
-  private final Callbacks callbacks;
-  private final CapabilityMultiplexer multiplexer;
+  protected final PeerConnectionEventDispatcher connectionEventDispatcher;
   private final LabelledMetric<Counter> outboundMessagesCounter;
-  private final Peer peer;
 
-  public NettyPeerConnection(
-      final ChannelHandlerContext ctx,
+  public AbstractPeerConnection(
       final Peer peer,
       final PeerInfo peerInfo,
+      final InetSocketAddress localAddress,
+      final InetSocketAddress remoteAddress,
+      final String connectionId,
       final CapabilityMultiplexer multiplexer,
-      final Callbacks callbacks,
+      final PeerConnectionEventDispatcher connectionEventDispatcher,
       final LabelledMetric<Counter> outboundMessagesCounter) {
-    this.ctx = ctx;
     this.peer = peer;
     this.peerInfo = peerInfo;
+    this.localAddress = localAddress;
+    this.remoteAddress = remoteAddress;
+    this.connectionId = connectionId;
     this.multiplexer = multiplexer;
+
     this.agreedCapabilities = multiplexer.getAgreedCapabilities();
     for (final Capability cap : agreedCapabilities) {
       protocolToCapability.put(cap.getName(), cap);
     }
-    this.callbacks = callbacks;
+    this.connectionEventDispatcher = connectionEventDispatcher;
     this.outboundMessagesCounter = outboundMessagesCounter;
-    ctx.channel().closeFuture().addListener(f -> terminateConnection(TCP_SUBSYSTEM_ERROR, false));
   }
 
   @Override
@@ -111,8 +113,10 @@ final class NettyPeerConnection implements PeerConnection {
     }
 
     LOG.trace("Writing {} to {} via protocol {}", message, peerInfo, capability);
-    ctx.channel().writeAndFlush(new OutboundMessage(capability, message));
+    doSendMessage(capability, message);
   }
+
+  protected abstract void doSendMessage(final Capability capability, final MessageData message);
 
   @Override
   public PeerInfo getPeerInfo() {
@@ -138,20 +142,24 @@ final class NettyPeerConnection implements PeerConnection {
   public void terminateConnection(final DisconnectReason reason, final boolean peerInitiated) {
     if (disconnected.compareAndSet(false, true)) {
       LOG.debug("Disconnected ({}) from {}", reason, peerInfo);
-      callbacks.invokeDisconnect(this, reason, peerInitiated);
+      connectionEventDispatcher.dispatchDisconnect(this, reason, peerInitiated);
     }
     // Always ensure the context gets closed immediately even if we previously sent a disconnect
     // message and are waiting to close.
-    ctx.close();
+    closeConnectionImmediately();
   }
+
+  protected abstract void closeConnectionImmediately();
+
+  protected abstract void closeConnection();
 
   @Override
   public void disconnect(final DisconnectReason reason) {
     if (disconnected.compareAndSet(false, true)) {
       LOG.debug("Disconnecting ({}) from {}", reason, peerInfo);
-      callbacks.invokeDisconnect(this, reason, false);
+      connectionEventDispatcher.dispatchDisconnect(this, reason, false);
       doSend(null, DisconnectMessage.create(reason));
-      ctx.channel().eventLoop().schedule((Callable<ChannelFuture>) ctx::close, 2L, SECONDS);
+      closeConnection();
     }
   }
 
@@ -162,12 +170,30 @@ final class NettyPeerConnection implements PeerConnection {
 
   @Override
   public InetSocketAddress getLocalAddress() {
-    return (InetSocketAddress) ctx.channel().localAddress();
+    return localAddress;
   }
 
   @Override
   public InetSocketAddress getRemoteAddress() {
-    return (InetSocketAddress) ctx.channel().remoteAddress();
+    return remoteAddress;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof AbstractPeerConnection)) {
+      return false;
+    }
+    final AbstractPeerConnection that = (AbstractPeerConnection) o;
+    return Objects.equals(this.connectionId, that.connectionId)
+        && Objects.equals(this.peer, that.peer);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(connectionId, peer);
   }
 
   @Override

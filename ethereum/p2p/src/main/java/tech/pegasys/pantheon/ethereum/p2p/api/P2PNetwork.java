@@ -58,23 +58,23 @@ public interface P2PNetwork extends Closeable {
    * per supported sub-protocol should throw a {@link RuntimeException}.
    *
    * @param capability Capability (sub-protocol) to subscribe to.
-   * @param consumer Consumer to subscribe
+   * @param callback The callback to invoke when a message for the given capability arrives
    */
-  void subscribe(Capability capability, Consumer<Message> consumer);
+  void subscribe(final Capability capability, final MessageCallback callback);
 
   /**
    * Subscribe a {@link Consumer} to all incoming new Peer connection events.
    *
-   * @param consumer Consumer to subscribe
+   * @param callback The callback to invoke when a new connection is established
    */
-  void subscribeConnect(Consumer<PeerConnection> consumer);
+  void subscribeConnect(ConnectCallback callback);
 
   /**
    * Subscribe a {@link Consumer} to all incoming new Peer disconnect events.
    *
-   * @param consumer Consumer to subscribe
+   * @param callback The callback to invoke when a peer disconnects
    */
-  void subscribeDisconnect(DisconnectCallback consumer);
+  void subscribeDisconnect(DisconnectCallback callback);
 
   /**
    * Adds a {@link Peer} to a list indicating efforts should be made to always stay connected

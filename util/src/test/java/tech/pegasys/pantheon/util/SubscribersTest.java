@@ -13,6 +13,8 @@
 package tech.pegasys.pantheon.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -22,7 +24,7 @@ import org.junit.Test;
 public class SubscribersTest {
   private final Runnable subscriber1 = mock(Runnable.class);
   private final Runnable subscriber2 = mock(Runnable.class);
-  private final Subscribers<Runnable> subscribers = new Subscribers<>();
+  private final Subscribers<Runnable> subscribers = Subscribers.create();
 
   @Test
   public void shouldAddSubscriber() {
@@ -58,5 +60,28 @@ public class SubscribersTest {
     verify(subscriber1).run();
     verify(subscriber2).run();
     verify(subscriber3).run();
+  }
+
+  @Test
+  public void suppressCallbackExceptions_false() {
+    final Subscribers<Runnable> subscribers = Subscribers.create(false);
+
+    doThrow(new IllegalStateException("whoops")).when(subscriber1).run();
+    subscribers.subscribe(subscriber1);
+
+    assertThatThrownBy(() -> subscribers.forEach(Runnable::run))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("whoops");
+  }
+
+  @Test
+  public void suppressCallbackExceptions_true() {
+    final Subscribers<Runnable> subscribers = Subscribers.create(true);
+
+    doThrow(new IllegalStateException("whoops")).when(subscriber1).run();
+    subscribers.subscribe(subscriber1);
+
+    // No Exception should be thrown
+    subscribers.forEach(Runnable::run);
   }
 }

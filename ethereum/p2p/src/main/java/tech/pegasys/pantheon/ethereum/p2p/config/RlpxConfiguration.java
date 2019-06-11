@@ -12,6 +12,11 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.config;
 
+import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 public class RlpxConfiguration {
@@ -19,10 +24,24 @@ public class RlpxConfiguration {
   private String bindHost = "0.0.0.0";
   private int bindPort = 30303;
   private int maxPeers = 25;
-  private WireProtocolConfig wire = new WireProtocolConfig();
+  private List<SubProtocol> supportedProtocols = Collections.emptyList();
 
   public static RlpxConfiguration create() {
     return new RlpxConfiguration();
+  }
+
+  public RlpxConfiguration setSupportedProtocols(final SubProtocol... supportedProtocols) {
+    this.supportedProtocols = Arrays.asList(supportedProtocols);
+    return this;
+  }
+
+  public RlpxConfiguration setSupportedProtocols(final List<SubProtocol> supportedProtocols) {
+    this.supportedProtocols = supportedProtocols;
+    return this;
+  }
+
+  public List<SubProtocol> getSupportedProtocols() {
+    return supportedProtocols;
   }
 
   public String getBindHost() {
@@ -43,15 +62,6 @@ public class RlpxConfiguration {
     return this;
   }
 
-  public WireProtocolConfig getWire() {
-    return wire;
-  }
-
-  public RlpxConfiguration setWire(final WireProtocolConfig wire) {
-    this.wire = wire;
-    return this;
-  }
-
   public RlpxConfiguration setMaxPeers(final int peers) {
     maxPeers = peers;
     return this;
@@ -65,8 +75,9 @@ public class RlpxConfiguration {
     return clientId;
   }
 
-  public void setClientId(final String clientId) {
+  public RlpxConfiguration setClientId(final String clientId) {
     this.clientId = clientId;
+    return this;
   }
 
   @Override
@@ -78,14 +89,12 @@ public class RlpxConfiguration {
       return false;
     }
     final RlpxConfiguration that = (RlpxConfiguration) o;
-    return bindPort == that.bindPort
-        && Objects.equals(bindHost, that.bindHost)
-        && Objects.equals(wire, that.wire);
+    return bindPort == that.bindPort && Objects.equals(bindHost, that.bindHost);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(bindHost, bindPort, wire);
+    return Objects.hash(bindHost, bindPort);
   }
 
   @Override
@@ -93,7 +102,6 @@ public class RlpxConfiguration {
     final StringBuilder sb = new StringBuilder("RlpxConfiguration{");
     sb.append("bindHost='").append(bindHost).append('\'');
     sb.append(", bindPort=").append(bindPort);
-    sb.append(", wire=").append(wire);
     sb.append('}');
     return sb.toString();
   }

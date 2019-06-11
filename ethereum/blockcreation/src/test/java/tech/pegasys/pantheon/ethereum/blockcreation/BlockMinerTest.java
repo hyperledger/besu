@@ -119,7 +119,7 @@ public class BlockMinerTest {
 
   private static Subscribers<MinedBlockObserver> subscribersContaining(
       final MinedBlockObserver... observers) {
-    final Subscribers<MinedBlockObserver> result = new Subscribers<>();
+    final Subscribers<MinedBlockObserver> result = Subscribers.create();
     for (final MinedBlockObserver obs : observers) {
       result.subscribe(obs);
     }

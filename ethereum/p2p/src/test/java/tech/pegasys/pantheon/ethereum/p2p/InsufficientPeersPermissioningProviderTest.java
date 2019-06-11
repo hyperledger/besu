@@ -18,6 +18,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import tech.pegasys.pantheon.ethereum.p2p.api.ConnectCallback;
 import tech.pegasys.pantheon.ethereum.p2p.api.DisconnectCallback;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
@@ -27,7 +28,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -176,25 +176,25 @@ public class InsufficientPeersPermissioningProviderTest {
         new InsufficientPeersPermissioningProvider(p2pNetwork, bootnodes);
 
     @SuppressWarnings("unchecked")
-    final ArgumentCaptor<Consumer<PeerConnection>> callbackCaptor =
-        ArgumentCaptor.forClass(Consumer.class);
+    final ArgumentCaptor<ConnectCallback> callbackCaptor =
+        ArgumentCaptor.forClass(ConnectCallback.class);
 
     verify(p2pNetwork).subscribeConnect(callbackCaptor.capture());
-    final Consumer<PeerConnection> connectCallback = callbackCaptor.getValue();
+    final ConnectCallback connectCallback = callbackCaptor.getValue();
 
     final Runnable updatePermsCallback = mock(Runnable.class);
 
     provider.subscribeToUpdates(updatePermsCallback);
 
-    connectCallback.accept(peerConnectionMatching(ENODE_2));
+    connectCallback.onConnect(peerConnectionMatching(ENODE_2));
     verify(updatePermsCallback, times(0)).run();
-    connectCallback.accept(peerConnectionMatching(ENODE_3));
+    connectCallback.onConnect(peerConnectionMatching(ENODE_3));
     verify(updatePermsCallback, times(0)).run();
-    connectCallback.accept(peerConnectionMatching(ENODE_4));
+    connectCallback.onConnect(peerConnectionMatching(ENODE_4));
     verify(updatePermsCallback, times(1)).run();
-    connectCallback.accept(peerConnectionMatching(ENODE_5));
+    connectCallback.onConnect(peerConnectionMatching(ENODE_5));
     verify(updatePermsCallback, times(1)).run();
-    connectCallback.accept(peerConnectionMatching(ENODE_3));
+    connectCallback.onConnect(peerConnectionMatching(ENODE_3));
     verify(updatePermsCallback, times(1)).run();
   }
 
@@ -209,10 +209,10 @@ public class InsufficientPeersPermissioningProviderTest {
         new InsufficientPeersPermissioningProvider(p2pNetwork, bootnodes);
 
     @SuppressWarnings("unchecked")
-    final ArgumentCaptor<Consumer<PeerConnection>> connectCallbackCaptor =
-        ArgumentCaptor.forClass(Consumer.class);
+    final ArgumentCaptor<ConnectCallback> connectCallbackCaptor =
+        ArgumentCaptor.forClass(ConnectCallback.class);
     verify(p2pNetwork).subscribeConnect(connectCallbackCaptor.capture());
-    final Consumer<PeerConnection> connectCallback = connectCallbackCaptor.getValue();
+    final ConnectCallback connectCallback = connectCallbackCaptor.getValue();
 
     final ArgumentCaptor<DisconnectCallback> disconnectCallbackCaptor =
         ArgumentCaptor.forClass(DisconnectCallback.class);
@@ -223,13 +223,13 @@ public class InsufficientPeersPermissioningProviderTest {
 
     provider.subscribeToUpdates(updatePermsCallback);
 
-    connectCallback.accept(peerConnectionMatching(ENODE_2));
+    connectCallback.onConnect(peerConnectionMatching(ENODE_2));
     verify(updatePermsCallback, times(0)).run();
-    connectCallback.accept(peerConnectionMatching(ENODE_3));
+    connectCallback.onConnect(peerConnectionMatching(ENODE_3));
     verify(updatePermsCallback, times(0)).run();
-    connectCallback.accept(peerConnectionMatching(ENODE_4));
+    connectCallback.onConnect(peerConnectionMatching(ENODE_4));
     verify(updatePermsCallback, times(1)).run();
-    connectCallback.accept(peerConnectionMatching(ENODE_5));
+    connectCallback.onConnect(peerConnectionMatching(ENODE_5));
     verify(updatePermsCallback, times(1)).run();
     disconnectCallback.onDisconnect(peerConnectionMatching(ENODE_2), null, true);
     verify(updatePermsCallback, times(1)).run();

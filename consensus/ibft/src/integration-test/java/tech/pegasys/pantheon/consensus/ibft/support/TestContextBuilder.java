@@ -320,7 +320,7 @@ public class TestContextBuilder {
     final MessageValidatorFactory messageValidatorFactory =
         new MessageValidatorFactory(proposerSelector, protocolSchedule, protocolContext);
 
-    final Subscribers<MinedBlockObserver> minedBlockObservers = new Subscribers<>();
+    final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
 
     final MessageTracker duplicateMessageTracker = new MessageTracker(DUPLICATE_MESSAGE_LIMIT);
     final FutureMessageBuffer futureMessageBuffer =

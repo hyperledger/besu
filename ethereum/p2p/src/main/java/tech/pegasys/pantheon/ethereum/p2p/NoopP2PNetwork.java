@@ -12,8 +12,9 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p;
 
+import tech.pegasys.pantheon.ethereum.p2p.api.ConnectCallback;
 import tech.pegasys.pantheon.ethereum.p2p.api.DisconnectCallback;
-import tech.pegasys.pantheon.ethereum.p2p.api.Message;
+import tech.pegasys.pantheon.ethereum.p2p.api.MessageCallback;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
@@ -25,7 +26,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class NoopP2PNetwork implements P2PNetwork {
@@ -45,13 +45,13 @@ public class NoopP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public void subscribe(final Capability capability, final Consumer<Message> consumer) {}
+  public void subscribe(final Capability capability, final MessageCallback callback) {}
 
   @Override
-  public void subscribeConnect(final Consumer<PeerConnection> consumer) {}
+  public void subscribeConnect(final ConnectCallback callback) {}
 
   @Override
-  public void subscribeDisconnect(final DisconnectCallback consumer) {}
+  public void subscribeDisconnect(final DisconnectCallback callback) {}
 
   @Override
   public boolean addMaintainConnectionPeer(final Peer peer) {

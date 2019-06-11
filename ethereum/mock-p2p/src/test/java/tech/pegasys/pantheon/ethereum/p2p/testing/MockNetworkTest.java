@@ -59,7 +59,7 @@ public final class MockNetworkTest {
     try (final P2PNetwork network1 = network.setup(one);
         final P2PNetwork network2 = network.setup(two)) {
       final CompletableFuture<Message> messageFuture = new CompletableFuture<>();
-      network1.subscribe(cap, messageFuture::complete);
+      network1.subscribe(cap, (capability, msg) -> messageFuture.complete(msg));
       final Predicate<PeerConnection> isPeerOne =
           peerConnection -> peerConnection.getPeerInfo().getNodeId().equals(one.getId());
       final Predicate<PeerConnection> isPeerTwo =

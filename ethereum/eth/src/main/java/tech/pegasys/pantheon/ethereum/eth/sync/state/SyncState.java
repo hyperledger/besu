@@ -29,8 +29,8 @@ public class SyncState {
 
   private final long startingBlock;
   private boolean lastInSync = true;
-  private final Subscribers<InSyncListener> inSyncListeners = new Subscribers<>();
-  private final Subscribers<SyncStatusListener> syncStatusListeners = new Subscribers<>();
+  private final Subscribers<InSyncListener> inSyncListeners = Subscribers.create();
+  private final Subscribers<SyncStatusListener> syncStatusListeners = Subscribers.create();
   private Optional<SyncTarget> syncTarget = Optional.empty();
   private long chainHeightListenerId;
 
