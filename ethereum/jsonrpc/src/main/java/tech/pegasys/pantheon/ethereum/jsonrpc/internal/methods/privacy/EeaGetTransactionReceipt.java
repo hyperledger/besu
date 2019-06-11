@@ -40,7 +40,6 @@ import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.io.IOException;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -160,7 +159,7 @@ public class EeaGetTransactionReceipt implements JsonRpcMethod {
   }
 
   private ReceiveResponse getReceiveResponseFromEnclave(
-      final Transaction transaction, final String publicKey) throws IOException {
+      final Transaction transaction, final String publicKey) throws Exception {
     LOG.trace("Fetching transaction information from Enclave");
     final ReceiveRequest enclaveRequest =
         new ReceiveRequest(new String(transaction.getPayload().extractArray(), UTF_8), publicKey);

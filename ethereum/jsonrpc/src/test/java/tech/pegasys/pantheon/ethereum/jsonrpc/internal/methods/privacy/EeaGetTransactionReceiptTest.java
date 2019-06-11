@@ -48,7 +48,6 @@ import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Base64;
@@ -127,7 +126,7 @@ public class EeaGetTransactionReceiptTest {
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
   @Test
-  public void createsPrivateTransactionReceipt() throws IOException {
+  public void createsPrivateTransactionReceipt() throws Exception {
     final BytesValue mockBytesValue = mock(BytesValue.class);
     final Block chainBlock = mock(Block.class);
     final long mockLong = 10;

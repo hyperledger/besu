@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.mainnet.precompiles.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -58,7 +59,6 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
-  //  private static final String PAYLOAD = "a wonderful transaction";
   private static final byte[] VALID_PRIVATE_TRANSACTION_RLP_BASE64 =
       Base64.getEncoder()
           .encode(
@@ -147,7 +147,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
   }
 
   @Test
-  public void testSendAndReceive() throws IOException {
+  public void testSendAndReceive() throws Exception {
     List<String> publicKeys = testHarness.getPublicKeys();
 
     String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
@@ -170,5 +170,31 @@ public class PrivacyPrecompiledContractIntegrationTest {
             BytesValue.wrap(sr.getKey().getBytes(UTF_8)), messageFrame);
 
     assertThat(actual).isEqualTo(BytesValue.fromHexString(DEFAULT_OUTPUT));
+  }
+
+  @Test
+  public void testNoPrivateKeyError() throws RuntimeException {
+    List<String> publicKeys = testHarness.getPublicKeys();
+    publicKeys.add("noPrivateKey");
+
+    String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
+    SendRequest sc = new SendRequest(s, publicKeys.get(0), publicKeys);
+
+    final Throwable thrown = catchThrowable(() -> enclave.send(sc));
+
+    assertThat(thrown).hasMessageContaining("EnclaveDecodePublicKey");
+  }
+
+  @Test
+  public void testWrongPrivateKeyError() throws RuntimeException {
+    List<String> publicKeys = testHarness.getPublicKeys();
+    publicKeys.add("noPrivateKenoPrivateKenoPrivateKenoPrivateK");
+
+    String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
+    SendRequest sc = new SendRequest(s, publicKeys.get(0), publicKeys);
+
+    final Throwable thrown = catchThrowable(() -> enclave.send(sc));
+
+    assertThat(thrown).hasMessageContaining("NodeMissingPeerUrl");
   }
 }

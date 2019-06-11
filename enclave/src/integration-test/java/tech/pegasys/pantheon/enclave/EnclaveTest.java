@@ -66,7 +66,7 @@ public class EnclaveTest {
   }
 
   @Test
-  public void testSendAndReceive() throws IOException {
+  public void testSendAndReceive() throws Exception {
     List<String> publicKeys = testHarness.getPublicKeys();
 
     SendRequest sc =

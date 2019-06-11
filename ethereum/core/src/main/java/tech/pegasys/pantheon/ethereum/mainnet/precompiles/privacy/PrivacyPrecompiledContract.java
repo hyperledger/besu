@@ -40,7 +40,6 @@ import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.io.IOException;
 import java.util.Base64;
 
 import com.google.common.base.Charsets;
@@ -102,8 +101,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     ReceiveResponse receiveResponse;
     try {
       receiveResponse = enclave.receive(receiveRequest);
-    } catch (IOException e) {
-      LOG.debug("Enclave probably does not have private transaction with key {}.", key, e);
+    } catch (Exception e) {
+      LOG.error("Enclave probably does not have private transaction with key {}.", key, e);
       return BytesValue.EMPTY;
     }
 
