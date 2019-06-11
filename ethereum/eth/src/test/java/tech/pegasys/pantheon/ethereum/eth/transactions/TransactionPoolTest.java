@@ -128,7 +128,8 @@ public class TransactionPoolTest {
             batchAddedListener,
             syncState,
             ethContext,
-            peerTransactionTracker);
+            peerTransactionTracker,
+            metricsSystem);
     blockchain.observeBlockAdded(transactionPool);
   }
 
@@ -336,6 +337,29 @@ public class TransactionPoolTest {
   }
 
   @Test
+  public void shouldDiscardRemoteTransactionThatAlreadyExistsBeforeValidation() {
+    final PendingTransactions pendingTransactions = mock(PendingTransactions.class);
+    final TransactionPool transactionPool =
+        new TransactionPool(
+            pendingTransactions,
+            protocolSchedule,
+            protocolContext,
+            batchAddedListener,
+            syncState,
+            ethContext,
+            peerTransactionTracker,
+            metricsSystem);
+
+    when(pendingTransactions.containsTransaction(transaction1.hash())).thenReturn(true);
+
+    transactionPool.addRemoteTransactions(singletonList(transaction1));
+
+    verify(pendingTransactions).containsTransaction(transaction1.hash());
+    verifyZeroInteractions(transactionValidator);
+    verifyNoMoreInteractions(pendingTransactions);
+  }
+
+  @Test
   public void shouldNotNotifyBatchListenerWhenRemoteTransactionDoesNotReplaceExisting() {
     final TransactionTestFixture builder = new TransactionTestFixture();
     final Transaction transaction1 =
@@ -465,7 +489,8 @@ public class TransactionPoolTest {
             batchAddedListener,
             syncState,
             ethContext,
-            peerTransactionTracker);
+            peerTransactionTracker,
+            metricsSystem);
 
     final TransactionTestFixture builder = new TransactionTestFixture();
     final Transaction transaction1 = builder.nonce(1).createTransaction(KEY_PAIR1);
@@ -529,7 +554,8 @@ public class TransactionPoolTest {
             batchAddedListener,
             syncState,
             ethContext,
-            peerTransactionTracker);
+            peerTransactionTracker,
+            metricsSystem);
 
     final TransactionTestFixture builder = new TransactionTestFixture();
     final Transaction transactionLocal = builder.nonce(1).createTransaction(KEY_PAIR1);

@@ -49,7 +49,8 @@ public class TransactionPoolFactory {
             new TransactionSender(transactionTracker, transactionsMessageSender, ethContext),
             syncState,
             ethContext,
-            transactionTracker);
+            transactionTracker,
+            metricsSystem);
 
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
