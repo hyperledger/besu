@@ -62,6 +62,19 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
 
   private final Map<Node, PantheonPluginContextImpl> pantheonPluginContextMap = new HashMap<>();
 
+  private PantheonPluginContextImpl buildPluginContext(final PantheonNode node) {
+    PantheonPluginContextImpl pantheonPluginContext = new PantheonPluginContextImpl();
+    final Path pluginsPath = node.homeDirectory().resolve("plugins");
+    final File pluginsDirFile = pluginsPath.toFile();
+    if (!pluginsDirFile.isDirectory()) {
+      pluginsDirFile.mkdirs();
+      pluginsDirFile.deleteOnExit();
+    }
+    System.setProperty("pantheon.plugins.dir", pluginsPath.toString());
+    pantheonPluginContext.registerPlugins(pluginsPath);
+    return pantheonPluginContext;
+  }
+
   @Override
   @SuppressWarnings("UnstableApiUsage")
   public void startNode(final PantheonNode node) {
@@ -71,16 +84,9 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
 
     final CommandLine commandLine = new CommandLine(CommandSpec.create());
     final PantheonPluginContextImpl pantheonPluginContext =
-        pantheonPluginContextMap.computeIfAbsent(node, n -> new PantheonPluginContextImpl());
+        pantheonPluginContextMap.computeIfAbsent(node, n -> buildPluginContext(node));
     pantheonPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
-    final Path pluginsPath = node.homeDirectory().resolve("plugins");
-    final File pluginsDirFile = pluginsPath.toFile();
-    if (!pluginsDirFile.isDirectory()) {
-      pluginsDirFile.mkdirs();
-      pluginsDirFile.deleteOnExit();
-    }
-    System.setProperty("pantheon.plugins.dir", pluginsPath.toString());
-    pantheonPluginContext.registerPlugins(pluginsPath);
+
     commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
 
     final MetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
@@ -150,13 +156,20 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
 
   @Override
   public void stopNode(final PantheonNode node) {
-    pantheonPluginContextMap.get(node).stopPlugins();
+    PantheonPluginContextImpl pluginContext = pantheonPluginContextMap.remove(node);
+    if (pluginContext != null) {
+      pluginContext.stopPlugins();
+    }
     node.stop();
     killRunner(node.getName());
   }
 
   @Override
   public void shutdown() {
+    // stop all plugins from pluginContext
+    pantheonPluginContextMap.values().forEach(PantheonPluginContextImpl::stopPlugins);
+    pantheonPluginContextMap.clear();
+
     // iterate over a copy of the set so that pantheonRunner can be updated when a runner is killed
     new HashSet<>(pantheonRunners.keySet()).forEach(this::killRunner);
     try {
