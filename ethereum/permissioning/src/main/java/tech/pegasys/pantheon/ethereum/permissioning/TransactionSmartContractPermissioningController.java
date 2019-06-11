@@ -219,9 +219,11 @@ public class TransactionSmartContractPermissioningController
 
   // A bytes array is a uint256 of its length, then the bytes that make up its value, then pad to
   // next 32 bytes interval
+  // It needs to be preceded by the bytes offset of the first dynamic parameter (192 bytes)
   private static BytesValue encodeBytes(final BytesValue value) {
+    final BytesValue dynamicParameterOffset = encodeLong(192);
     final BytesValue length = encodeLong(value.size());
     final BytesValue padding = BytesValue.wrap(new byte[(32 - (value.size() % 32))]);
-    return BytesValues.concatenate(length, value, padding);
+    return BytesValues.concatenate(dynamicParameterOffset, length, value, padding);
   }
 }
