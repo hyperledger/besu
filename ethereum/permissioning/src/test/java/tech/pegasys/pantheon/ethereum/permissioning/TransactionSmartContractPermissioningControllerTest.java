@@ -98,7 +98,7 @@ public class TransactionSmartContractPermissioningControllerTest {
         .value(Wei.ZERO)
         .gasPrice(Wei.ZERO)
         .gasLimit(0)
-        .payload(BytesValue.EMPTY)
+        .payload(BytesValue.fromHexString("0x1234"))
         .nonce(1)
         .signature(Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 1))
         .build();
