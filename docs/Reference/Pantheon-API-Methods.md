@@ -3031,6 +3031,163 @@ Reruns the transaction with the same state as when the transaction was executed.
     }
     ```
 
+### debug_traceBlock
+
+Returns full trace of all invoked opcodes of all transactions included in the block.
+
+**Parameters**
+
+`Block` : `data` - RLP of the block
+
+`Object` - request options (all optional and default to `false`):
+
+* `disableStorage` : `boolean` - `true` disables storage capture. 
+* `disableMemory` : `boolean` - `true` disables memory capture. 
+* `disableStack` : `boolean` - `true` disables stack capture. 
+
+**Returns**
+
+`result`:`object` - [Trace object](Pantheon-API-Objects.md#trace-object). 
+
+!!! example
+    ```bash tab="curl HTTP request"
+    curl -X POST --data '{"jsonrpc":"2.0","method":"debug_traceBlock","params":["0xf90277f90208a05a41d0e66b4120775176c09fcf39e7c0520517a13d2b57b18d33d342df038bfca01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794e6a7a1d47ff21b6321162aea7c6cb457d5476bcaa00e0df2706b0a4fb8bd08c9246d472abbe850af446405d9eba1db41db18b4a169a04513310fcb9f6f616972a3b948dc5d547f280849a87ebb5af0191f98b87be598a0fe2bf2a941abf41d72637e5b91750332a30283efd40c424dc522b77e6f0ed8c4b9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000860153886c1bbd82b44382520b8252088455c426598b657468706f6f6c2e6f7267a0b48c515a9dde8d346c3337ea520aa995a4738bb595495506125449c1149d6cf488ba4f8ecd18aab215f869f86780862d79883d2000825208945df9b87991262f6ba471f09758cde1c0fc1de734827a69801ca088ff6cf0fefd94db46111149ae4bfc179e9b94721fffd821d38d16464b3f71d0a045e0aff800961cfce805daef7016b9b675c137a6a41a548f7b60a3484c06a33ac0"],"id":1}' http://127.0.0.1:8545
+    ```
+    
+    ```bash tab="wscat WS request"
+    {"jsonrpc":"2.0","method":"debug_traceBlock","params":["0xf90277f90208a05a41d0e66b4120775176c09fcf39e7c0520517a13d2b57b18d33d342df038bfca01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794e6a7a1d47ff21b6321162aea7c6cb457d5476bcaa00e0df2706b0a4fb8bd08c9246d472abbe850af446405d9eba1db41db18b4a169a04513310fcb9f6f616972a3b948dc5d547f280849a87ebb5af0191f98b87be598a0fe2bf2a941abf41d72637e5b91750332a30283efd40c424dc522b77e6f0ed8c4b9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000860153886c1bbd82b44382520b8252088455c426598b657468706f6f6c2e6f7267a0b48c515a9dde8d346c3337ea520aa995a4738bb595495506125449c1149d6cf488ba4f8ecd18aab215f869f86780862d79883d2000825208945df9b87991262f6ba471f09758cde1c0fc1de734827a69801ca088ff6cf0fefd94db46111149ae4bfc179e9b94721fffd821d38d16464b3f71d0a045e0aff800961cfce805daef7016b9b675c137a6a41a548f7b60a3484c06a33ac0"],"id":1}
+    ```
+    
+    ```json tab="JSON result"
+    {
+      "jsonrpc" : "2.0",
+      "id" : 1,
+      "result" : {
+        "gas" : 21000,
+        "failed" : false,
+        "returnValue" : "",
+        "structLogs" : [ {
+          "pc" : 0,
+          "op" : "STOP",
+          "gas" : 0,
+          "gasCost" : 0,
+          "depth" : 1,
+          "stack" : [ ],
+          "memory" : [ ],
+          "storage" : null
+        } ]
+      }
+    }
+    ```    
+
+### debug_traceBlockByHash
+
+Returns full trace of all invoked opcodes of all transactions included in the block.
+
+**Parameters**
+
+`block hash` : `data` - Block hash
+
+`Object` - request options (all optional and default to `false`):
+
+* `disableStorage` : `boolean` - `true` disables storage capture. 
+* `disableMemory` : `boolean` - `true` disables memory capture. 
+* `disableStack` : `boolean` - `true` disables stack capture. 
+
+**Returns**
+
+`result`:`array of objects` - [Trace objects](Pantheon-API-Objects.md#trace-object). 
+
+!!! example
+    ```bash tab="curl HTTP request"
+    curl -X POST --data '{"jsonrpc":"2.0","method":"debug_traceBlockByHash","params":["0xaceb3b2c9b25b0589230873921eb894b28722011b8df63977145517d754875a5"], "id":1}' http://127.0.0.1:8545
+    ```
+    
+    ```bash tab="wscat WS request"
+    {"jsonrpc":"2.0","method":"debug_traceBlockByHash","params":["0xaceb3b2c9b25b0589230873921eb894b28722011b8df63977145517d754875a5"], "id":1}
+    ```
+    
+    ```json tab="JSON result"
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": [
+            {
+                "gas": 21000,
+                "failed": false,
+                "returnValue": "",
+                "structLogs": [
+                    {
+                        "pc": 0,
+                        "op": "STOP",
+                        "gas": 0,
+                        "gasCost": 0,
+                        "depth": 1,
+                        "stack": [],
+                        "memory": [],
+                        "storage": {},
+                        "reason": null
+                    }
+                ]
+            }
+        ]
+    }
+    ```
+    
+### debug_traceBlockByNumber
+
+Returns full trace of all invoked opcodes of all transactions included in the block.
+
+**Parameters**
+
+`quantity|tag` - Integer representing a block number or one of the string tags `latest`, `earliest`, or `pending`, as described in [Block Parameter](../Pantheon-API/Using-JSON-RPC-API.md#block-parameter).
+
+`Object` - request options (all optional and default to `false`):
+
+* `disableStorage` : `boolean` - `true` disables storage capture. 
+* `disableMemory` : `boolean` - `true` disables memory capture. 
+* `disableStack` : `boolean` - `true` disables stack capture. 
+
+**Returns**
+
+`result`:`array of objects` - [Trace objects](Pantheon-API-Objects.md#trace-object). 
+
+!!! example
+    ```bash tab="curl HTTP request"
+    curl -X POST --data '{"jsonrpc":"2.0","method":"debug_traceBlockByNumber","params":["0x7224",{"disableStorage":true}], "id":1}' http://127.0.0.1:8545
+    ```
+    
+    ```bash tab="wscat WS request"
+    {"jsonrpc":"2.0","method":"debug_traceBlockByNumber","params":["0x7224",{"disableStorage":true}], "id":1}
+    ```
+    
+    ```json tab="JSON result"
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": [
+            {
+                "gas": 21000,
+                "failed": false,
+                "returnValue": "",
+                "structLogs": [
+                    {
+                        "pc": 0,
+                        "op": "STOP",
+                        "gas": 0,
+                        "gasCost": 0,
+                        "depth": 1,
+                        "stack": [],
+                        "memory": [],
+                        "storage": null,
+                        "reason": null
+                    }
+                ]
+            }
+        ]
+    }
+    ```
+
 ## Miner Methods
 
 !!! note

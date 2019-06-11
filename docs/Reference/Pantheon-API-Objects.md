@@ -93,7 +93,8 @@ Log information returned as part of the [Trace object](#trace-object).
 
 ## Trace Object
 
-Returned by [debug_traceTransaction](Pantheon-API-Methods.md#debug_tracetransaction).
+Returned by [debug_traceBlock](Pantheon-API-Methods.md#debug_traceblock), [debug_traceBlockByHash](Pantheon-API-Methods.md#debug_traceblockbyhash),
+[debug_traceBlockByNumber](Pantheon-API-Methods.md#debug_traceblockbynumber), and [debug_traceTransaction](Pantheon-API-Methods.md#debug_tracetransaction).
 
 | Key             | Type    | Value                                                             |
 |-----------------|:-------:|-------------------------------------------------------------------|
