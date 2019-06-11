@@ -47,7 +47,7 @@ To run the Ethereum Lite Explorer using the Docker image:
 
     !!! note "Default HTTP port"
         We are using port 8080 to run the Ethereum Lite Explorer so
-        the [Lite Network Monitor](Lite-Network-Monitor.md) can use port 80. You can then run 
+        the [EthStats Lite](Lite-Network-Monitor.md) can use port 80. You can then run 
         both at the same time. 
 
 ## Install and Run with Node.js
