@@ -35,4 +35,14 @@ public class ClusterAcceptanceTest extends AcceptanceTestBase {
     minerNode.verify(net.awaitPeerCount(1));
     fullNode.verify(net.awaitPeerCount(1));
   }
+
+  @Test
+  public void shouldRestartAfterStop() {
+    minerNode.verify(net.awaitPeerCount(1));
+    fullNode.verify(net.awaitPeerCount(1));
+    cluster.stop();
+    cluster.start(minerNode, fullNode);
+    minerNode.verify(net.awaitPeerCount(1));
+    fullNode.verify(net.awaitPeerCount(1));
+  }
 }

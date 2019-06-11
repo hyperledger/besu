@@ -478,7 +478,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
   }
 
   @Override
-  public void getBootnodes(final List<URI> bootnodes) {
+  public void setBootnodes(final List<URI> bootnodes) {
     this.bootnodes.clear();
     this.bootnodes.addAll(bootnodes);
   }

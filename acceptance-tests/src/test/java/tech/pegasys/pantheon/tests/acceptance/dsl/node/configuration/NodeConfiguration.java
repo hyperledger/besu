@@ -20,7 +20,7 @@ import java.util.Optional;
 
 public interface NodeConfiguration {
 
-  void getBootnodes(List<URI> bootnodes);
+  void setBootnodes(List<URI> bootnodes);
 
   List<URI> getBootnodes();
 
