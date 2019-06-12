@@ -22,7 +22,6 @@ import tech.pegasys.pantheon.ethereum.chain.BlockAddedObserver;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Account;
-import tech.pegasys.pantheon.ethereum.core.AccountFilter;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
@@ -41,7 +40,6 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.apache.logging.log4j.Logger;
@@ -65,7 +63,6 @@ public class TransactionPool implements BlockAddedObserver {
   private final TransactionBatchAddedListener transactionBatchAddedListener;
   private final SyncState syncState;
   private final LabelledMetric<Counter> duplicateTransactionCounter;
-  private Optional<AccountFilter> accountFilter = Optional.empty();
   private final PeerTransactionTracker peerTransactionTracker;
 
   public TransactionPool(
@@ -186,13 +183,6 @@ public class TransactionPool implements BlockAddedObserver {
       return basicValidationResult;
     }
 
-    final String sender = transaction.getSender().toString();
-    if (accountIsNotPermitted(sender)) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
-          String.format("Sender %s is not on the Account Whitelist", sender));
-    }
-
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
     if (transaction.getGasLimit() > chainHeadBlockHeader.getGasLimit()) {
       return ValidationResult.invalid(
@@ -217,10 +207,6 @@ public class TransactionPool implements BlockAddedObserver {
         .orElseGet(() -> ValidationResult.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
   }
 
-  private boolean accountIsNotPermitted(final String account) {
-    return accountFilter.map(c -> !c.permitted(account)).orElse(false);
-  }
-
   private BlockHeader getChainHeadBlockHeader() {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
     return blockchain.getBlockHeader(blockchain.getChainHeadHash()).get();
@@ -229,9 +215,5 @@ public class TransactionPool implements BlockAddedObserver {
   public interface TransactionBatchAddedListener {
 
     void onTransactionsAdded(Iterable<Transaction> transactions);
-  }
-
-  public void setAccountFilter(final AccountFilter accountFilter) {
-    this.accountFilter = Optional.of(accountFilter);
   }
 }
