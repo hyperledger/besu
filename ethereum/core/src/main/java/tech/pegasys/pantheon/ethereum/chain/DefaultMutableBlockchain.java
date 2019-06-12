@@ -50,6 +50,8 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
 
   private volatile BlockHeader chainHeader;
   private volatile UInt256 totalDifficulty;
+  private volatile int chainHeadTransactionCount;
+  private volatile int chainHeadOmmerCount;
 
   public DefaultMutableBlockchain(
       final Block genesisBlock,
@@ -62,6 +64,9 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
     final Hash chainHead = blockchainStorage.getChainHead().get();
     chainHeader = blockchainStorage.getBlockHeader(chainHead).get();
     totalDifficulty = blockchainStorage.getTotalDifficulty(chainHead).get();
+    final BlockBody chainHeadBody = blockchainStorage.getBlockBody(chainHead).get();
+    chainHeadTransactionCount = chainHeadBody.getTransactions().size();
+    chainHeadOmmerCount = chainHeadBody.getOmmers().size();
 
     metricsSystem.createLongGauge(
         MetricCategory.BLOCKCHAIN,
@@ -81,6 +86,30 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
         "chain_head_timestamp",
         "Timestamp from the current chain head",
         () -> getChainHeadHeader().getTimestamp());
+
+    metricsSystem.createLongGauge(
+        MetricCategory.BLOCKCHAIN,
+        "chain_head_gas_used",
+        "Gas used by the current chain head block",
+        () -> getChainHeadHeader().getGasUsed());
+
+    metricsSystem.createLongGauge(
+        MetricCategory.BLOCKCHAIN,
+        "chain_head_gas_limit",
+        "Block gas limit of the current chain head block",
+        () -> getChainHeadHeader().getGasLimit());
+
+    metricsSystem.createIntegerGauge(
+        MetricCategory.BLOCKCHAIN,
+        "chain_head_transaction_count",
+        "Number of transactions in the current chain head block",
+        () -> chainHeadTransactionCount);
+
+    metricsSystem.createIntegerGauge(
+        MetricCategory.BLOCKCHAIN,
+        "chain_head_ommer_count",
+        "Number of ommers in the current chain head block",
+        () -> chainHeadOmmerCount);
   }
 
   @Override
@@ -184,6 +213,8 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
     if (blockAddedEvent.isNewCanonicalHead()) {
       chainHeader = block.getHeader();
       totalDifficulty = td;
+      chainHeadTransactionCount = block.getBody().getTransactions().size();
+      chainHeadOmmerCount = block.getBody().getOmmers().size();
     }
 
     return blockAddedEvent;
