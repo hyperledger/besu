@@ -30,14 +30,12 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT;
 import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.NONCE_TOO_LOW;
-import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED;
 import static tech.pegasys.pantheon.ethereum.mainnet.ValidationResult.valid;
 
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Account;
-import tech.pegasys.pantheon.ethereum.core.AccountFilter;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -103,7 +101,6 @@ public class TransactionPoolTest {
   private final ProtocolContext<Void> protocolContext = executionContext.getProtocolContext();
   private TransactionPool transactionPool;
   private long genesisBlockGasLimit;
-  private final AccountFilter accountFilter = mock(AccountFilter.class);
   private SyncState syncState;
   private EthContext ethContext;
   private PeerTransactionTracker peerTransactionTracker;
@@ -439,32 +436,6 @@ public class TransactionPoolTest {
   @Test
   public void shouldNotNotifyBatchListenerIfNoTransactionsAreAdded() {
     transactionPool.addRemoteTransactions(emptyList());
-    verifyZeroInteractions(batchAddedListener);
-  }
-
-  @Test
-  public void shouldAllowWhitelistedTransactionWhenWhitelistEnabled() {
-    transactionPool.setAccountFilter(accountFilter);
-    givenTransactionIsValid(transaction1);
-
-    when(accountFilter.permitted(transaction1.getSender().toString())).thenReturn(true);
-
-    assertThat(transactionPool.addLocalTransaction(transaction1)).isEqualTo(valid());
-
-    assertTransactionPending(transaction1);
-  }
-
-  @Test
-  public void shouldRejectNonWhitelistedTransactionWhenWhitelistEnabled() {
-    transactionPool.setAccountFilter(accountFilter);
-    givenTransactionIsValid(transaction1);
-
-    when(accountFilter.permitted(transaction1.getSender().toString())).thenReturn(false);
-
-    assertThat(transactionPool.addLocalTransaction(transaction1))
-        .isEqualTo(ValidationResult.invalid(TX_SENDER_NOT_AUTHORIZED));
-
-    assertTransactionNotPending(transaction1);
     verifyZeroInteractions(batchAddedListener);
   }
 
