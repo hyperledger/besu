@@ -30,6 +30,8 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcHttpService;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcMethodsFactory;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
+import tech.pegasys.pantheon.ethereum.jsonrpc.health.LivenessService;
+import tech.pegasys.pantheon.ethereum.jsonrpc.health.ReadinessService;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterIdGenerator;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterRepository;
@@ -340,7 +342,13 @@ public class RunnerBuilder {
       jsonRpcHttpService =
           Optional.of(
               new JsonRpcHttpService(
-                  vertx, dataDir, jsonRpcConfiguration, metricsSystem, jsonRpcMethods));
+                  vertx,
+                  dataDir,
+                  jsonRpcConfiguration,
+                  metricsSystem,
+                  jsonRpcMethods,
+                  new LivenessService(),
+                  new ReadinessService(peerNetwork)));
     }
 
     Optional<GraphQLHttpService> graphQLHttpService = Optional.empty();
