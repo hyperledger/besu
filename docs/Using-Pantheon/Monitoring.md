@@ -12,6 +12,7 @@ JSON-RPC API method.
 
 Use the [`--metrics-enabled` option](../Reference/Pantheon-CLI-Syntax.md#metrics-enabled) to enable the [Prometheus](https://prometheus.io/) monitoring and 
 alerting service to access Pantheon metrics. You can also visualize the collected data using [Grafana](https://grafana.com/).
+A sample [Pantheon Grafana dashboard](https://grafana.com/dashboards/10273) is provided. 
 
 To specify the host and port on which Prometheus accesses Pantheon, use the [`--metrics-host`](../Reference/Pantheon-CLI-Syntax.md#metrics-host) and 
 [`--metrics-port`](../Reference/Pantheon-CLI-Syntax.md#metrics-port) options. 
