@@ -36,12 +36,11 @@ public class JsonRpcParameter {
    * @return Returns the parameter cast as T if available, otherwise throws exception.
    */
   public <T> T required(final Object[] params, final int index, final Class<T> paramClass) {
-    final Optional<T> optionalParam = optional(params, index, paramClass);
-    if (!optionalParam.isPresent()) {
-      throw new InvalidJsonRpcParameters("Missing required json rpc parameter at index " + index);
-    }
-
-    return optionalParam.get();
+    return optional(params, index, paramClass)
+        .orElseThrow(
+            () ->
+                new InvalidJsonRpcParameters(
+                    "Missing required json rpc parameter at index " + index));
   }
 
   /**
