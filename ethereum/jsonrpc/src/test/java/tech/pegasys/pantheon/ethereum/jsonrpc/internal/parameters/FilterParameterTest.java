@@ -111,6 +111,18 @@ public class FilterParameterTest {
         .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
   }
 
+  @Test
+  public void jsonWithParamsInDifferentOrderShouldDeserializeIntoFilterParameterSuccessfully()
+      throws Exception {
+    final String jsonWithTopicsFirst =
+        "{\"topics\":[\"0x492e34c7da2a87c57444aa0f6143558999bceec63065f04557cfb20932e0d591\"], \"address\":\"0x8CdaF0CD259887258Bc13a92C0a6dA92698644C0\",\"fromBlock\":\"earliest\",\"toBlock\":\"latest\"}";
+    final String jsonWithTopicsLast =
+        "{\"address\":\"0x8CdaF0CD259887258Bc13a92C0a6dA92698644C0\",\"fromBlock\":\"earliest\",\"toBlock\":\"latest\",\"topics\":[\"0x492e34c7da2a87c57444aa0f6143558999bceec63065f04557cfb20932e0d591\"]}";
+
+    assertThat(readJsonAsFilterParameter(jsonWithTopicsFirst))
+        .isEqualToComparingFieldByFieldRecursively(readJsonAsFilterParameter(jsonWithTopicsLast));
+  }
+
   private FilterParameter filterParameterWithAddresses(final String... addresses) {
     return new FilterParameter("latest", "latest", Arrays.asList(addresses), null, null);
   }
@@ -136,5 +148,9 @@ public class FilterParameterTest {
   private JsonRpcRequest readJsonAsJsonRpcRequest(final String jsonWithSingleAddress)
       throws java.io.IOException {
     return new ObjectMapper().readValue(jsonWithSingleAddress, JsonRpcRequest.class);
+  }
+
+  private FilterParameter readJsonAsFilterParameter(final String json) throws java.io.IOException {
+    return new ObjectMapper().readValue(json, FilterParameter.class);
   }
 }
