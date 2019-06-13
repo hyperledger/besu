@@ -2032,6 +2032,20 @@ public class JsonRpcHttpServiceTest {
     }
   }
 
+  @Test
+  public void assertThatLivenessProbeWorks() throws Exception {
+    try (final Response resp = client.newCall(buildGetRequest("/liveness")).execute()) {
+      assertThat(resp.code()).isEqualTo(200);
+    }
+  }
+
+  @Test
+  public void assertThatReadinessProbeWorks() throws Exception {
+    try (final Response resp = client.newCall(buildGetRequest("/readiness")).execute()) {
+      assertThat(resp.code()).isEqualTo(200);
+    }
+  }
+
   private Request buildPostRequest(final RequestBody body) {
     return new Request.Builder().post(body).url(baseUrl).build();
   }
