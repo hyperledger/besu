@@ -4,6 +4,7 @@ pragma solidity >=0.4.0 <0.6.0;
 
 contract SimpleAccountPermissioning {
     mapping (address => bool) private whitelist;
+    uint256 private size;
 
     function transactionAllowed(
         address sender,
@@ -12,16 +13,34 @@ contract SimpleAccountPermissioning {
         uint256 gasPrice,
         uint256 gasLimit,
         bytes memory payload)
-        public view returns (bool) {
+    public view returns (bool) {
         return whitelistContains(sender);
     }
+
     function addAccount(address account) public {
-        whitelist[account] = true;
+        if (!whitelist[account]) {
+            whitelist[account] = true;
+            size++;
+        }
     }
+
     function removeAccount(address account) public {
-        whitelist[account] = false;
+        if (whitelist[account]) {
+            whitelist[account] = false;
+            size--;
+        }
     }
+
+    // For testing purposes, this will return true if the whitelist is empty
     function whitelistContains(address account) public view returns(bool) {
-        return whitelist[account];
+        if (size == 0) {
+            return true;
+        } else {
+            return whitelist[account];
+        }
+    }
+
+    function getSize() public view returns(uint256) {
+        return size;
     }
 }

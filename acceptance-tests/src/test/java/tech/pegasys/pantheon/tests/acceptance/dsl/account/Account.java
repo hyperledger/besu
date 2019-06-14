@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.tests.acceptance.dsl.blockchain.Amount;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.account.ExpectAccountBalance;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.account.ExpectAccountBalanceNotChanging;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 
@@ -74,6 +75,14 @@ public class Account {
   public Condition balanceEquals(final Amount expectedBalance) {
     return new ExpectAccountBalance(
         eth, this, expectedBalance.getValue(), expectedBalance.getUnit());
+  }
+
+  public Condition balanceDoesNotChange(final String startingBalance, final Unit balanceUnit) {
+    return new ExpectAccountBalanceNotChanging(eth, this, startingBalance, balanceUnit);
+  }
+
+  public Condition balanceDoesNotChange(final int startingBalance) {
+    return balanceDoesNotChange(String.valueOf(startingBalance), Unit.ETHER);
   }
 
   @Override

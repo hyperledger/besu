@@ -25,7 +25,7 @@ import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 
-public class AccountsWhitelistAcceptanceTest extends AcceptanceTestBase {
+public class AccountLocalConfigPermissioningAcceptanceTest extends AcceptanceTestBase {
 
   private Node node;
   private Account senderA;

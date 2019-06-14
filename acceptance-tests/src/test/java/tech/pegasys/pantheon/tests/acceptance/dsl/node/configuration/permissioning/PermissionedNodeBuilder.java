@@ -62,8 +62,11 @@ public class PermissionedNodeBuilder {
   private Path localConfigAccountsPermissioningFile = null;
   private Collection<String> localConfigPermittedAccounts = null;
 
-  private boolean smartContractPermissioningEnabled = false;
-  private String permissioningSmartContractAddress = null;
+  private boolean nodeSmartContractPermissioningEnabled = false;
+  private String nodePermissioningSmartContractAddress = null;
+
+  private boolean accountSmartContractPermissioningEnabled = false;
+  private String accountPermissioningSmartContractAddress = null;
 
   public PermissionedNodeBuilder name(final String name) {
     this.name = name;
@@ -115,8 +118,14 @@ public class PermissionedNodeBuilder {
   }
 
   public PermissionedNodeBuilder nodesContractEnabled(final String address) {
-    this.smartContractPermissioningEnabled = true;
-    this.permissioningSmartContractAddress = address;
+    this.nodeSmartContractPermissioningEnabled = true;
+    this.nodePermissioningSmartContractAddress = address;
+    return this;
+  }
+
+  public PermissionedNodeBuilder accountsContractEnabled(final String address) {
+    this.accountSmartContractPermissioningEnabled = true;
+    this.accountPermissioningSmartContractAddress = address;
     return this;
   }
 
@@ -142,7 +151,7 @@ public class PermissionedNodeBuilder {
     }
 
     Optional<SmartContractPermissioningConfiguration> smartContractPermConfig = Optional.empty();
-    if (smartContractPermissioningEnabled) {
+    if (nodeSmartContractPermissioningEnabled || accountSmartContractPermissioningEnabled) {
       smartContractPermConfig = Optional.of(smartContractPermissioningConfiguration());
     }
 
@@ -209,10 +218,18 @@ public class PermissionedNodeBuilder {
   private SmartContractPermissioningConfiguration smartContractPermissioningConfiguration() {
     SmartContractPermissioningConfiguration config =
         SmartContractPermissioningConfiguration.createDefault();
-    if (permissioningSmartContractAddress != null) {
-      config.setNodeSmartContractAddress(Address.fromHexString(permissioningSmartContractAddress));
+    if (nodePermissioningSmartContractAddress != null) {
+      config.setNodeSmartContractAddress(
+          Address.fromHexString(nodePermissioningSmartContractAddress));
       config.setSmartContractNodeWhitelistEnabled(true);
     }
+
+    if (accountPermissioningSmartContractAddress != null) {
+      config.setAccountSmartContractAddress(
+          Address.fromHexString(accountPermissioningSmartContractAddress));
+      config.setSmartContractAccountWhitelistEnabled(true);
+    }
+
     return config;
   }
 
