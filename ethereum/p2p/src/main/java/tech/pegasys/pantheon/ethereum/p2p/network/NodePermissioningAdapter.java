@@ -71,10 +71,10 @@ class NodePermissioningAdapter extends PeerPermissions {
         return inboundIsPermitted(localNode, remotePeer);
       case RLPX_ALLOW_NEW_OUTBOUND_CONNECTION:
         return outboundIsPermitted(localNode, remotePeer);
-      case RLPX_ALLOW_ONGOING_CONNECTION:
-        // TODO: This should probably check outbound || inbound, or the check should be more
-        // granular
+      case RLPX_ALLOW_ONGOING_LOCALLY_INITIATED_CONNECTION:
         return outboundIsPermitted(localNode, remotePeer);
+      case RLPX_ALLOW_ONGOING_REMOTELY_INITIATED_CONNECTION:
+        return inboundIsPermitted(localNode, remotePeer);
       default:
         // Return false for unknown / unhandled permissions
         LOG.error(

@@ -164,7 +164,9 @@ public class RlpxAgent {
 
   public Optional<CompletableFuture<PeerConnection>> getPeerConnection(final Peer peer) {
     final RlpxConnection connection = connectionsById.get(peer.getId());
-    return isNull(connection) ? Optional.empty() : Optional.of(connection.getFuture());
+    return Optional.ofNullable(connection)
+        .filter(conn -> !conn.isFailedOrDisconnected())
+        .map(RlpxConnection::getFuture);
   }
 
   /**
@@ -278,7 +280,8 @@ public class RlpxAgent {
 
     connectionsToCheck.forEach(
         connection -> {
-          if (!peerPermissions.allowOngoingConnection(connection.getPeer())) {
+          if (!peerPermissions.allowOngoingConnection(
+              connection.getPeer(), connection.initiatedRemotely())) {
             connection.disconnect(DisconnectReason.REQUESTED);
           }
         });

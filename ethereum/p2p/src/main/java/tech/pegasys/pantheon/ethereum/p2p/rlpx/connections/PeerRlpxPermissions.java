@@ -48,12 +48,15 @@ public class PeerRlpxPermissions {
         localNode.getPeer(), peer, Action.RLPX_ALLOW_NEW_INBOUND_CONNECTION);
   }
 
-  public boolean allowOngoingConnection(final Peer peer) {
+  public boolean allowOngoingConnection(final Peer peer, final boolean remotelyInitiated) {
     if (!localNode.isReady()) {
       return false;
     }
-    return peerPermissions.isPermitted(
-        localNode.getPeer(), peer, Action.RLPX_ALLOW_ONGOING_CONNECTION);
+    final Action action =
+        remotelyInitiated
+            ? Action.RLPX_ALLOW_ONGOING_REMOTELY_INITIATED_CONNECTION
+            : Action.RLPX_ALLOW_ONGOING_LOCALLY_INITIATED_CONNECTION;
+    return peerPermissions.isPermitted(localNode.getPeer(), peer, action);
   }
 
   public void subscribeUpdate(final PermissionsUpdateCallback callback) {
