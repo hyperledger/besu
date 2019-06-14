@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 import tech.pegasys.pantheon.consensus.ibft.network.ValidatorMulticaster;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
-import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.RawMessage;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;

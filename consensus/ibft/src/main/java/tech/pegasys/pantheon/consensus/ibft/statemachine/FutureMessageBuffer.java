@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.statemachine;
 
-import tech.pegasys.pantheon.ethereum.p2p.api.Message;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Message;
 
 import java.util.ArrayList;
 import java.util.Collections;

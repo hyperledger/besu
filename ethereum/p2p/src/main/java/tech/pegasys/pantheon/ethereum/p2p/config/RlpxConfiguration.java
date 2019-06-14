@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.config;
 
-import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.util.Arrays;
 import java.util.Collections;

@@ -16,7 +16,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
-import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.PeerConnection;
 
 import org.apache.logging.log4j.Logger;
 

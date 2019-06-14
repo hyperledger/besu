@@ -12,8 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.peers;
 
-import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
-import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.PeerInfo;
 
 import java.util.List;
 import java.util.Optional;

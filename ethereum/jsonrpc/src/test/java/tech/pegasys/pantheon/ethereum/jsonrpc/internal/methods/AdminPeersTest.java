@@ -22,10 +22,10 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResp
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.PeerResult;
-import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
-import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
-import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
-import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
+import tech.pegasys.pantheon.ethereum.p2p.network.P2PNetwork;
+import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.P2PDisabledException;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.PeerInfo;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
@@ -88,7 +88,7 @@ public class AdminPeersTest {
 
   @Test
   public void shouldFailIfP2pDisabled() {
-    when(p2pNetwork.getPeers()).thenThrow(new P2pDisabledException("P2P disabled."));
+    when(p2pNetwork.getPeers()).thenThrow(new P2PDisabledException("P2P disabled."));
 
     final JsonRpcRequest request = adminPeers();
     final JsonRpcResponse expectedResponse =

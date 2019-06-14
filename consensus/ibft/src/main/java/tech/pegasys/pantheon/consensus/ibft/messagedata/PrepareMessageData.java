@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.consensus.ibft.messagedata;
 
 import tech.pegasys.pantheon.consensus.ibft.messagewrappers.Prepare;
-import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.MessageData;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 public class PrepareMessageData extends AbstractIbftMessageData {

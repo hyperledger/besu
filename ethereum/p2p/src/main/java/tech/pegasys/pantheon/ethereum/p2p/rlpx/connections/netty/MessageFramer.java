@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.netty;
 
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.framing.Framer;
-import tech.pegasys.pantheon.ethereum.p2p.wire.CapabilityMultiplexer;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.CapabilityMultiplexer;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

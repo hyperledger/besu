@@ -12,8 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.config;
 
-import tech.pegasys.pantheon.ethereum.p2p.api.ProtocolManager;
-import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
+import tech.pegasys.pantheon.ethereum.p2p.network.ProtocolManager;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.util.ArrayList;
 import java.util.List;

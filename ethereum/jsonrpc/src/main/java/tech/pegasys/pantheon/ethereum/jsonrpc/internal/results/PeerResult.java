@@ -12,8 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.results;
 
-import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
-import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 
 import java.util.List;
 import java.util.stream.Collectors;

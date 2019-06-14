@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.network.exceptions;
 
-import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
 public class PeerDisconnectedException extends RuntimeException {
 

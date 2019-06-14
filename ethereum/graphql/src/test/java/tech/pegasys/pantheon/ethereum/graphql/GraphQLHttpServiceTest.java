@@ -27,7 +27,7 @@ import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.graphql.internal.BlockWithMetadata;
 import tech.pegasys.pantheon.ethereum.graphql.internal.BlockchainQuery;
 import tech.pegasys.pantheon.ethereum.graphql.internal.TransactionWithMetadata;
-import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;

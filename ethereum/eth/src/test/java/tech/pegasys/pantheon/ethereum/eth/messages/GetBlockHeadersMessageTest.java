@@ -13,8 +13,8 @@
 package tech.pegasys.pantheon.ethereum.eth.messages;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
-import tech.pegasys.pantheon.ethereum.p2p.wire.RawMessage;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.RawMessage;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Arrays;

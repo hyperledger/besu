@@ -14,8 +14,8 @@ package tech.pegasys.pantheon.consensus.ibftlegacy.protocol;
 
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV63;
-import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
-import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.util.Arrays;
 import java.util.List;

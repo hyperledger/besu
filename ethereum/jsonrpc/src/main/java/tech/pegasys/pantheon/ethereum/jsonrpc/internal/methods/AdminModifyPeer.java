@@ -18,8 +18,8 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParamet
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
-import tech.pegasys.pantheon.ethereum.p2p.P2pDisabledException;
-import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
+import tech.pegasys.pantheon.ethereum.p2p.network.P2PNetwork;
+import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.P2PDisabledException;
 
 public abstract class AdminModifyPeer implements JsonRpcMethod {
 
@@ -49,7 +49,7 @@ public abstract class AdminModifyPeer implements JsonRpcMethod {
       } else {
         return new JsonRpcErrorResponse(req.getId(), JsonRpcError.PARSE_ERROR);
       }
-    } catch (final P2pDisabledException e) {
+    } catch (final P2PDisabledException e) {
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
     }
   }
