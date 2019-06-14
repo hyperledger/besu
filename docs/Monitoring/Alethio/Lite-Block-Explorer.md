@@ -25,7 +25,7 @@ data is required.
 
 To run the Ethereum Lite Explorer using the Docker image: 
 
-1. Start Pantheon with the [`--rpc-http-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled) option. 
+1. Start Pantheon with the [`--rpc-http-enabled`](../../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled) option. 
 
     !!! example 
         
@@ -81,7 +81,7 @@ To run the Ethereum Lite Explorer using the Docker image:
    
     * Remove other environment variables. 
    
-1. In another terminal, start Pantheon with the [`--rpc-http-enabled`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled) option. 
+1. In another terminal, start Pantheon with the [`--rpc-http-enabled`](../../Reference/Pantheon-CLI-Syntax.md#rpc-http-enabled) option. 
 
     !!! example 
         
