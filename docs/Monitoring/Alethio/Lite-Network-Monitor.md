@@ -81,7 +81,7 @@ Start the EthStats Lite server using in-memory persistence:
     cd ethstats-network-server/docker/lite-mode/memory-persistence
     ```
 
-1. Update the `docker-compose.yml` file to your Pantheon [network ID](../Configuring-Pantheon/NetworkID-And-ChainID.md):
+1. Update the `docker-compose.yml` file to your Pantheon [network ID](../../Configuring-Pantheon/NetworkID-And-ChainID.md):
     
     ```yaml
      - NETWORK_ID=2018

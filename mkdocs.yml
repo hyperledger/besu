@@ -117,12 +117,12 @@ nav:
           - Accessing Logs Using JSON-RPC API: Using-Pantheon/Accessing-Logs-Using-JSON-RPC.md
         - Using Wallets for Account Management: Using-Pantheon/Account-Management.md
         - Mining: Using-Pantheon/Mining.md
-        - Monitoring Pantheon: Using-Pantheon/Monitoring.md
-    - Monitoring Pantheon:
-        - Alethio:
-          - Overview: Alethio/Overview.md
-          - Ethereum Lite Explorer: Alethio/Lite-Block-Explorer.md
-          - EthStats Lite Network Monitor: Alethio/Lite-Network-Monitor.md
+    - Monitoring:
+        - Monitoring Performances: Monitoring/Monitoring-Performances.md
+        - Monitoring Network:
+          - Alethio Overview: Monitoring/Alethio/Overview.md
+          - Alethio Ethereum Lite Explorer: Monitoring/Alethio/Lite-Block-Explorer.md
+          - Alethio EthStats Lite Network Monitor: Monitoring/Alethio/Lite-Network-Monitor.md
     - Troubleshooting:
         - Troubleshooting: Troubleshooting/Troubleshooting.md
     - Reference:
