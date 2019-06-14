@@ -21,8 +21,6 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
-import tech.pegasys.pantheon.ethereum.chain.BlockAddedObserver;
-import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
@@ -30,6 +28,7 @@ import tech.pegasys.pantheon.ethereum.p2p.config.NetworkingConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.config.RlpxConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.IncompatiblePeerException;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions.Action;
@@ -37,53 +36,27 @@ import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissionsBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
-import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
-import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.net.InetAddress;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import io.vertx.core.Vertx;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class P2PNetworkTest {
-
-  @Mock private Blockchain blockchain;
-
-  private ArgumentCaptor<BlockAddedObserver> observerCaptor =
-      ArgumentCaptor.forClass(BlockAddedObserver.class);
-
   private final Vertx vertx = Vertx.vertx();
   private final NetworkingConfiguration config =
       NetworkingConfiguration.create()
           .setDiscovery(DiscoveryConfiguration.create().setActive(false))
           .setRlpx(RlpxConfiguration.create().setBindPort(0).setSupportedProtocols(subProtocol()));
-
-  private final String selfEnodeString =
-      "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:1111";
-  private final EnodeURL selfEnode = EnodeURL.fromString(selfEnodeString);
-
-  @Before
-  public void before() {
-    when(blockchain.observeBlockAdded(observerCaptor.capture())).thenReturn(1L);
-  }
 
   @After
   public void closeVertx() {
@@ -270,70 +243,11 @@ public class P2PNetworkTest {
   }
 
   @Test
-  public void rejectIncomingConnectionFromNonWhitelistedPeer() throws Exception {
-    final LocalPermissioningConfiguration config = LocalPermissioningConfiguration.createDefault();
-    final Path tempFile = Files.createTempFile("test", "test");
-    tempFile.toFile().deleteOnExit();
-    config.setNodePermissioningConfigFilePath(tempFile.toAbsolutePath().toString());
-
-    final NodeLocalConfigPermissioningController localWhitelistController =
-        new NodeLocalConfigPermissioningController(
-            config, Collections.emptyList(), selfEnode.getNodeId(), new NoOpMetricsSystem());
-    // turn on whitelisting by adding a different node NOT remote node
-    localWhitelistController.addNode(
-        EnodeURL.builder()
-            .ipAddress("127.0.0.1")
-            .useDefaultPorts()
-            .nodeId(Peer.randomId())
-            .build());
-    final NodePermissioningController nodePermissioningController =
-        new NodePermissioningController(
-            Optional.empty(), Collections.singletonList(localWhitelistController));
-
-    try (final P2PNetwork localNetwork =
-            builder()
-                .nodePermissioningController(nodePermissioningController)
-                .blockchain(blockchain)
-                .build();
-        final P2PNetwork remoteNetwork = builder().build()) {
-
-      localNetwork.start();
-      remoteNetwork.start();
-
-      final EnodeURL localEnode = localNetwork.getLocalEnode().get();
-      final BytesValue localId = localEnode.getNodeId();
-      final int localPort = localEnode.getListeningPort().getAsInt();
-
-      final Peer localPeer = createPeer(localId, localPort);
-
-      // Setup disconnect listener
-      final CompletableFuture<PeerConnection> peerFuture = new CompletableFuture<>();
-      final CompletableFuture<DisconnectReason> reasonFuture = new CompletableFuture<>();
-      remoteNetwork.subscribeDisconnect(
-          (peerConnection, reason, initiatedByPeer) -> {
-            peerFuture.complete(peerConnection);
-            reasonFuture.complete(reason);
-          });
-
-      // Remote connect to local
-      final CompletableFuture<PeerConnection> connectFuture = remoteNetwork.connect(localPeer);
-
-      // Check connection is made, and then a disconnect is registered at remote
-      assertThat(connectFuture.get(5L, TimeUnit.SECONDS).getPeerInfo().getNodeId())
-          .isEqualTo(localId);
-      assertThat(peerFuture.get(5L, TimeUnit.SECONDS).getPeerInfo().getNodeId()).isEqualTo(localId);
-      assertThat(reasonFuture.get(5L, TimeUnit.SECONDS))
-          .isEqualByComparingTo(DisconnectReason.UNKNOWN);
-    }
-  }
-
-  @Test
   public void rejectIncomingConnectionFromDisallowedPeer() throws Exception {
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
     when(peerPermissions.isPermitted(any(), any(), any())).thenReturn(true);
 
-    try (final P2PNetwork localNetwork =
-            builder().peerPermissions(peerPermissions).blockchain(blockchain).build();
+    try (final P2PNetwork localNetwork = builder().peerPermissions(peerPermissions).build();
         final P2PNetwork remoteNetwork = builder().build()) {
 
       localNetwork.start();

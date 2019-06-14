@@ -15,9 +15,9 @@ package tech.pegasys.pantheon.ethereum.p2p.permissions;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions.Action;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.Collections;
 import java.util.List;

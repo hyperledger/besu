@@ -20,7 +20,6 @@ import static tech.pegasys.pantheon.util.bytes.BytesValue.fromHexString;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import com.google.common.net.InetAddresses;
 import org.junit.Test;

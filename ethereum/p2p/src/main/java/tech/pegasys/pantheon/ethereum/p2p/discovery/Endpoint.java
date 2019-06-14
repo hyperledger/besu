@@ -15,11 +15,11 @@ package tech.pegasys.pantheon.ethereum.p2p.discovery;
 import static com.google.common.base.Preconditions.checkArgument;
 import static tech.pegasys.pantheon.util.Preconditions.checkGuard;
 
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.NetworkUtility;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.net.InetAddress;
 import java.util.Objects;

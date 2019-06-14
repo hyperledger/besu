@@ -16,8 +16,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptySet;
 
-import tech.pegasys.pantheon.util.enode.EnodeURL;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;

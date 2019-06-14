@@ -17,7 +17,6 @@ import static com.google.common.base.Preconditions.checkState;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
-import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.p2p.api.ConnectCallback;
 import tech.pegasys.pantheon.ethereum.p2p.api.DisconnectCallback;
 import tech.pegasys.pantheon.ethereum.p2p.api.MessageCallback;
@@ -30,6 +29,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBonde
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeerProperties;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.p2p.peers.LocalNode;
 import tech.pegasys.pantheon.ethereum.p2p.peers.MaintainedPeers;
 import tech.pegasys.pantheon.ethereum.p2p.peers.MutableLocalNode;
@@ -40,10 +40,8 @@ import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissionsBlacklist;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.RlpxAgent;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -351,8 +349,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     private MaintainedPeers maintainedPeers = new MaintainedPeers();
     private PeerPermissions peerPermissions = PeerPermissions.noop();
-    private Optional<NodePermissioningController> nodePermissioningController = Optional.empty();
-    private Blockchain blockchain = null;
 
     private MetricsSystem metricsSystem;
 
@@ -363,13 +359,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     private P2PNetwork doBuild() {
       // Set up permissions
-      // Fold NodePermissioningController into peerPermissions
-      if (nodePermissioningController.isPresent()) {
-        final List<EnodeURL> bootnodes = config.getDiscovery().getBootnodes();
-        final PeerPermissions nodePermissions =
-            new NodePermissioningAdapter(nodePermissioningController.get(), bootnodes, blockchain);
-        peerPermissions = PeerPermissions.combine(peerPermissions, nodePermissions);
-      }
       // Fold peer reputation into permissions
       final PeerPermissionsBlacklist misbehavingPeers = PeerPermissionsBlacklist.create(500);
       final PeerReputationManager reputationManager = new PeerReputationManager(misbehavingPeers);
@@ -399,9 +388,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
           supportedCapabilities != null && supportedCapabilities.size() > 0,
           "Supported capabilities must be set and non-empty.");
       checkState(metricsSystem != null, "MetricsSystem must be set.");
-      checkState(
-          !nodePermissioningController.isPresent() || blockchain != null,
-          "Network permissioning needs to listen to BlockAddedEvents. Blockchain can't be null.");
       checkState(peerDiscoveryAgent != null || vertx != null, "Vertx must be set.");
     }
 
@@ -473,23 +459,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     public Builder metricsSystem(final MetricsSystem metricsSystem) {
       checkNotNull(metricsSystem);
       this.metricsSystem = metricsSystem;
-      return this;
-    }
-
-    public Builder nodePermissioningController(
-        final NodePermissioningController nodePermissioningController) {
-      this.nodePermissioningController = Optional.ofNullable(nodePermissioningController);
-      return this;
-    }
-
-    public Builder nodePermissioningController(
-        final Optional<NodePermissioningController> nodePermissioningController) {
-      this.nodePermissioningController = nodePermissioningController;
-      return this;
-    }
-
-    public Builder blockchain(final Blockchain blockchain) {
-      this.blockchain = blockchain;
       return this;
     }
 

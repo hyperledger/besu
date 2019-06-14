@@ -10,16 +10,15 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.p2p.network;
+package tech.pegasys.pantheon.ethereum.permissioning.node;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions;
-import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +26,7 @@ import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-class NodePermissioningAdapter extends PeerPermissions {
+public class PeerPermissionsAdapter extends PeerPermissions {
   private static final Logger LOG = LogManager.getLogger();
 
   private final NodePermissioningController nodePermissioningController;
@@ -36,7 +35,7 @@ class NodePermissioningAdapter extends PeerPermissions {
   private final long blockchainListenId;
   private final long nodePermissioningListenId;
 
-  public NodePermissioningAdapter(
+  public PeerPermissionsAdapter(
       final NodePermissioningController nodePermissioningController,
       final List<EnodeURL> bootnodes,
       final Blockchain blockchain) {

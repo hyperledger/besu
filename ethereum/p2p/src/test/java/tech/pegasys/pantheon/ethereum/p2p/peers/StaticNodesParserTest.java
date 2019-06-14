@@ -15,8 +15,6 @@ package tech.pegasys.pantheon.ethereum.p2p.peers;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import tech.pegasys.pantheon.util.enode.EnodeURL;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;

@@ -10,23 +10,21 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.p2p.network;
+package tech.pegasys.pantheon.ethereum.permissioning.node;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static tech.pegasys.pantheon.ethereum.p2p.peers.PeerTestHelper.createPeer;
 
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
+import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions.Action;
-import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +32,9 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
+import org.mockito.ArgumentMatchers;
 
-public class NodePermissioningAdapterTest {
+public class PeerPermissionsAdapterTest {
 
   private final Peer localNode = createPeer();
   private final Peer remoteNode = createPeer();
@@ -45,8 +44,8 @@ public class NodePermissioningAdapterTest {
   private final MutableBlockchain blockchain =
       InMemoryStorageProvider.createInMemoryBlockchain(gen.genesisBlock());
   private final List<EnodeURL> bootNodes = new ArrayList<>();
-  private final NodePermissioningAdapter adapter =
-      new NodePermissioningAdapter(nodePermissioningController, bootNodes, blockchain);
+  private final PeerPermissionsAdapter adapter =
+      new PeerPermissionsAdapter(nodePermissioningController, bootNodes, blockchain);
 
   @Test
   public void allowInPeerTable() {
@@ -386,10 +385,21 @@ public class NodePermissioningAdapterTest {
   private void mockControllerPermissions(
       final boolean allowLocalToRemote, final boolean allowRemoteToLocal) {
     when(nodePermissioningController.isPermitted(
-            eq(localNode.getEnodeURL()), eq(remoteNode.getEnodeURL())))
+            ArgumentMatchers.eq(localNode.getEnodeURL()),
+            ArgumentMatchers.eq(remoteNode.getEnodeURL())))
         .thenReturn(allowLocalToRemote);
     when(nodePermissioningController.isPermitted(
-            eq(remoteNode.getEnodeURL()), eq(localNode.getEnodeURL())))
+            ArgumentMatchers.eq(remoteNode.getEnodeURL()),
+            ArgumentMatchers.eq(localNode.getEnodeURL())))
         .thenReturn(allowRemoteToLocal);
+  }
+
+  private Peer createPeer() {
+    return DefaultPeer.fromEnodeURL(
+        EnodeURL.builder()
+            .ipAddress("127.0.0.1")
+            .nodeId(Peer.randomId())
+            .useDefaultPorts()
+            .build());
   }
 }
