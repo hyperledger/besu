@@ -35,7 +35,7 @@ import tech.pegasys.pantheon.ethereum.graphql.internal.pojoadapter.TransactionAd
 import tech.pegasys.pantheon.ethereum.graphql.internal.response.GraphQLError;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
-import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.util.bytes.Bytes32;

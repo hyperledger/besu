@@ -16,7 +16,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.graphql.internal.BlockchainQuery;
 import tech.pegasys.pantheon.ethereum.graphql.internal.pojoadapter.NormalBlockAdapter;
-import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 
 import java.util.Optional;
 import java.util.Set;

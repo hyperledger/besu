@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import tech.pegasys.pantheon.ethereum.eth.manager.RequestManager.ResponseStream;
-import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection.PeerNotConnected;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 
 public interface PeerRequest {
   ResponseStream sendRequest(EthPeer peer) throws PeerNotConnected;

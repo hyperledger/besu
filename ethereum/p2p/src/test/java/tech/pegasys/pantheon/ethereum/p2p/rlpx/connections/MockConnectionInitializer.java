@@ -12,9 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.rlpx.connections;
 
-import tech.pegasys.pantheon.ethereum.p2p.api.ConnectCallback;
-import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.ConnectCallback;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.util.HashMap;

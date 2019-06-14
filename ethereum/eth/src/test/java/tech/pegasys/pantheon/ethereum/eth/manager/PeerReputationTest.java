@@ -16,8 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.pantheon.ethereum.eth.manager.PeerReputation.USELESS_RESPONSE_WINDOW_IN_MILLIS;
 import static tech.pegasys.pantheon.ethereum.eth.messages.EthPV62.GET_BLOCK_BODIES;
 import static tech.pegasys.pantheon.ethereum.eth.messages.EthPV62.GET_BLOCK_HEADERS;
-import static tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason.TIMEOUT;
-import static tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason.USELESS_PEER;
+import static tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason.TIMEOUT;
+import static tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason.USELESS_PEER;
 
 import org.junit.Test;
 

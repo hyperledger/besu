@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.ibftevent;
 
-import tech.pegasys.pantheon.ethereum.p2p.api.Message;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Message;
 
 /** Static helper functions for producing and working with IbftEvent objects */
 public class IbftEvents {

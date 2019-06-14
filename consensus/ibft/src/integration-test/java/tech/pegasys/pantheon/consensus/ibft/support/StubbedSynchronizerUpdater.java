@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.consensus.ibft.support;
 import static java.util.function.Function.identity;
 
 import tech.pegasys.pantheon.consensus.ibft.SynchronizerUpdater;
-import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.PeerConnection;
 
 import java.util.Collection;
 import java.util.HashMap;
