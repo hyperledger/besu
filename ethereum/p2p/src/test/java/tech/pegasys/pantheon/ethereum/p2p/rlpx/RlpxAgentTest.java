@@ -557,7 +557,7 @@ public class RlpxAgentTest {
         .isPermitted(
             eq(localNode.getPeer()),
             eq(nonPermittedPeer),
-            eq(Action.RLPX_ALLOW_ONGOING_CONNECTION));
+            eq(Action.RLPX_ALLOW_ONGOING_LOCALLY_INITIATED_CONNECTION));
     peerPermissions.testDispatchUpdate(true, Optional.empty());
 
     assertThat(agent.getConnectionCount()).isEqualTo(1);
@@ -584,7 +584,7 @@ public class RlpxAgentTest {
         .isPermitted(
             eq(localNode.getPeer()),
             eq(nonPermittedPeer),
-            eq(Action.RLPX_ALLOW_ONGOING_CONNECTION));
+            eq(Action.RLPX_ALLOW_ONGOING_LOCALLY_INITIATED_CONNECTION));
     peerPermissions.testDispatchUpdate(true, Optional.of(Arrays.asList(nonPermittedPeer)));
 
     assertThat(agent.getConnectionCount()).isEqualTo(1);
@@ -592,6 +592,64 @@ public class RlpxAgentTest {
     assertThat(agent.getPeerConnection(nonPermittedPeer)).isEmpty();
     assertThat(permittedConnection.isDisconnected()).isFalse();
     assertThat(nonPermittedConnection.isDisconnected()).isTrue();
+  }
+
+  @Test
+  public void permissionsUpdate_permissionsRestrictedForRemotelyInitiatedConnections()
+      throws ExecutionException, InterruptedException {
+    final Peer locallyConnectedPeer = createPeer();
+    final Peer remotelyConnectedPeer = createPeer();
+    startAgent();
+    final PeerConnection locallyInitiatedConnection = agent.connect(locallyConnectedPeer).get();
+    final PeerConnection remotelyInitiatedConnection =
+        MockPeerConnection.create(remotelyConnectedPeer);
+    connectionInitializer.simulateIncomingConnection(remotelyInitiatedConnection);
+
+    // Sanity check
+    assertThat(agent.getConnectionCount()).isEqualTo(2);
+
+    doReturn(false)
+        .when(peerPermissions)
+        .isPermitted(
+            eq(localNode.getPeer()),
+            any(),
+            eq(Action.RLPX_ALLOW_ONGOING_REMOTELY_INITIATED_CONNECTION));
+    peerPermissions.testDispatchUpdate(true, Optional.empty());
+
+    assertThat(agent.getConnectionCount()).isEqualTo(1);
+    assertThat(agent.getPeerConnection(locallyConnectedPeer)).isNotEmpty();
+    assertThat(agent.getPeerConnection(remotelyConnectedPeer)).isEmpty();
+    assertThat(locallyInitiatedConnection.isDisconnected()).isFalse();
+    assertThat(remotelyInitiatedConnection.isDisconnected()).isTrue();
+  }
+
+  @Test
+  public void permissionsUpdate_permissionsRestrictedForLocallyInitiatedConnections()
+      throws ExecutionException, InterruptedException {
+    final Peer locallyConnectedPeer = createPeer();
+    final Peer remotelyConnectedPeer = createPeer();
+    startAgent();
+    final PeerConnection locallyInitiatedConnection = agent.connect(locallyConnectedPeer).get();
+    final PeerConnection remotelyInitiatedConnection =
+        MockPeerConnection.create(remotelyConnectedPeer);
+    connectionInitializer.simulateIncomingConnection(remotelyInitiatedConnection);
+
+    // Sanity check
+    assertThat(agent.getConnectionCount()).isEqualTo(2);
+
+    doReturn(false)
+        .when(peerPermissions)
+        .isPermitted(
+            eq(localNode.getPeer()),
+            any(),
+            eq(Action.RLPX_ALLOW_ONGOING_LOCALLY_INITIATED_CONNECTION));
+    peerPermissions.testDispatchUpdate(true, Optional.empty());
+
+    assertThat(agent.getConnectionCount()).isEqualTo(1);
+    assertThat(agent.getPeerConnection(locallyConnectedPeer)).isEmpty();
+    assertThat(agent.getPeerConnection(remotelyConnectedPeer)).isNotEmpty();
+    assertThat(locallyInitiatedConnection.isDisconnected()).isTrue();
+    assertThat(remotelyInitiatedConnection.isDisconnected()).isFalse();
   }
 
   @Test

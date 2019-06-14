@@ -322,14 +322,31 @@ public class NodePermissioningAdapterTest {
   }
 
   @Test
-  public void allowOngoingConnection() {
-    final Action action = Action.RLPX_ALLOW_ONGOING_CONNECTION;
+  public void allowOngoingLocallyInitiatedConnection() {
+    final Action action = Action.RLPX_ALLOW_ONGOING_LOCALLY_INITIATED_CONNECTION;
 
     mockControllerPermissions(true, false);
     assertThat(adapter.isPermitted(localNode, remoteNode, action)).isTrue();
 
     mockControllerPermissions(false, true);
     assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
+
+    mockControllerPermissions(true, true);
+    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isTrue();
+
+    mockControllerPermissions(false, false);
+    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
+  }
+
+  @Test
+  public void allowOngoingRemotelyInitiatedConnection() {
+    final Action action = Action.RLPX_ALLOW_ONGOING_REMOTELY_INITIATED_CONNECTION;
+
+    mockControllerPermissions(true, false);
+    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isFalse();
+
+    mockControllerPermissions(false, true);
+    assertThat(adapter.isPermitted(localNode, remoteNode, action)).isTrue();
 
     mockControllerPermissions(true, true);
     assertThat(adapter.isPermitted(localNode, remoteNode, action)).isTrue();
