@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration;
+import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.plugin.services.PantheonEvents;
@@ -124,7 +125,12 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
     }
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
-    node.getPermissioningConfiguration().ifPresent(runnerBuilder::permissioningConfiguration);
+    if (node.getPermissioningConfiguration().isPresent()) {
+      PermissioningConfiguration permissioningConfiguration =
+          node.getPermissioningConfiguration().get();
+
+      runnerBuilder.permissioningConfiguration(permissioningConfiguration);
+    }
 
     pantheonPluginContext.addService(
         PantheonEvents.class,

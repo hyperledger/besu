@@ -21,7 +21,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfigurat
 import org.junit.Before;
 import org.junit.Test;
 
-public class LocalConfigNodePermissioningAcceptanceTest extends AcceptanceTestBase {
+public class NodeLocalConfigPermissioningAcceptanceTest extends AcceptanceTestBase {
 
   private Cluster permissionedCluster;
   private Node bootnode;
