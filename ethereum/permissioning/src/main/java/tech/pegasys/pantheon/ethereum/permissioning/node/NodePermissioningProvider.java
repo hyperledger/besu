@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.permissioning.node;
 
-import tech.pegasys.pantheon.util.enode.EnodeURL;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 
 @FunctionalInterface
 public interface NodePermissioningProvider {

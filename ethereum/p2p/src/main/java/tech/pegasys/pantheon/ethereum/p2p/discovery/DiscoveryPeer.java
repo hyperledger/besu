@@ -13,11 +13,11 @@
 package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerId;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 /**
  * Represents an Ethereum node that we interacting with through the discovery and wire protocols.

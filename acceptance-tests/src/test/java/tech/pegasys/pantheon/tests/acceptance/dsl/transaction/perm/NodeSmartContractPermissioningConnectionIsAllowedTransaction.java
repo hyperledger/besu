@@ -16,13 +16,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.pantheon.ethereum.permissioning.NodeSmartContractPermissioningController.checkTransactionResult;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeSmartContractPermissioningController;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.IOException;
 

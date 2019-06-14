@@ -14,8 +14,8 @@ package tech.pegasys.pantheon.ethereum.p2p.config;
 
 import static org.assertj.core.api.Java6Assertions.assertThatThrownBy;
 
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.Collections;
 

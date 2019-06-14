@@ -20,13 +20,13 @@ import tech.pegasys.pantheon.ethereum.p2p.api.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.DefaultMessage;
 import tech.pegasys.pantheon.ethereum.p2p.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.util.Subscribers;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;

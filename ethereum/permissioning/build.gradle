@@ -28,6 +28,7 @@ jar {
 dependencies {
   implementation project(':util')
   implementation project(':ethereum:core')
+  implementation project(':ethereum:p2p')
   implementation project(':crypto')
   implementation project(':metrics:core')
 

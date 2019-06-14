@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.IncompatiblePeerExc
 import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.PeerDisconnectedException;
 import tech.pegasys.pantheon.ethereum.p2p.network.exceptions.UnexpectedPeerConnectionException;
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.p2p.peers.LocalNode;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
@@ -36,7 +37,6 @@ import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

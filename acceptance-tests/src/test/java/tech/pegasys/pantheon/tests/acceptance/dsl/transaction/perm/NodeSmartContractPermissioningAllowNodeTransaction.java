@@ -17,6 +17,7 @@ import static org.web3j.utils.Numeric.toHexString;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeSmartContractPermissioningController;
 import tech.pegasys.pantheon.tests.acceptance.dsl.account.Account;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
@@ -24,7 +25,6 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.IOException;
 import java.math.BigInteger;

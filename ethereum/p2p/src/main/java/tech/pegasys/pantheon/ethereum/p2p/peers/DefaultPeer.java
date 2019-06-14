@@ -12,8 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.peers;
 
-import tech.pegasys.pantheon.util.enode.EnodeURL;
-
 import java.net.URI;
 import java.util.Objects;
 

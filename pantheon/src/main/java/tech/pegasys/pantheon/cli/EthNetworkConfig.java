@@ -18,7 +18,7 @@ import static tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.M
 import static tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
 import static tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.ROPSTEN_BOOTSTRAP_NODES;
 
-import tech.pegasys.pantheon.util.enode.EnodeURL;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 
 import java.io.IOException;
 import java.net.URI;

@@ -19,9 +19,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import tech.pegasys.pantheon.ethereum.p2p.peers.DefaultPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions.Action;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;

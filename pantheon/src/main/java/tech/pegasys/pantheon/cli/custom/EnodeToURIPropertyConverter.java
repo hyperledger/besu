@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.cli.custom;
 
-import tech.pegasys.pantheon.util.enode.EnodeURL;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 
 import java.net.URI;
 import java.util.function.Function;

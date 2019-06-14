@@ -22,8 +22,8 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResp
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.util.HashMap;
 import java.util.Map;

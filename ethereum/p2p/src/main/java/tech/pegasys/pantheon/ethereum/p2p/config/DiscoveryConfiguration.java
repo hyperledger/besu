@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.ethereum.p2p.config;
 
 import static java.util.stream.Collectors.toList;
 
-import tech.pegasys.pantheon.util.enode.EnodeURL;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 
 import java.util.ArrayList;
 import java.util.Collections;

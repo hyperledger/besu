@@ -13,12 +13,8 @@
 package tech.pegasys.pantheon.ethereum.p2p.network;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,8 +22,6 @@ import static tech.pegasys.pantheon.ethereum.p2p.peers.PeerTestHelper.createPeer
 import static tech.pegasys.pantheon.ethereum.p2p.peers.PeerTestHelper.enode;
 
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
-import tech.pegasys.pantheon.ethereum.chain.BlockAddedObserver;
-import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.p2p.api.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.api.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration;
@@ -46,7 +40,6 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.MockPeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.wire.MockSubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningController;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
@@ -68,15 +61,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public final class DefaultP2PNetworkTest {
 
-  @Mock private NodePermissioningController nodePermissioningController;
   final MaintainedPeers maintainedPeers = new MaintainedPeers();
-
-  @Mock private Blockchain blockchain;
   @Mock PeerDiscoveryAgent discoveryAgent;
   @Mock RlpxAgent rlpxAgent;
 
-  private final ArgumentCaptor<BlockAddedObserver> observerCaptor =
-      ArgumentCaptor.forClass(BlockAddedObserver.class);
   private final ArgumentCaptor<PeerBondedObserver> discoverySubscriberCaptor =
       ArgumentCaptor.forClass(PeerBondedObserver.class);
 
@@ -92,16 +80,15 @@ public final class DefaultP2PNetworkTest {
 
   @Before
   public void before() {
-    when(rlpxAgent.start()).thenReturn(CompletableFuture.completedFuture(30303));
-    when(rlpxAgent.stop()).thenReturn(CompletableFuture.completedFuture(null));
-    when(discoveryAgent.start(anyInt())).thenReturn(CompletableFuture.completedFuture(30303));
-    when(discoveryAgent.stop()).thenReturn(CompletableFuture.completedFuture(null));
-    when(discoveryAgent.observePeerBondedEvents(discoverySubscriberCaptor.capture()))
+    lenient().when(rlpxAgent.start()).thenReturn(CompletableFuture.completedFuture(30303));
+    lenient().when(rlpxAgent.stop()).thenReturn(CompletableFuture.completedFuture(null));
+    lenient()
+        .when(discoveryAgent.start(anyInt()))
+        .thenReturn(CompletableFuture.completedFuture(30303));
+    lenient().when(discoveryAgent.stop()).thenReturn(CompletableFuture.completedFuture(null));
+    lenient()
+        .when(discoveryAgent.observePeerBondedEvents(discoverySubscriberCaptor.capture()))
         .thenReturn(1L);
-
-    when(blockchain.observeBlockAdded(observerCaptor.capture())).thenReturn(1L);
-    // Make permissions lenient by default
-    lenient().when(nodePermissioningController.isPermitted(any(), any())).thenReturn(true);
   }
 
   @Test
@@ -199,31 +186,6 @@ public final class DefaultP2PNetworkTest {
     when(rlpxAgent.getPeerConnection(peer)).thenReturn(Optional.of(connectionFuture));
     network.checkMaintainedConnectionPeers();
     verify(rlpxAgent, times(0)).connect(peer);
-  }
-
-  @Test
-  public void whenBuildingNetworkWithNodePermissioningWithoutBlockchainShouldThrowIllegalState() {
-    blockchain = null;
-    final Throwable throwable = catchThrowable(this::network);
-    assertThat(throwable)
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessage(
-            "Network permissioning needs to listen to BlockAddedEvents. Blockchain can't be null.");
-  }
-
-  @Test
-  public void stop_removesListeners() {
-    final P2PNetwork network = network();
-
-    network.start();
-    verify(blockchain, never()).removeObserver(anyLong());
-    verify(nodePermissioningController, never()).unsubscribeFromUpdates(anyLong());
-
-    network.stop();
-    network.awaitStop();
-
-    verify(blockchain, times(1)).removeObserver(anyLong());
-    verify(nodePermissioningController, times(1)).unsubscribeFromUpdates(anyLong());
   }
 
   @Test
@@ -334,8 +296,6 @@ public final class DefaultP2PNetworkTest {
         .keyPair(keyPair)
         .maintainedPeers(maintainedPeers)
         .metricsSystem(new NoOpMetricsSystem())
-        .supportedCapabilities(Capability.create("eth", 63))
-        .nodePermissioningController(nodePermissioningController)
-        .blockchain(blockchain);
+        .supportedCapabilities(Capability.create("eth", 63));
   }
 }

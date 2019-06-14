@@ -13,9 +13,9 @@
 package tech.pegasys.pantheon.ethereum.p2p.api;
 
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
+import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.wire.Capability;
-import tech.pegasys.pantheon.util.enode.EnodeURL;
 
 import java.io.Closeable;
 import java.util.Collection;
