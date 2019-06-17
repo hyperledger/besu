@@ -167,12 +167,10 @@ public class TransactionSmartContractPermissioningControllerTest {
 
     verifyCountersUntouched();
 
-    assertThatThrownBy(
-            () -> controller.isPermitted(transactionForAccount(Address.fromHexString("0x1"))))
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessage("Transaction permissioning contract does not exist");
+    assertThat(controller.isPermitted(transactionForAccount(Address.fromHexString("0x1"))))
+        .isTrue();
 
-    verifyCountersFailedCheck();
+    verifyCountersPermitted();
   }
 
   @Test
