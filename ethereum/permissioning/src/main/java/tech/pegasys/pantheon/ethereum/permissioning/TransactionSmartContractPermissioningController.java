@@ -121,7 +121,11 @@ public class TransactionSmartContractPermissioningController
         transactionSimulator.doesAddressExistAtHead(contractAddress);
 
     if (contractExists.isPresent() && !contractExists.get()) {
-      throw new IllegalStateException("Transaction permissioning contract does not exist");
+      this.checkCounterPermitted.inc();
+      LOG.warn(
+          "Account permissioning smart contract not found at address {} in current head block. Any transaction will be allowed.",
+          contractAddress);
+      return true;
     }
 
     final Optional<TransactionSimulatorResult> result =
