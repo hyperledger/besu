@@ -34,6 +34,7 @@ import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.EthProtocol;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
+import tech.pegasys.pantheon.ethereum.jsonrpc.health.HealthService;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockWithMetadata;
@@ -149,7 +150,13 @@ public class JsonRpcHttpServiceTest {
   private static JsonRpcHttpService createJsonRpcHttpService(final JsonRpcConfiguration config)
       throws Exception {
     return new JsonRpcHttpService(
-        vertx, folder.newFolder().toPath(), config, new NoOpMetricsSystem(), rpcMethods);
+        vertx,
+        folder.newFolder().toPath(),
+        config,
+        new NoOpMetricsSystem(),
+        rpcMethods,
+        HealthService.ALWAYS_HEALTHY,
+        HealthService.ALWAYS_HEALTHY);
   }
 
   private static JsonRpcHttpService createJsonRpcHttpService() throws Exception {
@@ -158,7 +165,9 @@ public class JsonRpcHttpServiceTest {
         folder.newFolder().toPath(),
         createJsonRpcConfig(),
         new NoOpMetricsSystem(),
-        rpcMethods);
+        rpcMethods,
+        HealthService.ALWAYS_HEALTHY,
+        HealthService.ALWAYS_HEALTHY);
   }
 
   private static JsonRpcConfiguration createJsonRpcConfig() {
@@ -341,7 +350,7 @@ public class JsonRpcHttpServiceTest {
 
   @Test
   public void netPeerCountSuccessful() throws Exception {
-    when(peerDiscoveryMock.getPeers()).thenReturn(Arrays.asList(null, null, null));
+    when(peerDiscoveryMock.getPeerCount()).thenReturn(3);
 
     final String id = "123";
     final RequestBody body =
@@ -577,6 +586,7 @@ public class JsonRpcHttpServiceTest {
   @Test
   public void netPeerCountOfZero() throws Exception {
     when(peerDiscoveryMock.getPeers()).thenReturn(Collections.emptyList());
+    when(peerDiscoveryMock.getPeerCount()).thenReturn(0);
 
     final String id = "123";
     final RequestBody body =

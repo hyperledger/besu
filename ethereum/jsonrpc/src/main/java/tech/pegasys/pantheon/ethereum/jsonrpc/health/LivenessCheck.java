@@ -12,25 +12,18 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.health;
 
-import tech.pegasys.pantheon.ethereum.p2p.network.P2PNetwork;
+import tech.pegasys.pantheon.ethereum.jsonrpc.health.HealthService.HealthCheck;
+import tech.pegasys.pantheon.ethereum.jsonrpc.health.HealthService.ParamSource;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class ReadinessService extends HealthService {
+public class LivenessCheck implements HealthCheck {
   private static final Logger LOG = LogManager.getLogger();
 
-  public ReadinessService(final P2PNetwork p2PNetwork) {
-    super(buildHealthCheck(p2PNetwork));
-  }
-
-  private static HealthCheck buildHealthCheck(final P2PNetwork p2PNetwork) {
-    return () -> {
-      LOG.debug("Invoking readiness service.");
-      if (p2PNetwork.isP2pEnabled()) {
-        return p2PNetwork.isListening();
-      }
-      return true;
-    };
+  @Override
+  public boolean isHealthy(final ParamSource params) {
+    LOG.debug("Invoking liveness check.");
+    return true;
   }
 }

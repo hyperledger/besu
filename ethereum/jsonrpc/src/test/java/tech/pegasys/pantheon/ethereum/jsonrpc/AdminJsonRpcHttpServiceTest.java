@@ -62,6 +62,7 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTest {
     peerList.add(MockPeerConnection.create(info3, addr30301, addr60303));
 
     when(peerDiscoveryMock.getPeers()).thenReturn(peerList);
+    when(peerDiscoveryMock.getPeerCount()).thenReturn(peerList.size());
 
     final String id = "123";
     final RequestBody body =

@@ -42,6 +42,15 @@ public interface P2PNetwork extends Closeable {
   Collection<PeerConnection> getPeers();
 
   /**
+   * Returns the number of currently connected peers.
+   *
+   * @return the number of connected peers.
+   */
+  default int getPeerCount() {
+    return getPeers().size();
+  }
+
+  /**
    * Returns a stream of peers that have been discovered on the network. These peers are not
    * necessarily connected.
    *

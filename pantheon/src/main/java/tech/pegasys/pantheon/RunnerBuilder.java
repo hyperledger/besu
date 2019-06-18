@@ -31,8 +31,9 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcHttpService;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcMethodsFactory;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
-import tech.pegasys.pantheon.ethereum.jsonrpc.health.LivenessService;
-import tech.pegasys.pantheon.ethereum.jsonrpc.health.ReadinessService;
+import tech.pegasys.pantheon.ethereum.jsonrpc.health.HealthService;
+import tech.pegasys.pantheon.ethereum.jsonrpc.health.LivenessCheck;
+import tech.pegasys.pantheon.ethereum.jsonrpc.health.ReadinessCheck;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterIdGenerator;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterRepository;
@@ -353,8 +354,8 @@ public class RunnerBuilder {
                   jsonRpcConfiguration,
                   metricsSystem,
                   jsonRpcMethods,
-                  new LivenessService(),
-                  new ReadinessService(peerNetwork)));
+                  new HealthService(new LivenessCheck()),
+                  new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
     }
 
     Optional<GraphQLHttpService> graphQLHttpService = Optional.empty();
@@ -368,7 +369,7 @@ public class RunnerBuilder {
               transactionPool,
               miningCoordinator,
               synchronizer);
-      GraphQL graphQL = null;
+      final GraphQL graphQL;
       try {
         graphQL = GraphQLProvider.buildGraphQL(fetchers);
       } catch (final IOException ioe) {
