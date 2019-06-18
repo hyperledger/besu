@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -122,7 +123,7 @@ public class BlockTransactionSelectorTest {
     pendingTransactions.addRemoteTransaction(transaction);
 
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(transaction), any(), any(), any()))
+            any(), any(), any(), eq(transaction), any(), any(), anyBoolean(), anyBoolean()))
         .thenReturn(MainnetTransactionProcessor.Result.failed(5, ValidationResult.valid()));
 
     // The block should fit 3 transactions only
@@ -160,7 +161,8 @@ public class BlockTransactionSelectorTest {
       pendingTransactions.addRemoteTransaction(tx);
     }
 
-    when(transactionProcessor.processTransaction(any(), any(), any(), any(), any(), any(), any()))
+    when(transactionProcessor.processTransaction(
+            any(), any(), any(), any(), any(), any(), anyBoolean(), anyBoolean()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
                 new LogSeries(Lists.newArrayList()),
@@ -168,7 +170,14 @@ public class BlockTransactionSelectorTest {
                 BytesValue.EMPTY,
                 ValidationResult.valid()));
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(transactionsToInject.get(1)), any(), any(), any()))
+            any(),
+            any(),
+            any(),
+            eq(transactionsToInject.get(1)),
+            any(),
+            any(),
+            anyBoolean(),
+            anyBoolean()))
         .thenReturn(
             MainnetTransactionProcessor.Result.invalid(ValidationResult.invalid(NONCE_TOO_LOW)));
 
@@ -208,7 +217,8 @@ public class BlockTransactionSelectorTest {
       pendingTransactions.addRemoteTransaction(tx);
     }
 
-    when(transactionProcessor.processTransaction(any(), any(), any(), any(), any(), any(), any()))
+    when(transactionProcessor.processTransaction(
+            any(), any(), any(), any(), any(), any(), anyBoolean(), anyBoolean()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
                 new LogSeries(Lists.newArrayList()),
@@ -278,7 +288,8 @@ public class BlockTransactionSelectorTest {
   public void transactionTooLargeForBlockDoesNotPreventMoreBeingAddedIfBlockOccupancyNotReached() {
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(300);
 
-    when(transactionProcessor.processTransaction(any(), any(), any(), any(), any(), any(), any()))
+    when(transactionProcessor.processTransaction(
+            any(), any(), any(), any(), any(), any(), anyBoolean(), anyBoolean()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
                 new LogSeries(Lists.newArrayList()),
@@ -334,7 +345,8 @@ public class BlockTransactionSelectorTest {
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(300);
 
     // TransactionProcessor mock assumes all gas in the transaction was used (i.e. gasLimit).
-    when(transactionProcessor.processTransaction(any(), any(), any(), any(), any(), any(), any()))
+    when(transactionProcessor.processTransaction(
+            any(), any(), any(), any(), any(), any(), anyBoolean(), anyBoolean()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
                 new LogSeries(Lists.newArrayList()),
@@ -429,7 +441,8 @@ public class BlockTransactionSelectorTest {
             eq(validTransaction),
             any(),
             any(),
-            any()))
+            anyBoolean(),
+            anyBoolean()))
         .thenReturn(
             Result.successful(
                 LogSeries.empty(), 10000, BytesValue.EMPTY, ValidationResult.valid()));
@@ -440,7 +453,8 @@ public class BlockTransactionSelectorTest {
             eq(invalidTransaction),
             any(),
             any(),
-            any()))
+            anyBoolean(),
+            anyBoolean()))
         .thenReturn(
             Result.invalid(
                 ValidationResult.invalid(TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT)));
@@ -468,7 +482,8 @@ public class BlockTransactionSelectorTest {
             eq(futureTransaction),
             any(),
             any(),
-            any()))
+            anyBoolean(),
+            anyBoolean()))
         .thenReturn(
             Result.invalid(ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE)));
 

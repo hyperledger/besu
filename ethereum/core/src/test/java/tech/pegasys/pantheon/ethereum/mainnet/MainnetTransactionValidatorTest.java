@@ -186,7 +186,7 @@ public class MainnetTransactionValidatorTest {
     validator.setTransactionFilter(transactionFilter);
 
     final TransactionValidationParams validationParams =
-        new TransactionValidationParams.Builder().stateChange(true).build();
+        new TransactionValidationParams.Builder().checkOnchainPermissions(true).build();
 
     validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams);
 

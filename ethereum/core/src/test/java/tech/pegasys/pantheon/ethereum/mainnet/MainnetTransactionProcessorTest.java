@@ -71,7 +71,7 @@ public class MainnetTransactionProcessorTest {
         transactionValidationParamCaptor();
 
     final TransactionValidationParams expectedValidationParams =
-        new TransactionValidationParams.Builder().stateChange(false).build();
+        new TransactionValidationParams.Builder().checkOnchainPermissions(false).build();
 
     transactionProcessor.processTransaction(
         blockchain,
@@ -80,6 +80,7 @@ public class MainnetTransactionProcessorTest {
         transaction,
         Address.fromHexString("1"),
         blockHashLookup,
+        false,
         false);
 
     assertThat(txValidationParamCaptor.getValue())
@@ -93,7 +94,7 @@ public class MainnetTransactionProcessorTest {
         transactionValidationParamCaptor();
 
     final TransactionValidationParams expectedValidationParams =
-        new TransactionValidationParams.Builder().stateChange(true).build();
+        new TransactionValidationParams.Builder().checkOnchainPermissions(true).build();
 
     transactionProcessor.processTransaction(
         blockchain,
@@ -102,6 +103,7 @@ public class MainnetTransactionProcessorTest {
         transaction,
         Address.fromHexString("1"),
         blockHashLookup,
+        true,
         true);
 
     assertThat(txValidationParamCaptor.getValue())

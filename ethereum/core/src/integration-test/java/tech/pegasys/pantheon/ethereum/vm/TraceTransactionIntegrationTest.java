@@ -92,6 +92,7 @@ public class TraceTransactionIntegrationTest {
             createTransaction,
             genesisBlock.getHeader().getCoinbase(),
             blockHashLookup,
+            false,
             false);
     assertThat(result.isSuccessful()).isTrue();
     final Account createdContract =

@@ -168,7 +168,8 @@ public class BlockTransactionSelector {
             transaction,
             miningBeneficiary,
             blockHashLookup,
-            false);
+            false,
+            true);
 
     if (!result.isInvalid()) {
       worldStateUpdater.commit();

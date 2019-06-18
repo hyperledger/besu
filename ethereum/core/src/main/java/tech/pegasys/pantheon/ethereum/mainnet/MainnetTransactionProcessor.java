@@ -146,7 +146,8 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingState) {
+      final Boolean isPersistingState,
+      final Boolean checkOnchainPermissions) {
     LOG.trace("Starting execution of {}", transaction);
 
     ValidationResult<TransactionInvalidReason> validationResult =
@@ -162,7 +163,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     final TransactionValidationParams validationParams =
         new TransactionValidationParams.Builder()
             .allowFutureNonce(false)
-            .stateChange(isPersistingState)
+            .checkOnchainPermissions(checkOnchainPermissions)
             .build();
 
     final Address senderAddress = transaction.getSender();
