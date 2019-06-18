@@ -12,18 +12,23 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.health;
 
-import com.google.common.collect.ImmutableMap;
+import static java.util.Collections.singletonMap;
+
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
-public class HealthService {
+public final class HealthService {
+
+  public static final HealthService ALWAYS_HEALTHY = new HealthService(params -> true);
 
   public static final String LIVENESS_PATH = "/liveness";
   public static final String READINESS_PATH = "/readiness";
 
   private static final int HEALTHY_STATUS_CODE = HttpResponseStatus.OK.code();
-  private static final int NON_HEALTHY_STATUS_CODE = HttpResponseStatus.SERVICE_UNAVAILABLE.code();
+  private static final int UNHEALTHY_STATUS_CODE = HttpResponseStatus.SERVICE_UNAVAILABLE.code();
+  private static final String HEALTHY_STATUS_TEXT = "UP";
+  private static final String UNHEALTHY_STATUS_TEXT = "DOWN";
 
   private final HealthCheck healthCheck;
 
@@ -32,35 +37,28 @@ public class HealthService {
   }
 
   public void handleRequest(final RoutingContext routingContext) {
-    final HealthCheckResponse healthCheckResponse = buildResponse(isHealthy());
+    final int statusCode;
+    final String statusText;
+    if (healthCheck.isHealthy(name -> routingContext.queryParams().get(name))) {
+      statusCode = HEALTHY_STATUS_CODE;
+      statusText = HEALTHY_STATUS_TEXT;
+    } else {
+      statusCode = UNHEALTHY_STATUS_CODE;
+      statusText = UNHEALTHY_STATUS_TEXT;
+    }
     routingContext
         .response()
-        .setStatusCode(healthCheckResponse.statusCode)
-        .end(healthCheckResponse.responseBody);
-  }
-
-  public boolean isHealthy() {
-    return healthCheck.isHealthy();
-  }
-
-  private HealthCheckResponse buildResponse(final boolean healthy) {
-    return new HealthCheckResponse(
-        healthy ? HEALTHY_STATUS_CODE : NON_HEALTHY_STATUS_CODE,
-        new JsonObject(ImmutableMap.of("status", healthy ? "UP" : "DOWN")).encodePrettily());
+        .setStatusCode(statusCode)
+        .end(new JsonObject(singletonMap("status", statusText)).encodePrettily());
   }
 
   @FunctionalInterface
   public interface HealthCheck {
-    boolean isHealthy();
+    boolean isHealthy(ParamSource paramSource);
   }
 
-  private static class HealthCheckResponse {
-    private int statusCode;
-    private String responseBody;
-
-    private HealthCheckResponse(final int statusCode, final String responseBody) {
-      this.statusCode = statusCode;
-      this.responseBody = responseBody;
-    }
+  @FunctionalInterface
+  public interface ParamSource {
+    String getParam(String name);
   }
 }

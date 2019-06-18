@@ -91,32 +91,6 @@ public class JsonRpcHttpService {
   private final HealthService livenessService;
   private final HealthService readinessService;
 
-  /**
-   * Construct a JsonRpcHttpService handler
-   *
-   * @param vertx The vertx process that will be running this service
-   * @param dataDir The data directory where requests can be buffered
-   * @param config Configuration for the rpc methods being loaded
-   * @param metricsSystem The metrics service that activities should be reported to
-   * @param methods The json rpc methods that should be enabled
-   */
-  public JsonRpcHttpService(
-      final Vertx vertx,
-      final Path dataDir,
-      final JsonRpcConfiguration config,
-      final MetricsSystem metricsSystem,
-      final Map<String, JsonRpcMethod> methods) {
-    this(
-        vertx,
-        dataDir,
-        config,
-        metricsSystem,
-        methods,
-        AuthenticationService.create(vertx, config),
-        new HealthService(() -> true),
-        new HealthService(() -> true));
-  }
-
   public JsonRpcHttpService(
       final Vertx vertx,
       final Path dataDir,
