@@ -112,7 +112,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     defaultWebSocketConfiguration = WebSocketConfiguration.createDefault();
 
-    defaultMetricsConfiguration = MetricsConfiguration.createDefault();
+    defaultMetricsConfiguration = MetricsConfiguration.builder().build();
   }
 
   @Test
@@ -297,10 +297,8 @@ public class PantheonCommandTest extends CommandTestAbstract {
     webSocketConfiguration.setPort(9101);
     webSocketConfiguration.setRpcApis(expectedApis);
 
-    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
-    metricsConfiguration.setEnabled(false);
-    metricsConfiguration.setHost("8.6.7.5");
-    metricsConfiguration.setPort(309);
+    final MetricsConfiguration metricsConfiguration =
+        MetricsConfiguration.builder().enabled(false).host("8.6.7.5").port(309).build();
 
     parseCommand("--config-file", toml.toString());
 
@@ -701,7 +699,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
 
-    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
+    final MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
 
     verify(mockRunnerBuilder).discovery(eq(true));
     verify(mockRunnerBuilder)

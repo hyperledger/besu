@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import com.google.common.base.MoreObjects;
+
 public class MetricsConfiguration {
   private static final String DEFAULT_METRICS_HOST = "127.0.0.1";
   public static final int DEFAULT_METRICS_PORT = 9545;
@@ -30,155 +32,116 @@ public class MetricsConfiguration {
   private static final String DEFAULT_METRICS_PUSH_HOST = "127.0.0.1";
   public static final int DEFAULT_METRICS_PUSH_PORT = 9001;
 
-  private boolean enabled;
-  private int port;
-  private String host;
-  private Set<MetricCategory> metricCategories;
-  private boolean pushEnabled;
-  private int pushPort;
-  private String pushHost;
-  private int pushInterval;
-  private String prometheusJob;
-  private List<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
+  private final boolean enabled;
+  private final int port;
+  private final String host;
+  private final Set<MetricCategory> metricCategories;
+  private final boolean pushEnabled;
+  private final int pushPort;
+  private final String pushHost;
+  private final int pushInterval;
+  private final String prometheusJob;
+  private final List<String> hostsWhitelist;
 
-  public static MetricsConfiguration createDefault() {
-    final MetricsConfiguration metricsConfiguration = new MetricsConfiguration();
-    metricsConfiguration.setEnabled(false);
-    metricsConfiguration.setPort(DEFAULT_METRICS_PORT);
-    metricsConfiguration.setHost(DEFAULT_METRICS_HOST);
-    metricsConfiguration.setMetricCategories(DEFAULT_METRIC_CATEGORIES);
-    metricsConfiguration.setPushEnabled(false);
-    metricsConfiguration.setPushPort(DEFAULT_METRICS_PUSH_PORT);
-    metricsConfiguration.setPushHost(DEFAULT_METRICS_PUSH_HOST);
-    metricsConfiguration.setPushInterval(15);
-    metricsConfiguration.setPrometheusJob("pantheon-client");
-
-    return metricsConfiguration;
+  public static Builder builder() {
+    return new Builder();
   }
 
-  private MetricsConfiguration() {}
+  private MetricsConfiguration(
+      final boolean enabled,
+      final int port,
+      final String host,
+      final Set<MetricCategory> metricCategories,
+      final boolean pushEnabled,
+      final int pushPort,
+      final String pushHost,
+      final int pushInterval,
+      final String prometheusJob,
+      final List<String> hostsWhitelist) {
+    this.enabled = enabled;
+    this.port = port;
+    this.host = host;
+    this.metricCategories = metricCategories;
+    this.pushEnabled = pushEnabled;
+    this.pushPort = pushPort;
+    this.pushHost = pushHost;
+    this.pushInterval = pushInterval;
+    this.prometheusJob = prometheusJob;
+    this.hostsWhitelist = hostsWhitelist;
+  }
 
   public boolean isEnabled() {
     return enabled;
-  }
-
-  public void setEnabled(final boolean enabled) {
-    this.enabled = enabled;
   }
 
   public int getPort() {
     return port;
   }
 
-  public void setPort(final int port) {
-    this.port = port;
-  }
-
   public String getHost() {
     return host;
-  }
-
-  public void setHost(final String host) {
-    this.host = host;
   }
 
   public Set<MetricCategory> getMetricCategories() {
     return metricCategories;
   }
 
-  public void setMetricCategories(final Set<MetricCategory> metricCategories) {
-    this.metricCategories = metricCategories;
-  }
-
   public int getPushPort() {
     return pushPort;
-  }
-
-  public void setPushPort(final int pushPort) {
-    this.pushPort = pushPort;
   }
 
   public String getPushHost() {
     return pushHost;
   }
 
-  public void setPushHost(final String pushHost) {
-    this.pushHost = pushHost;
-  }
-
   public boolean isPushEnabled() {
     return pushEnabled;
-  }
-
-  public void setPushEnabled(final boolean pushEnabled) {
-    this.pushEnabled = pushEnabled;
   }
 
   public int getPushInterval() {
     return pushInterval;
   }
 
-  public void setPushInterval(final int pushInterval) {
-    this.pushInterval = pushInterval;
-  }
-
   public String getPrometheusJob() {
     return prometheusJob;
-  }
-
-  public void setPrometheusJob(final String prometheusJob) {
-    this.prometheusJob = prometheusJob;
   }
 
   Collection<String> getHostsWhitelist() {
     return Collections.unmodifiableCollection(this.hostsWhitelist);
   }
 
-  public void setHostsWhitelist(final List<String> hostsWhitelist) {
-    this.hostsWhitelist = hostsWhitelist;
-  }
-
   @Override
   public String toString() {
-    return "MetricsConfiguration{"
-        + "enabled="
-        + enabled
-        + ", port="
-        + port
-        + ", host='"
-        + host
-        + '\''
-        + ", categories="
-        + metricCategories.toString()
-        + ", pushEnabled="
-        + pushEnabled
-        + ", pushPort="
-        + pushPort
-        + ", pushHost='"
-        + pushHost
-        + '\''
-        + ", pushInterval="
-        + pushInterval
-        + ", prometheusJob='"
-        + prometheusJob
-        + '\''
-        + ", hostsWhitelist="
-        + hostsWhitelist
-        + '}';
+    return MoreObjects.toStringHelper(this)
+        .add("enabled", enabled)
+        .add("port", port)
+        .add("host", host)
+        .add("metricCategories", metricCategories)
+        .add("pushEnabled", pushEnabled)
+        .add("pushPort", pushPort)
+        .add("pushHost", pushHost)
+        .add("pushInterval", pushInterval)
+        .add("prometheusJob", prometheusJob)
+        .add("hostsWhitelist", hostsWhitelist)
+        .toString();
   }
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     final MetricsConfiguration that = (MetricsConfiguration) o;
     return enabled == that.enabled
         && port == that.port
-        && Objects.equals(metricCategories, that.metricCategories)
         && pushEnabled == that.pushEnabled
         && pushPort == that.pushPort
         && pushInterval == that.pushInterval
         && Objects.equals(host, that.host)
+        && Objects.equals(metricCategories, that.metricCategories)
         && Objects.equals(pushHost, that.pushHost)
         && Objects.equals(prometheusJob, that.prometheusJob)
         && Objects.equals(hostsWhitelist, that.hostsWhitelist);
@@ -197,5 +160,84 @@ public class MetricsConfiguration {
         pushInterval,
         prometheusJob,
         hostsWhitelist);
+  }
+
+  public static class Builder {
+    private boolean enabled = false;
+    private int port = DEFAULT_METRICS_PORT;
+    private String host = DEFAULT_METRICS_HOST;
+    private Set<MetricCategory> metricCategories = DEFAULT_METRIC_CATEGORIES;
+    private boolean pushEnabled = false;
+    private int pushPort = DEFAULT_METRICS_PUSH_PORT;
+    private String pushHost = DEFAULT_METRICS_PUSH_HOST;
+    private int pushInterval = 15;
+    private String prometheusJob = "pantheon-client";
+    private List<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
+
+    private Builder() {}
+
+    public Builder enabled(final boolean enabled) {
+      this.enabled = enabled;
+      return this;
+    }
+
+    public Builder port(final int port) {
+      this.port = port;
+      return this;
+    }
+
+    public Builder host(final String host) {
+      this.host = host;
+      return this;
+    }
+
+    public Builder metricCategories(final Set<MetricCategory> metricCategories) {
+      this.metricCategories = metricCategories;
+      return this;
+    }
+
+    public Builder pushEnabled(final boolean pushEnabled) {
+      this.pushEnabled = pushEnabled;
+      return this;
+    }
+
+    public Builder pushPort(final int pushPort) {
+      this.pushPort = pushPort;
+      return this;
+    }
+
+    public Builder pushHost(final String pushHost) {
+      this.pushHost = pushHost;
+      return this;
+    }
+
+    public Builder pushInterval(final int pushInterval) {
+      this.pushInterval = pushInterval;
+      return this;
+    }
+
+    public Builder prometheusJob(final String prometheusJob) {
+      this.prometheusJob = prometheusJob;
+      return this;
+    }
+
+    public Builder hostsWhitelist(final List<String> hostsWhitelist) {
+      this.hostsWhitelist = hostsWhitelist;
+      return this;
+    }
+
+    public MetricsConfiguration build() {
+      return new MetricsConfiguration(
+          enabled,
+          port,
+          host,
+          metricCategories,
+          pushEnabled,
+          pushPort,
+          pushHost,
+          pushInterval,
+          prometheusJob,
+          hostsWhitelist);
+    }
   }
 }

@@ -39,7 +39,7 @@ public class PantheonFactoryConfigurationBuilder {
   private PrivacyParameters privacyParameters = PrivacyParameters.DEFAULT;
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
-  private MetricsConfiguration metricsConfiguration = MetricsConfiguration.createDefault();
+  private MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private Optional<String> keyFilePath = Optional.empty();
   private boolean devMode = true;
