@@ -20,25 +20,26 @@ import java.util.stream.Stream;
 public interface MetricsSystem {
 
   default Counter createCounter(
-      final MetricCategory category, final String name, final String help) {
+      final PantheonMetricCategory category, final String name, final String help) {
     return createLabelledCounter(category, name, help, new String[0]).labels();
   }
 
   LabelledMetric<Counter> createLabelledCounter(
-      MetricCategory category, String name, String help, String... labelNames);
+      PantheonMetricCategory category, String name, String help, String... labelNames);
 
   default OperationTimer createTimer(
-      final MetricCategory category, final String name, final String help) {
+      final PantheonMetricCategory category, final String name, final String help) {
     return createLabelledTimer(category, name, help, new String[0]).labels();
   }
 
   LabelledMetric<OperationTimer> createLabelledTimer(
-      MetricCategory category, String name, String help, String... labelNames);
+      PantheonMetricCategory category, String name, String help, String... labelNames);
 
-  void createGauge(MetricCategory category, String name, String help, DoubleSupplier valueSupplier);
+  void createGauge(
+      PantheonMetricCategory category, String name, String help, DoubleSupplier valueSupplier);
 
   default void createIntegerGauge(
-      final MetricCategory category,
+      final PantheonMetricCategory category,
       final String name,
       final String help,
       final IntSupplier valueSupplier) {
@@ -46,16 +47,16 @@ public interface MetricsSystem {
   }
 
   default void createLongGauge(
-      final MetricCategory category,
+      final PantheonMetricCategory category,
       final String name,
       final String help,
       final LongSupplier valueSupplier) {
     createGauge(category, name, help, () -> (double) valueSupplier.getAsLong());
   }
 
-  Stream<Observation> streamObservations(MetricCategory category);
+  Stream<Observation> streamObservations(PantheonMetricCategory category);
 
   default Stream<Observation> streamObservations() {
-    return Stream.of(MetricCategory.values()).flatMap(this::streamObservations);
+    return Stream.of(PantheonMetricCategory.values()).flatMap(this::streamObservations);
   }
 }

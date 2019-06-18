@@ -22,8 +22,8 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryContro
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.TimerUtil;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.util.NetworkUtility;
 
 import java.io.IOException;
@@ -64,7 +64,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
     this.vertx = vertx;
 
     metricsSystem.createIntegerGauge(
-        MetricCategory.NETWORK,
+        PantheonMetricCategory.NETWORK,
         "vertx_eventloop_pending_tasks",
         "The number of pending tasks in the Vertx event loop",
         pendingTaskCounter(vertx.nettyEventLoopGroup()));

@@ -24,8 +24,8 @@ import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer.SyncStatusListener;
 import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -74,17 +74,17 @@ public class SyncStatusNodePermissioningProviderTest {
         ArgumentCaptor.forClass(IntSupplier.class);
 
     when(metricsSystem.createCounter(
-            MetricCategory.PERMISSIONING,
+            PantheonMetricCategory.PERMISSIONING,
             "sync_status_node_check_count",
             "Number of times the sync status permissioning provider has been checked"))
         .thenReturn(checkCounter);
     when(metricsSystem.createCounter(
-            MetricCategory.PERMISSIONING,
+            PantheonMetricCategory.PERMISSIONING,
             "sync_status_node_check_count_permitted",
             "Number of times the sync status permissioning provider has been checked and returned permitted"))
         .thenReturn(checkPermittedCounter);
     when(metricsSystem.createCounter(
-            MetricCategory.PERMISSIONING,
+            PantheonMetricCategory.PERMISSIONING,
             "sync_status_node_check_count_unpermitted",
             "Number of times the sync status permissioning provider has been checked and returned unpermitted"))
         .thenReturn(checkUnpermittedCounter);
@@ -92,7 +92,7 @@ public class SyncStatusNodePermissioningProviderTest {
     this.syncStatusListener = captor.getValue();
     verify(metricsSystem)
         .createIntegerGauge(
-            eq(MetricCategory.PERMISSIONING),
+            eq(PantheonMetricCategory.PERMISSIONING),
             eq("sync_status_node_sync_reached"),
             eq("Whether the sync status permissioning provider has realised sync yet"),
             syncGaugeCallbackCaptor.capture());

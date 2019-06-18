@@ -26,8 +26,8 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.time.Duration;
@@ -66,11 +66,11 @@ public class FastSyncActions<C> {
 
     pivotBlockSelectionCounter =
         metricsSystem.createCounter(
-            MetricCategory.SYNCHRONIZER,
+            PantheonMetricCategory.SYNCHRONIZER,
             "fast_sync_pivot_block_selected_count",
             "Number of times a fast sync pivot block has been selected");
     metricsSystem.createLongGauge(
-        MetricCategory.SYNCHRONIZER,
+        PantheonMetricCategory.SYNCHRONIZER,
         "fast_sync_pivot_block_current",
         "The current fast sync pivot block",
         pivotBlockGauge::get);

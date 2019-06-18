@@ -26,8 +26,8 @@ import static org.mockito.Mockito.when;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -58,19 +58,19 @@ public class AccountLocalConfigPermissioningControllerTest {
   public void before() {
 
     when(metricsSystem.createCounter(
-            MetricCategory.PERMISSIONING,
+            PantheonMetricCategory.PERMISSIONING,
             "account_local_check_count",
             "Number of times the account local permissioning provider has been checked"))
         .thenReturn(checkCounter);
 
     when(metricsSystem.createCounter(
-            MetricCategory.PERMISSIONING,
+            PantheonMetricCategory.PERMISSIONING,
             "account_local_check_count_permitted",
             "Number of times the account local permissioning provider has been checked and returned permitted"))
         .thenReturn(checkPermittedCounter);
 
     when(metricsSystem.createCounter(
-            MetricCategory.PERMISSIONING,
+            PantheonMetricCategory.PERMISSIONING,
             "account_local_check_count_unpermitted",
             "Number of times the account local permissioning provider has been checked and returned unpermitted"))
         .thenReturn(checkUnpermittedCounter);

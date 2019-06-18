@@ -23,8 +23,8 @@ import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.services.pipeline.Pipeline;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
@@ -65,7 +65,7 @@ public class PipelineChainDownloader<C> implements ChainDownloader {
 
     final LabelledMetric<Counter> labelledCounter =
         metricsSystem.createLabelledCounter(
-            MetricCategory.SYNCHRONIZER,
+            PantheonMetricCategory.SYNCHRONIZER,
             "chain_download_pipeline_restarts",
             "Number of times the chain download pipeline has been restarted",
             "reason");

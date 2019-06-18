@@ -19,8 +19,8 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.services.pipeline.Pipe;
 import tech.pegasys.pantheon.services.pipeline.Pipeline;
 import tech.pegasys.pantheon.services.pipeline.PipelineBuilder;
@@ -196,7 +196,7 @@ public class WorldStateDownloadProcess {
       final int bufferCapacity = hashCountPerRequest * 2;
       final LabelledMetric<Counter> outputCounter =
           metricsSystem.createLabelledCounter(
-              MetricCategory.SYNCHRONIZER,
+              PantheonMetricCategory.SYNCHRONIZER,
               "world_state_pipeline_processed_total",
               "Number of entries processed by each world state download pipeline stage",
               "step",

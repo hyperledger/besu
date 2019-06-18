@@ -34,8 +34,8 @@ import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.services.pipeline.Pipeline;
 import tech.pegasys.pantheon.services.pipeline.PipelineBuilder;
 
@@ -67,7 +67,7 @@ public class FastSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
     this.metricsSystem = metricsSystem;
     final LabelledMetric<Counter> fastSyncValidationCounter =
         metricsSystem.createLabelledCounter(
-            MetricCategory.SYNCHRONIZER,
+            PantheonMetricCategory.SYNCHRONIZER,
             "fast_sync_validation_mode",
             "Number of blocks validated using light vs full validation during fast sync",
             "validationMode");
@@ -130,7 +130,7 @@ public class FastSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
             checkpointRangeSource,
             downloaderParallelism,
             metricsSystem.createLabelledCounter(
-                MetricCategory.SYNCHRONIZER,
+                PantheonMetricCategory.SYNCHRONIZER,
                 "chain_download_pipeline_processed_total",
                 "Number of entries process by each chain download pipeline stage",
                 "step",

@@ -13,8 +13,8 @@
 package tech.pegasys.pantheon.metrics.vertx;
 
 import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 
 import io.vertx.core.spi.metrics.PoolMetrics;
 
@@ -29,7 +29,7 @@ final class PoolMetricsAdapter implements PoolMetrics<Object> {
     submittedCounter =
         metricsSystem
             .createLabelledCounter(
-                MetricCategory.NETWORK,
+                PantheonMetricCategory.NETWORK,
                 "vertx_worker_pool_submitted_total",
                 "Total number of tasks submitted to the Vertx worker pool",
                 "poolType",
@@ -39,7 +39,7 @@ final class PoolMetricsAdapter implements PoolMetrics<Object> {
     completedCounter =
         metricsSystem
             .createLabelledCounter(
-                MetricCategory.NETWORK,
+                PantheonMetricCategory.NETWORK,
                 "vertx_worker_pool_completed_total",
                 "Total number of tasks completed by the Vertx worker pool",
                 "poolType",
@@ -49,7 +49,7 @@ final class PoolMetricsAdapter implements PoolMetrics<Object> {
     rejectedCounter =
         metricsSystem
             .createLabelledCounter(
-                MetricCategory.NETWORK,
+                PantheonMetricCategory.NETWORK,
                 "vertx_worker_pool_rejected_total",
                 "Total number of tasks rejected by the Vertx worker pool",
                 "poolType",

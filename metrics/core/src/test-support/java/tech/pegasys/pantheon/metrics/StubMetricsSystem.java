@@ -29,7 +29,7 @@ public class StubMetricsSystem implements MetricsSystem {
 
   @Override
   public LabelledMetric<Counter> createLabelledCounter(
-      final MetricCategory category,
+      final PantheonMetricCategory category,
       final String name,
       final String help,
       final String... labelNames) {
@@ -50,7 +50,7 @@ public class StubMetricsSystem implements MetricsSystem {
 
   @Override
   public LabelledMetric<OperationTimer> createLabelledTimer(
-      final MetricCategory category,
+      final PantheonMetricCategory category,
       final String name,
       final String help,
       final String... labelNames) {
@@ -59,7 +59,7 @@ public class StubMetricsSystem implements MetricsSystem {
 
   @Override
   public void createGauge(
-      final MetricCategory category,
+      final PantheonMetricCategory category,
       final String name,
       final String help,
       final DoubleSupplier valueSupplier) {
@@ -75,7 +75,7 @@ public class StubMetricsSystem implements MetricsSystem {
   }
 
   @Override
-  public Stream<Observation> streamObservations(final MetricCategory category) {
+  public Stream<Observation> streamObservations(final PantheonMetricCategory category) {
     throw new UnsupportedOperationException("Observations aren't actually recorded");
   }
 

@@ -17,8 +17,8 @@ import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.permissioning.account.TransactionPermissioningProvider;
 import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -62,17 +62,17 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
     readAccountsFromConfig(configuration);
     this.checkCounter =
         metricsSystem.createCounter(
-            MetricCategory.PERMISSIONING,
+            PantheonMetricCategory.PERMISSIONING,
             "account_local_check_count",
             "Number of times the account local permissioning provider has been checked");
     this.checkCounterPermitted =
         metricsSystem.createCounter(
-            MetricCategory.PERMISSIONING,
+            PantheonMetricCategory.PERMISSIONING,
             "account_local_check_count_permitted",
             "Number of times the account local permissioning provider has been checked and returned permitted");
     this.checkCounterUnpermitted =
         metricsSystem.createCounter(
-            MetricCategory.PERMISSIONING,
+            PantheonMetricCategory.PERMISSIONING,
             "account_local_check_count_unpermitted",
             "Number of times the account local permissioning provider has been checked and returned unpermitted");
   }

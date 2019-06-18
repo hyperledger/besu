@@ -17,9 +17,9 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 
 import org.junit.Test;
 
@@ -30,7 +30,8 @@ public class NoOpMetricsSystemTest {
   @Test
   public void labelCountsMatchOnCounter() {
     final LabelledMetric<Counter> labeledCounter =
-        metricsSystem.createLabelledCounter(MetricCategory.PROCESS, "name", "help", "label1");
+        metricsSystem.createLabelledCounter(
+            PantheonMetricCategory.PROCESS, "name", "help", "label1");
     assertThat(labeledCounter.labels("one")).isSameAs(NoOpMetricsSystem.NO_OP_COUNTER);
   }
 
@@ -38,7 +39,7 @@ public class NoOpMetricsSystemTest {
   public void failsWheLabelCountsDoNotMatchOnCounter() {
     final LabelledMetric<Counter> labeledCounter =
         metricsSystem.createLabelledCounter(
-            MetricCategory.PROCESS, "name", "help", "label1", "label2");
+            PantheonMetricCategory.PROCESS, "name", "help", "label1", "label2");
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> labeledCounter.labels("one"))
@@ -51,7 +52,7 @@ public class NoOpMetricsSystemTest {
   @Test
   public void labelCountsMatchOnTimer() {
     final LabelledMetric<OperationTimer> labeledTimer =
-        metricsSystem.createLabelledTimer(MetricCategory.PROCESS, "name", "help", "label1");
+        metricsSystem.createLabelledTimer(PantheonMetricCategory.PROCESS, "name", "help", "label1");
     assertThat(labeledTimer.labels("one")).isSameAs(NoOpMetricsSystem.NO_OP_OPERATION_TIMER);
   }
 
@@ -59,7 +60,7 @@ public class NoOpMetricsSystemTest {
   public void failsWheLabelCountsDoNotMatchOnTimer() {
     final LabelledMetric<OperationTimer> labeledTimer =
         metricsSystem.createLabelledTimer(
-            MetricCategory.PROCESS, "name", "help", "label1", "label2");
+            PantheonMetricCategory.PROCESS, "name", "help", "label1", "label2");
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> labeledTimer.labels("one"))
