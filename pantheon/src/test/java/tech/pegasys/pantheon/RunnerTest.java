@@ -360,10 +360,7 @@ public final class RunnerTest {
   }
 
   private MetricsConfiguration metricsConfiguration() {
-    final MetricsConfiguration configuration = MetricsConfiguration.createDefault();
-    configuration.setPort(0);
-    configuration.setEnabled(false);
-    return configuration;
+    return MetricsConfiguration.builder().enabled(false).port(0).build();
   }
 
   private static void setupState(

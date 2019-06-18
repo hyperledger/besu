@@ -27,7 +27,6 @@ import static tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfigur
 import static tech.pegasys.pantheon.metrics.MetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
 import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
-import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.createDefault;
 
 import tech.pegasys.pantheon.Runner;
 import tech.pegasys.pantheon.RunnerBuilder;
@@ -924,18 +923,18 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             "--metrics-push-interval",
             "--metrics-push-prometheus-job"));
 
-    final MetricsConfiguration metricsConfiguration = createDefault();
-    metricsConfiguration.setEnabled(isMetricsEnabled);
-    metricsConfiguration.setHost(metricsHost);
-    metricsConfiguration.setPort(metricsPort);
-    metricsConfiguration.setMetricCategories(metricCategories);
-    metricsConfiguration.setPushEnabled(isMetricsPushEnabled);
-    metricsConfiguration.setPushHost(metricsPushHost);
-    metricsConfiguration.setPushPort(metricsPushPort);
-    metricsConfiguration.setPushInterval(metricsPushInterval);
-    metricsConfiguration.setPrometheusJob(metricsPrometheusJob);
-    metricsConfiguration.setHostsWhitelist(hostsWhitelist);
-    return metricsConfiguration;
+    return MetricsConfiguration.builder()
+        .enabled(isMetricsEnabled)
+        .host(metricsHost)
+        .port(metricsPort)
+        .metricCategories(metricCategories)
+        .pushEnabled(isMetricsPushEnabled)
+        .pushHost(metricsPushHost)
+        .pushPort(metricsPushPort)
+        .pushInterval(metricsPushInterval)
+        .hostsWhitelist(hostsWhitelist)
+        .prometheusJob(metricsPrometheusJob)
+        .build();
   }
 
   private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
