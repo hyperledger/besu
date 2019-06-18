@@ -33,8 +33,8 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.netty.NettyConnection
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.util.FutureUtils;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -90,15 +90,15 @@ public class RlpxAgent {
     // Setup metrics
     connectedPeersCounter =
         metricsSystem.createCounter(
-            MetricCategory.PEERS, "connected_total", "Total number of peers connected");
+            PantheonMetricCategory.PEERS, "connected_total", "Total number of peers connected");
 
     metricsSystem.createGauge(
-        MetricCategory.PEERS,
+        PantheonMetricCategory.PEERS,
         "peer_count_current",
         "Number of peers currently connected",
         () -> (double) getConnectionCount());
     metricsSystem.createIntegerGauge(
-        MetricCategory.NETWORK,
+        PantheonMetricCategory.NETWORK,
         "peers_limit",
         "Maximum P2P peer connections that can be established",
         () -> maxPeers);

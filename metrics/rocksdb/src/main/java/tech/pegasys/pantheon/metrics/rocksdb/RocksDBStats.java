@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.metrics.rocksdb;
 
-import static tech.pegasys.pantheon.metrics.MetricCategory.KVSTORE_ROCKSDB_STATS;
+import static tech.pegasys.pantheon.metrics.PantheonMetricCategory.KVSTORE_ROCKSDB_STATS;
 
 import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 

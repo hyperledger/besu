@@ -16,10 +16,10 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 
 import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.Observation;
 import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
@@ -49,14 +49,16 @@ import io.prometheus.client.hotspot.ThreadExports;
 public class PrometheusMetricsSystem implements MetricsSystem {
 
   private static final String PANTHEON_PREFIX = "pantheon_";
-  private final Map<MetricCategory, Collection<Collector>> collectors = new ConcurrentHashMap<>();
+  private final Map<PantheonMetricCategory, Collection<Collector>> collectors =
+      new ConcurrentHashMap<>();
   private final CollectorRegistry registry = new CollectorRegistry(true);
   private final Map<String, LabelledMetric<tech.pegasys.pantheon.metrics.Counter>> cachedCounters =
       new ConcurrentHashMap<>();
   private final Map<String, LabelledMetric<tech.pegasys.pantheon.metrics.OperationTimer>>
       cachedTimers = new ConcurrentHashMap<>();
 
-  private final EnumSet<MetricCategory> enabledCategories = EnumSet.allOf(MetricCategory.class);
+  private final EnumSet<PantheonMetricCategory> enabledCategories =
+      EnumSet.allOf(PantheonMetricCategory.class);
 
   PrometheusMetricsSystem() {}
 
@@ -66,14 +68,14 @@ public class PrometheusMetricsSystem implements MetricsSystem {
     }
     final PrometheusMetricsSystem metricsSystem = new PrometheusMetricsSystem();
     metricsSystem.enabledCategories.retainAll(metricsConfiguration.getMetricCategories());
-    if (metricsSystem.enabledCategories.contains(MetricCategory.PROCESS)) {
+    if (metricsSystem.enabledCategories.contains(PantheonMetricCategory.PROCESS)) {
       metricsSystem.collectors.put(
-          MetricCategory.PROCESS,
+          PantheonMetricCategory.PROCESS,
           singleton(new StandardExports().register(metricsSystem.registry)));
     }
-    if (metricsSystem.enabledCategories.contains(MetricCategory.JVM)) {
+    if (metricsSystem.enabledCategories.contains(PantheonMetricCategory.JVM)) {
       metricsSystem.collectors.put(
-          MetricCategory.JVM,
+          PantheonMetricCategory.JVM,
           asList(
               new MemoryPoolsExports().register(metricsSystem.registry),
               new BufferPoolsExports().register(metricsSystem.registry),
@@ -86,7 +88,7 @@ public class PrometheusMetricsSystem implements MetricsSystem {
 
   @Override
   public LabelledMetric<tech.pegasys.pantheon.metrics.Counter> createLabelledCounter(
-      final MetricCategory category,
+      final PantheonMetricCategory category,
       final String name,
       final String help,
       final String... labelNames) {
@@ -106,7 +108,7 @@ public class PrometheusMetricsSystem implements MetricsSystem {
 
   @Override
   public LabelledMetric<OperationTimer> createLabelledTimer(
-      final MetricCategory category,
+      final PantheonMetricCategory category,
       final String name,
       final String help,
       final String... labelNames) {
@@ -135,7 +137,7 @@ public class PrometheusMetricsSystem implements MetricsSystem {
 
   @Override
   public void createGauge(
-      final MetricCategory category,
+      final PantheonMetricCategory category,
       final String name,
       final String help,
       final DoubleSupplier valueSupplier) {
@@ -146,13 +148,14 @@ public class PrometheusMetricsSystem implements MetricsSystem {
     }
   }
 
-  public void addCollector(final MetricCategory category, final Collector metric) {
+  public void addCollector(final PantheonMetricCategory category, final Collector metric) {
     if (enabledCategories.contains(category)) {
       addCollectorUnchecked(category, metric);
     }
   }
 
-  private void addCollectorUnchecked(final MetricCategory category, final Collector metric) {
+  private void addCollectorUnchecked(
+      final PantheonMetricCategory category, final Collector metric) {
     metric.register(registry);
     collectors
         .computeIfAbsent(category, key -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
@@ -160,20 +163,22 @@ public class PrometheusMetricsSystem implements MetricsSystem {
   }
 
   @Override
-  public Stream<Observation> streamObservations(final MetricCategory category) {
+  public Stream<Observation> streamObservations(final PantheonMetricCategory category) {
     return collectors.getOrDefault(category, Collections.emptySet()).stream()
         .flatMap(collector -> collector.collect().stream())
         .flatMap(familySamples -> convertSamplesToObservations(category, familySamples));
   }
 
   private Stream<Observation> convertSamplesToObservations(
-      final MetricCategory category, final MetricFamilySamples familySamples) {
+      final PantheonMetricCategory category, final MetricFamilySamples familySamples) {
     return familySamples.samples.stream()
         .map(sample -> createObservationFromSample(category, sample, familySamples));
   }
 
   private Observation createObservationFromSample(
-      final MetricCategory category, final Sample sample, final MetricFamilySamples familySamples) {
+      final PantheonMetricCategory category,
+      final Sample sample,
+      final MetricFamilySamples familySamples) {
     if (familySamples.type == Type.HISTOGRAM) {
       return convertHistogramSampleNamesToLabels(category, sample, familySamples);
     }
@@ -188,7 +193,9 @@ public class PrometheusMetricsSystem implements MetricsSystem {
   }
 
   private Observation convertHistogramSampleNamesToLabels(
-      final MetricCategory category, final Sample sample, final MetricFamilySamples familySamples) {
+      final PantheonMetricCategory category,
+      final Sample sample,
+      final MetricFamilySamples familySamples) {
     final List<String> labelValues = new ArrayList<>(sample.labelValues);
     if (sample.name.endsWith("_bucket")) {
       labelValues.add(labelValues.size() - 1, "bucket");
@@ -203,7 +210,9 @@ public class PrometheusMetricsSystem implements MetricsSystem {
   }
 
   private Observation convertSummarySampleNamesToLabels(
-      final MetricCategory category, final Sample sample, final MetricFamilySamples familySamples) {
+      final PantheonMetricCategory category,
+      final Sample sample,
+      final MetricFamilySamples familySamples) {
     final List<String> labelValues = new ArrayList<>(sample.labelValues);
     if (sample.name.endsWith("_sum")) {
       labelValues.add("sum");
@@ -219,16 +228,18 @@ public class PrometheusMetricsSystem implements MetricsSystem {
         labelValues);
   }
 
-  public static String convertToPrometheusName(final MetricCategory category, final String name) {
+  public static String convertToPrometheusName(
+      final PantheonMetricCategory category, final String name) {
     return prometheusPrefix(category) + name;
   }
 
-  private String convertFromPrometheusName(final MetricCategory category, final String metricName) {
+  private String convertFromPrometheusName(
+      final PantheonMetricCategory category, final String metricName) {
     final String prefix = prometheusPrefix(category);
     return metricName.startsWith(prefix) ? metricName.substring(prefix.length()) : metricName;
   }
 
-  private static String prometheusPrefix(final MetricCategory category) {
+  private static String prometheusPrefix(final PantheonMetricCategory category) {
     return category.isPantheonSpecific()
         ? PANTHEON_PREFIX + category.getName() + "_"
         : category.getName() + "_";

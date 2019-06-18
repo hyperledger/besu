@@ -16,8 +16,8 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.services.tasks.CachingTaskCollection;
 
 import java.time.Clock;
@@ -66,13 +66,13 @@ public class WorldStateDownloader {
     this.metricsSystem = metricsSystem;
 
     metricsSystem.createIntegerGauge(
-        MetricCategory.SYNCHRONIZER,
+        PantheonMetricCategory.SYNCHRONIZER,
         "world_state_node_requests_since_last_progress_current",
         "Number of world state requests made since the last time new data was returned",
         downloadStateValue(WorldDownloadState::getRequestsSinceLastProgress));
 
     metricsSystem.createIntegerGauge(
-        MetricCategory.SYNCHRONIZER,
+        PantheonMetricCategory.SYNCHRONIZER,
         "world_state_inflight_requests_current",
         "Number of in progress requests for world state data",
         downloadStateValue(WorldDownloadState::getOutstandingTaskCount));

@@ -13,9 +13,9 @@
 package tech.pegasys.pantheon.services.kvstore;
 
 import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 import tech.pegasys.pantheon.metrics.rocksdb.RocksDBStats;
 import tech.pegasys.pantheon.services.util.RocksDbUtil;
@@ -76,7 +76,7 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
       readLatency =
           metricsSystem
               .createLabelledTimer(
-                  MetricCategory.KVSTORE_ROCKSDB,
+                  PantheonMetricCategory.KVSTORE_ROCKSDB,
                   "read_latency_seconds",
                   "Latency for read from RocksDB.",
                   "database")
@@ -84,7 +84,7 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
       removeLatency =
           metricsSystem
               .createLabelledTimer(
-                  MetricCategory.KVSTORE_ROCKSDB,
+                  PantheonMetricCategory.KVSTORE_ROCKSDB,
                   "remove_latency_seconds",
                   "Latency of remove requests from RocksDB.",
                   "database")
@@ -92,7 +92,7 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
       writeLatency =
           metricsSystem
               .createLabelledTimer(
-                  MetricCategory.KVSTORE_ROCKSDB,
+                  PantheonMetricCategory.KVSTORE_ROCKSDB,
                   "write_latency_seconds",
                   "Latency for write to RocksDB.",
                   "database")
@@ -100,7 +100,7 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
       commitLatency =
           metricsSystem
               .createLabelledTimer(
-                  MetricCategory.KVSTORE_ROCKSDB,
+                  PantheonMetricCategory.KVSTORE_ROCKSDB,
                   "commit_latency_seconds",
                   "Latency for commits to RocksDB.",
                   "database")
@@ -111,7 +111,7 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
       }
 
       metricsSystem.createLongGauge(
-          MetricCategory.KVSTORE_ROCKSDB,
+          PantheonMetricCategory.KVSTORE_ROCKSDB,
           "rocks_db_table_readers_memory_bytes",
           "Estimated memory used for RocksDB index and filter blocks in bytes",
           () -> {
@@ -126,7 +126,7 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
       rollbackCount =
           metricsSystem
               .createLabelledCounter(
-                  MetricCategory.KVSTORE_ROCKSDB,
+                  PantheonMetricCategory.KVSTORE_ROCKSDB,
                   "rollback_count",
                   "Number of RocksDB transactions rolled back.",
                   "database")

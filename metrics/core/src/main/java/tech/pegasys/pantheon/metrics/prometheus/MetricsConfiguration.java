@@ -12,9 +12,9 @@
  */
 package tech.pegasys.pantheon.metrics.prometheus;
 
-import static tech.pegasys.pantheon.metrics.MetricCategory.DEFAULT_METRIC_CATEGORIES;
+import static tech.pegasys.pantheon.metrics.PantheonMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
-import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,7 +35,7 @@ public class MetricsConfiguration {
   private final boolean enabled;
   private final int port;
   private final String host;
-  private final Set<MetricCategory> metricCategories;
+  private final Set<PantheonMetricCategory> metricCategories;
   private final boolean pushEnabled;
   private final int pushPort;
   private final String pushHost;
@@ -51,7 +51,7 @@ public class MetricsConfiguration {
       final boolean enabled,
       final int port,
       final String host,
-      final Set<MetricCategory> metricCategories,
+      final Set<PantheonMetricCategory> metricCategories,
       final boolean pushEnabled,
       final int pushPort,
       final String pushHost,
@@ -82,7 +82,7 @@ public class MetricsConfiguration {
     return host;
   }
 
-  public Set<MetricCategory> getMetricCategories() {
+  public Set<PantheonMetricCategory> getMetricCategories() {
     return metricCategories;
   }
 
@@ -166,7 +166,7 @@ public class MetricsConfiguration {
     private boolean enabled = false;
     private int port = DEFAULT_METRICS_PORT;
     private String host = DEFAULT_METRICS_HOST;
-    private Set<MetricCategory> metricCategories = DEFAULT_METRIC_CATEGORIES;
+    private Set<PantheonMetricCategory> metricCategories = DEFAULT_METRIC_CATEGORIES;
     private boolean pushEnabled = false;
     private int pushPort = DEFAULT_METRICS_PUSH_PORT;
     private String pushHost = DEFAULT_METRICS_PUSH_HOST;
@@ -191,7 +191,7 @@ public class MetricsConfiguration {
       return this;
     }
 
-    public Builder metricCategories(final Set<MetricCategory> metricCategories) {
+    public Builder metricCategories(final Set<PantheonMetricCategory> metricCategories) {
       this.metricCategories = metricCategories;
       return this;
     }

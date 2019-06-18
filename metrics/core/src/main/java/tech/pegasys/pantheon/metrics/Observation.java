@@ -18,13 +18,13 @@ import java.util.Objects;
 import com.google.common.base.MoreObjects;
 
 public class Observation {
-  private final MetricCategory category;
+  private final PantheonMetricCategory category;
   private final String metricName;
   private final List<String> labels;
   private final Object value;
 
   public Observation(
-      final MetricCategory category,
+      final PantheonMetricCategory category,
       final String metricName,
       final Object value,
       final List<String> labels) {
@@ -34,7 +34,7 @@ public class Observation {
     this.labels = labels;
   }
 
-  public MetricCategory getCategory() {
+  public PantheonMetricCategory getCategory() {
     return category;
   }
 

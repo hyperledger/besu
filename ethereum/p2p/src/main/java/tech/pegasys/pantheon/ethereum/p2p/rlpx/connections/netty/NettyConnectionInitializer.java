@@ -24,8 +24,8 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.ConnectCallback;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.ConnectionInitializer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.net.InetSocketAddress;
@@ -80,13 +80,13 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
     this.metricsSystem = metricsSystem;
 
     metricsSystem.createIntegerGauge(
-        MetricCategory.NETWORK,
+        PantheonMetricCategory.NETWORK,
         "netty_workers_pending_tasks",
         "The number of pending tasks in the Netty workers event loop",
         pendingTaskCounter(workers));
 
     metricsSystem.createIntegerGauge(
-        MetricCategory.NETWORK,
+        PantheonMetricCategory.NETWORK,
         "netty_boss_pending_tasks",
         "The number of pending tasks in the Netty boss event loop",
         pendingTaskCounter(boss));

@@ -33,8 +33,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -72,19 +72,19 @@ public class TransactionSmartContractPermissioningControllerTest {
     final Address contractAddress = Address.fromHexString(contractAddressString);
 
     when(metricsSystem.createCounter(
-            MetricCategory.PERMISSIONING,
+            PantheonMetricCategory.PERMISSIONING,
             "transaction_smart_contract_check_count",
             "Number of times the transaction smart contract permissioning provider has been checked"))
         .thenReturn(checkCounter);
 
     when(metricsSystem.createCounter(
-            MetricCategory.PERMISSIONING,
+            PantheonMetricCategory.PERMISSIONING,
             "transaction_smart_contract_check_count_permitted",
             "Number of times the transaction smart contract permissioning provider has been checked and returned permitted"))
         .thenReturn(checkPermittedCounter);
 
     when(metricsSystem.createCounter(
-            MetricCategory.PERMISSIONING,
+            PantheonMetricCategory.PERMISSIONING,
             "transaction_smart_contract_check_count_unpermitted",
             "Number of times the transaction smart contract permissioning provider has been checked and returned unpermitted"))
         .thenReturn(checkUnpermittedCounter);

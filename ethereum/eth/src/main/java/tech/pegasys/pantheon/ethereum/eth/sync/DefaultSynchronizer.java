@@ -27,8 +27,8 @@ import tech.pegasys.pantheon.ethereum.eth.sync.state.PendingBlocks;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 import tech.pegasys.pantheon.util.Subscribers;
 
@@ -98,12 +98,12 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             clock);
 
     metricsSystem.createLongGauge(
-        MetricCategory.SYNCHRONIZER,
+        PantheonMetricCategory.SYNCHRONIZER,
         "best_known_block",
         "Height of best known block from any connected peer",
         () -> syncState.syncStatus().getHighestBlock());
     metricsSystem.createIntegerGauge(
-        MetricCategory.SYNCHRONIZER,
+        PantheonMetricCategory.SYNCHRONIZER,
         "in_sync",
         "Whether or not the local node has caught up to the best known peer",
         () -> getSyncStatus().isPresent() ? 0 : 1);

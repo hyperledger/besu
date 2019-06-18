@@ -15,8 +15,8 @@ package tech.pegasys.pantheon.ethereum.eth.sync.worldstate;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.services.tasks.Task;
 
 public class CompleteTaskStep {
@@ -31,12 +31,12 @@ public class CompleteTaskStep {
 
     completedRequestsCounter =
         metricsSystem.createCounter(
-            MetricCategory.SYNCHRONIZER,
+            PantheonMetricCategory.SYNCHRONIZER,
             "world_state_completed_requests_total",
             "Total number of node data requests completed as part of fast sync world state download");
     retriedRequestsCounter =
         metricsSystem.createCounter(
-            MetricCategory.SYNCHRONIZER,
+            PantheonMetricCategory.SYNCHRONIZER,
             "world_state_retried_requests_total",
             "Total number of node data requests repeated as part of fast sync world state download");
   }

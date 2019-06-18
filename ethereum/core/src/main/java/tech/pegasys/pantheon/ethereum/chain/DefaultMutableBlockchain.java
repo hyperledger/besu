@@ -23,8 +23,8 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.util.InvalidConfigurationException;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
@@ -69,12 +69,12 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
     chainHeadOmmerCount = chainHeadBody.getOmmers().size();
 
     metricsSystem.createLongGauge(
-        MetricCategory.BLOCKCHAIN,
+        PantheonMetricCategory.BLOCKCHAIN,
         "height",
         "Height of the chainhead",
         this::getChainHeadBlockNumber);
     metricsSystem.createLongGauge(
-        MetricCategory.BLOCKCHAIN,
+        PantheonMetricCategory.BLOCKCHAIN,
         "difficulty_total",
         "Total difficulty of the chainhead",
         () ->
@@ -82,31 +82,31 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
                 .longValue());
 
     metricsSystem.createLongGauge(
-        MetricCategory.BLOCKCHAIN,
+        PantheonMetricCategory.BLOCKCHAIN,
         "chain_head_timestamp",
         "Timestamp from the current chain head",
         () -> getChainHeadHeader().getTimestamp());
 
     metricsSystem.createLongGauge(
-        MetricCategory.BLOCKCHAIN,
+        PantheonMetricCategory.BLOCKCHAIN,
         "chain_head_gas_used",
         "Gas used by the current chain head block",
         () -> getChainHeadHeader().getGasUsed());
 
     metricsSystem.createLongGauge(
-        MetricCategory.BLOCKCHAIN,
+        PantheonMetricCategory.BLOCKCHAIN,
         "chain_head_gas_limit",
         "Block gas limit of the current chain head block",
         () -> getChainHeadHeader().getGasLimit());
 
     metricsSystem.createIntegerGauge(
-        MetricCategory.BLOCKCHAIN,
+        PantheonMetricCategory.BLOCKCHAIN,
         "chain_head_transaction_count",
         "Number of transactions in the current chain head block",
         () -> chainHeadTransactionCount);
 
     metricsSystem.createIntegerGauge(
-        MetricCategory.BLOCKCHAIN,
+        PantheonMetricCategory.BLOCKCHAIN,
         "chain_head_ommer_count",
         "Number of ommers in the current chain head block",
         () -> chainHeadOmmerCount);

@@ -34,8 +34,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionIn
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -83,7 +83,7 @@ public class TransactionPool implements BlockAddedObserver {
 
     duplicateTransactionCounter =
         metricsSystem.createLabelledCounter(
-            MetricCategory.TRANSACTION_POOL,
+            PantheonMetricCategory.TRANSACTION_POOL,
             "transactions_duplicates_total",
             "Total number of duplicate transactions received",
             "source");

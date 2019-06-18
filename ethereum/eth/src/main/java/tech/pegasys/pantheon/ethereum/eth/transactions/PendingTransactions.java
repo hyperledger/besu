@@ -20,8 +20,8 @@ import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.time.Clock;
@@ -87,7 +87,7 @@ public class PendingTransactions {
     this.clock = clock;
     final LabelledMetric<Counter> transactionAddedCounter =
         metricsSystem.createLabelledCounter(
-            MetricCategory.TRANSACTION_POOL,
+            PantheonMetricCategory.TRANSACTION_POOL,
             "transactions_added_total",
             "Count of transactions added to the transaction pool",
             "source");
@@ -96,7 +96,7 @@ public class PendingTransactions {
 
     transactionRemovedCounter =
         metricsSystem.createLabelledCounter(
-            MetricCategory.TRANSACTION_POOL,
+            PantheonMetricCategory.TRANSACTION_POOL,
             "transactions_removed_total",
             "Count of transactions removed from the transaction pool",
             "source",

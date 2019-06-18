@@ -35,8 +35,8 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.WireMessageCodes;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -86,7 +86,7 @@ final class DeFramer extends ByteToMessageDecoder {
     this.connectionEventDispatcher = connectionEventDispatcher;
     this.outboundMessagesCounter =
         metricsSystem.createLabelledCounter(
-            MetricCategory.NETWORK,
+            PantheonMetricCategory.NETWORK,
             "p2p_messages_outbound",
             "Count of each P2P message sent outbound.",
             "protocol",

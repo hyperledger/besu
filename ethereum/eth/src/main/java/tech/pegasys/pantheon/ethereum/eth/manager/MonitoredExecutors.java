@@ -13,8 +13,8 @@
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -87,31 +87,31 @@ public class MonitoredExecutors {
             new ThreadFactoryBuilder().setNameFormat(name + "-%d").build());
 
     metricsSystem.createIntegerGauge(
-        MetricCategory.EXECUTORS,
+        PantheonMetricCategory.EXECUTORS,
         metricName + "_queue_length_current",
         "Current number of tasks awaiting execution",
         executor.getQueue()::size);
 
     metricsSystem.createIntegerGauge(
-        MetricCategory.EXECUTORS,
+        PantheonMetricCategory.EXECUTORS,
         metricName + "_active_threads_current",
         "Current number of threads executing tasks",
         executor::getActiveCount);
 
     metricsSystem.createIntegerGauge(
-        MetricCategory.EXECUTORS,
+        PantheonMetricCategory.EXECUTORS,
         metricName + "_pool_size_current",
         "Current number of threads in the thread pool",
         executor::getPoolSize);
 
     metricsSystem.createLongGauge(
-        MetricCategory.EXECUTORS,
+        PantheonMetricCategory.EXECUTORS,
         metricName + "_completed_tasks_total",
         "Total number of tasks executed",
         executor::getCompletedTaskCount);
 
     metricsSystem.createLongGauge(
-        MetricCategory.EXECUTORS,
+        PantheonMetricCategory.EXECUTORS,
         metricName + "_submitted_tasks_total",
         "Total number of tasks executed",
         executor::getTaskCount);
@@ -126,7 +126,7 @@ public class MonitoredExecutors {
     public CountingAbortPolicy(final String metricName, final MetricsSystem metricsSystem) {
       this.rejectedTaskCounter =
           metricsSystem.createCounter(
-              MetricCategory.EXECUTORS,
+              PantheonMetricCategory.EXECUTORS,
               metricName + "_rejected_tasks_total",
               "Total number of tasks rejected by this executor");
     }
