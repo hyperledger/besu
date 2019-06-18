@@ -107,6 +107,8 @@ public interface TransactionProcessor {
    * @param miningBeneficiary The address which is to receive the transaction fee
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
    * @param isPersistingState Whether the state will be modified by this process
+   * @param checkOnchainPermissions Whether a transaction permissioning check should check onchain
+   *     permissioning rules
    * @return the transaction result
    */
   default Result processTransaction(
@@ -116,7 +118,8 @@ public interface TransactionProcessor {
       final Transaction transaction,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingState) {
+      final Boolean isPersistingState,
+      final Boolean checkOnchainPermissions) {
     return processTransaction(
         blockchain,
         worldState,
@@ -125,7 +128,8 @@ public interface TransactionProcessor {
         miningBeneficiary,
         NO_TRACING,
         blockHashLookup,
-        isPersistingState);
+        isPersistingState,
+        checkOnchainPermissions);
   }
 
   /**
@@ -141,6 +145,27 @@ public interface TransactionProcessor {
    * @param isPersistingState Whether the state will be modified by this process
    * @return the transaction result
    */
+  default Result processTransaction(
+      final Blockchain blockchain,
+      final WorldUpdater worldState,
+      final ProcessableBlockHeader blockHeader,
+      final Transaction transaction,
+      final Address miningBeneficiary,
+      final OperationTracer operationTracer,
+      final BlockHashLookup blockHashLookup,
+      final Boolean isPersistingState) {
+    return processTransaction(
+        blockchain,
+        worldState,
+        blockHeader,
+        transaction,
+        miningBeneficiary,
+        operationTracer,
+        blockHashLookup,
+        isPersistingState,
+        false);
+  }
+
   Result processTransaction(
       Blockchain blockchain,
       WorldUpdater worldState,
@@ -149,5 +174,6 @@ public interface TransactionProcessor {
       Address miningBeneficiary,
       OperationTracer operationTracer,
       BlockHashLookup blockHashLookup,
-      Boolean isPersistingState);
+      Boolean isPersistingState,
+      Boolean checkOnchainPermissions);
 }

@@ -14,5 +14,5 @@ package tech.pegasys.pantheon.ethereum.core;
 
 @FunctionalInterface
 public interface TransactionFilter {
-  boolean permitted(Transaction transaction, boolean isStateChange);
+  boolean permitted(Transaction transaction, boolean checkOnchainPermissions);
 }

@@ -193,7 +193,10 @@ public class TransactionPool implements BlockAddedObserver {
     }
 
     final TransactionValidationParams validationParams =
-        new TransactionValidationParams.Builder().allowFutureNonce(true).stateChange(false).build();
+        new TransactionValidationParams.Builder()
+            .allowFutureNonce(true)
+            .checkOnchainPermissions(false)
+            .build();
 
     return protocolContext
         .getWorldStateArchive()
