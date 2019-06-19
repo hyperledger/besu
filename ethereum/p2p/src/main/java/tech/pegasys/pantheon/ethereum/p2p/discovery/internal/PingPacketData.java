@@ -13,14 +13,10 @@
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static tech.pegasys.pantheon.util.Preconditions.checkGuard;
 
 import tech.pegasys.pantheon.ethereum.p2p.discovery.Endpoint;
-import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
-
-import java.math.BigInteger;
 
 public class PingPacketData implements PacketData {
 
@@ -53,18 +49,12 @@ public class PingPacketData implements PacketData {
 
   public static PingPacketData readFrom(final RLPInput in) {
     in.enterList();
-    final BigInteger version = in.readBigIntegerScalar();
-    checkGuard(
-        version.intValue() == VERSION,
-        PeerDiscoveryPacketDecodingException::new,
-        "Version mismatch in ping packet. Expected: %s, got: %s.",
-        VERSION,
-        version);
-
+    // The first element signifies the "version", but this value is ignored as of EIP-8
+    in.readBigIntegerScalar();
     final Endpoint from = Endpoint.decodeStandalone(in);
     final Endpoint to = Endpoint.decodeStandalone(in);
     final long expiration = in.readLongScalar();
-    in.leaveList();
+    in.leaveListLenient();
     return new PingPacketData(from, to, expiration);
   }
 

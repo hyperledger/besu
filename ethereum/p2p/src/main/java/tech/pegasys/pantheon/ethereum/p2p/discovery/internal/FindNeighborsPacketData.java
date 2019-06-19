@@ -52,7 +52,7 @@ public class FindNeighborsPacketData implements PacketData {
     in.enterList();
     final BytesValue target = in.readBytesValue();
     final long expiration = in.readLongScalar();
-    in.leaveList();
+    in.leaveListLenient();
     return new FindNeighborsPacketData(target, expiration);
   }
 
