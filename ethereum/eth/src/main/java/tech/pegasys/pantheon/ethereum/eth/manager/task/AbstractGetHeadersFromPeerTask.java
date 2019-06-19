@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.eth.messages.BlockHeadersMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.MessageData;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
 import java.util.ArrayList;
@@ -86,16 +87,27 @@ public abstract class AbstractGetHeadersFromPeerTask
 
     final List<BlockHeader> headersList = new ArrayList<>();
     headersList.add(firstHeader);
-    long prevNumber = firstHeader.getNumber();
-
+    BlockHeader prevBlockHeader = firstHeader;
     final int expectedDelta = reverse ? -(skip + 1) : (skip + 1);
     for (int i = 1; i < headers.size(); i++) {
       final BlockHeader header = headers.get(i);
-      if (header.getNumber() != prevNumber + expectedDelta) {
+      if (header.getNumber() != prevBlockHeader.getNumber() + expectedDelta) {
         // Skip doesn't match, this isn't our data
         return Optional.empty();
       }
-      prevNumber = header.getNumber();
+      // if headers are supposed to be sequential check if a chain is formed
+      if (Math.abs(expectedDelta) == 1) {
+        final BlockHeader parent = reverse ? header : prevBlockHeader;
+        final BlockHeader child = reverse ? prevBlockHeader : header;
+        if (!parent.getHash().equals(child.getParentHash())) {
+          LOG.debug(
+              "Sequential headers must form a chain through hashes, disconnecting peer: {}",
+              peer.toString());
+          peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+          return Optional.empty();
+        }
+      }
+      prevBlockHeader = header;
       headersList.add(header);
     }
 

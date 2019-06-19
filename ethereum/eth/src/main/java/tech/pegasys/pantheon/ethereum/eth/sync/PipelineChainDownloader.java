@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.EthTaskException;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
@@ -121,6 +122,16 @@ public class PipelineChainDownloader<C> implements ChainDownloader {
       // Allowing the normal looping logic to retry after a brief delay.
       return scheduler.scheduleFutureTask(() -> completedFuture(null), PAUSE_AFTER_ERROR_DURATION);
     }
+    if (ExceptionUtils.rootCause(error) instanceof InvalidBlockException) {
+      syncState
+          .syncTarget()
+          .ifPresent(
+              syncTarget ->
+                  syncTarget
+                      .peer()
+                      .disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL));
+    }
+
     logDownloadFailure("Chain download failed.", error);
     // Propagate the error out, terminating this chain download.
     return completedExceptionally(error);
