@@ -14,10 +14,8 @@ package tech.pegasys.pantheon.metrics.prometheus;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Streams.stream;
-import static tech.pegasys.pantheon.util.NetworkUtility.urlForSocketAddress;
 
 import tech.pegasys.pantheon.metrics.MetricsSystem;
-import tech.pegasys.pantheon.util.NetworkUtility;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,7 +28,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -68,9 +65,7 @@ class MetricsHttpService implements MetricsService {
   }
 
   private void validateConfig(final MetricsConfiguration config) {
-    checkArgument(
-        config.getPort() == 0 || NetworkUtility.isValidPort(config.getPort()),
-        "Invalid port configuration.");
+    checkArgument(config.getPort() >= 0 && config.getPort() < 65535, "Invalid port configuration.");
     checkArgument(config.getHost() != null, "Required host is not configured.");
     checkArgument(
         !(config.isEnabled() && config.isPushEnabled()),
@@ -230,14 +225,6 @@ class MetricsHttpService implements MetricsService {
       return Optional.empty();
     }
     return Optional.of(httpServer.actualPort());
-  }
-
-  @VisibleForTesting
-  public String url() {
-    if (httpServer == null) {
-      return "";
-    }
-    return urlForSocketAddress("http", socketAddress());
   }
 
   // Facilitate remote health-checks in AWS, inter alia.

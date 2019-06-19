@@ -187,8 +187,7 @@ public class RocksDBStats {
       final Statistics stats, final HistogramType histogram) {
     return new Collector() {
       final String metricName =
-          PrometheusMetricsSystem.convertToPrometheusName(
-              KVSTORE_ROCKSDB_STATS, histogram.name().toLowerCase());
+          KVSTORE_ROCKSDB_STATS.getName() + "_" + histogram.name().toLowerCase();
 
       @Override
       public List<MetricFamilySamples> collect() {
