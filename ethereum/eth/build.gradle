@@ -55,7 +55,6 @@ dependencies {
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
-
   jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')

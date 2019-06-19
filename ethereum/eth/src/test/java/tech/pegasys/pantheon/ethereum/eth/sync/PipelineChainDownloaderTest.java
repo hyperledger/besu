@@ -31,6 +31,8 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
+import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.pipeline.Pipeline;
 
@@ -44,6 +46,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -249,6 +252,23 @@ public class PipelineChainDownloaderTest {
     // And then things are complete when the pipeline is actually complete.
     pipelineFuture.completeExceptionally(new CancellationException("Pipeline aborted"));
     assertCancelled(result);
+  }
+
+  @Test
+  public void shouldDisconnectPeerIfInvalidBlockException() {
+    final CompletableFuture<SyncTarget> selectTargetFuture = new CompletableFuture<>();
+    when(syncTargetManager.shouldContinueDownloading()).thenReturn(false);
+    when(syncTargetManager.findSyncTarget(Optional.empty()))
+        .thenReturn(selectTargetFuture)
+        .thenReturn(new CompletableFuture<>());
+    final EthPeer ethPeer = Mockito.mock(EthPeer.class);
+    final BlockHeader commonAncestor = Mockito.mock(BlockHeader.class);
+    final SyncTarget target = new SyncTarget(ethPeer, commonAncestor);
+    when(syncState.syncTarget()).thenReturn(Optional.of(target));
+    chainDownloader.start();
+    verify(syncTargetManager).findSyncTarget(Optional.empty());
+    selectTargetFuture.completeExceptionally(new InvalidBlockException("", 1, null));
+    verify(ethPeer).disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
   }
 
   private CompletableFuture<Void> expectPipelineStarted(final SyncTarget syncTarget) {
