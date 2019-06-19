@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -13,16 +13,16 @@
 package tech.pegasys.pantheon.metrics;
 
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.Set;
 
-public enum PantheonMetricCategory {
-  BIG_QUEUE("big_queue"),
+import com.google.common.collect.ImmutableSet;
+
+public enum PantheonMetricCategory implements MetricCategory {
   BLOCKCHAIN("blockchain"),
   EXECUTORS("executors"),
-  JVM("jvm", false),
   NETWORK("network"),
   PEERS("peers"),
-  PROCESS("process", false),
   PERMISSIONING("permissioning"),
   KVSTORE_ROCKSDB("rocksdb"),
   KVSTORE_ROCKSDB_STATS("rocksdb", false),
@@ -30,9 +30,20 @@ public enum PantheonMetricCategory {
   SYNCHRONIZER("synchronizer"),
   TRANSACTION_POOL("transaction_pool");
 
-  // Why not BIG_QUEUE and ROCKSDB?  They hurt performance under load.
-  public static final Set<PantheonMetricCategory> DEFAULT_METRIC_CATEGORIES =
-      EnumSet.complementOf(EnumSet.of(BIG_QUEUE, KVSTORE_ROCKSDB, KVSTORE_ROCKSDB_STATS));
+  private static final Optional<String> PANTHEON_PREFIX = Optional.of("pantheon_");
+  public static final Set<MetricCategory> DEFAULT_METRIC_CATEGORIES;
+
+  static {
+    // Why not ROCKSDB and KVSTORE_ROCKSDB_STATS?  They hurt performance under load.
+    final EnumSet<PantheonMetricCategory> pantheonCategories =
+        EnumSet.complementOf(EnumSet.of(KVSTORE_ROCKSDB, KVSTORE_ROCKSDB_STATS));
+
+    DEFAULT_METRIC_CATEGORIES =
+        ImmutableSet.<MetricCategory>builder()
+            .addAll(pantheonCategories)
+            .addAll(EnumSet.allOf(StandardMetricCategory.class))
+            .build();
+  }
 
   private final String name;
   private final boolean pantheonSpecific;
@@ -46,11 +57,13 @@ public enum PantheonMetricCategory {
     this.pantheonSpecific = pantheonSpecific;
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
-  public boolean isPantheonSpecific() {
-    return pantheonSpecific;
+  @Override
+  public Optional<String> getAppliationPrefix() {
+    return pantheonSpecific ? PANTHEON_PREFIX : Optional.empty();
   }
 }

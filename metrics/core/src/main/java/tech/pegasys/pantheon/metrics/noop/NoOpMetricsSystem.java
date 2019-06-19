@@ -14,11 +14,11 @@ package tech.pegasys.pantheon.metrics.noop;
 
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.metrics.MetricCategory;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.Observation;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.OperationTimer.TimingContext;
-import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 
 import java.util.function.DoubleSupplier;
 import java.util.stream.Stream;
@@ -42,7 +42,7 @@ public class NoOpMetricsSystem implements MetricsSystem {
 
   @Override
   public LabelledMetric<Counter> createLabelledCounter(
-      final PantheonMetricCategory category,
+      final MetricCategory category,
       final String name,
       final String help,
       final String... labelNames) {
@@ -64,7 +64,7 @@ public class NoOpMetricsSystem implements MetricsSystem {
 
   @Override
   public LabelledMetric<OperationTimer> createLabelledTimer(
-      final PantheonMetricCategory category,
+      final MetricCategory category,
       final String name,
       final String help,
       final String... labelNames) {
@@ -82,13 +82,13 @@ public class NoOpMetricsSystem implements MetricsSystem {
 
   @Override
   public void createGauge(
-      final PantheonMetricCategory category,
+      final MetricCategory category,
       final String name,
       final String help,
       final DoubleSupplier valueSupplier) {}
 
   @Override
-  public Stream<Observation> streamObservations(final PantheonMetricCategory category) {
+  public Stream<Observation> streamObservations(final MetricCategory category) {
     return Stream.empty();
   }
 

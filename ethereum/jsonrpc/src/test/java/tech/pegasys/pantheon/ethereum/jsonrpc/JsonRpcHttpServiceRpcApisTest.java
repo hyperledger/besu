@@ -257,7 +257,7 @@ public class JsonRpcHttpServiceRpcApisTest {
   }
 
   private MetricsConfiguration createMetricsConfiguration() {
-    return MetricsConfiguration.builder().enabled(true).build();
+    return MetricsConfiguration.builder().enabled(true).port(0).build();
   }
 
   private JsonRpcHttpService createJsonRpcHttpService(

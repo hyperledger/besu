@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.metrics.prometheus;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import tech.pegasys.pantheon.metrics.MetricsSystem;
-import tech.pegasys.pantheon.util.NetworkUtility;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -45,8 +44,7 @@ class MetricsPushGatewayService implements MetricsService {
 
   private void validateConfig(final MetricsConfiguration config) {
     checkArgument(
-        config.getPushPort() == 0 || NetworkUtility.isValidPort(config.getPushPort()),
-        "Invalid port configuration.");
+        config.getPushPort() >= 0 && config.getPushPort() < 65536, "Invalid port configuration.");
     checkArgument(config.getPushHost() != null, "Required host is not configured.");
     checkArgument(
         !(config.isEnabled() && config.isPushEnabled()),
