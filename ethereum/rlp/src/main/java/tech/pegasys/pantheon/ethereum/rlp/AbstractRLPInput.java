@@ -494,7 +494,11 @@ abstract class AbstractRLPInput implements RLPInput {
   }
 
   @Override
-  public void leaveList(final boolean ignoreRest) {
+  public void leaveListLenient() {
+    leaveList(true);
+  }
+
+  private void leaveList(final boolean ignoreRest) {
     checkState(depth > 0, "Not within an RLP list");
 
     if (!ignoreRest) {

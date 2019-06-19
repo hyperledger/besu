@@ -452,7 +452,7 @@ public class BytesValueRLPInputTest {
     final RLPInput in = RLP.input(h("0xc80102c51112c22122"));
     assertThat(in.enterList()).isEqualTo(3);
     assertThat(in.readByte()).isEqualTo((byte) 0x01);
-    in.leaveList(true);
+    in.leaveListLenient();
   }
 
   @Test
@@ -460,7 +460,7 @@ public class BytesValueRLPInputTest {
     final RLPInput in = RLP.input(h("0xc80102c51112c22122"));
     assertThat(in.enterList()).isEqualTo(3);
     assertThat(in.readByte()).isEqualTo((byte) 0x01);
-    assertThatThrownBy(() -> in.leaveList(false))
+    assertThatThrownBy(() -> in.leaveList())
         .isInstanceOf(RLPException.class)
         .hasMessageStartingWith("Not at the end of the current list");
   }

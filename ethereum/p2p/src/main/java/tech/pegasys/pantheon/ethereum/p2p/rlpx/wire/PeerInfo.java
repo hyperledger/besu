@@ -61,7 +61,7 @@ public class PeerInfo {
         in.nextIsNull() ? Collections.emptyList() : in.readList(Capability::readFrom);
     final int port = in.readIntScalar();
     final BytesValue nodeId = in.readBytesValue();
-    in.leaveList(true);
+    in.leaveListLenient();
     return new PeerInfo(version, clientId, caps, port, nodeId);
   }
 

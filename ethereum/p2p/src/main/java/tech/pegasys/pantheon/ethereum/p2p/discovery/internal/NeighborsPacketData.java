@@ -45,7 +45,7 @@ public class NeighborsPacketData implements PacketData {
     in.enterList();
     final List<DiscoveryPeer> peers = in.readList(DiscoveryPeer::readFrom);
     final long expiration = in.readLongScalar();
-    in.leaveList();
+    in.leaveListLenient();
     return new NeighborsPacketData(peers, expiration);
   }
 
