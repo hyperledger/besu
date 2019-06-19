@@ -32,6 +32,7 @@ public enum RpcMethod {
   DEBUG_TRACE_BLOCK_BY_NUMBER("debug_traceBlockByNumber"),
   DEBUG_TRACE_TRANSACTION("debug_traceTransaction"),
   EEA_GET_TRANSACTION_COUNT("eea_getTransactionCount"),
+  EEA_GET_PRIVACY_PRECOMPILE_ADDRESS("eea_getPrivacyPrecompileAddress"),
   EEA_GET_TRANSACTION_RECEIPT("eea_getTransactionReceipt"),
   EEA_SEND_RAW_TRANSACTION("eea_sendRawTransaction"),
   ETH_ACCOUNTS("eth_accounts"),
