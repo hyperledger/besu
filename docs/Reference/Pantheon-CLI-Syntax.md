@@ -220,7 +220,7 @@ The default is 8547. Ports must be [exposed appropriately](../Configuring-Panthe
 ### host-whitelist
 
 ```bash tab="Syntax"
---host-whitelist=<hostname>[,<hostname>...]... or *
+--host-whitelist=<hostname>[,<hostname>...]... or "*"
 ```
 
 ```bash tab="Example Command Line"
@@ -235,7 +235,7 @@ Comma-separated list of hostnames to allow [access to the JSON-RPC API](../Panth
 By default, access from `localhost` and `127.0.0.1` is accepted. 
 
 !!!tip
-    To allow all hostnames, use `*`. We don't recommend allowing all hostnames for production code.
+    To allow all hostnames, use `"*"`. We don't recommend allowing all hostnames for production code.
 
 ### max-peers
 
@@ -858,7 +858,7 @@ Set to `true` to require [authentication](../Pantheon-API/Authentication.md) for
 ### rpc-http-cors-origins
 
 ```bash tab="Syntax"
---rpc-http-cors-origins=<url>[,<url>...]... or all or *
+--rpc-http-cors-origins=<url>[,<url>...]... or all or "*"
 ```
 
 ```bash tab="Example Command Line"

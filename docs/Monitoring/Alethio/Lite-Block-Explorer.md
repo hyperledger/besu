@@ -32,7 +32,7 @@ To run the Ethereum Lite Explorer using the Docker image:
         To run Pantheon in development mode:
         
         ```bash
-        pantheon --network=dev --miner-enabled --miner-coinbase=0xfe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-cors-origins="all" --host-whitelist=* --rpc-http-enabled --data-path=/tmp/tmpDatdir
+        pantheon --network=dev --miner-enabled --miner-coinbase=0xfe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-cors-origins="all" --host-whitelist="*" --rpc-http-enabled --data-path=/tmp/tmpDatdir
         ```
 
 1. Run the `alethio/ethereum-lite-explorer` Docker image specifying the JSON-RPC HTTP URL (`http://localhost:8545` in this example): 
@@ -88,7 +88,7 @@ To run the Ethereum Lite Explorer using the Docker image:
         To run Pantheon in development mode:
         
         ```bash
-        pantheon --network=dev --miner-enabled --miner-coinbase=0xfe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-cors-origins="all" --host-whitelist=* --rpc-http-enabled --data-path=/tmp/tmpDatdir
+        pantheon --network=dev --miner-enabled --miner-coinbase=0xfe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-cors-origins="all" --host-whitelist="*" --rpc-http-enabled --data-path=/tmp/tmpDatdir
         ```
         
 1. In the `ethereum-lite-explorer` directory, run the Lite Explorer in development mode: 

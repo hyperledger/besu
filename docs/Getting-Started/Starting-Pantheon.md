@@ -69,7 +69,7 @@ call [JSON-RPC API methods](../Reference/Pantheon-API-Methods.md) to confirm the
 To run a node that mines blocks at a rate suitable for testing purposes: 
 
 ```bash
-pantheon --network=dev --miner-enabled --miner-coinbase=0xfe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-cors-origins="all" --host-whitelist=* --rpc-ws-enabled --rpc-http-enabled --data-path=/tmp/tmpDatdir
+pantheon --network=dev --miner-enabled --miner-coinbase=0xfe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-cors-origins="all" --host-whitelist="*" --rpc-ws-enabled --rpc-http-enabled --data-path=/tmp/tmpDatdir
 ```
 
 Alternatively, use the following [configuration file](../Configuring-Pantheon/Using-Configuration-File.md) 
