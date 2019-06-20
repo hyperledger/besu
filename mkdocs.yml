@@ -118,7 +118,7 @@ nav:
         - Using Wallets for Account Management: Using-Pantheon/Account-Management.md
         - Mining: Using-Pantheon/Mining.md
     - Monitoring:
-        - Monitoring Performances: Monitoring/Monitoring-Performances.md
+        - Monitoring Performance: Monitoring/Monitoring-Performance.md
         - Monitoring Network:
           - Alethio Overview: Monitoring/Alethio/Overview.md
           - Alethio Ethereum Lite Explorer: Monitoring/Alethio/Lite-Block-Explorer.md
