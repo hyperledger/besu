@@ -82,11 +82,11 @@ Copy the following genesis definition to a file called `privateNetworkGenesis.js
 Start Node-1:
 
 ```bash tab="MacOS"
-pantheon --data-path=data --genesis-file=../privateNetworkGenesis.json --bootnodes --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-enabled --host-whitelist=* --rpc-http-cors-origins="all"     
+pantheon --data-path=data --genesis-file=../privateNetworkGenesis.json --bootnodes --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-enabled --host-whitelist="*" --rpc-http-cors-origins="all"     
 ```
 
 ```bash tab="Windows"
-pantheon --data-path=data --genesis-file=..\privateNetworkGenesis.json --bootnodes --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-enabled --host-whitelist=* --rpc-http-cors-origins="all"    
+pantheon --data-path=data --genesis-file=..\privateNetworkGenesis.json --bootnodes --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-http-enabled --host-whitelist="*" --rpc-http-cors-origins="all"    
 ```
 
 The command line specifies: 

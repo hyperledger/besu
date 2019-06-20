@@ -52,10 +52,10 @@ If your application publishes RPC ports, specify the hostnames when starting Pan
     pantheon --host-whitelist=example.com
     ```
     
-Specify * for `--host-whitelist` to effectively disable host protection.
+Specify "*" for `--host-whitelist` to effectively disable host protection.
 
 !!! caution 
-    Specifying * for `--host-whitelist` is not recommended for production code.
+    Specifying "*" for `--host-whitelist` is not recommended for production code.
     
 ## Not Supported by Pantheon
 
