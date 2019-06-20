@@ -520,13 +520,15 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--permissions-accounts-contract-address"},
       description = "Address of the account permissioning smart contract",
-      arity = "1")
+      arity = "1",
+      hidden = true)
   private final Address permissionsAccountsContractAddress = null;
 
   @Option(
       names = {"--permissions-accounts-contract-enabled"},
       description =
-          "Enable account level permissions via smart contract (default: ${DEFAULT-VALUE})")
+          "Enable account level permissions via smart contract (default: ${DEFAULT-VALUE})",
+      hidden = true)
   private final Boolean permissionsAccountsContractEnabled = false;
 
   @Option(
