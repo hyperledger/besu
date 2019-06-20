@@ -62,9 +62,9 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
           + System.lineSeparator()
           + "Commands:"
           + System.lineSeparator()
-          + "  generate-blockchain-config  This command generates blockchain network"
+          + "  generate-blockchain-config  This command generates node keypairs, genesis"
           + System.lineSeparator()
-          + "                                configuration files.";
+          + "                                file (with RLP encoded IBFT 2.0 extra data).";
 
   private Path tmpOutputDirectoryPath;
 

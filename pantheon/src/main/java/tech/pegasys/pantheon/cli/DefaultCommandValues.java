@@ -31,6 +31,7 @@ public interface DefaultCommandValues {
 
   String MANDATORY_PATH_FORMAT_HELP = "<PATH>";
   String MANDATORY_FILE_FORMAT_HELP = "<FILE>";
+  String MANDATORY_DIRECTORY_FORMAT_HELP = "<DIRECTORY>";
   String PANTHEON_HOME_PROPERTY_NAME = "pantheon.home";
   String DEFAULT_DATA_DIR_PATH = "./build/data";
   String MANDATORY_INTEGER_FORMAT_HELP = "<INTEGER>";

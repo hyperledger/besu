@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.cli.operator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static tech.pegasys.pantheon.cli.DefaultCommandValues.MANDATORY_DIRECTORY_FORMAT_HELP;
 import static tech.pegasys.pantheon.cli.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
 import static tech.pegasys.pantheon.cli.DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP;
 import static tech.pegasys.pantheon.cli.operator.OperatorSubCommand.COMMAND_NAME;
@@ -83,7 +84,8 @@ public class OperatorSubCommand implements Runnable {
 
   @Command(
       name = "generate-blockchain-config",
-      description = "This command generates blockchain network configuration files.",
+      description =
+          "This command generates node keypairs, genesis file (with RLP encoded IBFT 2.0 extra data).",
       mixinStandardHelpOptions = true)
   static class GenerateNetworkConfigSubCommand implements Runnable {
     @Option(
@@ -97,7 +99,7 @@ public class OperatorSubCommand implements Runnable {
     @Option(
         required = true,
         names = "--to",
-        paramLabel = MANDATORY_FILE_FORMAT_HELP,
+        paramLabel = MANDATORY_DIRECTORY_FORMAT_HELP,
         description = "Directory to write output files to.",
         arity = "1..1")
     private File outputDirectory = null;
