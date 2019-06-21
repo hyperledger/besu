@@ -51,6 +51,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -64,7 +65,10 @@ public class RlpxAgent {
   private final ConnectionInitializer connectionInitializer;
 
   private final int maxPeers;
-  private final Map<BytesValue, RlpxConnection> connectionsById = new ConcurrentHashMap<>();
+
+  @VisibleForTesting
+  final Map<BytesValue, RlpxConnection> connectionsById = new ConcurrentHashMap<>();
+
   private final PeerProperties peerProperties;
 
   private final AtomicBoolean started = new AtomicBoolean(false);
@@ -229,7 +233,8 @@ public class RlpxAgent {
                 (conn) -> {
                   this.dispatchConnect(conn.getPeerConnection());
                   this.enforceConnectionLimits();
-                });
+                },
+                (failedConn) -> cleanUpPeerConnection(failedConn.getId()));
             return newConnection;
           }
         });
@@ -247,9 +252,13 @@ public class RlpxAgent {
       final PeerConnection peerConnection,
       final DisconnectReason disconnectReason,
       final boolean initiatedByPeer) {
+    cleanUpPeerConnection(peerConnection.getPeer().getId());
+  }
+
+  private void cleanUpPeerConnection(final BytesValue peerId) {
     connectionsById.compute(
-        peerConnection.getPeer().getId(),
-        (peerId, trackedConnection) -> {
+        peerId,
+        (id, trackedConnection) -> {
           if (isNull(trackedConnection) || trackedConnection.isFailedOrDisconnected()) {
             // Remove if failed or disconnected
             return null;

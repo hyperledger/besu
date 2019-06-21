@@ -60,13 +60,15 @@ public abstract class RlpxConnection {
 
   public abstract boolean initiatedRemotely();
 
-  public void subscribeConnectionEstablished(final RlpxConnectCallback callback) {
+  public void subscribeConnectionEstablished(
+      final RlpxConnectCallback successCallback, final RlpxConnectFailedCallback failedCallback) {
     future.whenComplete(
         (conn, err) -> {
           if (err != null) {
-            return;
+            failedCallback.onFailure(this);
+          } else {
+            successCallback.onConnect(this);
           }
-          callback.onConnect(this);
         });
   }
 
@@ -220,5 +222,10 @@ public abstract class RlpxConnection {
   @FunctionalInterface
   public interface RlpxConnectCallback {
     void onConnect(RlpxConnection connection);
+  }
+
+  @FunctionalInterface
+  public interface RlpxConnectFailedCallback {
+    void onFailure(RlpxConnection connection);
   }
 }
