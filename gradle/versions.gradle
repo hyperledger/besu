@@ -27,7 +27,7 @@ dependencyManagement {
 
     dependency 'com.graphql-java:graphql-java:12.0'
 
-    dependency 'com.google.guava:guava:27.1-jre'
+    dependency 'com.google.guava:guava:28.0-jre'
 
     dependency 'com.squareup.okhttp3:okhttp:3.14.2'
 
@@ -42,7 +42,7 @@ dependencyManagement {
     dependency 'io.prometheus:simpleclient_hotspot:0.6.0'
     dependency 'io.prometheus:simpleclient_pushgateway:0.6.0'
 
-    dependency 'io.reactivex.rxjava2:rxjava:2.2.8'
+    dependency 'io.reactivex.rxjava2:rxjava:2.2.9'
 
     dependency 'io.vertx:vertx-auth-jwt:3.7.1'
     dependency 'io.vertx:vertx-codegen:3.7.1'
@@ -54,7 +54,7 @@ dependencyManagement {
 
     dependency 'net.consensys.cava:cava-toml:0.5.0'
 
-    dependency 'net.consensys:orion:0.9.0'
+    dependency 'net.consensys:orion:1.0.0'
 
     dependency 'org.apache.commons:commons-text:1.6'
 
@@ -66,11 +66,11 @@ dependencyManagement {
 
     dependency 'org.awaitility:awaitility:3.1.6'
 
-    dependency 'org.bouncycastle:bcprov-jdk15on:1.61'
+    dependency 'org.bouncycastle:bcprov-jdk15on:1.62'
 
     dependency 'org.java-websocket:Java-WebSocket:1.4.0'
 
-    dependency 'org.mockito:mockito-core:2.27.0'
+    dependency 'org.mockito:mockito-core:2.28.2'
 
     dependency 'org.openjdk.jmh:jmh-core:1.21'
     dependency 'org.openjdk.jmh:jmh-generator-annprocess:1.21'
@@ -79,9 +79,9 @@ dependencyManagement {
 
     dependency 'org.springframework.security:spring-security-crypto:5.1.5.RELEASE'
 
-    dependency 'org.web3j:abi:4.3.0'
-    dependency 'org.web3j:core:4.3.0'
-    dependency 'org.web3j:crypto:4.3.0'
+    dependency 'org.web3j:abi:4.3.1'
+    dependency 'org.web3j:core:4.3.1'
+    dependency 'org.web3j:crypto:4.3.1'
 
     dependency 'org.xerial.snappy:snappy-java:1.1.7.3'
 
