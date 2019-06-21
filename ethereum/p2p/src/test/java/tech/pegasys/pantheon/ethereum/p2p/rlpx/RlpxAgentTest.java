@@ -139,6 +139,19 @@ public class RlpxAgentTest {
   }
 
   @Test
+  public void connect_fails() {
+    connectionInitializer.setAutocompleteConnections(false);
+    startAgent();
+    final Peer peer = createPeer();
+    final CompletableFuture<PeerConnection> connection = agent.connect(peer);
+
+    // Fail connection
+    connection.completeExceptionally(new RuntimeException("whoopsies"));
+
+    assertPeerConnectionNotTracked(peer);
+  }
+
+  @Test
   public void connect_toDiscoveryPeerUpdatesStats() {
     startAgent();
     final DiscoveryPeer peer = DiscoveryPeer.fromEnode(enode());
@@ -176,7 +189,7 @@ public class RlpxAgentTest {
         .hasCauseInstanceOf(IllegalStateException.class)
         .hasMessageContaining("Cannot connect before")
         .hasMessageContaining("has finished starting");
-    assertThat(agent.getPeerConnection(peer)).isEmpty();
+    assertPeerConnectionNotTracked(peer);
   }
 
   @Test
@@ -186,7 +199,7 @@ public class RlpxAgentTest {
     final PeerConnection connection = connection(peer);
     connectionInitializer.simulateIncomingConnection(connection);
 
-    assertThat(agent.getPeerConnection(peer)).isEmpty();
+    assertPeerConnectionNotTracked(peer);
     assertThat(agent.getConnectionCount()).isEqualTo(0);
   }
 
@@ -202,7 +215,7 @@ public class RlpxAgentTest {
     assertThatThrownBy(connection::get)
         .hasCauseInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Attempt to connect to peer with no listening port");
-    assertThat(agent.getPeerConnection(peer)).isEmpty();
+    assertPeerConnectionNotTracked(peer);
   }
 
   @Test
@@ -276,7 +289,7 @@ public class RlpxAgentTest {
     assertThatThrownBy(connection::get)
         .hasCauseInstanceOf(IllegalStateException.class)
         .hasMessageContaining("Max peer peer connections established (1). Cannot connect to peer");
-    assertThat(agent.getPeerConnection(peer)).isEmpty();
+    assertPeerConnectionNotTracked(peer);
     assertThat(agent.getConnectionCount()).isEqualTo(1);
   }
 
@@ -384,7 +397,7 @@ public class RlpxAgentTest {
 
     // Existing connection should be disconnected
     assertThat(agent.getConnectionCount()).isEqualTo(1);
-    assertThat(agent.getPeerConnection(peerA)).isEmpty();
+    assertPeerConnectionNotTracked(peerA);
     assertThat(agent.getPeerConnection(peerB)).isNotEmpty();
     assertThat(existingConnection.isDisconnected()).isTrue();
     assertThat(existingConnection.getDisconnectReason()).contains(DisconnectReason.TOO_MANY_PEERS);
@@ -411,7 +424,7 @@ public class RlpxAgentTest {
 
     // Incoming connection should be disconnected
     assertThat(agent.getConnectionCount()).isEqualTo(1);
-    assertThat(agent.getPeerConnection(peerB)).isEmpty();
+    assertPeerConnectionNotTracked(peerB);
     assertThat(agent.getPeerConnection(peerA)).isNotEmpty();
     assertThat(connection.isDisconnected()).isTrue();
     assertThat(connection.getDisconnectReason()).contains(DisconnectReason.TOO_MANY_PEERS);
@@ -459,7 +472,7 @@ public class RlpxAgentTest {
     assertThat(connection).isCompletedExceptionally();
 
     assertThatThrownBy(connection::get).hasCauseInstanceOf(PeerPermissionsException.class);
-    assertThat(agent.getPeerConnection(peer)).isEmpty();
+    assertPeerConnectionNotTracked(peer);
   }
 
   @Test
@@ -473,7 +486,7 @@ public class RlpxAgentTest {
             eq(localNode.getPeer()), eq(peer), eq(Action.RLPX_ALLOW_NEW_INBOUND_CONNECTION));
     connectionInitializer.simulateIncomingConnection(connection);
 
-    assertThat(agent.getPeerConnection(peer)).isEmpty();
+    assertPeerConnectionNotTracked(peer);
     assertThat(connection.getDisconnectReason()).contains(DisconnectReason.UNKNOWN);
   }
 
@@ -510,7 +523,7 @@ public class RlpxAgentTest {
     assertThat(agent.getConnectionCount()).isEqualTo(0);
     assertThat(connection.isDisconnected()).isTrue();
     assertThat(connection.getDisconnectReason()).contains(reason);
-    assertThat(agent.getPeerConnection(peer)).isEmpty();
+    assertPeerConnectionNotTracked(peer);
 
     // Additional requests to disconnect should do nothing
     agent.disconnect(peer.getId(), reason);
@@ -562,7 +575,7 @@ public class RlpxAgentTest {
 
     assertThat(agent.getConnectionCount()).isEqualTo(1);
     assertThat(agent.getPeerConnection(permittedPeer)).isNotEmpty();
-    assertThat(agent.getPeerConnection(nonPermittedPeer)).isEmpty();
+    assertPeerConnectionNotTracked(nonPermittedPeer);
     assertThat(permittedConnection.isDisconnected()).isFalse();
     assertThat(nonPermittedConnection.isDisconnected()).isTrue();
   }
@@ -589,7 +602,7 @@ public class RlpxAgentTest {
 
     assertThat(agent.getConnectionCount()).isEqualTo(1);
     assertThat(agent.getPeerConnection(permittedPeer)).isNotEmpty();
-    assertThat(agent.getPeerConnection(nonPermittedPeer)).isEmpty();
+    assertPeerConnectionNotTracked(nonPermittedPeer);
     assertThat(permittedConnection.isDisconnected()).isFalse();
     assertThat(nonPermittedConnection.isDisconnected()).isTrue();
   }
@@ -601,8 +614,7 @@ public class RlpxAgentTest {
     final Peer remotelyConnectedPeer = createPeer();
     startAgent();
     final PeerConnection locallyInitiatedConnection = agent.connect(locallyConnectedPeer).get();
-    final PeerConnection remotelyInitiatedConnection =
-        MockPeerConnection.create(remotelyConnectedPeer);
+    final PeerConnection remotelyInitiatedConnection = connection(remotelyConnectedPeer);
     connectionInitializer.simulateIncomingConnection(remotelyInitiatedConnection);
 
     // Sanity check
@@ -618,7 +630,7 @@ public class RlpxAgentTest {
 
     assertThat(agent.getConnectionCount()).isEqualTo(1);
     assertThat(agent.getPeerConnection(locallyConnectedPeer)).isNotEmpty();
-    assertThat(agent.getPeerConnection(remotelyConnectedPeer)).isEmpty();
+    assertPeerConnectionNotTracked(remotelyConnectedPeer);
     assertThat(locallyInitiatedConnection.isDisconnected()).isFalse();
     assertThat(remotelyInitiatedConnection.isDisconnected()).isTrue();
   }
@@ -630,8 +642,7 @@ public class RlpxAgentTest {
     final Peer remotelyConnectedPeer = createPeer();
     startAgent();
     final PeerConnection locallyInitiatedConnection = agent.connect(locallyConnectedPeer).get();
-    final PeerConnection remotelyInitiatedConnection =
-        MockPeerConnection.create(remotelyConnectedPeer);
+    final PeerConnection remotelyInitiatedConnection = connection(remotelyConnectedPeer);
     connectionInitializer.simulateIncomingConnection(remotelyInitiatedConnection);
 
     // Sanity check
@@ -646,7 +657,7 @@ public class RlpxAgentTest {
     peerPermissions.testDispatchUpdate(true, Optional.empty());
 
     assertThat(agent.getConnectionCount()).isEqualTo(1);
-    assertThat(agent.getPeerConnection(locallyConnectedPeer)).isEmpty();
+    assertPeerConnectionNotTracked(locallyConnectedPeer);
     assertThat(agent.getPeerConnection(remotelyConnectedPeer)).isNotEmpty();
     assertThat(locallyInitiatedConnection.isDisconnected()).isTrue();
     assertThat(remotelyInitiatedConnection.isDisconnected()).isFalse();
@@ -774,6 +785,11 @@ public class RlpxAgentTest {
     assertThat(future).isDone();
 
     assertThat(agent.getPeerConnection(peer)).contains(future);
+  }
+
+  private void assertPeerConnectionNotTracked(final Peer peer) {
+    assertThat(agent.getPeerConnection(peer)).isEmpty();
+    assertThat(agent.connectionsById.get(peer.getId())).isNull();
   }
 
   private void startAgent() {
