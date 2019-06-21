@@ -185,20 +185,20 @@ try {
                 def stage_name = 'Kubernetes Docker image node: '
                 def image = imageRepos + '/pantheon-kubernetes:' + imageTag
                 def kubernetes_folder = 'kubernetes'
-                def kubernetes_image_build_script = kubernetes_folder + '/build_image.sh'
                 def version_property_file = 'gradle.properties'
                 def reports_folder = kubernetes_folder + '/reports'
                 def dockerfile = kubernetes_folder + '/Dockerfile'
                 node {
                     checkout scm
-                    unstash 'distTarBall'
                     docker.image(build_image).inside() {
                         stage(stage_name + 'Dockerfile lint') {
                             sh "docker run --rm -i hadolint/hadolint < ${dockerfile}"
                         }
+
                         stage(stage_name + 'Build image') {
-                            sh "${kubernetes_image_build_script} '${image}'"
+                            sh './gradlew docker'
                         }
+
                         stage(stage_name + "Test image labels") {
                             shortCommit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
                             version = sh(returnStdout: true, script: "grep -oE \"version=(.*)\" ${version_property_file} | cut -d= -f2").trim()
@@ -211,6 +211,7 @@ try {
     ${image} \
     | grep ${version}"
                         }
+
                         try {
                             stage(stage_name + 'Test image') {
                                 sh "mkdir -p ${reports_folder}"
