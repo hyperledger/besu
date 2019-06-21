@@ -28,6 +28,7 @@ import static tech.pegasys.pantheon.metrics.PantheonMetricCategory.DEFAULT_METRI
 import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
 import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
 
+import tech.pegasys.pantheon.PantheonInfo;
 import tech.pegasys.pantheon.Runner;
 import tech.pegasys.pantheon.RunnerBuilder;
 import tech.pegasys.pantheon.cli.PublicKeySubCommand.KeyLoader;
@@ -690,6 +691,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       System.out.println("Setting logging level to " + logLevel.name());
       Configurator.setAllLevels("", logLevel);
     }
+
+    logger.info("Starting Pantheon version: {}", PantheonInfo.version());
 
     // Check that P2P options are able to work or send an error
     checkOptionDependencies(
