@@ -14,7 +14,10 @@ package tech.pegasys.pantheon.ethereum.core;
 
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.Objects;
 import java.util.Optional;
+
+import com.google.common.base.MoreObjects;
 
 public class MiningParameters {
 
@@ -48,5 +51,35 @@ public class MiningParameters {
 
   public Boolean isMiningEnabled() {
     return enabled;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final MiningParameters that = (MiningParameters) o;
+    return Objects.equals(coinbase, that.coinbase)
+        && Objects.equals(minTransactionGasPrice, that.minTransactionGasPrice)
+        && Objects.equals(extraData, that.extraData)
+        && Objects.equals(enabled, that.enabled);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(coinbase, minTransactionGasPrice, extraData, enabled);
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("coinbase", coinbase)
+        .add("minTransactionGasPrice", minTransactionGasPrice)
+        .add("extraData", extraData)
+        .add("enabled", enabled)
+        .toString();
   }
 }

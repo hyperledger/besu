@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.cli;
 
+import static java.util.Collections.emptyMap;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
@@ -63,7 +64,7 @@ public class ConfigOptionSearchAndRunHandlerTest {
       new DefaultExceptionHandler<List<Object>>().useErr(errPrintStream).useAnsi(Ansi.OFF);
   private final ConfigOptionSearchAndRunHandler configParsingHandler =
       new ConfigOptionSearchAndRunHandler(
-          resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, false);
+          resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, emptyMap(), false);
 
   @Mock ParseResult mockParseResult;
   @Mock CommandLine mockCommandLine;

@@ -733,6 +733,42 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void envVariableOverridesValueFromConfigFile() {
+    assumeTrue(isFullInstantiation());
+
+    final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
+    final String expectedCoinbase = "0x0000000000000000000000000000000000000004";
+    setEnvironemntVariable("PANTHEON_MINER_COINBASE", expectedCoinbase);
+    parseCommand("--config-file", configFile);
+
+    verify(mockControllerBuilder)
+        .miningParameters(
+            new MiningParameters(
+                Address.fromHexString(expectedCoinbase),
+                DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
+                DefaultCommandValues.DEFAULT_EXTRA_DATA,
+                false));
+  }
+
+  @Test
+  public void cliOptionOverridesEnvVariableAndConfig() {
+    assumeTrue(isFullInstantiation());
+
+    final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
+    final String expectedCoinbase = "0x0000000000000000000000000000000000000006";
+    setEnvironemntVariable("PANTHEON_MINER_COINBASE", "0x0000000000000000000000000000000000000004");
+    parseCommand("--config-file", configFile, "--miner-coinbase", expectedCoinbase);
+
+    verify(mockControllerBuilder)
+        .miningParameters(
+            new MiningParameters(
+                Address.fromHexString(expectedCoinbase),
+                DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
+                DefaultCommandValues.DEFAULT_EXTRA_DATA,
+                false));
+  }
+
+  @Test
   public void configOptionDisabledUnderDocker() {
     System.setProperty("pantheon.docker", "true");
 

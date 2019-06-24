@@ -95,6 +95,7 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -145,6 +146,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final RunnerBuilder runnerBuilder;
   private final PantheonController.Builder controllerBuilderFactory;
   private final PantheonPluginContextImpl pantheonPluginContext;
+  private final Map<String, String> environment;
 
   protected KeyLoader getKeyLoader() {
     return KeyPairUtil::loadKeyPair;
@@ -607,7 +609,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       final SynchronizerConfiguration.Builder synchronizerConfigurationBuilder,
       final EthereumWireProtocolConfiguration.Builder ethereumWireConfigurationBuilder,
       final RocksDbConfiguration.Builder rocksDbConfigurationBuilder,
-      final PantheonPluginContextImpl pantheonPluginContext) {
+      final PantheonPluginContextImpl pantheonPluginContext,
+      final Map<String, String> environment) {
     this.logger = logger;
     this.blockImporter = blockImporter;
     this.runnerBuilder = runnerBuilder;
@@ -616,6 +619,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     this.ethereumWireConfigurationBuilder = ethereumWireConfigurationBuilder;
     this.rocksDbConfigurationBuilder = rocksDbConfigurationBuilder;
     this.pantheonPluginContext = pantheonPluginContext;
+    this.environment = environment;
   }
 
   private StandaloneCommand standaloneCommands;
@@ -680,7 +684,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     // and eventually it will run regular parsing of the remaining options.
     final ConfigOptionSearchAndRunHandler configParsingHandler =
         new ConfigOptionSearchAndRunHandler(
-            resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, isDocker);
+            resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment, isDocker);
     commandLine.parseWithHandlers(configParsingHandler, exceptionHandler, args);
   }
 
