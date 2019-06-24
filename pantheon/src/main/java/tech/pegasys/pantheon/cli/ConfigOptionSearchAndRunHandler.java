@@ -15,10 +15,12 @@ package tech.pegasys.pantheon.cli;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import picocli.CommandLine;
 import picocli.CommandLine.AbstractParseResultHandler;
 import picocli.CommandLine.ExecutionException;
+import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParseResult;
 
@@ -28,16 +30,19 @@ class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<List<Ob
   private final AbstractParseResultHandler<List<Object>> resultHandler;
   private final CommandLine.IExceptionHandler2<List<Object>> exceptionHandler;
   private final String configFileOptionName;
+  private final Map<String, String> environment;
   private final boolean isDocker;
 
   ConfigOptionSearchAndRunHandler(
       final AbstractParseResultHandler<List<Object>> resultHandler,
       final CommandLine.IExceptionHandler2<List<Object>> exceptionHandler,
       final String configFileOptionName,
+      final Map<String, String> environment,
       final boolean isDocker) {
     this.resultHandler = resultHandler;
     this.exceptionHandler = exceptionHandler;
     this.configFileOptionName = configFileOptionName;
+    this.environment = environment;
     this.isDocker = isDocker;
     // use the same output as the regular options handler to ensure that outputs are all going
     // in the same place. No need to do this for the exception handler as we reuse it directly.
@@ -55,9 +60,11 @@ class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<List<Ob
       } catch (final Exception e) {
         throw new ExecutionException(commandLine, e.getMessage(), e);
       }
-      final TomlConfigFileDefaultProvider tomlConfigFileDefaultProvider =
-          new TomlConfigFileDefaultProvider(commandLine, configFile);
-      commandLine.setDefaultValueProvider(tomlConfigFileDefaultProvider);
+      final IDefaultValueProvider defaultValueProvider =
+          new CascadingDefaultProvider(
+              new EnvironmentVariableDefaultProvider(environment),
+              new TomlConfigFileDefaultProvider(commandLine, configFile));
+      commandLine.setDefaultValueProvider(defaultValueProvider);
     } else if (isDocker) {
       final File configFile = new File(DOCKER_CONFIG_LOCATION);
       if (configFile.exists()) {

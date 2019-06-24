@@ -43,7 +43,8 @@ public final class Pantheon {
             new SynchronizerConfiguration.Builder(),
             EthereumWireProtocolConfiguration.builder(),
             new RocksDbConfiguration.Builder(),
-            new PantheonPluginContextImpl());
+            new PantheonPluginContextImpl(),
+            System.getenv());
 
     pantheonCommand.parse(
         new RunLast().andExit(SUCCESS_EXIT_CODE),
