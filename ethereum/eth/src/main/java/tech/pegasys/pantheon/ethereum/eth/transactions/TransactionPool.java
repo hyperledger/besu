@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
@@ -62,6 +63,7 @@ public class TransactionPool implements BlockAddedObserver {
   private final ProtocolContext<?> protocolContext;
   private final TransactionBatchAddedListener transactionBatchAddedListener;
   private final SyncState syncState;
+  private final Wei minTransactionGasPrice;
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final PeerTransactionTracker peerTransactionTracker;
 
@@ -73,6 +75,7 @@ public class TransactionPool implements BlockAddedObserver {
       final SyncState syncState,
       final EthContext ethContext,
       final PeerTransactionTracker peerTransactionTracker,
+      final Wei minTransactionGasPrice,
       final MetricsSystem metricsSystem) {
     this.pendingTransactions = pendingTransactions;
     this.protocolSchedule = protocolSchedule;
@@ -80,6 +83,7 @@ public class TransactionPool implements BlockAddedObserver {
     this.transactionBatchAddedListener = transactionBatchAddedListener;
     this.syncState = syncState;
     this.peerTransactionTracker = peerTransactionTracker;
+    this.minTransactionGasPrice = minTransactionGasPrice;
 
     duplicateTransactionCounter =
         metricsSystem.createLabelledCounter(
@@ -104,6 +108,9 @@ public class TransactionPool implements BlockAddedObserver {
 
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
       final Transaction transaction) {
+    if (transaction.getGasPrice().compareTo(minTransactionGasPrice) < 0) {
+      return ValidationResult.invalid(TransactionInvalidReason.GAS_PRICE_TOO_LOW);
+    }
     final ValidationResult<TransactionInvalidReason> validationResult =
         validateTransaction(transaction);
 
@@ -128,6 +135,9 @@ public class TransactionPool implements BlockAddedObserver {
       if (pendingTransactions.containsTransaction(transaction.hash())) {
         // We already have this transaction, don't even validate it.
         duplicateTransactionCounter.labels(REMOTE).inc();
+        continue;
+      }
+      if (transaction.getGasPrice().compareTo(minTransactionGasPrice) < 0) {
         continue;
       }
       final ValidationResult<TransactionInvalidReason> validationResult =

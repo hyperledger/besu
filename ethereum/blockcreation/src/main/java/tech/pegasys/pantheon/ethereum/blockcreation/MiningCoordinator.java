@@ -28,9 +28,6 @@ public interface MiningCoordinator {
 
   boolean isRunning();
 
-  // Required for JSON RPC, and are deemed to be valid for all mining mechanisms
-  void setMinTransactionGasPrice(Wei minGasPrice);
-
   Wei getMinTransactionGasPrice();
 
   void setExtraData(BytesValue extraData);

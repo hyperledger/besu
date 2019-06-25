@@ -125,12 +125,6 @@ public abstract class AbstractMiningCoordinator<
     minedBlockObservers.subscribe(obs);
   }
 
-  // Required for JSON RPC, and are deemed to be valid for all mining mechanisms
-  @Override
-  public void setMinTransactionGasPrice(final Wei minGasPrice) {
-    executor.setMinTransactionGasPrice(minGasPrice);
-  }
-
   @Override
   public Wei getMinTransactionGasPrice() {
     return executor.getMinTransactionGasPrice();

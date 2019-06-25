@@ -29,6 +29,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT;
+import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.GAS_PRICE_TOO_LOW;
 import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.NONCE_TOO_LOW;
 import static tech.pegasys.pantheon.ethereum.mainnet.ValidationResult.valid;
 
@@ -56,6 +57,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidationParams;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
+import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
@@ -126,6 +128,7 @@ public class TransactionPoolTest {
             syncState,
             ethContext,
             peerTransactionTracker,
+            Wei.of(2),
             metricsSystem);
     blockchain.observeBlockAdded(transactionPool);
   }
@@ -254,6 +257,37 @@ public class TransactionPoolTest {
   }
 
   @Test
+  public void shouldNotAddRemoteTransactionsWhenGasPriceBelowMinimum() {
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .nonce(1)
+            .gasLimit(0)
+            .gasPrice(Wei.of(1))
+            .createTransaction(KEY_PAIR1);
+    transactionPool.addRemoteTransactions(singletonList(transaction));
+
+    assertTransactionNotPending(transaction);
+    verifyZeroInteractions(transactionValidator); // Reject before validation
+  }
+
+  @Test
+  public void shouldRejectLocalTransactionsWhenGasPriceBelowMinimum() {
+
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .nonce(1)
+            .gasLimit(0)
+            .gasPrice(Wei.of(1))
+            .createTransaction(KEY_PAIR1);
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(transaction);
+
+    assertThat(result).isEqualTo(ValidationResult.invalid(GAS_PRICE_TOO_LOW));
+    assertTransactionNotPending(transaction);
+    verifyZeroInteractions(transactionValidator); // Reject before validation
+  }
+
+  @Test
   public void shouldNotAddRemoteTransactionsThatAreInvalidAccordingToInvariantChecks() {
     givenTransactionIsValid(transaction2);
     when(transactionValidator.validate(transaction1))
@@ -345,6 +379,7 @@ public class TransactionPoolTest {
             syncState,
             ethContext,
             peerTransactionTracker,
+            Wei.ZERO,
             metricsSystem);
 
     when(pendingTransactions.containsTransaction(transaction1.hash())).thenReturn(true);
@@ -461,6 +496,7 @@ public class TransactionPoolTest {
             syncState,
             ethContext,
             peerTransactionTracker,
+            Wei.ZERO,
             metricsSystem);
 
     final TransactionTestFixture builder = new TransactionTestFixture();
@@ -526,6 +562,7 @@ public class TransactionPoolTest {
             syncState,
             ethContext,
             peerTransactionTracker,
+            Wei.ZERO,
             metricsSystem);
 
     final TransactionTestFixture builder = new TransactionTestFixture();

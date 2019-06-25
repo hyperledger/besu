@@ -110,6 +110,7 @@ public class EthGetFilterChangesIntegrationTest {
             syncState,
             ethContext,
             peerTransactionTracker,
+            Wei.ZERO,
             metricsSystem);
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, protocolContext.getWorldStateArchive());

@@ -234,7 +234,8 @@ public abstract class PantheonControllerBuilder<C> {
             maxPendingTransactions,
             metricsSystem,
             syncState,
-            pendingTransactionRetentionPeriod);
+            pendingTransactionRetentionPeriod,
+            miningParameters.getMinTransactionGasPrice());
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
