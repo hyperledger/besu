@@ -19,6 +19,9 @@ import java.math.BigInteger;
  * https://github.com/ethereum/py_ecc/blob/master/py_ecc/bn128/bn128_field_elements.py
  */
 public class AltBn128Fq2Point extends AbstractFieldPoint<AltBn128Fq2Point> {
+  private static BigInteger CURVE_ORDER =
+      new BigInteger(
+          "21888242871839275222246405745257275088548364400416034343698204186575808495617", 10);
 
   public static AltBn128Fq2Point g2() {
     final Fq2 x =
@@ -66,6 +69,10 @@ public class AltBn128Fq2Point extends AbstractFieldPoint<AltBn128Fq2Point> {
     final Fq2 y = getY();
 
     return y.power(2).subtract(x.power(3)).equals(Fq2.b2());
+  }
+
+  public boolean isInGroup() {
+    return multiply(CURVE_ORDER).isInfinity();
   }
 
   @SuppressWarnings("rawtypes")
