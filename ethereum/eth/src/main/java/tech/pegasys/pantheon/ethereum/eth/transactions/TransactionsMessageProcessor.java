@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.transactions;
 
+import static java.time.Instant.now;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.ethereum.core.Transaction;
@@ -20,6 +21,8 @@ import tech.pegasys.pantheon.ethereum.eth.messages.TransactionsMessage;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -39,6 +42,17 @@ class TransactionsMessageProcessor {
   }
 
   void processTransactionsMessage(
+      final EthPeer peer,
+      final TransactionsMessage transactionsMessage,
+      final Instant startedAt,
+      final Duration keepAlive) {
+    // Check if message not expired.
+    if (startedAt.plus(keepAlive).isAfter(now())) {
+      this.processTransactionsMessage(peer, transactionsMessage);
+    }
+  }
+
+  private void processTransactionsMessage(
       final EthPeer peer, final TransactionsMessage transactionsMessage) {
     try {
       LOG.trace("Received transactions message from {}", peer);

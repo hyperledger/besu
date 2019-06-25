@@ -12,13 +12,19 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.transactions;
 
+import static java.time.Instant.now;
+
 import tech.pegasys.pantheon.ethereum.eth.manager.EthMessage;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthMessages.MessageCallback;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.messages.TransactionsMessage;
 
+import java.time.Duration;
+import java.time.Instant;
+
 class TransactionsMessageHandler implements MessageCallback {
 
+  private static final Duration TX_KEEP_ALIVE = Duration.ofMinutes(1);
   private final TransactionsMessageProcessor transactionsMessageProcessor;
   private final EthScheduler scheduler;
 
@@ -32,9 +38,10 @@ class TransactionsMessageHandler implements MessageCallback {
   @Override
   public void exec(final EthMessage message) {
     final TransactionsMessage transactionsMessage = TransactionsMessage.readFrom(message.getData());
+    final Instant startedAt = now();
     scheduler.scheduleTxWorkerTask(
         () ->
             transactionsMessageProcessor.processTransactionsMessage(
-                message.getPeer(), transactionsMessage));
+                message.getPeer(), transactionsMessage, startedAt, TX_KEEP_ALIVE));
   }
 }
