@@ -218,7 +218,7 @@ public abstract class AbstractFqp<T extends AbstractFqp> implements FieldElement
 
   private static int deg(final Fq[] p) {
     int d = p.length - 1;
-    while (p[d].equals(Fq.zero()) && d >= 0) {
+    while (d >= 0 && p[d].equals(Fq.zero())) {
       --d;
     }
     return d;

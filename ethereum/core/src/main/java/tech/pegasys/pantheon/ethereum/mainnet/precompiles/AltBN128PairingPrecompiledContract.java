@@ -34,10 +34,10 @@ public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContr
   private static final int FIELD_LENGTH = 32;
   private static final int PARAMETER_LENGTH = 192;
 
-  private static final BytesValue FALSE =
+  static final BytesValue FALSE =
       BytesValue.fromHexString(
           "0x0000000000000000000000000000000000000000000000000000000000000000");
-  private static final BytesValue TRUE =
+  static final BytesValue TRUE =
       BytesValue.fromHexString(
           "0x0000000000000000000000000000000000000000000000000000000000000001");
 
@@ -79,7 +79,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContr
       final Fq2 p2_x = Fq2.create(p2_xReal, p2_xImag);
       final Fq2 p2_y = Fq2.create(p2_yReal, p2_yImag);
       final AltBn128Fq2Point p2 = new AltBn128Fq2Point(p2_x, p2_y);
-      if (!p2.isOnCurve()) {
+      if (!p2.isOnCurve() || !p2.isInGroup()) {
         return null;
       }
       b.add(p2);
