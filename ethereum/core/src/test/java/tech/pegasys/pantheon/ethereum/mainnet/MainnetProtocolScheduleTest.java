@@ -75,7 +75,7 @@ public class MainnetProtocolScheduleTest {
   }
 
   @Test
-  public void outOfOrderForksFails() {
+  public void outOfOrderConstantinoplesFail() {
     final JsonObject json =
         new JsonObject(
             "{\"config\": {\"homesteadBlock\": 2, \"daoForkBlock\": 3, \"eip150Block\": 14, \"eip158Block\": 15, \"byzantiumBlock\": 16, \"constantinopleBlock\": 18, \"constantinopleFixBlock\": 17, \"chainId\":1234}}");

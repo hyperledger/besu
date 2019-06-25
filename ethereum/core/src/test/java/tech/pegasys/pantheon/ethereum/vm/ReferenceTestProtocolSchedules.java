@@ -51,6 +51,7 @@ public class ReferenceTestProtocolSchedules {
     builder.put(
         "ConstantinopleFix",
         createSchedule(new StubGenesisConfigOptions().constantinopleFixBlock(0)));
+    builder.put("Istanbul", createSchedule(new StubGenesisConfigOptions().istanbulBlock(0)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 

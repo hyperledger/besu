@@ -29,6 +29,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong byzantiumBlockNumber = OptionalLong.empty();
   private OptionalLong constantinopleBlockNumber = OptionalLong.empty();
   private OptionalLong constantinopleFixBlockNumber = OptionalLong.empty();
+  private OptionalLong istanbulBlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
@@ -109,6 +110,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getIstanbulBlockNumber() {
+    return istanbulBlockNumber;
+  }
+
+  @Override
   public OptionalInt getContractSizeLimit() {
     return contractSizeLimit;
   }
@@ -144,6 +150,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getByzantiumBlockNumber().ifPresent(l -> builder.put("byzantiumBlock", l));
     getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
     getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("constantinopleFixBlock", l));
+    getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmStackSize", l));
     if (isClique()) {
@@ -193,6 +200,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions constantinopleFixBlock(final long blockNumber) {
     constantinopleFixBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions istanbulBlock(final long blockNumber) {
+    istanbulBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

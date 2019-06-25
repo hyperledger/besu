@@ -120,6 +120,11 @@ public class ProtocolScheduleBuilder<C> {
         config.getConstantinopleFixBlockNumber(),
         MainnetProtocolSpecs.constantinopleFixDefinition(
             chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getIstanbulBlockNumber(),
+        MainnetProtocolSpecs.istanbulDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;
@@ -166,6 +171,7 @@ public class ProtocolScheduleBuilder<C> {
     lastForkBlock =
         validateForkOrder(
             "ConstantinopleFix", config.getConstantinopleFixBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Istanbul", config.getIstanbulBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 }

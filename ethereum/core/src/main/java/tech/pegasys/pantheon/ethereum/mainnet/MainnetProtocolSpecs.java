@@ -256,6 +256,14 @@ public abstract class MainnetProtocolSpecs {
         .name("ConstantinopleFix");
   }
 
+  public static ProtocolSpecBuilder<Void> istanbulDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit) {
+    return constantinopleFixDefinition(chainId, contractSizeLimit, configStackSizeLimit)
+        .name("Istanbul");
+  }
+
   private static TransactionReceipt frontierTransactionReceiptFactory(
       final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(worldState.rootHash(), gasUsed, result.getLogs());
