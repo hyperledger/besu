@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
+import static tech.pegasys.pantheon.ethereum.eth.manager.MonitoredExecutors.newBoundedThreadPool;
 import static tech.pegasys.pantheon.ethereum.eth.manager.MonitoredExecutors.newCachedThreadPool;
 import static tech.pegasys.pantheon.ethereum.eth.manager.MonitoredExecutors.newFixedThreadPool;
 import static tech.pegasys.pantheon.ethereum.eth.manager.MonitoredExecutors.newScheduledThreadPool;
@@ -45,9 +46,9 @@ public class EthScheduler {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Duration defaultTimeout = Duration.ofSeconds(5);
-
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch shutdown = new CountDownLatch(1);
+  private static final int TX_WORKER_CAPACITY = 1000000;
 
   protected final ExecutorService syncWorkerExecutor;
   protected final ScheduledExecutorService scheduler;
@@ -62,12 +63,24 @@ public class EthScheduler {
       final int txWorkerCount,
       final int computationWorkerCount,
       final MetricsSystem metricsSystem) {
+    this(syncWorkerCount, txWorkerCount, TX_WORKER_CAPACITY, computationWorkerCount, metricsSystem);
+  }
+
+  public EthScheduler(
+      final int syncWorkerCount,
+      final int txWorkerCount,
+      final int txWorkerQueueSize,
+      final int computationWorkerCount,
+      final MetricsSystem metricsSystem) {
     this(
         newFixedThreadPool(
             EthScheduler.class.getSimpleName() + "-Workers", syncWorkerCount, metricsSystem),
         newScheduledThreadPool(EthScheduler.class.getSimpleName() + "-Timer", 1, metricsSystem),
-        newFixedThreadPool(
-            EthScheduler.class.getSimpleName() + "-Transactions", txWorkerCount, metricsSystem),
+        newBoundedThreadPool(
+            EthScheduler.class.getSimpleName() + "-Transactions",
+            txWorkerCount,
+            txWorkerQueueSize,
+            metricsSystem),
         newCachedThreadPool(EthScheduler.class.getSimpleName() + "-Services", metricsSystem),
         newFixedThreadPool(
             EthScheduler.class.getSimpleName() + "-Computation",

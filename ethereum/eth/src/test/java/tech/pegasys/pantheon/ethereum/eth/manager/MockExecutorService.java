@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 public class MockExecutorService implements ExecutorService {
 
   private boolean autoRun = true;
+
   private final List<ExecutorTask<?>> tasks = new ArrayList<>();
 
   // Test utility for inspecting executor's futures

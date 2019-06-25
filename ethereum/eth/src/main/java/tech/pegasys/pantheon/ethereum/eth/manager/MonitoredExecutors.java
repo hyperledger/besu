@@ -12,11 +12,13 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
+import tech.pegasys.pantheon.ethereum.eth.manager.bounded.BoundedQueue;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 
 import java.util.Locale;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -35,6 +37,26 @@ public class MonitoredExecutors {
 
   public static ExecutorService newFixedThreadPool(
       final String name, final int workerCount, final MetricsSystem metricsSystem) {
+    return newFixedThreadPool(name, workerCount, new LinkedBlockingQueue<>(), metricsSystem);
+  }
+
+  public static ExecutorService newBoundedThreadPool(
+      final String name,
+      final int workerCount,
+      final int queueSize,
+      final MetricsSystem metricsSystem) {
+    return newFixedThreadPool(
+        name,
+        workerCount,
+        new BoundedQueue(queueSize, toMetricName(name), metricsSystem),
+        metricsSystem);
+  }
+
+  public static ExecutorService newFixedThreadPool(
+      final String name,
+      final int workerCount,
+      final BlockingQueue<Runnable> workingQueue,
+      final MetricsSystem metricsSystem) {
     return newMonitoredExecutor(
         name,
         metricsSystem,
@@ -44,7 +66,7 @@ public class MonitoredExecutors {
                 workerCount,
                 0L,
                 TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>(),
+                workingQueue,
                 threadFactory,
                 rejectedExecutionHandler));
   }
@@ -79,7 +101,7 @@ public class MonitoredExecutors {
       final MetricsSystem metricsSystem,
       final BiFunction<RejectedExecutionHandler, ThreadFactory, T> creator) {
 
-    final String metricName = name.toLowerCase(Locale.US).replace('-', '_');
+    final String metricName = toMetricName(name);
 
     final T executor =
         creator.apply(
@@ -117,6 +139,10 @@ public class MonitoredExecutors {
         executor::getTaskCount);
 
     return executor;
+  }
+
+  private static String toMetricName(final String name) {
+    return name.toLowerCase(Locale.US).replace('-', '_');
   }
 
   private static class CountingAbortPolicy extends AbortPolicy {

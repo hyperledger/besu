@@ -69,10 +69,6 @@ public class DeterministicEthScheduler extends EthScheduler {
     return (MockScheduledExecutor) scheduler;
   }
 
-  MockScheduledExecutor mockTransactionsExecutor() {
-    return (MockScheduledExecutor) txWorkerExecutor;
-  }
-
   public MockExecutorService mockServiceExecutor() {
     return (MockExecutorService) servicesExecutor;
   }
