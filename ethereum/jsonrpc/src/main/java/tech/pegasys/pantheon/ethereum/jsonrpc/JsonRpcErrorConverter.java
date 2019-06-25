@@ -41,6 +41,8 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.PRIVATE_NONCE_TOO_LOW;
       case INCORRECT_PRIVATE_NONCE:
         return JsonRpcError.INCORRECT_PRIVATE_NONCE;
+      case GAS_PRICE_TOO_LOW:
+        return JsonRpcError.GAS_PRICE_TOO_LOW;
 
       default:
         return JsonRpcError.INVALID_PARAMS;

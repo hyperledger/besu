@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.eth.transactions;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
@@ -31,7 +32,8 @@ public class TransactionPoolFactory {
       final int maxPendingTransactions,
       final MetricsSystem metricsSystem,
       final SyncState syncState,
-      final int maxTransactionRetentionHours) {
+      final int maxTransactionRetentionHours,
+      final Wei minTransactionGasPrice) {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -50,6 +52,7 @@ public class TransactionPoolFactory {
             syncState,
             ethContext,
             transactionTracker,
+            minTransactionGasPrice,
             metricsSystem);
 
     final TransactionsMessageHandler transactionsMessageHandler =

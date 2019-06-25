@@ -61,11 +61,6 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   }
 
   @Override
-  public void setMinTransactionGasPrice(final Wei minGasPrice) {
-    blockCreatorFactory.setMinTransactionGasPrice(minGasPrice);
-  }
-
-  @Override
   public Wei getMinTransactionGasPrice() {
     return blockCreatorFactory.getMinTransactionGasPrice();
   }

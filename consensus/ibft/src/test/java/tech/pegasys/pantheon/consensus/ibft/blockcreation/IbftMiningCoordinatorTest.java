@@ -68,13 +68,6 @@ public class IbftMiningCoordinatorTest {
   }
 
   @Test
-  public void setsMinTransactionGasPrice() {
-    final Wei minGasPrice = Wei.of(10);
-    ibftMiningCoordinator.setMinTransactionGasPrice(minGasPrice);
-    verify(ibftBlockCreatorFactory).setMinTransactionGasPrice(minGasPrice);
-  }
-
-  @Test
   public void getsMinTransactionGasPrice() {
     final Wei minGasPrice = Wei.of(10);
     when(ibftBlockCreatorFactory.getMinTransactionGasPrice()).thenReturn(minGasPrice);
