@@ -127,6 +127,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getIstanbulBlockNumber() {
+    return getOptionalLong("istanbulblock");
+  }
+
+  @Override
   public Optional<BigInteger> getChainId() {
     return getOptionalBigInteger(configRoot, "chainid");
   }
@@ -173,6 +178,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getByzantiumBlockNumber().ifPresent(l -> builder.put("byzantiumBlock", l));
     getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
     getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("constantinopleFixBlock", l));
+    getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
     if (isClique()) {

@@ -116,6 +116,12 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldGetIstanbulBlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("istanbulBlock", 1000));
+    assertThat(config.getIstanbulBlockNumber()).hasValue(1000);
+  }
+
+  @Test
   public void shouldNotReturnEmptyOptionalWhenBlockNumberNotSpecified() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
@@ -125,6 +131,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getByzantiumBlockNumber()).isEmpty();
     assertThat(config.getConstantinopleBlockNumber()).isEmpty();
     assertThat(config.getConstantinopleFixBlockNumber()).isEmpty();
+    assertThat(config.getIstanbulBlockNumber()).isEmpty();
   }
 
   @Test

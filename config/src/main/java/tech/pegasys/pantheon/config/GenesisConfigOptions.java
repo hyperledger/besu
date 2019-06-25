@@ -50,6 +50,8 @@ public interface GenesisConfigOptions {
 
   OptionalLong getConstantinopleFixBlockNumber();
 
+  OptionalLong getIstanbulBlockNumber();
+
   Optional<BigInteger> getChainId();
 
   OptionalInt getContractSizeLimit();
