@@ -134,6 +134,8 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.maxPendingTransactions(anyInt())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.pendingTransactionRetentionPeriod(anyInt()))
         .thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.txMessageKeepAliveSeconds(anyInt()))
+        .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.nodePrivateKeyFile(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.metricsSystem(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.privacyParameters(any())).thenReturn(mockControllerBuilder);

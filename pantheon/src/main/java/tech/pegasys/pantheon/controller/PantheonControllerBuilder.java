@@ -74,6 +74,7 @@ public abstract class PantheonControllerBuilder<C> {
   protected Clock clock;
   protected Integer maxPendingTransactions;
   protected Integer pendingTransactionRetentionPeriod;
+  protected Integer txMessageKeepAliveSeconds = TransactionPool.DEFAULT_TX_MSG_KEEP_ALIVE;
   protected KeyPair nodeKeys;
   private StorageProvider storageProvider;
   private final List<Runnable> shutdownActions = new ArrayList<>();
@@ -159,6 +160,12 @@ public abstract class PantheonControllerBuilder<C> {
     return this;
   }
 
+  public PantheonControllerBuilder<C> txMessageKeepAliveSeconds(
+      final int txMessageKeepAliveSeconds) {
+    this.txMessageKeepAliveSeconds = txMessageKeepAliveSeconds;
+    return this;
+  }
+
   public PantheonController<C> build() throws IOException {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -235,7 +242,8 @@ public abstract class PantheonControllerBuilder<C> {
             metricsSystem,
             syncState,
             pendingTransactionRetentionPeriod,
-            miningParameters.getMinTransactionGasPrice());
+            miningParameters.getMinTransactionGasPrice(),
+            txMessageKeepAliveSeconds);
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(

@@ -51,6 +51,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.TrailingPeerRequirements;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
@@ -566,6 +567,13 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Integer pendingTxRetentionPeriod = PendingTransactions.DEFAULT_TX_RETENTION_HOURS;
 
+  @Option(
+      names = {"--tx-pool-keep-alive-seconds"},
+      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+      description = "Keep alive of transactions in seconds (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer txMessageKeepAliveSeconds = TransactionPool.DEFAULT_TX_MSG_KEEP_ALIVE;
+
   // Inner class so we can get to loggingLevel.
   public class PantheonExceptionHandler
       extends CommandLine.AbstractHandler<List<Object>, PantheonExceptionHandler>
@@ -817,6 +825,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
               new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled))
           .maxPendingTransactions(txPoolMaxSize)
           .pendingTransactionRetentionPeriod(pendingTxRetentionPeriod)
+          .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
           .nodePrivateKeyFile(nodePrivateKeyFile())
           .metricsSystem(metricsSystem.get())
           .privacyParameters(privacyParameters())
