@@ -404,7 +404,7 @@ distZip {
 // simple for use in docker
 tasks.register("dockerDistUntar") {
   dependsOn distTar
-  def dockerBuildDir = "build/distributions/docker-pantheon/"
+  def dockerBuildDir = "build/docker-pantheon/"
   def distTarFile = distTar.outputs.files.singleFile
   def distTarFileName = distTar.outputs.files.singleFile.name.replace(".tar.gz", "")
 
@@ -423,7 +423,7 @@ docker {
   dependsOn dockerDistUntar
   name "pegasyseng/pantheon-kubernetes:${image_tag}"
   dockerfile file('kubernetes/Dockerfile')
-  files "build/distributions/docker-pantheon/"
+  files "build/docker-pantheon/"
   buildArgs(['BUILD_DATE': buildTime(), 'VERSION': rootProject.version, 'VCS_REF': getCheckedOutGitCommitHash()])
   pull true
   noCache true
