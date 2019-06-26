@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 
 import java.time.Clock;
 
@@ -58,7 +59,13 @@ public class TransactionPoolFactory {
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
             ethContext.getScheduler(),
-            new TransactionsMessageProcessor(transactionTracker, transactionPool));
+            new TransactionsMessageProcessor(
+                transactionTracker,
+                transactionPool,
+                metricsSystem.createCounter(
+                    PantheonMetricCategory.TRANSACTION_POOL,
+                    "transactions_messages_skipped_total",
+                    "Total number of transactions messages skipped by the processor.")));
 
     ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
     protocolContext.getBlockchain().observeBlockAdded(transactionPool);
