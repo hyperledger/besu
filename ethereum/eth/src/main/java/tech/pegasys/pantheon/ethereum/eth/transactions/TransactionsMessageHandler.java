@@ -24,15 +24,17 @@ import java.time.Instant;
 
 class TransactionsMessageHandler implements MessageCallback {
 
-  private static final Duration TX_KEEP_ALIVE = Duration.ofMinutes(1);
   private final TransactionsMessageProcessor transactionsMessageProcessor;
   private final EthScheduler scheduler;
+  private final Duration txMsgKeepAlive;
 
   public TransactionsMessageHandler(
       final EthScheduler scheduler,
-      final TransactionsMessageProcessor transactionsMessageProcessor) {
+      final TransactionsMessageProcessor transactionsMessageProcessor,
+      final int txMsgKeepAliveSeconds) {
     this.scheduler = scheduler;
     this.transactionsMessageProcessor = transactionsMessageProcessor;
+    this.txMsgKeepAlive = Duration.ofSeconds(txMsgKeepAliveSeconds);
   }
 
   @Override
@@ -42,6 +44,6 @@ class TransactionsMessageHandler implements MessageCallback {
     scheduler.scheduleTxWorkerTask(
         () ->
             transactionsMessageProcessor.processTransactionsMessage(
-                message.getPeer(), transactionsMessage, startedAt, TX_KEEP_ALIVE));
+                message.getPeer(), transactionsMessage, startedAt, txMsgKeepAlive));
   }
 }
