@@ -123,6 +123,8 @@ nav:
           - Alethio Overview: Monitoring/Alethio/Overview.md
           - Alethio Ethereum Lite Explorer: Monitoring/Alethio/Lite-Block-Explorer.md
           - Alethio EthStats Lite Network Monitor: Monitoring/Alethio/Lite-Network-Monitor.md
+    - Deploying Pantheon:
+        - High Availability: Deploying-Pantheon/High-Availability.md
     - Troubleshooting:
         - Troubleshooting: Troubleshooting/Troubleshooting.md
     - Reference:
