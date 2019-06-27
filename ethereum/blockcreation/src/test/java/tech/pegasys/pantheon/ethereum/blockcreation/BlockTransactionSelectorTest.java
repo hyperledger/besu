@@ -43,7 +43,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionProcessor;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
-import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import tech.pegasys.pantheon.ethereum.vm.TestBlockchain;
 import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
@@ -528,6 +528,6 @@ public class BlockTransactionSelectorTest {
 
   private DefaultMutableWorldState inMemoryWorldState() {
     return new DefaultMutableWorldState(
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage()));
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()));
   }
 }

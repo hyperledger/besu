@@ -25,14 +25,14 @@ import tech.pegasys.pantheon.util.bytes.BytesValues;
 import java.util.List;
 import java.util.Optional;
 
-public class PrivateKeyValueStorage implements PrivateTransactionStorage {
+public class PrivateTransactionKeyValueStorage implements PrivateTransactionStorage {
 
   private final KeyValueStorage keyValueStorage;
 
   private static final BytesValue EVENTS_KEY_SUFFIX = BytesValue.of("EVENTS".getBytes(UTF_8));
   private static final BytesValue OUTPUT_KEY_SUFFIX = BytesValue.of("OUTPUT".getBytes(UTF_8));
 
-  public PrivateKeyValueStorage(final KeyValueStorage keyValueStorage) {
+  public PrivateTransactionKeyValueStorage(final KeyValueStorage keyValueStorage) {
     this.keyValueStorage = keyValueStorage;
   }
 

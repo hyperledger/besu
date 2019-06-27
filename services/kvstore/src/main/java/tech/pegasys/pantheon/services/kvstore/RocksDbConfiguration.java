@@ -28,16 +28,19 @@ public class RocksDbConfiguration {
   private final String label;
   private final int maxBackgroundCompactions;
   private final int backgroundThreadCount;
+  private final boolean useColumns;
 
   public RocksDbConfiguration(
       final Path databaseDir,
       final int maxOpenFiles,
       final int maxBackgroundCompactions,
       final int backgroundThreadCount,
+      final boolean useColumns,
       final LRUCache cache,
       final String label) {
     this.maxBackgroundCompactions = maxBackgroundCompactions;
     this.backgroundThreadCount = backgroundThreadCount;
+    this.useColumns = useColumns;
     RocksDbUtil.loadNativeLibrary();
     this.databaseDir = databaseDir;
     this.maxOpenFiles = maxOpenFiles;
@@ -67,6 +70,10 @@ public class RocksDbConfiguration {
 
   public String getLabel() {
     return label;
+  }
+
+  public boolean useColumns() {
+    return useColumns;
   }
 
   public static class Builder {
@@ -108,6 +115,15 @@ public class RocksDbConfiguration {
         description = "Number of RocksDB background threads (default: ${DEFAULT-VALUE})")
     int backgroundThreadCount;
 
+    @CommandLine.Option(
+        names = {"--Xrocksdb-columns-enabled"},
+        hidden = true,
+        defaultValue = "false",
+        paramLabel = "<BOOLEAN>",
+        description =
+            "Whether to separate chain and world state into separate RocksDB columns (default: ${DEFAULT-VALUE})")
+    boolean useColumns = false;
+
     public Builder databaseDir(final Path databaseDir) {
       this.databaseDir = databaseDir;
       return this;
@@ -138,6 +154,11 @@ public class RocksDbConfiguration {
       return this;
     }
 
+    public Builder useColumns(final boolean useColumns) {
+      this.useColumns = useColumns;
+      return this;
+    }
+
     private LRUCache createCache(final long cacheCapacity) {
       RocksDbUtil.loadNativeLibrary();
       return new LRUCache(cacheCapacity);
@@ -148,7 +169,13 @@ public class RocksDbConfiguration {
         cache = createCache(cacheCapacity);
       }
       return new RocksDbConfiguration(
-          databaseDir, maxOpenFiles, maxBackgroundCompactions, backgroundThreadCount, cache, label);
+          databaseDir,
+          maxOpenFiles,
+          maxBackgroundCompactions,
+          backgroundThreadCount,
+          useColumns,
+          cache,
+          label);
     }
   }
 }

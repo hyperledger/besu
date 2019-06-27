@@ -16,7 +16,9 @@ import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.Collection;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public interface WorldStateStorage {
 
@@ -36,6 +38,12 @@ public interface WorldStateStorage {
 
   Updater updater();
 
+  long prune(Predicate<BytesValue> inUseCheck);
+
+  long addNodeAddedListener(NodesAddedListener listener);
+
+  void removeNodeAddedListener(long id);
+
   interface Updater {
 
     Updater putCode(Bytes32 nodeHash, BytesValue code);
@@ -53,5 +61,9 @@ public interface WorldStateStorage {
     void commit();
 
     void rollback();
+  }
+
+  interface NodesAddedListener {
+    void onNodesAdded(Collection<Bytes32> nodeHash);
   }
 }

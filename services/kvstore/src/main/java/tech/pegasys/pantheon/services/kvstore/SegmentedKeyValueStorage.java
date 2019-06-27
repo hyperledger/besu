@@ -17,21 +17,27 @@ import static com.google.common.base.Preconditions.checkState;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.Closeable;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-/** Service provided by pantheon to facilitate persistent data storage. */
-public interface KeyValueStorage extends Closeable {
+/**
+ * Service provided by pantheon to facilitate persistent data storage.
+ *
+ * @param <S> the segment identifier type
+ */
+public interface SegmentedKeyValueStorage<S> extends Closeable {
+
+  S getSegmentIdentifierByName(Segment segment);
 
   /**
+   * @param segment the segment
    * @param key Index into persistent data repository.
    * @return The value persisted at the key index.
    */
-  Optional<BytesValue> get(BytesValue key) throws StorageException;
+  Optional<BytesValue> get(S segment, BytesValue key) throws StorageException;
 
-  default boolean containsKey(final BytesValue key) throws StorageException {
-    return get(key).isPresent();
+  default boolean containsKey(final S segment, final BytesValue key) throws StorageException {
+    return get(segment, key).isPresent();
   }
 
   /**
@@ -39,51 +45,11 @@ public interface KeyValueStorage extends Closeable {
    *
    * @return An object representing the transaction.
    */
-  Transaction startTransaction() throws StorageException;
+  Transaction<S> startTransaction() throws StorageException;
 
-  long removeUnless(Predicate<BytesValue> inUseCheck);
+  long removeUnless(S segmentHandle, Predicate<BytesValue> inUseCheck);
 
-  void clear();
-
-  class Entry {
-    private final BytesValue key;
-    private final BytesValue value;
-
-    private Entry(final BytesValue key, final BytesValue value) {
-      this.key = key;
-      this.value = value;
-    }
-
-    public static Entry create(final BytesValue key, final BytesValue value) {
-      return new Entry(key, value);
-    }
-
-    public BytesValue getKey() {
-      return key;
-    }
-
-    public BytesValue getValue() {
-      return value;
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-      if (obj == this) {
-        return true;
-      }
-      if (!(obj instanceof Entry)) {
-        return false;
-      }
-      final Entry other = (Entry) obj;
-      return Objects.equals(getKey(), other.getKey())
-          && Objects.equals(getValue(), other.getValue());
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(key, value);
-    }
-  }
+  void clear(S segmentHandle);
 
   class StorageException extends RuntimeException {
     public StorageException(final Throwable t) {
@@ -94,23 +60,27 @@ public interface KeyValueStorage extends Closeable {
   /**
    * Represents a set of changes to be committed atomically. A single transaction is not
    * thread-safe, but multiple transactions can execute concurrently.
+   *
+   * @param <S> the segment identifier type
    */
-  interface Transaction {
+  interface Transaction<S> {
 
     /**
      * Add the given key-value pair to the set of updates to be committed.
      *
+     * @param segment the database segment
      * @param key The key to set / modify.
      * @param value The value to be set.
      */
-    void put(BytesValue key, BytesValue value);
+    void put(S segment, BytesValue key, BytesValue value);
 
     /**
      * Schedules the given key to be deleted from storage.
      *
+     * @param segment the database segment
      * @param key The key to delete
      */
-    void remove(BytesValue key);
+    void remove(S segment, BytesValue key);
 
     /**
      * Atomically commit the set of changes contained in this transaction to the underlying
@@ -126,20 +96,26 @@ public interface KeyValueStorage extends Closeable {
     void rollback();
   }
 
-  abstract class AbstractTransaction implements Transaction {
+  interface Segment {
+    String getName();
+
+    byte[] getId();
+  }
+
+  abstract class AbstractTransaction<S> implements Transaction<S> {
 
     private boolean active = true;
 
     @Override
-    public final void put(final BytesValue key, final BytesValue value) {
+    public final void put(final S segment, final BytesValue key, final BytesValue value) {
       checkState(active, "Cannot invoke put() on a completed transaction.");
-      doPut(key, value);
+      doPut(segment, key, value);
     }
 
     @Override
-    public final void remove(final BytesValue key) {
+    public final void remove(final S segment, final BytesValue key) {
       checkState(active, "Cannot invoke remove() on a completed transaction.");
-      doRemove(key);
+      doRemove(segment, key);
     }
 
     @Override
@@ -156,9 +132,9 @@ public interface KeyValueStorage extends Closeable {
       doRollback();
     }
 
-    protected abstract void doPut(BytesValue key, BytesValue value);
+    protected abstract void doPut(S segment, BytesValue key, BytesValue value);
 
-    protected abstract void doRemove(BytesValue key);
+    protected abstract void doRemove(S segment, BytesValue key);
 
     protected abstract void doCommit() throws StorageException;
 

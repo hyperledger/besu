@@ -25,8 +25,8 @@ import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
-import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
@@ -118,7 +118,7 @@ public class WorldStateDownloaderBenchmark {
   private Hash createExistingWorldState() {
     // Setup existing state
     remoteKeyValueStorage = new InMemoryKeyValueStorage();
-    final WorldStateStorage storage = new KeyValueStorageWorldStateStorage(remoteKeyValueStorage);
+    final WorldStateStorage storage = new WorldStateKeyValueStorage(remoteKeyValueStorage);
     final WorldStateArchive worldStateArchive = new WorldStateArchive(storage);
     final MutableWorldState worldState = worldStateArchive.getMutable();
 

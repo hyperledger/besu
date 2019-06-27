@@ -18,7 +18,7 @@ import tech.pegasys.pantheon.ethereum.core.MutableAccount;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldState;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
-import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.Collection;
@@ -50,7 +50,7 @@ public class DebuggableMutableWorldState extends DefaultMutableWorldState {
   private final DebugInfo info = new DebugInfo();
 
   public DebuggableMutableWorldState() {
-    super(new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage()));
+    super(new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()));
   }
 
   public DebuggableMutableWorldState(final WorldState worldState) {

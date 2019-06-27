@@ -27,7 +27,7 @@ import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -119,8 +119,7 @@ public final class GenesisState {
 
   private static Hash calculateGenesisStateHash(final List<GenesisAccount> genesisAccounts) {
     final MutableWorldState worldState =
-        new DefaultMutableWorldState(
-            new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage()));
+        new DefaultMutableWorldState(new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()));
     writeAccountsTo(worldState, genesisAccounts);
     return worldState.rootHash();
   }
