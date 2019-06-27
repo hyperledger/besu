@@ -88,6 +88,8 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.Per
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.PermReloadPermissionsFromFile;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.PermRemoveAccountsFromWhitelist;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.PermRemoveNodesFromWhitelist;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaCreatePrivacyGroup;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaDeletePrivacyGroup;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaGetPrivacyPrecompileAddress;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaGetPrivateTransaction;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaGetTransactionCount;
@@ -325,8 +327,10 @@ public class JsonRpcMethodsFactory {
               transactionPool,
               parameter),
           new EeaGetTransactionCount(parameter, privacyParameters),
-          new EeaGetPrivacyPrecompileAddress(privacyParameters),
-          new EeaGetPrivateTransaction(enclave, parameter, privacyParameters));
+          new EeaGetPrivateTransaction(enclave, parameter, privacyParameters),
+          new EeaCreatePrivacyGroup(new Enclave(privacyParameters.getEnclaveUri()), parameter),
+          new EeaDeletePrivacyGroup(new Enclave(privacyParameters.getEnclaveUri()), parameter),
+          new EeaGetPrivacyPrecompileAddress(privacyParameters));
     }
     return enabledMethods;
   }
