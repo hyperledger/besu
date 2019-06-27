@@ -71,7 +71,40 @@ Send individual requests as a JSON data package at each prompt:
     `wscat` does not support headers. [Authentication](Authentication.md) requires an authentication token to be passed in the 
     request header. To use authentication with WebSockets, an app that supports headers is required. 
 
-### API Methods Enabled by Default
+## Readiness and Liveness Endpoints 
+
+Pantheon provides readiness and liveness endpoints to confirm the Pantheon node status. Both return a
+`200 OK` status when ready or live and a `503 Service Unavailable` status if not ready or live. 
+ 
+By default, the readiness check requires a peer to be connected and the node to be within 2 blocks of the best
+known block. If [p2p communication is disabled](../Reference/Pantheon-CLI-Syntax.md#p2p-enabled), 
+no peers are required. A live node with p2p disabled is always ready. 
+
+Use the query parameters `minPeers` and `maxBlocksBehind` to adjust the number of peers required and number of blocks tolerance.
+
+```bash tab="Readiness Endpoint"
+http://<JSON-RPC-HTTP-endpoint:port>/readiness
+```
+    
+```bash tab="curl Request Example"
+curl -v 'http://localhost:8545/readiness'
+```
+
+```bash tab="Query Parameters Example"
+curl -v 'http://localhost:8545/readiness?minPeers=0&maxBlocksBehind=10'
+```
+
+The liveness check requires the JSON RPC server to be up. 
+
+```bash tab="Liveness Endpoint"
+http://<JSON-RPC-HTTP-endpoint:port>/liveness
+```
+    
+```bash tab="curl Request Example"
+curl -v 'http://localhost:8545/liveness'
+```
+
+## API Methods Enabled by Default
 
 The `ETH`, `NET`, and `WEB3` API methods are enabled by default. 
 
