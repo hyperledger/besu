@@ -25,7 +25,7 @@ import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldState;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
-import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
@@ -47,13 +47,13 @@ public class DefaultMutableWorldStateTest {
   private static final Address ADDRESS =
       Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b");
 
-  private static MutableWorldState createEmpty(final KeyValueStorageWorldStateStorage storage) {
+  private static MutableWorldState createEmpty(final WorldStateKeyValueStorage storage) {
     return new DefaultMutableWorldState(storage);
   }
 
   private static MutableWorldState createEmpty() {
     final InMemoryKeyValueStorage inMemoryKeyValueStorage = new InMemoryKeyValueStorage();
-    return createEmpty(new KeyValueStorageWorldStateStorage(inMemoryKeyValueStorage));
+    return createEmpty(new WorldStateKeyValueStorage(inMemoryKeyValueStorage));
   }
 
   @Test
@@ -158,8 +158,7 @@ public class DefaultMutableWorldStateTest {
   @Test
   public void commitAndPersist() {
     final KeyValueStorage storage = new InMemoryKeyValueStorage();
-    final KeyValueStorageWorldStateStorage kvWorldStateStorage =
-        new KeyValueStorageWorldStateStorage(storage);
+    final WorldStateKeyValueStorage kvWorldStateStorage = new WorldStateKeyValueStorage(storage);
     final MutableWorldState worldState = createEmpty(kvWorldStateStorage);
     final WorldUpdater updater = worldState.updater();
     final Wei newBalance = Wei.of(100000);
@@ -190,8 +189,7 @@ public class DefaultMutableWorldStateTest {
 
     // Create new world state and check that it can access modified address
     final MutableWorldState newWorldState =
-        new DefaultMutableWorldState(
-            expectedRootHash, new KeyValueStorageWorldStateStorage(storage));
+        new DefaultMutableWorldState(expectedRootHash, new WorldStateKeyValueStorage(storage));
     assertEquals(expectedRootHash, newWorldState.rootHash());
     assertNotNull(newWorldState.get(ADDRESS));
     assertEquals(newBalance, newWorldState.get(ADDRESS).getBalance());

@@ -47,7 +47,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.MessageData;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
-import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
 import tech.pegasys.pantheon.ethereum.trie.Node;
 import tech.pegasys.pantheon.ethereum.trie.StoredMerklePatriciaTrie;
@@ -164,7 +164,7 @@ public class WorldStateDownloaderTest {
     final CachingTaskCollection<NodeDataRequest> taskCollection =
         new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateStorage localStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateDownloader downloader =
         createDownloader(ethProtocolManager.ethContext(), localStorage, taskCollection);
 
@@ -180,8 +180,7 @@ public class WorldStateDownloaderTest {
   @Test
   public void downloadAlreadyAvailableWorldState() {
     // Setup existing state
-    final WorldStateStorage storage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+    final WorldStateStorage storage = new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateArchive worldStateArchive = new WorldStateArchive(storage);
     final MutableWorldState worldState = worldStateArchive.getMutable();
 
@@ -224,7 +223,7 @@ public class WorldStateDownloaderTest {
 
     // Setup "remote" state
     final WorldStateStorage remoteStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateArchive remoteWorldStateArchive = new WorldStateArchive(remoteStorage);
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
@@ -245,7 +244,7 @@ public class WorldStateDownloaderTest {
     final CachingTaskCollection<NodeDataRequest> taskCollection =
         new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateStorage localStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateDownloader downloader =
         createDownloader(ethProtocolManager.ethContext(), localStorage, taskCollection);
 
@@ -275,7 +274,7 @@ public class WorldStateDownloaderTest {
   public void doesNotRequestKnownCodeFromNetwork() {
     // Setup "remote" state
     final WorldStateStorage remoteStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateArchive remoteWorldStateArchive = new WorldStateArchive(remoteStorage);
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
@@ -296,7 +295,7 @@ public class WorldStateDownloaderTest {
     final CachingTaskCollection<NodeDataRequest> taskCollection =
         new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateStorage localStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
     // Seed local storage with some contract values
     final Map<Bytes32, BytesValue> knownCode = new HashMap<>();
@@ -357,7 +356,7 @@ public class WorldStateDownloaderTest {
 
     // Setup "remote" state
     final WorldStateStorage remoteStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateArchive remoteWorldStateArchive = new WorldStateArchive(remoteStorage);
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
@@ -377,7 +376,7 @@ public class WorldStateDownloaderTest {
     final CachingTaskCollection<NodeDataRequest> taskCollection =
         spy(new CachingTaskCollection<>(new InMemoryTaskQueue<>()));
     final WorldStateStorage localStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
     final WorldStateDownloader downloader =
         createDownloader(ethProtocolManager.ethContext(), localStorage, taskCollection);
@@ -427,7 +426,7 @@ public class WorldStateDownloaderTest {
   public void doesNotRequestKnownAccountTrieNodesFromNetwork() {
     // Setup "remote" state
     final WorldStateStorage remoteStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateArchive remoteWorldStateArchive = new WorldStateArchive(remoteStorage);
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
@@ -448,7 +447,7 @@ public class WorldStateDownloaderTest {
     final CachingTaskCollection<NodeDataRequest> taskCollection =
         new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateStorage localStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
     // Seed local storage with some trie node values
     final Map<Bytes32, BytesValue> allNodes =
@@ -506,7 +505,7 @@ public class WorldStateDownloaderTest {
   public void doesNotRequestKnownStorageTrieNodesFromNetwork() {
     // Setup "remote" state
     final WorldStateStorage remoteStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateArchive remoteWorldStateArchive = new WorldStateArchive(remoteStorage);
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
@@ -527,7 +526,7 @@ public class WorldStateDownloaderTest {
     final CachingTaskCollection<NodeDataRequest> taskCollection =
         new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateStorage localStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
     // Seed local storage with some trie node values
     final List<Bytes32> storageRootHashes =
@@ -605,7 +604,7 @@ public class WorldStateDownloaderTest {
 
     // Setup "remote" state
     final WorldStateStorage remoteStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateArchive remoteWorldStateArchive = new WorldStateArchive(remoteStorage);
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
@@ -619,7 +618,7 @@ public class WorldStateDownloaderTest {
     final CachingTaskCollection<NodeDataRequest> taskCollection =
         new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateStorage localStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final SynchronizerConfiguration syncConfig =
         SynchronizerConfiguration.builder().worldStateMaxRequestsWithoutProgress(10).build();
     final WorldStateDownloader downloader =
@@ -658,7 +657,7 @@ public class WorldStateDownloaderTest {
   public void resumesFromNonEmptyQueue() {
     // Setup "remote" state
     final WorldStateStorage remoteStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateArchive remoteWorldStateArchive = new WorldStateArchive(remoteStorage);
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
@@ -684,7 +683,7 @@ public class WorldStateDownloaderTest {
     }
 
     final WorldStateStorage localStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final SynchronizerConfiguration syncConfig =
         SynchronizerConfiguration.builder().worldStateMaxRequestsWithoutProgress(10).build();
     final WorldStateDownloader downloader =
@@ -794,7 +793,7 @@ public class WorldStateDownloaderTest {
 
     // Setup "remote" state
     final WorldStateStorage remoteStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateArchive remoteWorldStateArchive = new WorldStateArchive(remoteStorage);
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
@@ -817,7 +816,7 @@ public class WorldStateDownloaderTest {
     final CachingTaskCollection<NodeDataRequest> taskCollection =
         new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateStorage localStorage =
-        new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateArchive localWorldStateArchive = new WorldStateArchive(localStorage);
     final SynchronizerConfiguration syncConfig =
         SynchronizerConfiguration.builder()

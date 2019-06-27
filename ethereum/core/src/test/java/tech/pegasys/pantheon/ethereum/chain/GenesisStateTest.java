@@ -20,7 +20,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
-import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -61,8 +61,7 @@ public final class GenesisStateTest {
     assertThat(header.getExtraData()).isEqualTo(BytesValue.EMPTY);
     assertThat(header.getParentHash()).isEqualTo(Hash.ZERO);
     final DefaultMutableWorldState worldState =
-        new DefaultMutableWorldState(
-            new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage()));
+        new DefaultMutableWorldState(new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()));
     genesisState.writeStateTo(worldState);
     final Account first =
         worldState.get(Address.fromHexString("0x0000000000000000000000000000000000000001"));
@@ -102,8 +101,7 @@ public final class GenesisStateTest {
                 "0xe7fd8db206dcaf066b7c97b8a42a0abc18653613560748557ab44868652a78b6"));
 
     final DefaultMutableWorldState worldState =
-        new DefaultMutableWorldState(
-            new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage()));
+        new DefaultMutableWorldState(new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()));
     genesisState.writeStateTo(worldState);
     final Account contract =
         worldState.get(Address.fromHexString("0x3850000000000000000000000000000000000000"));

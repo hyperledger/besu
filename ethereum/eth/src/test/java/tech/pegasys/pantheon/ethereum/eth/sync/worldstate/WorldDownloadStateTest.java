@@ -22,7 +22,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.EthTask;
-import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.services.tasks.CachingTaskCollection;
@@ -45,7 +45,7 @@ public class WorldDownloadStateTest {
   private static final long MIN_MILLIS_BEFORE_STALLING = 50_000;
 
   private final WorldStateStorage worldStateStorage =
-      new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+      new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
   private final BlockHeader header =
       new BlockHeaderTestFixture().stateRoot(ROOT_NODE_HASH).buildHeader();

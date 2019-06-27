@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.ethereum.storage.keyvalue;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageWorldStateStorage.Updater;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage.Updater;
 import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
@@ -27,40 +27,40 @@ public class KeyValueStorageWorldStateStorageTest {
 
   @Test
   public void getCode_returnsEmpty() {
-    final KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final WorldStateKeyValueStorage storage = emptyStorage();
     assertThat(storage.getCode(Hash.EMPTY)).contains(BytesValue.EMPTY);
   }
 
   @Test
   public void getAccountStateTrieNode_returnsEmptyNode() {
-    final KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final WorldStateKeyValueStorage storage = emptyStorage();
     assertThat(storage.getAccountStateTrieNode(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
   }
 
   @Test
   public void getAccountStorageTrieNode_returnsEmptyNode() {
-    final KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final WorldStateKeyValueStorage storage = emptyStorage();
     assertThat(storage.getAccountStorageTrieNode(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
   }
 
   @Test
   public void getNodeData_returnsEmptyValue() {
-    final KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final WorldStateKeyValueStorage storage = emptyStorage();
     assertThat(storage.getNodeData(Hash.EMPTY)).contains(BytesValue.EMPTY);
   }
 
   @Test
   public void getNodeData_returnsEmptyNode() {
-    final KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final WorldStateKeyValueStorage storage = emptyStorage();
     assertThat(storage.getNodeData(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
   }
 
   @Test
   public void getCode_saveAndGetSpecialValues() {
-    final KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final WorldStateKeyValueStorage storage = emptyStorage();
     storage
         .updater()
         .putCode(MerklePatriciaTrie.EMPTY_TRIE_NODE)
@@ -75,7 +75,7 @@ public class KeyValueStorageWorldStateStorageTest {
   @Test
   public void getCode_saveAndGetRegularValue() {
     final BytesValue bytes = BytesValue.fromHexString("0x123456");
-    final KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final WorldStateKeyValueStorage storage = emptyStorage();
     storage.updater().putCode(bytes).commit();
 
     assertThat(storage.getCode(Hash.hash(bytes))).contains(bytes);
@@ -83,7 +83,7 @@ public class KeyValueStorageWorldStateStorageTest {
 
   @Test
   public void getAccountStateTrieNode_saveAndGetSpecialValues() {
-    final KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final WorldStateKeyValueStorage storage = emptyStorage();
     storage
         .updater()
         .putAccountStateTrieNode(
@@ -99,7 +99,7 @@ public class KeyValueStorageWorldStateStorageTest {
   @Test
   public void getAccountStateTrieNode_saveAndGetRegularValue() {
     final BytesValue bytes = BytesValue.fromHexString("0x123456");
-    final KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final WorldStateKeyValueStorage storage = emptyStorage();
     storage.updater().putAccountStateTrieNode(Hash.hash(bytes), bytes).commit();
 
     assertThat(storage.getAccountStateTrieNode(Hash.hash(bytes))).contains(bytes);
@@ -107,7 +107,7 @@ public class KeyValueStorageWorldStateStorageTest {
 
   @Test
   public void getAccountStorageTrieNode_saveAndGetSpecialValues() {
-    final KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final WorldStateKeyValueStorage storage = emptyStorage();
     storage
         .updater()
         .putAccountStorageTrieNode(
@@ -123,7 +123,7 @@ public class KeyValueStorageWorldStateStorageTest {
   @Test
   public void getAccountStorageTrieNode_saveAndGetRegularValue() {
     final BytesValue bytes = BytesValue.fromHexString("0x123456");
-    final KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final WorldStateKeyValueStorage storage = emptyStorage();
     storage.updater().putAccountStorageTrieNode(Hash.hash(bytes), bytes).commit();
 
     assertThat(storage.getAccountStateTrieNode(Hash.hash(bytes))).contains(bytes);
@@ -131,7 +131,7 @@ public class KeyValueStorageWorldStateStorageTest {
 
   @Test
   public void getNodeData_saveAndGetSpecialValues() {
-    final KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final WorldStateKeyValueStorage storage = emptyStorage();
     storage
         .updater()
         .putAccountStorageTrieNode(
@@ -147,7 +147,7 @@ public class KeyValueStorageWorldStateStorageTest {
   @Test
   public void getNodeData_saveAndGetRegularValue() {
     final BytesValue bytes = BytesValue.fromHexString("0x123456");
-    final KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final WorldStateKeyValueStorage storage = emptyStorage();
     storage.updater().putAccountStorageTrieNode(Hash.hash(bytes), bytes).commit();
 
     assertThat(storage.getNodeData(Hash.hash(bytes))).contains(bytes);
@@ -159,7 +159,7 @@ public class KeyValueStorageWorldStateStorageTest {
     final BytesValue bytesB = BytesValue.fromHexString("0x1234");
     final BytesValue bytesC = BytesValue.fromHexString("0x123456");
 
-    final KeyValueStorageWorldStateStorage storage = emptyStorage();
+    final WorldStateKeyValueStorage storage = emptyStorage();
     final Updater updaterA = storage.updater();
     final Updater updaterB = storage.updater();
 
@@ -186,7 +186,7 @@ public class KeyValueStorageWorldStateStorageTest {
     assertThat(emptyStorage().isWorldStateAvailable(Hash.EMPTY_TRIE_HASH)).isTrue();
   }
 
-  private KeyValueStorageWorldStateStorage emptyStorage() {
-    return new KeyValueStorageWorldStateStorage(new InMemoryKeyValueStorage());
+  private WorldStateKeyValueStorage emptyStorage() {
+    return new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
   }
 }
