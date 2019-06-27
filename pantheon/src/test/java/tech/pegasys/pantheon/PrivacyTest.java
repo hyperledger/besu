@@ -23,7 +23,7 @@ import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
-import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfiguration;
 import tech.pegasys.pantheon.ethereum.mainnet.PrecompiledContract;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -63,8 +63,7 @@ public class PrivacyTest {
             .dataDirectory(dataDir)
             .clock(TestClock.fixed())
             .privacyParameters(privacyParameters)
-            .maxPendingTransactions(PendingTransactions.MAX_PENDING_TRANSACTIONS)
-            .pendingTransactionRetentionPeriod(PendingTransactions.DEFAULT_TX_RETENTION_HOURS)
+            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .build();
 
     final Address privacyContractAddress = Address.privacyPrecompiled(ADDRESS);

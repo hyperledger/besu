@@ -22,7 +22,7 @@ import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.controller.PantheonControllerBuilder;
 import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
-import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfiguration;
 import tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
@@ -114,8 +114,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
               .privacyParameters(node.getPrivacyParameters())
               .nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory()))
               .metricsSystem(noOpMetricsSystem)
-              .maxPendingTransactions(PendingTransactions.MAX_PENDING_TRANSACTIONS)
-              .pendingTransactionRetentionPeriod(PendingTransactions.DEFAULT_TX_RETENTION_HOURS)
+              .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
               .rocksDbConfiguration(new RocksDbConfiguration.Builder().databaseDir(tempDir).build())
               .ethereumWireProtocolConfiguration(EthereumWireProtocolConfiguration.defaultConfig())
               .clock(Clock.systemUTC())

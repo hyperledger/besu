@@ -148,12 +148,10 @@ public class TestNode implements Closeable {
             protocolContext,
             ethContext,
             TestClock.fixed(),
-            PendingTransactions.MAX_PENDING_TRANSACTIONS,
             metricsSystem,
             syncState,
-            PendingTransactions.DEFAULT_TX_RETENTION_HOURS,
             Wei.ZERO,
-            TransactionPool.DEFAULT_TX_MSG_KEEP_ALIVE);
+            TransactionPoolConfiguration.builder().build());
 
     networkRunner.start();
     selfPeer = DefaultPeer.fromEnodeURL(network.getLocalEnode().get());
