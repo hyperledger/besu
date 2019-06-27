@@ -52,6 +52,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.TrailingPeerRequirements;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
+import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfiguration;
 import tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
@@ -823,9 +824,12 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           .dataDirectory(dataDir())
           .miningParameters(
               new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled))
-          .maxPendingTransactions(txPoolMaxSize)
-          .pendingTransactionRetentionPeriod(pendingTxRetentionPeriod)
-          .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
+          .transactionPoolConfiguration(
+              TransactionPoolConfiguration.builder()
+                  .txPoolMaxSize(txPoolMaxSize)
+                  .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
+                  .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
+                  .build())
           .nodePrivateKeyFile(nodePrivateKeyFile())
           .metricsSystem(metricsSystem.get())
           .privacyParameters(privacyParameters())

@@ -23,7 +23,7 @@ import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
-import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfiguration;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.BlockTestUtil;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -64,8 +64,7 @@ public final class BlockImporterTest {
             .privacyParameters(PrivacyParameters.DEFAULT)
             .dataDirectory(dataDir)
             .clock(TestClock.fixed())
-            .maxPendingTransactions(PendingTransactions.MAX_PENDING_TRANSACTIONS)
-            .pendingTransactionRetentionPeriod(PendingTransactions.DEFAULT_TX_RETENTION_HOURS)
+            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .build();
     final BlockImporter.ImportResult result =
         blockImporter.importBlockchain(source, targetController);
@@ -104,8 +103,7 @@ public final class BlockImporterTest {
             .privacyParameters(PrivacyParameters.DEFAULT)
             .dataDirectory(dataDir)
             .clock(TestClock.fixed())
-            .maxPendingTransactions(PendingTransactions.MAX_PENDING_TRANSACTIONS)
-            .pendingTransactionRetentionPeriod(PendingTransactions.DEFAULT_TX_RETENTION_HOURS)
+            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .build();
     final BlockImporter.ImportResult result = blockImporter.importBlockchain(source, controller);
 

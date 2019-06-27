@@ -30,16 +30,17 @@ public class TransactionPoolFactory {
       final ProtocolContext<?> protocolContext,
       final EthContext ethContext,
       final Clock clock,
-      final int maxPendingTransactions,
       final MetricsSystem metricsSystem,
       final SyncState syncState,
-      final int maxTransactionRetentionHours,
       final Wei minTransactionGasPrice,
-      final int txMessageKeepAliveSeconds) {
+      final TransactionPoolConfiguration transactionPoolConfiguration) {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            maxTransactionRetentionHours, maxPendingTransactions, clock, metricsSystem);
+            transactionPoolConfiguration.getPendingTxRetentionPeriod(),
+            transactionPoolConfiguration.getTxPoolMaxSize(),
+            clock,
+            metricsSystem);
 
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
     final TransactionsMessageSender transactionsMessageSender =
@@ -67,7 +68,7 @@ public class TransactionPoolFactory {
                     PantheonMetricCategory.TRANSACTION_POOL,
                     "transactions_messages_skipped_total",
                     "Total number of transactions messages skipped by the processor.")),
-            txMessageKeepAliveSeconds);
+            transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
 
     ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
     protocolContext.getBlockchain().observeBlockAdded(transactionPool);
