@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.WorldState;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionProcessor;
+import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidationParams;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.worldstate.DebuggableMutableWorldState;
 import tech.pegasys.pantheon.testutil.JsonTestParameters;
@@ -117,7 +118,7 @@ public class GeneralStateReferenceTestTools {
             blockHeader.getCoinbase(),
             new BlockHashLookup(blockHeader, blockchain),
             false,
-            false);
+            TransactionValidationParams.processingBlock());
     final Account coinbase = worldStateUpdater.getOrCreate(spec.blockHeader().getCoinbase());
     if (coinbase != null && coinbase.isEmpty() && shouldClearEmptyAccounts(spec.eip())) {
       worldStateUpdater.deleteAccount(coinbase.getAddress());

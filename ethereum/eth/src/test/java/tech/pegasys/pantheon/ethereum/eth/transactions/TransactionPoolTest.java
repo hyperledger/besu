@@ -595,10 +595,7 @@ public class TransactionPoolTest {
         .thenReturn(valid());
 
     final TransactionValidationParams expectedValidationParams =
-        new TransactionValidationParams.Builder()
-            .checkOnchainPermissions(false)
-            .allowFutureNonce(true)
-            .build();
+        TransactionValidationParams.transactionPool();
 
     transactionPool.addLocalTransaction(transaction1);
 

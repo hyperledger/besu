@@ -107,9 +107,11 @@ public interface TransactionProcessor {
    * @param miningBeneficiary The address which is to receive the transaction fee
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
    * @param isPersistingState Whether the state will be modified by this process
-   * @param checkOnchainPermissions Whether a transaction permissioning check should check onchain
-   *     permissioning rules
+   * @param transactionValidationParams Validation parameters that will be used by the {@link
+   *     TransactionValidator}
    * @return the transaction result
+   * @see TransactionValidator
+   * @see TransactionValidationParams
    */
   default Result processTransaction(
       final Blockchain blockchain,
@@ -119,7 +121,7 @@ public interface TransactionProcessor {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingState,
-      final Boolean checkOnchainPermissions) {
+      final TransactionValidationParams transactionValidationParams) {
     return processTransaction(
         blockchain,
         worldState,
@@ -129,7 +131,7 @@ public interface TransactionProcessor {
         NO_TRACING,
         blockHashLookup,
         isPersistingState,
-        checkOnchainPermissions);
+        transactionValidationParams);
   }
 
   /**
@@ -163,7 +165,7 @@ public interface TransactionProcessor {
         operationTracer,
         blockHashLookup,
         isPersistingState,
-        false);
+        new TransactionValidationParams.Builder().build());
   }
 
   Result processTransaction(
@@ -175,5 +177,5 @@ public interface TransactionProcessor {
       OperationTracer operationTracer,
       BlockHashLookup blockHashLookup,
       Boolean isPersistingState,
-      Boolean checkOnchainPermissions);
+      TransactionValidationParams transactionValidationParams);
 }
