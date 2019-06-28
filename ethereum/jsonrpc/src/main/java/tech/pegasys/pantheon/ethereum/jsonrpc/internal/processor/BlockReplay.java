@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionProcessor;
+import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidationParams;
 import tech.pegasys.pantheon.ethereum.vm.BlockHashLookup;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 
@@ -90,7 +91,7 @@ public class BlockReplay {
                   spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
                   blockHashLookup,
                   false,
-                  false);
+                  TransactionValidationParams.blockReplay());
             }
           }
           return Optional.empty();
@@ -112,7 +113,7 @@ public class BlockReplay {
               spec.getMiningBeneficiaryCalculator().calculateBeneficiary(blockHeader),
               new BlockHashLookup(blockHeader, blockchain),
               false,
-              false);
+              TransactionValidationParams.blockReplay());
           return action.performAction(
               transaction, blockHeader, blockchain, worldState, transactionProcessor);
         });

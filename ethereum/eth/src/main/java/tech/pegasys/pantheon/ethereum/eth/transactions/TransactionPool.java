@@ -204,12 +204,6 @@ public class TransactionPool implements BlockAddedObserver {
               transaction.getGasLimit(), chainHeadBlockHeader.getGasLimit()));
     }
 
-    final TransactionValidationParams validationParams =
-        new TransactionValidationParams.Builder()
-            .allowFutureNonce(true)
-            .checkOnchainPermissions(false)
-            .build();
-
     return protocolContext
         .getWorldStateArchive()
         .get(chainHeadBlockHeader.getStateRoot())
@@ -217,7 +211,8 @@ public class TransactionPool implements BlockAddedObserver {
             worldState -> {
               final Account senderAccount = worldState.get(transaction.getSender());
               return getTransactionValidator()
-                  .validateForSender(transaction, senderAccount, validationParams);
+                  .validateForSender(
+                      transaction, senderAccount, TransactionValidationParams.transactionPool());
             })
         .orElseGet(() -> ValidationResult.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
   }

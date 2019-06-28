@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.INCORRECT_NONCE;
 import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT;
@@ -191,6 +192,28 @@ public class MainnetTransactionValidatorTest {
     validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams);
 
     assertThat(stateChangeParamCaptor.getValue()).isTrue();
+  }
+
+  @Test
+  public void shouldNotCheckAccountPermissionIfBothValidationParamsCheckPermissionsAreFalse() {
+    final TransactionFilter transactionFilter = mock(TransactionFilter.class);
+
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(gasCalculator, false, Optional.empty());
+    validator.setTransactionFilter(transactionFilter);
+
+    final TransactionValidationParams validationParams =
+        new TransactionValidationParams.Builder()
+            .checkOnchainPermissions(false)
+            .checkLocalPermissions(false)
+            .build();
+
+    validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams);
+
+    assertThat(validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams))
+        .isEqualTo(ValidationResult.valid());
+
+    verifyZeroInteractions(transactionFilter);
   }
 
   private Account accountWithNonce(final long nonce) {
