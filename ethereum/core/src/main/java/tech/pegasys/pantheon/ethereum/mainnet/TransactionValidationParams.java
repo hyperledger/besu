@@ -14,6 +14,16 @@ package tech.pegasys.pantheon.ethereum.mainnet;
 
 public class TransactionValidationParams {
 
+  private static final TransactionValidationParams processingBlockParams =
+      new TransactionValidationParams(false, true, false);
+  private static final TransactionValidationParams transactionPoolParams =
+      new TransactionValidationParams(true, false, true);
+  private static final TransactionValidationParams miningParams =
+      new TransactionValidationParams(false, true, true);
+  private static final TransactionValidationParams blockReplayParams =
+      new TransactionValidationParams(false, false, false);
+  private static final TransactionValidationParams transactionSimulatorParams =
+      new TransactionValidationParams(false, false, false);
   private final boolean allowFutureNonce;
   private final boolean checkOnchainPermissions;
   private final boolean checkLocalPermissions;
@@ -40,43 +50,23 @@ public class TransactionValidationParams {
   }
 
   public static TransactionValidationParams transactionSimulator() {
-    return new Builder()
-        .checkLocalPermissions(false)
-        .checkOnchainPermissions(false)
-        .allowFutureNonce(false)
-        .build();
+    return transactionSimulatorParams;
   }
 
   public static TransactionValidationParams processingBlock() {
-    return new Builder()
-        .checkLocalPermissions(false)
-        .checkOnchainPermissions(true)
-        .allowFutureNonce(false)
-        .build();
+    return processingBlockParams;
   }
 
   public static TransactionValidationParams transactionPool() {
-    return new Builder()
-        .checkLocalPermissions(true)
-        .checkOnchainPermissions(false)
-        .allowFutureNonce(true)
-        .build();
+    return transactionPoolParams;
   }
 
   public static TransactionValidationParams mining() {
-    return new Builder()
-        .checkLocalPermissions(true)
-        .checkOnchainPermissions(true)
-        .allowFutureNonce(false)
-        .build();
+    return miningParams;
   }
 
   public static TransactionValidationParams blockReplay() {
-    return new Builder()
-        .checkLocalPermissions(false)
-        .checkOnchainPermissions(false)
-        .allowFutureNonce(false)
-        .build();
+    return blockReplayParams;
   }
 
   static class Builder {
