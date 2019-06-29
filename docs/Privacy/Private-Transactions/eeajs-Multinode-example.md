@@ -1,18 +1,9 @@
-description: Creating and sending private transactions
+description: web3.js-eea client library multinode example
 <!--- END of page meta data -->
 
-# Creating and Sending Private Transactions 
+# Using Multinode Example in web3.js-eea Client Library
 
-The [EEA JavaScript library](https://github.com/PegaSysEng/eeajs) is provided to create and send signed 
-RLP-encoded private transactions. 
-
-!!! note
-    Private transactions either deploy contracts or call contract functions. 
-    Ether transfer transactions cannot be private. 
-
-## Using Multinode Example 
-
-To use the examples provided in EEA JS library with [your privacy network](Configuring-Privacy.md):
+To use the examples provided in EEA JS library with [your privacy network](../Configuring-Privacy.md):
 
 1. Clone the **PegaSysEng/eeajs** repository: 
      ```bash
