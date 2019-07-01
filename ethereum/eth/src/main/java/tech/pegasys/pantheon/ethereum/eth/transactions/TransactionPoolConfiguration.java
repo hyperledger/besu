@@ -14,6 +14,8 @@ package tech.pegasys.pantheon.ethereum.eth.transactions;
 
 import java.util.Objects;
 
+import picocli.CommandLine;
+
 public class TransactionPoolConfiguration {
 
   private final int txPoolMaxSize;
@@ -79,7 +81,15 @@ public class TransactionPoolConfiguration {
   public static class Builder {
     private int txPoolMaxSize = PendingTransactions.MAX_PENDING_TRANSACTIONS;
     private int pendingTxRetentionPeriod = PendingTransactions.DEFAULT_TX_RETENTION_HOURS;
-    private int txMessageKeepAliveSeconds = TransactionPool.DEFAULT_TX_MSG_KEEP_ALIVE;
+
+    @CommandLine.Option(
+        names = {"--Xincoming-tx-messages-keep-alive-seconds"},
+        paramLabel = "<INTEGER>",
+        hidden = true,
+        description =
+            "Keep alive of incoming transaction messages in seconds (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private Integer txMessageKeepAliveSeconds = TransactionPool.DEFAULT_TX_MSG_KEEP_ALIVE;
 
     public Builder txPoolMaxSize(final int txPoolMaxSize) {
       this.txPoolMaxSize = txPoolMaxSize;

@@ -97,4 +97,4 @@ privacy-precompiled-address=9
 tx-pool-retention-hours=999
 
 tx-pool-max-size=1234
-tx-pool-keep-alive-seconds=60
+Xincoming-tx-messages-keep-alive-seconds=60
