@@ -32,10 +32,15 @@ public enum GraphQLError {
   INCORRECT_NONCE(-32006, "Incorrect nonce"),
   TX_SENDER_NOT_AUTHORIZED(-32007, "Sender account not authorized to send transactions"),
   CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE(-32008, "Initial sync is still in progress"),
+  GAS_PRICE_TOO_LOW(-32009, "Gas price below configured minimum gas price"),
   WRONG_CHAIN_ID(-32000, "Wrong Chain ID in transaction signature"),
   REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED(
       -32000, "Signatures with replay protection are not supported"),
-  PRIVATE_TRANSACTION_FAILED(-32000, "Private transaction failed");
+
+  // Provate Transaction Errors
+  PRIVATE_TRANSACTION_FAILED(-32000, "Private transaction failed"),
+  PRIVATE_NONCE_TOO_LOW(-50100, "Private transaction nonce too low"),
+  INCORRECT_PRIVATE_NONCE(-50100, "Private transaction nonce is incorrect");
 
   private final int code;
   private final String message;
@@ -77,8 +82,15 @@ public enum GraphQLError {
         return TX_SENDER_NOT_AUTHORIZED;
       case CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE:
         return CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
+        // Private Transaction Invalid Reasons
       case PRIVATE_TRANSACTION_FAILED:
         return PRIVATE_TRANSACTION_FAILED;
+      case PRIVATE_NONCE_TOO_LOW:
+        return PRIVATE_NONCE_TOO_LOW;
+      case INCORRECT_PRIVATE_NONCE:
+        return INCORRECT_PRIVATE_NONCE;
+      case GAS_PRICE_TOO_LOW:
+        return GAS_PRICE_TOO_LOW;
       default:
         return INTERNAL_ERROR;
     }

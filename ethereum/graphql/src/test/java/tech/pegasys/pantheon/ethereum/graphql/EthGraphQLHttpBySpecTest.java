@@ -90,6 +90,7 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
 
     specs.add("eth_sendRawTransaction_contractCreation");
     specs.add("eth_sendRawTransaction_messageCall");
+    specs.add("eth_sendRawTransaction_nonceTooLow");
     specs.add("eth_sendRawTransaction_transferEther");
     specs.add("eth_sendRawTransaction_unsignedTransaction");
 
