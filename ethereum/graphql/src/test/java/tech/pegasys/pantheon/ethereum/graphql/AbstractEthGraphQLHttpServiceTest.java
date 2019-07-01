@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.graphql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
@@ -38,6 +39,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
+import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
@@ -139,6 +141,9 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
 
     when(transactionPoolMock.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
+    // nonce too low tests uses a tx with nonce=16
+    when(transactionPoolMock.addLocalTransaction(argThat(tx -> tx.getNonce() == 16)))
+        .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
     final PendingTransactions pendingTransactionsMock = mock(PendingTransactions.class);
     when(transactionPoolMock.getPendingTransactions()).thenReturn(pendingTransactionsMock);
     when(pendingTransactionsMock.getTransactionInfo())

@@ -228,6 +228,7 @@ public class EthJsonRpcHttpBySpecTest extends AbstractEthJsonRpcHttpServiceTest 
     specs.put(EthSendRawTransaction.class, "eth_sendRawTransaction_contractCreation");
     specs.put(EthSendRawTransaction.class, "eth_sendRawTransaction_messageCall");
     specs.put(EthSendRawTransaction.class, "eth_sendRawTransaction_invalidByteValueHex");
+    specs.put(EthSendRawTransaction.class, "eth_sendRawTransaction_invalidNonceTooLow");
     specs.put(EthSendRawTransaction.class, "eth_sendRawTransaction_invalidRawTransaction");
     specs.put(EthSendRawTransaction.class, "eth_sendRawTransaction_unsignedTransaction");
 
