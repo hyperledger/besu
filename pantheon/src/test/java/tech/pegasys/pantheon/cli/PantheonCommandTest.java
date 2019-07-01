@@ -40,7 +40,6 @@ import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
-import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfiguration;
 import tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
@@ -716,9 +715,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).webSocketConfiguration(eq(webSocketConfiguration));
     verify(mockRunnerBuilder).metricsConfiguration(eq(metricsConfiguration));
     verify(mockRunnerBuilder).build();
-
-    verify(mockControllerBuilder)
-        .transactionPoolConfiguration(eq(TransactionPoolConfiguration.builder().build()));
     verify(mockControllerBuilder).build();
 
     verify(mockSyncConfBuilder).syncMode(eq(SyncMode.FULL));
@@ -2612,12 +2608,10 @@ public class PantheonCommandTest extends CommandTestAbstract {
   public void pendingTransactionRetentionPeriod() {
     final int pendingTxRetentionHours = 999;
     parseCommand("--tx-pool-retention-hours", String.valueOf(pendingTxRetentionHours));
-
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigurationArgumentCaptor.capture());
     assertThat(transactionPoolConfigurationArgumentCaptor.getValue().getPendingTxRetentionPeriod())
         .isEqualTo(pendingTxRetentionHours);
-
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
@@ -2625,25 +2619,25 @@ public class PantheonCommandTest extends CommandTestAbstract {
   @Test
   public void txMessageKeepAliveSeconds() {
     final int txMessageKeepAliveSeconds = 999;
-    parseCommand("--tx-pool-keep-alive-seconds", String.valueOf(txMessageKeepAliveSeconds));
-
+    parseCommand(
+        "--Xincoming-tx-messages-keep-alive-seconds", String.valueOf(txMessageKeepAliveSeconds));
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigurationArgumentCaptor.capture());
     assertThat(transactionPoolConfigurationArgumentCaptor.getValue().getTxMessageKeepAliveSeconds())
         .isEqualTo(txMessageKeepAliveSeconds);
-
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
   @Test
   public void txMessageKeepAliveSecondsWithInvalidInputShouldFail() {
-    parseCommand("--tx-pool-keep-alive-seconds", "acbd");
+    parseCommand("--Xincoming-tx-messages-keep-alive-seconds", "acbd");
 
     verifyZeroInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
-        .contains("Invalid value for option '--tx-pool-keep-alive-seconds': 'acbd' is not an int");
+        .contains(
+            "Invalid value for option '--Xincoming-tx-messages-keep-alive-seconds': 'acbd' is not an int");
   }
 }
