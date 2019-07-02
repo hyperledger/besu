@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.IntSupplier;
 
+import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -186,5 +187,26 @@ public class SyncStatusNodePermissioningProviderTest {
     verify(checkCounter, times(0)).inc();
     verify(checkPermittedCounter, times(0)).inc();
     verify(checkUnpermittedCounter, times(0)).inc();
+  }
+
+  @Test
+  public void syncStatusPermissioningCheckShouldIgnoreEnodeURLDiscoveryPort() {
+    syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
+    assertThat(provider.hasReachedSync()).isFalse();
+
+    final EnodeURL bootnode =
+        EnodeURL.fromString(
+            "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.3:5678");
+    final EnodeURL enodeWithDiscoveryPort =
+        EnodeURL.fromString(
+            "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.3:5678?discport=30303");
+
+    final SyncStatusNodePermissioningProvider provider =
+        new SyncStatusNodePermissioningProvider(
+            synchronizer, Lists.newArrayList(bootnode), metricsSystem);
+
+    boolean isPermitted = provider.isPermitted(enode1, enodeWithDiscoveryPort);
+
+    assertThat(isPermitted).isTrue();
   }
 }

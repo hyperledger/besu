@@ -41,11 +41,15 @@ public class NodePermissioningController {
   }
 
   public boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
-    LOG.trace("Checking node permission: {} -> {}", sourceEnode, destinationEnode);
+    LOG.trace("Node permissioning: Checking {} -> {}", sourceEnode, destinationEnode);
 
     if (syncStatusNodePermissioningProvider
         .map(p -> !p.hasReachedSync() && p.isPermitted(sourceEnode, destinationEnode))
         .orElse(false)) {
+
+      LOG.trace(
+          "Node permissioning - Sync Status: Permitted {} -> {}", sourceEnode, destinationEnode);
+
       return true;
     }
 
@@ -54,19 +58,40 @@ public class NodePermissioningController {
             p -> p.isPermitted(sourceEnode, destinationEnode));
 
     if (insufficientPeerPermission.isPresent()) {
-      return insufficientPeerPermission.get();
+      final Boolean permitted = insufficientPeerPermission.get();
+
+      LOG.trace(
+          "Node permissioning - Insufficient Peers: {} {} -> {}",
+          permitted ? "Permitted" : "Rejected",
+          sourceEnode,
+          destinationEnode);
+
+      return permitted;
     }
 
     if (syncStatusNodePermissioningProvider.isPresent()
         && !syncStatusNodePermissioningProvider.get().isPermitted(sourceEnode, destinationEnode)) {
+
+      LOG.trace(
+          "Node permissioning - Sync Status: Rejected {} -> {}", sourceEnode, destinationEnode);
+
       return false;
     } else {
       for (final NodePermissioningProvider provider : providers) {
         if (!provider.isPermitted(sourceEnode, destinationEnode)) {
+          LOG.trace(
+              "Node permissioning - {}: Rejected {} -> {}",
+              provider.getClass().getSimpleName(),
+              sourceEnode,
+              destinationEnode);
+
           return false;
         }
       }
     }
+
+    LOG.trace("Node permissioning: Permitted {} -> {}", sourceEnode, destinationEnode);
+
     return true;
   }
 

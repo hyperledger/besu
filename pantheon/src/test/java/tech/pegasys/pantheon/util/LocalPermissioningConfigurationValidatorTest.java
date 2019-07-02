@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import org.junit.Test;
 
@@ -87,6 +88,37 @@ public class LocalPermissioningConfigurationValidatorTest {
       assertThat(e.getMessage())
           .contains(
               "enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303");
+    }
+  }
+
+  @Test
+  public void nodeWhitelistCheckShouldIgnoreDiscoveryPortParam() throws Exception {
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG);
+    final Path toml = Files.createTempFile("toml", "");
+    toml.toFile().deleteOnExit();
+    Files.write(toml, Resources.toByteArray(configFile));
+
+    final LocalPermissioningConfiguration permissioningConfiguration =
+        PermissioningConfigurationBuilder.permissioningConfiguration(
+            true, toml.toAbsolutePath().toString(), true, toml.toAbsolutePath().toString());
+
+    // This node is defined in the PERMISSIONING_CONFIG file without the discovery port
+    final URI enodeURL =
+        URI.create(
+            "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.9:4567?discport=30303");
+
+    // In an URI comparison the URLs should not match
+    boolean isInWhitelist = permissioningConfiguration.getNodeWhitelist().contains(enodeURL);
+    assertThat(isInWhitelist).isFalse();
+
+    // However, for the whitelist validation, we should ignore the discovery port and don't throw an
+    // error
+    try {
+      PermissioningConfigurationValidator.areAllNodesAreInWhitelist(
+          Lists.newArrayList(enodeURL), permissioningConfiguration);
+    } catch (Exception e) {
+      fail(
+          "Exception not expected. Validation of nodes in whitelist should ignore the optional discovery port param.");
     }
   }
 }
