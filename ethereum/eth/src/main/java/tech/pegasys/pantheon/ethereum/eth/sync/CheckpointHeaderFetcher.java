@@ -56,8 +56,8 @@ public class CheckpointHeaderFetcher {
 
   public CompletableFuture<List<BlockHeader>> getNextCheckpointHeaders(
       final EthPeer peer, final BlockHeader previousCheckpointHeader) {
-    final int skip = syncConfig.downloaderChainSegmentSize() - 1;
-    final int maximumHeaderRequestSize = syncConfig.downloaderHeaderRequestSize();
+    final int skip = syncConfig.getDownloaderChainSegmentSize() - 1;
+    final int maximumHeaderRequestSize = syncConfig.getDownloaderHeaderRequestSize();
     final long previousCheckpointNumber = previousCheckpointHeader.getNumber();
 
     final int additionalHeaderCount;
@@ -117,7 +117,7 @@ public class CheckpointHeaderFetcher {
     if (finalCheckpointHeader.isPresent()) {
       return false;
     }
-    final int skip = syncConfig.downloaderChainSegmentSize() - 1;
+    final int skip = syncConfig.getDownloaderChainSegmentSize() - 1;
     final long peerEstimatedHeight = peer.chainState().getEstimatedHeight();
     final long previousCheckpointNumber = previousCheckpointHeader.getNumber();
     return previousCheckpointNumber + skip >= peerEstimatedHeight;

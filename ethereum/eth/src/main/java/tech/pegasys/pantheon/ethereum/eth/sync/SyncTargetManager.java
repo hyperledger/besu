@@ -71,7 +71,7 @@ public abstract class SyncTargetManager<C> {
                         protocolContext,
                         ethContext,
                         bestPeer,
-                        config.downloaderHeaderRequestSize(),
+                        config.getDownloaderHeaderRequestSize(),
                         metricsSystem)
                     .run()
                     .handle(

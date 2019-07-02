@@ -17,7 +17,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
-import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
+import tech.pegasys.pantheon.ethereum.eth.EthProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.messages.BlockBodiesMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.BlockHeadersMessage;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
@@ -51,13 +51,13 @@ class EthServer {
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final EthMessages ethMessages;
-  private final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration;
+  private final EthProtocolConfiguration ethereumWireProtocolConfiguration;
 
   EthServer(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final EthMessages ethMessages,
-      final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration) {
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.ethMessages = ethMessages;

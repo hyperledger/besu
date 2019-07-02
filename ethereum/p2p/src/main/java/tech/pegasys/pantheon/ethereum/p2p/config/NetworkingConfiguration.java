@@ -18,6 +18,8 @@ public class NetworkingConfiguration {
   private DiscoveryConfiguration discovery = new DiscoveryConfiguration();
   private RlpxConfiguration rlpx = new RlpxConfiguration();
 
+  private NetworkingConfiguration() {}
+
   public static NetworkingConfiguration create() {
     return new NetworkingConfiguration();
   }

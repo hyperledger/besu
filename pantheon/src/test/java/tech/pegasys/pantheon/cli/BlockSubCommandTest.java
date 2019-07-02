@@ -55,7 +55,7 @@ public class BlockSubCommandTest extends CommandTestAbstract {
   // Block sub-command
   @Test
   public void blockSubCommandExistAnbHaveSubCommands() {
-    CommandSpec spec = parseCommand();
+    CommandSpec spec = parseCommand().getSpec();
     assertThat(spec.subcommands()).containsKeys(BLOCK_SUBCOMMAND_NAME);
     assertThat(spec.subcommands().get(BLOCK_SUBCOMMAND_NAME).getSubcommands())
         .containsKeys(BLOCK_IMPORT_SUBCOMMAND_NAME);

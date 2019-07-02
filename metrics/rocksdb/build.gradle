@@ -31,7 +31,6 @@ dependencies {
 
   implementation 'com.google.guava:guava'
   implementation 'io.prometheus:simpleclient'
-  implementation 'info.picocli:picocli'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.rocksdb:rocksdbjni'
 }

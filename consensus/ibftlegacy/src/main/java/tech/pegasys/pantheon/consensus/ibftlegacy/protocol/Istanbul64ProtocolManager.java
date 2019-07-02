@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.consensus.ibftlegacy.protocol;
 import static java.util.Collections.singletonList;
 
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
-import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
+import tech.pegasys.pantheon.ethereum.eth.EthProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
@@ -37,7 +37,7 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
       final int computationWorkers,
       final Clock clock,
       final MetricsSystem metricsSystem,
-      final EthereumWireProtocolConfiguration ethereumWireProtocolConfiguration) {
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration) {
     super(
         blockchain,
         worldStateArchive,

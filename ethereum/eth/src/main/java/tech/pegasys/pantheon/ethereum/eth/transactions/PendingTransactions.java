@@ -51,9 +51,6 @@ import java.util.stream.Collectors;
  */
 public class PendingTransactions {
 
-  public static final int MAX_PENDING_TRANSACTIONS = 4096;
-  public static final int DEFAULT_TX_RETENTION_HOURS = 13;
-
   private final int maxTransactionRetentionHours;
   private final Clock clock;
 

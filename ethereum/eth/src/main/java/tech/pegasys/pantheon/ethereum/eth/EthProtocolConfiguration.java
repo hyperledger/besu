@@ -17,9 +17,8 @@ import tech.pegasys.pantheon.util.number.PositiveNumber;
 import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
-import picocli.CommandLine;
 
-public class EthereumWireProtocolConfiguration {
+public class EthProtocolConfiguration {
 
   public static final int DEFAULT_MAX_GET_BLOCK_HEADERS = 192;
   public static final int DEFAULT_MAX_GET_BLOCK_BODIES = 128;
@@ -31,7 +30,7 @@ public class EthereumWireProtocolConfiguration {
   private final int maxGetReceipts;
   private final int maxGetNodeData;
 
-  public EthereumWireProtocolConfiguration(
+  public EthProtocolConfiguration(
       final int maxGetBlockHeaders,
       final int maxGetBlockBodies,
       final int maxGetReceipts,
@@ -42,8 +41,8 @@ public class EthereumWireProtocolConfiguration {
     this.maxGetNodeData = maxGetNodeData;
   }
 
-  public static EthereumWireProtocolConfiguration defaultConfig() {
-    return new EthereumWireProtocolConfiguration(
+  public static EthProtocolConfiguration defaultConfig() {
+    return new EthProtocolConfiguration(
         DEFAULT_MAX_GET_BLOCK_HEADERS,
         DEFAULT_MAX_GET_BLOCK_BODIES,
         DEFAULT_MAX_GET_RECEIPTS,
@@ -78,7 +77,7 @@ public class EthereumWireProtocolConfiguration {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    final EthereumWireProtocolConfiguration that = (EthereumWireProtocolConfiguration) o;
+    final EthProtocolConfiguration that = (EthProtocolConfiguration) o;
     return maxGetBlockHeaders == that.maxGetBlockHeaders
         && maxGetBlockBodies == that.maxGetBlockBodies
         && maxGetReceipts == that.maxGetReceipts
@@ -101,41 +100,17 @@ public class EthereumWireProtocolConfiguration {
   }
 
   public static class Builder {
-    @CommandLine.Option(
-        hidden = true,
-        names = {"--Xewp-max-get-headers"},
-        paramLabel = "<INTEGER>",
-        description =
-            "Maximum request limit for Ethereum Wire Protocol GET_BLOCK_HEADERS. (default: ${DEFAULT-VALUE})")
     private PositiveNumber maxGetBlockHeaders =
-        PositiveNumber.fromInt(EthereumWireProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS);
+        PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS);
 
-    @CommandLine.Option(
-        hidden = true,
-        names = {"--Xewp-max-get-bodies"},
-        paramLabel = "<INTEGER>",
-        description =
-            "Maximum request limit for Ethereum Wire Protocol GET_BLOCK_BODIES. (default: ${DEFAULT-VALUE})")
     private PositiveNumber maxGetBlockBodies =
-        PositiveNumber.fromInt(EthereumWireProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_BODIES);
+        PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_BODIES);
 
-    @CommandLine.Option(
-        hidden = true,
-        names = {"--Xewp-max-get-receipts"},
-        paramLabel = "<INTEGER>",
-        description =
-            "Maximum request limit for Ethereum Wire Protocol GET_RECEIPTS. (default: ${DEFAULT-VALUE})")
     private PositiveNumber maxGetReceipts =
-        PositiveNumber.fromInt(EthereumWireProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS);
+        PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS);
 
-    @CommandLine.Option(
-        hidden = true,
-        names = {"--Xewp-max-get-node-data"},
-        paramLabel = "<INTEGER>",
-        description =
-            "Maximum request limit for Ethereum Wire Protocol GET_NODE_DATA. (default: ${DEFAULT-VALUE})")
     private PositiveNumber maxGetNodeData =
-        PositiveNumber.fromInt(EthereumWireProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA);
+        PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA);
 
     public Builder maxGetBlockHeaders(final PositiveNumber maxGetBlockHeaders) {
       this.maxGetBlockHeaders = maxGetBlockHeaders;
@@ -157,8 +132,8 @@ public class EthereumWireProtocolConfiguration {
       return this;
     }
 
-    public EthereumWireProtocolConfiguration build() {
-      return new EthereumWireProtocolConfiguration(
+    public EthProtocolConfiguration build() {
+      return new EthProtocolConfiguration(
           maxGetBlockHeaders.getValue(),
           maxGetBlockBodies.getValue(),
           maxGetReceipts.getValue(),

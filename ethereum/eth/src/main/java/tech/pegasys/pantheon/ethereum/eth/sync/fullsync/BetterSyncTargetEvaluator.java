@@ -50,13 +50,13 @@ public class BetterSyncTargetEvaluator {
                       .getBestBlock()
                       .getTotalDifficulty()
                       .minus(currentPeerChainState.getBestBlock().getTotalDifficulty());
-              if (tdDifference.compareTo(config.downloaderChangeTargetThresholdByTd()) > 0) {
+              if (tdDifference.compareTo(config.getDownloaderChangeTargetThresholdByTd()) > 0) {
                 return true;
               }
               final long heightDifference =
                   bestPeerChainState.getEstimatedHeight()
                       - currentPeerChainState.getEstimatedHeight();
-              return heightDifference > config.downloaderChangeTargetThresholdByHeight();
+              return heightDifference > config.getDownloaderChangeTargetThresholdByHeight();
             })
         .orElse(false);
   }

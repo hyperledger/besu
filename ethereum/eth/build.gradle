@@ -36,7 +36,6 @@ dependencies {
   implementation project(':services:pipeline')
   implementation project(':services:tasks')
 
-  implementation 'info.picocli:picocli'
   implementation 'io.vertx:vertx-core'
   implementation 'com.google.guava:guava'
 

@@ -119,7 +119,7 @@ public class FastSyncActions<C> {
         .map(
             peer -> {
               final long pivotBlockNumber =
-                  peer.chainState().getEstimatedHeight() - syncConfig.fastSyncPivotDistance();
+                  peer.chainState().getEstimatedHeight() - syncConfig.getFastSyncPivotDistance();
               if (pivotBlockNumber <= BlockHeader.GENESIS_BLOCK_NUMBER) {
                 throw new FastSyncException(CHAIN_TOO_SHORT);
               } else {

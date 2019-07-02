@@ -171,7 +171,7 @@ public class FastSyncChainDownloaderTest {
         SynchronizerConfiguration.builder()
             .downloaderChainSegmentSize(5)
             .downloaderHeadersRequestSize(3)
-            .downloaderParallelisim(1)
+            .downloaderParallelism(1)
             .build();
     final long pivotBlockNumber = 25;
     final ChainDownloader downloader = downloader(syncConfig, pivotBlockNumber);

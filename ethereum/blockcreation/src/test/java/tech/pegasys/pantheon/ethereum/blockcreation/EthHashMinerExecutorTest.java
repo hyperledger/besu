@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfiguration;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -36,7 +37,10 @@ public class EthHashMinerExecutorTest {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            PendingTransactions.DEFAULT_TX_RETENTION_HOURS, 1, TestClock.fixed(), metricsSystem);
+            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
+            1,
+            TestClock.fixed(),
+            metricsSystem);
 
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(
@@ -58,7 +62,10 @@ public class EthHashMinerExecutorTest {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
-            PendingTransactions.DEFAULT_TX_RETENTION_HOURS, 1, TestClock.fixed(), metricsSystem);
+            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
+            1,
+            TestClock.fixed(),
+            metricsSystem);
 
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(

@@ -53,7 +53,7 @@ public class OperationBenchmarkHelper {
     final Path storageDirectory = Files.createTempDirectory("benchmark");
     final KeyValueStorage keyValueStorage =
         RocksDbKeyValueStorage.create(
-            new RocksDbConfiguration.Builder().databaseDir(storageDirectory).build(),
+            RocksDbConfiguration.builder().databaseDir(storageDirectory).build(),
             new NoOpMetricsSystem());
 
     final ExecutionContextTestFixture executionContext =

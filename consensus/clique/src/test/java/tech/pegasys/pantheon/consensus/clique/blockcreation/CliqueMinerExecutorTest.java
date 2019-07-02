@@ -37,6 +37,7 @@ import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfiguration;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
@@ -91,7 +92,7 @@ public class CliqueMinerExecutorTest {
             Executors.newSingleThreadExecutor(),
             CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerKeyPair),
             new PendingTransactions(
-                PendingTransactions.DEFAULT_TX_RETENTION_HOURS,
+                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
                 TestClock.fixed(),
                 metricsSystem),
@@ -128,7 +129,7 @@ public class CliqueMinerExecutorTest {
             Executors.newSingleThreadExecutor(),
             CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerKeyPair),
             new PendingTransactions(
-                PendingTransactions.DEFAULT_TX_RETENTION_HOURS,
+                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
                 TestClock.fixed(),
                 metricsSystem),
@@ -165,7 +166,7 @@ public class CliqueMinerExecutorTest {
             Executors.newSingleThreadExecutor(),
             CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerKeyPair),
             new PendingTransactions(
-                PendingTransactions.DEFAULT_TX_RETENTION_HOURS,
+                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
                 TestClock.fixed(),
                 metricsSystem),

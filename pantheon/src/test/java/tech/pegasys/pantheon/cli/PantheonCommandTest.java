@@ -41,6 +41,7 @@ import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
+import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
@@ -164,14 +165,13 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(ethNetworkArg.capture());
     final ArgumentCaptor<MiningParameters> miningArg =
         ArgumentCaptor.forClass(MiningParameters.class);
-    verify(mockControllerBuilder).synchronizerConfiguration(isNotNull());
+    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
     verify(mockControllerBuilder).dataDirectory(isNotNull());
     verify(mockControllerBuilder).miningParameters(miningArg.capture());
     verify(mockControllerBuilder).nodePrivateKeyFile(isNotNull());
     verify(mockControllerBuilder).build();
 
-    verify(mockSyncConfBuilder).syncMode(eq(SyncMode.FULL));
-
+    assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.FULL);
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
@@ -328,9 +328,10 @@ public class PantheonCommandTest extends CommandTestAbstract {
             .build();
     verify(mockControllerBuilder).dataDirectory(eq(Paths.get("/opt/pantheon").toAbsolutePath()));
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(eq(networkConfig));
+    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
-    verify(mockSyncConfBuilder).syncMode(eq(SyncMode.FAST));
-    verify(mockSyncConfBuilder).fastSyncMinimumPeerCount(eq(13));
+    assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.FAST);
+    assertThat(syncConfigurationCaptor.getValue().getFastSyncMinimumPeerCount()).isEqualTo(13);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -651,7 +652,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
 
     // Parse it.
-    final CommandLine.Model.CommandSpec spec = parseCommand("--config-file", toml.toString());
+    final CommandLine.Model.CommandSpec spec = parseCommand("--config-file", toml.toString()).spec;
     final TomlParseResult tomlResult = Toml.parse(toml);
 
     // Verify we configured everything
@@ -717,9 +718,11 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).metricsConfiguration(eq(metricsConfiguration));
     verify(mockRunnerBuilder).build();
     verify(mockControllerBuilder).build();
+    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
-    verify(mockSyncConfBuilder).syncMode(eq(SyncMode.FULL));
-    verify(mockSyncConfBuilder).fastSyncMinimumPeerCount(eq(5));
+    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FULL);
+    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(5);
 
     assertThat(commandErrorOutput.toString()).isEmpty();
 
@@ -1220,13 +1223,24 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void syncModeOptionMustBeUsed() {
-
+  public void syncMode_fast() {
     parseCommand("--sync-mode", "FAST");
-    verify(mockSyncConfBuilder).syncMode(eq(SyncMode.FAST));
+    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
+    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void syncMode_full() {
     parseCommand("--sync-mode", "FULL");
-    verify(mockSyncConfBuilder).syncMode(eq(SyncMode.FULL));
+    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
+
+    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FULL);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1244,10 +1258,12 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   @Test
   public void parsesValidFastSyncMinPeersOption() {
-
     parseCommand("--sync-mode", "FAST", "--fast-sync-min-peers", "11");
-    verify(mockSyncConfBuilder).syncMode(eq(SyncMode.FAST));
-    verify(mockSyncConfBuilder).fastSyncMinimumPeerCount(eq(11));
+    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
+
+    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
+    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(11);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
@@ -1260,89 +1276,6 @@ public class PantheonCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains("Invalid value for option '--fast-sync-min-peers': 'ten' is not an int");
-  }
-
-  @Test
-  public void parsesValidEwpMaxGetHeadersOptions() {
-
-    parseCommand("--Xewp-max-get-headers", "13");
-    verify(mockEthereumWireProtocolConfigurationBuilder).build();
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void parsesInvalidEwpMaxGetHeadersOptionsShouldFail() {
-
-    parseCommand("--Xewp-max-get-headers", "-13");
-    verifyZeroInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
-        .contains(
-            "Invalid value for option '--Xewp-max-get-headers': cannot convert '-13' to PositiveNumber");
-  }
-
-  @Test
-  public void parsesValidEwpMaxGetBodiesOptions() {
-
-    parseCommand("--Xewp-max-get-bodies", "14");
-    verify(mockEthereumWireProtocolConfigurationBuilder).build();
-
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void parsesInvalidEwpMaxGetBodiesOptionsShouldFail() {
-
-    parseCommand("--Xewp-max-get-bodies", "-14");
-    verifyZeroInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
-        .contains(
-            "Invalid value for option '--Xewp-max-get-bodies': cannot convert '-14' to PositiveNumber");
-  }
-
-  @Test
-  public void parsesValidEwpMaxGetReceiptsOptions() {
-
-    parseCommand("--Xewp-max-get-receipts", "15");
-    verify(mockEthereumWireProtocolConfigurationBuilder).build();
-
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void parsesInvalidEwpMaxGetReceiptsOptionsShouldFail() {
-
-    parseCommand("--Xewp-max-get-receipts", "-15");
-    verifyZeroInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
-        .contains(
-            "Invalid value for option '--Xewp-max-get-receipts': cannot convert '-15' to PositiveNumber");
-  }
-
-  @Test
-  public void parsesValidEwpMaxGetNodeDataOptions() {
-
-    parseCommand("--Xewp-max-get-node-data", "16");
-    verify(mockEthereumWireProtocolConfigurationBuilder).build();
-
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void parsesInvalidEwpMaxGetNodeDataOptionsShouldFail() {
-
-    parseCommand("--Xewp-max-get-node-data", "-16");
-    verifyZeroInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
-        .contains(
-            "Invalid value for option '--Xewp-max-get-node-data': cannot convert '-16' to PositiveNumber");
   }
 
   @Test
@@ -2610,22 +2543,9 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final int pendingTxRetentionHours = 999;
     parseCommand("--tx-pool-retention-hours", String.valueOf(pendingTxRetentionHours));
     verify(mockControllerBuilder)
-        .transactionPoolConfiguration(transactionPoolConfigurationArgumentCaptor.capture());
-    assertThat(transactionPoolConfigurationArgumentCaptor.getValue().getPendingTxRetentionPeriod())
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getPendingTxRetentionPeriod())
         .isEqualTo(pendingTxRetentionHours);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void txMessageKeepAliveSeconds() {
-    final int txMessageKeepAliveSeconds = 999;
-    parseCommand(
-        "--Xincoming-tx-messages-keep-alive-seconds", String.valueOf(txMessageKeepAliveSeconds));
-    verify(mockControllerBuilder)
-        .transactionPoolConfiguration(transactionPoolConfigurationArgumentCaptor.capture());
-    assertThat(transactionPoolConfigurationArgumentCaptor.getValue().getTxMessageKeepAliveSeconds())
-        .isEqualTo(txMessageKeepAliveSeconds);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
