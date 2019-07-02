@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.util;
 import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfiguration;
 
 import java.net.URI;
-import java.util.ArrayList;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,16 +26,38 @@ public class PermissioningConfigurationValidator {
       final Collection<URI> nodeURIs,
       final LocalPermissioningConfiguration permissioningConfiguration)
       throws Exception {
-    List<URI> nodesNotInWhitelist = new ArrayList<>();
+
     if (permissioningConfiguration.isNodeWhitelistEnabled() && nodeURIs != null) {
-      nodesNotInWhitelist =
-          nodeURIs.stream()
-              .filter(enode -> !permissioningConfiguration.getNodeWhitelist().contains(enode))
+      final List<URI> whitelistNodesWithoutQueryParam =
+          permissioningConfiguration.getNodeWhitelist().stream()
+              .map(PermissioningConfigurationValidator::removeQueryFromURI)
               .collect(Collectors.toList());
+
+      final List<URI> nodeURIsNotInWhitelist =
+          nodeURIs.stream()
+              .map(PermissioningConfigurationValidator::removeQueryFromURI)
+              .filter(uri -> !whitelistNodesWithoutQueryParam.contains(uri))
+              .collect(Collectors.toList());
+
+      if (!nodeURIsNotInWhitelist.isEmpty()) {
+        throw new Exception(
+            "Specified node(s) not in nodes-whitelist " + enodesAsStrings(nodeURIsNotInWhitelist));
+      }
     }
-    if (!nodesNotInWhitelist.isEmpty()) {
-      throw new Exception(
-          "Specified node(s) not in nodes-whitelist " + enodesAsStrings(nodesNotInWhitelist));
+  }
+
+  private static URI removeQueryFromURI(final URI uri) {
+    try {
+      return new URI(
+          uri.getScheme(),
+          uri.getUserInfo(),
+          uri.getHost(),
+          uri.getPort(),
+          uri.getPath(),
+          null,
+          uri.getFragment());
+    } catch (URISyntaxException e) {
+      throw new IllegalArgumentException(e);
     }
   }
 

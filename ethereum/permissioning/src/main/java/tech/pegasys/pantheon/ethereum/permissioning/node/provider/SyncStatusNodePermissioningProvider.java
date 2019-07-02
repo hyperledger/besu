@@ -103,7 +103,7 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
       return true;
     } else {
       checkCounter.inc();
-      if (fixedNodes.contains(destinationEnode)) {
+      if (fixedNodes.stream().anyMatch(p -> EnodeURL.sameListeningEndpoint(p, destinationEnode))) {
         checkCounterPermitted.inc();
         return true;
       } else {
