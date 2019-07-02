@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.cli;
+package tech.pegasys.pantheon.cli.util;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParseResult;
 
-class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<List<Object>> {
+public class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<List<Object>> {
   private static final String DOCKER_CONFIG_LOCATION = "/etc/pantheon/pantheon.conf";
 
   private final AbstractParseResultHandler<List<Object>> resultHandler;
@@ -33,7 +33,7 @@ class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<List<Ob
   private final Map<String, String> environment;
   private final boolean isDocker;
 
-  ConfigOptionSearchAndRunHandler(
+  public ConfigOptionSearchAndRunHandler(
       final AbstractParseResultHandler<List<Object>> resultHandler,
       final CommandLine.IExceptionHandler2<List<Object>> exceptionHandler,
       final String configFileOptionName,
@@ -50,7 +50,7 @@ class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<List<Ob
   }
 
   @Override
-  protected List<Object> handle(final ParseResult parseResult) throws ExecutionException {
+  public List<Object> handle(final ParseResult parseResult) throws ExecutionException {
     final CommandLine commandLine = parseResult.asCommandLineList().get(0);
     if (parseResult.hasMatchedOption(configFileOptionName)) {
       final OptionSpec configFileOption = parseResult.matchedOption(configFileOptionName);
@@ -79,7 +79,7 @@ class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<List<Ob
   }
 
   @Override
-  protected ConfigOptionSearchAndRunHandler self() {
+  public ConfigOptionSearchAndRunHandler self() {
     return this;
   }
 }

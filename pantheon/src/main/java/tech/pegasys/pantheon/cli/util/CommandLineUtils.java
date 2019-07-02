@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.cli;
+package tech.pegasys.pantheon.cli.util;
 
 import tech.pegasys.pantheon.util.StringUtils;
 
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
 
-class CommandLineUtils {
+public class CommandLineUtils {
   /**
    * Check if options are passed that require an option to be true to have any effect and log a
    * warning with the list of affected options.
@@ -39,7 +39,7 @@ class CommandLineUtils {
    *     Example: if --miner-coinbase is in the list and condition is that --miner-enabled should
    *     not be false, we log a warning.
    */
-  static void checkOptionDependencies(
+  public static void checkOptionDependencies(
       final Logger logger,
       final CommandLine commandLine,
       final String mainOptionName,

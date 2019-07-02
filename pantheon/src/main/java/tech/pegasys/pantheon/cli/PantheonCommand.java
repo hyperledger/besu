@@ -16,9 +16,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static tech.pegasys.pantheon.cli.CommandLineUtils.checkOptionDependencies;
 import static tech.pegasys.pantheon.cli.DefaultCommandValues.getDefaultPantheonDataPath;
-import static tech.pegasys.pantheon.cli.NetworkName.MAINNET;
+import static tech.pegasys.pantheon.cli.config.NetworkName.MAINNET;
+import static tech.pegasys.pantheon.cli.util.CommandLineUtils.checkOptionDependencies;
 import static tech.pegasys.pantheon.controller.PantheonController.DATABASE_PATH;
 import static tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
@@ -31,14 +31,22 @@ import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.DEFA
 import tech.pegasys.pantheon.PantheonInfo;
 import tech.pegasys.pantheon.Runner;
 import tech.pegasys.pantheon.RunnerBuilder;
-import tech.pegasys.pantheon.cli.PublicKeySubCommand.KeyLoader;
+import tech.pegasys.pantheon.cli.config.EthNetworkConfig;
+import tech.pegasys.pantheon.cli.config.NetworkName;
 import tech.pegasys.pantheon.cli.converter.MetricCategoryConverter;
 import tech.pegasys.pantheon.cli.converter.RpcApisConverter;
 import tech.pegasys.pantheon.cli.custom.CorsAllowedOriginsProperty;
 import tech.pegasys.pantheon.cli.custom.JsonRPCWhitelistHostsProperty;
 import tech.pegasys.pantheon.cli.custom.RpcAuthFileValidator;
-import tech.pegasys.pantheon.cli.operator.OperatorSubCommand;
-import tech.pegasys.pantheon.cli.rlp.RLPSubCommand;
+import tech.pegasys.pantheon.cli.error.PantheonExceptionHandler;
+import tech.pegasys.pantheon.cli.subcommands.PasswordSubCommand;
+import tech.pegasys.pantheon.cli.subcommands.PublicKeySubCommand;
+import tech.pegasys.pantheon.cli.subcommands.PublicKeySubCommand.KeyLoader;
+import tech.pegasys.pantheon.cli.subcommands.blocks.BlocksSubCommand;
+import tech.pegasys.pantheon.cli.subcommands.operator.OperatorSubCommand;
+import tech.pegasys.pantheon.cli.subcommands.rlp.RLPSubCommand;
+import tech.pegasys.pantheon.cli.util.ConfigOptionSearchAndRunHandler;
+import tech.pegasys.pantheon.cli.util.VersionProvider;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.controller.KeyPairUtil;
 import tech.pegasys.pantheon.controller.PantheonController;
@@ -470,7 +478,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       paramLabel = "<LOG VERBOSITY LEVEL>",
       description =
           "Logging verbosity levels: OFF, FATAL, WARN, INFO, DEBUG, TRACE, ALL (default: INFO)")
-  private final Level logLevel = null;
+  private final Level logLevel = Level.INFO;
 
   @Option(
       names = {"--miner-enabled"},
@@ -577,38 +585,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private Collection<EnodeURL> staticNodes;
   private PantheonController<?> pantheonController;
 
-  // Inner class so we can get to loggingLevel.
-  public class PantheonExceptionHandler
-      extends CommandLine.AbstractHandler<List<Object>, PantheonExceptionHandler>
-      implements CommandLine.IExceptionHandler2<List<Object>> {
-
-    @Override
-    public List<Object> handleParseException(final ParameterException ex, final String[] args) {
-      if (logLevel != null && Level.DEBUG.isMoreSpecificThan(logLevel)) {
-        ex.printStackTrace(err());
-      } else {
-        err().println(ex.getMessage());
-      }
-      if (!CommandLine.UnmatchedArgumentException.printSuggestions(ex, err())) {
-        ex.getCommandLine().usage(err(), ansi());
-      }
-      return returnResultOrExit(null);
-    }
-
-    @Override
-    public List<Object> handleExecutionException(
-        final ExecutionException ex, final CommandLine.ParseResult parseResult) {
-      return throwOrExit(ex);
-    }
-
-    @Override
-    protected PantheonExceptionHandler self() {
-      return this;
-    }
-  }
-
-  private final Supplier<PantheonExceptionHandler> exceptionHandlerSupplier =
-      Suppliers.memoize(PantheonExceptionHandler::new);
   private final Supplier<MetricsSystem> metricsSystem =
       Suppliers.memoize(() -> PrometheusMetricsSystem.init(metricsConfiguration()));
 
@@ -857,7 +833,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     return this;
   }
 
-  PantheonController<?> buildController() {
+  public PantheonController<?> buildController() {
     try {
       return controllerBuilderFactory
           .fromEthNetworkConfig(updateNetworkConfig(getNetwork()))
@@ -965,7 +941,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     return webSocketConfiguration;
   }
 
-  MetricsConfiguration metricsConfiguration() {
+  public MetricsConfiguration metricsConfiguration() {
     if (isMetricsEnabled && isMetricsPushEnabled) {
       throw new ParameterException(
           this.commandLine,
@@ -1353,7 +1329,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  File nodePrivateKeyFile() {
+  public File nodePrivateKeyFile() {
     File nodePrivateKeyFile = null;
     if (isFullInstantiation()) {
       nodePrivateKeyFile = standaloneCommands.nodePrivateKeyFile;
@@ -1446,14 +1422,18 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     return metricsSystem.get();
   }
 
-  public PantheonExceptionHandler exceptionHandler() {
-    return exceptionHandlerSupplier.get();
-  }
-
   private Set<EnodeURL> loadStaticNodes() throws IOException {
     final String staticNodesFilename = "static-nodes.json";
     final Path staticNodesPath = dataDir().resolve(staticNodesFilename);
 
     return StaticNodesParser.fromPath(staticNodesPath);
+  }
+
+  public PantheonExceptionHandler exceptionHandler() {
+    return new PantheonExceptionHandler(this::getLogLevel);
+  }
+
+  private Level getLogLevel() {
+    return logLevel;
   }
 }

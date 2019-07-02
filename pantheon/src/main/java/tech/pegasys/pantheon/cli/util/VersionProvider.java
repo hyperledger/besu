@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright 2018 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -10,21 +10,15 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.cli.rlp;
+package tech.pegasys.pantheon.cli.util;
 
-/** Type of the RLP data to encode/decode */
-public enum RLPType {
-  // Enum is used to enable the listing of the possible values in PicoCLI.
-  IBFT_EXTRA_DATA(new IbftExtraDataCLIAdapter());
+import tech.pegasys.pantheon.PantheonInfo;
 
-  private final JSONToRLP adapter;
+import picocli.CommandLine;
 
-  RLPType(final JSONToRLP adapter) {
-
-    this.adapter = adapter;
-  }
-
-  public JSONToRLP getAdapter() {
-    return adapter;
+public class VersionProvider implements CommandLine.IVersionProvider {
+  @Override
+  public String[] getVersion() {
+    return new String[] {PantheonInfo.version()};
   }
 }

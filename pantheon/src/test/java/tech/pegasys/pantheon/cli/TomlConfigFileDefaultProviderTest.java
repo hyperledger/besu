@@ -15,6 +15,8 @@ package tech.pegasys.pantheon.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.cli.util.TomlConfigFileDefaultProvider;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;

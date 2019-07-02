@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.cli;
+package tech.pegasys.pantheon.cli.util;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +33,7 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   private final File configFile;
   private TomlParseResult result;
 
-  TomlConfigFileDefaultProvider(final CommandLine commandLine, final File configFile) {
+  public TomlConfigFileDefaultProvider(final CommandLine commandLine, final File configFile) {
     this.commandLine = commandLine;
     this.configFile = configFile;
   }

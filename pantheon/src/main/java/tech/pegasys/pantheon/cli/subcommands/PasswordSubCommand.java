@@ -10,12 +10,13 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.cli;
+package tech.pegasys.pantheon.cli.subcommands;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static tech.pegasys.pantheon.cli.PasswordSubCommand.COMMAND_NAME;
+import static tech.pegasys.pantheon.cli.subcommands.PasswordSubCommand.COMMAND_NAME;
 
-import tech.pegasys.pantheon.cli.PasswordSubCommand.HashSubCommand;
+import tech.pegasys.pantheon.cli.PantheonCommand;
+import tech.pegasys.pantheon.cli.subcommands.PasswordSubCommand.HashSubCommand;
 
 import java.io.PrintStream;
 
@@ -31,9 +32,9 @@ import picocli.CommandLine.Spec;
     description = "This command provides password related actions.",
     mixinStandardHelpOptions = true,
     subcommands = {HashSubCommand.class})
-class PasswordSubCommand implements Runnable {
+public class PasswordSubCommand implements Runnable {
 
-  static final String COMMAND_NAME = "password";
+  public static final String COMMAND_NAME = "password";
 
   @SuppressWarnings("unused")
   @ParentCommand
@@ -45,7 +46,7 @@ class PasswordSubCommand implements Runnable {
 
   final PrintStream out;
 
-  PasswordSubCommand(final PrintStream out) {
+  public PasswordSubCommand(final PrintStream out) {
     this.out = out;
   }
 

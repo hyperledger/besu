@@ -17,6 +17,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static picocli.CommandLine.defaultExceptionHandler;
 
+import tech.pegasys.pantheon.cli.util.CommandLineUtils;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
