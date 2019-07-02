@@ -568,6 +568,15 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Integer pendingTxRetentionPeriod = PendingTransactions.DEFAULT_TX_RETENTION_HOURS;
 
+  private EthNetworkConfig ethNetworkConfig;
+  private JsonRpcConfiguration jsonRpcConfiguration;
+  private GraphQLConfiguration graphQLConfiguration;
+  private WebSocketConfiguration webSocketConfiguration;
+  private MetricsConfiguration metricsConfiguration;
+  private Optional<PermissioningConfiguration> permissioningConfiguration;
+  private Collection<EnodeURL> staticNodes;
+  private PantheonController<?> pantheonController;
+
   // Inner class so we can get to loggingLevel.
   public class PantheonExceptionHandler
       extends CommandLine.AbstractHandler<List<Object>, PantheonExceptionHandler>
@@ -633,17 +642,36 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       final PantheonExceptionHandler exceptionHandler,
       final InputStream in,
       final String... args) {
+    commandLine = new CommandLine(this).setCaseInsensitiveEnumValuesAllowed(true);
+    handleStandaloneCommand()
+        .addSubCommands(resultHandler, in)
+        .registerConverters()
+        .handleUnstableOptions()
+        .preparePlugins()
+        .parse(resultHandler, exceptionHandler, args);
+  }
 
-    commandLine = new CommandLine(this);
+  @Override
+  public void run() {
+    try {
+      prepareLogging();
+      logger.info("Starting Pantheon version: {}", PantheonInfo.version());
+      checkOptions().configure().controller().startPlugins().startSynchronization();
+    } catch (final Exception e) {
+      throw new ParameterException(this.commandLine, e.getMessage(), e);
+    }
+  }
 
-    commandLine.setCaseInsensitiveEnumValuesAllowed(true);
-
+  private PantheonCommand handleStandaloneCommand() {
     standaloneCommands = new StandaloneCommand();
-
     if (isFullInstantiation()) {
       commandLine.addMixin("standaloneCommands", standaloneCommands);
     }
+    return this;
+  }
 
+  private PantheonCommand addSubCommands(
+      final AbstractParseResultHandler<List<Object>> resultHandler, final InputStream in) {
     commandLine.addSubcommand(
         BlocksSubCommand.COMMAND_NAME, new BlocksSubCommand(blockImporter, resultHandler.out()));
     commandLine.addSubcommand(
@@ -655,7 +683,10 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         RLPSubCommand.COMMAND_NAME, new RLPSubCommand(resultHandler.out(), in));
     commandLine.addSubcommand(
         OperatorSubCommand.COMMAND_NAME, new OperatorSubCommand(resultHandler.out()));
+    return this;
+  }
 
+  private PantheonCommand registerConverters() {
     commandLine.registerConverter(Address.class, Address::fromHexStringStrict);
     commandLine.registerConverter(BytesValue.class, BytesValue::fromHexString);
     commandLine.registerConverter(Level.class, Level::valueOf);
@@ -663,13 +694,15 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     commandLine.registerConverter(UInt256.class, (arg) -> UInt256.of(new BigInteger(arg)));
     commandLine.registerConverter(Wei.class, (arg) -> Wei.of(Long.parseUnsignedLong(arg)));
     commandLine.registerConverter(PositiveNumber.class, PositiveNumber::fromString);
-
     final MetricCategoryConverter metricCategoryConverter = new MetricCategoryConverter();
     metricCategoryConverter.addCategories(PantheonMetricCategory.class);
     metricCategoryConverter.addCategories(StandardMetricCategory.class);
     commandLine.registerConverter(MetricCategory.class, metricCategoryConverter);
+    return this;
+  }
 
-    // Add performance options
+  private PantheonCommand handleUnstableOptions() {
+    // Add unstable options
     UnstableOptionsSubCommand.createUnstableOptions(
         commandLine,
         ImmutableMap.of(
@@ -681,10 +714,19 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             ethereumWireConfigurationBuilder,
             "TransactionPool",
             transactionPoolConfigurationBuilder));
+    return this;
+  }
 
+  private PantheonCommand preparePlugins() {
     pantheonPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
     pantheonPluginContext.registerPlugins(pluginsDir());
+    return this;
+  }
 
+  private PantheonCommand parse(
+      final AbstractParseResultHandler<List<Object>> resultHandler,
+      final PantheonExceptionHandler exceptionHandler,
+      final String... args) {
     // Create a handler that will search for a config file option and use it for
     // default values
     // and eventually it will run regular parsing of the remaining options.
@@ -692,18 +734,44 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         new ConfigOptionSearchAndRunHandler(
             resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment, isDocker);
     commandLine.parseWithHandlers(configParsingHandler, exceptionHandler, args);
+    return this;
   }
 
-  @Override
-  public void run() {
+  private PantheonCommand startSynchronization() {
+    synchronize(
+        pantheonController,
+        p2pEnabled,
+        peerDiscoveryEnabled,
+        ethNetworkConfig,
+        maxPeers,
+        p2pHost,
+        p2pPort,
+        graphQLConfiguration,
+        jsonRpcConfiguration,
+        webSocketConfiguration,
+        metricsConfiguration,
+        permissioningConfiguration,
+        staticNodes);
+    return this;
+  }
+
+  private PantheonCommand startPlugins() {
+    pantheonPluginContext.addService(
+        PantheonEvents.class,
+        new PantheonEventsImpl((pantheonController.getProtocolManager().getBlockBroadcaster())));
+    pantheonPluginContext.startPlugins();
+    return this;
+  }
+
+  private void prepareLogging() {
     // set log level per CLI flags
     if (logLevel != null) {
       System.out.println("Setting logging level to " + logLevel.name());
       Configurator.setAllLevels("", logLevel);
     }
+  }
 
-    logger.info("Starting Pantheon version: {}", PantheonInfo.version());
-
+  private PantheonCommand checkOptions() {
     // Check that P2P options are able to work or send an error
     checkOptionDependencies(
         logger,
@@ -739,59 +807,32 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled)"
               + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
     }
+    return this;
+  }
 
-    final EthNetworkConfig ethNetworkConfig = updateNetworkConfig(getNetwork());
-    try {
-      final JsonRpcConfiguration jsonRpcConfiguration = jsonRpcConfiguration();
-      final GraphQLConfiguration graphQLConfiguration = graphQLConfiguration();
-      final WebSocketConfiguration webSocketConfiguration = webSocketConfiguration();
-      final Optional<PermissioningConfiguration> permissioningConfiguration =
-          permissioningConfiguration();
+  private PantheonCommand configure() throws Exception {
+    ethNetworkConfig = updateNetworkConfig(getNetwork());
+    jsonRpcConfiguration = jsonRpcConfiguration();
+    graphQLConfiguration = graphQLConfiguration();
+    webSocketConfiguration = webSocketConfiguration();
+    permissioningConfiguration = permissioningConfiguration();
+    staticNodes = loadStaticNodes();
+    logger.info("Connecting to {} static nodes.", staticNodes.size());
+    logger.trace("Static Nodes = {}", staticNodes);
+    final List<URI> enodeURIs =
+        ethNetworkConfig.getBootNodes().stream().map(EnodeURL::toURI).collect(Collectors.toList());
+    permissioningConfiguration
+        .flatMap(PermissioningConfiguration::getLocalConfig)
+        .ifPresent(p -> ensureAllNodesAreInWhitelist(enodeURIs, p));
 
-      final Collection<EnodeURL> staticNodes = loadStaticNodes();
-      logger.info("Connecting to {} static nodes.", staticNodes.size());
-      logger.trace("Static Nodes = {}", staticNodes);
-
-      final List<URI> enodeURIs =
-          ethNetworkConfig.getBootNodes().stream()
-              .map(EnodeURL::toURI)
-              .collect(Collectors.toList());
-      permissioningConfiguration
-          .flatMap(PermissioningConfiguration::getLocalConfig)
-          .ifPresent(p -> ensureAllNodesAreInWhitelist(enodeURIs, p));
-
-      permissioningConfiguration
-          .flatMap(PermissioningConfiguration::getLocalConfig)
-          .ifPresent(
-              p ->
-                  ensureAllNodesAreInWhitelist(
-                      staticNodes.stream().map(EnodeURL::toURI).collect(Collectors.toList()), p));
-
-      final PantheonController<?> pantheonController = buildController();
-      final MetricsConfiguration metricsConfiguration = metricsConfiguration();
-
-      pantheonPluginContext.addService(
-          PantheonEvents.class,
-          new PantheonEventsImpl((pantheonController.getProtocolManager().getBlockBroadcaster())));
-      pantheonPluginContext.startPlugins();
-
-      synchronize(
-          pantheonController,
-          p2pEnabled,
-          peerDiscoveryEnabled,
-          ethNetworkConfig,
-          maxPeers,
-          p2pHost,
-          p2pPort,
-          graphQLConfiguration,
-          jsonRpcConfiguration,
-          webSocketConfiguration,
-          metricsConfiguration,
-          permissioningConfiguration,
-          staticNodes);
-    } catch (final Exception e) {
-      throw new ParameterException(this.commandLine, e.getMessage(), e);
-    }
+    permissioningConfiguration
+        .flatMap(PermissioningConfiguration::getLocalConfig)
+        .ifPresent(
+            p ->
+                ensureAllNodesAreInWhitelist(
+                    staticNodes.stream().map(EnodeURL::toURI).collect(Collectors.toList()), p));
+    metricsConfiguration = metricsConfiguration();
+    return this;
   }
 
   private NetworkName getNetwork() {
@@ -809,6 +850,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage());
     }
+  }
+
+  private PantheonCommand controller() {
+    pantheonController = buildController();
+    return this;
   }
 
   PantheonController<?> buildController() {
