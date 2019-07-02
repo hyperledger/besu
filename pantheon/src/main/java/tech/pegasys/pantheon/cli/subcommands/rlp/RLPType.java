@@ -10,12 +10,21 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.cli;
+package tech.pegasys.pantheon.cli.subcommands.rlp;
 
-public enum NetworkName {
-  MAINNET,
-  RINKEBY,
-  ROPSTEN,
-  GOERLI,
-  DEV
+/** Type of the RLP data to encode/decode */
+public enum RLPType {
+  // Enum is used to enable the listing of the possible values in PicoCLI.
+  IBFT_EXTRA_DATA(new IbftExtraDataCLIAdapter());
+
+  private final JSONToRLP adapter;
+
+  RLPType(final JSONToRLP adapter) {
+
+    this.adapter = adapter;
+  }
+
+  public JSONToRLP getAdapter() {
+    return adapter;
+  }
 }

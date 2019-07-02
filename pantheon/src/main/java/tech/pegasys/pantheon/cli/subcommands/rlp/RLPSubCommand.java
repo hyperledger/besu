@@ -10,14 +10,14 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.cli.rlp;
+package tech.pegasys.pantheon.cli.subcommands.rlp;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.pantheon.cli.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
 
 import tech.pegasys.pantheon.cli.PantheonCommand;
-import tech.pegasys.pantheon.cli.rlp.RLPSubCommand.EncodeSubCommand;
+import tech.pegasys.pantheon.cli.subcommands.rlp.RLPSubCommand.EncodeSubCommand;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.BufferedReader;

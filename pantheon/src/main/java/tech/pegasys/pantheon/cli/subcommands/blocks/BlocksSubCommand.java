@@ -10,13 +10,14 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.cli;
+package tech.pegasys.pantheon.cli.subcommands.blocks;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static tech.pegasys.pantheon.cli.BlocksSubCommand.COMMAND_NAME;
 import static tech.pegasys.pantheon.cli.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
+import static tech.pegasys.pantheon.cli.subcommands.blocks.BlocksSubCommand.COMMAND_NAME;
 
-import tech.pegasys.pantheon.cli.BlocksSubCommand.ImportSubCommand;
+import tech.pegasys.pantheon.cli.PantheonCommand;
+import tech.pegasys.pantheon.cli.subcommands.blocks.BlocksSubCommand.ImportSubCommand;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsService;
 import tech.pegasys.pantheon.util.BlockImporter;
@@ -45,10 +46,10 @@ import picocli.CommandLine.Spec;
     description = "This command provides blocks related actions.",
     mixinStandardHelpOptions = true,
     subcommands = {ImportSubCommand.class})
-class BlocksSubCommand implements Runnable {
+public class BlocksSubCommand implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
 
-  static final String COMMAND_NAME = "blocks";
+  public static final String COMMAND_NAME = "blocks";
 
   @SuppressWarnings("unused")
   @ParentCommand
@@ -61,7 +62,7 @@ class BlocksSubCommand implements Runnable {
   private final BlockImporter blockImporter;
   private final PrintStream out;
 
-  BlocksSubCommand(final BlockImporter blockImporter, final PrintStream out) {
+  public BlocksSubCommand(final BlockImporter blockImporter, final PrintStream out) {
     this.blockImporter = blockImporter;
     this.out = out;
   }

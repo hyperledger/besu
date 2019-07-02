@@ -10,15 +10,16 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.cli;
+package tech.pegasys.pantheon.cli.subcommands;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.pantheon.cli.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
-import static tech.pegasys.pantheon.cli.PublicKeySubCommand.COMMAND_NAME;
+import static tech.pegasys.pantheon.cli.subcommands.PublicKeySubCommand.COMMAND_NAME;
 
-import tech.pegasys.pantheon.cli.PublicKeySubCommand.AddressSubCommand;
-import tech.pegasys.pantheon.cli.PublicKeySubCommand.ExportSubCommand;
+import tech.pegasys.pantheon.cli.PantheonCommand;
+import tech.pegasys.pantheon.cli.subcommands.PublicKeySubCommand.AddressSubCommand;
+import tech.pegasys.pantheon.cli.subcommands.PublicKeySubCommand.ExportSubCommand;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -46,10 +47,10 @@ import picocli.CommandLine.Spec;
     description = "This command provides node public key related actions.",
     mixinStandardHelpOptions = true,
     subcommands = {ExportSubCommand.class, AddressSubCommand.class})
-class PublicKeySubCommand implements Runnable {
+public class PublicKeySubCommand implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
 
-  static final String COMMAND_NAME = "public-key";
+  public static final String COMMAND_NAME = "public-key";
 
   @SuppressWarnings("unused")
   @ParentCommand
@@ -62,7 +63,7 @@ class PublicKeySubCommand implements Runnable {
   private final PrintStream out;
   private final KeyLoader keyLoader;
 
-  PublicKeySubCommand(final PrintStream out, final KeyLoader keyLoader) {
+  public PublicKeySubCommand(final PrintStream out, final KeyLoader keyLoader) {
     this.out = out;
     this.keyLoader = keyLoader;
   }

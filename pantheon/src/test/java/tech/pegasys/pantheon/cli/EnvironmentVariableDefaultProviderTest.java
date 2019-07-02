@@ -14,6 +14,8 @@ package tech.pegasys.pantheon.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.cli.util.EnvironmentVariableDefaultProvider;
+
 import java.util.HashMap;
 import java.util.Map;
 
