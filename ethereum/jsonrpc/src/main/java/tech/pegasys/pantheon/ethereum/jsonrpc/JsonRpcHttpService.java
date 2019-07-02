@@ -203,10 +203,10 @@ public class JsonRpcHttpService {
             res -> {
               if (!res.failed()) {
                 resultFuture.complete(null);
+                final int actualPort = httpServer.actualPort();
                 LOG.info(
-                    "JsonRPC service started and listening on {}:{}",
-                    config.getHost(),
-                    httpServer.actualPort());
+                    "JsonRPC service started and listening on {}:{}", config.getHost(), actualPort);
+                config.setPort(actualPort);
                 return;
               }
               httpServer = null;
