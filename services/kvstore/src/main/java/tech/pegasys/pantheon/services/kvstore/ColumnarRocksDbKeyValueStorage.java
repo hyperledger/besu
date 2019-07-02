@@ -34,11 +34,13 @@ import java.util.stream.Collectors;
 import com.google.common.collect.ImmutableMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.ColumnFamilyOptions;
 import org.rocksdb.DBOptions;
 import org.rocksdb.Env;
+import org.rocksdb.LRUCache;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
@@ -87,7 +89,7 @@ public class ColumnarRocksDbKeyValueStorage
           new ColumnFamilyDescriptor(
               DEFAULT_COLUMN.getBytes(StandardCharsets.UTF_8),
               new ColumnFamilyOptions()
-                  .setTableFormatConfig(rocksDbConfiguration.getBlockBasedTableConfig())));
+                  .setTableFormatConfig(createBlockBasedTableConfig(rocksDbConfiguration))));
 
       stats = new Statistics();
       options =
@@ -188,6 +190,11 @@ public class ColumnarRocksDbKeyValueStorage
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
+  }
+
+  private BlockBasedTableConfig createBlockBasedTableConfig(final RocksDbConfiguration config) {
+    final LRUCache cache = new LRUCache(config.getCacheCapacity());
+    return new BlockBasedTableConfig().setBlockCache(cache);
   }
 
   @Override

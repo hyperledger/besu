@@ -65,7 +65,7 @@ public class RLPSubCommandTest extends CommandTestAbstract {
   // RLP sub-command
   @Test
   public void rlpSubCommandExistAnbHaveSubCommands() {
-    final CommandSpec spec = parseCommand();
+    final CommandSpec spec = parseCommand().getSpec();
     assertThat(spec.subcommands()).containsKeys(RLP_SUBCOMMAND_NAME);
     assertThat(spec.subcommands().get(RLP_SUBCOMMAND_NAME).getSubcommands())
         .containsKeys(RLP_ENCODE_SUBCOMMAND_NAME);

@@ -81,9 +81,9 @@ public class WorldStateDownloaderBenchmark {
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             new EthScheduler(
-                syncConfig.downloaderParallelism(),
-                syncConfig.transactionsParallelism(),
-                syncConfig.computationParallelism(),
+                syncConfig.getDownloaderParallelism(),
+                syncConfig.getTransactionsParallelism(),
+                syncConfig.getComputationParallelism(),
                 metricsSystem));
 
     peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockHeader.getNumber());
@@ -91,7 +91,7 @@ public class WorldStateDownloaderBenchmark {
     final EthContext ethContext = ethProtocolManager.ethContext();
     storageProvider =
         RocksDbStorageProvider.create(
-            new RocksDbConfiguration.Builder().databaseDir(tempDir.resolve("database")).build(),
+            RocksDbConfiguration.builder().databaseDir(tempDir.resolve("database")).build(),
             metricsSystem);
     worldStateStorage = storageProvider.createWorldStateStorage();
 

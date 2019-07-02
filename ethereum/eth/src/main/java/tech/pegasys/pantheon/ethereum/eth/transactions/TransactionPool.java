@@ -55,7 +55,6 @@ import org.apache.logging.log4j.Logger;
 public class TransactionPool implements BlockAddedObserver {
 
   private static final Logger LOG = getLogger();
-  public static final int DEFAULT_TX_MSG_KEEP_ALIVE = 60;
 
   private static final long SYNC_TOLERANCE = 100L;
   private static final String REMOTE = "remote";

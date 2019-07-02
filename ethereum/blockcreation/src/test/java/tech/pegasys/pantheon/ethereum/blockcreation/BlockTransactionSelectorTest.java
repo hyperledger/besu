@@ -37,6 +37,7 @@ import tech.pegasys.pantheon.ethereum.core.WorldState;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfiguration;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetTransactionProcessor;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetTransactionProcessor.Result;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -68,7 +69,10 @@ public class BlockTransactionSelectorTest {
 
   private final PendingTransactions pendingTransactions =
       new PendingTransactions(
-          PendingTransactions.DEFAULT_TX_RETENTION_HOURS, 5, TestClock.fixed(), metricsSystem);
+          TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
+          5,
+          TestClock.fixed(),
+          metricsSystem);
   private final Blockchain blockchain = new TestBlockchain();
   private final DefaultMutableWorldState worldState = inMemoryWorldState();
   private final Supplier<Boolean> isCancelled = () -> false;

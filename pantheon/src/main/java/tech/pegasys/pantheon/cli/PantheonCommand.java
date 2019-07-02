@@ -39,6 +39,10 @@ import tech.pegasys.pantheon.cli.custom.CorsAllowedOriginsProperty;
 import tech.pegasys.pantheon.cli.custom.JsonRPCWhitelistHostsProperty;
 import tech.pegasys.pantheon.cli.custom.RpcAuthFileValidator;
 import tech.pegasys.pantheon.cli.error.PantheonExceptionHandler;
+import tech.pegasys.pantheon.cli.options.EthProtocolOptions;
+import tech.pegasys.pantheon.cli.options.RocksDBOptions;
+import tech.pegasys.pantheon.cli.options.SynchronizerOptions;
+import tech.pegasys.pantheon.cli.options.TransactionPoolOptions;
 import tech.pegasys.pantheon.cli.subcommands.PasswordSubCommand;
 import tech.pegasys.pantheon.cli.subcommands.PublicKeySubCommand;
 import tech.pegasys.pantheon.cli.subcommands.PublicKeySubCommand.KeyLoader;
@@ -54,11 +58,8 @@ import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Wei;
-import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
-import tech.pegasys.pantheon.ethereum.eth.sync.TrailingPeerRequirements;
-import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfiguration;
 import tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
@@ -149,10 +150,10 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   private final BlockImporter blockImporter;
 
-  private final SynchronizerConfiguration.Builder synchronizerConfigurationBuilder;
-  private final EthereumWireProtocolConfiguration.Builder ethereumWireConfigurationBuilder;
-  private final RocksDbConfiguration.Builder rocksDbConfigurationBuilder;
-  private final TransactionPoolConfiguration.Builder transactionPoolConfigurationBuilder;
+  final SynchronizerOptions synchronizerOptions = SynchronizerOptions.create();
+  final EthProtocolOptions ethProtocolOptions = EthProtocolOptions.create();
+  final RocksDBOptions rocksDBOptions = RocksDBOptions.create();
+  final TransactionPoolOptions transactionPoolOptions = TransactionPoolOptions.create();
   private final RunnerBuilder runnerBuilder;
   private final PantheonController.Builder controllerBuilderFactory;
   private final PantheonPluginContextImpl pantheonPluginContext;
@@ -566,7 +567,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       description =
           "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final Integer txPoolMaxSize = PendingTransactions.MAX_PENDING_TRANSACTIONS;
+  private final Integer txPoolMaxSize = TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
 
   @Option(
       names = {"--tx-pool-retention-hours"},
@@ -574,7 +575,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       description =
           "Maximum retention period of pending transactions in hours (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final Integer pendingTxRetentionPeriod = PendingTransactions.DEFAULT_TX_RETENTION_HOURS;
+  private final Integer pendingTxRetentionPeriod =
+      TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
 
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
@@ -593,20 +595,12 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       final BlockImporter blockImporter,
       final RunnerBuilder runnerBuilder,
       final PantheonController.Builder controllerBuilderFactory,
-      final SynchronizerConfiguration.Builder synchronizerConfigurationBuilder,
-      final EthereumWireProtocolConfiguration.Builder ethereumWireConfigurationBuilder,
-      final RocksDbConfiguration.Builder rocksDbConfigurationBuilder,
-      final TransactionPoolConfiguration.Builder transactionPoolConfigurationBuilder,
       final PantheonPluginContextImpl pantheonPluginContext,
       final Map<String, String> environment) {
     this.logger = logger;
     this.blockImporter = blockImporter;
     this.runnerBuilder = runnerBuilder;
     this.controllerBuilderFactory = controllerBuilderFactory;
-    this.synchronizerConfigurationBuilder = synchronizerConfigurationBuilder;
-    this.ethereumWireConfigurationBuilder = ethereumWireConfigurationBuilder;
-    this.rocksDbConfigurationBuilder = rocksDbConfigurationBuilder;
-    this.transactionPoolConfigurationBuilder = transactionPoolConfigurationBuilder;
     this.pantheonPluginContext = pantheonPluginContext;
     this.environment = environment;
   }
@@ -683,13 +677,13 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         commandLine,
         ImmutableMap.of(
             "Synchronizer",
-            synchronizerConfigurationBuilder,
+            synchronizerOptions,
             "RocksDB",
-            rocksDbConfigurationBuilder,
+            rocksDBOptions,
             "Ethereum Wire Protocol",
-            ethereumWireConfigurationBuilder,
+            ethProtocolOptions,
             "TransactionPool",
-            transactionPoolConfigurationBuilder));
+            transactionPoolOptions));
     return this;
   }
 
@@ -838,7 +832,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       return controllerBuilderFactory
           .fromEthNetworkConfig(updateNetworkConfig(getNetwork()))
           .synchronizerConfiguration(buildSyncConfig())
-          .ethereumWireProtocolConfiguration(ethereumWireConfigurationBuilder.build())
+          .ethProtocolConfiguration(ethProtocolOptions.toDomainObject())
           .rocksDbConfiguration(buildRocksDbConfiguration())
           .dataDirectory(dataDir())
           .miningParameters(
@@ -1099,19 +1093,20 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   }
 
   private SynchronizerConfiguration buildSyncConfig() {
-    return synchronizerConfigurationBuilder
+    return synchronizerOptions
+        .toDomainObject()
         .syncMode(syncMode)
         .fastSyncMinimumPeerCount(fastSyncMinPeerCount)
-        .maxTrailingPeers(TrailingPeerRequirements.calculateMaxTrailingPeers(maxPeers))
         .build();
   }
 
   private RocksDbConfiguration buildRocksDbConfiguration() {
-    return rocksDbConfigurationBuilder.databaseDir(dataDir().resolve(DATABASE_PATH)).build();
+    return rocksDBOptions.toDomainObject().databaseDir(dataDir().resolve(DATABASE_PATH)).build();
   }
 
   private TransactionPoolConfiguration buildTransactionPoolConfiguration() {
-    return transactionPoolConfigurationBuilder
+    return transactionPoolOptions
+        .toDomainObject()
         .txPoolMaxSize(txPoolMaxSize)
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
         .build();

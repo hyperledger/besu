@@ -30,7 +30,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockSyncTestUtils;
 import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
-import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
+import tech.pegasys.pantheon.ethereum.eth.EthProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -124,7 +124,7 @@ public final class RunnerTest {
         new MainnetPantheonControllerBuilder()
             .genesisConfigFile(GenesisConfigFile.mainnet())
             .synchronizerConfiguration(syncConfigAhead)
-            .ethereumWireProtocolConfiguration(EthereumWireProtocolConfiguration.defaultConfig())
+            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .dataDirectory(dataDirAhead)
             .networkId(networkId)
             .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
@@ -143,7 +143,7 @@ public final class RunnerTest {
         new MainnetPantheonControllerBuilder()
             .genesisConfigFile(GenesisConfigFile.mainnet())
             .synchronizerConfiguration(syncConfigAhead)
-            .ethereumWireProtocolConfiguration(EthereumWireProtocolConfiguration.defaultConfig())
+            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .dataDirectory(dataDirAhead)
             .networkId(networkId)
             .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
@@ -201,7 +201,7 @@ public final class RunnerTest {
           new MainnetPantheonControllerBuilder()
               .genesisConfigFile(GenesisConfigFile.mainnet())
               .synchronizerConfiguration(syncConfigBehind)
-              .ethereumWireProtocolConfiguration(EthereumWireProtocolConfiguration.defaultConfig())
+              .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
               .dataDirectory(dataDirBehind)
               .networkId(networkId)
               .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
@@ -330,7 +330,7 @@ public final class RunnerTest {
 
   private StorageProvider createKeyValueStorageProvider(final Path dbAhead) throws IOException {
     return RocksDbStorageProvider.create(
-        new RocksDbConfiguration.Builder().databaseDir(dbAhead).build(), new NoOpMetricsSystem());
+        RocksDbConfiguration.builder().databaseDir(dbAhead).build(), new NoOpMetricsSystem());
   }
 
   private JsonRpcConfiguration jsonRpcConfiguration() {

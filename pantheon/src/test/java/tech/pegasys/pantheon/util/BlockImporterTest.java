@@ -21,7 +21,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
 import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
-import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
+import tech.pegasys.pantheon.ethereum.eth.EthProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfiguration;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
@@ -55,7 +55,7 @@ public final class BlockImporterTest {
         new PantheonController.Builder()
             .fromGenesisConfig(GenesisConfigFile.mainnet())
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-            .ethereumWireProtocolConfiguration(EthereumWireProtocolConfiguration.defaultConfig())
+            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryStorageProvider())
             .networkId(1)
             .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
@@ -94,7 +94,7 @@ public final class BlockImporterTest {
         new PantheonController.Builder()
             .fromGenesisConfig(GenesisConfigFile.fromConfig(config))
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-            .ethereumWireProtocolConfiguration(EthereumWireProtocolConfiguration.defaultConfig())
+            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryStorageProvider())
             .networkId(10)
             .miningParameters(new MiningParametersTestBuilder().enabled(false).build())

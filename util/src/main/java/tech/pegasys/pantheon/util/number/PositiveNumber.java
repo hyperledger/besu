@@ -15,6 +15,8 @@ package tech.pegasys.pantheon.util.number;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.Integer.parseInt;
 
+import java.util.Objects;
+
 public class PositiveNumber {
 
   private int value;
@@ -45,5 +47,22 @@ public class PositiveNumber {
 
   public int getValue() {
     return value;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof PositiveNumber)) {
+      return false;
+    }
+    final PositiveNumber that = (PositiveNumber) o;
+    return value == that.value;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(value);
   }
 }

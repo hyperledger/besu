@@ -49,7 +49,7 @@ public class FastDownloaderFactory {
       final WorldStateStorage worldStateStorage,
       final SyncState syncState,
       final Clock clock) {
-    if (syncConfig.syncMode() != SyncMode.FAST) {
+    if (syncConfig.getSyncMode() != SyncMode.FAST) {
       return Optional.empty();
     }
 

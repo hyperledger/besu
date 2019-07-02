@@ -101,9 +101,9 @@ public class IbftLegacyPantheonControllerBuilder extends PantheonControllerBuild
         protocolContext.getWorldStateArchive(),
         networkId,
         fastSyncEnabled,
-        syncConfig.downloaderParallelism(),
-        syncConfig.transactionsParallelism(),
-        syncConfig.computationParallelism(),
+        syncConfig.getDownloaderParallelism(),
+        syncConfig.getTransactionsParallelism(),
+        syncConfig.getComputationParallelism(),
         clock,
         metricsSystem,
         ethereumWireProtocolConfiguration);

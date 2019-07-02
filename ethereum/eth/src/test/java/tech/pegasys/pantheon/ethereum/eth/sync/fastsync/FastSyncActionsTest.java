@@ -152,7 +152,7 @@ public class FastSyncActionsTest {
   @Test
   public void selectPivotBlockShouldFailIfBestPeerChainIsShorterThanPivotDistance() {
     EthProtocolManagerTestUtil.createPeer(
-        ethProtocolManager, syncConfig.fastSyncPivotDistance() - 1);
+        ethProtocolManager, syncConfig.getFastSyncPivotDistance() - 1);
 
     assertThrowsFastSyncException(
         CHAIN_TOO_SHORT, () -> fastSyncActions.selectPivotBlock(EMPTY_SYNC_STATE));
@@ -160,7 +160,8 @@ public class FastSyncActionsTest {
 
   @Test
   public void selectPivotBlockShouldFailIfBestPeerChainIsEqualToPivotDistance() {
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, syncConfig.fastSyncPivotDistance());
+    EthProtocolManagerTestUtil.createPeer(
+        ethProtocolManager, syncConfig.getFastSyncPivotDistance());
 
     assertThrowsFastSyncException(
         CHAIN_TOO_SHORT, () -> fastSyncActions.selectPivotBlock(EMPTY_SYNC_STATE));

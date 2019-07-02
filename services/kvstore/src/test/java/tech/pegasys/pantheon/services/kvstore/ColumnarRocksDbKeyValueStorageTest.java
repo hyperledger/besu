@@ -99,14 +99,13 @@ public class ColumnarRocksDbKeyValueStorageTest extends AbstractKeyValueStorageT
 
   private SegmentedKeyValueStorage<ColumnFamilyHandle> createSegmentedStore() throws Exception {
     return ColumnarRocksDbKeyValueStorage.create(
-        new RocksDbConfiguration.Builder().databaseDir(folder.newFolder().toPath()).build(),
+        RocksDbConfiguration.builder().databaseDir(folder.newFolder().toPath()).build(),
         Arrays.asList(TestSegment.FOO, TestSegment.BAR),
         new NoOpMetricsSystem());
   }
 
   @Override
   protected KeyValueStorage createStore() throws Exception {
-    return new SegmentedKeyValueStorageAdapter<ColumnFamilyHandle>(
-        TestSegment.FOO, createSegmentedStore());
+    return new SegmentedKeyValueStorageAdapter<>(TestSegment.FOO, createSegmentedStore());
   }
 }

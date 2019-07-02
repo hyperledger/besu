@@ -42,6 +42,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
+import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfiguration;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
@@ -114,7 +115,7 @@ public class CliqueBlockCreatorTest {
             coinbase,
             parent -> extraData,
             new PendingTransactions(
-                PendingTransactions.DEFAULT_TX_RETENTION_HOURS,
+                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
                 TestClock.fixed(),
                 metricsSystem),
@@ -145,7 +146,7 @@ public class CliqueBlockCreatorTest {
             coinbase,
             parent -> extraData,
             new PendingTransactions(
-                PendingTransactions.DEFAULT_TX_RETENTION_HOURS,
+                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
                 TestClock.fixed(),
                 metricsSystem),
@@ -175,7 +176,7 @@ public class CliqueBlockCreatorTest {
             coinbase,
             parent -> extraData,
             new PendingTransactions(
-                PendingTransactions.DEFAULT_TX_RETENTION_HOURS,
+                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
                 TestClock.fixed(),
                 metricsSystem),
@@ -208,7 +209,7 @@ public class CliqueBlockCreatorTest {
             coinbase,
             parent -> extraData,
             new PendingTransactions(
-                PendingTransactions.DEFAULT_TX_RETENTION_HOURS,
+                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
                 TestClock.fixed(),
                 metricsSystem),

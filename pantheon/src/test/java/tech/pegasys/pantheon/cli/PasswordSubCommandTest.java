@@ -21,7 +21,7 @@ public class PasswordSubCommandTest extends CommandTestAbstract {
 
   @Test
   public void passwordSubCommandExistAnbHaveSubCommands() {
-    final CommandSpec spec = parseCommand();
+    final CommandSpec spec = parseCommand().getSpec();
     assertThat(spec.subcommands()).containsKeys("password");
     assertThat(spec.subcommands().get("password").getSubcommands()).containsKeys("hash");
     assertThat(commandOutput.toString()).isEmpty();

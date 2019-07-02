@@ -51,7 +51,7 @@ public class PendingTransactionsTest {
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final PendingTransactions transactions =
       new PendingTransactions(
-          PendingTransactions.DEFAULT_TX_RETENTION_HOURS,
+          TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           MAX_TRANSACTIONS,
           TestClock.fixed(),
           metricsSystem);

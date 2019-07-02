@@ -176,7 +176,7 @@ public class PrivacyParameters {
         Path privateDbPath = dataDir.resolve(PRIVATE_DATABASE_PATH);
         StorageProvider privateStorageProvider =
             RocksDbStorageProvider.create(
-                new RocksDbConfiguration.Builder()
+                RocksDbConfiguration.builder()
                     .databaseDir(privateDbPath)
                     .label("private_state")
                     .build(),

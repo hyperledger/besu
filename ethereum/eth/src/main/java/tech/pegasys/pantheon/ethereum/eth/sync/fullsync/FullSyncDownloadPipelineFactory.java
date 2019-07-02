@@ -61,8 +61,8 @@ public class FullSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
 
   @Override
   public Pipeline<?> createDownloadPipelineForSyncTarget(final SyncTarget target) {
-    final int downloaderParallelism = syncConfig.downloaderParallelism();
-    final int headerRequestSize = syncConfig.downloaderHeaderRequestSize();
+    final int downloaderParallelism = syncConfig.getDownloaderParallelism();
+    final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
     final int singleHeaderBufferSize = headerRequestSize * downloaderParallelism;
     final CheckpointRangeSource checkpointRangeSource =
         new CheckpointRangeSource(
@@ -72,7 +72,7 @@ public class FullSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
             ethContext.getScheduler(),
             target.peer(),
             target.commonAncestor(),
-            syncConfig.downloaderCheckpointTimeoutsPermitted());
+            syncConfig.getDownloaderCheckpointTimeoutsPermitted());
     final DownloadHeadersStep<C> downloadHeadersStep =
         new DownloadHeadersStep<>(
             protocolSchedule,

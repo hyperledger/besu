@@ -73,16 +73,19 @@ public class FastSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
             "validationMode");
     attachedValidationPolicy =
         new FastSyncValidationPolicy(
-            this.syncConfig.fastSyncFullValidationRate(),
+            this.syncConfig.getFastSyncFullValidationRate(),
             LIGHT_SKIP_DETACHED,
             SKIP_DETACHED,
             fastSyncValidationCounter);
     ommerValidationPolicy =
         new FastSyncValidationPolicy(
-            this.syncConfig.fastSyncFullValidationRate(), LIGHT, FULL, fastSyncValidationCounter);
+            this.syncConfig.getFastSyncFullValidationRate(),
+            LIGHT,
+            FULL,
+            fastSyncValidationCounter);
     detachedValidationPolicy =
         new FastSyncValidationPolicy(
-            this.syncConfig.fastSyncFullValidationRate(),
+            this.syncConfig.getFastSyncFullValidationRate(),
             LIGHT_DETACHED_ONLY,
             DETACHED_ONLY,
             fastSyncValidationCounter);
@@ -90,8 +93,8 @@ public class FastSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
 
   @Override
   public Pipeline<?> createDownloadPipelineForSyncTarget(final SyncTarget target) {
-    final int downloaderParallelism = syncConfig.downloaderParallelism();
-    final int headerRequestSize = syncConfig.downloaderHeaderRequestSize();
+    final int downloaderParallelism = syncConfig.getDownloaderParallelism();
+    final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
     final int singleHeaderBufferSize = headerRequestSize * downloaderParallelism;
     final CheckpointRangeSource checkpointRangeSource =
         new CheckpointRangeSource(
@@ -105,7 +108,7 @@ public class FastSyncDownloadPipelineFactory<C> implements DownloadPipelineFacto
             ethContext.getScheduler(),
             target.peer(),
             target.commonAncestor(),
-            syncConfig.downloaderCheckpointTimeoutsPermitted());
+            syncConfig.getDownloaderCheckpointTimeoutsPermitted());
     final DownloadHeadersStep<C> downloadHeadersStep =
         new DownloadHeadersStep<>(
             protocolSchedule,

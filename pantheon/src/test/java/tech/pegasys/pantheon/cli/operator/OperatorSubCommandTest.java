@@ -75,7 +75,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
 
   @Test
   public void operatorSubCommandExistAndHaveSubCommands() {
-    final CommandSpec spec = parseCommand();
+    final CommandSpec spec = parseCommand().getSpec();
     assertThat(spec.subcommands()).containsKeys(COMMAND_NAME);
     assertThat(spec.subcommands().get(COMMAND_NAME).getSubcommands())
         .containsKeys(GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME);

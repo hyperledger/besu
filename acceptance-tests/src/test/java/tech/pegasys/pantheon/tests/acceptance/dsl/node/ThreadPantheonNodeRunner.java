@@ -20,7 +20,7 @@ import tech.pegasys.pantheon.cli.config.EthNetworkConfig;
 import tech.pegasys.pantheon.controller.KeyPairUtil;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.controller.PantheonControllerBuilder;
-import tech.pegasys.pantheon.ethereum.eth.EthereumWireProtocolConfiguration;
+import tech.pegasys.pantheon.ethereum.eth.EthProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfiguration;
 import tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration;
@@ -115,8 +115,8 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
               .nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory()))
               .metricsSystem(noOpMetricsSystem)
               .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
-              .rocksDbConfiguration(new RocksDbConfiguration.Builder().databaseDir(tempDir).build())
-              .ethereumWireProtocolConfiguration(EthereumWireProtocolConfiguration.defaultConfig())
+              .rocksDbConfiguration(RocksDbConfiguration.builder().databaseDir(tempDir).build())
+              .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
               .clock(Clock.systemUTC())
               .build();
     } catch (final IOException e) {
