@@ -40,7 +40,6 @@ public class ExpectNetServicesReturnsOnlyJsonRpcActive implements Condition {
 
     assertThat(InetAddresses.isUriInetAddress(result.get("jsonrpc").get("host"))).isTrue();
     final int jsonrpcPort = Integer.valueOf(result.get("jsonrpc").get("port"));
-    // TODO: Port should not be 0-valued. Refer to PAN-2703
-    assertThat(NetworkUtility.isValidPort(jsonrpcPort) || jsonrpcPort == 0).isTrue();
+    assertThat(NetworkUtility.isValidPort(jsonrpcPort)).isTrue();
   }
 }

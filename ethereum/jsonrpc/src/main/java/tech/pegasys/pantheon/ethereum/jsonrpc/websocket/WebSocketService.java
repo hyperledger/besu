@@ -178,11 +178,12 @@ public class WebSocketService {
     return res -> {
       if (res.succeeded()) {
 
+        final int actualPort = res.result().actualPort();
         LOG.info(
             "Websocket service started and listening on {}:{}",
             configuration.getHost(),
-            res.result().actualPort());
-
+            actualPort);
+        configuration.setPort(actualPort);
         resultFuture.complete(null);
       } else {
         resultFuture.completeExceptionally(res.cause());
