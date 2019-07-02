@@ -85,6 +85,6 @@ dependencyManagement {
 
     dependency 'org.xerial.snappy:snappy-java:1.1.7.3'
 
-    dependency "tech.pegasys.pantheon:plugin-api:${rootProject.version}"
+    dependency "tech.pegasys.pantheon:plugin-api:1.1.3"
   }
 }
