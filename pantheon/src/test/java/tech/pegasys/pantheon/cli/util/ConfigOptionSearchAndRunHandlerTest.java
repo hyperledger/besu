@@ -10,24 +10,23 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.cli;
+package tech.pegasys.pantheon.cli.util;
 
-import static java.util.Collections.emptyMap;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
+import static java.util.Collections.singletonMap;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import tech.pegasys.pantheon.cli.util.ConfigOptionSearchAndRunHandler;
-
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -64,9 +63,10 @@ public class ConfigOptionSearchAndRunHandlerTest {
       new RunLast().useOut(outPrintStream).useAnsi(Ansi.OFF);
   private final DefaultExceptionHandler<List<Object>> exceptionHandler =
       new DefaultExceptionHandler<List<Object>>().useErr(errPrintStream).useAnsi(Ansi.OFF);
+  private final Map<String, String> environment = singletonMap("PANTHEON_LOGGING", "ERROR");
   private final ConfigOptionSearchAndRunHandler configParsingHandler =
       new ConfigOptionSearchAndRunHandler(
-          resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, emptyMap(), false);
+          resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment, false);
 
   @Mock ParseResult mockParseResult;
   @Mock CommandLine mockCommandLine;
@@ -92,7 +92,7 @@ public class ConfigOptionSearchAndRunHandlerTest {
     final List<Object> result = configParsingHandler.handle(mockParseResult);
     verify(mockCommandLine).setDefaultValueProvider(any(IDefaultValueProvider.class));
     verify(mockCommandLine).parseWithHandlers(eq(resultHandler), eq(exceptionHandler), anyString());
-    assertThat(result, is(empty()));
+    assertThat(result).isEmpty();
   }
 
   @Test
@@ -106,6 +106,23 @@ public class ConfigOptionSearchAndRunHandlerTest {
 
   @Test
   public void selfMustReturnTheHandler() {
-    assertThat(configParsingHandler.self(), is(configParsingHandler));
+    assertThat(configParsingHandler.self()).isSameAs(configParsingHandler);
+  }
+
+  @Test
+  public void shouldRetrieveConfigFromEnvironmentWhenConfigFileSpecified() throws Exception {
+    final IDefaultValueProvider defaultValueProvider =
+        configParsingHandler.createDefaultValueProvider(
+            mockCommandLine, Optional.of(new File("foo")));
+    final String value = defaultValueProvider.defaultValue(OptionSpec.builder("--logging").build());
+    assertThat(value).isEqualTo("ERROR");
+  }
+
+  @Test
+  public void shouldRetrieveConfigFromEnvironmentWhenConfigFileNotSpecified() throws Exception {
+    final IDefaultValueProvider defaultValueProvider =
+        configParsingHandler.createDefaultValueProvider(mockCommandLine, Optional.empty());
+    final String value = defaultValueProvider.defaultValue(OptionSpec.builder("--logging").build());
+    assertThat(value).isEqualTo("ERROR");
   }
 }
