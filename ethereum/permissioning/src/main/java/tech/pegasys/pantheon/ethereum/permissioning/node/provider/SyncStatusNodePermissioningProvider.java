@@ -22,14 +22,16 @@ import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 
+import java.net.URI;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.OptionalLong;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SyncStatusNodePermissioningProvider implements NodePermissioningProvider {
 
   private final Synchronizer synchronizer;
-  private final Collection<EnodeURL> fixedNodes = new HashSet<>();
+  private final Set<URI> fixedNodes;
   private final Counter checkCounter;
   private final Counter checkCounterPermitted;
   private final Counter checkCounterUnpermitted;
@@ -44,7 +46,8 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
     this.synchronizer = synchronizer;
     long id = this.synchronizer.observeSyncStatus(this::handleSyncStatusUpdate);
     this.syncStatusObserverId = OptionalLong.of(id);
-    this.fixedNodes.addAll(fixedNodes);
+    this.fixedNodes =
+        fixedNodes.stream().map(EnodeURL::toURIWithoutDiscoveryPort).collect(Collectors.toSet());
 
     metricsSystem.createIntegerGauge(
         PantheonMetricCategory.PERMISSIONING,
@@ -103,7 +106,7 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
       return true;
     } else {
       checkCounter.inc();
-      if (fixedNodes.stream().anyMatch(p -> EnodeURL.sameListeningEndpoint(p, destinationEnode))) {
+      if (fixedNodes.contains(destinationEnode.toURIWithoutDiscoveryPort())) {
         checkCounterPermitted.inc();
         return true;
       } else {

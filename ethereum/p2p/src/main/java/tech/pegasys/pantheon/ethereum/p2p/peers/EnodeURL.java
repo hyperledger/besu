@@ -155,6 +155,15 @@ public class EnodeURL {
     }
   }
 
+  public URI toURIWithoutDiscoveryPort() {
+    final String uri =
+        String.format(
+            "enode://%s@%s:%d",
+            nodeId.toUnprefixedString(), InetAddresses.toUriString(ip), getListeningPortOrZero());
+
+    return URI.create(uri);
+  }
+
   /**
    * Returns the discovery port only if it differs from the listening port
    *
