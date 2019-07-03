@@ -105,6 +105,7 @@ public class RunnerBuilder {
   private Vertx vertx;
   private PantheonController<?> pantheonController;
 
+  private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private Collection<BytesValue> bannedNodeIds = new ArrayList<>();
   private boolean p2pEnabled = true;
   private boolean discovery;
@@ -144,6 +145,12 @@ public class RunnerBuilder {
 
   public RunnerBuilder ethNetworkConfig(final EthNetworkConfig ethNetworkConfig) {
     this.ethNetworkConfig = ethNetworkConfig;
+    return this;
+  }
+
+  public RunnerBuilder networkingConfiguration(
+      final NetworkingConfiguration networkingConfiguration) {
+    this.networkingConfiguration = networkingConfiguration;
     return this;
   }
 
@@ -250,10 +257,7 @@ public class RunnerBuilder {
             .setMaxPeers(maxPeers)
             .setSupportedProtocols(subProtocols)
             .setClientId(PantheonInfo.version());
-    final NetworkingConfiguration networkConfig =
-        NetworkingConfiguration.create()
-            .setRlpx(rlpxConfiguration)
-            .setDiscovery(discoveryConfiguration);
+    networkingConfiguration.setRlpx(rlpxConfiguration).setDiscovery(discoveryConfiguration);
 
     final PeerPermissionsBlacklist bannedNodes = PeerPermissionsBlacklist.create();
     bannedNodeIds.forEach(bannedNodes::add);
@@ -283,7 +287,7 @@ public class RunnerBuilder {
             DefaultP2PNetwork.builder()
                 .vertx(vertx)
                 .keyPair(keyPair)
-                .config(networkConfig)
+                .config(networkingConfiguration)
                 .peerPermissions(peerPermissions)
                 .metricsSystem(metricsSystem)
                 .supportedCapabilities(caps)
