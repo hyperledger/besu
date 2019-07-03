@@ -16,7 +16,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import picocli.CommandLine;
 import picocli.CommandLine.AbstractParseResultHandler;
 import picocli.CommandLine.ExecutionException;
@@ -52,30 +54,39 @@ public class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<
   @Override
   public List<Object> handle(final ParseResult parseResult) throws ExecutionException {
     final CommandLine commandLine = parseResult.asCommandLineList().get(0);
-    if (parseResult.hasMatchedOption(configFileOptionName)) {
-      final OptionSpec configFileOption = parseResult.matchedOption(configFileOptionName);
-      final File configFile;
-      try {
-        configFile = configFileOption.getter().get();
-      } catch (final Exception e) {
-        throw new ExecutionException(commandLine, e.getMessage(), e);
-      }
-      final IDefaultValueProvider defaultValueProvider =
-          new CascadingDefaultProvider(
-              new EnvironmentVariableDefaultProvider(environment),
-              new TomlConfigFileDefaultProvider(commandLine, configFile));
-      commandLine.setDefaultValueProvider(defaultValueProvider);
-    } else if (isDocker) {
-      final File configFile = new File(DOCKER_CONFIG_LOCATION);
-      if (configFile.exists()) {
-        final TomlConfigFileDefaultProvider tomlConfigFileDefaultProvider =
-            new TomlConfigFileDefaultProvider(commandLine, configFile);
-        commandLine.setDefaultValueProvider(tomlConfigFileDefaultProvider);
-      }
-    }
+    final Optional<File> configFile = findConfigFile(parseResult, commandLine);
+    commandLine.setDefaultValueProvider(createDefaultValueProvider(commandLine, configFile));
     commandLine.parseWithHandlers(
         resultHandler, exceptionHandler, parseResult.originalArgs().toArray(new String[0]));
     return new ArrayList<>();
+  }
+
+  private Optional<File> findConfigFile(
+      final ParseResult parseResult, final CommandLine commandLine) {
+    if (parseResult.hasMatchedOption(configFileOptionName)) {
+      final OptionSpec configFileOption = parseResult.matchedOption(configFileOptionName);
+      try {
+        return Optional.of(configFileOption.getter().get());
+      } catch (final Exception e) {
+        throw new ExecutionException(commandLine, e.getMessage(), e);
+      }
+    } else if (isDocker) {
+      final File dockerConfigFile = new File(DOCKER_CONFIG_LOCATION);
+      return dockerConfigFile.exists() ? Optional.of(dockerConfigFile) : Optional.empty();
+    }
+    return Optional.empty();
+  }
+
+  @VisibleForTesting
+  IDefaultValueProvider createDefaultValueProvider(
+      final CommandLine commandLine, final Optional<File> configFile) {
+    if (configFile.isPresent()) {
+      return new CascadingDefaultProvider(
+          new EnvironmentVariableDefaultProvider(environment),
+          new TomlConfigFileDefaultProvider(commandLine, configFile.get()));
+    } else {
+      return new EnvironmentVariableDefaultProvider(environment);
+    }
   }
 
   @Override
