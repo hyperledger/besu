@@ -36,7 +36,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
   public void execute(final MessageFrame frame) {
     final Address address = Words.toAddress(frame.popStackItem());
     final Account account = frame.getWorldState().get(address);
-    if (account == null) {
+    if (account == null || account.isEmpty()) {
       frame.pushStackItem(Bytes32.ZERO);
     } else {
       frame.pushStackItem(account.getCodeHash());

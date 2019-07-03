@@ -63,8 +63,14 @@ public class ExtCodeHashOperationTest {
 
   @Test
   public void shouldReturnHashOfEmptyDataWhenAccountExistsButDoesNotHaveCode() {
-    worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
+    worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).setBalance(Wei.of(1));
     assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Hash.EMPTY);
+  }
+
+  @Test
+  public void shouldReturnZeroWhenAccountExistsButIsEmpty() {
+    worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
+    assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Bytes32.ZERO);
   }
 
   @Test
