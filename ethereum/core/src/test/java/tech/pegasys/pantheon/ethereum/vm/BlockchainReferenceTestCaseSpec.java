@@ -186,6 +186,8 @@ public class BlockchainReferenceTestCaseSpec {
   @JsonIgnoreProperties({
     "expectExceptionByzantium",
     "expectExceptionConstantinople",
+    "expectExceptionConstantinopleFix",
+    "expectExceptionIstanbul",
     "expectExceptionEIP150",
     "expectExceptionEIP158",
     "expectExceptionFrontier",

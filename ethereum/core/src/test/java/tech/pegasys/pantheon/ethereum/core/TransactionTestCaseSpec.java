@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.core;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -61,26 +62,22 @@ public class TransactionTestCaseSpec {
 
   private final BytesValue rlp;
 
+  @SuppressWarnings("unchecked")
   @JsonCreator
-  public TransactionTestCaseSpec(
-      @JsonProperty("Frontier") final Expectation frontierExpectation,
-      @JsonProperty("Homestead") final Expectation homesteadExpectation,
-      @JsonProperty("EIP150") final Expectation EIP150Expectation,
-      @JsonProperty("EIP158") final Expectation EIP158Expectation,
-      @JsonProperty("Byzantium") final Expectation byzantiumExpectation,
-      @JsonProperty("Constantinople") final Expectation constantinopleExpectation,
-      @JsonProperty("rlp") final String rlp) {
+  public TransactionTestCaseSpec(final Map<String, Object> props) {
     expectations = new HashMap<>();
-    expectations.put("Frontier", frontierExpectation);
-    expectations.put("Homestead", homesteadExpectation);
-    expectations.put("EIP150", EIP150Expectation);
-    expectations.put("EIP158", EIP158Expectation);
-    expectations.put("Byzantium", byzantiumExpectation);
-    expectations.put("Constantinople", constantinopleExpectation);
+    for (final Map.Entry<String, Object> entry : props.entrySet()) {
+      if ("rlp".equals(entry.getKey())) continue;
+
+      final Map<String, Object> expectation = (Map<String, Object>) entry.getValue();
+      expectations.put(
+          entry.getKey(),
+          new Expectation((String) expectation.get("hash"), (String) expectation.get("sender")));
+    }
 
     BytesValue parsedRlp = null;
     try {
-      parsedRlp = BytesValue.fromHexString(rlp);
+      parsedRlp = BytesValue.fromHexString(props.get("rlp").toString());
     } catch (final IllegalArgumentException e) {
       // Some test cases include rlp "hex strings" with invalid characters
       // In this case, just set rlp to null

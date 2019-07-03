@@ -93,6 +93,11 @@ public class TransactionTest {
     milestone("Constantinople");
   }
 
+  @Test
+  public void constantinopleFix() {
+    milestone("ConstantinopleFix");
+  }
+
   public void milestone(final String milestone) {
 
     final TransactionTestCaseSpec.Expectation expected = spec.expectation(milestone);

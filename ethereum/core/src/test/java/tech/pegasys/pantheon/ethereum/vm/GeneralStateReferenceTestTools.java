@@ -81,7 +81,8 @@ public class GeneralStateReferenceTestTools {
       params.blacklistAll();
     }
     // Known incorrect test.
-    params.blacklist("RevertPrecompiledTouch-(EIP158|Byzantium)");
+    params.blacklist(
+        "RevertPrecompiledTouch(_storage)?-(EIP158|Byzantium|Constantinople|ConstantinopleFix)");
     // Gas integer value is too large to construct a valid transaction.
     params.blacklist("OverflowGasRequire");
     // Consumes a huge amount of memory
