@@ -12,13 +12,19 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.config;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.Objects;
 
 public class NetworkingConfiguration {
+  public static final int DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC = 30;
+  public static final int DEFAULT_CHECK_MAINTAINED_CONNECTSION_FREQUENCY_SEC = 60;
+
   private DiscoveryConfiguration discovery = new DiscoveryConfiguration();
   private RlpxConfiguration rlpx = new RlpxConfiguration();
-
-  private NetworkingConfiguration() {}
+  private int initiateConnectionsFrequencySec = DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC;
+  private int checkMaintainedConnectionsFrequencySec =
+      DEFAULT_CHECK_MAINTAINED_CONNECTSION_FREQUENCY_SEC;
 
   public static NetworkingConfiguration create() {
     return new NetworkingConfiguration();
@@ -39,6 +45,28 @@ public class NetworkingConfiguration {
 
   public NetworkingConfiguration setRlpx(final RlpxConfiguration rlpx) {
     this.rlpx = rlpx;
+    return this;
+  }
+
+  public int getInitiateConnectionsFrequencySec() {
+    return initiateConnectionsFrequencySec;
+  }
+
+  public NetworkingConfiguration setInitiateConnectionsFrequency(
+      final int initiateConnectionsFrequency) {
+    checkArgument(initiateConnectionsFrequency > 0);
+    this.initiateConnectionsFrequencySec = initiateConnectionsFrequency;
+    return this;
+  }
+
+  public int getCheckMaintainedConnectionsFrequencySec() {
+    return checkMaintainedConnectionsFrequencySec;
+  }
+
+  public NetworkingConfiguration setCheckMaintainedConnectionsFrequency(
+      final int checkMaintainedConnectionsFrequency) {
+    checkArgument(checkMaintainedConnectionsFrequency > 0);
+    this.checkMaintainedConnectionsFrequencySec = checkMaintainedConnectionsFrequency;
     return this;
   }
 
