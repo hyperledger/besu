@@ -13,7 +13,7 @@
 
 dependencyManagement {
   dependencies {
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.9.9'
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.9.9.1'
 
     dependency 'com.github.docker-java:docker-java:3.0.14'
 
