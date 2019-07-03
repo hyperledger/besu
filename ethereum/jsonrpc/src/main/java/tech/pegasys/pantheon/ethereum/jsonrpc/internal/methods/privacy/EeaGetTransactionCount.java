@@ -12,10 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy;
 
-import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
-import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
@@ -25,21 +22,18 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResp
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
-import tech.pegasys.pantheon.ethereum.privacy.PrivateStateStorage;
-import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionHandler;
 
 public class EeaGetTransactionCount implements JsonRpcMethod {
 
   private final JsonRpcParameter parameters;
-  private final PrivateStateStorage privateStateStorage;
-  private final WorldStateArchive privateWorldStateArchive;
+  private final PrivateTransactionHandler privateTransactionHandler;
 
   public EeaGetTransactionCount(
-      final JsonRpcParameter parameters, final PrivacyParameters privacyParameters) {
+      final JsonRpcParameter parameters,
+      final PrivateTransactionHandler privateTransactionHandler) {
     this.parameters = parameters;
-    this.privateStateStorage = privacyParameters.getPrivateStateStorage();
-    this.privateWorldStateArchive = privacyParameters.getPrivateWorldStateArchive();
+    this.privateTransactionHandler = privateTransactionHandler;
   }
 
   @Override
@@ -56,21 +50,7 @@ public class EeaGetTransactionCount implements JsonRpcMethod {
     final Address address = parameters.required(request.getParams(), 0, Address.class);
     final String privacyGroupId = parameters.required(request.getParams(), 1, String.class);
 
-    return privateStateStorage
-        .getPrivateAccountState(BytesValue.fromHexString(privacyGroupId))
-        .map(
-            lastRootHash -> {
-              final MutableWorldState privateWorldState =
-                  privateWorldStateArchive.getMutable(lastRootHash).get();
-
-              final Account maybePrivateSender = privateWorldState.get(address);
-
-              if (maybePrivateSender != null) {
-                return new JsonRpcSuccessResponse(
-                    request.getId(), Quantity.create(maybePrivateSender.getNonce()));
-              }
-              return new JsonRpcSuccessResponse(request.getId(), Quantity.create(0));
-            })
-        .orElse(new JsonRpcSuccessResponse(request.getId(), Quantity.create(0)));
+    final long nonce = privateTransactionHandler.getSenderNonce(address, privacyGroupId);
+    return new JsonRpcSuccessResponse(request.getId(), Quantity.create(nonce));
   }
 }

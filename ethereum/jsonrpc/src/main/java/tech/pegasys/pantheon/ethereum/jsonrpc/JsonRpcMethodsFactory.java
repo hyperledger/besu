@@ -317,16 +317,15 @@ public class JsonRpcMethodsFactory {
           new AdminPeers(p2pNetwork));
     }
     if (rpcApis.contains(RpcApis.EEA)) {
+      final PrivateTransactionHandler privateTransactionHandler =
+          new PrivateTransactionHandler(privacyParameters);
       final Enclave enclave = new Enclave(privacyParameters.getEnclaveUri());
       addMethods(
           enabledMethods,
           new EeaGetTransactionReceipt(blockchainQueries, enclave, parameter, privacyParameters),
           new EeaSendRawTransaction(
-              blockchainQueries,
-              new PrivateTransactionHandler(privacyParameters),
-              transactionPool,
-              parameter),
-          new EeaGetTransactionCount(parameter, privacyParameters),
+              blockchainQueries, privateTransactionHandler, transactionPool, parameter),
+          new EeaGetTransactionCount(parameter, privateTransactionHandler),
           new EeaGetPrivateTransaction(enclave, parameter, privacyParameters),
           new EeaCreatePrivacyGroup(new Enclave(privacyParameters.getEnclaveUri()), parameter),
           new EeaDeletePrivacyGroup(new Enclave(privacyParameters.getEnclaveUri()), parameter),

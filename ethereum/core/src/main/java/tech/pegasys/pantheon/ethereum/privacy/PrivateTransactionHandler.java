@@ -23,9 +23,9 @@ import tech.pegasys.pantheon.enclave.types.SendRequest;
 import tech.pegasys.pantheon.enclave.types.SendResponse;
 import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
@@ -70,7 +70,7 @@ public class PrivateTransactionHandler {
     this.enclave = enclave;
     this.privacyPrecompileAddress = privacyPrecompileAddress;
     this.nodeKeyPair = nodeKeyPair;
-    this.signerAddress = Address.extract(Hash.hash(nodeKeyPair.getPublicKey().getEncodedBytes()));
+    this.signerAddress = Util.publicKeyToAddress(nodeKeyPair.getPublicKey());
     this.privateStateStorage = privateStateStorage;
     this.privateWorldStateArchive = privateWorldStateArchive;
   }
@@ -122,7 +122,7 @@ public class PrivateTransactionHandler {
   public ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
       final PrivateTransaction privateTransaction, final String privacyGroupId) {
     final long actualNonce = privateTransaction.getNonce();
-    final long expectedNonce = getSenderNonce(privateTransaction, privacyGroupId);
+    final long expectedNonce = getSenderNonce(privateTransaction.getSender(), privacyGroupId);
     LOG.debug("Validating actual nonce {} with expected nonce {}", actualNonce, expectedNonce);
     if (expectedNonce > actualNonce) {
       return ValidationResult.invalid(
@@ -163,8 +163,7 @@ public class PrivateTransactionHandler {
         privateFor);
   }
 
-  private long getSenderNonce(
-      final PrivateTransaction privateTransaction, final String privacyGroupId) {
+  public long getSenderNonce(final Address sender, final String privacyGroupId) {
     return privateStateStorage
         .getPrivateAccountState(BytesValue.fromHexString(privacyGroupId))
         .map(
@@ -173,8 +172,7 @@ public class PrivateTransactionHandler {
                     .getMutable(lastRootHash)
                     .map(
                         worldState -> {
-                          final Account maybePrivateSender =
-                              worldState.get(privateTransaction.getSender());
+                          final Account maybePrivateSender = worldState.get(sender);
 
                           if (maybePrivateSender != null) {
                             return maybePrivateSender.getNonce();
