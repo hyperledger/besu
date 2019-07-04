@@ -47,12 +47,16 @@ public class EthTransactions {
     return new EthGetTransactionReceiptTransaction(transactionHash);
   }
 
-  public EthSendRawTransactionTransaction sendRawTransactionTransaction(
-      final String transactionData) {
+  public EthSendRawTransactionTransaction sendRawTransaction(final String transactionData) {
     return new EthSendRawTransactionTransaction(transactionData);
   }
 
   public EthGetTransactionCountTransaction getTransactionCount(final String accountAddress) {
     return new EthGetTransactionCountTransaction(accountAddress);
+  }
+
+  public EthGetTransactionReceiptWithRevertReason getTransactionReceiptWithRevertReason(
+      final String transactionHash) {
+    return new EthGetTransactionReceiptWithRevertReason(transactionHash);
   }
 }

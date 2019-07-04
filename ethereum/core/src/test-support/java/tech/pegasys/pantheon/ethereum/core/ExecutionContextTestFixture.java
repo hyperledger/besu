@@ -113,7 +113,8 @@ public class ExecutionContextTestFixture {
                     new StubGenesisConfigOptions().istanbulBlock(0),
                     BigInteger.valueOf(42),
                     Function.identity(),
-                    new PrivacyParameters())
+                    new PrivacyParameters(),
+                    false)
                 .createProtocolSchedule();
       }
       if (keyValueStorage == null) {

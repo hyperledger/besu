@@ -25,6 +25,8 @@ import tech.pegasys.pantheon.ethereum.vm.BlockHashLookup;
 import tech.pegasys.pantheon.ethereum.vm.OperationTracer;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.Optional;
+
 /** Processes transactions. */
 public interface TransactionProcessor {
 
@@ -95,6 +97,13 @@ public interface TransactionProcessor {
      * @return the validation result, with the reason for failure (if applicable.)
      */
     ValidationResult<TransactionInvalidReason> getValidationResult();
+
+    /**
+     * Returns the reason why a transaction was reverted (if applicable).
+     *
+     * @return the revert reason.
+     */
+    Optional<String> getRevertReason();
   }
 
   /**

@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.mainnet;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
-import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 
 import java.nio.charset.StandardCharsets;
 
@@ -95,8 +94,7 @@ public class MainnetProtocolScheduleTest {
             GenesisConfigFile.fromConfig(
                     Resources.toString(
                         this.getClass().getResource("/ropsten.json"), StandardCharsets.UTF_8))
-                .getConfigOptions(),
-            PrivacyParameters.DEFAULT);
+                .getConfigOptions());
     Assertions.assertThat(sched.getByBlockNumber(0).getName()).isEqualTo("TangerineWhistle");
     Assertions.assertThat(sched.getByBlockNumber(1).getName()).isEqualTo("TangerineWhistle");
     Assertions.assertThat(sched.getByBlockNumber(10).getName()).isEqualTo("SpuriousDragon");

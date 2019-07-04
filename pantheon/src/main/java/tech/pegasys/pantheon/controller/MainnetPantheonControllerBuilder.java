@@ -85,6 +85,7 @@ public class MainnetPantheonControllerBuilder extends PantheonControllerBuilder<
 
   @Override
   protected ProtocolSchedule<Void> createProtocolSchedule() {
-    return MainnetProtocolSchedule.fromConfig(genesisConfig.getConfigOptions(), privacyParameters);
+    return MainnetProtocolSchedule.fromConfig(
+        genesisConfig.getConfigOptions(), privacyParameters, isRevertReasonEnabled);
   }
 }

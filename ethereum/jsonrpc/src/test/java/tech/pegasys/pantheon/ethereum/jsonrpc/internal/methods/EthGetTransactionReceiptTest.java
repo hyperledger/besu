@@ -44,11 +44,11 @@ import org.junit.Test;
 public class EthGetTransactionReceiptTest {
 
   private final TransactionReceipt stateReceipt =
-      new TransactionReceipt(1, 12, Collections.emptyList());
+      new TransactionReceipt(1, 12, Collections.emptyList(), Optional.empty());
   private final Hash stateRoot =
       Hash.fromHexString("0000000000000000000000000000000000000000000000000000000000000000");
   private final TransactionReceipt rootReceipt =
-      new TransactionReceipt(stateRoot, 12, Collections.emptyList());
+      new TransactionReceipt(stateRoot, 12, Collections.emptyList(), Optional.empty());
 
   private final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 1);
   private final Address sender =

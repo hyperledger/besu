@@ -195,7 +195,7 @@ public class LogsSubscriptionServiceTest {
       final Transaction transaction, final Log log) {
     final BlockHeader blockHeader = blockHeaderTestFixture.buildHeader();
     final TransactionReceipt transactionReceipt =
-        new TransactionReceipt(Hash.ZERO, 1L, Lists.newArrayList(log));
+        new TransactionReceipt(Hash.ZERO, 1L, Lists.newArrayList(log), Optional.empty());
     final TransactionReceiptWithMetadata transactionReceiptWithMetadata =
         TransactionReceiptWithMetadata.create(
             transactionReceipt,

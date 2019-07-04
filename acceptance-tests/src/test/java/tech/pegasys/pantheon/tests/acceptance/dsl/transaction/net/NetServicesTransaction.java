@@ -25,11 +25,10 @@ public class NetServicesTransaction implements Transaction<Map<String, Map<Strin
 
   @Override
   public Map<String, Map<String, String>> execute(final NodeRequests requestFactories) {
-    CustomNetJsonRpcRequestFactory.NetServicesResponse netServicesResponse = null;
+    CustomRequestFactory.NetServicesResponse netServicesResponse = null;
     try {
-      final CustomNetJsonRpcRequestFactory netServicesJsonRpcRequestFactory =
-          requestFactories.customNet();
-      final Request<?, CustomNetJsonRpcRequestFactory.NetServicesResponse> request =
+      final CustomRequestFactory netServicesJsonRpcRequestFactory = requestFactories.custom();
+      final Request<?, CustomRequestFactory.NetServicesResponse> request =
           netServicesJsonRpcRequestFactory.netServices();
 
       netServicesResponse = request.send();

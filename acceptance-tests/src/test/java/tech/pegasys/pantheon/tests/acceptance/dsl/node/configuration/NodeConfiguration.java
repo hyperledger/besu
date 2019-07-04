@@ -47,4 +47,6 @@ public interface NodeConfiguration {
   boolean isBootnodeEligible();
 
   List<String> getExtraCLIOptions();
+
+  boolean isRevertReasonEnabled();
 }

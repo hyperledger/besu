@@ -18,19 +18,45 @@ import java.util.Map;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
-public class CustomNetJsonRpcRequestFactory {
+public class CustomRequestFactory {
+  private final Web3jService web3jService;
 
   public static class NetServicesResponse extends Response<Map<String, Map<String, String>>> {}
 
-  private final Web3jService web3jService;
+  public static class TransactionReceiptWithRevertReason extends TransactionReceipt {
+    private String revertReason;
 
-  public CustomNetJsonRpcRequestFactory(final Web3jService web3jService) {
+    public TransactionReceiptWithRevertReason() {}
+
+    public void setRevertReason(final String revertReason) {
+      this.revertReason = revertReason;
+    }
+
+    public String getRevertReason() {
+      return revertReason;
+    }
+  }
+
+  public static class EthGetTransactionReceiptWithRevertReasonResponse
+      extends Response<TransactionReceiptWithRevertReason> {}
+
+  public CustomRequestFactory(final Web3jService web3jService) {
     this.web3jService = web3jService;
   }
 
   public Request<?, NetServicesResponse> netServices() {
     return new Request<>(
         "net_services", Collections.emptyList(), web3jService, NetServicesResponse.class);
+  }
+
+  public Request<?, EthGetTransactionReceiptWithRevertReasonResponse>
+      ethGetTransactionReceiptWithRevertReason(final String transactionHash) {
+    return new Request<>(
+        "eth_getTransactionReceipt",
+        Collections.singletonList(transactionHash),
+        web3jService,
+        EthGetTransactionReceiptWithRevertReasonResponse.class);
   }
 }

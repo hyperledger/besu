@@ -224,12 +224,16 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder<Void> byzantiumDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit) {
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
     return spuriousDragonDefinition(chainId, contractSizeLimit, configStackSizeLimit)
         .evmBuilder(MainnetEvmRegistries::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
         .difficultyCalculator(MainnetDifficultyCalculators.BYZANTIUM)
-        .transactionReceiptFactory(MainnetProtocolSpecs::byzantiumTransactionReceiptFactory)
+        .transactionReceiptFactory(
+            enableRevertReason
+                ? MainnetProtocolSpecs::byzantiumTransactionReceiptFactoryWithReasonEnabled
+                : MainnetProtocolSpecs::byzantiumTransactionReceiptFactory)
         .blockReward(BYZANTIUM_BLOCK_REWARD)
         .transactionReceiptType(TransactionReceiptType.STATUS)
         .name("Byzantium");
@@ -238,8 +242,9 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder<Void> constantinopleDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit) {
-    return byzantiumDefinition(chainId, contractSizeLimit, configStackSizeLimit)
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    return byzantiumDefinition(chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
         .gasCalculator(ConstantinopleGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::constantinople)
@@ -250,8 +255,10 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder<Void> constantinopleFixDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit) {
-    return constantinopleDefinition(chainId, contractSizeLimit, configStackSizeLimit)
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    return constantinopleDefinition(
+            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
         .gasCalculator(ConstantinopleFixGasCalculator::new)
         .name("ConstantinopleFix");
   }
@@ -259,19 +266,32 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder<Void> istanbulDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit) {
-    return constantinopleFixDefinition(chainId, contractSizeLimit, configStackSizeLimit)
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    return constantinopleFixDefinition(
+            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
         .name("Istanbul");
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(
       final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
-    return new TransactionReceipt(worldState.rootHash(), gasUsed, result.getLogs());
+    return new TransactionReceipt(
+        worldState.rootHash(),
+        gasUsed,
+        result.getLogs(),
+        Optional.empty()); // No revert reason in frontier
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
       final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
-    return new TransactionReceipt(result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs());
+    return new TransactionReceipt(
+        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), Optional.empty());
+  }
+
+  private static TransactionReceipt byzantiumTransactionReceiptFactoryWithReasonEnabled(
+      final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
+    return new TransactionReceipt(
+        result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), result.getRevertReason());
   }
 
   private static class DaoBlockProcessor implements BlockProcessor {

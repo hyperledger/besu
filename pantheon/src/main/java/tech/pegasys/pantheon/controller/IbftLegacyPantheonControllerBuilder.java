@@ -63,7 +63,8 @@ public class IbftLegacyPantheonControllerBuilder extends PantheonControllerBuild
 
   @Override
   protected ProtocolSchedule<IbftContext> createProtocolSchedule() {
-    return IbftProtocolSchedule.create(genesisConfig.getConfigOptions(), privacyParameters);
+    return IbftProtocolSchedule.create(
+        genesisConfig.getConfigOptions(), privacyParameters, isRevertReasonEnabled);
   }
 
   @Override

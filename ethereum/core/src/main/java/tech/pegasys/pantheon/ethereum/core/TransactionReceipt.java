@@ -13,11 +13,15 @@
 package tech.pegasys.pantheon.ethereum.core;
 
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionReceiptType;
+import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import com.google.common.base.MoreObjects;
 
@@ -42,6 +46,7 @@ public class TransactionReceipt {
   private final LogsBloomFilter bloomFilter;
   private final int status;
   private final TransactionReceiptType transactionReceiptType;
+  private final Optional<String> revertReason;
 
   /**
    * Creates an instance of a state root-encoded transaction receipt.
@@ -49,18 +54,29 @@ public class TransactionReceipt {
    * @param stateRoot the state root for the world state after the transaction has been processed
    * @param cumulativeGasUsed the total amount of gas consumed in the block after this transaction
    * @param logs the logs generated within the transaction
+   * @param revertReason the revert reason for a failed transaction (if applicable)
    */
   public TransactionReceipt(
-      final Hash stateRoot, final long cumulativeGasUsed, final List<Log> logs) {
-    this(stateRoot, NONEXISTENT, cumulativeGasUsed, logs, LogsBloomFilter.compute(logs));
+      final Hash stateRoot,
+      final long cumulativeGasUsed,
+      final List<Log> logs,
+      final Optional<String> revertReason) {
+    this(
+        stateRoot,
+        NONEXISTENT,
+        cumulativeGasUsed,
+        logs,
+        LogsBloomFilter.compute(logs),
+        revertReason);
   }
 
   private TransactionReceipt(
       final Hash stateRoot,
       final long cumulativeGasUsed,
       final List<Log> logs,
-      final LogsBloomFilter bloomFilter) {
-    this(stateRoot, NONEXISTENT, cumulativeGasUsed, logs, bloomFilter);
+      final LogsBloomFilter bloomFilter,
+      final Optional<String> revertReason) {
+    this(stateRoot, NONEXISTENT, cumulativeGasUsed, logs, bloomFilter, revertReason);
   }
 
   /**
@@ -69,17 +85,23 @@ public class TransactionReceipt {
    * @param status the status code for the transaction (1 for success and 0 for failure)
    * @param cumulativeGasUsed the total amount of gas consumed in the block after this transaction
    * @param logs the logs generated within the transaction
+   * @param revertReason the revert reason for a failed transaction (if applicable)
    */
-  public TransactionReceipt(final int status, final long cumulativeGasUsed, final List<Log> logs) {
-    this(null, status, cumulativeGasUsed, logs, LogsBloomFilter.compute(logs));
+  public TransactionReceipt(
+      final int status,
+      final long cumulativeGasUsed,
+      final List<Log> logs,
+      final Optional<String> revertReason) {
+    this(null, status, cumulativeGasUsed, logs, LogsBloomFilter.compute(logs), revertReason);
   }
 
   private TransactionReceipt(
       final int status,
       final long cumulativeGasUsed,
       final List<Log> logs,
-      final LogsBloomFilter bloomFilter) {
-    this(null, status, cumulativeGasUsed, logs, bloomFilter);
+      final LogsBloomFilter bloomFilter,
+      final Optional<String> revertReason) {
+    this(null, status, cumulativeGasUsed, logs, bloomFilter, revertReason);
   }
 
   private TransactionReceipt(
@@ -87,7 +109,8 @@ public class TransactionReceipt {
       final int status,
       final long cumulativeGasUsed,
       final List<Log> logs,
-      final LogsBloomFilter bloomFilter) {
+      final LogsBloomFilter bloomFilter,
+      final Optional<String> revertReason) {
     this.stateRoot = stateRoot;
     this.cumulativeGasUsed = cumulativeGasUsed;
     this.status = status;
@@ -95,6 +118,7 @@ public class TransactionReceipt {
     this.bloomFilter = bloomFilter;
     transactionReceiptType =
         stateRoot == null ? TransactionReceiptType.STATUS : TransactionReceiptType.ROOT;
+    this.revertReason = revertReason;
   }
 
   /**
@@ -103,6 +127,14 @@ public class TransactionReceipt {
    * @param out The RLP output to write to
    */
   public void writeTo(final RLPOutput out) {
+    writeTo(out, false);
+  }
+
+  public void writeToWithRevertReason(final RLPOutput out) {
+    writeTo(out, true);
+  }
+
+  private void writeTo(final RLPOutput out, final boolean withRevertReason) {
     out.startList();
 
     // Determine whether it's a state root-encoded transaction receipt
@@ -115,7 +147,9 @@ public class TransactionReceipt {
     out.writeLongScalar(cumulativeGasUsed);
     out.writeBytesValue(bloomFilter.getBytes());
     out.writeList(logs, Log::writeTo);
-
+    if (withRevertReason && revertReason.isPresent()) {
+      out.writeBytesValue(BytesValue.wrap(revertReason.get().getBytes(StandardCharsets.UTF_8)));
+    }
     out.endList();
   }
 
@@ -126,6 +160,17 @@ public class TransactionReceipt {
    * @return the transaction receipt
    */
   public static TransactionReceipt readFrom(final RLPInput input) {
+    return readFrom(input, true);
+  }
+  /**
+   * Creates a transaction receipt for the given RLP
+   *
+   * @param input the RLP-encoded transaction receipt
+   * @param revertReasonAllowed whether the rlp input is allowed to have a revert reason
+   * @return the transaction receipt
+   */
+  public static TransactionReceipt readFrom(
+      final RLPInput input, final boolean revertReasonAllowed) {
     input.enterList();
 
     try {
@@ -137,15 +182,25 @@ public class TransactionReceipt {
       // TODO consider validating that the logs and bloom filter match.
       final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(input);
       final List<Log> logs = input.readList(Log::readFrom);
+      final Optional<String> revertReason;
+      if (input.isEndOfCurrentList()) {
+        revertReason = Optional.empty();
+      } else {
+        if (!revertReasonAllowed) {
+          throw new RLPException("Unexpected value at end of TransactionReceipt");
+        }
+        final byte[] bytes = input.readBytesValue().getArrayUnsafe();
+        revertReason = Optional.of(new String(bytes, StandardCharsets.UTF_8));
+      }
 
       // Status code-encoded transaction receipts have a single
       // byte for success (0x01) or failure (0x80).
       if (firstElement.raw().size() == 1) {
         final int status = firstElement.readIntScalar();
-        return new TransactionReceipt(status, cumulativeGas, logs, bloomFilter);
+        return new TransactionReceipt(status, cumulativeGas, logs, bloomFilter, revertReason);
       } else {
         final Hash stateRoot = Hash.wrap(firstElement.readBytes32());
-        return new TransactionReceipt(stateRoot, cumulativeGas, logs, bloomFilter);
+        return new TransactionReceipt(stateRoot, cumulativeGas, logs, bloomFilter, revertReason);
       }
     } finally {
       input.leaveList();
@@ -199,6 +254,10 @@ public class TransactionReceipt {
 
   public TransactionReceiptType getTransactionReceiptType() {
     return transactionReceiptType;
+  }
+
+  public Optional<String> getRevertReason() {
+    return revertReason;
   }
 
   @Override
