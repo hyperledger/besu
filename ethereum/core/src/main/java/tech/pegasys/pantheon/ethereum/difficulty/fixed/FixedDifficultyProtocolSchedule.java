@@ -21,15 +21,23 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 public class FixedDifficultyProtocolSchedule {
 
   public static ProtocolSchedule<Void> create(
-      final GenesisConfigOptions config, final PrivacyParameters privacyParameters) {
+      final GenesisConfigOptions config,
+      final PrivacyParameters privacyParameters,
+      final boolean isRevertReasonEnabled) {
     return new ProtocolScheduleBuilder<>(
             config,
             builder -> builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config)),
-            privacyParameters)
+            privacyParameters,
+            isRevertReasonEnabled)
         .createProtocolSchedule();
   }
 
+  public static ProtocolSchedule<Void> create(
+      final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
+    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
+  }
+
   public static ProtocolSchedule<Void> create(final GenesisConfigOptions config) {
-    return create(config, PrivacyParameters.DEFAULT);
+    return create(config, PrivacyParameters.DEFAULT, false);
   }
 }

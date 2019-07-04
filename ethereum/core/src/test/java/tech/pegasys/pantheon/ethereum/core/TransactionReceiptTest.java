@@ -25,7 +25,16 @@ public class TransactionReceiptTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final TransactionReceipt receipt = gen.receipt();
     final TransactionReceipt copy =
-        TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeTo)));
+        TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeToWithRevertReason)), false);
+    assertEquals(receipt, copy);
+  }
+
+  @Test
+  public void toFromRlpWithReason() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final TransactionReceipt receipt = gen.receipt("RevertReason");
+    final TransactionReceipt copy =
+        TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeToWithRevertReason)));
     assertEquals(receipt, copy);
   }
 }

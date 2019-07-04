@@ -75,6 +75,7 @@ public abstract class PantheonControllerBuilder<C> {
   protected Path dataDirectory;
   protected Clock clock;
   protected KeyPair nodeKeys;
+  protected boolean isRevertReasonEnabled;
   private StorageProvider storageProvider;
   private final List<Runnable> shutdownActions = new ArrayList<>();
   private RocksDbConfiguration rocksDbConfiguration;
@@ -151,6 +152,11 @@ public abstract class PantheonControllerBuilder<C> {
   public PantheonControllerBuilder<C> transactionPoolConfiguration(
       final TransactionPoolConfiguration transactionPoolConfiguration) {
     this.transactionPoolConfiguration = transactionPoolConfiguration;
+    return this;
+  }
+
+  public PantheonControllerBuilder<C> isRevertReasonEnabled(final boolean isRevertReasonEnabled) {
+    this.isRevertReasonEnabled = isRevertReasonEnabled;
     return this;
   }
 

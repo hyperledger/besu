@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({
@@ -38,7 +39,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   "status",
   "to",
   "transactionHash",
-  "transactionIndex"
+  "transactionIndex",
+  "revertReason"
 })
 public abstract class TransactionReceiptResult {
 
@@ -53,6 +55,7 @@ public abstract class TransactionReceiptResult {
   private final String to;
   private final String transactionHash;
   private final String transactionIndex;
+  private final String revertReason;
 
   protected final TransactionReceipt receipt;
 
@@ -78,6 +81,7 @@ public abstract class TransactionReceiptResult {
     this.to = receiptWithMetadata.getTransaction().getTo().map(BytesValue::toString).orElse(null);
     this.transactionHash = receiptWithMetadata.getTransaction().hash().toString();
     this.transactionIndex = Quantity.create(receiptWithMetadata.getTransactionIndex());
+    this.revertReason = receipt.getRevertReason().orElse(null);
   }
 
   @JsonGetter(value = "blockHash")
@@ -133,6 +137,12 @@ public abstract class TransactionReceiptResult {
   @JsonGetter(value = "transactionIndex")
   public String getTransactionIndex() {
     return transactionIndex;
+  }
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  @JsonGetter(value = "revertReason")
+  public String getRevertReason() {
+    return revertReason;
   }
 
   private List<TransactionReceiptLogResult> logReceipts(

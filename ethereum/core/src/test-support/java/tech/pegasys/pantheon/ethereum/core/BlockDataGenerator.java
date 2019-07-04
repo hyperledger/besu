@@ -298,7 +298,13 @@ public class BlockDataGenerator {
   }
 
   public TransactionReceipt receipt(final long cumulativeGasUsed) {
-    return new TransactionReceipt(hash(), cumulativeGasUsed, Arrays.asList(log(), log()));
+    return new TransactionReceipt(
+        hash(), cumulativeGasUsed, Arrays.asList(log(), log()), Optional.empty());
+  }
+
+  public TransactionReceipt receipt(final String revertReason) {
+    return new TransactionReceipt(
+        hash(), positiveLong(), Arrays.asList(log(), log()), Optional.of(revertReason));
   }
 
   public TransactionReceipt receipt() {

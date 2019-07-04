@@ -67,7 +67,7 @@ public final class ReceiptsMessage extends AbstractMessageData {
       final int setSize = input.enterList();
       final List<TransactionReceipt> receiptSet = new ArrayList<>(setSize);
       for (int i = 0; i < setSize; i++) {
-        receiptSet.add(TransactionReceipt.readFrom(input));
+        receiptSet.add(TransactionReceipt.readFrom(input, false));
       }
       input.leaveList();
       receipts.add(receiptSet);

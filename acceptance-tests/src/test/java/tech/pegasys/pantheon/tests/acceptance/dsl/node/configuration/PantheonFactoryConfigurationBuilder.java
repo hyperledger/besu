@@ -49,6 +49,7 @@ public class PantheonFactoryConfigurationBuilder {
   private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private boolean discoveryEnabled = true;
   private boolean bootnodeEligible = true;
+  private boolean revertReasonEnabled = false;
   private List<String> plugins = new ArrayList<>();
   private List<String> extraCLIOptions = new ArrayList<>();
 
@@ -187,6 +188,11 @@ public class PantheonFactoryConfigurationBuilder {
     return this;
   }
 
+  public PantheonFactoryConfigurationBuilder revertReasonEnabled() {
+    this.revertReasonEnabled = true;
+    return this;
+  }
+
   public PantheonFactoryConfiguration build() {
     return new PantheonFactoryConfiguration(
         name,
@@ -203,6 +209,7 @@ public class PantheonFactoryConfigurationBuilder {
         networkingConfiguration,
         discoveryEnabled,
         bootnodeEligible,
+        revertReasonEnabled,
         plugins,
         extraCLIOptions);
   }

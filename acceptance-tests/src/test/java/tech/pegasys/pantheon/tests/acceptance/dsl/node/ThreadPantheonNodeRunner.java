@@ -118,6 +118,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
               .rocksDbConfiguration(RocksDbConfiguration.builder().databaseDir(tempDir).build())
               .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
               .clock(Clock.systemUTC())
+              .isRevertReasonEnabled(node.isRevertReasonEnabled())
               .build();
     } catch (final IOException e) {
       throw new RuntimeException("Error building PantheonController", e);

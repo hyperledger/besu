@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.contract;
 
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.CallSmartContractFunction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.DeploySmartContractTransaction;
 
 import org.web3j.tx.Contract;
@@ -21,5 +22,10 @@ public class ContractTransactions {
   public <T extends Contract> DeploySmartContractTransaction<T> createSmartContract(
       final Class<T> clazz) {
     return new DeploySmartContractTransaction<>(clazz);
+  }
+
+  public CallSmartContractFunction callSmartContract(
+      final String functionName, final String contractAddress) {
+    return new CallSmartContractFunction(functionName, contractAddress);
   }
 }

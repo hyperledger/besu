@@ -59,6 +59,7 @@ public class PrivacyNode extends PantheonNode {
       final NetworkingConfiguration networkingConfiguration,
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
+      final boolean revertReasonEnabled,
       final List<String> plugins,
       final List<String> extraCLIOptions,
       final OrionTestHarness orion)
@@ -78,6 +79,7 @@ public class PrivacyNode extends PantheonNode {
         networkingConfiguration,
         discoveryEnabled,
         bootnodeEligible,
+        revertReasonEnabled,
         plugins,
         extraCLIOptions);
     this.orion = orion;

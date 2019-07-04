@@ -98,3 +98,6 @@ tx-pool-retention-hours=999
 
 tx-pool-max-size=1234
 Xincoming-tx-messages-keep-alive-seconds=60
+
+# Revert Reason
+revert-reason-enabled=false

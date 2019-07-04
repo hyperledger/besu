@@ -150,6 +150,10 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
       params.addAll(networkConfigParams);
     }
 
+    if (node.isRevertReasonEnabled()) {
+      params.add("--revert-reason-enabled");
+    }
+
     node.getPermissioningConfiguration()
         .flatMap(PermissioningConfiguration::getLocalConfig)
         .ifPresent(
