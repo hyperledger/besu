@@ -193,7 +193,7 @@ try {
                         }
 
                         stage(stage_name + 'Build image') {
-                            sh './gradlew docker'
+                            sh './gradlew distDocker'
                         }
 
                         stage(stage_name + "Test image labels") {
