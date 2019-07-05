@@ -599,6 +599,25 @@ task releaseReferenceTest(type: Test, dependsOn: [
 
 task releaseAcceptanceTest(type: Test, dependsOn: ':acceptance-tests:acceptanceTest') {}
 
+tasks.register("verifyDistributions") {
+  dependsOn distTar
+  dependsOn distZip
+  def distTarFile = distTar.outputs.files.singleFile
+  def distZipFile = distZip.outputs.files.singleFile
+  def minDistributionSize = 20000000
+
+  // Sanity check the distributions by checking they are at least a reasonable size
+  doFirst {
+    if (distTarFile.length() < minDistributionSize) {
+      throw new GradleException("Distribution tar is suspiciously small: " + distTarFile.length() + " bytes")
+    }
+    if (distZipFile.length() < minDistributionSize) {
+      throw new GradleException("Distribution zip is suspiciously small: " + distZipFile.length() + " bytes")
+    }
+  }
+}
+
+
 release {
   preTagCommitMessage = '[Gradle Release Plugin] - pre tag commit: '
   tagCommitMessage = '[Gradle Release Plugin] - creating tag: '
@@ -633,6 +652,8 @@ bintray {
   pkg = bintrayPackage
 }
 
+build.dependsOn verifyDistributions
+bintrayUpload.dependsOn verifyDistributions
 afterReleaseBuild.dependsOn bintrayUpload
 bintrayUpload.mustRunAfter(distTar)
 bintrayUpload.mustRunAfter(distZip)
