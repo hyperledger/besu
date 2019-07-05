@@ -128,7 +128,8 @@ public class WorldStateDownloader {
               .loadLocalDataStep(new LoadLocalDataStep(worldStateStorage, metricsSystem))
               .requestDataStep(new RequestDataStep(ethContext, metricsSystem))
               .persistDataStep(new PersistDataStep(worldStateStorage))
-              .completeTaskStep(new CompleteTaskStep(worldStateStorage, metricsSystem))
+              .completeTaskStep(
+                  new CompleteTaskStep(worldStateStorage, metricsSystem, taskCollection::size))
               .downloadState(newDownloadState)
               .pivotBlockHeader(header)
               .metricsSystem(metricsSystem)

@@ -38,7 +38,7 @@ public class CompleteTaskStepTest {
       new BlockHeaderTestFixture().stateRoot(ROOT_HASH).buildHeader();
 
   private final CompleteTaskStep completeTaskStep =
-      new CompleteTaskStep(worldStateStorage, new NoOpMetricsSystem());
+      new CompleteTaskStep(worldStateStorage, new NoOpMetricsSystem(), () -> 3);
 
   @SuppressWarnings("unchecked")
   private final ArgumentCaptor<Stream<NodeDataRequest>> streamCaptor =
@@ -59,14 +59,7 @@ public class CompleteTaskStepTest {
   @Test
   public void shouldEnqueueChildrenAndMarkCompleteWhenTaskHasData() {
     // Use an arbitrary but actually valid trie node to get children from.
-    final Hash hash =
-        Hash.fromHexString("0x601a7b0d0267209790cf4c4d9e0cab11b26c537e2ade006412f48b070010e847");
-    final BytesValue data =
-        BytesValue.fromHexString(
-            "0xf85180808080a05ac6993e3fbca0bfbd30173396dd5c2412657fae0bad92e401d17b2aa9a3698f80808080a012f96a0812be538c302416dc6e8df19ce18f1cc7b06a3c7a16831d766c87a9b580808080808080");
-    final StubTask task = new StubTask(NodeDataRequest.createAccountDataRequest(hash));
-    task.getData().setData(data);
-
+    final StubTask task = validTask();
     completeTaskStep.markAsCompleteOrFailed(blockHeader, downloadState, task);
 
     assertThat(task.isCompleted()).isTrue();
@@ -78,5 +71,23 @@ public class CompleteTaskStepTest {
         .containsExactlyInAnyOrderElementsOf(() -> task.getData().getChildRequests().iterator());
 
     verify(downloadState).checkCompletion(worldStateStorage, blockHeader);
+  }
+
+  @Test
+  public void shouldComputeWorldStateProgress() {
+    completeTaskStep.markAsCompleteOrFailed(blockHeader, downloadState, validTask());
+    // One task has been completed and there are 2 pending requests, progress should be 1/4 (25%)
+    assertThat(completeTaskStep.computeWorldStateSyncProgress()).isEqualTo(1.0 / 4.0);
+  }
+
+  private StubTask validTask() {
+    final Hash hash =
+        Hash.fromHexString("0x601a7b0d0267209790cf4c4d9e0cab11b26c537e2ade006412f48b070010e847");
+    final BytesValue data =
+        BytesValue.fromHexString(
+            "0xf85180808080a05ac6993e3fbca0bfbd30173396dd5c2412657fae0bad92e401d17b2aa9a3698f80808080a012f96a0812be538c302416dc6e8df19ce18f1cc7b06a3c7a16831d766c87a9b580808080808080");
+    final StubTask task = new StubTask(NodeDataRequest.createAccountDataRequest(hash));
+    task.getData().setData(data);
+    return task;
   }
 }
