@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.metrics;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /** Counter that triggers a specific task each time a step is hit. */
 public class RunnableCounter implements Counter {
@@ -20,13 +20,13 @@ public class RunnableCounter implements Counter {
   private final Counter backedCounter;
   private final Runnable task;
   private final int step;
-  private AtomicInteger stepCounter;
+  private AtomicLong stepCounter;
 
   public RunnableCounter(final Counter backedCounter, final Runnable task, final int step) {
     this.backedCounter = backedCounter;
     this.task = task;
     this.step = step;
-    this.stepCounter = new AtomicInteger(0);
+    this.stepCounter = new AtomicLong(0);
   }
 
   /**
@@ -46,11 +46,13 @@ public class RunnableCounter implements Counter {
    */
   @Override
   public void inc(final long amount) {
-    stepCounter.addAndGet((int) amount);
     backedCounter.inc(amount);
-    if (stepCounter.get() == step) {
+    if (stepCounter.addAndGet(amount) % step == 0) {
       task.run();
-      stepCounter = new AtomicInteger(0);
     }
+  }
+
+  public long get() {
+    return stepCounter.get();
   }
 }
