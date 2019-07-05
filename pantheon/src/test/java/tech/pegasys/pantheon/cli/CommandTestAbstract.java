@@ -44,6 +44,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.services.PantheonPluginContextImpl;
+import tech.pegasys.pantheon.util.BlockExporter;
 import tech.pegasys.pantheon.util.BlockImporter;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -97,6 +98,8 @@ public abstract class CommandTestAbstract {
   @Mock protected BlockBroadcaster mockBlockBroadcaster;
   @Mock protected PantheonController<Object> mockController;
   @Mock protected BlockImporter mockBlockImporter;
+  @Mock protected BlockExporter mockBlockExporter;
+
   @Mock protected Logger mockLogger;
   @Mock protected PantheonPluginContextImpl mockPantheonPluginContext;
 
@@ -209,6 +212,7 @@ public abstract class CommandTestAbstract {
         new TestPantheonCommand(
             mockLogger,
             mockBlockImporter,
+            mockBlockExporter,
             mockRunnerBuilder,
             mockControllerBuilderFactory,
             keyLoader,
@@ -237,6 +241,7 @@ public abstract class CommandTestAbstract {
     TestPantheonCommand(
         final Logger mockLogger,
         final BlockImporter mockBlockImporter,
+        final BlockExporter mockBlockExporter,
         final RunnerBuilder mockRunnerBuilder,
         final PantheonController.Builder controllerBuilderFactory,
         final KeyLoader keyLoader,
@@ -245,6 +250,7 @@ public abstract class CommandTestAbstract {
       super(
           mockLogger,
           mockBlockImporter,
+          mockBlockExporter,
           mockRunnerBuilder,
           controllerBuilderFactory,
           pantheonPluginContext,
