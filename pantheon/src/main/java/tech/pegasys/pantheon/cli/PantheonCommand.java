@@ -81,6 +81,7 @@ import tech.pegasys.pantheon.metrics.StandardMetricCategory;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 import tech.pegasys.pantheon.metrics.vertx.VertxMetricsAdapterFactory;
+import tech.pegasys.pantheon.nat.NatMethod;
 import tech.pegasys.pantheon.plugin.services.PantheonEvents;
 import tech.pegasys.pantheon.plugin.services.PicoCLIOptions;
 import tech.pegasys.pantheon.services.PantheonEventsImpl;
@@ -292,6 +293,13 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       description = "Port on which to listen for p2p communication (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Integer p2pPort = EnodeURL.DEFAULT_LISTENING_PORT;
+
+  @Option(
+      names = {"--nat-method"},
+      description =
+          "Specify the NAT circumvention method to be used, possible values are ${COMPLETION-CANDIDATES}."
+              + " NONE disables NAT functionality. (default: ${DEFAULT-VALUE})")
+  private final NatMethod natMethod = DEFAULT_NAT_METHOD;
 
   @Option(
       names = {"--network-id"},
@@ -1154,6 +1162,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             .vertx(Vertx.vertx(createVertxOptions(metricsSystem)))
             .pantheonController(controller)
             .p2pEnabled(p2pEnabled)
+            .natMethod(natMethod)
             .discovery(peerDiscoveryEnabled)
             .ethNetworkConfig(ethNetworkConfig)
             .p2pAdvertisedHost(p2pAdvertisedHost)

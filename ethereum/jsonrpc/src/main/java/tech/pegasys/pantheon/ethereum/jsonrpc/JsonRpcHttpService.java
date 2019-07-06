@@ -35,6 +35,7 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.OperationTimer.TimingContext;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.nat.upnp.UpnpNatManager;
 import tech.pegasys.pantheon.util.NetworkUtility;
 
 import java.net.InetSocketAddress;
@@ -82,6 +83,7 @@ public class JsonRpcHttpService {
   private final Vertx vertx;
   private final JsonRpcConfiguration config;
   private final RpcMethods rpcMethods;
+  private final Optional<UpnpNatManager> natManager;
   private final Path dataDir;
   private final LabelledMetric<OperationTimer> requestTimer;
 
@@ -91,11 +93,24 @@ public class JsonRpcHttpService {
   private final HealthService livenessService;
   private final HealthService readinessService;
 
+  /**
+   * Construct a JsonRpcHttpService handler
+   *
+   * @param vertx The vertx process that will be running this service
+   * @param dataDir The data directory where requests can be buffered
+   * @param config Configuration for the rpc methods being loaded
+   * @param metricsSystem The metrics service that activities should be reported to
+   * @param natManager The NAT environment manager.
+   * @param methods The json rpc methods that should be enabled
+   * @param livenessService A service responsible for reporting whether this node is live
+   * @param readinessService A service responsible for reporting whether this node has fully started
+   */
   public JsonRpcHttpService(
       final Vertx vertx,
       final Path dataDir,
       final JsonRpcConfiguration config,
       final MetricsSystem metricsSystem,
+      final Optional<UpnpNatManager> natManager,
       final Map<String, JsonRpcMethod> methods,
       final HealthService livenessService,
       final HealthService readinessService) {
@@ -104,6 +119,7 @@ public class JsonRpcHttpService {
         dataDir,
         config,
         metricsSystem,
+        natManager,
         methods,
         AuthenticationService.create(vertx, config),
         livenessService,
@@ -115,6 +131,7 @@ public class JsonRpcHttpService {
       final Path dataDir,
       final JsonRpcConfiguration config,
       final MetricsSystem metricsSystem,
+      final Optional<UpnpNatManager> natManager,
       final Map<String, JsonRpcMethod> methods,
       final Optional<AuthenticationService> authenticationService,
       final HealthService livenessService,
@@ -129,6 +146,7 @@ public class JsonRpcHttpService {
     validateConfig(config);
     this.config = config;
     this.vertx = vertx;
+    this.natManager = natManager;
     this.rpcMethods = new RpcMethods(methods);
     this.authenticationService = authenticationService;
     this.livenessService = livenessService;
@@ -144,6 +162,7 @@ public class JsonRpcHttpService {
 
   public CompletableFuture<?> start() {
     LOG.info("Starting JsonRPC service on {}:{}", config.getHost(), config.getPort());
+
     // Create the HTTP server and a router object.
     httpServer =
         vertx.createHttpServer(
@@ -207,6 +226,13 @@ public class JsonRpcHttpService {
                 LOG.info(
                     "JsonRPC service started and listening on {}:{}", config.getHost(), actualPort);
                 config.setPort(actualPort);
+                // Request that a NAT port forward for our server port
+                if (natManager.isPresent()) {
+                  natManager
+                      .get()
+                      .requestPortForward(
+                          config.getPort(), UpnpNatManager.Protocol.TCP, "partheon-json-rpc");
+                }
                 return;
               }
               httpServer = null;

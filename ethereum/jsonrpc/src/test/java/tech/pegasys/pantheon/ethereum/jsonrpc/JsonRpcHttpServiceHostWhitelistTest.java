@@ -125,6 +125,7 @@ public class JsonRpcHttpServiceHostWhitelistTest {
         folder.newFolder().toPath(),
         jsonRpcConfig,
         new NoOpMetricsSystem(),
+        Optional.empty(),
         rpcMethods,
         HealthService.ALWAYS_HEALTHY,
         HealthService.ALWAYS_HEALTHY);

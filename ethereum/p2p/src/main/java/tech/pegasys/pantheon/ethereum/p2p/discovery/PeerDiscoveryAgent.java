@@ -28,6 +28,7 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerId;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.nat.upnp.UpnpNatManager;
 import tech.pegasys.pantheon.util.NetworkUtility;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -39,6 +40,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -61,6 +63,7 @@ public abstract class PeerDiscoveryAgent {
   protected final List<DiscoveryPeer> bootstrapPeers;
   private final List<PeerRequirement> peerRequirements = new CopyOnWriteArrayList<>();
   private final PeerPermissions peerPermissions;
+  private final Optional<UpnpNatManager> natManager;
   private final MetricsSystem metricsSystem;
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
@@ -83,6 +86,7 @@ public abstract class PeerDiscoveryAgent {
       final SECP256K1.KeyPair keyPair,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
+      final Optional<UpnpNatManager> natManager,
       final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
     checkArgument(keyPair != null, "keypair cannot be null");
@@ -91,6 +95,7 @@ public abstract class PeerDiscoveryAgent {
     validateConfiguration(config);
 
     this.peerPermissions = peerPermissions;
+    this.natManager = natManager;
     this.bootstrapPeers =
         config.getBootnodes().stream().map(DiscoveryPeer::fromEnode).collect(Collectors.toList());
 
@@ -117,6 +122,26 @@ public abstract class PeerDiscoveryAgent {
       final int port = config.getBindPort();
       LOG.info("Starting peer discovery agent on host={}, port={}", host, port);
 
+      // override advertised host if we detect an external IP address via NAT manager
+      String externalIpAddress = null;
+      if (natManager.isPresent()) {
+        try {
+          final int timeoutSeconds = 60;
+          LOG.info("Waiting for up to {} seconds to detect external IP address...", timeoutSeconds);
+          externalIpAddress =
+              natManager.get().queryExternalIPAddress().get(timeoutSeconds, TimeUnit.SECONDS);
+
+        } catch (Exception e) {
+          LOG.warn(
+              "Caught exception while trying to query NAT external IP address (ignoring): {}", e);
+        }
+      }
+
+      final String advertisedAddress =
+          (null != externalIpAddress && !externalIpAddress.equals(""))
+              ? externalIpAddress
+              : config.getAdvertisedHost();
+
       return listenForConnections()
           .thenApply(
               (InetSocketAddress localAddress) -> {
@@ -126,7 +151,7 @@ public abstract class PeerDiscoveryAgent {
                     DiscoveryPeer.fromEnode(
                         EnodeURL.builder()
                             .nodeId(id)
-                            .ipAddress(config.getAdvertisedHost())
+                            .ipAddress(advertisedAddress)
                             .listeningPort(tcpPort)
                             .discoveryPort(discoveryPort)
                             .build());
