@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
@@ -39,7 +40,7 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
       final Map<BytesValue, MockPeerDiscoveryAgent> agentNetwork) {
-    super(keyPair, config, peerPermissions, new NoOpMetricsSystem());
+    super(keyPair, config, peerPermissions, Optional.empty(), new NoOpMetricsSystem());
     this.agentNetwork = agentNetwork;
   }
 

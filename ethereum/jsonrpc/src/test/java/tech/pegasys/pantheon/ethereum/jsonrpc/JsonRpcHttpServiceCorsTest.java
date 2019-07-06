@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.health.HealthService;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 
 import java.util.HashMap;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
@@ -193,6 +194,7 @@ public class JsonRpcHttpServiceCorsTest {
             folder.newFolder().toPath(),
             config,
             new NoOpMetricsSystem(),
+            Optional.empty(),
             new HashMap<>(),
             HealthService.ALWAYS_HEALTHY,
             HealthService.ALWAYS_HEALTHY);

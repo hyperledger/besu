@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.cli;
 
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
+import tech.pegasys.pantheon.nat.NatMethod;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.File;
@@ -58,6 +59,7 @@ public interface DefaultCommandValues {
   // Default should be FAST for the next release
   // but we use FULL for the moment as Fast is still in progress
   SyncMode DEFAULT_SYNC_MODE = SyncMode.FULL;
+  NatMethod DEFAULT_NAT_METHOD = NatMethod.NONE;
   int FAST_SYNC_MAX_WAIT_TIME = 0;
   int FAST_SYNC_MIN_PEER_COUNT = 5;
   int DEFAULT_MAX_PEERS = 25;

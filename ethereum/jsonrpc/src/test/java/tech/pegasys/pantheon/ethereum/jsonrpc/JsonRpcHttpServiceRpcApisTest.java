@@ -212,6 +212,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             folder.newFolder().toPath(),
             config,
             new NoOpMetricsSystem(),
+            Optional.empty(),
             rpcMethods,
             HealthService.ALWAYS_HEALTHY,
             HealthService.ALWAYS_HEALTHY);
@@ -301,6 +302,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             folder.newFolder().toPath(),
             jsonRpcConfiguration,
             new NoOpMetricsSystem(),
+            Optional.empty(),
             rpcMethods,
             HealthService.ALWAYS_HEALTHY,
             HealthService.ALWAYS_HEALTHY);

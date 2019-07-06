@@ -154,6 +154,7 @@ public class JsonRpcHttpServiceTest {
         folder.newFolder().toPath(),
         config,
         new NoOpMetricsSystem(),
+        Optional.empty(),
         rpcMethods,
         HealthService.ALWAYS_HEALTHY,
         HealthService.ALWAYS_HEALTHY);
@@ -165,6 +166,7 @@ public class JsonRpcHttpServiceTest {
         folder.newFolder().toPath(),
         createJsonRpcConfig(),
         new NoOpMetricsSystem(),
+        Optional.empty(),
         rpcMethods,
         HealthService.ALWAYS_HEALTHY,
         HealthService.ALWAYS_HEALTHY);

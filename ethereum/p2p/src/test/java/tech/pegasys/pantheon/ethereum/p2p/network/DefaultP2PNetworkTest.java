@@ -13,7 +13,9 @@
 package tech.pegasys.pantheon.ethereum.p2p.network;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -40,6 +42,8 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.MockSubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.nat.upnp.UpnpNatManager;
+import tech.pegasys.pantheon.nat.upnp.UpnpNatManager.Protocol;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +67,7 @@ public final class DefaultP2PNetworkTest {
   final MaintainedPeers maintainedPeers = new MaintainedPeers();
   @Mock PeerDiscoveryAgent discoveryAgent;
   @Mock RlpxAgent rlpxAgent;
+  @Mock UpnpNatManager natManager;
 
   private final ArgumentCaptor<PeerBondedObserver> discoverySubscriberCaptor =
       ArgumentCaptor.forClass(PeerBondedObserver.class);
@@ -200,6 +205,25 @@ public final class DefaultP2PNetworkTest {
     network.start();
 
     assertThat(network.getLocalEnode()).isPresent();
+  }
+
+  @Test
+  public void start_withNatManager() {
+    final String externalIp = "127.0.0.3";
+    config.getRlpx().setBindPort(30303);
+    config.getDiscovery().setBindPort(30301);
+
+    when(natManager.queryExternalIPAddress())
+        .thenReturn(CompletableFuture.completedFuture(externalIp));
+    final P2PNetwork network = builder().natManager(natManager).build();
+
+    network.start();
+    verify(natManager)
+        .requestPortForward(eq(config.getRlpx().getBindPort()), eq(Protocol.TCP), any());
+    verify(natManager)
+        .requestPortForward(eq(config.getDiscovery().getBindPort()), eq(Protocol.UDP), any());
+
+    assertThat(network.getLocalEnode().get().getIpAsString()).isEqualTo(externalIp);
   }
 
   @Test

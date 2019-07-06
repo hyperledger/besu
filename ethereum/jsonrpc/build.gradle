@@ -36,6 +36,7 @@ dependencies {
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:permissioning')
   implementation project(':metrics:core')
+  implementation project(':nat')
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'

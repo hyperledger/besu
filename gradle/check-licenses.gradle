@@ -112,6 +112,7 @@ downloadLicenses {
           license('Mozilla Public License 2.0', 'http://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt')
       ],
       (cddl): [
+              'CDDL 1.0',
               'CDDL',
               'Common Development and Distribution License 1.0',
               'CDDL + GPLv2 with classpath exception',

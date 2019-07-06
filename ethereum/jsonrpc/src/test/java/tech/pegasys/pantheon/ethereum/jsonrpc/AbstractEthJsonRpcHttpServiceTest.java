@@ -209,6 +209,7 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
             folder.newFolder().toPath(),
             config,
             new NoOpMetricsSystem(),
+            Optional.empty(),
             methods,
             HealthService.ALWAYS_HEALTHY,
             HealthService.ALWAYS_HEALTHY);
