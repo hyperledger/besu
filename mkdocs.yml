@@ -20,7 +20,7 @@ copyright: Pantheon and its documentation are licensed under Apache 2.0 license 
 #extra project info and template customisation
 extra:
   versions:
-    pantheon_stable: &pantheon_stable_version 1.1.1
+    pantheon_stable: &pantheon_stable_version 1.1.4
     quickstart: *pantheon_stable_version
   latest_version_warning:
     url_contains: /latest/
