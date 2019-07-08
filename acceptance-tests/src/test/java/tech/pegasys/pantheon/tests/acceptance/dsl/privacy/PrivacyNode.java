@@ -18,6 +18,7 @@ import static tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils.waitFor;
 import tech.pegasys.orion.testutil.OrionTestHarness;
 import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.SendRequest;
+import tech.pegasys.pantheon.enclave.types.SendRequestLegacy;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
@@ -100,7 +101,7 @@ public class PrivacyNode extends PantheonNode {
                 Arrays.stream(otherNodes).map(node -> node.orion.nodeUrl()).toArray())));
     Enclave orionEnclave = new Enclave(orion.clientUrl());
     SendRequest sendRequest1 =
-        new SendRequest(
+        new SendRequestLegacy(
             "SGVsbG8sIFdvcmxkIQ==",
             orion.getPublicKeys().get(0),
             Arrays.stream(otherNodes)

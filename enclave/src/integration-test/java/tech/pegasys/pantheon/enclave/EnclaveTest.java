@@ -25,6 +25,8 @@ import tech.pegasys.pantheon.enclave.types.PrivacyGroup;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
 import tech.pegasys.pantheon.enclave.types.SendRequest;
+import tech.pegasys.pantheon.enclave.types.SendRequestLegacy;
+import tech.pegasys.pantheon.enclave.types.SendRequestPantheon;
 import tech.pegasys.pantheon.enclave.types.SendResponse;
 
 import java.io.IOException;
@@ -73,7 +75,28 @@ public class EnclaveTest {
     List<String> publicKeys = testHarness.getPublicKeys();
 
     SendRequest sc =
-        new SendRequest(PAYLOAD, publicKeys.get(0), Lists.newArrayList(publicKeys.get(0)));
+        new SendRequestLegacy(PAYLOAD, publicKeys.get(0), Lists.newArrayList(publicKeys.get(0)));
+    SendResponse sr = enclave.send(sc);
+
+    ReceiveRequest rc = new ReceiveRequest(sr.getKey(), publicKeys.get(0));
+    ReceiveResponse rr = enclave.receive(rc);
+
+    assertEquals(PAYLOAD, new String(rr.getPayload(), UTF_8));
+    assertNotNull(rr.getPrivacyGroupId());
+  }
+
+  @Test
+  public void testSendWithPrivacyGroupAndReceive() throws Exception {
+    List<String> publicKeys = testHarness.getPublicKeys();
+
+    CreatePrivacyGroupRequest privacyGroupRequest =
+        new CreatePrivacyGroupRequest(publicKeys.toArray(new String[0]), publicKeys.get(0), "", "");
+
+    PrivacyGroup privacyGroupResponse = enclave.createPrivacyGroup(privacyGroupRequest);
+
+    SendRequest sc =
+        new SendRequestPantheon(
+            PAYLOAD, publicKeys.get(0), privacyGroupResponse.getPrivacyGroupId());
     SendResponse sr = enclave.send(sc);
 
     ReceiveRequest rc = new ReceiveRequest(sr.getKey(), publicKeys.get(0));

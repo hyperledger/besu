@@ -50,6 +50,14 @@ public class PrivateTransactionTest {
           + "6e766966746a69697a706a52742b4854754642733d8a726573747269637465"
           + "64";
 
+  private static final String VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP =
+      "0xf8b7800182520894095e7baea6a6c7c4c2dfeb977efac326af552d87a0f"
+          + "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+          + "801ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a3"
+          + "6649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53fa"
+          + "a07bd2c804ac4479414f69462f796e70632b4a5861325941474230624369745"
+          + "36c4f4d4e6d2b53686d422f374d364334773d8a72657374726963746564";
+
   private static final String VALID_SIGNED_PRIVATE_TRANSACTION_RLP =
       "0xf901a4808203e8832dc6c08080b8ef60806040523480156100105760008"
           + "0fd5b5060d08061001f6000396000f3fe60806040526004361060485763f"
@@ -103,10 +111,38 @@ public class PrivateTransactionTest {
           BytesValue.fromHexString("0x"),
           Address.wrap(BytesValue.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
           Optional.empty(),
-          BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)),
-          Lists.newArrayList(
-              BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)),
-              BytesValue.wrap("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=".getBytes(UTF_8))),
+          Optional.empty(),
+          Optional.of(
+              BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8))),
+          Optional.of(
+              Lists.newArrayList(
+                  BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)),
+                  BytesValue.wrap("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=".getBytes(UTF_8)))),
+          Restriction.RESTRICTED);
+
+  private static final PrivateTransaction VALID_PRIVATE_TRANSACTION_PRIVACY_GROUP =
+      new PrivateTransaction(
+          0L,
+          Wei.of(1),
+          21000L,
+          Optional.of(
+              Address.wrap(BytesValue.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))),
+          Wei.of(
+              new BigInteger(
+                  "115792089237316195423570985008687907853269984665640564039457584007913129639935")),
+          SECP256K1.Signature.create(
+              new BigInteger(
+                  "32886959230931919120748662916110619501838190146643992583529828535682419954515"),
+              new BigInteger(
+                  "14473701025599600909210599917245952381483216609124029382871721729679842002948"),
+              Byte.valueOf("0")),
+          BytesValue.fromHexString("0x"),
+          Address.wrap(BytesValue.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
+          Optional.empty(),
+          Optional.of(
+              BytesValue.wrap("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w=".getBytes(UTF_8))),
+          Optional.empty(),
+          Optional.empty(),
           Restriction.RESTRICTED);
 
   private static final PrivateTransaction VALID_SIGNED_PRIVATE_TRANSACTION =
@@ -187,6 +223,20 @@ public class PrivateTransactionTest {
   }
 
   @Test
+  public void testWriteTo_privacyGroup() {
+    BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
+    VALID_PRIVATE_TRANSACTION_PRIVACY_GROUP.writeTo(bvrlpo);
+    assertEquals(VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP, bvrlpo.encoded().toString());
+  }
+
+  @Test
+  public void testWriteToWithLargeChainId() {
+    BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
+    VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID.writeTo(bvrlpo);
+    assertEquals(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID_RLP, bvrlpo.encoded().toString());
+  }
+
+  @Test
   public void testSignedWriteTo() {
     BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
     VALID_SIGNED_PRIVATE_TRANSACTION.writeTo(bvrlpo);
@@ -200,6 +250,16 @@ public class PrivateTransactionTest {
             new BytesValueRLPInput(BytesValue.fromHexString(VALID_PRIVATE_TRANSACTION_RLP), false));
 
     assertEquals(VALID_PRIVATE_TRANSACTION, p);
+  }
+
+  @Test
+  public void testReadFrom_privacyGroup() {
+    PrivateTransaction p =
+        PrivateTransaction.readFrom(
+            new BytesValueRLPInput(
+                BytesValue.fromHexString(VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP), false));
+
+    assertEquals(VALID_PRIVATE_TRANSACTION_PRIVACY_GROUP, p);
   }
 
   @Test
@@ -219,13 +279,6 @@ public class PrivateTransactionTest {
   }
 
   @Test
-  public void testWriteToWithLargeChainId() {
-    BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
-    VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID.writeTo(bvrlpo);
-    assertEquals(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID_RLP, bvrlpo.encoded().toString());
-  }
-
-  @Test
   public void testReadFromWithLargeChainId() {
     PrivateTransaction p =
         PrivateTransaction.readFrom(
@@ -234,5 +287,28 @@ public class PrivateTransactionTest {
                 false));
 
     assertEquals(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID, p);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testBuildInvalidPrivateTransactionThrowsException() {
+    PrivateTransaction.builder()
+        .nonce(0)
+        .gasPrice(Wei.of(1000))
+        .gasLimit(3000000)
+        .to(Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57"))
+        .value(Wei.ZERO)
+        .payload(BytesValue.fromHexString("0x"))
+        .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
+        .chainId(BigInteger.valueOf(2018))
+        .privacyGroupId(
+            BytesValue.wrap("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w=".getBytes(UTF_8)))
+        .privateFrom(
+            BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)))
+        .privateFor(
+            Lists.newArrayList(
+                BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)),
+                BytesValue.wrap("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=".getBytes(UTF_8))))
+        .restriction(Restriction.RESTRICTED)
+        .build();
   }
 }
