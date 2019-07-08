@@ -79,8 +79,13 @@ public class TransactionsMessageSenderTest {
     final Set<Transaction> firstBatch = getTransactionsFromMessage(sentMessages.get(0));
     final Set<Transaction> secondBatch = getTransactionsFromMessage(sentMessages.get(1));
 
-    assertThat(firstBatch).hasSize(5219);
-    assertThat(secondBatch).hasSize(781);
+    final int expectedFirstBatchSize = 5219, expectedSecondBatchSize = 781, toleranceDelta = 50;
+    assertThat(firstBatch)
+        .hasSizeBetween(
+            expectedFirstBatchSize - toleranceDelta, expectedFirstBatchSize + toleranceDelta);
+    assertThat(secondBatch)
+        .hasSizeBetween(
+            expectedSecondBatchSize - toleranceDelta, expectedSecondBatchSize + toleranceDelta);
 
     assertThat(Sets.union(firstBatch, secondBatch)).isEqualTo(transactions);
   }
