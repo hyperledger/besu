@@ -17,6 +17,7 @@ import static java.util.stream.Collectors.toSet;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.crypto.SecureRandomProvider;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
@@ -24,6 +25,11 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.math.BigInteger;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.KeyPairGenerator;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.security.spec.ECGenParameterSpec;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -36,15 +42,44 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 public class BlockDataGenerator {
+
+  static {
+    Security.addProvider(new BouncyCastleProvider());
+  }
+
   private final Random random;
+  private final KeyPairGenerator keyPairGenerator;
 
   public BlockDataGenerator(final int seed) {
     this.random = new Random(seed);
+    keyPairGenerator = createKeyPairGenerator(seed);
   }
 
   public BlockDataGenerator() {
     this(1);
+  }
+
+  private KeyPairGenerator createKeyPairGenerator(final long seed) {
+    final KeyPairGenerator keyPairGenerator;
+    try {
+      keyPairGenerator = KeyPairGenerator.getInstance(SECP256K1.ALGORITHM, SECP256K1.PROVIDER);
+    } catch (final Exception e) {
+      throw new RuntimeException(e);
+    }
+    final ECGenParameterSpec ecGenParameterSpec = new ECGenParameterSpec(SECP256K1.CURVE_NAME);
+    try {
+      final SecureRandom secureRandom = SecureRandomProvider.createSecureRandom();
+      secureRandom.setSeed(seed);
+      keyPairGenerator.initialize(ecGenParameterSpec, secureRandom);
+    } catch (final InvalidAlgorithmParameterException e) {
+      throw new RuntimeException(e);
+    }
+    return keyPairGenerator;
   }
 
   /**
@@ -254,7 +289,7 @@ public class BlockDataGenerator {
         .value(Wei.wrap(bytes32()))
         .payload(payload)
         .chainId(BigInteger.ONE)
-        .signAndBuild(SECP256K1.KeyPair.generate());
+        .signAndBuild(generateKeyPair());
   }
 
   public Transaction transaction() {
@@ -266,7 +301,7 @@ public class BlockDataGenerator {
         .value(Wei.wrap(bytes32()))
         .payload(bytes32())
         .chainId(BigInteger.ONE)
-        .signAndBuild(SECP256K1.KeyPair.generate());
+        .signAndBuild(generateKeyPair());
   }
 
   public Set<Transaction> transactions(final int n) {
@@ -276,7 +311,7 @@ public class BlockDataGenerator {
     Wei value = Wei.wrap(bytes32());
     int chainId = 1;
     Bytes32 payload = bytes32();
-    SECP256K1.Signature signature = SECP256K1.sign(payload, SECP256K1.KeyPair.generate());
+    final SECP256K1.Signature signature = SECP256K1.sign(payload, generateKeyPair());
 
     final Set<Transaction> txs =
         IntStream.range(0, n)
@@ -400,6 +435,24 @@ public class BlockDataGenerator {
     random.nextBytes(bytes);
     Arrays.fill(bytes, 0, zerofill, (byte) 0x0);
     return bytes;
+  }
+
+  private SECP256K1.KeyPair generateKeyPair() {
+    final java.security.KeyPair rawKeyPair = keyPairGenerator.generateKeyPair();
+    final BCECPrivateKey privateKey = (BCECPrivateKey) rawKeyPair.getPrivate();
+    final BCECPublicKey publicKey = (BCECPublicKey) rawKeyPair.getPublic();
+
+    final BigInteger privateKeyValue = privateKey.getD();
+
+    // Ethereum does not use encoded public keys like bitcoin - see
+    // https://en.bitcoin.it/wiki/Elliptic_Curve_Digital_Signature_Algorithm for details
+    // Additionally, as the first bit is a constant prefix (0x04) we ignore this value
+    final byte[] publicKeyBytes = publicKey.getQ().getEncoded(false);
+    final BigInteger publicKeyValue =
+        new BigInteger(1, Arrays.copyOfRange(publicKeyBytes, 1, publicKeyBytes.length));
+
+    return new SECP256K1.KeyPair(
+        SECP256K1.PrivateKey.create(privateKeyValue), SECP256K1.PublicKey.create(publicKeyValue));
   }
 
   public static class BlockOptions {
