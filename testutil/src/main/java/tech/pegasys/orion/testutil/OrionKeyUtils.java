@@ -12,6 +12,11 @@
  */
 package tech.pegasys.orion.testutil;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -23,8 +28,24 @@ import net.consensys.cava.bytes.Bytes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class OrionKeyGenerator {
+public class OrionKeyUtils {
   private static final Logger LOG = LogManager.getLogger();
+
+  /**
+   * Utility method to load the enclave public key. Possible input values are the names of the *.pub
+   * files in the resources folder.
+   *
+   * @param keyFileName the name of the file containing the enclave public key
+   * @return the enclave public key stored in that file
+   * @throws IOException throws if key not found
+   */
+  public static String loadKey(final String keyFileName) throws IOException {
+    InputStream is = OrionKeyUtils.class.getResourceAsStream("/" + keyFileName);
+    InputStreamReader streamReader = new InputStreamReader(is, StandardCharsets.UTF_8);
+    try (BufferedReader reader = new BufferedReader(streamReader)) {
+      return reader.readLine();
+    }
+  }
 
   public static KeyPair generateKeys() throws NoSuchAlgorithmException {
     final KeyPair keyPair = KeyPairGenerator.getInstance("Ed25519").generateKeyPair();

@@ -20,6 +20,8 @@ import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
 import tech.pegasys.pantheon.enclave.types.SendRequest;
+import tech.pegasys.pantheon.enclave.types.SendRequestLegacy;
+import tech.pegasys.pantheon.enclave.types.SendRequestPantheon;
 import tech.pegasys.pantheon.enclave.types.SendResponse;
 import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -49,6 +51,7 @@ public class PrivateTransactionHandler {
   private final Address privacyPrecompileAddress;
   private final SECP256K1.KeyPair nodeKeyPair;
   private final Address signerAddress;
+  private final String enclavePublicKey;
   private final PrivateStateStorage privateStateStorage;
   private final WorldStateArchive privateWorldStateArchive;
 
@@ -57,6 +60,7 @@ public class PrivateTransactionHandler {
         new Enclave(privacyParameters.getEnclaveUri()),
         Address.privacyPrecompiled(privacyParameters.getPrivacyAddress()),
         privacyParameters.getSigningKeyPair(),
+        privacyParameters.getEnclavePublicKey(),
         privacyParameters.getPrivateStateStorage(),
         privacyParameters.getPrivateWorldStateArchive());
   }
@@ -65,12 +69,14 @@ public class PrivateTransactionHandler {
       final Enclave enclave,
       final Address privacyPrecompileAddress,
       final SECP256K1.KeyPair nodeKeyPair,
+      final String enclavePublicKey,
       final PrivateStateStorage privateStateStorage,
       final WorldStateArchive privateWorldStateArchive) {
     this.enclave = enclave;
     this.privacyPrecompileAddress = privacyPrecompileAddress;
     this.nodeKeyPair = nodeKeyPair;
     this.signerAddress = Util.publicKeyToAddress(nodeKeyPair.getPublicKey());
+    this.enclavePublicKey = enclavePublicKey;
     this.privateStateStorage = privateStateStorage;
     this.privateWorldStateArchive = privateWorldStateArchive;
   }
@@ -89,9 +95,16 @@ public class PrivateTransactionHandler {
     }
   }
 
-  public String getPrivacyGroup(final String key, final BytesValue from) throws Exception {
-    final ReceiveRequest receiveRequest = new ReceiveRequest(key, BytesValues.asString(from));
-    LOG.debug("Getting privacy group for {}", BytesValues.asString(from));
+  public String getPrivacyGroup(final String key, final PrivateTransaction privateTransaction)
+      throws Exception {
+    if (privateTransaction.getPrivacyGroupId().isPresent()) {
+      return privateTransaction.getPrivacyGroupId().get().toString();
+    }
+    final ReceiveRequest receiveRequest =
+        new ReceiveRequest(key, BytesValues.asString(privateTransaction.getPrivateFrom().get()));
+    LOG.debug(
+        "Getting privacy group for {}",
+        BytesValues.asString(privateTransaction.getPrivateFrom().get()));
     final ReceiveResponse receiveResponse;
     try {
       receiveResponse = enclave.receive(receiveRequest);
@@ -144,23 +157,30 @@ public class PrivateTransactionHandler {
   }
 
   private SendRequest createSendRequest(final PrivateTransaction privateTransaction) {
-    final List<String> privateFor =
-        privateTransaction.getPrivateFor().stream()
-            .map(BytesValues::asString)
-            .collect(Collectors.toList());
-
-    // FIXME: Orion should concatenate to and from - not it pantheon
-    if (privateFor.isEmpty()) {
-      privateFor.add(BytesValues.asString(privateTransaction.getPrivateFrom()));
-    }
-
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
 
-    return new SendRequest(
-        Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()),
-        BytesValues.asString(privateTransaction.getPrivateFrom()),
-        privateFor);
+    if (privateTransaction.getPrivacyGroupId().isPresent()) {
+      return new SendRequestPantheon(
+          Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()),
+          enclavePublicKey,
+          BytesValues.asString(privateTransaction.getPrivacyGroupId().get()));
+    } else {
+      final List<String> privateFor =
+          privateTransaction.getPrivateFor().get().stream()
+              .map(BytesValues::asString)
+              .collect(Collectors.toList());
+
+      // FIXME: orion should accept empty privateFor
+      if (privateFor.isEmpty()) {
+        privateFor.add(BytesValues.asString(privateTransaction.getPrivateFrom().get()));
+      }
+
+      return new SendRequestLegacy(
+          Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()),
+          BytesValues.asString(privateTransaction.getPrivateFrom().get()),
+          privateFor);
+    }
   }
 
   public long getSenderNonce(final Address sender, final String privacyGroupId) {

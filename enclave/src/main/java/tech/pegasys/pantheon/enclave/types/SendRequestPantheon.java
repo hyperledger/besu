@@ -12,22 +12,23 @@
  */
 package tech.pegasys.pantheon.enclave.types;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-public abstract class SendRequest {
-  private byte[] payload;
-  private String from;
+@JsonPropertyOrder({"payload", "from", "privacyGroupId"})
+public class SendRequestPantheon extends SendRequest {
+  private String privacyGroupId;
 
-  public SendRequest(final String payload, final String from) {
-    this.payload = payload.getBytes(UTF_8);
-    this.from = from;
+  public SendRequestPantheon(
+      @JsonProperty(value = "payload") final String payload,
+      @JsonProperty(value = "from") final String from,
+      @JsonProperty(value = "to") final String privacyGroupId) {
+    super(payload, from);
+
+    this.privacyGroupId = privacyGroupId;
   }
 
-  public byte[] getPayload() {
-    return payload;
-  }
-
-  public String getFrom() {
-    return from;
+  public String getPrivacyGroupId() {
+    return privacyGroupId;
   }
 }

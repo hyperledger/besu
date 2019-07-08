@@ -66,9 +66,11 @@ public class PrivateTransaction {
 
   private final Optional<BigInteger> chainId;
 
-  private final BytesValue privateFrom;
+  private final Optional<BytesValue> privacyGroupId;
 
-  private final List<BytesValue> privateFor;
+  private final Optional<BytesValue> privateFrom;
+
+  private final Optional<List<BytesValue>> privateFor;
 
   private final Restriction restriction;
 
@@ -115,19 +117,32 @@ public class PrivateTransaction {
     final BigInteger r = BytesValues.asUnsignedBigInteger(input.readUInt256Scalar().getBytes());
     final BigInteger s = BytesValues.asUnsignedBigInteger(input.readUInt256Scalar().getBytes());
     final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
-    final BytesValue privateFrom = input.readBytesValue();
-    final List<BytesValue> privateFor = input.readList(RLPInput::readBytesValue);
+    final BytesValue tempValue = input.readBytesValue();
+    Optional<List<BytesValue>> privateFor = Optional.empty();
+    if (input.nextIsList()) {
+      privateFor = Optional.of(input.readList(RLPInput::readBytesValue));
+    }
+
     final Restriction restriction = convertToEnum(input.readBytesValue());
 
     input.leaveList();
 
     chainId.ifPresent(builder::chainId);
-    return builder
-        .signature(signature)
-        .privateFrom(privateFrom)
-        .privateFor(privateFor)
-        .restriction(restriction)
-        .build();
+
+    if (privateFor.isPresent()) {
+      return builder
+          .signature(signature)
+          .privateFrom(tempValue)
+          .privateFor(privateFor.get())
+          .restriction(restriction)
+          .build();
+    } else {
+      return builder
+          .signature(signature)
+          .privacyGroupId(tempValue)
+          .restriction(restriction)
+          .build();
+    }
   }
 
   private static Restriction convertToEnum(final BytesValue readBytesValue) {
@@ -155,6 +170,7 @@ public class PrivateTransaction {
    *     otherwise it should contain an address.
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
    *     it will default to any chain.
+   * @param privacyGroupId The privacy group id of this private transaction
    * @param privateFrom The public key of the sender of this private transaction
    * @param privateFor An array of the public keys of the intended recipients of this private
    *     transaction
@@ -170,8 +186,9 @@ public class PrivateTransaction {
       final BytesValue payload,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final BytesValue privateFrom,
-      final List<BytesValue> privateFor,
+      final Optional<BytesValue> privacyGroupId,
+      final Optional<BytesValue> privateFrom,
+      final Optional<List<BytesValue>> privateFor,
       final Restriction restriction) {
     this.nonce = nonce;
     this.gasPrice = gasPrice;
@@ -182,6 +199,7 @@ public class PrivateTransaction {
     this.payload = payload;
     this.sender = sender;
     this.chainId = chainId;
+    this.privacyGroupId = privacyGroupId;
     this.privateFrom = privateFrom;
     this.privateFor = privateFor;
     this.restriction = restriction;
@@ -266,11 +284,20 @@ public class PrivateTransaction {
   }
 
   /**
+   * Returns the enclave privacy group id.
+   *
+   * @return the enclave privacy group id.
+   */
+  public Optional<BytesValue> getPrivacyGroupId() {
+    return privacyGroupId;
+  }
+
+  /**
    * Returns the enclave public key of the sender.
    *
    * @return the enclave public key of the sender.
    */
-  public BytesValue getPrivateFrom() {
+  public Optional<BytesValue> getPrivateFrom() {
     return privateFrom;
   }
 
@@ -279,7 +306,7 @@ public class PrivateTransaction {
    *
    * @return the enclave public keys of the receivers
    */
-  public List<BytesValue> getPrivateFor() {
+  public Optional<List<BytesValue>> getPrivateFor() {
     return privateFor;
   }
 
@@ -321,6 +348,7 @@ public class PrivateTransaction {
               value,
               payload,
               chainId,
+              privacyGroupId,
               privateFrom,
               privateFor,
               restriction.getBytes());
@@ -343,8 +371,10 @@ public class PrivateTransaction {
     out.writeUInt256Scalar(getValue());
     out.writeBytesValue(getPayload());
     writeSignature(out);
-    out.writeBytesValue(getPrivateFrom());
-    out.writeList(getPrivateFor(), (bv, rlpO) -> rlpO.writeBytesValue(bv));
+    getPrivacyGroupId().ifPresent(out::writeBytesValue);
+    getPrivateFrom().ifPresent(out::writeBytesValue);
+    getPrivateFor()
+        .ifPresent(privateFor -> out.writeList(privateFor, (bv, rlpO) -> rlpO.writeBytesValue(bv)));
     out.writeBytesValue(getRestriction().getBytes());
 
     out.endList();
@@ -427,8 +457,9 @@ public class PrivateTransaction {
       final Wei value,
       final BytesValue payload,
       final Optional<BigInteger> chainId,
-      final BytesValue privateFrom,
-      final List<BytesValue> privateFor,
+      final Optional<BytesValue> privacyGroupId,
+      final Optional<BytesValue> privateFrom,
+      final Optional<List<BytesValue>> privateFor,
       final BytesValue restriction) {
     return keccak256(
         RLP.encode(
@@ -445,8 +476,9 @@ public class PrivateTransaction {
                 out.writeUInt256Scalar(UInt256.ZERO);
                 out.writeUInt256Scalar(UInt256.ZERO);
               }
-              out.writeBytesValue(privateFrom);
-              out.writeList(privateFor, (bv, rlpO) -> rlpO.writeBytesValue(bv));
+              privacyGroupId.ifPresent(out::writeBytesValue);
+              privateFrom.ifPresent(out::writeBytesValue);
+              privateFor.ifPresent(pF -> out.writeList(pF, (bv, rlpO) -> rlpO.writeBytesValue(bv)));
               out.writeBytesValue(restriction);
               out.endList();
             }));
@@ -499,8 +531,14 @@ public class PrivateTransaction {
     sb.append("sig=").append(getSignature()).append(", ");
     if (chainId.isPresent()) sb.append("chainId=").append(getChainId().get()).append(", ");
     sb.append("payload=").append(getPayload());
-    sb.append("privateFrom=").append(getPrivateFrom());
-    sb.append("privateFor=").append(Arrays.toString(getPrivateFor().toArray()));
+    if (getPrivacyGroupId().isPresent())
+      sb.append("privacyGroupId=").append(getPrivacyGroupId().get()).append(", ");
+    if (getPrivateFrom().isPresent())
+      sb.append("privateFrom=").append(getPrivateFrom().get()).append(", ");
+    if (getPrivateFor().isPresent())
+      sb.append("privateFor=")
+          .append(Arrays.toString(getPrivateFor().get().toArray()))
+          .append(", ");
     sb.append("restriction=").append(getRestriction());
     return sb.append("}").toString();
   }
@@ -532,9 +570,11 @@ public class PrivateTransaction {
 
     protected Optional<BigInteger> chainId = Optional.empty();
 
-    protected BytesValue privateFrom;
+    protected Optional<BytesValue> privacyGroupId = Optional.empty();
 
-    protected List<BytesValue> privateFor;
+    protected Optional<BytesValue> privateFrom = Optional.empty();
+
+    protected Optional<List<BytesValue>> privateFor = Optional.empty();
 
     protected Restriction restriction;
 
@@ -583,13 +623,18 @@ public class PrivateTransaction {
       return this;
     }
 
+    public Builder privacyGroupId(final BytesValue privacyGroupId) {
+      this.privacyGroupId = Optional.of(privacyGroupId);
+      return this;
+    }
+
     public Builder privateFrom(final BytesValue privateFrom) {
-      this.privateFrom = privateFrom;
+      this.privateFrom = Optional.of(privateFrom);
       return this;
     }
 
     public Builder privateFor(final List<BytesValue> privateFor) {
-      this.privateFor = privateFor;
+      this.privateFor = Optional.of(privateFor);
       return this;
     }
 
@@ -599,6 +644,10 @@ public class PrivateTransaction {
     }
 
     public PrivateTransaction build() {
+      if (privacyGroupId.isPresent() && (privateFrom.isPresent() || privateFor.isPresent())) {
+        throw new IllegalArgumentException(
+            "Private transaction should contain either privacyGroup by itself or privateFrom and privateFor together, but not both");
+      }
       return new PrivateTransaction(
           nonce,
           gasPrice,
@@ -609,6 +658,7 @@ public class PrivateTransaction {
           payload,
           sender,
           chainId,
+          privacyGroupId,
           privateFrom,
           privateFor,
           restriction);
@@ -632,6 +682,7 @@ public class PrivateTransaction {
               value,
               payload,
               chainId,
+              privacyGroupId,
               privateFrom,
               privateFor,
               restriction.getBytes());

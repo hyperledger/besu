@@ -69,6 +69,14 @@ public class EeaSendRawTransactionTest {
           + "49644f6e766966746a69697a706a52742b4854754642733d8a72"
           + "657374726963746564";
 
+  private static final String VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP =
+      "0xf897800182520894095e7baea6a6c7c4c2dfeb977efac326af552d878"
+          + "0801ba048b55bfa915ac795c431978d8a6a992b628d557da5ff75"
+          + "9b307d495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b"
+          + "28ad43601b4ab949f53faa07bd2c804ac4479414f69462f796e70"
+          + "632b4a586132594147423062436974536c4f4d4e6d2b53686d422"
+          + "f374d364334773d8a72657374726963746564";
+
   private static final Transaction PUBLIC_TRANSACTION =
       new Transaction(
           0L,
@@ -182,7 +190,7 @@ public class EeaSendRawTransactionTest {
     when(parameter.required(any(Object[].class), anyInt(), any()))
         .thenReturn(VALID_PRIVATE_TRANSACTION_RLP);
     when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);
-    when(privateTxHandler.getPrivacyGroup(any(String.class), any(BytesValue.class)))
+    when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
         .thenReturn(MOCK_PRIVACY_GROUP);
     when(privateTxHandler.validatePrivateTransaction(
             any(PrivateTransaction.class), any(String.class)))
@@ -205,7 +213,46 @@ public class EeaSendRawTransactionTest {
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(privateTxHandler).sendToOrion(any(PrivateTransaction.class));
-    verify(privateTxHandler).getPrivacyGroup(any(String.class), any(BytesValue.class));
+    verify(privateTxHandler).getPrivacyGroup(any(String.class), any(PrivateTransaction.class));
+    verify(privateTxHandler)
+        .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
+    verify(privateTxHandler)
+        .createPrivacyMarkerTransaction(
+            any(String.class), any(PrivateTransaction.class), any(Long.class));
+    verify(transactionPool).addLocalTransaction(any(Transaction.class));
+  }
+
+  @Test
+  public void validTransactionPrivayGroupIsSentToTransactionPool() throws Exception {
+    when(parameter.required(any(Object[].class), anyInt(), any()))
+        .thenReturn(VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP);
+    when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);
+    when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
+        .thenReturn(MOCK_PRIVACY_GROUP);
+    when(privateTxHandler.validatePrivateTransaction(
+            any(PrivateTransaction.class), any(String.class)))
+        .thenReturn(ValidationResult.valid());
+    when(privateTxHandler.createPrivacyMarkerTransaction(
+            any(String.class), any(PrivateTransaction.class), any(Long.class)))
+        .thenReturn(PUBLIC_TRANSACTION);
+    when(transactionPool.addLocalTransaction(any(Transaction.class)))
+        .thenReturn(ValidationResult.valid());
+
+    final JsonRpcRequest request =
+        new JsonRpcRequest(
+            "2.0",
+            "eea_sendRawTransaction",
+            new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP});
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(
+            request.getId(), "0x221e930a2c18d91fca4d509eaa3512f3e01fef266f660e32473de67474b36c15");
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    verify(privateTxHandler).sendToOrion(any(PrivateTransaction.class));
+    verify(privateTxHandler).getPrivacyGroup(any(String.class), any(PrivateTransaction.class));
     verify(privateTxHandler)
         .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
     verify(privateTxHandler)
@@ -283,7 +330,7 @@ public class EeaSendRawTransactionTest {
     when(parameter.required(any(Object[].class), anyInt(), any()))
         .thenReturn(VALID_PRIVATE_TRANSACTION_RLP);
     when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);
-    when(privateTxHandler.getPrivacyGroup(any(String.class), any(BytesValue.class)))
+    when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
         .thenReturn(MOCK_PRIVACY_GROUP);
     when(privateTxHandler.validatePrivateTransaction(
             any(PrivateTransaction.class), any(String.class)))
@@ -305,7 +352,7 @@ public class EeaSendRawTransactionTest {
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(privateTxHandler).sendToOrion(any(PrivateTransaction.class));
-    verify(privateTxHandler).getPrivacyGroup(any(String.class), any(BytesValue.class));
+    verify(privateTxHandler).getPrivacyGroup(any(String.class), any(PrivateTransaction.class));
     verify(privateTxHandler)
         .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
     verify(privateTxHandler)

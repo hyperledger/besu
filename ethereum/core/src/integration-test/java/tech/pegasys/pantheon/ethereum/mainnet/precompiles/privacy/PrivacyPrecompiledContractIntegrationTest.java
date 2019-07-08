@@ -25,6 +25,7 @@ import tech.pegasys.orion.testutil.OrionTestHarness;
 import tech.pegasys.orion.testutil.OrionTestHarnessFactory;
 import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.SendRequest;
+import tech.pegasys.pantheon.enclave.types.SendRequestLegacy;
 import tech.pegasys.pantheon.enclave.types.SendResponse;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -151,7 +152,8 @@ public class PrivacyPrecompiledContractIntegrationTest {
     List<String> publicKeys = testHarness.getPublicKeys();
 
     String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
-    SendRequest sc = new SendRequest(s, publicKeys.get(0), Lists.newArrayList(publicKeys.get(0)));
+    SendRequest sc =
+        new SendRequestLegacy(s, publicKeys.get(0), Lists.newArrayList(publicKeys.get(0)));
     SendResponse sr = enclave.send(sc);
 
     PrivacyPrecompiledContract privacyPrecompiledContract =
@@ -178,7 +180,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
     publicKeys.add("noPrivateKey");
 
     String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
-    SendRequest sc = new SendRequest(s, publicKeys.get(0), publicKeys);
+    SendRequest sc = new SendRequestLegacy(s, publicKeys.get(0), publicKeys);
 
     final Throwable thrown = catchThrowable(() -> enclave.send(sc));
 
@@ -191,7 +193,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
     publicKeys.add("noPrivateKenoPrivateKenoPrivateKenoPrivateK");
 
     String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
-    SendRequest sc = new SendRequest(s, publicKeys.get(0), publicKeys);
+    SendRequest sc = new SendRequestLegacy(s, publicKeys.get(0), publicKeys);
 
     final Throwable thrown = catchThrowable(() -> enclave.send(sc));
 
