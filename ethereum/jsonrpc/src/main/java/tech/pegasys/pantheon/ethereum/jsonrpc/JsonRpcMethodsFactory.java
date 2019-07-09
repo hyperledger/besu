@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminAddPeer;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminChangeLogLevel;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminNodeInfo;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminPeers;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminRemovePeer;
@@ -314,7 +315,8 @@ public class JsonRpcMethodsFactory {
           new AdminRemovePeer(p2pNetwork, parameter),
           new AdminNodeInfo(
               clientVersion, networkId, genesisConfigOptions, p2pNetwork, blockchainQueries),
-          new AdminPeers(p2pNetwork));
+          new AdminPeers(p2pNetwork),
+          new AdminChangeLogLevel(parameter));
     }
     if (rpcApis.contains(RpcApis.EEA)) {
       final PrivateTransactionHandler privateTransactionHandler =
