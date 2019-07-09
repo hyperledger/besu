@@ -127,6 +127,19 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
             }
           });
 
+      metricsSystem.createLongGauge(
+          PantheonMetricCategory.KVSTORE_ROCKSDB,
+          "rocks_db_files_size_bytes",
+          "Estimated database size in bytes",
+          () -> {
+            try {
+              return db.getLongProperty("rocksdb.live-sst-files-size");
+            } catch (final RocksDBException e) {
+              LOG.debug("Failed to get RocksDB metric", e);
+              return 0L;
+            }
+          });
+
       rollbackCount =
           metricsSystem
               .createLabelledCounter(
