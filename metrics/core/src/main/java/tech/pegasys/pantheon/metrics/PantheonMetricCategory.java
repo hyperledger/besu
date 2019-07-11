@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableSet;
 
 public enum PantheonMetricCategory implements MetricCategory {
   BLOCKCHAIN("blockchain"),
+  ETHEREUM("ethereum", false),
   EXECUTORS("executors"),
   NETWORK("network"),
   PEERS("peers"),
