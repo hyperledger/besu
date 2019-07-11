@@ -44,7 +44,7 @@ public class AdminChangeLogLevel implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequest request) {
     try {
       final Level logLevel = parameters.required(request.getParams(), 0, Level.class);
-      LOG.log(Level.OFF, String.format("Setting logging level to %s", logLevel.name()));
+      LOG.log(Level.OFF, "Setting logging level to {}", logLevel.name());
       Configurator.setAllLevels("", logLevel);
       return new JsonRpcSuccessResponse(request.getId());
     } catch (InvalidJsonRpcParameters invalidJsonRpcParameters) {
