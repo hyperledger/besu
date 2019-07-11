@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.TransactionSmartContractPerm
 
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -76,5 +77,11 @@ public class AccountPermissioningController {
   public Optional<AccountLocalConfigPermissioningController>
       getAccountLocalConfigPermissioningController() {
     return accountLocalConfigPermissioningController;
+  }
+
+  @VisibleForTesting
+  Optional<TransactionSmartContractPermissioningController>
+      getTransactionSmartContractPermissioningController() {
+    return transactionSmartContractPermissioningController;
   }
 }
