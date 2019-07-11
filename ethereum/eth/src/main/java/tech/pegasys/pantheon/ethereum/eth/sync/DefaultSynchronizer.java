@@ -98,9 +98,9 @@ public class DefaultSynchronizer<C> implements Synchronizer {
             clock);
 
     metricsSystem.createLongGauge(
-        PantheonMetricCategory.SYNCHRONIZER,
-        "best_known_block",
-        "Height of best known block from any connected peer",
+        PantheonMetricCategory.ETHEREUM,
+        "best_known_block_number",
+        "The estimated highest block available",
         () -> syncState.syncStatus().getHighestBlock());
     metricsSystem.createIntegerGauge(
         PantheonMetricCategory.SYNCHRONIZER,

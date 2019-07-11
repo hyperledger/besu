@@ -96,15 +96,15 @@ public class RlpxAgent {
         metricsSystem.createCounter(
             PantheonMetricCategory.PEERS, "connected_total", "Total number of peers connected");
 
-    metricsSystem.createGauge(
-        PantheonMetricCategory.PEERS,
-        "peer_count_current",
-        "Number of peers currently connected",
-        () -> (double) getConnectionCount());
     metricsSystem.createIntegerGauge(
-        PantheonMetricCategory.NETWORK,
-        "peers_limit",
-        "Maximum P2P peer connections that can be established",
+        PantheonMetricCategory.ETHEREUM,
+        "peer_count",
+        "The current number of peers connected",
+        this::getConnectionCount);
+    metricsSystem.createIntegerGauge(
+        PantheonMetricCategory.ETHEREUM,
+        "peer_limit",
+        "The maximum number of peers this node allows to connect",
         () -> maxPeers);
   }
 

@@ -69,9 +69,9 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
     chainHeadOmmerCount = chainHeadBody.getOmmers().size();
 
     metricsSystem.createLongGauge(
-        PantheonMetricCategory.BLOCKCHAIN,
-        "height",
-        "Height of the chainhead",
+        PantheonMetricCategory.ETHEREUM,
+        "blockchain_height",
+        "The current height of the canonical chain",
         this::getChainHeadBlockNumber);
     metricsSystem.createLongGauge(
         PantheonMetricCategory.BLOCKCHAIN,
