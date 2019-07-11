@@ -497,20 +497,21 @@ tasks.register("dockerDistUntar") {
 
 task distDocker(type: Exec) {
   dependsOn dockerDistUntar
-  def image_tag = "develop"
-  def image="pegasyseng/pantheon-kubernetes:${image_tag}"
+  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+  def image="pegasyseng/pantheon:develop"
   def dockerBuildDir = "build/docker-pantheon/"
   workingDir "${dockerBuildDir}"
 
+
   doFirst {
     copy {
-      from file("${projectDir}/kubernetes/Dockerfile")
+      from file("${projectDir}/docker/Dockerfile")
       into(workingDir)
     }
   }
 
   executable "sh"
-  args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${rootProject.version} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+  args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
 }
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
