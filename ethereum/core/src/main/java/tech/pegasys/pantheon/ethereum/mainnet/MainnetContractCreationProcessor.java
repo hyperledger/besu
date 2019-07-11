@@ -40,6 +40,24 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
 
   private final int codeSizeLimit;
 
+  private final int accountVersion;
+
+  public MainnetContractCreationProcessor(
+      final GasCalculator gasCalculator,
+      final EVM evm,
+      final boolean requireCodeDepositToSucceed,
+      final int codeSizeLimit,
+      final long initialContractNonce,
+      final Collection<Address> forceCommitAddresses,
+      final int accountVersion) {
+    super(evm, forceCommitAddresses);
+    this.gasCalculator = gasCalculator;
+    this.requireCodeDepositToSucceed = requireCodeDepositToSucceed;
+    this.codeSizeLimit = codeSizeLimit;
+    this.initialContractNonce = initialContractNonce;
+    this.accountVersion = accountVersion;
+  }
+
   public MainnetContractCreationProcessor(
       final GasCalculator gasCalculator,
       final EVM evm,
@@ -47,11 +65,14 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
       final int codeSizeLimit,
       final long initialContractNonce,
       final Collection<Address> forceCommitAddresses) {
-    super(evm, forceCommitAddresses);
-    this.gasCalculator = gasCalculator;
-    this.requireCodeDepositToSucceed = requireCodeDepositToSucceed;
-    this.codeSizeLimit = codeSizeLimit;
-    this.initialContractNonce = initialContractNonce;
+    this(
+        gasCalculator,
+        evm,
+        requireCodeDepositToSucceed,
+        codeSizeLimit,
+        initialContractNonce,
+        forceCommitAddresses,
+        Account.DEFAULT_VERSION);
   }
 
   public MainnetContractCreationProcessor(
@@ -66,7 +87,8 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
         requireCodeDepositToSucceed,
         codeSizeLimit,
         initialContractNonce,
-        ImmutableSet.of());
+        ImmutableSet.of(),
+        Account.DEFAULT_VERSION);
   }
 
   private static boolean accountExists(final Account account) {
@@ -131,6 +153,7 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
         final MutableAccount contract =
             frame.getWorldState().getOrCreate(frame.getContractAddress());
         contract.setCode(contractCode);
+        contract.setVersion(accountVersion);
         LOG.trace(
             "Successful creation of contract {} with code of size {} (Gas remaining: {})",
             frame.getContractAddress(),

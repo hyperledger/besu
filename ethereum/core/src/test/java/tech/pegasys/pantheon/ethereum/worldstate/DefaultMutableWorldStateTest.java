@@ -18,6 +18,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.MutableAccount;
@@ -482,9 +483,11 @@ public class DefaultMutableWorldStateTest {
     final MutableAccount account = updater.createAccount(ADDRESS);
     account.setBalance(Wei.of(100000));
     account.setCode(BytesValue.of(1, 2, 3));
+    account.setVersion(Account.DEFAULT_VERSION);
     account.setCode(BytesValue.of(3, 2, 1));
     updater.commit();
     assertEquals(BytesValue.of(3, 2, 1), worldState.get(ADDRESS).getCode());
+    assertEquals(Account.DEFAULT_VERSION, worldState.get(ADDRESS).getVersion());
     assertEquals(
         Hash.fromHexString("0xc14f5e30581de9155ea092affa665fad83bcd9f98e45c4a42885b9b36d939702"),
         worldState.rootHash());
