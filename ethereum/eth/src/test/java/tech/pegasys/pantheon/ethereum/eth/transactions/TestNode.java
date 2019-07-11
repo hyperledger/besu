@@ -90,7 +90,8 @@ public class TestNode implements Closeable {
             .setRlpx(
                 RlpxConfiguration.create()
                     .setBindPort(listenPort)
-                    .setSupportedProtocols(EthProtocol.get()));
+                    .setSupportedProtocols(EthProtocol.get())
+                    .setFractionRemoteWireConnectionsAllowed(1.0));
 
     final GenesisConfigFile genesisConfigFile = GenesisConfigFile.development();
     final ProtocolSchedule<Void> protocolSchedule =

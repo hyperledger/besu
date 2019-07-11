@@ -146,6 +146,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
     this.devMode = devMode;
     this.p2pEnabled = p2pEnabled;
     this.networkingConfiguration = networkingConfiguration;
+    this.getNetworkingConfiguration().getRlpx().setFractionRemoteWireConnectionsAllowed(1.0);
     this.discoveryEnabled = discoveryEnabled;
     plugins.forEach(
         pluginName -> {

@@ -194,6 +194,7 @@ public class PantheonFactoryConfigurationBuilder {
   }
 
   public PantheonFactoryConfiguration build() {
+    networkingConfiguration.getRlpx().setFractionRemoteWireConnectionsAllowed(1.0);
     return new PantheonFactoryConfiguration(
         name,
         miningParameters,

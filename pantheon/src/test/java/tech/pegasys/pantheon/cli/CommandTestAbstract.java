@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.cli;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -108,6 +109,7 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<File> fileArgumentCaptor;
   @Captor protected ArgumentCaptor<String> stringArgumentCaptor;
   @Captor protected ArgumentCaptor<Integer> intArgumentCaptor;
+  @Captor protected ArgumentCaptor<Double> doubleArgumentCaptor;
   @Captor protected ArgumentCaptor<EthNetworkConfig> ethNetworkConfigArgumentCaptor;
   @Captor protected ArgumentCaptor<SynchronizerConfiguration> syncConfigurationCaptor;
   @Captor protected ArgumentCaptor<JsonRpcConfiguration> jsonRpcConfigArgumentCaptor;
@@ -162,6 +164,10 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.p2pAdvertisedHost(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pListenPort(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.maxPeers(anyInt())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.limitRemoteWireConnectionsEnabled(anyBoolean()))
+        .thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.fractionRemoteConnectionsAllowed(anyDouble()))
+        .thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.natMethod(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.jsonRpcConfiguration(any())).thenReturn(mockRunnerBuilder);

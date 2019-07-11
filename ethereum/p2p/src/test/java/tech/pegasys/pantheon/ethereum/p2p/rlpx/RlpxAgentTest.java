@@ -320,6 +320,22 @@ public class RlpxAgentTest {
   }
 
   @Test
+  public void connect_failsWhenFractionOfRemoteConnectionsTooHigh() {
+    startAgentWithMaxPeersAndEnableLimitRemoteConnections(3);
+    // Connect 1 peer (locally initiated)
+    agent.connect(createPeer());
+    // Connect 1 peer (remotely initiated)
+    connectionInitializer.simulateIncomingConnection(connection(createPeer()));
+    // Add remotely initiated connection, this one must be rejected because the fraction of remote
+    // connections is 0.5
+    final Peer remotelyInitiatedPeer = createPeer();
+    final MockPeerConnection incomingConnection = connection(remotelyInitiatedPeer);
+    connectionInitializer.simulateIncomingConnection(incomingConnection);
+    assertThat(incomingConnection.getDisconnectReason())
+        .contains(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+  }
+
+  @Test
   public void connect_succeedsForExemptPeerWhenMaxPeersConnected()
       throws ExecutionException, InterruptedException {
     // Turn off autocomplete so that each connection is established (completed) after it has been
@@ -802,12 +818,18 @@ public class RlpxAgentTest {
     startAgent();
   }
 
+  private void startAgentWithMaxPeersAndEnableLimitRemoteConnections(final int maxPeers) {
+    config.setLimitRemoteWireConnectionsEnabled(true);
+    startAgentWithMaxPeers(maxPeers);
+  }
+
   private void startAgent(final BytesValue nodeId) {
     agent.start();
     localNode.setEnode(enodeBuilder().nodeId(nodeId).build());
   }
 
   private RlpxAgent agent() {
+    config.setLimitRemoteWireConnectionsEnabled(true);
     return RlpxAgent.builder()
         .keyPair(KEY_PAIR)
         .config(config)
