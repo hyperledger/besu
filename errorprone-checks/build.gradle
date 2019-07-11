@@ -42,6 +42,4 @@ dependencies {
   epJavac 'com.google.errorprone:error_prone_check_api'
 }
 
-test {
-  testLogging { showStandardStreams = true }
-}
+test { testLogging { showStandardStreams = true } }

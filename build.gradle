@@ -28,7 +28,7 @@ plugins {
 
 if (!JavaVersion.current().java11Compatible) {
   throw new GradleException("Java 11 or later is required to build Pantheon.\n" +
-      "  Detected version ${JavaVersion.current()}")
+  "  Detected version ${JavaVersion.current()}")
 }
 
 group = 'tech.pegasys.pantheon'

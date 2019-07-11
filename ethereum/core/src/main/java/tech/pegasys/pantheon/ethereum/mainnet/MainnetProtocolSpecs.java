@@ -25,11 +25,13 @@ import tech.pegasys.pantheon.ethereum.core.TransactionReceipt;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldState;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
+import tech.pegasys.pantheon.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionProcessor;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -76,7 +78,11 @@ public abstract class MainnetProtocolSpecs {
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    gasCalculator, evm, false, contractSizeLimit, 0))
+                    gasCalculator,
+                    evm,
+                    false,
+                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
+                    0))
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(gasCalculator, false, Optional.empty()))
@@ -128,7 +134,11 @@ public abstract class MainnetProtocolSpecs {
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    gasCalculator, evm, true, contractSizeLimit, 0))
+                    gasCalculator,
+                    evm,
+                    true,
+                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
+                    0))
         .transactionValidatorBuilder(
             gasCalculator -> new MainnetTransactionValidator(gasCalculator, true, Optional.empty()))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
@@ -189,7 +199,7 @@ public abstract class MainnetProtocolSpecs {
                     gasCalculator,
                     evm,
                     true,
-                    contractSizeLimit,
+                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .transactionValidatorBuilder(
@@ -278,7 +288,7 @@ public abstract class MainnetProtocolSpecs {
                     gasCalculator,
                     evm,
                     true,
-                    contractSizeLimit,
+                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES,
                     1))
