@@ -17,12 +17,17 @@ import static com.google.common.base.Preconditions.checkState;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.Closeable;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 
 /** Service provided by pantheon to facilitate persistent data storage. */
 public interface KeyValueStorage extends Closeable {
+
+  void clear();
+
+  default boolean containsKey(final BytesValue key) throws StorageException {
+    return get(key).isPresent();
+  }
 
   /**
    * @param key Index into persistent data repository.
@@ -30,9 +35,7 @@ public interface KeyValueStorage extends Closeable {
    */
   Optional<BytesValue> get(BytesValue key) throws StorageException;
 
-  default boolean containsKey(final BytesValue key) throws StorageException {
-    return get(key).isPresent();
-  }
+  long removeUnless(Predicate<BytesValue> inUseCheck);
 
   /**
    * Begins a transaction. Returns a transaction object that can be updated and committed.
@@ -40,50 +43,6 @@ public interface KeyValueStorage extends Closeable {
    * @return An object representing the transaction.
    */
   Transaction startTransaction() throws StorageException;
-
-  long removeUnless(Predicate<BytesValue> inUseCheck);
-
-  void clear();
-
-  class Entry {
-    private final BytesValue key;
-    private final BytesValue value;
-
-    private Entry(final BytesValue key, final BytesValue value) {
-      this.key = key;
-      this.value = value;
-    }
-
-    public static Entry create(final BytesValue key, final BytesValue value) {
-      return new Entry(key, value);
-    }
-
-    public BytesValue getKey() {
-      return key;
-    }
-
-    public BytesValue getValue() {
-      return value;
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-      if (obj == this) {
-        return true;
-      }
-      if (!(obj instanceof Entry)) {
-        return false;
-      }
-      final Entry other = (Entry) obj;
-      return Objects.equals(getKey(), other.getKey())
-          && Objects.equals(getValue(), other.getValue());
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(key, value);
-    }
-  }
 
   class StorageException extends RuntimeException {
     public StorageException(final Throwable t) {

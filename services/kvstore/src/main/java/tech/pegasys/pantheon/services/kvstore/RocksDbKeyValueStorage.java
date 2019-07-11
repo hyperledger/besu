@@ -73,49 +73,6 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
     }
   }
 
-  private BlockBasedTableConfig createBlockBasedTableConfig(final RocksDbConfiguration config) {
-    final LRUCache cache = new LRUCache(config.getCacheCapacity());
-    return new BlockBasedTableConfig().setBlockCache(cache);
-  }
-
-  @Override
-  public Optional<BytesValue> get(final BytesValue key) throws StorageException {
-    throwIfClosed();
-
-    try (final OperationTimer.TimingContext ignored =
-        rocksDBMetricsHelper.getReadLatency().startTimer()) {
-      return Optional.ofNullable(db.get(key.getArrayUnsafe())).map(BytesValue::wrap);
-    } catch (final RocksDBException e) {
-      throw new StorageException(e);
-    }
-  }
-
-  @Override
-  public Transaction startTransaction() throws StorageException {
-    throwIfClosed();
-    final WriteOptions options = new WriteOptions();
-    return new RocksDbTransaction(db.beginTransaction(options), options);
-  }
-
-  @Override
-  public long removeUnless(final Predicate<BytesValue> inUseCheck) throws StorageException {
-    long removedNodeCounter = 0;
-    try (final RocksIterator rocksIterator = db.newIterator()) {
-      rocksIterator.seekToFirst();
-      while (rocksIterator.isValid()) {
-        final byte[] key = rocksIterator.key();
-        if (!inUseCheck.test(BytesValue.wrap(key))) {
-          removedNodeCounter++;
-          db.delete(key);
-        }
-        rocksIterator.next();
-      }
-    } catch (final RocksDBException e) {
-      throw new StorageException(e);
-    }
-    return removedNodeCounter;
-  }
-
   @Override
   public void clear() {
     try (final RocksIterator rocksIterator = db.newIterator()) {
@@ -143,6 +100,49 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
     }
   }
 
+  @Override
+  public Optional<BytesValue> get(final BytesValue key) throws StorageException {
+    throwIfClosed();
+
+    try (final OperationTimer.TimingContext ignored =
+        rocksDBMetricsHelper.getReadLatency().startTimer()) {
+      return Optional.ofNullable(db.get(key.getArrayUnsafe())).map(BytesValue::wrap);
+    } catch (final RocksDBException e) {
+      throw new StorageException(e);
+    }
+  }
+
+  @Override
+  public long removeUnless(final Predicate<BytesValue> inUseCheck) throws StorageException {
+    long removedNodeCounter = 0;
+    try (final RocksIterator rocksIterator = db.newIterator()) {
+      rocksIterator.seekToFirst();
+      while (rocksIterator.isValid()) {
+        final byte[] key = rocksIterator.key();
+        if (!inUseCheck.test(BytesValue.wrap(key))) {
+          removedNodeCounter++;
+          db.delete(key);
+        }
+        rocksIterator.next();
+      }
+    } catch (final RocksDBException e) {
+      throw new StorageException(e);
+    }
+    return removedNodeCounter;
+  }
+
+  @Override
+  public Transaction startTransaction() throws StorageException {
+    throwIfClosed();
+    final WriteOptions options = new WriteOptions();
+    return new RocksDbTransaction(db.beginTransaction(options), options);
+  }
+
+  private BlockBasedTableConfig createBlockBasedTableConfig(final RocksDbConfiguration config) {
+    final LRUCache cache = new LRUCache(config.getCacheCapacity());
+    return new BlockBasedTableConfig().setBlockCache(cache);
+  }
+
   private void throwIfClosed() {
     if (closed.get()) {
       LOG.error("Attempting to use a closed RocksDbKeyValueStorage");
@@ -151,6 +151,7 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
   }
 
   private class RocksDbTransaction extends AbstractTransaction {
+
     private final org.rocksdb.Transaction innerTx;
     private final WriteOptions options;
 
