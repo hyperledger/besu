@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.cli;
 
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.sync.SyncMode;
+import tech.pegasys.pantheon.ethereum.p2p.config.RlpxConfiguration;
 import tech.pegasys.pantheon.nat.NatMethod;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -36,6 +37,7 @@ public interface DefaultCommandValues {
   String PANTHEON_HOME_PROPERTY_NAME = "pantheon.home";
   String DEFAULT_DATA_DIR_PATH = "./build/data";
   String MANDATORY_INTEGER_FORMAT_HELP = "<INTEGER>";
+  String MANDATORY_DOUBLE_FORMAT_HELP = "<DOUBLE>";
   String MANDATORY_LONG_FORMAT_HELP = "<LONG>";
   String MANDATORY_MODE_FORMAT_HELP = "<MODE>";
   String MANDATORY_NETWORK_FORMAT_HELP = "<NETWORK>";
@@ -63,6 +65,8 @@ public interface DefaultCommandValues {
   int FAST_SYNC_MAX_WAIT_TIME = 0;
   int FAST_SYNC_MIN_PEER_COUNT = 5;
   int DEFAULT_MAX_PEERS = 25;
+  double DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED =
+      RlpxConfiguration.DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED;
 
   static Path getDefaultPantheonDataPath(final Object command) {
     // this property is retrieved from Gradle tasks or Pantheon running shell script.

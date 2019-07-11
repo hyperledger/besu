@@ -27,6 +27,8 @@ banned-node-id=["0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec
 p2p-host="1.2.3.4"
 p2p-port=1234
 max-peers=42
+limit-remote-wire-connections-enabled=false
+fraction-remote-connections-allowed=0.5
 host-whitelist=["all"]
 
 # chain
