@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -39,6 +40,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -108,8 +110,12 @@ public class EeaSendRawTransactionTest {
 
   @Mock private BlockchainQueries blockchainQueries;
 
+  @Mock private PendingTransactions pendingTransactions;
+
   @Before
   public void before() {
+    when(transactionPool.getPendingTransactions()).thenReturn(pendingTransactions);
+
     method =
         new EeaSendRawTransaction(blockchainQueries, privateTxHandler, transactionPool, parameter);
   }
@@ -200,7 +206,6 @@ public class EeaSendRawTransactionTest {
         .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
-
     final JsonRpcRequest request =
         new JsonRpcRequest(
             "2.0", "eea_sendRawTransaction", new String[] {VALID_PRIVATE_TRANSACTION_RLP});
@@ -340,7 +345,6 @@ public class EeaSendRawTransactionTest {
         .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.invalid(transactionInvalidReason));
-
     final JsonRpcRequest request =
         new JsonRpcRequest(
             "2.0", "eea_sendRawTransaction", new String[] {VALID_PRIVATE_TRANSACTION_RLP});
@@ -359,6 +363,13 @@ public class EeaSendRawTransactionTest {
         .createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class), any(Long.class));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
+  }
+
+  @Test
+  public void nextNonceUsesTxPool() {
+    Address address = PUBLIC_TRANSACTION.getSender();
+    when(pendingTransactions.getNextNonceForSender(address)).thenReturn(OptionalLong.of(123));
+    assertThat(method.getNonce(address)).isEqualTo(123);
   }
 
   @Test
