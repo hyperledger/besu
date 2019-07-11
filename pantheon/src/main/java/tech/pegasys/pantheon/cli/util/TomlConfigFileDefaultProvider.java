@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.cli.util;
 
+import tech.pegasys.pantheon.ethereum.core.Wei;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -55,6 +57,8 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     } else if (optionSpec.isMultiValue()) {
       defaultValue = getListEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(Integer.class)) {
+      defaultValue = getIntegerEntryAsString(optionSpec);
+    } else if (optionSpec.type().equals(Wei.class)) {
       defaultValue = getIntegerEntryAsString(optionSpec);
     } else { // else will be treated as String
       defaultValue = getEntryAsString(optionSpec);

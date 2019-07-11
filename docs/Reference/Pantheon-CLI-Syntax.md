@@ -595,7 +595,7 @@ PANTHEON_MIN_GAS_PRICE=1337
 ```
 
 ```bash tab="Configuration File"
-min-gas-price="1337"
+min-gas-price=1337
 ```
 
 The minimum price that a transaction offers for it to be included in a mined block.
