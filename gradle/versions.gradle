@@ -19,7 +19,6 @@ dependencyManagement {
 
     dependency 'com.google.auto.service:auto-service:1.0-rc5'
 
-    dependency 'com.google.errorprone:javac:9+181-r4173-1'
     dependency 'com.google.errorprone:error_prone_check_api:2.3.3'
     dependency 'com.google.errorprone:error_prone_core:2.3.3'
     dependency 'com.google.errorprone:error_prone_annotation:2.3.3'

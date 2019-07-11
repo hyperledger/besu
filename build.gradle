@@ -26,6 +26,11 @@ plugins {
   id 'net.researchgate.release' version '2.7.0'
 }
 
+if (!JavaVersion.current().java11Compatible) {
+  throw new GradleException("Java 11 or later is required to build Pantheon.\n" +
+      "  Detected version ${JavaVersion.current()}")
+}
+
 group = 'tech.pegasys.pantheon'
 
 defaultTasks 'build', 'checkLicenses', 'javadoc'
@@ -109,8 +114,8 @@ allprojects {
     from javadoc.destinationDir
   }
 
-  sourceCompatibility = '1.8'
-  targetCompatibility = '1.8'
+  sourceCompatibility = 11
+  targetCompatibility = 11
 
   repositories {
     if ("$System.env.JENKINS_URL" == 'https://jenkins.pegasys.tech/') {
@@ -124,12 +129,7 @@ allprojects {
     }
   }
 
-  dependencies {
-    errorprone("com.google.errorprone:error_prone_core")
-    if (JavaVersion.current().isJava8()) {
-      errorproneJavac("com.google.errorprone:javac")
-    }
-  }
+  dependencies { errorprone("com.google.errorprone:error_prone_core") }
 
   apply plugin: 'com.diffplug.gradle.spotless'
   spotless {
@@ -205,7 +205,7 @@ allprojects {
       check('FieldCanBeFinal', CheckSeverity.OFF)
 
       // This check is broken in Java 12.  See https://github.com/google/error-prone/issues/1257
-      if ((JavaVersion.current().majorVersion as Integer) > 11) {
+      if (JavaVersion.current().java12Compatible) {
         check('Finally', CheckSeverity.OFF)
       }
 
@@ -243,7 +243,13 @@ allprojects {
   test {
     jvmArgs = [
       '-Xmx4g',
-      '-XX:-UseGCOverheadLimit'
+      '-XX:-UseGCOverheadLimit',
+      // Mockito and jackson-databind do some strange reflection during tests.
+      // This suppresses an illegal access warning.
+      '--add-opens',
+      'java.base/java.util=ALL-UNNAMED',
+      '--add-opens',
+      'java.base/java.util.concurrent=ALL-UNNAMED'
     ]
     Set toImport = [
       'test.ethereum.include',
@@ -258,14 +264,9 @@ allprojects {
     }
   }
 
-  // Normalise Xdoclint behaviour across JDKs (OpenJDK 8 is more lenient than Oracle JDK by default).
   javadoc {
     options.addStringOption('Xdoclint:all', '-quiet')
-    if (JavaVersion.current() == JavaVersion.VERSION_1_8) {
-      options.addStringOption('Xwerror', '-quiet')
-    } else {
-      options.addStringOption('Xwerror', '-html5')
-    }
+    options.addStringOption('Xwerror', '-html5')
     options.encoding = 'UTF-8'
   }
 
@@ -405,13 +406,17 @@ subprojects {
 jar { enabled = false }
 
 apply plugin: 'application'
-mainClassName = "tech.pegasys.pantheon.Pantheon"
+mainClassName = 'tech.pegasys.pantheon.Pantheon'
 applicationDefaultJvmArgs = [
-  "-Dvertx.disableFileCPResolving=true",
-  "-Dpantheon.home=PANTHEON_HOME",
-  // We shutdown log4j ourselves, as otherwise his shutdown hook runs before our own and whatever
+  '-Dvertx.disableFileCPResolving=true',
+  '-Dpantheon.home=PANTHEON_HOME',
+  // We shutdown log4j ourselves, as otherwise this shutdown hook runs before our own and whatever
   // happens during shutdown is not logged.
-  "-Dlog4j.shutdownHookEnabled=false"
+  '-Dlog4j.shutdownHookEnabled=false',
+  // Bouncy Castle needs access to sun.security.provider, which is not open by default.
+  // This suppresses an illegal access warning.
+  '--add-opens',
+  'java.base/sun.security.provider=ALL-UNNAMED'
 ]
 
 run {
