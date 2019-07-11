@@ -24,8 +24,8 @@ apply plugin: 'java'
 apply plugin: 'net.ltgt.errorprone'
 apply plugin: 'net.ltgt.apt'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 11
+targetCompatibility = 11
 
 dependencies {
 
@@ -43,11 +43,5 @@ dependencies {
 }
 
 test {
-  if (JavaVersion.current().isJava8()) {
-    enabled = false
-    logger.info("Disabling {} because errorprone tests always fail in Java {}",
-      project.name, JavaVersion.current().majorVersion)
-  }
-
   testLogging { showStandardStreams = true }
 }
