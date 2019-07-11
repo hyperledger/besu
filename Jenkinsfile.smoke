@@ -11,9 +11,7 @@ def runDocker(image, cmd) {
 }
 
 def linuxImages = [
-    'openjdk:8-jdk',
     'openjdk:11-jdk',
-    'adoptopenjdk/openjdk8-openj9:latest',
     'adoptopenjdk/openjdk11-openj9:latest'
 ]
 
@@ -37,9 +35,8 @@ def createLinuxBuild(dockerImage) {
 }
 
 def linuxImagesPrivate = [
-    'pegasyseng/jdk:oracle-8-0.0.1',
     'pegasyseng/jdk:oracle-11-0.0.1',
-    'pegasyseng/jdk:corretto-8-0.0.1',
+    'pegasyseng/jdk:corretto-11-0.0.1',
     'pegasyseng/jdk:openjdk-12',
     'pegasyseng/jdk:zulu-openjdk-8',
     'pegasyseng/jdk:zulu-openjdk-11',
@@ -68,7 +65,6 @@ def createLinuxBuildPrivateImage(dockerImage) {
 }
 
 def windowsImages = [
-    "openjdk:8-windowsservercore",
     "openjdk:11-windowsservercore",
     "openjdk:12-windowsservercore"
 ]
