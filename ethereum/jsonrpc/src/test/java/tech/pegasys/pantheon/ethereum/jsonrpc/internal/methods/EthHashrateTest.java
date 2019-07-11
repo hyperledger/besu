@@ -59,10 +59,9 @@ public class EthHashrateTest {
   }
 
   @Test
-  public void shouldReturnErrorWhenMiningCoordinatorDoesNotHaveHashes() {
+  public void shouldReturnZeroWhenMiningCoordinatorDoesNotHaveHashes() {
     final JsonRpcRequest request = requestWithParams();
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.NO_HASHES_PER_SECOND);
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x0");
     when(miningCoordinator.hashesPerSecond()).thenReturn(Optional.empty());
 
     final JsonRpcResponse actualResponse = method.response(request);
