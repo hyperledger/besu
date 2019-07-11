@@ -83,6 +83,13 @@ public interface MutableAccount extends Account {
   void setCode(BytesValue code);
 
   /**
+   * Sets the version for the account.
+   *
+   * @param version the version of the code being set
+   */
+  void setVersion(int version);
+
+  /**
    * Sets a particular key-value pair in the account storage.
    *
    * <p>Note that setting the value of an entry to 0 is basically equivalent to deleting that entry.

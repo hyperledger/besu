@@ -108,9 +108,13 @@ public class DefaultMutableWorldState implements MutableWorldState {
   }
 
   private static BytesValue serializeAccount(
-      final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
+      final long nonce,
+      final Wei balance,
+      final Hash storageRoot,
+      final Hash codeHash,
+      final int version) {
     final StateTrieAccountValue accountValue =
-        new StateTrieAccountValue(nonce, balance, storageRoot, codeHash);
+        new StateTrieAccountValue(nonce, balance, storageRoot, codeHash, version);
     return RLP.encode(accountValue::writeTo);
   }
 
@@ -244,6 +248,11 @@ public class DefaultMutableWorldState implements MutableWorldState {
     }
 
     @Override
+    public int getVersion() {
+      return accountValue.getVersion();
+    }
+
+    @Override
     public UInt256 getStorageValue(final UInt256 key) {
       final Optional<BytesValue> val = storageTrie().get(Hash.hash(key.getBytes()));
       if (!val.isPresent()) {
@@ -283,6 +292,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
       builder.append("balance=").append(getBalance()).append(", ");
       builder.append("storageRoot=").append(getStorageRoot()).append(", ");
       builder.append("codeHash=").append(getCodeHash());
+      builder.append("version=").append(getVersion());
       return builder.append("}").toString();
     }
   }
@@ -364,7 +374,12 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
         // Lastly, save the new account.
         final BytesValue account =
-            serializeAccount(updated.getNonce(), updated.getBalance(), storageRoot, codeHash);
+            serializeAccount(
+                updated.getNonce(),
+                updated.getBalance(),
+                storageRoot,
+                codeHash,
+                updated.getVersion());
 
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
       }

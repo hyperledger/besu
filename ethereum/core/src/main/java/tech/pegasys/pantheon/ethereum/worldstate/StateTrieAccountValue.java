@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.worldstate;
 
+import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
@@ -24,13 +25,24 @@ public class StateTrieAccountValue {
   private final Wei balance;
   private final Hash storageRoot;
   private final Hash codeHash;
+  private final int version;
+
+  private StateTrieAccountValue(
+      final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
+    this(nonce, balance, storageRoot, codeHash, Account.DEFAULT_VERSION);
+  }
 
   public StateTrieAccountValue(
-      final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
+      final long nonce,
+      final Wei balance,
+      final Hash storageRoot,
+      final Hash codeHash,
+      final int version) {
     this.nonce = nonce;
     this.balance = balance;
     this.storageRoot = storageRoot;
     this.codeHash = codeHash;
+    this.version = version;
   }
 
   /**
@@ -63,10 +75,19 @@ public class StateTrieAccountValue {
   /**
    * The hash of the EVM bytecode associated with this account.
    *
-   * @return the hash of the account code (which may be {@link Hash#EMPTY}.
+   * @return the hash of the account code (which may be {@link Hash#EMPTY}).
    */
   public Hash getCodeHash() {
     return codeHash;
+  }
+
+  /**
+   * The version of the EVM bytecode associated with this account.
+   *
+   * @return the version of the account code.
+   */
+  public int getVersion() {
+    return version;
   }
 
   public void writeTo(final RLPOutput out) {
@@ -76,6 +97,11 @@ public class StateTrieAccountValue {
     out.writeUInt256Scalar(balance);
     out.writeBytesValue(storageRoot);
     out.writeBytesValue(codeHash);
+
+    if (version != Account.DEFAULT_VERSION) {
+      // version of zero is never written out.
+      out.writeLongScalar(version);
+    }
 
     out.endList();
   }
@@ -87,9 +113,15 @@ public class StateTrieAccountValue {
     final Wei balance = in.readUInt256Scalar(Wei::wrap);
     final Hash storageRoot = Hash.wrap(in.readBytes32());
     final Hash codeHash = Hash.wrap(in.readBytes32());
+    final int version;
+    if (!in.isEndOfCurrentList()) {
+      version = in.readIntScalar();
+    } else {
+      version = Account.DEFAULT_VERSION;
+    }
 
     in.leaveList();
 
-    return new StateTrieAccountValue(nonce, balance, storageRoot, codeHash);
+    return new StateTrieAccountValue(nonce, balance, storageRoot, codeHash, version);
   }
 }

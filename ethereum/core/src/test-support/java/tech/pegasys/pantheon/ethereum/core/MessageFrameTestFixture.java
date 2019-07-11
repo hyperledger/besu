@@ -30,7 +30,7 @@ import java.util.Optional;
 
 public class MessageFrameTestFixture {
 
-  private static final Address DEFAUT_ADDRESS = AddressHelpers.ofValue(244259721);
+  public static final Address DEFAUT_ADDRESS = AddressHelpers.ofValue(244259721);
   private final int maxStackSize = DEFAULT_MAX_STACK_SIZE;
 
   private Type type = Type.MESSAGE_CALL;

@@ -33,6 +33,7 @@ public class WorldStateMock extends DebuggableMutableWorldState {
     private final long nonce;
     private final Wei balance;
     private final BytesValue code;
+    private final int version;
     private final Map<UInt256, UInt256> storage;
 
     private static final Map<UInt256, UInt256> parseStorage(final Map<String, String> values) {
@@ -47,26 +48,36 @@ public class WorldStateMock extends DebuggableMutableWorldState {
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("balance") final String balance,
         @JsonProperty("storage") final Map<String, String> storage,
-        @JsonProperty("code") final String code) {
+        @JsonProperty("code") final String code,
+        @JsonProperty("version") final String version) {
       this.nonce = Long.decode(nonce);
       this.balance = Wei.fromHexString(balance);
       this.code = BytesValue.fromHexString(code);
       this.storage = parseStorage(storage);
+      if (version != null) {
+        this.version = Integer.decode(version);
+      } else {
+        this.version = 0;
+      }
     }
 
-    public long nonce() {
+    public long getNonce() {
       return nonce;
     }
 
-    public Wei balance() {
+    public Wei getBalance() {
       return balance;
     }
 
-    public BytesValue code() {
+    public BytesValue getCode() {
       return code;
     }
 
-    public Map<UInt256, UInt256> storage() {
+    public int getVersion() {
+      return version;
+    }
+
+    public Map<UInt256, UInt256> getStorage() {
       return storage;
     }
   }
@@ -74,10 +85,11 @@ public class WorldStateMock extends DebuggableMutableWorldState {
   public static void insertAccount(
       final WorldUpdater updater, final Address address, final AccountMock toCopy) {
     final MutableAccount account = updater.getOrCreate(address);
-    account.setNonce(toCopy.nonce());
-    account.setBalance(toCopy.balance());
-    account.setCode(toCopy.code());
-    for (final Map.Entry<UInt256, UInt256> entry : toCopy.storage().entrySet()) {
+    account.setNonce(toCopy.getNonce());
+    account.setBalance(toCopy.getBalance());
+    account.setCode(toCopy.getCode());
+    account.setVersion(toCopy.getVersion());
+    for (final Map.Entry<UInt256, UInt256> entry : toCopy.getStorage().entrySet()) {
       account.setStorageValue(entry.getKey(), entry.getValue());
     }
   }

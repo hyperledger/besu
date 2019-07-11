@@ -37,6 +37,10 @@ public class GenesisAllocation {
     return data.getString("code");
   }
 
+  public String getVersion() {
+    return data.getString("version");
+  }
+
   public Map<String, Object> getStorage() {
     return data.getJsonObject("storage", new JsonObject()).getMap();
   }

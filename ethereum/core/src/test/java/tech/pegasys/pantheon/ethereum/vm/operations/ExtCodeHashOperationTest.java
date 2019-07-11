@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.AddressHelpers;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -23,6 +24,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Gas;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.MessageFrameTestFixture;
+import tech.pegasys.pantheon.ethereum.core.MutableAccount;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.mainnet.ConstantinopleGasCalculator;
@@ -88,7 +90,9 @@ public class ExtCodeHashOperationTest {
   @Test
   public void shouldGetHashOfAccountCodeWhenCodeIsPresent() {
     final BytesValue code = BytesValue.fromHexString("0xabcdef");
-    worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).setCode(code);
+    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
+    account.setCode(code);
+    account.setVersion(Account.DEFAULT_VERSION);
     assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Hash.hash(code));
   }
 
@@ -96,7 +100,9 @@ public class ExtCodeHashOperationTest {
   public void shouldZeroOutLeftMostBitsToGetAddress() {
     // If EXTCODEHASH of A is X, then EXTCODEHASH of A + 2**160 is X.
     final BytesValue code = BytesValue.fromHexString("0xabcdef");
-    worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).setCode(code);
+    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
+    account.setCode(code);
+    account.setVersion(Account.DEFAULT_VERSION);
     final Bytes32 value =
         Words.fromAddress(REQUESTED_ADDRESS)
             .asUInt256()

@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.chain;
 
 import tech.pegasys.pantheon.config.GenesisAllocation;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
+import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
@@ -111,6 +112,7 @@ public final class GenesisState {
           final MutableAccount account = updater.getOrCreate(genesisAccount.address);
           account.setBalance(genesisAccount.balance);
           account.setCode(genesisAccount.code);
+          account.setVersion(genesisAccount.version);
           genesisAccount.storage.forEach(account::setStorageValue);
         });
     updater.commit();
@@ -216,25 +218,29 @@ public final class GenesisState {
 
     final Address address;
     final Wei balance;
-    final BytesValue code;
     final Map<UInt256, UInt256> storage;
+    final BytesValue code;
+    final int version;
 
-    public static GenesisAccount fromAllocation(final GenesisAllocation allocation) {
+    static GenesisAccount fromAllocation(final GenesisAllocation allocation) {
       return new GenesisAccount(
           allocation.getAddress(),
           allocation.getBalance(),
+          allocation.getStorage(),
           allocation.getCode(),
-          allocation.getStorage());
+          allocation.getVersion());
     }
 
     private GenesisAccount(
         final String hexAddress,
         final String balance,
+        final Map<String, Object> storage,
         final String hexCode,
-        final Map<String, Object> storage) {
+        final String version) {
       this.address = withNiceErrorMessage("address", hexAddress, Address::fromHexString);
       this.balance = withNiceErrorMessage("balance", balance, this::parseBalance);
       this.code = hexCode != null ? BytesValue.fromHexString(hexCode) : null;
+      this.version = version != null ? Integer.decode(version) : Account.DEFAULT_VERSION;
       this.storage = parseStorage(storage);
     }
 
@@ -265,8 +271,9 @@ public final class GenesisState {
       return MoreObjects.toStringHelper(this)
           .add("address", address)
           .add("balance", balance)
-          .add("code", code)
           .add("storage", storage)
+          .add("code", code)
+          .add("version", version)
           .toString();
     }
   }
