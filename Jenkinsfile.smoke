@@ -38,7 +38,6 @@ def linuxImagesPrivate = [
     'pegasyseng/jdk:oracle-11-0.0.1',
     'pegasyseng/jdk:corretto-11-0.0.1',
     'pegasyseng/jdk:openjdk-12',
-    'pegasyseng/jdk:zulu-openjdk-8',
     'pegasyseng/jdk:zulu-openjdk-11',
     'pegasyseng/jdk:zulu-openjdk-12'
 ]
