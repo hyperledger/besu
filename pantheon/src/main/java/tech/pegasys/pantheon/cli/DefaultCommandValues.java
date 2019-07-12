@@ -65,7 +65,7 @@ public interface DefaultCommandValues {
   int FAST_SYNC_MAX_WAIT_TIME = 0;
   int FAST_SYNC_MIN_PEER_COUNT = 5;
   int DEFAULT_MAX_PEERS = 25;
-  double DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED =
+  float DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED =
       RlpxConfiguration.DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED;
 
   static Path getDefaultPantheonDataPath(final Object command) {
