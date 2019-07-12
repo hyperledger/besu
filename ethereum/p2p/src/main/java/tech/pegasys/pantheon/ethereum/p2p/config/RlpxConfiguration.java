@@ -85,18 +85,10 @@ public class RlpxConfiguration {
     return this;
   }
 
-  public boolean isLimitRemoteWireConnectionsEnabled() {
-    return limitRemoteWireConnectionsEnabled;
-  }
-
   public RlpxConfiguration setLimitRemoteWireConnectionsEnabled(
       final boolean limitRemoteWireConnectionsEnabled) {
     this.limitRemoteWireConnectionsEnabled = limitRemoteWireConnectionsEnabled;
     return this;
-  }
-
-  public double getFractionRemoteWireConnectionsAllowed() {
-    return fractionRemoteWireConnectionsAllowed;
   }
 
   public RlpxConfiguration setFractionRemoteWireConnectionsAllowed(
@@ -106,6 +98,14 @@ public class RlpxConfiguration {
         "Fraction of remote connections allowed must be between 0.0 and 1.0 (inclusive).");
     this.fractionRemoteWireConnectionsAllowed = fractionRemoteWireConnectionsAllowed;
     return this;
+  }
+
+  public int getMaxRemotelyInitiatedConnections() {
+    if (!limitRemoteWireConnectionsEnabled) {
+      return maxPeers;
+    }
+
+    return (int) Math.floor(maxPeers * fractionRemoteWireConnectionsAllowed);
   }
 
   @Override

@@ -12,14 +12,15 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.peers;
 
-public interface PeerProperties {
+public class DefaultPeerPrivileges implements PeerPrivileges {
+  private final MaintainedPeers maintainedPeers;
 
-  /**
-   * If true, the given peer can connect or remain connected even if the max connection limit has
-   * been reached or exceeded.
-   *
-   * @param peer The peer to be checked.
-   * @return {@code true} if the peer should be allowed to connect regardless of max peer limits.
-   */
-  boolean ignoreMaxPeerLimits(final Peer peer);
+  public DefaultPeerPrivileges(final MaintainedPeers maintainedPeers) {
+    this.maintainedPeers = maintainedPeers;
+  }
+
+  @Override
+  public boolean canExceedConnectionLimits(final Peer peer) {
+    return maintainedPeers.contains(peer);
+  }
 }

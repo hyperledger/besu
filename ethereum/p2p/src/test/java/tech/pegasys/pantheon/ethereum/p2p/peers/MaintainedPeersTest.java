@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.p2p.peers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static tech.pegasys.pantheon.ethereum.p2p.peers.PeerTestHelper.enodeBuilder;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -126,6 +127,18 @@ public class MaintainedPeersTest {
   }
 
   @Test
+  public void contains() {
+    final Peer peerA = createPeer();
+    final Peer peerAClone = DefaultPeer.fromEnodeURL(peerA.getEnodeURL());
+    final Peer peerB = createPeer();
+
+    maintainedPeers.add(peerA);
+    assertThat(maintainedPeers.contains(peerA)).isTrue();
+    assertThat(maintainedPeers.contains(peerAClone)).isTrue();
+    assertThat(maintainedPeers.contains(peerB)).isFalse();
+  }
+
+  @Test
   public void stream_empty() {
     final List<Peer> peers = maintainedPeers.streamPeers().collect(Collectors.toList());
     assertThat(peers).isEmpty();
@@ -137,9 +150,5 @@ public class MaintainedPeersTest {
 
   private Peer nonListeningPeer() {
     return DefaultPeer.fromEnodeURL(enodeBuilder().disableListening().build());
-  }
-
-  private EnodeURL.Builder enodeBuilder() {
-    return EnodeURL.builder().ipAddress("127.0.0.1").useDefaultPorts().nodeId(Peer.randomId());
   }
 }
