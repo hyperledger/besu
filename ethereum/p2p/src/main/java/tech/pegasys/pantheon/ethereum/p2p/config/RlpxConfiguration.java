@@ -102,8 +102,8 @@ public class RlpxConfiguration {
   public RlpxConfiguration setFractionRemoteWireConnectionsAllowed(
       final double fractionRemoteWireConnectionsAllowed) {
     checkState(
-        fractionRemoteWireConnectionsAllowed > 0.0,
-        "Fraction of remote connections allowed must be positive.");
+        fractionRemoteWireConnectionsAllowed >= 0.0 && fractionRemoteWireConnectionsAllowed <= 1.0,
+        "Fraction of remote connections allowed must be between 0.0 and 1.0 (inclusive).");
     this.fractionRemoteWireConnectionsAllowed = fractionRemoteWireConnectionsAllowed;
     return this;
   }
