@@ -341,7 +341,7 @@ public class RlpxAgent {
       LOG.warn(
           "Fraction of remotely initiated connection is too high, rejecting incoming connection. (max ratio allowed: {})",
           fractionRemoteConnectionsAllowed);
-      peerConnection.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+      peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
       return;
     }
 
@@ -397,11 +397,8 @@ public class RlpxAgent {
                 .filter(RlpxConnection::isActive)
                 .filter(RlpxConnection::initiatedRemotely)
                 .count());
-    if (remotelyInitiatedConnectionsCount == 0) {
-      return false;
-    }
     final double fractionRemoteConnections =
-        (double) remotelyInitiatedConnectionsCount + 1 / (double) maxPeers;
+        (double) (remotelyInitiatedConnectionsCount + 1) / (double) maxPeers;
     return fractionRemoteConnections > fractionRemoteConnectionsAllowed;
   }
 
