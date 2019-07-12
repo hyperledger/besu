@@ -13,49 +13,41 @@
 package tech.pegasys.pantheon.util.number;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static java.lang.Float.parseFloat;
+import static java.lang.Integer.parseInt;
 
 import java.util.Objects;
 
-public class Fraction {
+public class Percentage {
 
-  private float value;
+  private int value;
 
-  private Fraction(final float value) {
+  private Percentage(final int value) {
     this.value = value;
   }
 
-  public static Fraction fromPercentage(final int percentage) {
-    return fromFloat((float) percentage / 100.0f);
-  }
-
-  public static Fraction fromPercentage(final Percentage percentage) {
-    return fromFloat(percentage.getValueAsFloat() / 100.0f);
-  }
-
-  public Percentage toPercentage() {
-    return Percentage.fromInt((int) (value * 100.0f));
-  }
-
   /**
-   * Parse a string representing a fraction.
+   * Parse a string representing a percentage.
    *
-   * @param str A string representing a valid positive number strictly between 0 and 1.
-   * @return The parsed double.
+   * @param str A string representing a valid percentage between 0 and 100 inclusive.
+   * @return The percentage.
    * @throws IllegalArgumentException if the provided string is {@code null}.
-   * @throws IllegalArgumentException if the string is either not a number, or not a fraction
+   * @throws IllegalArgumentException if the string is either not a number, or not a percentage
    */
-  public static Fraction fromString(final String str) {
+  public static Percentage fromString(final String str) {
     checkArgument(str != null);
-    return fromFloat(parseFloat(str));
+    return fromInt(parseInt(str));
   }
 
-  public static Fraction fromFloat(final float val) {
-    checkArgument(val > 0.0f && val <= 1.0f);
-    return new Fraction(val);
+  public static Percentage fromInt(final int val) {
+    checkArgument(val >= 0 && val <= 100);
+    return new Percentage(val);
   }
 
-  public float getValue() {
+  public int getValue() {
+    return value;
+  }
+
+  public float getValueAsFloat() {
     return value;
   }
 
@@ -64,10 +56,10 @@ public class Fraction {
     if (o == this) {
       return true;
     }
-    if (!(o instanceof Fraction)) {
+    if (!(o instanceof Percentage)) {
       return false;
     }
-    final Fraction that = (Fraction) o;
+    final Percentage that = (Percentage) o;
     return value == that.value;
   }
 

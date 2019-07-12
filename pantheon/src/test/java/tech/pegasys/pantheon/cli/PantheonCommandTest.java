@@ -55,6 +55,7 @@ import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.nat.NatMethod;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.number.Fraction;
+import tech.pegasys.pantheon.util.number.Percentage;
 
 import java.io.File;
 import java.io.IOException;
@@ -682,6 +683,8 @@ public class PantheonCommandTest extends CommandTestAbstract {
         tomlResult.getLong(tomlKey);
       } else if (Fraction.class.isAssignableFrom(optionSpec.type())) {
         tomlResult.getDouble(tomlKey);
+      } else if (Percentage.class.isAssignableFrom(optionSpec.type())) {
+        tomlResult.getLong(tomlKey);
       } else {
         tomlResult.getString(tomlKey);
       }
@@ -1020,8 +1023,8 @@ public class PantheonCommandTest extends CommandTestAbstract {
         "false",
         "--max-peers",
         "42",
-        "--fraction-remote-connections-allowed",
-        "0.5",
+        "--remote-connections-percentage",
+        "50",
         "--banned-node-id",
         String.join(",", nodes),
         "--banned-node-ids",
@@ -1033,7 +1036,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
         "--bootnodes",
         "--max-peers",
         "--banned-node-ids",
-        "--fraction-remote-connections-allowed");
+        "--remote-connections-percentage");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1239,47 +1242,48 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void fractionRemoteConnectionsAllowedOptionMustBeUsed() {
+  public void remoteConnectionsPercentageOptionMustBeUsed() {
 
-    final double fractionRemoteConnectionsAllowed = 0.12;
+    final int remoteConnectionsPercentage = 12;
     parseCommand(
-        "--limit-remote-wire-connections-enabled",
-        "--fraction-remote-connections-allowed",
-        String.valueOf(fractionRemoteConnectionsAllowed));
+        "--remote-connections-limit-enabled",
+        "--remote-connections-percentage",
+        String.valueOf(remoteConnectionsPercentage));
 
     verify(mockRunnerBuilder).fractionRemoteConnectionsAllowed(doubleArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(doubleArgumentCaptor.getValue()).isEqualTo(fractionRemoteConnectionsAllowed);
+    assertThat(doubleArgumentCaptor.getValue())
+        .isEqualTo(
+            Fraction.fromPercentage(Percentage.fromInt(remoteConnectionsPercentage)).getValue());
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
   @Test
-  public void fractionRemoteConnectionsAllowedWithInvalidFormatMustFail() {
+  public void remoteConnectionsPercentageWithInvalidFormatMustFail() {
 
     parseCommand(
-        "--limit-remote-wire-connections-enabled",
-        "--fraction-remote-connections-allowed",
-        "not-a-fraction");
+        "--remote-connections-limit-enabled", "--remote-connections-percentage", "invalid");
     verifyZeroInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "Invalid value for option '--fraction-remote-connections-allowed': cannot convert 'not-a-fraction' to Fraction");
+            "Invalid value for option '--remote-connections-percentage'",
+            "should be a number between 0 and 100 inclusive");
   }
 
   @Test
-  public void fractionRemoteConnectionsAllowedWithOutOfRangeMustFail() {
+  public void remoteConnectionsPercentageWithOutOfRangeMustFail() {
 
-    parseCommand(
-        "--limit-remote-wire-connections-enabled", "--fraction-remote-connections-allowed", "1.5");
+    parseCommand("--remote-connections-limit-enabled", "--remote-connections-percentage", "150");
     verifyZeroInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "Invalid value for option '--fraction-remote-connections-allowed': cannot convert '1.5' to Fraction");
+            "Invalid value for option '--remote-connections-percentage'",
+            "should be a number between 0 and 100 inclusive");
   }
 
   @Test

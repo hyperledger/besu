@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class RlpxConfiguration {
-  public static final Double DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED = 0.5;
+  public static final float DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED = 0.5f;
   private String clientId = "TestClient/1.0.0";
   private String bindHost = "0.0.0.0";
   private int bindPort = 30303;
