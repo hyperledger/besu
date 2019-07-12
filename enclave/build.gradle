@@ -7,8 +7,10 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation project(':testutil')
 
-  // integration test dependacies.
+  // integration test dependencies.
   integrationTestImplementation 'junit:junit'
+  integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation project(':testutil')
+
   integrationTestImplementation 'net.consensys:orion'
 }
