@@ -60,7 +60,7 @@ public class JumpiOperation extends AbstractOperation {
 
     final Code code = frame.getCode();
     final UInt256 potentialJumpDestination = frame.getStackItem(0).asUInt256();
-    return !code.isValidJumpDestination(evm, potentialJumpDestination)
+    return !code.isValidJumpDestination(evm, frame, potentialJumpDestination)
         ? Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION)
         : Optional.empty();
   }
