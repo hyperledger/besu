@@ -68,11 +68,11 @@ public class Enclave {
   }
 
   public PrivacyGroup createPrivacyGroup(final CreatePrivacyGroupRequest content) throws Exception {
-    return executePost(buildPostRequest(JSON, content, "/privacyGroupId"), PrivacyGroup.class);
+    return executePost(buildPostRequest(JSON, content, "/createPrivacyGroup"), PrivacyGroup.class);
   }
 
   public String deletePrivacyGroup(final DeletePrivacyGroupRequest content) throws Exception {
-    return executePost(buildPostRequest(JSON, content, "/deletePrivacyGroupId"), String.class);
+    return executePost(buildPostRequest(JSON, content, "/deletePrivacyGroup"), String.class);
   }
 
   private Request buildPostRequest(
