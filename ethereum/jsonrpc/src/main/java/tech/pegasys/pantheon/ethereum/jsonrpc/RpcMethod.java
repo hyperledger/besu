@@ -73,6 +73,7 @@ public enum RpcMethod {
   ETH_NEW_PENDING_TRANSACTION_FILTER("eth_newPendingTransactionFilter"),
   ETH_PROTOCOL_VERSION("eth_protocolVersion"),
   ETH_SEND_RAW_TRANSACTION("eth_sendRawTransaction"),
+  ETH_SEND_TRANSACTION("eth_sendTransaction"),
   ETH_SUBSCRIBE("eth_subscribe"),
   ETH_SYNCING("eth_syncing"),
   ETH_UNINSTALL_FILTER("eth_uninstallFilter"),
