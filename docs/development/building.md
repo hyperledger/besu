@@ -1,4 +1,18 @@
 # Checkout code and build it
+
+## Prerequisites
+
+* Java 8+
+
+## Quick-Start
+
+```sh
+git clone --recursive https://github.com/PegasysEng/pantheon
+cd pantheon
+./gradlew build  
+./gradlew integrationTest
+```
+
 ## Checkout source code
 
 ```
