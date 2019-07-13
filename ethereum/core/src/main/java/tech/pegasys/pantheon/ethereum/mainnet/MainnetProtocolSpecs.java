@@ -16,6 +16,7 @@ import static tech.pegasys.pantheon.ethereum.vm.MessageFrame.DEFAULT_MAX_STACK_S
 
 import tech.pegasys.pantheon.ethereum.MainnetBlockValidator;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.MutableAccount;
@@ -97,7 +98,8 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
-                    stackSizeLimit))
+                    stackSizeLimit,
+                    Account.DEFAULT_VERSION))
         .privateTransactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -109,7 +111,8 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
-                    stackSizeLimit))
+                    stackSizeLimit,
+                    Account.DEFAULT_VERSION))
         .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::create)
         .ommerHeaderValidatorBuilder(MainnetBlockHeaderValidator::createOmmerValidator)
@@ -215,7 +218,8 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     true,
-                    stackSizeLimit))
+                    stackSizeLimit,
+                    Account.DEFAULT_VERSION))
         .privateTransactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -227,7 +231,8 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
-                    stackSizeLimit))
+                    stackSizeLimit,
+                    Account.DEFAULT_VERSION))
         .name("SpuriousDragon");
   }
 
@@ -280,8 +285,35 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+    final int stackSizeLimit = configStackSizeLimit.orElse(DEFAULT_MAX_STACK_SIZE);
     return constantinopleFixDefinition(
             chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    stackSizeLimit,
+                    Account.ISTANBUL_VERSION))
+        .privateTransactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new PrivateTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    false,
+                    stackSizeLimit,
+                    Account.ISTANBUL_VERSION))
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
@@ -291,7 +323,7 @@ public abstract class MainnetProtocolSpecs {
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES,
-                    1))
+                    Account.ISTANBUL_VERSION))
         .name("Istanbul");
   }
 

@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.vm.operations;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.config.StubGenesisConfigOptions;
+import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Gas;
 import tech.pegasys.pantheon.ethereum.core.TestCodeExecutor;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
@@ -84,6 +85,7 @@ public class ConstantinopleSStoreOperationGasCostTest {
     final MessageFrame frame =
         codeExecutor.executeCode(
             code,
+            Account.DEFAULT_VERSION,
             gasLimit,
             account -> account.setStorageValue(UInt256.ZERO, UInt256.of(originalValue)));
     assertThat(frame.getState()).isEqualTo(State.COMPLETED_SUCCESS);
