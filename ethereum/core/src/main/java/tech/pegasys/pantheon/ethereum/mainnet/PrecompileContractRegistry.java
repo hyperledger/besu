@@ -14,23 +14,26 @@ package tech.pegasys.pantheon.ethereum.mainnet;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 
 /** Encapsulates a group of {@link PrecompiledContract}s used together. */
 public class PrecompileContractRegistry {
 
-  private final Map<Address, PrecompiledContract> precompiles;
+  private final Table<Address, Integer, PrecompiledContract> precompiles;
 
   public PrecompileContractRegistry() {
-    this.precompiles = new HashMap<>();
+    this.precompiles = HashBasedTable.create(16, 2);
   }
 
-  public PrecompiledContract get(final Address address) {
-    return precompiles.get(address);
+  public PrecompiledContract get(final Address address, final int contractAccountVersion) {
+    return precompiles.get(address, contractAccountVersion);
   }
 
-  public void put(final Address address, final PrecompiledContract precompile) {
-    precompiles.put(address, precompile);
+  public void put(
+      final Address address,
+      final int contractAccountVersion,
+      final PrecompiledContract precompile) {
+    precompiles.put(address, contractAccountVersion, precompile);
   }
 }

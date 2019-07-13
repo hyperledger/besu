@@ -47,12 +47,14 @@ public class EVM {
   }
 
   public void forEachOperation(
-      final Code code, final BiConsumer<Operation, Integer> operationDelegate) {
+      final Code code,
+      final int contractAccountVersion,
+      final BiConsumer<Operation, Integer> operationDelegate) {
     int pc = 0;
     final int length = code.getSize();
 
     while (pc < length) {
-      final Operation curOp = operationAtOffset(code, pc);
+      final Operation curOp = operationAtOffset(code, contractAccountVersion, pc);
       operationDelegate.accept(curOp, pc);
       pc += curOp.getOpSize();
     }
@@ -60,7 +62,8 @@ public class EVM {
 
   private void executeNextOperation(final MessageFrame frame, final OperationTracer operationTracer)
       throws ExceptionalHaltException {
-    frame.setCurrentOperation(operationAtOffset(frame.getCode(), frame.getPC()));
+    frame.setCurrentOperation(
+        operationAtOffset(frame.getCode(), frame.getContractAccountVersion(), frame.getPC()));
     evaluateExceptionalHaltReasons(frame);
     final Optional<Gas> currentGasCost = calculateGasCost(frame);
     operationTracer.traceExecution(
@@ -135,13 +138,14 @@ public class EVM {
     }
   }
 
-  private Operation operationAtOffset(final Code code, final int offset) {
+  private Operation operationAtOffset(
+      final Code code, final int contractAccountVersion, final int offset) {
     final BytesValue bytecode = code.getBytes();
     // If the length of the program code is shorter than the required offset, halt execution.
     if (offset >= bytecode.size()) {
-      return operations.get(STOP_OPCODE);
+      return operations.get(STOP_OPCODE, contractAccountVersion);
     }
 
-    return operations.getOrDefault(bytecode.get(offset), invalidOperation);
+    return operations.getOrDefault(bytecode.get(offset), contractAccountVersion, invalidOperation);
   }
 }

@@ -39,7 +39,6 @@ public interface Account {
   long DEFAULT_NONCE = 0L;
   Wei DEFAULT_BALANCE = Wei.ZERO;
   int DEFAULT_VERSION = 0;
-  int ISTANBUL_VERSION = 1;
 
   /**
    * The Keccak-256 hash of the account address.
