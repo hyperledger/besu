@@ -27,6 +27,11 @@ public enum JsonRpcError {
   INTERNAL_ERROR(-32603, "Internal error"),
   METHOD_NOT_ENABLED(-32604, "Method not enabled"),
 
+  // eth_sendTransaction specific error message
+  ETH_SEND_TX_NOT_AVAILABLE(
+      -32604,
+      "The method eth_sendTransaction is not supported. Use eth_sendRawTransaction to send a signed transaction to Pantheon."),
+
   // P2P related errors
   P2P_DISABLED(-32000, "P2P has been disabled. This functionality is not available"),
   P2P_NETWORK_NOT_RUNNING(-32000, "P2P network is not running"),
