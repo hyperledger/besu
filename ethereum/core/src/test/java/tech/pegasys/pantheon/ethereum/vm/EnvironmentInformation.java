@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.vm;
 
+import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Gas;
@@ -38,6 +39,8 @@ public class EnvironmentInformation {
   private final Address callerAddress;
 
   private final Code code;
+
+  private final int version;
 
   private final BytesValue data;
 
@@ -72,7 +75,8 @@ public class EnvironmentInformation {
       @JsonProperty("gas") final String gas,
       @JsonProperty("gasPrice") final String gasPrice,
       @JsonProperty("origin") final String origin,
-      @JsonProperty("value") final String value) {
+      @JsonProperty("value") final String value,
+      @JsonProperty("version") final String version) {
     this(
         code,
         0,
@@ -82,7 +86,8 @@ public class EnvironmentInformation {
         data == null ? null : BytesValue.fromHexString(data),
         value == null ? null : Wei.fromHexString(value),
         gasPrice == null ? null : Wei.fromHexString(gasPrice),
-        gas == null ? null : Gas.fromHexString(gas));
+        gas == null ? null : Gas.fromHexString(gas),
+        version == null ? Account.DEFAULT_VERSION : Integer.decode(version));
   }
 
   private EnvironmentInformation(
@@ -94,7 +99,8 @@ public class EnvironmentInformation {
       final BytesValue data,
       final Wei value,
       final Wei gasPrice,
-      final Gas gas) {
+      final Gas gas,
+      final int version) {
     this.code = code;
     this.depth = depth;
     this.accountAddress = accountAddress;
@@ -104,6 +110,7 @@ public class EnvironmentInformation {
     this.value = value;
     this.gasPrice = gasPrice;
     this.gas = gas;
+    this.version = version;
   }
 
   /**
@@ -165,6 +172,10 @@ public class EnvironmentInformation {
     return originAddress;
   }
 
+  public int getVersion() {
+    return version;
+  }
+
   @Override
   public String toString() {
     final StringBuilder builder = new StringBuilder();
@@ -180,7 +191,9 @@ public class EnvironmentInformation {
         .append("\nBlock header: \n  ")
         .append(blockHeader.toString().replaceAll("\n", "\n  "))
         .append("\nCaller: ")
-        .append(callerAddress);
+        .append(callerAddress)
+        .append("\nVersion: ")
+        .append(version);
 
     return builder.toString();
   }

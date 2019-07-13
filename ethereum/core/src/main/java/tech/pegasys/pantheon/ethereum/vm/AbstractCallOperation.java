@@ -172,6 +172,8 @@ public abstract class AbstractCallOperation extends AbstractOperation {
             .address(address(frame))
             .originator(frame.getOriginatorAddress())
             .contract(to)
+            .contractAccountVersion(
+                contract != null ? contract.getVersion() : Account.DEFAULT_VERSION)
             .gasPrice(frame.getGasPrice())
             .inputData(inputData)
             .sender(sender(frame))

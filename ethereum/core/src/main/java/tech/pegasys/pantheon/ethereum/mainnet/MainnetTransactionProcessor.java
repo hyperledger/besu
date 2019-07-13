@@ -48,7 +48,10 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
   private final AbstractMessageProcessor contractCreationProcessor;
 
   private final AbstractMessageProcessor messageCallProcessor;
+
   private final int maxStackSize;
+
+  private final int createContractAccountVersion;
 
   public static class Result implements TransactionProcessor.Result {
 
@@ -150,13 +153,15 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
-      final int maxStackSize) {
+      final int maxStackSize,
+      final int createContractAccountVersion) {
     this.gasCalculator = gasCalculator;
     this.transactionValidator = transactionValidator;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
     this.clearEmptyAccounts = clearEmptyAccounts;
     this.maxStackSize = maxStackSize;
+    this.createContractAccountVersion = createContractAccountVersion;
   }
 
   @Override
@@ -229,6 +234,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .address(contractAddress)
               .originator(senderAddress)
               .contract(contractAddress)
+              .contractAccountVersion(createContractAccountVersion)
               .gasPrice(transaction.getGasPrice())
               .inputData(BytesValue.EMPTY)
               .sender(senderAddress)
@@ -258,6 +264,8 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .address(to)
               .originator(senderAddress)
               .contract(to)
+              .contractAccountVersion(
+                  contract != null ? contract.getVersion() : Account.DEFAULT_VERSION)
               .gasPrice(transaction.getGasPrice())
               .inputData(transaction.getPayload())
               .sender(senderAddress)
