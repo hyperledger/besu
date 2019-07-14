@@ -28,11 +28,9 @@ pantheon --help
 * [Java JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 
 !!!attention
-    Pantheon requires Java 8+ to compile; earlier versions are not supported.
+    Pantheon requires Java 11+ to compile; earlier versions are not supported.
     Pantheon is currently supported only on 64-bit versions of Windows, and requires a 64-bit version of JDK/JRE. 
     We recommend that you also remove any 32-bit JDK/JRE installations.
-    
-    From v1.2, Pantheon will require Java 11.  That is, Pantheon on Java 8 will no longer be supported.
     
 !!! note "Linux Open File Limit"
     If synchronizing to MainNet on Linux or other chains with large data requirements, increase the maximum 
