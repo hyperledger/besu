@@ -2,9 +2,9 @@
 
 ## Prerequisites
 
-* Java 8+
+* Java 11+
 
-## Quick-Start
+## Quick start
 
 ```sh
 git clone --recursive https://github.com/PegasysEng/pantheon
