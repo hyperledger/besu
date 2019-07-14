@@ -208,6 +208,34 @@ Removes a [static node](../Configuring-Pantheon/Networking/Managing-Peers.md#sta
     }
     ```
 
+### admin_changeLogLevel
+
+Change the log level without restarting the client
+
+**Parameters**
+
+`level` - the new log [level](https://logging.apache.org/log4j/2.x/log4j-api/apidocs/org/apache/logging/log4j/Level.html)
+
+**Returns**
+
+`result` : `Success` if the log level has changed; otherwise `error`. 
+
+!!! example
+    ```bash tab="curl HTTP request"
+    curl -X POST --data '{"jsonrpc":"2.0","method":"admin_changeLogLevel","params":["DEBUG"], "id":1}' http://127.0.0.1:8545
+    ```
+    
+    ```bash tab="wscat WS request"
+    {"jsonrpc":"2.0","method":"admin_changeLogLevel","params":["DEBUG"], "id":1}
+    ```
+    
+    ```json tab="JSON result"
+    {
+     "jsonrpc": "2.0",
+     "id": 1,
+     "result": "Success"
+    }
+    ```
 
 ## Web3 Methods
 
