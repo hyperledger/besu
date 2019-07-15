@@ -21,6 +21,8 @@ import tech.pegasys.orion.testutil.OrionTestHarness;
 import tech.pegasys.orion.testutil.OrionTestHarnessFactory;
 import tech.pegasys.pantheon.enclave.types.CreatePrivacyGroupRequest;
 import tech.pegasys.pantheon.enclave.types.DeletePrivacyGroupRequest;
+import tech.pegasys.pantheon.enclave.types.FindPrivacyGroupRequest;
+import tech.pegasys.pantheon.enclave.types.FindPrivacyGroupResponse;
 import tech.pegasys.pantheon.enclave.types.PrivacyGroup;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
@@ -33,8 +35,8 @@ import java.net.URI;
 import java.util.List;
 
 import com.google.common.collect.Lists;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -48,8 +50,8 @@ public class EnclaveTest {
 
   private static OrionTestHarness testHarness;
 
-  @BeforeClass
-  public static void setUpOnce() throws Exception {
+  @Before
+  public void setUpOnce() throws Exception {
     folder.create();
 
     testHarness =
@@ -59,8 +61,8 @@ public class EnclaveTest {
     enclave = new Enclave(testHarness.clientUrl());
   }
 
-  @AfterClass
-  public static void tearDownOnce() {
+  @After
+  public void tearDownOnce() {
     testHarness.getOrion().stop();
   }
 
@@ -124,6 +126,44 @@ public class EnclaveTest {
                 privacyGroupResponse.getPrivacyGroupId(), publicKeys.get(0)));
 
     assertThat(privacyGroupResponse.getPrivacyGroupId()).isEqualTo(response);
+  }
+
+  @Test
+  public void testCreateFindDeleteFindPrivacyGroup() throws Exception {
+    List<String> publicKeys = testHarness.getPublicKeys();
+    String name = "name";
+    String description = "desc";
+    CreatePrivacyGroupRequest privacyGroupRequest =
+        new CreatePrivacyGroupRequest(
+            publicKeys.toArray(new String[0]), publicKeys.get(0), name, description);
+
+    PrivacyGroup privacyGroupResponse = enclave.createPrivacyGroup(privacyGroupRequest);
+
+    assertThat(privacyGroupResponse.getPrivacyGroupId()).isNotNull();
+    assertThat(privacyGroupResponse.getName()).isEqualTo(name);
+    assertThat(privacyGroupResponse.getDescription()).isEqualTo(description);
+    assertThat(privacyGroupResponse.getType()).isEqualTo(PrivacyGroup.Type.PANTHEON);
+
+    FindPrivacyGroupRequest findPrivacyGroupRequest =
+        new FindPrivacyGroupRequest(publicKeys.toArray(new String[0]));
+    FindPrivacyGroupResponse[] findPrivacyGroupResponse =
+        enclave.findPrivacyGroup(findPrivacyGroupRequest);
+
+    assertThat(findPrivacyGroupResponse.length).isEqualTo(1);
+    assertThat(findPrivacyGroupResponse[0].privacyGroupId())
+        .isEqualTo(privacyGroupResponse.getPrivacyGroupId());
+
+    DeletePrivacyGroupRequest deletePrivacyGroupRequest =
+        new DeletePrivacyGroupRequest(privacyGroupResponse.getPrivacyGroupId(), publicKeys.get(0));
+
+    String response = enclave.deletePrivacyGroup(deletePrivacyGroupRequest);
+
+    assertThat(privacyGroupResponse.getPrivacyGroupId()).isEqualTo(response);
+
+    findPrivacyGroupRequest = new FindPrivacyGroupRequest(publicKeys.toArray(new String[0]));
+    findPrivacyGroupResponse = enclave.findPrivacyGroup(findPrivacyGroupRequest);
+
+    assertThat(findPrivacyGroupResponse.length).isEqualTo(0);
   }
 
   @Test

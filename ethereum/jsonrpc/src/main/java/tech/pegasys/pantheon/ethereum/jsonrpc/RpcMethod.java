@@ -38,6 +38,7 @@ public enum RpcMethod {
   EEA_GET_TRANSACTION_RECEIPT("eea_getTransactionReceipt"),
   EEA_CREATE_PRIVACY_GROUP("eea_createPrivacyGroup"),
   EEA_DELETE_PRIVACY_GROUP("eea_deletePrivacyGroup"),
+  EEA_FIND_PRIVACY_GROUP("eea_findPrivacyGroup"),
   EEA_SEND_RAW_TRANSACTION("eea_sendRawTransaction"),
   ETH_ACCOUNTS("eth_accounts"),
   ETH_BLOCK_NUMBER("eth_blockNumber"),
