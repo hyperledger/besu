@@ -114,7 +114,7 @@ public class TrieNodeDecoderTest {
     assertThat(depth0And1Nodes.get(0).getHash()).isEqualTo(rootNode.getHash());
     // Subsequent nodes should be children of root node
     List<Bytes32> expectedNodesHashes =
-        rootNode.getChildren().get().stream()
+        rootNode.getChildren().stream()
             .filter(n -> !Objects.equals(n, NullNode.instance()))
             .map(Node::getHash)
             .collect(Collectors.toList());

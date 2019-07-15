@@ -28,7 +28,7 @@ public interface Node<V> {
 
   Optional<V> getValue();
 
-  Optional<List<Node<V>>> getChildren();
+  List<Node<V>> getChildren();
 
   BytesValue getRlp();
 

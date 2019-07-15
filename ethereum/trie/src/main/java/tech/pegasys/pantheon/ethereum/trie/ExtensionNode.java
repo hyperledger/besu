@@ -64,8 +64,8 @@ class ExtensionNode<V> implements Node<V> {
   }
 
   @Override
-  public Optional<List<Node<V>>> getChildren() {
-    return Optional.of(Collections.singletonList(child));
+  public List<Node<V>> getChildren() {
+    return Collections.singletonList(child);
   }
 
   public Node<V> getChild() {
