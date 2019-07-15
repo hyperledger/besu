@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.mainnet;
 
+import static tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSpecs.ISTANBUL_ACCOUNT_VERSION;
+
 import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.vm.EVM;
 import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
@@ -30,6 +32,7 @@ import tech.pegasys.pantheon.ethereum.vm.operations.CallDataSizeOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.CallOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.CallValueOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.CallerOperation;
+import tech.pegasys.pantheon.ethereum.vm.operations.ChainIdOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.CodeCopyOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.CodeSizeOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.CoinbaseOperation;
@@ -91,6 +94,10 @@ import tech.pegasys.pantheon.ethereum.vm.operations.SubOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.SwapOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.TimestampOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.XorOperation;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+
+import java.math.BigInteger;
 
 /** Provides EVMs supporting the appropriate operations for mainnet hard forks. */
 abstract class MainnetEvmRegistries {
@@ -127,10 +134,10 @@ abstract class MainnetEvmRegistries {
     return new EVM(registry, new InvalidOperation(gasCalculator));
   }
 
-  static EVM istanbul(final GasCalculator gasCalculator) {
+  static EVM istanbul(final GasCalculator gasCalculator, final BigInteger chainId) {
     final OperationRegistry registry = new OperationRegistry(2);
 
-    registerIstanbulOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION);
+    registerIstanbulOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION, chainId);
 
     return new EVM(registry, new InvalidOperation(gasCalculator));
   }
@@ -257,8 +264,13 @@ abstract class MainnetEvmRegistries {
   private static void registerIstanbulOpcodes(
       final OperationRegistry registry,
       final GasCalculator gasCalculator,
-      final int accountVersion) {
+      final int accountVersion,
+      final BigInteger chainId) {
     registerConstantinopleOpcodes(registry, gasCalculator, accountVersion);
-    registerConstantinopleOpcodes(registry, gasCalculator, 1);
+    registerConstantinopleOpcodes(registry, gasCalculator, ISTANBUL_ACCOUNT_VERSION);
+    registry.put(
+        new ChainIdOperation(gasCalculator, Bytes32.leftPad(BytesValue.of(chainId.toByteArray()))),
+        ISTANBUL_ACCOUNT_VERSION);
+    registerConstantinopleOpcodes(registry, gasCalculator, ISTANBUL_ACCOUNT_VERSION);
   }
 }
