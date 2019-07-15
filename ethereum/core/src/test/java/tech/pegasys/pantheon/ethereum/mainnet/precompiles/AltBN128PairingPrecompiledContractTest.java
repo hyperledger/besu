@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.mainnet.precompiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.ethereum.core.Gas;
 import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -29,11 +30,20 @@ public class AltBN128PairingPrecompiledContractTest {
 
   @Mock MessageFrame messageFrame;
   @Mock GasCalculator gasCalculator;
-  final AltBN128PairingPrecompiledContract precompile =
-      new AltBN128PairingPrecompiledContract(gasCalculator);
+
+  private final AltBN128PairingPrecompiledContract byzantiumContract =
+      AltBN128PairingPrecompiledContract.byzantium(gasCalculator);
+  private final AltBN128PairingPrecompiledContract istanbulContract =
+      AltBN128PairingPrecompiledContract.istanbul(gasCalculator);
 
   @Test
   public void compute_validPoints() {
+    final BytesValue input = validPointBytes();
+    final BytesValue result = byzantiumContract.compute(input, messageFrame);
+    assertThat(result).isEqualTo(AltBN128PairingPrecompiledContract.TRUE);
+  }
+
+  public BytesValue validPointBytes() {
     final BytesValue g1Point0 =
         BytesValues.concatenate(
             BytesValue.fromHexString(
@@ -67,9 +77,7 @@ public class AltBN128PairingPrecompiledContractTest {
             BytesValue.fromHexString(
                 "0x12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa"));
 
-    final BytesValue input = BytesValues.concatenate(g1Point0, g2Point0, g1Point1, g2Point1);
-    final BytesValue result = precompile.compute(input, messageFrame);
-    assertThat(result).isEqualTo(AltBN128PairingPrecompiledContract.TRUE);
+    return BytesValues.concatenate(g1Point0, g2Point0, g1Point1, g2Point1);
   }
 
   @Test
@@ -108,7 +116,17 @@ public class AltBN128PairingPrecompiledContractTest {
                 "0x1fbf8045ce3e79b5cde4112d38bcd0efbdb1295d2eefdf58151ae309d7ded7db"));
 
     final BytesValue input = BytesValues.concatenate(g1Point0, g2Point0, g1Point1, g2Point1);
-    final BytesValue result = precompile.compute(input, messageFrame);
+    final BytesValue result = byzantiumContract.compute(input, messageFrame);
     assertThat(result).isNull();
+  }
+
+  @Test
+  public void gasPrice_byzantium() {
+    assertThat(byzantiumContract.gasRequirement(validPointBytes())).isEqualTo(Gas.of(260_000));
+  }
+
+  @Test
+  public void gasPrice_istanbul() {
+    assertThat(istanbulContract.gasRequirement(validPointBytes())).isEqualTo(Gas.of(113_000));
   }
 }
