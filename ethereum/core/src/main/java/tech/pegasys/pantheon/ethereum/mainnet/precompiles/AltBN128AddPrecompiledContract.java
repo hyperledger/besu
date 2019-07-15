@@ -26,13 +26,24 @@ import java.util.Arrays;
 
 public class AltBN128AddPrecompiledContract extends AbstractPrecompiledContract {
 
-  public AltBN128AddPrecompiledContract(final GasCalculator gasCalculator) {
+  private final Gas gasCost;
+
+  private AltBN128AddPrecompiledContract(final GasCalculator gasCalculator, final Gas gasCost) {
     super("AltBN128Add", gasCalculator);
+    this.gasCost = gasCost;
+  }
+
+  public static AltBN128AddPrecompiledContract byzantium(final GasCalculator gasCalculator) {
+    return new AltBN128AddPrecompiledContract(gasCalculator, Gas.of(500));
+  }
+
+  public static AltBN128AddPrecompiledContract istanbul(final GasCalculator gasCalculator) {
+    return new AltBN128AddPrecompiledContract(gasCalculator, Gas.of(150));
   }
 
   @Override
   public Gas gasRequirement(final BytesValue input) {
-    return Gas.of(500);
+    return gasCost;
   }
 
   @Override

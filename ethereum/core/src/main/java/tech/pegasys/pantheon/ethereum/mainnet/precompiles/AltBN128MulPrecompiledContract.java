@@ -30,13 +30,24 @@ public class AltBN128MulPrecompiledContract extends AbstractPrecompiledContract 
       new BigInteger(
           "115792089237316195423570985008687907853269984665640564039457584007913129639935");
 
-  public AltBN128MulPrecompiledContract(final GasCalculator gasCalculator) {
-    super("AltBn128Mul", gasCalculator);
+  private final Gas gasCost;
+
+  private AltBN128MulPrecompiledContract(final GasCalculator gasCalculator, final Gas gasCost) {
+    super("AltBN128Mul", gasCalculator);
+    this.gasCost = gasCost;
+  }
+
+  public static AltBN128MulPrecompiledContract byzantium(final GasCalculator gasCalculator) {
+    return new AltBN128MulPrecompiledContract(gasCalculator, Gas.of(40_000));
+  }
+
+  public static AltBN128MulPrecompiledContract istanbul(final GasCalculator gasCalculator) {
+    return new AltBN128MulPrecompiledContract(gasCalculator, Gas.of(8_000));
   }
 
   @Override
   public Gas gasRequirement(final BytesValue input) {
-    return Gas.of(40_000L);
+    return gasCost;
   }
 
   @Override
