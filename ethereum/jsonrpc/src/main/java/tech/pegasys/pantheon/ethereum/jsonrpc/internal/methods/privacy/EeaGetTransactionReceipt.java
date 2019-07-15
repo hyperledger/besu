@@ -39,13 +39,12 @@ import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValues;
 
-import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.base.Charsets;
 import org.apache.logging.log4j.Logger;
 
 public class EeaGetTransactionReceipt implements JsonRpcMethod {
@@ -98,8 +97,7 @@ public class EeaGetTransactionReceipt implements JsonRpcMethod {
       LOG.trace("Received transaction information from Enclave");
 
       final BytesValueRLPInput bytesValueRLPInput =
-          new BytesValueRLPInput(
-              BytesValue.wrap(Base64.getDecoder().decode(receiveResponse.getPayload())), false);
+          new BytesValueRLPInput(BytesValues.fromBase64(receiveResponse.getPayload()), false);
 
       privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
       privacyGroupId = receiveResponse.getPrivacyGroupId();
@@ -114,7 +112,7 @@ public class EeaGetTransactionReceipt implements JsonRpcMethod {
             ? Address.privateContractAddress(
                     privateTransaction.getSender(),
                     privateTransaction.getNonce(),
-                    BytesValue.wrap(privacyGroupId.getBytes(Charsets.UTF_8)))
+                    BytesValues.fromBase64(privacyGroupId))
                 .toString()
             : null;
 

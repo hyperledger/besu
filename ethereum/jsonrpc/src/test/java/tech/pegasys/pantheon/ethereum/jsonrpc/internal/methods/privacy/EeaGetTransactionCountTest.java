@@ -23,13 +23,15 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParamet
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionHandler;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import org.junit.Test;
 
 public class EeaGetTransactionCountTest {
 
   private final JsonRpcParameter parameters = new JsonRpcParameter();
-  private final BytesValue privacyGroupId = BytesValue.wrap("0x123".getBytes(UTF_8));
+  private final String privacyGroupId =
+      BytesValues.asBase64String(BytesValue.wrap("0x123".getBytes(UTF_8)));
 
   private final Address senderAddress =
       Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57");
@@ -39,13 +41,12 @@ public class EeaGetTransactionCountTest {
   public void verifyTransactionCount() {
     final PrivateTransactionHandler privateTransactionHandler =
         mock(PrivateTransactionHandler.class);
-    when(privateTransactionHandler.getSenderNonce(senderAddress, privacyGroupId.toString()))
-        .thenReturn(NONCE);
+    when(privateTransactionHandler.getSenderNonce(senderAddress, privacyGroupId)).thenReturn(NONCE);
 
     final EeaGetTransactionCount eeaGetTransactionCount =
         new EeaGetTransactionCount(parameters, privateTransactionHandler);
 
-    final Object[] params = new Object[] {senderAddress, privacyGroupId.toString()};
+    final Object[] params = new Object[] {senderAddress, privacyGroupId};
     final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getTransactionCount", params);
 
     final JsonRpcSuccessResponse response =

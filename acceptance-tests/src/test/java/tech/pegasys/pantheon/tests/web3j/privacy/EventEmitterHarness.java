@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.tests.web3j.privacy;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils.waitFor;
 import static tech.pegasys.pantheon.tests.web3j.privacy.PrivacyGroup.generatePrivacyGroup;
 
@@ -24,6 +23,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivateTransactionVeri
 import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivateTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.PrivateTransactionBuilder;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -118,8 +118,7 @@ public class EventEmitterHarness {
             .from(privacyNet.getNode(sender).getAddress())
             .to(Address.fromHexString(contractAddress))
             .privateFrom(
-                BytesValue.wrap(
-                    privacyNet.getEnclave(sender).getPublicKeys().get(0).getBytes(UTF_8)))
+                BytesValues.fromBase64(privacyNet.getEnclave(sender).getPublicKeys().get(0)))
             .privateFor(convertNamesToOrionPublicKeys(receivers))
             .keyPair(privacyNet.getNode(sender).keyPair())
             .build(PrivateTransactionBuilder.TransactionType.STORE);
@@ -159,8 +158,7 @@ public class EventEmitterHarness {
             .from(privacyNet.getNode(sender).getAddress())
             .to(Address.fromHexString(contractAddress))
             .privateFrom(
-                BytesValue.wrap(
-                    privacyNet.getEnclave(sender).getPublicKeys().get(0).getBytes(UTF_8)))
+                BytesValues.fromBase64(privacyNet.getEnclave(sender).getPublicKeys().get(0)))
             .privateFor(convertNamesToOrionPublicKeys(receivers))
             .keyPair(privacyNet.getNode(sender).keyPair())
             .build(PrivateTransactionBuilder.TransactionType.GET);
@@ -190,8 +188,7 @@ public class EventEmitterHarness {
             .from(privacyNet.getNode(sender).getAddress())
             .to(null)
             .privateFrom(
-                BytesValue.wrap(
-                    privacyNet.getEnclave(sender).getPublicKeys().get(0).getBytes(UTF_8)))
+                BytesValues.fromBase64(privacyNet.getEnclave(sender).getPublicKeys().get(0)))
             .privateFor(convertNamesToOrionPublicKeys(receivers))
             .keyPair(privacyNet.getNode(sender).keyPair())
             .build(PrivateTransactionBuilder.TransactionType.CREATE_CONTRACT);
@@ -229,9 +226,7 @@ public class EventEmitterHarness {
 
   private List<BytesValue> convertNamesToOrionPublicKeys(final String... toNodeNames) {
     return Arrays.stream(toNodeNames)
-        .map(
-            name ->
-                BytesValue.wrap(privacyNet.getEnclave(name).getPublicKeys().get(0).getBytes(UTF_8)))
+        .map(name -> BytesValues.fromBase64(privacyNet.getEnclave(name).getPublicKeys().get(0)))
         .collect(Collectors.toList());
   }
 

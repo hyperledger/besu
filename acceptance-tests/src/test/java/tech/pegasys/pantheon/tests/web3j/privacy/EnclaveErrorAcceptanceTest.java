@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.tests.web3j.privacy;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static tech.pegasys.pantheon.tests.web3j.privacy.PrivacyGroup.generatePrivacyGroup;
@@ -23,6 +22,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivacyNet;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.PrivateTransactionBuilder;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.PrivateTransactionBuilder.TransactionType;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.util.Base64;
 
@@ -32,7 +32,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class PrivateTxEnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
+public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
   protected static final String CONTRACT_NAME = "Event Emitter";
 
   private EventEmitterHarness eventEmitterHarness;
@@ -54,7 +54,8 @@ public class PrivateTxEnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBa
             privateTransactionVerifier,
             eea);
     wrongPublicKey =
-        BytesValue.wrap(Base64.getEncoder().encode(Box.KeyPair.random().publicKey().bytesArray()));
+        BytesValues.fromBase64(
+            Base64.getEncoder().encode(Box.KeyPair.random().publicKey().bytesArray()));
   }
 
   @Test
@@ -91,8 +92,7 @@ public class PrivateTxEnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBa
             .nonce(privacyNet.getNode("Alice").nextNonce(privacyGroup))
             .from(privacyNet.getNode("Alice").getAddress())
             .privateFrom(
-                BytesValue.wrap(
-                    privacyNet.getEnclave("Alice").getPublicKeys().get(0).getBytes(UTF_8)))
+                BytesValues.fromBase64(privacyNet.getEnclave("Alice").getPublicKeys().get(0)))
             .privateFor(Lists.newArrayList(wrongPublicKey))
             .keyPair(privacyNet.getNode("Alice").keyPair())
             .build(TransactionType.CREATE_CONTRACT);

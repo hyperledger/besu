@@ -16,6 +16,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 /** Static utility methods to work with {@link BytesValue} and {@link MutableBytesValue}. */
 public abstract class BytesValues {
@@ -252,6 +253,18 @@ public abstract class BytesValues {
       return BigInteger.ZERO;
     }
     return new BigInteger(bytes.getArrayUnsafe());
+  }
+
+  public static String asBase64String(final BytesValue bytesValue) {
+    return Base64.getEncoder().encodeToString(bytesValue.extractArray());
+  }
+
+  public static BytesValue fromBase64(final byte[] bytes) {
+    return BytesValue.wrap(Base64.getDecoder().decode(bytes));
+  }
+
+  public static BytesValue fromBase64(final String str) {
+    return BytesValue.wrap(Base64.getDecoder().decode(str));
   }
 
   // In Java9, this could be moved to BytesValue and made private

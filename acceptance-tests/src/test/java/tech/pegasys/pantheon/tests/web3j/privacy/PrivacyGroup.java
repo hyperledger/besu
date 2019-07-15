@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.tests.web3j.privacy;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivacyNet;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +28,6 @@ import org.web3j.rlp.RlpEncoder;
 import org.web3j.rlp.RlpList;
 import org.web3j.rlp.RlpString;
 import org.web3j.rlp.RlpType;
-import org.web3j.utils.Numeric;
 
 public class PrivacyGroup {
   public static BytesValue generatePrivacyGroup(
@@ -47,8 +47,7 @@ public class PrivacyGroup {
             .sorted(Comparator.comparing(Arrays::hashCode))
             .map(RlpString::create)
             .collect(Collectors.toList());
-    return BytesValue.fromHexString(
-        Numeric.toHexString(
-            Base64.getEncoder().encode(Hash.sha3(RlpEncoder.encode(new RlpList(rlpList))))));
+    return BytesValues.fromBase64(
+        Base64.getEncoder().encode(Hash.sha3(RlpEncoder.encode(new RlpList(rlpList)))));
   }
 }
