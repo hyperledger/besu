@@ -105,6 +105,7 @@ public enum JsonRpcError {
   PRIVACY_NOT_ENABLED(-50100, "Privacy is not enabled to get the precompiled address"),
   CREATE_PRIVACY_GROUP_ERROR(-50100, "Error creating privacy group"),
   DELETE_PRIVACY_GROUP_ERROR(-50100, "Error deleting privacy group"),
+  FIND_PRIVACY_GROUP_ERROR(-50100, "Error finding privacy group"),
   VALUE_NOT_ZERO(-50100, "We cannot transfer ether in private transaction yet."),
   DECODE_ERROR(-50100, "Unable to decode the private signed raw transaction"),
 
@@ -131,7 +132,15 @@ public enum JsonRpcError {
   ENCLAVE_UNSUPPORTED_PRIVATE_KEY_TYPE(-50200, "EnclaveUnsupportedPrivateKeyType"),
   ENCLAVE_STORAGE_DECRYPT(-50200, "EnclaveStorageDecrypt"),
   ENCLAVE_PRIVACY_GROUP_CREATION(-50200, "EnclavePrivacyGroupIdCreation"),
-  CREATE_GROUP_INCLUDE_SELF(-50200, "CreatePrivacyGroupShouldIncludeSelf");
+  CREATE_GROUP_INCLUDE_SELF(-50200, "CreatePrivacyGroupShouldIncludeSelf"),
+
+  /** Storing privacy group issue */
+  ENCLAVE_UNABLE_STORE_PRIVACY_GROUP(-50200, "PrivacyGroupNotStored"),
+  ENCLAVE_UNABLE_DELETE_PRIVACY_GROUP(-50200, "PrivacyGroupNotDeleted"),
+  ENCLAVE_UNABLE_PUSH_DELETE_PRIVACY_GROUP(-50200, "PrivacyGroupNotPushed"),
+  ENCLAVE_PRIVACY_GROUP_MISSING(-50200, "PrivacyGroupNotFound"),
+  ENCLAVE_PRIVACY_QUERY_ERROR(-50200, "PrivacyGroupQueryError"),
+  METHOD_UNIMPLEMENTED(-50200, "MethodUnimplemented");
 
   private final int code;
   private final String message;

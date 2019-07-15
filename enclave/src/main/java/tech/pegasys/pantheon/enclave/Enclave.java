@@ -15,6 +15,8 @@ package tech.pegasys.pantheon.enclave;
 import tech.pegasys.pantheon.enclave.types.CreatePrivacyGroupRequest;
 import tech.pegasys.pantheon.enclave.types.DeletePrivacyGroupRequest;
 import tech.pegasys.pantheon.enclave.types.ErrorResponse;
+import tech.pegasys.pantheon.enclave.types.FindPrivacyGroupRequest;
+import tech.pegasys.pantheon.enclave.types.FindPrivacyGroupResponse;
 import tech.pegasys.pantheon.enclave.types.PrivacyGroup;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
@@ -73,6 +75,12 @@ public class Enclave {
 
   public String deletePrivacyGroup(final DeletePrivacyGroupRequest content) throws Exception {
     return executePost(buildPostRequest(JSON, content, "/deletePrivacyGroup"), String.class);
+  }
+
+  public FindPrivacyGroupResponse[] findPrivacyGroup(final FindPrivacyGroupRequest content)
+      throws Exception {
+    Request request = buildPostRequest(JSON, content, "/findPrivacyGroup");
+    return executePost(request, FindPrivacyGroupResponse[].class);
   }
 
   private Request buildPostRequest(
