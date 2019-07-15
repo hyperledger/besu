@@ -85,7 +85,6 @@ nav:
         - Contracts in Genesis: Configuring-Pantheon/Contracts-in-Genesis.md
         - Node Keys: Configuring-Pantheon/Node-Keys.md
         - Accounts for Testing: Configuring-Pantheon/Accounts-for-Testing.md
-        - Logging: Configuring-Pantheon/Logging.md
         - Passing JVM Options: Configuring-Pantheon/Passing-JVM-Options.md
     - Networking:
       - Bootnodes: Configuring-Pantheon/Networking/Bootnodes.md
@@ -121,6 +120,7 @@ nav:
         - Using Wallets for Account Management: Using-Pantheon/Account-Management.md
         - Mining: Using-Pantheon/Mining.md
     - Monitoring:
+        - Logging: Monitoring/Logging.md
         - Monitoring Performance: Monitoring/Monitoring-Performance.md
         - Monitoring Network:
           - Alethio Overview: Monitoring/Alethio/Overview.md

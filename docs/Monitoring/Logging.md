@@ -19,6 +19,10 @@ Use the [`--logging`](../Reference/Pantheon-CLI-Syntax.md#logging) command line 
 the logging verbosity. The [`--logging`](../Reference/Pantheon-CLI-Syntax.md#logging) option changes
 the volume of events displayed in the log. 
 
+!!! tip 
+    Use the [`admin_changeLogLevel`](../Reference/Pantheon-API-Methods.md#admin_changeloglevel) API method
+    to change the log level while Pantheon is running. 
+
 ## Advanced Custom Logging
 
 You can provide your own logging configuration using the standard Log4J2 configuration mechanisms.
