@@ -2,7 +2,12 @@
 
 ### Java 11 Required from v1.2
 
-From v1.2, Pantheon will require Java 11.  That is, Pantheon on Java 8 will no longer be supported.
+From v1.2, Pantheon requires Java 11.  Pantheon on Java 8 is no longer supported.
+
+### Docker Image Migration 
+
+In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://docs.pantheon.pegasys.tech/en/latest/Deploying-Pantheon/High-Availability/)
+for information on options that were previously automatically added to the Pantheon command line. 
 
 ## 1.1.4 
 
