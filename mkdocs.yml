@@ -113,6 +113,7 @@ nav:
         - Transactions:
           - Creating and Sending Transactions: Using-Pantheon/Transactions/Transactions.md
           - Transaction Pool: Using-Pantheon/Transactions/Transaction-Pool.md
+          - Vadidating Transactions: Using-Pantheon/Transactions/Transaction-Validation.md
         - Using Truffle with Pantheon: Using-Pantheon/Truffle.md
         - Events and Logs:
           - Overview: Using-Pantheon/Events-and-Logs.md
