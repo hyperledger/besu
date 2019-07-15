@@ -27,8 +27,14 @@ import java.util.Optional;
 
 public class SStoreOperation extends AbstractOperation {
 
-  public SStoreOperation(final GasCalculator gasCalculator) {
+  public static final Gas FRONTIER_MINIMUM = Gas.ZERO;
+  public static final Gas EIP_1706_MINIMUM = Gas.of(2300);
+
+  private final Gas minumumGasRemaining;
+
+  public SStoreOperation(final GasCalculator gasCalculator, final Gas minumumGasRemaining) {
     super(0x55, "SSTORE", 2, 0, false, 1, gasCalculator);
+    this.minumumGasRemaining = minumumGasRemaining;
   }
 
   @Override
@@ -59,8 +65,12 @@ public class SStoreOperation extends AbstractOperation {
       final MessageFrame frame,
       final EnumSet<ExceptionalHaltReason> previousReasons,
       final EVM evm) {
-    return frame.isStatic()
-        ? Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE)
-        : Optional.empty();
+    if (frame.isStatic()) {
+      return Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+    } else if (frame.getRemainingGas().compareTo(minumumGasRemaining) < 0) {
+      return Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS);
+    } else {
+      return Optional.empty();
+    }
   }
 }
