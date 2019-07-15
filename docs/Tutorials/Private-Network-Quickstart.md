@@ -58,34 +58,42 @@ When the process ends, it lists the running services:
     *************************************
     List endpoints and services
     ----------------------------------
-            Name                       Command               State                              Ports                           
-    -----------------------------------------------------------------------------------------------------------------------------
-    quickstart_bootnode_1    /opt/pantheon/bootnode_sta ...   Up      30303/tcp, 8545/tcp, 8546/tcp                              
-    quickstart_explorer_1    nginx -g daemon off;             Up      0.0.0.0:32770->80/tcp                                      
-    quickstart_minernode_1   /opt/pantheon/node_start.s ...   Up      30303/tcp, 8545/tcp, 8546/tcp                              
-    quickstart_node_1        /opt/pantheon/node_start.s ...   Up      30303/tcp, 8545/tcp, 8546/tcp                              
-    quickstart_node_2        /opt/pantheon/node_start.s ...   Up      30303/tcp, 8545/tcp, 8546/tcp                              
-    quickstart_node_3        /opt/pantheon/node_start.s ...   Up      30303/tcp, 8545/tcp, 8546/tcp                              
-    quickstart_node_4        /opt/pantheon/node_start.s ...   Up      30303/tcp, 8545/tcp, 8546/tcp                              
-    quickstart_rpcnode_1     /opt/pantheon/node_start.s ...   Up      30303/tcp, 0.0.0.0:32769->8545/tcp, 0.0.0.0:32768->8546/tcp
-    ```
+                  Name                            Command               State               Ports
+    ---------------------------------------------------------------------------------------------------------
+    pantheon-quickstart_bootnode_1     /opt/pantheon/bootnode_sta ...   Up      30303/tcp, 8545/tcp, 8546/tcp
+    pantheon-quickstart_explorer_1     nginx -g daemon off;             Up      0.0.0.0:32768->80/tcp
+    pantheon-quickstart_grafana_1      /run.sh                          Up      3000/tcp
+    pantheon-quickstart_minernode_1    /opt/pantheon/node_start.s ...   Up      30303/tcp, 8545/tcp, 8546/tcp
+    pantheon-quickstart_node_1         /opt/pantheon/node_start.s ...   Up      30303/tcp, 8545/tcp, 8546/tcp
+    pantheon-quickstart_node_2         /opt/pantheon/node_start.s ...   Up      30303/tcp, 8545/tcp, 8546/tcp
+    pantheon-quickstart_node_3         /opt/pantheon/node_start.s ...   Up      30303/tcp, 8545/tcp, 8546/tcp
+    pantheon-quickstart_node_4         /opt/pantheon/node_start.s ...   Up      30303/tcp, 8545/tcp, 8546/tcp
+    pantheon-quickstart_prometheus_1   /bin/prometheus --config.f ...   Up      9090/tcp
+    pantheon-quickstart_rpcnode_1      /opt/pantheon/node_start.s ...   Up      30303/tcp, 8545/tcp, 8546/tcp
+    ``` 
 
 Followed by a list of the endpoints:
 
 !!! example "Endpoint list example"
     ```log
     ****************************************************************
-    JSON-RPC HTTP service endpoint      : http://localhost:32770/jsonrpc   *
-    JSON-RPC WebSocket service endpoint : ws://localhost:32770/jsonws   *
-    Web block explorer address          : http://localhost:32770   *                                                                             
+    JSON-RPC HTTP service endpoint      : http://localhost:32768/jsonrpc
+    JSON-RPC WebSocket service endpoint : ws://localhost:32768/jsonws
+    GraphQL HTTP service endpoint       : http://localhost:32768/graphql
+    Web block explorer address          : http://localhost:32768
+    Prometheus address                  : http://localhost:32768/prometheus/graph
+    Grafana address                     : http://localhost:32768/grafana-dashboard                                                                        
     ****************************************************************
     ```
 
 - Use the **JSON-RPC HTTP service endpoint** to access the RPC node service from your Dapp or from cryptocurrency
 wallets such as Metamask.
 - Use the **JSON-RPC WebSocket service endpoint** to access the web socket node service from your Dapp.
+- Use the **GraphQL HTTP service endpoint** to access the [HTTP GraphQL](../Pantheon-API/GraphQL.md) node service from your Dapp.
 - Use the **Web block explorer address** to display the block explorer web application. View the block explorer by
 entering the URL in your web browser.
+- Use the **Prometheus address** to access the [Prometheus dashboard](../Monitoring/Monitoring-Performance.md).
+- Use the **Grafana address** to access the [Grafana dashboard](https://grafana.com/dashboards/10273).
 
 To display the list of endpoints again, run:
 
@@ -95,7 +103,7 @@ To display the list of endpoints again, run:
 
 ## Block Explorer
 
-This tutorial uses the [Alethio](https://aleth.io/) light block explorer.
+This tutorial uses the [Alethio Ethereum Lite Explorer](https://lite-explorer.aleth.io/).
 
 ### Run the Block Explorer
 
@@ -118,6 +126,19 @@ You can search for a specific block, transaction hash, or address by clicking th
 
 ![Explorer Search](../Getting-Started/ExplorerSearch.png)
 
+
+## Monitoring nodes with Prometheus and Grafana
+
+The quickstart also includes Prometheus and Grafana monitoring tools to let you visualise the nodes 
+health and usage. You can directly access these tools from your browser at the addresses displayed 
+in the endpoint list.
+
+For more details on how to configure and use these tools for your own nodes, refer to our 
+[performances monitoring documentation](../Monitoring/Monitoring-Performance.md), 
+as well as [Prometheus documentation](https://prometheus.io/docs/introduction/overview/)
+and [Grafana documentation](https://grafana.com/docs/).
+
+![Grafana](grafana.png)
 
 ## Run JSON-RPC Requests 
 
