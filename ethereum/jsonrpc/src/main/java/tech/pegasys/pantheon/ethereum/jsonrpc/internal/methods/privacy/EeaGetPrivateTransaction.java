@@ -26,9 +26,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransaction;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
-
-import java.util.Base64;
+import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import org.apache.logging.log4j.Logger;
 
@@ -56,7 +54,7 @@ public class EeaGetPrivateTransaction implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    LOG.trace("Executing {}", RpcMethod.EEA_GET_TRANSACTION_RECEIPT.getMethodName());
+    LOG.trace("Executing {}", RpcMethod.EEA_GET_PRIVATE_TRANSACTION.getMethodName());
     final String enclaveKey = parameters.required(request.getParams(), 0, String.class);
     try {
       ReceiveResponse receiveResponse =
@@ -64,8 +62,7 @@ public class EeaGetPrivateTransaction implements JsonRpcMethod {
       LOG.trace("Received transaction information from Enclave");
 
       final BytesValueRLPInput bytesValueRLPInput =
-          new BytesValueRLPInput(
-              BytesValue.wrap(Base64.getDecoder().decode(receiveResponse.getPayload())), false);
+          new BytesValueRLPInput(BytesValues.fromBase64(receiveResponse.getPayload()), false);
 
       final PrivateTransaction privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
       return new JsonRpcSuccessResponse(request.getId(), privateTransaction);
