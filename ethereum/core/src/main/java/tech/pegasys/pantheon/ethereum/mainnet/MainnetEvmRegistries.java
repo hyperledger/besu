@@ -194,7 +194,8 @@ abstract class MainnetEvmRegistries {
     registry.put(new MStoreOperation(gasCalculator), accountVersion);
     registry.put(new MStore8Operation(gasCalculator), accountVersion);
     registry.put(new SLoadOperation(gasCalculator), accountVersion);
-    registry.put(new SStoreOperation(gasCalculator), accountVersion);
+    registry.put(
+        new SStoreOperation(gasCalculator, SStoreOperation.FRONTIER_MINIMUM), accountVersion);
     registry.put(new JumpOperation(gasCalculator), accountVersion);
     registry.put(new JumpiOperation(gasCalculator), accountVersion);
     registry.put(new PCOperation(gasCalculator), accountVersion);
@@ -267,10 +268,17 @@ abstract class MainnetEvmRegistries {
       final int accountVersion,
       final BigInteger chainId) {
     registerConstantinopleOpcodes(registry, gasCalculator, accountVersion);
+    registry.put(
+        new SStoreOperation(gasCalculator, SStoreOperation.EIP_1706_MINIMUM),
+        Account.DEFAULT_VERSION);
+
     registerConstantinopleOpcodes(registry, gasCalculator, ISTANBUL_ACCOUNT_VERSION);
     registry.put(
         new ChainIdOperation(gasCalculator, Bytes32.leftPad(BytesValue.of(chainId.toByteArray()))),
         ISTANBUL_ACCOUNT_VERSION);
     registerConstantinopleOpcodes(registry, gasCalculator, ISTANBUL_ACCOUNT_VERSION);
+    registry.put(
+        new SStoreOperation(gasCalculator, SStoreOperation.EIP_1706_MINIMUM),
+        MainnetProtocolSpecs.ISTANBUL_ACCOUNT_VERSION);
   }
 }
