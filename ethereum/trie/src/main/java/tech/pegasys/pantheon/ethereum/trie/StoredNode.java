@@ -65,7 +65,7 @@ class StoredNode<V> implements Node<V> {
   }
 
   @Override
-  public Optional<List<Node<V>>> getChildren() {
+  public List<Node<V>> getChildren() {
     return load().getChildren();
   }
 

@@ -57,7 +57,7 @@ public class TrieNodeDecoder {
     nodes.add(node);
 
     final List<Node<BytesValue>> toProcess = new ArrayList<>();
-    node.getChildren().ifPresent(toProcess::addAll);
+    toProcess.addAll(node.getChildren());
     while (!toProcess.isEmpty()) {
       final Node<BytesValue> currentNode = toProcess.remove(0);
       if (Objects.equals(NullNode.instance(), currentNode)) {
@@ -68,7 +68,7 @@ public class TrieNodeDecoder {
 
       if (!currentNode.isReferencedByHash()) {
         // If current node is inlined, that means we can process its children
-        currentNode.getChildren().ifPresent(toProcess::addAll);
+        toProcess.addAll(currentNode.getChildren());
       }
     }
 
@@ -140,7 +140,7 @@ public class TrieNodeDecoder {
       final Node<BytesValue> nextNode = currentNodes.remove(0);
 
       final List<Node<BytesValue>> children = new ArrayList<>();
-      nextNode.getChildren().ifPresent(children::addAll);
+      children.addAll(nextNode.getChildren());
       while (!children.isEmpty()) {
         Node<BytesValue> child = children.remove(0);
         if (Objects.equals(child, NullNode.instance())) {

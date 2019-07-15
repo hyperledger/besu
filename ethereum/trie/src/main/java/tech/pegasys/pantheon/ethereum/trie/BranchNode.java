@@ -76,8 +76,8 @@ class BranchNode<V> implements Node<V> {
   }
 
   @Override
-  public Optional<List<Node<V>>> getChildren() {
-    return Optional.of(Collections.unmodifiableList(children));
+  public List<Node<V>> getChildren() {
+    return Collections.unmodifiableList(children);
   }
 
   public Node<V> child(final byte index) {

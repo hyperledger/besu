@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.trie;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,8 +51,8 @@ class NullNode<V> implements Node<V> {
   }
 
   @Override
-  public Optional<List<Node<V>>> getChildren() {
-    return Optional.empty();
+  public List<Node<V>> getChildren() {
+    return Collections.emptyList();
   }
 
   @Override
