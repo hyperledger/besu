@@ -22,7 +22,7 @@ public class RlpxConfigurationTest {
   public void getMaxRemotelyInitiatedConnections_remoteLimitsDisabled() {
     final RlpxConfiguration config =
         RlpxConfiguration.create()
-            .setFractionRemoteWireConnectionsAllowed(.5)
+            .setFractionRemoteWireConnectionsAllowed(.5f)
             .setLimitRemoteWireConnectionsEnabled(false)
             .setMaxPeers(20);
 
@@ -33,7 +33,7 @@ public class RlpxConfigurationTest {
   public void getMaxRemotelyInitiatedConnections_remoteLimitsEnabled() {
     final RlpxConfiguration config =
         RlpxConfiguration.create()
-            .setFractionRemoteWireConnectionsAllowed(.5)
+            .setFractionRemoteWireConnectionsAllowed(.5f)
             .setLimitRemoteWireConnectionsEnabled(true)
             .setMaxPeers(20);
 
@@ -44,7 +44,7 @@ public class RlpxConfigurationTest {
   public void getMaxRemotelyInitiatedConnections_remoteLimitsEnabledWithNonIntegerRatio() {
     final RlpxConfiguration config =
         RlpxConfiguration.create()
-            .setFractionRemoteWireConnectionsAllowed(.50)
+            .setFractionRemoteWireConnectionsAllowed(.5f)
             .setLimitRemoteWireConnectionsEnabled(true)
             .setMaxPeers(25);
 
@@ -55,7 +55,7 @@ public class RlpxConfigurationTest {
   public void getMaxRemotelyInitiatedConnections_remoteLimitsEnabledRoundsToZero() {
     final RlpxConfiguration config =
         RlpxConfiguration.create()
-            .setFractionRemoteWireConnectionsAllowed(.5)
+            .setFractionRemoteWireConnectionsAllowed(.5f)
             .setLimitRemoteWireConnectionsEnabled(true)
             .setMaxPeers(1);
 

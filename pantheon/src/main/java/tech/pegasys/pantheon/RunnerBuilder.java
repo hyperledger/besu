@@ -113,7 +113,7 @@ public class RunnerBuilder {
   private NatMethod natMethod = NatMethod.NONE;
   private int maxPeers;
   private boolean limitRemoteWireConnectionsEnabled = false;
-  private double fractionRemoteConnectionsAllowed;
+  private float fractionRemoteConnectionsAllowed;
   private EthNetworkConfig ethNetworkConfig;
 
   private JsonRpcConfiguration jsonRpcConfiguration;
@@ -183,7 +183,7 @@ public class RunnerBuilder {
   }
 
   public RunnerBuilder fractionRemoteConnectionsAllowed(
-      final double fractionRemoteConnectionsAllowed) {
+      final float fractionRemoteConnectionsAllowed) {
     this.fractionRemoteConnectionsAllowed = fractionRemoteConnectionsAllowed;
     return this;
   }
