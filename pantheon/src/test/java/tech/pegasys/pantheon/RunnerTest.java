@@ -179,7 +179,6 @@ public final class RunnerTest {
             .webSocketConfiguration(aheadWebSocketConfiguration)
             .metricsConfiguration(aheadMetricsConfiguration)
             .dataDir(dbAhead)
-            .fractionRemoteConnectionsAllowed(1.0)
             .build();
     try {
 

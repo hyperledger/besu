@@ -22,13 +22,13 @@ import java.util.List;
 import java.util.Objects;
 
 public class RlpxConfiguration {
-  public static final float DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED = 0.5f;
+  public static final float DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED = 0.6f;
   private String clientId = "TestClient/1.0.0";
   private String bindHost = "0.0.0.0";
   private int bindPort = 30303;
   private int maxPeers = 25;
   private boolean limitRemoteWireConnectionsEnabled = false;
-  private double fractionRemoteWireConnectionsAllowed = DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED;
+  private float fractionRemoteWireConnectionsAllowed = DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED;
   private List<SubProtocol> supportedProtocols = Collections.emptyList();
 
   public static RlpxConfiguration create() {
@@ -92,7 +92,7 @@ public class RlpxConfiguration {
   }
 
   public RlpxConfiguration setFractionRemoteWireConnectionsAllowed(
-      final double fractionRemoteWireConnectionsAllowed) {
+      final float fractionRemoteWireConnectionsAllowed) {
     checkState(
         fractionRemoteWireConnectionsAllowed >= 0.0 && fractionRemoteWireConnectionsAllowed <= 1.0,
         "Fraction of remote connections allowed must be between 0.0 and 1.0 (inclusive).");

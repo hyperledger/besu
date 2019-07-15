@@ -323,7 +323,7 @@ public class RlpxAgentTest {
   public void incomingConnection_afterMaxRemotelyInitiatedConnectionsHaveBeenEstablished() {
     final int maxPeers = 10;
     final int maxRemotePeers = 8;
-    final double maxRemotePeersFraction = (double) maxRemotePeers / (double) maxPeers;
+    final float maxRemotePeersFraction = (float) maxRemotePeers / (float) maxPeers;
     config.setLimitRemoteWireConnectionsEnabled(true);
     config.setFractionRemoteWireConnectionsAllowed(maxRemotePeersFraction);
     startAgentWithMaxPeers(maxPeers);
@@ -347,7 +347,7 @@ public class RlpxAgentTest {
   public void connect_afterMaxRemotelyInitiatedConnectionsHaveBeenEstablished() {
     final int maxPeers = 10;
     final int maxRemotePeers = 8;
-    final double maxRemotePeersFraction = (double) maxRemotePeers / (double) maxPeers;
+    final float maxRemotePeersFraction = (float) maxRemotePeers / (float) maxPeers;
     config.setLimitRemoteWireConnectionsEnabled(true);
     config.setFractionRemoteWireConnectionsAllowed(maxRemotePeersFraction);
     startAgentWithMaxPeers(maxPeers);
@@ -373,7 +373,7 @@ public class RlpxAgentTest {
   @Test
   public void incomingConnection_withMaxRemotelyInitiatedConnectionsAt100Percent() {
     final int maxPeers = 10;
-    final double maxRemotePeersFraction = 1.0;
+    final float maxRemotePeersFraction = 1.0f;
     config.setLimitRemoteWireConnectionsEnabled(true);
     config.setFractionRemoteWireConnectionsAllowed(maxRemotePeersFraction);
     startAgentWithMaxPeers(maxPeers);
@@ -390,7 +390,7 @@ public class RlpxAgentTest {
   @Test
   public void connect_withMaxRemotelyInitiatedConnectionsAt100Percent() {
     final int maxPeers = 10;
-    final double maxRemotePeersFraction = 1.0;
+    final float maxRemotePeersFraction = 1.0f;
     config.setLimitRemoteWireConnectionsEnabled(true);
     config.setFractionRemoteWireConnectionsAllowed(maxRemotePeersFraction);
     startAgentWithMaxPeers(maxPeers);
@@ -408,7 +408,7 @@ public class RlpxAgentTest {
   @Test
   public void incomingConnection_withMaxRemotelyInitiatedConnectionsAtZeroPercent() {
     final int maxPeers = 10;
-    final double maxRemotePeersFraction = 0.0;
+    final float maxRemotePeersFraction = 0.0f;
     config.setLimitRemoteWireConnectionsEnabled(true);
     config.setFractionRemoteWireConnectionsAllowed(maxRemotePeersFraction);
     startAgentWithMaxPeers(maxPeers);
@@ -423,7 +423,7 @@ public class RlpxAgentTest {
   @Test
   public void connect_withMaxRemotelyInitiatedConnectionsAtZeroPercent() {
     final int maxPeers = 10;
-    final double maxRemotePeersFraction = 0.0;
+    final float maxRemotePeersFraction = 0.0f;
     config.setLimitRemoteWireConnectionsEnabled(true);
     config.setFractionRemoteWireConnectionsAllowed(maxRemotePeersFraction);
     startAgentWithMaxPeers(maxPeers);
@@ -442,7 +442,7 @@ public class RlpxAgentTest {
   public void incomingConnection_succeedsForPrivilegedPeerWhenMaxRemoteConnectionsExceeded() {
     final int maxPeers = 5;
     final int maxRemotePeers = 3;
-    final double maxRemotePeersFraction = (double) maxRemotePeers / (double) maxPeers;
+    final float maxRemotePeersFraction = (float) maxRemotePeers / (float) maxPeers;
     config.setLimitRemoteWireConnectionsEnabled(true);
     config.setFractionRemoteWireConnectionsAllowed(maxRemotePeersFraction);
     startAgentWithMaxPeers(maxPeers);

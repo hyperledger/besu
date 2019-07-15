@@ -241,17 +241,17 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--remote-connections-limit-enabled"},
       description =
-          "Set to limit the fraction of wire connections initiated by peers. (default: ${DEFAULT-VALUE})")
-  private final Boolean isLimitRemoteWireConnectionsEnabled = false;
+          "Whether to limit the number of P2P connections initiated remotely. (default: ${DEFAULT-VALUE})")
+  private final Boolean isLimitRemoteWireConnectionsEnabled = true;
 
   @Option(
-      names = {"--remote-connections-percentage"},
+      names = {"--max-remote-connections-percentage"},
       paramLabel = MANDATORY_DOUBLE_FORMAT_HELP,
       description =
-          "Percentage of remote wire connections that can be established. Must be between 0 and 100 inclusive. (default: ${DEFAULT-VALUE})",
+          "The maximum percentage of P2P connections that can be initiated remotely. Must be between 0 and 100 inclusive. (default: ${DEFAULT-VALUE})",
       arity = "1",
       converter = PercentageConverter.class)
-  private final Integer remoteConnectionsPercentage =
+  private final Integer maxRemoteConnectionsPercentage =
       Fraction.fromFloat(DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED)
           .toPercentage()
           .getValue();
@@ -796,7 +796,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             "--max-peers",
             "--banned-node-id",
             "--banned-node-ids",
-            "--remote-connections-percentage"));
+            "--max-remote-connections-percentage"));
     // Check that mining options are able to work or send an error
     checkOptionDependencies(
         logger,
@@ -1189,7 +1189,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             .maxPeers(maxPeers)
             .limitRemoteWireConnectionsEnabled(isLimitRemoteWireConnectionsEnabled)
             .fractionRemoteConnectionsAllowed(
-                Fraction.fromPercentage(remoteConnectionsPercentage).getValue())
+                Fraction.fromPercentage(maxRemoteConnectionsPercentage).getValue())
             .networkingConfiguration(networkingOptions.toDomainObject())
             .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
