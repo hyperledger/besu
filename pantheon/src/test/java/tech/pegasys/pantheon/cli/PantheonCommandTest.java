@@ -232,7 +232,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     parseCommand("--config-file", tempConfigFile.toString());
 
     final String expectedOutputStart =
-        "Invalid TOML configuration : Unexpected '.', expected a-z, A-Z, 0-9, ', \", a table key, "
+        "Invalid TOML configuration: Unexpected '.', expected a-z, A-Z, 0-9, ', \", a table key, "
             + "a newline, or end-of-input (line 1, column 1)";
     assertThat(commandErrorOutput.toString()).startsWith(expectedOutputStart);
     assertThat(commandOutput.toString()).isEmpty();
@@ -264,7 +264,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     parseCommand("--config-file", tempConfigFile.toString());
 
     final String expectedOutputStart =
-        "Invalid TOML configuration : Unexpected '=', expected ', \", ''', \"\"\", a number, "
+        "Invalid TOML configuration: Unexpected '=', expected ', \", ''', \"\"\", a number, "
             + "a boolean, a date/time, an array, or a table (line 1, column 8)";
     assertThat(commandErrorOutput.toString()).startsWith(expectedOutputStart);
     assertThat(commandOutput.toString()).isEmpty();
@@ -2669,5 +2669,30 @@ public class PantheonCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString())
         .contains(
             "Invalid value for option '--Xincoming-tx-messages-keep-alive-seconds': 'acbd' is not an int");
+  }
+
+  @Test
+  public void tomlThatHasInvalidOptions() throws IOException {
+    assumeTrue(isFullInstantiation());
+
+    final URL configFile = this.getClass().getResource("/complete_config.toml");
+    // update genesis file path, "similar" valid option and add invalid options
+    final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
+    final String updatedConfig =
+        Resources.toString(configFile, UTF_8)
+                .replace("/opt/pantheon/genesis.json", escapeTomlString(genesisFile.toString()))
+                .replace("rpc-http-api", "rpc-http-apis")
+            + System.lineSeparator()
+            + "invalid_option=true"
+            + System.lineSeparator()
+            + "invalid_option2=true";
+
+    final Path toml = createTempFile("toml", updatedConfig.getBytes(UTF_8));
+
+    // Parse it.
+    parseCommand("--config-file", toml.toString());
+
+    assertThat(commandErrorOutput.toString())
+        .contains("Unknown options in TOML configuration file: invalid_option, invalid_option2");
   }
 }
