@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.enclave.Enclave;
@@ -160,7 +159,7 @@ public class EeaGetTransactionReceipt implements JsonRpcMethod {
       final Transaction transaction, final String publicKey) throws Exception {
     LOG.trace("Fetching transaction information from Enclave");
     final ReceiveRequest enclaveRequest =
-        new ReceiveRequest(new String(transaction.getPayload().extractArray(), UTF_8), publicKey);
+        new ReceiveRequest(BytesValues.asBase64String(transaction.getPayload()), publicKey);
     ReceiveResponse enclaveResponse = enclave.receive(enclaveRequest);
     LOG.trace("Received transaction information from Enclave");
     return enclaveResponse;

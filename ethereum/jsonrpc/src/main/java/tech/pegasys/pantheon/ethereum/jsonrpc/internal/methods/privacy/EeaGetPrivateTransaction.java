@@ -24,6 +24,8 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransaction;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
@@ -65,9 +67,15 @@ public class EeaGetPrivateTransaction implements JsonRpcMethod {
           new BytesValueRLPInput(BytesValues.fromBase64(receiveResponse.getPayload()), false);
 
       final PrivateTransaction privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
-      return new JsonRpcSuccessResponse(request.getId(), privateTransaction);
+      if (privateTransaction.getPrivacyGroupId().isPresent()) {
+        return new JsonRpcSuccessResponse(
+            request.getId(), new PrivateTransactionGroupResult(privateTransaction));
+      } else {
+        return new JsonRpcSuccessResponse(
+            request.getId(), new PrivateTransactionLegacyResult(privateTransaction));
+      }
     } catch (Exception e) {
-      LOG.error("Failed to fetch transaction from Enclave with error " + e.getMessage());
+      LOG.error("Failed to fetch private transaction with error " + e.getMessage());
       return new JsonRpcSuccessResponse(request.getId(), null);
     }
   }

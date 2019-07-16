@@ -43,6 +43,7 @@ import tech.pegasys.pantheon.ethereum.vm.OperationTracer;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -168,8 +169,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
     privacyPrecompiledContract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
 
     BytesValue actual =
-        privacyPrecompiledContract.compute(
-            BytesValue.wrap(sr.getKey().getBytes(UTF_8)), messageFrame);
+        privacyPrecompiledContract.compute(BytesValues.fromBase64(sr.getKey()), messageFrame);
 
     assertThat(actual).isEqualTo(BytesValue.fromHexString(DEFAULT_OUTPUT));
   }

@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -24,15 +24,18 @@ import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
-import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy.PrivateTransactionResult;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransaction;
 import tech.pegasys.pantheon.ethereum.privacy.Restriction;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.math.BigInteger;
 import java.util.Base64;
@@ -54,7 +57,7 @@ public class EeaGetPrivateTransactionTest {
               new BigInteger(
                   "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
 
-  private final PrivateTransaction privateTransaction =
+  private final PrivateTransaction.Builder privateTransactionBuilder =
       PrivateTransaction.builder()
           .nonce(0)
           .gasPrice(Wei.of(1000))
@@ -75,25 +78,10 @@ public class EeaGetPrivateTransactionTest {
                       + "daa4f6b2f003d1b0180029"))
           .sender(sender)
           .chainId(BigInteger.valueOf(2018))
-          .privateFrom(
-              BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)))
-          .privateFor(
-              Lists.newArrayList(
-                  BytesValue.wrap("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=".getBytes(UTF_8))))
-          .restriction(Restriction.RESTRICTED)
-          .signAndBuild(KEY_PAIR);
+          .privateFrom(BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
+          .restriction(Restriction.RESTRICTED);
 
-  private final Transaction transaction =
-      Transaction.builder()
-          .nonce(0)
-          .gasPrice(Wei.of(1000))
-          .gasLimit(3000000)
-          .to(Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57"))
-          .value(Wei.ZERO)
-          .payload(BytesValue.wrap("EnclaveKey".getBytes(UTF_8)))
-          .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
-          .chainId(BigInteger.valueOf(2018))
-          .signAndBuild(KEY_PAIR);
+  private final String enclaveKey = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
 
   private final JsonRpcParameter parameters = new JsonRpcParameter();
   private final Enclave enclave = mock(Enclave.class);
@@ -101,10 +89,19 @@ public class EeaGetPrivateTransactionTest {
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
   @Test
-  public void returnsPrivateTransaction() throws Exception {
+  public void returnsPrivateTransactionLegacy() throws Exception {
+    final PrivateTransaction privateTransaction =
+        privateTransactionBuilder
+            .privateFor(
+                Lists.newArrayList(
+                    BytesValues.fromBase64("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
+            .signAndBuild(KEY_PAIR);
+    final PrivateTransactionLegacyResult privateTransactionLegacyResult =
+        new PrivateTransactionLegacyResult(privateTransaction);
+
     final EeaGetPrivateTransaction eeaGetPrivateTransaction =
         new EeaGetPrivateTransaction(enclave, parameters, privacyParameters);
-    final Object[] params = new Object[] {transaction.getPayload().toString()};
+    final Object[] params = new Object[] {enclaveKey};
     final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getPrivateTransaction", params);
 
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
@@ -116,8 +113,36 @@ public class EeaGetPrivateTransactionTest {
                 ""));
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) eeaGetPrivateTransaction.response(request);
-    final PrivateTransaction result = (PrivateTransaction) response.getResult();
+    final PrivateTransactionResult result = (PrivateTransactionResult) response.getResult();
 
-    assertEquals(privateTransaction, result);
+    assertThat(result).isEqualToComparingFieldByField(privateTransactionLegacyResult);
+  }
+
+  @Test
+  public void returnsPrivateTransactionGroup() throws Exception {
+    final PrivateTransaction privateTransaction =
+        privateTransactionBuilder
+            .privacyGroupId(BytesValues.fromBase64("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs="))
+            .signAndBuild(KEY_PAIR);
+    final PrivateTransactionGroupResult privateTransactionGroupResult =
+        new PrivateTransactionGroupResult(privateTransaction);
+
+    final EeaGetPrivateTransaction eeaGetPrivateTransaction =
+        new EeaGetPrivateTransaction(enclave, parameters, privacyParameters);
+    final Object[] params = new Object[] {enclaveKey};
+    final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getPrivateTransaction", params);
+
+    final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
+    privateTransaction.writeTo(bvrlp);
+    when(enclave.receive(any(ReceiveRequest.class)))
+        .thenReturn(
+            new ReceiveResponse(
+                Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()).getBytes(UTF_8),
+                ""));
+    final JsonRpcSuccessResponse response =
+        (JsonRpcSuccessResponse) eeaGetPrivateTransaction.response(request);
+    final PrivateTransactionResult result = (PrivateTransactionResult) response.getResult();
+
+    assertThat(result).isEqualToComparingFieldByField(privateTransactionGroupResult);
   }
 }
