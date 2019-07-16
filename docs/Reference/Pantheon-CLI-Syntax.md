@@ -967,6 +967,31 @@ privacy-url="http://127.0.0.1:8888"
 
 URL on which the [Orion node](../Privacy/Configuring-Privacy.md#4-create-orion-configuration-files) is running.    
 
+### revert-reason-enabled
+
+```bash tab="Syntax"
+--revert-reason-enabled[=<true|false>]
+```
+
+```bash tab="Command Line"
+--revert-reason-enabled=true
+```
+
+```bash tab="Environment Variable"
+REVERT_REASON_ENABLED=true
+```
+
+```bash tab="Configuration File"
+revert-reason-enabled=true
+```
+
+Enables including the [revert reason](../Using-Pantheon/Transactions/Revert-Reason.md) in the transaction 
+receipt. Default is `false`. 
+
+!!! caution 
+    Enabling revert reason may use a significant amount of memory. We do not recommend enabling revert
+    reason when connected to public Ethereum networks. 
+
 ### rpc-http-api
 
 ```bash tab="Syntax"
@@ -1340,7 +1365,6 @@ Show the help message and exit.
 ```bash tab="Environment Variable"
 PANTHEON_LOGGING=DEBUG
 ```
-
 ```bash tab="Example Configration File"
 logging="DEBUG"
 ```

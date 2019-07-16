@@ -2180,6 +2180,9 @@ Object - [Transaction object](Pantheon-API-Objects.md#transaction-object), or `n
 
 Returns the receipt of a transaction by transaction hash. Receipts for pending transactions are not available.
 
+If [revert reason](../Using-Pantheon/Transactions/Revert-Reason.md) is enabled, includes available revert 
+reasons in the response. 
+
 **Parameters**
 
 `DATA` - 32-byte hash of a transaction.
