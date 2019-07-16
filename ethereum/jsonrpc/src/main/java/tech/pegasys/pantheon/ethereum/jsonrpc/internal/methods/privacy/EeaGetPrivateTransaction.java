@@ -28,6 +28,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy.PrivateTr
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransaction;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import org.apache.logging.log4j.Logger;
@@ -60,7 +61,10 @@ public class EeaGetPrivateTransaction implements JsonRpcMethod {
     final String enclaveKey = parameters.required(request.getParams(), 0, String.class);
     try {
       ReceiveResponse receiveResponse =
-          getReceiveResponseFromEnclave(enclaveKey, privacyParameters.getEnclavePublicKey());
+          getReceiveResponseFromEnclave(
+              BytesValues.asBase64String(BytesValue.fromHexString(enclaveKey)),
+              privacyParameters.getEnclavePublicKey());
+
       LOG.trace("Received transaction information from Enclave");
 
       final BytesValueRLPInput bytesValueRLPInput =

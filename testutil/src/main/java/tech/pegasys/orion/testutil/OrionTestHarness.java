@@ -42,6 +42,10 @@ public class OrionTestHarness {
     return orion;
   }
 
+  public void stopOrion() {
+    orion.stop();
+  }
+
   public Config getConfig() {
     return config;
   }
