@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 
 public enum FastSyncError {
   NO_PEERS_AVAILABLE,
-  CHAIN_TOO_SHORT,
   PIVOT_BLOCK_HEADER_MISMATCH,
   UNEXPECTED_ERROR
 }

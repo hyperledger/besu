@@ -13,11 +13,9 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.CHAIN_TOO_SHORT;
 import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncState.EMPTY_SYNC_STATE;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
@@ -41,7 +39,6 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -150,21 +147,41 @@ public class FastSyncActionsTest {
   }
 
   @Test
-  public void selectPivotBlockShouldFailIfBestPeerChainIsShorterThanPivotDistance() {
-    EthProtocolManagerTestUtil.createPeer(
-        ethProtocolManager, syncConfig.getFastSyncPivotDistance() - 1);
+  public void selectPivotBlockShouldWaitAndRetryIfBestPeerChainIsShorterThanPivotDistance() {
+    final long pivotDistance = syncConfig.getFastSyncPivotDistance();
+    EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, pivotDistance - 1);
 
-    assertThrowsFastSyncException(
-        CHAIN_TOO_SHORT, () -> fastSyncActions.selectPivotBlock(EMPTY_SYNC_STATE));
+    final CompletableFuture<FastSyncState> result =
+        fastSyncActions.selectPivotBlock(EMPTY_SYNC_STATE);
+    assertThat(result).isNotDone();
+    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
+    assertThat(result).isNotDone();
+
+    final long validHeight = pivotDistance + 1;
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, validHeight);
+    final FastSyncState expected = new FastSyncState(1);
+    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
+    assertThat(result).isCompletedWithValue(expected);
   }
 
   @Test
-  public void selectPivotBlockShouldFailIfBestPeerChainIsEqualToPivotDistance() {
-    EthProtocolManagerTestUtil.createPeer(
-        ethProtocolManager, syncConfig.getFastSyncPivotDistance());
+  public void selectPivotBlockShouldRetryIfBestPeerChainIsEqualToPivotDistance() {
+    final long pivotDistance = syncConfig.getFastSyncPivotDistance();
+    EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, pivotDistance);
 
-    assertThrowsFastSyncException(
-        CHAIN_TOO_SHORT, () -> fastSyncActions.selectPivotBlock(EMPTY_SYNC_STATE));
+    final CompletableFuture<FastSyncState> result =
+        fastSyncActions.selectPivotBlock(EMPTY_SYNC_STATE);
+    assertThat(result).isNotDone();
+    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
+    assertThat(result).isNotDone();
+
+    final long validHeight = pivotDistance + 1;
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, validHeight);
+    final FastSyncState expected = new FastSyncState(1);
+    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
+    assertThat(result).isCompletedWithValue(expected);
   }
 
   @Test
@@ -185,13 +202,5 @@ public class FastSyncActionsTest {
     peer.respond(responder);
 
     assertThat(result).isCompletedWithValue(new FastSyncState(blockchain.getBlockHeader(1).get()));
-  }
-
-  private void assertThrowsFastSyncException(
-      final FastSyncError expectedError, final ThrowingCallable callable) {
-    assertThatThrownBy(callable)
-        .isInstanceOf(FastSyncException.class)
-        .extracting(exception -> ((FastSyncException) exception).getError())
-        .isEqualTo(expectedError);
   }
 }

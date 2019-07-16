@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.fastsync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.CHAIN_TOO_SHORT;
 import static tech.pegasys.pantheon.util.FutureUtils.completedExceptionally;
 import static tech.pegasys.pantheon.util.FutureUtils.exceptionallyCompose;
 
@@ -121,19 +120,19 @@ public class FastSyncActions<C> {
               final long pivotBlockNumber =
                   peer.chainState().getEstimatedHeight() - syncConfig.getFastSyncPivotDistance();
               if (pivotBlockNumber <= BlockHeader.GENESIS_BLOCK_NUMBER) {
-                throw new FastSyncException(CHAIN_TOO_SHORT);
-              } else {
-                LOG.info("Selecting block number {} as fast sync pivot block.", pivotBlockNumber);
-                pivotBlockSelectionCounter.inc();
-                pivotBlockGauge.set(pivotBlockNumber);
-                return completedFuture(new FastSyncState(pivotBlockNumber));
+                // Peer's chain isn't long enough, return an empty value so we can try again.
+                return null;
               }
+              LOG.info("Selecting block number {} as fast sync pivot block.", pivotBlockNumber);
+              pivotBlockSelectionCounter.inc();
+              pivotBlockGauge.set(pivotBlockNumber);
+              return completedFuture(new FastSyncState(pivotBlockNumber));
             })
         .orElseGet(this::retrySelectPivotBlockAfterDelay);
   }
 
   private CompletableFuture<FastSyncState> retrySelectPivotBlockAfterDelay() {
-    LOG.info("Waiting for peer with known chain height");
+    LOG.info("Waiting for peer with sufficient chain height");
     return ethContext
         .getScheduler()
         .scheduleFutureTask(

@@ -19,7 +19,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.CHAIN_TOO_SHORT;
 import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.NO_PEERS_AVAILABLE;
 import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncError.UNEXPECTED_ERROR;
 import static tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastSyncState.EMPTY_SYNC_STATE;
@@ -145,11 +144,11 @@ public class FastSyncDownloaderTest {
   public void shouldAbortIfSelectPivotBlockFails() {
     when(fastSyncActions.waitForSuitablePeers(EMPTY_SYNC_STATE)).thenReturn(COMPLETE);
     when(fastSyncActions.selectPivotBlock(EMPTY_SYNC_STATE))
-        .thenThrow(new FastSyncException(CHAIN_TOO_SHORT));
+        .thenThrow(new FastSyncException(UNEXPECTED_ERROR));
 
     final CompletableFuture<FastSyncState> result = downloader.start();
 
-    assertCompletedExceptionally(result, CHAIN_TOO_SHORT);
+    assertCompletedExceptionally(result, UNEXPECTED_ERROR);
 
     verify(fastSyncActions).waitForSuitablePeers(EMPTY_SYNC_STATE);
     verify(fastSyncActions).selectPivotBlock(EMPTY_SYNC_STATE);
