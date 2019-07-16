@@ -78,10 +78,6 @@ To connect to the Rinkeby testnet, start Pantheon with the [`--network=rinkeby`]
 command line option. To start a node on a Clique private network, use the 
 [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file) option to specify the custom genesis file. 
 
-!!!note
-    The [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file) option is not used when running 
-    Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md). Use a bind mount to [specify a configuration file with Docker](../Getting-Started/Run-Docker-Image.md#custom-genesis-file).
-
 ## Adding and Removing Signers
 
 To propose adding or removing signers using the JSON-RPC methods, enable the HTTP interface 

@@ -124,11 +124,6 @@ Orion node public key (created in [3. Generate Orion Keys](#3-generate-orion-key
 JSON-RPC APIs to enable privacy JSON-RPC API methods.  
 * [`--min-gas-price`](../Reference/Pantheon-CLI-Syntax.md#min-gas-price) set to 0 for a [free gas network](../Configuring-Pantheon/FreeGas.md).
 
-!!!note
-    The [`--data-path`](../Reference/Pantheon-CLI-Syntax.md#data-path), [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file),
-    and [`--privacy-public-key-file`](../Reference/Pantheon-CLI-Syntax.md#privacy-public-key-file) 
-    options are not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md). 
-
 When the node starts, the [enode URL](../Configuring-Pantheon/Node-Keys.md#enode-url) is displayed.
 Copy the enode URL to specify Node-1 as the bootnode in the following steps. 
 
@@ -150,8 +145,7 @@ The command line specifies the same options as for Node-1 with different ports a
 [`--bootnodes`](../Reference/Pantheon-CLI-Syntax.md#bootnodes) option specifies the enode URL for Node-1.
 
 !!!note
-    The [`--p2p-port`](../Reference/Pantheon-CLI-Syntax.md#p2p-port) and [`--rpc-http-port`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-port)
-    options are not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md#exposing-ports).
+    When running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md), [expose ports](../Getting-Started/Run-Docker-Image.md#exposing-ports).
 
 ### 8. Start Pantheon Node-3
 

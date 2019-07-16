@@ -156,11 +156,6 @@ pantheon --data-path=data --genesis-file=../cliqueGenesis.json --permissions-nod
 pantheon --data-path=data --genesis-file=..\cliqueGenesis.json --permissions-nodes-config-file-enabled --permissions-accounts-config-file-enabled --rpc-http-enabled --rpc-http-api=ADMIN,ETH,NET,PERM,CLIQUE --host-whitelist="*" --rpc-http-cors-origins="*"    
 ```
 
-!!!note
-    The [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file) option is not used when running 
-    Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md). Use a bind mount to 
-    [specify a configuration file with Docker](../Getting-Started/Run-Docker-Image.md#custom-genesis-file).
-
 The command line specifies: 
 
 * Nodes and accounts permissions are enabled using the [`--permissions-nodes-config-file-enabled`](../Reference/Pantheon-CLI-Syntax.md#permissions-nodes-config-file-enabled)
