@@ -28,12 +28,6 @@ To start a bootnode for a private network, complete the following steps:
         
         The node public key is exported to the `bootnode` file.
     
-    !!!note
-        The [`--data-path`](../../Reference/Pantheon-CLI-Syntax.md#data-path) and [`--genesis-file`](../../Reference/Pantheon-CLI-Syntax.md#genesis-file) 
-        options are not used when running Pantheon from the [Docker image](../../Getting-Started/Run-Docker-Image.md). 
-        Use a bind mount to [specify a configuration file with Docker](../../Getting-Started/Run-Docker-Image.md#custom-genesis-file)
-        and volume to [specify the data directory](../../Getting-Started/Run-Docker-Image.md#data-directory).
-    
 2. Start the bootnode, specifying:
 
     * Genesis file and data directory, as in the previous step. 

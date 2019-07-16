@@ -47,11 +47,6 @@ JSON-RPC API method.
 
 Use the [`--node-private-key-file`](../Reference/Pantheon-CLI-Syntax.md#node-private-key-file) option to specify a custom `key` file in any location. 
 
-!!!note
-    The [`--node-private-key-file`](../Reference/Pantheon-CLI-Syntax.md#node-private-key-file) option is 
-    not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md). When running 
-    from the Docker image, Pantheon always uses the key file in the [data directory](../Getting-Started/Run-Docker-Image.md#data-directory).
-
 If the `key` file exists, the node is started with the private key in the custom `key` file. If the custom `key` file does not exist, 
 a node private key is generated and written to the custom `key` file.
 

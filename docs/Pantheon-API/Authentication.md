@@ -58,12 +58,6 @@ Use the [`--rpc-http-authentication-credentials-file`](../Reference/Pantheon-CLI
 and [`--rpc-ws-authentication-credentials-file`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-authentication-credentials-file) 
 options to specify the [credentials file](#credentials-file).  
 
-!!!note
-    The [`--rpc-http-authentication-credentials-file`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-authentication-credentials-file) 
-    and [`--rpc-ws-authentication-credentials-file`](../Reference/Pantheon-CLI-Syntax.md#rpc-ws-authentication-credentials-file) 
-    options are not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md). 
-    Use a bind mount to [specify a credentials file with Docker](../Getting-Started/Run-Docker-Image.md#credentials-files).
-
 ## Obtaining an Authentication Token 
 
 To obtain an authentication token, make a request to the `/login` endpoint with your username and password. Specify the 

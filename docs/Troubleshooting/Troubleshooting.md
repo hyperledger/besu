@@ -56,10 +56,6 @@ is lower than the `min-gas-price` for the mining node, the transaction will neve
 
 In [free gas networks](../Configuring-Pantheon/FreeGas.md), [`--min-gas-price`](../Reference/Pantheon-CLI-Syntax.md#min-gas-price) must be set to 0. 
 
-## Missing Command Line Options 
-
-When running Pantheon from the Docker image a number of [command line options are not used](../Getting-Started/Run-Docker-Image.md#command-line-options). 
-
 ## Genesis Milestone 
 
 Not including a sufficient milestone in the genesis file can lead to unexpected and inconsistent behaviour without

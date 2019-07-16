@@ -178,11 +178,6 @@ pantheon --data-path=data --genesis-file=../genesis.json --rpc-http-enabled --rp
 pantheon --data-path=data --genesis-file=..\genesis.json --rpc-http-enabled --rpc-http-api=ETH,NET,IBFT --host-whitelist="*" --rpc-http-cors-origins="all"    
 ```
 
-!!!note
-    The [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file) option is not used when running 
-    Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md). Use a bind mount to 
-    [specify a configuration file with Docker](../Getting-Started/Run-Docker-Image.md#custom-genesis-file).
-
 The command line specifies: 
 
 * Data directory for Node-1 using the [`--data-path`](../Reference/Pantheon-CLI-Syntax.md#data-path) option.

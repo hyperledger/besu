@@ -128,11 +128,6 @@ pantheon --data-path=data --genesis-file=../cliqueGenesis.json --bootnodes --net
 pantheon --data-path=data --genesis-file=..\cliqueGenesis.json --bootnodes --network-id 123 --rpc-http-enabled --rpc-http-api=ETH,NET,CLIQUE --host-whitelist="*" --rpc-http-cors-origins="all"    
 ```
 
-!!!note
-    The [`--genesis-file`](../Reference/Pantheon-CLI-Syntax.md#genesis-file) option is not used when running 
-    Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md). Use a bind mount to 
-    [specify a configuration file with Docker](../Getting-Started/Run-Docker-Image.md#custom-genesis-file).
-
 The command line specifies: 
 
 * No arguments for the [`--bootnodes`](../Reference/Pantheon-CLI-Syntax.md#bootnodes) option because this is your bootnode
