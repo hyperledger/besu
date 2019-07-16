@@ -32,13 +32,11 @@ import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionIn
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.google.common.base.Charsets;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -100,11 +98,10 @@ public class PrivateTransactionHandler {
       return BytesValues.asBase64String(privateTransaction.getPrivacyGroupId().get());
     }
     final ReceiveRequest receiveRequest =
-        new ReceiveRequest(
-            key, BytesValues.asBase64String(privateTransaction.getPrivateFrom().get()));
+        new ReceiveRequest(key, BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
     LOG.debug(
         "Getting privacy group for {}",
-        BytesValues.asBase64String(privateTransaction.getPrivateFrom().get()));
+        BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
     final ReceiveResponse receiveResponse;
     try {
       receiveResponse = enclave.receive(receiveRequest);
@@ -126,7 +123,7 @@ public class PrivateTransactionHandler {
         .gasLimit(privateTransaction.getGasLimit())
         .to(privacyPrecompileAddress)
         .value(privateTransaction.getValue())
-        .payload(BytesValue.wrap(transactionEnclaveKey.getBytes(Charsets.UTF_8)))
+        .payload(BytesValues.fromBase64(transactionEnclaveKey))
         .sender(signerAddress)
         .signAndBuild(nodeKeyPair);
   }
@@ -173,13 +170,11 @@ public class PrivateTransactionHandler {
 
       // FIXME: orion should accept empty privateFor
       if (privateFor.isEmpty()) {
-        privateFor.add(BytesValues.asBase64String(privateTransaction.getPrivateFrom().get()));
+        privateFor.add(BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
       }
 
       return new SendRequestLegacy(
-          payload,
-          BytesValues.asBase64String(privateTransaction.getPrivateFrom().get()),
-          privateFor);
+          payload, BytesValues.asBase64String(privateTransaction.getPrivateFrom()), privateFor);
     }
   }
 
@@ -209,5 +204,9 @@ public class PrivateTransactionHandler {
 
   public Address getSignerAddress() {
     return signerAddress;
+  }
+
+  public String getEnclaveKey() {
+    return enclavePublicKey;
   }
 }
