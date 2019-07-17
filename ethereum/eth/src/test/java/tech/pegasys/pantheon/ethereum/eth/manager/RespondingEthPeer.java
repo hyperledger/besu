@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -112,6 +113,14 @@ public class RespondingEthPeer {
 
   public static RespondingEthPeer create(
       final EthProtocolManager ethProtocolManager,
+      final UInt256 totalDifficulty,
+      final OptionalLong estimatedHeight) {
+    final Hash chainHeadHash = gen.hash();
+    return create(ethProtocolManager, chainHeadHash, totalDifficulty, estimatedHeight);
+  }
+
+  public static RespondingEthPeer create(
+      final EthProtocolManager ethProtocolManager,
       final Hash chainHeadHash,
       final UInt256 totalDifficulty) {
     return create(ethProtocolManager, chainHeadHash, totalDifficulty, DEFAULT_ESTIMATED_HEIGHT);
@@ -122,6 +131,15 @@ public class RespondingEthPeer {
       final Hash chainHeadHash,
       final UInt256 totalDifficulty,
       final long estimatedHeight) {
+    return create(
+        ethProtocolManager, chainHeadHash, totalDifficulty, OptionalLong.of(estimatedHeight));
+  }
+
+  public static RespondingEthPeer create(
+      final EthProtocolManager ethProtocolManager,
+      final Hash chainHeadHash,
+      final UInt256 totalDifficulty,
+      final OptionalLong estimatedHeight) {
     final EthPeers ethPeers = ethProtocolManager.ethContext().getEthPeers();
 
     final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.ETH63));
@@ -132,7 +150,7 @@ public class RespondingEthPeer {
     ethPeers.registerConnection(peerConnection);
     final EthPeer peer = ethPeers.peer(peerConnection);
     peer.registerStatusReceived(chainHeadHash, totalDifficulty);
-    peer.chainState().update(chainHeadHash, estimatedHeight);
+    estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
     peer.registerStatusSent();
 
     return new RespondingEthPeer(ethProtocolManager, peerConnection, peer, outgoingMessages);

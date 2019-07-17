@@ -80,14 +80,8 @@ public class FastSyncActions<C> {
       return waitForAnyPeer().thenApply(ignore -> fastSyncState);
     }
 
-    final WaitForPeersTask waitForPeersTask =
-        WaitForPeersTask.create(
-            ethContext, syncConfig.getFastSyncMinimumPeerCount(), metricsSystem);
-
     LOG.debug("Waiting for at least {} peers.", syncConfig.getFastSyncMinimumPeerCount());
-    return ethContext
-        .getScheduler()
-        .scheduleServiceTask(waitForPeersTask)
+    return waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
         .thenApply(successfulWaitResult -> fastSyncState);
   }
 
@@ -104,6 +98,12 @@ public class FastSyncActions<C> {
         });
   }
 
+  private CompletableFuture<Void> waitForPeers(final int count) {
+    final WaitForPeersTask waitForPeersTask =
+        WaitForPeersTask.create(ethContext, count, metricsSystem);
+    return waitForPeersTask.run();
+  }
+
   public CompletableFuture<FastSyncState> selectPivotBlock(final FastSyncState fastSyncState) {
     return fastSyncState.hasPivotBlockHeader()
         ? completedFuture(fastSyncState)
@@ -113,14 +113,28 @@ public class FastSyncActions<C> {
   private CompletableFuture<FastSyncState> selectPivotBlockFromPeers() {
     return ethContext
         .getEthPeers()
-        .bestPeer()
-        .filter(peer -> peer.chainState().hasEstimatedHeight())
+        .bestPeerWithHeightEstimate()
+        // Only select a pivot block number when we have a minimum number of height estimates
+        .filter(
+            peer -> {
+              final long peerCount = countPeersWithEstimatedHeight();
+              final int minPeerCount = syncConfig.getFastSyncMinimumPeerCount();
+              if (peerCount < minPeerCount) {
+                LOG.info(
+                    "Waiting for peers with chain height information.  {} / {} required peers currently available.",
+                    peerCount,
+                    minPeerCount);
+                return false;
+              }
+              return true;
+            })
         .map(
             peer -> {
               final long pivotBlockNumber =
                   peer.chainState().getEstimatedHeight() - syncConfig.getFastSyncPivotDistance();
               if (pivotBlockNumber <= BlockHeader.GENESIS_BLOCK_NUMBER) {
                 // Peer's chain isn't long enough, return an empty value so we can try again.
+                LOG.info("Waiting for peer with sufficient chain height");
                 return null;
               }
               LOG.info("Selecting block number {} as fast sync pivot block.", pivotBlockNumber);
@@ -131,12 +145,21 @@ public class FastSyncActions<C> {
         .orElseGet(this::retrySelectPivotBlockAfterDelay);
   }
 
+  private long countPeersWithEstimatedHeight() {
+    return ethContext
+        .getEthPeers()
+        .streamAvailablePeers()
+        .filter(peer -> peer.chainState().hasEstimatedHeight())
+        .count();
+  }
+
   private CompletableFuture<FastSyncState> retrySelectPivotBlockAfterDelay() {
-    LOG.info("Waiting for peer with sufficient chain height");
     return ethContext
         .getScheduler()
         .scheduleFutureTask(
-            () -> waitForAnyPeer().thenCompose(ignore -> selectPivotBlockFromPeers()),
+            () ->
+                waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
+                    .thenCompose(ignore -> selectPivotBlockFromPeers()),
             Duration.ofSeconds(1));
   }
 
