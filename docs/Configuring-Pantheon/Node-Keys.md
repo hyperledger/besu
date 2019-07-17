@@ -43,6 +43,9 @@ Specified by the [`--p2p-host`](../Reference/Pantheon-CLI-Syntax.md#p2p-host) an
 The enode is displayed when starting a Pantheon node and can be obtained using the [`net_enode`](../Reference/Pantheon-API-Methods.md#net_enode) 
 JSON-RPC API method. 
 
+If [UPnP](Networking/Using-UPnP.md) is enabled, the enode advertised to other nodes during discovery is the 
+external IP address and port. 
+
 ## Specifying a Custom Node Private Key File
 
 Use the [`--node-private-key-file`](../Reference/Pantheon-CLI-Syntax.md#node-private-key-file) option to specify a custom `key` file in any location. 

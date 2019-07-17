@@ -9,6 +9,10 @@ Ports must be exposed appropriately to enable communication. An example port con
 
 When running Pantheon from the [Docker image](../../Getting-Started/Run-Docker-Image.md), [expose ports](../../Getting-Started/Run-Docker-Image.md#exposing-ports). 
 
+!!! tip 
+    Pantheon supports [UPnP](Using-UPnP.md) for home or small office environments where a wireless router 
+    or modem provides NAT isolation. 
+
 ## P2P Networking 
 
 To enable peer discovery, the P2P UDP port must be open for inbound connections.

@@ -90,6 +90,7 @@ nav:
       - Bootnodes: Configuring-Pantheon/Networking/Bootnodes.md
       - Configuring Ports: Configuring-Pantheon/Networking/Configuring-Ports.md
       - Managing Peers: Configuring-Pantheon/Networking/Managing-Peers.md
+      - Using UPnP: Configuring-Pantheon/Networking/Using-UPnP.md
     - Consensus Protocols:
       - Pantheon Consensus Protocols: Consensus-Protocols/Overview-Consensus.md
       - Comparing PoA Consensus Protocols: Consensus-Protocols/Comparing-PoA.md
