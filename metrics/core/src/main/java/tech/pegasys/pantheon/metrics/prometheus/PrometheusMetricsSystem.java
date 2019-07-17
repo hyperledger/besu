@@ -241,7 +241,7 @@ public class PrometheusMetricsSystem implements MetricsSystem {
   }
 
   private String prometheusPrefix(final MetricCategory category) {
-    return category.getAppliationPrefix().orElse("") + category.getName() + "_";
+    return category.getApplicationPrefix().orElse("") + category.getName() + "_";
   }
 
   CollectorRegistry getRegistry() {

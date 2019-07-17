@@ -30,7 +30,7 @@ public enum StandardMetricCategory implements MetricCategory {
   }
 
   @Override
-  public Optional<String> getAppliationPrefix() {
+  public Optional<String> getApplicationPrefix() {
     return Optional.empty();
   }
 }

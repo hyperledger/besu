@@ -18,5 +18,5 @@ public interface MetricCategory {
 
   String getName();
 
-  Optional<String> getAppliationPrefix();
+  Optional<String> getApplicationPrefix();
 }

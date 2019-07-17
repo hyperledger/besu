@@ -64,7 +64,7 @@ public enum PantheonMetricCategory implements MetricCategory {
   }
 
   @Override
-  public Optional<String> getAppliationPrefix() {
+  public Optional<String> getApplicationPrefix() {
     return pantheonSpecific ? PANTHEON_PREFIX : Optional.empty();
   }
 }
