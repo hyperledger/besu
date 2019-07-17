@@ -127,6 +127,10 @@ public class EthPeers {
     return streamAvailablePeers().max(BEST_CHAIN);
   }
 
+  public Optional<EthPeer> bestPeerWithHeightEstimate() {
+    return streamAvailablePeers().filter(p -> p.chainState().hasEstimatedHeight()).max(BEST_CHAIN);
+  }
+
   @FunctionalInterface
   public interface ConnectCallback {
     void onPeerConnected(EthPeer newPeer);

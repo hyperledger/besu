@@ -32,6 +32,7 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.D
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
@@ -67,14 +68,22 @@ public class EthPeersTest {
     assertThat(EthPeers.BEST_CHAIN.compare(peerB, peerA)).isGreaterThan(0);
     assertThat(EthPeers.BEST_CHAIN.compare(peerA, peerA)).isEqualTo(0);
     assertThat(EthPeers.BEST_CHAIN.compare(peerB, peerB)).isEqualTo(0);
+
+    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer()).contains(peerB);
+    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimate())
+        .contains(peerB);
   }
 
   @Test
   public void comparesPeersWithTdAndNoHeight() {
     final EthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.of(100), 0).getEthPeer();
+        EthProtocolManagerTestUtil.createPeer(
+                ethProtocolManager, UInt256.of(100), OptionalLong.empty())
+            .getEthPeer();
     final EthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.of(50), 0).getEthPeer();
+        EthProtocolManagerTestUtil.createPeer(
+                ethProtocolManager, UInt256.of(50), OptionalLong.empty())
+            .getEthPeer();
 
     // Sanity check
     assertThat(peerA.chainState().getEstimatedHeight()).isEqualTo(0);
@@ -87,6 +96,10 @@ public class EthPeersTest {
     assertThat(EthPeers.BEST_CHAIN.compare(peerB, peerA)).isLessThan(0);
     assertThat(EthPeers.BEST_CHAIN.compare(peerA, peerA)).isEqualTo(0);
     assertThat(EthPeers.BEST_CHAIN.compare(peerB, peerB)).isEqualTo(0);
+
+    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer()).contains(peerA);
+    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimate())
+        .isEmpty();
   }
 
   @Test
