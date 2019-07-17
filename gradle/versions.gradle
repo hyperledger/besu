@@ -41,7 +41,7 @@ dependencyManagement {
     dependency 'io.prometheus:simpleclient_hotspot:0.6.0'
     dependency 'io.prometheus:simpleclient_pushgateway:0.6.0'
 
-    dependency 'io.reactivex.rxjava2:rxjava:2.2.9'
+    dependency 'io.reactivex.rxjava2:rxjava:2.2.10'
 
     dependency 'io.vertx:vertx-auth-jwt:3.7.1'
     dependency 'io.vertx:vertx-codegen:3.7.1'
@@ -55,11 +55,11 @@ dependencyManagement {
 
     dependency 'net.consensys:orion:1.2.0'
 
-    dependency 'org.apache.commons:commons-text:1.6'
+    dependency 'org.apache.commons:commons-text:1.7'
 
-    dependency 'org.apache.logging.log4j:log4j-api:2.11.2'
-    dependency 'org.apache.logging.log4j:log4j-core:2.11.2'
-    dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.11.2'
+    dependency 'org.apache.logging.log4j:log4j-api:2.12.0'
+    dependency 'org.apache.logging.log4j:log4j-core:2.12.0'
+    dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.12.0'
 
     dependency 'org.assertj:assertj-core:3.12.2'
 
