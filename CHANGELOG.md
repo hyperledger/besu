@@ -9,6 +9,86 @@ From v1.2, Pantheon requires Java 11.  Pantheon on Java 8 is no longer supported
 In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://docs.pantheon.pegasys.tech/en/latest/Deploying-Pantheon/High-Availability/)
 for information on options that were previously automatically added to the Pantheon command line. 
 
+### Docker Image Migration for v1.2
+
+In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://docs.pantheon.pegasys.tech/en/latest/Deploying-Pantheon/High-Availability/)
+for information on options that were previously automatically added to the Pantheon command line. 
+
+## 1.2-RC 
+
+### Additions and Improvements 
+
+- Add UPnP Support [\#1334](https://github.com/PegaSysEng/pantheon/pull/1334) (thanks to [notlesh](https://github.com/notlesh))
+- Limit the fraction of wire connections initiated by peers [\#1665](https://github.com/PegaSysEng/pantheon/pull/1665) 
+- EIP-1706 - Disable SSTORE with gasleft lt call stipend  [\#1706](https://github.com/PegaSysEng/pantheon/pull/1706) 
+- EIP-1108 - Reprice alt\_bn128 [\#1704](https://github.com/PegaSysEng/pantheon/pull/1704) 
+- EIP-1344 ChainID Opcode [\#1690](https://github.com/PegaSysEng/pantheon/pull/1690)
+- New release docker image [\#1664](https://github.com/PegaSysEng/pantheon/pull/1664) 
+- Support changing log level at runtime [\#1656](https://github.com/PegaSysEng/pantheon/pull/1656) (thanks to [matkt](https://github.com/matkt))
+- Implement dump command to dump a specific block from storage [\#1641](https://github.com/PegaSysEng/pantheon/pull/1641) (thanks to [matkt](https://github.com/matkt))
+- Add eea\_findPrivacyGroup endpoint to Pantheon [\#1635](https://github.com/PegaSysEng/pantheon/pull/1635) (thanks to [Puneetha17](https://github.com/Puneetha17))
+- Updated eea send raw transaction with privacy group ID [\#1611](https://github.com/PegaSysEng/pantheon/pull/1611) (thanks to [iikirilov](https://github.com/iikirilov))
+- Added Revert Reason [\#1603](https://github.com/PegaSysEng/pantheon/pull/1603)
+- Documentation updates include: 
+  - Added [UPnP content](https://docs.pantheon.pegasys.tech/en/latest/Configuring-Pantheon/Networking/Using-UPnP/)
+  - Added [load balancer image](https://docs.pantheon.pegasys.tech/en/latest/Deploying-Pantheon/High-Availability/) 
+  - Added [revert reason](https://docs.pantheon.pegasys.tech/en/latest/Using-Pantheon/Transactions/Revert-Reason/) 
+  - Added [admin\_changeLogLevel](https://docs.pantheon.pegasys.tech/en/latest/Reference/Pantheon-API-Methods/#admin_changeloglevel) JSON RPC API (thanks to [matkt](https://github.com/matkt))
+  - Updated for [new Docker image](https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Run-Docker-Image/) 
+  - Added [Docker image migration content](https://docs.pantheon.pegasys.tech/en/latest/Deploying-Pantheon/Migration-Docker/) 
+  - Added [transaction validation content](https://docs.pantheon.pegasys.tech/en/latest/Using-Pantheon/Transactions/Transaction-Validation/) 
+  - Updated [permissioning overview](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Permissioning-Overview/) for onchain account permissioning 
+  - Updated [quickstart](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Private-Network-Quickstart/#monitoring-nodes-with-prometheus-and-grafana) to include Prometheus and Grafana 
+  - Added [remote connections limits options](https://docs.pantheon.pegasys.tech/en/latest/Reference/Pantheon-CLI-Syntax/#remote-connections-limit-enabled)
+
+### Technical Improvements 
+
+- Update Orion version [\#1716](https://github.com/PegaSysEng/pantheon/pull/1716)
+- Rename CLI flag for better ordering of options [\#1715](https://github.com/PegaSysEng/pantheon/pull/1715)
+- Routine dependency updates [\#1712](https://github.com/PegaSysEng/pantheon/pull/1712) 
+- Fix spelling error in getApplicationPrefix method name [\#1711](https://github.com/PegaSysEng/pantheon/pull/1711) 
+- Wait and retry if best peer's chain is too short for fast sync [\#1708](https://github.com/PegaSysEng/pantheon/pull/1708) 
+- Eea get private transaction fix [\#1707](https://github.com/PegaSysEng/pantheon/pull/1707) (thanks to [iikirilov](https://github.com/iikirilov))
+- Rework remote connection limit flag defaults [\#1705](https://github.com/PegaSysEng/pantheon/pull/1705)
+- Report invalid options from config file [\#1703](https://github.com/PegaSysEng/pantheon/pull/1703) 
+- Add ERROR to list of CLI log level options [\#1699](https://github.com/PegaSysEng/pantheon/pull/1699) 
+- Enable onchain account permissioning CLI option [\#1686](https://github.com/PegaSysEng/pantheon/pull/1686)
+- Exempt static nodes from all connection limits [\#1685](https://github.com/PegaSysEng/pantheon/pull/1685)
+- Enclave refactoring [\#1684](https://github.com/PegaSysEng/pantheon/pull/1684) 
+- Add opcode and precompiled support for versioning  [\#1683](https://github.com/PegaSysEng/pantheon/pull/1683) 
+- Use a percentage instead of fraction for the remote connections percentage CLI option. [\#1682](https://github.com/PegaSysEng/pantheon/pull/1682) 
+- Added error msg for calling eth\_sendTransaction [\#1681](https://github.com/PegaSysEng/pantheon/pull/1681) 
+- Remove instructions for installing with Chocolatey [\#1680](https://github.com/PegaSysEng/pantheon/pull/1680) 
+- remove zulu-jdk8 from smoke tests [\#1679](https://github.com/PegaSysEng/pantheon/pull/1679)
+- Add new MainNet bootnodes [\#1678](https://github.com/PegaSysEng/pantheon/pull/1678) 
+- updating smoke tests to use \>= jdk11 [\#1677](https://github.com/PegaSysEng/pantheon/pull/1677) 
+- Fix handling of remote connection limit [\#1676](https://github.com/PegaSysEng/pantheon/pull/1676) 
+- Add accountVersion to MessageFrame [\#1675](https://github.com/PegaSysEng/pantheon/pull/1675) 
+- Change getChildren return type [\#1674](https://github.com/PegaSysEng/pantheon/pull/1674) 
+- Use Log4J message template instead of String.format [\#1673](https://github.com/PegaSysEng/pantheon/pull/1673) 
+- Return hashrate of 0 when not mining. [\#1672](https://github.com/PegaSysEng/pantheon/pull/1672)
+- Add hooks for validation  [\#1671](https://github.com/PegaSysEng/pantheon/pull/1671) 
+- Upgrade to pantheon-build:0.0.6-jdk11 which really does include jdk11 [\#1670](https://github.com/PegaSysEng/pantheon/pull/1670) 
+- Onchain permissioning startup check [\#1669](https://github.com/PegaSysEng/pantheon/pull/1669) 
+- Update PantheonCommand to accept minTransactionGasPriceWei as an integer [\#1668](https://github.com/PegaSysEng/pantheon/pull/1668) (thanks to [matkt](https://github.com/matkt))
+- Privacy group id consistent [\#1667](https://github.com/PegaSysEng/pantheon/pull/1667) (thanks to [iikirilov](https://github.com/iikirilov))
+- Change eea\_getPrivateTransaction endpoint to accept hex [\#1666](https://github.com/PegaSysEng/pantheon/pull/1666) (thanks to [Puneetha17](https://github.com/Puneetha17))
+- Factorise metrics code for KeyValueStorage database [\#1663](https://github.com/PegaSysEng/pantheon/pull/1663))
+- Create a metric tracking DB size [\#1662](https://github.com/PegaSysEng/pantheon/pull/1662) 
+- AT- Removing unused methods on KeyValueStorage [\#1661](https://github.com/PegaSysEng/pantheon/pull/1661) 
+- Add Prerequisites and Quick-Start [\#1660](https://github.com/PegaSysEng/pantheon/pull/1660) (thanks to [lazaridiscom](https://github.com/lazaridiscom))
+- Java 11 updates [\#1658](https://github.com/PegaSysEng/pantheon/pull/1658)
+- Make test generated keys deterministic w/in block generator [\#1657](https://github.com/PegaSysEng/pantheon/pull/1657)
+- Rename privacyGroupId to createPrivacyGroupId [\#1654](https://github.com/PegaSysEng/pantheon/pull/1654) (thanks to [Puneetha17](https://github.com/Puneetha17))
+- Intermittent Test Failures in TransactionsMessageSenderTest [\#1653](https://github.com/PegaSysEng/pantheon/pull/1653) 
+- Sanity check the generated distribution files before upload [\#1648](https://github.com/PegaSysEng/pantheon/pull/1648)
+- Use JDK 11 for release builds [\#1647](https://github.com/PegaSysEng/pantheon/pull/1647)
+- Support multiple private marker transactions in a block  [\#1646](https://github.com/PegaSysEng/pantheon/pull/1646) 
+- Display World State Sync Progress in Logs [\#1645](https://github.com/PegaSysEng/pantheon/pull/1645) 
+- Remove the docker gradle plugin, handle building docker with shell now [\#1644](https://github.com/PegaSysEng/pantheon/pull/1644) 
+- Switch to using metric names from EIP-2159 [\#1634](https://github.com/PegaSysEng/pantheon/pull/1634) 
+- Account versioning [\#1612](https://github.com/PegaSysEng/pantheon/pull/1612) 
+
 ## 1.1.4 
 
 ### Additions and Improvements
