@@ -44,7 +44,7 @@ public class EeaCreatePrivacyGroupTest {
   @Test
   public void verifyCreatePrivacyGroup() throws Exception {
     PrivacyGroup privacyGroup =
-        new PrivacyGroup(privacyGroupId, PrivacyGroup.Type.PANTHEON, name, description);
+        new PrivacyGroup(privacyGroupId, PrivacyGroup.Type.PANTHEON, name, description, addresses);
     when(enclave.createPrivacyGroup(any())).thenReturn(privacyGroup);
 
     final EeaCreatePrivacyGroup eeaCreatePrivacyGroup =

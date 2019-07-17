@@ -20,6 +20,7 @@ public class PrivacyGroup implements Serializable {
   private String name;
   private String description;
   private Type type;
+  private String[] members;
 
   public String getPrivacyGroupId() {
     return privacyGroupId;
@@ -53,14 +54,27 @@ public class PrivacyGroup implements Serializable {
     this.type = type;
   }
 
+  public String[] getMembers() {
+    return members;
+  }
+
+  public void setMembers(final String[] members) {
+    this.members = members;
+  }
+
   public PrivacyGroup() {}
 
   public PrivacyGroup(
-      final String privacyGroupId, final Type type, final String name, final String description) {
+      final String privacyGroupId,
+      final Type type,
+      final String name,
+      final String description,
+      final String[] members) {
     this.privacyGroupId = privacyGroupId;
     this.type = type;
     this.name = name;
     this.description = description;
+    this.members = members;
   }
 
   public enum Type {

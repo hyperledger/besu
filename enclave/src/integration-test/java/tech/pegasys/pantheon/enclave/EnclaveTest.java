@@ -22,7 +22,6 @@ import tech.pegasys.orion.testutil.OrionTestHarnessFactory;
 import tech.pegasys.pantheon.enclave.types.CreatePrivacyGroupRequest;
 import tech.pegasys.pantheon.enclave.types.DeletePrivacyGroupRequest;
 import tech.pegasys.pantheon.enclave.types.FindPrivacyGroupRequest;
-import tech.pegasys.pantheon.enclave.types.FindPrivacyGroupResponse;
 import tech.pegasys.pantheon.enclave.types.PrivacyGroup;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
@@ -146,11 +145,10 @@ public class EnclaveTest {
 
     FindPrivacyGroupRequest findPrivacyGroupRequest =
         new FindPrivacyGroupRequest(publicKeys.toArray(new String[0]));
-    FindPrivacyGroupResponse[] findPrivacyGroupResponse =
-        enclave.findPrivacyGroup(findPrivacyGroupRequest);
+    PrivacyGroup[] findPrivacyGroupResponse = enclave.findPrivacyGroup(findPrivacyGroupRequest);
 
     assertThat(findPrivacyGroupResponse.length).isEqualTo(1);
-    assertThat(findPrivacyGroupResponse[0].privacyGroupId())
+    assertThat(findPrivacyGroupResponse[0].getPrivacyGroupId())
         .isEqualTo(privacyGroupResponse.getPrivacyGroupId());
 
     DeletePrivacyGroupRequest deletePrivacyGroupRequest =

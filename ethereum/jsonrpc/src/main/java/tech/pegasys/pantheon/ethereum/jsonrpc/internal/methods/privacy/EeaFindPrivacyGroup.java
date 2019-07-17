@@ -16,7 +16,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.FindPrivacyGroupRequest;
-import tech.pegasys.pantheon.enclave.types.FindPrivacyGroupResponse;
+import tech.pegasys.pantheon.enclave.types.PrivacyGroup;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
@@ -54,7 +54,7 @@ public class EeaFindPrivacyGroup implements JsonRpcMethod {
     LOG.trace("Finding a privacy group with members {}", Arrays.toString(addresses));
 
     FindPrivacyGroupRequest findPrivacyGroupRequest = new FindPrivacyGroupRequest(addresses);
-    FindPrivacyGroupResponse[] response;
+    PrivacyGroup[] response;
     try {
       response = enclave.findPrivacyGroup(findPrivacyGroupRequest);
     } catch (Exception e) {
