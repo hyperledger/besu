@@ -100,6 +100,8 @@ Properties of the node object are:
 
 !!! note
     If the node is running locally, the host of the `enode` and `listenAddr` are displayed as `[::]` in the result. 
+    If [UPnP](../Configuring-Pantheon/Networking/Using-UPnP.md) is enabled, the external address is 
+    displayed for the `enode` and `listenAddr`. 
 
 !!! example
     ```bash tab="curl HTTP request"

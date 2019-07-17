@@ -586,6 +586,23 @@ min-gas-price=1337
 The minimum price that a transaction offers for it to be included in a mined block.
 The default is 1000.
 
+### nat-method
+
+```bash tab="Syntax"
+--nat-method=<METHOD>
+```
+
+```bash tab="Command Line"
+--nat-method=upnp
+```
+
+```bash tab="Example Configuration File"
+nat-method="upnp"
+```
+
+Specifies the method for handling [NAT environments](../Configuring-Pantheon/Networking/Using-UPnP.md). 
+Options are `upnp` and `none`. The default is `none` (that is, NAT functionality is disabled).
+
 ### network
 
 ```bash tab="Syntax"
