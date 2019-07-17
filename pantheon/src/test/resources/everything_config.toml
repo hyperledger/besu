@@ -28,7 +28,7 @@ p2p-host="1.2.3.4"
 p2p-port=1234
 max-peers=42
 remote-connections-limit-enabled=true
-max-remote-connections-percentage=60
+remote-connections-max-percentage=60
 host-whitelist=["all"]
 
 # chain

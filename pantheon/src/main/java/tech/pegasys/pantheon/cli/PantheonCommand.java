@@ -245,7 +245,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Boolean isLimitRemoteWireConnectionsEnabled = true;
 
   @Option(
-      names = {"--max-remote-connections-percentage"},
+      names = {"--remote-connections-max-percentage"},
       paramLabel = MANDATORY_DOUBLE_FORMAT_HELP,
       description =
           "The maximum percentage of P2P connections that can be initiated remotely. Must be between 0 and 100 inclusive. (default: ${DEFAULT-VALUE})",
@@ -796,7 +796,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             "--max-peers",
             "--banned-node-id",
             "--banned-node-ids",
-            "--max-remote-connections-percentage"));
+            "--remote-connections-max-percentage"));
     // Check that mining options are able to work or send an error
     checkOptionDependencies(
         logger,

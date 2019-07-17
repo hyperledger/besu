@@ -1023,7 +1023,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
         "false",
         "--max-peers",
         "42",
-        "--max-remote-connections-percentage",
+        "--remote-connections-max-percentage",
         "50",
         "--banned-node-id",
         String.join(",", nodes),
@@ -1036,7 +1036,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
         "--bootnodes",
         "--max-peers",
         "--banned-node-ids",
-        "--max-remote-connections-percentage");
+        "--remote-connections-max-percentage");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1247,7 +1247,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final int remoteConnectionsPercentage = 12;
     parseCommand(
         "--remote-connections-limit-enabled",
-        "--max-remote-connections-percentage",
+        "--remote-connections-max-percentage",
         String.valueOf(remoteConnectionsPercentage));
 
     verify(mockRunnerBuilder).fractionRemoteConnectionsAllowed(floatCaptor.capture());
@@ -1265,12 +1265,12 @@ public class PantheonCommandTest extends CommandTestAbstract {
   public void remoteConnectionsPercentageWithInvalidFormatMustFail() {
 
     parseCommand(
-        "--remote-connections-limit-enabled", "--max-remote-connections-percentage", "invalid");
+        "--remote-connections-limit-enabled", "--remote-connections-max-percentage", "invalid");
     verifyZeroInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "Invalid value for option '--max-remote-connections-percentage'",
+            "Invalid value for option '--remote-connections-max-percentage'",
             "should be a number between 0 and 100 inclusive");
   }
 
@@ -1278,12 +1278,12 @@ public class PantheonCommandTest extends CommandTestAbstract {
   public void remoteConnectionsPercentageWithOutOfRangeMustFail() {
 
     parseCommand(
-        "--remote-connections-limit-enabled", "--max-remote-connections-percentage", "150");
+        "--remote-connections-limit-enabled", "--remote-connections-max-percentage", "150");
     verifyZeroInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "Invalid value for option '--max-remote-connections-percentage'",
+            "Invalid value for option '--remote-connections-max-percentage'",
             "should be a number between 0 and 100 inclusive");
   }
 
