@@ -47,8 +47,7 @@ public class BetterSyncTargetEvaluator {
               final ChainState bestPeerChainState = bestPeer.chainState();
               final UInt256 tdDifference =
                   bestPeerChainState
-                      .getBestBlock()
-                      .getTotalDifficulty()
+                      .getEstimatedTotalDifficulty()
                       .minus(currentPeerChainState.getBestBlock().getTotalDifficulty());
               if (tdDifference.compareTo(config.getDownloaderChangeTargetThresholdByTd()) > 0) {
                 return true;

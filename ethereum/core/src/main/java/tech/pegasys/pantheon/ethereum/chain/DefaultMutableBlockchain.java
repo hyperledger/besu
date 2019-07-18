@@ -114,7 +114,7 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
 
   @Override
   public ChainHead getChainHead() {
-    return new ChainHead(chainHeader.getHash(), totalDifficulty);
+    return new ChainHead(chainHeader.getHash(), totalDifficulty, chainHeader.getNumber());
   }
 
   @Override

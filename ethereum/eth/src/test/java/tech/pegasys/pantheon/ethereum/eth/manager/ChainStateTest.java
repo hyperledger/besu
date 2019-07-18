@@ -17,6 +17,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import tech.pegasys.pantheon.ethereum.chain.ChainHead;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
@@ -286,5 +287,66 @@ public class ChainStateTest {
     chainState.update(lowerBlockHeader);
 
     verifyNoMoreInteractions(listener);
+  }
+
+  @Test
+  public void chainIsBetterThan_chainStateIsLighterAndShorter() {
+    final ChainState chainState = new ChainState();
+    updateChainState(chainState, UInt256.of(50), 50);
+    final ChainHead chainHead = new ChainHead(Hash.ZERO, UInt256.of(100), 100);
+
+    assertThat(chainState.chainIsBetterThan(chainHead)).isFalse();
+  }
+
+  @Test
+  public void chainIsBetterThan_chainStateIsHeavierAndShorter() {
+    final ChainState chainState = new ChainState();
+    updateChainState(chainState, UInt256.of(100), 50);
+    final ChainHead chainHead = new ChainHead(Hash.ZERO, UInt256.of(50), 100);
+
+    assertThat(chainState.chainIsBetterThan(chainHead)).isTrue();
+  }
+
+  @Test
+  public void chainIsBetterThan_chainStateIsLighterAndTaller() {
+    final ChainState chainState = new ChainState();
+    updateChainState(chainState, UInt256.of(50), 100);
+    final ChainHead chainHead = new ChainHead(Hash.ZERO, UInt256.of(100), 50);
+
+    assertThat(chainState.chainIsBetterThan(chainHead)).isTrue();
+  }
+
+  @Test
+  public void chainIsBetterThan_chainStateIsHeavierAndTaller() {
+    final ChainState chainState = new ChainState();
+    updateChainState(chainState, UInt256.of(100), 100);
+    final ChainHead chainHead = new ChainHead(Hash.ZERO, UInt256.of(50), 50);
+
+    assertThat(chainState.chainIsBetterThan(chainHead)).isTrue();
+  }
+
+  /**
+   * Updates the chain state, such that the peer will end up with an estimated height of {@code
+   * blockHeight} and an estimated total difficulty of {@code totalDifficulty}
+   *
+   * @param chainState The chain state to update
+   * @param totalDifficulty The total difficulty
+   * @param blockHeight The target estimated block height
+   */
+  private void updateChainState(
+      final ChainState chainState, final UInt256 totalDifficulty, final long blockHeight) {
+    // Chain state is updated based on the parent of the announced block
+    // So, increment block number by 1 and set block difficulty to zero
+    // in order to update to the values we want
+    final BlockHeader header =
+        new BlockHeaderTestFixture()
+            .number(blockHeight + 1L)
+            .difficulty(UInt256.ZERO)
+            .buildHeader();
+    chainState.updateForAnnouncedBlock(header, totalDifficulty);
+
+    // Sanity check this logic still holds
+    assertThat(chainState.getEstimatedHeight()).isEqualTo(blockHeight);
+    assertThat(chainState.getEstimatedTotalDifficulty()).isEqualTo(totalDifficulty);
   }
 }

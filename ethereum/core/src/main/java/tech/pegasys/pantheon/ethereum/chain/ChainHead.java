@@ -22,9 +22,12 @@ public final class ChainHead {
 
   private final UInt256 totalDifficulty;
 
-  public ChainHead(final Hash hash, final UInt256 totalDifficulty) {
+  private final long height;
+
+  public ChainHead(final Hash hash, final UInt256 totalDifficulty, final long height) {
     this.hash = hash;
     this.totalDifficulty = totalDifficulty;
+    this.height = height;
   }
 
   public Hash getHash() {
@@ -33,5 +36,9 @@ public final class ChainHead {
 
   public UInt256 getTotalDifficulty() {
     return totalDifficulty;
+  }
+
+  public long getHeight() {
+    return height;
   }
 }

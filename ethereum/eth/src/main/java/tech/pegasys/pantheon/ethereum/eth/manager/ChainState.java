@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
+import tech.pegasys.pantheon.ethereum.chain.ChainHead;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.util.Subscribers;
@@ -43,6 +44,10 @@ public class ChainState {
 
   public long getEstimatedHeight() {
     return estimatedHeight;
+  }
+
+  public UInt256 getEstimatedTotalDifficulty() {
+    return bestBlock.getTotalDifficulty();
   }
 
   public BestBlock getBestBlock() {
@@ -97,6 +102,26 @@ public class ChainState {
         estimatedHeightListeners.forEach(e -> e.onEstimatedHeightChanged(estimatedHeight));
       }
     }
+  }
+
+  /**
+   * Returns true if this chain state represents a chain that is "better" than the chain represented
+   * by the supplied {@link ChainHead}. "Better" currently means that this chain is longer or
+   * heavier than the supplied {@code chainToCheck}.
+   *
+   * @param chainToCheck The chain being compared.
+   * @return true if this {@link ChainState} represents a better chain than {@code chainToCheck}.
+   */
+  public boolean chainIsBetterThan(final ChainHead chainToCheck) {
+    return hasHigherDifficultyThan(chainToCheck) || hasLongerChainThan(chainToCheck);
+  }
+
+  private boolean hasHigherDifficultyThan(final ChainHead chainToCheck) {
+    return bestBlock.getTotalDifficulty().compareTo(chainToCheck.getTotalDifficulty()) > 0;
+  }
+
+  private boolean hasLongerChainThan(final ChainHead chainToCheck) {
+    return estimatedHeight > chainToCheck.getHeight();
   }
 
   @Override

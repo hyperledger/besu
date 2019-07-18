@@ -25,7 +25,6 @@ import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
-import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -85,12 +84,9 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
   }
 
   private boolean isSyncTargetReached(final EthPeer peer) {
-    final long peerHeight = peer.chainState().getEstimatedHeight();
-    final UInt256 peerTd = peer.chainState().getBestBlock().getTotalDifficulty();
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
-
-    return peerTd.compareTo(blockchain.getChainHead().getTotalDifficulty()) <= 0
-        && peerHeight <= blockchain.getChainHeadBlockNumber();
+    // We're in sync if the peer's chain is no better than our chain
+    return !peer.chainState().chainIsBetterThan(blockchain.getChainHead());
   }
 
   @Override

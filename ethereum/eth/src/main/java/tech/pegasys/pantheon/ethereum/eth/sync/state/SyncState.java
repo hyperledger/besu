@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.state;
 
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.chain.ChainHead;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.SyncStatus;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer.SyncStatusListener;
@@ -84,8 +85,24 @@ public class SyncState {
   }
 
   public boolean isInSync(final long syncTolerance) {
+    // Sync target may be temporarily empty while we switch sync targets during a sync, so
+    // check both the sync target and our best peer to determine if we're in sync or not
+    return isInSyncWithTarget(syncTolerance) && isInSyncWithBestPeer(syncTolerance);
+  }
+
+  private boolean isInSyncWithTarget(final long syncTolerance) {
     return syncTarget
         .map(t -> t.estimatedTargetHeight() - blockchain.getChainHeadBlockNumber() <= syncTolerance)
+        .orElse(true);
+  }
+
+  private boolean isInSyncWithBestPeer(final long syncTolerance) {
+    final ChainHead chainHead = blockchain.getChainHead();
+    return ethPeers
+        .bestPeerWithHeightEstimate()
+        .filter(peer -> peer.chainState().chainIsBetterThan(chainHead))
+        .map(EthPeer::chainState)
+        .map(chainState -> chainState.getEstimatedHeight() - chainHead.getHeight() <= syncTolerance)
         .orElse(true);
   }
 
@@ -112,7 +129,10 @@ public class SyncState {
   public long bestChainHeight(final long localChainHeight) {
     return Math.max(
         localChainHeight,
-        ethPeers.bestPeer().map(p -> p.chainState().getEstimatedHeight()).orElse(localChainHeight));
+        ethPeers
+            .bestPeerWithHeightEstimate()
+            .map(p -> p.chainState().getEstimatedHeight())
+            .orElse(localChainHeight));
   }
 
   private synchronized void checkInSync() {

@@ -75,7 +75,7 @@ public class SyncTarget {
         .add(
             "height",
             (chainState.getEstimatedHeight() == 0 ? "?" : chainState.getEstimatedHeight()))
-        .add("td", chainState.getBestBlock().getTotalDifficulty())
+        .add("td", chainState.getEstimatedTotalDifficulty())
         .add("peer", peer)
         .toString();
   }

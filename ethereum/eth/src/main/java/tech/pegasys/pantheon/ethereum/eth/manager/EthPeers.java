@@ -30,8 +30,7 @@ import java.util.stream.Stream;
 
 public class EthPeers {
   public static final Comparator<EthPeer> TOTAL_DIFFICULTY =
-      Comparator.comparing(
-          ((final EthPeer p) -> p.chainState().getBestBlock().getTotalDifficulty()));
+      Comparator.comparing(((final EthPeer p) -> p.chainState().getEstimatedTotalDifficulty()));
 
   public static final Comparator<EthPeer> CHAIN_HEIGHT =
       Comparator.comparing(((final EthPeer p) -> p.chainState().getEstimatedHeight()));
