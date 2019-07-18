@@ -61,6 +61,7 @@ public class PrivateTransactionHandlerTest {
 
   private PrivateTransactionHandler privateTransactionHandler;
   private PrivateTransactionHandler brokenPrivateTransactionHandler;
+  private PrivateTransactionValidator privateTransactionValidator;
 
   private static final Transaction PUBLIC_TRANSACTION =
       Transaction.builder()
@@ -89,6 +90,12 @@ public class PrivateTransactionHandlerTest {
     return mockEnclave;
   }
 
+  PrivateTransactionValidator mockPrivateTransactionValidator() {
+    PrivateTransactionValidator validator = mock(PrivateTransactionValidator.class);
+    when(validator.validate(any(), any())).thenReturn(ValidationResult.valid());
+    return validator;
+  }
+
   @Before
   public void setUp() throws Exception {
     PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
@@ -102,6 +109,8 @@ public class PrivateTransactionHandlerTest {
     when(worldStateArchive.getMutable(any(Hash.class))).thenReturn(Optional.of(mutableWorldState));
     when(mutableWorldState.get(any(Address.class))).thenReturn(account);
 
+    privateTransactionValidator = mockPrivateTransactionValidator();
+
     privateTransactionHandler =
         new PrivateTransactionHandler(
             mockEnclave(),
@@ -109,7 +118,8 @@ public class PrivateTransactionHandlerTest {
             KEY_PAIR,
             OrionKeyUtils.loadKey("orion_key_0.pub"),
             privateStateStorage,
-            worldStateArchive);
+            worldStateArchive,
+            privateTransactionValidator);
     brokenPrivateTransactionHandler =
         new PrivateTransactionHandler(
             brokenMockEnclave(),
@@ -117,7 +127,8 @@ public class PrivateTransactionHandlerTest {
             KEY_PAIR,
             OrionKeyUtils.loadKey("orion_key_0.pub"),
             privateStateStorage,
-            worldStateArchive);
+            worldStateArchive,
+            privateTransactionValidator);
   }
 
   @Test
@@ -173,8 +184,10 @@ public class PrivateTransactionHandlerTest {
 
   @Test
   public void nonceTooLowError() throws Exception {
-    final PrivateTransaction transaction = buildLegacyPrivateTransaction(0);
+    when(privateTransactionValidator.validate(any(), any()))
+        .thenReturn(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
 
+    final PrivateTransaction transaction = buildLegacyPrivateTransaction(0);
     final String enclaveKey = privateTransactionHandler.sendToOrion(transaction);
     final String privacyGroupId =
         privateTransactionHandler.getPrivacyGroup(enclaveKey, transaction);
@@ -185,6 +198,9 @@ public class PrivateTransactionHandlerTest {
 
   @Test
   public void incorrectNonceError() throws Exception {
+    when(privateTransactionValidator.validate(any(), any()))
+        .thenReturn(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
+
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(2);
 
     final String enclaveKey = privateTransactionHandler.sendToOrion(transaction);
