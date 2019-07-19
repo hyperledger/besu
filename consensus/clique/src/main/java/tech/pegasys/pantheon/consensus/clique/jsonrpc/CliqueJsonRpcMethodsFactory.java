@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.consensus.clique.jsonrpc;
 
 import tech.pegasys.pantheon.consensus.clique.CliqueBlockInterface;
 import tech.pegasys.pantheon.consensus.clique.CliqueContext;
+import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.CliqueGetSignerMetrics;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.CliqueGetSigners;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.CliqueGetSignersAtHash;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.methods.CliqueProposals;
@@ -66,12 +67,15 @@ public class CliqueJsonRpcMethodsFactory implements JsonRpcMethodFactory {
     final Propose proposeRpc = new Propose(voteProposer, jsonRpcParameter);
     final Discard discardRpc = new Discard(voteProposer, jsonRpcParameter);
     final CliqueProposals cliqueProposals = new CliqueProposals(voteProposer);
+    final CliqueGetSignerMetrics cliqueGetSignerMetrics =
+        new CliqueGetSignerMetrics(new CliqueBlockInterface(), blockchainQueries, jsonRpcParameter);
 
     rpcMethods.put(cliqueGetSigners.getName(), cliqueGetSigners);
     rpcMethods.put(cliqueGetSignersAtHash.getName(), cliqueGetSignersAtHash);
     rpcMethods.put(proposeRpc.getName(), proposeRpc);
     rpcMethods.put(discardRpc.getName(), discardRpc);
     rpcMethods.put(cliqueProposals.getName(), cliqueProposals);
+    rpcMethods.put(cliqueGetSignerMetrics.getName(), cliqueGetSignerMetrics);
     return rpcMethods;
   }
 
