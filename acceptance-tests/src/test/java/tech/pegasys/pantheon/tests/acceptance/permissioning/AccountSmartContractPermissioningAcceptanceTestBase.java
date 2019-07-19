@@ -21,10 +21,12 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.Cluster;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.permissioning.PermissionedNodeBuilder;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.AccountSmartContractPermissioningTransactions;
 
 import java.io.IOException;
+import java.util.List;
 
 class AccountSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBase {
 
@@ -51,12 +53,18 @@ class AccountSmartContractPermissioningAcceptanceTestBase extends AcceptanceTest
     return new Cluster(clusterConfiguration, net);
   }
 
-  protected Node permissionedNode(final String name) {
-    return permissionedNodeBuilder
-        .name(name)
-        .genesisFile(GENESIS_FILE)
-        .accountsContractEnabled(CONTRACT_ADDRESS)
-        .build();
+  protected Node permissionedNode(final String name, final List<String> accountsPermittedInConfig) {
+    PermissionedNodeBuilder permissionedNodeBuilder =
+        this.permissionedNodeBuilder
+            .name(name)
+            .genesisFile(GENESIS_FILE)
+            .accountsContractEnabled(CONTRACT_ADDRESS);
+
+    if (accountsPermittedInConfig != null && !accountsPermittedInConfig.isEmpty()) {
+      permissionedNodeBuilder.accountsPermittedInConfig(accountsPermittedInConfig);
+    }
+
+    return permissionedNodeBuilder.build();
   }
 
   protected Node node(final String name) {
