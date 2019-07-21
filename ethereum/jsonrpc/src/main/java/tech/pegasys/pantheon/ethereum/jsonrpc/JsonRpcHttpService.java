@@ -166,7 +166,10 @@ public class JsonRpcHttpService {
     // Create the HTTP server and a router object.
     httpServer =
         vertx.createHttpServer(
-            new HttpServerOptions().setHost(config.getHost()).setPort(config.getPort()));
+            new HttpServerOptions()
+                .setHost(config.getHost())
+                .setPort(config.getPort())
+                .setHandle100ContinueAutomatically(true));
 
     // Handle json rpc requests
     final Router router = Router.router(vertx);
