@@ -130,6 +130,7 @@ nav:
           - Alethio Ethereum Lite Explorer: Monitoring/Alethio/Lite-Block-Explorer.md
           - Alethio EthStats Lite Network Monitor: Monitoring/Alethio/Lite-Network-Monitor.md
     - Deploying Pantheon:
+        - Ansible: Deploying-Pantheon/Ansible.md
         - High Availability: Deploying-Pantheon/High-Availability.md
         - Migrating Docker Image: Deploying-Pantheon/Migration-Docker.md
     - Troubleshooting:
