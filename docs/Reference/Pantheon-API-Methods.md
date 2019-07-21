@@ -3784,6 +3784,10 @@ data using `eea_sendRawTransaction`.
 !!! important
     For production systems requiring private transactions, we recommend using a network 
     with a consensus mechanism supporting transaction finality. For example, [IBFT 2.0](../Consensus-Protocols/IBFT.md). 
+    
+    Pantheon does not implement [`eea_sendTransaction`](../Using-Pantheon/Account-Management.md). 
+        
+    [EthSigner](https://docs.ethsigner.pegasys.tech/en/latest/) provides transaction signing and implements [`eea_sendTransaction`](https://docs.ethsigner.pegasys.tech/en/latest/Using-EthSigner/Using-EthSigner/#eea_sendtransaction).
 
 **Parameters**
 
