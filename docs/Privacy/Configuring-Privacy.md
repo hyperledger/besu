@@ -10,6 +10,9 @@ This tutorial assumes you have completed setting up an IBFT 2.0 network to the p
 [created the genesis file](../Tutorials/Create-IBFT-Network.md#5-create-genesis-file). If not, complete
 steps 1 to 5 of the [Create an IBFT 2.0](../Tutorials/Create-IBFT-Network.md) tutorial before continuing. 
 
+!!! important 
+    To support privacy, ensure your genesis file includes at least the `constantinopleFixBlock` milestone.
+
 In this tutorial we start Orion nodes for the three Pantheon nodes and configure each Pantheon node to be associated 
 with an Orion node. 
 
