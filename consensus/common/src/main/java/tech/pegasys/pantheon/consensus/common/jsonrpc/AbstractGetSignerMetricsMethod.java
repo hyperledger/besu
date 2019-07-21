@@ -101,7 +101,7 @@ public abstract class AbstractGetSignerMetricsMethod {
   private long getFromBlockNumber(final Optional<BlockParameter> startBlockParameter) {
     return startBlockParameter
         .map(this::resolveBlockNumber)
-        .orElseGet(() -> blockchainQueries.headBlockNumber() - DEFAULT_RANGE_BLOCK);
+        .orElseGet(() -> Math.max(0, blockchainQueries.headBlockNumber() - DEFAULT_RANGE_BLOCK));
   }
 
   private long getEndBlockNumber(final Optional<BlockParameter> endBlockParameter) {

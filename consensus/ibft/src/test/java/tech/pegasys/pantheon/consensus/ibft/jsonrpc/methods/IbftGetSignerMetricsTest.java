@@ -13,7 +13,10 @@
 package tech.pegasys.pantheon.consensus.ibft.jsonrpc.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.AdditionalMatchers.lt;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.consensus.common.BlockInterface;
@@ -136,6 +139,30 @@ public class IbftGetSignerMetricsTest {
     final JsonRpcRequest request = requestWithParams();
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
+
+    assertThat((Collection<SignerMetricResult>) response.getResult())
+        .containsExactlyInAnyOrderElementsOf(signerMetricResultList);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void getSignerMetricsWhenThereAreFewerBlocksThanTheDefaultRange() {
+    final long startBlock = 0L;
+    final long headBlock = 2L;
+
+    final List<SignerMetricResult> signerMetricResultList = new ArrayList<>();
+
+    when(blockchainQueries.headBlockNumber()).thenReturn(headBlock);
+
+    LongStream.range(startBlock, headBlock)
+        .forEach(value -> signerMetricResultList.add(generateBlock(value)));
+
+    final JsonRpcRequest request = requestWithParams();
+
+    final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
+
+    // verify getBlockHeaderByNumber is not called with negative values
+    verify(blockchainQueries, never()).getBlockHeaderByNumber(lt(0L));
 
     assertThat((Collection<SignerMetricResult>) response.getResult())
         .containsExactlyInAnyOrderElementsOf(signerMetricResultList);
