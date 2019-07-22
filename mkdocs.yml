@@ -57,6 +57,7 @@ nav:
         - Installation Overview: Installation/Overview.md
         - Install Binary Distribution: Installation/Install-Binaries.md
         - Build from Source: Installation/Build-From-Source.md
+        - System Requirements: Installation/System-Requirements.md
     - Architecture:
         - Overview: Architecture/Overview.md
     - Getting Started:
