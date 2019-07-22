@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.Cluster;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.permissioning.PermissionedNodeBuilder;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.NodeSmartContractPermissioningTransactions;
 
@@ -49,12 +50,16 @@ class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBas
     return new Cluster(clusterConfiguration, net);
   }
 
-  protected Node permissionedNode(final String name) {
-    return permissionedNodeBuilder
-        .name(name)
-        .genesisFile(GENESIS_FILE)
-        .nodesContractEnabled(CONTRACT_ADDRESS)
-        .build();
+  protected Node permissionedNode(final String name, final Node... localConfigWhiteListedNodes) {
+    PermissionedNodeBuilder permissionedNodeBuilder =
+        this.permissionedNodeBuilder
+            .name(name)
+            .genesisFile(GENESIS_FILE)
+            .nodesContractEnabled(CONTRACT_ADDRESS);
+    if (localConfigWhiteListedNodes != null && localConfigWhiteListedNodes.length > 0) {
+      permissionedNodeBuilder.nodesPermittedInConfig(localConfigWhiteListedNodes);
+    }
+    return permissionedNodeBuilder.build();
   }
 
   protected Node bootnode(final String name) {
