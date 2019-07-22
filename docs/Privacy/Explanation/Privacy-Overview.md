@@ -8,14 +8,14 @@ Other parties cannot access the transaction content, sending party, or list of p
 
 !!! important
     For production systems requiring private transactions, we recommend using a network 
-    with a consensus mechanism supporting transaction finality. For example, [IBFT 2.0](../Consensus-Protocols/IBFT.md). 
+    with a consensus mechanism supporting transaction finality. For example, [IBFT 2.0](../../Consensus-Protocols/IBFT.md). 
 
 ## Private Transaction Manager
 
 Pantheon uses a Private Transaction Manager to implement privacy. For example, [Orion](http://docs.orion.pegasys.tech).  
 Each Pantheon node that sends or receives private transactions requires an associated Orion node. 
 
-![Orion Nodes](../images/OrionNodes.png)
+![Orion Nodes](../../images/OrionNodes.png)
 
 Private transactions are passed from the Pantheon node to the associated Orion node. The Orion node
 encrypts and directly distributes (that is, point to point) the private transaction to Orion nodes 
@@ -48,7 +48,7 @@ Private transactions have additional attributes to public Ethereum transactions:
 Pantheon and Orion nodes both have public/private key pairs identifying them. The private transaction 
 submitted from the Pantheon node to the Orion node is signed with the Pantheon node private key. The 
 `privateFrom` and `privateFor` attributes specified in the RLP-encoded transaction string for 
-[`eea_sendRawTransaction`](../Reference/Pantheon-API-Methods.md#eea_sendrawtransaction) are the public keys
+[`eea_sendRawTransaction`](../../Reference/Pantheon-API-Methods.md#eea_sendrawtransaction) are the public keys
 of the Orion nodes sending and receiving the transaction.  
 
 !!! important 
@@ -64,7 +64,7 @@ The Pantheon nodes maintain the public world state for the blockchain and a priv
 The private states contain data that is not shared in the globally replicated world state. Private transactions read 
 and write to the private world state for the privacy group, and read from the public world state.
 
-![Privacy Groups](../images/PrivacyGroups.png)
+![Privacy Groups](../../images/PrivacyGroups.png)
 
 !!! note
     The Orion nodes are not shown above for clarity only.  To send private transactions, 

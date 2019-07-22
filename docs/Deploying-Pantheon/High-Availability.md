@@ -29,7 +29,7 @@ are sent to multiple nodes, the [`eth_getTransactionCount`](../Reference/Pantheo
 results can be incorrect. 
 
 !!! note
-    If using [private transactions](../Privacy/Privacy-Overview.md), `eea_getTransactionCount` is used to obtain 
+    If using [private transactions](../Privacy/Explanation/Privacy-Overview.md), `eea_getTransactionCount` is used to obtain 
     the account nonce and [`eea_sendRawTransaction`](../Reference/Pantheon-API-Methods.md#eea_sendrawtransaction)
     to send private transactions. 
 

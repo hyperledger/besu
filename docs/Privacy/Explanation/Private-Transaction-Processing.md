@@ -10,13 +10,13 @@ Ethereum node for later execution.
 
 - **Privacy Marker Transaction**: Public Ethereum transaction with a payload of the transaction hash of the 
 private transaction. The `to` attribute of the Privacy Marker Transaction is the address of the privacy precompile contract. 
-The Privacy Marker Transaction is signed with the [Ethereum node private key](../Configuring-Pantheon/Node-Keys.md#node-private-key).
+The Privacy Marker Transaction is signed with the [Ethereum node private key](../../Configuring-Pantheon/Node-Keys.md#node-private-key).
 
 Private transactions are processed as illustrated and described below.  
 
-![Processing Private Transctions](../images/PrivateTransactionProcessing.png)
+![Processing Private Transctions](../../images/PrivateTransactionProcessing.png)
 
-1. A private transaction is submitted using [eea_sendRawTransaction](../Reference/Pantheon-API-Methods.md#eea_sendrawtransaction). 
+1. A private transaction is submitted using [eea_sendRawTransaction](../../Reference/Pantheon-API-Methods.md#eea_sendrawtransaction). 
 The signed transaction includes transaction attributes that are specific to private transactions: 
 
     * `privateFor` specifies the list of recipients
@@ -57,4 +57,4 @@ the private world state, and read from the public world state.
 
 !!! important
     For production systems requiring private transactions, we recommend using a network 
-    with a consensus mechanism supporting transaction finality. For example, [IBFT 2.0](../Consensus-Protocols/IBFT.md).
+    with a consensus mechanism supporting transaction finality. For example, [IBFT 2.0](../../Consensus-Protocols/IBFT.md).

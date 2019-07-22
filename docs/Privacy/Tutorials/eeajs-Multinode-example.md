@@ -3,7 +3,7 @@ description: web3.js-eea client library multinode example
 
 # Using Multinode Example in web3.js-eea Client Library
 
-To use the examples provided in EEA JS library with [your privacy network](../Configuring-Privacy.md):
+To use the examples provided in EEA JS library with [your privacy network](Configuring-Privacy.md):
 
 1. Clone the **PegaSysEng/eeajs** repository: 
      ```bash

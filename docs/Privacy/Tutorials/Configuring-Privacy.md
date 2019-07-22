@@ -7,8 +7,8 @@ Configuring a network that supports private transactions requires starting an Or
 Pantheon node. Pantheon command line options associate the Pantheon node with the Orion node. 
 
 This tutorial assumes you have completed setting up an IBFT 2.0 network to the point where you have 
-[created the genesis file](../Tutorials/Create-IBFT-Network.md#5-create-genesis-file). If not, complete
-steps 1 to 5 of the [Create an IBFT 2.0](../Tutorials/Create-IBFT-Network.md) tutorial before continuing. 
+[created the genesis file](../../Tutorials/Create-IBFT-Network.md#5-create-genesis-file). If not, complete
+steps 1 to 5 of the [Create an IBFT 2.0](../../Tutorials/Create-IBFT-Network.md) tutorial before continuing. 
 
 !!! important 
     To support privacy, ensure your genesis file includes at least the `constantinopleFixBlock` milestone.
@@ -119,18 +119,18 @@ pantheon --data-path=data --genesis-file=..\ibftGenesis.json --rpc-http-enabled 
 
 The command line specifies privacy options: 
 
-* [`--privacy-enabled`](../Reference/Pantheon-CLI-Syntax.md#privacy-enabled) enables privacy
-* [`--privacy-url`](../Reference/Pantheon-CLI-Syntax.md#privacy-url) specifies the Orion node URL (`clienturl` in `orion.conf`)
-* [`--privacy-public-key-file`](../Reference/Pantheon-CLI-Syntax.md#privacy-public-key-file) specifies the file containing
+* [`--privacy-enabled`](../../Reference/Pantheon-CLI-Syntax.md#privacy-enabled) enables privacy
+* [`--privacy-url`](../../Reference/Pantheon-CLI-Syntax.md#privacy-url) specifies the Orion node URL (`clienturl` in `orion.conf`)
+* [`--privacy-public-key-file`](../../Reference/Pantheon-CLI-Syntax.md#privacy-public-key-file) specifies the file containing
 Orion node public key (created in [3. Generate Orion Keys](#3-generate-orion-keys))
-* [`--rpc-http-api`](../Reference/Pantheon-CLI-Syntax.md#rpc-http-api) includes `EEA` in the list of 
+* [`--rpc-http-api`](../../Reference/Pantheon-CLI-Syntax.md#rpc-http-api) includes `EEA` in the list of 
 JSON-RPC APIs to enable privacy JSON-RPC API methods.  
-* [`--min-gas-price`](../Reference/Pantheon-CLI-Syntax.md#min-gas-price) set to 0 for a [free gas network](../Configuring-Pantheon/FreeGas.md).
+* [`--min-gas-price`](../../Reference/Pantheon-CLI-Syntax.md#min-gas-price) set to 0 for a [free gas network](../../Configuring-Pantheon/FreeGas.md).
 
-When the node starts, the [enode URL](../Configuring-Pantheon/Node-Keys.md#enode-url) is displayed.
+When the node starts, the [enode URL](../../Configuring-Pantheon/Node-Keys.md#enode-url) is displayed.
 Copy the enode URL to specify Node-1 as the bootnode in the following steps. 
 
-![Node 1 Enode URL](../images/EnodeStartup.png)
+![Node 1 Enode URL](../../images/EnodeStartup.png)
 
 ### 7. Start Pantheon Node-2 
 
@@ -145,10 +145,10 @@ pantheon --data-path=data --genesis-file=..\ibftGenesis.json --bootnodes=<Node-1
 ```
 
 The command line specifies the same options as for Node-1 with different ports and Orion node URL.  The 
-[`--bootnodes`](../Reference/Pantheon-CLI-Syntax.md#bootnodes) option specifies the enode URL for Node-1.
+[`--bootnodes`](../../Reference/Pantheon-CLI-Syntax.md#bootnodes) option specifies the enode URL for Node-1.
 
 !!!note
-    When running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md), [expose ports](../Getting-Started/Run-Docker-Image.md#exposing-ports).
+    When running Pantheon from the [Docker image](../../Getting-Started/Run-Docker-Image.md), [expose ports](../../Getting-Started/Run-Docker-Image.md#exposing-ports).
 
 ### 8. Start Pantheon Node-3
 
@@ -163,5 +163,5 @@ pantheon --data-path=data --genesis-file=..\ibftGenesis.json --bootnodes=<Node-1
 ```
 
 The command line specifies the same options as for Node-1 with different ports and Orion node URL.  The 
-[`--bootnodes`](../Reference/Pantheon-CLI-Syntax.md#bootnodes) option specifies the enode URL for Node-1.
+[`--bootnodes`](../../Reference/Pantheon-CLI-Syntax.md#bootnodes) option specifies the enode URL for Node-1.
 
