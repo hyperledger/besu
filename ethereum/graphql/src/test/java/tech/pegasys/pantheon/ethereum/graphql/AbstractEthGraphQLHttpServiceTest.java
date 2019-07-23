@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.graphql;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -44,6 +43,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
+import tech.pegasys.pantheon.testutil.BlockTestUtil;
 
 import java.net.URL;
 import java.nio.file.Paths;
@@ -64,11 +64,11 @@ import okhttp3.OkHttpClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 public abstract class AbstractEthGraphQLHttpServiceTest {
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
   private static ProtocolSchedule<Void> PROTOCOL_SCHEDULE;
 
@@ -99,18 +99,9 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
   public static void setupConstants() throws Exception {
     PROTOCOL_SCHEDULE = MainnetProtocolSchedule.create();
 
-    final URL blocksUrl =
-        EthGraphQLHttpBySpecTest.class
-            .getClassLoader()
-            .getResource("tech/pegasys/pantheon/ethereum/graphql/graphQLTestBlockchain.blocks");
+    final URL blocksUrl = BlockTestUtil.getTestBlockchainUrl();
 
-    final URL genesisJsonUrl =
-        EthGraphQLHttpBySpecTest.class
-            .getClassLoader()
-            .getResource("tech/pegasys/pantheon/ethereum/graphql/graphQLTestGenesis.json");
-
-    assertThat(blocksUrl).isNotNull();
-    assertThat(genesisJsonUrl).isNotNull();
+    final URL genesisJsonUrl = BlockTestUtil.getTestGenesisUrl();
 
     BLOCKS = new ArrayList<>();
     try (final RawBlockIterator iterator =

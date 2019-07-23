@@ -39,8 +39,8 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.testutil.BlockTestUtil;
 
-import java.net.URL;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -59,22 +59,12 @@ public class EthGetUncleByBlockHashAndIndexIntegrationTest {
 
   @BeforeClass
   public static void setUpOnce() throws Exception {
-    final URL blocksUrl =
-        EthGetUncleByBlockHashAndIndexIntegrationTest.class
-            .getClassLoader()
-            .getResource("tech/pegasys/pantheon/ethereum/jsonrpc/jsonRpcTestBlockchain.blocks");
+    final String genesisJson =
+        Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
 
-    final URL genesisJsonUrl =
-        EthGetUncleByBlockHashAndIndexIntegrationTest.class
-            .getClassLoader()
-            .getResource("tech/pegasys/pantheon/ethereum/jsonrpc/jsonRpcTestGenesis.json");
-
-    assertThat(blocksUrl).isNotNull();
-    assertThat(genesisJsonUrl).isNotNull();
-
-    final String genesisJson = Resources.toString(genesisJsonUrl, Charsets.UTF_8);
-
-    BLOCKCHAIN = new JsonRpcTestMethodsFactory(new BlockchainImporter(blocksUrl, genesisJson));
+    BLOCKCHAIN =
+        new JsonRpcTestMethodsFactory(
+            new BlockchainImporter(BlockTestUtil.getTestBlockchainUrl(), genesisJson));
   }
 
   @Before

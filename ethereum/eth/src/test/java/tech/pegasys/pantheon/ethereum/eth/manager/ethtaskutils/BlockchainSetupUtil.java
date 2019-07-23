@@ -31,12 +31,11 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
+import tech.pegasys.pantheon.testutil.BlockTestUtil;
 
 import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Files;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -96,10 +95,11 @@ public class BlockchainSetupUtil<C> {
     final TemporaryFolder temp = new TemporaryFolder();
     try {
       temp.create();
-      final URL genesisFileUrl = getResourceUrl(temp, "/testGenesis.json");
-      final GenesisState genesisState =
-          GenesisState.fromJson(
-              Resources.toString(genesisFileUrl, Charsets.UTF_8), protocolSchedule);
+      final String genesisJson =
+          Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
+
+      final GenesisState genesisState = GenesisState.fromJson(genesisJson, protocolSchedule);
+
       final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
       final WorldStateArchive worldArchive = createInMemoryWorldStateArchive();
 
@@ -107,7 +107,7 @@ public class BlockchainSetupUtil<C> {
       final ProtocolContext<Void> protocolContext =
           new ProtocolContext<>(blockchain, worldArchive, null);
 
-      final Path blocksPath = getResourcePath(temp, "/testBlockchain.blocks");
+      final Path blocksPath = Path.of(BlockTestUtil.getTestBlockchainUrl().toURI());
       final List<Block> blocks = new ArrayList<>();
       final BlockHeaderFunctions blockHeaderFunctions =
           ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
@@ -120,29 +120,11 @@ public class BlockchainSetupUtil<C> {
       }
       return new BlockchainSetupUtil<>(
           genesisState, blockchain, protocolContext, protocolSchedule, worldArchive, blocks);
-    } catch (final IOException ex) {
+    } catch (final IOException | URISyntaxException ex) {
       throw new IllegalStateException(ex);
     } finally {
       temp.delete();
     }
-  }
-
-  private static Path getResourcePath(final TemporaryFolder temp, final String resource)
-      throws IOException {
-    final URL url = BlockchainSetupUtil.class.getResource(resource);
-    final Path path =
-        Files.write(
-            temp.newFile().toPath(),
-            Resources.toByteArray(url),
-            StandardOpenOption.CREATE,
-            StandardOpenOption.TRUNCATE_EXISTING);
-    return path;
-  }
-
-  private static URL getResourceUrl(final TemporaryFolder temp, final String resource)
-      throws IOException {
-    final Path path = getResourcePath(temp, resource);
-    return path.toUri().toURL();
   }
 
   public long getMaxBlockNumber() {

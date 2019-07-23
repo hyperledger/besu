@@ -13,16 +13,59 @@
 package tech.pegasys.pantheon.testutil;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.util.function.Supplier;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Suppliers;
 import com.google.common.io.Resources;
 
 public final class BlockTestUtil {
 
-  private BlockTestUtil() {
-    // Utility Class
+  private static final Supplier<URL> blockchainURLSupplier =
+      Suppliers.memoize(BlockTestUtil::supplyTestBlockchainURL);
+  private static final Supplier<URL> genesisURLSupplier =
+      Suppliers.memoize(BlockTestUtil::supplyTestGenesisURL);
+
+  private static URL supplyTestBlockchainURL() {
+    return ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("testBlockchain.blocks"));
+  }
+
+  private static URL supplyTestGenesisURL() {
+    return ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("testGenesis.json"));
+  }
+
+  public static URL getTestBlockchainUrl() {
+    return blockchainURLSupplier.get();
+  }
+
+  public static URL getTestGenesisUrl() {
+    return genesisURLSupplier.get();
+  }
+
+  /** Take a resource URL and if needed copy it to a temp file and return that URL. */
+  private static URL ensureFileUrl(final URL resource) {
+    Preconditions.checkNotNull(resource);
+    try {
+      try {
+        Paths.get(resource.toURI());
+      } catch (final FileSystemNotFoundException e) {
+        final Path target = Files.createTempFile("pantheon", null);
+        target.toFile().deleteOnExit();
+        Files.copy(resource.openStream(), target, StandardCopyOption.REPLACE_EXISTING);
+        return target.toUri().toURL();
+      }
+    } catch (final IOException | URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+    return resource;
   }
 
   /**

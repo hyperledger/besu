@@ -28,6 +28,7 @@ import tech.pegasys.pantheon.ethereum.graphql.internal.BlockWithMetadata;
 import tech.pegasys.pantheon.ethereum.graphql.internal.BlockchainQuery;
 import tech.pegasys.pantheon.ethereum.graphql.internal.TransactionWithMetadata;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
+import tech.pegasys.pantheon.testutil.BlockTestUtil;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
@@ -117,16 +118,9 @@ public class GraphQLHttpServiceTest {
 
   @BeforeClass
   public static void setupConstants() {
+    final URL blocksUrl = BlockTestUtil.getTestBlockchainUrl();
 
-    final URL blocksUrl =
-        GraphQLHttpServiceTest.class
-            .getClassLoader()
-            .getResource("tech/pegasys/pantheon/ethereum/graphql/graphQLTestBlockchain.blocks");
-
-    final URL genesisJsonUrl =
-        GraphQLHttpServiceTest.class
-            .getClassLoader()
-            .getResource("tech/pegasys/pantheon/ethereum/graphql/graphQLTestGenesis.json");
+    final URL genesisJsonUrl = BlockTestUtil.getTestGenesisUrl();
 
     assertThat(blocksUrl).isNotNull();
     assertThat(genesisJsonUrl).isNotNull();

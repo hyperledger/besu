@@ -39,6 +39,7 @@ dependencies {
   implementation 'io.vertx:vertx-web'
 
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(':testutil')
 
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'junit:junit'
