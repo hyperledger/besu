@@ -3814,10 +3814,6 @@ Deletes the specified privacy group.
 
 `data` - Orion public key of privacy group deleter 
 
-`data` - Privacy group ID 
-
-**Returns** 
-
 Privacy group ID 
 
 !!! example
@@ -3858,12 +3854,9 @@ Privacy groups containing only the specified members.
     ```bash tab="wscat WS request"
     {"jsonrpc": "2.0","method": "eea_findPrivacyGroup","params": [["negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=", "g59BmTeJIn7HIcnq8VQWgyh/pDbvbt2eyP0Ii60aDDw="]],"id": 1}
     ```
-    
-    ```json tab="JSON result"
-    {
-      "jsonrpc": "2.0",
-      "id": 1,
-      "result": [
+ 
+     ```json tab="JSON result"
+     "result": [
          {
            "privacyGroupId": "GpK3ErNO0xF27T0sevgkJ3+4qk9Z+E3HtXYxcKIBKX8=",
            "name": "Group B",
@@ -3877,7 +3870,38 @@ Privacy groups containing only the specified members.
       ]
     }
     ```
+    
+### eea_getTransactionCount
 
+Returns the private transaction count for specified account and privacy group. 
+
+**Parameters** 
+
+`data` - Account address
+
+`data` - Privacy group ID 
+
+**Returns** 
+
+`quantity` - Integer representing the number of private transactions sent from the address to the specified privacy group.
+
+!!! example 
+    ```bash tab="curl HTTP request"
+    curl -X POST --data '{"jsonrpc":"2.0","method":"eea_getTransactionCount","params":["0xfe3b557e8fb62b89f4916b721be55ceb828dbd73", "kAbelwaVW7okoEn1+okO+AbA4Hhz/7DaCOWVQz9nx5M="], "id":1}' http://127.0.0.1:8545
+    ```
+    
+    ```bash tab="wscat WS request"
+    {"jsonrpc":"2.0","method":"eea_getTransactionCount","params":["0xfe3b557e8fb62b89f4916b721be55ceb828dbd73", "kAbelwaVW7okoEn1+okO+AbA4Hhz/7DaCOWVQz9nx5M="], "id":1}
+    ```
+
+    ```json tab="JSON result"
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": "0x1"
+    }
+    ```  
+     
 ### eea_sendRawTransaction
 
 Creates a private transaction from a signed transaction, generates the transaction hash and submits it 
