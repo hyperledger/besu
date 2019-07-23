@@ -127,6 +127,20 @@ public final class GenesisStateTest {
   }
 
   @Test
+  public void createFromJsonWithNonce() throws Exception {
+    final GenesisState genesisState =
+        GenesisState.fromJson(
+            Resources.toString(
+                GenesisStateTest.class.getResource("genesisNonce.json"), Charsets.UTF_8),
+            MainnetProtocolSchedule.create());
+    final BlockHeader header = genesisState.getBlock().getHeader();
+    assertThat(header.getHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x36750291f1a8429aeb553a790dc2d149d04dbba0ca4cfc7fd5eb12d478117c9f"));
+  }
+
+  @Test
   public void encodeOlympicBlock() throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(

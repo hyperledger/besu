@@ -1,0 +1,33 @@
+{
+  "config" : {
+    "ethash" : {
+      "fixeddifficulty" : 0
+    },
+    "homesteadBlock" : 0,
+    "eip150Block" : 0,
+    "eip158Block" : 0,
+    "byzantiumBlock" : 0,
+    "constantinopleBlock" : 0
+  },
+  "coinbase" : "0x8888f1f195afa192cfee860698584c030f4c9db1",
+  "difficulty" : "0x020000",
+  "extraData" : "0x42",
+  "gasLimit" : "0x2fefd8",
+  "mixHash" : "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+  "nonce" : "0x0102030405060708",
+  "timestamp" : "0x54c98c81",
+  "alloc" : {
+    "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b" : {
+      "balance" : "0x0de0b6b3a7640000",
+      "code" : "0x",
+      "nonce" : "0x00",
+      "storage" : { }
+    },
+    "0xec0e71ad0a90ffe1909d27dac207f7680abba42d" : {
+      "balance" : "0x01",
+      "code" : "0x6010ff",
+      "nonce" : "0x03",
+      "storage" : { }
+    }
+  }
+}

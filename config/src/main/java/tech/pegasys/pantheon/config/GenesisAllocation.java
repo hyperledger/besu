@@ -20,7 +20,7 @@ public class GenesisAllocation {
   private final String address;
   private final JsonObject data;
 
-  public GenesisAllocation(final String address, final JsonObject data) {
+  GenesisAllocation(final String address, final JsonObject data) {
     this.address = address;
     this.data = data;
   }
@@ -35,6 +35,10 @@ public class GenesisAllocation {
 
   public String getCode() {
     return data.getString("code");
+  }
+
+  public String getNonce() {
+    return data.getString("nonce", "0");
   }
 
   public String getVersion() {
