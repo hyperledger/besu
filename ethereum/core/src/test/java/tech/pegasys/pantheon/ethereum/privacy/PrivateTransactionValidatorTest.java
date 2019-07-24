@@ -13,27 +13,34 @@
 package tech.pegasys.pantheon.ethereum.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.INCORRECT_PRIVATE_NONCE;
+import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.INVALID_SIGNATURE;
 import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW;
+import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED;
+import static tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.WRONG_CHAIN_ID;
 
-import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.core.Wei;
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
+import tech.pegasys.pantheon.ethereum.core.PrivateTransactionTestFixture;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.math.BigInteger;
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
 
 public class PrivateTransactionValidatorTest {
 
+  private static final KeyPair senderKeys = KeyPair.generate();
+
   private PrivateTransactionValidator validator;
 
   @Before
   public void before() {
-    validator = new PrivateTransactionValidator();
+    validator = new PrivateTransactionValidator(Optional.empty());
   }
 
   @Test
@@ -60,17 +67,51 @@ public class PrivateTransactionValidatorTest {
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
   }
 
-  private static PrivateTransaction privateTransactionWithNonce(final long nonce) {
-    return PrivateTransaction.builder()
-        .nonce(nonce)
-        .gasPrice(Wei.of(1000))
-        .gasLimit(3000000)
-        .to(Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57"))
-        .value(Wei.ZERO)
-        .payload(BytesValue.fromHexString("0x"))
-        .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
-        .chainId(BigInteger.valueOf(2018))
-        .restriction(Restriction.RESTRICTED)
-        .build();
+  @Test
+  public void transactionWithInvalidChainIdShouldReturnWrongChainId() {
+    validator = new PrivateTransactionValidator(Optional.of(BigInteger.ONE));
+
+    ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(privateTransactionWithChainId(999), 0L);
+
+    assertThat(validationResult).isEqualTo(ValidationResult.invalid(WRONG_CHAIN_ID));
+  }
+
+  @Test
+  public void
+      transactionWithoutChainIdWithValidatorUsingChainIdShouldReturnReplayProtectedSignaturesNotSupported() {
+    validator = new PrivateTransactionValidator(Optional.empty());
+
+    ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(privateTransactionWithChainId(999), 0L);
+
+    assertThat(validationResult)
+        .isEqualTo(ValidationResult.invalid(REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED));
+  }
+
+  @Test
+  public void transactionWithInvalidSignatureShouldReturnInvalidSignature() {
+    PrivateTransaction transactionWithInvalidSignature = spy(privateTransactionWithNonce(1L));
+    when(transactionWithInvalidSignature.getSender()).thenThrow(new IllegalArgumentException());
+
+    ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(transactionWithInvalidSignature, 1L);
+
+    assertThat(validationResult).isEqualTo(ValidationResult.invalid(INVALID_SIGNATURE));
+  }
+
+  private PrivateTransaction privateTransactionWithNonce(final long nonce) {
+    PrivateTransactionTestFixture privateTransactionTestFixture =
+        new PrivateTransactionTestFixture();
+    privateTransactionTestFixture.nonce(nonce);
+    privateTransactionTestFixture.chainId(Optional.empty());
+    return privateTransactionTestFixture.createTransaction(senderKeys);
+  }
+
+  private PrivateTransaction privateTransactionWithChainId(final int chainId) {
+    PrivateTransactionTestFixture privateTransactionTestFixture =
+        new PrivateTransactionTestFixture();
+    privateTransactionTestFixture.chainId(Optional.of(BigInteger.valueOf(chainId)));
+    return privateTransactionTestFixture.createTransaction(senderKeys);
   }
 }

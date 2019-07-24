@@ -31,7 +31,9 @@ import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 
+import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -50,7 +52,8 @@ public class PrivateTransactionHandler {
   private final WorldStateArchive privateWorldStateArchive;
   private final PrivateTransactionValidator privateTransactionValidator;
 
-  public PrivateTransactionHandler(final PrivacyParameters privacyParameters) {
+  public PrivateTransactionHandler(
+      final PrivacyParameters privacyParameters, final Optional<BigInteger> chainId) {
     this(
         new Enclave(privacyParameters.getEnclaveUri()),
         Address.privacyPrecompiled(privacyParameters.getPrivacyAddress()),
@@ -58,7 +61,7 @@ public class PrivateTransactionHandler {
         privacyParameters.getEnclavePublicKey(),
         privacyParameters.getPrivateStateStorage(),
         privacyParameters.getPrivateWorldStateArchive(),
-        new PrivateTransactionValidator());
+        new PrivateTransactionValidator(chainId));
   }
 
   public PrivateTransactionHandler(

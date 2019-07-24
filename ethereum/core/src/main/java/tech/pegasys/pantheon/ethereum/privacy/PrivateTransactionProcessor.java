@@ -163,15 +163,16 @@ public class PrivateTransactionProcessor {
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
       final int maxStackSize,
-      final int createContractAccountVersion) {
+      final int createContractAccountVersion,
+      final PrivateTransactionValidator privateTransactionValidator) {
     this.gasCalculator = gasCalculator;
     this.transactionValidator = transactionValidator;
-    this.privateTransactionValidator = new PrivateTransactionValidator();
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
     this.clearEmptyAccounts = clearEmptyAccounts;
     this.maxStackSize = maxStackSize;
     this.createContractAccountVersion = createContractAccountVersion;
+    this.privateTransactionValidator = privateTransactionValidator;
   }
 
   @SuppressWarnings("unused")
