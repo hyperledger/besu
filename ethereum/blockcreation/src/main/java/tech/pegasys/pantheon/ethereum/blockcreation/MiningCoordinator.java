@@ -43,8 +43,7 @@ public interface MiningCoordinator {
   }
 
   default Optional<Long> hashesPerSecond() {
-    throw new UnsupportedOperationException(
-        "Current consensus mechanism prevents querying of hashrate.");
+    return Optional.empty();
   }
 
   default Optional<EthHashSolverInputs> getWorkDefinition() {

@@ -17,8 +17,6 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.blockcreation.EthHashMiningCoordinator;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
@@ -63,17 +61,6 @@ public class EthHashrateTest {
     final JsonRpcRequest request = requestWithParams();
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x0");
     when(miningCoordinator.hashesPerSecond()).thenReturn(Optional.empty());
-
-    final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-  }
-
-  @Test
-  public void shouldReturnErrorWhenMiningCoordinatorDoesNotSupportHashing() {
-    final JsonRpcRequest request = requestWithParams();
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_REQUEST);
-    when(miningCoordinator.hashesPerSecond()).thenThrow(UnsupportedOperationException.class);
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
