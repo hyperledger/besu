@@ -33,6 +33,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -83,7 +84,8 @@ public class PrivacyNode extends PantheonNode {
         bootnodeEligible,
         revertReasonEnabled,
         plugins,
-        extraCLIOptions);
+        extraCLIOptions,
+        new ArrayList<>());
     this.orion = orion;
   }
 

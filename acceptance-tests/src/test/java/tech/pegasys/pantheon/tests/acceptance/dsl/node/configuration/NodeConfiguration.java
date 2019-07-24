@@ -49,4 +49,6 @@ public interface NodeConfiguration {
   List<String> getExtraCLIOptions();
 
   boolean isRevertReasonEnabled();
+
+  List<String> getStaticNodes();
 }

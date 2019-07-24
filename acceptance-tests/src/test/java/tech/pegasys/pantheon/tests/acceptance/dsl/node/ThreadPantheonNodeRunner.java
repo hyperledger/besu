@@ -154,6 +154,10 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
             .metricsConfiguration(node.metricsConfiguration())
             .p2pEnabled(node.isP2pEnabled())
             .graphQLConfiguration(GraphQLConfiguration.createDefault())
+            .staticNodes(
+                node.getStaticNodes().stream()
+                    .map(EnodeURL::fromString)
+                    .collect(Collectors.toList()))
             .build();
 
     runner.start();

@@ -43,6 +43,7 @@ public class PantheonFactoryConfiguration {
   private final boolean revertReasonEnabled;
   private final List<String> plugins;
   private final List<String> extraCLIOptions;
+  private final List<String> staticNodes;
 
   public PantheonFactoryConfiguration(
       final String name,
@@ -61,7 +62,8 @@ public class PantheonFactoryConfiguration {
       final boolean bootnodeEligible,
       final boolean revertReasonEnabled,
       final List<String> plugins,
-      final List<String> extraCLIOptions) {
+      final List<String> extraCLIOptions,
+      final List<String> staticNodes) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.privacyParameters = privacyParameters;
@@ -79,6 +81,7 @@ public class PantheonFactoryConfiguration {
     this.revertReasonEnabled = revertReasonEnabled;
     this.plugins = plugins;
     this.extraCLIOptions = extraCLIOptions;
+    this.staticNodes = staticNodes;
   }
 
   public String getName() {
@@ -147,5 +150,9 @@ public class PantheonFactoryConfiguration {
 
   public boolean isRevertReasonEnabled() {
     return revertReasonEnabled;
+  }
+
+  public List<String> getStaticNodes() {
+    return staticNodes;
   }
 }
