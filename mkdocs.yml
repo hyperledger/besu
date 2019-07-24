@@ -142,6 +142,7 @@ nav:
         - Pantheon Command Line: Reference/Pantheon-CLI-Syntax.md
         - Pantheon API Methods: Reference/Pantheon-API-Methods.md
         - Pantheon API Objects: Reference/Pantheon-API-Objects.md
+        - web3.js-eaa Methods: Reference/web3js-eea-Methods.md
     - Resources:
         - Blog Posts and Webinars: Resources/Resources.md
 
