@@ -8,7 +8,7 @@ if (env.BRANCH_NAME == "master") {
     properties([
         buildDiscarder(
             logRotator(
-                daysToKeepStr: '90'
+                daysToKeepStr: '30', artifactDaysToKeepStr: '7'
             )
         )
     ])
