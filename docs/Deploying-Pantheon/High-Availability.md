@@ -1,7 +1,7 @@
 description: Pantheon high availability 
 <!--- END of page meta data -->
 
-# High Availability 
+# High Availability of JSON-RPC and RPC Rub/Sub APIs
 
 To enable high availability to the [RPC Pub/Sub API over WebSockets](../Pantheon-API/RPC-PubSub.md) 
 or the [JSON-RPC API](../Pantheon-API/Using-JSON-RPC-API.md) run and synchronize multiple Pantheon 

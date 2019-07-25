@@ -134,7 +134,7 @@ nav:
           - Alethio EthStats Lite Network Monitor: Monitoring/Alethio/Lite-Network-Monitor.md
     - Deploying Pantheon:
         - Ansible: Deploying-Pantheon/Ansible.md
-        - High Availability: Deploying-Pantheon/High-Availability.md
+        - High Availability of APIs: Deploying-Pantheon/High-Availability.md
         - Migrating Docker Image: Deploying-Pantheon/Migration-Docker.md
     - Troubleshooting:
         - Troubleshooting: Troubleshooting/Troubleshooting.md
