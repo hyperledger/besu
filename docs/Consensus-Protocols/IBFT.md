@@ -98,7 +98,7 @@ to two times `blockperiodseconds` generally results in blocks being added every 
 
 !!! example 
     An internal PegaSys IBFT 2.0 testnet has 4 geographically dispersed validators in Sweden, 
-    Sydney, and North Viringia (2 validators). With a `blockperiodseconds`of 5 and a `requesttimeoutseconds` of 10,
+    Sydney, and North Virginia (2 validators). With a `blockperiodseconds`of 5 and a `requesttimeoutseconds` of 10,
     the testnet consistently creates block with a 5 second blocktime. 
 
 ### Optional Configuration Options 
