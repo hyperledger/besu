@@ -32,6 +32,7 @@ import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -91,6 +92,11 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
             localAddress);
     executorService.execute(currentRunningMiner);
     return currentRunningMiner;
+  }
+
+  @Override
+  public Optional<Address> getCoinbase() {
+    return Optional.of(localAddress);
   }
 
   @VisibleForTesting

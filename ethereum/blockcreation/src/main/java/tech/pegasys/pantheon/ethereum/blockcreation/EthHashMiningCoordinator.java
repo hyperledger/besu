@@ -44,11 +44,6 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<Void, Et
   }
 
   @Override
-  public Optional<Address> getCoinbase() {
-    return executor.getCoinbase();
-  }
-
-  @Override
   public Optional<Long> hashesPerSecond() {
     final Optional<Long> currentHashesPerSecond =
         currentRunningMiner.flatMap(EthHashBlockMiner::getHashesPerSecond);

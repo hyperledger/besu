@@ -21,8 +21,11 @@ import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedObserver;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+
+import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
 
@@ -68,6 +71,11 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   @Override
   public void setExtraData(final BytesValue extraData) {
     blockCreatorFactory.setExtraData(extraData);
+  }
+
+  @Override
+  public Optional<Address> getCoinbase() {
+    return Optional.of(blockCreatorFactory.getLocalAddress());
   }
 
   @Override
