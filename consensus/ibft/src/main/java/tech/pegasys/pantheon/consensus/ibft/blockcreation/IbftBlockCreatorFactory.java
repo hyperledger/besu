@@ -107,6 +107,10 @@ public class IbftBlockCreatorFactory {
     return extraData.encode();
   }
 
+  public Address getLocalAddress() {
+    return localAddress;
+  }
+
   private static Optional<Vote> toVote(final Optional<ValidatorVote> input) {
     return input
         .map(v -> Optional.of(new Vote(v.getRecipient(), v.getVotePolarity())))

@@ -37,10 +37,7 @@ public interface MiningCoordinator {
         "Current consensus mechanism prevents setting coinbase.");
   }
 
-  default Optional<Address> getCoinbase() {
-    throw new UnsupportedOperationException(
-        "Current consensus mechanism prevents querying of coinbase.");
-  }
+  Optional<Address> getCoinbase();
 
   default Optional<Long> hashesPerSecond() {
     return Optional.empty();

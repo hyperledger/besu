@@ -35,7 +35,7 @@ public class CliqueMiningCoordinator
 
   @Override
   protected boolean newChainHeadInvalidatesMiningOperation(final BlockHeader newChainHeadHeader) {
-    if (!currentRunningMiner.isPresent()) {
+    if (currentRunningMiner.isEmpty()) {
       return true;
     }
 
@@ -56,9 +56,6 @@ public class CliqueMiningCoordinator
     final boolean nodeIsMining = miningTracker.canMakeBlockNextRound(parentHeader);
     final boolean nodeIsInTurn = miningTracker.isProposerAfter(parentHeader);
 
-    if (nodeIsMining && nodeIsInTurn) {
-      return false;
-    }
-    return true;
+    return !nodeIsMining || !nodeIsInTurn;
   }
 }

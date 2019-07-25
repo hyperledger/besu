@@ -88,6 +88,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
     }
   }
 
+  @Override
   public Optional<Address> getCoinbase() {
     return coinbase;
   }

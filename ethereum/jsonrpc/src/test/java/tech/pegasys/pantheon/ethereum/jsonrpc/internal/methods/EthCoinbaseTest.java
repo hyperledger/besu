@@ -77,17 +77,6 @@ public class EthCoinbaseTest {
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
-  @Test
-  public void shouldReturnAnInvalidRequestIfUnderlyingOperationThrowsUnsupportedOperation() {
-    final JsonRpcRequest request = requestWithParams();
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_REQUEST);
-    when(miningCoordinator.getCoinbase()).thenThrow(UnsupportedOperationException.class);
-
-    final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-  }
-
   private JsonRpcRequest requestWithParams(final Object... params) {
     return new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params);
   }

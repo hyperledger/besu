@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.ethereum.chain.BlockAddedEvent;
 import tech.pegasys.pantheon.ethereum.chain.BlockAddedObserver;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
@@ -133,6 +134,11 @@ public abstract class AbstractMiningCoordinator<
   @Override
   public void setExtraData(final BytesValue extraData) {
     executor.setExtraData(extraData);
+  }
+
+  @Override
+  public Optional<Address> getCoinbase() {
+    return executor.getCoinbase();
   }
 
   protected abstract boolean newChainHeadInvalidatesMiningOperation(
