@@ -22,13 +22,13 @@ to get the transaction receipt for the private transaction.
 
 Use [`eth_getTransactionByHash`](../../Reference/Pantheon-API-Methods.md#eth_gettransactionbyhash) to 
 get the Privacy Marker Transaction with the transaction hash returned when submitting the private transaction. 
-Use [`eea_getPrivateTransacton`](../../Reference/Pantheon-API-Methods.md#eea_getprivatetransaction) 
+Use [`priv_getPrivateTransaction`](../../Reference/Pantheon-API-Methods.md#priv_getprivatetransaction) 
 to get the private transaction with the `input` value from the Privacy Marker Transaction. 
 
 Separate private states are maintained for each [privacy group](../Explanation/Privacy-Overview.md#privacy-groups) so 
 the account nonce for an account is specific to the privacy group. That is, the nonce for account A for
 privacy group ABC is different to the account nonce for account A for privacy group AB. Use 
-[`eea_getTransactionCount`](../../Reference/Pantheon-API-Methods.md#eea_gettransactioncount) to get 
+[`priv_getTransactionCount`](../../Reference/Pantheon-API-Methods.md#priv_getTransactionCount) to get 
 the account nonce for an account for the specified privacy group. 
 
 !!! note

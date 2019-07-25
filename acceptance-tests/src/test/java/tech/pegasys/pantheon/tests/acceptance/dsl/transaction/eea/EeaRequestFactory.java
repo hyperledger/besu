@@ -100,10 +100,10 @@ public class EeaRequestFactory {
         PrivateTransactionReceiptResponse.class);
   }
 
-  Request<?, EthGetTransactionCount> eeaGetTransactionCount(
+  public Request<?, EthGetTransactionCount> privGetTransactionCount(
       final String accountAddress, final String privacyGroupId) {
     return new Request<>(
-        "eea_getTransactionCount",
+        "priv_getTransactionCount",
         Lists.newArrayList(accountAddress, privacyGroupId),
         web3jService,
         EthGetTransactionCount.class);

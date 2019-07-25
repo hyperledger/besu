@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
@@ -33,7 +33,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import org.apache.logging.log4j.Logger;
 
-public class EeaGetPrivateTransaction implements JsonRpcMethod {
+public class PrivGetPrivateTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
 
@@ -41,7 +41,7 @@ public class EeaGetPrivateTransaction implements JsonRpcMethod {
   private final JsonRpcParameter parameters;
   private final PrivacyParameters privacyParameters;
 
-  public EeaGetPrivateTransaction(
+  public PrivGetPrivateTransaction(
       final Enclave enclave,
       final JsonRpcParameter parameters,
       final PrivacyParameters privacyParameters) {
@@ -52,12 +52,12 @@ public class EeaGetPrivateTransaction implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.EEA_GET_PRIVATE_TRANSACTION.getMethodName();
+    return RpcMethod.PRIV_GET_PRIVATE_TRANSACTION.getMethodName();
   }
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    LOG.trace("Executing {}", RpcMethod.EEA_GET_PRIVATE_TRANSACTION.getMethodName());
+    LOG.trace("Executing {}", RpcMethod.PRIV_GET_PRIVATE_TRANSACTION.getMethodName());
     final String enclaveKey = parameters.required(request.getParams(), 0, String.class);
     try {
       ReceiveResponse receiveResponse =

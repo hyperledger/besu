@@ -27,7 +27,7 @@ import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaGetPrivateTransaction;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv.PrivGetPrivateTransaction;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
@@ -48,7 +48,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-public class EeaGetPrivateTransactionIntegrationTest {
+public class PrivGetPrivateTransactionIntegrationTest {
 
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
@@ -120,8 +120,8 @@ public class EeaGetPrivateTransactionIntegrationTest {
 
   @Test
   public void returnsStoredPrivateTransaction() throws Exception {
-    final EeaGetPrivateTransaction eeaGetPrivateTransaction =
-        new EeaGetPrivateTransaction(enclave, parameters, privacyParameters);
+    final PrivGetPrivateTransaction privGetPrivateTransaction =
+        new PrivGetPrivateTransaction(enclave, parameters, privacyParameters);
 
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
@@ -135,10 +135,10 @@ public class EeaGetPrivateTransactionIntegrationTest {
 
     final String hexKey = BytesValues.fromBase64(sendResponse.getKey()).toString();
     final Object[] params = new Object[] {hexKey};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getPrivateTransaction", params);
+    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getPrivateTransaction", params);
 
     final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse) eeaGetPrivateTransaction.response(request);
+        (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);
     final PrivateTransactionLegacyResult result =
         (PrivateTransactionLegacyResult) response.getResult();
 

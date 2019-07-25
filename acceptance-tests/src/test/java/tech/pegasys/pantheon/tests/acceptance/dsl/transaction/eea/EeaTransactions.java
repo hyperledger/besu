@@ -12,15 +12,17 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea;
 
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.priv.PrivGetTransactionCountTransaction;
+
 public class EeaTransactions {
 
   public EeaGetTransactionReceiptTransaction getTransactionReceipt(final String transactionHash) {
     return new EeaGetTransactionReceiptTransaction(transactionHash);
   }
 
-  public EeaGetTransactionCountTransaction getTransactionCount(
+  public PrivGetTransactionCountTransaction getTransactionCount(
       final String address, final String privacyGroupId) {
-    return new EeaGetTransactionCountTransaction(address, privacyGroupId);
+    return new PrivGetTransactionCountTransaction(address, privacyGroupId);
   }
 
   public EeaGetTransactionReceiptTransaction getPrivateTransactionReceipt(

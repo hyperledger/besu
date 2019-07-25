@@ -374,7 +374,7 @@ Documentation updates include:
 
 ### Technical Improvements 
 
-- eea_getTransactionCount fails if account has not interacted with private state [\#1369](https://github.com/PegaSysEng/pantheon/pull/1369) 
+- priv_getTransactionCount fails if account has not interacted with private state [\#1369](https://github.com/PegaSysEng/pantheon/pull/1369) 
 - Updating Orion to 0.9.0 [\#1360](https://github.com/PegaSysEng/pantheon/pull/1360)
 - Allow use of large chain IDs [\#1357](https://github.com/PegaSysEng/pantheon/pull/1357)
 - Allow private contract invocations in multiple privacy groups [\#1340](https://github.com/PegaSysEng/pantheon/pull/1340)

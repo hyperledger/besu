@@ -67,7 +67,7 @@ Returned by [eth_getFilterChanges](Pantheon-API-Methods.md#eth_getfilterchanges)
 
 ## Private Transaction Object
 
-Returned by [eea_getPrivateTransaction](Pantheon-API-Methods.md#eea_getprivatetransaction).
+Returned by [priv_getPrivateTransaction](Pantheon-API-Methods.md#priv_getprivatetransaction).
 
 | Key                  | Type                              | Value                                                                           |
 |----------------------|-:-:-------------------------------|---------------------------------------------------------------------------------|

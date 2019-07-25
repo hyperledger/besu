@@ -90,14 +90,14 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.Per
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.PermReloadPermissionsFromFile;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.PermRemoveAccountsFromWhitelist;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.permissioning.PermRemoveNodesFromWhitelist;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaCreatePrivacyGroup;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaDeletePrivacyGroup;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaFindPrivacyGroup;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaGetPrivacyPrecompileAddress;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaGetPrivateTransaction;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaGetTransactionCount;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaGetTransactionReceipt;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.EeaSendRawTransaction;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.eea.EeaGetTransactionReceipt;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.eea.EeaSendRawTransaction;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv.PrivCreatePrivacyGroup;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv.PrivDeletePrivacyGroup;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv.PrivFindPrivacyGroup;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv.PrivGetPrivacyPrecompileAddress;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv.PrivGetPrivateTransaction;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv.PrivGetTransactionCount;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.BlockReplay;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.BlockTracer;
@@ -321,22 +321,31 @@ public class JsonRpcMethodsFactory {
           new AdminPeers(p2pNetwork),
           new AdminChangeLogLevel(parameter));
     }
-    if (rpcApis.contains(RpcApis.EEA)) {
+
+    boolean eea = rpcApis.contains(RpcApis.EEA), priv = rpcApis.contains(RpcApis.PRIV);
+    if (eea || priv) {
       final PrivateTransactionHandler privateTransactionHandler =
           new PrivateTransactionHandler(privacyParameters, protocolSchedule.getChainId());
       final Enclave enclave = new Enclave(privacyParameters.getEnclaveUri());
-      addMethods(
-          enabledMethods,
-          new EeaGetTransactionReceipt(blockchainQueries, enclave, parameter, privacyParameters),
-          new EeaSendRawTransaction(
-              blockchainQueries, privateTransactionHandler, transactionPool, parameter),
-          new EeaGetTransactionCount(parameter, privateTransactionHandler),
-          new EeaGetPrivateTransaction(enclave, parameter, privacyParameters),
-          new EeaCreatePrivacyGroup(new Enclave(privacyParameters.getEnclaveUri()), parameter),
-          new EeaDeletePrivacyGroup(new Enclave(privacyParameters.getEnclaveUri()), parameter),
-          new EeaFindPrivacyGroup(new Enclave(privacyParameters.getEnclaveUri()), parameter),
-          new EeaGetPrivacyPrecompileAddress(privacyParameters));
+      if (eea) {
+        addMethods(
+            enabledMethods,
+            new EeaGetTransactionReceipt(blockchainQueries, enclave, parameter, privacyParameters),
+            new EeaSendRawTransaction(
+                blockchainQueries, privateTransactionHandler, transactionPool, parameter));
+      }
+      if (priv) {
+        addMethods(
+            enabledMethods,
+            new PrivCreatePrivacyGroup(new Enclave(privacyParameters.getEnclaveUri()), parameter),
+            new PrivDeletePrivacyGroup(new Enclave(privacyParameters.getEnclaveUri()), parameter),
+            new PrivFindPrivacyGroup(new Enclave(privacyParameters.getEnclaveUri()), parameter),
+            new PrivGetPrivacyPrecompileAddress(privacyParameters),
+            new PrivGetTransactionCount(parameter, privateTransactionHandler),
+            new PrivGetPrivateTransaction(enclave, parameter, privacyParameters));
+      }
     }
+
     return enabledMethods;
   }
 
