@@ -3771,6 +3771,56 @@ None
     The `EEA` API methods are not enabled by default for JSON-RPC. Use the [`--rpc-http-api`](Pantheon-CLI-Syntax.md#rpc-http-api) 
     or [`--rpc-ws-api`](Pantheon-CLI-Syntax.md#rpc-ws-api) options to enable the `EEA` API methods.
 
+### eea_getPrivateTransaction
+
+Returns the private transaction if you are a participant; otherwise, null. To get the public transaction, 
+use [`eth_getTransactionByHash`](#eth_gettransactionbyhash) with the transaction hash returned by 
+[`eea_sendRawTransaction`](#eea_sendrawtransaction) or [`eea_sendTransction`](https://docs.ethsigner.pegasys.tech/en/latest/Using-EthSigner/Using-EthSigner/#eea_sendtransaction). 
+
+**Parameters** 
+
+`data` - Value of `input` from the [public transaction object](Pantheon-API-Objects.md#transaction-object). `input`
+is a pointer to the transaction location in [Orion](https://docs.orion.pegasys.tech/en/stable/).
+
+**Returns**  
+
+Object - [Private transaction object](Pantheon-API-Objects.md#private-transaction-object), or `null` if not a participant in the private transaction. 
+
+!!! example
+    ```bash tab="curl HTTP request"
+    curl -X POST --data '{"jsonrpc":"2.0","method":"eea_getPrivateTransaction","params":["0xd2274e3da9ac7f7fcec531adeefdc205688e85544ccf515c4de73b0540c9b818"], "id":1}' http://127.0.0.1:8545
+    ```
+    
+    ```bash tab="wscat WS request"
+    {"jsonrpc":"2.0","method":"eea_getPrivateTransaction","params":["0xd2274e3da9ac7f7fcec531adeefdc205688e85544ccf515c4de73b0540c9b818"], "id":1}
+    ```
+    
+    ```bash tab="json tab="JSON result"
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+            "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+            "gas": "0x2dc6c0",
+            "gasPrice": "0x0",
+            "hash": "0xdb4ab78714c79d8ef6e93c598fd894cdafd3dde15460eaa4c9725c1e1d454971",
+            "input": "0x608060405234801561001057600080fd5b50336000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550610221806100606000396000f300608060405260043610610057576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680633fa4f2451461005c5780636057361d1461008757806367e404ce146100b4575b600080fd5b34801561006857600080fd5b5061007161010b565b6040518082815260200191505060405180910390f35b34801561009357600080fd5b506100b260048036038101908080359060200190929190505050610115565b005b3480156100c057600080fd5b506100c96101cb565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6000600254905090565b7fc9db20adedc6cf2b5d25252b101ab03e124902a73fcb12b753f3d1aaa2d8f9f53382604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018281526020019250505060405180910390a18060028190555033600160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555050565b6000600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff169050905600a165627a7a723058208efaf938851fb2d235f8bf9a9685f149129a30fe0f4b20a6c1885dc02f639eba0029",
+            "nonce": "0x0",
+            "to": null,
+            "value": "0x0",
+            "v": "0xfe8",
+            "r": "0x654a6a9663ca70bb13e27cca14b3777cc92da184e19a151cdeef2ccbbd5c6405",
+            "s": "0x5dd4667b020c8a5af7ae28d4c3126f8dcb1187f49dcf0de9d7a39b1651892eef",
+            "privateFrom": "negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=",
+            "privateFor": [
+                "g59BmTeJIn7HIcnq8VQWgyh/pDbvbt2eyP0Ii60aDDw="
+            ],
+            "restriction": "restricted"
+        }
+    }
+    ```
+
+
 ### eea_createPrivacyGroup 
 
 Creates a privacy group containing the specified members. Members are specified by their Orion public key. 
