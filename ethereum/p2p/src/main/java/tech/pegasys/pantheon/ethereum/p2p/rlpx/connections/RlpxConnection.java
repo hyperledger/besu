@@ -24,18 +24,19 @@ public abstract class RlpxConnection {
   private final long initiatedAt;
   protected final CompletableFuture<PeerConnection> future;
 
-  private RlpxConnection(final CompletableFuture<PeerConnection> future) {
+  private RlpxConnection(final CompletableFuture<PeerConnection> future, final long initiatedAt) {
     this.future = future;
-    this.initiatedAt = System.currentTimeMillis();
+    this.initiatedAt = initiatedAt;
   }
 
-  public static RlpxConnection inboundConnection(final PeerConnection peerConnection) {
-    return new RemotelyInitiatedRlpxConnection(peerConnection);
+  public static RlpxConnection inboundConnection(
+      final PeerConnection peerConnection, final long initiatedAt) {
+    return new RemotelyInitiatedRlpxConnection(peerConnection, initiatedAt);
   }
 
   public static RlpxConnection outboundConnection(
-      final Peer peer, final CompletableFuture<PeerConnection> future) {
-    return new LocallyInitiatedRlpxConnection(peer, future);
+      final Peer peer, final CompletableFuture<PeerConnection> future, final long initiatedAt) {
+    return new LocallyInitiatedRlpxConnection(peer, future, initiatedAt);
   }
 
   public abstract Peer getPeer();
@@ -84,8 +85,9 @@ public abstract class RlpxConnection {
 
     private final PeerConnection peerConnection;
 
-    private RemotelyInitiatedRlpxConnection(final PeerConnection peerConnection) {
-      super(CompletableFuture.completedFuture(peerConnection));
+    private RemotelyInitiatedRlpxConnection(
+        final PeerConnection peerConnection, final long initiatedAt) {
+      super(CompletableFuture.completedFuture(peerConnection), initiatedAt);
       this.peerConnection = peerConnection;
     }
 
@@ -147,8 +149,8 @@ public abstract class RlpxConnection {
     private final Peer peer;
 
     private LocallyInitiatedRlpxConnection(
-        final Peer peer, final CompletableFuture<PeerConnection> future) {
-      super(future);
+        final Peer peer, final CompletableFuture<PeerConnection> future, final long initiatedAt) {
+      super(future, initiatedAt);
       this.peer = peer;
     }
 

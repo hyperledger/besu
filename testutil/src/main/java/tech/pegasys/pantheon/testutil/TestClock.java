@@ -17,13 +17,19 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.TemporalUnit;
+import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
 
 public class TestClock extends Clock {
-  public static Clock fixed() {
-    return Clock.fixed(Instant.ofEpochSecond(10_000_000), ZoneId.systemDefault());
-  }
 
-  private Instant now = Instant.ofEpochSecond(24982948294L);
+  private static final Supplier<Clock> fixedNow =
+      Suppliers.memoize(() -> Clock.fixed(Instant.now(), ZoneOffset.UTC));
+  private Instant now = fixedNow.get().instant();
+
+  public static Clock fixed() {
+    return fixedNow.get();
+  }
 
   @Override
   public ZoneId getZone() {

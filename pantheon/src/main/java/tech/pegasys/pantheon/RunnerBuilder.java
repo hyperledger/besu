@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import tech.pegasys.pantheon.cli.config.EthNetworkConfig;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
@@ -85,6 +87,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -95,7 +98,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
 
@@ -124,6 +126,7 @@ public class RunnerBuilder {
   private MetricsSystem metricsSystem;
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private Collection<EnodeURL> staticNodes = Collections.emptyList();
+  private Clock clock;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -234,9 +237,14 @@ public class RunnerBuilder {
     return this;
   }
 
-  public Runner build() {
+  public RunnerBuilder clock(final Clock clock) {
+    this.clock = clock;
+    return this;
+  }
 
-    Preconditions.checkNotNull(pantheonController);
+  public Runner build() {
+    checkNotNull(pantheonController);
+    checkNotNull(clock);
 
     final DiscoveryConfiguration discoveryConfiguration;
     if (discovery) {
@@ -313,6 +321,7 @@ public class RunnerBuilder {
                 .config(networkingConfiguration)
                 .peerPermissions(peerPermissions)
                 .metricsSystem(metricsSystem)
+                .clock(clock)
                 .supportedCapabilities(caps)
                 .natManager(natManager)
                 .build();

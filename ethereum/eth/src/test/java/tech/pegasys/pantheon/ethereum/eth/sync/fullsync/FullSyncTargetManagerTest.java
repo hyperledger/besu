@@ -32,6 +32,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.testutil.TestClock;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -58,7 +59,8 @@ public class FullSyncTargetManagerTest {
     final BlockchainSetupUtil<Void> localBlockchainSetup = BlockchainSetupUtil.forTesting();
     localBlockchain = localBlockchainSetup.getBlockchain();
 
-    final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
+    final ProtocolSchedule<Void> protocolSchedule =
+        MainnetProtocolSchedule.create(TestClock.fixed());
     final ProtocolContext<Void> protocolContext =
         new ProtocolContext<>(localBlockchain, localWorldState, null);
     ethProtocolManager =

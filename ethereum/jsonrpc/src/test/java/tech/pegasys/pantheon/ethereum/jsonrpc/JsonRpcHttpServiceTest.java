@@ -49,6 +49,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.AccountLocalConfigPermission
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 import tech.pegasys.pantheon.util.uint.UInt256;
@@ -126,7 +127,8 @@ public class JsonRpcHttpServiceTest {
                     MainnetProtocolSchedule.fromConfig(
                         new StubGenesisConfigOptions()
                             .constantinopleBlock(0)
-                            .chainId(BigInteger.valueOf(CHAIN_ID))),
+                            .chainId(BigInteger.valueOf(CHAIN_ID)),
+                        TestClock.fixed()),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(EthHashMiningCoordinator.class),

@@ -32,6 +32,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -67,7 +68,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final BlockHeader blockHeader = buildBlockHeader(2, proposerKeyPair, validators, parentHeader);
 
     final BlockHeaderValidator<IbftContext> validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5, TestClock.fixed());
 
     assertThat(
             validator.validateHeader(
@@ -90,7 +91,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final BlockHeader blockHeader = buildBlockHeader(2, proposerKeyPair, validators, null);
 
     final BlockHeaderValidator<IbftContext> validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5, TestClock.fixed());
 
     assertThat(
             validator.validateHeader(

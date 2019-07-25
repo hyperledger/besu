@@ -35,6 +35,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -64,6 +65,7 @@ public abstract class PeerDiscoveryAgent {
   private final List<PeerRequirement> peerRequirements = new CopyOnWriteArrayList<>();
   private final PeerPermissions peerPermissions;
   private final Optional<UpnpNatManager> natManager;
+  private final Clock clock;
   private final MetricsSystem metricsSystem;
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
@@ -87,20 +89,23 @@ public abstract class PeerDiscoveryAgent {
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
       final Optional<UpnpNatManager> natManager,
-      final MetricsSystem metricsSystem) {
-    this.metricsSystem = metricsSystem;
+      final MetricsSystem metricsSystem,
+      final Clock clock) {
     checkArgument(keyPair != null, "keypair cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
+    checkArgument(clock != null, "provided clock cannot be null");
 
     validateConfiguration(config);
+
+    this.keyPair = keyPair;
+    this.config = config;
 
     this.peerPermissions = peerPermissions;
     this.natManager = natManager;
     this.bootstrapPeers =
         config.getBootnodes().stream().map(DiscoveryPeer::fromEnode).collect(Collectors.toList());
-
-    this.config = config;
-    this.keyPair = keyPair;
+    this.metricsSystem = metricsSystem;
+    this.clock = clock;
 
     id = keyPair.getPublicKey().getEncodedBytes();
   }
@@ -188,6 +193,7 @@ public abstract class PeerDiscoveryAgent {
         .peerPermissions(peerPermissions)
         .peerBondedObservers(peerBondedObservers)
         .metricsSystem(metricsSystem)
+        .clock(clock)
         .build();
   }
 
@@ -242,7 +248,7 @@ public abstract class PeerDiscoveryAgent {
                 }
                 return;
               }
-              peer.setLastContacted(System.currentTimeMillis());
+              peer.setLastContacted(clock.millis());
             });
   }
 

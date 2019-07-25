@@ -32,6 +32,7 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions.Action;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissionsBlacklist;
+import tech.pegasys.pantheon.testutil.TestClock;
 
 import java.util.Collections;
 import java.util.List;
@@ -73,7 +74,7 @@ public class PeerDiscoveryAgentTest {
 
     // Generate an out-of-band NEIGHBORS message.
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(5);
-    final NeighborsPacketData data = NeighborsPacketData.create(peers);
+    final NeighborsPacketData data = NeighborsPacketData.create(peers, TestClock.fixed());
     final Packet packet = Packet.create(PacketType.NEIGHBORS, data, otherNode.getKeyPair());
     helper.sendMessageBetweenAgents(otherNode, agent, packet);
 
@@ -112,7 +113,8 @@ public class PeerDiscoveryAgentTest {
     packet =
         Packet.create(
             PacketType.FIND_NEIGHBORS,
-            FindNeighborsPacketData.create(otherAgents.get(0).getAdvertisedPeer().get().getId()),
+            FindNeighborsPacketData.create(
+                otherAgents.get(0).getAdvertisedPeer().get().getId(), TestClock.fixed()),
             testAgent.getKeyPair());
     helper.sendMessageBetweenAgents(testAgent, agent, packet);
 
@@ -204,7 +206,7 @@ public class PeerDiscoveryAgentTest {
     // Start an agent with no bootstrap peers.
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
     final MockPeerDiscoveryAgent agent =
-        helper.startDiscoveryAgent(Collections.emptyList(), peerPermissions);
+        helper.startDiscoveryAgent(Collections.emptyList(), peerPermissions, TestClock.fixed());
     final Peer localNode = agent.getAdvertisedPeer().get();
 
     // Setup peer and permissions
@@ -231,7 +233,7 @@ public class PeerDiscoveryAgentTest {
     // Start an agent with no bootstrap peers.
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
     final MockPeerDiscoveryAgent agent =
-        helper.startDiscoveryAgent(Collections.emptyList(), peerPermissions);
+        helper.startDiscoveryAgent(Collections.emptyList(), peerPermissions, TestClock.fixed());
     final Peer localNode = agent.getAdvertisedPeer().get();
 
     // Setup peer and permissions
@@ -472,7 +474,8 @@ public class PeerDiscoveryAgentTest {
 
   protected void requestNeighbors(
       final MockPeerDiscoveryAgent fromAgent, final MockPeerDiscoveryAgent toAgent) {
-    final FindNeighborsPacketData data = FindNeighborsPacketData.create(Peer.randomId());
+    final FindNeighborsPacketData data =
+        FindNeighborsPacketData.create(Peer.randomId(), TestClock.fixed());
     final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, data, fromAgent.getKeyPair());
     helper.sendMessageBetweenAgents(fromAgent, toAgent, packet);
   }

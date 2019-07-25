@@ -967,7 +967,8 @@ public final class EthProtocolManagerTest {
         .isEqualTo(Collections.singletonList(EthProtocol.ETH63));
 
     // assert that all messages transmitted contain the expected block & total difficulty.
-    final ProtocolSchedule<Void> protocolSchdeule = MainnetProtocolSchedule.create();
+    final ProtocolSchedule<Void> protocolSchdeule =
+        MainnetProtocolSchedule.create(TestClock.fixed());
     for (final NewBlockMessage msg : messageSentCaptor.getAllValues()) {
       assertThat(msg.block(protocolSchdeule)).isEqualTo(minedBlock);
       assertThat(msg.totalDifficulty(protocolSchdeule)).isEqualTo(expectedTotalDifficulty);

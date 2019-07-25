@@ -15,7 +15,6 @@ package tech.pegasys.errorpronechecks;
 import static com.google.errorprone.BugPattern.SeverityLevel.WARNING;
 import static com.google.errorprone.bugpatterns.BugChecker.MethodInvocationTreeMatcher;
 import static com.google.errorprone.matchers.Description.NO_MATCH;
-import static com.google.errorprone.matchers.Matchers.allOf;
 import static com.google.errorprone.matchers.method.MethodMatchers.staticMethod;
 
 import java.util.Map;
@@ -23,6 +22,7 @@ import java.util.Map;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableMap;
 import com.google.errorprone.BugPattern;
+import com.google.errorprone.BugPattern.LinkType;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.bugpatterns.BugChecker;
 import com.google.errorprone.matchers.Description;
@@ -34,12 +34,15 @@ import com.sun.source.tree.MethodInvocationTree;
 @BugPattern(
     name = "BannedMethod",
     summary = "Some methods should not be used, make sure that doesn't happen.",
-    severity = WARNING)
+    severity = WARNING,
+    linkType = LinkType.NONE)
 public class BannedMethod extends BugChecker implements MethodInvocationTreeMatcher {
 
   private static final ImmutableMap<Matcher<ExpressionTree>, String> BANNED_METHOD_LIST =
       ImmutableMap.of(
-          allOf(staticMethod().onClass("com.google.common.base.Objects").withAnyName()),
+          staticMethod().onClass("java.lang.System").named("currentTimeMillis"),
+          "Do not use System.currentTimeMillis(), use a java.time.Clock passed into a constructor or as a static method parameter.",
+          staticMethod().onClass("com.google.common.base.Objects").withAnyName(),
           "Do not use com.google.common.base.Objects methods, use java.util.Objects methods instead.");
 
   @Override

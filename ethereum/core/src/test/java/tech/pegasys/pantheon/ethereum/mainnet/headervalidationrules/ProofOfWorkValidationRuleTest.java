@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationTestUtils;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.io.IOException;
@@ -109,7 +110,8 @@ public class ProofOfWorkValidationRuleTest {
   }
 
   private BlockHeaderFunctions mainnetBlockHashFunction() {
-    final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
+    final ProtocolSchedule<Void> protocolSchedule =
+        MainnetProtocolSchedule.create(TestClock.fixed());
     return ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
   }
 }

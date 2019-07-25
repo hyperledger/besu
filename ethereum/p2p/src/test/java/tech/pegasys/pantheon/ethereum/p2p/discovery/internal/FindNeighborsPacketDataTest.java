@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import org.junit.Test;
@@ -24,10 +25,11 @@ import org.junit.Test;
 public class FindNeighborsPacketDataTest {
   @Test
   public void serializeDeserialize() {
-    final long time = System.currentTimeMillis();
+    final long time = TestClock.fixed().millis();
     final BytesValue target = Peer.randomId();
 
-    final FindNeighborsPacketData packet = FindNeighborsPacketData.create(target);
+    final FindNeighborsPacketData packet =
+        FindNeighborsPacketData.create(target, TestClock.fixed());
     final BytesValue serialized = RLP.encode(packet::writeTo);
     final FindNeighborsPacketData deserialized =
         FindNeighborsPacketData.readFrom(RLP.input(serialized));
@@ -38,7 +40,7 @@ public class FindNeighborsPacketDataTest {
 
   @Test
   public void readFrom() {
-    final long time = System.currentTimeMillis();
+    final long time = TestClock.fixed().millis();
     final BytesValue target = Peer.randomId();
 
     BytesValueRLPOutput out = new BytesValueRLPOutput();
@@ -56,7 +58,7 @@ public class FindNeighborsPacketDataTest {
 
   @Test
   public void readFrom_withExtraFields() {
-    final long time = System.currentTimeMillis();
+    final long time = TestClock.fixed().millis();
     final BytesValue target = Peer.randomId();
 
     BytesValueRLPOutput out = new BytesValueRLPOutput();

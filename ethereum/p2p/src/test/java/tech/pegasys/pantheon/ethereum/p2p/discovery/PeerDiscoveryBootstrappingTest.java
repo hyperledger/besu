@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
@@ -53,7 +54,7 @@ public class PeerDiscoveryBootstrappingTest {
 
     final PingPacketData pingData = pingPacket.getPacketData(PingPacketData.class).get();
     assertThat(pingData.getExpiration())
-        .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
+        .isGreaterThanOrEqualTo(TestClock.fixed().millis() / 1000 - 10000);
     assertThat(pingData.getFrom()).isEqualTo(agent.getAdvertisedPeer().get().getEndpoint());
     assertThat(pingData.getTo()).isEqualTo(testAgent.getAdvertisedPeer().get().getEndpoint());
   }
@@ -100,7 +101,7 @@ public class PeerDiscoveryBootstrappingTest {
         // Assert on the content of the packet data.
         final PingPacketData ping = packet.getPacketData(PingPacketData.class).get();
         assertThat(ping.getExpiration())
-            .isGreaterThanOrEqualTo(System.currentTimeMillis() / 1000 - 10000);
+            .isGreaterThanOrEqualTo(TestClock.fixed().millis() / 1000 - 10000);
         assertThat(ping.getTo()).isEqualTo(bootstrapAgent.getAdvertisedPeer().get().getEndpoint());
       }
     }

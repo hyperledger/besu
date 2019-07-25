@@ -63,14 +63,16 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
 
   private final Map<Node, PantheonPluginContextImpl> pantheonPluginContextMap = new HashMap<>();
 
-  private PantheonPluginContextImpl buildPluginContext(final PantheonNode node) {
-    PantheonPluginContextImpl pantheonPluginContext = new PantheonPluginContextImpl();
+  private PantheonPluginContextImpl buildPluginContext(
+      final PantheonNode node, final CommandLine commandLine) {
+    final PantheonPluginContextImpl pantheonPluginContext = new PantheonPluginContextImpl();
     final Path pluginsPath = node.homeDirectory().resolve("plugins");
     final File pluginsDirFile = pluginsPath.toFile();
     if (!pluginsDirFile.isDirectory()) {
       pluginsDirFile.mkdirs();
       pluginsDirFile.deleteOnExit();
     }
+    pantheonPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
     System.setProperty("pantheon.plugins.dir", pluginsPath.toString());
     pantheonPluginContext.registerPlugins(pluginsPath);
     return pantheonPluginContext;
@@ -85,8 +87,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
 
     final CommandLine commandLine = new CommandLine(CommandSpec.create());
     final PantheonPluginContextImpl pantheonPluginContext =
-        pantheonPluginContextMap.computeIfAbsent(node, n -> buildPluginContext(node));
-    pantheonPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
+        pantheonPluginContextMap.computeIfAbsent(node, n -> buildPluginContext(node, commandLine));
 
     commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
 
@@ -126,7 +127,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
     if (node.getPermissioningConfiguration().isPresent()) {
-      PermissioningConfiguration permissioningConfiguration =
+      final PermissioningConfiguration permissioningConfiguration =
           node.getPermissioningConfiguration().get();
 
       runnerBuilder.permissioningConfiguration(permissioningConfiguration);
@@ -151,6 +152,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
             .webSocketConfiguration(node.webSocketConfiguration())
             .dataDir(node.homeDirectory())
             .metricsSystem(noOpMetricsSystem)
+            .clock(Clock.systemUTC())
             .metricsConfiguration(node.metricsConfiguration())
             .p2pEnabled(node.isP2pEnabled())
             .graphQLConfiguration(GraphQLConfiguration.createDefault())
@@ -167,7 +169,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
 
   @Override
   public void stopNode(final PantheonNode node) {
-    PantheonPluginContextImpl pluginContext = pantheonPluginContextMap.remove(node);
+    final PantheonPluginContextImpl pluginContext = pantheonPluginContextMap.remove(node);
     if (pluginContext != null) {
       pluginContext.stopPlugins();
     }

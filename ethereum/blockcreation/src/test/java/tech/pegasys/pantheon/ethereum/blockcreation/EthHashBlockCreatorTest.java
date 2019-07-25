@@ -58,8 +58,10 @@ public class EthHashBlockCreatorTest {
                       BigInteger.valueOf(42),
                       Function.identity(),
                       PrivacyParameters.DEFAULT,
-                      false)
+                      false,
+                      TestClock.fixed())
                   .createProtocolSchedule())
+          .clock(TestClock.fixed())
           .build();
 
   @Test

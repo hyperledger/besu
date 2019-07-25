@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -62,12 +63,14 @@ public class PeerDiscoveryTableRefreshTest {
                 .tableRefreshIntervalMs(0)
                 .peerBondedObservers(Subscribers.create())
                 .metricsSystem(new NoOpMetricsSystem())
+                .clock(TestClock.fixed())
                 .build());
     controller.start();
 
     // Send a PING, so as to add a Peer in the controller.
     final PingPacketData ping =
-        PingPacketData.create(peers.get(1).getEndpoint(), peers.get(0).getEndpoint());
+        PingPacketData.create(
+            peers.get(1).getEndpoint(), peers.get(0).getEndpoint(), TestClock.fixed());
     final Packet pingPacket = Packet.create(PacketType.PING, ping, keypairs.get(1));
     controller.onMessage(pingPacket, peers.get(1));
 
@@ -76,7 +79,7 @@ public class PeerDiscoveryTableRefreshTest {
 
     // Simulate a PONG message from peer 0.
     final PongPacketData pongPacketData =
-        PongPacketData.create(localPeer.getEndpoint(), pingPacket.getHash());
+        PongPacketData.create(localPeer.getEndpoint(), pingPacket.getHash(), TestClock.fixed());
     final Packet pongPacket = Packet.create(PacketType.PONG, pongPacketData, keypairs.get(0));
 
     final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);

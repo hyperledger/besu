@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.testutil.TestClock;
 
 import org.junit.Test;
 
@@ -28,7 +29,8 @@ public final class MainnetBlockHeaderValidatorTest {
   @Test
   public void validHeaderFrontier() throws Exception {
     final BlockHeaderValidator<Void> headerValidator =
-        MainnetBlockHeaderValidator.create(MainnetDifficultyCalculators.FRONTIER);
+        MainnetBlockHeaderValidator.create(
+            MainnetDifficultyCalculators.FRONTIER, TestClock.fixed());
     assertThat(
             headerValidator.validateHeader(
                 ValidationTestUtils.readHeader(300006),
@@ -41,7 +43,8 @@ public final class MainnetBlockHeaderValidatorTest {
   @Test
   public void validHeaderHomestead() throws Exception {
     final BlockHeaderValidator<Void> headerValidator =
-        MainnetBlockHeaderValidator.create(MainnetDifficultyCalculators.HOMESTEAD);
+        MainnetBlockHeaderValidator.create(
+            MainnetDifficultyCalculators.HOMESTEAD, TestClock.fixed());
     assertThat(
             headerValidator.validateHeader(
                 ValidationTestUtils.readHeader(1200001),
@@ -54,7 +57,8 @@ public final class MainnetBlockHeaderValidatorTest {
   @Test
   public void invalidParentHash() throws Exception {
     final BlockHeaderValidator<Void> headerValidator =
-        MainnetBlockHeaderValidator.create(MainnetDifficultyCalculators.HOMESTEAD);
+        MainnetBlockHeaderValidator.create(
+            MainnetDifficultyCalculators.HOMESTEAD, TestClock.fixed());
     assertThat(
             headerValidator.validateHeader(
                 ValidationTestUtils.readHeader(1200001),
@@ -67,7 +71,8 @@ public final class MainnetBlockHeaderValidatorTest {
   @Test
   public void validHeaderByzantium() throws Exception {
     final BlockHeaderValidator<Void> headerValidator =
-        MainnetBlockHeaderValidator.create(MainnetDifficultyCalculators.BYZANTIUM);
+        MainnetBlockHeaderValidator.create(
+            MainnetDifficultyCalculators.BYZANTIUM, TestClock.fixed());
     assertThat(
             headerValidator.validateHeader(
                 ValidationTestUtils.readHeader(4400001),

@@ -49,6 +49,7 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.D
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.PingMessage;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Arrays;
@@ -971,6 +972,7 @@ public class RlpxAgentTest {
         .peerPrivileges(peerPrivileges)
         .localNode(localNode)
         .metricsSystem(metrics)
+        .clock(TestClock.fixed())
         .connectionInitializer(connectionInitializer)
         .connectionEvents(peerConnectionEvents)
         .build();

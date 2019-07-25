@@ -43,6 +43,7 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 
+import java.time.Clock;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -102,7 +103,7 @@ public class JsonRpcTestMethodsFactory {
             peerDiscovery,
             blockchainQueries,
             synchronizer,
-            MainnetProtocolSchedule.create(),
+            MainnetProtocolSchedule.create(Clock.systemUTC()),
             filterManager,
             transactionPool,
             miningCoordinator,

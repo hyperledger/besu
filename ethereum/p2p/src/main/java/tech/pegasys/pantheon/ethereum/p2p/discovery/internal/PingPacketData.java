@@ -18,6 +18,8 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.Endpoint;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
+import java.time.Clock;
+
 public class PingPacketData implements PacketData {
 
   /* Fixed value that represents we're using v4 of the P2P discovery protocol. */
@@ -42,9 +44,8 @@ public class PingPacketData implements PacketData {
     this.expiration = expiration;
   }
 
-  public static PingPacketData create(final Endpoint from, final Endpoint to) {
-    return new PingPacketData(
-        from, to, System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
+  public static PingPacketData create(final Endpoint from, final Endpoint to, final Clock clock) {
+    return new PingPacketData(from, to, clock.millis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
   }
 
   public static PingPacketData readFrom(final RLPInput in) {

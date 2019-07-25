@@ -32,6 +32,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.testutil.BlockTestUtil;
+import tech.pegasys.pantheon.testutil.TestClock;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -91,7 +92,8 @@ public class BlockchainSetupUtil<C> {
   }
 
   public static BlockchainSetupUtil<Void> forTesting() {
-    final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
+    final ProtocolSchedule<Void> protocolSchedule =
+        MainnetProtocolSchedule.create(TestClock.fixed());
     final TemporaryFolder temp = new TemporaryFolder();
     try {
       temp.create();

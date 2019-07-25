@@ -46,6 +46,7 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.D
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.util.List;
@@ -58,7 +59,8 @@ import org.junit.Test;
 
 public class DetermineCommonAncestorTaskTest {
 
-  private final ProtocolSchedule<?> protocolSchedule = MainnetProtocolSchedule.create();
+  private final ProtocolSchedule<?> protocolSchedule =
+      MainnetProtocolSchedule.create(TestClock.fixed());
   private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final int defaultHeaderRequestSize = 10;

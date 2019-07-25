@@ -30,6 +30,7 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
@@ -57,7 +58,10 @@ public class OperationBenchmarkHelper {
             new NoOpMetricsSystem());
 
     final ExecutionContextTestFixture executionContext =
-        ExecutionContextTestFixture.builder().keyValueStorage(keyValueStorage).build();
+        ExecutionContextTestFixture.builder()
+            .keyValueStorage(keyValueStorage)
+            .clock(Clock.systemUTC())
+            .build();
     final MutableBlockchain blockchain = executionContext.getBlockchain();
 
     for (int i = 1; i < 256; i++) {

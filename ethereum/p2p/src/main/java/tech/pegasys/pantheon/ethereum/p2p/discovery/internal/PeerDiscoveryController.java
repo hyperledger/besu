@@ -35,6 +35,7 @@ import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -142,6 +143,8 @@ public class PeerDiscoveryController {
 
   private RecursivePeerRefreshState recursivePeerRefreshState;
 
+  private final Clock clock;
+
   private PeerDiscoveryController(
       final KeyPair keypair,
       final DiscoveryPeer localPeer,
@@ -155,7 +158,8 @@ public class PeerDiscoveryController {
       final PeerRequirement peerRequirement,
       final PeerPermissions peerPermissions,
       final Subscribers<PeerBondedObserver> peerBondedObservers,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Clock clock) {
     this.timerUtil = timerUtil;
     this.keypair = keypair;
     this.localPeer = localPeer;
@@ -167,6 +171,7 @@ public class PeerDiscoveryController {
     this.peerRequirement = peerRequirement;
     this.outboundMessageHandler = outboundMessageHandler;
     this.peerBondedObservers = peerBondedObservers;
+    this.clock = clock;
     this.discoveryProtocolLogger = new DiscoveryProtocolLogger(metricsSystem);
 
     this.peerPermissions = new PeerDiscoveryPermissions(localPeer, peerPermissions);
@@ -357,7 +362,7 @@ public class PeerDiscoveryController {
     }
 
     // Reset the last seen timestamp.
-    final long now = System.currentTimeMillis();
+    final long now = clock.millis();
     if (peer.getFirstDiscovered() == 0) {
       peer.setFirstDiscovered(now);
     }
@@ -396,7 +401,7 @@ public class PeerDiscoveryController {
   }
 
   private void refreshTableIfRequired() {
-    final long now = System.currentTimeMillis();
+    final long now = clock.millis();
     if (lastRefreshTime + tableRefreshIntervalMs <= now) {
       LOG.debug("Peer table refresh triggered by timer expiry");
       refreshTable();
@@ -425,7 +430,7 @@ public class PeerDiscoveryController {
     final BytesValue target = Peer.randomId();
     final List<DiscoveryPeer> initialPeers = peerTable.nearestPeers(Peer.randomId(), 16);
     recursivePeerRefreshState.start(initialPeers, target);
-    lastRefreshTime = System.currentTimeMillis();
+    lastRefreshTime = clock.millis();
   }
 
   /**
@@ -435,13 +440,13 @@ public class PeerDiscoveryController {
    */
   @VisibleForTesting
   void bond(final DiscoveryPeer peer) {
-    peer.setFirstDiscovered(System.currentTimeMillis());
+    peer.setFirstDiscovered(clock.millis());
     peer.setStatus(PeerDiscoveryStatus.BONDING);
 
     final Consumer<PeerInteractionState> action =
         interaction -> {
           final PingPacketData data =
-              PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
+              PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint(), clock);
           createPacket(
               PacketType.PING,
               data,
@@ -505,7 +510,7 @@ public class PeerDiscoveryController {
   private void findNodes(final DiscoveryPeer peer, final BytesValue target) {
     final Consumer<PeerInteractionState> action =
         (interaction) -> {
-          final FindNeighborsPacketData data = FindNeighborsPacketData.create(target);
+          final FindNeighborsPacketData data = FindNeighborsPacketData.create(target, clock);
           sendPacket(peer, PacketType.FIND_NEIGHBORS, data);
         };
     final PeerInteractionState interaction =
@@ -532,7 +537,7 @@ public class PeerDiscoveryController {
 
   private void respondToPing(
       final PingPacketData packetData, final BytesValue pingHash, final DiscoveryPeer sender) {
-    final PongPacketData data = PongPacketData.create(packetData.getFrom(), pingHash);
+    final PongPacketData data = PongPacketData.create(packetData.getFrom(), pingHash, clock);
     sendPacket(sender, PacketType.PONG, data);
   }
 
@@ -541,7 +546,7 @@ public class PeerDiscoveryController {
     // TODO: for now return 16 peers. Other implementations calculate how many
     // peers they can fit in a 1280-byte payload.
     final List<DiscoveryPeer> peers = peerTable.nearestPeers(packetData.getTarget(), 16);
-    final PacketData data = NeighborsPacketData.create(peers);
+    final PacketData data = NeighborsPacketData.create(peers, clock);
     sendPacket(sender, PacketType.NEIGHBORS, data);
   }
 
@@ -662,6 +667,7 @@ public class PeerDiscoveryController {
     private TimerUtil timerUtil;
     private AsyncExecutor workerExecutor;
     private MetricsSystem metricsSystem;
+    private Clock clock;
 
     private Builder() {}
 
@@ -685,7 +691,8 @@ public class PeerDiscoveryController {
           peerRequirement,
           peerPermissions,
           peerBondedObservers,
-          metricsSystem);
+          metricsSystem,
+          clock);
     }
 
     private void validate() {
@@ -695,6 +702,7 @@ public class PeerDiscoveryController {
       validateRequiredDependency(workerExecutor, "AsyncExecutor");
       validateRequiredDependency(metricsSystem, "MetricsSystem");
       validateRequiredDependency(peerBondedObservers, "PeerBondedObservers");
+      validateRequiredDependency(clock, "Clock");
     }
 
     private void validateRequiredDependency(final Object object, final String name) {
@@ -775,6 +783,12 @@ public class PeerDiscoveryController {
     public Builder metricsSystem(final MetricsSystem metricsSystem) {
       checkNotNull(metricsSystem);
       this.metricsSystem = metricsSystem;
+      return this;
+    }
+
+    public Builder clock(final Clock clock) {
+      checkNotNull(clock);
+      this.clock = clock;
       return this;
     }
   }

@@ -17,6 +17,7 @@ import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionValidator;
 
 import java.math.BigInteger;
+import java.time.Clock;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Function;
@@ -32,27 +33,37 @@ public class ProtocolScheduleBuilder<C> {
   private final Optional<BigInteger> defaultChainId;
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
+  private final Clock clock;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final BigInteger defaultChainId,
       final Function<ProtocolSpecBuilder<Void>, ProtocolSpecBuilder<C>> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final Clock clock) {
     this(
         config,
         Optional.of(defaultChainId),
         protocolSpecAdapter,
         privacyParameters,
-        isRevertReasonEnabled);
+        isRevertReasonEnabled,
+        clock);
   }
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final Function<ProtocolSpecBuilder<Void>, ProtocolSpecBuilder<C>> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
-    this(config, Optional.empty(), protocolSpecAdapter, privacyParameters, isRevertReasonEnabled);
+      final boolean isRevertReasonEnabled,
+      final Clock clock) {
+    this(
+        config,
+        Optional.empty(),
+        protocolSpecAdapter,
+        privacyParameters,
+        isRevertReasonEnabled,
+        clock);
   }
 
   private ProtocolScheduleBuilder(
@@ -60,17 +71,18 @@ public class ProtocolScheduleBuilder<C> {
       final Optional<BigInteger> defaultChainId,
       final Function<ProtocolSpecBuilder<Void>, ProtocolSpecBuilder<C>> protocolSpecAdapter,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final Clock clock) {
     this.config = config;
     this.defaultChainId = defaultChainId;
     this.protocolSpecAdapter = protocolSpecAdapter;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
+    this.clock = clock;
   }
 
   public ProtocolSchedule<C> createProtocolSchedule() {
-    final Optional<BigInteger> chainId =
-        config.getChainId().map(Optional::of).orElse(defaultChainId);
+    final Optional<BigInteger> chainId = config.getChainId().or(() -> defaultChainId);
     final MutableProtocolSchedule<C> protocolSchedule = new MutableProtocolSchedule<>(chainId);
 
     validateForkOrdering();
@@ -79,12 +91,12 @@ public class ProtocolScheduleBuilder<C> {
         protocolSchedule,
         OptionalLong.of(0),
         MainnetProtocolSpecs.frontierDefinition(
-            config.getContractSizeLimit(), config.getEvmStackSize()));
+            config.getContractSizeLimit(), config.getEvmStackSize(), clock));
     addProtocolSpec(
         protocolSchedule,
         config.getHomesteadBlockNumber(),
         MainnetProtocolSpecs.homesteadDefinition(
-            config.getContractSizeLimit(), config.getEvmStackSize()));
+            config.getContractSizeLimit(), config.getEvmStackSize(), clock));
 
     config
         .getDaoForkBlock()
@@ -96,12 +108,12 @@ public class ProtocolScheduleBuilder<C> {
                   protocolSchedule,
                   OptionalLong.of(daoBlockNumber),
                   MainnetProtocolSpecs.daoRecoveryInitDefinition(
-                      config.getContractSizeLimit(), config.getEvmStackSize()));
+                      config.getContractSizeLimit(), config.getEvmStackSize(), clock));
               addProtocolSpec(
                   protocolSchedule,
                   OptionalLong.of(daoBlockNumber + 1),
                   MainnetProtocolSpecs.daoRecoveryTransitionDefinition(
-                      config.getContractSizeLimit(), config.getEvmStackSize()));
+                      config.getContractSizeLimit(), config.getEvmStackSize(), clock));
 
               // Return to the previous protocol spec after the dao fork has completed.
               protocolSchedule.putMilestone(daoBlockNumber + 10, originalProtocolSpec);
@@ -111,12 +123,12 @@ public class ProtocolScheduleBuilder<C> {
         protocolSchedule,
         config.getTangerineWhistleBlockNumber(),
         MainnetProtocolSpecs.tangerineWhistleDefinition(
-            config.getContractSizeLimit(), config.getEvmStackSize()));
+            config.getContractSizeLimit(), config.getEvmStackSize(), clock));
     addProtocolSpec(
         protocolSchedule,
         config.getSpuriousDragonBlockNumber(),
         MainnetProtocolSpecs.spuriousDragonDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize(), clock));
     addProtocolSpec(
         protocolSchedule,
         config.getByzantiumBlockNumber(),
@@ -124,7 +136,8 @@ public class ProtocolScheduleBuilder<C> {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isRevertReasonEnabled));
+            isRevertReasonEnabled,
+            clock));
     addProtocolSpec(
         protocolSchedule,
         config.getConstantinopleBlockNumber(),
@@ -132,7 +145,8 @@ public class ProtocolScheduleBuilder<C> {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isRevertReasonEnabled));
+            isRevertReasonEnabled,
+            clock));
     addProtocolSpec(
         protocolSchedule,
         config.getConstantinopleFixBlockNumber(),
@@ -140,7 +154,8 @@ public class ProtocolScheduleBuilder<C> {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isRevertReasonEnabled));
+            isRevertReasonEnabled,
+            clock));
     addProtocolSpec(
         protocolSchedule,
         config.getIstanbulBlockNumber(),
@@ -148,7 +163,8 @@ public class ProtocolScheduleBuilder<C> {
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
-            isRevertReasonEnabled));
+            isRevertReasonEnabled,
+            clock));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;

@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
+import java.time.Clock;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
@@ -39,8 +40,9 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final KeyPair keyPair,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
-      final Map<BytesValue, MockPeerDiscoveryAgent> agentNetwork) {
-    super(keyPair, config, peerPermissions, Optional.empty(), new NoOpMetricsSystem());
+      final Map<BytesValue, MockPeerDiscoveryAgent> agentNetwork,
+      final Clock clock) {
+    super(keyPair, config, peerPermissions, Optional.empty(), new NoOpMetricsSystem(), clock);
     this.agentNetwork = agentNetwork;
   }
 

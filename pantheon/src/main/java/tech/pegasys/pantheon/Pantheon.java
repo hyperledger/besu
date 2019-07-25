@@ -20,6 +20,8 @@ import tech.pegasys.pantheon.services.PantheonPluginContextImpl;
 import tech.pegasys.pantheon.util.BlockExporter;
 import tech.pegasys.pantheon.util.BlockImporter;
 
+import java.time.Clock;
+
 import org.apache.logging.log4j.Logger;
 import picocli.CommandLine.RunLast;
 
@@ -40,6 +42,7 @@ public final class Pantheon {
             new RunnerBuilder(),
             new PantheonController.Builder(),
             new PantheonPluginContextImpl(),
+            Clock.systemUTC(),
             System.getenv());
 
     pantheonCommand.parse(

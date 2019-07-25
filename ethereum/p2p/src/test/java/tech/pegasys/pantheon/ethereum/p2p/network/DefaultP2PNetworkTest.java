@@ -44,6 +44,7 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.D
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.nat.upnp.UpnpNatManager;
 import tech.pegasys.pantheon.nat.upnp.UpnpNatManager.Protocol;
+import tech.pegasys.pantheon.testutil.TestClock;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -215,7 +216,7 @@ public final class DefaultP2PNetworkTest {
 
     when(natManager.queryExternalIPAddress())
         .thenReturn(CompletableFuture.completedFuture(externalIp));
-    final P2PNetwork network = builder().natManager(natManager).build();
+    final P2PNetwork network = builder().natManager(natManager).clock(TestClock.fixed()).build();
 
     network.start();
     verify(natManager)
@@ -231,7 +232,7 @@ public final class DefaultP2PNetworkTest {
     final DefaultP2PNetwork network = network();
     network.start();
     final DiscoveryPeer peer = DiscoveryPeer.fromEnode(enode());
-    final PeerBondedEvent peerBondedEvent = new PeerBondedEvent(peer, System.currentTimeMillis());
+    final PeerBondedEvent peerBondedEvent = new PeerBondedEvent(peer, TestClock.fixed().millis());
 
     discoverySubscriberCaptor.getValue().onPeerBonded(peerBondedEvent);
     verify(rlpxAgent, times(1)).connect(peer);
@@ -244,7 +245,7 @@ public final class DefaultP2PNetworkTest {
     final DiscoveryPeer peer =
         DiscoveryPeer.fromIdAndEndpoint(
             Peer.randomId(), new Endpoint("127.0.0.1", 999, OptionalInt.empty()));
-    final PeerBondedEvent peerBondedEvent = new PeerBondedEvent(peer, System.currentTimeMillis());
+    final PeerBondedEvent peerBondedEvent = new PeerBondedEvent(peer, TestClock.fixed().millis());
 
     discoverySubscriberCaptor.getValue().onPeerBonded(peerBondedEvent);
     verify(rlpxAgent, times(1)).connect(peer);
@@ -305,7 +306,7 @@ public final class DefaultP2PNetworkTest {
   }
 
   private DefaultP2PNetwork network() {
-    return (DefaultP2PNetwork) builder().build();
+    return (DefaultP2PNetwork) builder().clock(TestClock.fixed()).build();
   }
 
   private DefaultP2PNetwork.Builder builder() {

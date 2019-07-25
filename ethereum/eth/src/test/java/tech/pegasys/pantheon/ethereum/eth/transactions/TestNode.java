@@ -95,7 +95,7 @@ public class TestNode implements Closeable {
     final GenesisConfigFile genesisConfigFile = GenesisConfigFile.development();
     final ProtocolSchedule<Void> protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.development().getConfigOptions(), false);
+            GenesisConfigFile.development().getConfigOptions(), false, TestClock.fixed());
 
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
     final BlockHeaderFunctions blockHeaderFunctions =
@@ -130,6 +130,7 @@ public class TestNode implements Closeable {
                         .keyPair(this.kp)
                         .config(networkingConfiguration)
                         .metricsSystem(new NoOpMetricsSystem())
+                        .clock(TestClock.fixed())
                         .supportedCapabilities(capabilities)
                         .build())
             .metricsSystem(new NoOpMetricsSystem())

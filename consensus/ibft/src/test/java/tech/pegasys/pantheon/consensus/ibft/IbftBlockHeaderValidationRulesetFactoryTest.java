@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -54,7 +55,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerKeyPair, validators, parentHeader).buildHeader();
 
     final BlockHeaderValidator<IbftContext> validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5, TestClock.fixed());
 
     assertThat(
             validator.validateHeader(
@@ -75,7 +76,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerKeyPair, emptyList(), parentHeader).buildHeader();
 
     final BlockHeaderValidator<IbftContext> validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5, TestClock.fixed());
 
     assertThat(
             validator.validateHeader(
@@ -100,7 +101,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator<IbftContext> validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5, TestClock.fixed());
 
     assertThat(
             validator.validateHeader(
@@ -121,7 +122,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerKeyPair, validators, parentHeader).nonce(3).buildHeader();
 
     final BlockHeaderValidator<IbftContext> validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5, TestClock.fixed());
 
     assertThat(
             validator.validateHeader(
@@ -144,7 +145,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator<IbftContext> validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5, TestClock.fixed());
 
     assertThat(
             validator.validateHeader(
@@ -167,7 +168,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator<IbftContext> validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5, TestClock.fixed());
 
     assertThat(
             validator.validateHeader(
@@ -190,7 +191,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator<IbftContext> validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5, TestClock.fixed());
 
     assertThat(
             validator.validateHeader(
@@ -213,7 +214,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator<IbftContext> validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5, TestClock.fixed());
 
     assertThat(
             validator.validateHeader(
@@ -234,7 +235,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerKeyPair, validators, null).buildHeader();
 
     final BlockHeaderValidator<IbftContext> validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5, TestClock.fixed());
 
     assertThat(
             validator.validateHeader(
@@ -258,7 +259,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator<IbftContext> validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5, TestClock.fixed());
 
     assertThat(
             validator.validateHeader(
@@ -281,7 +282,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator<IbftContext> validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5, TestClock.fixed());
 
     assertThat(
             validator.validateHeader(

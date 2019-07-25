@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.time.Clock;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
@@ -61,8 +62,9 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
       final Optional<UpnpNatManager> natManager,
-      final MetricsSystem metricsSystem) {
-    super(keyPair, config, peerPermissions, natManager, metricsSystem);
+      final MetricsSystem metricsSystem,
+      final Clock clock) {
+    super(keyPair, config, peerPermissions, natManager, metricsSystem, clock);
     checkArgument(vertx != null, "vertx instance cannot be null");
     this.vertx = vertx;
 

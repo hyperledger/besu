@@ -21,13 +21,15 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.RawMessage;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import org.junit.Test;
 
 public class NewBlockMessageTest {
-  private static final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
+  private static final ProtocolSchedule<Void> protocolSchedule =
+      MainnetProtocolSchedule.create(TestClock.fixed());
 
   @Test
   public void roundTripNewBlockMessage() {

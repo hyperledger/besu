@@ -38,6 +38,7 @@ import tech.pegasys.pantheon.ethereum.p2p.network.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
+import tech.pegasys.pantheon.testutil.TestClock;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -127,7 +128,7 @@ public class JsonRpcHttpServiceLoginTest {
                     peerDiscoveryMock,
                     blockchainQueries,
                     synchronizer,
-                    MainnetProtocolSchedule.fromConfig(genesisConfigOptions),
+                    MainnetProtocolSchedule.fromConfig(genesisConfigOptions, TestClock.fixed()),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(EthHashMiningCoordinator.class),

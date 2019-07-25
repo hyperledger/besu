@@ -28,6 +28,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.GasUsageVali
 import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
 
+import java.time.Clock;
+
 public class BlockHeaderValidationRulesetFactory {
 
   /**
@@ -38,16 +40,17 @@ public class BlockHeaderValidationRulesetFactory {
    *
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
    * @param epochManager an object which determines if a given block is an epoch block.
+   * @param clock System clock
    * @return the header validator.
    */
   public static BlockHeaderValidator<CliqueContext> cliqueBlockHeaderValidator(
-      final long secondsBetweenBlocks, final EpochManager epochManager) {
+      final long secondsBetweenBlocks, final EpochManager epochManager, final Clock clock) {
 
     return new BlockHeaderValidator.Builder<CliqueContext>()
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
         .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))
-        .addRule(new TimestampBoundedByFutureParameter(10))
+        .addRule(new TimestampBoundedByFutureParameter(10, clock))
         .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
         .addRule(new ConstantFieldValidationRule<>("MixHash", BlockHeader::getMixHash, Hash.ZERO))
         .addRule(

@@ -43,7 +43,7 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.time.Instant;
+import java.time.Clock;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -78,11 +78,13 @@ public class IbftBlockCreatorTest {
             Address.fromHexString(String.format("%020d", 4)),
             localAddr);
 
+    Clock testClock = TestClock.fixed();
     final ProtocolSchedule<IbftContext> protocolSchedule =
         IbftProtocolSchedule.create(
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
                 .getConfigOptions(),
-            false);
+            false,
+            testClock);
     final ProtocolContext<IbftContext> protContext =
         new ProtocolContext<>(
             blockchain,
@@ -102,7 +104,7 @@ public class IbftBlockCreatorTest {
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
-                TestClock.fixed(),
+                testClock,
                 metricsSystem),
             protContext,
             protocolSchedule,
@@ -111,10 +113,10 @@ public class IbftBlockCreatorTest {
             Wei.ZERO,
             parentHeader);
 
-    final Block block = blockCreator.createBlock(Instant.now().getEpochSecond());
+    final Block block = blockCreator.createBlock(testClock.instant().getEpochSecond());
 
     final BlockHeaderValidator<IbftContext> rules =
-        IbftBlockHeaderValidationRulesetFactory.ibftProposedBlockValidator(0);
+        IbftBlockHeaderValidationRulesetFactory.ibftProposedBlockValidator(0, testClock);
 
     final boolean validationResult =
         rules.validateHeader(

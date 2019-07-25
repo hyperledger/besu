@@ -13,6 +13,7 @@
 package tech.pegasys.errorpronechecks;
 
 import java.util.Objects;
+import java.time.Clock;
 
 public class BannedMethodNegativeCases {
 
@@ -23,4 +24,9 @@ public class BannedMethodNegativeCases {
   public void callsObjectsHashCode() throws Exception {
     Objects.hash("1", "1");
   }
+
+  public void callsClockMillis(final Clock clock) throws Exception {
+    clock.millis();
+  }
+
 }

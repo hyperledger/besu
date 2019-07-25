@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
 
 import java.net.URL;
 import java.nio.file.Paths;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,7 +41,7 @@ public class BlockchainImporter {
   public BlockchainImporter(final URL blocksUrl, final String genesisJson) throws Exception {
     protocolSchedule =
         MainnetProtocolSchedule.fromConfig(
-            GenesisConfigFile.fromConfig(genesisJson).getConfigOptions());
+            GenesisConfigFile.fromConfig(genesisJson).getConfigOptions(), Clock.systemUTC());
 
     blocks = new ArrayList<>();
     try (final RawBlockIterator iterator =

@@ -17,27 +17,32 @@ import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 
+import java.time.Clock;
+
 /** A ProtocolSchedule which behaves similarly to MainNet, but with a much reduced difficulty. */
 public class FixedDifficultyProtocolSchedule {
 
   public static ProtocolSchedule<Void> create(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final Clock clock) {
     return new ProtocolScheduleBuilder<>(
             config,
             builder -> builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config)),
             privacyParameters,
-            isRevertReasonEnabled)
+            isRevertReasonEnabled,
+            clock)
         .createProtocolSchedule();
   }
 
   public static ProtocolSchedule<Void> create(
-      final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
-    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
+      final GenesisConfigOptions config, final boolean isRevertReasonEnabled, final Clock clock) {
+    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, clock);
   }
 
-  public static ProtocolSchedule<Void> create(final GenesisConfigOptions config) {
-    return create(config, PrivacyParameters.DEFAULT, false);
+  public static ProtocolSchedule<Void> create(
+      final GenesisConfigOptions config, final Clock clock) {
+    return create(config, PrivacyParameters.DEFAULT, false, clock);
   }
 }

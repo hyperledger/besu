@@ -18,6 +18,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -30,7 +31,8 @@ public class MockPacketDataFactory {
       final DiscoveryPeer from, final DiscoveryPeer... neighbors) {
     final Packet packet = mock(Packet.class);
 
-    final NeighborsPacketData packetData = NeighborsPacketData.create(Arrays.asList(neighbors));
+    final NeighborsPacketData packetData =
+        NeighborsPacketData.create(Arrays.asList(neighbors), TestClock.fixed());
 
     when(packet.getPacketData(any())).thenReturn(Optional.of(packetData));
     final BytesValue id = from.getId();
@@ -44,7 +46,8 @@ public class MockPacketDataFactory {
   public static Packet mockPongPacket(final DiscoveryPeer from, final BytesValue pingHash) {
     final Packet packet = mock(Packet.class);
 
-    final PongPacketData pongPacketData = PongPacketData.create(from.getEndpoint(), pingHash);
+    final PongPacketData pongPacketData =
+        PongPacketData.create(from.getEndpoint(), pingHash, TestClock.fixed());
     when(packet.getPacketData(any())).thenReturn(Optional.of(pongPacketData));
     final BytesValue id = from.getId();
     when(packet.getNodeId()).thenReturn(id);
@@ -60,7 +63,8 @@ public class MockPacketDataFactory {
         BytesValue.fromHexString(
             "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40");
 
-    final FindNeighborsPacketData packetData = FindNeighborsPacketData.create(target);
+    final FindNeighborsPacketData packetData =
+        FindNeighborsPacketData.create(target, TestClock.fixed());
     when(packet.getPacketData(any())).thenReturn(Optional.of(packetData));
     final BytesValue id = from.getId();
     when(packet.getNodeId()).thenReturn(id);

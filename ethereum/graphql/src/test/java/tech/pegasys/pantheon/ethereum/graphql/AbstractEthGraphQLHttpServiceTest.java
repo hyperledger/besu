@@ -44,6 +44,7 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.testutil.BlockTestUtil;
+import tech.pegasys.pantheon.testutil.TestClock;
 
 import java.net.URL;
 import java.nio.file.Paths;
@@ -97,7 +98,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
 
   @BeforeClass
   public static void setupConstants() throws Exception {
-    PROTOCOL_SCHEDULE = MainnetProtocolSchedule.create();
+    PROTOCOL_SCHEDULE = MainnetProtocolSchedule.create(TestClock.fixed());
 
     final URL blocksUrl = BlockTestUtil.getTestBlockchainUrl();
 

@@ -29,6 +29,7 @@ import tech.pegasys.pantheon.ethereum.eth.messages.GetBlockHeadersMessage;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.List;
@@ -55,7 +56,7 @@ public class DaoForkPeerValidatorTest {
     PeerValidator validator =
         new DaoForkPeerValidator(
             ethProtocolManager.ethContext(),
-            MainnetProtocolSchedule.create(),
+            MainnetProtocolSchedule.create(TestClock.fixed()),
             new NoOpMetricsSystem(),
             daoBlockNumber,
             0);
@@ -87,7 +88,7 @@ public class DaoForkPeerValidatorTest {
     PeerValidator validator =
         new DaoForkPeerValidator(
             ethProtocolManager.ethContext(),
-            MainnetProtocolSchedule.create(),
+            MainnetProtocolSchedule.create(TestClock.fixed()),
             new NoOpMetricsSystem(),
             daoBlockNumber,
             0);
@@ -115,7 +116,7 @@ public class DaoForkPeerValidatorTest {
     PeerValidator validator =
         new DaoForkPeerValidator(
             ethProtocolManager.ethContext(),
-            MainnetProtocolSchedule.create(),
+            MainnetProtocolSchedule.create(TestClock.fixed()),
             new NoOpMetricsSystem(),
             daoBlockNumber,
             0);
@@ -144,7 +145,7 @@ public class DaoForkPeerValidatorTest {
     PeerValidator validator =
         new DaoForkPeerValidator(
             ethProtocolManager.ethContext(),
-            MainnetProtocolSchedule.create(),
+            MainnetProtocolSchedule.create(TestClock.fixed()),
             new NoOpMetricsSystem(),
             daoBlockNumber,
             0);
@@ -183,7 +184,7 @@ public class DaoForkPeerValidatorTest {
     PeerValidator validator =
         new DaoForkPeerValidator(
             ethProtocolManager.ethContext(),
-            MainnetProtocolSchedule.create(),
+            MainnetProtocolSchedule.create(TestClock.fixed()),
             new NoOpMetricsSystem(),
             daoBlockNumber,
             buffer);

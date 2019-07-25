@@ -622,6 +622,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private Optional<PermissioningConfiguration> permissioningConfiguration;
   private Collection<EnodeURL> staticNodes;
   private PantheonController<?> pantheonController;
+  private Clock clock;
 
   private final Supplier<MetricsSystem> metricsSystem =
       Suppliers.memoize(() -> PrometheusMetricsSystem.init(metricsConfiguration()));
@@ -633,6 +634,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       final RunnerBuilder runnerBuilder,
       final PantheonController.Builder controllerBuilderFactory,
       final PantheonPluginContextImpl pantheonPluginContext,
+      final Clock clock,
       final Map<String, String> environment) {
     this.logger = logger;
     this.blockImporter = blockImporter;
@@ -640,6 +642,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     this.runnerBuilder = runnerBuilder;
     this.controllerBuilderFactory = controllerBuilderFactory;
     this.pantheonPluginContext = pantheonPluginContext;
+    this.clock = clock;
     this.environment = environment;
   }
 
@@ -883,7 +886,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           .nodePrivateKeyFile(nodePrivateKeyFile())
           .metricsSystem(metricsSystem.get())
           .privacyParameters(privacyParameters())
-          .clock(Clock.systemUTC())
+          .clock(clock)
           .isRevertReasonEnabled(isRevertReasonEnabled)
           .build();
     } catch (final InvalidConfigurationException e) {
@@ -1199,6 +1202,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             .metricsSystem(metricsSystem)
             .metricsConfiguration(metricsConfiguration)
             .staticNodes(staticNodes)
+            .clock(clock)
             .build();
 
     addShutdownHook(runner);

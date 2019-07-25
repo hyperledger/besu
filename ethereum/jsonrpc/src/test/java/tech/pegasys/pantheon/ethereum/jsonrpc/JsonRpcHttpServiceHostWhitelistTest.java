@@ -34,6 +34,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.AccountLocalConfigPermission
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
+import tech.pegasys.pantheon.testutil.TestClock;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -99,7 +100,8 @@ public class JsonRpcHttpServiceHostWhitelistTest {
                     MainnetProtocolSchedule.fromConfig(
                         new StubGenesisConfigOptions()
                             .constantinopleBlock(0)
-                            .chainId(BigInteger.valueOf(CHAIN_ID))),
+                            .chainId(BigInteger.valueOf(CHAIN_ID)),
+                        TestClock.fixed()),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(EthHashMiningCoordinator.class),

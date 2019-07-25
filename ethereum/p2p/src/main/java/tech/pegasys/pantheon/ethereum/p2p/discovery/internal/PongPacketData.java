@@ -17,6 +17,8 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.time.Clock;
+
 public class PongPacketData implements PacketData {
 
   /* Destination. */
@@ -34,9 +36,10 @@ public class PongPacketData implements PacketData {
     this.expiration = expiration;
   }
 
-  public static PongPacketData create(final Endpoint to, final BytesValue pingHash) {
+  public static PongPacketData create(
+      final Endpoint to, final BytesValue pingHash, final Clock clock) {
     return new PongPacketData(
-        to, pingHash, System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
+        to, pingHash, clock.millis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
   }
 
   public static PongPacketData readFrom(final RLPInput in) {

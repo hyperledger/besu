@@ -178,6 +178,7 @@ public final class RunnerTest {
             .graphQLConfiguration(aheadGraphQLConfiguration)
             .webSocketConfiguration(aheadWebSocketConfiguration)
             .metricsConfiguration(aheadMetricsConfiguration)
+            .clock(TestClock.fixed())
             .dataDir(dbAhead)
             .build();
     try {
