@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSpecs;
 import tech.pegasys.pantheon.ethereum.mainnet.MutableProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionValidator;
 import tech.pegasys.pantheon.ethereum.vm.ehalt.ExceptionalHaltException;
 import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
 import tech.pegasys.pantheon.testutil.JsonTestParameters;
@@ -122,6 +123,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
     final ProtocolSpec<Void> protocolSpec =
         MainnetProtocolSpecs.frontierDefinition(OptionalInt.empty(), OptionalInt.empty())
             .privacyParameters(PrivacyParameters.DEFAULT)
+            .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(CHAIN_ID))
             .build(new MutableProtocolSchedule<>(CHAIN_ID));
 
     final TestBlockchain blockchain = new TestBlockchain(execEnv.getBlockHeader().getNumber());

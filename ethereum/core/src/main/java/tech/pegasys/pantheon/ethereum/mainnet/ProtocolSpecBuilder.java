@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockProcessor.TransactionReceiptFactory;
 import tech.pegasys.pantheon.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionProcessor;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionValidator;
 import tech.pegasys.pantheon.ethereum.vm.EVM;
 import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
 
@@ -56,6 +57,7 @@ public class ProtocolSpecBuilder<T> {
   private MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private PrivacyParameters privacyParameters;
   private PrivateTransactionProcessorBuilder privateTransactionProcessorBuilder;
+  private PrivateTransactionValidatorBuilder privateTransactionValidatorBuilder;
 
   public ProtocolSpecBuilder<T> gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -160,6 +162,12 @@ public class ProtocolSpecBuilder<T> {
     return this;
   }
 
+  public ProtocolSpecBuilder<T> privateTransactionValidatorBuilder(
+      final PrivateTransactionValidatorBuilder privateTransactionValidatorBuilder) {
+    this.privateTransactionValidatorBuilder = privateTransactionValidatorBuilder;
+    return this;
+  }
+
   public ProtocolSpecBuilder<T> blockProcessorBuilder(
       final BlockProcessorBuilder blockProcessorBuilder) {
     this.blockProcessorBuilder = blockProcessorBuilder;
@@ -211,6 +219,7 @@ public class ProtocolSpecBuilder<T> {
         .gasCalculator(gasCalculatorBuilder)
         .evmBuilder(evmBuilder)
         .transactionValidatorBuilder(transactionValidatorBuilder)
+        .privateTransactionValidatorBuilder(privateTransactionValidatorBuilder)
         .contractCreationProcessorBuilder(contractCreationProcessorBuilder)
         .privacyParameters(privacyParameters)
         .precompileContractRegistryBuilder(precompileContractRegistryBuilder)
@@ -236,6 +245,7 @@ public class ProtocolSpecBuilder<T> {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(evmBuilder, "Missing operation registry");
     checkNotNull(transactionValidatorBuilder, "Missing transaction validator");
+    checkNotNull(privateTransactionValidatorBuilder, "Missing private transaction validator");
     checkNotNull(contractCreationProcessorBuilder, "Missing contract creation processor");
     checkNotNull(precompileContractRegistryBuilder, "Missing precompile contract registry");
     checkNotNull(messageCallProcessorBuilder, "Missing message call processor");
@@ -274,9 +284,15 @@ public class ProtocolSpecBuilder<T> {
 
     // Set private Tx Processor
     if (privacyParameters.isEnabled()) {
+      final PrivateTransactionValidator privateTransactionValidator =
+          privateTransactionValidatorBuilder.apply();
       final PrivateTransactionProcessor privateTransactionProcessor =
           privateTransactionProcessorBuilder.apply(
-              gasCalculator, transactionValidator, contractCreationProcessor, messageCallProcessor);
+              gasCalculator,
+              transactionValidator,
+              contractCreationProcessor,
+              messageCallProcessor,
+              privateTransactionValidator);
       Address address = Address.privacyPrecompiled(privacyParameters.getPrivacyAddress());
       PrivacyPrecompiledContract privacyPrecompiledContract =
           (PrivacyPrecompiledContract)
@@ -332,7 +348,12 @@ public class ProtocolSpecBuilder<T> {
         GasCalculator gasCalculator,
         TransactionValidator transactionValidator,
         AbstractMessageProcessor contractCreationProcessor,
-        AbstractMessageProcessor messageCallProcessor);
+        AbstractMessageProcessor messageCallProcessor,
+        PrivateTransactionValidator privateTransactionValidator);
+  }
+
+  public interface PrivateTransactionValidatorBuilder {
+    PrivateTransactionValidator apply();
   }
 
   public interface BlockProcessorBuilder {

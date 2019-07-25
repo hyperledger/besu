@@ -323,7 +323,7 @@ public class JsonRpcMethodsFactory {
     }
     if (rpcApis.contains(RpcApis.EEA)) {
       final PrivateTransactionHandler privateTransactionHandler =
-          new PrivateTransactionHandler(privacyParameters);
+          new PrivateTransactionHandler(privacyParameters, protocolSchedule.getChainId());
       final Enclave enclave = new Enclave(privacyParameters.getEnclaveUri());
       addMethods(
           enabledMethods,
