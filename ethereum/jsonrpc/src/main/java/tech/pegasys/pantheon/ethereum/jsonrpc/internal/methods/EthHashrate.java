@@ -15,8 +15,6 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
@@ -38,11 +36,7 @@ public class EthHashrate implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest req) {
-    try {
-      final Optional<Long> hashesPerSecond = miningCoordinator.hashesPerSecond();
-      return new JsonRpcSuccessResponse(req.getId(), Quantity.create(hashesPerSecond.orElse(0L)));
-    } catch (final UnsupportedOperationException ex) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INVALID_REQUEST);
-    }
+    final Optional<Long> hashesPerSecond = miningCoordinator.hashesPerSecond();
+    return new JsonRpcSuccessResponse(req.getId(), Quantity.create(hashesPerSecond.orElse(0L)));
   }
 }
