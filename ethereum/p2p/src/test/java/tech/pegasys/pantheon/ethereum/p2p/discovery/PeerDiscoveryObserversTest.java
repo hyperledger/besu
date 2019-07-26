@@ -16,7 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
-import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;
@@ -103,7 +102,7 @@ public class PeerDiscoveryObserversTest {
 
     // Create a discovery agent (which we'll assert on), using the above two peers as bootstrap
     // peers.
-    final MockPeerDiscoveryAgent agent = helper.createDiscoveryAgent(peers2, TestClock.fixed());
+    final MockPeerDiscoveryAgent agent = helper.createDiscoveryAgent(peers2);
     // A queue for storing peer bonded events.
     final List<PeerBondedEvent> events = new ArrayList<>(10);
     agent.observePeerBondedEvents(events::add);

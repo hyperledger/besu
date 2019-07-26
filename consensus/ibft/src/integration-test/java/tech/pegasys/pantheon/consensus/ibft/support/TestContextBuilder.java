@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.consensus.ibft.support;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.mockito.Mockito.mock;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
@@ -160,8 +159,6 @@ public class TestContextBuilder {
   }
 
   public TestContext build() {
-    checkNotNull(clock);
-
     final NetworkLayout networkNodes =
         NetworkLayout.createNetworkLayout(validatorCount, indexOfFirstLocallyProposedBlock);
 
@@ -266,7 +263,7 @@ public class TestContextBuilder {
     genesisConfigOptions.byzantiumBlock(0);
 
     final ProtocolSchedule<IbftContext> protocolSchedule =
-        IbftProtocolSchedule.create(genesisConfigOptions, Clock.systemUTC());
+        IbftProtocolSchedule.create(genesisConfigOptions);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftPantheonController

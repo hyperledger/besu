@@ -21,7 +21,6 @@ import tech.pegasys.pantheon.ethereum.vm.Code;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
 import tech.pegasys.pantheon.ethereum.vm.OperationTracer;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
-import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.math.BigInteger;
@@ -36,11 +35,7 @@ public class TestCodeExecutor {
   private static final Address SENDER_ADDRESS = AddressHelpers.ofValue(244259721);
 
   public TestCodeExecutor(final ProtocolSchedule<Void> protocolSchedule) {
-    fixture =
-        ExecutionContextTestFixture.builder()
-            .protocolSchedule(protocolSchedule)
-            .clock(TestClock.fixed())
-            .build();
+    fixture = ExecutionContextTestFixture.builder().protocolSchedule(protocolSchedule).build();
   }
 
   public MessageFrame executeCode(

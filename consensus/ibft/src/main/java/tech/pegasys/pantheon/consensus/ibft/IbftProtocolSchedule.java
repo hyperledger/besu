@@ -26,7 +26,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpecBuilder;
 
 import java.math.BigInteger;
-import java.time.Clock;
 
 /** Defines the protocol behaviours for a blockchain using IBFT. */
 public class IbftProtocolSchedule {
@@ -36,37 +35,34 @@ public class IbftProtocolSchedule {
   public static ProtocolSchedule<IbftContext> create(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled,
-      final Clock clock) {
+      final boolean isRevertReasonEnabled) {
     final IbftConfigOptions ibftConfig = config.getIbftLegacyConfigOptions();
     final long blockPeriod = ibftConfig.getBlockPeriodSeconds();
 
     return new ProtocolScheduleBuilder<>(
             config,
             DEFAULT_CHAIN_ID,
-            builder -> applyIbftChanges(blockPeriod, builder, clock),
+            builder -> applyIbftChanges(blockPeriod, builder),
             privacyParameters,
-            isRevertReasonEnabled,
-            clock)
+            isRevertReasonEnabled)
         .createProtocolSchedule();
   }
 
   public static ProtocolSchedule<IbftContext> create(
-      final GenesisConfigOptions config, final boolean isRevertReasonEnabled, final Clock clock) {
-    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, clock);
+      final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
+    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
   }
 
-  public static ProtocolSchedule<IbftContext> create(
-      final GenesisConfigOptions config, final Clock clock) {
-    return create(config, PrivacyParameters.DEFAULT, false, clock);
+  public static ProtocolSchedule<IbftContext> create(final GenesisConfigOptions config) {
+    return create(config, PrivacyParameters.DEFAULT, false);
   }
 
   private static ProtocolSpecBuilder<IbftContext> applyIbftChanges(
-      final long secondsBetweenBlocks, final ProtocolSpecBuilder<Void> builder, final Clock clock) {
+      final long secondsBetweenBlocks, final ProtocolSpecBuilder<Void> builder) {
     return builder
         .<IbftContext>changeConsensusContextType(
-            difficultyCalculator -> ibftBlockHeaderValidator(secondsBetweenBlocks, clock),
-            difficultyCalculator -> ibftBlockHeaderValidator(secondsBetweenBlocks, clock),
+            difficultyCalculator -> ibftBlockHeaderValidator(secondsBetweenBlocks),
+            difficultyCalculator -> ibftBlockHeaderValidator(secondsBetweenBlocks),
             MainnetBlockBodyValidator::new,
             MainnetBlockValidator::new,
             MainnetBlockImporter::new,

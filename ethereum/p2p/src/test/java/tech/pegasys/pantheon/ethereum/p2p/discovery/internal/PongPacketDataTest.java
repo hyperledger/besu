@@ -17,7 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.Endpoint;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
-import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -29,11 +28,11 @@ public class PongPacketDataTest {
 
   @Test
   public void serializeDeserialize() {
-    final long currentTime = TestClock.fixed().millis();
+    final long currentTime = System.currentTimeMillis();
     final Endpoint to = new Endpoint("127.0.0.2", 30303, OptionalInt.empty());
     final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
 
-    final PongPacketData packet = PongPacketData.create(to, hash, TestClock.fixed());
+    final PongPacketData packet = PongPacketData.create(to, hash);
     final BytesValue serialized = RLP.encode(packet::writeTo);
     final PongPacketData deserialized = PongPacketData.readFrom(RLP.input(serialized));
 
@@ -44,7 +43,7 @@ public class PongPacketDataTest {
 
   @Test
   public void readFrom() {
-    final long time = TestClock.fixed().millis();
+    final long time = System.currentTimeMillis();
     final Endpoint to = new Endpoint("127.0.0.2", 30303, OptionalInt.empty());
     final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
 
@@ -64,7 +63,7 @@ public class PongPacketDataTest {
 
   @Test
   public void readFrom_withExtraFields() {
-    final long time = TestClock.fixed().millis();
+    final long time = System.currentTimeMillis();
     final Endpoint to = new Endpoint("127.0.0.2", 30303, OptionalInt.empty());
     final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
 

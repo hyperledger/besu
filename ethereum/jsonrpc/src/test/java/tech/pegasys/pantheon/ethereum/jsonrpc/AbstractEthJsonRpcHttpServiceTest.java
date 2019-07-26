@@ -54,7 +54,6 @@ import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.testutil.BlockTestUtil;
-import tech.pegasys.pantheon.testutil.TestClock;
 
 import java.net.URL;
 import java.nio.file.Paths;
@@ -116,7 +115,7 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
 
   @BeforeClass
   public static void setupConstants() throws Exception {
-    PROTOCOL_SCHEDULE = MainnetProtocolSchedule.create(TestClock.fixed());
+    PROTOCOL_SCHEDULE = MainnetProtocolSchedule.create();
 
     final URL blocksUrl = BlockTestUtil.getTestBlockchainUrl();
 
@@ -180,7 +179,7 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
                 peerDiscoveryMock,
                 blockchainQueries,
                 synchronizerMock,
-                MainnetProtocolSchedule.create(TestClock.fixed()),
+                MainnetProtocolSchedule.create(),
                 filterManager,
                 transactionPoolMock,
                 miningCoordinatorMock,

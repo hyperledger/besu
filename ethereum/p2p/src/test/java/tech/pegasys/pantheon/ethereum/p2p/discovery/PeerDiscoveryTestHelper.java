@@ -24,10 +24,8 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions;
-import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -82,8 +80,7 @@ public class PeerDiscoveryTestHelper {
         PacketType.PING,
         PingPacketData.create(
             fromAgent.getAdvertisedPeer().get().getEndpoint(),
-            toAgent.getAdvertisedPeer().get().getEndpoint(),
-            TestClock.fixed()),
+            toAgent.getAdvertisedPeer().get().getEndpoint()),
         fromAgent.getKeyPair());
   }
 
@@ -125,31 +122,13 @@ public class PeerDiscoveryTestHelper {
    * @return a list of discovery agents.
    */
   public MockPeerDiscoveryAgent startDiscoveryAgent(final List<DiscoveryPeer> bootstrapPeers) {
-    return startDiscoveryAgent(bootstrapPeers, TestClock.fixed());
-  }
-
-  /**
-   * Start a single discovery agent with the provided bootstrap peers.
-   *
-   * @param bootstrapPeers the list of bootstrap peers
-   * @param clock the clock to sample timestamps from
-   * @return a list of discovery agents.
-   */
-  public MockPeerDiscoveryAgent startDiscoveryAgent(
-      final List<DiscoveryPeer> bootstrapPeers, final Clock clock) {
-    final AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers).clock(clock);
+    final AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers);
 
     return startDiscoveryAgent(agentBuilder);
   }
 
   public MockPeerDiscoveryAgent startDiscoveryAgent(final DiscoveryPeer... bootstrapPeers) {
     final AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers);
-
-    return startDiscoveryAgent(agentBuilder);
-  }
-
-  public MockPeerDiscoveryAgent startDiscoveryAgent(final Clock clock) {
-    final AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(List.of()).clock(clock);
 
     return startDiscoveryAgent(agentBuilder);
   }
@@ -162,11 +141,9 @@ public class PeerDiscoveryTestHelper {
    * @return a list of discovery agents.
    */
   public MockPeerDiscoveryAgent startDiscoveryAgent(
-      final List<DiscoveryPeer> bootstrapPeers,
-      final PeerPermissions peerPermissions,
-      final Clock clock) {
+      final List<DiscoveryPeer> bootstrapPeers, final PeerPermissions peerPermissions) {
     final AgentBuilder agentBuilder =
-        agentBuilder().bootstrapPeers(bootstrapPeers).peerPermissions(peerPermissions).clock(clock);
+        agentBuilder().bootstrapPeers(bootstrapPeers).peerPermissions(peerPermissions);
 
     return startDiscoveryAgent(agentBuilder);
   }
@@ -177,9 +154,8 @@ public class PeerDiscoveryTestHelper {
     return agent;
   }
 
-  public MockPeerDiscoveryAgent createDiscoveryAgent(
-      final List<DiscoveryPeer> bootstrapPeers, final Clock clock) {
-    final AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers).clock(clock);
+  public MockPeerDiscoveryAgent createDiscoveryAgent(final List<DiscoveryPeer> bootstrapPeers) {
+    final AgentBuilder agentBuilder = agentBuilder().bootstrapPeers(bootstrapPeers);
 
     return createDiscoveryAgent(agentBuilder);
   }
@@ -203,7 +179,6 @@ public class PeerDiscoveryTestHelper {
     private List<EnodeURL> bootnodes = Collections.emptyList();
     private boolean active = true;
     private PeerPermissions peerPermissions = PeerPermissions.noop();
-    private Clock clock = TestClock.fixed();
 
     private AgentBuilder(
         final Map<BytesValue, MockPeerDiscoveryAgent> agents,
@@ -240,11 +215,6 @@ public class PeerDiscoveryTestHelper {
       return this;
     }
 
-    public AgentBuilder clock(final Clock clock) {
-      this.clock = clock;
-      return this;
-    }
-
     public MockPeerDiscoveryAgent build() {
       final DiscoveryConfiguration config = new DiscoveryConfiguration();
       config.setBootnodes(bootnodes);
@@ -252,7 +222,7 @@ public class PeerDiscoveryTestHelper {
       config.setActive(active);
 
       return new MockPeerDiscoveryAgent(
-          SECP256K1.KeyPair.generate(), config, peerPermissions, agents, clock);
+          SECP256K1.KeyPair.generate(), config, peerPermissions, agents);
     }
   }
 }

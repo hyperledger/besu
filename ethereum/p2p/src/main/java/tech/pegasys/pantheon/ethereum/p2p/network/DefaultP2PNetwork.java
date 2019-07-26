@@ -43,7 +43,6 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.nat.upnp.UpnpNatManager;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.time.Clock;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
@@ -410,7 +409,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     private Optional<UpnpNatManager> natManager = Optional.empty();
     private MetricsSystem metricsSystem;
-    private Clock clock;
 
     public P2PNetwork build() {
       validate();
@@ -428,7 +426,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           MutableLocalNode.create(config.getRlpx().getClientId(), 5, supportedCapabilities);
       final PeerPrivileges peerPrivileges = new DefaultPeerPrivileges(maintainedPeers);
       peerDiscoveryAgent = peerDiscoveryAgent == null ? createDiscoveryAgent() : peerDiscoveryAgent;
-      rlpxAgent = rlpxAgent == null ? createRlpxAgent(localNode, peerPrivileges, clock) : rlpxAgent;
+      rlpxAgent = rlpxAgent == null ? createRlpxAgent(localNode, peerPrivileges) : rlpxAgent;
 
       return new DefaultP2PNetwork(
           localNode,
@@ -449,18 +447,17 @@ public class DefaultP2PNetwork implements P2PNetwork {
           supportedCapabilities != null && supportedCapabilities.size() > 0,
           "Supported capabilities must be set and non-empty.");
       checkState(metricsSystem != null, "MetricsSystem must be set.");
-      checkState(clock != null, "Clock must be set.");
       checkState(peerDiscoveryAgent != null || vertx != null, "Vertx must be set.");
     }
 
     private PeerDiscoveryAgent createDiscoveryAgent() {
 
       return new VertxPeerDiscoveryAgent(
-          vertx, keyPair, config.getDiscovery(), peerPermissions, natManager, metricsSystem, clock);
+          vertx, keyPair, config.getDiscovery(), peerPermissions, natManager, metricsSystem);
     }
 
     private RlpxAgent createRlpxAgent(
-        final LocalNode localNode, final PeerPrivileges peerPrivileges, final Clock clock) {
+        final LocalNode localNode, final PeerPrivileges peerPrivileges) {
       return RlpxAgent.builder()
           .keyPair(keyPair)
           .config(config.getRlpx())
@@ -468,7 +465,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
           .peerPrivileges(peerPrivileges)
           .localNode(localNode)
           .metricsSystem(metricsSystem)
-          .clock(clock)
           .build();
     }
 
@@ -522,12 +518,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     public Builder metricsSystem(final MetricsSystem metricsSystem) {
       checkNotNull(metricsSystem);
       this.metricsSystem = metricsSystem;
-      return this;
-    }
-
-    public Builder clock(final Clock clock) {
-      checkNotNull(clock);
-      this.clock = clock;
       return this;
     }
 

@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
-import java.time.Clock;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,12 +28,9 @@ public class TimestampBoundedByFutureParameter implements DetachedBlockHeaderVal
 
   private final Logger LOG = LogManager.getLogger();
   private final long acceptableClockDriftSeconds;
-  private final Clock clock;
 
-  public TimestampBoundedByFutureParameter(
-      final long acceptableClockDriftSeconds, final Clock clock) {
+  public TimestampBoundedByFutureParameter(final long acceptableClockDriftSeconds) {
     this.acceptableClockDriftSeconds = acceptableClockDriftSeconds;
-    this.clock = clock;
   }
 
   @Override
@@ -46,7 +43,9 @@ public class TimestampBoundedByFutureParameter implements DetachedBlockHeaderVal
   }
 
   private boolean validateHeaderNotAheadOfCurrentSystemTime(final long timestamp) {
-    final long timestampMargin = clock.instant().getEpochSecond() + acceptableClockDriftSeconds;
+    final long timestampMargin =
+        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+            + acceptableClockDriftSeconds;
     if (Long.compareUnsigned(timestamp, timestampMargin) > 0) {
       LOG.trace(
           "Invalid block header: timestamp {} is greater than the timestamp margin {}",

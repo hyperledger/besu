@@ -30,7 +30,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpecBuilder;
 
 import java.math.BigInteger;
-import java.time.Clock;
 
 /** Defines the protocol behaviours for a blockchain using Clique. */
 public class CliqueProtocolSchedule {
@@ -41,8 +40,7 @@ public class CliqueProtocolSchedule {
       final GenesisConfigOptions config,
       final KeyPair nodeKeys,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled,
-      final Clock clock) {
+      final boolean isRevertReasonEnabled) {
 
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
 
@@ -54,37 +52,28 @@ public class CliqueProtocolSchedule {
             DEFAULT_CHAIN_ID,
             builder ->
                 applyCliqueSpecificModifications(
-                    epochManager,
-                    cliqueConfig.getBlockPeriodSeconds(),
-                    localNodeAddress,
-                    builder,
-                    clock),
+                    epochManager, cliqueConfig.getBlockPeriodSeconds(), localNodeAddress, builder),
             privacyParameters,
-            isRevertReasonEnabled,
-            clock)
+            isRevertReasonEnabled)
         .createProtocolSchedule();
   }
 
   public static ProtocolSchedule<CliqueContext> create(
       final GenesisConfigOptions config,
       final KeyPair nodeKeys,
-      final boolean isRevertReasonEnabled,
-      final Clock clock) {
-    return create(config, nodeKeys, PrivacyParameters.DEFAULT, isRevertReasonEnabled, clock);
+      final boolean isRevertReasonEnabled) {
+    return create(config, nodeKeys, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
   }
 
   private static ProtocolSpecBuilder<CliqueContext> applyCliqueSpecificModifications(
       final EpochManager epochManager,
       final long secondsBetweenBlocks,
       final Address localNodeAddress,
-      final ProtocolSpecBuilder<Void> specBuilder,
-      final Clock clock) {
+      final ProtocolSpecBuilder<Void> specBuilder) {
     return specBuilder
         .changeConsensusContextType(
-            difficultyCalculator ->
-                cliqueBlockHeaderValidator(secondsBetweenBlocks, epochManager, clock),
-            difficultyCalculator ->
-                cliqueBlockHeaderValidator(secondsBetweenBlocks, epochManager, clock),
+            difficultyCalculator -> cliqueBlockHeaderValidator(secondsBetweenBlocks, epochManager),
+            difficultyCalculator -> cliqueBlockHeaderValidator(secondsBetweenBlocks, epochManager),
             MainnetBlockBodyValidator::new,
             MainnetBlockValidator::new,
             MainnetBlockImporter::new,

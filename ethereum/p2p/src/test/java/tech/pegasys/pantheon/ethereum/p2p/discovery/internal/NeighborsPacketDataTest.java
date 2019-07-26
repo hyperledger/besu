@@ -18,7 +18,6 @@ import static tech.pegasys.pantheon.ethereum.p2p.peers.PeerTestHelper.enode;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
-import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Arrays;
@@ -30,11 +29,11 @@ public class NeighborsPacketDataTest {
 
   @Test
   public void serializeDeserialize() {
-    final long time = TestClock.fixed().millis();
+    final long time = System.currentTimeMillis();
     final List<DiscoveryPeer> peers =
         Arrays.asList(DiscoveryPeer.fromEnode(enode()), DiscoveryPeer.fromEnode(enode()));
 
-    final NeighborsPacketData packet = NeighborsPacketData.create(peers, TestClock.fixed());
+    final NeighborsPacketData packet = NeighborsPacketData.create(peers);
     final BytesValue serialized = RLP.encode(packet::writeTo);
     final NeighborsPacketData deserialized = NeighborsPacketData.readFrom(RLP.input(serialized));
 
@@ -44,7 +43,7 @@ public class NeighborsPacketDataTest {
 
   @Test
   public void readFrom() {
-    final long time = TestClock.fixed().millis();
+    final long time = System.currentTimeMillis();
     final List<DiscoveryPeer> peers =
         Arrays.asList(DiscoveryPeer.fromEnode(enode()), DiscoveryPeer.fromEnode(enode()));
 
@@ -62,7 +61,7 @@ public class NeighborsPacketDataTest {
 
   @Test
   public void readFrom_extraFields() {
-    final long time = TestClock.fixed().millis();
+    final long time = System.currentTimeMillis();
     final List<DiscoveryPeer> peers =
         Arrays.asList(DiscoveryPeer.fromEnode(enode()), DiscoveryPeer.fromEnode(enode()));
 

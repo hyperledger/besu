@@ -24,19 +24,18 @@ public abstract class RlpxConnection {
   private final long initiatedAt;
   protected final CompletableFuture<PeerConnection> future;
 
-  private RlpxConnection(final CompletableFuture<PeerConnection> future, final long initiatedAt) {
+  private RlpxConnection(final CompletableFuture<PeerConnection> future) {
     this.future = future;
-    this.initiatedAt = initiatedAt;
+    this.initiatedAt = System.currentTimeMillis();
   }
 
-  public static RlpxConnection inboundConnection(
-      final PeerConnection peerConnection, final long initiatedAt) {
-    return new RemotelyInitiatedRlpxConnection(peerConnection, initiatedAt);
+  public static RlpxConnection inboundConnection(final PeerConnection peerConnection) {
+    return new RemotelyInitiatedRlpxConnection(peerConnection);
   }
 
   public static RlpxConnection outboundConnection(
-      final Peer peer, final CompletableFuture<PeerConnection> future, final long initiatedAt) {
-    return new LocallyInitiatedRlpxConnection(peer, future, initiatedAt);
+      final Peer peer, final CompletableFuture<PeerConnection> future) {
+    return new LocallyInitiatedRlpxConnection(peer, future);
   }
 
   public abstract Peer getPeer();
@@ -85,9 +84,8 @@ public abstract class RlpxConnection {
 
     private final PeerConnection peerConnection;
 
-    private RemotelyInitiatedRlpxConnection(
-        final PeerConnection peerConnection, final long initiatedAt) {
-      super(CompletableFuture.completedFuture(peerConnection), initiatedAt);
+    private RemotelyInitiatedRlpxConnection(final PeerConnection peerConnection) {
+      super(CompletableFuture.completedFuture(peerConnection));
       this.peerConnection = peerConnection;
     }
 
@@ -149,8 +147,8 @@ public abstract class RlpxConnection {
     private final Peer peer;
 
     private LocallyInitiatedRlpxConnection(
-        final Peer peer, final CompletableFuture<PeerConnection> future, final long initiatedAt) {
-      super(future, initiatedAt);
+        final Peer peer, final CompletableFuture<PeerConnection> future) {
+      super(future);
       this.peer = peer;
     }
 

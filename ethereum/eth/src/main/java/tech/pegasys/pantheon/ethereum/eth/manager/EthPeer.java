@@ -109,7 +109,7 @@ public class EthPeer {
 
   public void recordUselessResponse(final String requestType) {
     LOG.debug("Received useless response for {} from peer {}", requestType, this);
-    reputation.recordUselessResponse(clock.millis()).ifPresent(this::disconnect);
+    reputation.recordUselessResponse(System.currentTimeMillis()).ifPresent(this::disconnect);
   }
 
   public void disconnect(final DisconnectReason reason) {

@@ -27,7 +27,6 @@ import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils.BlockchainSetupUtil;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
-import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import org.junit.Test;
@@ -46,7 +45,7 @@ public class ChainHeadTrackerTest {
           0);
   private final ProtocolSchedule<Void> protocolSchedule =
       FixedDifficultyProtocolSchedule.create(
-          GenesisConfigFile.development().getConfigOptions(), false, TestClock.fixed());
+          GenesisConfigFile.development().getConfigOptions(), false);
 
   private final TrailingPeerLimiter trailingPeerLimiter = mock(TrailingPeerLimiter.class);
   private final ChainHeadTracker chainHeadTracker =

@@ -17,7 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.Endpoint;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
-import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.OptionalInt;
@@ -28,11 +27,11 @@ public class PingPacketDataTest {
 
   @Test
   public void serializeDeserialize() {
-    final long currentTime = TestClock.fixed().millis();
+    final long currentTime = System.currentTimeMillis();
 
     final Endpoint from = new Endpoint("127.0.0.1", 30303, OptionalInt.of(30303));
     final Endpoint to = new Endpoint("127.0.0.2", 30303, OptionalInt.empty());
-    final PingPacketData packet = PingPacketData.create(from, to, TestClock.fixed());
+    final PingPacketData packet = PingPacketData.create(from, to);
     final BytesValue serialized = RLP.encode(packet::writeTo);
     final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
 
@@ -46,7 +45,7 @@ public class PingPacketDataTest {
     final int version = 4;
     final Endpoint from = new Endpoint("127.0.0.1", 30303, OptionalInt.of(30303));
     final Endpoint to = new Endpoint("127.0.0.2", 30303, OptionalInt.empty());
-    final long time = TestClock.fixed().millis();
+    final long time = System.currentTimeMillis();
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
@@ -69,7 +68,7 @@ public class PingPacketDataTest {
     final int version = 4;
     final Endpoint from = new Endpoint("127.0.0.1", 30303, OptionalInt.of(30303));
     final Endpoint to = new Endpoint("127.0.0.2", 30303, OptionalInt.empty());
-    final long time = TestClock.fixed().millis();
+    final long time = System.currentTimeMillis();
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
@@ -94,7 +93,7 @@ public class PingPacketDataTest {
     final int version = 99;
     final Endpoint from = new Endpoint("127.0.0.1", 30303, OptionalInt.of(30303));
     final Endpoint to = new Endpoint("127.0.0.2", 30303, OptionalInt.empty());
-    final long time = TestClock.fixed().millis();
+    final long time = System.currentTimeMillis();
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();

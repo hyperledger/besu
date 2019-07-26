@@ -121,11 +121,7 @@ public class CliquePantheonControllerBuilder extends PantheonControllerBuilder<C
   @Override
   protected ProtocolSchedule<CliqueContext> createProtocolSchedule() {
     return CliqueProtocolSchedule.create(
-        genesisConfig.getConfigOptions(),
-        nodeKeys,
-        privacyParameters,
-        isRevertReasonEnabled,
-        clock);
+        genesisConfig.getConfigOptions(), nodeKeys, privacyParameters, isRevertReasonEnabled);
   }
 
   @Override

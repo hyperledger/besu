@@ -36,7 +36,6 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
-import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.InetAddress;
@@ -327,7 +326,6 @@ public class P2PNetworkTest {
         .config(config)
         .keyPair(KeyPair.generate())
         .metricsSystem(new NoOpMetricsSystem())
-        .clock(TestClock.fixed())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)));
   }
 }

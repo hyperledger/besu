@@ -35,7 +35,6 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 
 import java.io.IOException;
-import java.time.Clock;
 
 import com.google.common.io.Resources;
 import org.junit.Test;
@@ -52,8 +51,7 @@ public class NodeSmartContractPermissioningControllerTest {
 
   private NodeSmartContractPermissioningController setupController(
       final String resourceName, final String contractAddressString) throws IOException {
-    final ProtocolSchedule<Void> protocolSchedule =
-        MainnetProtocolSchedule.create(Clock.systemUTC());
+    final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
 
     final String emptyContractFile =
         Resources.toString(this.getClass().getResource(resourceName), UTF_8);

@@ -18,8 +18,6 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.time.Clock;
-
 public class FindNeighborsPacketData implements PacketData {
   private static final int TARGET_SIZE = 64;
 
@@ -37,9 +35,9 @@ public class FindNeighborsPacketData implements PacketData {
     this.expiration = expiration;
   }
 
-  public static FindNeighborsPacketData create(final BytesValue target, final Clock clock) {
+  public static FindNeighborsPacketData create(final BytesValue target) {
     return new FindNeighborsPacketData(
-        target, clock.millis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
+        target, System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
   }
 
   @Override

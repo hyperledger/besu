@@ -16,7 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
-import tech.pegasys.pantheon.testutil.TestClock;
+
+import java.util.concurrent.TimeUnit;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -25,8 +26,7 @@ public class TimestampValidationRuleTest {
 
   @Test
   public void headerTimestampSufficientlyFarIntoFutureVadidatesSuccessfully() {
-    final TimestampBoundedByFutureParameter uut00 =
-        new TimestampBoundedByFutureParameter(0, TestClock.fixed());
+    final TimestampBoundedByFutureParameter uut00 = new TimestampBoundedByFutureParameter(0);
     final TimestampMoreRecentThanParent uut01 = new TimestampMoreRecentThanParent(10);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
@@ -50,8 +50,7 @@ public class TimestampValidationRuleTest {
 
   @Test
   public void headerTimestampTooCloseToParentFailsValidation() {
-    final TimestampBoundedByFutureParameter uut00 =
-        new TimestampBoundedByFutureParameter(0, TestClock.fixed());
+    final TimestampBoundedByFutureParameter uut00 = new TimestampBoundedByFutureParameter(0);
     final TimestampMoreRecentThanParent uut01 = new TimestampMoreRecentThanParent(10);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
@@ -69,8 +68,7 @@ public class TimestampValidationRuleTest {
 
   @Test
   public void headerTimestampIsBehindParentFailsValidation() {
-    final TimestampBoundedByFutureParameter uut00 =
-        new TimestampBoundedByFutureParameter(0, TestClock.fixed());
+    final TimestampBoundedByFutureParameter uut00 = new TimestampBoundedByFutureParameter(0);
     final TimestampMoreRecentThanParent uut01 = new TimestampMoreRecentThanParent(10);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
@@ -91,13 +89,14 @@ public class TimestampValidationRuleTest {
     final long acceptableClockDrift = 5;
 
     final TimestampBoundedByFutureParameter uut00 =
-        new TimestampBoundedByFutureParameter(acceptableClockDrift, TestClock.fixed());
+        new TimestampBoundedByFutureParameter(acceptableClockDrift);
     final TimestampMoreRecentThanParent uut01 = new TimestampMoreRecentThanParent(10);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
     // Create Parent Header @ 'now'
-    headerBuilder.timestamp(TestClock.fixed().instant().getEpochSecond());
+    headerBuilder.timestamp(
+        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
     final BlockHeader parent = headerBuilder.buildHeader();
 
     // Create header for validation with a timestamp in the future (1 second too far away)
@@ -113,12 +112,14 @@ public class TimestampValidationRuleTest {
     final long acceptableClockDrift = 5;
 
     final TimestampBoundedByFutureParameter uut00 =
-        new TimestampBoundedByFutureParameter(acceptableClockDrift, TestClock.fixed());
+        new TimestampBoundedByFutureParameter(acceptableClockDrift);
     final TimestampMoreRecentThanParent uut01 = new TimestampMoreRecentThanParent(10);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
-    headerBuilder.timestamp(TestClock.fixed().instant().getEpochSecond());
+    // Create Parent Header @ 'now'
+    headerBuilder.timestamp(
+        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
     final BlockHeader parent = headerBuilder.buildHeader();
 
     // Create header for validation with a timestamp in the future (1 second too far away)

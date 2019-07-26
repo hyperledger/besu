@@ -31,7 +31,6 @@ import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
 import tech.pegasys.pantheon.testutil.JsonTestParameters;
 
 import java.math.BigInteger;
-import java.time.Clock;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Optional;
@@ -122,8 +121,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
     final EnvironmentInformation execEnv = spec.getExec();
 
     final ProtocolSpec<Void> protocolSpec =
-        MainnetProtocolSpecs.frontierDefinition(
-                OptionalInt.empty(), OptionalInt.empty(), Clock.systemUTC())
+        MainnetProtocolSpecs.frontierDefinition(OptionalInt.empty(), OptionalInt.empty())
             .privacyParameters(PrivacyParameters.DEFAULT)
             .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(CHAIN_ID))
             .build(new MutableProtocolSchedule<>(CHAIN_ID));

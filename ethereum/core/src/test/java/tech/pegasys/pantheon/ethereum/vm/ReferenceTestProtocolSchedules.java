@@ -19,7 +19,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolScheduleBuilder;
 
 import java.math.BigInteger;
-import java.time.Clock;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -68,12 +67,7 @@ public class ReferenceTestProtocolSchedules {
 
   private static ProtocolSchedule<Void> createSchedule(final GenesisConfigOptions options) {
     return new ProtocolScheduleBuilder<>(
-            options,
-            CHAIN_ID,
-            Function.identity(),
-            PrivacyParameters.DEFAULT,
-            false,
-            Clock.systemUTC())
+            options, CHAIN_ID, Function.identity(), PrivacyParameters.DEFAULT, false)
         .createProtocolSchedule();
   }
 }

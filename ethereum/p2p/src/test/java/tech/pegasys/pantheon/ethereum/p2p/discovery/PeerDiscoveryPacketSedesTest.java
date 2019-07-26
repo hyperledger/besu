@@ -24,7 +24,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketData;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
-import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.MutableBytesValue;
 
@@ -44,8 +43,7 @@ public class PeerDiscoveryPacketSedesTest {
     final BytesValue target = BytesValue.wrap(r);
     final SECP256K1.KeyPair kp = SECP256K1.KeyPair.generate();
 
-    final FindNeighborsPacketData packetData =
-        FindNeighborsPacketData.create(target, TestClock.fixed());
+    final FindNeighborsPacketData packetData = FindNeighborsPacketData.create(target);
     final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, packetData, kp);
     final Buffer encoded = packet.encode();
     assertNotNull(encoded);
@@ -63,8 +61,7 @@ public class PeerDiscoveryPacketSedesTest {
     new Random().nextBytes(r);
     final BytesValue target = BytesValue.wrap(r);
 
-    final FindNeighborsPacketData packet =
-        FindNeighborsPacketData.create(target, TestClock.fixed());
+    final FindNeighborsPacketData packet = FindNeighborsPacketData.create(target);
     final BytesValue serialized = RLP.encode(packet::writeTo);
     assertNotNull(serialized);
 
@@ -75,14 +72,14 @@ public class PeerDiscoveryPacketSedesTest {
     // assertion.
     assertThat(deserialized.getExpiration())
         .isCloseTo(
-            TestClock.fixed().millis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS, offset(1500L));
+            System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS, offset(1500L));
   }
 
   @Test
   public void neighborsPacketData() {
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(5);
 
-    final NeighborsPacketData packet = NeighborsPacketData.create(peers, TestClock.fixed());
+    final NeighborsPacketData packet = NeighborsPacketData.create(peers);
     final BytesValue serialized = RLP.encode(packet::writeTo);
     assertNotNull(serialized);
 
@@ -92,7 +89,7 @@ public class PeerDiscoveryPacketSedesTest {
     // assertion.
     assertThat(deserialized.getExpiration())
         .isCloseTo(
-            TestClock.fixed().millis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS, offset(1500L));
+            System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS, offset(1500L));
   }
 
   @Test(expected = RLPException.class)
@@ -101,8 +98,7 @@ public class PeerDiscoveryPacketSedesTest {
     new Random().nextBytes(r);
     final BytesValue target = BytesValue.wrap(r);
 
-    final FindNeighborsPacketData packet =
-        FindNeighborsPacketData.create(target, TestClock.fixed());
+    final FindNeighborsPacketData packet = FindNeighborsPacketData.create(target);
     final BytesValue serialized = RLP.encode(packet::writeTo);
     assertNotNull(serialized);
 
@@ -117,7 +113,7 @@ public class PeerDiscoveryPacketSedesTest {
 
     final SECP256K1.KeyPair kp = SECP256K1.KeyPair.generate();
 
-    final FindNeighborsPacketData data = FindNeighborsPacketData.create(target, TestClock.fixed());
+    final FindNeighborsPacketData data = FindNeighborsPacketData.create(target);
     final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, data, kp);
 
     final BytesValue encoded = BytesValue.wrapBuffer(packet.encode());

@@ -76,10 +76,7 @@ public class CliqueBlockCreatorTest {
   public void setup() {
     protocolSchedule =
         CliqueProtocolSchedule.create(
-            GenesisConfigFile.DEFAULT.getConfigOptions(),
-            proposerKeyPair,
-            false,
-            TestClock.fixed());
+            GenesisConfigFile.DEFAULT.getConfigOptions(), proposerKeyPair, false);
 
     final Address otherAddress = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
     validatorList.add(otherAddress);

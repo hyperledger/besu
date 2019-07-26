@@ -18,7 +18,6 @@ import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.testutil.TestClock;
 
 import org.junit.Test;
 
@@ -28,8 +27,7 @@ public class FixedProtocolScheduleTest {
   public void reportedDifficultyForAllBlocksIsAFixedValue() {
 
     final ProtocolSchedule<Void> schedule =
-        FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.development().getConfigOptions(), TestClock.fixed());
+        FixedDifficultyProtocolSchedule.create(GenesisConfigFile.development().getConfigOptions());
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 

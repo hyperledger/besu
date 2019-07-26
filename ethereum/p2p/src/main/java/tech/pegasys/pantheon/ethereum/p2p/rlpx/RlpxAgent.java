@@ -39,7 +39,6 @@ import tech.pegasys.pantheon.util.FutureUtils;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +67,6 @@ public class RlpxAgent {
   private final PeerPrivileges peerPrivileges;
   private final int maxConnections;
   private final int maxRemotelyInitiatedConnections;
-  private final Clock clock;
 
   @VisibleForTesting
   final Map<BytesValue, RlpxConnection> connectionsById = new ConcurrentHashMap<>();
@@ -86,8 +84,7 @@ public class RlpxAgent {
       final PeerPrivileges peerPrivileges,
       final int maxConnections,
       final int maxRemotelyInitiatedConnections,
-      final MetricsSystem metricsSystem,
-      final Clock clock) {
+      final MetricsSystem metricsSystem) {
     this.localNode = localNode;
     this.connectionEvents = connectionEvents;
     this.connectionInitializer = connectionInitializer;
@@ -96,7 +93,6 @@ public class RlpxAgent {
     this.maxConnections = maxConnections;
     this.maxRemotelyInitiatedConnections =
         Math.min(maxConnections, maxRemotelyInitiatedConnections);
-    this.clock = clock;
 
     // Setup metrics
     connectedPeersCounter =
@@ -235,8 +231,7 @@ public class RlpxAgent {
             // We're initiating a new connection
             final CompletableFuture<PeerConnection> future = initiateOutboundConnection(peer);
             connectionFuture.set(future);
-            RlpxConnection newConnection =
-                RlpxConnection.outboundConnection(peer, future, clock.millis());
+            RlpxConnection newConnection = RlpxConnection.outboundConnection(peer, future);
             newConnection.subscribeConnectionEstablished(
                 (conn) -> {
                   this.dispatchConnect(conn.getPeerConnection());
@@ -304,7 +299,7 @@ public class RlpxAgent {
   private CompletableFuture<PeerConnection> initiateOutboundConnection(final Peer peer) {
     LOG.trace("Initiating connection to peer: {}", peer.getEnodeURL());
     if (peer instanceof DiscoveryPeer) {
-      ((DiscoveryPeer) peer).setLastAttemptedConnection(clock.millis());
+      ((DiscoveryPeer) peer).setLastAttemptedConnection(System.currentTimeMillis());
     }
 
     return connectionInitializer
@@ -344,8 +339,7 @@ public class RlpxAgent {
 
     // Track this new connection, deduplicating existing connection if necessary
     final AtomicBoolean newConnectionAccepted = new AtomicBoolean(false);
-    final RlpxConnection inboundConnection =
-        RlpxConnection.inboundConnection(peerConnection, clock.millis());
+    final RlpxConnection inboundConnection = RlpxConnection.inboundConnection(peerConnection);
     // Our disconnect handler runs connectionsById.compute(), so don't actually execute the
     // disconnect command until we've returned from our compute() calculation
     final AtomicReference<Runnable> disconnectAction = new AtomicReference<>();
@@ -509,7 +503,6 @@ public class RlpxAgent {
     private ConnectionInitializer connectionInitializer;
     private PeerConnectionEvents connectionEvents;
     private MetricsSystem metricsSystem;
-    private Clock clock;
 
     private Builder() {}
 
@@ -535,8 +528,7 @@ public class RlpxAgent {
           peerPrivileges,
           config.getMaxPeers(),
           config.getMaxRemotelyInitiatedConnections(),
-          metricsSystem,
-          clock);
+          metricsSystem);
     }
 
     private void validate() {
@@ -546,7 +538,6 @@ public class RlpxAgent {
       checkState(peerPrivileges != null, "PeerPrivileges must be configured");
       checkState(peerPermissions != null, "PeerPermissions must be configured");
       checkState(metricsSystem != null, "MetricsSystem must be configured");
-      checkState(clock != null, "Clock must be configured");
     }
 
     public Builder keyPair(final KeyPair keyPair) {
@@ -594,12 +585,6 @@ public class RlpxAgent {
     public Builder metricsSystem(final MetricsSystem metricsSystem) {
       checkNotNull(metricsSystem);
       this.metricsSystem = metricsSystem;
-      return this;
-    }
-
-    public Builder clock(final Clock clock) {
-      checkNotNull(clock);
-      this.clock = clock;
       return this;
     }
   }

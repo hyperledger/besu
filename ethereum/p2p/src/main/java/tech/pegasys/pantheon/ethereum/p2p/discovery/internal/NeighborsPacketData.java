@@ -18,7 +18,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 
-import java.time.Clock;
 import java.util.List;
 
 public class NeighborsPacketData implements PacketData {
@@ -37,8 +36,9 @@ public class NeighborsPacketData implements PacketData {
   }
 
   @SuppressWarnings("unchecked")
-  public static NeighborsPacketData create(final List<DiscoveryPeer> peers, final Clock clock) {
-    return new NeighborsPacketData(peers, clock.millis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
+  public static NeighborsPacketData create(final List<DiscoveryPeer> peers) {
+    return new NeighborsPacketData(
+        peers, System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
   }
 
   public static NeighborsPacketData readFrom(final RLPInput in) {

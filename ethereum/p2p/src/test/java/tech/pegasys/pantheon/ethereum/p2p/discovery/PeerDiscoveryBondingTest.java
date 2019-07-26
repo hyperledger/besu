@@ -21,7 +21,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.MockPeerDiscoveryAg
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.Packet;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PacketType;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PongPacketData;
-import tech.pegasys.pantheon.testutil.TestClock;
 
 import java.util.Collections;
 import java.util.List;
@@ -68,8 +67,7 @@ public class PeerDiscoveryBondingTest {
     // ignored because
     // we haven't bonded.
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
-    final FindNeighborsPacketData data =
-        FindNeighborsPacketData.create(otherNode.getId(), TestClock.fixed());
+    final FindNeighborsPacketData data = FindNeighborsPacketData.create(otherNode.getId());
     final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, data, otherNode.getKeyPair());
     helper.sendMessageBetweenAgents(otherNode, agent, packet);
 

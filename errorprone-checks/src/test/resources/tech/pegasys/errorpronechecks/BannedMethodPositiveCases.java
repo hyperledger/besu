@@ -27,10 +27,4 @@ public class BannedMethodPositiveCases {
     // java.util.Objects methods instead.
     Objects.hashCode("1", "1");
   }
-
-  public void callsSystemCurrentTimeMillis() throws Exception {
-    // BUG: Diagnostic contains:  Do not use System.currentTimeMillis(), use a java.time.Clock
-    // passed into a constructor or as a static method parameter.
-    System.currentTimeMillis();
-  }
 }

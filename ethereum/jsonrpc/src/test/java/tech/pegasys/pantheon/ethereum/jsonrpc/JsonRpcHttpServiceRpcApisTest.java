@@ -43,7 +43,6 @@ import tech.pegasys.pantheon.ethereum.permissioning.AccountLocalConfigPermission
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
-import tech.pegasys.pantheon.testutil.TestClock;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -194,7 +193,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(P2PNetwork.class),
                     blockchainQueries,
                     mock(Synchronizer.class),
-                    MainnetProtocolSchedule.create(TestClock.fixed()),
+                    MainnetProtocolSchedule.create(),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(EthHashMiningCoordinator.class),
@@ -252,7 +251,6 @@ public class JsonRpcHttpServiceRpcApisTest {
             .vertx(vertx)
             .config(config)
             .metricsSystem(new NoOpMetricsSystem())
-            .clock(TestClock.fixed())
             .build();
 
     p2pNetwork.start();
@@ -285,7 +283,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     p2pNetwork,
                     blockchainQueries,
                     mock(Synchronizer.class),
-                    MainnetProtocolSchedule.create(TestClock.fixed()),
+                    MainnetProtocolSchedule.create(),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(EthHashMiningCoordinator.class),

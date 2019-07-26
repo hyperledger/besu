@@ -26,8 +26,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.TimestampBou
 import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
-import java.time.Clock;
-
 public class IbftBlockHeaderValidationRulesetFactory {
 
   /**
@@ -35,12 +33,11 @@ public class IbftBlockHeaderValidationRulesetFactory {
    * part of the BlockChain (i.e. not proposed blocks, which do not contain commit seals)
    *
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
-   * @param clock System clock
    * @return BlockHeaderValidator configured for assessing ibft block headers
    */
   public static BlockHeaderValidator<IbftContext> ibftBlockHeaderValidator(
-      final long secondsBetweenBlocks, final Clock clock) {
-    return createValidator(secondsBetweenBlocks, true, clock);
+      final long secondsBetweenBlocks) {
+    return createValidator(secondsBetweenBlocks, true);
   }
 
   /**
@@ -48,21 +45,20 @@ public class IbftBlockHeaderValidationRulesetFactory {
    * which need to be vetted by the validators, and do not contain commit seals).
    *
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
-   * @param clock System clock
    * @return BlockHeaderValidator configured for assessing ibft block headers
    */
   public static BlockHeaderValidator<IbftContext> ibftProposedBlockValidator(
-      final long secondsBetweenBlocks, final Clock clock) {
-    return createValidator(secondsBetweenBlocks, false, clock);
+      final long secondsBetweenBlocks) {
+    return createValidator(secondsBetweenBlocks, false);
   }
 
   private static BlockHeaderValidator<IbftContext> createValidator(
-      final long secondsBetweenBlocks, final boolean validateCommitSeals, final Clock clock) {
+      final long secondsBetweenBlocks, final boolean validateCommitSeals) {
     return new BlockHeaderValidator.Builder<IbftContext>()
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
         .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))
-        .addRule(new TimestampBoundedByFutureParameter(1, clock))
+        .addRule(new TimestampBoundedByFutureParameter(1))
         .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
         .addRule(
             new ConstantFieldValidationRule<>(

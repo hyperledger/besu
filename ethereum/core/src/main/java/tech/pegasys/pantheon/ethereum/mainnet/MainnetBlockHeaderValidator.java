@@ -24,8 +24,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.TimestampBou
 import tech.pegasys.pantheon.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.time.Clock;
-
 public final class MainnetBlockHeaderValidator {
 
   public static final BytesValue DAO_EXTRA_DATA =
@@ -36,13 +34,13 @@ public final class MainnetBlockHeaderValidator {
   public static final int MINIMUM_SECONDS_SINCE_PARENT = 1;
 
   public static BlockHeaderValidator<Void> create(
-      final DifficultyCalculator<Void> difficultyCalculator, final Clock clock) {
-    return createValidator(difficultyCalculator, clock).build();
+      final DifficultyCalculator<Void> difficultyCalculator) {
+    return createValidator(difficultyCalculator).build();
   }
 
-  static BlockHeaderValidator<Void> createDaoValidator(
-      final DifficultyCalculator<Void> difficultyCalculator, final Clock clock) {
-    return createValidator(difficultyCalculator, clock)
+  public static BlockHeaderValidator<Void> createDaoValidator(
+      final DifficultyCalculator<Void> difficultyCalculator) {
+    return createValidator(difficultyCalculator)
         .addRule(
             new ConstantFieldValidationRule<>(
                 "extraData", BlockHeader::getExtraData, DAO_EXTRA_DATA))
@@ -67,14 +65,14 @@ public final class MainnetBlockHeaderValidator {
   }
 
   private static BlockHeaderValidator.Builder<Void> createValidator(
-      final DifficultyCalculator<Void> difficultyCalculator, final Clock clock) {
+      final DifficultyCalculator<Void> difficultyCalculator) {
     return new BlockHeaderValidator.Builder<Void>()
         .addRule(new CalculatedDifficultyValidationRule<>(difficultyCalculator))
         .addRule(new AncestryValidationRule())
         .addRule(new GasLimitRangeAndDeltaValidationRule(MIN_GAS_LIMIT, MAX_GAS_LIMIT))
         .addRule(new GasUsageValidationRule())
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
-        .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S, clock))
+        .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
         .addRule(new ProofOfWorkValidationRule());
   }

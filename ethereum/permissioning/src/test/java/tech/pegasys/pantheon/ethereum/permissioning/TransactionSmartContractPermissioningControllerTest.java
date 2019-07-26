@@ -39,7 +39,6 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.time.Clock;
 
 import com.google.common.io.Resources;
 import org.junit.Test;
@@ -56,8 +55,7 @@ public class TransactionSmartContractPermissioningControllerTest {
 
   private TransactionSmartContractPermissioningController setupController(
       final String resourceName, final String contractAddressString) throws IOException {
-    final ProtocolSchedule<Void> protocolSchedule =
-        MainnetProtocolSchedule.create(Clock.systemUTC());
+    final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
 
     final String emptyContractFile =
         Resources.toString(this.getClass().getResource(resourceName), UTF_8);

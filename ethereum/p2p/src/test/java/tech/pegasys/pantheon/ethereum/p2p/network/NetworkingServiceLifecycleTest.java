@@ -25,7 +25,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryServiceExceptio
 import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
-import tech.pegasys.pantheon.testutil.TestClock;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -158,7 +157,6 @@ public class NetworkingServiceLifecycleTest {
         .keyPair(keyPair)
         .config(config)
         .metricsSystem(new NoOpMetricsSystem())
-        .clock(TestClock.fixed())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)));
   }
 }

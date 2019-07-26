@@ -26,7 +26,6 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerDiscoveryContro
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PeerTable;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.PingPacketData;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
-import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.util.Collections;
@@ -39,7 +38,6 @@ import org.junit.Test;
 
 public class PeerDiscoveryTimestampsTest {
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
-  private final TestClock testClock = new TestClock();
 
   @Test
   public void lastSeenAndFirstDiscoveredTimestampsUpdatedOnMessage() {
@@ -62,14 +60,11 @@ public class PeerDiscoveryTimestampsTest {
             .tableRefreshIntervalMs(TimeUnit.HOURS.toMillis(1))
             .peerBondedObservers(Subscribers.create())
             .metricsSystem(new NoOpMetricsSystem())
-            .clock(testClock)
             .build();
     controller.start();
 
-    testClock.stepMillis(1_000);
     final PingPacketData ping =
-        PingPacketData.create(
-            peers.get(1).getEndpoint(), peers.get(0).getEndpoint(), TestClock.fixed());
+        PingPacketData.create(peers.get(1).getEndpoint(), peers.get(0).getEndpoint());
     final Packet packet = Packet.create(PacketType.PING, ping, keypairs.get(1));
 
     controller.onMessage(packet, peers.get(1));
@@ -79,7 +74,6 @@ public class PeerDiscoveryTimestampsTest {
 
     assertThat(controller.streamDiscoveredPeers()).hasSize(1);
 
-    testClock.stepMillis(1_000);
     DiscoveryPeer p = controller.streamDiscoveredPeers().iterator().next();
     assertThat(p.getLastSeen()).isGreaterThan(0);
     assertThat(p.getFirstDiscovered()).isGreaterThan(0);
@@ -87,7 +81,6 @@ public class PeerDiscoveryTimestampsTest {
     lastSeen.set(p.getLastSeen());
     firstDiscovered.set(p.getFirstDiscovered());
 
-    testClock.stepMillis(1_000);
     controller.onMessage(packet, peers.get(1));
 
     assertThat(controller.streamDiscoveredPeers()).hasSize(1);
@@ -99,12 +92,11 @@ public class PeerDiscoveryTimestampsTest {
 
   @Test
   public void lastContactedTimestampUpdatedOnOutboundMessage() {
-    final MockPeerDiscoveryAgent agent =
-        helper.startDiscoveryAgent(Collections.emptyList(), testClock);
+    final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(Collections.emptyList());
     assertThat(agent.streamDiscoveredPeers()).hasSize(0);
 
     // Start a test peer and send a PING packet to the agent under test.
-    final MockPeerDiscoveryAgent testAgent = helper.startDiscoveryAgent(testClock);
+    final MockPeerDiscoveryAgent testAgent = helper.startDiscoveryAgent();
     final Packet ping = helper.createPingPacket(testAgent, agent);
     helper.sendMessageBetweenAgents(testAgent, agent, ping);
 
@@ -128,7 +120,6 @@ public class PeerDiscoveryTimestampsTest {
     firstDiscovered.set(fd);
 
     // Send another packet and ensure that timestamps are updated accordingly.
-    testClock.stepMillis(1_000);
     helper.sendMessageBetweenAgents(testAgent, agent, ping);
 
     peer = agent.streamDiscoveredPeers().iterator().next();

@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.cli.operator;
 
 import static java.lang.String.format;
+import static java.lang.System.currentTimeMillis;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.createTempDirectory;
 import static java.util.Arrays.asList;
@@ -27,7 +28,6 @@ import static tech.pegasys.pantheon.cli.subcommands.operator.OperatorSubCommand.
 import static tech.pegasys.pantheon.cli.subcommands.operator.OperatorSubCommand.GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME;
 
 import tech.pegasys.pantheon.cli.CommandTestAbstract;
-import tech.pegasys.pantheon.testutil.TestClock;
 
 import java.io.File;
 import java.io.IOException;
@@ -70,7 +70,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
 
   @Before
   public void init() throws IOException {
-    tmpOutputDirectoryPath = createTempDirectory(format("output-%d", TestClock.fixed().millis()));
+    tmpOutputDirectoryPath = createTempDirectory(format("output-%d", currentTimeMillis()));
   }
 
   @Test
