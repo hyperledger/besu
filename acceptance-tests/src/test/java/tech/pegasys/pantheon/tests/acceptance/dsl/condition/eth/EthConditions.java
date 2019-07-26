@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.condition.eth;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.miner.MiningStatusCondition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
 
 public class EthConditions {
@@ -60,5 +61,9 @@ public class EthConditions {
   public Condition expectSuccessfulTransactionReceiptWithoutReason(final String transactionHash) {
     return new ExpectSuccessfulEthGetTransactionReceiptWithoutReason(
         transactions.getTransactionReceiptWithRevertReason(transactionHash));
+  }
+
+  public Condition miningStatus(final boolean isMining) {
+    return new MiningStatusCondition(transactions.mining(), isMining);
   }
 }

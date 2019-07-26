@@ -68,6 +68,9 @@ public class PermissionedNodeBuilder {
   private boolean accountSmartContractPermissioningEnabled = false;
   private String accountPermissioningSmartContractAddress = null;
 
+  private List<String> staticNodes = new ArrayList<>();
+  private boolean mining = true;
+
   public PermissionedNodeBuilder name(final String name) {
     this.name = name;
     return this;
@@ -129,6 +132,16 @@ public class PermissionedNodeBuilder {
     return this;
   }
 
+  public PermissionedNodeBuilder staticNodes(final List<String> staticNodes) {
+    this.staticNodes = staticNodes;
+    return this;
+  }
+
+  public PermissionedNodeBuilder disableMining() {
+    this.mining = false;
+    return this;
+  }
+
   @SuppressWarnings("UnstableApiUsage")
   public PermissionedNodeBuilder genesisFile(final String path) {
     try {
@@ -163,8 +176,15 @@ public class PermissionedNodeBuilder {
         .name(name)
         .jsonRpcConfiguration(jsonRpcConfigWithPermApiEnabled())
         .permissioningConfiguration(permissioningConfiguration)
-        .bootnodeEligible(false)
-        .miningEnabled();
+        .bootnodeEligible(false);
+
+    if (mining) {
+      builder.miningEnabled();
+    }
+
+    if (!staticNodes.isEmpty()) {
+      builder.staticNodes(staticNodes);
+    }
 
     if (genesisFile != null) {
       builder.genesisConfigProvider((a) -> Optional.of(genesisFile));

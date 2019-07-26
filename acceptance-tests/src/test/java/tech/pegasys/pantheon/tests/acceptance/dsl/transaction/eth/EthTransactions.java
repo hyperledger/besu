@@ -59,4 +59,8 @@ public class EthTransactions {
       final String transactionHash) {
     return new EthGetTransactionReceiptWithRevertReason(transactionHash);
   }
+
+  public EthMiningTransaction mining() {
+    return new EthMiningTransaction();
+  }
 }

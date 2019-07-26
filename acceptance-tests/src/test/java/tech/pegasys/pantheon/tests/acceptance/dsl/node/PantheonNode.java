@@ -37,6 +37,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique.CliqueReque
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaRequestFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2.Ibft2RequestFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.login.LoginRequestFactory;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.miner.MinerRequestFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermissioningJsonRpcRequestFactory;
 
@@ -293,6 +294,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
               new AdminRequestFactory(web3jService),
               new EeaRequestFactory(web3jService),
               new CustomRequestFactory(web3jService),
+              new MinerRequestFactory(web3jService),
               websocketService,
               loginRequestFactory());
     }

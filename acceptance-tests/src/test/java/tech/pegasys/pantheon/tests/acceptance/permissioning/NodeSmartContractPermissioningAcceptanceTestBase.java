@@ -12,8 +12,11 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.permissioning;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
+import tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.perm.NodeSmartContractPermissioningConditions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
@@ -25,14 +28,15 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.NodeSmartContractPermissioningTransactions;
 
 import java.io.IOException;
+import java.math.BigInteger;
 
 class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBase {
 
   private final NodeSmartContractPermissioningTransactions smartContractNodePermissioning;
   private final NodeSmartContractPermissioningConditions nodeSmartContractPermissioningConditions;
 
-  private static final String CONTRACT_ADDRESS = "0x0000000000000000000000000000000000009999";
-  private static final String GENESIS_FILE = "/permissioning/simple_permissioning_genesis.json";
+  protected static final String CONTRACT_ADDRESS = "0x0000000000000000000000000000000000009999";
+  protected static final String GENESIS_FILE = "/permissioning/simple_permissioning_genesis.json";
 
   protected final Cluster permissionedCluster;
 
@@ -78,6 +82,14 @@ class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBas
     }
   }
 
+  protected Node miner(final String name) {
+    try {
+      return pantheon.createCustomGenesisNode(name, GENESIS_FILE, false, true);
+    } catch (IOException e) {
+      throw new RuntimeException("Error creating node", e);
+    }
+  }
+
   @Override
   public void tearDownAcceptanceTestBase() {
     permissionedCluster.stop();
@@ -108,5 +120,13 @@ class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBas
   protected Condition connectionIsForbidden(final Node source, final Node target) {
     return nodeSmartContractPermissioningConditions.connectionIsForbidden(
         CONTRACT_ADDRESS, source, target);
+  }
+
+  protected void waitForBlockHeight(final Node node, final long blockchainHeight) {
+    WaitUtils.waitFor(
+        120,
+        () ->
+            assertThat(node.execute(ethTransactions.blockNumber()))
+                .isGreaterThanOrEqualTo(BigInteger.valueOf(blockchainHeight)));
   }
 }

@@ -32,6 +32,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.clique.CliqueTrans
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.contract.ContractTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.miner.MinerTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermissioningTransactions;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.web3.Web3Transactions;
@@ -60,6 +61,7 @@ public class AcceptanceTestBase {
   protected final PermissioningConditions perm;
   protected final PermissionedNodeBuilder permissionedNodeBuilder;
   protected final PermissioningTransactions permissioningTransactions;
+  protected final MinerTransactions minerTransactions;
   protected final Web3Conditions web3;
 
   protected AcceptanceTestBase() {
@@ -71,6 +73,7 @@ public class AcceptanceTestBase {
     accountTransactions = new AccountTransactions(accounts);
     permissioningTransactions = new PermissioningTransactions();
     contractTransactions = new ContractTransactions();
+    minerTransactions = new MinerTransactions();
 
     blockchain = new Blockchain(ethTransactions);
     clique = new CliqueConditions(ethTransactions, cliqueTransactions);

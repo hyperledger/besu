@@ -12,12 +12,7 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.permissioning;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
-
-import java.math.BigInteger;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -47,11 +42,7 @@ public class NodeSmartContractPermissioningOutOfSyncAcceptanceTest
   @Test
   public void addNodeToClusterAndVerifyNonBootNodePeerConnectionWorksAfterSync() {
     final long blockchainHeight = 50L;
-    WaitUtils.waitFor(
-        120,
-        () ->
-            assertThat(currentHeight(permissionedNodeA))
-                .isGreaterThanOrEqualTo(BigInteger.valueOf(blockchainHeight)));
+    waitForBlockHeight(permissionedNodeA, blockchainHeight);
 
     // Add Node B
     permissionedCluster.addNode(permissionedNodeB);
@@ -62,15 +53,7 @@ public class NodeSmartContractPermissioningOutOfSyncAcceptanceTest
     permissionedNodeB.verify(connectionIsForbidden(permissionedNodeA, permissionedNodeB));
 
     // connection should be allowed after node B syncs
-    WaitUtils.waitFor(
-        () ->
-            assertThat(currentHeight(permissionedNodeB))
-                .isGreaterThanOrEqualTo(BigInteger.valueOf(blockchainHeight)));
-
+    waitForBlockHeight(permissionedNodeB, blockchainHeight);
     permissionedNodeB.verify(connectionIsAllowed(permissionedNodeA, permissionedNodeB));
-  }
-
-  private BigInteger currentHeight(final Node node) {
-    return node.execute(ethTransactions.blockNumber());
   }
 }

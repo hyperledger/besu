@@ -222,16 +222,30 @@ public class PantheonNodeFactory {
 
   public PantheonNode createCustomGenesisNode(
       final String name, final String genesisPath, final boolean canBeBootnode) throws IOException {
+    return createCustomGenesisNode(name, genesisPath, canBeBootnode, false);
+  }
+
+  public PantheonNode createCustomGenesisNode(
+      final String name,
+      final String genesisPath,
+      final boolean canBeBootnode,
+      final boolean mining)
+      throws IOException {
     final String genesisFile = genesis.readGenesisFile(genesisPath);
-    return create(
+    final PantheonFactoryConfigurationBuilder builder =
         new PantheonFactoryConfigurationBuilder()
             .name(name)
             .jsonRpcEnabled()
             .webSocketEnabled()
             .genesisConfigProvider((a) -> Optional.of(genesisFile))
             .devMode(false)
-            .bootnodeEligible(canBeBootnode)
-            .build());
+            .bootnodeEligible(canBeBootnode);
+
+    if (mining) {
+      builder.miningEnabled();
+    }
+
+    return create(builder.build());
   }
 
   public PantheonNode createCliqueNodeWithValidators(final String name, final String... validators)
