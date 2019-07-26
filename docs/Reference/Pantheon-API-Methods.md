@@ -3025,6 +3025,7 @@ Reruns the transaction with the same state as when the transaction was executed.
 `transactionHash` : `data` - Transaction hash.
 
 `Object` - request options (all optional and default to `false`):
+
 * `disableStorage` : `boolean` - `true` disables storage capture. 
 * `disableMemory` : `boolean` - `true` disables memory capture. 
 * `disableStack` : `boolean` - `true` disables stack capture. 
