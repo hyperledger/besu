@@ -19,7 +19,8 @@ import java.util.Queue;
 import java.util.Set;
 
 public class CachingTaskCollection<T> implements TaskCollection<T> {
-  private static final int DEFAULT_CACHE_SIZE = 1_000_000;
+
+  public static final int DEFAULT_CACHE_SIZE = 1_000_000;
   private final int maxCacheSize;
 
   // The underlying collection

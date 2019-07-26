@@ -41,6 +41,7 @@ public class SynchronizerOptionsTest
             SynchronizerConfiguration.DEFAULT_WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS * 2)
         .worldStateMinMillisBeforeStalling(
             SynchronizerConfiguration.DEFAULT_WORLD_STATE_MIN_MILLIS_BEFORE_STALLING * 2)
+        .worldStateTaskCacheSize(SynchronizerConfiguration.DEFAULT_WORLD_STATE_TASK_CACHE_SIZE + 1)
         .blockPropagationRange(
             Range.closed(
                 SynchronizerConfiguration.DEFAULT_BLOCK_PROPAGATION_RANGE.lowerEndpoint() - 2,

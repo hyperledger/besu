@@ -52,6 +52,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       "--Xsynchronizer-world-state-max-requests-without-progress";
   private static final String WORLD_STATE_MIN_MILLIS_BEFORE_STALLING_FLAG =
       "--Xsynchronizer-world-state-min-millis-before-stalling";
+  private static final String WORLD_STATE_TASK_CACHE_SIZE_FLAG =
+      "--Xsynchronizer-world-state-task-cache-size";
 
   @CommandLine.Option(
       names = BLOCK_PROPAGATION_RANGE_FLAG,
@@ -196,6 +198,16 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private long worldStateMinMillisBeforeStalling =
       SynchronizerConfiguration.DEFAULT_WORLD_STATE_MIN_MILLIS_BEFORE_STALLING;
 
+  @CommandLine.Option(
+      names = WORLD_STATE_TASK_CACHE_SIZE_FLAG,
+      hidden = true,
+      defaultValue = "1000000",
+      paramLabel = "<INTEGER>",
+      description =
+          "The max number of pending node data requests cached in-memory during fast sync world state download. (default: ${DEFAULT-VALUE})")
+  private int worldStateTaskCacheSize =
+      SynchronizerConfiguration.DEFAULT_WORLD_STATE_TASK_CACHE_SIZE;
+
   private SynchronizerOptions() {}
 
   public static SynchronizerOptions create() {
@@ -221,6 +233,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.worldStateRequestParallelism = config.getWorldStateRequestParallelism();
     options.worldStateMaxRequestsWithoutProgress = config.getWorldStateMaxRequestsWithoutProgress();
     options.worldStateMinMillisBeforeStalling = config.getWorldStateMinMillisBeforeStalling();
+    options.worldStateTaskCacheSize = config.getWorldStateTaskCacheSize();
     return options;
   }
 
@@ -242,6 +255,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.worldStateRequestParallelism(worldStateRequestParallelism);
     builder.worldStateMaxRequestsWithoutProgress(worldStateMaxRequestsWithoutProgress);
     builder.worldStateMinMillisBeforeStalling(worldStateMinMillisBeforeStalling);
+    builder.worldStateTaskCacheSize(worldStateTaskCacheSize);
     return builder;
   }
 
@@ -277,6 +291,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS_FLAG,
         OptionParser.format(worldStateMaxRequestsWithoutProgress),
         WORLD_STATE_MIN_MILLIS_BEFORE_STALLING_FLAG,
-        OptionParser.format(worldStateMinMillisBeforeStalling));
+        OptionParser.format(worldStateMinMillisBeforeStalling),
+        WORLD_STATE_TASK_CACHE_SIZE_FLAG,
+        OptionParser.format(worldStateTaskCacheSize));
   }
 }
