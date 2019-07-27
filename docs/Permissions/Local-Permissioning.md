@@ -104,9 +104,6 @@ can synchronise and add blocks containing transactions from accounts that are no
     This means a transaction can be successfully submitted by Node A from an account in the Node A whitelist but rejected by 
     Node B to which it is propagated if the account is not in the Node B whitelist. 
     We recommend each node in the network has the same accounts whitelist. 
-        
-    On-chain permissioning is under development. On-chain permissioning will use one on-chain 
-    nodes whitelist. 
 
 To update the accounts whitelist when the node is running, use the JSON-RPC API methods: 
 
