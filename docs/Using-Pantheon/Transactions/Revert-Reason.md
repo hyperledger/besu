@@ -36,7 +36,7 @@ to include the revert reason in the transaction receipt in Pantheon.
 
 ## Where is the Revert Reason Included 
 
-When revert reason is enabled, the revert reason is included in the transaction receipt returned by 
+When revert reason is enabled, the revert reason is included as an ABI-encoded string in the transaction receipt returned by 
 [`eth_getTransactionReceipt`](../../Reference/Pantheon-API-Methods.md#eth_gettransactionreceipt). 
 
 !!! important 
@@ -62,12 +62,29 @@ When revert reason is enabled, the revert reason is included in the transaction 
          "to": "0xf17f52151ebef6c7334fad080c5704d77216b732",
          "transactionHash": "0xc00e97af59c6f88de163306935f7682af1a34c67245e414537d02e422815efc3",
          "transactionIndex": "0x0",
-         "revertReason":"Not enough Ether provided"
+         "revertReason":"0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001a4e6f7420656e6f7567682045746865722070726f76696465642e000000000000"
        }
     }
     ```
     
-## Dapp support 
+## Revert Reason Format
+    
+As described in the [Solidity documentation](https://solidity.readthedocs.io/en/v0.5.10/control-structures.html#revert),
+the revert reason is included as an ABI-encoded string consisting of: 
+
+```
+0x08c379a0                                                         // Function selector for Error(string)
+0x0000000000000000000000000000000000000000000000000000000000000020 // Data offset
+0x000000000000000000000000000000000000000000000000000000000000001a // String length
+0x4e6f7420656e6f7567682045746865722070726f76696465642e000000000000 // String data
+```
+
+!!! example
+    ```bash tab="Revert reason string for Not enough Ether provided."
+    "0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001a4e6f7420656e6f7567682045746865722070726f76696465642e000000000000"
+    ```
+
+## Dapp Support 
 
 Client libraries (eg, web3j) do not support extracting the revert reason from the transaction receipt. 
 To extract the revert reason your Dapp must interact directly with Pantheon using a custom JSON -> Object 
