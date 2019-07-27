@@ -8,12 +8,6 @@ private transactions](../Privacy/How-To/Creating-Sending-Private-Transactions.md
 
 ## Options Parameter 
 
-The Options parameter is used by: 
-
-* [`generatePrivacyGroup`](#generateprivacygroup)
-* [`getTransactionCount`](#gettransactioncount)
-* [`sendRawParameter`](#sendrawtransaction)
-
 The Options parameter has the following properties: 
 
 * `privateKey`: Ethereum private key with which to sign the transaction
@@ -23,9 +17,88 @@ The Options parameter has the following properties:
 * `to` : Optional. Contract address to send the transaction to. Do not specify for contract deployment transactions
 * `data` : Transaction data
 
+## createPrivacyGroup
+
+Creates privacy group for Pantheon privacy. 
+
+**Parameters**
+
+[Transaction options](#options-parameter)
+
+**Returns** 
+
+`string` : Privacy group ID 
+
+!!! example 
+    ```bash
+    const createPrivacyGroup = () => {
+      const contractOptions = {
+        addresses: [orion.node1.publicKey, orion.node2.publicKey],
+        privateFrom: orion.node1.publicKey,
+        name: "Privacy Group A",
+        description: "Members of Group A"
+      };
+      return web3.eea.createPrivacyGroup(contractOptions).then(result => {
+        console.log(`The privacy group created is:`, result);
+        return result;
+      });
+    };
+    ```
+
+## deletePrivacyGroup
+
+Deletes privacy group. 
+
+**Parameters**
+
+[Transaction options](#options-parameter)
+
+**Returns** 
+
+`string` : Privacy group ID 
+
+!!! example 
+    ```bash
+    const deletePrivacyGroup = givenPrivacyGroupId => {
+      const contractOptions = {
+        privacyGroupId: givenPrivacyGroupId,
+        privateFrom: orion.node1.publicKey
+      };
+      return web3.eea.deletePrivacyGroup(contractOptions).then(result => {
+        console.log(`The privacy group deleted is:`, result);
+        return result;
+      });
+    };
+    ```
+
+## findPrivacyGroup
+
+Finds privacy groups containing only the specified members.
+
+**Parameters**
+
+[Transaction options](#options-parameter)
+
+**Returns** 
+
+`array of objects` : Privacy groups containing only the specified members. 
+
+!!! example 
+    ```bash
+    const findPrivacyGroup = () => {
+      const contractOptions = {
+        addresses: [orion.node1.publicKey, orion.node2.publicKey]
+      };
+      return web3.eea.findPrivacyGroup(contractOptions).then(result => {
+        console.log(`The privacy groups found are:`, result);
+        return result;
+      });
+    };
+    ```
+
 ## generatePrivacyGroup
     
-Generates the privacy group ID. The privacy group ID is the RLP-encoded `privateFor` and `privateFrom` keys.
+Generates the privacy group ID for EEA privacy. The privacy group ID is the RLP-encoded `privateFor` and `privateFrom` keys.
     
 **Parameters**
     
