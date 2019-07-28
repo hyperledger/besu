@@ -1,4 +1,4 @@
-description: Some use cases of creating transactions on a Pantheon network
+description: Some use cases of creating transactions
 <!--- END of page meta data -->
 
 # Creating and Sending Transactions

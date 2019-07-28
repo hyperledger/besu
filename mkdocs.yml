@@ -57,6 +57,7 @@ nav:
         - Installation Overview: Installation/Overview.md
         - Install Binary Distribution: Installation/Install-Binaries.md
         - Build from Source: Installation/Build-From-Source.md
+        - System Requirements: Installation/System-Requirements.md
     - Architecture:
         - Overview: Architecture/Overview.md
     - Getting Started:
@@ -65,6 +66,7 @@ nav:
         - Running Pantheon from Docker Image: Getting-Started/Run-Docker-Image.md
     - Tutorials:
         - Private Network Quickstart: Tutorials/Private-Network-Quickstart.md
+        - Private Network Quickstart for Private Transactions: Tutorials/Privacy-Quickstart.md
         - Private Network Quickstart On Azure: Tutorials/Azure/Azure-Private-Network-Quickstart.md
         - Create a Private Network using Ethash (Pow): Tutorials/Create-Private-Network.md
         - Create a Private Network using Clique (PoA): Tutorials/Create-Private-Clique-Network.md
@@ -98,14 +100,15 @@ nav:
       - IBFT 2.0: Consensus-Protocols/IBFT.md
       - Quorum IBFT 1.0: Consensus-Protocols/QuorumIBFT.md
     - Privacy:
-        - Overview: Privacy/Privacy-Overview.md
-        - Processing Private Transactions: Privacy/Private-Transaction-Processing.md
-        - Configuring a Privacy-Enabled Network: Privacy/Configuring-Privacy.md
-        - Creating and Sending Private Transactions:
-          - Overview: Privacy/Private-Transactions/Creating-Sending-Private-Transactions.md
-          - web3.js-eea Client Library: Privacy/Private-Transactions/eeajs.md
-          - web3.js-eea Multinode Example: Privacy/Private-Transactions/eeajs-Multinode-example.md
-        - Quickstart for Private Transactions: Privacy/Privacy-Quickstart.md
+        - Tutorials:
+          - Configuring a Privacy-Enabled Network: Privacy/Tutorials/Configuring-Privacy.md
+          - Using web3.js-eea Multinode Example: Privacy/Tutorials/eeajs-Multinode-example.md
+        - How To:
+          - Create and Send Private Transactions: Privacy/How-To/Creating-Sending-Private-Transactions.md
+          - Use the web3.js-eea Client Library: Privacy/How-To/eeajs.md
+        - Explanation:
+          - Privacy Overview: Privacy/Explanation/Privacy-Overview.md
+          - Processing Private Transactions: Privacy/Explanation/Private-Transaction-Processing.md
     - Permissions:
         - Overview: Permissions/Permissioning-Overview.md
         - Local Permissions: Permissions/Local-Permissioning.md
@@ -130,7 +133,8 @@ nav:
           - Alethio Ethereum Lite Explorer: Monitoring/Alethio/Lite-Block-Explorer.md
           - Alethio EthStats Lite Network Monitor: Monitoring/Alethio/Lite-Network-Monitor.md
     - Deploying Pantheon:
-        - High Availability: Deploying-Pantheon/High-Availability.md
+        - Ansible: Deploying-Pantheon/Ansible.md
+        - High Availability of APIs: Deploying-Pantheon/High-Availability.md
         - Migrating Docker Image: Deploying-Pantheon/Migration-Docker.md
     - Troubleshooting:
         - Troubleshooting: Troubleshooting/Troubleshooting.md
@@ -138,6 +142,7 @@ nav:
         - Pantheon Command Line: Reference/Pantheon-CLI-Syntax.md
         - Pantheon API Methods: Reference/Pantheon-API-Methods.md
         - Pantheon API Objects: Reference/Pantheon-API-Objects.md
+        - web3.js-eaa Methods: Reference/web3js-eea-Methods.md
     - Resources:
         - Blog Posts and Webinars: Resources/Resources.md
 

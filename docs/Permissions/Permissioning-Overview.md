@@ -13,7 +13,7 @@ account permissioning on the network.
     follow the rules. A single bad actor can decide not to follow the rules. Nodes can take action 
     to prevent the bad actor adding to the chain but they cannot prevent the bad actor from allowing access to the chain.  
     
-    Pantheon also implements [privacy](../Privacy/Privacy-Overview.md).
+    Pantheon also implements [privacy](../Privacy/Explanation/Privacy-Overview.md).
     
 ## Node Permissioning 
 

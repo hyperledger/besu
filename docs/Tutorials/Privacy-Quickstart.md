@@ -4,12 +4,12 @@ description: Pantheon private network with privacy enabled quickstart tutorial
 # Private Network with Privacy Enabled Quickstart Tutorial
 
 The Private Network with Privacy Enabled Quickstart runs a private network of Pantheon and Orion nodes managed by Docker Compose.
-It is an expanded version of the [Private Network Quickstart](../Tutorials/Private-Network-Quickstart.md). 
+It is an expanded version of the [Private Network Quickstart](Private-Network-Quickstart.md). 
 
 You can use the [Block Explorer](../Tutorials/Private-Network-Quickstart.md#block-explorer), 
 make [JSON-RPC requests](../Tutorials/Private-Network-Quickstart.md#run-json-rpc-requests), and 
 create [transactions using Metamask](../Tutorials/Private-Network-Quickstart.md#creating-a-transaction-using-metamask)
-as described in the [Private Network Quickstart tutorial](../Tutorials/Private-Network-Quickstart.md). 
+as described in the [Private Network Quickstart tutorial](Private-Network-Quickstart.md). 
 This tutorial describes how to use the examples provided in the EEAJS library to [create and send private transactions](#send-private-transactions-and-read-values). 
 
 !!! important 
@@ -143,7 +143,7 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionReceipt","para
 curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionReceipt","params":["0xe0776de9a9d4e30be0025c1308eed8bc45502cba9fe22c504a56e2fd95343e6f"],"id":1}' http://localhost:32771/jsonrpc
 ```
 
-The transaction receipt for the [privacy marker transaction](Private-Transaction-Processing.md) is displayed with a `contractAddress` of `null`. 
+The transaction receipt for the [privacy marker transaction](../Privacy/Explanation/Private-Transaction-Processing.md) is displayed with a `contractAddress` of `null`. 
 
 ```json
 {

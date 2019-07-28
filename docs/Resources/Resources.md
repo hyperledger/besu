@@ -17,6 +17,8 @@ description: Pantheon resources including blog posts, webinars, and meetup recor
 
 ## Webinars 
 
+[Permissioning in Blockchain: A Technical Look at Benefits and Best Practices](https://www.youtube.com/watch?v=CD0pHtNDqZs)
+
 [Privacy in Pantheon: How PegaSys Redefined Blockchain for Enterprises](https://www.youtube.com/watch?v=8l7SSZLyFL8)
 
 [The Final Word: IBFT 2.0 and Enterprise Consensus](https://www.youtube.com/watch?v=YmTUP_dWfME)
@@ -24,6 +26,3 @@ description: Pantheon resources including blog posts, webinars, and meetup recor
 [De-Mystifying Pantheon: Understanding an Ethereum Codebase](https://www.youtube.com/watch?v=OJfib9kTK7U&feature=youtu.be)
 
 [Getting Started with Pantheon](https://www.youtube.com/watch?v=OKWBr94J9rY&t=1s)
-
-
-

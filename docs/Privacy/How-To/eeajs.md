@@ -57,3 +57,7 @@ to get the contract binary.
     ```
 
 The transaction hash is returned. To get the private transaction receipt, use `web3.eea.getTransactionReceipt(txHash)`. 
+
+## web3.js-eea Methods 
+
+Refer to the [web3.js-eea reference documentation](../../Reference/web3js-eea-Methods.md).

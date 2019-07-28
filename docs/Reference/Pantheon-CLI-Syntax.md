@@ -932,7 +932,7 @@ PANTHEON_PRIVACY_ENABLED=false
 privacy-enabled=false
 ```
 
-Set to enable [private transactions](../Privacy/Privacy-Overview.md). 
+Set to enable [private transactions](../Privacy/Explanation/Privacy-Overview.md). 
 The default is false.  
 
 ### privacy-precompiled-address
@@ -941,7 +941,7 @@ The default is false.
 --privacy-precompiled-address=<privacyPrecompiledAddress>
 ```
 
-Address to which the [privacy pre-compiled contract](../Privacy/Private-Transaction-Processing.md) is mapped.
+Address to which the [privacy pre-compiled contract](../Privacy/Explanation/Private-Transaction-Processing.md) is mapped.
 The default is 126.     
     
 ### privacy-public-key-file
@@ -962,7 +962,7 @@ PANTHEON_PRIVACY_PUBLIC_KEY_FILE=Orion/nodeKey.pub
 privacy-public-key-file="Orion/nodeKey.pub"
 ```
 
-Path to the [public key of the Orion node](../Privacy/Privacy-Overview.md#pantheon-and-orion-keys).     
+Path to the [public key of the Orion node](../Privacy/Explanation/Privacy-Overview.md#pantheon-and-orion-keys).     
 
 ### privacy-url
 
@@ -982,7 +982,7 @@ PANTHEON_PRIVACY_URL=http://127.0.0.1:8888
 privacy-url="http://127.0.0.1:8888"
 ```
 
-URL on which the [Orion node](../Privacy/Configuring-Privacy.md#4-create-orion-configuration-files) is running.    
+URL on which the [Orion node](../Privacy/Tutorials/Configuring-Privacy.md#4-create-orion-configuration-files) is running.    
 
 ### revert-reason-enabled
 
