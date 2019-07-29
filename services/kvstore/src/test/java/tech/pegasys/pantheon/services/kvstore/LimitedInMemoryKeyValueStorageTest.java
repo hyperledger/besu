@@ -1,0 +1,51 @@
+/*
+ * Copyright 2018 ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+package tech.pegasys.pantheon.services.kvstore;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import tech.pegasys.pantheon.services.kvstore.KeyValueStorage.Transaction;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+
+import org.junit.Test;
+
+public class LimitedInMemoryKeyValueStorageTest extends AbstractKeyValueStorageTest {
+
+  @Override
+  protected KeyValueStorage createStore() throws Exception {
+    return new LimitedInMemoryKeyValueStorage(100_000_000);
+  }
+
+  @Test
+  public void testLimiting() {
+    final long limit = 5;
+    final LimitedInMemoryKeyValueStorage storage = new LimitedInMemoryKeyValueStorage(limit);
+
+    for (int i = 0; i < limit * 2; i++) {
+      final Transaction tx = storage.startTransaction();
+      tx.put(BytesValue.of(i), BytesValue.of(i));
+      tx.commit();
+    }
+
+    int hits = 0;
+    for (int i = 0; i < limit * 2; i++) {
+      if (storage.containsKey(BytesValue.of(i))) {
+        hits++;
+      }
+    }
+
+    assertThat(hits <= limit).isTrue();
+    // Oldest key should've been dropped first
+    assertThat(storage.containsKey(BytesValue.of(0))).isFalse();
+  }
+}

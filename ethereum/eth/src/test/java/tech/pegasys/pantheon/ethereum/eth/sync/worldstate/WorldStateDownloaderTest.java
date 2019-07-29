@@ -22,9 +22,11 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Account;
+import tech.pegasys.pantheon.ethereum.core.AccountStorageEntry;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator.BlockOptions;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -48,12 +50,14 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.MessageData;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
 import tech.pegasys.pantheon.ethereum.trie.Node;
 import tech.pegasys.pantheon.ethereum.trie.StoredMerklePatriciaTrie;
 import tech.pegasys.pantheon.ethereum.trie.TrieNodeDecoder;
 import tech.pegasys.pantheon.ethereum.worldstate.StateTrieAccountValue;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStatePreimageStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage.Updater;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
@@ -63,7 +67,6 @@ import tech.pegasys.pantheon.services.tasks.InMemoryTaskQueue;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -180,8 +183,7 @@ public class WorldStateDownloaderTest {
   @Test
   public void downloadAlreadyAvailableWorldState() {
     // Setup existing state
-    final WorldStateStorage storage = new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateArchive worldStateArchive = new WorldStateArchive(storage);
+    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     final MutableWorldState worldState = worldStateArchive.getMutable();
 
     // Generate accounts and save corresponding state root
@@ -201,7 +203,10 @@ public class WorldStateDownloaderTest {
     final CachingTaskCollection<NodeDataRequest> taskCollection =
         new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateDownloader downloader =
-        createDownloader(ethProtocolManager.ethContext(), storage, taskCollection);
+        createDownloader(
+            ethProtocolManager.ethContext(),
+            worldStateArchive.getWorldStateStorage(),
+            taskCollection);
 
     final CompletableFuture<Void> future = downloader.run(header);
     assertThat(future).isDone();
@@ -222,9 +227,7 @@ public class WorldStateDownloaderTest {
     serviceExecutor.setAutoRun(false);
 
     // Setup "remote" state
-    final WorldStateStorage remoteStorage =
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateArchive remoteWorldStateArchive = new WorldStateArchive(remoteStorage);
+    final WorldStateArchive remoteWorldStateArchive = createInMemoryWorldStateArchive();
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
     // Generate accounts and save corresponding state root
@@ -259,7 +262,8 @@ public class WorldStateDownloaderTest {
     respondUntilDone(peers, responder, result);
 
     // Check that all expected account data was downloaded
-    final WorldStateArchive localWorldStateArchive = new WorldStateArchive(localStorage);
+    final WorldStateArchive localWorldStateArchive =
+        new WorldStateArchive(localStorage, createPreimageStorage());
     final WorldState localWorldState = localWorldStateArchive.get(stateRoot).get();
     assertThat(result).isDone();
     assertAccountsMatch(localWorldState, accounts);
@@ -273,9 +277,7 @@ public class WorldStateDownloaderTest {
   @Test
   public void doesNotRequestKnownCodeFromNetwork() {
     // Setup "remote" state
-    final WorldStateStorage remoteStorage =
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateArchive remoteWorldStateArchive = new WorldStateArchive(remoteStorage);
+    final WorldStateArchive remoteWorldStateArchive = createInMemoryWorldStateArchive();
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
     // Generate accounts and save corresponding state root
@@ -329,7 +331,8 @@ public class WorldStateDownloaderTest {
     assertThat(Collections.disjoint(requestedHashes, knownCode.keySet())).isTrue();
 
     // Check that all expected account data was downloaded
-    final WorldStateArchive localWorldStateArchive = new WorldStateArchive(localStorage);
+    final WorldStateArchive localWorldStateArchive =
+        new WorldStateArchive(localStorage, createPreimageStorage());
     final WorldState localWorldState = localWorldStateArchive.get(stateRoot).get();
     assertThat(result).isDone();
     assertAccountsMatch(localWorldState, accounts);
@@ -355,9 +358,7 @@ public class WorldStateDownloaderTest {
     serviceExecutor.setAutoRun(false);
 
     // Setup "remote" state
-    final WorldStateStorage remoteStorage =
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateArchive remoteWorldStateArchive = new WorldStateArchive(remoteStorage);
+    final WorldStateArchive remoteWorldStateArchive = createInMemoryWorldStateArchive();
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
     // Generate accounts and save corresponding state root
@@ -427,7 +428,8 @@ public class WorldStateDownloaderTest {
     // Setup "remote" state
     final WorldStateStorage remoteStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateArchive remoteWorldStateArchive = new WorldStateArchive(remoteStorage);
+    final WorldStateArchive remoteWorldStateArchive =
+        new WorldStateArchive(remoteStorage, createPreimageStorage());
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
     // Generate accounts and save corresponding state root
@@ -495,7 +497,8 @@ public class WorldStateDownloaderTest {
     assertThat(requestedHashes).doesNotContainAnyElementsOf(knownNodes);
 
     // Check that all expected account data was downloaded
-    final WorldStateArchive localWorldStateArchive = new WorldStateArchive(localStorage);
+    final WorldStateArchive localWorldStateArchive =
+        new WorldStateArchive(localStorage, createPreimageStorage());
     final WorldState localWorldState = localWorldStateArchive.get(stateRoot).get();
     assertThat(result).isDone();
     assertAccountsMatch(localWorldState, accounts);
@@ -506,7 +509,8 @@ public class WorldStateDownloaderTest {
     // Setup "remote" state
     final WorldStateStorage remoteStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateArchive remoteWorldStateArchive = new WorldStateArchive(remoteStorage);
+    final WorldStateArchive remoteWorldStateArchive =
+        new WorldStateArchive(remoteStorage, createPreimageStorage());
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
     // Generate accounts and save corresponding state root
@@ -591,7 +595,8 @@ public class WorldStateDownloaderTest {
     assertThat(requestedHashes).doesNotContainAnyElementsOf(knownNodes);
 
     // Check that all expected account data was downloaded
-    final WorldStateArchive localWorldStateArchive = new WorldStateArchive(localStorage);
+    final WorldStateArchive localWorldStateArchive =
+        new WorldStateArchive(localStorage, createPreimageStorage());
     final WorldState localWorldState = localWorldStateArchive.get(stateRoot).get();
     assertThat(result).isDone();
     assertAccountsMatch(localWorldState, accounts);
@@ -605,7 +610,8 @@ public class WorldStateDownloaderTest {
     // Setup "remote" state
     final WorldStateStorage remoteStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateArchive remoteWorldStateArchive = new WorldStateArchive(remoteStorage);
+    final WorldStateArchive remoteWorldStateArchive =
+        new WorldStateArchive(remoteStorage, createPreimageStorage());
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
     // Generate accounts and save corresponding state root
@@ -658,7 +664,8 @@ public class WorldStateDownloaderTest {
     // Setup "remote" state
     final WorldStateStorage remoteStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateArchive remoteWorldStateArchive = new WorldStateArchive(remoteStorage);
+    final WorldStateArchive remoteWorldStateArchive =
+        new WorldStateArchive(remoteStorage, createPreimageStorage());
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
     // Generate accounts and save corresponding state root
@@ -722,7 +729,8 @@ public class WorldStateDownloaderTest {
 
     // Check that all expected account data was downloaded
     assertThat(result).isDone();
-    final WorldStateArchive localWorldStateArchive = new WorldStateArchive(localStorage);
+    final WorldStateArchive localWorldStateArchive =
+        new WorldStateArchive(localStorage, createPreimageStorage());
     final WorldState localWorldState = localWorldStateArchive.get(stateRoot).get();
     assertAccountsMatch(localWorldState, accounts);
   }
@@ -794,7 +802,8 @@ public class WorldStateDownloaderTest {
     // Setup "remote" state
     final WorldStateStorage remoteStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateArchive remoteWorldStateArchive = new WorldStateArchive(remoteStorage);
+    final WorldStateArchive remoteWorldStateArchive =
+        new WorldStateArchive(remoteStorage, createPreimageStorage());
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
     // Generate accounts and save corresponding state root
@@ -817,7 +826,8 @@ public class WorldStateDownloaderTest {
         new CachingTaskCollection<>(new InMemoryTaskQueue<>());
     final WorldStateStorage localStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStateArchive localWorldStateArchive = new WorldStateArchive(localStorage);
+    final WorldStateArchive localWorldStateArchive =
+        new WorldStateArchive(localStorage, createPreimageStorage());
     final SynchronizerConfiguration syncConfig =
         SynchronizerConfiguration.builder()
             .worldStateHashCountPerRequest(hashesPerRequest)
@@ -930,9 +940,9 @@ public class WorldStateDownloaderTest {
       assertThat(actualAccount.getCode()).isEqualTo(expectedAccount.getCode());
       assertThat(actualAccount.getBalance()).isEqualTo(expectedAccount.getBalance());
 
-      final Map<Bytes32, UInt256> actualStorage =
+      final Map<Bytes32, AccountStorageEntry> actualStorage =
           actualAccount.storageEntriesFrom(Bytes32.ZERO, 500);
-      final Map<Bytes32, UInt256> expectedStorage =
+      final Map<Bytes32, AccountStorageEntry> expectedStorage =
           expectedAccount.storageEntriesFrom(Bytes32.ZERO, 500);
       assertThat(actualStorage).isEqualTo(expectedStorage);
     }
@@ -961,6 +971,10 @@ public class WorldStateDownloaderTest {
         config.getWorldStateMinMillisBeforeStalling(),
         TestClock.fixed(),
         new NoOpMetricsSystem());
+  }
+
+  private WorldStatePreimageStorage createPreimageStorage() {
+    return new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
   }
 
   private void respondUntilDone(

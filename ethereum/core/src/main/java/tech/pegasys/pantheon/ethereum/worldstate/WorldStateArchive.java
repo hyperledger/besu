@@ -21,11 +21,14 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.util.Optional;
 
 public class WorldStateArchive {
-  private final WorldStateStorage storage;
+  private final WorldStateStorage worldStateStorage;
+  private final WorldStatePreimageStorage preimageStorage;
   private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
-  public WorldStateArchive(final WorldStateStorage storage) {
-    this.storage = storage;
+  public WorldStateArchive(
+      final WorldStateStorage worldStateStorage, final WorldStatePreimageStorage preimageStorage) {
+    this.worldStateStorage = worldStateStorage;
+    this.preimageStorage = preimageStorage;
   }
 
   public Optional<WorldState> get(final Hash rootHash) {
@@ -33,14 +36,14 @@ public class WorldStateArchive {
   }
 
   public boolean isWorldStateAvailable(final Hash rootHash) {
-    return storage.isWorldStateAvailable(rootHash);
+    return worldStateStorage.isWorldStateAvailable(rootHash);
   }
 
   public Optional<MutableWorldState> getMutable(final Hash rootHash) {
-    if (!storage.isWorldStateAvailable(rootHash)) {
+    if (!worldStateStorage.isWorldStateAvailable(rootHash)) {
       return Optional.empty();
     }
-    return Optional.of(new DefaultMutableWorldState(rootHash, storage));
+    return Optional.of(new DefaultMutableWorldState(rootHash, worldStateStorage, preimageStorage));
   }
 
   public WorldState get() {
@@ -52,10 +55,10 @@ public class WorldStateArchive {
   }
 
   public Optional<BytesValue> getNodeData(final Hash hash) {
-    return storage.getNodeData(hash);
+    return worldStateStorage.getNodeData(hash);
   }
 
-  public WorldStateStorage getStorage() {
-    return storage;
+  public WorldStateStorage getWorldStateStorage() {
+    return worldStateStorage;
   }
 }

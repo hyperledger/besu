@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Account;
+import tech.pegasys.pantheon.ethereum.core.AccountStorageEntry;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
@@ -40,6 +41,9 @@ import tech.pegasys.pantheon.ethereum.mainnet.TransactionProcessor;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -97,9 +101,16 @@ public class DebugStorageRangeAtTest {
     when(worldState.get(accountAddress)).thenReturn(account);
     when(blockReplay.afterTransactionInBlock(eq(blockHash), eq(transactionHash), any()))
         .thenAnswer(this::callAction);
-    final NavigableMap<Bytes32, UInt256> rawEntries = new TreeMap<>();
-    rawEntries.put(Bytes32.fromHexString("0x33"), UInt256.of(6));
-    rawEntries.put(Bytes32.fromHexString("0x44"), UInt256.of(7));
+
+    final List<AccountStorageEntry> entries = new ArrayList<>();
+    entries.add(AccountStorageEntry.forKeyAndValue(UInt256.fromHexString("0x33"), UInt256.of(6)));
+    entries.add(AccountStorageEntry.forKeyAndValue(UInt256.fromHexString("0x44"), UInt256.of(7)));
+    entries.add(
+        AccountStorageEntry.create(
+            UInt256.of(7), Hash.hash(Bytes32.fromHexString("0x45")), Optional.empty()));
+    final NavigableMap<Bytes32, AccountStorageEntry> rawEntries = new TreeMap<>();
+    entries.forEach(e -> rawEntries.put(e.getKeyHash(), e));
+
     when(account.storageEntriesFrom(START_KEY_HASH, 11)).thenReturn(rawEntries);
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugStorageRangeAt.response(request);
@@ -107,10 +118,13 @@ public class DebugStorageRangeAtTest {
 
     assertThat(result).isNotNull();
     assertThat(result.getNextKey()).isNull();
+
+    entries.sort(Comparator.comparing(AccountStorageEntry::getKeyHash));
     assertThat(result.getStorage())
         .containsExactly(
-            entry(Bytes32.fromHexString("0x33").toString(), new StorageEntry(UInt256.of(6))),
-            entry(Bytes32.fromHexString("0x44").toString(), new StorageEntry(UInt256.of(7))));
+            entry(entries.get(0).getKeyHash().toString(), new StorageEntry(entries.get(0))),
+            entry(entries.get(1).getKeyHash().toString(), new StorageEntry(entries.get(1))),
+            entry(entries.get(2).getKeyHash().toString(), new StorageEntry(entries.get(2))));
   }
 
   private Object callAction(final InvocationOnMock invocation) {

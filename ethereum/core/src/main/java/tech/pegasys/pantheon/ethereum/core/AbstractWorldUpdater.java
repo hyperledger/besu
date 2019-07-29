@@ -319,21 +319,18 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
 
     @Override
-    public NavigableMap<Bytes32, UInt256> storageEntriesFrom(
+    public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
         final Bytes32 startKeyHash, final int limit) {
-      final NavigableMap<Bytes32, UInt256> entries;
+      final NavigableMap<Bytes32, AccountStorageEntry> entries;
       if (account != null) {
         entries = account.storageEntriesFrom(startKeyHash, limit);
       } else {
         entries = new TreeMap<>();
       }
-      updatedStorage.forEach(
-          (key, value) -> {
-            final Hash hashedKey = Hash.hash(key.getBytes());
-            if (hashedKey.compareTo(startKeyHash) >= 0) {
-              entries.put(hashedKey, value);
-            }
-          });
+      updatedStorage.entrySet().stream()
+          .map(entry -> AccountStorageEntry.forKeyAndValue(entry.getKey(), entry.getValue()))
+          .filter(entry -> entry.getKeyHash().compareTo(startKeyHash) >= 0)
+          .forEach(entry -> entries.put(entry.getKeyHash(), entry));
 
       while (entries.size() > limit) {
         entries.remove(entries.lastKey());

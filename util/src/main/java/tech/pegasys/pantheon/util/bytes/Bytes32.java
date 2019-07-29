@@ -85,6 +85,24 @@ public interface Bytes32 extends BytesValue {
   }
 
   /**
+   * Wraps a slice/sub-part of the provided value as a {@link Bytes32}.
+   *
+   * <p>Note that value is not copied, only wrapped, and thus any future update to {@code value}
+   * within the wrapped parts will be reflected in the returned value.
+   *
+   * @param bytes The bytes to wrap.
+   * @return A {@link Bytes32} that exposes the bytes of {@code value} from {@code 0} (inclusive) to
+   *     {@code 32} (exclusive).
+   * @throws IndexOutOfBoundsException if {@code offset &lt; 0 || (value.size() &gt; 0 && offset >=
+   *     value.size())}.
+   * @throws IllegalArgumentException if {@code length &lt; 0 || offset + 32 &gt; value.size()}.
+   */
+  static Bytes32 wrap(final BytesValue bytes) {
+    final BytesValue slice = bytes.slice(0, Bytes32.SIZE);
+    return slice instanceof Bytes32 ? (Bytes32) slice : new WrappingBytes32(slice);
+  }
+
+  /**
    * Left pad a {@link BytesValue} with zero bytes to create a {@link Bytes32}
    *
    * @param value The bytes value pad.

@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.vm;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
+import tech.pegasys.pantheon.ethereum.core.AccountStorageEntry;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.MutableAccount;
@@ -37,7 +38,7 @@ public class EntriesFromIntegrationTest {
     final MutableWorldState worldState = createInMemoryWorldStateArchive().getMutable();
     final WorldUpdater updater = worldState.updater();
     MutableAccount account = updater.getOrCreate(Address.fromHexString("0x56"));
-    final Map<Bytes32, UInt256> expectedValues = new TreeMap<>();
+    final Map<Bytes32, AccountStorageEntry> expectedValues = new TreeMap<>();
     final int nodeCount = 100_000;
     final Random random = new Random(42989428249L);
 
@@ -55,17 +56,17 @@ public class EntriesFromIntegrationTest {
           account, expectedValues, UInt256.of(Math.abs(random.nextLong())), UInt256.of(i * 10 + 1));
     }
 
-    final Map<Bytes32, UInt256> values =
+    final Map<Bytes32, AccountStorageEntry> values =
         account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
     assertThat(values).isEqualTo(expectedValues);
   }
 
   private void addExpectedValue(
       final MutableAccount account,
-      final Map<Bytes32, UInt256> expectedValues,
+      final Map<Bytes32, AccountStorageEntry> expectedValues,
       final UInt256 key,
       final UInt256 value) {
     account.setStorageValue(key, value);
-    expectedValues.put(Hash.hash(key.getBytes()), value);
+    expectedValues.put(Hash.hash(key.getBytes()), AccountStorageEntry.forKeyAndValue(key, value));
   }
 }

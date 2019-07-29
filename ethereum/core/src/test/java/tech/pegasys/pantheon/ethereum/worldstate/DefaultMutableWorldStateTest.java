@@ -17,8 +17,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldState;
 
 import tech.pegasys.pantheon.ethereum.core.Account;
+import tech.pegasys.pantheon.ethereum.core.AccountStorageEntry;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.MutableAccount;
@@ -27,6 +29,7 @@ import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldState;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
@@ -34,7 +37,9 @@ import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
-import java.util.NavigableMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 import org.junit.Test;
@@ -49,12 +54,13 @@ public class DefaultMutableWorldStateTest {
       Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b");
 
   private static MutableWorldState createEmpty(final WorldStateKeyValueStorage storage) {
-    return new DefaultMutableWorldState(storage);
+    final WorldStatePreimageKeyValueStorage preimageStorage =
+        new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
+    return new DefaultMutableWorldState(storage, preimageStorage);
   }
 
   private static MutableWorldState createEmpty() {
-    final InMemoryKeyValueStorage inMemoryKeyValueStorage = new InMemoryKeyValueStorage();
-    return createEmpty(new WorldStateKeyValueStorage(inMemoryKeyValueStorage));
+    return createInMemoryWorldState();
   }
 
   @Test
@@ -190,7 +196,10 @@ public class DefaultMutableWorldStateTest {
 
     // Create new world state and check that it can access modified address
     final MutableWorldState newWorldState =
-        new DefaultMutableWorldState(expectedRootHash, new WorldStateKeyValueStorage(storage));
+        new DefaultMutableWorldState(
+            expectedRootHash,
+            new WorldStateKeyValueStorage(storage),
+            new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
     assertEquals(expectedRootHash, newWorldState.rootHash());
     assertNotNull(newWorldState.get(ADDRESS));
     assertEquals(newBalance, newWorldState.get(ADDRESS).getBalance());
@@ -544,21 +553,36 @@ public class DefaultMutableWorldStateTest {
     account.setStorageValue(UInt256.of(2), UInt256.of(5));
     updater.commit();
 
+    final List<AccountStorageEntry> initialSetOfEntries = new ArrayList<>();
+    initialSetOfEntries.add(AccountStorageEntry.forKeyAndValue(UInt256.ONE, UInt256.of(2)));
+    initialSetOfEntries.add(AccountStorageEntry.forKeyAndValue(UInt256.of(2), UInt256.of(5)));
+    final Map<Bytes32, AccountStorageEntry> initialEntries = new TreeMap<>();
+    initialSetOfEntries.forEach(entry -> initialEntries.put(entry.getKeyHash(), entry));
+
     updater = worldState.updater();
     account = updater.getMutable(ADDRESS);
     account.setStorageValue(UInt256.ONE, UInt256.of(3));
     account.setStorageValue(UInt256.of(3), UInt256.of(6));
 
-    final NavigableMap<Bytes32, UInt256> storage = account.storageEntriesFrom(Hash.ZERO, 10);
+    final List<AccountStorageEntry> finalSetOfEntries = new ArrayList<>();
+    finalSetOfEntries.add(AccountStorageEntry.forKeyAndValue(UInt256.ONE, UInt256.of(3)));
+    finalSetOfEntries.add(AccountStorageEntry.forKeyAndValue(UInt256.of(2), UInt256.of(5)));
+    finalSetOfEntries.add(AccountStorageEntry.forKeyAndValue(UInt256.of(3), UInt256.of(6)));
+    final Map<Bytes32, AccountStorageEntry> finalEntries = new TreeMap<>();
+    finalSetOfEntries.forEach(entry -> finalEntries.put(entry.getKeyHash(), entry));
 
-    final NavigableMap<Bytes32, UInt256> expected = new TreeMap<>();
-    expected.put(hash(UInt256.ONE), UInt256.of(3));
-    expected.put(hash(UInt256.of(2)), UInt256.of(5));
-    expected.put(hash(UInt256.of(3)), UInt256.of(6));
-    assertThat(storage).isEqualTo(expected);
-  }
+    assertThat(account.storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
+    assertThat(updater.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
+    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(initialEntries);
 
-  private Hash hash(final UInt256 key) {
-    return Hash.hash(key.getBytes());
+    worldState.persist();
+    assertThat(updater.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
+    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(initialEntries);
+
+    updater.commit();
+    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
+
+    worldState.persist();
+    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
   }
 }

@@ -25,7 +25,10 @@ import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionStorage;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
+import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
+import tech.pegasys.pantheon.ethereum.worldstate.WorldStatePreimageStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
@@ -46,7 +49,15 @@ public class InMemoryStorageProvider implements StorageProvider {
   }
 
   public static WorldStateArchive createInMemoryWorldStateArchive() {
-    return new WorldStateArchive(new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()));
+    return new WorldStateArchive(
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
+        new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
+  }
+
+  public static MutableWorldState createInMemoryWorldState() {
+    final InMemoryStorageProvider provider = new InMemoryStorageProvider();
+    return new DefaultMutableWorldState(
+        provider.createWorldStateStorage(), provider.createWorldStatePreimageStorage());
   }
 
   @Override
@@ -58,6 +69,11 @@ public class InMemoryStorageProvider implements StorageProvider {
   @Override
   public WorldStateStorage createWorldStateStorage() {
     return new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+  }
+
+  @Override
+  public WorldStatePreimageStorage createWorldStatePreimageStorage() {
+    return new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
   }
 
   @Override

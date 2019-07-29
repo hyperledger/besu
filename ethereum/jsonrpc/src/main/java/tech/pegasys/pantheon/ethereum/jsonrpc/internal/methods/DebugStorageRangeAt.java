@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.ethereum.core.Account;
+import tech.pegasys.pantheon.ethereum.core.AccountStorageEntry;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
@@ -26,7 +27,6 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.DebugStorageRangeAtResult;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
-import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.NavigableMap;
 import java.util.Optional;
@@ -81,7 +81,8 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
       final int limit,
       final MutableWorldState worldState) {
     final Account account = worldState.get(accountAddress);
-    final NavigableMap<Bytes32, UInt256> entries = account.storageEntriesFrom(startKey, limit + 1);
+    final NavigableMap<Bytes32, AccountStorageEntry> entries =
+        account.storageEntriesFrom(startKey, limit + 1);
 
     Bytes32 nextKey = null;
     if (entries.size() == limit + 1) {

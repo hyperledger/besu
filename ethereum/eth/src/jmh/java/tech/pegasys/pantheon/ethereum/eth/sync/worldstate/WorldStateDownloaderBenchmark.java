@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.sync.worldstate;
 
+import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
+
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
@@ -26,12 +28,10 @@ import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
-import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
-import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
 import tech.pegasys.pantheon.services.tasks.CachingTaskCollection;
 import tech.pegasys.pantheon.services.tasks.FlatFileTaskCollection;
@@ -68,7 +68,6 @@ public class WorldStateDownloaderBenchmark {
   private CachingTaskCollection<NodeDataRequest> pendingRequests;
   private StorageProvider storageProvider;
   private EthProtocolManager ethProtocolManager;
-  private InMemoryKeyValueStorage remoteKeyValueStorage;
 
   @Setup(Level.Invocation)
   public void setUpUnchangedState() throws Exception {
@@ -117,9 +116,7 @@ public class WorldStateDownloaderBenchmark {
 
   private Hash createExistingWorldState() {
     // Setup existing state
-    remoteKeyValueStorage = new InMemoryKeyValueStorage();
-    final WorldStateStorage storage = new WorldStateKeyValueStorage(remoteKeyValueStorage);
-    final WorldStateArchive worldStateArchive = new WorldStateArchive(storage);
+    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     final MutableWorldState worldState = worldStateArchive.getMutable();
 
     dataGen.createRandomAccounts(worldState, 10000);

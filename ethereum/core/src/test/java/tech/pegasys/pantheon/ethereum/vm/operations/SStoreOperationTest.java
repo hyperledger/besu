@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 import static tech.pegasys.pantheon.ethereum.vm.ExceptionalHaltReason.INSUFFICIENT_GAS;
 
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
@@ -25,12 +26,10 @@ import tech.pegasys.pantheon.ethereum.core.MessageFrameTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.mainnet.ConstantinopleGasCalculator;
-import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import tech.pegasys.pantheon.ethereum.vm.ExceptionalHaltReason;
 import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
-import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -91,8 +90,7 @@ public class SStoreOperationTest {
       final Address address, final Gas initialGas, final Gas remainingGas) {
     final Blockchain blockchain = mock(Blockchain.class);
 
-    final WorldStateArchive worldStateArchive =
-        new WorldStateArchive(new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()));
+    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     final WorldUpdater worldStateUpdater = worldStateArchive.getMutable().updater();
     final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
     final MessageFrame frame =

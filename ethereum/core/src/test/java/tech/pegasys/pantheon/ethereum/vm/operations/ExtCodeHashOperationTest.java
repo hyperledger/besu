@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Account;
@@ -28,11 +29,9 @@ import tech.pegasys.pantheon.ethereum.core.MutableAccount;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.mainnet.ConstantinopleGasCalculator;
-import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
 import tech.pegasys.pantheon.ethereum.vm.Words;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
-import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
@@ -45,8 +44,7 @@ public class ExtCodeHashOperationTest {
 
   private final Blockchain blockchain = mock(Blockchain.class);
 
-  private final WorldStateArchive worldStateArchive =
-      new WorldStateArchive(new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()));
+  private final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
   private final WorldUpdater worldStateUpdater = worldStateArchive.getMutable().updater();
 
   private final ExtCodeHashOperation operation =

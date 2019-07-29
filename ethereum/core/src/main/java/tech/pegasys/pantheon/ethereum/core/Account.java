@@ -151,7 +151,7 @@ public interface Account {
    *
    * @param startKeyHash the first key hash to return.
    * @param limit the maximum number of entries to return.
-   * @return the requested storage entries as a map of key hash to value.
+   * @return the requested storage entries as a map of key hash to entry.
    */
-  NavigableMap<Bytes32, UInt256> storageEntriesFrom(Bytes32 startKeyHash, int limit);
+  NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(Bytes32 startKeyHash, int limit);
 }
