@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv;
 
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
@@ -40,7 +41,8 @@ public class PrivGetPrivacyPrecompileAddress implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequest request) {
 
     if (privacyEnabled) {
-      return new JsonRpcSuccessResponse(request.getId(), privacyAddress);
+      return new JsonRpcSuccessResponse(
+          request.getId(), Address.privacyPrecompiled(privacyAddress).toString());
     } else {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.PRIVACY_NOT_ENABLED);
     }

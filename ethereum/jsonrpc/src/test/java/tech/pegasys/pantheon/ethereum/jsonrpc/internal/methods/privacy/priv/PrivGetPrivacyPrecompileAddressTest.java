@@ -16,6 +16,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
@@ -28,12 +29,13 @@ import org.junit.Test;
 
 public class PrivGetPrivacyPrecompileAddressTest {
 
-  private final Integer privacyAddress = 127;
+  private final int rawPrivacyAddress = Address.PRIVACY;
+  private final String privacyAddress = Address.privacyPrecompiled(rawPrivacyAddress).toString();
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
   @Test
   public void verifyPrivacyPrecompileAddress() {
-    when(privacyParameters.getPrivacyAddress()).thenReturn(privacyAddress);
+    when(privacyParameters.getPrivacyAddress()).thenReturn(rawPrivacyAddress);
     when(privacyParameters.isEnabled()).thenReturn(true);
 
     final PrivGetPrivacyPrecompileAddress privGetPrivacyPrecompileAddress =
@@ -50,7 +52,7 @@ public class PrivGetPrivacyPrecompileAddressTest {
 
   @Test
   public void verifyErrorPrivacyDisabled() {
-    when(privacyParameters.getPrivacyAddress()).thenReturn(privacyAddress);
+    when(privacyParameters.getPrivacyAddress()).thenReturn(rawPrivacyAddress);
     when(privacyParameters.isEnabled()).thenReturn(false);
 
     final PrivGetPrivacyPrecompileAddress privGetPrivacyPrecompileAddress =
