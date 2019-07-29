@@ -115,6 +115,7 @@ nav:
         - Onchain Permissioning:
             - Overview: Permissions/Onchain-Permissioning/Onchain-Permissioning.md
             - Getting Started with Onchain Permissioning: Permissions/Onchain-Permissioning/Getting-Started-Onchain-Permissioning.md
+            - Deploying Management Dapp for Production: Permissions/Onchain-Permissioning/Production.md
             - Updating Whitelists: Permissions/Onchain-Permissioning/Updating-Whitelists.md
     - Using Pantheon:
         - Transactions:

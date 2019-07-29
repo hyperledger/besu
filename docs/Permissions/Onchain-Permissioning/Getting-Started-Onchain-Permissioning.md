@@ -6,6 +6,9 @@ description: Setting up and using onchain Permissioning
 The following steps describe bootstrapping a local permissioned network using a Pantheon node and a 
 development server to run the Permissioning Management Dapp. 
 
+!!! note 
+    In production, a webserver is required to [host the Permissioning Management Dapp](Production.md). 
+
 To start a network with onchain permissioning: 
 
 1. [Install pre-requisites](#pre-requisites) 
@@ -13,6 +16,7 @@ To start a network with onchain permissioning:
 1. [Set environment variables](#set-environment-variables)
 1. [Start first node with onchain permissioning and the JSON-RPC HTTP service enabled](#onchain-permissioning-command-line-options) 
 1. [Clone the permissioning contracts repository and install dependencies](#clone-contracts-and-install-dependencies) 
+1. [Build project](#build-project)
 1. [Deploy the permissioning contracts](#deploy-contracts) 
 1. [Start the development server for the Permissioning Management Dapp](#start-the-permissioning-management-dapp) 
 1. [Add the first node to the nodes whitelist](#update-nodes-whitelist)
@@ -101,6 +105,9 @@ to enable onchain nodes permissioning
 * [--permissions-nodes-contract-address](../../Reference/Pantheon-CLI-Syntax.md#permissions-nodes-contract-address)
 set to the address of the Node Ingress contract in the genesis file (`"0x0000000000000000000000000000000000009999"`)  
 
+Start your first node with command line options to enable onchain permissioning and the JSON-RPC HTTP host and port 
+matching environment variable `PANTHEON_NODE_PERM_ENDPOINT`. 
+
 ## Clone Project and Install Dependencies 
 
 1. Clone the `permissioning-smart-contracts` repository: 
@@ -138,6 +145,9 @@ The migration logs the addresses of the Admin and Rules contracts.
     The account that deploys the contracts is automatically an [admin account](#update-accounts-or-admin-accounts-whitelists). 
 
 ## Start the Development Server for the Permissioning Management Dapp
+
+!!! note 
+    In production, a webserver is required to [host the Permissioning Management Dapp](Production.md). 
 
 1. In the `permissioning-smart-contracts` directory, start the web server serving the Dapp: 
 

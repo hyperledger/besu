@@ -7,7 +7,7 @@ Onchain permissioning uses smart contracts to store and maintain the node, accou
 Using onchain permissioning enables all nodes to read the whitelists from a single source, the blockchain.                                        
 
 !!! important 
-    The dependency chain for our implementation of onchain permissioning includes [web3j](https://github.com/web3j/web3j) which is 
+    The dependency chain for our implementation of onchain permissioning includes [web3js](https://github.com/ethereum/web3.js/) which is 
     LGPL licensed.  
 
 ## Permissioning Contracts
@@ -24,6 +24,10 @@ Node Rules and Account Rules contracts. The Ingress contracts are deployed to st
 * Admin - stores the list of admin accounts and admin list operations (for example, add and remove). There is 
 one list of admin accounts for node and accounts.
 
+!!! note
+    The permissioning smart contracts are currently in the process of going through a third party audit. 
+    Please [contact us](https://pegasys.tech/contact/) before using in a production environment.
+
 ## Permissioning Management Dapp
 
 The [Permissioning Management Dapp](Getting-Started-Onchain-Permissioning.md) is provided to view 
@@ -37,13 +41,11 @@ and maintain the whitelists.
 
 Permissioning implements three whitelists: 
 
-* [Accounts](Getting-Started-Onchain-Permissioning.md#update-accounts-or-admin-accounts-whitelists) can submit 
-transactions to the network
+* Accounts can submit transactions to the network
 
-* [Nodes](Getting-Started-Onchain-Permissioning.md#update-nodes-whitelist) can participate in the network 
+* Nodes can participate in the network 
 
-* [Admins](Getting-Started-Onchain-Permissioning.md#update-accounts-or-admin-accounts-whitelists) are accounts that
-can update the accounts and nodes whitelists 
+* Admins are accounts that can update the accounts and nodes whitelists 
 
 ## Bootnodes
 
