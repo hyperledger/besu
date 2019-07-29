@@ -74,6 +74,20 @@ public class EventEmitterHarness {
         receivers);
   }
 
+  public void deployWithPrivacyGroup(
+      final String contractName,
+      final String sender,
+      final String mPrivacyGroupId,
+      final String... groupMembers) {
+    deployWithPrivacyGroup(
+        contractName,
+        "Test",
+        nextNonce(sender, BytesValues.fromBase64(mPrivacyGroupId)),
+        sender,
+        mPrivacyGroupId,
+        groupMembers);
+  }
+
   public void deploy(
       final String contractName,
       final EeaCondition forParticipants,
@@ -174,6 +188,40 @@ public class EventEmitterHarness {
     verifyForNonParticipants(forNonParticipants, transactionHash, sender, receivers);
   }
 
+  private void deployWithPrivacyGroup(
+      final String contractAddress,
+      final String contractName,
+      final long nonce,
+      final String sender,
+      final String privacyGroupId,
+      final String... groupMembers) {
+
+    final String deployContract =
+        privateTransactionBuilder
+            .nonce(nonce)
+            .from(privacyNet.getNode(sender).getAddress())
+            .to(null)
+            .privateFrom(
+                BytesValues.fromBase64(privacyNet.getEnclave(sender).getPublicKeys().get(0)))
+            .privacyGroupId(BytesValues.fromBase64(privacyGroupId))
+            .keyPair(privacyNet.getNode(sender).keyPair())
+            .build(PrivateTransactionBuilder.TransactionType.CREATE_CONTRACT);
+    final String transactionHash =
+        privacyNet
+            .getNode(sender)
+            .execute(privateTransactions.deployPrivateSmartContract(deployContract));
+
+    waitForTransactionToBeMined(transactionHash);
+
+    verifyForParticipants(
+        privateTransactionVerifier.validPrivateTransactionReceipt(),
+        transactionHash,
+        sender,
+        groupMembers);
+
+    contracts.put(contractName, contractAddress);
+  }
+
   private void deploy(
       final String contractAddress,
       final String contractName,
@@ -247,7 +295,7 @@ public class EventEmitterHarness {
       final String[] toNodeNames) {
     verifyForParticipant(condition, transactionHash, fromNodeName);
     Arrays.stream(toNodeNames)
-        .forEach(node -> verifyForParticipant(condition, transactionHash, fromNodeName));
+        .forEach(node -> verifyForParticipant(condition, transactionHash, node));
   }
 
   private void verifyForParticipant(
