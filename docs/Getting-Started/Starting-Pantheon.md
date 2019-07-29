@@ -78,7 +78,7 @@ on the command line to start a node with the same options as above:
 network="dev"
 miner-enabled=true
 miner-coinbase="0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"
-rpc-cors-origins=["all"]
+rpc-http-cors-origins=["all"]
 host-whitelist=["*"]
 rpc-ws-enabled=true
 rpc-http-enabled=true

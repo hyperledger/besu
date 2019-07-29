@@ -109,10 +109,13 @@ nav:
         - Explanation:
           - Privacy Overview: Privacy/Explanation/Privacy-Overview.md
           - Processing Private Transactions: Privacy/Explanation/Private-Transaction-Processing.md
-    - Permissions:
+    - Permissioning:
         - Overview: Permissions/Permissioning-Overview.md
-        - Local Permissions: Permissions/Local-Permissioning.md
-        - Onchain Permissions: Permissions/Onchain-Permissioning.md
+        - Local Permissioning: Permissions/Local-Permissioning.md
+        - Onchain Permissioning:
+            - Overview: Permissions/Onchain-Permissioning/Onchain-Permissioning.md
+            - Getting Started with Onchain Permissioning: Permissions/Onchain-Permissioning/Getting-Started-Onchain-Permissioning.md
+            - Updating Whitelists: Permissions/Onchain-Permissioning/Updating-Whitelists.md
     - Using Pantheon:
         - Transactions:
           - Creating and Sending Transactions: Using-Pantheon/Transactions/Transactions.md

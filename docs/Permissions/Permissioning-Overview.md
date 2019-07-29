@@ -32,7 +32,6 @@ Use account permissioning:
 
 ![Account Permissioning](../images/account-permissioning.png)
 
-
 ## Specifying Permissioning 
 
 Permissioning is [local](#local) or [onchain](#onchain).
@@ -49,8 +48,8 @@ protect your node. Your rules are not enforced in blocks produced by other nodes
 
 ### Onchain 
 
-[Onchain permissioning](Onchain-Permissioning.md) is specified in a smart contract on the network. Specifying permissioning onchain
-enables all nodes to read and update permissioning in one location. 
+[Onchain permissioning](Onchain-Permissioning/Onchain-Permissioning.md) is specified in a smart contract on the network. Specifying permissioning onchain
+enables all nodes to read and update permissioning configuration from one location. 
 
 Onchain permissioning requires co-ordination to update rules. The network may not be able to act immediately 
 (for example, the smart contract may enforce a minimum of votes before changing permissioning rules). 
