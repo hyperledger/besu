@@ -19,7 +19,7 @@ Private transactions are processed as illustrated and described below.
 1. A private transaction is submitted using [eea_sendRawTransaction](../../Reference/Pantheon-API-Methods.md#eea_sendrawtransaction). 
 The signed transaction includes transaction attributes that are specific to private transactions: 
 
-    * `privateFor` specifies the list of recipients
+    * `privateFor` or `privacyGroupId` specifies the list of recipients
     * `privateFrom` specifies the sender
     * `restriction` specifies the transaction is of type [_restricted_](Privacy-Overview.md#private-transactions)
  
@@ -28,7 +28,7 @@ The signed transaction includes transaction attributes that are specific to priv
 1. The Private Transaction Handler sends the private transaction to Orion. 
 
 1. Orion distributes the private transaction directly (that is, point-to-point) to the Orion nodes specified 
-in the `privateFor` attribute. All Orion nodes specified in by `privateFor` and `privateFrom` store the transaction. 
+in `privateFor` or belonging to the privacy group identified by `privacyGroupId`. All recipient Orion nodes store the transaction. 
 The stored transaction is associated with the transaction hash and privacy group ID.
 
 1. Orion returns the transaction hash to the Private Transaction Handler.

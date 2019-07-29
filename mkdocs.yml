@@ -108,6 +108,7 @@ nav:
           - Use the web3.js-eea Client Library: Privacy/How-To/eeajs.md
         - Explanation:
           - Privacy Overview: Privacy/Explanation/Privacy-Overview.md
+          - Privacy Groups: Privacy/Explanation/Privacy-Groups.md
           - Processing Private Transactions: Privacy/Explanation/Private-Transaction-Processing.md
     - Permissioning:
         - Overview: Permissions/Permissioning-Overview.md
