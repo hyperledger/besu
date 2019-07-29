@@ -105,6 +105,7 @@ nav:
           - Using web3.js-eea Multinode Example: Privacy/Tutorials/eeajs-Multinode-example.md
         - How To:
           - Create and Send Private Transactions: Privacy/How-To/Creating-Sending-Private-Transactions.md
+          - Use EEA-compliant Privacy: Privacy/How-To/EEA-Compliant.md
           - Use the web3.js-eea Client Library: Privacy/How-To/eeajs.md
         - Explanation:
           - Privacy Overview: Privacy/Explanation/Privacy-Overview.md
