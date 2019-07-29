@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.storage.keyvalue;
 
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStatePreimageStorage;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage.Transaction;
@@ -29,7 +30,19 @@ public class WorldStatePreimageKeyValueStorage implements WorldStatePreimageStor
 
   @Override
   public Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
-    return keyValueStorage.get(trieKey).map(Bytes32::wrap).map(UInt256::wrap);
+    return keyValueStorage
+        .get(trieKey)
+        .filter(val -> val.size() == UInt256.SIZE)
+        .map(Bytes32::wrap)
+        .map(UInt256::wrap);
+  }
+
+  @Override
+  public Optional<Address> getAccountTrieKeyPreimage(final Bytes32 trieKey) {
+    return keyValueStorage
+        .get(trieKey)
+        .filter(val -> val.size() == Address.SIZE)
+        .map(Address::wrap);
   }
 
   @Override
@@ -48,6 +61,13 @@ public class WorldStatePreimageKeyValueStorage implements WorldStatePreimageStor
     public WorldStatePreimageStorage.Updater putStorageTrieKeyPreimage(
         final Bytes32 trieKey, final UInt256 preimage) {
       transaction.put(trieKey, preimage.getBytes());
+      return this;
+    }
+
+    @Override
+    public WorldStatePreimageStorage.Updater putAccountTrieKeyPreimage(
+        final Bytes32 trieKey, final Address preimage) {
+      transaction.put(trieKey, preimage);
       return this;
     }
 

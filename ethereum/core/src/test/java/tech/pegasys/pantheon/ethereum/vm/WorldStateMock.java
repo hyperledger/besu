@@ -16,7 +16,10 @@ import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.MutableAccount;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
-import tech.pegasys.pantheon.ethereum.worldstate.DebuggableMutableWorldState;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
+import tech.pegasys.pantheon.ethereum.worldstate.DefaultMutableWorldState;
+import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -27,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /** Represent a mock worldState for testing. */
-public class WorldStateMock extends DebuggableMutableWorldState {
+public class WorldStateMock extends DefaultMutableWorldState {
 
   public static class AccountMock {
     private final long nonce;
@@ -108,6 +111,8 @@ public class WorldStateMock extends DebuggableMutableWorldState {
   }
 
   private WorldStateMock() {
-    super();
+    super(
+        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
+        new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
   }
 }

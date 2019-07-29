@@ -41,6 +41,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.Test;
 
@@ -160,6 +162,80 @@ public class DefaultMutableWorldStateTest {
     assertNull(updater.get(ADDRESS));
 
     assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
+  }
+
+  @Test
+  public void streamAccounts_empty() {
+    final MutableWorldState worldState = createEmpty();
+    final Stream<Account> accounts = worldState.streamAccounts(Bytes32.ZERO, 10);
+    assertThat(accounts.count()).isEqualTo(0L);
+  }
+
+  @Test
+  public void streamAccounts_singleAccount() {
+    final MutableWorldState worldState = createEmpty();
+    final WorldUpdater updater = worldState.updater();
+    updater.createAccount(ADDRESS).setBalance(Wei.of(100000));
+    updater.commit();
+
+    List<Account> accounts =
+        worldState.streamAccounts(Bytes32.ZERO, 10).collect(Collectors.toList());
+    assertThat(accounts.size()).isEqualTo(1L);
+    assertThat(accounts.get(0).getAddress()).isEqualTo(ADDRESS);
+    assertThat(accounts.get(0).getBalance()).isEqualTo(Wei.of(100000));
+
+    // Check again after persisting
+    worldState.persist();
+    accounts = worldState.streamAccounts(Bytes32.ZERO, 10).collect(Collectors.toList());
+    assertThat(accounts.size()).isEqualTo(1L);
+    assertThat(accounts.get(0).getAddress()).isEqualTo(ADDRESS);
+    assertThat(accounts.get(0).getBalance()).isEqualTo(Wei.of(100000));
+  }
+
+  @Test
+  public void streamAccounts_multipleAccounts() {
+    final Address addr1 = Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b");
+    final Address addr2 = Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0c");
+
+    final MutableWorldState worldState = createEmpty();
+    final WorldUpdater updater = worldState.updater();
+
+    // Create an account
+    final MutableAccount accountA = updater.createAccount(addr1);
+    accountA.setBalance(Wei.of(100000));
+    // Create another
+    final MutableAccount accountB = updater.createAccount(addr2);
+    accountB.setNonce(1);
+    // Commit changes
+    updater.commit();
+
+    final boolean accountAIsFirst =
+        accountA.getAddressHash().compareTo(accountB.getAddressHash()) < 0;
+    final Hash startHash = accountAIsFirst ? accountA.getAddressHash() : accountB.getAddressHash();
+
+    // Get first account
+    final List<Account> firstAccount =
+        worldState.streamAccounts(startHash, 1).collect(Collectors.toList());
+    assertThat(firstAccount.size()).isEqualTo(1L);
+    assertThat(firstAccount.get(0).getAddress())
+        .isEqualTo(accountAIsFirst ? accountA.getAddress() : accountB.getAddress());
+
+    // Get both accounts
+    final List<Account> allAccounts =
+        worldState.streamAccounts(Bytes32.ZERO, 2).collect(Collectors.toList());
+    assertThat(allAccounts.size()).isEqualTo(2L);
+    assertThat(allAccounts.get(0).getAddress())
+        .isEqualTo(accountAIsFirst ? accountA.getAddress() : accountB.getAddress());
+    assertThat(allAccounts.get(1).getAddress())
+        .isEqualTo(accountAIsFirst ? accountB.getAddress() : accountA.getAddress());
+
+    // Get second account
+    final Bytes32 startHashForSecondAccount = startHash.asUInt256().plus(1L).getBytes();
+    final List<Account> secondAccount =
+        worldState.streamAccounts(startHashForSecondAccount, 100).collect(Collectors.toList());
+    assertThat(secondAccount.size()).isEqualTo(1L);
+    assertThat(secondAccount.get(0).getAddress())
+        .isEqualTo(accountAIsFirst ? accountB.getAddress() : accountA.getAddress());
   }
 
   @Test

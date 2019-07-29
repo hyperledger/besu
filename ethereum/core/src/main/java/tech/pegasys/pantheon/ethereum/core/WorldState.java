@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.core;
 
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+
 import java.util.stream.Stream;
 
 /**
@@ -34,8 +36,10 @@ public interface WorldState extends WorldView {
   /**
    * A stream of all the accounts in this world state.
    *
+   * @param startKeyHash The trie key at which to start iterating
+   * @param limit The maximum number of results to return
    * @return a stream of all the accounts (in no particular order) contained in the world state
    *     represented by the root hash of this object at the time of the call.
    */
-  Stream<Account> streamAccounts();
+  Stream<Account> streamAccounts(Bytes32 startKeyHash, int limit);
 }
