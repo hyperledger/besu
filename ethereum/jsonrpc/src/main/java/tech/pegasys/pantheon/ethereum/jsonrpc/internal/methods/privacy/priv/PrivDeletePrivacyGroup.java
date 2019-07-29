@@ -16,6 +16,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.DeletePrivacyGroupRequest;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
@@ -30,10 +31,15 @@ public class PrivDeletePrivacyGroup implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
   private final Enclave enclave;
+  private PrivacyParameters privacyParameters;
   private final JsonRpcParameter parameters;
 
-  public PrivDeletePrivacyGroup(final Enclave enclave, final JsonRpcParameter parameters) {
+  public PrivDeletePrivacyGroup(
+      final Enclave enclave,
+      final PrivacyParameters privacyParameters,
+      final JsonRpcParameter parameters) {
     this.enclave = enclave;
+    this.privacyParameters = privacyParameters;
     this.parameters = parameters;
   }
 
@@ -46,13 +52,15 @@ public class PrivDeletePrivacyGroup implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequest request) {
     LOG.trace("Executing {}", RpcMethod.PRIV_DELETE_PRIVACY_GROUP.getMethodName());
 
-    final String privacyGroupId = parameters.required(request.getParams(), 1, String.class);
-    final String from = parameters.required(request.getParams(), 0, String.class);
+    final String privacyGroupId = parameters.required(request.getParams(), 0, String.class);
 
-    LOG.trace("Deleting a privacy group with privacyGroupId {} and from {}", privacyGroupId, from);
+    LOG.trace(
+        "Deleting a privacy group with privacyGroupId {} and from {}",
+        privacyGroupId,
+        privacyParameters.getEnclavePublicKey());
 
     DeletePrivacyGroupRequest deletePrivacyGroupRequest =
-        new DeletePrivacyGroupRequest(privacyGroupId, from);
+        new DeletePrivacyGroupRequest(privacyGroupId, privacyParameters.getEnclavePublicKey());
     String response;
     try {
       response = enclave.deletePrivacyGroup(deletePrivacyGroupRequest);
