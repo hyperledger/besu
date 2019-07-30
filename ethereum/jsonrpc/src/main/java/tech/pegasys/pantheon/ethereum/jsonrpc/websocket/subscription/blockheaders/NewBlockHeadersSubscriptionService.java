@@ -36,21 +36,23 @@ public class NewBlockHeadersSubscriptionService implements BlockAddedObserver {
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event, final Blockchain blockchain) {
-    subscriptionManager.notifySubscribersOnWorkerThread(
-        SubscriptionType.NEW_BLOCK_HEADERS,
-        NewBlockHeadersSubscription.class,
-        subscribers -> {
-          final Hash newBlockHash = event.getBlock().getHash();
+    if (event.isNewCanonicalHead()) {
+      subscriptionManager.notifySubscribersOnWorkerThread(
+          SubscriptionType.NEW_BLOCK_HEADERS,
+          NewBlockHeadersSubscription.class,
+          subscribers -> {
+            final Hash newBlockHash = event.getBlock().getHash();
 
-          for (final NewBlockHeadersSubscription subscription : subscribers) {
-            final BlockResult newBlock =
-                subscription.getIncludeTransactions()
-                    ? blockWithCompleteTransaction(newBlockHash)
-                    : blockWithTransactionHash(newBlockHash);
+            for (final NewBlockHeadersSubscription subscription : subscribers) {
+              final BlockResult newBlock =
+                  subscription.getIncludeTransactions()
+                      ? blockWithCompleteTransaction(newBlockHash)
+                      : blockWithTransactionHash(newBlockHash);
 
-            subscriptionManager.sendMessage(subscription.getSubscriptionId(), newBlock);
-          }
-        });
+              subscriptionManager.sendMessage(subscription.getSubscriptionId(), newBlock);
+            }
+          });
+    }
   }
 
   private BlockResult blockWithCompleteTransaction(final Hash hash) {
