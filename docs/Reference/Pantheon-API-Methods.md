@@ -4027,22 +4027,22 @@ Privacy groups containing only the specified members.
     {"jsonrpc": "2.0","method": "priv_findPrivacyGroup","params": [["negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=", "g59BmTeJIn7HIcnq8VQWgyh/pDbvbt2eyP0Ii60aDDw="]],"id": 1}
     ```
  
-     ```json tab="JSON result"
-     {
-       "jsonrpc": "2.0",
-       "id": 1,
-       "result": [
-         {
-           "privacyGroupId": "GpK3ErNO0xF27T0sevgkJ3+4qk9Z+E3HtXYxcKIBKX8=",
-           "name": "Group B",
-           "description": "Description of Group B",
-           "type": "PANTHEON",
-           "members": [
-             "negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=",
-             "g59BmTeJIn7HIcnq8VQWgyh/pDbvbt2eyP0Ii60aDDw="
-           ]
-         }
-      ]
+    ```json tab="JSON result"
+    {
+     "jsonrpc": "2.0",
+     "id": 1,
+     "result": [
+       {
+         "privacyGroupId": "GpK3ErNO0xF27T0sevgkJ3+4qk9Z+E3HtXYxcKIBKX8=",
+         "name": "Group B",
+         "description": "Description of Group B",
+         "type": "PANTHEON",
+         "members": [
+           "negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=",
+           "g59BmTeJIn7HIcnq8VQWgyh/pDbvbt2eyP0Ii60aDDw="
+         ]
+       }
+    ]
     }
     ```
     
