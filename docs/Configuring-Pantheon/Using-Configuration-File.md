@@ -5,10 +5,6 @@ To specify command line options in a file, use a TOML configuration file.
 The configuration file can be saved and reused across node startups. To specify the configuration file,
 use the [`--config-file`](../Reference/Pantheon-CLI-Syntax.md#config-file) option. 
 
-!!!note
-    The [`--config-file`](../Reference/Pantheon-CLI-Syntax.md#config-file) option is not used when running Pantheon from the [Docker image](../Getting-Started/Run-Docker-Image.md). 
-    Use a bind mount to [specify a configuration file with Docker](../Getting-Started/Run-Docker-Image.md#custom-configuration-file). 
-
 To override an option specified in the configuration file, specify the same option on the command line or as 
 an [environment variable](../Reference/Pantheon-CLI-Syntax.md#pantheon-environment-variables). If an option is specified in multiple places, 
 the order of priority is command line, environment variable, configuration file. 
