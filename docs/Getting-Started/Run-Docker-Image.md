@@ -52,25 +52,32 @@ docker run -p <localportJSON-RPC>:8545 -p <localportWS>:8546 -p <localportP2P>:3
      
 ## Starting Pantheon 
 
+!!! important 
+    Do not mount a volume at the default data path (`/opt/pantheon`). Mounting a volume at the default 
+    data path interferes with the operation of Pantheon and prevents Pantheon from safely launching. 
+    
+    To run a node that maintains the node state (key and database), [`--data-path` must be set to a location
+    other than `/opt/pantheon` and a storage volume mounted at that location]. 
+
 ### Run a Node for Testing 
 
 To run a node that mines blocks at a rate suitable for testing purposes with WebSockets enabled: 
 ```bash
-docker run -p 8546:8546 --mount type=bind,source=/<myvolume/pantheon/testnode>,target=/opt/pantheon/database pegasyseng/pantheon:latest --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-ws-enabled --network=dev
+docker run -p 8546:8546 --mount type=bind,source=/<myvolume/pantheon/testnode>,target=/var/lib/pantheon pegasyseng/pantheon:latest --miner-enabled --miner-coinbase fe3b557e8fb62b89f4916b721be55ceb828dbd73 --rpc-ws-enabled --network=dev --data-path=/var/lib/pantheon
 ```
 
 ### Run a Node on Rinkeby Testnet 
 
 To run a node on Rinkeby: 
 ```bash
-docker run -p 30303:30303 --mount type=bind,source=/<myvolume/pantheon/rinkeby>,target=/opt/pantheon/database pegasyseng/pantheon:latest --network=rinkeby
+docker run -p 30303:30303 --mount type=bind,source=/<myvolume/pantheon/rinkeby>,target=/var/lib/pantheon pegasyseng/pantheon:latest --network=rinkeby --data-path=/var/lib/pantheon
 ```
 
 ### Run a Node on Ethereum Mainnet 
 
 To run a node on Ethereum mainnet with the HTTP JSON-RPC service enabled: 
 ```bash
-docker run -p 8545:8545 --mount type=bind,source=/<myvolume/pantheon/rinkeby>,target=/opt/pantheon/database  -p 30303:30303 pegasyseng/pantheon:latest --rpc-http-enabled
+docker run -p 8545:8545 --mount type=bind,source=/<myvolume/pantheon/rinkeby>,target=/var/lib/pantheon  -p 30303:30303 pegasyseng/pantheon:latest --rpc-http-enabled --data-path=/var/lib/pantheon
 ```
 
 ## Stopping Pantheon and Cleaning up Resources

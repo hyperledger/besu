@@ -6,6 +6,9 @@ description: Setting up and using onchain Permissioning
 The following steps describe bootstrapping a local permissioned network using a Pantheon node and a 
 development server to run the Permissioning Management Dapp. 
 
+!!! note 
+    In production, a webserver is required to [host the Permissioning Management Dapp](Production.md). 
+
 To start a network with onchain permissioning: 
 
 1. [Install pre-requisites](#pre-requisites) 
@@ -13,6 +16,7 @@ To start a network with onchain permissioning:
 1. [Set environment variables](#set-environment-variables)
 1. [Start first node with onchain permissioning and the JSON-RPC HTTP service enabled](#onchain-permissioning-command-line-options) 
 1. [Clone the permissioning contracts repository and install dependencies](#clone-contracts-and-install-dependencies) 
+1. [Build project](#build-project)
 1. [Deploy the permissioning contracts](#deploy-contracts) 
 1. [Start the development server for the Permissioning Management Dapp](#start-the-permissioning-management-dapp) 
 1. [Add the first node to the nodes whitelist](#update-nodes-whitelist)
@@ -25,10 +29,6 @@ For the development server to run the dapp:
 * [Yarn](https://yarnpkg.com/en/) v1.15 or later
 * Browser with [MetaMask installed](https://metamask.io/)
 
-To deploy the permissioning contracts: 
-
-* [Truffle](https://truffleframework.com/docs/truffle/getting-started/installation)
-
 ## Add Ingress Contracts to Genesis File
 
 !!! tip 
@@ -39,7 +39,6 @@ Add the Ingress contracts to the genesis file for your network by copying them f
 in the [`permissioning-smart-contracts` repository](https://github.com/PegaSysEng/permissioning-smart-contracts): 
    
 ```json
-
 "0x0000000000000000000000000000000000008888": {
       "comment": "Account Ingress smart contract",
       "balance": "0",
@@ -89,17 +88,20 @@ in the network.
 All nodes participating in a permissioned network must include the command line options to enable account and/or
 node permissioning: 
 
-* [--permissions-accounts-contract-enabled](../../Reference/Pantheon-CLI-Syntax.md#permissions-accounts-contract-enabled)
+* [`--permissions-accounts-contract-enabled`](../../Reference/Pantheon-CLI-Syntax.md#permissions-accounts-contract-enabled)
 to enable onchain accounts permissioning
           
-* [--permissions-accounts-contract-address](../../Reference/Pantheon-CLI-Syntax.md#permissions-accounts-contract-address)
+* [`--permissions-accounts-contract-address`](../../Reference/Pantheon-CLI-Syntax.md#permissions-accounts-contract-address)
 set to the address of the Account Ingress contract in the genesis file (`"0x0000000000000000000000000000000000008888"`)
 
-* [--permissions-nodes-contract-enabled](../../Reference/Pantheon-CLI-Syntax.md#permissions-nodes-contract-enabled)
+* [`--permissions-nodes-contract-enabled`](../../Reference/Pantheon-CLI-Syntax.md#permissions-nodes-contract-enabled)
 to enable onchain nodes permissioning
 
-* [--permissions-nodes-contract-address](../../Reference/Pantheon-CLI-Syntax.md#permissions-nodes-contract-address)
+* [`--permissions-nodes-contract-address`](../../Reference/Pantheon-CLI-Syntax.md#permissions-nodes-contract-address)
 set to the address of the Node Ingress contract in the genesis file (`"0x0000000000000000000000000000000000009999"`)  
+
+Start your first node with command line options to enable onchain permissioning and the JSON-RPC HTTP host and port 
+matching environment variable `PANTHEON_NODE_PERM_ENDPOINT`. 
 
 ## Clone Project and Install Dependencies 
 
@@ -128,7 +130,7 @@ yarn run build
 In the `permissioning-smart-contracts` directory, deploy the Admin and Rules contracts: 
 
 ```bash
-truffle migrate --reset
+yarn truffle migrate --reset
 ```
 
 The Admin and Rules contracts are deployed and the Ingress contract updated with the name and version of the contracts. 
@@ -138,6 +140,9 @@ The migration logs the addresses of the Admin and Rules contracts.
     The account that deploys the contracts is automatically an [admin account](#update-accounts-or-admin-accounts-whitelists). 
 
 ## Start the Development Server for the Permissioning Management Dapp
+
+!!! note 
+    In production, a webserver is required to [host the Permissioning Management Dapp](Production.md). 
 
 1. In the `permissioning-smart-contracts` directory, start the web server serving the Dapp: 
 

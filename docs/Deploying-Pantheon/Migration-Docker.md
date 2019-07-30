@@ -36,10 +36,17 @@ was not available and the node key was always read from the data path.
 All file options (for example, [`--config-file`](../Reference/Pantheon-CLI-Syntax.md#config-file)) no longer 
 have a default. Add the relevant command line options to your Pantheon command line and specify the file path. 
 
-The [`--data-path`](../Reference/Pantheon-CLI-Syntax.md#data-path) default is now `/opt/pantheon/database`. 
+The [`--data-path`](../Reference/Pantheon-CLI-Syntax.md#data-path) default is now `/opt/pantheon`. 
 
 The [`--node-private-key-file`](../Reference/Pantheon-CLI-Syntax.md#node-private-key-file) default is 
-now `/opt/pantheon/database/key`. 
+now `/opt/pantheon/key`. 
+
+!!! important 
+    Do not mount a volume at the default data path (`/opt/pantheon`). Mounting a volume at the default 
+    data path path interferes with the operation of Pantheon and prevents Pantheon from safely launching. 
+    
+    To run a node that maintains the node state (key and database), [`--data-path` must be set to a location
+    other than `/opt/pantheon` and a storage volume mounted at that location](../Getting-Started/Run-Docker-Image.md#starting-pantheon). 
 
 The host and port options continue to default to the previously set values. 
 
