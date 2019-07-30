@@ -10,12 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.enclave.Enclave;
-import tech.pegasys.pantheon.enclave.types.CreatePrivacyGroupRequest;
+import tech.pegasys.pantheon.enclave.types.FindPrivacyGroupRequest;
 import tech.pegasys.pantheon.enclave.types.PrivacyGroup;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
@@ -25,45 +25,43 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
+import java.util.Arrays;
+
 import org.apache.logging.log4j.Logger;
 
-public class EeaCreatePrivacyGroup implements JsonRpcMethod {
+public class PrivFindPrivacyGroup implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
   private final Enclave enclave;
   private final JsonRpcParameter parameters;
 
-  public EeaCreatePrivacyGroup(final Enclave enclave, final JsonRpcParameter parameters) {
+  public PrivFindPrivacyGroup(final Enclave enclave, final JsonRpcParameter parameters) {
     this.enclave = enclave;
     this.parameters = parameters;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.EEA_CREATE_PRIVACY_GROUP.getMethodName();
+    return RpcMethod.PRIV_FIND_PRIVACY_GROUP.getMethodName();
   }
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    LOG.trace("Executing {}", RpcMethod.EEA_CREATE_PRIVACY_GROUP.getMethodName());
+    LOG.trace("Executing {}", RpcMethod.PRIV_FIND_PRIVACY_GROUP.getMethodName());
 
-    final String from = parameters.required(request.getParams(), 0, String.class);
-    final String name = parameters.required(request.getParams(), 1, String.class);
-    final String description = parameters.required(request.getParams(), 2, String.class);
-    final String[] addresses = parameters.required(request.getParams(), 3, String[].class);
+    final String[] addresses = parameters.required(request.getParams(), 0, String[].class);
 
-    LOG.trace("Creating a privacy group with name {} and description {}", name, description);
+    LOG.trace("Finding a privacy group with members {}", Arrays.toString(addresses));
 
-    CreatePrivacyGroupRequest createPrivacyGroupRequest =
-        new CreatePrivacyGroupRequest(addresses, from, name, description);
-    PrivacyGroup response;
+    FindPrivacyGroupRequest findPrivacyGroupRequest = new FindPrivacyGroupRequest(addresses);
+    PrivacyGroup[] response;
     try {
-      response = enclave.createPrivacyGroup(createPrivacyGroupRequest);
+      response = enclave.findPrivacyGroup(findPrivacyGroupRequest);
     } catch (Exception e) {
-      LOG.error("Failed to fetch transaction from Enclave with error " + e.getMessage());
+      LOG.error("Failed to fetch group from Enclave with error " + e.getMessage());
       LOG.error(e);
-      return new JsonRpcSuccessResponse(request.getId(), JsonRpcError.CREATE_PRIVACY_GROUP_ERROR);
+      return new JsonRpcSuccessResponse(request.getId(), JsonRpcError.FIND_PRIVACY_GROUP_ERROR);
     }
-    return new JsonRpcSuccessResponse(request.getId(), response.getPrivacyGroupId());
+    return new JsonRpcSuccessResponse(request.getId(), response);
   }
 }

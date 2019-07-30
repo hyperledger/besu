@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.eea;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv.PrivGetTransactionCount;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionHandler;
@@ -27,7 +28,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import org.junit.Test;
 
-public class EeaGetTransactionCountTest {
+public class PrivGetTransactionCountTest {
 
   private final JsonRpcParameter parameters = new JsonRpcParameter();
   private final String privacyGroupId =
@@ -43,14 +44,14 @@ public class EeaGetTransactionCountTest {
         mock(PrivateTransactionHandler.class);
     when(privateTransactionHandler.getSenderNonce(senderAddress, privacyGroupId)).thenReturn(NONCE);
 
-    final EeaGetTransactionCount eeaGetTransactionCount =
-        new EeaGetTransactionCount(parameters, privateTransactionHandler);
+    final PrivGetTransactionCount privGetTransactionCount =
+        new PrivGetTransactionCount(parameters, privateTransactionHandler);
 
     final Object[] params = new Object[] {senderAddress, privacyGroupId};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getTransactionCount", params);
+    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionCount", params);
 
     final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse) eeaGetTransactionCount.response(request);
+        (JsonRpcSuccessResponse) privGetTransactionCount.response(request);
 
     assertEquals(String.format("0x%X", NONCE), response.getResult());
   }

@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -27,7 +27,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessRe
 
 import org.junit.Test;
 
-public class EeaGetPrivacyPrecompileAddressTest {
+public class PrivGetPrivacyPrecompileAddressTest {
 
   private final int rawPrivacyAddress = Address.PRIVACY;
   private final String privacyAddress = Address.privacyPrecompiled(rawPrivacyAddress).toString();
@@ -38,14 +38,14 @@ public class EeaGetPrivacyPrecompileAddressTest {
     when(privacyParameters.getPrivacyAddress()).thenReturn(rawPrivacyAddress);
     when(privacyParameters.isEnabled()).thenReturn(true);
 
-    final EeaGetPrivacyPrecompileAddress eeaGetPrivacyPrecompileAddress =
-        new EeaGetPrivacyPrecompileAddress(privacyParameters);
+    final PrivGetPrivacyPrecompileAddress privGetPrivacyPrecompileAddress =
+        new PrivGetPrivacyPrecompileAddress(privacyParameters);
 
     final JsonRpcRequest request =
-        new JsonRpcRequest("1", "eea_getPrivacyPrecompileAddress", new Object[0]);
+        new JsonRpcRequest("1", "priv_getPrivacyPrecompileAddress", new Object[0]);
 
     final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse) eeaGetPrivacyPrecompileAddress.response(request);
+        (JsonRpcSuccessResponse) privGetPrivacyPrecompileAddress.response(request);
 
     assertEquals(privacyAddress, response.getResult());
   }
@@ -55,13 +55,13 @@ public class EeaGetPrivacyPrecompileAddressTest {
     when(privacyParameters.getPrivacyAddress()).thenReturn(rawPrivacyAddress);
     when(privacyParameters.isEnabled()).thenReturn(false);
 
-    final EeaGetPrivacyPrecompileAddress eeaGetPrivacyPrecompileAddress =
-        new EeaGetPrivacyPrecompileAddress(privacyParameters);
+    final PrivGetPrivacyPrecompileAddress privGetPrivacyPrecompileAddress =
+        new PrivGetPrivacyPrecompileAddress(privacyParameters);
 
     final JsonRpcRequest request =
-        new JsonRpcRequest("1", "eea_getPrivacyPrecompileAddress", new Object[0]);
+        new JsonRpcRequest("1", "priv_getPrivacyPrecompileAddress", new Object[0]);
 
-    final JsonRpcResponse response = eeaGetPrivacyPrecompileAddress.response(request);
+    final JsonRpcResponse response = privGetPrivacyPrecompileAddress.response(request);
 
     assertEquals(JsonRpcResponseType.ERROR, response.getType());
     assertEquals(JsonRpcError.PRIVACY_NOT_ENABLED, ((JsonRpcErrorResponse) response).getError());

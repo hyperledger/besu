@@ -86,6 +86,7 @@ public class PantheonFactoryConfigurationBuilder {
   public PantheonFactoryConfigurationBuilder enablePrivateTransactions(
       final PrivacyParameters privacyParameters) {
     this.jsonRpcConfiguration.addRpcApi(RpcApis.EEA);
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.PRIV);
     this.privacyParameters = privacyParameters;
     this.privacyParameters.setEnabled(true);
     return this;

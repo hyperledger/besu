@@ -10,41 +10,46 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.TransactionWithMetadata;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransaction;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPInput;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import org.apache.logging.log4j.Logger;
 
-public class EeaGetPrivateTransaction implements JsonRpcMethod {
+public class PrivGetPrivateTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
 
+  private final BlockchainQueries blockchain;
   private final Enclave enclave;
   private final JsonRpcParameter parameters;
   private final PrivacyParameters privacyParameters;
 
-  public EeaGetPrivateTransaction(
+  public PrivGetPrivateTransaction(
+      final BlockchainQueries blockchain,
       final Enclave enclave,
       final JsonRpcParameter parameters,
       final PrivacyParameters privacyParameters) {
+    this.blockchain = blockchain;
     this.enclave = enclave;
     this.parameters = parameters;
     this.privacyParameters = privacyParameters;
@@ -52,17 +57,24 @@ public class EeaGetPrivateTransaction implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.EEA_GET_PRIVATE_TRANSACTION.getMethodName();
+    return RpcMethod.PRIV_GET_PRIVATE_TRANSACTION.getMethodName();
   }
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    LOG.trace("Executing {}", RpcMethod.EEA_GET_PRIVATE_TRANSACTION.getMethodName());
-    final String enclaveKey = parameters.required(request.getParams(), 0, String.class);
+    LOG.trace("Executing {}", RpcMethod.PRIV_GET_PRIVATE_TRANSACTION.getMethodName());
+
+    final Hash hash = parameters.required(request.getParams(), 0, Hash.class);
+    final TransactionWithMetadata resultTransaction =
+        blockchain.transactionByHash(hash).orElse(null);
+
+    if (resultTransaction == null) {
+      return new JsonRpcSuccessResponse(request.getId(), null);
+    }
     try {
       ReceiveResponse receiveResponse =
           getReceiveResponseFromEnclave(
-              BytesValues.asBase64String(BytesValue.fromHexString(enclaveKey)),
+              BytesValues.asBase64String(resultTransaction.getTransaction().getPayload()),
               privacyParameters.getEnclavePublicKey());
 
       LOG.trace("Received transaction information from Enclave");

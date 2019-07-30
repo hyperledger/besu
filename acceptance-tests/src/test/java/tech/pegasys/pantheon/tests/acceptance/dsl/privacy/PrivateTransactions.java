@@ -12,8 +12,8 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.privacy;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaGetTransactionCountTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaSendRawTransactionTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.priv.PrivGetTransactionCountTransaction;
 
 public class PrivateTransactions {
 
@@ -29,8 +29,8 @@ public class PrivateTransactions {
     return new EeaSendRawTransactionTransaction(signedRawPrivateTransaction);
   }
 
-  public EeaGetTransactionCountTransaction getTransactionCount(
+  public PrivGetTransactionCountTransaction getTransactionCount(
       final String address, final String privacyGroupId) {
-    return new EeaGetTransactionCountTransaction(address, privacyGroupId);
+    return new PrivGetTransactionCountTransaction(address, privacyGroupId);
   }
 }

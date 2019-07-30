@@ -10,57 +10,47 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
-import tech.pegasys.pantheon.enclave.Enclave;
-import tech.pegasys.pantheon.enclave.types.DeletePrivacyGroupRequest;
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionHandler;
 
-import org.apache.logging.log4j.Logger;
+public class PrivGetTransactionCount implements JsonRpcMethod {
 
-public class EeaDeletePrivacyGroup implements JsonRpcMethod {
-
-  private static final Logger LOG = getLogger();
-  private final Enclave enclave;
   private final JsonRpcParameter parameters;
+  private final PrivateTransactionHandler privateTransactionHandler;
 
-  public EeaDeletePrivacyGroup(final Enclave enclave, final JsonRpcParameter parameters) {
-    this.enclave = enclave;
+  public PrivGetTransactionCount(
+      final JsonRpcParameter parameters,
+      final PrivateTransactionHandler privateTransactionHandler) {
     this.parameters = parameters;
+    this.privateTransactionHandler = privateTransactionHandler;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.EEA_DELETE_PRIVACY_GROUP.getMethodName();
+    return RpcMethod.PRIV_GET_TRANSACTION_COUNT.getMethodName();
   }
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    LOG.trace("Executing {}", RpcMethod.EEA_DELETE_PRIVACY_GROUP.getMethodName());
-
-    final String privacyGroupId = parameters.required(request.getParams(), 1, String.class);
-    final String from = parameters.required(request.getParams(), 0, String.class);
-
-    LOG.trace("Deleting a privacy group with privacyGroupId {} and from {}", privacyGroupId, from);
-
-    DeletePrivacyGroupRequest deletePrivacyGroupRequest =
-        new DeletePrivacyGroupRequest(privacyGroupId, from);
-    String response;
-    try {
-      response = enclave.deletePrivacyGroup(deletePrivacyGroupRequest);
-    } catch (Exception e) {
-      LOG.error("Failed to fetch transaction from Enclave with error " + e.getMessage());
-      LOG.error(e);
-      return new JsonRpcSuccessResponse(request.getId(), JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
+    if (request.getParamLength() != 2) {
+      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
-    return new JsonRpcSuccessResponse(request.getId(), response);
+
+    final Address address = parameters.required(request.getParams(), 0, Address.class);
+    final String privacyGroupId = parameters.required(request.getParams(), 1, String.class);
+
+    final long nonce = privateTransactionHandler.getSenderNonce(address, privacyGroupId);
+    return new JsonRpcSuccessResponse(request.getId(), Quantity.create(nonce));
   }
 }

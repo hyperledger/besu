@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.eea;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.PrivacyGroup;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv.PrivCreatePrivacyGroup;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
@@ -47,11 +48,11 @@ public class EeaCreatePrivacyGroupTest {
         new PrivacyGroup(privacyGroupId, PrivacyGroup.Type.PANTHEON, name, description, addresses);
     when(enclave.createPrivacyGroup(any())).thenReturn(privacyGroup);
 
-    final EeaCreatePrivacyGroup eeaCreatePrivacyGroup =
-        new EeaCreatePrivacyGroup(enclave, parameters);
+    final PrivCreatePrivacyGroup eeaCreatePrivacyGroup =
+        new PrivCreatePrivacyGroup(enclave, parameters);
 
     Object[] params = new Object[] {from, name, description, addresses};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "eea_createPrivacyGroup", params);
+    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_createPrivacyGroup", params);
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) eeaCreatePrivacyGroup.response(request);

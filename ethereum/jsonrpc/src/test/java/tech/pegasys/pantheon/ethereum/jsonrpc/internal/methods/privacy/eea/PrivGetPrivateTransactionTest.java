@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.eea;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,10 +23,15 @@ import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv.PrivGetPrivateTransaction;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.TransactionWithMetadata;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
@@ -39,13 +44,14 @@ import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.math.BigInteger;
 import java.util.Base64;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-public class EeaGetPrivateTransactionTest {
+public class PrivGetPrivateTransactionTest {
 
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
@@ -89,8 +95,19 @@ public class EeaGetPrivateTransactionTest {
 
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
+  private final BlockchainQueries blockchain = mock(BlockchainQueries.class);
+
+  private final TransactionWithMetadata returnedTransaction = mock(TransactionWithMetadata.class);
+
+  private final Transaction justTransaction = mock(Transaction.class);
+
   @Test
   public void returnsPrivateTransactionLegacy() throws Exception {
+    when(blockchain.transactionByHash(any(Hash.class)))
+        .thenReturn(Optional.of(returnedTransaction));
+    when(returnedTransaction.getTransaction()).thenReturn(justTransaction);
+    when(justTransaction.getPayload()).thenReturn(BytesValues.fromBase64(""));
+
     final PrivateTransaction privateTransaction =
         privateTransactionBuilder
             .privateFor(
@@ -100,10 +117,10 @@ public class EeaGetPrivateTransactionTest {
     final PrivateTransactionLegacyResult privateTransactionLegacyResult =
         new PrivateTransactionLegacyResult(privateTransaction);
 
-    final EeaGetPrivateTransaction eeaGetPrivateTransaction =
-        new EeaGetPrivateTransaction(enclave, parameters, privacyParameters);
+    final PrivGetPrivateTransaction privGetPrivateTransaction =
+        new PrivGetPrivateTransaction(blockchain, enclave, parameters, privacyParameters);
     final Object[] params = new Object[] {enclaveKey};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getPrivateTransaction", params);
+    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getPrivateTransaction", params);
 
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
@@ -113,7 +130,7 @@ public class EeaGetPrivateTransactionTest {
                 Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()).getBytes(UTF_8),
                 ""));
     final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse) eeaGetPrivateTransaction.response(request);
+        (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);
     final PrivateTransactionResult result = (PrivateTransactionResult) response.getResult();
 
     assertThat(result).isEqualToComparingFieldByField(privateTransactionLegacyResult);
@@ -121,6 +138,11 @@ public class EeaGetPrivateTransactionTest {
 
   @Test
   public void returnsPrivateTransactionGroup() throws Exception {
+    when(blockchain.transactionByHash(any(Hash.class)))
+        .thenReturn(Optional.of(returnedTransaction));
+    when(returnedTransaction.getTransaction()).thenReturn(justTransaction);
+    when(justTransaction.getPayload()).thenReturn(BytesValues.fromBase64(""));
+
     final PrivateTransaction privateTransaction =
         privateTransactionBuilder
             .privacyGroupId(BytesValues.fromBase64("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs="))
@@ -128,10 +150,11 @@ public class EeaGetPrivateTransactionTest {
     final PrivateTransactionGroupResult privateTransactionGroupResult =
         new PrivateTransactionGroupResult(privateTransaction);
 
-    final EeaGetPrivateTransaction eeaGetPrivateTransaction =
-        new EeaGetPrivateTransaction(enclave, parameters, privacyParameters);
+    final PrivGetPrivateTransaction privGetPrivateTransaction =
+        new PrivGetPrivateTransaction(blockchain, enclave, parameters, privacyParameters);
+
     final Object[] params = new Object[] {enclaveKey};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getPrivateTransaction", params);
+    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getPrivateTransaction", params);
 
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
@@ -141,7 +164,7 @@ public class EeaGetPrivateTransactionTest {
                 Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()).getBytes(UTF_8),
                 ""));
     final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse) eeaGetPrivateTransaction.response(request);
+        (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);
     final PrivateTransactionResult result = (PrivateTransactionResult) response.getResult();
 
     assertThat(result).isEqualToComparingFieldByField(privateTransactionGroupResult);
