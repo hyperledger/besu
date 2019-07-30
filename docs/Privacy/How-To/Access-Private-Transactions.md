@@ -8,7 +8,9 @@ Use [`eth_getTransactionReceipt`](../../Reference/Pantheon-API-Methods.md#eth_ge
 get the transaction receipt for the Privacy Maker Transaction and [`eea_getTransactionReceipt`](../../Reference/Pantheon-API-Methods.md#eea_gettransactionreceipt) 
 to get the transaction receipt for the private transaction. 
 
-Use [`eth_getTransactionByHash`](../../Reference/Pantheon-API-Methods.md#eth_gettransactionbyhash) to 
-get the Privacy Marker Transaction with the transaction hash returned when submitting the private transaction. 
-Use [`priv_getPrivateTransaction`](../../Reference/Pantheon-API-Methods.md#priv_getprivatetransaction) 
-to get the private transaction with the `input` value from the Privacy Marker Transaction. 
+With the transaction hash returned when submitting the private transaction, use: 
+
+* [`eth_getTransactionByHash`](../../Reference/Pantheon-API-Methods.md#eth_gettransactionbyhash) to 
+get the Privacy Marker Transaction . 
+* [`priv_getPrivateTransaction`](../../Reference/Pantheon-API-Methods.md#priv_getprivatetransaction) 
+to get the private transaction. 
