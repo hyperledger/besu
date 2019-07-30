@@ -13,8 +13,6 @@
 package tech.pegasys.pantheon.ethereum.vm.operations;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.mainnet.ConstantinopleGasCalculator;
@@ -26,47 +24,33 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(Parameterized.class)
+@RunWith(MockitoJUnitRunner.class)
 public class RevertOperationTest {
 
-  private final String code;
-
-  private final MessageFrame messageFrame = mock(MessageFrame.class);
+  @Mock private MessageFrame messageFrame;
   private final RevertOperation operation = new RevertOperation(new ConstantinopleGasCalculator());
 
-  @Parameters(name = "sender: {0}, salt: {1}, code: {2}")
-  public static Object[][] params() {
-    return new Object[][] {
-      {
-        "0x6c726576657274656420646174616000557f726576657274206d657373616765000000000000000000000000000000000000600052600e6000fd",
-      }
-    };
-  }
-
-  public RevertOperationTest(final String code) {
-    this.code = code;
-  }
+  private final BytesValue revertReasonBytes =
+      BytesValue.fromHexString("726576657274206d657373616765");
 
   @Before
   public void setUp() {
     when(messageFrame.popStackItem())
         .thenReturn(Bytes32.fromHexString("0x00"))
         .thenReturn(Bytes32.fromHexString("0x0e"));
-    when(messageFrame.readMemory(UInt256.ZERO, UInt256.of(0x0e)))
-        .thenReturn(BytesValue.fromHexString("726576657274206d657373616765"));
+    when(messageFrame.readMemory(UInt256.ZERO, UInt256.of(0x0e))).thenReturn(revertReasonBytes);
   }
 
   @Test
   public void shouldReturnReason() {
-    assertTrue(code.contains("726576657274206d657373616765"));
-    ArgumentCaptor<String> arg = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<BytesValue> arg = ArgumentCaptor.forClass(BytesValue.class);
     operation.execute(messageFrame);
     Mockito.verify(messageFrame).setRevertReason(arg.capture());
-    assertEquals("revert message", arg.getValue());
+    assertEquals(revertReasonBytes, arg.getValue());
   }
 }

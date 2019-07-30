@@ -19,10 +19,7 @@ import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
-import java.nio.charset.Charset;
-
 public class RevertOperation extends AbstractOperation {
-  private static final Charset CHARSET = Charset.forName("UTF-8");
 
   public RevertOperation(final GasCalculator gasCalculator) {
     super(0xFD, "REVERT", 2, 0, false, 1, gasCalculator);
@@ -42,8 +39,7 @@ public class RevertOperation extends AbstractOperation {
     final UInt256 length = frame.popStackItem().asUInt256();
     BytesValue reason = frame.readMemory(from, length);
     frame.setOutputData(reason);
-    String reasonMessage = new String(reason.extractArray(), CHARSET);
-    frame.setRevertReason(reasonMessage);
+    frame.setRevertReason(reason);
     frame.setState(MessageFrame.State.REVERT);
   }
 }

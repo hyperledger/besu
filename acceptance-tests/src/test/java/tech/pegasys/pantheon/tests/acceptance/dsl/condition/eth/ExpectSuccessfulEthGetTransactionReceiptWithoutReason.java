@@ -37,7 +37,7 @@ public class ExpectSuccessfulEthGetTransactionReceiptWithoutReason implements Co
   private boolean revertReasonIsEmpty(final Node node) {
     return node.execute(transaction)
         .map(TransactionReceiptWithRevertReason::getRevertReason)
-        .filter(String::isEmpty)
+        .filter(str -> str.equals("0x"))
         .isPresent();
   }
 }

@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.debug;
 import tech.pegasys.pantheon.ethereum.core.Gas;
 import tech.pegasys.pantheon.ethereum.vm.ExceptionalHaltReason;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.EnumSet;
@@ -34,7 +35,7 @@ public class TraceFrame {
   private final Optional<Bytes32[]> stack;
   private final Optional<Bytes32[]> memory;
   private final Optional<Map<UInt256, UInt256>> storage;
-  private final String revertReason;
+  private final Optional<BytesValue> revertReason;
 
   public TraceFrame(
       final int pc,
@@ -46,7 +47,7 @@ public class TraceFrame {
       final Optional<Bytes32[]> stack,
       final Optional<Bytes32[]> memory,
       final Optional<Map<UInt256, UInt256>> storage,
-      final String revertReason) {
+      final Optional<BytesValue> revertReason) {
     this.pc = pc;
     this.opcode = opcode;
     this.gasRemaining = gasRemaining;
@@ -79,7 +80,7 @@ public class TraceFrame {
         stack,
         memory,
         storage,
-        null);
+        Optional.empty());
   }
 
   public int getPc() {
@@ -118,7 +119,7 @@ public class TraceFrame {
     return storage;
   }
 
-  public String getRevertReason() {
+  public Optional<BytesValue> getRevertReason() {
     return revertReason;
   }
 

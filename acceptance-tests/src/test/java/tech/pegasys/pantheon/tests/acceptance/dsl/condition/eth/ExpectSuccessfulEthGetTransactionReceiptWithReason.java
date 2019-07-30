@@ -19,6 +19,10 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eth.EthGetTransactionReceiptWithRevertReason;
 
+import java.nio.charset.StandardCharsets;
+
+import org.web3j.utils.Numeric;
+
 public class ExpectSuccessfulEthGetTransactionReceiptWithReason implements Condition {
 
   private final EthGetTransactionReceiptWithRevertReason transaction;
@@ -39,8 +43,12 @@ public class ExpectSuccessfulEthGetTransactionReceiptWithReason implements Condi
   private boolean revertReasonMatches(final Node node, final String expectedRevertReason) {
     return node.execute(transaction)
         .filter(
-            transactionReceipt ->
-                transactionReceipt.getRevertReason().contains(expectedRevertReason))
+            transactionReceipt -> {
+              final byte[] bytes =
+                  Numeric.hexStringToByteArray(transactionReceipt.getRevertReason());
+              final String utf8Encoded = new String(bytes, StandardCharsets.UTF_8);
+              return utf8Encoded.contains(expectedRevertReason);
+            })
         .isPresent();
   }
 }

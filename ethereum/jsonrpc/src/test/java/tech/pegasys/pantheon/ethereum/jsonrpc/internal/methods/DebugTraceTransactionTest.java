@@ -87,7 +87,7 @@ public class DebugTraceTransactionTest {
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
-            "revert message");
+            Optional.of(BytesValue.fromHexString("0x1122334455667788")));
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
     final TransactionTrace transactionTrace =
         new TransactionTrace(transaction, result, traceFrames);
@@ -130,7 +130,7 @@ public class DebugTraceTransactionTest {
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
-            "revert message");
+            Optional.of(BytesValue.fromHexString("0x1122334455667788")));
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
     final TransactionTrace transactionTrace =
         new TransactionTrace(transaction, result, traceFrames);
