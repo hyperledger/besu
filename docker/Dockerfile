@@ -11,6 +11,11 @@ WORKDIR /opt/pantheon
 # 30303 P2P
 EXPOSE 8545 8546 8547 30303
 
+# defaults for host interfaces
+ENV PANTHEON_RPC_HTTP_HOST 0.0.0.0
+ENV PANTHEON_RPC_WS_HOST 0.0.0.0
+ENV PANTHEON_GRAPHQL_HTTP_HOST 0.0.0.0
+
 ENTRYPOINT ["/opt/pantheon/bin/pantheon"]
 
 # Build-time metadata as defined at http://label-schema.org
