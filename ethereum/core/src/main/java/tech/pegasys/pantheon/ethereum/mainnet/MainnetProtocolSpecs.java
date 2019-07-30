@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.mainnet;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static tech.pegasys.pantheon.ethereum.vm.MessageFrame.DEFAULT_MAX_STACK_SIZE;
 
 import tech.pegasys.pantheon.ethereum.MainnetBlockValidator;
@@ -292,14 +291,15 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason) {
-    checkArgument(chainId.isPresent(), "Istanbul requires the use of chainId");
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(DEFAULT_MAX_STACK_SIZE);
     return constantinopleFixDefinition(
             chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
         .gasCalculator(IstanbulGasCalculator::new)
-        .evmBuilder(gasCalculator -> MainnetEvmRegistries.istanbul(gasCalculator, chainId.get()))
+        .evmBuilder(
+            gasCalculator ->
+                MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .transactionProcessorBuilder(
             (gasCalculator,
