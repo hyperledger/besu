@@ -18,7 +18,6 @@ import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
 import tech.pegasys.pantheon.ethereum.rlp.RLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -46,7 +45,7 @@ public class TransactionReceipt {
   private final LogsBloomFilter bloomFilter;
   private final int status;
   private final TransactionReceiptType transactionReceiptType;
-  private final Optional<String> revertReason;
+  private final Optional<BytesValue> revertReason;
 
   /**
    * Creates an instance of a state root-encoded transaction receipt.
@@ -60,7 +59,7 @@ public class TransactionReceipt {
       final Hash stateRoot,
       final long cumulativeGasUsed,
       final List<Log> logs,
-      final Optional<String> revertReason) {
+      final Optional<BytesValue> revertReason) {
     this(
         stateRoot,
         NONEXISTENT,
@@ -75,7 +74,7 @@ public class TransactionReceipt {
       final long cumulativeGasUsed,
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
-      final Optional<String> revertReason) {
+      final Optional<BytesValue> revertReason) {
     this(stateRoot, NONEXISTENT, cumulativeGasUsed, logs, bloomFilter, revertReason);
   }
 
@@ -91,7 +90,7 @@ public class TransactionReceipt {
       final int status,
       final long cumulativeGasUsed,
       final List<Log> logs,
-      final Optional<String> revertReason) {
+      final Optional<BytesValue> revertReason) {
     this(null, status, cumulativeGasUsed, logs, LogsBloomFilter.compute(logs), revertReason);
   }
 
@@ -100,7 +99,7 @@ public class TransactionReceipt {
       final long cumulativeGasUsed,
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
-      final Optional<String> revertReason) {
+      final Optional<BytesValue> revertReason) {
     this(null, status, cumulativeGasUsed, logs, bloomFilter, revertReason);
   }
 
@@ -110,7 +109,7 @@ public class TransactionReceipt {
       final long cumulativeGasUsed,
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
-      final Optional<String> revertReason) {
+      final Optional<BytesValue> revertReason) {
     this.stateRoot = stateRoot;
     this.cumulativeGasUsed = cumulativeGasUsed;
     this.status = status;
@@ -148,7 +147,7 @@ public class TransactionReceipt {
     out.writeBytesValue(bloomFilter.getBytes());
     out.writeList(logs, Log::writeTo);
     if (withRevertReason && revertReason.isPresent()) {
-      out.writeBytesValue(BytesValue.wrap(revertReason.get().getBytes(StandardCharsets.UTF_8)));
+      out.writeBytesValue(revertReason.get());
     }
     out.endList();
   }
@@ -182,15 +181,14 @@ public class TransactionReceipt {
       // TODO consider validating that the logs and bloom filter match.
       final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(input);
       final List<Log> logs = input.readList(Log::readFrom);
-      final Optional<String> revertReason;
+      final Optional<BytesValue> revertReason;
       if (input.isEndOfCurrentList()) {
         revertReason = Optional.empty();
       } else {
         if (!revertReasonAllowed) {
           throw new RLPException("Unexpected value at end of TransactionReceipt");
         }
-        final byte[] bytes = input.readBytesValue().getArrayUnsafe();
-        revertReason = Optional.of(new String(bytes, StandardCharsets.UTF_8));
+        revertReason = Optional.of(input.readBytesValue());
       }
 
       // Status code-encoded transaction receipts have a single
@@ -256,7 +254,7 @@ public class TransactionReceipt {
     return transactionReceiptType;
   }
 
-  public Optional<String> getRevertReason() {
+  public Optional<BytesValue> getRevertReason() {
     return revertReason;
   }
 

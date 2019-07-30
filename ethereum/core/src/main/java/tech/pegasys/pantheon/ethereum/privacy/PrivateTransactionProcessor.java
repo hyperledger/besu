@@ -72,7 +72,7 @@ public class PrivateTransactionProcessor {
     private final BytesValue output;
 
     private final ValidationResult<TransactionInvalidReason> validationResult;
-    private final Optional<String> revertReason;
+    private final Optional<BytesValue> revertReason;
 
     public static Result invalid(
         final ValidationResult<TransactionInvalidReason> validationResult) {
@@ -88,7 +88,7 @@ public class PrivateTransactionProcessor {
     public static Result failed(
         final long gasRemaining,
         final ValidationResult<TransactionInvalidReason> validationResult,
-        final Optional<String> revertReason) {
+        final Optional<BytesValue> revertReason) {
       return new Result(
           Status.FAILED,
           LogSeries.empty(),
@@ -113,7 +113,7 @@ public class PrivateTransactionProcessor {
         final long gasRemaining,
         final BytesValue output,
         final ValidationResult<TransactionInvalidReason> validationResult,
-        final Optional<String> revertReason) {
+        final Optional<BytesValue> revertReason) {
       this.status = status;
       this.logs = logs;
       this.gasRemaining = gasRemaining;
@@ -148,7 +148,7 @@ public class PrivateTransactionProcessor {
     }
 
     @Override
-    public Optional<String> getRevertReason() {
+    public Optional<BytesValue> getRevertReason() {
       return revertReason;
     }
   }

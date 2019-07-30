@@ -219,7 +219,7 @@ public class MessageFrame {
   private final Deque<MessageFrame> messageFrameStack;
   private final Address miningBeneficiary;
   private final Boolean isPersistingState;
-  private Optional<String> revertReason;
+  private Optional<BytesValue> revertReason;
 
   // Miscellaneous fields.
   private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
@@ -254,7 +254,7 @@ public class MessageFrame {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingState,
-      final Optional<String> revertReason,
+      final Optional<BytesValue> revertReason,
       final int maxStackSize) {
     this.type = type;
     this.blockchain = blockchain;
@@ -511,11 +511,11 @@ public class MessageFrame {
    *
    * @return the revertReason string
    */
-  public Optional<String> getRevertReason() {
+  public Optional<BytesValue> getRevertReason() {
     return revertReason;
   }
 
-  public void setRevertReason(final String revertReason) {
+  public void setRevertReason(final BytesValue revertReason) {
     this.revertReason = Optional.ofNullable(revertReason);
   }
 
@@ -879,7 +879,7 @@ public class MessageFrame {
     private Address miningBeneficiary;
     private BlockHashLookup blockHashLookup;
     private Boolean isPersistingState = false;
-    private Optional<String> reason = Optional.empty();
+    private Optional<BytesValue> reason = Optional.empty();
 
     public Builder type(final Type type) {
       this.type = type;
@@ -997,7 +997,7 @@ public class MessageFrame {
       return this;
     }
 
-    public Builder reason(final String reason) {
+    public Builder reason(final BytesValue reason) {
       this.reason = Optional.ofNullable(reason);
       return this;
     }

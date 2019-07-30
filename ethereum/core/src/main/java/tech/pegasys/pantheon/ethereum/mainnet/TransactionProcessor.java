@@ -103,7 +103,7 @@ public interface TransactionProcessor {
      *
      * @return the revert reason.
      */
-    Optional<String> getRevertReason();
+    Optional<BytesValue> getRevertReason();
   }
 
   /**
