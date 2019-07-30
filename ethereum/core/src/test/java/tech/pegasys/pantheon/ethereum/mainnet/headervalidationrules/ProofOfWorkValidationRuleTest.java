@@ -22,6 +22,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationTestUtils;
+import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.io.IOException;
@@ -73,6 +75,27 @@ public class ProofOfWorkValidationRuleTest {
             .blockHeaderFunctions(mainnetBlockHashFunction())
             .buildBlockHeader();
     assertThat(validationRule.validate(header, parentHeader)).isFalse();
+  }
+
+  @Test
+  public void passesBlockWithOneValuedDifficulty() {
+    final BlockHeaderBuilder headerBuilder =
+        BlockHeaderBuilder.fromHeader(blockHeader)
+            .difficulty(UInt256.ONE)
+            .blockHeaderFunctions(mainnetBlockHashFunction())
+            .timestamp(1);
+    final BlockHeader preHeader = headerBuilder.buildBlockHeader();
+    final byte[] hashBuffer = new byte[64];
+    final Hash headerHash = validationRule.hashHeader(preHeader);
+    ProofOfWorkValidationRule.HASHER.hash(
+        hashBuffer, preHeader.getNonce(), preHeader.getNumber(), headerHash.extractArray());
+
+    final BlockHeader header =
+        headerBuilder
+            .mixHash(Hash.wrap(Bytes32.leftPad(BytesValue.wrap(hashBuffer).slice(0, Bytes32.SIZE))))
+            .buildBlockHeader();
+
+    assertThat(validationRule.validate(header, parentHeader)).isTrue();
   }
 
   @Test

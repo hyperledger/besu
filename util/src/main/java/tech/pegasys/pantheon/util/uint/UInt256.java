@@ -29,6 +29,9 @@ public interface UInt256 extends UInt256Value<UInt256> {
   UInt256 ONE = of(1);
   /** The value 32. */
   UInt256 U_32 = of(32);
+  /** The value of 2^256-1 */
+  UInt256 MAX_VALUE =
+      fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
   static UInt256 of(final long value) {
     return new DefaultUInt256(UInt256Bytes.of(value));

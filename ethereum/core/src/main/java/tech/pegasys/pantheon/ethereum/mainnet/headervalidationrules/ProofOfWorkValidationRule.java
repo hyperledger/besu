@@ -31,9 +31,9 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final BigInteger ETHHASH_TARGET_UPPER_BOUND = BigInteger.valueOf(2).pow(256);
+  private static final BigInteger ETHASH_TARGET_UPPER_BOUND = BigInteger.valueOf(2).pow(256);
 
-  private static final EthHasher HASHER = new EthHasher.Light();
+  static final EthHasher HASHER = new EthHasher.Light();
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
@@ -47,8 +47,10 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
     }
     final BigInteger difficulty =
         BytesValues.asUnsignedBigInteger(header.getDifficulty().getBytes());
-    final UInt256 target = UInt256.of(ETHHASH_TARGET_UPPER_BOUND.divide(difficulty));
-
+    final UInt256 target =
+        difficulty.equals(BigInteger.ONE)
+            ? UInt256.MAX_VALUE
+            : UInt256.of(ETHASH_TARGET_UPPER_BOUND.divide(difficulty));
     final UInt256 result = UInt256.wrap(Bytes32.wrap(hashBuffer, 32));
     if (result.compareTo(target) > 0) {
       LOG.warn(
@@ -75,7 +77,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
     return true;
   }
 
-  private Hash hashHeader(final BlockHeader header) {
+  Hash hashHeader(final BlockHeader header) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
 
     // Encode header without nonce and mixhash

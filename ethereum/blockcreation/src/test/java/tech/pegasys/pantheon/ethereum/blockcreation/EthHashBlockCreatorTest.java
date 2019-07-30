@@ -50,20 +50,20 @@ public class EthHashBlockCreatorTest {
       BytesValue.fromHexString("0x476574682f76312e302e302f6c696e75782f676f312e342e32");
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
-  private final ExecutionContextTestFixture executionContextTestFixture =
-      ExecutionContextTestFixture.builder()
-          .protocolSchedule(
-              new ProtocolScheduleBuilder<>(
-                      GenesisConfigFile.DEFAULT.getConfigOptions(),
-                      BigInteger.valueOf(42),
-                      Function.identity(),
-                      PrivacyParameters.DEFAULT,
-                      false)
-                  .createProtocolSchedule())
-          .build();
-
   @Test
   public void createMainnetBlock1() throws IOException {
+    final ExecutionContextTestFixture executionContextTestFixture =
+        ExecutionContextTestFixture.builder()
+            .protocolSchedule(
+                new ProtocolScheduleBuilder<>(
+                        GenesisConfigFile.DEFAULT.getConfigOptions(),
+                        BigInteger.valueOf(42),
+                        Function.identity(),
+                        PrivacyParameters.DEFAULT,
+                        false)
+                    .createProtocolSchedule())
+            .build();
+
     final EthHashSolver solver = new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new Light());
 
     final PendingTransactions pendingTransactions =
@@ -93,5 +93,47 @@ public class EthHashBlockCreatorTest {
 
     Assertions.assertThat(actualBlock).isEqualTo(expectedBlock);
     Assertions.assertThat(blockCreator.getHashesPerSecond().isPresent()).isTrue();
+  }
+
+  @Test
+  public void createMainnetBlock1_fixedDifficulty1() throws IOException {
+    final ExecutionContextTestFixture executionContextTestFixture =
+        ExecutionContextTestFixture.builder()
+            .protocolSchedule(
+                new ProtocolScheduleBuilder<>(
+                        GenesisConfigFile.fromConfig(
+                                "{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
+                            .getConfigOptions(),
+                        BigInteger.valueOf(42),
+                        Function.identity(),
+                        PrivacyParameters.DEFAULT,
+                        false)
+                    .createProtocolSchedule())
+            .build();
+
+    final EthHashSolver solver = new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new Light());
+
+    final PendingTransactions pendingTransactions =
+        new PendingTransactions(
+            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
+            1,
+            TestClock.fixed(),
+            metricsSystem);
+
+    final EthHashBlockCreator blockCreator =
+        new EthHashBlockCreator(
+            BLOCK_1_COINBASE,
+            parent -> BLOCK_1_EXTRA_DATA,
+            pendingTransactions,
+            executionContextTestFixture.getProtocolContext(),
+            executionContextTestFixture.getProtocolSchedule(),
+            gasLimit -> gasLimit,
+            solver,
+            Wei.ZERO,
+            executionContextTestFixture.getBlockchain().getChainHeadHeader());
+
+    blockCreator.createBlock(BLOCK_1_TIMESTAMP);
+    // If we weren't setting difficulty to 2^256-1 a difficulty of 1 would have caused a
+    // IllegalArgumentException at the previous line, as 2^256 is 33 bytes.
   }
 }
