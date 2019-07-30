@@ -34,6 +34,8 @@ public class EnvironmentInformation {
 
   private final Address accountAddress;
 
+  private final Wei accountBalance;
+
   private BlockHeader blockHeader;
 
   private final Address callerAddress;
@@ -69,6 +71,7 @@ public class EnvironmentInformation {
   @JsonCreator
   public EnvironmentInformation(
       @JsonProperty("address") final String account,
+      @JsonProperty("balance") final String balance,
       @JsonProperty("caller") final String caller,
       @JsonProperty("code") final CodeMock code,
       @JsonProperty("data") final String data,
@@ -81,6 +84,7 @@ public class EnvironmentInformation {
         code,
         0,
         account == null ? null : Address.fromHexString(account),
+        balance == null ? Wei.ZERO : Wei.fromHexString(balance),
         caller == null ? null : Address.fromHexString(caller),
         origin == null ? null : Address.fromHexString(origin),
         data == null ? null : BytesValue.fromHexString(data),
@@ -94,6 +98,7 @@ public class EnvironmentInformation {
       final Code code,
       final int depth,
       final Address accountAddress,
+      final Wei accountBalance,
       final Address callerAddress,
       final Address originAddress,
       final BytesValue data,
@@ -104,6 +109,7 @@ public class EnvironmentInformation {
     this.code = code;
     this.depth = depth;
     this.accountAddress = accountAddress;
+    this.accountBalance = accountBalance;
     this.callerAddress = callerAddress;
     this.originAddress = originAddress;
     this.data = data;
@@ -130,6 +136,11 @@ public class EnvironmentInformation {
   /** @return The address of the currently executing account. */
   public Address getAccountAddress() {
     return accountAddress;
+  }
+
+  /** @return The balance of the currently executing account */
+  public Wei getAccountBalance() {
+    return accountBalance;
   }
 
   /** @return Address of the caller. */

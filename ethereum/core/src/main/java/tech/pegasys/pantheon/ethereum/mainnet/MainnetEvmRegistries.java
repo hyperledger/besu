@@ -81,6 +81,7 @@ import tech.pegasys.pantheon.ethereum.vm.operations.SLtOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.SModOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.SStoreOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.SarOperation;
+import tech.pegasys.pantheon.ethereum.vm.operations.SelfBalanceOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.SelfDestructOperation;
 import tech.pegasys.pantheon.ethereum.vm.operations.Sha3Operation;
 import tech.pegasys.pantheon.ethereum.vm.operations.ShlOperation;
@@ -267,11 +268,9 @@ abstract class MainnetEvmRegistries {
       final BigInteger chainId) {
     registerConstantinopleOpcodes(registry, gasCalculator, accountVersion);
     registry.put(
-        new SStoreOperation(gasCalculator, SStoreOperation.EIP_1706_MINIMUM),
-        Account.DEFAULT_VERSION);
-    registry.put(
         new ChainIdOperation(gasCalculator, Bytes32.leftPad(BytesValue.of(chainId.toByteArray()))),
         Account.DEFAULT_VERSION);
+    registry.put(new SelfBalanceOperation(gasCalculator), Account.DEFAULT_VERSION);
     registry.put(
         new SStoreOperation(gasCalculator, SStoreOperation.EIP_1706_MINIMUM),
         Account.DEFAULT_VERSION);

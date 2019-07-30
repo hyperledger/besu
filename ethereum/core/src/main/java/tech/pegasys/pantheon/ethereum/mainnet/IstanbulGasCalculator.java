@@ -25,6 +25,9 @@ public class IstanbulGasCalculator extends ConstantinopleFixGasCalculator {
   private static final Gas TX_BASE_COST = Gas.of(21_000L);
 
   private static final Gas SLOAD_GAS = Gas.of(800);
+  private static final Gas BALANCE_OPERATION_GAS_COST = Gas.of(700);
+  private static final Gas EXTCODE_HASH_COST = Gas.of(700);
+
   private static final Gas SSTORE_SET_GAS = Gas.of(20_000);
   private static final Gas SSTORE_RESET_GAS = Gas.of(5_000);
   private static final Gas SSTORE_CLEARS_SCHEDULE = Gas.of(15_000);
@@ -113,5 +116,23 @@ public class IstanbulGasCalculator extends ConstantinopleFixGasCalculator {
         return refund;
       }
     }
+  }
+
+  @Override
+  // As per https://eips.ethereum.org/EIPS/eip-1884
+  public Gas getSloadOperationGasCost() {
+    return SLOAD_GAS;
+  }
+
+  @Override
+  // As per https://eips.ethereum.org/EIPS/eip-1884
+  public Gas getBalanceOperationGasCost() {
+    return BALANCE_OPERATION_GAS_COST;
+  }
+
+  @Override
+  // As per https://eips.ethereum.org/EIPS/eip-1884
+  public Gas extCodeHashOperationGasCost() {
+    return EXTCODE_HASH_COST;
   }
 }

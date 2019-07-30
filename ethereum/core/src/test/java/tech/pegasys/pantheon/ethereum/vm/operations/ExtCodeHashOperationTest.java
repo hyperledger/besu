@@ -29,6 +29,7 @@ import tech.pegasys.pantheon.ethereum.core.MutableAccount;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.mainnet.ConstantinopleGasCalculator;
+import tech.pegasys.pantheon.ethereum.mainnet.IstanbulGasCalculator;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
 import tech.pegasys.pantheon.ethereum.vm.Words;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
@@ -49,10 +50,18 @@ public class ExtCodeHashOperationTest {
 
   private final ExtCodeHashOperation operation =
       new ExtCodeHashOperation(new ConstantinopleGasCalculator());
+  private final ExtCodeHashOperation operationIstanbul =
+      new ExtCodeHashOperation(new IstanbulGasCalculator());
 
   @Test
   public void shouldCharge400Gas() {
     assertThat(operation.cost(createMessageFrame(REQUESTED_ADDRESS))).isEqualTo(Gas.of(400));
+  }
+
+  @Test
+  public void istanbulShouldCharge700Gas() {
+    assertThat(operationIstanbul.cost(createMessageFrame(REQUESTED_ADDRESS)))
+        .isEqualTo(Gas.of(700));
   }
 
   @Test

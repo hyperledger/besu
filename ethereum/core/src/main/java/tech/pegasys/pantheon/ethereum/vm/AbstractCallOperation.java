@@ -172,6 +172,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
             .address(address(frame))
             .originator(frame.getOriginatorAddress())
             .contract(to)
+            .contractBalance(contract != null ? contract.getBalance() : Wei.ZERO)
             .contractAccountVersion(
                 contract != null ? contract.getVersion() : Account.DEFAULT_VERSION)
             .gasPrice(frame.getGasPrice())

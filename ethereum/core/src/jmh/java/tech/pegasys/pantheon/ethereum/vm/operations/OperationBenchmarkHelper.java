@@ -98,6 +98,7 @@ public class OperationBenchmarkHelper {
         .address(messageFrame.getContractAddress())
         .originator(messageFrame.getOriginatorAddress())
         .contract(messageFrame.getRecipientAddress())
+        .contractBalance(messageFrame.getContractBalance())
         .gasPrice(messageFrame.getGasPrice())
         .inputData(messageFrame.getInputData())
         .sender(messageFrame.getSenderAddress())
