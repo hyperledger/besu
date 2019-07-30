@@ -29,10 +29,6 @@ For the development server to run the dapp:
 * [Yarn](https://yarnpkg.com/en/) v1.15 or later
 * Browser with [MetaMask installed](https://metamask.io/)
 
-To deploy the permissioning contracts: 
-
-* [Truffle](https://truffleframework.com/docs/truffle/getting-started/installation)
-
 ## Add Ingress Contracts to Genesis File
 
 !!! tip 
@@ -134,7 +130,7 @@ yarn run build
 In the `permissioning-smart-contracts` directory, deploy the Admin and Rules contracts: 
 
 ```bash
-truffle migrate --reset
+yarn truffle migrate --reset
 ```
 
 The Admin and Rules contracts are deployed and the Ingress contract updated with the name and version of the contracts. 
