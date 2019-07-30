@@ -23,11 +23,15 @@ import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv.PrivGetPrivateTransaction;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.TransactionWithMetadata;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
@@ -40,6 +44,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.math.BigInteger;
 import java.util.Base64;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.junit.Rule;
@@ -90,8 +95,19 @@ public class PrivGetPrivateTransactionTest {
 
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
+  private final BlockchainQueries blockchain = mock(BlockchainQueries.class);
+
+  private final TransactionWithMetadata returnedTransaction = mock(TransactionWithMetadata.class);
+
+  private final Transaction justTransaction = mock(Transaction.class);
+
   @Test
   public void returnsPrivateTransactionLegacy() throws Exception {
+    when(blockchain.transactionByHash(any(Hash.class)))
+        .thenReturn(Optional.of(returnedTransaction));
+    when(returnedTransaction.getTransaction()).thenReturn(justTransaction);
+    when(justTransaction.getPayload()).thenReturn(BytesValues.fromBase64(""));
+
     final PrivateTransaction privateTransaction =
         privateTransactionBuilder
             .privateFor(
@@ -102,7 +118,7 @@ public class PrivGetPrivateTransactionTest {
         new PrivateTransactionLegacyResult(privateTransaction);
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(enclave, parameters, privacyParameters);
+        new PrivGetPrivateTransaction(blockchain, enclave, parameters, privacyParameters);
     final Object[] params = new Object[] {enclaveKey};
     final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getPrivateTransaction", params);
 
@@ -122,6 +138,11 @@ public class PrivGetPrivateTransactionTest {
 
   @Test
   public void returnsPrivateTransactionGroup() throws Exception {
+    when(blockchain.transactionByHash(any(Hash.class)))
+        .thenReturn(Optional.of(returnedTransaction));
+    when(returnedTransaction.getTransaction()).thenReturn(justTransaction);
+    when(justTransaction.getPayload()).thenReturn(BytesValues.fromBase64(""));
+
     final PrivateTransaction privateTransaction =
         privateTransactionBuilder
             .privacyGroupId(BytesValues.fromBase64("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs="))
@@ -130,7 +151,8 @@ public class PrivGetPrivateTransactionTest {
         new PrivateTransactionGroupResult(privateTransaction);
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(enclave, parameters, privacyParameters);
+        new PrivGetPrivateTransaction(blockchain, enclave, parameters, privacyParameters);
+
     final Object[] params = new Object[] {enclaveKey};
     final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getPrivateTransaction", params);
 

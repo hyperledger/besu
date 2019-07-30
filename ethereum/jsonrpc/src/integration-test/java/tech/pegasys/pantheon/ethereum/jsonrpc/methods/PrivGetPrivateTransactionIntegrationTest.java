@@ -14,7 +14,9 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.methods;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import tech.pegasys.orion.testutil.OrionTestHarness;
 import tech.pegasys.orion.testutil.OrionTestHarnessFactory;
@@ -24,11 +26,15 @@ import tech.pegasys.pantheon.enclave.types.SendRequest;
 import tech.pegasys.pantheon.enclave.types.SendRequestLegacy;
 import tech.pegasys.pantheon.enclave.types.SendResponse;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv.PrivGetPrivateTransaction;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.TransactionWithMetadata;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransaction;
@@ -40,6 +46,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValues;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Base64;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.junit.AfterClass;
@@ -55,6 +62,10 @@ public class PrivGetPrivateTransactionIntegrationTest {
   private static Enclave enclave;
 
   private static OrionTestHarness testHarness;
+
+  private final TransactionWithMetadata returnedTransaction = mock(TransactionWithMetadata.class);
+
+  private final Transaction justTransaction = mock(Transaction.class);
 
   @BeforeClass
   public static void setUpOnce() throws Exception {
@@ -118,10 +129,17 @@ public class PrivGetPrivateTransactionIntegrationTest {
 
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
+  private final BlockchainQueries blockchain = mock(BlockchainQueries.class);
+
   @Test
   public void returnsStoredPrivateTransaction() throws Exception {
+
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(enclave, parameters, privacyParameters);
+        new PrivGetPrivateTransaction(blockchain, enclave, parameters, privacyParameters);
+
+    when(blockchain.transactionByHash(any(Hash.class)))
+        .thenReturn(Optional.of(returnedTransaction));
+    when(returnedTransaction.getTransaction()).thenReturn(justTransaction);
 
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
@@ -133,8 +151,11 @@ public class PrivGetPrivateTransactionIntegrationTest {
             Lists.newArrayList("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="));
     final SendResponse sendResponse = enclave.send(sendRequest);
 
-    final String hexKey = BytesValues.fromBase64(sendResponse.getKey()).toString();
-    final Object[] params = new Object[] {hexKey};
+    final BytesValue hexKey = BytesValues.fromBase64(sendResponse.getKey());
+    when(justTransaction.getPayload()).thenReturn(hexKey);
+
+    final Object[] params = new Object[] {Hash.ZERO};
+
     final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getPrivateTransaction", params);
 
     final JsonRpcSuccessResponse response =
