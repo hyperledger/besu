@@ -9,12 +9,7 @@ From v1.2, Pantheon requires Java 11.  Pantheon on Java 8 is no longer supported
 In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://docs.pantheon.pegasys.tech/en/latest/Deploying-Pantheon/High-Availability/)
 for information on options that were previously automatically added to the Pantheon command line. 
 
-### Docker Image Migration for v1.2
-
-In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://docs.pantheon.pegasys.tech/en/latest/Deploying-Pantheon/High-Availability/)
-for information on options that were previously automatically added to the Pantheon command line. 
-
-## 1.2-RC 
+## 1.2 
 
 ### Additions and Improvements 
 
@@ -40,9 +35,28 @@ for information on options that were previously automatically added to the Panth
   - Updated [permissioning overview](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Permissioning-Overview/) for onchain account permissioning 
   - Updated [quickstart](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Private-Network-Quickstart/#monitoring-nodes-with-prometheus-and-grafana) to include Prometheus and Grafana 
   - Added [remote connections limits options](https://docs.pantheon.pegasys.tech/en/latest/Reference/Pantheon-CLI-Syntax/#remote-connections-limit-enabled)
+  - Updated [web3.js-eea reference](https://docs.pantheon.pegasys.tech/en/latest/Reference/web3js-eea-Methods/) to include privacy group methods 
+  - Updated [onchain permissioning to include account permissioning](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Onchain-Permissioning/Onchain-Permissioning/) and [Permissioning Management Dapp](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Onchain-Permissioning/Production/)
+  - Added [deployment procedure for Permissioning Management Dapp](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Onchain-Permissioning/Production/) 
+  - Added privacy content for [EEA-compliant and Pantheon-extended privacy](https://docs.pantheon.pegasys.tech/en/latest/Privacy/Explanation/Privacy-Groups/) 
+  - Added content on [creating and managing privacy groups](https://docs.pantheon.pegasys.tech/en/latest/Privacy/How-To/Create-Manage-Privacy-Groups/)
+  - Added content on [accessing private and privacy marker transactions](https://docs.pantheon.pegasys.tech/en/latest/Privacy/How-To/Access-Private-Transactions/)
+  - Added content on [system requirements](https://docs.pantheon.pegasys.tech/en/latest/Installation/System-Requirements/)
+  - Added reference to [Pantheon role on Galaxy to deploy using Ansible](https://docs.pantheon.pegasys.tech/en/latest/Deploying-Pantheon/Ansible/).  
 
 ### Technical Improvements 
 
+- Remove enclave public key from parameter [\#1789](https://github.com/PegaSysEng/pantheon/pull/1789)
+- Update defaults host interfaces [\#1782](https://github.com/PegaSysEng/pantheon/pull/1782)
+- Modifies PrivGetPrivateTransaction to take public tx hash [\#1778](https://github.com/PegaSysEng/pantheon/pull/1778)
+- Remove enclave public key from parameter [\#1777](https://github.com/PegaSysEng/pantheon/pull/1777)
+- Return the ethereum address of the privacy precompile from priv_getPrivacyPrecompileAddress [\#1766](https://github.com/PegaSysEng/pantheon/pull/1766)
+- Report node local address as the coinbase in Clique and IBFT [\#1760](https://github.com/PegaSysEng/pantheon/pull/1760)
+- Additional integration test for contract creation with privacyGroupId [\#1762](https://github.com/PegaSysEng/pantheon/pull/1762)
+- Report 0 hashrate when the mining coordinator doesn't support mining [\#1757](https://github.com/PegaSysEng/pantheon/pull/1757)
+- Fix private tx signature validation [\#1753](https://github.com/PegaSysEng/pantheon/pull/1753)
+- RevertReason changed to BytesValue [\#1746](https://github.com/PegaSysEng/pantheon/pull/1746)
+- Renames various eea methods to priv methods [\#1736](https://github.com/PegaSysEng/pantheon/pull/1736)
 - Update Orion version [\#1716](https://github.com/PegaSysEng/pantheon/pull/1716)
 - Rename CLI flag for better ordering of options [\#1715](https://github.com/PegaSysEng/pantheon/pull/1715)
 - Routine dependency updates [\#1712](https://github.com/PegaSysEng/pantheon/pull/1712) 
