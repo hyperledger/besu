@@ -25,6 +25,10 @@ Creates privacy group for Pantheon privacy.
 
 [Transaction options](#options-parameter)
 
+`name` : `string` - Name of the privacy group. Optional.
+
+`description` : `string` - Name of the privacy group. Optional. 
+
 **Returns** 
 
 `string` : Privacy group ID 
@@ -34,7 +38,6 @@ Creates privacy group for Pantheon privacy.
     const createPrivacyGroup = () => {
       const contractOptions = {
         addresses: [orion.node1.publicKey, orion.node2.publicKey],
-        privateFrom: orion.node1.publicKey,
         name: "Privacy Group A",
         description: "Members of Group A"
       };
@@ -61,8 +64,7 @@ Deletes privacy group.
     ```bash
     const deletePrivacyGroup = givenPrivacyGroupId => {
       const contractOptions = {
-        privacyGroupId: givenPrivacyGroupId,
-        privateFrom: orion.node1.publicKey
+        privacyGroupId: givenPrivacyGroupId
       };
       return web3.eea.deletePrivacyGroup(contractOptions).then(result => {
         console.log(`The privacy group deleted is:`, result);
@@ -98,7 +100,8 @@ Finds privacy groups containing only the specified members.
 
 ## generatePrivacyGroup
     
-Generates the privacy group ID for EEA privacy. The privacy group ID is the RLP-encoded `privateFor` and `privateFrom` keys.
+Generates the privacy group ID for [EEA privacy](../Privacy/Explanation/Privacy-Groups.md#eea-compliant-privacy). 
+The privacy group ID is the RLP-encoded `privateFor` and `privateFrom` keys.
     
 **Parameters**
     

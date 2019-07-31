@@ -3945,15 +3945,13 @@ Object - [Private transaction object](Pantheon-API-Objects.md#private-transactio
 
 Creates a privacy group containing the specified members. Members are specified by their Orion public key. 
 
-**Parameters** 
-
-`data` - Orion public key of privacy group creator 
-
-`string` - Privacy group name. Optional. 
-
-`string` - Privacy group description. Optional. 
+**Parameters**  
 
 `array of data` - Array of members specified by Orion public keys 
+
+`string` - Privacy group name 
+
+`string` - Privacy group description
 
 **Returns** 
 
@@ -3961,11 +3959,11 @@ Privacy group ID
 
 !!! example
     ```bash tab="curl HTTP request"
-    curl -X POST --data '{"jsonrpc":"2.0","method":"priv_createPrivacyGroup","params":["negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=", "Group A", "Description Group A", ["negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=","g59BmTeJIn7HIcnq8VQWgyh/pDbvbt2eyP0Ii60aDDw="]],"id":1}' http://127.0.0.1:8545
+    curl -X POST --data '{"jsonrpc":"2.0","method":"priv_createPrivacyGroup","params":[["negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=","g59BmTeJIn7HIcnq8VQWgyh/pDbvbt2eyP0Ii60aDDw="], "Group A", "Description Group A"],"id":1}' http://127.0.0.1:8545
     ```
     
     ```bash tab="wscat WS request"
-    {"jsonrpc":"2.0","method":"priv_createPrivacyGroup","params":["negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=", "Group A", "Description Group A", ["negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=","g59BmTeJIn7HIcnq8VQWgyh/pDbvbt2eyP0Ii60aDDw="]],"id":1}
+    {"jsonrpc":"2.0","method":"priv_createPrivacyGroup","params":[["negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=","g59BmTeJIn7HIcnq8VQWgyh/pDbvbt2eyP0Ii60aDDw="], "Group A", "Description Group A"],"id":1}
     ```
     
     ```json tab="JSON result"
