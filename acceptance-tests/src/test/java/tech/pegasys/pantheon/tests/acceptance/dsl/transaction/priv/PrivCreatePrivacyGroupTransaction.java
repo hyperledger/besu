@@ -18,28 +18,29 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
-import java.math.BigInteger;
+import java.util.List;
 
-import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
+public class PrivCreatePrivacyGroupTransaction implements Transaction<String> {
 
-public class PrivGetTransactionCountTransaction implements Transaction<BigInteger> {
+  private final List<String> addresses;
+  private final String name;
+  private final String description;
 
-  private final String accountAddress;
-  private String privacyGroupId;
+  public PrivCreatePrivacyGroupTransaction(
+      final List<String> addresses, final String name, final String description) {
 
-  public PrivGetTransactionCountTransaction(
-      final String accountAddress, final String privacyGroupId) {
-    this.accountAddress = accountAddress;
-    this.privacyGroupId = privacyGroupId;
+    this.addresses = addresses;
+    this.name = name;
+    this.description = description;
   }
 
   @Override
-  public BigInteger execute(final NodeRequests node) {
+  public String execute(final NodeRequests node) {
     try {
-      EthGetTransactionCount result =
-          node.priv().privGetTransactionCount(accountAddress, privacyGroupId).send();
+      PrivRequestFactory.PrivCreatePrivacyGroupResponse result =
+          node.priv().privCreatePrivacyGroup(addresses, name, description).send();
       assertThat(result).isNotNull();
-      return result.getTransactionCount();
+      return result.getResult();
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }

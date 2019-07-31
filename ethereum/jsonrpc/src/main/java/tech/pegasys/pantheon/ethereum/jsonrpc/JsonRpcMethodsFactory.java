@@ -337,7 +337,8 @@ public class JsonRpcMethodsFactory {
       if (priv) {
         addMethods(
             enabledMethods,
-            new PrivCreatePrivacyGroup(new Enclave(privacyParameters.getEnclaveUri()), parameter),
+            new PrivCreatePrivacyGroup(
+                new Enclave(privacyParameters.getEnclaveUri()), privacyParameters, parameter),
             new PrivDeletePrivacyGroup(
                 new Enclave(privacyParameters.getEnclaveUri()), privacyParameters, parameter),
             new PrivFindPrivacyGroup(new Enclave(privacyParameters.getEnclaveUri()), parameter),
