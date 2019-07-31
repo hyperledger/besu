@@ -127,8 +127,8 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
 
     assertThat(privacyGroups.size()).isEqualTo(1);
     assertThat(privacyGroups.get(0).getPrivacyGroupId()).isEqualTo(privacyGroupId);
-    assertThat(privacyGroups.get(0).getName()).isEqualTo(null);
-    assertThat(privacyGroups.get(0).getDescription()).isEqualTo(null);
+    assertThat(privacyGroups.get(0).getName()).isEqualTo("Default Name");
+    assertThat(privacyGroups.get(0).getDescription()).isEqualTo("Default Description");
     assertThat(privacyGroups.get(0).getMembers().length).isEqualTo(2);
   }
 }
