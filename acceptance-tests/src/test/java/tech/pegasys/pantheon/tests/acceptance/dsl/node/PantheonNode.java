@@ -39,6 +39,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2.Ibft2Request
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.login.LoginRequestFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermissioningJsonRpcRequestFactory;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.priv.PrivRequestFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -290,6 +291,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
               new PermissioningJsonRpcRequestFactory(web3jService),
               new AdminRequestFactory(web3jService),
               new EeaRequestFactory(web3jService),
+              new PrivRequestFactory(web3jService),
               new CustomRequestFactory(web3jService),
               websocketService,
               loginRequestFactory());

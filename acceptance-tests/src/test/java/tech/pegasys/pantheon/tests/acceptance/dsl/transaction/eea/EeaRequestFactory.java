@@ -19,7 +19,6 @@ import org.assertj.core.util.Lists;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
-import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.Log;
 
 public class EeaRequestFactory {
@@ -98,14 +97,5 @@ public class EeaRequestFactory {
         Lists.newArrayList(txHash),
         web3jService,
         PrivateTransactionReceiptResponse.class);
-  }
-
-  public Request<?, EthGetTransactionCount> privGetTransactionCount(
-      final String accountAddress, final String privacyGroupId) {
-    return new Request<>(
-        "priv_getTransactionCount",
-        Lists.newArrayList(accountAddress, privacyGroupId),
-        web3jService,
-        EthGetTransactionCount.class);
   }
 }

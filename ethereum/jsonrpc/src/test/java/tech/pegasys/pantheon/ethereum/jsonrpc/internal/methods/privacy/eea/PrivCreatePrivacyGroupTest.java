@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.PrivacyGroup;
+import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.priv.PrivCreatePrivacyGroup;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -26,9 +27,10 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessRe
 
 import org.junit.Test;
 
-public class EeaCreatePrivacyGroupTest {
+public class PrivCreatePrivacyGroupTest {
 
   private final Enclave enclave = mock(Enclave.class);
+  private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
   private final JsonRpcParameter parameters = new JsonRpcParameter();
 
   private final String from = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
@@ -44,14 +46,15 @@ public class EeaCreatePrivacyGroupTest {
 
   @Test
   public void verifyCreatePrivacyGroup() throws Exception {
-    PrivacyGroup privacyGroup =
+    final PrivacyGroup privacyGroup =
         new PrivacyGroup(privacyGroupId, PrivacyGroup.Type.PANTHEON, name, description, addresses);
     when(enclave.createPrivacyGroup(any())).thenReturn(privacyGroup);
+    when(privacyParameters.getEnclavePublicKey()).thenReturn(from);
 
     final PrivCreatePrivacyGroup eeaCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, parameters);
+        new PrivCreatePrivacyGroup(enclave, privacyParameters, parameters);
 
-    Object[] params = new Object[] {from, name, description, addresses};
+    final Object[] params = new Object[] {addresses, name, description};
     final JsonRpcRequest request = new JsonRpcRequest("1", "priv_createPrivacyGroup", params);
 
     final JsonRpcSuccessResponse response =

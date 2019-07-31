@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.ibft2.Ibft2Request
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.login.LoginRequestFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.perm.PermissioningJsonRpcRequestFactory;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.priv.PrivRequestFactory;
 
 import java.util.Optional;
 
@@ -33,6 +34,7 @@ public class NodeRequests {
   private final PermissioningJsonRpcRequestFactory perm;
   private final AdminRequestFactory admin;
   private final EeaRequestFactory eea;
+  private final PrivRequestFactory priv;
   private final CustomRequestFactory custom;
   private final Optional<WebSocketService> websocketService;
   private final LoginRequestFactory login;
@@ -44,6 +46,7 @@ public class NodeRequests {
       final PermissioningJsonRpcRequestFactory perm,
       final AdminRequestFactory admin,
       final EeaRequestFactory eea,
+      final PrivRequestFactory priv,
       final CustomRequestFactory custom,
       final Optional<WebSocketService> websocketService,
       final LoginRequestFactory login) {
@@ -53,6 +56,7 @@ public class NodeRequests {
     this.perm = perm;
     this.admin = admin;
     this.eea = eea;
+    this.priv = priv;
     this.custom = custom;
     this.websocketService = websocketService;
     this.login = login;
@@ -88,6 +92,10 @@ public class NodeRequests {
 
   public EeaRequestFactory eea() {
     return eea;
+  }
+
+  public PrivRequestFactory priv() {
+    return priv;
   }
 
   public LoginRequestFactory login() {

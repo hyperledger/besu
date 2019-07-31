@@ -13,7 +13,12 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.privacy;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaSendRawTransactionTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.priv.PrivCreatePrivacyGroupTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.priv.PrivCreatePrivacyGroupWithoutOptionalParamsTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.priv.PrivFindPrivacyGroupTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.priv.PrivGetTransactionCountTransaction;
+
+import java.util.List;
 
 public class PrivateTransactions {
 
@@ -32,5 +37,19 @@ public class PrivateTransactions {
   public PrivGetTransactionCountTransaction getTransactionCount(
       final String address, final String privacyGroupId) {
     return new PrivGetTransactionCountTransaction(address, privacyGroupId);
+  }
+
+  public PrivCreatePrivacyGroupTransaction createPrivacyGroup(
+      final List<String> addresses, final String name, final String description) {
+    return new PrivCreatePrivacyGroupTransaction(addresses, name, description);
+  }
+
+  public PrivCreatePrivacyGroupWithoutOptionalParamsTransaction
+      createPrivacyGroupWithoutOptionalParams(final List<String> addresses) {
+    return new PrivCreatePrivacyGroupWithoutOptionalParamsTransaction(addresses);
+  }
+
+  public PrivFindPrivacyGroupTransaction findPrivacyGroup(final List<String> addresses) {
+    return new PrivFindPrivacyGroupTransaction(addresses);
   }
 }

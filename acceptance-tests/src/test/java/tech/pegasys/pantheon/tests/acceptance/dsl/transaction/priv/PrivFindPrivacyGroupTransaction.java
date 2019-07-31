@@ -14,32 +14,29 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.enclave.types.PrivacyGroup;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
-import java.math.BigInteger;
+import java.util.List;
 
-import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
+public class PrivFindPrivacyGroupTransaction implements Transaction<List<PrivacyGroup>> {
 
-public class PrivGetTransactionCountTransaction implements Transaction<BigInteger> {
+  private final List<String> addresses;
 
-  private final String accountAddress;
-  private String privacyGroupId;
+  public PrivFindPrivacyGroupTransaction(final List<String> addresses) {
 
-  public PrivGetTransactionCountTransaction(
-      final String accountAddress, final String privacyGroupId) {
-    this.accountAddress = accountAddress;
-    this.privacyGroupId = privacyGroupId;
+    this.addresses = addresses;
   }
 
   @Override
-  public BigInteger execute(final NodeRequests node) {
+  public List<PrivacyGroup> execute(final NodeRequests node) {
     try {
-      EthGetTransactionCount result =
-          node.priv().privGetTransactionCount(accountAddress, privacyGroupId).send();
+      PrivRequestFactory.PrivFindPrivacyGroupResponse result =
+          node.priv().privFindPrivacyGroup(addresses).send();
       assertThat(result).isNotNull();
-      return result.getTransactionCount();
+      return result.getResult();
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
