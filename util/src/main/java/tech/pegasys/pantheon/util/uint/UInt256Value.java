@@ -166,6 +166,25 @@ public interface UInt256Value<T extends UInt256Value<T>> extends Bytes32Backed, 
     return "0x" + hex.substring(i);
   }
 
+  /**
+   * @return This value represented as a byte-minimal hexadecimal string (without leading zero
+   *     pairs).
+   */
+  default String toStrictShortHexString() {
+    final String hex = toHexString();
+    // Skipping '0x'
+    if (hex.charAt(2) != '0') return hex;
+
+    int i = 3;
+    while (i < hex.length() - 1 && hex.charAt(i) == '0') {
+      i++;
+    }
+    // Align the trim so we get full bytes, not stray nybbles.
+    i = i & 0xFFFFFFFE;
+
+    return "0x" + hex.substring(i);
+  }
+
   /** @return This value represented as an hexadecimal string without a 0x prefix. */
   default String toUnprefixedHexString() {
     return toHexString().substring(2);

@@ -191,7 +191,7 @@ public class UInt256BytesTest {
   }
 
   @Test
-  public void hexStrings() {
+  public void shortHexStrings() {
     assertThat(UInt256.of(0).toShortHexString()).isEqualTo("0x0");
     assertThat(UInt256.of(1).toShortHexString()).isEqualTo("0x1");
     assertThat(UInt256.fromHexString("0xdeadbeef").toShortHexString()).isEqualTo("0xdeadbeef");
@@ -202,6 +202,33 @@ public class UInt256BytesTest {
         .isEqualTo("0xdecafbad");
     assertThat(UInt256.fromHexString("cafebabe").toShortHexString()).isEqualTo("0xcafebabe");
     assertThat(UInt256.fromHexString("facefeed").toShortHexString()).isEqualTo("0xfacefeed");
+  }
+
+  @Test
+  public void strictShortHexStrings() {
+    assertThat(UInt256.of(0).toStrictShortHexString()).isEqualTo("0x00");
+    assertThat(UInt256.of(1).toStrictShortHexString()).isEqualTo("0x01");
+    assertThat(UInt256.fromHexString("0xdeadbeef").toStrictShortHexString())
+        .isEqualTo("0xdeadbeef");
+    assertThat(
+            UInt256.fromHexString(
+                    "0x00000000000000000000000000000000000000000000000000000000decafbad")
+                .toStrictShortHexString())
+        .isEqualTo("0xdecafbad");
+    assertThat(UInt256.fromHexString("cafebabe").toStrictShortHexString()).isEqualTo("0xcafebabe");
+    assertThat(UInt256.fromHexString("facefeed").toStrictShortHexString()).isEqualTo("0xfacefeed");
+    assertThat(UInt256.fromHexString("0xdedbeef").toStrictShortHexString()).isEqualTo("0x0dedbeef");
+    assertThat(
+            UInt256.fromHexString(
+                    "0x000000000000000000000000000000000000000000000000000000000dcafbad")
+                .toStrictShortHexString())
+        .isEqualTo("0x0dcafbad");
+    assertThat(UInt256.fromHexString("cafebab").toStrictShortHexString()).isEqualTo("0x0cafebab");
+    assertThat(UInt256.fromHexString("facefed").toStrictShortHexString()).isEqualTo("0x0facefed");
+  }
+
+  @Test
+  public void fullHexStrings() {
     assertThat(UInt256.of(0).toHexString())
         .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000000");
     assertThat(UInt256.of(1).toHexString())
