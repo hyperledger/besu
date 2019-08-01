@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Map;
 
-import io.vertx.core.json.JsonObject;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
 
 public class CliqueConfigOptionsTest {
@@ -63,9 +63,11 @@ public class CliqueConfigOptionsTest {
   }
 
   private CliqueConfigOptions fromConfigOptions(final Map<String, Object> cliqueConfigOptions) {
-    return GenesisConfigFile.fromConfig(
-            new JsonObject(singletonMap("config", singletonMap("clique", cliqueConfigOptions))))
-        .getConfigOptions()
-        .getCliqueConfigOptions();
+    final ObjectNode rootNode = JsonUtil.createEmptyObjectNode();
+    final ObjectNode configNode = JsonUtil.createEmptyObjectNode();
+    final ObjectNode options = JsonUtil.objectNodeFromMap(cliqueConfigOptions);
+    configNode.set("clique", options);
+    rootNode.set("config", configNode);
+    return GenesisConfigFile.fromConfig(rootNode).getConfigOptions().getCliqueConfigOptions();
   }
 }

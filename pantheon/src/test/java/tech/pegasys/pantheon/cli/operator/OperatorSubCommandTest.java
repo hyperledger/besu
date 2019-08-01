@@ -21,6 +21,7 @@ import static java.util.Arrays.stream;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.contentOf;
 import static org.junit.Assert.assertTrue;
 import static tech.pegasys.pantheon.cli.operator.OperatorSubCommandTest.Cmd.cmd;
@@ -152,15 +153,36 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
         asList("key.pub", "priv.test"));
   }
 
-  @Test(expected = CommandLine.ExecutionException.class)
-  public void shouldFailIfDuplicateFiles() throws IOException {
-    runCmdAndCheckOutput(
-        cmd("--private-key-file-name", "dup.test", "--public-key-file-name", "dup.test"),
-        "/operator/config_generate_keys.json",
-        tmpOutputDirectoryPath,
-        "genesis.json",
-        true,
-        asList("key.pub", "priv.test"));
+  @Test
+  public void shouldFailIfDuplicateFiles() {
+    assertThatThrownBy(
+            () ->
+                runCmdAndCheckOutput(
+                    cmd(
+                        "--private-key-file-name",
+                        "dup.test",
+                        "--public-key-file-name",
+                        "dup.test"),
+                    "/operator/config_generate_keys.json",
+                    tmpOutputDirectoryPath,
+                    "genesis.json",
+                    true,
+                    asList("key.pub", "priv.test")))
+        .isInstanceOf(CommandLine.ExecutionException.class);
+  }
+
+  @Test
+  public void shouldFailIfPublicKeysAreWrongType() {
+    assertThatThrownBy(
+            () ->
+                runCmdAndCheckOutput(
+                    cmd(),
+                    "/operator/config_import_keys_invalid_keys.json",
+                    tmpOutputDirectoryPath,
+                    "genesis.json",
+                    false,
+                    singletonList("key.pub")))
+        .isInstanceOf(CommandLine.ExecutionException.class);
   }
 
   @Test(expected = CommandLine.ExecutionException.class)

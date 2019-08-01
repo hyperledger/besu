@@ -22,6 +22,7 @@ import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.create
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
+import tech.pegasys.pantheon.config.JsonUtil;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -36,6 +37,7 @@ import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 
 import java.io.IOException;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,8 +57,10 @@ public class NodeSmartContractPermissioningControllerTest {
 
     final String emptyContractFile =
         Resources.toString(this.getClass().getResource(resourceName), UTF_8);
+
+    final ObjectNode jsonData = JsonUtil.objectNodeFromString(emptyContractFile, true);
     final GenesisState genesisState =
-        GenesisState.fromConfig(GenesisConfigFile.fromConfig(emptyContractFile), protocolSchedule);
+        GenesisState.fromConfig(GenesisConfigFile.fromConfig(jsonData), protocolSchedule);
 
     final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
     final WorldStateArchive worldArchive = createInMemoryWorldStateArchive();

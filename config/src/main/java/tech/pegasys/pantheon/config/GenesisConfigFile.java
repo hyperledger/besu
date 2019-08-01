@@ -15,22 +15,23 @@ package tech.pegasys.pantheon.config;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Streams;
 import com.google.common.io.Resources;
-import io.vertx.core.json.JsonObject;
 
 public class GenesisConfigFile {
 
-  public static final GenesisConfigFile DEFAULT = new GenesisConfigFile(new JsonObject());
+  public static final GenesisConfigFile DEFAULT =
+      new GenesisConfigFile(JsonUtil.createEmptyObjectNode());
 
-  private final JsonObject configRoot;
+  private final ObjectNode configRoot;
 
-  private GenesisConfigFile(final JsonObject config) {
+  private GenesisConfigFile(final ObjectNode config) {
     this.configRoot = config;
   }
 
@@ -52,26 +53,36 @@ public class GenesisConfigFile {
     }
   }
 
-  public static GenesisConfigFile fromConfig(final String config) {
-    return fromConfig(new JsonObject(config));
+  public static GenesisConfigFile fromConfig(final String jsonString) {
+    // TODO: Should we disable comments?
+    final boolean allowComments = true;
+    final ObjectNode rootNode = JsonUtil.objectNodeFromString(jsonString, allowComments);
+    return fromConfig(rootNode);
   }
 
-  public static GenesisConfigFile fromConfig(final JsonObject config) {
+  public static GenesisConfigFile fromConfig(final ObjectNode config) {
     return new GenesisConfigFile(normalizeKeys(config));
   }
 
   public GenesisConfigOptions getConfigOptions() {
-    return new JsonGenesisConfigOptions(configRoot.getJsonObject("config"));
+    ObjectNode config =
+        JsonUtil.getObjectNode(configRoot, "config").orElse(JsonUtil.createEmptyObjectNode());
+    return new JsonGenesisConfigOptions(config);
   }
 
   public Stream<GenesisAllocation> streamAllocations() {
-    final JsonObject allocations = configRoot.getJsonObject("alloc", new JsonObject());
-    return allocations.fieldNames().stream()
-        .map(key -> new GenesisAllocation(key, allocations.getJsonObject(key)));
+    return JsonUtil.getObjectNode(configRoot, "alloc").stream()
+        .flatMap(
+            allocations ->
+                Streams.stream(allocations.fieldNames())
+                    .map(
+                        key ->
+                            new GenesisAllocation(
+                                key, JsonUtil.getObjectNode(allocations, key).get())));
   }
 
   public String getParentHash() {
-    return configRoot.getString("parenthash", "");
+    return JsonUtil.getString(configRoot, "parenthash", "");
   }
 
   public String getDifficulty() {
@@ -79,7 +90,7 @@ public class GenesisConfigFile {
   }
 
   public String getExtraData() {
-    return configRoot.getString("extradata", "");
+    return JsonUtil.getString(configRoot, "extradata", "");
   }
 
   public long getGasLimit() {
@@ -87,27 +98,27 @@ public class GenesisConfigFile {
   }
 
   public String getMixHash() {
-    return configRoot.getString("mixhash", "");
+    return JsonUtil.getString(configRoot, "mixhash", "");
   }
 
   public String getNonce() {
-    return configRoot.getString("nonce", "0x0");
+    return JsonUtil.getValueAsString(configRoot, "nonce", "0x0");
   }
 
   public Optional<String> getCoinbase() {
-    return Optional.ofNullable(configRoot.getString("coinbase"));
+    return JsonUtil.getString(configRoot, "coinbase");
   }
 
   public long getTimestamp() {
-    return parseLong("timestamp", configRoot.getString("timestamp", "0x0"));
+    return parseLong("timestamp", JsonUtil.getValueAsString(configRoot, "timestamp", "0x0"));
   }
 
   private String getRequiredString(final String key) {
-    if (!configRoot.containsKey(key)) {
+    if (!configRoot.has(key)) {
       throw new IllegalArgumentException(
           String.format("Invalid genesis block configuration, missing value for '%s'", key));
     }
-    return configRoot.getString(key);
+    return configRoot.get(key).asText();
   }
 
   private long parseLong(final String name, final String value) {
@@ -123,28 +134,24 @@ public class GenesisConfigFile {
     }
   }
 
-  /* Converts the {@link JsonObject} describing the Genesis Block to a {@link Map}. This method
-   * converts all nested {@link JsonObject} to {@link Map} as well. Also, note that all keys are
-   * converted to lowercase for easier lookup since the keys in a 'genesis.json' file are assumed
+  /* Converts all to lowercase for easier lookup since the keys in a 'genesis.json' file are assumed
    * case insensitive.
    */
-  @SuppressWarnings("unchecked")
-  private static JsonObject normalizeKeys(final JsonObject genesis) {
-    final Map<String, Object> normalized = new HashMap<>();
+  private static ObjectNode normalizeKeys(final ObjectNode genesis) {
+    final ObjectNode normalized = JsonUtil.createEmptyObjectNode();
     genesis
-        .getMap()
-        .forEach(
-            (key, value) -> {
+        .fields()
+        .forEachRemaining(
+            entry -> {
+              final String key = entry.getKey();
+              final JsonNode value = entry.getValue();
               final String normalizedKey = key.toLowerCase(Locale.US);
-              if (value instanceof JsonObject) {
-                normalized.put(normalizedKey, normalizeKeys((JsonObject) value));
-              } else if (value instanceof Map) {
-                normalized.put(
-                    normalizedKey, normalizeKeys(new JsonObject((Map<String, Object>) value)));
+              if (value instanceof ObjectNode) {
+                normalized.set(normalizedKey, normalizeKeys((ObjectNode) value));
               } else {
-                normalized.put(normalizedKey, value);
+                normalized.set(normalizedKey, value);
               }
             });
-    return new JsonObject(normalized);
+    return normalized;
   }
 }

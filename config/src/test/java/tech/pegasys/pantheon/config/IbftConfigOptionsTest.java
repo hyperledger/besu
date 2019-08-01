@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Map;
 
-import io.vertx.core.json.JsonObject;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
 
 public class IbftConfigOptionsTest {
@@ -179,9 +179,11 @@ public class IbftConfigOptionsTest {
   }
 
   private IbftConfigOptions fromConfigOptions(final Map<String, Object> ibftConfigOptions) {
-    return GenesisConfigFile.fromConfig(
-            new JsonObject(singletonMap("config", singletonMap("ibft", ibftConfigOptions))))
-        .getConfigOptions()
-        .getIbftLegacyConfigOptions();
+    final ObjectNode rootNode = JsonUtil.createEmptyObjectNode();
+    final ObjectNode configNode = JsonUtil.createEmptyObjectNode();
+    final ObjectNode options = JsonUtil.objectNodeFromMap(ibftConfigOptions);
+    configNode.set("ibft", options);
+    rootNode.set("config", configNode);
+    return GenesisConfigFile.fromConfig(rootNode).getConfigOptions().getIbftLegacyConfigOptions();
   }
 }

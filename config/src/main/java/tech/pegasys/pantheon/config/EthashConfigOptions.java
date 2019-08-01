@@ -15,20 +15,22 @@ package tech.pegasys.pantheon.config;
 import java.util.Map;
 import java.util.OptionalLong;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
-import io.vertx.core.json.JsonObject;
 
 public class EthashConfigOptions {
 
-  public static final EthashConfigOptions DEFAULT = new EthashConfigOptions(new JsonObject());;
-  private final JsonObject ethashConfigRoot;
+  public static final EthashConfigOptions DEFAULT =
+      new EthashConfigOptions(JsonUtil.createEmptyObjectNode());
 
-  EthashConfigOptions(final JsonObject ethashConfigRoot) {
+  private final ObjectNode ethashConfigRoot;
+
+  EthashConfigOptions(final ObjectNode ethashConfigRoot) {
     this.ethashConfigRoot = ethashConfigRoot;
   }
 
   public OptionalLong getFixedDifficulty() {
-    return ConfigUtil.getOptionalLong(ethashConfigRoot, "fixeddifficulty");
+    return JsonUtil.getLong(ethashConfigRoot, "fixeddifficulty");
   }
 
   Map<String, Object> asMap() {

@@ -14,12 +14,13 @@ package tech.pegasys.pantheon.config;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
-import io.vertx.core.json.JsonObject;
 
 public class IbftConfigOptions {
 
-  public static final IbftConfigOptions DEFAULT = new IbftConfigOptions(new JsonObject());
+  public static final IbftConfigOptions DEFAULT =
+      new IbftConfigOptions(JsonUtil.createEmptyObjectNode());
 
   private static final long DEFAULT_EPOCH_LENGTH = 30_000;
   private static final int DEFAULT_BLOCK_PERIOD_SECONDS = 1;
@@ -32,69 +33,70 @@ public class IbftConfigOptions {
   private static final int DEFAULT_FUTURE_MESSAGES_LIMIT = 1000;
   private static final int DEFAULT_FUTURE_MESSAGES_MAX_DISTANCE = 10;
 
-  private final JsonObject ibftConfigRoot;
+  private final ObjectNode ibftConfigRoot;
 
-  IbftConfigOptions(final JsonObject ibftConfigRoot) {
+  IbftConfigOptions(final ObjectNode ibftConfigRoot) {
     this.ibftConfigRoot = ibftConfigRoot;
   }
 
   public long getEpochLength() {
-    return ibftConfigRoot.getLong("epochlength", DEFAULT_EPOCH_LENGTH);
+    return JsonUtil.getLong(ibftConfigRoot, "epochlength", DEFAULT_EPOCH_LENGTH);
   }
 
   public int getBlockPeriodSeconds() {
-    return ibftConfigRoot.getInteger("blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
+    return JsonUtil.getInt(ibftConfigRoot, "blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
   }
 
   public int getRequestTimeoutSeconds() {
-    return ibftConfigRoot.getInteger("requesttimeoutseconds", DEFAULT_ROUND_EXPIRY_SECONDS);
+    return JsonUtil.getInt(ibftConfigRoot, "requesttimeoutseconds", DEFAULT_ROUND_EXPIRY_SECONDS);
   }
 
   public int getGossipedHistoryLimit() {
-    return ibftConfigRoot.getInteger("gossipedhistorylimit", DEFAULT_GOSSIPED_HISTORY_LIMIT);
+    return JsonUtil.getInt(ibftConfigRoot, "gossipedhistorylimit", DEFAULT_GOSSIPED_HISTORY_LIMIT);
   }
 
   public int getMessageQueueLimit() {
-    return ibftConfigRoot.getInteger("messagequeuelimit", DEFAULT_MESSAGE_QUEUE_LIMIT);
+    return JsonUtil.getInt(ibftConfigRoot, "messagequeuelimit", DEFAULT_MESSAGE_QUEUE_LIMIT);
   }
 
   public int getDuplicateMessageLimit() {
-    return ibftConfigRoot.getInteger("duplicatemessagelimit", DEFAULT_DUPLICATE_MESSAGE_LIMIT);
+    return JsonUtil.getInt(
+        ibftConfigRoot, "duplicatemessagelimit", DEFAULT_DUPLICATE_MESSAGE_LIMIT);
   }
 
   public int getFutureMessagesLimit() {
-    return ibftConfigRoot.getInteger("futuremessageslimit", DEFAULT_FUTURE_MESSAGES_LIMIT);
+    return JsonUtil.getInt(ibftConfigRoot, "futuremessageslimit", DEFAULT_FUTURE_MESSAGES_LIMIT);
   }
 
   public int getFutureMessagesMaxDistance() {
-    return ibftConfigRoot.getInteger(
-        "futuremessagesmaxdistance", DEFAULT_FUTURE_MESSAGES_MAX_DISTANCE);
+    return JsonUtil.getInt(
+        ibftConfigRoot, "futuremessagesmaxdistance", DEFAULT_FUTURE_MESSAGES_MAX_DISTANCE);
   }
 
   Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
-    if (ibftConfigRoot.containsKey("epochlength")) {
+    if (ibftConfigRoot.has("epochlength")) {
       builder.put("epochLength", getEpochLength());
     }
-    if (ibftConfigRoot.containsKey("blockperiodseconds")) {
+    if (ibftConfigRoot.has("blockperiodseconds")) {
       builder.put("blockPeriodSeconds", getBlockPeriodSeconds());
     }
-    if (ibftConfigRoot.containsKey("requesttimeoutseconds")) {
+    if (ibftConfigRoot.has("requesttimeoutseconds")) {
       builder.put("requestTimeoutSeconds", getRequestTimeoutSeconds());
     }
-    if (ibftConfigRoot.containsKey("gossipedhistorylimit")) {
+    if (ibftConfigRoot.has("gossipedhistorylimit")) {
       builder.put("gossipedHistoryLimit", getGossipedHistoryLimit());
     }
-    if (ibftConfigRoot.containsKey("messagequeuelimit")) {
+    if (ibftConfigRoot.has("messagequeuelimit")) {
       builder.put("messageQueueLimit", getMessageQueueLimit());
     }
-    if (ibftConfigRoot.containsKey("duplicatemessagelimit")) {
+    if (ibftConfigRoot.has("duplicatemessagelimit")) {
       builder.put("duplicateMessageLimit", getDuplicateMessageLimit());
     }
-    if (ibftConfigRoot.containsKey("futuremessageslimit")) {
+    if (ibftConfigRoot.has("futuremessageslimit")) {
       builder.put("futureMessagesLimit", getFutureMessagesLimit());
     }
-    if (ibftConfigRoot.containsKey("futuremessagesmaxdistance")) {
+    if (ibftConfigRoot.has("futuremessagesmaxdistance")) {
       builder.put("futureMessagesMaxDistance", getFutureMessagesMaxDistance());
     }
     return builder.build();

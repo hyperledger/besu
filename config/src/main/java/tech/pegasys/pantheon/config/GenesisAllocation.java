@@ -12,15 +12,16 @@
  */
 package tech.pegasys.pantheon.config;
 
+import java.util.HashMap;
 import java.util.Map;
 
-import io.vertx.core.json.JsonObject;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class GenesisAllocation {
   private final String address;
-  private final JsonObject data;
+  private final ObjectNode data;
 
-  GenesisAllocation(final String address, final JsonObject data) {
+  GenesisAllocation(final String address, final ObjectNode data) {
     this.address = address;
     this.data = data;
   }
@@ -30,22 +31,30 @@ public class GenesisAllocation {
   }
 
   public String getBalance() {
-    return data.getString("balance", "0");
+    return JsonUtil.getValueAsString(data, "balance", "0");
   }
 
   public String getCode() {
-    return data.getString("code");
+    return JsonUtil.getString(data, "code", null);
   }
 
   public String getNonce() {
-    return data.getString("nonce", "0");
+    return JsonUtil.getValueAsString(data, "nonce", "0");
   }
 
   public String getVersion() {
-    return data.getString("version");
+    return JsonUtil.getValueAsString(data, "version", null);
   }
 
-  public Map<String, Object> getStorage() {
-    return data.getJsonObject("storage", new JsonObject()).getMap();
+  public Map<String, String> getStorage() {
+    final Map<String, String> map = new HashMap<>();
+    JsonUtil.getObjectNode(data, "storage")
+        .orElse(JsonUtil.createEmptyObjectNode())
+        .fields()
+        .forEachRemaining(
+            (entry) -> {
+              map.put(entry.getKey(), entry.getValue().asText());
+            });
+    return map;
   }
 }

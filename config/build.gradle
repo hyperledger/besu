@@ -28,7 +28,6 @@ jar {
 dependencies {
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
-  implementation 'io.vertx:vertx-core'
   implementation 'org.apache.logging.log4j:log4j-api'
 
   runtime 'org.apache.logging.log4j:log4j-core'

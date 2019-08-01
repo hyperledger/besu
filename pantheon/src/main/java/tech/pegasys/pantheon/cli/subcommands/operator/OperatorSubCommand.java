@@ -21,6 +21,7 @@ import static tech.pegasys.pantheon.cli.subcommands.operator.OperatorSubCommand.
 
 import tech.pegasys.pantheon.cli.PantheonCommand;
 import tech.pegasys.pantheon.config.JsonGenesisConfigOptions;
+import tech.pegasys.pantheon.config.JsonUtil;
 import tech.pegasys.pantheon.consensus.ibft.IbftExtraData;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -39,9 +40,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import picocli.CommandLine.Command;
@@ -129,10 +131,10 @@ public class OperatorSubCommand implements Runnable {
     @ParentCommand
     private OperatorSubCommand parentCommand; // Picocli injects reference to parent command
 
-    private JsonObject operatorConfig;
-    private JsonObject genesisConfig;
-    private JsonObject blockchainConfig;
-    private JsonObject nodesConfig;
+    private ObjectNode operatorConfig;
+    private ObjectNode genesisConfig;
+    private ObjectNode blockchainConfig;
+    private ObjectNode nodesConfig;
     private boolean generateNodesKeys;
     private List<Address> addressesForGenesisExtraData = new ArrayList<>();
     private Path keysDirectory;
@@ -171,19 +173,25 @@ public class OperatorSubCommand implements Runnable {
     /** Imports public keys from input configuration. */
     private void importPublicKeysFromConfig() {
       LOG.info("Importing public keys from configuration.");
-      JsonArray keys = nodesConfig.getJsonArray("keys");
-      keys.stream().forEach(this::importPublicKey);
+      JsonUtil.getArrayNode(nodesConfig, "keys")
+          .ifPresent(keys -> keys.forEach(this::importPublicKey));
     }
 
     /**
      * Imports a single public key.
      *
-     * @param publicKeyObject The public key.
+     * @param publicKeyJson The public key.
      */
-    private void importPublicKey(final Object publicKeyObject) {
+    private void importPublicKey(final JsonNode publicKeyJson) {
+      if (publicKeyJson.getNodeType() != JsonNodeType.STRING) {
+        throw new IllegalArgumentException(
+            "Invalid key json of type: " + publicKeyJson.getNodeType());
+      }
+      String publicKeyText = publicKeyJson.asText();
+
       try {
         final SECP256K1.PublicKey publicKey =
-            SECP256K1.PublicKey.create(BytesValue.fromHexString((String) publicKeyObject));
+            SECP256K1.PublicKey.create(BytesValue.fromHexString(publicKeyText));
         writeKeypair(publicKey, null);
         LOG.info("Public key imported from configuration.({})", publicKey.toString());
       } catch (IOException e) {
@@ -193,7 +201,7 @@ public class OperatorSubCommand implements Runnable {
 
     /** Generates nodes keypairs. */
     private void generateNodesKeys() {
-      final int nodesCount = nodesConfig.getInteger("count");
+      final int nodesCount = JsonUtil.getInt(nodesConfig, "count", 0);
       LOG.info("Generating {} nodes keys.", nodesCount);
       IntStream.range(0, nodesCount).forEach(this::generateNodeKeypair);
     }
@@ -241,8 +249,9 @@ public class OperatorSubCommand implements Runnable {
      * @throws IOException
      */
     private void processExtraData() {
+      final ObjectNode configNode = JsonUtil.getObjectNode(genesisConfig, "config").orElse(null);
       final JsonGenesisConfigOptions genesisConfigOptions =
-          JsonGenesisConfigOptions.fromJsonObject(genesisConfig.getJsonObject("config"));
+          JsonGenesisConfigOptions.fromJsonObject(configNode);
       if (genesisConfigOptions.isIbft2()) {
         LOG.info("Generating IBFT extra data.");
         final String extraData =
@@ -265,11 +274,18 @@ public class OperatorSubCommand implements Runnable {
     private void parseConfig() throws IOException {
       final String configString =
           Resources.toString(configurationFile.toPath().toUri().toURL(), UTF_8);
-      operatorConfig = new JsonObject(configString);
-      genesisConfig = operatorConfig.getJsonObject("genesis");
-      blockchainConfig = operatorConfig.getJsonObject("blockchain");
-      nodesConfig = blockchainConfig.getJsonObject("nodes");
-      generateNodesKeys = nodesConfig.getBoolean("generate", false);
+      final ObjectNode root = JsonUtil.objectNodeFromString(configString);
+      operatorConfig = root;
+      genesisConfig =
+          JsonUtil.getObjectNode(operatorConfig, "genesis")
+              .orElse(JsonUtil.createEmptyObjectNode());
+      blockchainConfig =
+          JsonUtil.getObjectNode(operatorConfig, "blockchain")
+              .orElse(JsonUtil.createEmptyObjectNode());
+      nodesConfig =
+          JsonUtil.getObjectNode(blockchainConfig, "nodes")
+              .orElse(JsonUtil.createEmptyObjectNode());
+      generateNodesKeys = JsonUtil.getBoolean(nodesConfig, "generate", false);
     }
 
     /**
@@ -301,11 +317,11 @@ public class OperatorSubCommand implements Runnable {
      * @throws IOException
      */
     private void writeGenesisFile(
-        final File directory, final String fileName, final JsonObject genesis) throws IOException {
+        final File directory, final String fileName, final ObjectNode genesis) throws IOException {
       LOG.info("Writing genesis file.");
       Files.write(
           directory.toPath().resolve(fileName),
-          genesis.encodePrettily().getBytes(UTF_8),
+          JsonUtil.getJson(genesis).getBytes(UTF_8),
           StandardOpenOption.CREATE_NEW);
     }
   }

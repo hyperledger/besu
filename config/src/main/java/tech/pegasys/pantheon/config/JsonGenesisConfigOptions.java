@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.config;
 
-import static tech.pegasys.pantheon.config.ConfigUtil.getOptionalBigInteger;
+import static java.util.Objects.isNull;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -20,8 +20,8 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
-import io.vertx.core.json.JsonObject;
 
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
@@ -29,62 +29,62 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
   private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String CLIQUE_CONFIG_KEY = "clique";
-  private final JsonObject configRoot;
+  private final ObjectNode configRoot;
 
-  public static JsonGenesisConfigOptions fromJsonObject(final JsonObject configRoot) {
+  public static JsonGenesisConfigOptions fromJsonObject(final ObjectNode configRoot) {
     return new JsonGenesisConfigOptions(configRoot);
   }
 
-  JsonGenesisConfigOptions(final JsonObject configRoot) {
-    this.configRoot = configRoot != null ? configRoot : new JsonObject();
+  JsonGenesisConfigOptions(final ObjectNode maybeConfig) {
+    this.configRoot = isNull(maybeConfig) ? JsonUtil.createEmptyObjectNode() : maybeConfig;
   }
 
   @Override
   public boolean isEthHash() {
-    return configRoot.containsKey(ETHASH_CONFIG_KEY);
+    return configRoot.has(ETHASH_CONFIG_KEY);
   }
 
   @Override
   public boolean isIbftLegacy() {
-    return configRoot.containsKey(IBFT_LEGACY_CONFIG_KEY);
+    return configRoot.has(IBFT_LEGACY_CONFIG_KEY);
   }
 
   @Override
   public boolean isClique() {
-    return configRoot.containsKey(CLIQUE_CONFIG_KEY);
+    return configRoot.has(CLIQUE_CONFIG_KEY);
   }
 
   @Override
   public boolean isIbft2() {
-    return configRoot.containsKey(IBFT2_CONFIG_KEY);
+    return configRoot.has(IBFT2_CONFIG_KEY);
   }
 
   @Override
   public IbftConfigOptions getIbftLegacyConfigOptions() {
-    return isIbftLegacy()
-        ? new IbftConfigOptions(configRoot.getJsonObject(IBFT_LEGACY_CONFIG_KEY))
-        : IbftConfigOptions.DEFAULT;
+    return JsonUtil.getObjectNode(configRoot, IBFT_LEGACY_CONFIG_KEY)
+        .map(IbftConfigOptions::new)
+        .orElse(IbftConfigOptions.DEFAULT);
   }
 
   @Override
   public IbftConfigOptions getIbft2ConfigOptions() {
-    return isIbft2()
-        ? new IbftConfigOptions(configRoot.getJsonObject(IBFT2_CONFIG_KEY))
-        : IbftConfigOptions.DEFAULT;
+    return JsonUtil.getObjectNode(configRoot, IBFT2_CONFIG_KEY)
+        .map(IbftConfigOptions::new)
+        .orElse(IbftConfigOptions.DEFAULT);
   }
 
   @Override
   public CliqueConfigOptions getCliqueConfigOptions() {
-    return isClique()
-        ? new CliqueConfigOptions(configRoot.getJsonObject(CLIQUE_CONFIG_KEY))
-        : CliqueConfigOptions.DEFAULT;
+    return JsonUtil.getObjectNode(configRoot, CLIQUE_CONFIG_KEY)
+        .map(CliqueConfigOptions::new)
+        .orElse(CliqueConfigOptions.DEFAULT);
   }
 
   @Override
   public EthashConfigOptions getEthashConfigOptions() {
-    return isEthHash()
-        ? new EthashConfigOptions(configRoot.getJsonObject(ETHASH_CONFIG_KEY))
-        : EthashConfigOptions.DEFAULT;
+    return JsonUtil.getObjectNode(configRoot, ETHASH_CONFIG_KEY)
+        .map(EthashConfigOptions::new)
+        .orElse(EthashConfigOptions.DEFAULT);
   }
 
   @Override
@@ -133,21 +133,17 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public Optional<BigInteger> getChainId() {
-    return getOptionalBigInteger(configRoot, "chainid");
+    return JsonUtil.getValueAsString(configRoot, "chainid").map(BigInteger::new);
   }
 
   @Override
   public OptionalInt getContractSizeLimit() {
-    return configRoot.containsKey("contractsizelimit")
-        ? OptionalInt.of(configRoot.getInteger("contractsizelimit"))
-        : OptionalInt.empty();
+    return JsonUtil.getInt(configRoot, "contractsizelimit");
   }
 
   @Override
   public OptionalInt getEvmStackSize() {
-    return configRoot.containsKey("evmstacksize")
-        ? OptionalInt.of(configRoot.getInteger("evmstacksize"))
-        : OptionalInt.empty();
+    return JsonUtil.getInt(configRoot, "evmstacksize");
   }
 
   @Override
@@ -165,8 +161,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
         .ifPresent(
             l -> {
               builder.put("eip150Block", l);
-              if (configRoot.containsKey("eip150hash")) {
-                builder.put("eip150Hash", configRoot.getString("eip150hash"));
+              if (configRoot.has("eip150hash")) {
+                builder.put("eip150Hash", configRoot.get("eip150hash").asText());
               }
             });
     getSpuriousDragonBlockNumber()
@@ -197,6 +193,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   private OptionalLong getOptionalLong(final String key) {
-    return ConfigUtil.getOptionalLong(configRoot, key);
+    return JsonUtil.getLong(configRoot, key);
   }
 }

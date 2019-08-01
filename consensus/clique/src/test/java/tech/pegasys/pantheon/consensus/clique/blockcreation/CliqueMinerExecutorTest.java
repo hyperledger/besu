@@ -48,7 +48,6 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 
 import com.google.common.collect.Lists;
-import io.vertx.core.json.JsonObject;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -56,7 +55,7 @@ public class CliqueMinerExecutorTest {
 
   private static final int EPOCH_LENGTH = 10;
   private static final GenesisConfigOptions GENESIS_CONFIG_OPTIONS =
-      GenesisConfigFile.fromConfig(new JsonObject()).getConfigOptions();
+      GenesisConfigFile.fromConfig("{}").getConfigOptions();
   private final KeyPair proposerKeyPair = KeyPair.generate();
   private final Random random = new Random(21341234L);
   private Address localAddress;
