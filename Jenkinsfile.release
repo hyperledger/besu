@@ -73,10 +73,10 @@ pipeline {
 
                     def docker_folder = 'docker'
                     def reports_folder = docker_folder + '/reports'
-                    def pantheon = "pegasyseng/pantheon:develop"
                     def releaseVersion = "${params.RELEASE_VERSION.trim()}"
+                    def pantheon = "pegasyseng/pantheon:" + releaseVersion
                     def shortReleaseVersion = getShortVersion(releaseVersion)
-                    def additionalTags = [releaseVersion]
+                    def additionalTags = []
 
                     stage(stage_name + 'Build image') {
                         sh "echo Building docker image for release ${releaseVersion} with short version ${shortReleaseVersion}"
@@ -106,6 +106,7 @@ pipeline {
                                     additionalTags.add(shortReleaseVersion)
                                 }
                             }
+                            additionalTags.add('develop')
 
                             additionalTags.each { tag ->
                                 dockerImage.push tag.trim()

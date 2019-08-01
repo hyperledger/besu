@@ -503,10 +503,9 @@ tasks.register("dockerDistUntar") {
 task distDocker(type: Exec) {
   dependsOn dockerDistUntar
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def image="pegasyseng/pantheon:develop"
+  def image = project.hasProperty('release.releaseVersion') ? "pegasyseng/pantheon:" + project.property('release.releaseVersion') : "pegasyseng/pantheon:develop"
   def dockerBuildDir = "build/docker-pantheon/"
   workingDir "${dockerBuildDir}"
-
 
   doFirst {
     copy {
