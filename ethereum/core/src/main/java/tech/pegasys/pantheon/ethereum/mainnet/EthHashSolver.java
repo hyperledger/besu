@@ -32,7 +32,7 @@ public class EthHashSolver {
     private final EthHashSolverInputs inputs;
     private final CompletableFuture<EthHashSolution> nonceFuture;
 
-    public EthHashSolverJob(
+    EthHashSolverJob(
         final EthHashSolverInputs inputs, final CompletableFuture<EthHashSolution> nonceFuture) {
       this.inputs = inputs;
       this.nonceFuture = nonceFuture;
@@ -42,7 +42,7 @@ public class EthHashSolver {
       return new EthHashSolverJob(inputs, new CompletableFuture<>());
     }
 
-    public EthHashSolverInputs getInputs() {
+    EthHashSolverInputs getInputs() {
       return inputs;
     }
 
@@ -50,7 +50,7 @@ public class EthHashSolver {
       return nonceFuture.isDone();
     }
 
-    public void solvedWith(final EthHashSolution solution) {
+    void solvedWith(final EthHashSolution solution) {
       nonceFuture.complete(solution);
     }
 
@@ -62,7 +62,7 @@ public class EthHashSolver {
       nonceFuture.completeExceptionally(ex);
     }
 
-    public EthHashSolution getSolution() throws InterruptedException, ExecutionException {
+    EthHashSolution getSolution() throws InterruptedException, ExecutionException {
       return nonceFuture.get();
     }
   }
@@ -121,7 +121,7 @@ public class EthHashSolver {
   }
 
   public void cancel() {
-    currentJob.ifPresent(job -> job.cancel());
+    currentJob.ifPresent(EthHashSolverJob::cancel);
   }
 
   public Optional<EthHashSolverInputs> getWorkDefinition() {
@@ -137,7 +137,7 @@ public class EthHashSolver {
 
   public boolean submitSolution(final EthHashSolution solution) {
     final Optional<EthHashSolverJob> jobSnapshot = currentJob;
-    if (!jobSnapshot.isPresent()) {
+    if (jobSnapshot.isEmpty()) {
       return false;
     }
 
@@ -155,5 +155,9 @@ public class EthHashSolver {
       return true;
     }
     return false;
+  }
+
+  public Iterable<Long> getNonceGenerator() {
+    return nonceGenerator;
   }
 }

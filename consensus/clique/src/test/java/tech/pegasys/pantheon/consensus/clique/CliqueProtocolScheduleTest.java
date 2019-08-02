@@ -62,6 +62,7 @@ public class CliqueProtocolScheduleTest {
 
     assertThat(homestead.getName()).isEqualTo("Frontier");
     assertThat(homestead.getBlockReward()).isEqualTo(Wei.ZERO);
+    assertThat(homestead.isSkipZeroBlockRewards()).isEqualTo(true);
     assertThat(homestead.getDifficultyCalculator()).isInstanceOf(CliqueDifficultyCalculator.class);
   }
 }

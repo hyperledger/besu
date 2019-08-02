@@ -79,6 +79,7 @@ public class CliqueProtocolSchedule {
             MainnetBlockImporter::new,
             new CliqueDifficultyCalculator(localNodeAddress))
         .blockReward(Wei.ZERO)
+        .skipZeroBlockRewards(true)
         .miningBeneficiaryCalculator(CliqueHelpers::getProposerOfBlock)
         .blockHeaderFunctions(new CliqueBlockHeaderFunctions());
   }

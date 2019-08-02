@@ -12,11 +12,17 @@
  */
 package tech.pegasys.pantheon.ethereum.blockcreation;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockHeaderBuilder;
 import tech.pegasys.pantheon.ethereum.core.ExecutionContextTestFixture;
+import tech.pegasys.pantheon.ethereum.core.Hash;
+import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
+import tech.pegasys.pantheon.ethereum.core.ProcessableBlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -28,13 +34,14 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class EthHashBlockCreatorTest {
@@ -86,17 +93,17 @@ public class EthHashBlockCreatorTest {
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
     // A Hashrate should not exist in the block creator prior to creating a block
-    Assertions.assertThat(blockCreator.getHashesPerSecond().isPresent()).isFalse();
+    assertThat(blockCreator.getHashesPerSecond().isPresent()).isFalse();
 
     final Block actualBlock = blockCreator.createBlock(BLOCK_1_TIMESTAMP);
     final Block expectedBlock = ValidationTestUtils.readBlock(1);
 
-    Assertions.assertThat(actualBlock).isEqualTo(expectedBlock);
-    Assertions.assertThat(blockCreator.getHashesPerSecond().isPresent()).isTrue();
+    assertThat(actualBlock).isEqualTo(expectedBlock);
+    assertThat(blockCreator.getHashesPerSecond().isPresent()).isTrue();
   }
 
   @Test
-  public void createMainnetBlock1_fixedDifficulty1() throws IOException {
+  public void createMainnetBlock1_fixedDifficulty1() {
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
@@ -135,5 +142,120 @@ public class EthHashBlockCreatorTest {
     blockCreator.createBlock(BLOCK_1_TIMESTAMP);
     // If we weren't setting difficulty to 2^256-1 a difficulty of 1 would have caused a
     // IllegalArgumentException at the previous line, as 2^256 is 33 bytes.
+  }
+
+  @Test
+  public void rewardBeneficiary_zeroReward_skipZeroRewardsFalse() {
+    final ExecutionContextTestFixture executionContextTestFixture =
+        ExecutionContextTestFixture.builder()
+            .protocolSchedule(
+                new ProtocolScheduleBuilder<>(
+                        GenesisConfigFile.fromConfig(
+                                "{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
+                            .getConfigOptions(),
+                        BigInteger.valueOf(42),
+                        Function.identity(),
+                        PrivacyParameters.DEFAULT,
+                        false)
+                    .createProtocolSchedule())
+            .build();
+
+    final EthHashSolver solver = new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new Light());
+
+    final PendingTransactions pendingTransactions =
+        new PendingTransactions(
+            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
+            1,
+            TestClock.fixed(),
+            metricsSystem);
+
+    final EthHashBlockCreator blockCreator =
+        new EthHashBlockCreator(
+            BLOCK_1_COINBASE,
+            parent -> BLOCK_1_EXTRA_DATA,
+            pendingTransactions,
+            executionContextTestFixture.getProtocolContext(),
+            executionContextTestFixture.getProtocolSchedule(),
+            gasLimit -> gasLimit,
+            solver,
+            Wei.ZERO,
+            executionContextTestFixture.getBlockchain().getChainHeadHeader());
+
+    final MutableWorldState mutableWorldState =
+        executionContextTestFixture.getStateArchive().getMutable();
+    assertThat(mutableWorldState.get(BLOCK_1_COINBASE)).isNull();
+
+    final ProcessableBlockHeader header =
+        BlockHeaderBuilder.create()
+            .parentHash(Hash.ZERO)
+            .coinbase(BLOCK_1_COINBASE)
+            .difficulty(UInt256.ONE)
+            .number(1)
+            .gasLimit(1)
+            .timestamp(1)
+            .buildProcessableBlockHeader();
+
+    blockCreator.rewardBeneficiary(
+        mutableWorldState, header, Collections.emptyList(), Wei.ZERO, false);
+
+    assertThat(mutableWorldState.get(BLOCK_1_COINBASE)).isNotNull();
+    assertThat(mutableWorldState.get(BLOCK_1_COINBASE).getBalance()).isEqualTo(Wei.ZERO);
+  }
+
+  @Test
+  public void rewardBeneficiary_zeroReward_skipZeroRewardsTrue() {
+    final ExecutionContextTestFixture executionContextTestFixture =
+        ExecutionContextTestFixture.builder()
+            .protocolSchedule(
+                new ProtocolScheduleBuilder<>(
+                        GenesisConfigFile.fromConfig(
+                                "{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
+                            .getConfigOptions(),
+                        BigInteger.valueOf(42),
+                        Function.identity(),
+                        PrivacyParameters.DEFAULT,
+                        false)
+                    .createProtocolSchedule())
+            .build();
+
+    final EthHashSolver solver = new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new Light());
+
+    final PendingTransactions pendingTransactions =
+        new PendingTransactions(
+            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
+            1,
+            TestClock.fixed(),
+            metricsSystem);
+
+    final EthHashBlockCreator blockCreator =
+        new EthHashBlockCreator(
+            BLOCK_1_COINBASE,
+            parent -> BLOCK_1_EXTRA_DATA,
+            pendingTransactions,
+            executionContextTestFixture.getProtocolContext(),
+            executionContextTestFixture.getProtocolSchedule(),
+            gasLimit -> gasLimit,
+            solver,
+            Wei.ZERO,
+            executionContextTestFixture.getBlockchain().getChainHeadHeader());
+
+    final MutableWorldState mutableWorldState =
+        executionContextTestFixture.getStateArchive().getMutable();
+    assertThat(mutableWorldState.get(BLOCK_1_COINBASE)).isNull();
+
+    final ProcessableBlockHeader header =
+        BlockHeaderBuilder.create()
+            .parentHash(Hash.ZERO)
+            .coinbase(BLOCK_1_COINBASE)
+            .difficulty(UInt256.ONE)
+            .number(1)
+            .gasLimit(1)
+            .timestamp(1)
+            .buildProcessableBlockHeader();
+
+    blockCreator.rewardBeneficiary(
+        mutableWorldState, header, Collections.emptyList(), Wei.ZERO, true);
+
+    assertThat(mutableWorldState.get(BLOCK_1_COINBASE)).isNull();
   }
 }

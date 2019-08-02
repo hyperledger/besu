@@ -35,6 +35,7 @@ import java.util.function.Supplier;
 public class ProtocolSpecBuilder<T> {
   private Supplier<GasCalculator> gasCalculatorBuilder;
   private Wei blockReward;
+  private boolean skipZeroBlockRewards;
   private BlockHeaderFunctions blockHeaderFunctions;
   private TransactionReceiptFactory transactionReceiptFactory;
   private DifficultyCalculator<T> difficultyCalculator;
@@ -66,6 +67,11 @@ public class ProtocolSpecBuilder<T> {
 
   public ProtocolSpecBuilder<T> blockReward(final Wei blockReward) {
     this.blockReward = blockReward;
+    return this;
+  }
+
+  public ProtocolSpecBuilder<T> skipZeroBlockRewards(final boolean skipZeroBlockRewards) {
+    this.skipZeroBlockRewards = skipZeroBlockRewards;
     return this;
   }
 
@@ -234,6 +240,7 @@ public class ProtocolSpecBuilder<T> {
         .blockImporterBuilder(blockImporterBuilder)
         .blockHeaderFunctions(blockHeaderFunctions)
         .blockReward(blockReward)
+        .skipZeroBlockRewards(skipZeroBlockRewards)
         .difficultyCalculator(difficultyCalculator)
         .transactionReceiptFactory(transactionReceiptFactory)
         .transactionReceiptType(transactionReceiptType)
@@ -311,7 +318,8 @@ public class ProtocolSpecBuilder<T> {
             transactionProcessor,
             transactionReceiptFactory,
             blockReward,
-            miningBeneficiaryCalculator);
+            miningBeneficiaryCalculator,
+            skipZeroBlockRewards);
     final BlockValidator<T> blockValidator =
         blockValidatorBuilder.apply(blockHeaderValidator, blockBodyValidator, blockProcessor);
     final BlockImporter<T> blockImporter = blockImporterBuilder.apply(blockValidator);
@@ -332,7 +340,8 @@ public class ProtocolSpecBuilder<T> {
         blockReward,
         transactionReceiptType,
         miningBeneficiaryCalculator,
-        precompileContractRegistry);
+        precompileContractRegistry,
+        skipZeroBlockRewards);
   }
 
   public interface TransactionProcessorBuilder {
@@ -361,7 +370,8 @@ public class ProtocolSpecBuilder<T> {
         TransactionProcessor transactionProcessor,
         TransactionReceiptFactory transactionReceiptFactory,
         Wei blockReward,
-        MiningBeneficiaryCalculator miningBeneficiaryCalculator);
+        MiningBeneficiaryCalculator miningBeneficiaryCalculator,
+        boolean skipZeroBlockRewards);
   }
 
   public interface BlockValidatorBuilder<T> {

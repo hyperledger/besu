@@ -34,13 +34,17 @@ public class MainnetBlockProcessorTest {
   private final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
   private final TransactionReceiptFactory transactionReceiptFactory =
       mock(TransactionReceiptFactory.class);
-  private final MainnetBlockProcessor blockProcessor =
-      new MainnetBlockProcessor(
-          transactionProcessor, transactionReceiptFactory, Wei.ZERO, BlockHeader::getCoinbase);
 
   @Test
-  public void noAccountCreatedWhenBlockRewardIsZero() {
+  public void noAccountCreatedWhenBlockRewardIsZeroAndSkipped() {
     final Blockchain blockchain = new TestBlockchain();
+    final MainnetBlockProcessor blockProcessor =
+        new MainnetBlockProcessor(
+            transactionProcessor,
+            transactionReceiptFactory,
+            Wei.ZERO,
+            BlockHeader::getCoinbase,
+            true);
 
     final MutableWorldState worldState = WorldStateMock.create(emptyMap());
     final Hash initialHash = worldState.rootHash();
@@ -54,5 +58,30 @@ public class MainnetBlockProcessorTest {
 
     // An empty block with 0 reward should not change the world state
     assertThat(worldState.rootHash()).isEqualTo(initialHash);
+  }
+
+  @Test
+  public void accountCreatedWhenBlockRewardIsZeroAndNotSkipped() {
+    final Blockchain blockchain = new TestBlockchain();
+    final MainnetBlockProcessor blockProcessor =
+        new MainnetBlockProcessor(
+            transactionProcessor,
+            transactionReceiptFactory,
+            Wei.ZERO,
+            BlockHeader::getCoinbase,
+            false);
+
+    final MutableWorldState worldState = WorldStateMock.create(emptyMap());
+    final Hash initialHash = worldState.rootHash();
+
+    final BlockHeader emptyBlockHeader =
+        new BlockHeaderTestFixture()
+            .transactionsRoot(Hash.EMPTY_LIST_HASH)
+            .ommersHash(Hash.EMPTY_LIST_HASH)
+            .buildHeader();
+    blockProcessor.processBlock(blockchain, worldState, emptyBlockHeader, emptyList(), emptyList());
+
+    // An empty block with 0 reward should change the world state prior to EIP158
+    assertThat(worldState.rootHash()).isNotEqualTo(initialHash);
   }
 }
