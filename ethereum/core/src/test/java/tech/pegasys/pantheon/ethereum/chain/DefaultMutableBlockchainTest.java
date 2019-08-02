@@ -456,6 +456,44 @@ public class DefaultMutableBlockchainTest {
   }
 
   @Test
+  public void rewindChain() {
+    final BlockDataGenerator gen = new BlockDataGenerator(2);
+
+    // Setup an initial blockchain
+    final int originalChainLength = 4;
+    final List<Block> chain = gen.blockSequence(originalChainLength);
+    final List<List<TransactionReceipt>> blockReceipts =
+        chain.stream().map(gen::receipts).collect(Collectors.toList());
+    final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
+    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, chain.get(0));
+    for (int i = 1; i < chain.size(); i++) {
+      blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
+    }
+    final Block originalHead = blockchain.getChainHeadBlock();
+    final Block targetHead = blockchain.getBlockByHash(originalHead.getHeader().getParentHash());
+
+    // rewind it by 1 block
+    blockchain.rewindToBlock(targetHead.getHeader().getNumber());
+
+    // Check chain has the expected blocks
+    for (int i = 0; i < chain.size() - 1; i++) {
+      assertBlockDataIsStored(blockchain, chain.get(i), blockReceipts.get(i));
+    }
+    assertBlockIsHead(blockchain, targetHead);
+
+    // Check transactions were not indexed
+    for (final Transaction tx : originalHead.getBody().getTransactions()) {
+      assertThat(blockchain.getTransactionByHash(tx.hash())).isNotPresent();
+    }
+
+    // Check that blockNumber index for previous chain head has been removed
+    assertThat(blockchain.getBlockHashByNumber(originalHead.getHeader().getNumber()))
+        .isNotPresent();
+    // Old chain head should not be tracked.
+    assertThat(blockchain.blockIsOnCanonicalChain(originalHead.getHash())).isFalse();
+  }
+
+  @Test
   public void appendBlockForFork() {
     final BlockDataGenerator gen = new BlockDataGenerator(2);
 
@@ -614,10 +652,7 @@ public class DefaultMutableBlockchainTest {
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
 
     final AtomicBoolean observerInvoked = new AtomicBoolean(false);
-    blockchain.observeBlockAdded(
-        (block, chain) -> {
-          observerInvoked.set(true);
-        });
+    blockchain.observeBlockAdded((block, chain) -> observerInvoked.set(true));
 
     blockchain.appendBlock(newBlock, receipts);
 
@@ -638,22 +673,13 @@ public class DefaultMutableBlockchainTest {
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
 
     final AtomicBoolean observer1Invoked = new AtomicBoolean(false);
-    blockchain.observeBlockAdded(
-        (block, chain) -> {
-          observer1Invoked.set(true);
-        });
+    blockchain.observeBlockAdded((block, chain) -> observer1Invoked.set(true));
 
     final AtomicBoolean observer2Invoked = new AtomicBoolean(false);
-    blockchain.observeBlockAdded(
-        (block, chain) -> {
-          observer2Invoked.set(true);
-        });
+    blockchain.observeBlockAdded((block, chain) -> observer2Invoked.set(true));
 
     final AtomicBoolean observer3Invoked = new AtomicBoolean(false);
-    blockchain.observeBlockAdded(
-        (block, chain) -> {
-          observer3Invoked.set(true);
-        });
+    blockchain.observeBlockAdded((block, chain) -> observer3Invoked.set(true));
 
     blockchain.appendBlock(newBlock, receipts);
 
