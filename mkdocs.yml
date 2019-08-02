@@ -185,3 +185,8 @@ markdown_extensions:
 plugins:
     - search
     - markdownextradata
+    - exclude:
+        glob:
+          - development/*
+          - community/*
+          - global/*
