@@ -30,9 +30,37 @@ public class DebugStorageRangeAtResult implements JsonRpcResult {
   private final String nextKey;
 
   public DebugStorageRangeAtResult(
-      final NavigableMap<Bytes32, AccountStorageEntry> entries, final Bytes32 nextKey) {
-    entries.forEach((keyHash, entry) -> storage.put(keyHash.toString(), new StorageEntry(entry)));
-    this.nextKey = nextKey != null ? nextKey.toString() : null;
+      final NavigableMap<Bytes32, AccountStorageEntry> entries,
+      final Bytes32 nextKey,
+      final boolean shortValues) {
+    if (shortValues) {
+      entries.forEach(
+          (keyHash, entry) ->
+              storage.put(
+                  toStrictShortHexString(keyHash.toString()),
+                  new StorageEntry(entry, shortValues)));
+      this.nextKey = nextKey != null ? nextKey.toString() : null;
+
+    } else {
+      entries.forEach(
+          (keyHash, entry) ->
+              storage.put(keyHash.toString(), new StorageEntry(entry, shortValues)));
+      this.nextKey = nextKey != null ? nextKey.toString() : null;
+    }
+  }
+
+  private static String toStrictShortHexString(final String hex) {
+    // Skipping '0x'
+    if (hex.charAt(2) != '0') return hex;
+
+    int i = 3;
+    while (i < hex.length() - 1 && hex.charAt(i) == '0') {
+      i++;
+    }
+    // Align the trim so we get full bytes, not stray nybbles.
+    i = i & 0xFFFFFFFE;
+
+    return "0x" + hex.substring(i);
   }
 
   @JsonGetter(value = "storage")
@@ -45,14 +73,24 @@ public class DebugStorageRangeAtResult implements JsonRpcResult {
     return nextKey;
   }
 
+  @JsonGetter(value = "complete")
+  public boolean getComplete() {
+    return nextKey == null;
+  }
+
   @JsonPropertyOrder(value = {"key", "value"})
   public static class StorageEntry {
     private final String value;
     private final String key;
 
-    public StorageEntry(final AccountStorageEntry entry) {
-      this.value = entry.getValue().toHexString();
-      this.key = entry.getKey().map(UInt256::toHexString).orElse(null);
+    public StorageEntry(final AccountStorageEntry entry, final boolean shortValues) {
+      if (shortValues) {
+        this.value = entry.getValue().toStrictShortHexString();
+        this.key = entry.getKey().map(UInt256::toStrictShortHexString).orElse(null);
+      } else {
+        this.value = entry.getValue().toHexString();
+        this.key = entry.getKey().map(UInt256::toHexString).orElse(null);
+      }
     }
 
     @JsonGetter(value = "key")
@@ -67,7 +105,7 @@ public class DebugStorageRangeAtResult implements JsonRpcResult {
 
     @Override
     public String toString() {
-      return MoreObjects.toStringHelper(this).add("value", value).toString();
+      return MoreObjects.toStringHelper(this).add("key", key).add("value", value).toString();
     }
 
     @Override

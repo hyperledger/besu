@@ -496,7 +496,7 @@ public class JsonRpcHttpService {
       try (final TimingContext ignored = requestTimer.labels(request.getMethod()).startTimer()) {
         return method.response(request);
       } catch (final InvalidJsonRpcParameters e) {
-        LOG.debug(e);
+        LOG.debug("Invalid Params", e);
         return errorResponse(id, JsonRpcError.INVALID_PARAMS);
       } catch (final RuntimeException e) {
         LOG.error("Error processing JSON-RPC request", e);

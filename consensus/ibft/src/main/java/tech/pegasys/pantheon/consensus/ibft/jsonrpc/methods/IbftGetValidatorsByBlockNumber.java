@@ -44,13 +44,13 @@ public class IbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return parameters().required(request.getParams(), 0, BlockParameter.class);
+    return getParameters().required(request.getParams(), 0, BlockParameter.class);
   }
 
   @Override
   protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
     final Optional<BlockHeader> blockHeader =
-        blockchainQueries().getBlockHeaderByNumber(blockNumber);
+        getBlockchainQueries().getBlockHeaderByNumber(blockNumber);
     LOG.trace("Received RPC rpcName={} block={}", getName(), blockNumber);
     return blockHeader
         .map(

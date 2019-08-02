@@ -19,12 +19,23 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
 
+import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
+
 public class EthBlockNumber implements JsonRpcMethod {
 
-  private final BlockchainQueries blockchain;
+  private final Supplier<BlockchainQueries> blockchain;
+  private final boolean resultAsInteger;
 
   public EthBlockNumber(final BlockchainQueries blockchain) {
+    this(Suppliers.ofInstance(blockchain), false);
+  }
+
+  public EthBlockNumber(
+      final Supplier<BlockchainQueries> blockchain, final boolean resultAsInteger) {
     this.blockchain = blockchain;
+    this.resultAsInteger = resultAsInteger;
   }
 
   @Override
@@ -34,6 +45,8 @@ public class EthBlockNumber implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest req) {
-    return new JsonRpcSuccessResponse(req.getId(), Quantity.create(blockchain.headBlockNumber()));
+    final long value = blockchain.get().headBlockNumber();
+    return new JsonRpcSuccessResponse(
+        req.getId(), resultAsInteger ? value : Quantity.create(value));
   }
 }

@@ -1,0 +1,27 @@
+{
+  "request": {
+    "id": 414,
+    "jsonrpc": "2.0",
+    "method": "debug_accountRangeAt",
+    "params": [
+      "0x10",
+      "0x1",
+      "0x0",
+      100
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 414,
+    "result": {
+      "addressMap": {
+        "0x15b040a190663dd210787de31621bae9fb17d6b59d1cd1d319c0ed452d7a0f15" : "0xbcde5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "0x03601462093b5945d1676df093446790fd31b20e7b12a2e8e5e09d068109616b" : "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "0xa32fbb2bcac38ed596cbb34ae265df4d60b832ce8077a3abc6f57b4611005cfd" : "0x8888f1f195afa192cfee860698584c030f4c9db1",
+        "0xeb8ec137a2f5a74ec3a73144b552caad890b18b5f725872fa212fff6d4d565ba" : "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"
+      },
+      "nextKey": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "statusCode": 200
+}

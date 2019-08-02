@@ -103,7 +103,7 @@ public abstract class AbstractEthJsonRpcHttpServiceTest {
   protected final int NETWORK_ID = 123;
 
   protected static final Collection<RpcApi> JSON_RPC_APIS =
-      Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
+      Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3, RpcApis.DEBUG);
 
   protected MutableBlockchain blockchain;
 

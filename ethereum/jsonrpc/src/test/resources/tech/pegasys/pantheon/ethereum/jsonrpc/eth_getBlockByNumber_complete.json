@@ -1,0 +1,54 @@
+{
+  "request": {
+    "id": 174,
+    "jsonrpc": "2.0",
+    "method": "eth_getBlockByNumber",
+    "params": [
+      "0x10",
+      true
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 174,
+    "result": {
+      "number": "0x10",
+      "hash": "0x1878c6f27178250f3d55186a2887b076936599f307d96dabcf331b2ff0a38f0c",
+      "parentHash": "0x9dcd5e20cc30e48e3635ac3a1c398c2f45ee818fcbc232110878ddf0e936e7ea",
+      "nonce": "0xdfc50ac1134d764f",
+      "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+      "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "transactionsRoot": "0x399a0923c02fd28a351a11cbf2fd647225c0a69a67d7e04ad1c35c9435fc7d82",
+      "stateRoot": "0xf4814dce3c4230ab409f92001f88e55d63ed5a23d84c73ad3fad1222ba06cb7a",
+      "receiptsRoot": "0x3e5fff5f6eaeee82841547e049b6bdb980c4e6bd8539fb072a346a30ee72a25d",
+      "miner": "0x8888f1f195afa192cfee860698584c030f4c9db1",
+      "difficulty": "0x203c0",
+      "totalDifficulty": "0x221e00",
+      "extraData": "0x",
+      "size": "0x288",
+      "gasLimit": "0x2fefd8",
+      "gasUsed": "0xab90",
+      "timestamp": "0x561bc307",
+      "uncles": [],
+      "transactions": [
+        {
+          "blockHash": "0x1878c6f27178250f3d55186a2887b076936599f307d96dabcf331b2ff0a38f0c",
+          "blockNumber": "0x10",
+          "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+          "gas": "0x4cb2f",
+          "gasPrice": "0x1",
+          "hash": "0x9f6a5eb65991ce483a9e1bfc57b44cd2c8ff4c26ca804240d593b4b63c3eafcd",
+          "input": "0xc2b12a73aabbccffffffffffffffffffffffffffffffffffffffffffffffffffffffffee",
+          "nonce": "0xf",
+          "to": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+          "transactionIndex": "0x0",
+          "value": "0xa",
+          "v": "0x1b",
+          "r": "0x394fa9c43a2469d48b98f4f7e8dfdf7bd3c7abd9eafe8c124b362594aafc5d6",
+          "s": "0xecf369283eda15f4c4db09784b5226dfe48a0a80ff91e87d858f6adbb131cf9"
+        }
+      ]
+    }
+  },
+  "statusCode": 200
+}

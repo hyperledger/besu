@@ -20,9 +20,18 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParamet
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
+
 public class EthGetCode extends AbstractBlockParameterMethod {
 
   public EthGetCode(final BlockchainQueries blockchainQueries, final JsonRpcParameter parameters) {
+    super(Suppliers.ofInstance(blockchainQueries), parameters);
+  }
+
+  public EthGetCode(
+      final Supplier<BlockchainQueries> blockchainQueries, final JsonRpcParameter parameters) {
     super(blockchainQueries, parameters);
   }
 
@@ -33,12 +42,15 @@ public class EthGetCode extends AbstractBlockParameterMethod {
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return parameters().required(request.getParams(), 1, BlockParameter.class);
+    return getParameters().required(request.getParams(), 1, BlockParameter.class);
   }
 
   @Override
   protected String resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
-    final Address address = parameters().required(request.getParams(), 0, Address.class);
-    return blockchainQueries().getCode(address, blockNumber).map(BytesValue::toString).orElse(null);
+    final Address address = getParameters().required(request.getParams(), 0, Address.class);
+    return getBlockchainQueries()
+        .getCode(address, blockNumber)
+        .map(BytesValue::toString)
+        .orElse(null);
   }
 }

@@ -26,6 +26,12 @@ public class BlockResultFactory {
 
   public BlockResult transactionComplete(
       final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata) {
+    return transactionComplete(blockWithMetadata, false);
+  }
+
+  public BlockResult transactionComplete(
+      final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata,
+      final boolean includeCoinbase) {
     final List<TransactionResult> txs =
         blockWithMetadata.getTransactions().stream()
             .map(TransactionCompleteResult::new)
@@ -40,10 +46,16 @@ public class BlockResultFactory {
         txs,
         ommers,
         blockWithMetadata.getTotalDifficulty(),
-        blockWithMetadata.getSize());
+        blockWithMetadata.getSize(),
+        includeCoinbase);
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
+    return transactionHash(blockWithMetadata, false);
+  }
+
+  public BlockResult transactionHash(
+      final BlockWithMetadata<Hash, Hash> blockWithMetadata, final boolean includeCoinbase) {
     final List<TransactionResult> txs =
         blockWithMetadata.getTransactions().stream()
             .map(Hash::toString)
@@ -59,6 +71,7 @@ public class BlockResultFactory {
         txs,
         ommers,
         blockWithMetadata.getTotalDifficulty(),
-        blockWithMetadata.getSize());
+        blockWithMetadata.getSize(),
+        includeCoinbase);
   }
 }

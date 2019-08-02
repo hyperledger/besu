@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminChangeLogLev
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminNodeInfo;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminPeers;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminRemovePeer;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.DebugAccountRange;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.DebugMetrics;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.DebugStorageRangeAt;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.DebugTraceBlock;
@@ -262,6 +263,7 @@ public class JsonRpcMethodsFactory {
           enabledMethods,
           new DebugTraceTransaction(
               blockchainQueries, new TransactionTracer(blockReplay), parameter),
+          new DebugAccountRange(parameter, blockchainQueries),
           new DebugStorageRangeAt(parameter, blockchainQueries, blockReplay),
           new DebugMetrics(metricsSystem),
           new DebugTraceBlock(
@@ -352,7 +354,7 @@ public class JsonRpcMethodsFactory {
     return enabledMethods;
   }
 
-  private void addMethods(
+  public static void addMethods(
       final Map<String, JsonRpcMethod> methods, final JsonRpcMethod... rpcMethods) {
     for (final JsonRpcMethod rpcMethod : rpcMethods) {
       methods.put(rpcMethod.getName(), rpcMethod);

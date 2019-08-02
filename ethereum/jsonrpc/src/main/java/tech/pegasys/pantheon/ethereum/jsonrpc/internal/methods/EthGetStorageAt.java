@@ -34,15 +34,15 @@ public class EthGetStorageAt extends AbstractBlockParameterMethod {
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return parameters().required(request.getParams(), 2, BlockParameter.class);
+    return getParameters().required(request.getParams(), 2, BlockParameter.class);
   }
 
   @Override
   protected String resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
-    final Address address = parameters().required(request.getParams(), 0, Address.class);
+    final Address address = getParameters().required(request.getParams(), 0, Address.class);
     final UInt256 position =
-        parameters().required(request.getParams(), 1, UInt256Parameter.class).getValue();
-    return blockchainQueries()
+        getParameters().required(request.getParams(), 1, UInt256Parameter.class).getValue();
+    return getBlockchainQueries()
         .storageAt(address, position, blockNumber)
         .map(UInt256::toHexString)
         .orElse(null);

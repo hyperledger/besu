@@ -20,14 +20,22 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 import java.util.OptionalLong;
+import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
 
 public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
 
-  private final BlockchainQueries blockchainQueries;
+  private final Supplier<BlockchainQueries> blockchainQueries;
   private final JsonRpcParameter parameters;
 
   protected AbstractBlockParameterMethod(
       final BlockchainQueries blockchainQueries, final JsonRpcParameter parameters) {
+    this(Suppliers.ofInstance(blockchainQueries), parameters);
+  }
+
+  protected AbstractBlockParameterMethod(
+      final Supplier<BlockchainQueries> blockchainQueries, final JsonRpcParameter parameters) {
     this.blockchainQueries = blockchainQueries;
     this.parameters = parameters;
   }
@@ -36,11 +44,11 @@ public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
 
   protected abstract Object resultByBlockNumber(JsonRpcRequest request, long blockNumber);
 
-  protected BlockchainQueries blockchainQueries() {
-    return blockchainQueries;
+  protected BlockchainQueries getBlockchainQueries() {
+    return blockchainQueries.get();
   }
 
-  protected JsonRpcParameter parameters() {
+  protected JsonRpcParameter getParameters() {
     return parameters;
   }
 
@@ -51,7 +59,7 @@ public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
   }
 
   protected Object latestResult(final JsonRpcRequest request) {
-    return resultByBlockNumber(request, blockchainQueries.headBlockNumber());
+    return resultByBlockNumber(request, blockchainQueries.get().headBlockNumber());
   }
 
   protected Object findResultByParamType(final JsonRpcRequest request) {

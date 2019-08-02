@@ -32,6 +32,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.BlockReplay;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.BlockReplay.TransactionAction;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockWithMetadata;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.TransactionWithMetadata;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -42,6 +43,7 @@ import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NavigableMap;
@@ -85,9 +87,16 @@ public class DebugStorageRangeAtTest {
   }
 
   @Test
-  public void shouldRetrieveStorageRange() {
+  public void shouldRetrieveStorageRange_fullValues() {
     final TransactionWithMetadata transactionWithMetadata =
         new TransactionWithMetadata(transaction, 12L, blockHash, TRANSACTION_INDEX);
+    final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata =
+        new BlockWithMetadata<>(
+            blockHeader,
+            Collections.singletonList(transactionWithMetadata),
+            Collections.emptyList(),
+            UInt256.ONE,
+            1);
     final JsonRpcRequest request =
         new JsonRpcRequest(
             "2.0",
@@ -96,6 +105,7 @@ public class DebugStorageRangeAtTest {
               blockHash.toString(), TRANSACTION_INDEX, accountAddress, START_KEY_HASH.toString(), 10
             });
 
+    when(blockchainQueries.blockByHash(blockHash)).thenReturn(Optional.of(blockWithMetadata));
     when(blockchainQueries.transactionByBlockHashAndIndex(blockHash, TRANSACTION_INDEX))
         .thenReturn(Optional.of(transactionWithMetadata));
     when(worldState.get(accountAddress)).thenReturn(account);
@@ -122,9 +132,9 @@ public class DebugStorageRangeAtTest {
     entries.sort(Comparator.comparing(AccountStorageEntry::getKeyHash));
     assertThat(result.getStorage())
         .containsExactly(
-            entry(entries.get(0).getKeyHash().toString(), new StorageEntry(entries.get(0))),
-            entry(entries.get(1).getKeyHash().toString(), new StorageEntry(entries.get(1))),
-            entry(entries.get(2).getKeyHash().toString(), new StorageEntry(entries.get(2))));
+            entry(entries.get(0).getKeyHash().toString(), new StorageEntry(entries.get(0), false)),
+            entry(entries.get(1).getKeyHash().toString(), new StorageEntry(entries.get(1), false)),
+            entry(entries.get(2).getKeyHash().toString(), new StorageEntry(entries.get(2), false)));
   }
 
   private Object callAction(final InvocationOnMock invocation) {

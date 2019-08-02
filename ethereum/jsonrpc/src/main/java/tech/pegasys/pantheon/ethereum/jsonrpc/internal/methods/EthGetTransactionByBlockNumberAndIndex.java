@@ -37,15 +37,15 @@ public class EthGetTransactionByBlockNumberAndIndex extends AbstractBlockParamet
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return parameters().required(request.getParams(), 0, BlockParameter.class);
+    return getParameters().required(request.getParams(), 0, BlockParameter.class);
   }
 
   @Override
   protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
     final int index =
-        parameters().required(request.getParams(), 1, UnsignedIntParameter.class).getValue();
+        getParameters().required(request.getParams(), 1, UnsignedIntParameter.class).getValue();
     final Optional<TransactionWithMetadata> transactionWithMetadata =
-        blockchainQueries().transactionByBlockNumberAndIndex(blockNumber, index);
+        getBlockchainQueries().transactionByBlockNumberAndIndex(blockNumber, index);
     return transactionWithMetadata.map(TransactionCompleteResult::new).orElse(null);
   }
 }

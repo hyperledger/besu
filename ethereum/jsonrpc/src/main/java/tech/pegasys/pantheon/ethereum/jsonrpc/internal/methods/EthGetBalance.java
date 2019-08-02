@@ -20,9 +20,18 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParamet
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
 
+import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
+
 public class EthGetBalance extends AbstractBlockParameterMethod {
 
   public EthGetBalance(final BlockchainQueries blockchain, final JsonRpcParameter parameters) {
+    this(Suppliers.ofInstance(blockchain), parameters);
+  }
+
+  public EthGetBalance(
+      final Supplier<BlockchainQueries> blockchain, final JsonRpcParameter parameters) {
     super(blockchain, parameters);
   }
 
@@ -33,13 +42,13 @@ public class EthGetBalance extends AbstractBlockParameterMethod {
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return parameters().required(request.getParams(), 1, BlockParameter.class);
+    return getParameters().required(request.getParams(), 1, BlockParameter.class);
   }
 
   @Override
   protected String resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
-    final Address address = parameters().required(request.getParams(), 0, Address.class);
-    return blockchainQueries()
+    final Address address = getParameters().required(request.getParams(), 0, Address.class);
+    return getBlockchainQueries()
         .accountBalance(address, blockNumber)
         .map(Quantity::create)
         .orElse(null);

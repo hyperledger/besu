@@ -14,10 +14,12 @@ package tech.pegasys.pantheon.ethereum.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.DebugAccountRange;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthBlockNumber;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthCall;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthEstimateGas;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthGetBalance;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthGetBlockByNumber;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthGetBlockTransactionCountByHash;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthGetBlockTransactionCountByNumber;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthGetCode;
@@ -83,6 +85,9 @@ public class EthJsonRpcHttpBySpecTest extends AbstractEthJsonRpcHttpServiceTest 
     specs.put(EthGetBalance.class, "eth_getBalance_illegalRangeGreaterThan");
     specs.put(EthGetBalance.class, "eth_getBalance_illegalRangeLessThan");
     specs.put(EthGetBalance.class, "eth_getBalance_invalidParams");
+
+    specs.put(EthGetBlockByNumber.class, "eth_getBlockByNumber_complete");
+    specs.put(EthGetBlockByNumber.class, "eth_getBlockByNumber_hashes");
 
     specs.put(EthGetStorageAt.class, "eth_getStorageAt_latest");
     specs.put(EthGetStorageAt.class, "eth_getStorageAt_invalidParams");
@@ -238,6 +243,13 @@ public class EthJsonRpcHttpBySpecTest extends AbstractEthJsonRpcHttpServiceTest 
     specs.put(EthEstimateGas.class, "eth_estimateGas_insufficientGas");
 
     specs.put(EthProtocolVersion.class, "eth_protocolVersion");
+
+    specs.put(DebugAccountRange.class, "debug_accountRange_blockHash");
+    specs.put(DebugAccountRange.class, "debug_accountRange_complete");
+    specs.put(DebugAccountRange.class, "debug_accountRange_partial");
+    specs.put(DebugAccountRange.class, "debug_storageRangeAt_blockHash");
+    specs.put(DebugAccountRange.class, "debug_storageRangeAt_blockNumber");
+    specs.put(DebugAccountRange.class, "debug_storageRangeAt_midBlock");
 
     return specs.values();
   }

@@ -18,6 +18,8 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -63,6 +65,7 @@ public class BlockResult implements JsonRpcResult {
   private final String timestamp;
   private final List<TransactionResult> transactions;
   private final List<JsonNode> ommers;
+  private final String coinbase;
 
   public <T extends TransactionResult> BlockResult(
       final BlockHeader header,
@@ -70,6 +73,16 @@ public class BlockResult implements JsonRpcResult {
       final List<JsonNode> ommers,
       final UInt256 totalDifficulty,
       final int size) {
+    this(header, transactions, ommers, totalDifficulty, size, false);
+  }
+
+  public <T extends TransactionResult> BlockResult(
+      final BlockHeader header,
+      final List<TransactionResult> transactions,
+      final List<JsonNode> ommers,
+      final UInt256 totalDifficulty,
+      final int size,
+      final boolean includeCoinbase) {
     this.number = Quantity.create(header.getNumber());
     this.hash = header.getHash().toString();
     this.parentHash = header.getParentHash().toString();
@@ -89,6 +102,7 @@ public class BlockResult implements JsonRpcResult {
     this.timestamp = Quantity.create(header.getTimestamp());
     this.ommers = ommers;
     this.transactions = transactions;
+    this.coinbase = includeCoinbase ? header.getCoinbase().toString() : null;
   }
 
   @JsonGetter(value = "number")
@@ -184,5 +198,11 @@ public class BlockResult implements JsonRpcResult {
   @JsonGetter(value = "transactions")
   public List<TransactionResult> getTransactions() {
     return transactions;
+  }
+
+  @JsonGetter(value = "author")
+  @JsonInclude(Include.NON_NULL)
+  public String getCoinbase() {
+    return coinbase;
   }
 }

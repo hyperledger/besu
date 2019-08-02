@@ -33,11 +33,11 @@ public class EthGetUncleCountByBlockNumber extends AbstractBlockParameterMethod 
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return parameters().required(request.getParams(), 0, BlockParameter.class);
+    return getParameters().required(request.getParams(), 0, BlockParameter.class);
   }
 
   @Override
   protected String resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
-    return blockchainQueries().getOmmerCount(blockNumber).map(Quantity::create).orElse(null);
+    return getBlockchainQueries().getOmmerCount(blockNumber).map(Quantity::create).orElse(null);
   }
 }

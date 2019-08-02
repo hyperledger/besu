@@ -15,12 +15,15 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.AccountStorageEntry;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.BlockReplay;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockWithMetadata;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.TransactionWithMetadata;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
@@ -28,22 +31,40 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessRe
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.DebugStorageRangeAtResult;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 
+import java.util.Collections;
 import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
 
 public class DebugStorageRangeAt implements JsonRpcMethod {
 
   private final JsonRpcParameter parameters;
-  private final BlockchainQueries blockchainQueries;
-  private final BlockReplay blockReplay;
+  private final Supplier<BlockchainQueries> blockchainQueries;
+  private final Supplier<BlockReplay> blockReplay;
+  private final boolean shortValues;
 
   public DebugStorageRangeAt(
       final JsonRpcParameter parameters,
       final BlockchainQueries blockchainQueries,
       final BlockReplay blockReplay) {
+    this(
+        parameters,
+        Suppliers.ofInstance(blockchainQueries),
+        Suppliers.ofInstance(blockReplay),
+        false);
+  }
+
+  public DebugStorageRangeAt(
+      final JsonRpcParameter parameters,
+      final Supplier<BlockchainQueries> blockchainQueries,
+      final Supplier<BlockReplay> blockReplay,
+      final boolean shortValues) {
     this.parameters = parameters;
     this.blockchainQueries = blockchainQueries;
     this.blockReplay = blockReplay;
+    this.shortValues = shortValues;
   }
 
   @Override
@@ -53,25 +74,63 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    final Hash blockHash = parameters.required(request.getParams(), 0, Hash.class);
+    final BlockParameterOrBlockHash blockParameterOrBlockHash =
+        parameters.required(request.getParams(), 0, BlockParameterOrBlockHash.class);
     final int transactionIndex = parameters.required(request.getParams(), 1, Integer.class);
     final Address accountAddress = parameters.required(request.getParams(), 2, Address.class);
-    final Hash startKey = parameters.required(request.getParams(), 3, Hash.class);
+    final Hash startKey =
+        Hash.fromHexStringLenient(parameters.required(request.getParams(), 3, String.class));
     final int limit = parameters.required(request.getParams(), 4, Integer.class);
 
+    final Optional<Hash> blockHashOptional = hashFromParameter(blockParameterOrBlockHash);
+    if (blockHashOptional.isEmpty()) {
+      return emptyResponse(request);
+    }
+    final Hash blockHash = blockHashOptional.get();
+    final Optional<BlockHeader> blockHeaderOptional =
+        blockchainQueries.get().blockByHash(blockHash).map(BlockWithMetadata::getHeader);
+    if (blockHeaderOptional.isEmpty()) {
+      return emptyResponse(request);
+    }
+
     final Optional<TransactionWithMetadata> optional =
-        blockchainQueries.transactionByBlockHashAndIndex(blockHash, transactionIndex);
+        blockchainQueries.get().transactionByBlockHashAndIndex(blockHash, transactionIndex);
+
     return optional
         .map(
             transactionWithMetadata ->
                 (blockReplay
+                    .get()
                     .afterTransactionInBlock(
                         blockHash,
                         transactionWithMetadata.getTransaction().hash(),
                         (transaction, blockHeader, blockchain, worldState, transactionProcessor) ->
                             extractStorageAt(request, accountAddress, startKey, limit, worldState))
-                    .orElseGet(() -> new JsonRpcSuccessResponse(request.getId(), null))))
-        .orElseGet(() -> new JsonRpcSuccessResponse(request.getId(), null));
+                    .orElseGet(() -> emptyResponse(request))))
+        .orElseGet(
+            () ->
+                blockchainQueries
+                    .get()
+                    .getWorldState(blockHeaderOptional.get().getNumber())
+                    .map(
+                        worldState ->
+                            extractStorageAt(request, accountAddress, startKey, limit, worldState))
+                    .orElseGet(() -> emptyResponse(request)));
+  }
+
+  private Optional<Hash> hashFromParameter(final BlockParameterOrBlockHash blockParameter) {
+    if (blockParameter.isEarliest()) {
+      return blockchainQueries.get().getBlockHashByNumber(0);
+    } else if (blockParameter.isLatest() || blockParameter.isPending()) {
+      return blockchainQueries
+          .get()
+          .latestBlockWithTxHashes()
+          .map(block -> block.getHeader().getHash());
+    } else if (blockParameter.isNumeric()) {
+      return blockchainQueries.get().getBlockHashByNumber(blockParameter.getNumber().getAsLong());
+    } else {
+      return blockParameter.getHash();
+    }
   }
 
   private JsonRpcSuccessResponse extractStorageAt(
@@ -90,6 +149,12 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
       entries.remove(nextKey);
     }
     return new JsonRpcSuccessResponse(
-        request.getId(), new DebugStorageRangeAtResult(entries, nextKey));
+        request.getId(), new DebugStorageRangeAtResult(entries, nextKey, shortValues));
+  }
+
+  private JsonRpcSuccessResponse emptyResponse(final JsonRpcRequest request) {
+    return new JsonRpcSuccessResponse(
+        request.getId(),
+        new DebugStorageRangeAtResult(Collections.emptyNavigableMap(), null, shortValues));
   }
 }

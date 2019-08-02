@@ -33,11 +33,14 @@ public class EthGetBlockTransactionCountByNumber extends AbstractBlockParameterM
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return parameters().required(request.getParams(), 0, BlockParameter.class);
+    return getParameters().required(request.getParams(), 0, BlockParameter.class);
   }
 
   @Override
   protected String resultByBlockNumber(final JsonRpcRequest req, final long blockNumber) {
-    return blockchainQueries().getTransactionCount(blockNumber).map(Quantity::create).orElse(null);
+    return getBlockchainQueries()
+        .getTransactionCount(blockNumber)
+        .map(Quantity::create)
+        .orElse(null);
   }
 }

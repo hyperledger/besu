@@ -35,14 +35,14 @@ public class EthGetUncleByBlockNumberAndIndex extends AbstractBlockParameterMeth
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return parameters().required(request.getParams(), 0, BlockParameter.class);
+    return getParameters().required(request.getParams(), 0, BlockParameter.class);
   }
 
   @Override
   protected BlockResult resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
     final int index =
-        parameters().required(request.getParams(), 1, UnsignedIntParameter.class).getValue();
-    return blockchainQueries()
+        getParameters().required(request.getParams(), 1, UnsignedIntParameter.class).getValue();
+    return getBlockchainQueries()
         .getOmmer(blockNumber, index)
         .map(UncleBlockResult::build)
         .orElse(null);

@@ -46,7 +46,7 @@ public class EthCall extends AbstractBlockParameterMethod {
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return parameters().required(request.getParams(), 1, BlockParameter.class);
+    return getParameters().required(request.getParams(), 1, BlockParameter.class);
   }
 
   @Override
@@ -80,7 +80,7 @@ public class EthCall extends AbstractBlockParameterMethod {
 
   private CallParameter validateAndGetCallParams(final JsonRpcRequest request) {
     final JsonCallParameter callParams =
-        parameters().required(request.getParams(), 0, JsonCallParameter.class);
+        getParameters().required(request.getParams(), 0, JsonCallParameter.class);
     if (callParams.getTo() == null) {
       throw new InvalidJsonRpcParameters("Missing \"to\" field in call arguments");
     }
