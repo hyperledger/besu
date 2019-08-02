@@ -37,6 +37,7 @@ public class Address extends DelegatingBytesValue {
   public static final Address ALTBN128_ADD = Address.precompiled(6);
   public static final Address ALTBN128_MUL = Address.precompiled(7);
   public static final Address ALTBN128_PAIRING = Address.precompiled(8);
+  public static final Address BLAKE2B_F_COMPRESSION = Address.precompiled(9);
 
   // Last address that can be generated for a pre-compiled contract
   public static final Integer PRIVACY = Byte.MAX_VALUE - 1;

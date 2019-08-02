@@ -14,15 +14,19 @@ package tech.pegasys.pantheon.crypto;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-public class BouncyCastleMessageDigestFactory {
+public class MessageDigestFactory {
 
-  private static final BouncyCastleProvider securityProvider = new BouncyCastleProvider();
+  static {
+    Security.addProvider(new PantheonProvider());
+    Security.addProvider(new BouncyCastleProvider());
+  }
 
   @SuppressWarnings("DoNotInvokeMessageDigestDirectly")
   public static MessageDigest create(final String algorithm) throws NoSuchAlgorithmException {
-    return MessageDigest.getInstance(algorithm, securityProvider);
+    return MessageDigest.getInstance(algorithm);
   }
 }

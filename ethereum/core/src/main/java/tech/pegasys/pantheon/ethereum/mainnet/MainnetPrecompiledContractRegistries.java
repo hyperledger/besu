@@ -17,6 +17,7 @@ import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.mainnet.precompiles.AltBN128AddPrecompiledContract;
 import tech.pegasys.pantheon.ethereum.mainnet.precompiles.AltBN128MulPrecompiledContract;
 import tech.pegasys.pantheon.ethereum.mainnet.precompiles.AltBN128PairingPrecompiledContract;
+import tech.pegasys.pantheon.ethereum.mainnet.precompiles.BLAKE2BFPrecompileContract;
 import tech.pegasys.pantheon.ethereum.mainnet.precompiles.BigIntegerModularExponentiationPrecompiledContract;
 import tech.pegasys.pantheon.ethereum.mainnet.precompiles.ECRECPrecompiledContract;
 import tech.pegasys.pantheon.ethereum.mainnet.precompiles.IDPrecompiledContract;
@@ -100,6 +101,10 @@ public abstract class MainnetPrecompiledContractRegistries {
         Account.DEFAULT_VERSION,
         AltBN128PairingPrecompiledContract.istanbul(
             precompiledContractConfiguration.getGasCalculator()));
+    registry.put(
+        Address.BLAKE2B_F_COMPRESSION,
+        Account.DEFAULT_VERSION,
+        new BLAKE2BFPrecompileContract(precompiledContractConfiguration.getGasCalculator()));
 
     return registry;
   }

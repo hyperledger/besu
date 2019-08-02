@@ -14,8 +14,8 @@ package tech.pegasys.pantheon.ethereum.mainnet;
 
 import static tech.pegasys.pantheon.ethereum.mainnet.EthHash.EPOCH_LENGTH;
 
-import tech.pegasys.pantheon.crypto.BouncyCastleMessageDigestFactory;
 import tech.pegasys.pantheon.crypto.Hash;
+import tech.pegasys.pantheon.crypto.MessageDigestFactory;
 
 import java.security.DigestException;
 import java.security.MessageDigest;
@@ -27,7 +27,7 @@ public class DirectAcyclicGraphSeed {
       ThreadLocal.withInitial(
           () -> {
             try {
-              return BouncyCastleMessageDigestFactory.create(Hash.KECCAK256_ALG);
+              return MessageDigestFactory.create(Hash.KECCAK256_ALG);
             } catch (final NoSuchAlgorithmException ex) {
               throw new IllegalStateException(ex);
             }

@@ -17,22 +17,16 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.Security;
-
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 /** Various utilities for providing hashes (digests) of arbitrary data. */
 public abstract class Hash {
   private Hash() {}
 
-  static {
-    Security.addProvider(new BouncyCastleProvider());
-  }
-
   public static final String KECCAK256_ALG = "KECCAK-256";
 
   private static final String SHA256_ALG = "SHA-256";
   private static final String RIPEMD160 = "RIPEMD160";
+  private static final String BLAKE2BF_ALG = "BLAKE2BF";
 
   /**
    * Helper method to generate a digest using the provided algorithm.
@@ -42,9 +36,8 @@ public abstract class Hash {
    * @return A digest.
    */
   private static byte[] digestUsingAlgorithm(final BytesValue input, final String alg) {
-    final MessageDigest digest;
     try {
-      digest = BouncyCastleMessageDigestFactory.create(alg);
+      final MessageDigest digest = MessageDigestFactory.create(alg);
       input.update(digest);
       return digest.digest();
     } catch (final NoSuchAlgorithmException e) {
@@ -80,5 +73,15 @@ public abstract class Hash {
    */
   public static BytesValue ripemd160(final BytesValue input) {
     return BytesValue.wrap(digestUsingAlgorithm(input, RIPEMD160));
+  }
+
+  /**
+   * Digest using Blake2f compression function.
+   *
+   * @param input The input bytes to produce the digest for.
+   * @return A digest.
+   */
+  public static BytesValue blake2bf(final BytesValue input) {
+    return BytesValue.wrap(digestUsingAlgorithm(input, BLAKE2BF_ALG));
   }
 }
