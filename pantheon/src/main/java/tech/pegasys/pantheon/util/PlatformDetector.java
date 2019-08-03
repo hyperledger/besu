@@ -181,6 +181,9 @@ public class PlatformDetector {
         return "zulu";
       }
     }
+    if (javaVendor.contains("amazoncominc")) {
+      return "corretto";
+    }
 
     return "-" + javaVendor + "-" + javaVmName;
   }
