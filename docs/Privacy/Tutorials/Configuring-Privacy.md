@@ -110,11 +110,11 @@ orion orion.conf
 In the `Node-1` directory, start Pantheon Node-1:
 
 ```bash tab="MacOS"
-pantheon --data-path=data --genesis-file=../ibftGenesis.json --rpc-http-enabled --rpc-http-api=ETH,NET,IBFT,EEA --host-whitelist="*" --rpc-http-cors-origins="all" --privacy-enabled --privacy-url=http://127.0.0.1:8888 --privacy-public-key-file=Orion/nodeKey.pub --min-gas-price=0   
+pantheon --data-path=data --genesis-file=../ibftGenesis.json --rpc-http-enabled --rpc-http-api=ETH,NET,IBFT,EEA,PRIV --host-whitelist="*" --rpc-http-cors-origins="all" --privacy-enabled --privacy-url=http://127.0.0.1:8888 --privacy-public-key-file=Orion/nodeKey.pub --min-gas-price=0   
 ```
 
 ```bash tab="Windows"
-pantheon --data-path=data --genesis-file=..\ibftGenesis.json --rpc-http-enabled --rpc-http-api=ETH,NET,IBFT,EEA --host-whitelist="*" --rpc-http-cors-origins="all" --privacy-enabled --privacy-url=http://127.0.0.1:8888 --privacy-public-key-file=Orion\nodeKey.pub --min-gas-price=0  
+pantheon --data-path=data --genesis-file=..\ibftGenesis.json --rpc-http-enabled --rpc-http-api=ETH,NET,IBFT,EEA,PRIV --host-whitelist="*" --rpc-http-cors-origins="all" --privacy-enabled --privacy-url=http://127.0.0.1:8888 --privacy-public-key-file=Orion\nodeKey.pub --min-gas-price=0  
 ```
 
 The command line specifies privacy options: 
@@ -123,7 +123,7 @@ The command line specifies privacy options:
 * [`--privacy-url`](../../Reference/Pantheon-CLI-Syntax.md#privacy-url) specifies the Orion node URL (`clienturl` in `orion.conf`)
 * [`--privacy-public-key-file`](../../Reference/Pantheon-CLI-Syntax.md#privacy-public-key-file) specifies the file containing
 Orion node public key (created in [3. Generate Orion Keys](#3-generate-orion-keys))
-* [`--rpc-http-api`](../../Reference/Pantheon-CLI-Syntax.md#rpc-http-api) includes `EEA` in the list of 
+* [`--rpc-http-api`](../../Reference/Pantheon-CLI-Syntax.md#rpc-http-api) includes `EEA` and `PRIV` in the list of 
 JSON-RPC APIs to enable privacy JSON-RPC API methods.  
 * [`--min-gas-price`](../../Reference/Pantheon-CLI-Syntax.md#min-gas-price) set to 0 for a [free gas network](../../Configuring-Pantheon/FreeGas.md).
 
@@ -137,11 +137,11 @@ Copy the enode URL to specify Node-1 as the bootnode in the following steps.
 In the `Node-2` directory, start Pantheon Node-2 specifying the Node-1 enode URL copied when starting Node-1 as the bootnode:
  
 ```bash tab="MacOS"
-pantheon --data-path=data --genesis-file=../ibftGenesis.json --bootnodes=<Node-1 Enode URL> --p2p-port=30304 --rpc-http-enabled --rpc-http-api=ETH,NET,IBFT,EEA --host-whitelist="*" --rpc-http-cors-origins="all" --rpc-http-port=8546 --privacy-enabled --privacy-url=http://127.0.0.1:8889 --privacy-public-key-file=Orion/nodeKey.pub --min-gas-price=0   
+pantheon --data-path=data --genesis-file=../ibftGenesis.json --bootnodes=<Node-1 Enode URL> --p2p-port=30304 --rpc-http-enabled --rpc-http-api=ETH,NET,IBFT,EEA,PRIV --host-whitelist="*" --rpc-http-cors-origins="all" --rpc-http-port=8546 --privacy-enabled --privacy-url=http://127.0.0.1:8889 --privacy-public-key-file=Orion/nodeKey.pub --min-gas-price=0   
 ```
 
 ```bash tab="Windows"
-pantheon --data-path=data --genesis-file=..\ibftGenesis.json --bootnodes=<Node-1 Enode URL> --p2p-port=30304 --rpc-http-enabled --rpc-http-api=ETH,NET,IBFT,EEA --host-whitelist="*" --rpc-http-cors-origins="all" --rpc-http-port=8546 --privacy-enabled --privacy-url=http://127.0.0.1:8889 --privacy-public-key-file=Orion\nodeKey.pub --min-gas-price=0   
+pantheon --data-path=data --genesis-file=..\ibftGenesis.json --bootnodes=<Node-1 Enode URL> --p2p-port=30304 --rpc-http-enabled --rpc-http-api=ETH,NET,IBFT,EEA,PRIV --host-whitelist="*" --rpc-http-cors-origins="all" --rpc-http-port=8546 --privacy-enabled --privacy-url=http://127.0.0.1:8889 --privacy-public-key-file=Orion\nodeKey.pub --min-gas-price=0   
 ```
 
 The command line specifies the same options as for Node-1 with different ports and Orion node URL.  The 
@@ -155,11 +155,11 @@ The command line specifies the same options as for Node-1 with different ports a
 In the `Node-3` directory and start Pantheon Node-3 specifying the Node-1 enode URL copied when starting Node-1 as the bootnode: 
 
 ```bash tab="MacOS"
-pantheon --data-path=data --genesis-file=../ibftGenesis.json --bootnodes=<Node-1 Enode URL> --p2p-port=30305 --rpc-http-enabled --rpc-http-api=ETH,NET,IBFT,EEA --host-whitelist="*" --rpc-http-cors-origins="all" --rpc-http-port=8547 --privacy-enabled --privacy-url=http://127.0.0.1:8890 --privacy-public-key-file=Orion/nodeKey.pub --min-gas-price=0   
+pantheon --data-path=data --genesis-file=../ibftGenesis.json --bootnodes=<Node-1 Enode URL> --p2p-port=30305 --rpc-http-enabled --rpc-http-api=ETH,NET,IBFT,EEA,PRIV --host-whitelist="*" --rpc-http-cors-origins="all" --rpc-http-port=8547 --privacy-enabled --privacy-url=http://127.0.0.1:8890 --privacy-public-key-file=Orion/nodeKey.pub --min-gas-price=0   
 ```
 
 ```bash tab="Windows"
-pantheon --data-path=data --genesis-file=..\ibftGenesis.json --bootnodes=<Node-1 Enode URL> --p2p-port=30305 --rpc-http-enabled --rpc-http-api=ETH,NET,IBFT,EEA --host-whitelist="*" --rpc-http-cors-origins="all" --rpc-http-port=8547 --privacy-enabled --privacy-url=http://127.0.0.1:8890 --privacy-public-key-file=Orion\nodeKey.pub --min-gas-price=0  
+pantheon --data-path=data --genesis-file=..\ibftGenesis.json --bootnodes=<Node-1 Enode URL> --p2p-port=30305 --rpc-http-enabled --rpc-http-api=ETH,NET,IBFT,EEA,PRIV --host-whitelist="*" --rpc-http-cors-origins="all" --rpc-http-port=8547 --privacy-enabled --privacy-url=http://127.0.0.1:8890 --privacy-public-key-file=Orion\nodeKey.pub --min-gas-price=0  
 ```
 
 The command line specifies the same options as for Node-1 with different ports and Orion node URL.  The 
