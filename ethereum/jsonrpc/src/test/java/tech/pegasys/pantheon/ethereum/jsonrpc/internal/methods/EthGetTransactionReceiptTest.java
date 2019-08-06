@@ -32,7 +32,6 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.TransactionReceip
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.TransactionReceiptStatusResult;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
-import tech.pegasys.pantheon.ethereum.mainnet.TransactionReceiptType;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.math.BigInteger;
@@ -90,7 +89,6 @@ public class EthGetTransactionReceiptTest {
           null,
           null,
           null,
-          TransactionReceiptType.ROOT,
           BlockHeader::getCoinbase,
           null,
           false);
@@ -110,7 +108,6 @@ public class EthGetTransactionReceiptTest {
           null,
           null,
           null,
-          TransactionReceiptType.STATUS,
           BlockHeader::getCoinbase,
           null,
           false);

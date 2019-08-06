@@ -53,7 +53,6 @@ public class ProtocolSpecBuilder<T> {
   private BlockProcessorBuilder blockProcessorBuilder;
   private BlockValidatorBuilder<T> blockValidatorBuilder;
   private BlockImporterBuilder<T> blockImporterBuilder;
-  private TransactionReceiptType transactionReceiptType;
   private String name;
   private MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private PrivacyParameters privacyParameters;
@@ -192,12 +191,6 @@ public class ProtocolSpecBuilder<T> {
     return this;
   }
 
-  public ProtocolSpecBuilder<T> transactionReceiptType(
-      final TransactionReceiptType transactionReceiptType) {
-    this.transactionReceiptType = transactionReceiptType;
-    return this;
-  }
-
   public ProtocolSpecBuilder<T> miningBeneficiaryCalculator(
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator) {
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
@@ -243,7 +236,6 @@ public class ProtocolSpecBuilder<T> {
         .skipZeroBlockRewards(skipZeroBlockRewards)
         .difficultyCalculator(difficultyCalculator)
         .transactionReceiptFactory(transactionReceiptFactory)
-        .transactionReceiptType(transactionReceiptType)
         .miningBeneficiaryCalculator(miningBeneficiaryCalculator)
         .name(name);
   }
@@ -267,7 +259,6 @@ public class ProtocolSpecBuilder<T> {
     checkNotNull(blockReward, "Missing block reward");
     checkNotNull(difficultyCalculator, "Missing difficulty calculator");
     checkNotNull(transactionReceiptFactory, "Missing transaction receipt factory");
-    checkNotNull(transactionReceiptType, "Missing transaction receipt type");
     checkNotNull(name, "Missing name");
     checkNotNull(miningBeneficiaryCalculator, "Missing Mining Beneficiary Calculator");
     checkNotNull(protocolSchedule, "Missing protocol schedule");
@@ -338,7 +329,6 @@ public class ProtocolSpecBuilder<T> {
         transactionReceiptFactory,
         difficultyCalculator,
         blockReward,
-        transactionReceiptType,
         miningBeneficiaryCalculator,
         precompileContractRegistry,
         skipZeroBlockRewards);

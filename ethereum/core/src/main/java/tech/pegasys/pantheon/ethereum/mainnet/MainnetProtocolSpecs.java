@@ -126,7 +126,6 @@ public abstract class MainnetProtocolSpecs {
         .blockProcessorBuilder(MainnetBlockProcessor::new)
         .blockValidatorBuilder(MainnetBlockValidator::new)
         .blockImporterBuilder(MainnetBlockImporter::new)
-        .transactionReceiptType(TransactionReceiptType.ROOT)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
         .name("Frontier");
@@ -260,7 +259,6 @@ public abstract class MainnetProtocolSpecs {
                 ? MainnetProtocolSpecs::byzantiumTransactionReceiptFactoryWithReasonEnabled
                 : MainnetProtocolSpecs::byzantiumTransactionReceiptFactory)
         .blockReward(BYZANTIUM_BLOCK_REWARD)
-        .transactionReceiptType(TransactionReceiptType.STATUS)
         .name("Byzantium");
   }
 

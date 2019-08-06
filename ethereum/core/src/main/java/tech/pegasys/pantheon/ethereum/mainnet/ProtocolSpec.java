@@ -73,7 +73,6 @@ public class ProtocolSpec<C> {
    * @param transactionReceiptFactory the transactionReceiptFactory to use
    * @param difficultyCalculator the difficultyCalculator to use
    * @param blockReward the blockReward to use.
-   * @param transactionReceiptType the type of transaction receipt to use, one of
    * @param miningBeneficiaryCalculator determines to whom mining proceeds are paid
    * @param precompileContractRegistry all the pre-compiled contracts added
    * @param skipZeroBlockRewards should rewards be skipped if it is zero
@@ -93,7 +92,6 @@ public class ProtocolSpec<C> {
       final TransactionReceiptFactory transactionReceiptFactory,
       final DifficultyCalculator<C> difficultyCalculator,
       final Wei blockReward,
-      final TransactionReceiptType transactionReceiptType,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final PrecompileContractRegistry precompileContractRegistry,
       final boolean skipZeroBlockRewards) {
