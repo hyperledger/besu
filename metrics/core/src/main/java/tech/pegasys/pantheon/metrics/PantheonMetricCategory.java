@@ -27,6 +27,7 @@ public enum PantheonMetricCategory implements MetricCategory {
   PERMISSIONING("permissioning"),
   KVSTORE_ROCKSDB("rocksdb"),
   KVSTORE_ROCKSDB_STATS("rocksdb", false),
+  PRUNER("pruner"),
   RPC("rpc"),
   SYNCHRONIZER("synchronizer"),
   TRANSACTION_POOL("transaction_pool");

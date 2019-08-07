@@ -56,4 +56,7 @@ public interface Node<V> {
   boolean isDirty();
 
   String print();
+
+  /** Unloads the node if it is, for example, a StoredNode. */
+  default void unload() {}
 }

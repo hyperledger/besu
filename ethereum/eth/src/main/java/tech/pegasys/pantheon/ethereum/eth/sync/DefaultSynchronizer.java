@@ -26,6 +26,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.fullsync.FullSyncDownloader;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.PendingBlocks;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
+import tech.pegasys.pantheon.ethereum.worldstate.Pruner;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
@@ -44,6 +45,8 @@ public class DefaultSynchronizer<C> implements Synchronizer {
 
   private static final Logger LOG = LogManager.getLogger();
 
+  private static final boolean PRUNING_ENABLED = false;
+  private final Pruner pruner;
   private final SyncState syncState;
   private final AtomicBoolean running = new AtomicBoolean(false);
   private final Subscribers<SyncStatusListener> syncStatusListeners = Subscribers.create();
@@ -57,11 +60,13 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       final ProtocolContext<C> protocolContext,
       final WorldStateStorage worldStateStorage,
       final BlockBroadcaster blockBroadcaster,
+      final Pruner pruner,
       final EthContext ethContext,
       final SyncState syncState,
       final Path dataDirectory,
       final Clock clock,
       final MetricsSystem metricsSystem) {
+    this.pruner = pruner;
     this.syncState = syncState;
 
     ChainHeadTracker.trackChainHeadForPeers(
@@ -164,6 +169,9 @@ public class DefaultSynchronizer<C> implements Synchronizer {
 
   private void startFullSync() {
     fullSyncDownloader.start();
+    if (PRUNING_ENABLED) {
+      pruner.start();
+    }
   }
 
   @Override

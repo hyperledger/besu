@@ -109,6 +109,11 @@ class StoredNode<V> implements Node<V> {
   }
 
   @Override
+  public void unload() {
+    loaded = null;
+  }
+
+  @Override
   public String print() {
     if (loaded == null) {
       return "StoredNode:" + "\n\tRef: " + getRlpRef();

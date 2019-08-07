@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
+import tech.pegasys.pantheon.testutil.MockExecutorService;
+
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;

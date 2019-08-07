@@ -30,4 +30,5 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'com.squareup.okhttp3:okhttp'
   implementation 'net.consensys:orion'
+  implementation 'org.mockito:mockito-core'
 }

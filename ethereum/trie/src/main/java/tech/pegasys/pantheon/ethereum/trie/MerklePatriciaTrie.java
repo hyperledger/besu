@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /** An Merkle Patricial Trie. */
 public interface MerklePatriciaTrie<K, V> {
@@ -74,4 +75,6 @@ public interface MerklePatriciaTrie<K, V> {
    * @return the requested storage entries as a map of key hash to value.
    */
   Map<Bytes32, V> entriesFrom(Bytes32 startKeyHash, int limit);
+
+  void visitAll(Consumer<Node<V>> visitor);
 }

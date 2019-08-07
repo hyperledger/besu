@@ -44,6 +44,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
+import tech.pegasys.pantheon.ethereum.worldstate.MarkSweepPruner;
+import tech.pegasys.pantheon.ethereum.worldstate.Pruner;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
@@ -56,7 +58,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.OptionalLong;
+import java.util.concurrent.Executors;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -199,6 +203,30 @@ public abstract class PantheonControllerBuilder<C> {
 
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
+    final Pruner pruner =
+        new Pruner(
+            new MarkSweepPruner(
+                protocolContext.getWorldStateArchive().getWorldStateStorage(),
+                storageProvider.createPruningStorage(),
+                metricsSystem),
+            protocolContext.getBlockchain(),
+            Executors.newSingleThreadExecutor(
+                new ThreadFactoryBuilder()
+                    .setDaemon(true)
+                    .setPriority(Thread.MIN_PRIORITY)
+                    .setNameFormat("StatePruning-%d")
+                    .build()),
+            10,
+            1000);
+    addShutdownAction(
+        () -> {
+          try {
+            pruner.stop();
+          } catch (InterruptedException ie) {
+            throw new RuntimeException(ie);
+          }
+        });
+
     final boolean fastSyncEnabled = syncConfig.getSyncMode().equals(SyncMode.FAST);
     ethProtocolManager = createEthProtocolManager(protocolContext, fastSyncEnabled);
     final SyncState syncState =
@@ -210,6 +238,7 @@ public abstract class PantheonControllerBuilder<C> {
             protocolContext,
             protocolContext.getWorldStateArchive().getWorldStateStorage(),
             ethProtocolManager.getBlockBroadcaster(),
+            pruner,
             ethProtocolManager.ethContext(),
             syncState,
             dataDirectory,

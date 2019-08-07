@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.services.kvstore;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage.Transaction;
@@ -60,6 +61,20 @@ public abstract class AbstractKeyValueStorageTest {
     tx.commit();
     assertEquals(
         Optional.of(BytesValue.fromHexString("0DEF")), store.get(BytesValue.fromHexString("0F")));
+  }
+
+  @Test
+  public void containsKey() throws Exception {
+    final KeyValueStorage store = createStore();
+    final BytesValue key = BytesValue.fromHexString("ABCD");
+
+    assertFalse(store.containsKey(key));
+
+    final Transaction transaction = store.startTransaction();
+    transaction.put(key, BytesValue.fromHexString("DEFF"));
+    transaction.commit();
+
+    assertTrue(store.containsKey(key));
   }
 
   @Test
