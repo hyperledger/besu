@@ -13,7 +13,11 @@
 package tech.pegasys.pantheon.ethereum.core;
 
 import tech.pegasys.pantheon.util.bytes.Bytes32;
+import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.util.NavigableMap;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -41,5 +45,65 @@ public interface WorldState extends WorldView {
    * @return a stream of all the accounts (in no particular order) contained in the world state
    *     represented by the root hash of this object at the time of the call.
    */
-  Stream<Account> streamAccounts(Bytes32 startKeyHash, int limit);
+  Stream<StreamableAccount> streamAccounts(Bytes32 startKeyHash, int limit);
+
+  class StreamableAccount implements AccountState {
+    private final Optional<Address> address;
+    private final AccountState accountState;
+
+    public StreamableAccount(final Optional<Address> address, final AccountState accountState) {
+      this.address = address;
+      this.accountState = accountState;
+    }
+
+    public Optional<Address> getAddress() {
+      return address;
+    }
+
+    @Override
+    public Hash getAddressHash() {
+      return accountState.getAddressHash();
+    }
+
+    @Override
+    public long getNonce() {
+      return accountState.getNonce();
+    }
+
+    @Override
+    public Wei getBalance() {
+      return accountState.getBalance();
+    }
+
+    @Override
+    public BytesValue getCode() {
+      return accountState.getCode();
+    }
+
+    @Override
+    public Hash getCodeHash() {
+      return accountState.getCodeHash();
+    }
+
+    @Override
+    public int getVersion() {
+      return accountState.getVersion();
+    }
+
+    @Override
+    public UInt256 getStorageValue(final UInt256 key) {
+      return accountState.getStorageValue(key);
+    }
+
+    @Override
+    public UInt256 getOriginalStorageValue(final UInt256 key) {
+      return accountState.getOriginalStorageValue(key);
+    }
+
+    @Override
+    public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
+        final Bytes32 startKeyHash, final int limit) {
+      return accountState.storageEntriesFrom(startKeyHash, limit);
+    }
+  }
 }

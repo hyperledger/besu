@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.worldstate;
 
 import tech.pegasys.pantheon.ethereum.core.AbstractWorldUpdater;
 import tech.pegasys.pantheon.ethereum.core.Account;
+import tech.pegasys.pantheon.ethereum.core.AccountState;
 import tech.pegasys.pantheon.ethereum.core.AccountStorageEntry;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
@@ -110,11 +111,11 @@ public class DefaultMutableWorldState implements MutableWorldState {
         .orElse(null);
   }
 
-  private AccountState deserializeAccount(
+  private WorldStateAccount deserializeAccount(
       final Address address, final Hash addressHash, final BytesValue encoded) throws RLPException {
     final RLPInput in = RLP.input(encoded);
     final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(in);
-    return new AccountState(address, addressHash, accountValue);
+    return new WorldStateAccount(address, addressHash, accountValue);
   }
 
   private static BytesValue serializeAccount(
@@ -134,16 +135,16 @@ public class DefaultMutableWorldState implements MutableWorldState {
   }
 
   @Override
-  public Stream<Account> streamAccounts(final Bytes32 startKeyHash, final int limit) {
+  public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
     return accountStateTrie.entriesFrom(startKeyHash, limit).entrySet().stream()
         .map(
-            entry ->
-                deserializeAccount(
-                    // TODO: Account address should be an {@code Optional} rather than defaulting to
-                    // ZERO
-                    getAccountTrieKeyPreimage(entry.getKey()).orElse(Address.ZERO),
-                    Hash.wrap(entry.getKey()),
-                    entry.getValue()));
+            entry -> {
+              final Optional<Address> address = getAccountTrieKeyPreimage(entry.getKey());
+              final AccountState account =
+                  deserializeAccount(
+                      address.orElse(Address.ZERO), Hash.wrap(entry.getKey()), entry.getValue());
+              return new StreamableAccount(address, account);
+            });
   }
 
   @Override
@@ -203,7 +204,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   // An immutable class that represents an individual account as stored in
   // in the world state's underlying merkle patricia trie.
-  protected class AccountState implements Account {
+  protected class WorldStateAccount implements Account {
 
     private final Address address;
     private final Hash addressHash;
@@ -213,7 +214,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
     // Lazily initialized since we don't always access storage.
     private volatile MerklePatriciaTrie<Bytes32, BytesValue> storageTrie;
 
-    private AccountState(
+    private WorldStateAccount(
         final Address address, final Hash addressHash, final StateTrieAccountValue accountValue) {
 
       this.address = address;
@@ -337,14 +338,14 @@ public class DefaultMutableWorldState implements MutableWorldState {
   }
 
   protected static class Updater
-      extends AbstractWorldUpdater<DefaultMutableWorldState, AccountState> {
+      extends AbstractWorldUpdater<DefaultMutableWorldState, WorldStateAccount> {
 
     protected Updater(final DefaultMutableWorldState world) {
       super(world);
     }
 
     @Override
-    protected AccountState getForMutation(final Address address) {
+    protected WorldStateAccount getForMutation(final Address address) {
       final DefaultMutableWorldState wrapped = wrappedWorldView();
       final Hash addressHash = Hash.hash(address);
       return wrapped
@@ -376,8 +377,8 @@ public class DefaultMutableWorldState implements MutableWorldState {
         wrapped.updatedAccountCode.remove(address);
       }
 
-      for (final UpdateTrackingAccount<AccountState> updated : updatedAccounts()) {
-        final AccountState origin = updated.getWrappedAccount();
+      for (final UpdateTrackingAccount<WorldStateAccount> updated : updatedAccounts()) {
+        final WorldStateAccount origin = updated.getWrappedAccount();
 
         // Save the code in key-value storage ...
         Hash codeHash = origin == null ? Hash.EMPTY : origin.getCodeHash();

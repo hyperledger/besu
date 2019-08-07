@@ -27,6 +27,7 @@ import tech.pegasys.pantheon.ethereum.core.MutableAccount;
 import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldState;
+import tech.pegasys.pantheon.ethereum.core.WorldState.StreamableAccount;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
@@ -167,7 +168,7 @@ public class DefaultMutableWorldStateTest {
   @Test
   public void streamAccounts_empty() {
     final MutableWorldState worldState = createEmpty();
-    final Stream<Account> accounts = worldState.streamAccounts(Bytes32.ZERO, 10);
+    final Stream<StreamableAccount> accounts = worldState.streamAccounts(Bytes32.ZERO, 10);
     assertThat(accounts.count()).isEqualTo(0L);
   }
 
@@ -178,17 +179,17 @@ public class DefaultMutableWorldStateTest {
     updater.createAccount(ADDRESS).setBalance(Wei.of(100000));
     updater.commit();
 
-    List<Account> accounts =
+    List<StreamableAccount> accounts =
         worldState.streamAccounts(Bytes32.ZERO, 10).collect(Collectors.toList());
     assertThat(accounts.size()).isEqualTo(1L);
-    assertThat(accounts.get(0).getAddress()).isEqualTo(ADDRESS);
+    assertThat(accounts.get(0).getAddress()).hasValue(ADDRESS);
     assertThat(accounts.get(0).getBalance()).isEqualTo(Wei.of(100000));
 
     // Check again after persisting
     worldState.persist();
     accounts = worldState.streamAccounts(Bytes32.ZERO, 10).collect(Collectors.toList());
     assertThat(accounts.size()).isEqualTo(1L);
-    assertThat(accounts.get(0).getAddress()).isEqualTo(ADDRESS);
+    assertThat(accounts.get(0).getAddress()).hasValue(ADDRESS);
     assertThat(accounts.get(0).getBalance()).isEqualTo(Wei.of(100000));
   }
 
@@ -214,28 +215,28 @@ public class DefaultMutableWorldStateTest {
     final Hash startHash = accountAIsFirst ? accountA.getAddressHash() : accountB.getAddressHash();
 
     // Get first account
-    final List<Account> firstAccount =
+    final List<StreamableAccount> firstAccount =
         worldState.streamAccounts(startHash, 1).collect(Collectors.toList());
     assertThat(firstAccount.size()).isEqualTo(1L);
     assertThat(firstAccount.get(0).getAddress())
-        .isEqualTo(accountAIsFirst ? accountA.getAddress() : accountB.getAddress());
+        .hasValue(accountAIsFirst ? accountA.getAddress() : accountB.getAddress());
 
     // Get both accounts
-    final List<Account> allAccounts =
+    final List<StreamableAccount> allAccounts =
         worldState.streamAccounts(Bytes32.ZERO, 2).collect(Collectors.toList());
     assertThat(allAccounts.size()).isEqualTo(2L);
     assertThat(allAccounts.get(0).getAddress())
-        .isEqualTo(accountAIsFirst ? accountA.getAddress() : accountB.getAddress());
+        .hasValue(accountAIsFirst ? accountA.getAddress() : accountB.getAddress());
     assertThat(allAccounts.get(1).getAddress())
-        .isEqualTo(accountAIsFirst ? accountB.getAddress() : accountA.getAddress());
+        .hasValue(accountAIsFirst ? accountB.getAddress() : accountA.getAddress());
 
     // Get second account
     final Bytes32 startHashForSecondAccount = startHash.asUInt256().plus(1L).getBytes();
-    final List<Account> secondAccount =
+    final List<StreamableAccount> secondAccount =
         worldState.streamAccounts(startHashForSecondAccount, 100).collect(Collectors.toList());
     assertThat(secondAccount.size()).isEqualTo(1L);
     assertThat(secondAccount.get(0).getAddress())
-        .isEqualTo(accountAIsFirst ? accountB.getAddress() : accountA.getAddress());
+        .hasValue(accountAIsFirst ? accountB.getAddress() : accountA.getAddress());
   }
 
   @Test
