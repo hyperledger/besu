@@ -55,7 +55,7 @@ public class DebugAccountRange implements JsonRpcMethod {
   public String getName() {
     // TODO(shemnon) 5229b899 is the last stable commit of retesteth, after this they rename the
     //  method to just "debug_accountRange".  Once the tool is stable we will support the new name.
-    return "debug_accountRangeAt";
+    return "debug_accountRange";
   }
 
   @Override

@@ -48,6 +48,7 @@ import tech.pegasys.pantheon.cli.options.TransactionPoolOptions;
 import tech.pegasys.pantheon.cli.subcommands.PasswordSubCommand;
 import tech.pegasys.pantheon.cli.subcommands.PublicKeySubCommand;
 import tech.pegasys.pantheon.cli.subcommands.PublicKeySubCommand.KeyLoader;
+import tech.pegasys.pantheon.cli.subcommands.RetestethSubCommand;
 import tech.pegasys.pantheon.cli.subcommands.blocks.BlocksSubCommand;
 import tech.pegasys.pantheon.cli.subcommands.operator.OperatorSubCommand;
 import tech.pegasys.pantheon.cli.subcommands.rlp.RLPSubCommand;
@@ -688,6 +689,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         new PublicKeySubCommand(resultHandler.out(), getKeyLoader()));
     commandLine.addSubcommand(
         PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(resultHandler.out()));
+    commandLine.addSubcommand(RetestethSubCommand.COMMAND_NAME, new RetestethSubCommand());
     commandLine.addSubcommand(
         RLPSubCommand.COMMAND_NAME, new RLPSubCommand(resultHandler.out(), in));
     commandLine.addSubcommand(

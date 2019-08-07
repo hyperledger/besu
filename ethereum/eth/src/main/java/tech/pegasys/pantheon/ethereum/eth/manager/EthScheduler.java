@@ -224,7 +224,7 @@ public class EthScheduler {
     }
   }
 
-  void awaitStop() throws InterruptedException {
+  public void awaitStop() throws InterruptedException {
     shutdown.await();
     serviceFutures.forEach(future -> future.cancel(true));
     if (!syncWorkerExecutor.awaitTermination(30, TimeUnit.SECONDS)) {

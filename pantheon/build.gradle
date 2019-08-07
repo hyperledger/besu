@@ -40,6 +40,7 @@ dependencies {
   implementation project(':ethereum:graphql')
   implementation project(':ethereum:permissioning')
   implementation project(':ethereum:p2p')
+  implementation project(':ethereum:retesteth')
   implementation project(':ethereum:rlp')
   implementation project(':metrics:core')
   implementation project(':nat')

@@ -2,7 +2,7 @@
   "request": {
     "id": 415,
     "jsonrpc": "2.0",
-    "method": "debug_accountRangeAt",
+    "method": "debug_accountRange",
     "params": [
       "0x10",
       "0x1",

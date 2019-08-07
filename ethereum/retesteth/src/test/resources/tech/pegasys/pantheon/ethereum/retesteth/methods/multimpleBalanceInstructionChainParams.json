@@ -1,0 +1,102 @@
+{
+  "accounts": {
+    "0x0000000000000000000000000000000000000001": {
+      "precompiled": {
+        "linear": {
+          "base": 3000,
+          "word": 0
+        },
+        "name": "ecrecover"
+      }
+    },
+    "0x0000000000000000000000000000000000000002": {
+      "precompiled": {
+        "linear": {
+          "base": 60,
+          "word": 12
+        },
+        "name": "sha256"
+      }
+    },
+    "0x0000000000000000000000000000000000000003": {
+      "precompiled": {
+        "linear": {
+          "base": 600,
+          "word": 120
+        },
+        "name": "sha256"
+      }
+    },
+    "0x0000000000000000000000000000000000000004": {
+      "precompiled": {
+        "linear": {
+          "base": 15,
+          "word": 3
+        },
+        "name": "identity"
+      }
+    },
+    "0x0000000000000000000000000000000000000005": {
+      "precompiled": {
+        "name": "modexp"
+      }
+    },
+    "0x0000000000000000000000000000000000000006": {
+      "precompiled": {
+        "linear": {
+          "base": 500,
+          "word": 0
+        },
+        "name": "alt_bn128_G1_add"
+      }
+    },
+    "0x0000000000000000000000000000000000000007": {
+      "precompiled": {
+        "linear": {
+          "base": 40000,
+          "word": 0
+        },
+        "name": "alt_bn128_G1_mul"
+      }
+    },
+    "0x0000000000000000000000000000000000000008": {
+      "precompiled": {
+        "name": "alt_bn128_pairing_product"
+      }
+    },
+    "0x095e7baea6a6c7c4c2dfeb977efac326af552d87": {
+      "balance": "0x0186a0",
+      "code": "0x73a94f5374fce5edbc8e2a8697c15331677e6ebf0b31600055738888f1f195afa192cfee860698584c030f4c9db13160015573a94f5374fce5edbc8e2a8697c15331677e6ebf0b31600255738888f1f195afa192cfee860698584c030f4c9db13160035573095e7baea6a6c7c4c2dfeb977efac326af552d8731600555",
+      "nonce": "0x00",
+      "storage": {}
+    },
+    "0x195e7baea6a6c7c4c2dfeb977efac326af552d87": {
+      "balance": "0x0186a0",
+      "code": "0x73a94f5374fce5edbc8e2a8697c15331677e6ebf0b31600055738888f1f195afa192cfee860698584c030f4c9db13160015573a94f5374fce5edbc8e2a8697c15331677e6ebf0b31600255738888f1f195afa192cfee860698584c030f4c9db13160035573095e7baea6a6c7c4c2dfeb977efac326af552d873160045573195e7baea6a6c7c4c2dfeb977efac326af552d8731600555",
+      "nonce": "0x00",
+      "storage": {}
+    },
+    "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+      "balance": "0x1748721582",
+      "code": "0x",
+      "nonce": "0x00",
+      "storage": {}
+    }
+  },
+  "genesis": {
+    "author": "0x8888f1f195afa192cfee860698584c030f4c9db1",
+    "difficulty": "0x020000",
+    "extraData": "0x42",
+    "gasLimit": "0x2fefd8",
+    "mixHash": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+    "nonce": "0x0102030405060708",
+    "timestamp": "0x54c98c81"
+  },
+  "params": {
+    "EIP150ForkBlock": "0x00",
+    "EIP158ForkBlock": "0x00",
+    "byzantiumForkBlock": "0x00",
+    "homesteadForkBlock": "0x00"
+  },
+  "sealEngine": "NoProof"
+}
