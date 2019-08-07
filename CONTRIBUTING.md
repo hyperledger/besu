@@ -15,7 +15,7 @@ and feel free to propose changes to this document in a pull request.
   * [Suggesting Enhancements](#suggesting-enhancements)
   * [Your First Contribution](#your-first-contribution)
   * [Pull Requests](#pull-requests)
-  * [Code Reviews]
+  * [Code Reviews](#code-review)
 
 [Style Guides](#style-guides)
   * [Java Style Guide](#java-code-style-guide)
@@ -51,7 +51,7 @@ open a new issue and include a link to the original issue in the body of your ne
 
 #### Before Submitting A Bug Report
 * **Confirm the problem** is reproducible in the latest version of the software
-* **Check the [Debugging documentation]**. You might be able to find the cause of the problem and fix things yourself. 
+* **Check [Pantheon documentation]**. You might be able to find the cause of the problem and fix things yourself. 
 * **Perform a [cursory search of project issues](https://pegasys1.atlassian.net/browse/PAN-2502?jql=project%20%3D%20PAN)** 
 to see if the problem has already been reported. If it has **and the issue is still open**, add a comment 
 to the existing issue instead of opening a new one.
@@ -110,7 +110,7 @@ When you are creating an enhancement suggestion, please
 
 #### Before Submitting An Enhancement Suggestion
 
-* **Check the [Debugging documentation].** You might be able to find the cause of the problem and fix things yourself. 
+* **Check the [Pantheon documentation].** You might be able to find the cause of the problem and fix things yourself. 
 * **Perform a [cursory search of project issues](https://pegasys1.atlassian.net/browse/PAN-2502?jql=project%20%3D%20PAN)** 
 to see if the problem has already been reported. If it has **and the issue is still open**, add a comment 
 to the existing issue instead of opening a new one.
@@ -138,7 +138,7 @@ Start by looking through the 'good first issue' and 'help wanted' labeled issues
 and a test or two.
 * [Help wanted issues][search-label-help-wanted] - issues which are a bit more involved than `good first issue` issues.
 
-When you've indentified an issue you'd like to work on, ping us on [Gitter] and we'll assign it to you. 
+When you've identified an issue you'd like to work on, ping us on [Gitter] and we'll assign it to you. 
 
 ### Contribution Workflow
 The codebase and documentation are maintained using the same "*contributor workflow*" where everyone 
@@ -153,21 +153,18 @@ To contribute changes, use the following workflow:
 1. **Create a topic branch** and name it appropriately.
 Starting the branch name with the issue number is a good practice and a reminder to fix only one issue in a 
 Pull-Request (PR)._
-1. **Make your changes** adhering to the coding and documentation conventions described below.
+1. **Make your changes** adhering to the coding conventions described below.
 _In general a commit serves a single purpose and diffs should be easily comprehensible.
 For this reason do not mix any formatting fixes or code moves with actual code changes._
-1. **Commit your changes** using a clear commit message.
+1. **Commit your changes** see [How to Write a Git Commit Message] article by [Chris Beams].
 1. **Test your changes** locally before pushing to ensure that what you are proposing is not breaking
-another part of the software.
-    * For code changes, running the `./gradlew clean check test` command locally will help you
+another part of the software. Running the `./gradlew clean check test` command locally will help you
 to be confident that your changes will pass CI tests once pushed as a Pull Request.
-    * For doc changes, displaying the doc with [MkDocs] in a preview mode enables you to check the
-  rendering as explained in the [MkDocs And Markdown Guide](MKDOCS-MARKDOWN-GUIDE.md#preview-the-documentation). 
 1. **Push your changes** to your remote fork (usually labeled as `origin`).
 1. **Create a pull-request** (PR) on the Pantheon repository. If the PR addresses an existing Jira issue, 
 include the issue number in the PR title in square brackets (for example, `[PAN-2374]`). 
-1. **Add labels** to identify the type of your PR. _For example, if your PR only changes documentation, add the
-"documentation" label. If it fixes a bug, add the "bug" label._
+1. **Add labels** to identify the type of your PR. _For example, if your PR is not ready to validate,
+add the "work-in-progress" label. If it fixes a bug, add the "bug" label._
 1. If the PR address an existing Jira issue, comment in the Jira issue with the PR number. 
 1. **Ensure your changes are reviewed**.
 _Select the reviewers you would like to review your PR.
@@ -175,7 +172,7 @@ If you don't know who to choose, simply select the reviewers proposed by GitHub 
 1. **Make any required changes** on your contribution from the reviewers feedback.
 _Make the changes, commit to your branch, and push to your remote fork._
 1. **When your PR is validated**, all tests passed and your branch has no conflicts with the target branch,
-you can **"squash and merge"** your PR and you're done. You contributed to Pantheon ! Thanks !
+you can **"squash and merge"** your PR and you're done. You contributed to Pantheon! Thanks !
 
 ### Architectural Best Practices
 
@@ -186,10 +183,6 @@ Questions on architectural best practices will be guided by the principles set f
 All code submissions must be accompanied by appropriate automated tests.
 The goal is to provide confidence in the code’s robustness, while avoiding redundant tests.
 
->**Important** 
-> The [`libsodium`](https://download.libsodium.org/doc/installation) library must be installed to 
-run `./gradlew integrationTest`. 
-
 ### Pull Requests
 
 The process described here has several goals:
@@ -198,8 +191,8 @@ The process described here has several goals:
 - Fix problems that are important to users
 - Engage the community in working toward the best possible product
 - Enable a sustainable system for maintainers to review contributions
-- Further explanation on PR & commit messages can be found in this post: 
-[How to Write a Git Commit Message](https://chris.beams.io/posts/git-commit/).
+- Further explanation on PR & commit messages can be found in the 
+[How to Write a Git Commit Message] article by [Chris Beams].
 
 Please follow these steps to have your contribution considered by the approvers:
 
@@ -215,6 +208,7 @@ explaining why you believe the failure is unrelated. A maintainer will re-run th
 If we conclude that the failure was a false positive, then we will open an issue to track that problem 
 with our status check suite.</details>
 
+## Code Review
 While the prerequisites above must be satisfied prior to having your pull request reviewed, the reviewer(s) 
 may ask you to complete additional design work, tests, or other changes before your pull request 
 can be ultimately accepted.  Please refer to [Code Reviews].
@@ -235,21 +229,6 @@ Code style will be checked automatically during a build.
 We have a set of [coding conventions](CODING-CONVENTIONS.md) to which we try to adhere.
 These are not strictly enforced during the build, but should be adhered to and called out in code reviews.
 
-## Documentation Style Guide
-For documentation, we have [documentation guidelines and examples](DOC-STYLE-GUIDE.md). 
-These rules are not automatically enforced but are recommended to make the documentation consistent
- and enhance the user experience.
-
-Also have a look at our [MKDocs Markdown guide](MKDOCS-MARKDOWN-GUIDE.md) if you're not famililar with 
-MarkDown syntax. We also have a number of extensions that are available in the Pantheon documentation described
-in this guide.
-
-## Git Commit Messages & Pull Request Messages
-* Use the present tense ("Add feature" not "Added feature")
-* Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
-* Provide a summary on the first line with more details on additional lines as needed
-* Reference issues and pull requests liberally
-
 # Pull Request Labels
 
 #### Pull Request Labels
@@ -260,32 +239,11 @@ in this guide.
 | [`requires-changes`][search-label-requires-changes]                     | Pull requests which need to be updated based on review comments and then reviewed again.   |
 | [`needs engineering approval`][search-label-needs-engineering-approval] | Pull requests which need to be approved from a technical person, mainly documentation PRs. |
 
-[search-label-windows]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22windows%22
-[search-label-linux]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22linux%22
-[search-label-mac]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22mac%22
-[search-label-documentation]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22documentation%22
-[search-label-performance]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22performance%22
-[search-label-security]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22security%22
-[search-label-api]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22api%22
-[search-label-enhancement]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22enhancement%22
-[search-label-bug]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug%22
-[search-label-help-wanted]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22help%20wanted%22
-[search-label-good-first-issue]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22good%20first%20issue%22
-[search-label-info-needed]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22info%20needed%22
-[search-label-needs-reproduction]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22needs%20reproduction%22
-[search-label-blocked]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22blocked%22
-[search-label-duplicate]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22duplicate%22
-[search-label-wontfix]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22wontfix%22
-[search-label-invalid]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22invalid%22
-[search-label-do-we-want-this]: https://github.com/PegaSysEng/pantheon/issues?q=is%3Aopen+is%3Aissue+label%3A%22do%20we%20want%20this%22
-[search-label-work-in-progress]: https://github.com/PegaSysEng/pantheon/pulls?q=is%3Aopen+is%3Apr+label%3A%22work%20in%20progress%22
-[search-label-requires-changes]: https://github.com/PegaSysEng/pantheon/pulls?q=is%3Aopen+is%3Apr+label%3A%22requires%20changes%22
-[search-label-needs-engineering-approval]: https://github.com/PegaSysEng/pantheon/pulls?q=is%3Aopen+is%3Apr+label%3A%22needs+engineering+approval%22
-
 [private@pegasys.tech]: mailto:private@pegasys.tech
 [Gitter]: https://gitter.im/PegaSysEng/pantheon
 [Pantheon documentation]: https://docs.pantheon.pegasys.tech/
-[Debugging documentation]: https://docs.pantheon.pegasys.tech/en/stable/Using-Pantheon/Debugging/
 [CLA.md]: /CLA.md
 [Code Reviews]: /docs/community/code-reviews.md
 [MkDocs]: https://www.mkdocs.org/
+[How to Write a Git Commit Message]: https://chris.beams.io/posts/git-commit/
+[Chris Beams]: https://github.com/cbeams

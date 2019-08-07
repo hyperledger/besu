@@ -161,23 +161,6 @@ try {
                     }
                 }
             }
-        }, DocTests: {
-            def stage_name = "Documentation tests node: "
-            node {
-                checkout scm
-                stage(stage_name + 'Build') {
-//                Python image version should be set to the same as in readthedocs.yml
-//                to make sure we test with the same version that RTD will use
-                    def container = docker.image("python:3.7-alpine").inside() {
-                        try {
-                            sh 'pip install -r docs/requirements.txt'
-                            sh 'mkdocs build -s'
-                        } catch (e) {
-                            throw e
-                        }
-                    }
-                }
-            }
         }, DockerImage: {
                 def stage_name = 'Docker image node: '
                 def image = imageRepos + '/pantheon:' + imageTag
