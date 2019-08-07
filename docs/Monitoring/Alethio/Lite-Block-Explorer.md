@@ -41,7 +41,7 @@ To run the Ethereum Lite Explorer using the Docker image:
     docker run --rm -p 8080:80 -e APP_NODE_URL=http://localhost:8545 alethio/ethereum-lite-explorer
     ```
 
-1. Open [http://localhost:8080](http://localhost) in your browser to view the Lite Explorer. 
+1. Open [http://localhost:8080](http://localhost:8080) in your browser to view the Lite Explorer. 
 
     ![Ethereum Lite Explorer](explorer.png)
 
